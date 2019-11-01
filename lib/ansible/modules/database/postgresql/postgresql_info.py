@@ -33,6 +33,7 @@ options:
     - If you pass including and excluding values to the filter, for example, I(filter=!settings,ver),
       the excluding values will be ignored.
     type: list
+    elements: str
   db:
     description:
     - Name of database to connect.
@@ -46,19 +47,8 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
-notes:
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- login_user or session_role must be able to read from pg_authid.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module. If
-  the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host. For Ubuntu-based
-  systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-requirements: [ psycopg2 ]
+seealso:
+- module: postgresql_ping
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
@@ -192,16 +182,16 @@ databases:
               returned: always
               type: dict
               contains:
-              major:
-                description: Extension major version.
-                returned: always
-                type: int
-                sample: 1
-              minor:
-                description: Extension minor version.
-                returned: always
-                type: int
-                sample: 0
+                major:
+                  description: Extension major version.
+                  returned: always
+                  type: int
+                  sample: 1
+                minor:
+                  description: Extension minor version.
+                  returned: always
+                  type: int
+                  sample: 0
             nspname:
               description: Namespace where the extension is.
               returned: always

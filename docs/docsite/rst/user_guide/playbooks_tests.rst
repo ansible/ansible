@@ -59,7 +59,47 @@ To match strings against a substring or a regular expression, use the "match", "
             msg: "matched pattern 4"
           when: url is regex("example.com/\w+/foo")
 
-'match' requires zero or more characters at the beginning of the string, while 'search' only requires matching a subset of the string. By default, 'regex' works like `search`, but `regex` can be configured to perform other tests as well. 
+'match' requires zero or more characters at the beginning of the string, while 'search' only requires matching a subset of the string. By default, 'regex' works like `search`, but `regex` can be configured to perform other tests as well.
+
+.. _testing_truthiness:
+
+Testing Truthiness
+``````````````````
+
+.. versionadded:: 2.10
+
+As of Ansible 2.10, you can now perform Python like truthy and falsy checks.
+
+.. code-block:: yaml
+
+    - debug:
+        msg: "Truthy"
+      when: value is truthy
+      vars:
+        value: "some string"
+
+    - debug:
+        msg: "Falsy"
+      when: value is falsy
+      vars:
+        value: ""
+
+Additionally, the ``truthy`` and ``falsy`` tests accept an optional parameter called ``convert_bool`` that will attempt
+to convert boolean indicators to actual booleans.
+
+.. code-block:: yaml
+
+    - debug:
+        msg: "Truthy"
+      when: value is truthy(convert_bool=True)
+      vars:
+        value: "yes"
+
+    - debug:
+        msg: "Falsy"
+      when: value is falsy(convert_bool=True)
+      vars:
+        value: "off"
 
 .. _testing_versions:
 
@@ -249,17 +289,17 @@ The following tasks are illustrative of the tests meant to check the status of t
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

@@ -21,7 +21,7 @@ Knowing your Ansible version and the exact commands you are running, and what yo
 
 Do not use the issue tracker for "how do I do this" type questions.  These are great candidates for IRC or the mailing list instead where things are likely to be more of a discussion.
 
-To be respectful of reviewers' time and allow us to help everyone efficiently, please  provide minimal well-reduced and well-commented examples versus sharing your entire production playbook.  Include playbook snippets and output where possible.
+To be respectful of reviewers' time and allow us to help everyone efficiently, please  provide minimal well-reduced and well-commented examples rather than sharing your entire production playbook.  Include playbook snippets and output where possible.
 
 When sharing YAML in playbooks, formatting can be preserved by using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_.
 
@@ -37,5 +37,3 @@ Requesting a feature
 ====================
 
 The best way to get a feature into Ansible is to :ref:`submit a pull request <community_pull_requests>`.
-
-The next best way of getting a feature into Ansible is to submit a proposal through the `Ansible proposal process  <https://github.com/ansible/proposals>`_.

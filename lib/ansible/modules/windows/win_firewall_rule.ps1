@@ -117,6 +117,7 @@ $description = Get-AnsibleParam -obj $params -name "description" -type "str"
 $direction = Get-AnsibleParam -obj $params -name "direction" -type "str" -validateset "in","out"
 $action = Get-AnsibleParam -obj $params -name "action" -type "str" -validateset "allow","block"
 $program = Get-AnsibleParam -obj $params -name "program" -type "str"
+$group = Get-AnsibleParam -obj $params -name "group" -type "str"
 $service = Get-AnsibleParam -obj $params -name "service" -type "str"
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -aliases "enable"
 $profiles = Get-AnsibleParam -obj $params -name "profiles" -type "list" -aliases "profile"
@@ -130,11 +131,6 @@ $edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -validateset "no"
 $security = Get-AnsibleParam -obj $params -name "security" -type "str" -validateset "notrequired","authnoencap","authenticate","authdynenc","authenc"
 
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
-
-$force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $false
-if ($force) {
-    Add-DeprecationWarning -obj $result -message "'force' isn't required anymore" -version 2.9
-}
 
 if ($diff_support) {
     $result.diff = @{}
@@ -156,7 +152,8 @@ try {
     # the default for enabled in module description is "true", but the actual COM object defaults to "false" when created
     if ($null -ne $enabled) { $new_rule.Enabled = $enabled } else { $new_rule.Enabled = $true }
     if ($null -ne $description) { $new_rule.Description = $description }
-    if ($null -ne $program -and $program -ne "any") { $new_rule.ApplicationName = $program }
+    if ($null -ne $group) { $new_rule.Grouping = $group }
+    if ($null -ne $program -and $program -ne "any") { $new_rule.ApplicationName = [System.Environment]::ExpandEnvironmentVariables($program) }
     if ($null -ne $service -and $program -ne "any") { $new_rule.ServiceName = $service }
     if ($null -ne $protocol -and $protocol -ne "any") { $new_rule.Protocol = Parse-ProtocolType -protocol $protocol }
     if ($null -ne $localport -and $localport -ne "any") { $new_rule.LocalPorts = $localport }
@@ -181,8 +178,8 @@ try {
         }
     }
 
-    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions', 'SecureFlags')
-    $userPassedArguments = @($name, $description, $direction, $action, $program, $service, $enabled, $profiles, $localip, $remoteip, $localport, $remoteport, $protocol, $interfacetypes, $edge, $security)
+    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','Grouping','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions', 'SecureFlags')
+    $userPassedArguments = @($name, $description, $direction, $action, $program, $group, $service, $enabled, $profiles, $localip, $remoteip, $localport, $remoteport, $protocol, $interfacetypes, $edge, $security)
 
     if ($state -eq "absent") {
         if ($null -eq $existingRule) {

@@ -123,7 +123,7 @@ options:
     version_added: "2.4"
   placement_tenancy:
     description:
-      - Determines whether the instance runs on single-tenant harware or not.
+      - Determines whether the instance runs on single-tenant hardware or not.
     default: 'default'
     version_added: "2.4"
 

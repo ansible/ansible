@@ -1,0 +1,52 @@
+---
+merged:
+  before: {}
+  
+  commands:
+    - "lldp reinit 2"
+    - "lldp holdtime 100"
+    - "lldp timer 3000"
+    - "lldp subinterfaces enable"
+    - "lldp tlv-select system-description disable"
+    - "lldp tlv-select management-address disable"
+    
+  after:
+    holdtime: 100
+    reinit: 2
+    subinterfaces: True
+    timer: 3000
+    tlv_select:
+      management_address: False
+      system_description: False
+
+replaced:
+  commands:
+    - "no lldp reinit 2"
+    - "no lldp subinterfaces enable"
+    - "no lldp timer 3000"
+    - "lldp tlv-select port-description disable"
+  
+  after:
+    holdtime: 100
+    tlv_select:
+      management_address: False
+      port_description: False
+      system_description: False
+    
+deleted:
+  commands:
+    - "no lldp holdtime 100"
+    - "no lldp reinit 2"
+    - "no lldp subinterfaces enable"
+    - "no lldp timer 3000"
+    - "no lldp tlv-select management-address disable"
+    - "no lldp tlv-select system-description disable"
+
+  after: {}
+
+round_trip:
+  after:
+    holdtime: 200
+    reinit: 4
+    subinterfaces: True
+    timer: 3000

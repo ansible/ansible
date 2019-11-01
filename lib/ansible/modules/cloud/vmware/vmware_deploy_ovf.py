@@ -31,16 +31,21 @@ options:
         default: ha-datacenter
         description:
         - Datacenter to deploy to.
+        type: str
     cluster:
         description:
         - Cluster to deploy to.
+        type: str
     datastore:
         default: datastore1
         description:
         - Datastore to deploy to.
+        - "You can also specify datastore storage cluster. version_added: 2.9"
+        type: str
     deployment_option:
         description:
         - The key of the chosen deployment option.
+        type: str
     disk_provisioning:
         choices:
         - flat
@@ -56,6 +61,7 @@ options:
         default: thin
         description:
         - Disk provisioning type.
+        type: str
     fail_on_spec_warnings:
         description:
         - Cause the module to treat OVF Import Spec warnings as errors.
@@ -75,6 +81,7 @@ options:
         - '   folder: /folder1/datacenter1/vm'
         - '   folder: folder1/datacenter1/vm'
         - '   folder: /folder1/datacenter1/vm/folder2'
+        type: str
     inject_ovf_env:
         description:
         - Force the given properties to be inserted into an OVF Environment and injected through VMware Tools.
@@ -84,11 +91,13 @@ options:
         description:
         - Name of the VM to work with.
         - Virtual machine names in vCenter are not necessarily unique, which may be problematic.
+        type: str
     networks:
         default:
             VM Network: VM Network
         description:
         - 'C(key: value) mapping of OVF network name, to the vCenter network name.'
+        type: dict
     ovf:
         description:
         - 'Path to OVF or OVA file to deploy.'
@@ -102,10 +111,12 @@ options:
     properties:
         description:
         - The assignment of values to the properties found in the OVF as key value pairs.
+        type: dict
     resource_pool:
         default: Resources
         description:
-        - 'Resource Pool to deploy to.'
+        - Resource Pool to deploy to.
+        type: str
     wait:
         default: true
         description:
@@ -172,8 +183,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import generic_urlparse, open_url, urlparse, urlunparse
-from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, find_datacenter_by_name, find_datastore_by_name,
-                                         find_network_by_name, find_resource_pool_by_name, find_vm_by_name, find_cluster_by_name,
+from ansible.module_utils.vmware import (find_network_by_name, find_vm_by_name, PyVmomi,
                                          gather_vm_facts, vmware_argument_spec, wait_for_task, wait_for_vm_ip)
 try:
     from ansible.module_utils.vmware import vim
@@ -290,9 +300,9 @@ class VMDKUploader(Thread):
                 self.e = sys.exc_info()
 
 
-class VMwareDeployOvf:
+class VMwareDeployOvf(PyVmomi):
     def __init__(self, module):
-        self.si = connect_to_api(module)
+        super(VMwareDeployOvf, self).__init__(module)
         self.module = module
         self.params = module.params
 
@@ -309,27 +319,44 @@ class VMwareDeployOvf:
         self.entity = None
 
     def get_objects(self):
-        self.datastore = find_datastore_by_name(self.si, self.params['datastore'])
-        if not self.datastore:
-            self.module.fail_json(msg='%(datastore)s could not be located' % self.params)
-
-        self.datacenter = find_datacenter_by_name(self.si, self.params['datacenter'])
+        self.datacenter = self.find_datacenter_by_name(self.params['datacenter'])
         if not self.datacenter:
             self.module.fail_json(msg='%(datacenter)s could not be located' % self.params)
 
+        self.datastore = None
+        datastore_cluster_obj = self.find_datastore_cluster_by_name(self.params['datastore'])
+        if datastore_cluster_obj:
+            datastore = None
+            datastore_freespace = 0
+            for ds in datastore_cluster_obj.childEntity:
+                if isinstance(ds, vim.Datastore) and ds.summary.freeSpace > datastore_freespace:
+                    # If datastore field is provided, filter destination datastores
+                    if ds.summary.maintenanceMode != 'normal' or not ds.summary.accessible:
+                        continue
+                    datastore = ds
+                    datastore_freespace = ds.summary.freeSpace
+            if datastore:
+                self.datastore = datastore
+        else:
+            self.datastore = self.find_datastore_by_name(self.params['datastore'])
+
+        if not self.datastore:
+            self.module.fail_json(msg='%(datastore)s could not be located' % self.params)
+
         if self.params['cluster']:
-            cluster = find_cluster_by_name(self.si, self.params['cluster'])
+            resource_pools = []
+            cluster = self.find_cluster_by_name(self.params['cluster'], datacenter_name=self.datacenter)
             if cluster is None:
                 self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
-            else:
-                self.resource_pool = cluster.resourcePool
+            self.resource_pool = self.find_resource_pool_by_cluster(self.params['resource_pool'], cluster=cluster)
         else:
-            self.resource_pool = find_resource_pool_by_name(self.si, self.params['resource_pool'])
-            if not self.resource_pool:
-                self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
+            self.resource_pool = self.find_resource_pool_by_name(self.params['resource_pool'])
+
+        if not self.resource_pool:
+            self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
 
         for key, value in self.params['networks'].items():
-            network = find_network_by_name(self.si, value)
+            network = find_network_by_name(self.content, value)
             if not network:
                 self.module.fail_json(msg='%(network)s could not be located' % self.params)
             network_mapping = vim.OvfManager.NetworkMapping()
@@ -379,7 +406,7 @@ class VMwareDeployOvf:
                 params['propertyMapping'].append(property_mapping)
 
         if self.params['folder']:
-            folder = self.si.searchIndex.FindByInventoryPath(self.params['folder'])
+            folder = self.content.searchIndex.FindByInventoryPath(self.params['folder'])
             if not folder:
                 self.module.fail_json(msg="Unable to find the specified folder %(folder)s" % self.params)
         else:
@@ -389,7 +416,7 @@ class VMwareDeployOvf:
 
         ovf_descriptor = self.get_ovf_descriptor()
 
-        self.import_spec = self.si.ovfManager.CreateImportSpec(
+        self.import_spec = self.content.ovfManager.CreateImportSpec(
             ovf_descriptor,
             resource_pool,
             datastore,
@@ -411,9 +438,9 @@ class VMwareDeployOvf:
 
         if not self.params['allow_duplicates']:
             name = self.import_spec.importSpec.configSpec.name
-            match = find_vm_by_name(self.si, name, folder=folder)
+            match = find_vm_by_name(self.content, name, folder=folder)
             if match:
-                self.module.exit_json(instance=gather_vm_facts(self.si, match), changed=False)
+                self.module.exit_json(instance=gather_vm_facts(self.content, match), changed=False)
 
         if self.module.check_mode:
             self.module.exit_json(changed=True, instance={'hw_name': name})
@@ -540,9 +567,9 @@ class VMwareDeployOvf:
         env = ET.Element('Environment', **attrib)
 
         platform = ET.SubElement(env, 'PlatformSection')
-        ET.SubElement(platform, 'Kind').text = self.si.about.name
-        ET.SubElement(platform, 'Version').text = self.si.about.version
-        ET.SubElement(platform, 'Vendor').text = self.si.about.vendor
+        ET.SubElement(platform, 'Kind').text = self.content.about.name
+        ET.SubElement(platform, 'Version').text = self.content.about.version
+        ET.SubElement(platform, 'Vendor').text = self.content.about.vendor
         ET.SubElement(platform, 'Locale').text = 'US'
 
         prop_section = ET.SubElement(env, 'PropertySection')
@@ -574,13 +601,13 @@ class VMwareDeployOvf:
             if self.params['wait']:
                 wait_for_task(task)
                 if self.params['wait_for_ip_address']:
-                    _facts = wait_for_vm_ip(self.si, self.entity)
+                    _facts = wait_for_vm_ip(self.content, self.entity)
                     if not _facts:
                         self.module.fail_json(msg='Waiting for IP address timed out')
                     facts.update(_facts)
 
         if not facts:
-            facts.update(gather_vm_facts(self.si, self.entity))
+            facts.update(gather_vm_facts(self.content, self.entity))
 
         return facts
 
@@ -664,9 +691,6 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
-
-    if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi python library not found')
 
     deploy_ovf = VMwareDeployOvf(module)
     deploy_ovf.upload()

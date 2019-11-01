@@ -1,0 +1,2 @@
+minor_changes:
+- postgresql_privs - add support for TYPE as object types in postgresql_privs module (https://github.com/ansible/ansible/issues/62432).

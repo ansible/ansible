@@ -1,18 +1,9 @@
 #!/usr/bin/python
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -31,22 +22,16 @@ notes:
    - In 2.4, this module has been renamed from C(s3) into M(aws_s3).
 version_added: "1.1"
 options:
-  aws_access_key:
-    description:
-      - AWS access key id. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    aliases: [ 'ec2_access_key', 'access_key' ]
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    aliases: ['ec2_secret_key', 'secret_key']
   bucket:
     description:
       - Bucket name.
     required: true
+    type: str
   dest:
     description:
       - The destination file path when downloading an object/key with a GET operation.
     version_added: "1.3"
+    type: path
   encrypt:
     description:
       - When set for PUT mode, asks for server-side encryption.
@@ -61,27 +46,34 @@ options:
       - AES256
       - aws:kms
     version_added: "2.7"
-  expiration:
+    type: str
+  expiry:
     description:
       - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
     default: 600
+    aliases: ['expiration']
+    type: int
   headers:
     description:
       - Custom headers for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
     version_added: "2.0"
+    type: dict
   marker:
     description:
       - Specifies the key to start with when using list mode. Object keys are returned in alphabetical order, starting with key after the marker in order.
     version_added: "2.0"
+    type: str
   max_keys:
     description:
       - Max number of results to return in list mode, set this if you want to retrieve fewer than the default 1000 keys.
     default: 1000
     version_added: "2.0"
+    type: int
   metadata:
     description:
       - Metadata for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
     version_added: "1.6"
+    type: dict
   mode:
     description:
       - Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+),
@@ -89,26 +81,32 @@ options:
         and delobj (delete object, Ansible 2.0+).
     required: true
     choices: ['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list']
+    type: str
   object:
     description:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
+    type: str
   permission:
     description:
       - This option lets the user set the canned permissions on the object/bucket that are created.
         The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read' for a bucket or
         'private', 'public-read', 'public-read-write', 'aws-exec-read', 'authenticated-read', 'bucket-owner-read',
         'bucket-owner-full-control' for an object. Multiple permissions can be specified as a list.
-    default: private
+    default: ['private']
     version_added: "2.0"
+    type: list
+    elements: str
   prefix:
     description:
       - Limits the response to keys that begin with the specified prefix for list mode
     default: ""
     version_added: "2.0"
+    type: str
   version:
     description:
       - Version ID of the object inside the bucket. Can be used to get a specific version of a file if versioning is enabled in the target bucket.
     version_added: "2.0"
+    type: str
   overwrite:
     description:
       - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
@@ -119,21 +117,19 @@ options:
     default: 'always'
     aliases: ['force']
     version_added: "1.2"
-  region:
-    description:
-     - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables
-       are checked, followed by the aws_region and ec2_region settings in the Boto config file. If none of those are set the
-       region defaults to the S3 Location: US Standard. Prior to ansible 1.8 this parameter could be specified but had no effect."
-    version_added: "1.8"
+    type: str
   retries:
     description:
      - On recoverable failure, how many times to retry before actually failing.
     default: 0
     version_added: "2.0"
+    type: int
+    aliases: ['retry']
   s3_url:
     description:
       - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc. Otherwise assumes AWS.
     aliases: [ S3_URL ]
+    type: str
   dualstack:
     description:
       - Enables Amazon S3 Dual-Stack Endpoints, allowing S3 communications using both IPv4 and IPv6.
@@ -151,6 +147,7 @@ options:
     description:
       - The source file path when performing a PUT operation.
     version_added: "1.3"
+    type: str
   ignore_nonexistent_bucket:
     description:
       - "Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the
@@ -162,7 +159,7 @@ options:
     description:
       - KMS key id to use when encrypting objects using C(aws:kms) encryption. Ignored if encryption is not C(aws:kms)
     version_added: "2.7"
-
+    type: str
 requirements: [ "boto3", "botocore" ]
 author:
     - "Lester Wade (@lwade)"
@@ -297,14 +294,14 @@ s3_keys:
   - prefix1/key2
 '''
 
-import hashlib
 import mimetypes
 import os
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ssl import SSLError
 from ansible.module_utils.basic import to_text, to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.aws.s3 import calculate_etag, HAS_MD5
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 
 try:
     import botocore
@@ -340,42 +337,21 @@ def key_check(module, s3, bucket, obj, version=None, validate=True):
     return exists
 
 
-def keysum_compare(module, local_file, s3, bucket, obj, version=None):
-    s3_keysum = keysum(s3, bucket, obj, version=version)
-    if '-' in s3_keysum:  # Check for multipart, ETag is not a proper MD5 sum
-        parts = int(s3_keysum.split('-')[1])
-        md5s = []
+def etag_compare(module, local_file, s3, bucket, obj, version=None):
+    s3_etag = get_etag(s3, bucket, obj, version=version)
+    local_etag = calculate_etag(module, local_file, s3_etag, s3, bucket, obj, version)
 
-        with open(local_file, 'rb') as f:
-            for part_num in range(1, parts + 1):
-                # Get the part size for every part of the multipart uploaded object
-                if version:
-                    key_head = s3.head_object(Bucket=bucket, Key=obj, VersionId=version, PartNumber=part_num)
-                else:
-                    key_head = s3.head_object(Bucket=bucket, Key=obj, PartNumber=part_num)
-                part_size = int(key_head['ContentLength'])
-                data = f.read(part_size)
-                hash = hashlib.md5(data)
-                md5s.append(hash)
-
-        digests = b''.join(m.digest() for m in md5s)
-        digests_md5 = hashlib.md5(digests)
-        local_keysum = '{0}-{1}'.format(digests_md5.hexdigest(), len(md5s))
-    else:  # Compute the MD5 sum normally
-        local_keysum = module.md5(local_file)
-
-    return s3_keysum == local_keysum
+    return s3_etag == local_etag
 
 
-def keysum(s3, bucket, obj, version=None):
+def get_etag(s3, bucket, obj, version=None):
     if version:
         key_check = s3.head_object(Bucket=bucket, Key=obj, VersionId=version)
     else:
         key_check = s3.head_object(Bucket=bucket, Key=obj)
     if not key_check:
         return None
-    md5_remote = key_check['ETag'][1:-1]
-    return md5_remote
+    return key_check['ETag']
 
 
 def bucket_check(module, s3, bucket, validate=True):
@@ -410,6 +386,9 @@ def create_bucket(module, s3, bucket, location=None):
             s3.create_bucket(Bucket=bucket, CreateBucketConfiguration=configuration)
         else:
             s3.create_bucket(Bucket=bucket)
+        if module.params.get('permission'):
+            # Wait for the bucket to exist before setting ACLs
+            s3.get_waiter('bucket_exists').wait(Bucket=bucket)
         for acl in module.params.get('permission'):
             s3.put_bucket_acl(ACL=acl, Bucket=bucket)
     except botocore.exceptions.ClientError as e:
@@ -670,32 +649,29 @@ def get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=F
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            bucket=dict(required=True),
-            dest=dict(default=None, type='path'),
-            encrypt=dict(default=True, type='bool'),
-            encryption_mode=dict(choices=['AES256', 'aws:kms'], default='AES256'),
-            expiry=dict(default=600, type='int', aliases=['expiration']),
-            headers=dict(type='dict'),
-            marker=dict(default=""),
-            max_keys=dict(default=1000, type='int'),
-            metadata=dict(type='dict'),
-            mode=dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
-            object=dict(),
-            permission=dict(type='list', default=['private']),
-            version=dict(default=None),
-            overwrite=dict(aliases=['force'], default='always'),
-            prefix=dict(default=""),
-            retries=dict(aliases=['retry'], type='int', default=0),
-            s3_url=dict(aliases=['S3_URL']),
-            dualstack=dict(default='no', type='bool'),
-            rgw=dict(default='no', type='bool'),
-            src=dict(),
-            ignore_nonexistent_bucket=dict(default=False, type='bool'),
-            encryption_kms_key_id=dict()
-        ),
+    argument_spec = dict(
+        bucket=dict(required=True),
+        dest=dict(default=None, type='path'),
+        encrypt=dict(default=True, type='bool'),
+        encryption_mode=dict(choices=['AES256', 'aws:kms'], default='AES256'),
+        expiry=dict(default=600, type='int', aliases=['expiration']),
+        headers=dict(type='dict'),
+        marker=dict(default=""),
+        max_keys=dict(default=1000, type='int'),
+        metadata=dict(type='dict'),
+        mode=dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
+        object=dict(),
+        permission=dict(type='list', default=['private']),
+        version=dict(default=None),
+        overwrite=dict(aliases=['force'], default='always'),
+        prefix=dict(default=""),
+        retries=dict(aliases=['retry'], type='int', default=0),
+        s3_url=dict(aliases=['S3_URL']),
+        dualstack=dict(default='no', type='bool'),
+        rgw=dict(default='no', type='bool'),
+        src=dict(),
+        ignore_nonexistent_bucket=dict(default=False, type='bool'),
+        encryption_kms_key_id=dict()
     )
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
@@ -734,6 +710,9 @@ def main():
             overwrite = 'always'
         else:
             overwrite = 'never'
+
+    if overwrite == 'different' and not HAS_MD5:
+        module.fail_json(msg='overwrite=different is unavailable: ETag calculation requires MD5 support')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
 
@@ -792,9 +771,7 @@ def main():
     if validate and mode not in ('create', 'put', 'delete') and not bucketrtn:
         module.fail_json(msg="Source bucket cannot be found.")
 
-    # If our mode is a GET operation (download), go through the procedure as appropriate ...
     if mode == 'get':
-        # Next, we check to see if the key in the bucket exists. If it exists, it also returns key_matches md5sum check.
         keyrtn = key_check(module, s3, bucket, obj, version=version, validate=validate)
         if keyrtn is False:
             if version:
@@ -802,86 +779,42 @@ def main():
             else:
                 module.fail_json(msg="Key %s does not exist." % obj)
 
-        # If the destination path doesn't exist or overwrite is True, no need to do the md5sum ETag check, so just download.
-        # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
-        if path_check(dest):
-            # Determine if the remote and local object are identical
-            if keysum_compare(module, dest, s3, bucket, obj, version=version):
-                sum_matches = True
-                if overwrite == 'always':
-                    try:
-                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
-                    except Sigv4Required:
-                        s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
-                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
-                else:
-                    module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=always parameter to force.", changed=False)
-            else:
-                sum_matches = False
+        if path_check(dest) and overwrite != 'always':
+            if overwrite == 'never':
+                module.exit_json(msg="Local object already exists and overwrite is disabled.", changed=False)
+            if etag_compare(module, dest, s3, bucket, obj, version=version):
+                module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite=always parameter to force.", changed=False)
 
-                if overwrite in ('always', 'different'):
-                    try:
-                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
-                    except Sigv4Required:
-                        s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
-                        download_s3file(module, s3, bucket, obj, dest, retries, version=version)
-                else:
-                    module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force download.")
-        else:
-            try:
-                download_s3file(module, s3, bucket, obj, dest, retries, version=version)
-            except Sigv4Required:
-                s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
-                download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+        try:
+            download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+        except Sigv4Required:
+            s3 = get_s3_connection(module, aws_connect_kwargs, location, rgw, s3_url, sig_4=True)
+            download_s3file(module, s3, bucket, obj, dest, retries, version=version)
 
-    # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
 
         # if putting an object in a bucket yet to be created, acls for the bucket and/or the object may be specified
         # these were separated into the variables bucket_acl and object_acl above
 
-        # Lets check the src path.
         if not path_check(src):
             module.fail_json(msg="Local object for PUT does not exist")
 
-        # Lets check to see if bucket exists to get ground truth.
         if bucketrtn:
             keyrtn = key_check(module, s3, bucket, obj, version=version, validate=validate)
-
-        # Lets check key state. Does it exist and if it does, compute the ETag md5sum.
-        if bucketrtn and keyrtn:
-            # Compare the local and remote object
-            if keysum_compare(module, src, s3, bucket, obj):
-                sum_matches = True
-                if overwrite == 'always':
-                    # only use valid object acls for the upload_s3file function
-                    module.params['permission'] = object_acl
-                    upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
-                else:
-                    get_download_url(module, s3, bucket, obj, expiry, changed=False)
-            else:
-                sum_matches = False
-                if overwrite in ('always', 'different'):
-                    # only use valid object acls for the upload_s3file function
-                    module.params['permission'] = object_acl
-                    upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
-                else:
-                    module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
-
-        # If neither exist (based on bucket existence), we can create both.
-        if not bucketrtn:
+        else:
+            # If the bucket doesn't exist we should create it.
             # only use valid bucket acls for create_bucket function
             module.params['permission'] = bucket_acl
             create_bucket(module, s3, bucket, location)
-            # only use valid object acls for the upload_s3file function
-            module.params['permission'] = object_acl
-            upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
 
-        # If bucket exists but key doesn't, just upload.
-        if bucketrtn and not keyrtn:
-            # only use valid object acls for the upload_s3file function
-            module.params['permission'] = object_acl
-            upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
+        if keyrtn and overwrite != 'always':
+            if overwrite == 'never' or etag_compare(module, src, s3, bucket, obj):
+                # Return the download URL for the existing object
+                get_download_url(module, s3, bucket, obj, expiry, changed=False)
+
+        # only use valid object acls for the upload_s3file function
+        module.params['permission'] = object_acl
+        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
 
     # Delete an object from a bucket, not the entire bucket
     if mode == 'delobj':

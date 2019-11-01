@@ -2,7 +2,7 @@
     - name: Create a namespace
       k8s:
         name: "{{ playbook_namespace }}"
-        kind: namespace
+        kind: Namespace
 
     - copy:
         src: files
@@ -81,6 +81,10 @@
     - name: setup custom resource definition
       k8s:
         src: "{{ remote_tmp_dir }}/files/setup-crd.yml"
+
+    - name: wait a few seconds
+      pause:
+        seconds: 5
 
     - name: add custom resource definition
       k8s:

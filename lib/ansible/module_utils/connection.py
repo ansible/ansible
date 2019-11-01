@@ -33,11 +33,10 @@ import socket
 import struct
 import traceback
 import uuid
-from datetime import date, datetime
 
 from functools import partial
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import cPickle
 
@@ -156,7 +155,7 @@ class Connection(object):
         try:
             response = json.loads(out)
         except ValueError:
-            params = list(args) + ['{0}={1}'.format(k, v) for k, v in iteritems(kwargs)]
+            params = [repr(arg) for arg in args] + ['{0}={1!r}'.format(k, v) for k, v in iteritems(kwargs)]
             params = ', '.join(params)
             raise ConnectionError(
                 "Unable to decode JSON from response to {0}({1}). Received '{2}'.".format(name, params, out)
@@ -164,6 +163,8 @@ class Connection(object):
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')
+        if "result_type" in response:
+            response["result"] = cPickle.loads(to_bytes(response["result"]))
 
         return response
 
@@ -202,29 +203,3 @@ class Connection(object):
         sf.close()
 
         return to_text(response, errors='surrogate_or_strict')
-
-
-# NOTE: This is a modified copy of the class in parsing.ajson to get around not
-#       being able to import that directly, nor some of the type classes
-class AnsibleJSONEncoder(json.JSONEncoder):
-    '''
-    Simple encoder class to deal with JSON encoding of Ansible internal types
-    '''
-
-    def default(self, o):
-        if type(o).__name__ == 'AnsibleVaultEncryptedUnicode':
-            # vault object
-            value = {'__ansible_vault': to_text(o._ciphertext, errors='surrogate_or_strict', nonstring='strict')}
-        elif type(o).__name__ == 'AnsibleUnsafe':
-            # unsafe object
-            value = {'__ansible_unsafe': to_text(o, errors='surrogate_or_strict', nonstring='strict')}
-        elif isinstance(o, Mapping):
-            # hostvars and other objects
-            value = dict(o)
-        elif isinstance(o, (date, datetime)):
-            # date object
-            value = o.isoformat()
-        else:
-            # use default encoder
-            value = super(AnsibleJSONEncoder, self).default(o)
-        return value

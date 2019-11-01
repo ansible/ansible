@@ -122,7 +122,7 @@ updates:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, exec_command
+from ansible.module_utils.network.cloudengine.ce import get_config, exec_command, cli_err_msg
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
 
 
@@ -169,7 +169,7 @@ class AclInterface(object):
                         msg='Error: The len of acl_name is out of [1 - 32].')
 
         if self.interface:
-            cmd = "display current-configuration | ignore-case section include ^interface %s$" % self.interface
+            cmd = "display current-configuration | ignore-case section include interface %s" % self.interface
             rc, out, err = exec_command(self.module, cmd)
             if rc != 0:
                 self.module.fail_json(msg=err)
@@ -199,7 +199,7 @@ class AclInterface(object):
     def get_existing(self):
         """ Get existing config """
 
-        cmd = "display current-configuration | ignore-case section include ^interface %s$ | include traffic-filter" % self.interface
+        cmd = "display current-configuration | ignore-case section include interface %s | include traffic-filter" % self.interface
         rc, out, err = exec_command(self.module, cmd)
         if rc != 0:
             self.module.fail_json(msg=err)
@@ -217,7 +217,7 @@ class AclInterface(object):
     def get_end_state(self):
         """ Get config end state """
 
-        cmd = "display current-configuration | ignore-case section include ^interface %s$ | include traffic-filter" % self.interface
+        cmd = "display current-configuration | ignore-case section include interface %s | include traffic-filter" % self.interface
         rc, out, err = exec_command(self.module, cmd)
         if rc != 0:
             self.module.fail_json(msg=err)
@@ -231,11 +231,31 @@ class AclInterface(object):
                 end.append(item.strip())
             self.end_state["acl interface"] = end
 
+    def load_config(self, config):
+        """Sends configuration commands to the remote device"""
+
+        rc, out, err = exec_command(self.module, 'mmi-mode enable')
+        if rc != 0:
+            self.module.fail_json(msg='unable to set mmi-mode enable', output=err)
+        rc, out, err = exec_command(self.module, 'system-view immediately')
+        if rc != 0:
+            self.module.fail_json(msg='unable to enter system-view', output=err)
+
+        for cmd in config:
+            rc, out, err = exec_command(self.module, cmd)
+            if rc != 0:
+                if "unrecognized command found" in err.lower():
+                    self.module.fail_json(msg="Error:The parameter is incorrect or the interface does not support this parameter.")
+                else:
+                    self.module.fail_json(msg=cli_err_msg(cmd.strip(), err))
+
+        exec_command(self.module, 'return')
+
     def cli_load_config(self, commands):
         """ Cli method to load config """
 
         if not self.module.check_mode:
-            load_config(self.module, commands)
+            self.load_config(commands)
 
     def work(self):
         """ Work function """

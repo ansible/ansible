@@ -25,7 +25,7 @@ author:
     - Dean Hailin Song (!UNKNOWN)
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.3"
 options:
     host_name:
         description:
@@ -72,17 +72,11 @@ EXAMPLES = '''
 '''
 
 
+import atexit
 import traceback
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
-
-    # Extend the ZabbixAPI
-    # Since the zabbix-api python module too old (version 1.0, no higher version so far).
-    class ZabbixAPIExtends(ZabbixAPI):
-        def __init__(self, server, timeout, user, passwd, validate_certs, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd, validate_certs=validate_certs)
-
+    from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
     ZBX_IMP_ERR = traceback.format_exc()
@@ -197,9 +191,10 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                               validate_certs=validate_certs)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

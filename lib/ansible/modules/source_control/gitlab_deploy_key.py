@@ -31,20 +31,17 @@ extends_documentation_fragment:
 options:
   api_token:
     description:
-      - Gitlab token for logging in.
+      - GitLab token for logging in.
     version_added: "2.8"
     type: str
-    aliases:
-      - private_token
-      - access_token
   project:
     description:
-      - Id or Full path of project in the form of group/name
+      - Id or Full path of project in the form of group/name.
     required: true
     type: str
   title:
     description:
-      - Deploy key's title
+      - Deploy key's title.
     required: true
     type: str
   key:
@@ -54,13 +51,13 @@ options:
     type: str
   can_push:
     description:
-      - Whether this key can push to the project
+      - Whether this key can push to the project.
     type: bool
     default: no
   state:
     description:
       - When C(present) the deploy key added to the project if it doesn't exist.
-      - When C(absent) it will be removed from the project if it exists
+      - When C(absent) it will be removed from the project if it exists.
     required: true
     default: present
     type: str
@@ -71,7 +68,7 @@ EXAMPLES = '''
 - name: "Adding a project deploy key"
   gitlab_deploy_key:
     api_url: https://gitlab.example.com/
-    api_token: "{{ access_token }}"
+    api_token: "{{ api_token }}"
     project: "my_group/my_project"
     title: "Jenkins CI"
     state: present
@@ -80,7 +77,7 @@ EXAMPLES = '''
 - name: "Update the above deploy key to add push access"
   gitlab_deploy_key:
     api_url: https://gitlab.example.com/
-    api_token: "{{ access_token }}"
+    api_token: "{{ api_token }}"
     project: "my_group/my_project"
     title: "Jenkins CI"
     state: present
@@ -89,7 +86,7 @@ EXAMPLES = '''
 - name: "Remove the previous deploy key from the project"
   gitlab_deploy_key:
     api_url: https://gitlab.example.com/
-    api_token: "{{ access_token }}"
+    api_token: "{{ api_token }}"
     project: "my_group/my_project"
     state: absent
     key: "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt4596k6YjzGGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9w..."
@@ -109,7 +106,7 @@ result:
   type: dict
 
 error:
-  description: the error message returned by the Gitlab API
+  description: the error message returned by the GitLab API
   returned: failed
   type: str
   sample: "400: key is already in use"
@@ -120,7 +117,6 @@ deploy_key:
   type: dict
 '''
 
-import os
 import re
 import traceback
 
@@ -181,7 +177,7 @@ class GitLabDeployKey(object):
 
     '''
     @param project Project Object
-    @param arguments Attributs of the deployKey
+    @param arguments Attributes of the deployKey
     '''
     def createDeployKey(self, project, arguments):
         if self._module.check_mode:
@@ -196,7 +192,7 @@ class GitLabDeployKey(object):
 
     '''
     @param deployKey Deploy Key Object
-    @param arguments Attributs of the deployKey
+    @param arguments Attributes of the deployKey
     '''
     def updateDeployKey(self, deployKey, arguments):
         changed = False
@@ -238,16 +234,10 @@ class GitLabDeployKey(object):
         return self.deployKeyObject.delete()
 
 
-def deprecation_warning(module):
-    deprecated_aliases = ['private_token', 'access_token']
-
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), "2.10")
-
-
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        api_token=dict(type='str', no_log=True, aliases=["private_token", "access_token"]),
+        api_token=dict(type='str', no_log=True),
         state=dict(type='str', default="present", choices=["absent", "present"]),
         project=dict(type='str', required=True),
         key=dict(type='str', required=True),
@@ -270,8 +260,6 @@ def main():
         supports_check_mode=True,
     )
 
-    deprecation_warning(module)
-
     gitlab_url = re.sub('/api.*', '', module.params['api_url'])
     validate_certs = module.params['validate_certs']
     gitlab_user = module.params['api_username']
@@ -292,10 +280,10 @@ def main():
                                         private_token=gitlab_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
-            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s. \
+            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
 
     gitlab_deploy_key = GitLabDeployKey(module, gitlab_instance)
 

@@ -22,7 +22,7 @@ Before you work through this tutorial you need:
 Install Ansible
 ==================================================
 
-Install Ansible using your preferred method. See :doc:`../../installation_guide/intro_installation`. Then return to this tutorial.
+Install Ansible using your preferred method. See :ref:`installation_guide`. Then return to this tutorial.
 
 Confirm the version of Ansible (must be >= 2.5):
 
@@ -64,6 +64,10 @@ The flags in this command set seven values:
   - an extra variable ( -e, in this case, setting the network OS value)
 
 NOTE: If you use ``ssh-agent`` with ssh keys, Ansible loads them automatically. You can omit ``-k`` flag.
+
+.. note::
+
+   If you are running Ansible in a virtual environment, you will also need to add the variable ``ansible_python_interpreter=/path/to/venv/bin/python``
 
 
 Create and Run Your First Network Ansible Playbook

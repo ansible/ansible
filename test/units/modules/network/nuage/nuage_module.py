@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from units.compat.mock import patch
-from units.modules.utils import set_module_args as _set_module_args, AnsibleExitJson, AnsibleFailJson, ModuleTestCase
+from units.modules.utils import set_module_args as _set_module_args, ModuleTestCase
 
 import pytest
 

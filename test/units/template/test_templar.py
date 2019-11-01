@@ -104,6 +104,42 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
         # self.assertEqual(res['{{ a_keyword }}'], "blip")
         print(res)
 
+    def test_is_possibly_template_true(self):
+        tests = [
+            '{{ foo }}',
+            '{% foo %}',
+            '{# foo #}',
+            '{# {{ foo }} #}',
+            '{# {{ nothing }} {# #}',
+            '{# {{ nothing }} {# #} #}',
+            '{% raw %}{{ foo }}{% endraw %}',
+            '{{',
+            '{%',
+            '{#',
+            '{% raw',
+        ]
+        for test in tests:
+            self.assertTrue(self.templar.is_possibly_template(test))
+
+    def test_is_possibly_template_false(self):
+        tests = [
+            '{',
+            '%',
+            '#',
+            'foo',
+            '}}',
+            '%}',
+            'raw %}',
+            '#}',
+        ]
+        for test in tests:
+            self.assertFalse(self.templar.is_possibly_template(test))
+
+    def test_is_possible_template(self):
+        """This test ensures that a broken template still gets templated"""
+        # Purposefully invalid jinja
+        self.assertRaises(AnsibleError, self.templar.template, '{{ foo|default(False)) }}')
+
     def test_is_template_true(self):
         tests = [
             '{{ foo }}',
@@ -250,9 +286,9 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
         # FIXME Use assertRaises() as a context manager (added in 2.7) once we do not run tests on Python 2.6 anymore.
         try:
             templar.available_variables = "foo=bam"
-        except AssertionError as e:
+        except AssertionError:
             pass
-        except Exception:
+        except Exception as e:
             self.fail(e)
 
     def test_templar_escape_backslashes(self):

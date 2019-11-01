@@ -279,7 +279,7 @@ class CloudWatchEventRule(object):
         return targets_request
 
     def _snakify(self, dict):
-        """Converts cammel case to snake case"""
+        """Converts camel case to snake case"""
         return camel_dict_to_snake_dict(dict)
 
 

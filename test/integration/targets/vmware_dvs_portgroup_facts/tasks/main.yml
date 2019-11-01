@@ -4,6 +4,8 @@
 
 - import_role:
     name: prepare_vmware_tests
+  vars:
+    setup_dvswitch: true
 
 - when: vcsim is not defined
   block:
@@ -34,3 +36,21 @@
     - assert:
         that:
           - dvs_results.dvs_portgroup_facts is defined
+
+# Testcase 0002: Get portgroup facts for a given dvswitch
+- name: get facts for a given dvswitch
+  vmware_dvs_portgroup_facts:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    dvswitch: "{{ dvswitch1 }}"
+  register: dvs_results_0002
+
+- debug:
+    msg: "{{ dvs_results_0002 }}"
+
+- assert:
+    that:
+      - "dvs_results_0002['dvs_portgroup_facts']['DVS0'] is defined"

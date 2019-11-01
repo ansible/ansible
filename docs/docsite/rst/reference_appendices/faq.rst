@@ -160,6 +160,11 @@ Please refer the documentation of the respective package for such dependencies a
 Common Platform Issues
 ++++++++++++++++++++++
 
+What customer platforms does Red Hat support?
+---------------------------------------------
+
+A number of them! For a definitive list please see this `Knowledge Base article <https://access.redhat.com/articles/3168091>`_.
+
 Running in a virtualenv
 -----------------------
 
@@ -241,7 +246,7 @@ There are a few common errors that one might run into when trying to execute Ans
 * When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with
 
   .. error::
-      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
+      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see https://python.org/dev/peps/pep-0263/ for details
 
   To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
 
@@ -280,7 +285,7 @@ Where does the configuration file live and what can I configure in it?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-See :doc:`../installation_guide/intro_configuration`.
+See :ref:`intro_configuration`.
 
 .. _who_would_ever_want_to_disable_cowsay_but_ok_here_is_how:
 
@@ -397,7 +402,7 @@ How do I access a variable of the first host in a group?
 
 What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too.  Note that if we
 are using dynamic inventory, which host is the 'first' may not be consistent, so you wouldn't want to do this unless your inventory
-is static and predictable.  (If you are using :doc:`../reference_appendices/tower`, it will use database order, so this isn't a problem even if you are using cloud
+is static and predictable.  (If you are using :ref:`ansible_tower`, it will use database order, so this isn't a problem even if you are using cloud
 based inventory scripts).
 
 Anyway, here's the trick:
@@ -479,7 +484,7 @@ Once the library is ready, SHA512 password values can then be generated as follo
     python -c "from passlib.hash import sha512_crypt; import getpass; print(sha512_crypt.using(rounds=5000).hash(getpass.getpass()))"
 
 Use the integrated :ref:`hash_filters` to generate a hashed version of a password.
-You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :doc:`../user_guide/playbooks_vault` to encrypt sensitive data.
+You shouldn't put plaintext passwords in your playbook or host_vars; instead, use :ref:`playbooks_vault` to encrypt sensitive data.
 
 In OpenBSD, a similar option is available in the base system called encrypt(1):
 
@@ -489,8 +494,8 @@ In OpenBSD, a similar option is available in the base system called encrypt(1):
 
 .. _dot_or_array_notation:
 
-Ansible supports dot notation and array notation for variables. Which notation should I use?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Ansible allows dot notation and array notation for variables. Which notation should I use?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 The dot notation comes from Jinja and works fine for variables without special
 characters. If your variable contains dots (.), colons (:), or dashes (-), if
@@ -559,7 +564,7 @@ We also offer free web-based training classes on a regular basis. See our `webin
 Is there a web interface / REST API / etc?
 ++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :doc:`../reference_appendices/tower`.
+Yes!  Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :ref:`ansible_tower`.
 
 
 .. _docs_contributions:
@@ -575,7 +580,7 @@ Great question!  Documentation for Ansible is kept in the main project git repos
 How do I keep secret data in my playbook?
 +++++++++++++++++++++++++++++++++++++++++
 
-If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`../user_guide/playbooks_vault`.
+If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :ref:`playbooks_vault`.
 
 If you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
 
@@ -633,9 +638,8 @@ For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
 Why don't you ship in X format?
 +++++++++++++++++++++++++++++++
 
-Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
-In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
-
+In most cases it has to do with maintainability. There are many ways to ship software and we do not have the resources to release Ansible on every platform.
+In some cases there are technical issues. For example, our dependencies are not present on Python Wheels.
 
 .. _ansible_host_delegated:
 
@@ -647,7 +651,7 @@ but you can still access the original via ``hostvars``::
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
-This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+This works for all overridden connection variables, like ``ansible_user``, ``ansible_port``, etc.
 
 
 .. _scp_protocol_error_filename:
@@ -685,9 +689,9 @@ Please see the section below for a link to IRC and the Google Group, where you c
 
 .. seealso::
 
-   :doc:`../user_guide/playbooks`
+   :ref:`working_with_playbooks`
        An introduction to playbooks
-   :doc:`../user_guide/playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

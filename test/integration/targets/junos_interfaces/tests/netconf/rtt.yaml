@@ -1,0 +1,98 @@
+---
+- debug:
+    msg: "START junos_interfaces round trip integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- set_fact:
+    expected_revert_output:
+      - name: ge-0/0/1
+        description: "Configured by Ansible - Interface 1"
+        mtu: 1024
+        speed: 100m
+        enabled: false
+        duplex: full-duplex
+        hold_time:
+          up: 2000
+          down: 2200
+      - name: ge-0/0/2
+        description: "Configured by Ansible - Interface 2"
+        mtu: 2048
+        speed: 10m
+        enabled: true
+        hold_time:
+          up: 3000
+          down: 3200
+      - name: fxp0
+        enabled: true
+
+- block:
+    - name: Apply the provided configuration (base config)
+      junos_interfaces:
+        config:
+          - name: ge-0/0/1
+            description: "Configured by Ansible - Interface 1"
+            mtu: 1024
+            speed: 100m
+            enabled: False
+            duplex: full-duplex
+            hold_time:
+              up: 2000
+              down: 2200
+          - name: ge-0/0/2
+            description: "Configured by Ansible - Interface 2"
+            mtu: 2048
+            speed: 10m
+            enabled: True
+            hold_time:
+              up: 3000
+              down: 3200
+        state: merged
+      register: base_config
+
+    - name: Gather interfaces facts
+      junos_facts:
+        gather_subset:
+          - default
+        gather_network_resources:
+          - interfaces
+
+    - name: Apply the provided configuration (config to be reverted)
+      junos_interfaces:
+        config:
+          - name: ge-0/0/1
+            description: "Configured by Ansible - Interface 1 modified"
+            mtu: 3048
+            speed: 10m
+            enabled: True
+            duplex: half-duplex
+            hold_time:
+              up: 3000
+              down: 2200
+          - name: ge-0/0/2
+            description: "Configured by Ansible - Interface 2 modified"
+            mtu: 4048
+            speed: 100m
+            enabled: False
+            hold_time:
+              up: 4000
+              down: 5200
+        state: merged
+      register: result
+
+    - name: Assert that changes were applied
+      assert:
+        that: "result['changed'] == true"
+
+    - name: Revert back to base config using facts round trip
+      junos_interfaces:
+        config: "{{ ansible_facts['network_resources']['interfaces'] }}"
+        state: replaced
+      register: revert
+
+    - name: Assert that config was reverted
+      assert:
+        that: "{{ expected_revert_output | symmetric_difference(revert['after']) |length == 0 }}"
+
+  always:
+    - include_tasks: _remove_config.yaml

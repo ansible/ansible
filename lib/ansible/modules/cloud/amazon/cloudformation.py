@@ -153,7 +153,7 @@ options:
     required: False
   capabilities:
     description:
-    - Specify capabilites that stack template contains.
+    - Specify capabilities that stack template contains.
     - Valid values are CAPABILITY_IAM, CAPABILITY_NAMED_IAM and CAPABILITY_AUTO_EXPAND.
     type: list
     version_added: "2.8"
@@ -291,6 +291,11 @@ log:
   returned: always
   type: list
   sample: ["updating stack"]
+change_set_id:
+  description: The ID of the stack change set if one was created
+  returned:  I(state=present) and I(create_changeset=true)
+  type: str
+  sample: "arn:aws:cloudformation:us-east-1:012345678901:changeSet/Ansible-StackName-f4496805bd1b2be824d1e315c6884247ede41eb0"
 stack_resources:
   description: AWS stack resources and their status. List of dictionaries, one dict per resource.
   returned: state == present
@@ -325,9 +330,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-import ansible.module_utils.ec2
-# import a class, otherwise we'll use a fully qualified path
-from ansible.module_utils.ec2 import AWSRetry, boto_exception
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, AWSRetry, boto3_conn, boto_exception, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
 
@@ -451,6 +454,7 @@ def create_changeset(module, stack_params, cfn, events_limit):
                 # Lets not hog the cpu/spam the AWS API
                 time.sleep(1)
             result = stack_operation(cfn, stack_params['StackName'], 'CREATE_CHANGESET', events_limit)
+            result['change_set_id'] = cs['Id']
             result['warnings'] = ['Created changeset named %s for stack %s' % (changeset_name, stack_params['StackName']),
                                   'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
                                   'NOTE that dependencies on this stack might fail due to pending changes!']
@@ -621,7 +625,7 @@ def get_stack_facts(cfn, stack_name):
 
 
 def main():
-    argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
+    argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         stack_name=dict(required=True),
         template_parameters=dict(required=False, type='dict', default={}),
@@ -713,7 +717,7 @@ def main():
             stack_params['Parameters'].append({'ParameterKey': k, 'ParameterValue': str(v)})
 
     if isinstance(module.params.get('tags'), dict):
-        stack_params['Tags'] = ansible.module_utils.ec2.ansible_dict_to_boto3_tag_list(module.params['tags'])
+        stack_params['Tags'] = ansible_dict_to_boto3_tag_list(module.params['tags'])
 
     if module.params.get('role_arn'):
         stack_params['RoleARN'] = module.params['role_arn']
@@ -721,8 +725,8 @@ def main():
     result = {}
 
     try:
-        region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
-        cfn = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='cloudformation', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        cfn = boto3_conn(module, conn_type='client', resource='cloudformation', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=boto_exception(e))
 

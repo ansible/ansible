@@ -46,6 +46,7 @@ options:
   leaf_port_blk_description:
     description:
     - The description to assign to the C(leaf_port_blk).
+    type: str
   from_port:
     description:
     - The beginning (from-range) of the port range block for the leaf access port block.

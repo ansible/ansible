@@ -203,7 +203,7 @@ response:
                     "tier": "Standard"
                     }
         tags:
-            decription:
+            description:
                 - Resource tags.
             type: dict
             returned: always

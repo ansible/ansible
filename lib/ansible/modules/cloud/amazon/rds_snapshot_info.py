@@ -142,7 +142,7 @@ snapshots:
       type: str
       sample: default:postgres-9-5
     percent_progress:
-      description: Perecent progress of snapshot
+      description: Percent progress of snapshot
       returned: always
       type: int
       sample: 100
@@ -244,7 +244,7 @@ cluster_snapshots:
       type: str
       sample: shertel
     percent_progress:
-      description: Perecent progress of snapshot
+      description: Percent progress of snapshot
       returned: always
       type: int
       sample: 0

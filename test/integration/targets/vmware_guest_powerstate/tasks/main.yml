@@ -7,7 +7,31 @@
   vars:
     setup_attach_host: true
     setup_datastore: true
-    setup_virtualmachines: true
+
+- name: Create a VM with the state poweredoff
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    validate_certs: no
+    folder: '{{ f0 }}'
+    name: test_vm1
+    state: poweredoff
+    guest_id: debian8_64Guest
+    disk:
+    - size_gb: 1
+      type: thin
+      datastore: '{{ ds2 }}'
+    hardware:
+      memory_mb: 128
+      num_cpus: 1
+      scsi: paravirtual
+    cdrom:
+      type: iso
+      iso_path: "[{{ ds1 }}] fedora.iso"
+    networks:
+    - name: VM Network
 
 - name: set state to poweroff the first VM
   vmware_guest_powerstate:
@@ -15,8 +39,8 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: "{{ virtual_machines[0].name }}"
-    folder: "{{ virtual_machines[0].folder }}"
+    name: test_vm1
+    folder: '{{ f0 }}'
     state: powered-off
   register: poweroff_d1_c1_f0
 
@@ -26,7 +50,7 @@
 - name: make sure change was made
   assert:
     that:
-        - poweroff_d1_c1_f0.changed
+        - not (poweroff_d1_c1_f0 is changed)
 
 - when: vcsim is not defined
   block:
@@ -36,8 +60,8 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      name: "{{ virtual_machines[0].name }}"
-      folder: "{{ virtual_machines[0].folder }}"
+      name: test_vm1
+      folder: '{{ f0 }}'
       scheduled_at: "10/10/2030 10:10"
       state: powered-on
     register: poweron_d1_c1_f0
@@ -45,4 +69,4 @@
   - name: Check that task is schedule
     assert:
       that:
-        - poweron_d1_c1_f0.changed
+        - poweron_d1_c1_f0 is changed

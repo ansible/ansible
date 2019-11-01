@@ -8,23 +8,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
-#Requires -Module Ansible.ModuleUtils.AddType
 #Requires -Module Ansible.ModuleUtils.FileUtil
+#Requires -Module Ansible.ModuleUtils.WebRequest
 
 $spec = @{
     options = @{
-        url = @{ type='str'; required=$true }
         dest = @{ type='path'; required=$true }
-        timeout = @{ type='int'; default=10 }
-        headers = @{ type='dict'; default=@{} }
-        validate_certs = @{ type='bool'; default=$true }
-        url_username = @{ type='str'; aliases=@( 'username' ) }
-        url_password = @{ type='str'; aliases=@( 'password' ); no_log=$true }
-        force_basic_auth = @{ type='bool'; default=$false }
-        use_proxy = @{ type='bool'; default=$true }
-        proxy_url = @{ type='str' }
-        proxy_username = @{ type='str' }
-        proxy_password = @{ type='str'; no_log=$true }
         force = @{ type='bool'; default=$true }
         checksum = @{ type='str' }
         checksum_algorithm = @{ type='str'; default='sha1'; choices = @("md5", "sha1", "sha256", "sha384", "sha512") }
@@ -35,21 +24,12 @@ $spec = @{
     )
     supports_check_mode = $true
 }
+$spec.options += $ansible_web_request_options
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 $url = $module.Params.url
 $dest = $module.Params.dest
-$timeout = $module.Params.timeout
-$headers = $module.Params.headers
-$validate_certs = $module.Params.validate_certs
-$url_username = $module.Params.url_username
-$url_password = $module.Params.url_password
-$force_basic_auth = $module.Params.force_basic_auth
-$use_proxy = $module.Params.use_proxy
-$proxy_url = $module.Params.proxy_url
-$proxy_username = $module.Params.proxy_username
-$proxy_password = $module.Params.proxy_password
 $force = $module.Params.force
 $checksum = $module.Params.checksum
 $checksum_algorithm = $module.Params.checksum_algorithm
@@ -58,103 +38,11 @@ $checksum_url = $module.Params.checksum_url
 $module.Result.elapsed = 0
 $module.Result.url = $url
 
-Function Invoke-AnsibleWebRequest {
-    <#
-    .SYNOPSIS
-    Creates a WebRequest and invokes a ScriptBlock with the response passed in.
-    It handles the common module options like credential, timeout, proxy options
-    in a single location to reduce code duplication.
-    #>
-    param(
-        [Parameter(Mandatory=$true)][Ansible.Basic.AnsibleModule]$Module,
-        [Parameter(Mandatory=$true)][Uri]$Uri,
-        [Parameter(Mandatory=$true)][Hashtable]$Method,
-        [Parameter(Mandatory=$true)][ScriptBlock]$Script, # Invoked in this cmdlet
-        [System.Collections.IDictionary]$Headers,
-        [Int32]$Timeout,
-        [Switch]$UseProxy,
-        [System.Net.WebProxy]$Proxy,
-        $Credential  # Either a String (force_basic_auth) or NetCredentials
-    )
-
-    $web_request = [System.Net.WebRequest]::Create($Uri)
-    $web_request.Method = $Method.($web_request.GetType().Name)
-
-    foreach ($header in $headers.GetEnumerator()) {
-        # some headers need to be set on the property itself
-        switch ($header.Key) {
-            Accept { $web_request.Accept = $header.Value }
-            Connection { $web_request.Connection = $header.Value }
-            Content-Length { $web_request.ContentLength = $header.Value }
-            Content-Type { $web_request.ContentType = $header.Value }
-            Expect { $web_request.Expect = $header.Value }
-            Date { $web_request.Date = $header.Value }
-            Host { $web_request.Host = $header.Value }
-            If-Modified-Since { $web_request.IfModifiedSince = $header.Value }
-            Range { $web_request.AddRange($header.Value) }
-            Referer { $web_request.Referer = $header.Value }
-            Transfer-Encoding {
-                $web_request.SendChunked = $true
-                $web_request.TransferEncoding = $header.Value
-            }
-            User-Agent { $web_request.UserAgent = $header.Value }
-            default { $web_request.Headers.Add($header.Key, $header.Value) }
-        }
-    }
-
-    if ($timeout) {
-        $web_request.Timeout = $timeout * 1000
-    }
-
-    if (-not $UseProxy) {
-        $web_request.Proxy = $null
-    } elseif ($ProxyUri) {
-        $web_request.Proxy = $Proxy
-    }
-
-    if ($Credential) {
-        if ($Credential -is [String]) {
-            # force_basic_auth=yes is set
-            $web_request.Headers.Add("Authorization", "Basic $Credential")
-        } else {
-            $web_request.Credentials = $Credential
-        }
-    }
-
-    try {
-        $web_response = $web_request.GetResponse()
-        $response_stream = $web_response.GetResponseStream()
-        try {
-            # Invoke the ScriptBlock and pass in the WebResponse and ResponseStream
-            &$Script -Response $web_response -Stream $response_stream
-        } finally {
-            $response_stream.Dispose()
-        }
-
-        if ($Uri.IsFile) {
-            # A FileWebResponse won't have these properties set
-            $module.Result.msg = "OK"
-            $module.Result.status_code = 200
-        } else {
-            $module.Result.msg = [string]$web_response.StatusDescription
-            $module.Result.status_code = [int]$web_response.StatusCode
-        }
-    } catch [System.Net.WebException] {
-        $module.Result.status_code = [int]$_.Exception.Response.StatusCode
-        $module.FailJson("Error requesting '$Uri'. $($_.Exception.Message)", $_)
-    } finally {
-        if ($web_response) {
-            $web_response.Close()
-        }
-    }
-}
-
 Function Get-ChecksumFromUri {
     param(
         [Parameter(Mandatory=$true)][Ansible.Basic.AnsibleModule]$Module,
         [Parameter(Mandatory=$true)][Uri]$Uri,
-        [Uri]$SourceUri,
-        [Hashtable]$RequestParams
+        [Uri]$SourceUri
     )
 
     $script = {
@@ -176,18 +64,10 @@ Function Get-ChecksumFromUri {
 
         Write-Output -InputObject $hash_from_file
     }
-    $invoke_args = @{
-        Module = $Module
-        Uri = $Uri
-        Method = @{
-            FileWebRequest = [System.Net.WebRequestMethods+File]::DownloadFile
-            FtpWebRequest = [System.Net.WebRequestMethods+Ftp]::DownloadFile
-            HttpWebRequest = [System.Net.WebRequestMethods+Http]::Get
-        }
-        Script = $script
-    }
+    $web_request = Get-AnsibleWebRequest -Uri $Uri -Module $Module
+
     try {
-        Invoke-AnsibleWebRequest @invoke_args @RequestParams
+        Invoke-WithWebRequest -Module $Module -Request $web_request -Script $script
     } catch {
         $Module.FailJson("Error when getting the remote checksum from '$Uri'. $($_.Exception.Message)", $_)
     }
@@ -203,8 +83,7 @@ Function Compare-ModifiedFile {
     param(
         [Parameter(Mandatory=$true)][Ansible.Basic.AnsibleModule]$Module,
         [Parameter(Mandatory=$true)][Uri]$Uri,
-        [Parameter(Mandatory=$true)][String]$Dest,
-        [Hashtable]$RequestParams
+        [Parameter(Mandatory=$true)][String]$Dest
     )
 
     $dest_last_mod = (Get-AnsibleItem -Path $Dest).LastWriteTimeUtc
@@ -213,17 +92,15 @@ Function Compare-ModifiedFile {
     if ($Uri.IsFile) {
         $src_last_mod = (Get-AnsibleItem -Path $Uri.AbsolutePath).LastWriteTimeUtc
     } else {
-        $invoke_args = @{
-            Module = $Module
-            Uri = $Uri
-            Method = @{
-                FtpWebRequest = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
-                HttpWebRequest = [System.Net.WebRequestMethods+Http]::Head
-            }
-            Script = { param($Response, $Stream); $Response.LastModified }
+        $web_request = Get-AnsibleWebRequest -Uri $Uri -Module $Module
+        $web_request.Method = switch ($web_request.GetType().Name) {
+            FtpWebRequest { [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp }
+            HttpWebRequest { [System.Net.WebRequestMethods+Http]::Head }
         }
+        $script = { param($Response, $Stream); $Response.LastModified }
+
         try {
-            $src_last_mod = Invoke-AnsibleWebRequest @invoke_args @RequestParams
+            $src_last_mod = Invoke-WithWebRequest -Module $Module -Request $web_request -Script $script
         } catch {
             $Module.FailJson("Error when requesting 'Last-Modified' date from '$Uri'. $($_.Exception.Message)", $_)
         }
@@ -263,8 +140,7 @@ Function Invoke-DownloadFile {
         [Parameter(Mandatory=$true)][Uri]$Uri,
         [Parameter(Mandatory=$true)][String]$Dest,
         [String]$Checksum,
-        [String]$ChecksumAlgorithm,
-        [Hashtable]$RequestParams
+        [String]$ChecksumAlgorithm
     )
 
     # Check $dest parent folder exists before attempting download, which avoids unhelpful generic error message.
@@ -312,52 +188,13 @@ Function Invoke-DownloadFile {
             $Module.Result.changed = $true
         }
     }
+    $web_request = Get-AnsibleWebRequest -Uri $Uri -Module $Module
 
-    $invoke_args = @{
-        Module = $Module
-        Uri = $Uri
-        Method = @{
-            FileWebRequest = [System.Net.WebRequestMethods+File]::DownloadFile
-            FtpWebRequest = [System.Net.WebRequestMethods+Ftp]::DownloadFile
-            HttpWebRequest = [System.Net.WebRequestMethods+Http]::Get
-        }
-        Script = $download_script
-    }
-
-    $module_start = Get-Date
     try {
-        Invoke-AnsibleWebRequest @invoke_args @RequestParams
+        Invoke-WithWebRequest -Module $Module -Request $web_request -Script $download_script
     } catch {
-        $Module.FailJson("Unknown error downloading '$Uri' to '$Dest': $($_.Exception.Message)", $_)
-    } finally {
-        $Module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+        $Module.FailJson("Error downloading '$Uri' to '$Dest': $($_.Exception.Message)", $_)
     }
-}
-
-if (-not $use_proxy -and ($proxy_url -or $proxy_username -or $proxy_password)) {
-    $module.Warn("Not using a proxy on request, however a 'proxy_url', 'proxy_username' or 'proxy_password' was defined.")
-}
-
-$proxy = $null
-if ($proxy_url) {
-    $proxy = New-Object System.Net.WebProxy($proxy_url, $true)
-    if ($proxy_username -and $proxy_password) {
-        $proxy_credential = New-Object System.Net.NetworkCredential($proxy_username, $proxy_password)
-        $proxy.Credentials = $proxy_credential
-    }
-}
-
-$credentials = $null
-if ($url_username) {
-    if ($force_basic_auth) {
-        $credentials = [convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($url_username+":"+$url_password))
-    } else {
-        $credentials = New-Object System.Net.NetworkCredential($url_username, $url_password)
-    }
-}
-
-if (-not $validate_certs) {
-    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
 }
 
 # Use last part of url for dest file name if a directory is supplied for $dest
@@ -380,24 +217,6 @@ if (Test-Path -LiteralPath $dest -PathType Container) {
 
 $module.Result.dest = $dest
 
-# Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
-$security_protocols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
-if ([Net.SecurityProtocolType].GetMember("Tls11").Count -gt 0) {
-    $security_protocols = $security_protocols -bor [Net.SecurityProtocolType]::Tls11
-}
-if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
-    $security_protocols = $security_protocols -bor [Net.SecurityProtocolType]::Tls12
-}
-[Net.ServicePointManager]::SecurityProtocol = $security_protocols
-
-$request_params = @{
-    Credential = $credentials
-    Headers = $headers
-    Timeout = $timeout
-    UseProxy = $use_proxy
-    Proxy = $proxy
-}
-
 if ($checksum) {
     $checksum = $checksum.Trim().ToLower()
 }
@@ -415,20 +234,20 @@ if ($checksum_url) {
         $module.FailJson("Unsupported 'checksum_url' value for '$dest': '$checksum_url'")
     }
 
-    $checksum = Get-ChecksumFromUri -Module $Module -Uri $checksum_uri -SourceUri $url -RequestParams $request_params
+    $checksum = Get-ChecksumFromUri -Module $Module -Uri $checksum_uri -SourceUri $url
 }
 
 if ($force -or -not (Test-Path -LiteralPath $dest)) {
     # force=yes or dest does not exist, download the file
     # Note: Invoke-DownloadFile will compare the checksums internally if dest exists
     Invoke-DownloadFile -Module $module -Uri $url -Dest $dest -Checksum $checksum `
-        -ChecksumAlgorithm $checksum_algorithm -RequestParams $request_params
+        -ChecksumAlgorithm $checksum_algorithm
 } else {
     # force=no, we want to check the last modified dates and only download if they don't match
-    $is_modified = Compare-ModifiedFile -Module $module -Uri $url -Dest $dest -RequestParams $request_params
+    $is_modified = Compare-ModifiedFile -Module $module -Uri $url -Dest $dest
     if ($is_modified) {
         Invoke-DownloadFile -Module $module -Uri $url -Dest $dest -Checksum $checksum `
-            -ChecksumAlgorithm $checksum_algorithm -RequestParams $request_params
+            -ChecksumAlgorithm $checksum_algorithm
    }
 }
 

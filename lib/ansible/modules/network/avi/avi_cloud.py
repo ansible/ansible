@@ -200,7 +200,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = """
-  - name: Create a VMWare cloud with write access mode
+  - name: Create a VMware cloud with write access mode
     avi_cloud:
       username: '{{ username }}'
       controller: '{{ controller }}'
@@ -210,7 +210,7 @@ EXAMPLES = """
       enable_vip_static_routes: false
       license_type: LIC_CORES
       mtu: 1500
-      name: VCenter Cloud
+      name: vCenter Cloud
       prefer_static_routes: false
       tenant_ref: admin
       vcenter_configuration:

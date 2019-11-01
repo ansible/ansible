@@ -99,10 +99,11 @@ EXAMPLES = '''
 # ==============================================================
 
 import os
+import platform
 import re
 import tempfile
 
-from ansible.module_utils.basic import get_platform, AnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 from ansible.module_utils._text import to_native
@@ -138,7 +139,7 @@ class SysctlModule(object):
 
     def process(self):
 
-        self.platform = get_platform().lower()
+        self.platform = platform.system().lower()
 
         # Whitespace is bad
         self.args['name'] = self.args['name'].strip()
@@ -149,7 +150,7 @@ class SysctlModule(object):
         # get the current proc fs value
         self.proc_value = self.get_token_curr_value(thisname)
 
-        # get the currect sysctl file value
+        # get the current sysctl file value
         self.read_sysctl_file()
         if thisname not in self.file_values:
             self.file_values[thisname] = None
@@ -169,9 +170,16 @@ class SysctlModule(object):
         elif self.file_values[thisname] != self.args['value']:
             self.changed = True
             self.write_file = True
+        # with reload=yes we should check if the current system values are
+        # correct, so that we know if we should reload
+        elif self.args['reload']:
+            if self.proc_value is None:
+                self.changed = True
+            elif not self._values_is_equal(self.proc_value, self.args['value']):
+                self.changed = True
 
         # use the sysctl command or not?
-        if self.args['sysctl_set']:
+        if self.args['sysctl_set'] and self.args['state'] == "present":
             if self.proc_value is None:
                 self.changed = True
             elif not self._values_is_equal(self.proc_value, self.args['value']):
@@ -182,7 +190,7 @@ class SysctlModule(object):
         if not self.module.check_mode:
             if self.write_file:
                 self.write_sysctl()
-            if self.write_file and self.args['reload']:
+            if self.changed and self.args['reload']:
                 self.reload_sysctl()
             if self.set_proc:
                 self.set_token_value(self.args['name'], self.args['value'])

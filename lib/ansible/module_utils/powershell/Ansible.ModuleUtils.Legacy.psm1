@@ -360,7 +360,7 @@ Function Get-PendingRebootStatus
     Check if reboot is required, if so notify CA.
     Function returns true if computer has a pending reboot
 #>
-    $featureData = Invoke-WmiMethod -EA Ignore -Name GetServerFeature -Namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
+    $featureData = Invoke-CimMethod -EA Ignore -Name GetServerFeature -Namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
     $regData = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "PendingFileRenameOperations" -EA Ignore
     $CBSRebootStatus = Get-ChildItem "HKLM:\\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing"  -ErrorAction SilentlyContinue| Where-Object {$_.PSChildName -eq "RebootPending"}
     if(($featureData -and $featureData.RequiresReboot) -or $regData -or $CBSRebootStatus)
@@ -375,4 +375,3 @@ Function Get-PendingRebootStatus
 
 # this line must stay at the bottom to ensure all defined module parts are exported
 Export-ModuleMember -Alias * -Function * -Cmdlet *
-

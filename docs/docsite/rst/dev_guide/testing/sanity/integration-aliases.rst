@@ -1,5 +1,5 @@
-Sanity Tests » integration-aliases
-==================================
+integration-aliases
+===================
 
 Integration tests are executed by ``ansible-test`` and reside in directories under ``test/integration/targets/``.
 Each test MUST have an ``aliases`` file to control test execution.

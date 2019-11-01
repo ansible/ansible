@@ -1,0 +1,61 @@
+---
+
+- name: Create postgres datasource
+  grafana_datasource:
+    name: "datasource-postgres"
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    org_id: "1"
+    ds_type: "postgres"
+    ds_url: "postgres.company.com:5432"
+    database: "db"
+    user: "postgres"
+    password: "iampgroot"
+    sslmode: "verify-full"
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.name == 'datasource-postgres'"
+      - "result.msg == 'Datasource datasource-postgres created : Datasource added'"
+
+- name: Check postgres datasource creation idempotency
+  grafana_datasource:
+    name: "datasource-postgres"
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    org_id: "1"
+    ds_type: "postgres"
+    ds_url: "postgres.company.com:5432"
+    database: "db"
+    user: "postgres"
+    password: "iampgroot"
+    sslmode: "verify-full"
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      # Idempotency is not working currently
+      # "result.changed == false"
+      - "result.name == 'datasource-postgres'"
+      - "result.after.basicAuth == false"
+      - "result.after.database == 'db'"
+      - "result.after.isDefault == false"
+      - "result.after.jsonData.sslmode == 'verify-full'"
+      - "result.after.jsonData.tlsAuth == false"
+      - "result.after.jsonData.tlsAuthWithCACert == false"
+      - "result.after.name == 'datasource-postgres'"
+      - "result.after.orgId == 1"
+      - "result.after.type == 'postgres'"
+      - "result.after.url == 'postgres.company.com:5432'"
+      - "result.after.user == 'postgres'"
+      - "result.after.withCredentials == false"

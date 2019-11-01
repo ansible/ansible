@@ -74,14 +74,19 @@ options:
     type: str
     aliases: [ ssl_rootcert ]
     version_added: '2.8'
-notes:
-- This module uses I(psycopg2), a Python PostgreSQL database adapter.
-- You must ensure that psycopg2 is installed on the host before using this module.
-- If the remote host is the PostgreSQL server (which is the default case),
-  then PostgreSQL must also be installed on the remote host.
-- For Ubuntu-based systems, install the C(postgresql), C(libpq-dev),
-  and C(python-psycopg2) packages on the remote host before using this module.
-requirements: [ psycopg2 ]
+seealso:
+- name: PostgreSQL schemas
+  description: General information about PostgreSQL schemas.
+  link: https://www.postgresql.org/docs/current/ddl-schemas.html
+- name: CREATE SCHEMA reference
+  description: Complete reference of the CREATE SCHEMA command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createschema.html
+- name: ALTER SCHEMA reference
+  description: Complete reference of the ALTER SCHEMA command documentation.
+  link: https://www.postgresql.org/docs/current/sql-alterschema.html
+- name: DROP SCHEMA reference
+  description: Complete reference of the DROP SCHEMA command documentation.
+  link: https://www.postgresql.org/docs/current/sql-dropschema.html
 author:
 - Flavien Chantelot (@Dorn-) <contact@flavien.io>
 - Thomas O'Donnell (@andytom)
@@ -102,7 +107,7 @@ EXAMPLES = r'''
 - name: Drop schema "acme" with cascade
   postgresql_schema:
     name: acme
-    ensure: absent
+    state: absent
     cascade_drop: yes
 '''
 

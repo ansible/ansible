@@ -96,6 +96,12 @@ options:
     description:
       - The parent object that contains the target Amazon Resource Name (ARN) of an Amazon SQS queue or Amazon SNS topic.
     version_added: "2.3"
+  tracing_mode:
+    description:
+      - Set mode to 'Active' to sample and trace incoming requests with AWS X-Ray. Turned off (set to 'PassThrough') by default.
+    choices: ['Active', 'PassThrough']
+    version_added: "2.10"
+
   tags:
     description:
       - tag dict to apply to the function (requires botocore 1.5.40 or above).
@@ -175,7 +181,7 @@ configuration:
     type: dict
     sample:
       {
-        'code_sha256': 'SHA256 hash',
+        'code_sha256': 'zOAGfF5JLFuzZoSNirUtOrQp+S341IOA3BcoXXoaIaU=',
         'code_size': 123,
         'description': 'My function',
         'environment': {
@@ -188,13 +194,16 @@ configuration:
         'handler': 'index.handler',
         'last_modified': '2017-08-01T00:00:00.000+0000',
         'memory_size': 128,
+        'revision_id': 'a2x9886d-d48a-4a0c-ab64-82abc005x80c',
         'role': 'arn:aws:iam::123456789012:role/lambda_basic_execution',
         'runtime': 'nodejs6.10',
+        'tracing_config': { 'mode': 'Active' },
         'timeout': 3,
         'version': '1',
         'vpc_config': {
           'security_group_ids': [],
-          'subnet_ids': []
+          'subnet_ids': [],
+          'vpc_id': '123'
         }
       }
 '''
@@ -206,6 +215,7 @@ from ansible.module_utils.ec2 import compare_aws_tags
 import base64
 import hashlib
 import traceback
+import re
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError, ValidationError, ParamValidationError
@@ -213,33 +223,41 @@ except ImportError:
     pass  # protected by AnsibleAWSModule
 
 
-def get_account_id(module, region=None, endpoint=None, **aws_connect_kwargs):
-    """return the account id we are currently working on
+def get_account_info(module, region=None, endpoint=None, **aws_connect_kwargs):
+    """return the account information (account id and partition) we are currently working on
 
-    get_account_id tries too find out the account that we are working
+    get_account_info tries too find out the account that we are working
     on.  It's not guaranteed that this will be easy so we try in
     several different ways.  Giving either IAM or STS privileges to
     the account should be enough to permit this.
     """
     account_id = None
+    partition = None
     try:
         sts_client = boto3_conn(module, conn_type='client', resource='sts',
                                 region=region, endpoint=endpoint, **aws_connect_kwargs)
-        account_id = sts_client.get_caller_identity().get('Account')
+        caller_id = sts_client.get_caller_identity()
+        account_id = caller_id.get('Account')
+        partition = caller_id.get('Arn').split(':')[1]
     except ClientError:
         try:
             iam_client = boto3_conn(module, conn_type='client', resource='iam',
                                     region=region, endpoint=endpoint, **aws_connect_kwargs)
-            account_id = iam_client.get_user()['User']['Arn'].split(':')[4]
+            arn, partition, service, reg, account_id, resource = iam_client.get_user()['User']['Arn'].split(':')
         except ClientError as e:
             if (e.response['Error']['Code'] == 'AccessDenied'):
                 except_msg = to_native(e.message)
-                account_id = except_msg.search(r"arn:aws:iam::([0-9]{12,32}):\w+/").group(1)
+                m = except_msg.search(r"arn:(aws(-([a-z\-]+))?):iam::([0-9]{12,32}):\w+/")
+                account_id = m.group(4)
+                partition = m.group(1)
             if account_id is None:
                 module.fail_json_aws(e, msg="getting account information")
+            if partition is None:
+                module.fail_json_aws(e, msg="getting account information: partition")
         except Exception as e:
             module.fail_json_aws(e, msg="getting account information")
-    return account_id
+
+    return account_id, partition
 
 
 def get_current_function(connection, function_name, qualifier=None):
@@ -327,6 +345,7 @@ def main():
         vpc_security_group_ids=dict(type='list'),
         environment_variables=dict(type='dict'),
         dead_letter_arn=dict(),
+        tracing_mode=dict(choices=['Active', 'PassThrough']),
         tags=dict(type='dict'),
     )
 
@@ -361,6 +380,7 @@ def main():
     vpc_security_group_ids = module.params.get('vpc_security_group_ids')
     environment_variables = module.params.get('environment_variables')
     dead_letter_arn = module.params.get('dead_letter_arn')
+    tracing_mode = module.params.get('tracing_mode')
     tags = module.params.get('tags')
 
     check_mode = module.check_mode
@@ -377,12 +397,12 @@ def main():
         module.fail_json_aws(e, msg="Trying to connect to AWS")
 
     if state == 'present':
-        if role.startswith('arn:aws:iam'):
+        if re.match(r'^arn:aws(-([a-z\-]+))?:iam', role):
             role_arn = role
         else:
             # get account ID and assemble ARN
-            account_id = get_account_id(module, region=region, endpoint=ec2_url, **aws_connect_kwargs)
-            role_arn = 'arn:aws:iam::{0}:role/{1}'.format(account_id, role)
+            account_id, partition = get_account_info(module, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+            role_arn = 'arn:{0}:iam::{1}:role/{2}'.format(partition, account_id, role)
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
@@ -408,6 +428,8 @@ def main():
             func_kwargs.update({'Timeout': timeout})
         if memory_size and current_config['MemorySize'] != memory_size:
             func_kwargs.update({'MemorySize': memory_size})
+        if runtime and current_config['Runtime'] != runtime:
+            func_kwargs.update({'Runtime': runtime})
         if (environment_variables is not None) and (current_config.get(
                 'Environment', {}).get('Variables', {}) != environment_variables):
             func_kwargs.update({'Environment': {'Variables': environment_variables}})
@@ -418,10 +440,8 @@ def main():
             else:
                 if dead_letter_arn != "":
                     func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
-
-        # Check for unsupported mutation
-        if current_config['Runtime'] != runtime:
-            module.fail_json(msg='Cannot change runtime. Please recreate the function')
+        if tracing_mode and (current_config.get('TracingConfig', {}).get('Mode', 'PassThrough') != tracing_mode):
+            func_kwargs.update({'TracingConfig': {'Mode': tracing_mode}})
 
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
@@ -545,6 +565,9 @@ def main():
 
         if dead_letter_arn:
             func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
+
+        if tracing_mode:
+            func_kwargs.update({'TracingConfig': {'Mode': tracing_mode}})
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:

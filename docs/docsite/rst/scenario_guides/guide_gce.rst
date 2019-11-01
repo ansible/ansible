@@ -8,7 +8,7 @@ Introduction
 
 Ansible + Google have been working together on a set of auto-generated
 Ansible modules designed to consistently and comprehensively cover the entirety
-of the Google Cloud Platform.
+of the Google Cloud Platform (GCP).
 
 Ansible contains modules for managing Google Cloud Platform resources,
 including creating instances, controlling network access, working with
@@ -18,7 +18,8 @@ These new modules can be found under a new consistent name scheme "gcp_*"
 (Note: gcp_target_proxy and gcp_url_map are legacy modules, despite the "gcp_*"
 name. Please use gcp_compute_target_proxy and gcp_compute_url_map instead).
 
-Additionally, the gcp_compute inventory plugin can discover all GCE instances
+Additionally, the gcp_compute inventory plugin can discover all
+Google Compute Engine (GCE) instances
 and make them automatically available in your Ansible inventory.
 
 You may see a collection of other GCP modules that do not conform to this
@@ -35,7 +36,7 @@ these new modules if possible.
 
 Requisites
 ---------------
-The Google Cloud Platform (GCP) modules require both the ``requests`` and the
+The GCP modules require both the ``requests`` and the
 ``google-auth`` libraries to be installed.
 
 .. code-block:: bash

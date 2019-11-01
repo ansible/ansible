@@ -20,8 +20,6 @@ short_description: Change an owner of PostgreSQL database object
 description:
 - Change an owner of PostgreSQL database object.
 - Also allows to reassign the ownership of database objects owned by a database role to another role.
-- For more information about REASSIGN OWNED BY command
-  see U(https://www.postgresql.org/docs/current/sql-reassign-owned.html).
 version_added: '2.8'
 
 options:
@@ -48,12 +46,12 @@ options:
     description:
     - The list of role names. The ownership of all the objects within the current database,
       and of all shared objects (databases, tablespaces), owned by this role(s) will be reassigned to I(owner).
-    - Pay attention - it reassignes all objects owned by this role(s) in the I(db)!
+    - Pay attention - it reassigns all objects owned by this role(s) in the I(db)!
     - If role(s) exists, always returns changed True.
     - Cannot reassign ownership of objects that are required by the database system.
-    - For more information see U(https://www.postgresql.org/docs/current/sql-reassign-owned.html).
     - Mutually exclusive with C(obj_type).
     type: list
+    elements: str
   fail_on_role:
     description:
     - If C(yes), fail when I(reassign_owned_by) role does not exist.
@@ -74,21 +72,13 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
-notes:
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module.
-- If the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host.
-- For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-
-requirements:
-- psycopg2
-
+seealso:
+- module: postgresql_user
+- module: postgresql_privs
+- module: postgresql_membership
+- name: PostgreSQL REASSIGN OWNED command reference
+  description: Complete reference of the PostgreSQL REASSIGN OWNED command documentation.
+  link: https://www.postgresql.org/docs/current/sql-reassign-owned.html
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
@@ -172,7 +162,7 @@ class PgOwnership(object):
 
     Arguments:
         module (AnsibleModule): Object of Ansible module class.
-        cursor (psycopg2.connect.cursor): Cursor object for interraction with the database.
+        cursor (psycopg2.connect.cursor): Cursor object for interaction with the database.
         role (str): Role name to set as a new owner of objects.
 
     Important:
@@ -378,7 +368,7 @@ class PgOwnership(object):
         self.changed = exec_sql(self, query, ddl=True)
 
     def __role_exists(self, role):
-        """Return True if role exists, otherwise return Fasle."""
+        """Return True if role exists, otherwise return False."""
         return exec_sql(self, "SELECT 1 FROM pg_roles WHERE rolname = '%s'" % role, add_to_executed=False)
 
 

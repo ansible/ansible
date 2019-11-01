@@ -30,9 +30,6 @@ options:
   slot_type:
     description:
     - Slot type.
-    - For more information see
-      U(https://www.postgresql.org/docs/current/protocol-replication.html) and
-      U(https://www.postgresql.org/docs/current/logicaldecoding-explanation.html).
     type: str
     default: physical
     choices: [ logical, physical ]
@@ -78,22 +75,21 @@ options:
 notes:
 - Physical replication slots were introduced to PostgreSQL with version 9.4,
   while logical replication slots were added beginning with version 10.0.
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module.
-- If the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host.
-- For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages
 
-requirements:
-- psycopg2
+seealso:
+- name: PostgreSQL pg_replication_slots view reference
+  description: Complete reference of the PostgreSQL pg_replication_slots view.
+  link: https://www.postgresql.org/docs/current/view-pg-replication-slots.html
+- name: PostgreSQL streaming replication protocol reference
+  description: Complete reference of the PostgreSQL streaming replication protocol documentation.
+  link: https://www.postgresql.org/docs/current/protocol-replication.html
+- name: PostgreSQL logical replication protocol reference
+  description: Complete reference of the PostgreSQL logical replication protocol documentation.
+  link: https://www.postgresql.org/docs/current/protocol-logical-replication.html
 
 author:
 - John Scalia (@jscalia)
-- Andew Klychkov (@Andersson007)
+- Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
 '''
 
@@ -111,7 +107,7 @@ EXAMPLES = r'''
     db: ansible
     state: absent
 
-- name: Create logical_one logical slot to the database acme if doen't exist
+- name: Create logical_one logical slot to the database acme if doesn't exist
   postgresql_slot:
     name: logical_slot_one
     slot_type: logical
@@ -243,7 +239,18 @@ def main():
     if immediately_reserve and slot_type == 'logical':
         module.fail_json(msg="Module parameters immediately_reserve and slot_type=logical are mutually exclusive")
 
-    conn_params = get_conn_params(module, module.params)
+    # When slot_type is logical and parameter db is not passed,
+    # the default database will be used to create the slot and
+    # the user should know about this.
+    # When the slot type is physical,
+    # it doesn't matter which database will be used
+    # because physical slots are global objects.
+    if slot_type == 'logical':
+        warn_db_default = True
+    else:
+        warn_db_default = False
+
+    conn_params = get_conn_params(module, module.params, warn_db_default=warn_db_default)
     db_connection = connect_to_db(module, conn_params, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 

@@ -9,32 +9,6 @@ class ModuleDocFragment(object):
     # Standard files documentation fragment
     DOCUMENTATION = r'''
 options:
-  authorize:
-    description:
-      - B(Deprecated)
-      - "Starting with Ansible 2.5 we recommend using C(connection: network_cli) and C(become: yes)."
-      - This option is only required if you are using eAPI.
-      - For more information please see the L(EOS Platform Options guide, ../network/user_guide/platform_eos.html).
-      - HORIZONTALLINE
-      - Instructs the module to enter privileged mode on the remote device
-        before sending any commands.  If not specified, the device will
-        attempt to execute all commands in non-privileged mode. If the value
-        is not specified in the task, the value of environment variable
-        C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-    type: bool
-    default: no
-  auth_pass:
-    description:
-      - B(Deprecated)
-      - "Starting with Ansible 2.5 we recommend using C(connection: network_cli) and C(become: yes) with C(become_pass)."
-      - This option is only required if you are using eAPI.
-      - For more information please see the L(EOS Platform Options guide, ../network/user_guide/platform_eos.html).
-      - HORIZONTALLINE
-      - Specifies the password to use if required to enter privileged mode
-        on the remote device.  If I(authorize) is false, then this argument
-        does nothing. If the value is not specified in the task, the value of
-        environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
-    type: str
   provider:
     description:
       - B(Deprecated)
@@ -55,11 +29,11 @@ options:
       port:
         description:
           - Specifies the port to use when building the connection to the remote
-            device.  This value applies to either I(cli) or I(eapi).  The port
-            value will default to the appropriate transport common port if
-            none is provided in the task.  (cli=22, http=80, https=443).
+            device.  This value applies to either I(cli) or I(eapi).
+          - The port value will default to the appropriate transport common port
+            if none is provided in the task (cli=22, http=80, https=443).
         type: int
-        default: 0 (use common port)
+        default: 0
       username:
         description:
           - Configures the username to use to authenticate the connection to
@@ -81,7 +55,6 @@ options:
             for either connecting or sending commands.  If the timeout is
             exceeded before the operation is completed, the module will error.
         type: int
-        default: 10
       ssh_keyfile:
         description:
           - Specifies the SSH keyfile to use to authenticate the connection to
@@ -126,6 +99,7 @@ options:
             on personally controlled sites using self-signed certificates.  If the transport
             argument is not eapi, this value is ignored.
         type: bool
+        default: true
       use_proxy:
         description:
           - If C(no), the environment variables C(http_proxy) and C(https_proxy) will be ignored.

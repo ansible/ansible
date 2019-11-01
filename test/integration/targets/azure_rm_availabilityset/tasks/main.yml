@@ -103,7 +103,7 @@
 # azure_rm_availabilityset_facts tests
 #
 - name: Get facts for created availability set
-  azure_rm_availabilityset_facts:
+  azure_rm_availabilityset_info:
     name: myavailabilityset2
     resource_group: "{{ resource_group }}"
   register: results
@@ -112,9 +112,9 @@
     that: 
       - not results.changed
       - not results.failed
-      - results.ansible_facts.azure_availabilitysets[0].properties.platformFaultDomainCount == 2
-      - results.ansible_facts.azure_availabilitysets[0].properties.platformUpdateDomainCount == 5
-      - results.ansible_facts.azure_availabilitysets[0].sku == 'Aligned'
+      - results.ansible_info.azure_availabilitysets[0].properties.platformFaultDomainCount == 2
+      - results.ansible_info.azure_availabilitysets[0].properties.platformUpdateDomainCount == 5
+      - results.ansible_info.azure_availabilitysets[0].sku == 'Aligned'
 
 
 - name: Delete an availability set

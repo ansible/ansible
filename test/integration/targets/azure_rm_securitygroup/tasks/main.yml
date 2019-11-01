@@ -35,7 +35,7 @@
 - assert: { that: "{{ output.state.rules | length }} == 2" }
 
 - name: Gather facts by tags
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
       tags:
         - testing
@@ -43,7 +43,7 @@
   register: output
 
 - assert:
-      that: azure_securitygroups | length == 1
+      that: output.securitygroups | length == 1
 
 - name: Add/Update rules on existing security group
   azure_rm_securitygroup:
@@ -121,23 +121,23 @@
           - output.state.tags.delete == 'on-exit'
 
 - name: Gather facts for one accounts
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
       name: "{{ secgroupname }}"
   register: output
 
 - assert:
       that:
-          - azure_securitygroups | length == 1
+          - output.securitygroups | length == 1
 
 - name: Gather facts for all accounts
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
-  register: output
+  register: output_groups
 
 - assert:
       that:
-          - azure_securitygroups | length > 0
+          - output_groups.securitygroups | length > 0
 
 - name: Create security group with source_address_prefixes
   azure_rm_securitygroup:
@@ -290,13 +290,13 @@
       resource_group: "{{ resource_group }}"
       name: "{{ item.name }}"
       state: absent
-  with_items: "{{ azure_securitygroups }}"
+  with_items: "{{ output_groups.securitygroups }}"
 
 - name: Should have no security groups remaining
-  azure_rm_securitygroup_facts:
+  azure_rm_securitygroup_info:
       resource_group: "{{ resource_group }}"
   register: output
 
 - assert:
       that:
-          - azure_securitygroups | length == 0
+          - output.securitygroups | length == 0

@@ -20,9 +20,7 @@ DOCUMENTATION = r'''
 module: postgresql_tablespace
 short_description: Add or remove PostgreSQL tablespaces from remote hosts
 description:
-- Adds or removes PostgreSQL tablespaces from remote hosts
-  U(https://www.postgresql.org/docs/current/sql-createtablespace.html),
-  U(https://www.postgresql.org/docs/current/manage-ag-tablespaces.html).
+- Adds or removes PostgreSQL tablespaces from remote hosts.
 version_added: '2.8'
 options:
   tablespace:
@@ -58,8 +56,7 @@ options:
     description:
     - Dict of tablespace options to set. Supported from PostgreSQL 9.0.
     - For more information see U(https://www.postgresql.org/docs/current/sql-createtablespace.html).
-    - When reset is passed as an option's value, if the option was set previously, it will be removed
-      U(https://www.postgresql.org/docs/current/sql-altertablespace.html).
+    - When reset is passed as an option's value, if the option was set previously, it will be removed.
     type: dict
   rename_to:
     description:
@@ -83,6 +80,20 @@ notes:
 - I(state=absent) and I(state=present) (the second one if the tablespace doesn't exist) do not
   support check mode because the corresponding PostgreSQL DROP and CREATE TABLESPACE commands
   can not be run inside the transaction block.
+
+seealso:
+- name: PostgreSQL tablespaces
+  description: General information about PostgreSQL tablespaces.
+  link: https://www.postgresql.org/docs/current/manage-ag-tablespaces.html
+- name: CREATE TABLESPACE reference
+  description: Complete reference of the CREATE TABLESPACE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createtablespace.html
+- name: ALTER TABLESPACE reference
+  description: Complete reference of the ALTER TABLESPACE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-altertablespace.html
+- name: DROP TABLESPACE reference
+  description: Complete reference of the DROP TABLESPACE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-droptablespace.html
 
 author:
 - Flavien Chantelot (@Dorn-)
@@ -395,7 +406,7 @@ def main():
         module.fail_json(msg="state=absent is mutually exclusive location, "
                              "owner, rename_to, and set")
 
-    conn_params = get_conn_params(module, module.params)
+    conn_params = get_conn_params(module, module.params, warn_db_default=False)
     db_connection = connect_to_db(module, conn_params, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 

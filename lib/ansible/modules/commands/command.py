@@ -166,7 +166,7 @@ import os
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.collections import is_iterable
 
 
@@ -259,8 +259,15 @@ def main():
         args = [to_native(arg, errors='surrogate_or_strict', nonstring='simplerepr') for arg in args]
 
     if chdir:
-        chdir = os.path.abspath(chdir)
-        os.chdir(chdir)
+        try:
+            chdir = to_bytes(os.path.abspath(chdir), errors='surrogate_or_strict')
+        except ValueError as e:
+            module.fail_json(msg='Unable to use supplied chdir: %s' % to_text(e))
+
+        try:
+            os.chdir(chdir)
+        except (IOError, OSError) as e:
+            module.fail_json(msg='Unable to change directory before execution: %s' % to_text(e))
 
     if creates:
         # do not run the command if the line contains creates=filename

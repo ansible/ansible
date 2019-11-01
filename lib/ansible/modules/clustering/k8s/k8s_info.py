@@ -51,7 +51,7 @@ options:
   namespace:
     description:
     - Use to specify an object namespace. Use in conjunction with I(api_version), I(kind), and I(name)
-      to identify a specfic object.
+      to identify a specific object.
   label_selectors:
     description: List of label selectors to use to filter results
   field_selectors:

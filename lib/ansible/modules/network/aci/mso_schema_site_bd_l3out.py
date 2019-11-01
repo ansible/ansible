@@ -64,7 +64,7 @@ extends_documentation_fragment: mso
 
 EXAMPLES = r'''
 - name: Add a new site BD l3out
-  mso_schema_site_bd:
+  mso_schema_site_bd_l3out:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -77,7 +77,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a site BD l3out
-  mso_schema_site_vrf:
+  mso_schema_site_bd_l3out:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -90,7 +90,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a specific site BD l3out
-  mso_schema_site_vrf:
+  mso_schema_site_bd_l3out:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -104,7 +104,7 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all site BD l3outs
-  mso_schema_site_vrf:
+  mso_schema_site_bd_l3out:
     host: mso_host
     username: admin
     password: SomeSecretPassword

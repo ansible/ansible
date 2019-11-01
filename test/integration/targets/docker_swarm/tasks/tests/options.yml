@@ -1,4 +1,6 @@
----
+- debug:
+    msg: Running tests/options.yml
+
 - name: Create a Swarm cluster
   docker_swarm:
     state: present
@@ -1152,3 +1154,5 @@
        - 'output_6.actions[0] == "Swarm cluster updated"'
        - 'output_6.diff.before is defined'
        - 'output_6.diff.after is defined'
+
+- include_tasks: cleanup.yml

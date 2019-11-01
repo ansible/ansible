@@ -42,7 +42,7 @@ Issues
 
 Issues for modules, including bug reports, documentation bug reports, and feature requests, are tracked in the `ansible repository <https://github.com/ansible/ansible/issues>`_.
 
-Issues for modules are routed to their maintainers via an automated process. This process is still being refined, and currently depends upon the issue creator to provide adequate details (specifically, providing the proper module name) in order to route it correctly. If you are a maintainer of a specific module, it is recommended that you periodically search module issues for issues which mention your module's name (or some variation on that name), as well as setting an appropriate notification process for receiving notification of mentions of your GitHub ID.
+Issues for modules are routed to their maintainers by an automated process. This process is still being refined, and currently depends upon the issue creator to provide adequate details (specifically, providing the proper module name) in order to route it correctly. If you are a maintainer of a specific module, it is recommended that you periodically search module issues for issues which mention your module's name (or some variation on that name), as well as setting an appropriate notification process for receiving notification of mentions of your GitHub ID.
 
 PR workflow
 -----------
@@ -51,7 +51,7 @@ Automated routing of pull requests is handled by a tool called `Ansibot <https:/
 
 Being moderately familiar with how the workflow behind the bot operates can be helpful to you, and -- should things go awry -- your feedback can be helpful to the folks that continually help Ansibullbot to evolve.
 
-A detailed explanation of the PR workflow can be seen in the :doc:`development_process`
+A detailed explanation of the PR workflow can be seen in the :ref:`community_development_process`.
 
 Maintainers (BOTMETA.yml)
 -------------------------
@@ -68,6 +68,6 @@ If you'd like to step down as a maintainer, please submit a PR to the ``BOTMETA.
 Tools and other Resources
 =========================
 
-* `PRs in flight, organised by directory <https://ansible.sivel.net/pr/byfile.html>`_.
-* Ansibullbot: https://github.com/ansible/ansibullbot
-* :doc:`development_process`
+* `PRs in flight, organized by directory <https://ansible.sivel.net/pr/byfile.html>`_
+* `Ansibullbot <https://github.com/ansible/ansibullbot>`_
+* :ref:`community_development_process`

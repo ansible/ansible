@@ -126,6 +126,7 @@ RETURN = ''' # '''
 
 
 import traceback
+import atexit
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 try:
@@ -180,8 +181,8 @@ class Proxy(object):
                 self._module.exit_json(changed=True)
             self._zapi.proxy.delete([proxy_id])
             self._module.exit_json(changed=True,
-                                   result="Successfully deleted" +
-                                          " proxy %s" % proxy_name)
+                                   result="Successfully deleted"
+                                          + " proxy %s" % proxy_name)
         except Exception as e:
             self._module.fail_json(msg="Failed to delete proxy %s: %s" %
                                        (proxy_name, str(e)))
@@ -309,6 +310,7 @@ def main():
                         passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

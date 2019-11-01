@@ -19,7 +19,7 @@ DOCUMENTATION = r'''
 module: postgresql_query
 short_description: Run PostgreSQL queries
 description:
-- Runs arbitraty PostgreSQL queries.
+- Runs arbitrary PostgreSQL queries.
 - Can run queries from SQL script files.
 version_added: '2.8'
 options:
@@ -30,11 +30,13 @@ options:
   positional_args:
     description:
     - List of values to be passed as positional arguments to the query.
+      When the value is a list, it will be converted to PostgreSQL array.
     - Mutually exclusive with I(named_args).
     type: list
   named_args:
     description:
     - Dictionary of key-value arguments to pass to the query.
+      When the value is a list, it will be converted to PostgreSQL array.
     - Mutually exclusive with I(positional_args).
     type: dict
   path_to_script:
@@ -56,18 +58,14 @@ options:
     type: str
     aliases:
     - login_db
-notes:
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module. If
-  the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host. For Ubuntu-based
-  systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-requirements: [ psycopg2 ]
+  autocommit:
+    description:
+    - Execute in autocommit mode when the query can't be run inside a transaction block
+      (e.g., VACUUM).
+    - Mutually exclusive with I(check_mode).
+    type: bool
+    default: no
+    version_added: '2.9'
 author:
 - Felix Archambault (@archf)
 - Andrew Klychkov (@Andersson007)
@@ -99,10 +97,10 @@ EXAMPLES = r'''
       id_val: 1
       story_val: test
 
-- name: Insert query to db test_db
+- name: Insert query to test_table in db test_db
   postgresql_query:
     db: test_db
-    query: INSERT INTO test_db (id, story) VALUES (2, 'my_long_story')
+    query: INSERT INTO test_table (id, story) VALUES (2, 'my_long_story')
 
 - name: Run queries from SQL script
   postgresql_query:
@@ -110,6 +108,36 @@ EXAMPLES = r'''
     path_to_script: /var/lib/pgsql/test.sql
     positional_args:
     - 1
+
+- name: Example of using autocommit parameter
+  postgresql_query:
+    db: test_db
+    query: VACUUM
+    autocommit: yes
+
+- name: >
+    Insert data to the column of array type using positional_args.
+    Note that we use quotes here, the same as for passing JSON, etc.
+  postgresql_query:
+    query: INSERT INTO test_table (array_column) VALUES (%s)
+    positional_args:
+    - '{1,2,3}'
+
+# Pass list and string vars as positional_args
+- name: Set vars
+  set_fact:
+    my_list:
+    - 1
+    - 2
+    - 3
+    my_arr: '{1, 2, 3}'
+
+- name: Select from test table by passing positional_args as arrays
+  postgresql_query:
+    query: SELECT * FROM test_array_table WHERE arr_col1 = %s AND arr_col2 = %s
+    positional_args:
+    - '{{ my_list }}'
+    - '{{ my_arr|string }}'
 '''
 
 RETURN = r'''
@@ -152,11 +180,49 @@ from ansible.module_utils.postgres import (
     postgres_common_argument_spec,
 )
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems
 
 
 # ===========================================
 # Module execution.
 #
+
+def list_to_pg_array(elem):
+    """Convert the passed list to PostgreSQL array
+    represented as a string.
+
+    Args:
+        elem (list): List that needs to be converted.
+
+    Returns:
+        elem (str): String representation of PostgreSQL array.
+    """
+    elem = str(elem).strip('[]')
+    elem = '{' + elem + '}'
+    return elem
+
+
+def convert_elements_to_pg_arrays(obj):
+    """Convert list elements of the passed object
+    to PostgreSQL arrays represented as strings.
+
+    Args:
+        obj (dict or list): Object whose elements need to be converted.
+
+    Returns:
+        obj (dict or list): Object with converted elements.
+    """
+    if isinstance(obj, dict):
+        for (key, elem) in iteritems(obj):
+            if isinstance(elem, list):
+                obj[key] = list_to_pg_array(elem)
+
+    elif isinstance(obj, list):
+        for i, elem in enumerate(obj):
+            if isinstance(elem, list):
+                obj[i] = list_to_pg_array(elem)
+
+    return obj
 
 
 def main():
@@ -168,6 +234,7 @@ def main():
         named_args=dict(type='dict'),
         session_role=dict(type='str'),
         path_to_script=dict(type='path'),
+        autocommit=dict(type='bool', default=False),
     )
 
     module = AnsibleModule(
@@ -180,12 +247,22 @@ def main():
     positional_args = module.params["positional_args"]
     named_args = module.params["named_args"]
     path_to_script = module.params["path_to_script"]
+    autocommit = module.params["autocommit"]
+
+    if autocommit and module.check_mode:
+        module.fail_json(msg="Using autocommit is mutually exclusive with check_mode")
 
     if positional_args and named_args:
         module.fail_json(msg="positional_args and named_args params are mutually exclusive")
 
     if path_to_script and query:
         module.fail_json(msg="path_to_script is mutually exclusive with query")
+
+    if positional_args:
+        positional_args = convert_elements_to_pg_arrays(positional_args)
+
+    elif named_args:
+        named_args = convert_elements_to_pg_arrays(named_args)
 
     if path_to_script:
         try:
@@ -194,7 +271,7 @@ def main():
             module.fail_json(msg="Cannot read file '%s' : %s" % (path_to_script, to_native(e)))
 
     conn_params = get_conn_params(module, module.params)
-    db_connection = connect_to_db(module, conn_params, autocommit=False)
+    db_connection = connect_to_db(module, conn_params, autocommit=autocommit)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Prepare args:
@@ -248,7 +325,8 @@ def main():
     if module.check_mode:
         db_connection.rollback()
     else:
-        db_connection.commit()
+        if not autocommit:
+            db_connection.commit()
 
     kw = dict(
         changed=changed,

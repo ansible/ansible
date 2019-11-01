@@ -1,7 +1,9 @@
+---
 - name: Get servers certificate
   get_certificate:
     host: "{{ httpbin_host }}"
     port: 443
+    select_crypto_backend: "{{ select_crypto_backend }}"
   register: result
 
 - debug: var=result
@@ -18,6 +20,7 @@
   get_certificate:
     host: "{{ httpbin_host }}"
     port: 80
+    select_crypto_backend: "{{ select_crypto_backend }}"
   register: result
   ignore_errors: true
 
@@ -33,6 +36,7 @@
     host: "{{ httpbin_host }}"
     port: 1234
     timeout: 1
+    select_crypto_backend: "{{ select_crypto_backend }}"
   register: result
   ignore_errors: true
 
@@ -48,6 +52,7 @@
     host: "{{ httpbin_host }}"
     port: 443
     ca_cert: dn.e
+    select_crypto_backend: "{{ select_crypto_backend }}"
   register: result
   ignore_errors: true
 
@@ -68,6 +73,7 @@
     ca_cert: '{{ output_dir }}/temp.pem'
     host: "{{ httpbin_host }}"
     port: 443
+    select_crypto_backend: "{{ select_crypto_backend }}"
   register: result
 
 - assert:
@@ -90,6 +96,7 @@
     ca_cert: '{{ my_temp_dir.path }}/bogus_ca.pem'
     host: "{{ httpbin_host }}"
     port: 443
+    select_crypto_backend: "{{ select_crypto_backend }}"
   register: result
   ignore_errors: true
 

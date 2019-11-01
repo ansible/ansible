@@ -43,6 +43,7 @@ options:
       - Specifies the cluster size to use when formatting the volume.
       - If no cluster size is specified when you format a partition, defaults are selected based on
         the size of the partition.
+      - This value must be a multiple of the physical sector size of the disk.
     type: int
   large_frs:
     description:

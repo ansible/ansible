@@ -1,0 +1,17 @@
+{
+    "include_symlinks": true,
+    "prefixes": [
+        "test/runner/",
+        "test/sanity/ansible-doc/",
+        "test/sanity/compile/",
+        "test/sanity/import/",
+        "test/sanity/pep8/",
+        "test/sanity/pslint/",
+        "test/sanity/pylint/",
+        "test/sanity/rstcheck/",
+        "test/sanity/shellcheck/",
+        "test/sanity/validate-modules/",
+        "test/sanity/yamllint/"
+    ],
+    "output": "path-message"
+}

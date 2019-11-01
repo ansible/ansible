@@ -1,3 +1,6 @@
+
+:orphan:
+
 .. _porting_2.0_guide:
 
 *************************
@@ -393,4 +396,3 @@ Porting custom scripts
 ======================
 
 Custom scripts that used the ``ansible.runner.Runner`` API in 1.x have to be ported in 2.x.  Please refer to: :ref:`developing_api`
-

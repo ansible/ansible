@@ -1,0 +1,50 @@
+---
+- debug:
+      msg: "START Replaced ios_lag_interfaces state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Replaces device configuration of listed interfaces with provided configuration
+      ios_lag_interfaces: &replaced
+        config:
+          - name: Port-channel2
+            members:
+            - member: GigabitEthernet0/1
+              mode: active
+          - name: Port-channel40
+            members:
+            - member: GigabitEthernet0/2
+              mode: active
+        state: replaced
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ replaced['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ replaced['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
+    - name: Replaces device configuration of listed interfaces with provided configuration (IDEMPOTENT)
+      ios_lag_interfaces: *replaced
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+  when: ansible_net_version != "15.6(2)T"
+
+  always:
+    - include_tasks: _remove_config.yaml

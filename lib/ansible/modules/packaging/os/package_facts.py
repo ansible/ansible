@@ -28,15 +28,16 @@ options:
     type: list
   strategy:
     description:
-      - This option controls how the module queres the package managers on the system.
-        C(first) means it will return only informatino for the first supported package manager available.
+      - This option controls how the module queries the package managers on the system.
+        C(first) means it will return only information for the first supported package manager available.
         C(all) will return information for all supported and available package managers on the system.
     choices: ['first', 'all']
     default: 'first'
     version_added: "2.8"
 version_added: "2.5"
 requirements:
-    - For 'portage' support it requires the `qlist` utility, which is part of 'app-portage/portage-utils'.
+    - For 'portage' support it requires the C(qlist) utility, which is part of 'app-portage/portage-utils'.
+    - For Debian-based systems C(python-apt) package must be installed on targeted hosts.
 author:
   - Matthew Jones (@matburt)
   - Brian Coca (@bcoca)
@@ -52,6 +53,11 @@ EXAMPLES = '''
   debug:
     var: ansible_facts.packages
 
+- name: Check whether a package called foobar is installed
+  debug:
+    msg: "{{ ansible_facts.packages['foobar'] | length }} versions of foobar are installed!"
+  when: "'foobar' in ansible_facts.packages"
+
 '''
 
 RETURN = '''
@@ -61,9 +67,55 @@ ansible_facts:
   type: complex
   contains:
     packages:
-      description: list of dicts with package information
+      description:
+        - Maps the package name to a non-empty list of dicts with package information.
+        - Every dict in the list corresponds to one installed version of the package.
+        - The fields described below are present for all package managers. Depending on the
+          package manager, there might be more fields for a package.
       returned: when operating system level package manager is specified or auto detected manager
       type: dict
+      contains:
+        name:
+          description: The package's name.
+          returned: always
+          type: str
+        version:
+          description: The package's version.
+          returned: always
+          type: str
+        source:
+          description: Where information on the package came from.
+          returned: always
+          type: str
+      sample: |-
+        {
+          "packages": {
+            "kernel": [
+              {
+                "name": "kernel",
+                "source": "rpm",
+                "version": "3.10.0",
+                ...
+              },
+              {
+                "name": "kernel",
+                "source": "rpm",
+                "version": "3.10.0",
+                ...
+              },
+              ...
+            ],
+            "kernel-tools": [
+              {
+                "name": "kernel-tools",
+                "source": "rpm",
+                "version": "3.10.0",
+                ...
+              }
+            ],
+            ...
+          }
+        }
       sample_rpm:
         {
           "packages": {
@@ -178,7 +230,7 @@ class RPM(LibMgr):
         ''' we expect the python bindings installed, but this gives warning if they are missing and we have rpm cli'''
         we_have_lib = super(RPM, self).is_available()
         if not we_have_lib and get_bin_path('rpm'):
-            self.warnings.append('Found "rpm" but %s' % (missing_required_lib('rpm')))
+            module.warn('Found "rpm" but %s' % (missing_required_lib('rpm')))
         return we_have_lib
 
 
@@ -192,7 +244,7 @@ class APT(LibMgr):
 
     @property
     def pkg_cache(self):
-        if self._cache:
+        if self._cache is not None:
             return self._cache
 
         self._cache = self._lib.Cache()
@@ -204,12 +256,14 @@ class APT(LibMgr):
         if not we_have_lib:
             for exe in ('apt', 'apt-get', 'aptitude'):
                 if get_bin_path(exe):
-                    self.warnings.append('Found "%s" but %s' % (exe, missing_required_lib('apt')))
+                    module.warn('Found "%s" but %s' % (exe, missing_required_lib('apt')))
                     break
         return we_have_lib
 
     def list_installed(self):
-        return [pk for pk in self.pkg_cache.keys() if self.pkg_cache[pk].is_installed]
+        # Store the cache to avoid running pkg_cache() for each item in the comprehension, which is very slow
+        cache = self.pkg_cache
+        return [pk for pk in cache.keys() if cache[pk].is_installed]
 
     def get_package_details(self, package):
         ac_pkg = self.pkg_cache[package].installed
@@ -238,7 +292,7 @@ class PKG(CLIMgr):
                 pass
 
         if 'automatic' in pkg:
-            pkg['automatic'] = bool(pkg['automatic'])
+            pkg['automatic'] = bool(int(pkg['automatic']))
 
         if 'category' in pkg:
             pkg['category'] = pkg['category'].split('/', 1)[0]
@@ -255,7 +309,7 @@ class PKG(CLIMgr):
                 pkg['revision'] = '0'
 
         if 'vital' in pkg:
-            pkg['vital'] = bool(pkg['vital'])
+            pkg['vital'] = bool(int(pkg['vital']))
 
         return pkg
 
@@ -328,15 +382,14 @@ def main():
                     module.warn('Requested package manager %s was not usable by this module: %s' % (pkgmgr, to_text(e)))
                 continue
 
-            for warning in getattr(manager, 'warnings', []):
-                module.warn(warning)
-
         except Exception as e:
             if pkgmgr in module.params['manager']:
                 module.warn('Failed to retrieve packages with %s: %s' % (pkgmgr, to_text(e)))
 
     if found == 0:
-        module.fail_json(msg='Could not detect a supported package manager from the following list: %s' % managers)
+        msg = ('Could not detect a supported package manager from the following list: %s, '
+               'or the required Python library is not installed. Check warnings for details.' % managers)
+        module.fail_json(msg=msg)
 
     # Set the facts, this will override the facts in ansible_facts that might exist from previous runs
     # when using operating system level or distribution package managers

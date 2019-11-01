@@ -388,7 +388,7 @@ standard:
 .. Note:: You should only quote strings when it is absolutely
     necessary or required by YAML, and then use single quotes.
 
-The YAML specification considers the following `escape sequences <http://yaml.org/spec/current.html#id2517668>`_:
+The YAML specification considers the following `escape sequences <https://yaml.org/spec/current.html#id2517668>`_:
 
 * ``\0``, ``\\``, ``\"``, ``\_``, ``\a``, ``\b``, ``\e``, ``\f``, ``\n``, ``\r``, ``\t``,
   ``\v``, ``\L``, ``\N`` and ``\P`` -- Single character escape
@@ -501,11 +501,9 @@ guides for Windows modules differ substantially from those for standard standard
 
 .. seealso::
 
-   :doc:`index`
-       The documentation index
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell

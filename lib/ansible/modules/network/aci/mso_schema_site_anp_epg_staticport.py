@@ -48,7 +48,7 @@ options:
     description:
     - The path type of the static port
     type: str
-    choices: [ port ]
+    choices: [ port, vpc ]
     default: port
   pod:
     description:
@@ -90,7 +90,7 @@ options:
     default: present
 notes:
 - The ACI MultiSite PATCH API has a deficiency requiring some objects to be referenced by index.
-  This can cause silent corruption on concurrent access when changing/removing on object as
+  This can cause silent corruption on concurrent access when changing/removing an object as
   the wrong object may be referenced. This module is affected by this deficiency.
 seealso:
 - module: mso_schema_site_anp_epg
@@ -100,7 +100,7 @@ extends_documentation_fragment: mso
 
 EXAMPLES = r'''
 - name: Add a new static port to a site EPG
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -119,7 +119,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a static port from a site EPG
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -136,7 +136,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a specific site EPG static port
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -154,7 +154,7 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all site EPG static ports
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -182,7 +182,7 @@ def main():
         template=dict(type='str', required=True),
         anp=dict(type='str', required=True),
         epg=dict(type='str', required=True),
-        type=dict(type='str', default='port', choices=['port']),
+        type=dict(type='str', default='port', choices=['port', 'vpc']),
         pod=dict(type='str'),  # This parameter is not required for querying all objects
         leaf=dict(type='str'),  # This parameter is not required for querying all objects
         path=dict(type='str'),  # This parameter is not required for querying all objects
@@ -217,6 +217,8 @@ def main():
 
     if path_type == 'port':
         portpath = 'topology/{0}/paths-{1}/pathep-[{2}]'.format(pod, leaf, path)
+    elif path_type == 'vpc':
+        portpath = 'topology/{0}/protpaths-{1}/pathep-[{2}]'.format(pod, leaf, path)
 
     mso = MSOModule(module)
 

@@ -10,11 +10,11 @@ This document discusses the setup that is required before Ansible can communicat
 Host Requirements
 `````````````````
 For Ansible to communicate to a Windows host and use Windows modules, the
-Windows host must meet the following requirements:
+Windows host must meet these requirements:
 
-* Ansible's supported Windows versions generally match those under current
-  and extended support from Microsoft. Supported desktop OSs include
-  Windows 7, 8.1, and 10, and supported server OSs are Windows Server 2008,
+* Ansible can generally manage Windows versions under current
+  and extended support from Microsoft. Ansible can manage desktop OSs including
+  Windows 7, 8.1, and 10, and server OSs including Windows Server 2008,
   2008 R2, 2012, 2012 R2, 2016, and 2019.
 
 * Ansible requires PowerShell 3.0 or newer and at least .NET 4.0 to be
@@ -148,9 +148,7 @@ following command:
 
     winrm enumerate winrm/config/Listener
 
-This will output something like the following:
-
-.. code-block:: guess
+This will output something like::
 
     Listener
         Address = *
@@ -193,10 +191,7 @@ the key options that are useful to understand are:
 * ``CertificateThumbprint``: If running over an HTTPS listener, this is the
   thumbprint of the certificate in the Windows Certificate Store that is used
   in the connection. To get the details of the certificate itself, run this
-  command with the relevant certificate thumbprint in PowerShell:
-
-  .. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-  .. code-block:: guess
+  command with the relevant certificate thumbprint in PowerShell::
 
     $thumbprint = "E6CDAA82EEAF2ECE8546E05DB7F3E01AA47D76CE"
     Get-ChildItem -Path cert:\LocalMachine\My -Recurse | Where-Object { $_.Thumbprint -eq $thumbprint } | Select-Object *
@@ -240,10 +235,7 @@ There are three ways to set up a WinRM listener:
 
 Delete WinRM Listener
 +++++++++++++++++++++
-To remove a WinRM listener:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+To remove a WinRM listener::
 
     # Remove all listeners
     Remove-Item -Path WSMan:\localhost\Listener\* -Recurse -Force
@@ -268,9 +260,7 @@ following command:
     winrm get winrm/config/Service
     winrm get winrm/config/Winrs
 
-This will output something like the following:
-
-.. code-block:: guess
+This will output something like::
 
     Service
         RootSDDL = O:NSG:BAD:P(A;;GA;;;BA)(A;;GR;;;IU)S:P(AU;FA;GA;;;WD)(AU;SA;GXGW;;;WD)
@@ -312,7 +302,7 @@ options are:
 
 * ``Service\AllowUnencrypted``: This option defines whether WinRM will allow
   traffic that is run over HTTP without message encryption. Message level
-  encryption is only supported when ``ansible_winrm_transport`` is ``ntlm``,
+  encryption is only possible when ``ansible_winrm_transport`` is ``ntlm``,
   ``kerberos`` or ``credssp``. By default this is ``false`` and should only be
   set to ``true`` when debugging WinRM messages.
 
@@ -323,9 +313,7 @@ options are:
 * ``Service\Auth\CbtHardeningLevel``: Specifies whether channel binding tokens are
   not verified (None), verified but not required (Relaxed), or verified and
   required (Strict). CBT is only used when connecting with NTLM or Kerberos
-  over HTTPS. The downstream libraries that Ansible currently uses only support
-  passing the CBT with NTLM authentication. Using Kerberos with
-  ``CbtHardeningLevel = Strict`` will result in a ``404`` error.
+  over HTTPS.
 
 * ``Service\CertificateThumbprint``: This is the thumbprint of the certificate
   used to encrypt the TLS channel used with CredSSP authentication. By default
@@ -338,11 +326,7 @@ options are:
 * ``Winrs\MaxMemoryPerShellMB``: This is the maximum amount of memory allocated
   per shell, including the shell's child processes.
 
-To modify a setting under the ``Service`` key in PowerShell, the following
-command can be used:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+To modify a setting under the ``Service`` key in PowerShell::
 
     # substitute {path} with the path to the option after winrm/config/Service
     Set-Item -Path WSMan:\localhost\Service\{path} -Value "value here"
@@ -350,11 +334,7 @@ command can be used:
     # for example, to change Service\Auth\CbtHardeningLevel run
     Set-Item -Path WSMan:\localhost\Service\Auth\CbtHardeningLevel -Value Strict
 
-To modify a setting under the ``Winrs`` key in PowerShell, the following
-command can be used:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+To modify a setting under the ``Winrs`` key in PowerShell::
 
     # Substitute {path} with the path to the option after winrm/config/Winrs
     Set-Item -Path WSMan:\localhost\Shell\{path} -Value "value here"
@@ -374,10 +354,7 @@ could in fact be issues with the host setup instead.
 
 One easy way to determine whether a problem is a host issue is to
 run the following command from another Windows host to connect to the
-target Windows host:
-
-.. comment: Pygments powershell lexer does not support -u:Username
-.. code-block:: guess
+target Windows host::
 
     # Test out HTTP
     winrs -r:http://server:5985/wsman -u:Username -p:Password ipconfig
@@ -461,8 +438,7 @@ Windows host.
 
 Windows SSH Setup
 `````````````````
-Ansible 2.8 has added experimental support for using SSH to connect to a
-Windows host.
+Ansible 2.8 has added an experimental SSH connection for Windows managed nodes.
 
 .. warning::
     Use this feature at your own risk!

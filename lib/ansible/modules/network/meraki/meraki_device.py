@@ -179,7 +179,7 @@ EXAMPLES = r'''
     tags: recently-added
   delegate_to: localhost
 
-- name: Claim a deivce into a network.
+- name: Claim a device into a network.
   meraki_device:
     auth_key: abc123
     org_name: YourOrg

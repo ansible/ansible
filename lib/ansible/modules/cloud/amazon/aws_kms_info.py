@@ -1,17 +1,9 @@
 #!/usr/bin/python
 #
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -34,6 +26,7 @@ options:
         The filters aren't natively supported by boto3, but are supported to provide similar
         functionality to other modules. Standard tag filters (C(tag-key), C(tag-value) and
         C(tag:tagName)) are available, as are C(key-id) and C(alias)
+    type: dict
   pending_deletion:
     description: Whether to get full details (tags, grants etc.) of keys pending deletion
     default: False
@@ -103,7 +96,7 @@ keys:
       description: Date of creation of the key
       type: str
       returned: always
-      sample: 2017-04-18T15:12:08.551000+10:00
+      sample: "2017-04-18T15:12:08.551000+10:00"
     description:
       description: Description of the key
       type: str
@@ -179,7 +172,7 @@ keys:
           description: Date of creation of the grant
           type: str
           returned: always
-          sample: 2017-04-18T15:12:08+10:00
+          sample: "2017-04-18T15:12:08+10:00"
         grant_id:
           description: The unique ID for the grant
           type: str

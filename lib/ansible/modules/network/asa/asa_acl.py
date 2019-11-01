@@ -79,7 +79,7 @@ options:
         against the contents of source.  There are times when it is not
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(config) argument allows the
-        implementer to pass in the configuruation to use as the base
+        implementer to pass in the configuration to use as the base
         config for comparison.
 """
 
