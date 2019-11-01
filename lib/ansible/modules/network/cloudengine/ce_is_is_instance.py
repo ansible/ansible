@@ -1,19 +1,8 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+# Copyright 2019 Red Hat
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 
 from __future__ import absolute_import, division, print_function
@@ -30,7 +19,10 @@ version_added: "2.10"
 author: xuxiaowei0512 (@CloudEngine-Ansible)
 short_description: Manages isis process id configuration on HUAWEI CloudEngine devices.
 description:
-    - Manages  isis process id, creates a isis instance id or deletes a process id on HUAWEI CloudEngine devices.
+  - Manages  isis process id, creates a isis instance id or deletes a process id on HUAWEI CloudEngine devices.
+notes:
+  - This module requires the netconf system service be enabled on the remote device being managed.
+  - This module works with connection C(netconf).
 options:
   instance_id:
     description:
