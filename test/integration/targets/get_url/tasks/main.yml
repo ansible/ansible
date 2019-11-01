@@ -239,11 +239,21 @@
       - "stat_result.stat.mode == '0700'"
 
 # https://github.com/ansible/ansible/issues/29614
+- name: download a file and get the checksum
+  get_url:
+    url: 'https://{{ httpbin_host }}/html'
+    dest: '{{ remote_tmp_dir }}/test_check'
+  register: result
+
+- stat:
+    path: "{{ remote_tmp_dir }}/test_check"
+  register: test_check_result
+
 - name: Change mode on an already downloaded file and specify checksum
   get_url:
-    url: 'https://{{ httpbin_host }}/get'
+    url: 'https://{{ httpbin_host }}/html'
     dest: '{{ remote_tmp_dir }}/test'
-    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+    checksum: 'sha1:{{ test_check_result.stat.checksum }}'
     mode: '0775'
   register: result
 
@@ -259,9 +269,9 @@
 
 - name: test checksum match in check mode
   get_url:
-    url: 'https://{{ httpbin_host }}/get'
+    url: 'https://{{ httpbin_host }}/html'
     dest: '{{ remote_tmp_dir }}/test'
-    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+    checksum: 'sha1:{{ test_check_result.stat.checksum }}'
   check_mode: True
   register: result
 
