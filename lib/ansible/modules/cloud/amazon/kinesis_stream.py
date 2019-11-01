@@ -964,11 +964,11 @@ def update(client, current_stream, stream_name, number_of_shards=1, retention_pe
                 return success, changed, err_msg
 
     if tags:
-        _, _, err_msg = (
+        tag_success, tag_changed, err_msg = (
             update_tags(client, stream_name, tags, check_mode=check_mode)
         )
     if wait:
-        success, err_msg, _ = (
+        success, err_msg, status_stream = (
             wait_for_status(
                 client, stream_name, 'ACTIVE', wait_timeout,
                 check_mode=check_mode
@@ -1102,10 +1102,10 @@ def create_stream(client, stream_name, number_of_shards=1, retention_period=None
                 changed = True
 
     if success:
-        _, _, results = (
+        stream_found, stream_msg, results = (
             find_stream(client, stream_name, check_mode=check_mode)
         )
-        _, _, current_tags = (
+        tag_success, tag_msg, current_tags = (
             get_tags(client, stream_name, check_mode=check_mode)
         )
         if current_tags and not check_mode:
