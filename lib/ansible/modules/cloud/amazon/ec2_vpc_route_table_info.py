@@ -216,6 +216,14 @@ def list_route_tables(route_table, module):
     if snaked_route_tables:
         for route_table in snaked_route_tables:
             route_table['id'] = route_table['route_table_id']
+            for association in route_table['associations']:
+                association['id'] = association['route_table_association_id']
+                if 'subnet_id' not in association:
+                    association['subnet_id'] = None
+            for route in route_table['routes']:
+                for key in ['instance_id']:
+                    if key not in route:
+                        route[key] = None
             route_table['tags'] = boto3_tag_list_to_ansible_dict(route_table.get('tags', []))
     module.exit_json(changed=False, route_tables=snaked_route_tables)
 
