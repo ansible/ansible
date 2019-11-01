@@ -92,13 +92,19 @@ class GenericBsdIfconfigNetwork(Network):
                 #   RTNETLINK answers: Invalid argument
                 continue
             for line in out.splitlines():
-                words = line.split()
+                words = line.strip().split(': ')
                 # Collect output from route command
                 if len(words) > 1:
-                    if words[0] == 'interface:':
+                    if words[0] == 'interface':
                         interface[v]['interface'] = words[1]
-                    if words[0] == 'gateway:':
+                    if words[0] == 'gateway':
                         interface[v]['gateway'] = words[1]
+                    # help pick the right interface address on OpenBSD
+                    if words[0] == 'if address':
+                        interface[v]['address'] = words[1]
+                    # help pick the right interface address on NetBSD
+                    if words[0] == 'local addr':
+                        interface[v]['address'] = words[1]
 
         return interface['v4'], interface['v6']
 
@@ -291,6 +297,14 @@ class GenericBsdIfconfigNetwork(Network):
         for item in ifinfo:
             if item != 'ipv4' and item != 'ipv6':
                 defaults[item] = ifinfo[item]
-        if len(ifinfo[ip_type]) > 0:
-            for item in ifinfo[ip_type][0]:
-                defaults[item] = ifinfo[ip_type][0][item]
+
+        ipinfo = []
+        if 'address' in defaults:
+            ipinfo = [x for x in ifinfo[ip_type] if x['address'] == defaults['address']]
+
+        if len(ipinfo) == 0:
+            ipinfo = ifinfo[ip_type]
+
+        if len(ipinfo) > 0:
+            for item in ipinfo[0]:
+                defaults[item] = ipinfo[0][item]
