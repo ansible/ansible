@@ -275,10 +275,6 @@ class BaseFileInventoryPlugin(BaseInventoryPlugin):
 
     TYPE = 'storage'
 
-    def __init__(self):
-
-        super(BaseFileInventoryPlugin, self).__init__()
-
 
 class DeprecatedCache(object):
     def __init__(self, real_cacheable):

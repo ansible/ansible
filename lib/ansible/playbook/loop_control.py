@@ -31,9 +31,6 @@ class LoopControl(FieldAttributeBase):
     _pause = FieldAttribute(isa='float', default=0)
     _extended = FieldAttribute(isa='bool')
 
-    def __init__(self):
-        super(LoopControl, self).__init__()
-
     @staticmethod
     def load(data, variable_manager=None, loader=None):
         t = LoopControl()

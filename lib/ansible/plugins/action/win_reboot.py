@@ -37,9 +37,6 @@ class ActionModule(RebootActionModule, ActionBase):
         'shutdown_timeout_sec': '2.5',
     }
 
-    def __init__(self, *args, **kwargs):
-        super(ActionModule, self).__init__(*args, **kwargs)
-
     def get_distribution(self, task_vars):
         return {'name': 'windows', 'version': '', 'family': ''}
 

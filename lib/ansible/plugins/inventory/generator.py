@@ -85,10 +85,6 @@ class InventoryModule(BaseInventoryPlugin):
 
     NAME = 'generator'
 
-    def __init__(self):
-
-        super(InventoryModule, self).__init__()
-
     def verify_file(self, path):
 
         valid = False

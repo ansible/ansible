@@ -72,9 +72,6 @@ class ActionModule(ActionBase):
         'vmkernel': 'who',
     }
 
-    def __init__(self, *args, **kwargs):
-        super(ActionModule, self).__init__(*args, **kwargs)
-
     @property
     def pre_reboot_delay(self):
         return self._check_delay('pre_reboot_delay', self.DEFAULT_PRE_REBOOT_DELAY)

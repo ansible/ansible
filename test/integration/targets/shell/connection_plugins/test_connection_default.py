@@ -22,9 +22,6 @@ class Connection(ConnectionBase):
 
     transport = 'test_connection_default'
 
-    def __init__(self, *args, **kwargs):
-        super(Connection, self).__init__(*args, **kwargs)
-
     def transport(self):
         pass
 

@@ -57,10 +57,6 @@ class CallbackModule(CallbackBase):
     TIME_FORMAT = "%b %d %Y %H:%M:%S"
     MSG_FORMAT = "%(now)s - %(category)s - %(data)s\n\n"
 
-    def __init__(self):
-
-        super(CallbackModule, self).__init__()
-
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
