@@ -1,8 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 import pytest
@@ -19,7 +20,6 @@ from ..nxos_module import TestNxosModule, load_fixture, set_module_args
 
 
 class TestNxosZoneZonesetModule(TestNxosModule):
-
     module = nxos_zone_zoneset
 
     def setUp(self):
@@ -29,7 +29,8 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.mock_run_commands = patch(module_path + 'run_commands')
         self.run_commands = self.mock_run_commands.start()
 
-        self.mock_execute_show_cmd_zoneset_active = patch(module_path + 'ShowZonesetActive.execute_show_zoneset_active_cmd')
+        self.mock_execute_show_cmd_zoneset_active = patch(
+            module_path + 'ShowZonesetActive.execute_show_zoneset_active_cmd')
         self.execute_show_cmd_zoneset_active = self.mock_execute_show_cmd_zoneset_active.start()
 
         self.mock_execute_show_cmd_zoneset = patch(module_path + 'ShowZoneset.execute_show_zoneset_cmd')
@@ -65,9 +66,9 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         set_module_args(a, True)
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_0.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 
-                                                'zone default-zone permit vsan 922', 
-                                                'no terminal dont-ask'])
+        self.assertEqual(result['commands'], ['terminal dont-ask',
+                                              'zone default-zone permit vsan 922',
+                                              'no terminal dont-ask'])
 
     def test_zone_defzone_deny_to_permit_1(self):
         # switch has def-zone deny and mode enhanced
@@ -75,10 +76,10 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         set_module_args(a, True)
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_1.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 
-                                                'zone default-zone permit vsan 922', 
-                                                'zone commit vsan 922', 
-                                                'no terminal dont-ask'])
+        self.assertEqual(result['commands'], ['terminal dont-ask',
+                                              'zone default-zone permit vsan 922',
+                                              'zone commit vsan 922',
+                                              'no terminal dont-ask'])
 
     def test_zone_defzone_permit_to_deny_1(self):
         # switch has def-zone deny and mode enhanced
@@ -86,10 +87,10 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         set_module_args(a, True)
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_2.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 
-                                                'no zone default-zone permit vsan 923', 
-                                                'zone commit vsan 923', 
-                                                'no terminal dont-ask'])
+        self.assertEqual(result['commands'], ['terminal dont-ask',
+                                              'no zone default-zone permit vsan 923',
+                                              'zone commit vsan 923',
+                                              'no terminal dont-ask'])
 
     def test_zone_defzone_permit_to_deny_2(self):
         # switch has def-zone deny and mode enhanced
@@ -97,9 +98,9 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         set_module_args(a, True)
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_3.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 
-                                                'no zone default-zone permit vsan 923', 
-                                                'no terminal dont-ask'])
+        self.assertEqual(result['commands'], ['terminal dont-ask',
+                                              'no zone default-zone permit vsan 923',
+                                              'no terminal dont-ask'])
 
     # Test zone mode from basic to enhanced and vice versa
     def test_zone_mode_basic_to_enh(self):
@@ -108,10 +109,10 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         set_module_args(a, True)
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_0.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 
-                                                'zone mode enhanced vsan 922', 
-                                                'zone commit vsan 922', 
-                                                'no terminal dont-ask'])
+        self.assertEqual(result['commands'], ['terminal dont-ask',
+                                              'zone mode enhanced vsan 922',
+                                              'zone commit vsan 922',
+                                              'no terminal dont-ask'])
 
     # Test zone mode from basic to enhanced and vice versa
     def test_zone_mode_basic_to_enh_1(self):
@@ -120,9 +121,9 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         set_module_args(a, True)
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_1.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 
-                                                'no zone mode enhanced vsan 922', 
-                                                'no terminal dont-ask'])
+        self.assertEqual(result['commands'], ['terminal dont-ask',
+                                              'no zone mode enhanced vsan 922',
+                                              'no terminal dont-ask'])
 
     # Test zone smart-zone from enabled to disabled and vice versa
     def test_zone_smart_zone(self):
@@ -131,9 +132,9 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         set_module_args(a, True)
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_0.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 
-                                                'no zone smart-zoning enable vsan 922', 
-                                                'no terminal dont-ask'])
+        self.assertEqual(result['commands'], ['terminal dont-ask',
+                                              'no zone smart-zoning enable vsan 922',
+                                              'no terminal dont-ask'])
 
     def test_zone_smart_zone_1(self):
         # switch has def-zone deny and mode basic
@@ -141,10 +142,10 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         set_module_args(a, True)
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_1.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 
-                                                'zone smart-zoning enable vsan 923', 
-                                                'zone commit vsan 923', 
-                                                'no terminal dont-ask'])
+        self.assertEqual(result['commands'], ['terminal dont-ask',
+                                              'zone smart-zoning enable vsan 923',
+                                              'zone commit vsan 923',
+                                              'no terminal dont-ask'])
 
     # Test zone  add/removal
     def test_zone_add_rem(self):
@@ -160,7 +161,9 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_1.cfg')
         self.execute_show_cmd_zone.return_value = load_fixture('nxos_zone_zoneset', 'shzone_0.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 'no zone name zoneB vsan 923', 'zone commit vsan 923', 'no terminal dont-ask'])
+        self.assertEqual(result['commands'],
+                         ['terminal dont-ask', 'no zone name zoneB vsan 923', 'zone commit vsan 923',
+                          'no terminal dont-ask'])
 
     def test_zone_add_rem_1(self):
         a = dict(zone_zoneset_details=[dict(
@@ -191,10 +194,10 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_1.cfg')
         self.execute_show_cmd_zone.return_value = load_fixture('nxos_zone_zoneset', 'shzone_0.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 
-                                                'zone name zoneBNew vsan 923', 
-                                                'zone commit vsan 923', 
-                                                'no terminal dont-ask'])
+        self.assertEqual(result['commands'], ['terminal dont-ask',
+                                              'zone name zoneBNew vsan 923',
+                                              'zone commit vsan 923',
+                                              'no terminal dont-ask'])
 
     def test_zone_add_rem_3(self):
         a = dict(zone_zoneset_details=[dict(
@@ -228,12 +231,12 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_1.cfg')
         self.execute_show_cmd_zone.return_value = load_fixture('nxos_zone_zoneset', 'shzone_0.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 
-                                                'zone name zoneBNew vsan 923', 
-                                                'member pwwn 10:00:10:94:00:00:00:01', 
-                                                'member device-alias somename', 
-                                                'zone commit vsan 923', 
-                                                'no terminal dont-ask'])
+        self.assertEqual(result['commands'], ['terminal dont-ask',
+                                              'zone name zoneBNew vsan 923',
+                                              'member pwwn 10:00:10:94:00:00:00:01',
+                                              'member device-alias somename',
+                                              'zone commit vsan 923',
+                                              'no terminal dont-ask'])
 
     # Test zone mem add/removal
     def test_zonemem_add_rem_1(self):
@@ -251,12 +254,12 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.execute_show_cmd_zone_status.return_value = load_fixture('nxos_zone_zoneset', 'shzonestatus_1.cfg')
         self.execute_show_cmd_zone.return_value = load_fixture('nxos_zone_zoneset', 'shzone_0.cfg')
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['terminal dont-ask', 
-                                                'zone name zoneA vsan 923', 
-                                                'no member pwwn 11:11:11:11:11:11:11:11', 
-                                                'no member device-alias test123', 
-                                                'zone commit vsan 923', 
-                                                'no terminal dont-ask'])
+        self.assertEqual(result['commands'], ['terminal dont-ask',
+                                              'zone name zoneA vsan 923',
+                                              'no member pwwn 11:11:11:11:11:11:11:11',
+                                              'no member device-alias test123',
+                                              'zone commit vsan 923',
+                                              'no terminal dont-ask'])
 
     # Test zone mem add/removal
     def test_zonemem_add_rem_2(self):
@@ -296,11 +299,11 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.execute_show_cmd_zone.return_value = load_fixture('nxos_zone_zoneset', 'shzone_1.cfg')
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'],
-                         ['terminal dont-ask', 'zone name zoneBNew vsan 922', 
-                         'member pwwn 10:00:10:94:00:00:00:01 initiator', 
-                         'member device-alias somename target', 
-                         'member device-alias somenameWithBoth both', 
-                         'no terminal dont-ask'])
+                         ['terminal dont-ask', 'zone name zoneBNew vsan 922',
+                          'member pwwn 10:00:10:94:00:00:00:01 initiator',
+                          'member device-alias somename target',
+                          'member device-alias somenameWithBoth both',
+                          'no terminal dont-ask'])
 
     # Test zone mem add/removal with devtype
     def test_zonemem_add_rem_4(self):
@@ -319,13 +322,12 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.execute_show_cmd_zone.return_value = load_fixture('nxos_zone_zoneset', 'shzone_1.cfg')
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'],
-                         ['terminal dont-ask', 'zone name zoneA vsan 922', 
-                         'no member device-alias test123 both', 
-                         'no terminal dont-ask'])
+                         ['terminal dont-ask', 'zone name zoneA vsan 922',
+                          'no member device-alias test123 both',
+                          'no terminal dont-ask'])
 
     # Test zoneset add/removal
     def test_zoneset_add_rem(self):
-
         a = dict(zone_zoneset_details=[
             dict(vsan=922,
                  zoneset=[
@@ -356,7 +358,6 @@ class TestNxosZoneZonesetModule(TestNxosModule):
                          )
 
     def test_zoneset_add_rem_2(self):
-
         a = dict(zone_zoneset_details=[
             dict(vsan=922,
                  zoneset=[
@@ -372,7 +373,6 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.assertEqual(result['messages'], [m])
 
     def test_zoneset_add_rem_3(self):
-
         a = dict(zone_zoneset_details=[
             dict(vsan=922,
                  zoneset=[
@@ -402,7 +402,8 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.execute_show_cmd_zoneset.return_value = load_fixture('nxos_zone_zoneset', 'shzoneset_0.cfg')
         result = self.execute_module(changed=True, failed=False)
         self.assertEqual(result['commands'],
-                         ['terminal dont-ask', 'zoneset name zsetname21 vsan 922', 'member newZoneV100', 'no terminal dont-ask']
+                         ['terminal dont-ask', 'zoneset name zsetname21 vsan 922', 'member newZoneV100',
+                          'no terminal dont-ask']
                          )
 
     # Test zoneset mem add/removal
@@ -420,7 +421,8 @@ class TestNxosZoneZonesetModule(TestNxosModule):
         self.execute_show_cmd_zoneset.return_value = load_fixture('nxos_zone_zoneset', 'shzoneset_0.cfg')
         result = self.execute_module(changed=True, failed=False)
         self.assertEqual(result['commands'],
-                         ['terminal dont-ask', 'zoneset name zsetname21 vsan 922', 'no member zone21A', 'no terminal dont-ask']
+                         ['terminal dont-ask', 'zoneset name zsetname21 vsan 922', 'no member zone21A',
+                          'no terminal dont-ask']
                          )
 
     # Test zoneset mem add/removal

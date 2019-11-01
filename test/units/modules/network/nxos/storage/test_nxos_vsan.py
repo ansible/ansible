@@ -1,8 +1,9 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 import pytest
@@ -16,7 +17,6 @@ from ..nxos_module import TestNxosModule, load_fixture, set_module_args
 
 
 class TestNxosVsanModule(TestNxosModule):
-
     module = nxos_vsan
 
     def setUp(self):

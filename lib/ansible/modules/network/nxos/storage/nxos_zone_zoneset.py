@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_zone_zoneset
 extends_documentation_fragment: nxos
-version_added: 2.10
+version_added: "2.10"
 short_description: Configuration of zone/zoneset.
 description:
     - Configuration of zone/zoneset for Cisco MDS NXOS.
