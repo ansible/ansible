@@ -66,7 +66,7 @@ Modules
 Renaming from ``_facts`` to ``_info``
 --------------------------------------
 
-Ansible 2.9 renamed a lot of modules from ``<something>_facts`` to ``<something>_info``, because the modules do not return Ansible facts. Ansible facts relate to a specific host. For example, the configuration of a network interface, the operating system on a unix server, and the list of packages installed on a Windows box are all Ansible facts. The renamed modules return values that are not unique to the host. For example, account information or region data for a cloud provider. Renaming these modules should provide more clarity about the types of return values each set of modules offers.
+Ansible 2.9 renamed a lot of modules from ``<something>_facts`` to ``<something>_info``, because the modules do not return :ref:`Ansible facts <vars_and_facts>`. Ansible facts relate to a specific host. For example, the configuration of a network interface, the operating system on a unix server, and the list of packages installed on a Windows box are all Ansible facts. The renamed modules return values that are not unique to the host. For example, account information or region data for a cloud provider. Renaming these modules should provide more clarity about the types of return values each set of modules offers.
 
 Writing modules
 ---------------
