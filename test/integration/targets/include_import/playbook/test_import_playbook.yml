@@ -1,4 +1,4 @@
-# Test that additional parameters afetr import_playbook raises a warning & strips whitespaces
+# Test that additional parameters after import_playbook raises a warning & strips whitespaces
 - import_playbook: playbook1.yml  tags=test_import
 
 # Test and validate playbook import
