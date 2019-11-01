@@ -27,6 +27,7 @@ options:
         for possible filters. Filter names and values are case sensitive.
     required: false
     default: {}
+    type: dict
 extends_documentation_fragment:
     - aws
     - ec2

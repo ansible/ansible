@@ -24,10 +24,12 @@ options:
     description:
       - Name of the key pair.
     required: true
+    type: str
   key_material:
     description:
       - Public key material.
     required: false
+    type: str
   force:
     description:
       - Force overwrite of already existing key pair if key has changed.
@@ -41,6 +43,7 @@ options:
     required: false
     choices: [ present, absent ]
     default: 'present'
+    type: str
   wait:
     description:
       - This option has no effect since version 2.5 and will be removed in 2.14.

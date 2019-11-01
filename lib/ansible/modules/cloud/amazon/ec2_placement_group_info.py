@@ -24,6 +24,8 @@ options:
     description:
       - A list of names to filter on. If a listed group does not exist, there
         will be no corresponding entry in the result; no error will be raised.
+    type: list
+    elements: str
     required: false
     default: []
 extends_documentation_fragment:

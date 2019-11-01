@@ -60,6 +60,7 @@ options:
       - Instance type to use for the instance, see U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html).
     required: true
     type: str
+    aliases: ['type']
   tenancy:
     version_added: "1.9"
     description:
@@ -219,6 +220,7 @@ options:
       - Used with 'exact_count' to determine how many nodes based on a specific tag criteria should be running.
         This can be expressed in multiple ways and is shown in the EXAMPLES section.  For instance, one can request 25 servers
         that are tagged with "class=webserver". The specified tag must already exist or be passed in as the 'instance_tags' option.
+    type: raw
   network_interfaces:
     version_added: "2.0"
     description:

@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 module: ec2_customer_gateway
 short_description: Manage an AWS customer gateway
 description:
-    - Manage an AWS customer gateway
+    - Manage an AWS customer gateway.
 version_added: "2.2"
 author: Michael Baydoun (@MichaelBaydoun)
 requirements: [ botocore, boto3 ]
@@ -28,26 +28,31 @@ notes:
 options:
   bgp_asn:
     description:
-      - Border Gateway Protocol (BGP) Autonomous System Number (ASN), required when state=present.
+      - Border Gateway Protocol (BGP) Autonomous System Number (ASN), required when I(state=present).
+    type: int
   ip_address:
     description:
       - Internet-routable IP address for customers gateway, must be a static address.
     required: true
+    type: str
   name:
     description:
       - Name of the customer gateway.
     required: true
+    type: str
   routing:
     description:
       - The type of routing.
     choices: ['static', 'dynamic']
     default: dynamic
     version_added: '2.4'
+    type: str
   state:
     description:
       - Create or terminate the Customer Gateway.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -96,13 +101,12 @@ gateway.customer_gateways:
         state:
             description: state of gateway.
             returned: when gateway exists and is available.
-            state: available
+            sample: available
             type: str
         tags:
-            description: any tags on the gateway.
+            description: Any tags on the gateway.
             returned: when gateway exists and is available, and when tags exist.
-            state: available
-            type: str
+            type: list
         type:
             description: encryption type.
             returned: when gateway exists and is available.

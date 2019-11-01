@@ -18,28 +18,31 @@ DOCUMENTATION = """
 module: ec2_lc_find
 short_description: Find AWS Autoscaling Launch Configurations
 description:
-  - Returns list of matching Launch Configurations for a given name, along with other useful information
-  - Results can be sorted and sliced
-  - It depends on boto
-  - Based on the work by Tom Bamford (https://github.com/tombamford)
+  - Returns list of matching Launch Configurations for a given name, along with other useful information.
+  - Results can be sorted and sliced.
+  - It depends on boto.
+  - Based on the work by Tom Bamford U(https://github.com/tombamford)
 
 version_added: "2.2"
 author: "Jose Armesto (@fiunchinho)"
 options:
   name_regex:
     description:
-      - A Launch Configuration to match
-      - It'll be compiled as regex
+      - A Launch Configuration to match.
+      - It'll be compiled as regex.
     required: True
+    type: str
   sort_order:
     description:
       - Order in which to sort results.
     choices: ['ascending', 'descending']
     default: 'ascending'
+    type: str
   limit:
     description:
       - How many results to show.
       - Corresponds to Python slice notation like list[:limit].
+    type: int
 requirements:
   - "python >= 2.6"
   - boto3
