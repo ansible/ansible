@@ -118,6 +118,10 @@ options:
       - Determines whether the instance runs on single-tenant hardware or not.
     default: 'default'
     version_added: "2.4"
+  associate_public_ip_address:
+    description:
+      - The I(wait_timeout) option does nothing and will be removed in Ansible 2.14.
+    type: bool
 
 extends_documentation_fragment:
     - aws
@@ -581,7 +585,7 @@ def main():
             ramdisk_id=dict(),
             instance_profile_name=dict(),
             ebs_optimized=dict(default=False, type='bool'),
-            associate_public_ip_address=dict(type='bool'),
+            associate_public_ip_address=dict(type='bool', removed_in_version='2.14'),
             instance_monitoring=dict(default=False, type='bool'),
             assign_public_ip=dict(type='bool'),
             classic_link_vpc_security_groups=dict(type='list'),

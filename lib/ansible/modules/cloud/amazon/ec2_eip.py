@@ -87,6 +87,10 @@ options:
         only applies to newly allocated Elastic IPs, isn't validated when reuse_existing_ip_allowed is true.
     default: 'no'
     version_added: "2.9"
+  wait_timeout:
+    description:
+      - The I(wait_timeout) option does nothing and will be removed in Ansible 2.14.
+    type: int
 extends_documentation_fragment:
     - aws
     - ec2
@@ -528,7 +532,7 @@ def main():
                                        default=False),
         release_on_disassociation=dict(required=False, type='bool', default=False),
         allow_reassociation=dict(type='bool', default=False),
-        wait_timeout=dict(default=300, type='int'),
+        wait_timeout=dict(type='int', removed_in_version='2.14'),
         private_ip_address=dict(),
         tag_name=dict(),
         tag_value=dict(),
