@@ -225,7 +225,7 @@
   get_url:
     url: 'https://{{ httpbin_host }}/'
     dest: '{{ remote_tmp_dir }}/test'
-    mode: '0070'
+    mode: '0700'
   register: result
 
 - stat:
@@ -236,7 +236,7 @@
   assert:
     that:
       - result is changed
-      - "stat_result.stat.mode == '0070'"
+      - "stat_result.stat.mode == '0700'"
 
 # https://github.com/ansible/ansible/issues/29614
 - name: Change mode on an already downloaded file and specify checksum
