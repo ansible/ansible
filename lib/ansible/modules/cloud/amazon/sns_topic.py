@@ -23,6 +23,7 @@ author:
   - "Joel Thompson (@joelthompson)"
   - "Fernando Jose Pando (@nand0p)"
   - "Will Thames (@willthames)"
+  - "Brian Huang (@brianhhq)
 options:
   name:
     description:
@@ -57,8 +58,18 @@ options:
         description: Endpoint of subscription.
         required: true
       protocol:
-        description: Protocol of subscription.
-        required: true
+        description: Protocol of subscription
+        required: yes
+      raw_message_delivery:
+        description: Raw messages are free of JSON formatting and can be sent to HTTP/S and Amazon SQS endpoints.
+        required: no
+        default: "false"
+        choices: ["true", "false"]
+        type: str
+      filter_policy:
+        description: The filter policy JSON assigned to the subscription
+        required: no
+        type: str
     type: list
     elements: dict
     default: []
@@ -100,6 +111,8 @@ EXAMPLES = """
         protocol: "email"
       - endpoint: "my_mobile_number"
         protocol: "sms"
+        raw_message_delivery: "true"
+        filter_policy: "{ \"insurance_type\": [\"car\", \"boat\"] }"
 
 """
 
@@ -258,6 +271,7 @@ class SnsTopicManager(object):
         self.topic_deleted = False
         self.topic_arn = None
         self.attributes_set = []
+        self.changed = False
 
     @AWSRetry.jittered_backoff()
     def _list_topics_with_backoff(self):
@@ -299,14 +313,13 @@ class SnsTopicManager(object):
         return True
 
     def _set_topic_attrs(self):
-        changed = False
         try:
             topic_attributes = self.connection.get_topic_attributes(TopicArn=self.topic_arn)['Attributes']
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg="Couldn't get topic attributes for topic %s" % self.topic_arn)
 
         if self.display_name and self.display_name != topic_attributes['DisplayName']:
-            changed = True
+            self.changed = True
             self.attributes_set.append('display_name')
             if not self.check_mode:
                 try:
@@ -316,7 +329,7 @@ class SnsTopicManager(object):
                     self.module.fail_json_aws(e, msg="Couldn't set display name")
 
         if self.policy and compare_policies(self.policy, json.loads(topic_attributes['Policy'])):
-            changed = True
+            self.changed = True
             self.attributes_set.append('policy')
             if not self.check_mode:
                 try:
@@ -327,7 +340,7 @@ class SnsTopicManager(object):
 
         if self.delivery_policy and ('DeliveryPolicy' not in topic_attributes or
                                      compare_policies(self.delivery_policy, json.loads(topic_attributes['DeliveryPolicy']))):
-            changed = True
+            self.changed = True
             self.attributes_set.append('delivery_policy')
             if not self.check_mode:
                 try:
@@ -335,15 +348,14 @@ class SnsTopicManager(object):
                                                          AttributeValue=json.dumps(self.delivery_policy))
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     self.module.fail_json_aws(e, msg="Couldn't set topic delivery policy")
-        return changed
 
-    def _canonicalize_endpoint(self, protocol, endpoint):
+    @staticmethod
+    def _canonicalize_endpoint(protocol, endpoint):
         if protocol == 'sms':
             return re.sub('[^0-9]*', '', endpoint)
         return endpoint
 
     def _set_topic_subs(self):
-        changed = False
         subscriptions_existing_list = set()
         desired_subscriptions = [(sub['protocol'],
                                   self._canonicalize_endpoint(sub['protocol'], sub['endpoint'])) for sub in
@@ -351,10 +363,11 @@ class SnsTopicManager(object):
 
         for sub in self._list_topic_subscriptions():
             sub_key = (sub['Protocol'], sub['Endpoint'])
+            self.subscriptions_existing.append(sub)
             subscriptions_existing_list.add(sub_key)
             if (self.purge_subscriptions and sub_key not in desired_subscriptions and
                     sub['SubscriptionArn'] not in ('PendingConfirmation', 'Deleted')):
-                changed = True
+                self.changed = True
                 self.subscriptions_deleted.append(sub_key)
                 if not self.check_mode:
                     try:
@@ -363,14 +376,55 @@ class SnsTopicManager(object):
                         self.module.fail_json_aws(e, msg="Couldn't unsubscribe from topic")
 
         for protocol, endpoint in set(desired_subscriptions).difference(subscriptions_existing_list):
-            changed = True
+            self.changed = True
             self.subscriptions_added.append((protocol, endpoint))
             if not self.check_mode:
                 try:
                     self.connection.subscribe(TopicArn=self.topic_arn, Protocol=protocol, Endpoint=endpoint)
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     self.module.fail_json_aws(e, msg="Couldn't subscribe to topic %s" % self.topic_arn)
-        return changed
+
+    @staticmethod
+    def _sub_arn_lookup(subscriptions_existing_list, protocol, endpoint):
+        for sub in subscriptions_existing_list:
+            if sub['Protocol'] == protocol and sub['Endpoint'] == endpoint \
+                    and sub['SubscriptionArn'] != 'PendingConfirmation':
+                return sub['SubscriptionArn']
+
+    def _set_sub_attrs(self):
+        subscriptions_existing_list = self._list_topic_subscriptions()
+        for sub in self.subscriptions:
+            subscription_arn = self._sub_arn_lookup(subscriptions_existing_list, sub['protocol'], sub['endpoint'])
+            if subscription_arn:
+                try:
+                    sub_attributes = self.connection.get_subscription_attributes(
+                        SubscriptionArn=subscription_arn)['Attributes']
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    self.module.fail_json_aws(e,
+                                              msg="Couldn't get attributes for subscription %s" % subscription_arn)
+            else:
+                continue
+            if sub['raw_message_delivery'] is not None and sub['raw_message_delivery'] != sub_attributes['RawMessageDelivery']:
+                self.changed = True
+                if not self.check_mode:
+                    try:
+                        self.connection.set_subscription_attributes(SubscriptionArn=subscription_arn,
+                                                                    AttributeName="RawMessageDelivery",
+                                                                    AttributeValue=sub['raw_message_delivery'])
+                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                        self.module.fail_json_aws(e, msg="Couldn't set subscription attribute - raw_message_delivery")
+            if sub['filter_policy'] is not None and compare_policies(
+                    json.loads(sub['filter_policy']),
+                    json.loads(sub_attributes['FilterPolicy'])):
+                self.changed = True
+                if not self.check_mode:
+                    try:
+                        self.connection.set_subscription_attributes(SubscriptionArn=subscription_arn,
+                                                                    AttributeName="FilterPolicy",
+                                                                    AttributeValue=json.dumps(
+                                                                        json.loads(sub['filter_policy'])))
+                    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                        self.module.fail_json_aws(e, msg="Couldn't set subscription attribute - filter_policy")
 
     def _list_topic_subscriptions(self):
         try:
@@ -414,32 +468,31 @@ class SnsTopicManager(object):
         return self.name.startswith('arn:')
 
     def ensure_ok(self):
-        changed = False
         if self._name_is_arn():
             self.topic_arn = self.name
         else:
             self.topic_arn = self._topic_arn_lookup()
         if not self.topic_arn:
-            changed = self._create_topic()
+            self._create_topic()
         if self.topic_arn in self._list_topics():
-            changed |= self._set_topic_attrs()
+            self._set_topic_attrs()
         elif self.display_name or self.policy or self.delivery_policy:
-            self.module.fail_json(msg="Cannot set display name, policy or delivery policy for SNS topics not owned by this account")
-        changed |= self._set_topic_subs()
-        return changed
+            self.module.fail_json(
+                msg="Cannot set display name, policy or delivery policy for SNS topics not owned by this account")
+        self._set_topic_subs()
+        self._set_sub_attrs()
 
     def ensure_gone(self):
-        changed = False
         if self._name_is_arn():
             self.topic_arn = self.name
         else:
             self.topic_arn = self._topic_arn_lookup()
         if self.topic_arn:
             if self.topic_arn not in self._list_topics():
-                self.module.fail_json(msg="Cannot use state=absent with third party ARN. Use subscribers=[] to unsubscribe")
-            changed = self._delete_subscriptions()
-            changed |= self._delete_topic()
-        return changed
+                self.module.fail_json(
+                    msg="Cannot use state=absent with third party ARN. Use subscribers=[] to unsubscribe")
+            self._delete_subscriptions()
+            self._delete_topic()
 
     def get_info(self):
         info = {
@@ -471,12 +524,21 @@ def main():
         display_name=dict(),
         policy=dict(type='dict'),
         delivery_policy=dict(type='dict'),
-        subscriptions=dict(default=[], type='list'),
+        subscriptions=dict(
+          default=[],
+          type='list',
+          elements='dict',
+          options=dict(
+            protocol=dict(type='str', required=True),
+            endpoint=dict(type='str', required=True),
+            raw_message_delivery=dict(type='str'),
+            filter_policy=dict(type='json')
+          )
+        ),
         purge_subscriptions=dict(type='bool', default=True),
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec,
-                              supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     name = module.params.get('name')
     state = module.params.get('state')
@@ -498,14 +560,11 @@ def main():
                                 check_mode)
 
     if state == 'present':
-        changed = sns_topic.ensure_ok()
-
+        sns_topic.ensure_ok()
     elif state == 'absent':
-        changed = sns_topic.ensure_gone()
+        sns_topic.ensure_gone()
 
-    sns_facts = dict(changed=changed,
-                     sns_arn=sns_topic.topic_arn,
-                     sns_topic=sns_topic.get_info())
+    sns_facts = dict(changed=sns_topic.changed, sns_arn=sns_topic.topic_arn, sns_topic=sns_topic.get_info())
 
     module.exit_json(**sns_facts)
 
