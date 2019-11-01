@@ -1,0 +1,4 @@
+---
+bugfixes:
+- "To fix ios_interfaces where non-existing virtual/loopback interfaces was not getting configured"
+- "(https://github.com/ansible/ansible/pull/63901)"
