@@ -447,22 +447,22 @@ class SnsTopicManager(object):
             return False
         for sub in subscriptions:
             if sub['SubscriptionArn'] not in ('PendingConfirmation', 'Deleted'):
+                self.changed = True
                 self.subscriptions_deleted.append(sub['SubscriptionArn'])
                 if not self.check_mode:
                     try:
                         self.connection.unsubscribe(SubscriptionArn=sub['SubscriptionArn'])
                     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                         self.module.fail_json_aws(e, msg="Couldn't unsubscribe from topic")
-        return True
 
     def _delete_topic(self):
         self.topic_deleted = True
+        self.changed = True
         if not self.check_mode:
             try:
                 self.connection.delete_topic(TopicArn=self.topic_arn)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg="Couldn't delete topic %s" % self.topic_arn)
-        return True
 
     def _name_is_arn(self):
         return self.name.startswith('arn:')
@@ -531,8 +531,8 @@ def main():
           options=dict(
             protocol=dict(type='str', required=True),
             endpoint=dict(type='str', required=True),
-            raw_message_delivery=dict(type='str'),
-            filter_policy=dict(type='json')
+            raw_message_delivery=dict(type='str', required=False),
+            filter_policy=dict(type='json', required=False)
           )
         ),
         purge_subscriptions=dict(type='bool', default=True),
