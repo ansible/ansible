@@ -309,6 +309,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if callable(value):
                 self._attr_defaults[key] = value()
 
+        self._valid_attrs_repr = [(name, attribute.serialize()) for (name, attribute) in iteritems(self._valid_attrs)]
+
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
 
@@ -570,7 +572,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         repr['uuid'] = self._uuid
         repr['finalized'] = self._finalized
         repr['squashed'] = self._squashed
-        repr['valid_attrs'] = [(name, attribute.serialize()) for (name, attribute) in iteritems(self._valid_attrs)]
+        repr['valid_attrs'] = self._valid_attrs_repr
         repr['class_name'] = self.__class__.__name__
         repr['ds'] = self.get_ds()
 
