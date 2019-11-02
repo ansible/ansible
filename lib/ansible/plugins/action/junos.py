@@ -22,8 +22,6 @@ __metaclass__ = type
 import sys
 import copy
 
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.junos.junos import junos_provider_spec
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
@@ -41,7 +39,6 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'junos_config' else False
-        socket_path = None
 
         if self._play_context.connection == 'local':
             provider = load_provider(junos_provider_spec, self._task.args)
@@ -93,19 +90,6 @@ class ActionModule(ActionNetworkModule):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module. "
                                                "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
                                                % (self._play_context.connection, module_name)}
-
-        if (self._play_context.connection == 'local' and pc.connection == 'network_cli') or self._play_context.connection == 'network_cli':
-            # make sure we are in the right cli context which should be
-            # enable mode and not config module
-            if socket_path is None:
-                socket_path = self._connection.socket_path
-
-            conn = Connection(socket_path)
-            out = conn.get_prompt()
-            while to_text(out, errors='surrogate_then_replace').strip().endswith('#'):
-                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                conn.send_command('exit')
-                out = conn.get_prompt()
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result

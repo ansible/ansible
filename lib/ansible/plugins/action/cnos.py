@@ -24,8 +24,6 @@ from ansible import constants as C
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.cnos.cnos import cnos_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
-from ansible.module_utils.connection import Connection
-from ansible.module_utils._text import to_text
 from ansible.utils.display import Display
 
 display = Display()
@@ -37,7 +35,6 @@ class ActionModule(ActionNetworkModule):
         del tmp  # tmp no longer has any effect
 
         self._config_module = True if self._task.action == 'cnos_config' else False
-        socket_path = None
 
         if self._play_context.connection == 'local':
             provider = load_provider(cnos_provider_spec, self._task.args)
@@ -66,19 +63,6 @@ class ActionModule(ActionNetworkModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
-
-        # make sure we are in the right cli context which should be
-        # enable mode and not config module or exec mode
-        if socket_path is None:
-            socket_path = self._connection.socket_path
-
-        conn = Connection(socket_path)
-        out = conn.get_prompt()
-        if to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
-            display.vvvv('In Config mode, sending exit to device', self._play_context.remote_addr)
-            conn.send_command('exit')
-        else:
-            conn.send_command('enable')
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result

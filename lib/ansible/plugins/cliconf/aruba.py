@@ -86,3 +86,11 @@ class Cliconf(CliconfBase):
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            self._update_cli_prompt_context(config_context=')#')
