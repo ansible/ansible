@@ -77,22 +77,26 @@ def _validate_mutable_mappings(a, b):
         )
 
 
-def combine_vars(a, b):
+def combine_vars(a, b, validate=True, inplace=False):
     """
     Return a copy of dictionaries of variables based on configured hash behavior
     """
 
     if C.DEFAULT_HASH_BEHAVIOUR == "merge":
-        return merge_hash(a, b)
+        return merge_hash(a, b, validate=validate)
     else:
         # HASH_BEHAVIOUR == 'replace'
-        _validate_mutable_mappings(a, b)
-        result = a.copy()
+        if validate:
+            _validate_mutable_mappings(a, b)
+        if inplace:
+            result = a
+        else:
+            result = a.copy()
         result.update(b)
         return result
 
 
-def merge_hash(a, b):
+def merge_hash(a, b, validate=True):
     """
     Recursively merges hash b into a so that keys from b take precedence over keys from a
     """

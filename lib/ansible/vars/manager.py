@@ -195,7 +195,7 @@ class VariableManager:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
-                all_vars = combine_vars(all_vars, role.get_default_vars())
+                all_vars = combine_vars(all_vars, role.get_default_vars(), validate=False, inplace=True)
 
         if task:
             # set basedirs
@@ -211,7 +211,7 @@ class VariableManager:
             # sure it sees its defaults above any other roles, as we previously
             # (v1) made sure each task had a copy of its roles default vars
             if task._role is not None and (play or task.action == 'include_role'):
-                all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
+                all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()), validate=False, inplace=True)
 
         if host:
             # THE 'all' group and the rest of groups for a host, used below
@@ -282,8 +282,8 @@ class VariableManager:
                 '''
                 data = {}
                 for group in host_groups:
-                    data[group] = combine_vars(data[group], _plugins_inventory(group))
-                    data[group] = combine_vars(data[group], _plugins_play(group))
+                    data[group] = combine_vars(data[group], _plugins_inventory(group), validate=False, inplace=True)
+                    data[group] = combine_vars(data[group], _plugins_play(group), validate=False, inplace=True)
                 return data
 
             # Merge groups as per precedence config
@@ -291,14 +291,14 @@ class VariableManager:
             for entry in C.VARIABLE_PRECEDENCE:
                 if entry in self._ALLOWED:
                     display.debug('Calling %s to load vars for %s' % (entry, host.name))
-                    all_vars = combine_vars(all_vars, locals()[entry]())
+                    all_vars = combine_vars(all_vars, locals()[entry](), validate=False, inplace=True)
                 else:
                     display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
 
             # host vars, from inventory, inventory adjacent and play adjacent via plugins
-            all_vars = combine_vars(all_vars, host.get_vars())
-            all_vars = combine_vars(all_vars, _plugins_inventory([host]))
-            all_vars = combine_vars(all_vars, _plugins_play([host]))
+            all_vars = combine_vars(all_vars, host.get_vars(), validate=False, inplace=True)
+            all_vars = combine_vars(all_vars, _plugins_inventory([host]), validate=False, inplace=True)
+            all_vars = combine_vars(all_vars, _plugins_play([host]), validate=False, inplace=True)
 
             # finally, the facts caches for this host, if it exists
             # TODO: cleaning of facts should eventually become part of taskresults instead of vars
@@ -308,23 +308,23 @@ class VariableManager:
 
                 # push facts to main namespace
                 if C.INJECT_FACTS_AS_VARS:
-                    all_vars = combine_vars(all_vars, wrap_var(clean_facts(facts)))
+                    all_vars = combine_vars(all_vars, wrap_var(clean_facts(facts)), validate=False, inplace=True)
                 else:
                     # always 'promote' ansible_local
-                    all_vars = combine_vars(all_vars, wrap_var({'ansible_local': facts.get('ansible_local', {})}))
+                    all_vars = combine_vars(all_vars, wrap_var({'ansible_local': facts.get('ansible_local', {})}), validate=False, inplace=True)
             except KeyError:
                 pass
 
         if play:
-            all_vars = combine_vars(all_vars, play.get_vars())
+            all_vars = combine_vars(all_vars, play.get_vars(), validate=False, inplace=True)
 
             vars_files = play.get_vars_files()
             try:
                 for vars_file_item in vars_files:
                     # create a set of temporary vars here, which incorporate the extra
                     # and magic vars so we can properly template the vars_files entries
-                    temp_vars = combine_vars(all_vars, self._extra_vars)
-                    temp_vars = combine_vars(temp_vars, magic_variables)
+                    temp_vars = combine_vars(all_vars, self._extra_vars, validate=False, inplace=True)
+                    temp_vars = combine_vars(temp_vars, magic_variables, validate=False, inplace=True)
                     templar = Templar(loader=self._loader, variables=temp_vars)
 
                     # we assume each item in the list is itself a list, as we
@@ -350,7 +350,7 @@ class VariableManager:
                                 data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                                 if data is not None:
                                     for item in data:
-                                        all_vars = combine_vars(all_vars, item)
+                                        all_vars = combine_vars(all_vars, item, validate=False, inplace=True)
                                 break
                             except AnsibleFileNotFound:
                                 # we continue on loader failures
@@ -381,39 +381,39 @@ class VariableManager:
             # unless the user has disabled this via a config option
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
-                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
+                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False), validate=False, inplace=True)
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False))
-            all_vars = combine_vars(all_vars, task.get_vars())
+                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False), validate=False, inplace=True)
+            all_vars = combine_vars(all_vars, task.get_vars(), validate=False, inplace=True)
 
         # next, we merge in the vars cache (include vars) and nonpersistent
         # facts cache (set_fact/register), in that order
         if host:
             # include_vars non-persistent cache
-            all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
+            all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()), validate=False, inplace=True)
             # fact non-persistent cache
-            all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
+            all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()), validate=False, inplace=True)
 
         # next, we merge in role params and task include params
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_role_params(task.get_dep_chain()))
+                all_vars = combine_vars(all_vars, task._role.get_role_params(task.get_dep_chain()), validate=False, inplace=True)
 
             # special case for include tasks, where the include params
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
-            all_vars = combine_vars(all_vars, task.get_include_params())
+            all_vars = combine_vars(all_vars, task.get_include_params(), validate=False, inplace=True)
 
         # extra vars
-        all_vars = combine_vars(all_vars, self._extra_vars)
+        all_vars = combine_vars(all_vars, self._extra_vars, validate=False, inplace=True)
 
         # magic variables
-        all_vars = combine_vars(all_vars, magic_variables)
+        all_vars = combine_vars(all_vars, magic_variables, validate=False, inplace=True)
 
         # special case for the 'environment' magic variable, as someone
         # may have set it as a variable and we don't want to stomp on it
@@ -441,7 +441,7 @@ class VariableManager:
         '''
 
         variables = {}
-        variables['playbook_dir'] = os.path.abspath(self._loader.get_basedir())
+        variables['playbook_dir'] = self._loader.get_basedir()
         variables['ansible_playbook_python'] = sys.executable
 
         if play:
@@ -596,10 +596,10 @@ class VariableManager:
                                 break
                         else:
                             delegated_host = Host(name=delegated_host_name)
-                            delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars)
+                            delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars, validate=False, inplace=True)
             else:
                 delegated_host = Host(name=delegated_host_name)
-                delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars)
+                delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars, validate=False, inplace=True)
 
             # now we go fetch the vars for the delegated-to host and save them in our
             # master dictionary of variables to be used later in the TaskExecutor/PlayContext
@@ -670,6 +670,6 @@ class VariableManager:
         if host not in self._vars_cache:
             self._vars_cache[host] = dict()
         if varname in self._vars_cache[host] and isinstance(self._vars_cache[host][varname], MutableMapping) and isinstance(value, MutableMapping):
-            self._vars_cache[host] = combine_vars(self._vars_cache[host], {varname: value})
+            self._vars_cache[host] = combine_vars(self._vars_cache[host], {varname: value}, validate=False, inplace=True)
         else:
             self._vars_cache[host][varname] = value
