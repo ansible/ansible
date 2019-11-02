@@ -38,14 +38,17 @@ options:
     description:
       - This is the URL of the WTI device to send the module.
     required: true
+    type: str
   cpm_username:
     description:
       - This is the Username of the WTI device to send the module.
     required: true
+    type: str
   cpm_password:
     description:
       - This is the Password of the WTI device to send the module.
     required: true
+    type: str
   use_https:
     description:
       - Designates to use an https connection or http connection.
