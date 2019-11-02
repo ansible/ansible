@@ -28,6 +28,10 @@ description:
     - This module offers the ability to configure a BGP EVPN peer relationship on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@QijunPan)
+notes:
+  - This module requires the netconf system service be enabled on the remote device being managed.
+  - Recommended connection is C(netconf).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
     bgp_instance:
         description:

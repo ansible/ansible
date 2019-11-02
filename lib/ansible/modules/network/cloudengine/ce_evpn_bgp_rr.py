@@ -31,6 +31,9 @@ author: Zhijin Zhou (@QijunPan)
 notes:
     - Ensure that BGP view is existed.
     - The peer, peer_type, and reflect_client arguments must all exist or not exist.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     as_number:
         description:

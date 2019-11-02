@@ -31,6 +31,10 @@ description:
 author:
     - Zhijin Zhou (@QijunPan)
 notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
+notes:
     - The relevant configurations will be deleted if DLDP is disabled using enable=disable.
     - When using auth_mode=none, it will restore the default DLDP authentication mode. By default,
       DLDP packets are not authenticated.
