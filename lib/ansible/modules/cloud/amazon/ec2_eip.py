@@ -238,6 +238,7 @@ def associate_ip_and_device(ec2, module, address, private_ip_address, device_id,
     # If we're in check mode, nothing else to do
     if not check_mode:
         if is_instance:
+            err = None  # workaround for Python 3's stricter scoping rules
             try:
                 params = dict(
                     InstanceId=device_id,
@@ -250,6 +251,7 @@ def associate_ip_and_device(ec2, module, address, private_ip_address, device_id,
                     params['PublicIp'] = address['PublicIp']
                 res = ec2.associate_address(**params)
             except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+                err = e
                 msg = "Couldn't associate Elastic IP address with instance '{0}'".format(device_id)
                 module.fail_json_aws(e, msg=msg)
         else:
@@ -265,10 +267,11 @@ def associate_ip_and_device(ec2, module, address, private_ip_address, device_id,
             try:
                 res = ec2.associate_address(aws_retry=True, **params)
             except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+                err = e
                 msg = "Couldn't associate Elastic IP address with network interface '{0}'".format(device_id)
                 module.fail_json_aws(e, msg=msg)
         if not res:
-            module.fail_json_aws(e, msg='Association failed.')
+            module.fail_json_aws(err, msg='Association failed.')
 
     return {'changed': True}
 
