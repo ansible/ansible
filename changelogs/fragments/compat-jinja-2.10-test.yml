@@ -1,0 +1,3 @@
+---
+bugfixes:
+- fixed ansible template failures on older jinja due to missing built-in tests
