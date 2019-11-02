@@ -314,6 +314,7 @@ class Connection(NetworkConnectionBase):
         self._last_response = None
         self._history = list()
         self._command_response = None
+        self._last_recv_window = None
 
         self._terminal = None
         self.cliconf = None
@@ -541,6 +542,7 @@ class Connection(NetworkConnectionBase):
             recv.seek(offset)
 
             window = self._strip(recv.read())
+            self._last_recv_window = window
             window_count += 1
 
             if prompts and not handled:
