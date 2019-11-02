@@ -148,7 +148,7 @@ class StrategyModule(StrategyBase):
 
                         # pop the task, mark the host blocked, and queue it
                         self._blocked_hosts[host_name] = True
-                        (state, task) = iterator.get_next_task_for_host(host)
+                        iterator._host_states[host_name] = state
 
                         try:
                             action = action_loader.get(task.action, class_only=True)
