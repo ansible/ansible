@@ -331,3 +331,13 @@
     - assert:
         that:
           - "combined.key2 == 'is_defined'"
+
+- name: ensure that unique is case sensitive by default
+  assert:
+    that:
+      - "{{ (mylist | unique) == mylist }}"
+  vars:
+    mylist:
+      - one
+      - two
+      - Two

@@ -1,0 +1,7 @@
+---
+bugfixes:
+- >-
+  ``unique` filter - unify case sensitivity between old and new jinja2 versions.
+  Prior to 2.8, the ``unique`` filter was always case sensitive.  Restore that
+  behavior as default.  (Ansible 2.8 case sensitivity previously dependeded on
+  which version of jinja2 was available.)
