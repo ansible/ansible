@@ -17,27 +17,31 @@ module: rds_param_group
 version_added: "1.5"
 short_description: manage RDS parameter groups
 description:
-     - Creates, modifies, and deletes RDS parameter groups. This module has a dependency on python-boto >= 2.5.
+     - Creates, modifies, and deletes RDS parameter groups.
 requirements: [ boto3 ]
 options:
   state:
     description:
       - Specifies whether the group should be present or absent.
     required: true
-    default: present
     choices: [ 'present' , 'absent' ]
+    type: str
   name:
     description:
       - Database parameter group identifier.
     required: true
+    type: str
   description:
     description:
       - Database parameter group description. Only set when a new group is added.
+    type: str
   engine:
     description:
-      - The type of database for this group. Required for state=present.
+      - The type of database for this group.
       - Please use following command to get list of all supported db engines and their respective versions.
       - '# aws rds describe-db-engine-versions --query "DBEngineVersions[].DBParameterGroupFamily"'
+      - Required for I(state=present).
+    type: str
   immediate:
     description:
       - Whether to apply the changes immediately, or after the next reboot of any associated instances.
@@ -49,13 +53,15 @@ options:
       - Map of parameter names and values. Numeric values may be represented as K for kilo (1024), M for mega (1024^2), G for giga (1024^3),
         or T for tera (1024^4), and these values will be expanded into the appropriate number before being set in the parameter group.
     aliases: [parameters]
+    type: dict
   tags:
     description:
-      - Dictionary of tags to attach to the parameter group
+      - Dictionary of tags to attach to the parameter group.
     version_added: "2.4"
+    type: dict
   purge_tags:
     description:
-      - Whether or not to remove tags that do not appear in the I(tags) list.
+      - Whether or not to remove tags that do not appear in the M(tags) list.
     version_added: "2.4"
     type: bool
     default: False

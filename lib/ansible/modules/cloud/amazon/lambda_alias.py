@@ -28,27 +28,32 @@ options:
     description:
       - The name of the function alias.
     required: true
+    type: str
   state:
     description:
       - Describes the desired state.
     required: true
     default: "present"
     choices: ["present", "absent"]
+    type: str
   name:
     description:
       - Name of the function alias.
     required: true
     aliases: ['alias_name']
+    type: str
   description:
     description:
       - A short, user-defined function alias description.
     required: false
-  version:
+    type: str
+  function_version:
     description:
       -  Version associated with the Lambda function alias.
          A value of 0 (or omitted parameter) sets the alias to the $LATEST version.
     required: false
-    aliases: ['function_version']
+    aliases: ['version']
+    type: int
 requirements:
     - boto3
 extends_documentation_fragment:

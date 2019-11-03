@@ -26,22 +26,28 @@ author: Allen Sanabria (@linuxdynasty)
 options:
   name:
     description:
-      - "The name of the Kinesis Stream you are managing."
+      - The name of the Kinesis Stream you are managing.
     required: true
+    type: str
   shards:
     description:
-      - "The number of shards you want to have with this stream."
-      - "This is required when state == present"
+      - The number of shards you want to have with this stream.
+      - This is required when I(state=present)
+    type: int
   retention_period:
     description:
-      - "The default retention period is 24 hours and can not be less than 24
-      hours."
-      - "The retention period can be modified during any point in time."
+      - The length of time (in hours) data records are accessible after they are added to
+        the stream.
+      - The default retention period is 24 hours and can not be less than 24 hours.
+      - The maximum retention period is 168 hours.
+      - The retention period can be modified during any point in time.
+    type: int
   state:
     description:
-      - "Create or Delete the Kinesis Stream."
+      - Create or Delete the Kinesis Stream.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   wait:
     description:
       - Wait for operation to complete before returning.
@@ -51,24 +57,30 @@ options:
     description:
       - How many seconds to wait for an operation to complete before timing out.
     default: 300
+    type: int
   tags:
     description:
-      - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }."
+      - "A dictionary of resource tags of the form: C({ tag1: value1, tag2: value2 })."
     aliases: [ "resource_tags" ]
+    type: dict
   encryption_state:
     description:
-      - "Enable or Disable encryption on the Kinesis Stream."
+      - Enable or Disable encryption on the Kinesis Stream.
     choices: [ 'enabled', 'disabled' ]
     version_added: "2.5"
+    type: str
   encryption_type:
     description:
-      - "The type of encryption."
-    default: KMS
+      - The type of encryption.
+      - Defaults to C(KMS)
+    choices: ['KMS', 'NONE']
     version_added: "2.5"
+    type: str
   key_id:
     description:
-      - "The GUID or alias for the KMS key."
+      - The GUID or alias for the KMS key.
     version_added: "2.5"
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
