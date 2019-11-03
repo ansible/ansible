@@ -222,7 +222,7 @@ class OnyxBFDModule(BaseOnyxModule):
                     self._commands.append('ip route vrf {0} {1} /{2} {3} bfd' .format(vrf_name, iproute_network_prefix, iproute_mask_length, iproute_next_hop))
             else:
                 if curr_config_arr is not None:
-                    if ('ip route vrf default {1}/{2} {3} bfd' .format(vrf_name, iproute_network_prefix,
+                    if ('ip route vrf default {0}/{1} {2} bfd' .format(iproute_network_prefix,
                                                                        iproute_mask_length, iproute_next_hop)) not in curr_config_arr:
                         self._commands.append('ip route {0} /{1} {2} bfd' .format(iproute_network_prefix, iproute_mask_length, iproute_next_hop))
                 else:
