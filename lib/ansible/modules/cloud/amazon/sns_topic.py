@@ -23,7 +23,7 @@ author:
   - "Joel Thompson (@joelthompson)"
   - "Fernando Jose Pando (@nand0p)"
   - "Will Thames (@willthames)"
-  - "Brian Huang (@brianhhq)
+  - "Brian Huang (@brianhhq)"
 options:
   name:
     description:
@@ -525,14 +525,14 @@ def main():
         policy=dict(type='dict'),
         delivery_policy=dict(type='dict'),
         subscriptions=dict(
-          default=[],
-          type='list',
-          elements='dict',
-          options=dict(
-            protocol=dict(type='str', required=True),
-            endpoint=dict(type='str', required=True),
-            raw_message_delivery=dict(type='str', required=False),
-            filter_policy=dict(type='json', required=False)
+            default=[],
+            type='list',
+            elements='dict',
+            options=dict(
+                protocol=dict(type='str', required=True),
+                endpoint=dict(type='str', required=True),
+                raw_message_delivery=dict(type='str', required=False),
+                filter_policy=dict(type='json', required=False)
           )
         ),
         purge_subscriptions=dict(type='bool', default=True),
