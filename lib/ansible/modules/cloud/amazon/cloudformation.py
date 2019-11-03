@@ -102,11 +102,10 @@ options:
     version_added: "2.4"
   template_format:
     description:
-    - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format.
-      This parameter is ignored since Ansible 2.3.
-    default: json
-    choices: [ json, yaml ]
+    - This parameter is ignored since Ansible 2.3 and will be removed in Ansible 2.14.
+    - Templates are now passed raw to CloudFormation regardless of format.
     version_added: "2.0"
+    type: str
   role_arn:
     description:
     - The role that AWS CloudFormation assumes to create the stack. See the AWS CloudFormation Service Role
@@ -638,7 +637,7 @@ def main():
         create_timeout=dict(default=None, type='int'),
         template_url=dict(default=None, required=False),
         template_body=dict(default=None, require=False),
-        template_format=dict(default=None, choices=['json', 'yaml'], required=False),
+        template_format=dict(removed_in_version='2.14'),
         create_changeset=dict(default=False, type='bool'),
         changeset_name=dict(default=None, required=False),
         role_arn=dict(default=None, required=False),
@@ -812,10 +811,6 @@ def main():
         except Exception as err:
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
 
-    if module.params['template_format'] is not None:
-        result['warnings'] = [('Argument `template_format` is deprecated '
-                               'since Ansible 2.3, JSON and YAML templates are now passed '
-                               'directly to the CloudFormation API.')]
     module.exit_json(**result)
 
 
