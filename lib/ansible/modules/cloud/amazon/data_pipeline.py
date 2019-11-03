@@ -125,6 +125,11 @@ options:
     description:
       - A dict of key:value pair(s) to add to the pipeline.
     type: dict
+  version:
+    description:
+      - The version option has never had any effect and will be removed in
+        Ansible 2.14
+    type: str
 '''
 
 EXAMPLES = '''
@@ -604,7 +609,7 @@ def main():
     argument_spec.update(
         dict(
             name=dict(required=True),
-            version=dict(required=False),
+            version=dict(removed_in_version='2.14'),
             description=dict(required=False, default=''),
             objects=dict(required=False, type='list', default=[]),
             parameters=dict(required=False, type='list', default=[]),
