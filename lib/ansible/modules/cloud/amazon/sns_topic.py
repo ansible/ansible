@@ -63,15 +63,17 @@ options:
       raw_message_delivery:
         description: Raw messages are free of JSON formatting and can be sent to HTTP/S and Amazon SQS endpoints.
         required: no
-        default: "false"
-        choices: ["true", "false"]
         type: str
       filter_policy:
         description: The filter policy JSON assigned to the subscription
         required: no
+<<<<<<< HEAD
         type: str
     type: list
     elements: dict
+=======
+        type: json
+>>>>>>> Fix docs syntax
     default: []
   purge_subscriptions:
     description:
@@ -112,7 +114,7 @@ EXAMPLES = """
       - endpoint: "my_mobile_number"
         protocol: "sms"
         raw_message_delivery: "true"
-        filter_policy: "{ \"insurance_type\": [\"car\", \"boat\"] }"
+        filter_policy: "{{ lookup( 'template', 'filter_policy.json.j2') }}"
 
 """
 
@@ -533,7 +535,7 @@ def main():
                 endpoint=dict(type='str', required=True),
                 raw_message_delivery=dict(type='str', required=False),
                 filter_policy=dict(type='json', required=False)
-          )
+            )
         ),
         purge_subscriptions=dict(type='bool', default=True),
     )
