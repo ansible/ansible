@@ -714,7 +714,7 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
 
-    region, _, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = EFSConnection(module, region, **aws_connect_params)
 
     name = module.params.get('name')

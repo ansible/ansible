@@ -244,7 +244,7 @@ def run_with_timeout(timeout, func, *func_args, **func_kwargs):
 
     """
 
-    for _ in range(timeout // 10):
+    for count in range(timeout // 10):
         if func(*func_args, **func_kwargs):
             return True
         else:
@@ -525,7 +525,7 @@ def create_pipeline(client, module):
 
     if changed == "NEW_VERSION":
         # delete old version
-        changed, _ = delete_pipeline(client, module)
+        changed, creation_result = delete_pipeline(client, module)
 
     # There isn't a pipeline or it has different parameters than the pipeline in existence.
     if create_dp:
@@ -544,7 +544,7 @@ def create_pipeline(client, module):
             module.fail_json(msg=('Data Pipeline {0} failed to create'
                                   'within timeout {1} seconds').format(dp_name, timeout))
         # Put pipeline definition
-        _, msg = define_pipeline(client, module, objects, dp_id)
+        changed, msg = define_pipeline(client, module, objects, dp_id)
 
         changed = True
         data_pipeline = get_result(client, dp_id)

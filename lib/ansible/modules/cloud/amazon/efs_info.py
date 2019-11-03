@@ -370,7 +370,7 @@ def main():
         module.deprecate("The 'efs_facts' module has been renamed to 'efs_info', "
                          "and the renamed one no longer returns ansible_facts", version='2.13')
 
-    region, _, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = EFSConnection(module, region, **aws_connect_params)
 
     name = module.params.get('name')
