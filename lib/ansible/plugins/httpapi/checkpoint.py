@@ -21,11 +21,6 @@ options:
       - Specifies the domain of the Check Point device
     vars:
       - name: ansible_checkpoint_domain
-    ini:
-      - section: checkpoint_httpapi
-        key: checkpoint_domain
-    env:
-      - name: ANSIBLE_CHECKPOINT_DOMAIN
 """
 
 import json
