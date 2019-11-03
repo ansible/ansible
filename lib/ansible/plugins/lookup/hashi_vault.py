@@ -3,7 +3,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
-import subprocess
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -118,6 +117,7 @@ import os
 from ansible.errors import AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.lookup import LookupBase
+from ansible.module_utils.basic import AnsibleModule
 
 HAS_HVAC = False
 try:
@@ -180,20 +180,22 @@ class HashiVault:
                     os.environ.get('HOME'),
                     '.vault-token'
                 )
-                vault_conf_file = os.path.join(
+                vault_conf_filename = os.path.join(
                     os.environ.get('HOME'),
                     '.vault'
                 )
                 if os.path.exists(token_filename):
                     with open(token_filename) as token_file:
                         self.token = token_file.read().strip()
-                elif os.path.exists(vault_conf_file):
-                    with open(vault_conf_file) as vault_conf:
-                        for line in vault_conf:
+                elif os.path.exists(vault_conf_filename):
+                    with open(vault_conf_filename) as vault_conf_file:
+                        for line in vault_conf_file:
                             if 'token-helper' in line:
                                 tokenhelper_path = line.split('=')[1].strip().strip('"')
                     if os.path.exists(tokenhelper_path):
-                        self.token = subprocess.check_output([tokenhelper_path, "get"])
+                        rc, out, err = AnsibleModule.run_command([tokenhelper_path, "get"])
+                        if out:
+                            self.token = out
 
             if self.token is None:
                 raise AnsibleError("No Vault Token specified")
