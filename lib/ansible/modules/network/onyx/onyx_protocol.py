@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: onyx_protocol
-version_added: "2.5"
+version_added: "2.9"
 author: "Samer Deeb (@samerd)"
 short_description: Enables/Disables protocols on Mellanox ONYX network devices
 description:
