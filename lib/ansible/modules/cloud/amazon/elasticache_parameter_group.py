@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: elasticache_parameter_group
-short_description: Manage cache security groups in Amazon Elasticache.
+short_description: Manage cache security groups in Amazon ElastiCache.
 description:
-  - Manage cache security groups in Amazon Elasticache.
+  - Manage cache security groups in Amazon ElastiCache.
   - Returns information about the specified cache cluster.
 version_added: "2.3"
 author: "Sloane Hertel (@s-hertel)"
@@ -30,21 +30,26 @@ options:
       - The name of the cache parameter group family that the cache parameter group can be used with.
         Required when creating a cache parameter group.
     choices: ['memcached1.4', 'memcached1.5', 'redis2.6', 'redis2.8', 'redis3.2', 'redis4.0', 'redis5.0']
+    type: str
   name:
     description:
      - A user-specified name for the cache parameter group.
     required: yes
+    type: str
   description:
     description:
       - A user-specified description for the cache parameter group.
+    type: str
   state:
     description:
       - Idempotent actions that will create/modify, destroy, or reset a cache parameter group as needed.
     choices: ['present', 'absent', 'reset']
     required: true
+    type: str
   values:
     description:
       - A user-specified dictionary of parameters to reset or modify for the cache parameter group.
+    type: dict
 """
 
 EXAMPLES = """

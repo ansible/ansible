@@ -14,8 +14,8 @@ DOCUMENTATION = '''
 
 module: cloudfront_origin_access_identity
 
-short_description: create, update and delete origin access identities for a
-                   cloudfront distribution.
+short_description: Create, update and delete origin access identities for a
+                   cloudfront distribution
 
 description:
     - Allows for easy creation, updating and deletion of origin access
@@ -39,22 +39,26 @@ options:
       choices:
         - present
         - absent
-      default: update_origin_access_identity
+      default: present
+      type: str
     origin_access_identity_id:
       description:
         - The origin_access_identity_id of the cloudfront distribution.
       required: false
+      type: str
     comment:
       description:
         - A comment to describe the cloudfront origin access identity.
       required: false
+      type: str
     caller_reference:
       description:
         - A unique identifier to reference the origin access identity by.
       required: false
+      type: str
 
 notes:
-  - does not support check mode
+  - Does not support check mode.
 
 '''
 

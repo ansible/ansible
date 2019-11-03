@@ -14,7 +14,7 @@ DOCUMENTATION = '''
 
 module: cloudfront_invalidation
 
-short_description: create invalidations for aws cloudfront distributions
+short_description: create invalidations for AWS CloudFront distributions
 description:
     - Allows for invalidation of a batch of paths for a CloudFront distribution.
 
@@ -33,21 +33,27 @@ extends_documentation_fragment:
 options:
     distribution_id:
       description:
-        - The id of the cloudfront distribution to invalidate paths for. Can be specified instead of the alias.
+        - The id of the CloudFront distribution to invalidate paths for. Can be specified instead of the alias.
       required: false
+      type: str
     alias:
       description:
-        - The alias of the cloudfront distribution to invalidate paths for. Can be specified instead of distribution_id.
+        - The alias of the CloudFront distribution to invalidate paths for. Can be specified instead of distribution_id.
       required: false
+      type: str
     caller_reference:
       description:
         - A unique reference identifier for the invalidation paths.
+        - Defaults to current datetime stamp.
       required: false
-      default: current datetime stamp
+      default:
+      type: str
     target_paths:
       description:
         - A list of paths on the distribution to invalidate. Each path should begin with '/'. Wildcards are allowed. eg. '/foo/bar/*'
       required: true
+      type: list
+      elements: str
 
 notes:
   - does not support check mode
