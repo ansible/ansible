@@ -389,6 +389,36 @@ def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=No
 
 
 # TODO: mv these classes to a separate file so we don't pollute vault with 'subprocess' etc
+class EnvVaultSecret(VaultSecret):
+    def __init__(self, envvar=None, loader=None):
+        super(EnvVaultSecret, self).__init__()
+        self.envvar = envvar
+        self.loader = loader
+
+        # We could load from file here, but that is eventually a pain to test
+        self._bytes = None
+
+    @property
+    def bytes(self):
+        return self._bytes
+
+    def load(self):
+        self._bytes = self._read_env(self.envvar)
+
+    def _read_env(self, envvar):
+        if envvar not in os.environ:
+            raise AnsibleError("Vault password variable %s doesn't exist in the environment" % envvar)
+
+        vault_pass = os.environ[envvar]
+        return to_bytes(vault_pass)
+
+    def __repr__(self):
+        if self.envvar:
+            return "%s(envvar='%s')" % (self.__class__.__name__, self.envvar)
+        return "%s()" % (self.__class__.__name__)
+
+
+# TODO: mv these classes to a separate file so we don't pollute vault with 'subprocess' etc
 class FileVaultSecret(VaultSecret):
     def __init__(self, filename=None, encoding=None, loader=None):
         super(FileVaultSecret, self).__init__()

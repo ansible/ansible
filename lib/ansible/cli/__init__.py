@@ -23,7 +23,7 @@ from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.dataloader import DataLoader
-from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
+from ansible.parsing.vault import EnvVaultSecret, PromptVaultSecret, get_file_vault_secret
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionLoader, get_collection_name_from_path, set_collection_playbook_paths
@@ -109,11 +109,17 @@ class CLI(with_metaclass(ABCMeta, object)):
         return ret
 
     @staticmethod
-    def build_vault_ids(vault_ids, vault_password_files=None,
+    def build_vault_ids(vault_ids, vault_password_env=None, vault_password_files=None,
                         ask_vault_pass=None, create_new_password=None,
                         auto_prompt=True):
+        vault_password_env = vault_password_env or []
         vault_password_files = vault_password_files or []
         vault_ids = vault_ids or []
+
+        # convert vault_password_env into vault_id slugs
+        for password_env in vault_password_env:
+            id_slug = u'%s@env:%s' % (C.DEFAULT_VAULT_IDENTITY, password_env)
+            vault_ids.append(id_slug)
 
         # convert vault_password_files into vault_ids slugs
         for password_file in vault_password_files:
@@ -136,7 +142,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
     # TODO: remove the now unused args
     @staticmethod
-    def setup_vault_secrets(loader, vault_ids, vault_password_files=None,
+    def setup_vault_secrets(loader, vault_ids, vault_password_env=None, vault_password_files=None,
                             ask_vault_pass=None, create_new_password=False,
                             auto_prompt=True):
         # list of tuples
@@ -165,7 +171,9 @@ class CLI(with_metaclass(ABCMeta, object)):
             # The format when we use just --ask-vault-pass needs to match 'Vault password:\s*?$'
             prompt_formats['prompt_ask_vault_pass'] = ['Vault password: ']
 
+        vault_password_env = vault_password_env or []
         vault_ids = CLI.build_vault_ids(vault_ids,
+                                        vault_password_env,
                                         vault_password_files,
                                         ask_vault_pass,
                                         create_new_password,
@@ -173,7 +181,20 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
-            if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
+            if vault_id_value.startswith('env:'):
+                env_vault_variable = vault_id_value[len('env:'):]
+                env_vault_secret = EnvVaultSecret(envvar=env_vault_variable, loader=loader)
+                try:
+                    env_vault_secret.load()
+                except AnsibleError as exc:
+                    display.warning('Error in vault password environment variable (%s): %s' % (vault_id_name, exc))
+                    raise
+
+                vault_secrets.append((vault_id_name, env_vault_secret))
+                loader.set_vault_secrets(vault_secrets)
+                continue
+
+            elif vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
 
                 # --vault-id some_name@prompt_ask_vault_pass --vault-id other_name@prompt_ask_vault_pass will be a little
                 # confusing since it will use the old format without the vault id in the prompt
@@ -460,6 +481,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         vault_secrets = CLI.setup_vault_secrets(loader,
                                                 vault_ids=vault_ids,
+                                                vault_password_env=list(options['vault_password_env']),
                                                 vault_password_files=list(options['vault_password_files']),
                                                 ask_vault_pass=options['ask_vault_pass'],
                                                 auto_prompt=False)
