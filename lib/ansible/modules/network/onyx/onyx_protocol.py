@@ -61,7 +61,6 @@ options:
   bfd:
     description: bfd protocol
     choices: ['enabled', 'disabled']
-    version_added: "2.10"
 """
 
 EXAMPLES = """
