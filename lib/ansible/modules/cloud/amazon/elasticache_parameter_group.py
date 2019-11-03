@@ -285,7 +285,7 @@ def main():
             group_family=dict(type='str', choices=['memcached1.4', 'memcached1.5', 'redis2.6', 'redis2.8', 'redis3.2', 'redis4.0', 'redis5.0']),
             name=dict(required=True, type='str'),
             description=dict(default='', type='str'),
-            state=dict(required=True),
+            state=dict(required=True, choices=['present', 'absent', 'reset']),
             values=dict(type='dict'),
         )
     )
