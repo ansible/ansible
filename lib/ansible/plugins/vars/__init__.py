@@ -18,6 +18,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os.path
+
 from ansible.plugins import AnsiblePlugin
 from ansible.utils.path import basedir
 from ansible.utils.display import Display
@@ -38,4 +40,5 @@ class BaseVarsPlugin(AnsiblePlugin):
 
     def get_vars(self, loader, path, entities):
         """ Gets variables. """
-        self._basedir = basedir(path)
+        if not hasattr(self, '_basedir'):
+            self._basedir = os.path.realpath(os.path.dirname(path))

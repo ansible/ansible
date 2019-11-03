@@ -219,7 +219,6 @@ class VariableManager:
             host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
 
             if vars_loader.last_modified > self._all_vars_loaded:
-                print("reloading vars plugins...")
                 self._all_vars_plugins = [x() for x in vars_loader.all()]
                 self._all_vars_loaded = vars_loader.last_modified
 

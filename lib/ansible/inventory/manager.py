@@ -161,6 +161,7 @@ class InventoryManager(object):
             self._sources = sources
 
         # get to work!
+        self._source_dirs = []
         self.parse_sources(cache=True)
 
     @property
@@ -214,13 +215,21 @@ class InventoryManager(object):
 
         parsed = False
         # allow for multiple inventory parsing
+        self._source_dirs = []
         for source in self._sources:
-
             if source:
                 if ',' not in source:
                     source = unfrackpath(source, follow=False)
                 parse = self.parse_source(source, cache=cache)
                 if parse and not parsed:
+                    # save the directory of this source for later use
+                    source_dir = None
+                    if os.path.isdir(source):
+                        source_dir = source
+                    else:
+                        source_dir = os.path.dirname(source)
+                    if source_dir:
+                        self._source_dirs.append(source_dir)
                     parsed = True
 
         if parsed:
