@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: cloudformation_info
 short_description: Obtain information about an AWS CloudFormation stack
 description:
-  - Gets information about an AWS CloudFormation stack
+  - Gets information about an AWS CloudFormation stack.
   - This module was called C(cloudformation_facts) before Ansible 2.9, returning C(ansible_facts).
     Note that the M(cloudformation_info) module no longer returns C(ansible_facts)!
 requirements:
@@ -28,31 +28,32 @@ options:
     stack_name:
         description:
           - The name or id of the CloudFormation stack. Gathers information on all stacks by default.
+        type: str
     all_facts:
         description:
-            - Get all stack information for the stack
+            - Get all stack information for the stack.
         type: bool
-        default: 'no'
+        default: false
     stack_events:
         description:
-            - Get stack events for the stack
+            - Get stack events for the stack.
         type: bool
-        default: 'no'
+        default: false
     stack_template:
         description:
-            - Get stack template body for the stack
+            - Get stack template body for the stack.
         type: bool
-        default: 'no'
+        default: false
     stack_resources:
         description:
-            - Get stack resources for the stack
+            - Get stack resources for the stack.
         type: bool
-        default: 'no'
+        default: false
     stack_policy:
         description:
-            - Get stack policy for the stack
+            - Get stack policy for the stack.
         type: bool
-        default: 'no'
+        default: false
 extends_documentation_fragment:
     - aws
     - ec2

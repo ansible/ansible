@@ -1,8 +1,12 @@
 #!/usr/bin/python
 #
 # Copyright (c) 2017 Ansible Project
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -11,9 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: elasticache
-short_description: Manage cache clusters in Amazon Elasticache.
+short_description: Manage cache clusters in Amazon ElastiCache
 description:
-  - Manage cache clusters in Amazon Elasticache.
+  - Manage cache clusters in Amazon ElastiCache.
   - Returns information about the specified cache cluster.
 version_added: "1.4"
 requirements: [ boto3 ]
@@ -21,62 +25,80 @@ author: "Jim Dalton (@jsdalton)"
 options:
   state:
     description:
-      - C(absent) or C(present) are idempotent actions that will create or destroy a cache cluster as needed. C(rebooted) will reboot the cluster,
-        resulting in a momentary outage.
+      - C(absent) or C(present) are idempotent actions that will create or destroy a cache cluster as needed.
+      - C(rebooted) will reboot the cluster, resulting in a momentary outage.
     choices: ['present', 'absent', 'rebooted']
     required: true
+    type: str
   name:
     description:
-      - The cache cluster identifier
+      - The cache cluster identifier.
     required: true
+    type: str
   engine:
     description:
       - Name of the cache engine to be used.
+      - Supported values are C(redis) and C(memcached).
     default: memcached
-    choices: ['redis', 'memcached']
+    type: str
   cache_engine_version:
     description:
-      - The version number of the cache engine
+      - The version number of the cache engine.
+    type: str
   node_type:
     description:
-      - The compute and memory capacity of the nodes in the cache cluster
-    default: cache.m1.small
+      - The compute and memory capacity of the nodes in the cache cluster.
+    default: cache.t2.small
+    type: str
   num_nodes:
     description:
-      - The initial number of cache nodes that the cache cluster will have. Required when state=present.
+      - The initial number of cache nodes that the cache cluster will have.
+      - Required when I(state=present).
+    type: int
+    default: 1
   cache_port:
     description:
-      - The port number on which each of the cache nodes will accept connections
+      - The port number on which each of the cache nodes will accept
+        connections.
+    type: int
   cache_parameter_group:
     description:
       - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group
         for the specified engine will be used.
     version_added: "2.0"
     aliases: [ 'parameter_group' ]
+    type: str
   cache_subnet_group:
     description:
-      - The subnet group name to associate with. Only use if inside a vpc. Required if inside a vpc
+      - The subnet group name to associate with. Only use if inside a vpc.
+      - Required if inside a vpc
     version_added: "2.0"
+    type: str
   security_group_ids:
     description:
-      - A list of vpc security group IDs to associate with this cache cluster. Only use if inside a vpc
+      - A list of vpc security group IDs to associate with this cache cluster. Only use if inside a vpc.
+    type: list
+    elements: str
     version_added: "1.6"
   cache_security_groups:
     description:
-      - A list of cache security group names to associate with this cache cluster. Must be an empty list if inside a vpc
+      - A list of cache security group names to associate with this cache cluster. Must be an empty list if inside a vpc.
+    type: list
+    elements: str
   zone:
     description:
-      - The EC2 Availability Zone in which the cache cluster will be created
+      - The EC2 Availability Zone in which the cache cluster will be created.
+    type: str
   wait:
     description:
-      - Wait for cache cluster result before returning
+      - Wait for cache cluster result before returning.
     type: bool
-    default: 'yes'
+    default: true
   hard_modify:
     description:
-      - Whether to destroy and recreate an existing cache cluster if necessary in order to modify its state
+      - Whether to destroy and recreate an existing cache cluster if necessary in order to modify its state.
     type: bool
-    default: 'no'
+    default: false
 extends_documentation_fragment:
     - aws
     - ec2
