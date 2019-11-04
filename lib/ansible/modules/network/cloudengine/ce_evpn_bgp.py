@@ -29,8 +29,7 @@ description:
 author:
     - Li Yanfeng (@QijunPan)
 notes:
-  - This module requires the netconf system service be enabled on the remote device being managed.
-  - Recommended connection is C(netconf).
+  - Recommended connection is C(network_cli).
   - This module also works with C(local) connections for legacy playbooks.
 options:
     bgp_instance:
