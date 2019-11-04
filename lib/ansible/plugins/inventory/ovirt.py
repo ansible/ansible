@@ -9,6 +9,8 @@ DOCUMENTATION = '''
     name: ovirt
     plugin_type: inventory
     short_description: oVirt inventory source
+    version_added: "2.10"
+    author: Bram Verschueren (@bverschueren)
     requirements:
       - ovirt-engine-sdk-python >= 4.2.4
     extends_documentation_fragment:
@@ -25,12 +27,18 @@ DOCUMENTATION = '''
       ovirt_url:
         description: URL to ovirt-engine API.
         required: True
+        env:
+          - name: OVIRT_URL
       ovirt_username:
         description: ovirt authentication user.
         required: True
+        env:
+          - name: OVIRT_USERNAME
       ovirt_password:
         description: ovirt authentication password.
         required : True
+        env:
+          - name: OVIRT_PASSWORD
       ovirt_cafile:
         description: path to ovirt-engine CA file.
         required: False
@@ -43,6 +51,7 @@ DOCUMENTATION = '''
         description: list of options that describe the ordering for which hostnames should be assigned. See U(https://ovirt.github.io/ovirt-engin\
 e-api-model/master/#types/vm) for available attributes.
         default: ['fqdn', 'name']
+        type: list
 '''
 
 EXAMPLES = '''
@@ -160,17 +169,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         else:
             return vms_service.list()
 
-    def _add_hosts(self, hosts, group):
-        ''' Adds hosts to an inventory group
-            :param host: list of hosts to add
-            :param group: inventory group to add host to
-        '''
-
-        self.inventory.add_group(group)
-
-        for host in hosts:
-            self.inventory.add_host(host.name, group=group)
-
     def _get_query_options(self, param_dict):
         ''' Get filter parameters and cast these to comply with sdk VmsService.list param types
             :param param_dict: dictionary of filter parameters and values
@@ -204,16 +202,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
           :param host: dict representation of oVirt VmStruct
           :param return: preferred hostname for the host
         '''
-        hostname_preference = self.get_option('ovirt_hostname_preference', ['fqdn, name'])
+        hostname_preference = self.get_option('ovirt_hostname_preference')
+        if not hostname_preference:
+            raise AnsibleParserError('Invalid value for option ovirt_hostname_preference: {0}'.format(hostname_preference))
         hostname = None
 
         for preference in hostname_preference:
-            if preference == 'fqdn':
-                hostname = host.get('fqdn')
-            elif preference == 'name':
-                hostname = host.get('name')
-            else:
-                raise AnsibleParserError("%s is not a valid hostname precedent" % preference)
+            hostname = host.get(preference)
             if hostname is not None:
                 return hostname
 
@@ -236,9 +231,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def verify_file(self, path):
 
-        if not HAS_OVIRT_LIB:
-            raise AnsibleError('oVirt inventory script requires ovirt-engine-sdk-python >= 4.2.4')
-
         valid = False
         if super(InventoryModule, self).verify_file(path):
             if path.endswith(('ovirt.yml', 'ovirt4.yml', 'ovirt.yaml', 'ovirt4.yaml')):
@@ -246,6 +238,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return valid
 
     def parse(self, inventory, loader, path, cache=True):
+
+        if not HAS_OVIRT_LIB:
+            raise AnsibleError('oVirt inventory script requires ovirt-engine-sdk-python >= 4.2.4')
 
         super(InventoryModule, self).parse(inventory, loader, path, cache)
 
@@ -258,25 +253,23 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         query_filter = self._get_query_options(self.get_option('ovirt_query_filter', None))
 
-        if cache:
-            cache = self.get_option('cache')
-            cache_key = self.get_cache_key(path)
+        cache_key = self.get_cache_key(path)
+        source_data = None
 
-        source_data = {}
-        update_cache = False
+        user_cache_setting = self.get_option('cache')
+        attempt_to_read_cache = user_cache_setting and cache
+        cache_needs_update = user_cache_setting and not cache
 
-        if cache:
+        if attempt_to_read_cache:
             try:
-                source_data = self.cache.get(cache_key)
+                source_data = self._cache[cache_key]
             except KeyError:
-                update_cache = True
-            else:
-                self._populate_from_source(source_data)
+                cache_needs_update = True
 
-        if not cache or update_cache:
+        if source_data is None:
             source_data = self._query(query_filter=query_filter)
 
-        if update_cache:
-            self.cache.set(cache_key, source_data)
+        if cache_needs_update:
+            self._cache[cache_key] = source_data
 
         self._populate_from_source(source_data)
