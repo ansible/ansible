@@ -31,6 +31,8 @@ description:
 author: QijunPan (@QijunPan)
 notes:
     - Ensure All-Active Gateways or Distributed Gateway for the VXLAN Network can not configure at the same time.
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     dfs_id:
         description:
