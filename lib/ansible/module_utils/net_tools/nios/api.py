@@ -436,10 +436,8 @@ class WapiModule(WapiBase):
                 name = obj_filter['name']
 
             if old_name and new_name:
-                if (ib_obj_type == NIOS_HOST_RECORD):
+                if (ib_obj_type in (NIOS_HOST_RECORD, NIOS_AAAA_RECORD, NIOS_A_RECORD)):
                     test_obj_filter = dict([('name', old_name), ('view', obj_filter['view'])])
-                elif (ib_obj_type in (NIOS_AAAA_RECORD, NIOS_A_RECORD)):
-                    test_obj_filter = obj_filter
                 else:
                     test_obj_filter = dict([('name', old_name)])
                 # get the object reference
