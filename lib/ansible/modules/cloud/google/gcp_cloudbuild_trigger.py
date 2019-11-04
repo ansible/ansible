@@ -53,6 +53,12 @@ options:
     - The unique identifier for the trigger.
     required: false
     type: str
+  name:
+    description:
+    - Name of the trigger. Must be unique within the project.
+    required: false
+    type: str
+    version_added: '2.10'
   description:
     description:
     - Human-readable description of the trigger.
@@ -370,6 +376,11 @@ id:
   - The unique identifier for the trigger.
   returned: success
   type: str
+name:
+  description:
+  - Name of the trigger. Must be unique within the project.
+  returned: success
+  type: str
 description:
   description:
   - Human-readable description of the trigger.
@@ -622,6 +633,7 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             id=dict(type='str'),
+            name=dict(type='str'),
             description=dict(type='str'),
             disabled=dict(type='bool'),
             substitutions=dict(type='dict'),
@@ -672,10 +684,7 @@ def main():
 
     state = module.params['state']
 
-    if module.params['id']:
-        fetch = fetch_resource(module, self_link(module))
-    else:
-        fetch = {}
+    fetch = fetch_resource(module, self_link(module))
     changed = False
 
     if fetch:
@@ -718,6 +727,7 @@ def delete(module, link):
 def resource_to_request(module):
     request = {
         u'id': module.params.get('id'),
+        u'name': module.params.get('name'),
         u'description': module.params.get('description'),
         u'disabled': module.params.get('disabled'),
         u'substitutions': module.params.get('substitutions'),
@@ -792,6 +802,7 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'id': response.get(u'id'),
+        u'name': response.get(u'name'),
         u'description': response.get(u'description'),
         u'disabled': response.get(u'disabled'),
         u'createTime': response.get(u'createTime'),
