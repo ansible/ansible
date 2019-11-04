@@ -189,6 +189,5 @@
   nxos_feature:
     feature: lacp
     state: disabled
-    #timeout: 60
 
 - debug: msg="END connection={{ ansible_connection }} nxos_linkagg sanity test"
