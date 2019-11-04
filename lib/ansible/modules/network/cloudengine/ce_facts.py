@@ -33,7 +33,9 @@ description:
     with C(ansible_net_<fact>).  The facts module will always collect a
     base set of facts from the device and can enable or disable
     collection of additional facts.
-
+notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
   gather_subset:
     description:
