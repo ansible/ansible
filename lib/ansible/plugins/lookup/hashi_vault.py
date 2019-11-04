@@ -204,8 +204,8 @@ class HashiVault:
         # https://vaultproject.io/api/secret/kv/kv-v2.html#sample-response-1
         try:
             # sentinel field checks
-            _ = data['data']['data']
-            _ = data['data']['metadata']
+            check_dd = data['data']['data']
+            check_md = data['data']['metadata']
             # unwrap nested data
             data = data['data']
         except KeyError:
