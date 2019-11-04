@@ -22,49 +22,59 @@ author: "Zacharie Eakin (@Zeekin)"
 options:
     state:
         description:
-          - register or deregister the alarm
-        required: true
+          - Register or deregister the alarm.
         choices: ['present', 'absent']
+        default: 'present'
+        type: str
     name:
         description:
-          - Unique name for the alarm
+          - Unique name for the alarm.
         required: true
+        type: str
     metric:
         description:
-          - Name of the monitored metric (e.g. CPUUtilization)
-          - Metric must already exist
+          - Name of the monitored metric (e.g. C(CPUUtilization)).
+          - Metric must already exist.
         required: false
+        type: str
     namespace:
         description:
-          - Name of the appropriate namespace ('AWS/EC2', 'System/Linux', etc.), which determines the category it will appear under in cloudwatch
+          - Name of the appropriate namespace (C(AWS/EC2), C(System/Linux), etc.), which determines the category it will appear under in cloudwatch.
         required: false
+        type: str
     statistic:
         description:
-          - Operation applied to the metric
-          - Works in conjunction with period and evaluation_periods to determine the comparison value
+          - Operation applied to the metric.
+          - Works in conjunction with I(period) and I(evaluation_periods) to determine the comparison value.
         required: false
         choices: ['SampleCount','Average','Sum','Minimum','Maximum']
+        type: str
     comparison:
         description:
-          - Determines how the threshold value is compared
+          - Determines how the threshold value is compared.
         required: false
         choices: ['<=','<','>','>=']
+        type: str
     threshold:
         description:
-          - Sets the min/max bound for triggering the alarm
+          - Sets the min/max bound for triggering the alarm.
         required: false
+        type: float
     period:
         description:
-          - The time (in seconds) between metric evaluations
+          - The time (in seconds) between metric evaluations.
         required: false
+        type: int
     evaluation_periods:
         description:
-          - The number of times in which the metric is evaluated before final calculation
+          - The number of times in which the metric is evaluated before final calculation.
         required: false
+        type: int
     unit:
         description:
-          - The threshold's unit of measurement
+          - The threshold's unit of measurement.
         required: false
+        type: str
         choices:
             - 'Seconds'
             - 'Microseconds'
@@ -95,24 +105,34 @@ options:
             - 'None'
     description:
         description:
-          - A longer description of the alarm
+          - A longer description of the alarm.
         required: false
+        type: str
     dimensions:
         description:
-          - Describes to what the alarm is applied
+          - A dictionary describing which metric the alarm is applied to.
+          - 'For more information see the AWS documentation:'
+          - U(https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html#Dimension)
         required: false
+        type: dict
     alarm_actions:
         description:
-          - A list of the names action(s) taken when the alarm is in the 'alarm' status, denoted as Amazon Resource Name(s)
+          - A list of the names action(s) taken when the alarm is in the C(alarm) status, denoted as Amazon Resource Name(s).
         required: false
+        type: list
+        elements: str
     insufficient_data_actions:
         description:
-          - A list of the names of action(s) to take when the alarm is in the 'insufficient_data' status
+          - A list of the names of action(s) to take when the alarm is in the C(insufficient_data) status.
         required: false
+        type: list
+        elements: str
     ok_actions:
         description:
-          - A list of the names of action(s) to take when the alarm is in the 'ok' status, denoted as Amazon Resource Name(s)
+          - A list of the names of action(s) to take when the alarm is in the C(ok) status, denoted as Amazon Resource Name(s).
         required: false
+        type: list
+        elements: str
 extends_documentation_fragment:
     - aws
     - ec2

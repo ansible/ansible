@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ec2_lc_info
-short_description: Gather information about AWS Autoscaling Launch Configurations
+short_description: Gather information about AWS Autoscaling Launch Configurations.
 description:
-    - Gather information about AWS Autoscaling Launch Configurations
+    - Gather information about AWS Autoscaling Launch Configurations.
     - This module was called C(ec2_lc_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.3"
 author: "Loïc Latreille (@psykotox)"
@@ -27,24 +27,30 @@ options:
     description:
       - A name or a list of name to match.
     default: []
+    type: list
+    elements: str
   sort:
     description:
       - Optional attribute which with to sort the results.
     choices: ['launch_configuration_name', 'image_id', 'created_time', 'instance_type', 'kernel_id', 'ramdisk_id', 'key_name']
+    type: str
   sort_order:
     description:
       - Order in which to sort results.
       - Only used when the 'sort' parameter is specified.
     choices: ['ascending', 'descending']
     default: 'ascending'
+    type: str
   sort_start:
     description:
       - Which result to start with (when sorting).
       - Corresponds to Python slice notation.
+    type: int
   sort_end:
     description:
       - Which result to end with (when sorting).
       - Corresponds to Python slice notation.
+    type: int
 extends_documentation_fragment:
     - aws
     - ec2
@@ -186,15 +192,12 @@ def list_launch_configs(connection, module):
     if sort:
         snaked_launch_configs.sort(key=lambda e: e[sort], reverse=(sort_order == 'descending'))
 
-    try:
-        if sort and sort_start and sort_end:
-            snaked_launch_configs = snaked_launch_configs[int(sort_start):int(sort_end)]
-        elif sort and sort_start:
-            snaked_launch_configs = snaked_launch_configs[int(sort_start):]
-        elif sort and sort_end:
-            snaked_launch_configs = snaked_launch_configs[:int(sort_end)]
-    except TypeError:
-        module.fail_json(msg="Please supply numeric values for sort_start and/or sort_end")
+    if sort and sort_start and sort_end:
+        snaked_launch_configs = snaked_launch_configs[sort_start:sort_end]
+    elif sort and sort_start:
+        snaked_launch_configs = snaked_launch_configs[sort_start:]
+    elif sort and sort_end:
+        snaked_launch_configs = snaked_launch_configs[:sort_end]
 
     module.exit_json(launch_configurations=snaked_launch_configs)
 
@@ -208,8 +211,8 @@ def main():
                       choices=['launch_configuration_name', 'image_id', 'created_time', 'instance_type', 'kernel_id', 'ramdisk_id', 'key_name']),
             sort_order=dict(required=False, default='ascending',
                             choices=['ascending', 'descending']),
-            sort_start=dict(required=False),
-            sort_end=dict(required=False),
+            sort_start=dict(required=False, type='int'),
+            sort_end=dict(required=False, type='int'),
         )
     )
 

@@ -21,25 +21,33 @@ options:
   instance_id:
     description:
       - Instance ID to create the AMI from.
+    type: str
   name:
     description:
       - The name of the new AMI.
+    type: str
   architecture:
     version_added: "2.3"
     description:
       - The target architecture of the image to register
+    default: "x86_64"
+    type: str
   kernel_id:
     version_added: "2.3"
     description:
       - The target kernel id of the image to register.
+    type: str
   virtualization_type:
     version_added: "2.3"
     description:
       - The virtualization type of the image to register.
+    default: "hvm"
+    type: str
   root_device_name:
     version_added: "2.3"
     description:
       - The root device name of the image to register.
+    type: str
   wait:
     description:
       - Wait for the AMI to be in state 'available' before returning.
@@ -49,14 +57,17 @@ options:
     description:
       - How long before wait gives up, in seconds.
     default: 900
+    type: int
   state:
     description:
       - Register or deregister an AMI.
     default: 'present'
     choices: [ "absent", "present" ]
+    type: str
   description:
     description:
       - Human-readable string describing the contents and purpose of the AMI.
+    type: str
   no_reboot:
     description:
       - Flag indicating that the bundling process should not attempt to shutdown the instance before bundling. If this flag is True, the
@@ -66,13 +77,39 @@ options:
   image_id:
     description:
       - Image ID to be deregistered.
+    type: str
   device_mapping:
     version_added: "2.0"
     description:
       - List of device hashes/dictionaries with custom configurations (same block-device-mapping parameters).
-      - >
-        Valid properties include: device_name, volume_type, size/volume_size (in GiB), delete_on_termination (boolean), no_device (boolean),
-        snapshot_id, iops (for io1 volume_type), encrypted
+    type: list
+    elements: dict
+    suboptions:
+        device_name:
+          type: str
+          description: The device name. For example C(/dev/sda).
+        volume_type:
+          type: str
+          description: The volume type.  Defaults to C(gp2) when not set.
+        delete_on_termination:
+          type: bool
+          description: Whether the device should be automatically deleted when the Instance is terminated.
+        no_device:
+          type: bool
+          description: Suppresses the specified device included in the block device mapping of the AMI.
+        snapshot_id:
+          type: str
+          description: The ID of the Snapshot.
+        iops:
+          type: int
+          description: When using an C(io1) I(volume_type) this sets the number of IOPS provisioned for the volume
+        encrypted:
+          type: bool
+          description: Whether the volume should be encrypted.
+        volume_size:
+          aliases: ['size']
+          type: int
+          description: The size of the volume (in GiB)
   delete_snapshot:
     description:
       - Delete snapshots when deregistering the AMI.
@@ -82,6 +119,7 @@ options:
     description:
       - A dictionary of tags to add to the new image; '{"key":"value"}' and '{"key":"value","key":"value"}'
     version_added: "2.0"
+    type: dict
   purge_tags:
     description: Whether to remove existing tags that aren't passed in the C(tags) parameter
     version_added: "2.5"
@@ -93,10 +131,12 @@ options:
         be a list of account ids. group_name should be a list of groups, "all" is the only acceptable value currently.
       - You must pass all desired launch permissions if you wish to modify existing launch permissions (passing just groups will remove all users)
     version_added: "2.0"
+    type: dict
   image_location:
     description:
       - The s3 location of an image to use for the AMI.
     version_added: "2.5"
+    type: str
   enhanced_networking:
     description:
       - A boolean representing whether enhanced networking with ENA is enabled or not.
@@ -106,14 +146,18 @@ options:
     description:
       - A list of valid billing codes. To be used with valid accounts by aws marketplace vendors.
     version_added: "2.5"
+    type: list
+    elements: str
   ramdisk_id:
     description:
       - The ID of the RAM disk.
     version_added: "2.5"
+    type: str
   sriov_net_support:
     description:
       - Set to simple to enable enhanced networking with the Intel 82599 Virtual Function interface for the AMI and any instances that you launch from the AMI.
     version_added: "2.5"
+    type: str
 author:
     - "Evan Duffield (@scicoin-project) <eduffield@iacquire.com>"
     - "Constantin Bugneac (@Constantin07) <constantin.bugneac@endava.com>"
