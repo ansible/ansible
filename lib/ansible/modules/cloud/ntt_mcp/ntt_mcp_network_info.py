@@ -31,7 +31,7 @@ module: ntt_mcp_network_info
 short_description: List, Get Cloud Network Domains (CND)
 description:
     - List, Get Cloud Network Domains (CND)
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -197,7 +197,10 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    try:
+        client = NTTMCPClient(credentials, module.params.get('region'))
+    except NTTMCPAPIException as e:
+        module.fail_json(msg=str(e.msg))
 
     # Get a list of existing CNDs and check if the name already exists
     try:

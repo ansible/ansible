@@ -33,7 +33,7 @@ description:
     - Alter the disk configuration for an existing server
     - The controller must exist before trying to add a disk of that type. E.g. If no IDE controller exists on a server,
     - trying to add a disk here using a controller type of IDE will fail
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -82,6 +82,7 @@ options:
     disk_number:
         description:
             - The disk number on the controller as an integer
+            - If no disk number is provided the last disk of the specified type on the controller will be assumed
         required: false
         type: int
         default: 0
@@ -846,8 +847,6 @@ def get_disk(module, server):
     """
     disk_type = module.params.get('type')
     disk_number = module.params.get('disk_number')
-    if disk_number is None:
-        return None
     controller_number = module.params.get('controller_number')
     if controller_number is None:
         module.fail_json(msg='The controller number cannot be None')
@@ -861,8 +860,11 @@ def get_disk(module, server):
         module.fail_json(msg='Invalid disk type.')
 
     try:
+        # If no disk number is provided use the last disk of the specified type on the controller
+        if disk_number is None:
+            disk_number = len(server.get(controller_name)[controller_number].get('disk')) - 1
         return server.get(controller_name)[controller_number].get('disk')[disk_number]
-    except NTTMCPAPIException as e:
+    except (NTTMCPAPIException) as e:
         module.fail_json(msg='Could not locate any matching disk - {0}'.format(e))
     except (KeyError, IndexError, AttributeError):
         return None
@@ -1079,7 +1081,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get the CND object based on the supplied name
     try:

@@ -31,7 +31,7 @@ module: ntt_mcp_firewall_info
 short_description: List/Get Firewall rules
 description:
     - List/Get Firewall rules
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -240,7 +240,10 @@ def list_fw_rule(module, client, network_domain_id):
     """
     return_data = return_object('acl')
     try:
-        return_data['acl'] = client.list_fw_rules(network_domain_id)
+        if module.params.get('stats'):
+            return_data['acl'] = client.list_fw_rule_stats(network_domain_id)
+        else:
+            return_data['acl'] = client.list_fw_rules(network_domain_id)
     except NTTMCPAPIException as e:
         module.fail_json(msg='Could not retrieve a list of firewall rules - {0}'.format(e), exception=traceback.format_exc())
     except KeyError:
@@ -289,6 +292,7 @@ def main():
             region=dict(default='na', type='str'),
             datacenter=dict(required=True, type='str'),
             name=dict(required=False, type='str'),
+            stats=dict(required=False, default=False, type='bool'),
             network_domain=dict(required=True, type='str')
         ),
         supports_check_mode=True
@@ -309,7 +313,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get the CND
     try:

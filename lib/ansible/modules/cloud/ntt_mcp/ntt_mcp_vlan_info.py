@@ -31,7 +31,7 @@ module: ntt_mcp_vlan_info
 short_description: Get and List VLANs
 description:
     - Get and List VLANs
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -215,7 +215,7 @@ def main():
         module.fail_json(msg='Could not load the user credentials')
 
     try:
-        client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+        client = NTTMCPClient(credentials, module.params.get('region'))
     except NTTMCPAPIException as e:
         module.fail_json(msg='{0}'.format(e))
 

@@ -31,7 +31,7 @@ module: ntt_mcp_geo_info
 short_description: Get NTT LTD Cloud Geo Information
 description:
     - Get NTT LTD Cloud Information
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -189,7 +189,7 @@ def main():
         module.fail_json(msg='Could not load the user credentials')
 
     # Create the API client
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     get_geo(module=module, client=client)
 

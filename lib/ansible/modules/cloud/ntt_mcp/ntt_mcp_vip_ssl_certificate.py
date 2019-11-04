@@ -34,7 +34,7 @@ description:
     - Certificates/Chains cannot be updated or removed while still associated with an SSL Offload Profile
     - Adding certifications/chains can also be done a single step as part of creating an SSL Offload Profile using
     - ntt_mcp_vip_ssl
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -134,7 +134,7 @@ EXAMPLES = '''
       path: "/path/my_chain.pem"
       state: present
 
-  - name: Delete an SSL Offload Profile - If this profile is the last associated profile with the cert and chain they will also be removed
+  - name: Delete an SSL Certificate
     ntt_mcp_vip_ssl_certificate:
       region: na
       datacenter: NA9
@@ -285,7 +285,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get the CND
     try:

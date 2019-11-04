@@ -32,7 +32,7 @@ short_description: Create, update and delete VIP Pools
 description:
     - Create, update and delete VIP Pools
     - It is quicker to use the option "id" to locate the VIP Pool if the UUID is known rather than search by name
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -249,6 +249,7 @@ def create_vip_pool(module, client, network_domain_id):
     :returns: The created VIP pool dict
     """
     members = module.params.get('members')
+    pool_result = {}
 
     if not module.params.get('name'):
         module.fail_json(msg='A valid name is required')
@@ -271,6 +272,11 @@ def create_vip_pool(module, client, network_domain_id):
         module.fail_json(msg='The VIP Pool was created but there was a issue adding the members to the Pool. '
                              'Check the list of member objects - {0}'.format(exc))
 
+    try:
+        pool_result = client.get_vip_pool(pool_result.get('id'))
+    except (AttributeError, KeyError, NTTMCPAPIException):
+        pass
+
     module.exit_json(changed=True, data=pool_result)
 
 
@@ -283,6 +289,7 @@ def update_vip_pool(module, client, pool):
     :arg pool: The dict containing the existing pool to be updated
     :returns: The updated VIP pool UUID
     """
+    pool_result = {}
     try:
         pool_id = client.update_vip_pool(pool.get('id'), module.params.get('description'), module.params.get('load_balancing'),
                                          module.params.get('health_monitor'), module.params.get('no_health_monitor'),
@@ -339,7 +346,11 @@ def update_vip_pool(module, client, pool):
             module.fail_json(msg='The VIP Pool was updated but there was a issue updating the members of the Pool. '
                              'Check the list of member objects - {0}'.format(exc))
 
-    module.exit_json(changed=True, data=pool_id)
+    try:
+        pool_result = client.get_vip_pool(pool_id).get('id')
+    except (AttributeError, KeyError, NTTMCPAPIException):
+        pass
+    module.exit_json(changed=True, data=pool_result)
 
 
 def delete_vip_pool(module, client, pool_id):
@@ -459,7 +470,7 @@ def compare_vip_pool(module, pool):
         new_pool['healthMonitorId'] = {'nil': True}
     elif module.params.get('health_monitor'):
         new_pool['healthMonitor'] = module.params.get('health_monitor')
-        for profile in pool.get('healthMonitor'):
+        for profile in pool.get('healthMonitor', []):
             existing_health_monitors.append(profile.get('id'))
         existing_pool['healthMonitor'] = existing_health_monitors
 
@@ -528,7 +539,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get the CND
     try:

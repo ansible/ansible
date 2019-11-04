@@ -159,12 +159,12 @@
       certificate:
         name: my_cert_2
         description: "My Certificate 2"
-        path: "/Users/kenneth/dev/ca/intermediate/certs/www.lab2.local.cert.pem"
-        key_path: "/Users/kenneth/dev/ca/intermediate/private/www.lab2.local.key.pem"
+        path: "/Users/ken.sinfield/dev/ca/intermediate/certs/www.lab2.local.cert.pem"
+        key_path: "/Users/ken.sinfield/dev/ca/intermediate/private/www.lab2.local.key.pem"
       chain:
         name: my_chain_1
         description: "My Certificate Chain"
-        path: "/Users/kenneth/dev/ca/intermediate/certs/ca-chain.cert.pem"
+        path: "/Users/ken.sinfield/dev/ca/intermediate/certs/ca-chain.cert.pem"
       ciphers: "DHE+AES:DHE+AES-GCM:RSA+AES:RSA+3DES:RSA+AES-GCM"
       state: present
     register: ssl

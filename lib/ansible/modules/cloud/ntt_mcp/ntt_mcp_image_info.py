@@ -31,7 +31,7 @@ module: ntt_mcp_image_info
 short_description: Get available server images information
 description:
     - Get available server images information
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -330,7 +330,7 @@ def main():
         module.fail_json(msg='Could not load the user credentials')
 
     # Create the API client
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params['region'])
+    client = NTTMCPClient(credentials, module.params['region'])
 
     get_image(module=module, client=client)
 

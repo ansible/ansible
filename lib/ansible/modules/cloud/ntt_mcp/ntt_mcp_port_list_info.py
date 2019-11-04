@@ -31,7 +31,7 @@ module: ntt_mcp_port_list_info
 short_description: List/Get Firewall Port Lists
 description:
     - List/Get Firewall Port Lists
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -179,7 +179,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params['region'])
+    client = NTTMCPClient(credentials, module.params['region'])
 
     # Get a list of existing CNDs and check if the name already exists
     try:

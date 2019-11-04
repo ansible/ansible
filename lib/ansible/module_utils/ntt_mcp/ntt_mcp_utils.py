@@ -83,8 +83,12 @@ def get_credentials(module):
     """
     Determine the Cloud Control API credentials to be Used
     """
-    user_id = None
-    password = None
+    return_data = {
+        'user_id': None,
+        'password': None,
+        'api_endpoint': None,
+        'api_version': None
+    }
 
     # Check Imports
     try:
@@ -94,31 +98,41 @@ def get_credentials(module):
 
     # Attempt to grab from environment
     if 'NTTMCP_USER' in environ and 'NTTMCP_PASSWORD' in environ:
-        user_id = environ['NTTMCP_USER']
-        password = environ['NTTMCP_PASSWORD']
-
+        return_data['user_id'] = environ['NTTMCP_USER']
+        return_data['password'] = environ['NTTMCP_PASSWORD']
     # Environment failed try dot file
-    elif user_id is None or password is None:
+    else:
         try:
             home = expanduser('~')
             config = configparser.RawConfigParser()
             config.read("%s/.nttmcp" % home)
-            user_id = config.get("nttmcp", "NTTMCP_USER")
-            password = config.get("nttmcp", "NTTMCP_PASSWORD")
+            return_data['user_id'] = config.get("nttmcp", "NTTMCP_USER")
+            return_data['password'] = config.get("nttmcp", "NTTMCP_PASSWORD")
         except AttributeError:
             module.fail_json(msg='Could not read the format of the .nttmcp file. Check the syntax of the file.')
-        except configparser.NoSectionError as e:
+        except (configparser.NoSectionError, configparser.ParsingError) as e:
             module.fail_json(msg='Error in the .nttmcp credential file syntax: {0}'.format(e))
 
-    else:
-        module.fail_json(msg='Could not locate credentials in either the environment variables or .nttmcp file in the users home directory')
+    # Check if a custom API endpoint or version has been supplied
+    try:
+        if 'NTTMCP_API' in environ and 'NTTMCP_API_VERSION' in environ:
+            return_data['api_endpoint'] = environ.get('NTTMCP_API')
+            return_data['api_version'] = environ.get('NTTMCP_API_VERSION')
+        else:
+            home = expanduser('~')
+            config = configparser.RawConfigParser()
+            config.read("%s/.nttmcp" % home)
+            return_data['api_endpoint'] = config.get('nttmcp', 'NTTMCP_API')
+            return_data['api_version'] = config.get('nttmcp', 'NTTMCP_API_VERSION')
+    except (configparser.NoSectionError, configparser.NoOptionError, configparser.ParsingError):
+        pass
 
     # Return False if either are not found
-    if user_id is None or password is None:
+    if return_data.get('user_id') is None or return_data.get('password') is None:
         return False
 
     # Both found, return data
-    return (user_id, password)
+    return return_data
 
 
 def generate_password():

@@ -31,7 +31,7 @@ module: ntt_mcp_network
 short_description: Create, Update and Delete Cloud Network Domains (CND)
 description:
     - Create, Update and Delete Cloud Network Domains (CND)
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -58,14 +58,10 @@ options:
         type: str
     network_type:
         description:
-            - The type of Cloud Network Domain
+            - The type of Cloud Network Domain (e.g. ADVANCED, ESSENTIALS, ENTERPRISE)
         required: true
         type: str
         default: ADVANCED
-        choices:
-          - ADVANCED
-          - ESSENTIALS
-          - ENTERPRISE
     new_name:
         description:
             - The new name of the Cloud Network Domain when renaming a CND
@@ -252,7 +248,7 @@ def create_network_domain(module, client):
     datacenter = module.params.get('datacenter')
     name = module.params.get('name')
     description = module.params.get('description')
-    network_type = module.params.get('network_type')
+    network_type = str.upper(module.params.get('network_type'))
 
     try:
         result = client.create_network_domain(datacenter, name, network_type, description)
@@ -264,9 +260,9 @@ def create_network_domain(module, client):
         wait_result = wait_for_network_domain(module, client, name, datacenter, 'NORMAL')
         if wait_result is None:
             module.fail_json(msg='Could not verify the Cloud Network Domain creation was successful. Check manually')
-        return_data['network'].append(wait_result)
+        return_data['network'] = wait_result
     else:
-        return_data['network'].append({'id': new_network_domain_id})
+        return_data['network'] = {'id': new_network_domain_id}
 
     module.exit_json(changed=True, data=return_data.get('network'))
 
@@ -408,7 +404,7 @@ def main():
             datacenter=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             description=dict(required=False, type='str'),
-            network_type=dict(default='ADVANCED', choices=['ADVANCED', 'ESSENTIALS', 'ENTERPRISE']),
+            network_type=dict(default='ADVANCED', type='str'),
             new_name=dict(required=False, default=None, type='str'),
             state=dict(default='present', choices=['present', 'absent']),
             wait=dict(required=False, default=True, type='bool'),
@@ -434,7 +430,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get a list of existing CNDs and check if the name already exists
     try:
@@ -459,7 +455,7 @@ def main():
                 if compare_result:
                     if compare_result.get('changes'):
                         update_network_domain(module, client, network)
-                module.exit_json(changed=False, result=network)
+                module.exit_json(changed=False, data=network)
             except (KeyError, AttributeError, NTTMCPAPIException) as e:
                 module.fail_json(msg='Failed to update the Cloud Network Domain - {0}'.format(e))
     # Delete the Cloud Network Domain

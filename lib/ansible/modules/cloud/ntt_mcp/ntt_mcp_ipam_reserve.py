@@ -31,7 +31,7 @@ module: ntt_mcp_ipam_reserve
 short_description: Reserve an IP Address in IP Address Management
 description:
     - Reserve an IP Address in IP Address Management
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -264,7 +264,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Check the IP address is valid
     try:

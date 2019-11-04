@@ -31,7 +31,7 @@ module: ntt_mcp_server_nic
 short_description: Add, update or remove the NIC configuration for an existing server
 description:
     - Add, update or remove the NIC configuration for an existing server
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -876,7 +876,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get the CND object based on the supplied name
     try:

@@ -31,7 +31,7 @@ module: ntt_mcp_snat_info
 short_description: List SNAT Exclusions
 description:
     - List SNAT Exclusions
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -255,7 +255,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Check to see the CIDR provided is valid
     if module.params.get('cidr'):

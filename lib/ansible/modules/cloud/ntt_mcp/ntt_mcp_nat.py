@@ -31,7 +31,7 @@ module: ntt_mcp_nat
 short_description: Add and Remove NAT entries
 description:
     - Add and Remove NAT entries
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -321,7 +321,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get a list of existing CNDs and check if the name already exists
     try:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2019 NTT Communications Cloud Infrastructure Services
+# Copyright (c) 2019, Ken Sinfield <ken.sinfield@cis.ntt.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,9 +68,17 @@ class NTTMCPClient():
         self.check_imports()
         self.credentials = credentials
         self.region = region
-        self.home_geo = self.get_user_home_geo()
-        self.org_id = self.get_org_id()
-        self.base_url = ('https://%s/caas/%s/%s/' % (API_ENDPOINTS[region]['host'], API_VERSION, self.org_id))
+        self.API_URL = credentials.get('api_endpoint') or API_ENDPOINTS[region]['host']
+        self.API_VER = credentials.get('API_VERSION') or API_VERSION
+        try:
+            self.home_geo = self.get_user_home_geo()
+        except NTTMCPAPIException as e:
+            raise NTTMCPAPIException('Could not get the user home geo: {0}'.format(e.msg))
+        try:
+            self.org_id = self.get_org_id()
+        except NTTMCPAPIException as e:
+            raise NTTMCPAPIException('Could not get the user org ID: {0}'.format(e))
+        self.base_url = ('https://%s/caas/%s/%s/' % (self.API_URL, self.API_VER, self.org_id))
 
     def __repr__(self):
         return ('Username: %s\nHome Geo: %s\nOrg Id: %s\nSupplied Region: %s'
@@ -92,13 +100,16 @@ class NTTMCPClient():
         :arg self: self
         :returns: The users home geo
         """
-        url = ('https://%s/caas/%s/user/myUser' %
-               (API_ENDPOINTS[DEFAULT_REGION]['host'], API_VERSION))
-        response = self.api_get_call(url, None)
-        if response is not None:
-            return response.json()['organization']['homeGeoApiHost']
-        else:
-            raise NTTMCPAPIException('Could not determine the Home Geo for user: %s') % (self.credentials[0])
+        API_URL = self.credentials.get('api_endpoint') or API_ENDPOINTS[DEFAULT_REGION]['host']
+        url = ('https://%s/caas/%s/user/myUser' % (API_URL, self.API_VER))
+        try:
+            response = self.api_get_call(url, None)
+            if response is not None:
+                return response.json()['organization']['homeGeoApiHost']
+            else:
+                raise NTTMCPAPIException('Could not determine the Home Geo for user: %s') % (self.credentials[0])
+        except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
+            raise NTTMCPAPIException(e)
 
     def get_org_id(self):
         """
@@ -107,8 +118,9 @@ class NTTMCPClient():
         :arg self: self
         :returns: The UUID of the org ID for the account
         """
+        API_URL = self.credentials.get('api_endpoint') or API_ENDPOINTS[DEFAULT_REGION]['host']
         url = ('https://%s/caas/%s/user/myUser' %
-               (API_ENDPOINTS[DEFAULT_REGION]['host'], API_VERSION))
+               (API_URL, self.API_VER))
         response = self.api_get_call(url, None)
         if response is not None:
             return response.json()['organization']['id']
@@ -144,12 +156,12 @@ class NTTMCPClient():
 
         url = self.base_url + 'network/networkDomain'
 
-        response = self.api_get_call(url, params)
+        try:
+            response = self.api_get_call(url, params)
+        except NTTMCPAPIException as e:
+            raise NTTMCPAPIException(e)
         if response is not None:
-            if response.json()['totalCount'] > 0:
-                return response.json()['networkDomain']
-            else:
-                raise NTTMCPAPIException('No Network Domain found with the parameters {0}'.format(str(params)))
+            return response.json()['networkDomain']
         else:
             raise NTTMCPAPIException('Could not get a list of network domains')
 
@@ -167,10 +179,7 @@ class NTTMCPClient():
         if datacenter is None:
             raise NTTMCPAPIException('A Datacenter is required.')
 
-        try:
-            networks = self.list_network_domains(datacenter=datacenter)
-        except Exception as e:
-            raise NTTMCPAPIException('Failed to get a list of Cloud Network Domains - {0}'.format(e))
+        networks = self.list_network_domains(datacenter=datacenter)
         network_exists = [x for x in networks if x['name'] == name]
         try:
             return network_exists[0]
@@ -475,11 +484,26 @@ class NTTMCPClient():
         server_exists = [x for x in servers if x['name'] == name]
         if server_exists:
             try:
-                return server_exists[0]
+                return self.get_server_by_id(server_exists[0].get('id'))
             except (KeyError, IndexError):
                 raise NTTMCPAPIException('Could not return the server object. Possible API error')
         else:
             return None
+
+    def get_server_by_id(self, server_id=None):
+        """
+        Get a server/VM by id
+        """
+        if server_id is None:
+            raise NTTMCPAPIException('A valid value for server_id is required')
+
+        url = self.base_url + 'server/server/{0}'.format(server_id)
+
+        response = self.api_get_call(url, None)
+        try:
+            return response.json()
+        except (KeyError, IndexError) as e:
+            raise NTTMCPAPIException('Could not find the server with id - {0}'.format(server_id))
 
     def create_server(self, ngoc, params):
         """
@@ -1276,7 +1300,7 @@ class NTTMCPClient():
         response = self.api_get_call(url, params)
         if response is not None:
             try:
-                #return response.json().get('customerImage')
+                # return response.json().get('customerImage')
                 return response.json()
             except AttributeError:
                 raise NTTMCPAPIException('Error with the API response')
@@ -2108,6 +2132,23 @@ class NTTMCPClient():
         response = self.api_get_call(url, params)
         try:
             return response.json()['firewallRule']
+        except KeyError:
+            return []
+
+    def list_fw_rule_stats(self, network_domain_id,):
+        """
+        Return an array of firewall rules with statistics for the specified Cloud Network Domain
+
+        :arg network_domain_id: Cloud Network Domain UUID
+        :returns: Array of firewall rules
+        """
+        url = self.base_url + 'network/firewallRuleStatistics'
+
+        params = {'networkDomainId': network_domain_id}
+
+        response = self.api_get_call(url, params)
+        try:
+            return response.json()['firewallRuleStatistics']
         except KeyError:
             return []
 
@@ -3163,6 +3204,158 @@ class NTTMCPClient():
             raise NTTMCPAPIException('Could not confirm that the remove VIP Virtual Listener request was accepted')
 
     #
+    # Snapshot Section
+    #
+    def list_snapshot_windows(self, datacenter=None, service_plan=None, start_hour=None, slots_available=None):
+        """
+        List Snapshot Windows
+
+        :kw datacenter: The datacenter ID (e.g. NA9)
+        :kw service_plan: The Service Plan name (e.g. ONE_MONTH)
+        :kw start_hour: Filter results by a specific start hour (e.g. 06)
+        :kw slots_available: Boolean to filter results based on if slots are available or not
+        :returns: A list of Snapshot Windows
+        """
+
+        params = {}
+        if datacenter is None:
+            raise NTTMCPAPIException('datacenter is required')
+        if service_plan is None:
+            raise NTTMCPAPIException('service_plan is required')
+
+        params['datacenterId'] = datacenter
+        params['servicePlan'] = service_plan
+        if start_hour:
+            params['startHour'] = start_hour
+        if slots_available:
+            params['slotsAvailable'] = slots_available
+
+        url = self.base_url + 'infrastructure/snapshotWindow'
+
+        response = self.api_get_call(url, params)
+        try:
+            return response.json().get('snapshotWindow')
+        except Exception:
+            return []
+
+
+    def list_snapshot_service_plans(self, service_plan=None, available=True):
+        """
+        List Snapshot Service Plans
+
+        :kw service_plan: The Service Plan name (e.g. ONE_MONTH)
+        :kw available: Boolean to filter results based on if slots are available or not
+        :returns: A list of Snapshot Service Plans
+        """
+
+        params = {}
+
+        if service_plan:
+            params['id'] = service_plan
+        if available:
+            params['available'] = available
+
+        url = self.base_url + 'snapshot/servicePlan'
+
+        response = self.api_get_call(url, params)
+        try:
+            return response.json().get('snapshotServicePlan')
+        except Exception:
+            return []
+
+    def list_snapshot(self, server_id=None, datacenter=None, snapshot_id=None, start_hour=None, state=None,
+                      snapshot_type=None, expiry_time=None, index_state='INDEX_VALID', description=None,
+                      ):
+        """
+        List Snapshot Windows
+
+        :kw datacenter: The datacenter ID (e.g. NA9)
+        :kw service_plan: The Service Plan name (e.g. ONE_MONTH)
+        :kw day: Filter results by specific day(s) of the week (e.g. SUNDAY)
+        :kw start_hour: Filter results by a specific start hour (e.g. 06)
+        :kw slots_available: Boolean to filter results based on if slots are available or not
+        :returns: A list of Snapshot Windows
+        """
+
+        params = {}
+        if server_id is None:
+            raise NTTMCPAPIException('A valid server is required')
+
+        params['serverId'] = server_id
+        if start_hour:
+            params['startHour'] = start_hour
+
+        url = self.base_url + 'infrastructure/snapshotWindow'
+
+        response = self.api_get_call(url, params)
+        try:
+            return response.json().get('snapshotWindow')
+        except Exception:
+            return []
+
+    def enable_snapshot_service(self, update=False, server_id=None, service_plan=None, window_id=None):
+        """
+        Enable/Update Snapshot Service configuration
+
+        :kw update: Is this an update for an existing configuration
+        :kw server_id: The UUID of the server being enabled for Snapshots
+        :kw service_plan: The Service Plan name (e.g. ONE_MONTH)
+        :kw window_id: Filter results by a specific start hour (e.g. 06)
+        :returns: API response
+        """
+
+        params = {}
+        if server_id is None:
+            raise NTTMCPAPIException('A Server is required, server_id cannot be None')
+        if service_plan is None:
+            raise NTTMCPAPIException('A Service Plan is required, service_plan cannot be None')
+        if window_id is None:
+            raise NTTMCPAPIException('A Snapshot Window is required, window_id cannot be None')
+
+        params['serverId'] = server_id
+        params['servicePlan'] = service_plan
+        params['windowId'] = window_id
+
+        if update:
+            url = self.base_url + 'snapshot/changeSnapshotServicePlan'
+        else:
+            url = self.base_url + 'snapshot/enableSnapshotService'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            if response.json()['requestId']:
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Snapshot Service was successfully enabled')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def disable_snapshot_service(self, server_id=None):
+        """
+        List Snapshot Windows
+
+        :kw server_id: The UUID of the server being enabled for Snapshots
+        :returns: API Respose
+        """
+
+        params = {}
+        if server_id is None:
+            raise NTTMCPAPIException('A Server is required, server_id cannot be None')
+
+        params['serverId'] = server_id
+
+        url = self.base_url + 'snapshot/disableSnapshotService'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            if response.json()['requestId']:
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Snapshot Service was successfully disabled')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    #
     # API Calls
     #
     def api_get_call(self, url, params=None):
@@ -3173,7 +3366,10 @@ class NTTMCPClient():
         :kw params: The parameters for the GET request
         :returns: API response
         """
-        response = REQ.get(url, auth=self.credentials, headers=HTTP_HEADERS, params=params)
+        response = REQ.get(url,
+                           auth=(self.credentials.get('user_id'), self.credentials.get('password')),
+                           headers=HTTP_HEADERS,
+                           params=params)
         try:
             if response is not None:
                 if response.status_code == 200:
@@ -3195,7 +3391,10 @@ class NTTMCPClient():
         :kw params: The parameters for the POST request
         :returns: API response
         """
-        response = REQ.post(url, auth=self.credentials, headers=HTTP_HEADERS, json=params)
+        response = REQ.post(url,
+                            auth=(self.credentials.get('user_id'), self.credentials.get('password')),
+                            headers=HTTP_HEADERS,
+                            json=params)
         try:
             if response is not None:
                 if response.status_code == 200:

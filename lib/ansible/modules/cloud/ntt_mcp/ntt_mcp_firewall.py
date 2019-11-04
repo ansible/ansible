@@ -31,7 +31,7 @@ module: ntt_mcp_firewall
 short_description: Create, Modify and Delete Firewall rules
 description:
     - Create, Modify and Delete Firewall rules
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -502,7 +502,7 @@ def update_fw_rule(module, client, network_domain_id, existing_fw_rule, src_cidr
             if compare_result['changes']:
                 client.update_fw_rule(fw_rule)
                 return_data['acl'] = client.get_fw_rule_by_name(network_domain_id, args.get('name'))
-                module.exit_json(changed=True, reuslts=return_data.get('acl'))
+                module.exit_json(changed=True, data=return_data.get('acl'))
         except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
             module.fail_json(msg='Could not update the firewall rule - {0}'.format(e), exception=traceback.format_exc())
     module.exit_json(changed=False, data=existing_fw_rule)
@@ -643,7 +643,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Check to see the CIDR provided is valid
     if module.params.get('src_cidr'):

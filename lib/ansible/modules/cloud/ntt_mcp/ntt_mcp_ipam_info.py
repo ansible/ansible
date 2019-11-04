@@ -31,7 +31,7 @@ module: ntt_mcp_ipam_info
 short_description: IP Address Management Facts
 description:
     - IP Address Management Facts
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -308,7 +308,7 @@ def main():
     if not credentials:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get the CND
     try:

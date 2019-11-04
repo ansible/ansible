@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2019 NTT Communications Cloud Infrastructure Services
+# Copyright (c) 2019, Ken Sinfield <ken.sinfield@cis.ntt.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ module: ntt_mcp_vip_node
 short_description: Create, Update and Delete VIP Nodes
 description:
     - Create, Update and Delete VIP Nodes
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -381,7 +381,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get the CND
     try:
@@ -422,7 +422,7 @@ def main():
         else:
             if compare_vip_node(module, node):
                 update_vip_node(module, client, node)
-            module.exit_json(result=node)
+            module.exit_json(data=node)
     elif state == 'absent':
         if not node:
             module.exit_json(msg='No VIP node not found. Nothing to remove.')

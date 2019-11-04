@@ -31,7 +31,7 @@ module: ntt_mcp_ip_list_info
 short_description: List and Get IP Address Lists
 description:
     - List and Get IP Address Lists
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -205,7 +205,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params['region'])
+    client = NTTMCPClient(credentials, module.params['region'])
 
     # Get the CND
     try:

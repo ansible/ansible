@@ -31,7 +31,7 @@ module: ntt_mcp_vlan
 short_description: List, Create, Update, Delete VLANs
 description:
     - Get, Create, Delete VLANs
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -551,7 +551,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get the CND
     try:
@@ -579,7 +579,7 @@ def main():
             try:
                 if compare_vlan(module, vlan):
                     update_vlan(module, client, vlan)
-                module.exit_json(result=vlan)
+                module.exit_json(data=vlan)
             except NTTMCPAPIException as exc:
                 module.fail_json(msg='Failed to update the VLAN - {0}'.format(exc))
     # Delete the VLAN

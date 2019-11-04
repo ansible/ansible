@@ -126,7 +126,7 @@
     tags:
       - delete_piops
 
-  - name: Delete a disk to a server (STANDARD)
+  - name: Delete a disk frmo a server (STANDARD)
     ntt_mcp_server_disk:
       region: na
       datacenter: NA12

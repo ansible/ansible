@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2019 NTT Communications Cloud Infrastructure Services
+# Copyright (c) 2019, Ken Sinfield <ken.sinfield@cis.ntt.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ module: ntt_mcp_ansible_gw
 short_description: List, Create and Destory an Ansible Bastion Host
 description:
     - List, Create and Destory an Ansible Bastion Host
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -746,7 +746,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params['region'])
+    client = NTTMCPClient(credentials, module.params['region'])
 
     # Get the CND object based on the supplied name
     try:

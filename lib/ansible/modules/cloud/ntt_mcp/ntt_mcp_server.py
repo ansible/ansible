@@ -31,7 +31,7 @@ module: ntt_mcp_server
 short_description: Create, Update and Delete Servers
 description:
     - Create, Update and Delete Servers
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -72,6 +72,12 @@ options:
             - The name of the Image to use whend creating a new server
             - Use ntt_mcp_infrastructure -> state=get_image to get a list
             - of that available images
+        required: false
+        type: str
+    cluster:
+        description:
+            - The name of the cluster when the server is being deployed in a multi-cluster environment
+            - This argument can typically be ignored
         required: false
         type: str
     cpu:
@@ -866,6 +872,8 @@ def create_server(module, client):
         params['ipv4Gateway'] = module.params['ipv4_gw']
     if module.params['ipv6_gw']:
         params['ipv6Gateway'] = module.params['ipv6_gw']
+    if module.params.get('cluster') is not None:
+        params['clusterId'] = module.params.get('cluster')
     if not ngoc:
         if module.params['admin_password']:
             params['administratorPassword'] = module.params['admin_password']
@@ -1205,8 +1213,8 @@ def server_command(module, client, server, command, should_return_data):
     except NTTMCPAPIException as e:
         module.fail_json(msg='Could not {0} the server - {1}'.format(command, e))
     if should_return_data:
-        return_data['server'] = wait_result
-        module.exit_json(changed=True, msg=msg, data=return_data)
+        # return_data['server'] = wait_result
+        module.exit_json(changed=True, msg=msg, data=wait_result)
     module.exit_json(changed=True, msg=msg)
 
 
@@ -1341,6 +1349,7 @@ def main():
             name=dict(required=True, type='str'),
             description=dict(required=False, type='str'),
             image=dict(required=False, type='str'),
+            cluster=dict(required=False, type='str'),
             cpu=dict(required=False, type='dict'),
             memory_gb=dict(required=False, type='int'),
             network_info=dict(required=False, type='dict'),
@@ -1392,7 +1401,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get the CND object based on the supplied name
     # This is more complicated in other modules because the network_domain can be supplied in multiple locations on this module
@@ -1452,7 +1461,7 @@ def main():
                         module.fail_json(msg='Server cannot be updated while the it is running')
                     update_server(module, client, server)
                 if start and not server_running:
-                    server_command(module, client, server, 'start', False)
+                    server_command(module, client, server, 'start', True)
                 server = client.get_server_by_name(datacenter, network_domain_id, vlan_id, name)
                 module.exit_json(changed=False, data=server)
             except NTTMCPAPIException as e:
@@ -1492,7 +1501,7 @@ def main():
         # Implement check_mode
         if module.check_mode:
             module.exit_json(msg='The server {0} is ok to be started'.format(server.get('name')))
-        server_command(module, client, server, state, False)
+        server_command(module, client, server, state, True)
     # Stop a Server
     elif state == 'stop' or state == 'hard_stop':
         if not server:
@@ -1502,7 +1511,7 @@ def main():
         # Implement check_mode
         if module.check_mode:
             module.exit_json(msg='The server {0} is ok to be stopped'.format(server.get('name')))
-        server_command(module, client, server, state, False)
+        server_command(module, client, server, state, True)
     # Reboot a Server
     elif state == 'reboot':
         if not server:
@@ -1510,7 +1519,7 @@ def main():
         # Implement check_mode
         if module.check_mode:
             module.exit_json(msg='The server {0} is ok to be rebooted'.format(server.get('name')))
-        server_command(module, client, server, state, False)
+        server_command(module, client, server, state, True)
 
 
 if __name__ == '__main__':

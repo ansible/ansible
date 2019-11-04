@@ -31,7 +31,7 @@ module: ntt_mcp_server_info
 short_description: Get and List Servers
 description:
     - Get and List Servers
-version_added: 2.9
+version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -476,7 +476,7 @@ def main():
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
-    client = NTTMCPClient((credentials[0], credentials[1]), module.params.get('region'))
+    client = NTTMCPClient(credentials, module.params.get('region'))
 
     # Get the CND object based on the supplied name
     try:
@@ -504,7 +504,11 @@ def main():
         module.fail_json(msg='Failed to get a list of servers - {0}'.format(exc))
     try:
         if name:
-            return_data['server'] = [x for x in servers if x.get('name') == name]
+            server = client.get_server_by_name(datacenter=datacenter,
+                                               network_domain_id=network_domain.get('id'),
+                                               name=name)
+            if server:
+                return_data['server'].append(server)
         else:
             return_data['server'] = servers
     except (KeyError, IndexError, AttributeError):

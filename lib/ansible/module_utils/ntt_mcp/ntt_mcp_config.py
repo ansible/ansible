@@ -28,43 +28,43 @@ HTTP_HEADERS = {'Content-Type': 'application/json',
                 'Accept': 'application/json'}
 
 # API Versions
-API_VERSION = '2.9'
+API_VERSION = '2.10'
 
 # API end-points
 API_ENDPOINTS = {
     'na': {
         'name': 'North America (NA)',
-        'host': 'api-na.dimensiondata.com',
+        'host': 'api-na.mcp-services.net',
         'vendor': 'NTT'
     },
     'eu': {
         'name': 'Europe (EU)',
-        'host': 'api-eu.dimensiondata.com',
+        'host': 'api-eu.mcp-services.net',
         'vendor': 'NTT'
     },
     'au': {
         'name': 'Australia (AU)',
-        'host': 'api-au.dimensiondata.com',
+        'host': 'api-au.mcp-services.net',
         'vendor': 'NTT'
     },
     'au-gov': {
         'name': 'Australia Canberra ACT (AU)',
-        'host': 'api-canberra.dimensiondata.com',
+        'host': 'api-canberra.mcp-services.net',
         'vendor': 'NTT'
     },
     'af': {
         'name': 'Africa (AF)',
-        'host': 'api-mea.dimensiondata.com',
+        'host': 'api-mea.mcp-services.net',
         'vendor': 'NTT'
     },
     'ap': {
         'name': 'Asia Pacific (AP)',
-        'host': 'api-ap.dimensiondata.com',
+        'host': 'api-ap.mcp-services.net',
         'vendor': 'NTT'
     },
     'ca': {
         'name': 'Canada (CA)',
-        'host': 'api-canada.dimensiondata.com',
+        'host': 'api-canada.mcp-services.net',
         'vendor': 'NTT'
     },
     'is-na': {
