@@ -860,3 +860,50 @@ def test_get_collection_versions_pagination(api_version, token_type, token_ins, 
         assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
         assert mock_open.mock_calls[1][2]['headers']['Authorization'] == '%s my token' % token_type
         assert mock_open.mock_calls[2][2]['headers']['Authorization'] == '%s my token' % token_type
+
+
+@pytest.mark.parametrize('responses', [
+    [
+        {
+            'count': 2,
+            'results': [{'name': '3.5.1', }, {'name': '3.5.2'}],
+            'next_link': None,
+            'next': None,
+            'previous_link': None,
+            'previous': None
+        },
+    ],
+    [
+        {
+            'count': 2,
+            'results': [{'name': '3.5.1',}],
+            'next_link': '/api/v1/roles/432/versions/?page=2&page_size=50',
+            'next': '/roles/432/versions/?page=2&page_size=50',
+            'previous_link': None,
+            'previous': None
+        },
+        {
+            'count': 2,
+            'results': [{'name': '3.5.2'}],
+            'next_link': None,
+            'next': None,
+            'previous_link': '/api/v1/roles/432/versions/?&page_size=50',
+            'previous': '/roles/432/versions/?page_size=50',
+        },
+    ]
+])
+def test_get_role_versions_pagination(monkeypatch, responses):
+    api = get_test_galaxy_api('https://galaxy.com/api/', 'v1')
+
+    mock_open = MagicMock()
+    mock_open.side_effect = [StringIO(to_text(json.dumps(r))) for r in responses]
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    actual = api.fetch_role_related('versions', 432)
+    assert actual == [{'name': '3.5.1'}, {'name': '3.5.2'}]
+
+    assert mock_open.call_count == len(responses)
+
+    assert mock_open.mock_calls[0][1][0] == 'https://galaxy.com/api/v1/roles/432/versions/?page_size=50'
+    if len(responses) == 2:
+        assert mock_open.mock_calls[1][1][0] == 'https://galaxy.com/api/v1/roles/432/versions/?page=2&page_size=50'
