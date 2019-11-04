@@ -225,7 +225,6 @@ import os
 import re
 import select
 import socket
-import sys
 import time
 import traceback
 
@@ -437,26 +436,6 @@ def _convert_host_to_hex(host):
     return ips
 
 
-def _create_connection(host, port, connect_timeout):
-    """
-    Connect to a 2-tuple (host, port) and return
-    the socket object.
-
-    Args:
-        2-tuple (host, port) and connection timeout
-    Returns:
-        Socket object
-    """
-    if sys.version_info < (2, 6):
-        (family, _) = (_convert_host_to_ip(host))[0]
-        connect_socket = socket.socket(family, socket.SOCK_STREAM)
-        connect_socket.settimeout(connect_timeout)
-        connect_socket.connect((host, port))
-    else:
-        connect_socket = socket.create_connection((host, port), connect_timeout)
-    return connect_socket
-
-
 def _timedelta_total_seconds(timedelta):
     return (
         timedelta.microseconds + 0.0 +
@@ -546,7 +525,7 @@ def main():
                     break
             elif port:
                 try:
-                    s = _create_connection(host, port, connect_timeout)
+                    s = socket.create_connection((host, port), connect_timeout)
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
                 except Exception:
@@ -596,7 +575,7 @@ def main():
             elif port:
                 alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                 try:
-                    s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout))
+                    s = socket.create_connection((host, port), min(connect_timeout, alt_connect_timeout))
                 except Exception:
                     # Failed to connect by connect_timeout. wait and try again
                     pass
