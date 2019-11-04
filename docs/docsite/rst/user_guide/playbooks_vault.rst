@@ -22,7 +22,7 @@ There are 2 types of vaulted content and each has their own uses and limitations
     * You can mix vaulted and non vaulted variables in the same file, even inline in a play or role.
 
 .. warning::
-    * Vault ONLY protects data 'at rest', once decrypted play and plugin authors are responsible of avoiding any secrets discolsure,
+    * Vault ONLY protects data 'at rest'.  Once decrypted, play and plugin authors are responsible for avoiding any secret disclosure,
       see :ref:`no_log <keep_secret_data>` for details on hiding output.
 
 To enable this feature, a command line tool, :ref:`ansible-vault` is used to edit files, and a command line flag :option:`--ask-vault-pass <ansible-vault-create --ask-vault-pass>`, :option:`--vault-password-file <ansible-vault-create --vault-password-file>` or :option:`--vault-id <ansible-playbook --vault-id>` is used. You can also modify your ``ansible.cfg`` file to specify the location of a password file or configure Ansible to always prompt for the password. These options require no command line flag usage.
