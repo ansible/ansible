@@ -42,6 +42,9 @@ notes:
     - When using state:absent, evpn is not supported and it will be ignored.
     - When using state:absent to delete VPN target attributes, ensure the configuration of VPN target attributes has
       existed and otherwise it will report an error.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     bridge_domain_id:
         description:
