@@ -101,7 +101,7 @@ options:
           min_cpu_platform:
             description:
             - The minimum CPU platform for the reservation. For example, `"Intel Skylake"`.
-              See the CPU platform availability reference](U(https://cloud.google.com/compute/docs/instances/specify-min-cpu-platform#availablezones))
+              See U(https://cloud.google.com/compute/docs/instances/specify-min-cpu-platform#availablezones)
               for information on available CPU platforms.
             required: false
             type: str
@@ -291,7 +291,7 @@ specificReservation:
         minCpuPlatform:
           description:
           - The minimum CPU platform for the reservation. For example, `"Intel Skylake"`.
-            See the CPU platform availability reference](U(https://cloud.google.com/compute/docs/instances/specify-min-cpu-platform#availablezones))
+            See U(https://cloud.google.com/compute/docs/instances/specify-min-cpu-platform#availablezones)
             for information on available CPU platforms.
           returned: success
           type: str
