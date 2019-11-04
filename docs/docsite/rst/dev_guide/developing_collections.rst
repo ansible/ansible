@@ -241,7 +241,6 @@ a tarball of the built collection in the current directory which can be uploaded
 This tarball is mainly intended to upload to Galaxy
 as a distribution method, but you can use it directly to install the collection on target systems.
 
-
 .. _trying_collection_locally:
 
 Trying collection locally
