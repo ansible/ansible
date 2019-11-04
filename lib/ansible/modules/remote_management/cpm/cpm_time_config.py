@@ -100,10 +100,9 @@ options:
     type: str
   timeout:
     description:
-      - Set the network timeout in seconds of contacting the NTP servers, valid options can befrom 1-60.
+      - Set the network timeout in seconds of contacting the NTP servers, valid options can be from 1-60.
     required: false
     type: int
-    choices: [ 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 ]
 notes:
   - Use C(groups/cpm) in C(module_defaults) to set common options used between CPM modules.
 """
@@ -188,7 +187,6 @@ def assemble_json(cpmmodule, existing):
         localprimary.insert(x, None)
         localsecondary.insert(x, None)
 
-    json_load = "{"
     if cpmmodule.params["date"] is not None:
         if (existing["date"] != to_native(cpmmodule.params["date"])):
             total_change = (total_change | 1)
@@ -235,8 +233,9 @@ def assemble_json(cpmmodule, existing):
                 loopcounter += 1
     if cpmmodule.params["timeout"] is not None:
         if (existing["ntp"]["timeout"] != to_native(cpmmodule.params["timeout"])):
-            total_change = (total_change | 8)
-            localtimeout = to_native(cpmmodule.params["timeout"])
+            if ((int(to_native(cpmmodule.params["timeout"])) > 0) and (int(to_native(cpmmodule.params["timeout"])) <= 60)):
+                total_change = (total_change | 8)
+                localtimeout = to_native(cpmmodule.params["timeout"])
 
     if (total_change > 0):
         protocol = protocolchanged = 0
@@ -306,6 +305,7 @@ def assemble_json(cpmmodule, existing):
             # end ntp block
             ietfstring = '%s}' % (ietfstring)
 
+        json_load = "{"
         json_load = '%s%s' % (json_load, ietfstring)
         json_load = '%s}' % (json_load)
     else:
@@ -326,7 +326,7 @@ def run_module():
         ntpenable=dict(type='int', required=False, default=None, choices=[0, 1]),
         ipv4address=dict(type='str', required=False, default=None),
         ipv6address=dict(type='str', required=False, default=None),
-        timeout=dict(type='int', required=False, default=None, choices=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]),
+        timeout=dict(type='int', required=False, default=None),
         use_https=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
         use_proxy=dict(type='bool', default=False)
