@@ -91,6 +91,8 @@ class TestEosL2InterfacesModule(TestEosModule):
                     'ip address 203.0.113.27/24',
                     'interface Ethernet1', 'no ip address']
         self.execute_module(changed=True, commands=commands)
+    
+    # Existing bug #64302
 
     # def test_eos_l3_interfaces_overridden_idempotent(self):
     #     set_module_args(dict(
