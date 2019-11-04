@@ -353,15 +353,15 @@ def main():
 
             # Are the existing certificate in ACM and the local certificate the same?
             same = True
-            same &= chain_compare(old_cert['certificate'], module.params['certificate'])
+            same &= chain_compare(module, old_cert['certificate'], module.params['certificate'])
             if module.params['certificate_chain']:
                 # Need to test this
                 # not sure if Amazon appends the cert itself to the chain when self-signed
-                same &= chain_compare(old_cert['certificate_chain'], module.params['certificate_chain'])
+                same &= chain_compare(module, old_cert['certificate_chain'], module.params['certificate_chain'])
             else:
                 # When there is no chain with a cert
                 # it seems Amazon returns the cert itself as the chain
-                same &= chain_compare(old_cert['certificate_chain'], module.params['certificate'])
+                same &= chain_compare(module, old_cert['certificate_chain'], module.params['certificate'])
 
             if same:
                 module.debug("Existing certificate in ACM is the same, doing nothing")
