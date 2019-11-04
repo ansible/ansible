@@ -195,7 +195,7 @@ options:
             - Default value is set by oVirt/RHV engine.
     cpu_threads:
         description:
-            - Number of virtual CPUs sockets of the Virtual Machine.
+            - Number of threads per core of the Virtual Machine.
             - Default value is set by oVirt/RHV engine.
         version_added: "2.5"
     type:
