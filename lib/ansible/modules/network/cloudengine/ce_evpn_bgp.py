@@ -28,6 +28,9 @@ description:
     - This module offers the ability to configure a BGP EVPN peer relationship on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@QijunPan)
+notes:
+  - Recommended connection is C(network_cli).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
     bgp_instance:
         description:

@@ -34,6 +34,9 @@ description:
     the results read from the device.  The ce_command module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
+notes:
+  - Recommended connection is C(network_cli).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
   commands:
     description:
