@@ -1,65 +1,68 @@
 #!/usr/bin/python
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: iam_policy
-short_description: Manage IAM policies for users, groups, and roles
+short_description: Manage inline IAM policies for users, groups, and roles
 description:
-     - Allows uploading or removing IAM policies for IAM users, groups or roles.
+    - Allows uploading or removing inline IAM policies for IAM users, groups or roles.
+    - To administer managed policies please see M(iam_user), M(iam_role),
+      M(iam_group) and M(iam_managed_policy)
 version_added: "2.0"
 options:
   iam_type:
     description:
-      - Type of IAM resource
+      - Type of IAM resource.
     required: true
     choices: [ "user", "group", "role"]
+    type: str
   iam_name:
     description:
       - Name of IAM resource you wish to target for policy actions. In other words, the user name, group name or role name.
     required: true
+    type: str
   policy_name:
     description:
       - The name label for the policy to create or remove.
     required: true
+    type: str
   policy_document:
     description:
-      - The path to the properly json formatted policy file (mutually exclusive with C(policy_json))
+      - The path to the properly json formatted policy file.
+      - Mutually exclusive with I(policy_json).
+    type: str
   policy_json:
     description:
-      - A properly json formatted policy as string (mutually exclusive with C(policy_document),
-        see https://github.com/ansible/ansible/issues/7005#issuecomment-42894813 on how to use it properly)
+      - A properly json formatted policy as string.
+      - Mutually exclusive with I(policy_document).
+      - See U(https://github.com/ansible/ansible/issues/7005#issuecomment-42894813) on how to use it properly.
+    type: json
   state:
     description:
       - Whether to create or delete the IAM policy.
     required: true
     choices: [ "present", "absent"]
+    default: present
+    type: str
   skip_duplicates:
     description:
       - By default the module looks for any policies that match the document you pass in, if there is a match it will not make a new policy object with
         the same rules. You can override this by specifying false which would allow for two policy objects with different names but same rules.
-    default: "/"
+    default: True
+    type: bool
 
-notes:
-  - 'Currently boto does not support the removal of Managed Policies, the module will not work removing/adding managed policies.'
-author: "Jonathan I. Davila (@defionscode)"
+author:
+  - Jonathan I. Davila (@defionscode)
 extends_documentation_fragment:
     - aws
     - ec2
@@ -268,12 +271,10 @@ def group_action(module, iam, name, policy_name, skip, pdoc, state):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        iam_type=dict(
-            default=None, required=True, choices=['user', 'group', 'role']),
-        state=dict(
-            default=None, required=True, choices=['present', 'absent']),
+        iam_type=dict(required=True, choices=['user', 'group', 'role']),
+        state=dict(default='present', choices=['present', 'absent']),
         iam_name=dict(default=None, required=False),
-        policy_name=dict(default=None, required=True),
+        policy_name=dict(required=True),
         policy_document=dict(default=None, required=False),
         policy_json=dict(type='json', default=None, required=False),
         skip_duplicates=dict(type='bool', default=True, required=False)

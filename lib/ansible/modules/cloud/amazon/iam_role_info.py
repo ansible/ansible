@@ -25,14 +25,16 @@ author:
 options:
     name:
         description:
-            - Name of a role to search for
-            - Mutually exclusive with C(prefix)
+            - Name of a role to search for.
+            - Mutually exclusive with I(path_prefix).
         aliases:
             - role_name
+        type: str
     path_prefix:
         description:
-            - Prefix of role I(path) to restrict IAM role search for
-            - Mutually exclusive with C(name)
+            - Prefix of role C(path) to restrict IAM role search for.
+            - Mutually exclusive with I(name).
+        type: str
 extends_documentation_fragment:
   - aws
   - ec2

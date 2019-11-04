@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -25,7 +17,7 @@ module: lambda_info
 short_description: Gathers AWS Lambda function details
 description:
   - Gathers various details related to Lambda functions, including aliases, versions and event source mappings.
-    Use module M(lambda) to manage the lambda function itself, M(lambda_alias) to manage function aliases and
+  - Use module M(lambda) to manage the lambda function itself, M(lambda_alias) to manage function aliases and
     M(lambda_event) to manage lambda event source mappings.
 
 version_added: "2.9"
@@ -37,13 +29,16 @@ options:
     required: true
     choices: [ "aliases", "all", "config", "mappings", "policy", "versions" ]
     default: "all"
+    type: str
   function_name:
     description:
       - The name of the lambda function for which information is requested.
     aliases: [ "function", "name"]
+    type: str
   event_source_arn:
     description:
-      - For query type 'mappings', this is the Amazon Resource Name (ARN) of the Amazon Kinesis or DynamoDB stream.
+      - When I(query=mappings), this is the Amazon Resource Name (ARN) of the Amazon Kinesis or DynamoDB stream.
+    type: str
 author: Pierre Jodouin (@pjodouin)
 requirements:
     - boto3
