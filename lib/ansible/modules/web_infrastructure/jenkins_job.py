@@ -334,7 +334,7 @@ def test_dependencies(module):
 
 
 def job_config_to_string(xml_str):
-    return ET.tostring(ET.fromstring(xml_str))
+    return ET.tostring(ET.fromstring(xml_str), encoding='UTF-8')
 
 
 def main():
