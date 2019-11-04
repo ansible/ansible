@@ -9,7 +9,6 @@
 - name: "Enable feature LACP"
   nxos_feature:
     feature: lacp
-    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -18,14 +17,12 @@
     lines:
       - no interface port-channel 20
       - no interface port-channel 100
-    provider: "{{ connection }}"
 
 - name: setup - remove config used in test(part2)
   nxos_config:
     lines:
       - no channel-group 20
     parents: "{{ item }}"
-    provider: "{{ connection }}"
 
   ignore_errors: yes
   loop:
@@ -38,13 +35,11 @@
     - { name: "{{testint1}}" }
     - { name: "{{testint2}}" }
     mode: layer2
-    provider: "{{ connection }}"
   when: platform is match("N35")
 
 - name: create linkagg
   nxos_linkagg: &create
     group: 20
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -69,7 +64,6 @@
     members:
       - "{{ testint1 }}"
       - "{{ testint2 }}"
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -95,7 +89,6 @@
     force: True
     members:
       - "{{ testint2 }}"
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -115,7 +108,6 @@
 - name: remove linkagg
   nxos_linkagg: &remove
     group: 20
-    provider: "{{ connection }}"
     state: absent
   register: result
 
@@ -137,7 +129,6 @@
     aggregate:
       - { group: 20, min_links: 3 }
       - { group: 100, min_links: 4 }
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -161,7 +152,6 @@
     aggregate:
       - { group: 20, min_links: 3 }
       - { group: 100, min_links: 4 }
-    provider: "{{ connection }}"
     state: absent
   register: result
 
@@ -184,14 +174,12 @@
     lines:
       - no interface port-channel 20
       - no interface port-channel 100
-    provider: "{{ connection }}"
 
 - name: teardown - remove config used in test(part2)
   nxos_config:
     lines:
       - no channel-group 20
     parents: "{{ item }}"
-    provider: "{{ connection }}"
   ignore_errors: yes
   loop:
     - "interface {{ testint1 }}"
@@ -200,7 +188,6 @@
 - name: "Disable feature LACP"
   nxos_feature:
     feature: lacp
-    provider: "{{ connection }}"
     state: disabled
     #timeout: 60
 
