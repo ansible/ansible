@@ -82,7 +82,6 @@ options:
       - This is timezone that is assigned to the WTI device.
     required: false
     type: int
-    choices: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37 ]
   ntpenable:
     description:
       - This enables or disables the NTP client service.
@@ -101,9 +100,10 @@ options:
     type: str
   timeout:
     description:
-      - Set the network timeout in seconds of contacting the NTP servers, valid options can be from 1-60.
+      - Set the network timeout in seconds of contacting the NTP servers, valid options can befrom 1-60.
     required: false
     type: int
+    choices: [ 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30 ]
 notes:
   - Use C(groups/cpm) in C(module_defaults) to set common options used between CPM modules.
 """
@@ -326,7 +326,7 @@ def run_module():
         ntpenable=dict(type='int', required=False, default=None, choices=[0, 1]),
         ipv4address=dict(type='str', required=False, default=None),
         ipv6address=dict(type='str', required=False, default=None),
-        timeout=dict(type='int', required=False, default=None),
+        timeout=dict(type='int', required=False, default=None, choices=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]),
         use_https=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
         use_proxy=dict(type='bool', default=False)
