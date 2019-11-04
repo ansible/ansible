@@ -210,6 +210,11 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
     * Specifies the data type that option accepts, must match the ``argspec``.
     * If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
+    * If an argument is ``type='list'``, ``elements`` should be specified.
+
+  :elements:
+
+    * Specifies the data type for list elements in case ``type='list'``.
 
   :aliases:
     * List of optional name aliases.
@@ -382,13 +387,15 @@ Otherwise, for each value returned, provide the following fields. All fields are
     When this value is returned, such as ``always``, or ``on success``.
   :type:
     Data type.
+  :elements:
+    If ``type='list'``, specifies the data type of the list's elements.
   :sample:
     One or more examples.
   :version_added:
     Only needed if this return was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
     This is a string, and not a float, i.e. ``version_added: '2.3'``.
   :contains:
-    Optional. To describe nested return values, set ``type: complex`` and repeat the elements above for each sub-field.
+    Optional. To describe nested return values, set ``type: complex``, ``type: dict``, or ``type: list``/``elements: dict`` and repeat the elements above for each sub-field.
 
 Here are two example ``RETURN`` sections, one with three simple fields and one with a complex nested field::
 
