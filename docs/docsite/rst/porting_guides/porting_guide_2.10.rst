@@ -57,6 +57,9 @@ The following functionality will be removed in Ansible 2.14. Please update updat
 * :ref:`s3_lifecycle <s3_lifecycle_module>`: the ``requester_pays`` option will be removed. It has always been ignored by the module.
 * :ref:`s3_sync <s3_sync_module>`: the ``retries`` option will be removed. It has always been ignored by the module.
 * The return values ``err`` and ``out`` of :ref:`docker_stack <docker_stack_module>` have been deprecated. Use ``stdout`` and ``stderr`` from now on instead.
+* :ref:`cloudformation <cloudformation_module>`: the ``template_format`` option will be removed. It has been ignored by the module since Ansible 2.3.
+* :ref:`data_pipeline <data_pipeline_module>`: the ``version`` option will be removed. It has always been ignored by the module.
+
 
 The following functionality will change in Ansible 2.14. Please update update your playbooks accordingly.
 
