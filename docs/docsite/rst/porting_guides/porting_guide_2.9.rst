@@ -19,8 +19,25 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
+Inventory
+---------
+
  * ``hash_behaviour`` now affects inventory sources. If you have it set to ``merge``, the data you get from inventory might change and you will have to update playbooks accordingly. If you're using the default setting (``overwrite``), you will see no changes. Inventory was ignoring this setting.
 
+Loops
+-----
+
+Many improvements were made in Ansible 2.9 as they impact "unsafe" data, to ensure that data marked as "unsafe" is not templated.
+
+This impacts the use of ``with_X`` style loops, that return structured data such as lists of dictionaries.
+Previously Ansible treated direct uses of ``lookup()`` differently than the indirect use of lookups through ``with_`` style loops.
+
+This caused data returned from ``lookup()`` to be recursively marked as "unsafe", but returned data from ``with_`` style
+loops was only marked as unsafe if the returned elements were strings.
+
+As a result, using ``with_dict`` that returned keys with templatable values, may no longer work as expected in Ansible 2.9.
+
+The solution to allowing the old behavior is to switch from use of ``with_X`` to using ``loop`` with a filter as described at :ref:`migrating_to_loop`.
 
 Command Line
 ============
