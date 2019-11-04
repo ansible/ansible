@@ -23,7 +23,6 @@
     lines:
       - no channel-group 20
     parents: "{{ item }}"
-
   ignore_errors: yes
   loop:
     - "interface {{ testint1 }}"
