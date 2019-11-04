@@ -29,6 +29,9 @@ description:
     - Manages a system startup information on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@QijunPan)
+notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     cfg_file:
         description:

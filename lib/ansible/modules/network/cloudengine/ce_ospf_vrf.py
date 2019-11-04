@@ -28,6 +28,10 @@ short_description: Manages configuration of an OSPF VPN instance on HUAWEI Cloud
 description:
     - Manages configuration of an OSPF VPN instance on HUAWEI CloudEngine switches.
 author: Yang yang (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     ospf:
         description:
