@@ -34,6 +34,13 @@ echo "This is a test file for edit2" > "${TEST_FILE_EDIT2}"
 TEST_FILE_EDIT3="${MYTMPDIR}/test_file_edit3"
 echo "This is a test file for edit3" > "${TEST_FILE_EDIT3}"
 
+PASSWORD=$(<vault-password)
+WRONG_PASSWORD=$(<vault-password-wrong)
+EXAMPLE1_PASSWORD=$(<example1_password)
+EXAMPLE2_PASSWORD=$(<example2_password)
+
+export PASSWORD WRONG_PASSWORD EXAMPLE1_PASSWORD EXAMPLE2_PASSWORD
+
 # ansible-config view
 ansible-config view
 
@@ -424,6 +431,46 @@ ansible-playbook -i ../../inventory -v "$@" --vault-id vault-password test_vault
 # test with password from password script
 ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-password-file password-script.py
 ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-password-file password-script.py
+
+# test with password from environment
+ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-password-env "PASSWORD"
+ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-password-env "PASSWORD"
+
+# test with password from environment with vault-id syntax
+ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-id "env:PASSWORD"
+ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-id "env:PASSWORD"
+
+# test with wrong password from environment
+ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-password-env "WRONG_PASSWORD" && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
+# test with not existing variable in environment
+ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-password-env "NOT_EXISTING" && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (1 is expected)"
+[ $WRONG_RC -eq 1 ]
+
+# test with multiple environment variables
+ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-password-env "PASSWORD" --vault-password-env "WRONG_PASSWORD"
+ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-password-env "WRONG_PASSWORD" --vault-password-env "PASSWORD"
+
+ansible-playbook test_vault_embedded.yml          -i ../../inventory -v "$@" --vault-password-env "PASSWORD" --vault-password-env "WRONG_PASSWORD"
+ansible-playbook test_vault_embedded.yml          -i ../../inventory -v "$@" --vault-password-env "WRONG_PASSWORD" --vault-password-env "PASSWORD"
+
+# test with password file and environment
+# should fail because --vault-password-env and --vault-password-file are incompatible
+ansible-playbook test_vault_embedded.yml          -i ../../inventory -v "$@" --vault-password-env "PASSWORD" --vault-password-file vault-password-file && :
+WRONG_RC=$?
+echo "rc was $WRONG_RC (2 is expected)"
+[ $WRONG_RC -eq 2 ]
+
+# test with vault-id mixing env and file
+ansible-playbook test_vault_embedded_ids.yml          -i ../../inventory -v "$@" \
+                 --vault-id "example1@example1_password" \
+                 --vault-id "example2@env:EXAMPLE2_PASSWORD" \
+                 --vault-id "wrong_id@example3_password"
 
 # with multiple password files
 ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-password-file vault-password --vault-password-file vault-password-wrong
