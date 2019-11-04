@@ -1,4 +1,3 @@
-:orphan:
 
 .. _porting_2.4_guide:
 
