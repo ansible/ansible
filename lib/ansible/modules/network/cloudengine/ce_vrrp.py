@@ -29,6 +29,10 @@ description:
     - Manages VRRP interface attributes on HUAWEI CloudEngine devices.
 author:
     - Li Yanfeng (@numone213)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     interface:
         description:
