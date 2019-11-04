@@ -99,7 +99,7 @@ class TestEosLacpInterfacesModule(TestEosModule):
             ), state="replaced"
         ))
         self.execute_module(changed=False, commands=[])
-    
+
     def test_eos_l3_interfaces_deleted(self):
         set_module_args(dict(state="deleted"))
         commands = ['no lacp system-priority']
