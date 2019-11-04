@@ -149,7 +149,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         else:
             new_ds['import_playbook'] = items[0].strip()
             if len(items) > 1:
-                display.warning('Additional parameters in import_playbook statements are no longer supported and will be removed in version 2.14')
+                display.warning('Additional parameters in import_playbook statements are not supported. This will be an error in version 2.14')
                 # rejoin the parameter portion of the arguments and
                 # then use parse_kv() to get a dict of params back
                 params = parse_kv(" ".join(items[1:]))
