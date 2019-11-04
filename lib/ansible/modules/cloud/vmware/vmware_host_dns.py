@@ -165,23 +165,35 @@ class VmwareHostDNS(PyVmomi):
 
     def __init__(self, module):
         super(VmwareHostDNS, self).__init__(module)
-        cluster_name = self.params.get('cluster_name')
-        esxi_host_name = self.params.get('esxi_hostname')
-        self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
-        if not self.hosts:
-            self.module.fail_json(msg="Failed to find host system.")
+        self.cluster_name = self.params.get('cluster_name')
+        self.esxi_host_name = self.params.get('esxi_hostname')
+        if self.is_vcenter():
+            if not self.cluster_name and not self.esxi_host_name:
+                self.module.fail_json(
+                    msg="You connected to a vCenter but didn't specify the cluster_name or esxi_hostname you want to configure."
+                )
+            self.hosts = self.get_all_host_objs(cluster_name=self.cluster_name, esxi_host_name=self.esxi_host_name)
+            if not self.hosts:
+                self.module.fail_json(msg="Failed to find host system(s).")
+        else:
+            if self.cluster_name:
+                self.module.warn(
+                    "You connected directly to an ESXi host, cluster_name will be ignored."
+                )
+            if self.esxi_host_name:
+                self.module.warn(
+                    "You connected directly to an ESXi host, esxi_host_name will be ignored."
+                )
+        self.network_type = self.params.get('type')
+        self.vmkernel_device = self.params.get('device')
+        self.host_name = self.params.get('host_name')
+        self.domain = self.params.get('domain')
+        self.dns_servers = self.params.get('dns_servers')
+        self.search_domains = self.params.get('search_domains')
 
     def ensure(self):
         """Function to manage DNS configuration of an ESXi host system"""
         results = dict(changed=False, result=dict())
-        cluster_name = self.params.get('cluster_name', None)
-        if not cluster_name:
-            host_name = self.params.get('host_name')
-        network_type = self.params.get('type')
-        vmkernel_device = self.params.get('device')
-        domain = self.params.get('domain')
-        dns_servers = self.params.get('dns_servers')
-        search_domains = self.params.get('search_domains', None)
         verbose = self.module.params.get('verbose', False)
         host_change_list = []
         for host in self.hosts:
@@ -197,78 +209,84 @@ class VmwareHostDNS(PyVmomi):
                     netstack_spec.netStackInstance = vim.host.NetStackInstance()
                     netstack_spec.netStackInstance.key = 'defaultTcpipStack'
                     dns_config = vim.host.DnsConfig()
-                    results['result'][host.name]['dns_config'] = network_type
-                    if network_type == 'static':
+                    results['result'][host.name]['dns_config'] = self.network_type
+                    if self.network_type == 'static':
                         if instance.dnsConfig.dhcp:
-                            results['result'][host.name]['host_name'] = host_name
-                            results['result'][host.name]['domain'] = domain
-                            results['result'][host.name]['dns_servers'] = dns_servers
-                            results['result'][host.name]['search_domains'] = search_domains
+                            if self.cluster_name:
+                                self.module.fail_json(msg="Changing the DNS config from DHCP to static is not supported on a cluster.")
+                            if not self.host_name or not self.domain or not self.dns_servers or not self.search_domains:
+                                self.module.fail_json(msg="Changing DHCP to static requires all of host_name, domain, search_domains and dns_servers.")
+                            results['result'][host.name]['host_name'] = self.host_name
+                            results['result'][host.name]['domain'] = self.domain
+                            results['result'][host.name]['dns_servers'] = self.dns_servers
+                            results['result'][host.name]['search_domains'] = self.search_domains
                             results['result'][host.name]['dns_config_previous'] = 'DHCP'
                             changed = True
                             changed_list.append("DNS configuration")
                             dns_config.dhcp = False
                             dns_config.virtualNicDevice = None
-                            dns_config.hostName = host_name
-                            dns_config.domainName = domain
-                            dns_config.address = dns_servers
-                            dns_config.searchDomain = search_domains
+                            dns_config.hostName = self.host_name
+                            dns_config.domainName = self.domain
+                            dns_config.address = self.dns_servers
+                            dns_config.searchDomain = self.search_domains
                         else:
+                            results['result'][host.name]['host_name'] = self.host_name
                             # Check host name
-                            if cluster_name:
-                                # Don't check (and configure) hostname if cluster is specified
-                                results['result'][host.name]['host_name'] = instance.dnsConfig.hostName
-                            else:
-                                results['result'][host.name]['host_name'] = host_name
-                                if instance.dnsConfig.hostName != host_name:
+                            if self.host_name:
+                                if instance.dnsConfig.hostName != self.host_name:
                                     results['result'][host.name]['host_name_previous'] = instance.dnsConfig.hostName
                                     changed = True
                                     changed_list.append("Host name")
-                                    dns_config.hostName = host_name
+                                    dns_config.hostName = self.host_name
+                            else:
+                                dns_config.hostName = instance.dnsConfig.hostName
 
                             # Check domain
-                            results['result'][host.name]['domain'] = domain
-                            if instance.dnsConfig.domainName != domain:
-                                results['result'][host.name]['domain_previous'] = instance.dnsConfig.domainName
-                                changed = True
-                                changed_list.append("Domain")
-                                dns_config.domainName = domain
+                            results['result'][host.name]['domain'] = self.domain
+                            if self.domain_name:
+                                if instance.dnsConfig.domainName != self.domain:
+                                    results['result'][host.name]['domain_previous'] = instance.dnsConfig.domainName
+                                    changed = True
+                                    changed_list.append("Domain")
+                                    dns_config.domainName = self.domain_name
+                            else:
+                                dns_config.domainName = instance.dnsConfig.domainName
 
                             # Check DNS server(s)
-                            results['result'][host.name]['dns_servers'] = dns_servers
-                            if instance.dnsConfig.address != dns_servers:
+                            results['result'][host.name]['dns_servers'] = self.dns_servers
+                            if instance.dnsConfig.address != self.dns_servers:
                                 results['result'][host.name]['dns_servers_previous'] = instance.dnsConfig.address
                                 results['result'][host.name]['dns_servers_changed'] = (
-                                    self.get_differt_entries(instance.dnsConfig.address, dns_servers)
+                                    self.get_differt_entries(instance.dnsConfig.address, self.dns_servers)
                                 )
                                 changed = True
                                 # build verbose message
                                 if verbose:
                                     dns_servers_verbose_message = self.build_changed_message(
                                         instance.dnsConfig.address,
-                                        dns_servers
+                                        self.dns_servers
                                     )
                                 else:
                                     changed_list.append("DNS servers")
-                                dns_config.address = dns_servers
+                                dns_config.address = self.dns_servers
 
                             # Check search domain config
-                            results['result'][host.name]['search_domains'] = search_domains
-                            if search_domains and instance.dnsConfig.searchDomain != search_domains:
+                            results['result'][host.name]['search_domains'] = self.search_domains
+                            if self.search_domains and instance.dnsConfig.searchDomain != self.search_domains:
                                 results['result'][host.name]['search_domains_previous'] = instance.dnsConfig.searchDomain
                                 results['result'][host.name]['search_domains_changed'] = (
-                                    self.get_differt_entries(instance.dnsConfig.searchDomain, search_domains)
+                                    self.get_differt_entries(instance.dnsConfig.searchDomain, self.search_domains)
                                 )
                                 changed = True
                                 changed_list.append("Search domains")
-                                dns_config.searchDomain = search_domains
-                    elif network_type == 'dhcp' and not instance.dnsConfig.dhcp:
-                        results['result'][host.name]['device'] = vmkernel_device
+                                dns_config.searchDomain = self.search_domains
+                    elif self.network_type == 'dhcp' and not instance.dnsConfig.dhcp:
+                        results['result'][host.name]['device'] = self.vmkernel_device
                         results['result'][host.name]['dns_config_previous'] = 'static'
                         changed = True
                         changed_list.append("DNS configuration")
                         dns_config.dhcp = True
-                        dns_config.virtualNicDevice = vmkernel_device
+                        dns_config.virtualNicDevice = self.vmkernel_device
                     netstack_spec.netStackInstance.dnsConfig = dns_config
                     config = vim.host.NetworkConfig()
                     config.netStackSpec = [netstack_spec]
@@ -427,15 +445,13 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        required_one_of=[
-            ['cluster_name', 'esxi_hostname'],
-        ],
         required_if=[
             ['type', 'dhcp', ['device']],
-            ['type', 'static', ['host_name', 'domain', 'dns_servers', 'search_domains']],
+            ['type', 'static', ['dns_servers', 'search_domains']],
         ],
         mutually_exclusive=[
             ['cluster_name', 'host_name'],
+            ['cluster_name', 'esxi_host_name'],
             ['static', 'device'],
             ['dhcp', 'host_name'],
             ['dhcp', 'domain'],
