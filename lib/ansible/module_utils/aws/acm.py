@@ -112,7 +112,7 @@ class ACMServiceManager(object):
                 cert_data = self.describe_certificate_with_backoff(client, certificate['CertificateArn'])
             except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg="Couldn't obtain certificate metadata for domain %s" % certificate['DomainName'])
-                
+
             # in some states, ACM resources do not have a corresponding cert
             if cert_data['Status'] not in ['PENDING_VALIDATION', 'VALIDATION_TIMED_OUT', 'FAILED']:
                 try:
