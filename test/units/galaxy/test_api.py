@@ -876,7 +876,7 @@ def test_get_collection_versions_pagination(api_version, token_type, token_ins, 
     [
         {
             'count': 2,
-            'results': [{'name': '3.5.1',}],
+            'results': [{'name': '3.5.1'}],
             'next_link': '/api/v1/roles/432/versions/?page=2&page_size=50',
             'next': '/roles/432/versions/?page=2&page_size=50',
             'previous_link': None,
