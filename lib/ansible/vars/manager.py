@@ -35,10 +35,10 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
-from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
 from ansible.module_utils.six import iteritems, text_type, string_types
-from ansible.plugins.loader import lookup_loader, vars_loader
+from ansible.plugins.loader import lookup_loader
 from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
 from ansible.utils.display import Display
@@ -46,6 +46,7 @@ from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
 
 display = Display()
 
@@ -141,7 +142,7 @@ class VariableManager:
         self._inventory = inventory
 
     def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True,
-                 _hosts=None, _hosts_all=None):
+                 _hosts=None, _hosts_all=None, stage='task'):
         '''
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -231,25 +232,13 @@ class VariableManager:
             # internal fuctions that actually do the work
             def _plugins_inventory(entities):
                 ''' merges all entities by inventory source '''
-                data = {}
-                for inventory_dir in self._inventory._sources:
-                    if ',' in inventory_dir and not os.path.exists(inventory_dir):  # skip host lists
-                        continue
-                    elif not os.path.isdir(to_bytes(inventory_dir)):  # always pass 'inventory directory'
-                        inventory_dir = os.path.dirname(inventory_dir)
-
-                    for plugin in vars_loader.all():
-
-                        data = combine_vars(data, _get_plugin_vars(plugin, inventory_dir, entities))
-                return data
+                return get_vars_from_inventory_sources(self._loader, self._inventory._sources, entities, stage)
 
             def _plugins_play(entities):
                 ''' merges all entities adjacent to play '''
                 data = {}
-                for plugin in vars_loader.all():
-
-                    for path in basedirs:
-                        data = combine_vars(data, _get_plugin_vars(plugin, path, entities))
+                for path in basedirs:
+                    data = combine_vars(data, get_vars_from_path(self._loader, path, entities, stage))
                 return data
 
             # configurable functions that are sortable via config, rememer to add to _ALLOWED if expanding this list
