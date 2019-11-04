@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_login - Use ``with`` statement when accessing files, to prevent that invalid json output is produced"
