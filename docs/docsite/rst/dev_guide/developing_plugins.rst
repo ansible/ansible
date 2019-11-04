@@ -442,9 +442,38 @@ The parameters are:
  * path: this is 'directory data' for every inventory source and the current play's playbook directory, so they can search for data in reference to them. ``get_vars`` will be called at least once per available path.
  * entities: these are host or group names that are pertinent to the variables needed. The plugin will get called once for hosts and again for groups.
 
-This ``get vars`` method just needs to return a dictionary structure with the variables.
+This ``get_vars`` method just needs to return a dictionary structure with the variables.
 
-Since Ansible version 2.4, vars plugins only execute as needed when preparing to execute a task. This avoids the costly 'always execute' behavior that occurred during inventory construction in older versions of Ansible.
+Since Ansible version 2.4, vars plugins only execute as needed when preparing to execute a task. This avoids the costly 'always execute' behavior that occurred during inventory construction in older versions of Ansible. Since Ansible version 2.10, vars plugin execution can be toggled by the user to run when preparing to execute a task or after importing an inventory source.
+
+Since Ansible 2.10, vars plugins can require whitelisting. Vars plugins that don't require whitelisting will run by default. To require whitelisting for your plugin set the class variable ``REQUIRES_WHITELIST``:
+
+.. code-block:: python
+
+    class VarsModule(BaseVarsPlugin):
+        REQUIRES_WHITELIST = True
+
+Include the ``vars_plugin_staging`` documentation fragment to allow users to determine when vars plugins run.
+
+.. code-block:: python
+
+    DOCUMENTATION = '''
+        vars: custom_hostvars
+        version_added: "2.10"
+        short_description: Load custom host vars
+        description: Load custom host vars
+        options:
+          stage:
+            ini:
+              - key: stage
+                section: vars_custom_hostvars
+            env:
+              - name: ANSIBLE_VARS_PLUGIN_STAGE
+        extends_documentation_fragment:
+          - vars_plugin_staging
+    '''
+
+Also since Ansible 2.10, vars plugins can reside in collections. Vars plugins in collections must require whitelisting to be functional.
 
 For example vars plugins, see the source code for the `vars plugins included with Ansible Core
 <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_.

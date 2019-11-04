@@ -1757,6 +1757,19 @@ RETRY_FILES_SAVE_PATH:
   ini:
   - {key: retry_files_save_path, section: defaults}
   type: path
+RUN_VARS_PLUGINS:
+  name: When should vars plugins run relative to inventory
+  default: demand
+  description:
+    - This setting can be used to optimize vars_plugin usage depending on user's inventory size and play selection.
+    - Setting to C(demand) will run vars_plugins relative to inventory sources anytime vars are 'demanded' by tasks.
+    - Setting to C(start) will run vars_plugins relative to inventory sources after importing that inventory source.
+  env: [{name: ANSIBLE_RUN_VARS_PLUGINS}]
+  ini:
+  - {key: run_vars_plugins, section: defaults}
+  type: str
+  choices: ['demand', 'start']
+  version_added: "2.10"
 SHOW_CUSTOM_STATS:
   name: Display custom stats
   default: False
@@ -1811,6 +1824,15 @@ USE_PERSISTENT_CONNECTIONS:
   ini:
   - {key: use_persistent_connections, section: defaults}
   type: boolean
+VARIABLE_PLUGINS_ENABLED:
+  name: Vars plugin whitelist
+  default: ['host_group_vars']
+  description: Whitelist for variable plugins that require it.
+  env: [{name: ANSIBLE_VARS_ENABLED}]
+  ini:
+  - {key: vars_plugins_enabled, section: defaults}
+  type: list
+  version_added: "2.10"
 VARIABLE_PRECEDENCE:
   name: Group variable precedence
   default: ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play', 'groups_plugins_inventory', 'groups_plugins_play']

@@ -1,5 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-# (c) 2014, Serge van Ginderachter <serge@vanginderachter.be>
+# Copyright 2019 RedHat, inc
 #
 # This file is part of Ansible
 #
@@ -15,27 +14,31 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#############################################
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.plugins import AnsiblePlugin
-from ansible.utils.path import basedir
-from ansible.utils.display import Display
+DOCUMENTATION = '''
+    vars: custom_vars
+    version_added: "2.10"
+    short_description: load host and group vars
+    description: test loading host and group vars from a collection
+    options:
+      stage:
+        choices: ['all', 'inventory', 'task']
+        type: str
+        ini:
+          - key: stage
+            section: custom_vars
+        env:
+          - name: ANSIBLE_VARS_PLUGIN_STAGE
+'''
 
-display = Display()
+from ansible.plugins.vars import BaseVarsPlugin
 
 
-class BaseVarsPlugin(AnsiblePlugin):
+class VarsModule(BaseVarsPlugin):
 
-    """
-    Loads variables for groups and/or hosts
-    """
-
-    def __init__(self):
-        """ constructor """
-        super(BaseVarsPlugin, self).__init__()
-        self._display = display
-
-    def get_vars(self, loader, path, entities):
-        """ Gets variables. """
-        self._basedir = basedir(path)
+    def get_vars(self, loader, path, entities, cache=True):
+        super(VarsModule, self).get_vars(loader, path, entities)
+        return {'collection': 'collection_root_user'}
