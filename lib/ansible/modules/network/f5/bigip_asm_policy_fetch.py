@@ -28,7 +28,7 @@ options:
   dest:
     description:
       - A directory to save the policy file into.
-      - This option is ignored when C(inline) is set to c(yes).
+      - This option is ignored when C(inline) is set to C(yes).
     type: path
   file:
     description:

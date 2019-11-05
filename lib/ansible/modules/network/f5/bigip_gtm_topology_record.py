@@ -26,7 +26,7 @@ options:
     suboptions:
       negate:
         description:
-          - When set to c(yes) the system selects this topology record, when the request source does not match.
+          - When set to C(yes) the system selects this topology record, when the request source does not match.
         type: bool
         default: no
       subnet:
@@ -85,7 +85,7 @@ options:
     suboptions:
       negate:
         description:
-          - When set to c(yes) the system selects this topology record, when the request destination does not match.
+          - When set to C(yes) the system selects this topology record, when the request destination does not match.
         type: bool
         default: no
       subnet:
