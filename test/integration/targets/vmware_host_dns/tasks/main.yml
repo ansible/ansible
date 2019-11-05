@@ -4,8 +4,8 @@
 
 - import_role:
     name: prepare_vmware_tests
-      vars:
-        setup_attach_host: true
+  vars:
+    setup_attach_host: true
 
 - name: Gather DNS facts about ESXi Host
   vmware_host_dns_info:
