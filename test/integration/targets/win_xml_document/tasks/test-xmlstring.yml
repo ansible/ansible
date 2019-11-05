@@ -1,13 +1,13 @@
 ---
   - name: Copy expected result to remote
     win_copy:
-      src: 'fixtures/ansible-xml-beers.xml'
+      src: 'results/test-xmlstring.xml'
       dest: '\tmp\test-xmlstring.xml'
 
   # NOTE: Jinja2 templating eats trailing newlines
   - name: Read from xmlstring
     win_xml_document:
-      xmlstring: "{{ lookup('file', '{{ role_path }}/fixtures/ansible-xml-beers.xml') }}"
+      xmlstring: "{{ lookup('file', '{{ role_path }}/results/test-xmlstring.xml') }}"
       xpath: .
     register: xmlresponse
 
@@ -34,7 +34,7 @@
   # NOTE: Jinja2 templating eats trailing newlines
   - name: Read from xmlstring
     win_xml_document:
-      xmlstring: "{{ lookup('file', '{{ role_path }}/fixtures/ansible-xml-beers.xml') }}"
+      xmlstring: "{{ lookup('file', '{{ role_path }}/results/test-xmlstring.xml') }}"
       xpath: /business/beers
       add_children:
       - beer: Old Rasputin
