@@ -163,13 +163,13 @@ EXAMPLES = r'''
 
 - firewalld:
     zone: drop
-    state: present
+    state: enabled
     permanent: yes
     icmp_block_inversion: yes
 
 - firewalld:
     zone: drop
-    state: present
+    state: enabled
     permanent: yes
     icmp_block: echo-request
 
