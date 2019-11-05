@@ -81,7 +81,7 @@ options:
         aliases:
           - mac
       add:
-        version_added: "2.8"
+        version_added: "2.10"
         description:
           - If user wants to add the ipv4 address to an existing host record.
             Note that with I(add) user will have to keep the I(state) as I(present),
@@ -91,7 +91,7 @@ options:
         aliases:
           - add
       remove:
-        version_added: "2.8"
+        version_added: "2.10"
         description:
           - If user wants to remove the ipv4 address from an existing host record.
             Note that with I(remove) user will have to change the I(state) to I(absent),
