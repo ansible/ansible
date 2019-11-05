@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: iam_role_info
 short_description: Gather information on IAM roles
 description:
-    - Gathers information about IAM roles
+    - Gathers information about IAM roles.
     - This module was called C(iam_role_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 requirements: [ boto3 ]
@@ -32,7 +32,7 @@ options:
         type: str
     path_prefix:
         description:
-            - Prefix of role C(path) to restrict IAM role search for.
+            - Prefix of role to restrict IAM role search for.
             - Mutually exclusive with I(name).
         type: str
 extends_documentation_fragment:
@@ -61,89 +61,94 @@ iam_roles:
   type: complex
   contains:
     arn:
-      description: Amazon Resource Name for IAM role
+      description: Amazon Resource Name for IAM role.
       returned: always
       type: str
       sample: arn:aws:iam::123456789012:role/AnsibleTestRole
     assume_role_policy_document:
-      description: Policy Document describing what can assume the role
+      description: Policy Document describing what can assume the role.
       returned: always
       type: str
     create_date:
-      description: Date IAM role was created
+      description: Date IAM role was created.
       returned: always
       type: str
       sample: '2017-10-23T00:05:08+00:00'
     inline_policies:
-      description: List of names of inline policies
+      description: List of names of inline policies.
       returned: always
       type: list
       sample: []
     managed_policies:
-      description: List of attached managed policies
+      description: List of attached managed policies.
       returned: always
       type: complex
       contains:
         policy_arn:
-          description: Amazon Resource Name for the policy
+          description: Amazon Resource Name for the policy.
           returned: always
           type: str
           sample: arn:aws:iam::123456789012:policy/AnsibleTestEC2Policy
         policy_name:
-          description: Name of managed policy
+          description: Name of managed policy.
           returned: always
           type: str
           sample: AnsibleTestEC2Policy
     instance_profiles:
-      description: List of attached instance profiles
+      description: List of attached instance profiles.
       returned: always
       type: complex
       contains:
         arn:
-          description: Amazon Resource Name for the instance profile
+          description: Amazon Resource Name for the instance profile.
           returned: always
           type: str
           sample: arn:aws:iam::123456789012:instance-profile/AnsibleTestEC2Policy
         create_date:
-          description: Date instance profile was created
+          description: Date instance profile was created.
           returned: always
           type: str
           sample: '2017-10-23T00:05:08+00:00'
         instance_profile_id:
-          description: Amazon Identifier for the instance profile
+          description: Amazon Identifier for the instance profile.
           returned: always
           type: str
           sample: AROAII7ABCD123456EFGH
         instance_profile_name:
-          description: Name of instance profile
+          description: Name of instance profile.
           returned: always
           type: str
           sample: AnsibleTestEC2Policy
         path:
-          description: Path of instance profile
+          description: Path of instance profile.
           returned: always
           type: str
           sample: /
         roles:
-          description: List of roles associated with this instance profile
+          description: List of roles associated with this instance profile.
           returned: always
           type: list
           sample: []
     path:
-      description: Path of role
+      description: Path of role.
       returned: always
       type: str
       sample: /
     role_id:
-      description: Amazon Identifier for the role
+      description: Amazon Identifier for the role.
       returned: always
       type: str
       sample: AROAII7ABCD123456EFGH
     role_name:
-      description: Name of the role
+      description: Name of the role.
       returned: always
       type: str
       sample: AnsibleTestRole
+    tags:
+      description: Role tags.
+      type: dict
+      returned: always
+      sample: '{"Env": "Prod"}'
 '''
 
 try:

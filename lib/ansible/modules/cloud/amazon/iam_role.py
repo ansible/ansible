@@ -30,13 +30,13 @@ options:
     type: str
   description:
     description:
-      - Provide a description of the new role
+      - Provide a description of the new role.
     version_added: "2.5"
     type: str
   boundary:
     description:
-      - Add the ARN of an IAM managed policy to restrict the permissions this role can pass on to IAM roles/users that it creates.
-      - Boundaries cannot be set on Instance Profiles, so if this option is specified then C(create_instance_profile) must be false.
+      - The ARN of an IAM managed policy to use to restrict the permissions this role can pass on to IAM roles/users that it creates.
+      - Boundaries cannot be set on Instance Profiles, so if this option is specified then I(create_instance_profile) must be false.
       - This is intended for roles/users that have permissions to create new IAM objects.
       - For more information on boundaries, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
     aliases: [boundary_policy_arn]
@@ -45,7 +45,7 @@ options:
   assume_role_policy_document:
     description:
       - The trust relationship policy document that grants an entity permission to assume the role.
-      - "This parameter is required when C(state=present)."
+      - "This parameter is required when I(state=present)."
     type: json
   managed_policy:
     description:
@@ -61,27 +61,27 @@ options:
     type: int
   purge_policies:
     description:
-      - Detaches any managed policies not listed in the "managed_policy" option. Set to false if you want to attach policies elsewhere.
+      - Detaches any managed policies not listed in the I(managed_policy) option. Set to false if you want to attach policies elsewhere.
     default: true
     version_added: "2.5"
     type: bool
   state:
     description:
-      - Create or remove the IAM role
+      - Create or remove the IAM role.
     default: present
     choices: [ present, absent ]
     type: str
   create_instance_profile:
     description:
-      - Creates an IAM instance profile along with the role
+      - Creates an IAM instance profile along with the role.
     default: true
     version_added: "2.5"
     type: bool
   delete_instance_profile:
     description:
       - When deleting a role will also delete the instance profile created with
-        the same name as the role
-      - Only applies when C(state=absent)
+        the same name as the role.
+      - Only applies when I(state=absent).
     default: false
     version_added: "2.10"
     type: bool
@@ -205,7 +205,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict, compare_policies
 from ansible.module_utils.ec2 import AWSRetry, ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 
 try:
-    from botocore.exceptions import ClientError, BotoCoreError, ParamValidationError
+    from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
@@ -543,7 +543,7 @@ def update_role_tags(connection, module):
                 connection.untag_role(RoleName=role_name, TagKeys=tags_to_remove)
             if tags_to_add:
                 connection.tag_role(RoleName=role_name, Tags=ansible_dict_to_boto3_tag_list(tags_to_add))
-        except (ClientError, BotoCoreError, ParamValidationError) as e:
+        except (ClientError, BotoCoreError) as e:
             module.fail_json_aws(e, msg='Unable to set tags for role %s' % role_name)
 
     changed = bool(tags_to_add) or bool(tags_to_remove)
