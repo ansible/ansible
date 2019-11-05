@@ -1,0 +1,32 @@
+---
+  - name: Setup test fixture
+    win_copy:
+      src: fixtures/ansible-xml-beers-unicode.xml
+      dest: \tmp\ansible-xml-beers-unicode.xml
+
+
+  - name: Get element attributes
+    win_xml_document:
+      path: \tmp\ansible-xml-beers-unicode.xml
+      xpath: /business/rating
+      content: attribute
+    register: get_element_attribute
+
+  - name: Test expected result
+    assert:
+      that:
+      - get_element_attribute.changed == false
+      - get_element_attribute.matches[0]['rating'] is defined and get_element_attribute.matches[0]['rating']['subjective'] == 'да'
+
+  - name: Get element text
+    win_xml_document:
+      path: \tmp\ansible-xml-beers-unicode.xml
+      xpath: /business/rating
+      content: text
+    register: get_element_text
+
+  - name: Test expected result
+    assert:
+      that:
+      - get_element_text.changed == false
+      - get_element_text.matches[0]['rating'] == 'десять'

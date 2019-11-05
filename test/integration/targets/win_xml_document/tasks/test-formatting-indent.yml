@@ -1,0 +1,57 @@
+---
+  - name: Setup test fixture
+    win_copy:
+      src: fixtures/ansible-xml-beers.xml
+      dest: \tmp\ansible-xml-beers.xml
+
+  - name: Set indentation to 4 spaces
+    win_xml_document:
+      path: \tmp\ansible-xml-beers.xml
+      indent_spaces: 4
+    register: indent_result
+
+  - name: Compare to expected result
+    win_copy:
+      src: results/test-formatting-indent-4.xml
+      dest: \tmp\ansible-xml-beers.xml
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - indent_result.changed == true
+      - comparison.changed == false  # identical
+
+  - name: Set indentation to 4 spaces (again)
+    win_xml_document:
+      path: \tmp\ansible-xml-beers.xml
+      indent_spaces: 4
+    register: indent_result
+
+  - name: Test expected result
+    assert:
+      that:
+      - indent_result.changed == false
+      - comparison.changed == false  # identical
+
+  - name: Set indentation to 0 spaces
+    win_xml_document:
+      path: \tmp\ansible-xml-beers.xml
+      indent_spaces: 0
+    register: indent_result
+
+  - name: Compare to expected result
+    win_copy:
+      src: results/test-formatting-indent-0.xml
+      dest: \tmp\ansible-xml-beers.xml
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - indent_result.changed == true
+      - comparison.changed == false  # identical

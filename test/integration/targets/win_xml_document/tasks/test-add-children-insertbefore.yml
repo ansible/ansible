@@ -1,0 +1,31 @@
+---
+  - name: Setup test fixture
+    win_copy:
+      src: fixtures/ansible-xml-beers.xml
+      dest: \tmp\ansible-xml-beers.xml
+
+
+  - name: Add child element
+    win_xml_document:
+      path: \tmp\ansible-xml-beers.xml
+      xpath: '/business/beers/beer[text()="St. Bernardus Abbot 12"]'
+      insertbefore: yes
+      add_children:
+      - beer: Old Rasputin
+      - beer: Old Motor Oil
+      - beer: Old Curmudgeon
+    register: add_children_insertbefore
+
+  - name: Compare to expected result
+    win_copy:
+      src: results/test-add-children-insertbefore.xml
+      dest: \tmp\ansible-xml-beers.xml
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - add_children_insertbefore.changed == true
+      - comparison.changed == false  # identical

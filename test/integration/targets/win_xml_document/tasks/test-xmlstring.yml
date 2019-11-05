@@ -1,0 +1,57 @@
+---
+  - name: Copy expected result to remote
+    win_copy:
+      src: 'fixtures/ansible-xml-beers.xml'
+      dest: '\tmp\test-xmlstring.xml'
+
+  # NOTE: Jinja2 templating eats trailing newlines
+  - name: Read from xmlstring
+    win_xml_document:
+      xmlstring: "{{ lookup('file', '{{ role_path }}/fixtures/ansible-xml-beers.xml') }}"
+      xpath: .
+    register: xmlresponse
+
+  - name: Compare to expected result
+    win_copy:
+      content: "{{ xmlresponse.xmlstring }}\r\n"
+      dest: '\tmp\test-xmlstring.xml'
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - xmlresponse.changed == false
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/fixtures/ansible-xml-beers.xml /tmp/ansible-xml-beers.xml
+
+  - name: Copy expected result to remote
+    win_copy:
+      src: 'results/test-add-children-elements.xml'
+      dest: '\tmp\test-xmlstring.xml'
+
+  # NOTE: Jinja2 templating eats trailing newlines
+  - name: Read from xmlstring
+    win_xml_document:
+      xmlstring: "{{ lookup('file', '{{ role_path }}/fixtures/ansible-xml-beers.xml') }}"
+      xpath: /business/beers
+      add_children:
+      - beer: Old Rasputin
+    register: xmlresponse_modification
+
+  - name: Compare to expected result
+    win_copy:
+      content: '{{ xmlresponse_modification.xmlstring }}'
+      dest: '/tmp/test-xmlstring.xml'
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  # FIXME: This change is related to the newline added by pretty_print
+  - name: Test expected result
+    assert:
+      that:
+      - xmlresponse_modification.changed == true
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-pretty-print.xml /tmp/ansible-xml-beers.xml

@@ -1,0 +1,49 @@
+---
+
+- name: set up test directory
+  win_file:
+    state: directory
+    path: \tmp\
+
+- name: run tests
+  block:
+
+  - include_tasks: test-add-children-elements.yml
+  - include_tasks: test-add-children-from-groupvars.yml
+  - include_tasks: test-add-children-insertafter.yml
+  - include_tasks: test-add-children-insertbefore.yml
+  - include_tasks: test-add-children-with-attributes.yml
+  - include_tasks: test-add-element-implicitly.yml
+  - include_tasks: test-count.yml
+  - include_tasks: test-mutually-exclusive-attributes.yml
+  - include_tasks: test-remove-attribute.yml
+  - include_tasks: test-remove-element.yml
+  - include_tasks: test-set-attribute-value.yml
+  - include_tasks: test-set-children-elements.yml
+  - include_tasks: test-set-children-elements-level.yml
+  - include_tasks: test-set-element-value.yml
+  - include_tasks: test-set-element-value-empty.yml
+  - include_tasks: test-formatting-indent.yml
+  - include_tasks: test-formatting-no-indent.yml
+  - include_tasks: test-add-namespaced-children-elements.yml
+  - include_tasks: test-remove-namespaced-attribute.yml
+  - include_tasks: test-set-namespaced-attribute-value.yml
+  - include_tasks: test-set-namespaced-element-value.yml
+  - include_tasks: test-set-namespaced-children-elements.yml
+  - include_tasks: test-get-element-content.yml
+  - include_tasks: test-xmlstring.yml
+#  - include_tasks: test-children-elements-xml.yml todo? input only allows for yml formatted list
+
+  # Unicode tests
+  - include_tasks: test-add-children-elements-unicode.yml
+  - include_tasks: test-add-children-with-attributes-unicode.yml
+  - include_tasks: test-set-attribute-value-unicode.yml
+  - include_tasks: test-count-unicode.yml
+  - include_tasks: test-get-element-content.yml
+  - include_tasks: test-set-children-elements-unicode.yml
+  - include_tasks: test-set-element-value-unicode.yml
+  always:
+    - name: cleanup test directory
+      win_file:
+        state: absent
+        path: \tmp\

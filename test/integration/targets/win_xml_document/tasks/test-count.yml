@@ -1,0 +1,19 @@
+---
+  - name: Setup test fixture
+    win_copy:
+      src: fixtures/ansible-xml-beers.xml
+      dest: \tmp\ansible-xml-beers.xml
+
+
+  - name: Add child element
+    win_xml_document:
+      path: \tmp\ansible-xml-beers.xml
+      xpath: /business/beers/beer
+      count: yes
+    register: beers
+
+  - name: Test expected result
+    assert:
+      that:
+      - beers.changed == false
+      - beers.count == 3

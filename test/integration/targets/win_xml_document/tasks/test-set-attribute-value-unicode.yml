@@ -1,0 +1,28 @@
+---
+  - name: Setup test fixture
+    win_copy:
+      src: fixtures/ansible-xml-beers.xml
+      dest: \tmp\ansible-xml-beers.xml
+
+
+  - name: Set '/business/rating/@subjective' to 'нет'
+    win_xml_document:
+      path: \tmp\ansible-xml-beers.xml
+      xpath: /business/rating/@subjective
+      value: нет
+    register: set_attribute_value_unicode
+
+  - name: Compare to expected result
+    win_copy:
+      src: results/test-set-attribute-value-unicode.xml
+      dest: \tmp\ansible-xml-beers.xml
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - set_attribute_value_unicode.changed == true
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-set-attribute-value-unicode.xml /tmp/ansible-xml-beers.xml

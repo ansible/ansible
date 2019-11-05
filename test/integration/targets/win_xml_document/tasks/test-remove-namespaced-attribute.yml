@@ -1,0 +1,33 @@
+---
+  - name: Setup test fixture
+    win_copy:
+      src: fixtures/ansible-xml-namespaced-beers.xml
+      dest: \tmp\ansible-xml-namespaced-beers.xml
+
+
+  - name: Remove namespaced '/bus:business/rat:rating/@attr:subjective'
+    win_xml_document:
+      path: \tmp\ansible-xml-namespaced-beers.xml
+      xpath: /bus:business/rat:rating/@attr:subjective
+      namespaces:
+        bus: http://test.business
+        ber: http://test.beers
+        rat: http://test.rating
+        attr: http://test.attribute
+      state: absent
+    register: remove_namespaced_attribute
+
+  - name: Compare to expected result
+    win_copy:
+      src: results/test-remove-namespaced-attribute.xml
+      dest: \tmp\ansible-xml-namespaced-beers.xml
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - remove_namespaced_attribute.changed == true
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-remove-namespaced-attribute.xml /tmp/ansible-xml-namespaced-beers.xml
