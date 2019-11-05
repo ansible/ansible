@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/agg.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
 - name: setup - remove vlan used in test
@@ -9,7 +8,6 @@
       - no vlan 102
       - no vlan 103
       - no vlan 104
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 
@@ -20,7 +18,6 @@
       - { name: app03, vlan_id: 103 }
     vlan_state: active
     admin_state: up
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -46,7 +43,6 @@
       - { name: app03, vlan_id: 103 }
     vlan_state: active
     admin_state: down
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -68,7 +64,6 @@
   nxos_vlan: &purge
     vlan_id: 1
     purge: yes
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -89,7 +84,6 @@
   nxos_vlan:
     vlan_id: 104
     purge: true
-    provider: "{{ connection }}"
 
 - name: purge 104 with aggregate add 102-103
   nxos_vlan: &purge_add
@@ -97,7 +91,6 @@
       - { vlan_id: 102 }
       - { vlan_id: 103 }
     purge: true
-    provider: "{{ connection }}"
   register: result
 
 - assert:

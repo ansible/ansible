@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} common/misc_tests.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
 - name: hit conditional for lists of 10 or more commands
@@ -16,7 +15,6 @@
       - show hostname
       - show hostname
       - show hostname
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -27,4 +25,3 @@
   nxos_command:
     commands:
       - show hostname
-    provider: "{{ connection | combine({'timeout': 500}) }}"

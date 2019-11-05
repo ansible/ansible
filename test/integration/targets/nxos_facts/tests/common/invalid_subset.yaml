@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/invalid_subset.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
 
@@ -8,7 +7,6 @@
   nxos_facts:
     gather_subset:
       - "foobar"
-    provider: "{{ connection }}"
   register: result
   ignore_errors: true
 
@@ -31,7 +29,6 @@
     gather_subset:
       - "!hardware"
       - "hardware"
-    provider: "{{ connection }}"
   register: result
   ignore_errors: true
 

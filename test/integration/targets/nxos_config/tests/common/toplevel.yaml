@@ -5,12 +5,10 @@
   nxos_config:
     lines: hostname switch
     match: none
-    provider: "{{ connection }}"
 
 - name: configure top level command
   nxos_config:
     lines: hostname foo
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -21,7 +19,6 @@
 - name: configure top level command idempotent check
   nxos_config:
     lines: hostname foo
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -32,6 +29,5 @@
   nxos_config:
     lines: hostname switch
     match: none
-    provider: "{{ connection }}"
 
 - debug: msg='END common/toplevel.yaml on connection={{ ansible_connection }}'

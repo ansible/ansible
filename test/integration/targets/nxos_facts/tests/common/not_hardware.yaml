@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/not_hardware_facts.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
 
@@ -9,7 +8,6 @@
     gather_subset:
       - "!hardware"
     timeout: 30
-    provider: "{{ connection }}"
   register: result
 
 - assert:
