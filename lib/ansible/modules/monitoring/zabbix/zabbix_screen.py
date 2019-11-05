@@ -43,9 +43,10 @@ options:
                 required: true
             host_group:
                 description:
-                    - Host group will be used for searching hosts.
+                    - Host group(s) will be used for searching hosts.
                     - Required if I(state=present).
-                type: str
+                type: list
+                aliases: [ 'host_groups' ]
             state:
                 description:
                     - I(present) - Create a screen if it doesn't exist. If the screen already exists, the screen will be updated as needed.
@@ -150,6 +151,25 @@ EXAMPLES = r'''
         graph_width: 200
         graph_height: 100
   when: inventory_hostname==groups['group_name'][0]
+
+# Create/update using multiple hosts_groups. Hosts NOT present in all listed host_groups will be skipped.
+- name: Create new screen or update the existing screen's items for hosts in both given groups
+  local_action:
+    module: zabbix_screen
+    server_url: http://monitor.example.com
+    login_user: username
+    login_password: password
+    screens:
+      - screen_name: ExampleScreen1
+        host_group:
+          - Example group1
+          - Example group2
+        state: present
+        graph_names:
+          - Example graph1
+          - Example graph2
+        graph_width: 200
+        graph_height: 100
 '''
 
 
@@ -174,29 +194,32 @@ class Screen(object):
         self._module = module
         self._zapi = zbx
 
-    # get group id by group name
-    def get_host_group_id(self, group_name):
-        if group_name == "":
-            self._module.fail_json(msg="group_name is required")
-        hostGroup_list = self._zapi.hostgroup.get({'output': 'extend', 'filter': {'name': group_name}})
+    # get list of group ids by list of group names
+    def get_host_group_ids(self, group_names):
+        if len(group_names) < 1:
+            self._module.fail_json(msg="host_group(s) is required")
+        hostGroup_list = self._zapi.hostgroup.get({'output': 'groupid', 'filter': {'name': group_names}})
         if len(hostGroup_list) < 1:
-            self._module.fail_json(msg="Host group not found: %s" % group_name)
+            self._module.fail_json(msg="Host group not found: %s" % group_names)
         else:
-            hostGroup_id = hostGroup_list[0]['groupid']
-            return hostGroup_id
+            hostGroup_ids = [g['groupid'] for g in hostGroup_list]
+            return hostGroup_ids
 
-    # get monitored host_id by host_group_id
-    def get_host_ids_by_group_id(self, group_id, sort):
-        host_list = self._zapi.host.get({'output': 'extend', 'groupids': group_id, 'monitored_hosts': 1})
+    # get monitored host_ids by host_group_ids
+    # (the hosts belonging to all given groups)
+    def get_host_ids_by_group_ids(self, group_ids, sort):
+        host_list = self._zapi.host.get({'output': 'extend', 'selectGroups': 'groupid', 'groupids': group_ids, 'monitored_hosts': 1})
         if len(host_list) < 1:
-            self._module.fail_json(msg="No host in the group.")
+            self._module.fail_json(msg="No host in the group(s).")
         else:
             if sort:
                 host_list = sorted(host_list, key=lambda name: name['name'])
             host_ids = []
-            for i in host_list:
-                host_id = i['hostid']
-                host_ids.append(host_id)
+            for host in host_list:
+                host_group_ids = [g['groupid'] for g in host['groups']]
+                if set(group_ids).issubset(host_group_ids):
+                    host_id = host['hostid']
+                    host_ids.append(host_id)
             return host_ids
 
     # get screen
@@ -357,7 +380,7 @@ def main():
                 required=True,
                 options=dict(
                     screen_name=dict(type='str', required=True),
-                    host_group=dict(type='str'),
+                    host_group=dict(type='list', aliases=['host_groups']),
                     state=dict(type='str', default='present', choices=['absent', 'present']),
                     graph_names=dict(type='list', elements='str'),
                     graph_width=dict(type='int', default=None),
@@ -423,9 +446,10 @@ def main():
             graphs_in_row = zabbix_screen['graphs_in_row']
             graph_width = zabbix_screen['graph_width']
             graph_height = zabbix_screen['graph_height']
-            host_group_id = screen.get_host_group_id(host_group)
-            hosts = screen.get_host_ids_by_group_id(host_group_id, sort)
-
+            host_group_ids = screen.get_host_group_ids(host_group)
+            hosts = screen.get_host_ids_by_group_ids(host_group_ids, sort)
+            if not hosts:
+                module.fail_json(msg="No hosts found belongin to all given groups: %s" % host_group)
             screen_item_id_list = []
             resource_id_list = []
 
