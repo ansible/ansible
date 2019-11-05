@@ -20,6 +20,9 @@ from ansible.utils.display import Display
 display = Display()
 
 
+RE_INTERP = re.compile('^ansible_.*_interpreter$')
+
+
 def module_response_deepcopy(v):
     """Function to create a deep copy of module response data
 
@@ -144,9 +147,8 @@ def clean_facts(facts):
             remove_keys.add(hard)
 
     # finally, we search for interpreter keys to remove
-    re_interp = re.compile('^ansible_.*_interpreter$')
     for fact_key in fact_keys:
-        if re_interp.match(fact_key):
+        if RE_INTERP.match(fact_key):
             remove_keys.add(fact_key)
     # then we remove them (except for ssh host keys)
     for r_key in remove_keys:
