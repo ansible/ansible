@@ -1,28 +1,29 @@
-# test code for the win_psmodule module when using winrm connection
-# (c) 2017, Daniele Lazzari <lazzari@mailup.com>
+---
+- name: get PowerShell version of the host
+  win_shell: $PSVersionTable.PSVersion.Major
+  changed_when: False
+  register: ps_version
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-
-- name: get facts
-  setup:
-
-- name: Perform integration tests for Powershell 5+
-  when: ansible_powershell_version >= 5
+- name: setup and run tests block
+  when: ps_version.stdout | trim | int >= 5
   block:
+  - name: create temporary directory
+    win_tempfile:
+      state: directory
+      suffix: .test
+    register: remote_tmp_dir
+    notify:
+    - delete temporary directory
 
-    - name: run all tasks
-      include: test.yml
+  - name: record temporary directory
+    set_fact:
+      remote_tmp_dir: '{{ remote_tmp_dir.path }}'
+
+  - name: update PSGet and PackageManagement for tests
+    include_tasks: install.yml
+
+  - name: setup local PSRepository with test modules
+    include_tasks: repo.yml
+
+  - name: test win_psmodule
+    include_tasks: test.yml

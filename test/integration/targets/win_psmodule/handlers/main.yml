@@ -1,0 +1,22 @@
+- name: delete temporary directory
+  win_file:
+    path: "{{ remote_tmp_dir }}"
+    state: absent
+
+- name: re-add PSGallery repository
+  win_shell: Register-PSRepository -Default -InstallationPolicy Untrusted
+
+- name: remove registered repo
+  win_shell: |
+    $name = 'PSRepo 1'
+    if ((Get-PSRepository -Name $name -ErrorAction SilentlyContinue)) {
+        Unregister-PSRepository -Name $name
+    }
+
+- name: remove test packages
+  win_psmodule:
+    name: '{{ item }}'
+    state: absent
+  loop:
+  - ansible-test1
+  - ansible-clobber
