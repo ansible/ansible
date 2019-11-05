@@ -229,12 +229,6 @@ options:
     - "vmware-tools needs to be installed on the given virtual machine in order to work with this parameter."
     default: 'no'
     type: bool
-  wait_for_ip_address_timeout:
-    description:
-    - Define a timeout (in seconds) for the wait_for_ip_address parameter.
-    default: '300'
-    type: int
-    version_added: '2.10'
   wait_for_customization:
     description:
     - Wait until vCenter detects all guest customizations as successfully completed.
@@ -425,7 +419,6 @@ EXAMPLES = r'''
       netmask: 255.255.255.0
       device_type: vmxnet3
     wait_for_ip_address: yes
-    wait_for_ip_address_timeout: 600
   delegate_to: localhost
   register: deploy_vm
 
@@ -1813,8 +1806,7 @@ class PyVmomiHelper(PyVmomi):
             ident.userData.computerName = vim.vm.customization.FixedName()
             # computer name will be truncated to 15 characters if using VM name
             default_name = self.params['name'].replace(' ', '')
-            punctuation = string.punctuation.replace('-', '')
-            default_name = ''.join([c for c in default_name if c not in punctuation])
+            default_name = ''.join([c for c in default_name if c not in string.punctuation])
             ident.userData.computerName.name = str(self.params['customization'].get('hostname', default_name[0:15]))
             ident.userData.fullName = str(self.params['customization'].get('fullname', 'Administrator'))
             ident.userData.orgName = str(self.params['customization'].get('orgname', 'ACME'))
@@ -2522,7 +2514,7 @@ class PyVmomiHelper(PyVmomi):
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
 
                 if self.params['wait_for_ip_address']:
-                    wait_for_vm_ip(self.content, vm, self.params['wait_for_ip_address_timeout'])
+                    self.wait_for_vm_ip(vm)
 
                 if self.params['wait_for_customization']:
                     is_customization_ok = self.wait_for_customization(vm)
@@ -2681,7 +2673,8 @@ class PyVmomiHelper(PyVmomi):
             set_vm_power_state(self.content, self.current_vm_obj, 'poweredon', force=False)
             is_customization_ok = self.wait_for_customization(self.current_vm_obj)
             if not is_customization_ok:
-                return {'changed': self.change_applied, 'failed': True, 'op': 'wait_for_customize_exist'}
+                return {'changed': self.change_applied, 'failed': True,
+                        'msg': 'Wait for customization failed due to timeout', 'op': 'wait_for_customize_exist'}
 
         return {'changed': self.change_applied, 'failed': False}
 
@@ -2703,13 +2696,28 @@ class PyVmomiHelper(PyVmomi):
             time.sleep(poll_interval)
         self.change_applied = self.change_applied or task.info.state == 'success'
 
+    def wait_for_vm_ip(self, vm, poll=100, sleep=5):
+        ips = None
+        facts = {}
+        thispoll = 0
+        while not ips and thispoll <= poll:
+            newvm = self.get_vm()
+            facts = self.gather_facts(newvm)
+            if facts['ipv4'] or facts['ipv6']:
+                ips = True
+            else:
+                time.sleep(sleep)
+                thispoll += 1
+
+        return facts
+
     def get_vm_events(self, vm, eventTypeIdList):
         byEntity = vim.event.EventFilterSpec.ByEntity(entity=vm, recursion="self")
         filterSpec = vim.event.EventFilterSpec(entity=byEntity, eventTypeId=eventTypeIdList)
         eventManager = self.content.eventManager
         return eventManager.QueryEvent(filterSpec)
 
-    def wait_for_customization(self, vm, poll=10000, sleep=10):
+    def wait_for_customization(self, vm, poll=360, sleep=10):
         thispoll = 0
         while thispoll <= poll:
             eventStarted = self.get_vm_events(vm, ['CustomizationStartedEvent'])
@@ -2719,18 +2727,24 @@ class PyVmomiHelper(PyVmomi):
                     eventsFinishedResult = self.get_vm_events(vm, ['CustomizationSucceeded', 'CustomizationFailed'])
                     if len(eventsFinishedResult):
                         if not isinstance(eventsFinishedResult[0], vim.event.CustomizationSucceeded):
-                            self.module.fail_json(msg='Customization failed with error {0}:\n{1}'.format(
-                                eventsFinishedResult[0]._wsdlName, eventsFinishedResult[0].fullFormattedMessage))
+                            self.module.warn("Customization failed with error {%s}:{%s}"
+                                             % (eventsFinishedResult[0]._wsdlName, eventsFinishedResult[0].fullFormattedMessage))
                             return False
-                        break
+                        else:
+                            return True
                     else:
                         time.sleep(sleep)
                         thispoll += 1
-                return True
+                if len(eventsFinishedResult) == 0:
+                    self.module.warn('Waiting for customization succeed or failed event timed out.')
+                    return False
             else:
                 time.sleep(sleep)
                 thispoll += 1
-        self.module.fail_json('waiting for customizations timed out.')
+        if len(eventStarted):
+            self.module.warn('Waiting for customization succeed or failed event timed out.')
+        else:
+            self.module.warn('Waiting for customization start event timed out.')
         return False
 
 
@@ -2757,7 +2771,6 @@ def main():
         esxi_hostname=dict(type='str'),
         cluster=dict(type='str'),
         wait_for_ip_address=dict(type='bool', default=False),
-        wait_for_ip_address_timeout=dict(type='int', default=300),
         state_change_timeout=dict(type='int', default=0),
         snapshot_src=dict(type='str'),
         linked_clone=dict(type='bool', default=False),
@@ -2828,7 +2841,7 @@ def main():
             if tmp_result['changed']:
                 result["changed"] = True
                 if module.params['state'] in ['poweredon', 'restarted', 'rebootguest'] and module.params['wait_for_ip_address']:
-                    wait_result = wait_for_vm_ip(pyv.content, vm, module.params['wait_for_ip_address_timeout'])
+                    wait_result = wait_for_vm_ip(pyv.content, vm)
                     if not wait_result:
                         module.fail_json(msg='Waiting for IP address timed out')
                     tmp_result['instance'] = wait_result
