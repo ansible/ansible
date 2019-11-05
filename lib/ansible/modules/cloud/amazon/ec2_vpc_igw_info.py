@@ -152,7 +152,7 @@ def main():
 
     # call your function here
     results = list_internet_gateways(connection, module)
-    
+
     for igw in results:
         igw['tags'] = boto3_tag_list_to_ansible_dict(igw.get('tags', []))
 
