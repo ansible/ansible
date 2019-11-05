@@ -179,7 +179,7 @@ class PulpAnsibleModule(AnsibleModule):
             return True
         elif res.count == 1:
             resource = res.results[0]
-            api_data_diff = dict((k, self.api_data[k]) for k in self.api_data.keys() if self.api_data[k] and self.api_data[k] != getattr(resource, k))
+            api_data_diff = dict((k, self.api_data[k]) for k in self.api_data.keys() if self.api_data[k] is not None and self.api_data[k] != getattr(resource, k))
             if api_data_diff:
                 self.api.update(resource.pulp_href, self.api_data)
                 return True
