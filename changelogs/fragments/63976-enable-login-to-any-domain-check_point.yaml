@@ -1,0 +1,3 @@
+bugfixes:
+  - enable login to any domain in the check point management server.
+  - PR(https://github.com/ansible/ansible/pull/63976)
