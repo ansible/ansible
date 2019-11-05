@@ -82,7 +82,6 @@ options:
   tag_value:
     description:
       - Supplements I(tag_name) but also checks that the value of the tag provided in I(tag_name) matches I(tag_value).
-        matches the I(tag_value)
     version_added: "2.9"
     type: str
   public_ipv4_pool:

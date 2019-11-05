@@ -144,7 +144,7 @@ options:
     choices: ['default', 'dedicated']
   associate_public_ip_address:
     description:
-      - The I(wait_timeout) option does nothing and will be removed in Ansible 2.14.
+      - The I(associate_public_ip_address) option does nothing and will be removed in Ansible 2.14.
     type: bool
 
 extends_documentation_fragment:
