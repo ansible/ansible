@@ -21,6 +21,7 @@ from ansible.module_utils.network.junos.facts.lldp_global.lldp_global import Lld
 from ansible.module_utils.network.junos.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
 from ansible.module_utils.network.junos.facts.vlans.vlans import VlansFacts
 from ansible.module_utils.network.junos.facts.l2_interfaces.l2_interfaces import L2_interfacesFacts
+from ansible.module_utils.network.junos.facts.static_routes.static_routes import Static_routesFacts
 
 FACT_LEGACY_SUBSETS = dict(
     default=Default,
@@ -38,6 +39,7 @@ FACT_RESOURCE_SUBSETS = dict(
     lldp_global=Lldp_globalFacts,
     lldp_interfaces=Lldp_interfacesFacts,
     vlans=VlansFacts,
+    static_routes=Static_routesFacts
 )
 
 
