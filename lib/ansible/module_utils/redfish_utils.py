@@ -269,7 +269,6 @@ class RedfishUtils(object):
             return {'ret': True}
 
     def _find_chassis_resource(self):
-        chassis_service = []
         response = self.get_request(self.root_uri + self.service_root)
         if response['ret'] is False:
             return response
@@ -280,21 +279,21 @@ class RedfishUtils(object):
         response = self.get_request(self.root_uri + chassis)
         if response['ret'] is False:
             return response
-        self.chassis_uri_list = [
+        self.chassis_uris = [
             i['@odata.id'] for i in response['data'].get('Members', [])]
-        if not self.chassis_uri_list:
+        if not self.chassis_uris:
             return {'ret': False,
                     'msg': "Chassis Members array is either empty or missing"}
-        self.chassis_uri = self.chassis_uri_list[0]
+        self.chassis_uri = self.chassis_uris[0]
         if self.data_modification:
             if self.resource_id:
-                self.chassis_uri = self._get_resource_uri_by_id(self.chassis_uri_list,
+                self.chassis_uri = self._get_resource_uri_by_id(self.chassis_uris,
                                                                 self.resource_id)
                 if not self.chassis_uri:
                     return {
                         'ret': False,
                         'msg': "Chassis resource %s not found" % self.resource_id}
-            elif len(self.chassis_uri_list) > 1:
+            elif len(self.chassis_uris) > 1:
                 self.module.deprecate(DEPRECATE_MSG % {'resource': 'Chassis'},
                                       version='2.13')
         return {'ret': True}
@@ -310,21 +309,21 @@ class RedfishUtils(object):
         response = self.get_request(self.root_uri + manager)
         if response['ret'] is False:
             return response
-        self.manager_uri_list = [
+        self.manager_uris = [
             i['@odata.id'] for i in response['data'].get('Members', [])]
-        if not self.manager_uri_list:
+        if not self.manager_uris:
             return {'ret': False,
                     'msg': "Managers Members array is either empty or missing"}
-        self.manager_uri = self.manager_uri_list[0]
+        self.manager_uri = self.manager_uris[0]
         if self.data_modification:
             if self.resource_id:
-                self.manager_uri = self._get_resource_uri_by_id(self.manager_uri_list,
+                self.manager_uri = self._get_resource_uri_by_id(self.manager_uris,
                                                                 self.resource_id)
                 if not self.manager_uri:
                     return {
                         'ret': False,
                         'msg': "Manager resource %s not found" % self.resource_id}
-            elif len(self.manager_uri_list) > 1:
+            elif len(self.manager_uris) > 1:
                 self.module.deprecate(DEPRECATE_MSG % {'resource': 'Manager'},
                                       version='2.13')
         return {'ret': True}
@@ -411,16 +410,25 @@ class RedfishUtils(object):
                         return response
         return {'ret': True}
 
-    def aggregate(self, func):
+    def aggregate(self, func, uri_list, uri_name):
         ret = True
         entries = []
-        for systems_uri in self.systems_uris:
-            inventory = func(systems_uri)
+        for uri in uri_list:
+            inventory = func(uri)
             ret = inventory.pop('ret') and ret
             if 'entries' in inventory:
-                entries.append(({'systems_uri': systems_uri},
+                entries.append(({uri_name: uri},
                                 inventory['entries']))
         return dict(ret=ret, entries=entries)
+
+    def aggregate_chassis(self, func):
+        return self.aggregate(func, self.chassis_uris, 'chassis_uri')
+
+    def aggregate_managers(self, func):
+        return self.aggregate(func, self.manager_uris, 'manager_uri')
+
+    def aggregate_systems(self, func):
+        return self.aggregate(func, self.systems_uris, 'system_uri')
 
     def get_storage_controller_inventory(self, systems_uri):
         result = {}
@@ -471,7 +479,7 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "Storage resource not found"}
 
     def get_multi_storage_controller_inventory(self):
-        return self.aggregate(self.get_storage_controller_inventory)
+        return self.aggregate_systems(self.get_storage_controller_inventory)
 
     def get_disk_inventory(self, systems_uri):
         result = {'entries': []}
@@ -575,7 +583,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_disk_inventory(self):
-        return self.aggregate(self.get_disk_inventory)
+        return self.aggregate_systems(self.get_disk_inventory)
 
     def get_volume_inventory(self, systems_uri):
         result = {'entries': []}
@@ -667,7 +675,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_volume_inventory(self):
-        return self.aggregate(self.get_volume_inventory)
+        return self.aggregate_systems(self.get_volume_inventory)
 
     def restart_manager_gracefully(self):
         result = {}
@@ -694,7 +702,7 @@ class RedfishUtils(object):
         payloads = {'IndicatorLedOn': 'Lit', 'IndicatorLedOff': 'Off', "IndicatorLedBlink": 'Blinking'}
 
         result = {}
-        for chassis_uri in self.chassis_uri_list:
+        for chassis_uri in self.chassis_uris:
             response = self.get_request(self.root_uri + chassis_uri)
             if response['ret'] is False:
                 return response
@@ -1258,7 +1266,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_bios_attributes(self):
-        return self.aggregate(self.get_bios_attributes)
+        return self.aggregate_systems(self.get_bios_attributes)
 
     def _get_boot_options_dict(self, boot):
         # Get these entries from BootOption, if present
@@ -1332,7 +1340,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_boot_order(self):
-        return self.aggregate(self.get_boot_order)
+        return self.aggregate_systems(self.get_boot_order)
 
     def get_boot_override(self, systems_uri):
         result = {}
@@ -1365,7 +1373,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_boot_override(self):
-        return self.aggregate(self.get_boot_override)
+        return self.aggregate_systems(self.get_boot_override)
 
     def set_bios_default_settings(self):
         result = {}
@@ -1598,7 +1606,7 @@ class RedfishUtils(object):
                       'Manufacturer', 'IndicatorLED', 'SerialNumber', 'Model']
 
         # Go through list
-        for chassis_uri in self.chassis_uri_list:
+        for chassis_uri in self.chassis_uris:
             response = self.get_request(self.root_uri + chassis_uri)
             if response['ret'] is False:
                 return response
@@ -1621,7 +1629,7 @@ class RedfishUtils(object):
         properties = ['FanName', 'Reading', 'ReadingUnits', 'Status']
 
         # Go through list
-        for chassis_uri in self.chassis_uri_list:
+        for chassis_uri in self.chassis_uris:
             response = self.get_request(self.root_uri + chassis_uri)
             if response['ret'] is False:
                 return response
@@ -1657,7 +1665,7 @@ class RedfishUtils(object):
 
         chassis_power_results = []
         # Go through list
-        for chassis_uri in self.chassis_uri_list:
+        for chassis_uri in self.chassis_uris:
             chassis_power_result = {}
             response = self.get_request(self.root_uri + chassis_uri)
             if response['ret'] is False:
@@ -1696,7 +1704,7 @@ class RedfishUtils(object):
                       'SensorNumber']
 
         # Go through list
-        for chassis_uri in self.chassis_uri_list:
+        for chassis_uri in self.chassis_uris:
             response = self.get_request(self.root_uri + chassis_uri)
             if response['ret'] is False:
                 return response
@@ -1772,7 +1780,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_cpu_inventory(self):
-        return self.aggregate(self.get_cpu_inventory)
+        return self.aggregate_systems(self.get_cpu_inventory)
 
     def get_memory_inventory(self, systems_uri):
         result = {}
@@ -1829,7 +1837,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_memory_inventory(self):
-        return self.aggregate(self.get_memory_inventory)
+        return self.aggregate_systems(self.get_memory_inventory)
 
     def get_nic_inventory(self, resource_uri):
         result = {}
@@ -1886,8 +1894,7 @@ class RedfishUtils(object):
         if resource_type == 'Systems':
             resource_uris = self.systems_uris
         elif resource_type == 'Manager':
-            # put in a list to match what we're doing with systems_uris
-            resource_uris = [self.manager_uri]
+            resource_uris = self.manager_uris
 
         for resource_uri in resource_uris:
             inventory = self.get_nic_inventory(resource_uri)
@@ -1948,9 +1955,7 @@ class RedfishUtils(object):
         ret = True
         entries = []
 
-        # Because _find_managers_resource() only find last Manager uri in self.manager_uri, not one list. This should be 1 issue.
-        # I have to put manager_uri into list to reduce future changes when the issue is fixed.
-        resource_uris = [self.manager_uri]
+        resource_uris = self.manager_uris
 
         for resource_uri in resource_uris:
             virtualmedia = self.get_virtualmedia(resource_uri)
@@ -1972,7 +1977,7 @@ class RedfishUtils(object):
 
         # Get a list of all Chassis and build URIs, then get all PowerSupplies
         # from each Power entry in the Chassis
-        chassis_uri_list = self.chassis_uri_list
+        chassis_uri_list = self.chassis_uris
         for chassis_uri in chassis_uri_list:
             response = self.get_request(self.root_uri + chassis_uri)
             if response['ret'] is False:
@@ -2014,7 +2019,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_psu_inventory(self):
-        return self.aggregate(self.get_psu_inventory)
+        return self.aggregate_systems(self.get_psu_inventory)
 
     def get_system_inventory(self, systems_uri):
         result = {}
@@ -2039,7 +2044,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_system_inventory(self):
-        return self.aggregate(self.get_system_inventory)
+        return self.aggregate_systems(self.get_system_inventory)
 
     def get_network_protocols(self):
         result = {}
@@ -2136,3 +2141,125 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified Manager NetworkProtocol services"}
+
+    @staticmethod
+    def to_singular(resource_name):
+        if resource_name.endswith('ies'):
+            resource_name = resource_name[:-3] + 'y'
+        elif resource_name.endswith('s'):
+            resource_name = resource_name[:-1]
+        return resource_name
+
+    def get_health_resource(self, subsystem, uri, health, expanded):
+        status = 'Status'
+
+        if expanded:
+            d = expanded
+        else:
+            r = self.get_request(self.root_uri + uri)
+            if r.get('ret'):
+                d = r.get('data')
+            else:
+                return
+
+        if 'Members' in d:  # collections case
+            for m in d.get('Members'):
+                u = m.get('@odata.id')
+                r = self.get_request(self.root_uri + u)
+                if r.get('ret'):
+                    p = r.get('data')
+                    if p:
+                        e = {self.to_singular(subsystem.lower()) + '_uri': u,
+                             status: p.get(status,
+                                           "Status not available")}
+                        health[subsystem].append(e)
+        else:  # non-collections case
+            e = {self.to_singular(subsystem.lower()) + '_uri': uri,
+                 status: d.get(status,
+                               "Status not available")}
+            health[subsystem].append(e)
+
+    def get_health_subsystem(self, subsystem, data, health):
+        if subsystem in data:
+            sub = data.get(subsystem)
+            if isinstance(sub, list):
+                for r in sub:
+                    if '@odata.id' in r:
+                        uri = r.get('@odata.id')
+                        expanded = None
+                        if '#' in uri and len(r) > 1:
+                            expanded = r
+                        self.get_health_resource(subsystem, uri, health, expanded)
+            elif isinstance(sub, dict):
+                if '@odata.id' in sub:
+                    uri = sub.get('@odata.id')
+                    self.get_health_resource(subsystem, uri, health, None)
+        elif 'Members' in data:
+            for m in data.get('Members'):
+                u = m.get('@odata.id')
+                r = self.get_request(self.root_uri + u)
+                if r.get('ret'):
+                    d = r.get('data')
+                    self.get_health_subsystem(subsystem, d, health)
+
+    def get_health_report(self, category, uri, subsystems):
+        result = {}
+        health = {}
+        status = 'Status'
+
+        # Get health status of top level resource
+        response = self.get_request(self.root_uri + uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+        health[category] = {status: data.get(status, "Status not available")}
+
+        # Get health status of subsystems
+        for sub in subsystems:
+            d = None
+            if sub.startswith('Links.'):  # ex: Links.PCIeDevices
+                sub = sub[len('Links.'):]
+                d = data.get('Links', {})
+            elif '.' in sub:  # ex: Thermal.Fans
+                p, sub = sub.split('.')
+                u = data.get(p, {}).get('@odata.id')
+                if u:
+                    r = self.get_request(self.root_uri + u)
+                    if r['ret']:
+                        d = r['data']
+                if not d:
+                    continue
+            else:  # ex: Memory
+                d = data
+            health[sub] = []
+            self.get_health_subsystem(sub, d, health)
+            if not health[sub]:
+                del health[sub]
+
+        result["entries"] = health
+        return result
+
+    def get_system_health_report(self, systems_uri):
+        subsystems = ['Processors', 'Memory', 'SimpleStorage', 'Storage',
+                      'EthernetInterfaces', 'NetworkInterfaces.NetworkPorts',
+                      'NetworkInterfaces.NetworkDeviceFunctions']
+        return self.get_health_report('System', systems_uri, subsystems)
+
+    def get_multi_system_health_report(self):
+        return self.aggregate_systems(self.get_system_health_report)
+
+    def get_chassis_health_report(self, chassis_uri):
+        subsystems = ['Power.PowerSupplies', 'Thermal.Fans',
+                      'Links.PCIeDevices']
+        return self.get_health_report('Chassis', chassis_uri, subsystems)
+
+    def get_multi_chassis_health_report(self):
+        return self.aggregate_chassis(self.get_chassis_health_report)
+
+    def get_manager_health_report(self, manager_uri):
+        subsystems = []
+        return self.get_health_report('Manager', manager_uri, subsystems)
+
+    def get_multi_manager_health_report(self):
+        return self.aggregate_managers(self.get_manager_health_report)
