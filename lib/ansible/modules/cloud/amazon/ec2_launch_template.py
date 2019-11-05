@@ -78,7 +78,7 @@ options:
           type. After you connect to the instance, you must mount the volume.
         type: str
       ebs:
-        description: Parameters used to automatically set up EBS volumes when the instance is launchedself
+        description: Parameters used to automatically set up EBS volumes when the instance is launched.
         type: dict
         suboptions:
           delete_on_termination:
@@ -136,7 +136,7 @@ options:
           the default value of 2.
         type: int
   credit_specification:
-    description: The credit option for CPU usage of the instance. Valid for T2 or T3 instances onlyself.
+    description: The credit option for CPU usage of the instance. Valid for T2 or T3 instances only.
     type: dict
     suboptions:
       cpu_credits:
@@ -214,7 +214,7 @@ options:
   instance_type:
     description: >
       The instance type, such as C(c5.2xlarge). For a full list of instance types, see
-      http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html
+      U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html).
     type: str
   kernel_id:
     description: >
@@ -269,7 +269,7 @@ options:
           block range of your subnet. You can't use this option if you're
           specifying the I(ipv6_address_count) option.
         type: list
-        elements: int
+        elements: str
       network_interface_id:
         description: The eni ID of a network interface to attach.
         type: str
