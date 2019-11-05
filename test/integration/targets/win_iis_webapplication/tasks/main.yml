@@ -3,7 +3,7 @@
 # Run a brief check and skip hosts that don't support
 # that operation
 
-# Run on Server 2008R2 and higher
+# Run on Server 2012 and higher
 - block:
   - name: ensure IIS features are installed
     win_feature:
