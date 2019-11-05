@@ -26,7 +26,8 @@ from ansible.playbook.base import post_validate
 from ansible.playbook.conditional import evaluate_conditional
 from ansible.playbook.play_context import set_task_and_variable_override, set_become_plugin, set_attributes_from_plugin
 from ansible.playbook.task import Task
-from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
+from ansible.plugins.loader import become_loader, cliconf_loader, httpapi_loader, netconf_loader, terminal_loader
+from ansible.plugins.new_loader import connection_loader
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.listify import listify_lookup_plugin_terms
