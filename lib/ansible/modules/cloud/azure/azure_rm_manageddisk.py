@@ -460,6 +460,8 @@ class AzureRMManagedDisk(AzureRMModuleBase):
             self.log('Did not find managed disk')
 
     def is_attach_caching_option_different(self, vm_name, disk):
+        if self.attach_caching is None:
+            return False
         resp = False
         if vm_name:
             vm = self._get_vm(vm_name)
