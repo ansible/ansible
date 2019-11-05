@@ -7,16 +7,18 @@
   vars:
     setup_attach_host: true
 
-- name: Gather DNS facts about ESXi Host
-  vmware_host_dns_info:
-    hostname: '{{ esxi1 }}'
-    username: '{{ esxi_user }}'
-    password: '{{ esxi_password }}'
-    esxi_hostname: "{{ esxi1 }}"
-    validate_certs: False
-  register: res
+- when: vcsim is not defined
+  block:
+    - name: Gather DNS facts about ESXi Host
+      vmware_host_dns_info:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        esxi_hostname: "{{ esxi1 }}"
+        validate_certs: False
+      register: res
 
-- include_tasks: dhcp.yml
-  when: res['hosts_dns_facts']['{{ esxi1 }}']['dhcp']
-- include_tasks: static.yml
-  when: not res['hosts_dns_facts']['{{ esxi1 }}']['dhcp']
+    - include_tasks: dhcp.yml
+      when: res['hosts_dns_facts']['{{ esxi1 }}']['dhcp']
+    - include_tasks: static.yml
+      when: not res['hosts_dns_facts']['{{ esxi1 }}']['dhcp']
