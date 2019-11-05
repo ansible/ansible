@@ -139,7 +139,7 @@ options:
         default: 86400
     type:
         description:
-            - The type of DNS record to create. Required if C(state=present).
+            - The type of DNS record.
         type: str
         required: false
         choices: [ A, AAAA, AFSDB, CAA, CNAME, HINFO, LOC, MX, NAPTR, NS, PTR, RP, SOA, SRV, SSHFP, TLSA, TXT ]
