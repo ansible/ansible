@@ -522,9 +522,8 @@ class PgPublication():
         Returns:
             True if successful, False otherwise.
         """
-        query = ("ALTER PUBLICATION %s SET (%s = '%s')" % (pg_quote_identifier(self.name, 'publication'),
-                                                           param, value))
-        return self.__exec_sql(query, check_mode=check_mode)
+        query = ("ALTER PUBLICATION %s SET (%s = " % (pg_quote_identifier(self.name, 'publication'), param))
+        return self.__exec_sql(query + '%(val)s)', query_param={'value': value}, check_mode=check_mode)
 
     def __pub_set_owner(self, role, check_mode=False):
         """Set a publication owner.
