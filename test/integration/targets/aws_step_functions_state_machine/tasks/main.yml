@@ -130,6 +130,74 @@
           - update_output.changed == True
           - update_output.state_machine_arn == creation_output.state_machine_arn
 
+    - name: Start execution of state machine -- check_mode
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+        <<: *aws_connection_info
+      register: start_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - start_execution_output.changed == True
+          - "start_execution_output.output == 'State machine execution would be started.'"
+
+    - name: Start execution of state machine
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+        <<: *aws_connection_info
+      register: start_execution_output
+
+    - assert:
+        that:
+          - start_execution_output.changed
+          - "'execution_arn' in start_execution_output"
+          - "'start_date' in start_execution_output"
+
+    - name: Stop execution of state machine -- check_mode
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+        <<: *aws_connection_info
+      register: stop_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - stop_execution_output.changed
+          - "stop_execution_output.output == 'State machine execution would be stopped.'"
+
+    - name: Stop execution of state machine
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+        <<: *aws_connection_info
+      register: stop_execution_output
+
+    - assert:
+        that:
+          - stop_execution_output.changed
+          - "'stop_date' in stop_execution_output"
+
+    - name: Start execution of state machine with the same execution name
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+        <<: *aws_connection_info
+      register: start_execution_output_again
+
+    - assert:
+        that:
+          - not start_execution_output_again.changed
+
     - name: Remove state machine -- check_mode
       aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"

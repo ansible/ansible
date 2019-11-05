@@ -238,6 +238,8 @@
               "states:DescribeStateMachine",
               "states:ListStateMachines",
               "states:ListTagsForResource",
+              "states:StartExecution",
+              "states:StopExecution",
               "states:TagResource",
               "states:UntagResource",
               "states:UpdateStateMachine"
