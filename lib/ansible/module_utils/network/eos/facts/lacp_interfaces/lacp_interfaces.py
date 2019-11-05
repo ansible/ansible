@@ -40,7 +40,6 @@ class Lacp_interfacesFacts(object):
     def get_device_data(self, connection):
         return connection.get('show running-config | section lacp')
 
-
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for lacp_interfaces
         :param connection: the device connection
