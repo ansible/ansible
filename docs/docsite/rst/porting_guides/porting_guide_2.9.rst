@@ -27,17 +27,11 @@ Inventory
 Loops
 -----
 
-Many improvements were made in Ansible 2.9 as they impact "unsafe" data, to ensure that data marked as "unsafe" is not templated.
+Ansible 2.9 handles "unsafe" data more robustly, ensuring that data marked "unsafe" is not templated. In previous versions, Ansible recursively marked all data returned by the direct use of ``lookup()`` as "unsafe", but only marked structured data returned by indirect lookups using ``with_X`` style loops as "unsafe" if the returned elements were strings. Ansible 2.9 treats these two approaches consistently.
 
-This impacts the use of ``with_X`` style loops, that return structured data such as lists of dictionaries.
-Previously Ansible treated direct uses of ``lookup()`` differently than the indirect use of lookups through ``with_`` style loops.
+As a result, if you use ``with_dict`` to return keys with templatable values, your templates may no longer work as expected in Ansible 2.9.
 
-This caused data returned from ``lookup()`` to be recursively marked as "unsafe", but returned data from ``with_`` style
-loops was only marked as unsafe if the returned elements were strings.
-
-As a result, using ``with_dict`` that returned keys with templatable values, may no longer work as expected in Ansible 2.9.
-
-The solution to allowing the old behavior is to switch from use of ``with_X`` to using ``loop`` with a filter as described at :ref:`migrating_to_loop`.
+To allow the old behavior, switch from using ``with_X`` to using ``loop`` with a filter as described at :ref:`migrating_to_loop`.
 
 Command Line
 ============
