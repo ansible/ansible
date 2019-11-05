@@ -214,7 +214,7 @@ def get_bond_options(mode, usr_opts):
             None,
             'Dynamic link aggregation (802.3ad)',
         ]
-        if (not 0 < mode_number <= len(modes) - 1):
+        if (not 0 < mode_number <= len(modes)):
             return None
         return modes[mode_number - 1]
 
