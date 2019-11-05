@@ -59,7 +59,7 @@ def main():
             return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
 
         def is_package(self, fullname):
-            return self.get_filename(fullname).endswith('__init__.py')
+            return os.path.basename(self.get_filename(fullname)) in ('__init__.py', '__synthetic__')
 
         def get_filename(self, fullname):
             if fullname in sys.modules:
