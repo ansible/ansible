@@ -72,7 +72,7 @@ options:
       - This is the ethernet port name that is getting retrieved. It can include a single ethernet
         port name, multiple ethernet port names separated by commas or not defined for all ports.
     required: false
-    type: str
+    type: list
 notes:
  - Use C(groups/cpm) in C(module_defaults) to set common options used between CPM modules.)
 """
