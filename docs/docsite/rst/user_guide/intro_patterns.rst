@@ -100,7 +100,7 @@ Your pattern must match your inventory syntax. If you define a host as an :ref:`
         maxRequestsPerChild: 808
         host: 127.0.0.2
 
-you must use the alias in your pattern. In the example above, your must use ``host1`` in your pattern. If you use the IP address, you will once again get the error::
+you must use the alias in your pattern. In the example above, you must use ``host1`` in your pattern. If you use the IP address, you will once again get the error::
 
    [WARNING]: Could not match supplied host pattern, ignoring: 127.0.0.2
 
