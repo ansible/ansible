@@ -22,10 +22,12 @@ class CProfileDecorator:
 
     def __init__(self):
         self._temp = tempfile.mkdtemp()
+        self._clean = True
         atexit.register(self.print_stats)
 
-    def __call__(self, sort='cumtime', cache=False):
+    def __call__(self, sort='cumtime', cache=False, clean=True):
         def closure(func):
+            self._clean = clean
             name = getattr(func, '__qualname__', func.__name__)
             #for k in dir(func):
             #    print("%s: %s" % (k, getattr(func, k)))
@@ -51,32 +53,35 @@ class CProfileDecorator:
                     if not cache:
                         p.print_stats(sort=sort)
                     else:
-                        p.dump_stats(os.path.join(name_dir, str(time.time())))
+                        dump_file = os.path.join(name_dir, str(time.time()))
+                        p.dump_stats(dump_file)
+                        print("stats dumped to: %s" % (dump_file,))
 
             return do_profile
         return closure
 
     def print_stats(self):
         temp_dir = self._temp
-        try:
-            keys = os.listdir(self._temp)
-        except OSError:
-            return
-        for key in keys:
-            key_dir = os.path.join(temp_dir, key)
-            files = os.listdir(key_dir)
-            _join = os.path.join
-            ps = pstats.Stats(
-                *(_join(key_dir, d) for d in files if d != 'config'),
-                stream=sys.stderr
-            )
-            with open(_join(key_dir, 'config')) as f:
-                sort = f.read()
-            print('%s %s' % (key, '*' * (75 - len(key))))
-            ps.sort_stats(sort).print_stats()
-        try:
-            shutil.rmtree(self._temp)
-        except Exception:
-            pass
+        if self._clean:
+            try:
+                keys = os.listdir(self._temp)
+            except OSError:
+                return
+            for key in keys:
+                key_dir = os.path.join(temp_dir, key)
+                files = os.listdir(key_dir)
+                _join = os.path.join
+                ps = pstats.Stats(
+                    *(_join(key_dir, d) for d in files if d != 'config'),
+                    stream=sys.stderr
+                )
+                with open(_join(key_dir, 'config')) as f:
+                    sort = f.read()
+                print('%s %s' % (key, '*' * (75 - len(key))))
+                ps.sort_stats(sort).print_stats()
+            try:
+                shutil.rmtree(self._temp)
+            except Exception:
+                pass
 
 cprofile_func = CProfileDecorator()
