@@ -83,8 +83,8 @@ class Play(Base, Taggable, CollectionSearch):
 
     # =================================================================================
 
-    def __init__(self):
-        super(Play, self).__init__()
+    def __init__(self, generate_id=True):
+        super(Play, self).__init__(generate_id=generate_id)
 
         self._included_conditional = None
         self._included_path = None

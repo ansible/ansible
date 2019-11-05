@@ -69,6 +69,7 @@ def _generic_g_parent(prop_name, self):
 
 
 def _generic_s(prop_name, self, value):
+    self._props_dirty = True
     self._attributes[prop_name] = value
 
 
@@ -101,10 +102,10 @@ def get_validated_value(name, attribute, value, templar):
             for item in value:
                 if not isinstance(item, attribute['listof']):
                     raise AnsibleParserError("the field '%s' should be a list of %s, "
-                                             "but the item '%s' is a %s" % (name, attribute['listof'], item, type(item)), obj=self.get_ds())
+                                             "but the item '%s' is a %s" % (name, attribute['listof'], item, type(item))) #, obj=self.get_ds())
                 elif attribute['required'] and attribute['listof'] == string_types:
                     if item is None or item.strip() == "":
-                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
+                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,)) #, obj=self.get_ds())
     elif isa == 'set':
         if value is None:
             value = set()
@@ -279,12 +280,14 @@ class BaseMeta(type):
         _create_attrs(dct, dct)
         _process_parents(parents, dct)
 
+        dct['_valid_attrs_repr'] = [(name, attribute.serialize()) for (name, attribute) in iteritems(dct['_valid_attrs'])]
+
         return super(BaseMeta, cls).__new__(cls, name, parents, dct)
 
 
 class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
-    def __init__(self):
+    def __init__(self, generate_id=True):
 
         # initialize the data loader and variable manager, which will be provided
         # later when the object is actually loaded
@@ -295,9 +298,12 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         self._validated = False
         self._squashed = False
         self._finalized = False
+        self._props_dirty = True
 
         # every object gets a random uuid:
-        self._uuid = get_unique_id()
+        self._uuid = None
+        if generate_id:
+            self._uuid = get_unique_id()
 
         # we create a copy of the attributes here due to the fact that
         # it was initialized as a class param in the meta class, so we
@@ -309,10 +315,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if callable(value):
                 self._attr_defaults[key] = value()
 
-        self._valid_attrs_repr = [(name, attribute.serialize()) for (name, attribute) in iteritems(self._valid_attrs)]
-
         # and init vars, avoid using defaults in field declaration as it lives across plays
-        self.vars = dict()
+        self.vars = {}
 
     def dump_me(self, depth=0):
         ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
@@ -451,7 +455,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         Create a copy of this object and return it.
         '''
 
-        new_me = self.__class__()
+        new_me = self.__class__(generate_id=False)
 
         for name in self._valid_attrs.keys():
             if name in self._alias_attrs:
@@ -534,14 +538,17 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
         Dumps all attributes to a dictionary
         '''
-        attrs = {}
-        for (name, attribute) in iteritems(self._valid_attrs):
-            attr = getattr(self, name)
-            if attribute.isa == 'class' and hasattr(attr, 'serialize'):
-                attrs[name] = attr.serialize()
-            else:
-                attrs[name] = attr
-        return attrs
+        if self._props_dirty:
+            attrs = {}
+            for (name, attribute) in iteritems(self._valid_attrs):
+                attr = getattr(self, name)
+                if attribute.isa == 'class' and hasattr(attr, 'serialize'):
+                    attrs[name] = attr.serialize()
+                else:
+                    attrs[name] = attr
+            self._dumped_attrs = attrs
+            self._props_dirty = False
+        return self._dumped_attrs
 
     def from_attrs(self, attrs):
         '''
@@ -553,9 +560,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 if attribute.isa == 'class' and isinstance(value, dict):
                     obj = attribute.class_type()
                     obj.deserialize(value)
-                    setattr(self, attr, obj)
+                    #setattr(self, attr, obj)
+                    self._attributes[attr] = obj
                 else:
-                    setattr(self, attr, value)
+                    #setattr(self, attr, value)
+                    self._attributes[attr] = value
 
     def serialize(self):
         '''

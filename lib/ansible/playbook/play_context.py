@@ -327,12 +327,12 @@ class PlayContext(Base):
     # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
     _force_handlers = FieldAttribute(isa='bool', default=False)
 
-    def __init__(self, play=None, passwords=None, connection_lockfd=None):
+    def __init__(self, play=None, passwords=None, connection_lockfd=None, generate_id=True):
         # Note: play is really not optional.  The only time it could be omitted is when we create
         # a PlayContext just so we can invoke its deserialize method to load it from a serialized
         # data source.
 
-        super(PlayContext, self).__init__()
+        super(PlayContext, self).__init__(generate_id=generate_id)
 
         if passwords is None:
             passwords = {}

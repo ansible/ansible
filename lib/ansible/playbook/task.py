@@ -88,7 +88,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     # deprecated, used to be loop and loop_args but loop has been repurposed
     _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
 
-    def __init__(self, block=None, role=None, task_include=None):
+    def __init__(self, block=None, role=None, task_include=None, generate_id=True):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
 
         self._role = role
@@ -99,7 +99,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         else:
             self._parent = block
 
-        super(Task, self).__init__()
+        super(Task, self).__init__(generate_id=generate_id)
 
     def get_path(self):
         ''' return the absolute path of the task with its line number '''

@@ -45,7 +45,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
     # similar to the 'else' clause for exceptions
     # _otherwise = FieldAttribute(isa='list')
 
-    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
+    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False, generate_id=True):
         self._play = play
         self._role = role
         self._parent = None
@@ -61,7 +61,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         elif parent_block:
             self._parent = parent_block
 
-        super(Block, self).__init__()
+        super(Block, self).__init__(generate_id=generate_id)
 
     def __repr__(self):
         return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
