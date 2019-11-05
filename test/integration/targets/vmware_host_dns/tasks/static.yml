@@ -1,0 +1,139 @@
+# Testcase 0001: Ensure DNS config directly on the host is idempotent for static
+- name: Ensure static DNS config is idempotent when done directly on the host
+  vmware_host_dns:
+    hostname: '{{ esxi1 }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    validate_certs: False
+    type: 'static'
+    host_name: "{{ res['hosts_dns_facts'][esxi1]['host_name'] }}"
+    domain: "{{ res['hosts_dns_facts'][esxi1]['domain_name'] }}"
+    dns_servers: "{{ res['hosts_dns_facts'][esxi1]['ip_address'] }}"
+    search_domains: "{{ res['hosts_dns_facts'][esxi1]['search_domain'] }}"
+  register: vmware_host_dns_result_0001
+
+- name: Ensure DNS config wasn't changed
+  assert:
+    that:
+      - "{{ vmware_host_dns_result_0001.changed is false }}"
+
+# Testcase 0002: Change DNS config directly on the host from static to DHCP
+- name: Change DNS config from static to DHCP directly on the host
+  vmware_host_dns:
+    hostname: '{{ esxi1 }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    validate_certs: False
+    type: 'dhcp'
+    device: "vmk0"
+  register: vmware_host_dns_result_0002
+
+- name: Ensure DNS config was changed
+  assert:
+    that:
+      - "{{ vmware_host_dns_result_0002.changed is true }}"
+ 
+# Testcase 0003: Ensure DNS config directly on the host is idempotent for DHCP
+- name: Ensure DHCP config is idempotent when done directly on the host
+  vmware_host_dns:
+    hostname: '{{ esxi1 }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    validate_certs: False
+    type: 'dhcp'
+    device: "vmk0"
+  register: vmware_host_dns_result_0003
+
+- name: Ensure DNS config wasn't changed
+  assert:
+    that:
+      - "{{ vmware_host_dns_result_0003.changed is false }}"
+
+# Testcase 0004: Change DNS config directly on the host from DHCP to static
+- name: Change DNS config from DHCP to static directly on the host
+  vmware_host_dns:
+    hostname: '{{ esxi1 }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    validate_certs: False
+    type: 'static'
+    host_name: "{{ res['hosts_dns_facts'][esxi1]['host_name'] }}"
+    domain: "{{ res['hosts_dns_facts'][esxi1]['domain_name'] }}"
+    dns_servers: "{{ res['hosts_dns_facts'][esxi1]['ip_address'] }}"
+    search_domains: "{{ res['hosts_dns_facts'][esxi1]['search_domain'] }}"
+  register: vmware_host_dns_result_0004
+
+- name: Ensure DNS config was changed
+  assert:
+    that:
+      - "{{ vmware_host_dns_result_0004.changed is true }}"
+
+# Testcase 0005: Ensure DNS config on the cluster is idempotent for static
+- name: Ensure static DNS config is idempotent when done on the cluster
+  vmware_host_dns:
+    hostname: '{{ esxi1 }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    validate_certs: False
+    type: 'static'
+    domain: "{{ res['hosts_dns_facts'][esxi1]['domain_name'] }}"
+    dns_servers: "{{ res['hosts_dns_facts'][esxi1]['ip_address'] }}"
+    search_domains: "{{ res['hosts_dns_facts'][esxi1]['search_domain'] }}"
+  register: vmware_host_dns_result_0005
+
+- name: Ensure DNS config wasn't changed
+  assert:
+    that:
+      - "{{ vmware_host_dns_result_0005.changed is false }}"
+
+# Testcase 0006: Change DNS config on the cluster from static to DHCP
+- name: Set DNS config to DHCP on the cluster
+  vmware_host_dns:
+    hostname: '{{ esxi1 }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    validate_certs: False
+    type: 'dhcp'
+    device: "vmk0"
+  register: vmware_host_dns_result_0006
+
+- name: Ensure DNS config was changed
+  assert:
+    that:
+      - "{{ vmware_host_dns_result_0006.changed is true }}"
+
+# Testcase 0007: Ensure DNS config on the cluster is idempotent for DHCP
+- name: Ensure DHCP config is idempotent when done on the cluster
+  vmware_host_dns:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    cluster_name: "{{ ccr1 }}"
+    validate_certs: False
+    type: 'dhcp'
+    device: "vmk0"
+  register: vmware_host_dns_result_0007
+
+- name: Ensure DNS config wasn't changed
+  assert:
+    that:
+      - "{{ vmware_host_dns_result_0007.changed is false }}"
+
+# Testcase 0008: Change DNS config on the cluster from DHCP to static
+- name: Change DNS config from DHCP to static on the cluster
+  vmware_host_dns:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    cluster_name: "{{ ccr1 }}"
+    validate_certs: False
+    type: 'static'
+    domain: "{{ res['hosts_dns_facts'][esxi1]['domain_name'] }}"
+    dns_servers: "{{ res['hosts_dns_facts'][esxi1]['ip_address'] }}"
+    search_domains: "{{ res['hosts_dns_facts'][esxi1]['search_domain'] }}"
+  register: vmware_host_dns_result_0008
+
+- name: Ensure DNS config was changed
+  assert:
+    that:
+      - "{{ vmware_host_dns_result_0008.changed is true }}"

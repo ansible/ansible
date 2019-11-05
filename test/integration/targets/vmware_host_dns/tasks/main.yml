@@ -1,101 +1,20 @@
-# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
-# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# Test code for the vmware_host_dns module.
+# Copyright: (c) 2019, Mario Lenz <m@riolenz.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- import_role:
+    name: prepare_vmware_tests
 
-- debug: var=vcsim
+- name: Gather DNS facts about ESXi Host
+  vmware_host_dns_info:
+    hostname: '{{ esxi1 }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    esxi_hostname: "{{ esxi1 }}"
+    validate_certs: False
+  register: res
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
-
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?cluster=2
-  register: vcsim_instance
-
-- debug:
-    var: vcsim_instance
-
-- name: Wait for vcsim server to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of Cluster from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=CCR
-  register: clusters
-
-- name: get a cluster
-  set_fact:
-    ccr1: "{{ clusters.json[0] | basename }}"
-
-- debug: var=ccr1
-
-- name: get a list of Hosts from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=H
-  register: hosts
-
-- name: get a cluster
-  set_fact:
-    host1: "{{ hosts.json[0] | basename }}"
-
-- debug: var=host1
-
-# vcsim doesn't support DNS configuration
-
-- name: Configure DNS for a host system
-  vmware_host_dns:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
-    esxi_hostname: "{{ host1 }}"
-    host_name: "{{ inventory_hostname_short }}"
-    domain: example.local
-    dns_servers:
-      - 192.168.1.10
-      - 192.168.1.11
-    search_domains:
-      - subdomain.example.local
-      - example.local
-    validate_certs: no
-  register: host_dns_result
-
-- name: Ensure DNS was configured
-  assert:
-    that:
-        - host_dns_result.changed
-
-- name: Configure DNS facts for a host system in check mode
-  vmware_host_dns_facts:
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance.json.username }}"
-    password: "{{ vcsim_instance.json.password }}"
-    host_name: "{{ inventory_hostname_short }}"
-    domain: example.local
-    dns_servers:
-      - 192.168.1.12
-      - 192.168.1.13
-    search_domains:
-      - subdomain.example.local
-      - example.local
-    validate_certs: no
-  register: host_dns_result_check_mode
-  check_mode: yes
-
-- name: Ensure DNS was configured
-  assert:
-    that:
-        - host_dns_result_check_mode.changed
+- include_tasks: dhcp.yml
+  when: res['hosts_dns_facts']['{{ esxi1 }}']['dhcp']
+- include_tasks: static.yml
+  when: not res['hosts_dns_facts']['{{ esxi1 }}']['dhcp']
