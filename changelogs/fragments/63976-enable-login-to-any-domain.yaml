@@ -1,0 +1,2 @@
+bugfixes:
+  - enable login to any domain in the check point management server. solve issues - #63890, #63975
