@@ -68,9 +68,9 @@ class TestCheckpointHttpApi(unittest.TestCase):
             {'sid': 'SID', 'uid': 'UID'}
         )
 
-        self.checkpoint_plugin.login('username', 'password')
+        self.checkpoint_plugin.login('USERNAME', 'PASSWORD')
 
-        self.connection_mock.send.assert_called_once_with('/test_domain', mock.ANY, headers=mock.ANY,
+        self.connection_mock.send.assert_called_once_with('/web_api/login', mock.ANY, headers=mock.ANY,
                                                           method=mock.ANY)
         self.checkpoint_plugin.hostvars['domain'] = temp_domain
 
