@@ -21,7 +21,7 @@ module: vmware_host_dns
 short_description: Manage DNS configuration of an ESXi host system
 description:
 - This module can be used to configure DNS for the default TCP/IP stack on an ESXi host system.
-version_added: 2.10
+version_added: '2.10'
 author:
 - Christian Kotte (@ckotte)
 - Mario Lenz (@mariolenz)
