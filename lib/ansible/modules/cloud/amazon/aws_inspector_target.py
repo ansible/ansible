@@ -2,6 +2,9 @@
 # Copyright (c) 2018 Dennis Conrad for Sainsbury's
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -21,6 +24,7 @@ options:
       - The user-defined name that identifies the assessment target.  The name
         must be unique within the AWS account.
     required: true
+    type: str
   state:
     description:
       - The state of the assessment target.
@@ -28,10 +32,12 @@ options:
       - absent
       - present
     default: present
+    type: str
   tags:
     description:
       - Tags of the EC2 instances to be added to the assessment target.
       - Required if C(state=present).
+    type: dict
 extends_documentation_fragment:
   - aws
   - ec2

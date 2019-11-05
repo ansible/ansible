@@ -45,6 +45,8 @@ Currently Ansible can be run from any machine with Python 2 (version 2.7) or Pyt
 
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 
+When choosing a control node, bear in mind that any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud. In most cases this will work better than on the open Internet.
+
 .. note::
 
     macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" error.
@@ -82,8 +84,8 @@ later).
      modules to use. You will still need to set :ref:`ansible_python_interpreter<ansible_python_interpreter>` if the Python
      2 interpreter is not installed to :command:`/usr/bin/python`.
 
-   * Ansible's "raw" module (for executing commands in a quick and dirty way) and the script module
-     don't even need Python installed.  So technically, you can use Ansible to install a compatible
+   * Ansible's :ref:`raw module<raw_module>`, and the :ref:`script module<script_module>`, do not depend
+     on a client side install of Python to run.  Technically, you can use Ansible to install a compatible
      version of Python using the :ref:`raw module<raw_module>`, which then allows you to use everything else.
      For example, if you need to bootstrap Python 2 onto a RHEL-based system, you can install it
      via
@@ -320,7 +322,7 @@ In order to use the ``paramiko`` connection plugin or modules that require ``par
 
     $ pip install --user paramiko
 
-Ansble can also be installed inside a new or existing ``virtualenv``::
+Ansible can also be installed inside a new or existing ``virtualenv``::
 
     $ python -m virtualenv ansible  # Create a virtualenv if one does not already exist
     $ source ansible/bin/activate   # Activate the virtual environment

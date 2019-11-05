@@ -89,7 +89,9 @@ $tmpdir = $module.Tmpdir
 # Override the Exit and WriteLine behaviour to throw an exception instead of exiting the module
 [Ansible.Basic.AnsibleModule]::Exit = {
     param([Int32]$rc)
-    throw "exit: $rc"
+    $exp = New-Object -TypeName System.Exception -ArgumentList "exit: $rc"
+    $exp | Add-Member -Type NoteProperty -Name Output -Value $_test_out
+    throw $exp
 }
 [Ansible.Basic.AnsibleModule]::WriteLine = {
     param([String]$line)
@@ -429,7 +431,7 @@ $tests = @{
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -529,7 +531,7 @@ $tests = @{
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -569,7 +571,7 @@ $tests = @{
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -643,10 +645,9 @@ $tests = @{
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
-        #$_test_out
 
         # verify no_log params are masked in invocation
         $expected = @{
@@ -709,6 +710,48 @@ test_no_log - Invoked with:
         $actual_event | Assert-DictionaryEquals -Expected $expected_event
     }
 
+    "No log value with an empty string" = {
+        $spec = @{
+            options = @{
+                password1 = @{type = "str"; no_log = $true}
+                password2 = @{type = "str"; no_log = $true}
+            }
+        }
+        $complex_args = @{
+            _ansible_module_name = "test_no_log"
+            password1 = ""
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $m.Result.data = $complex_args.dict
+
+        # verify params internally aren't masked
+        $m.Params.password1 | Assert-Equals -Expected ""
+        $m.Params.password2 | Assert-Equals -Expected $null
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            invocation = @{
+                module_args = @{
+                    password1 = ""
+                    password2 = $null
+                }
+            }
+            changed = $false
+            data = $complex_args.dict
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
     "Removed in version" = {
         $spec = @{
             options = @{
@@ -728,7 +771,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -774,7 +817,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -816,7 +859,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -857,7 +900,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -895,7 +938,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -933,7 +976,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -987,7 +1030,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1011,7 +1054,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $failed
 
@@ -1041,7 +1084,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $failed
 
@@ -1071,7 +1114,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $failed
 
@@ -1104,7 +1147,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $failed
 
@@ -1133,7 +1176,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $failed
 
@@ -1157,7 +1200,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $failed
 
@@ -1184,7 +1227,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $failed
 
@@ -1281,7 +1324,7 @@ test_no_log - Invoked with:
                 failed = $true
                 msg = "Unsupported parameters for (undefined win module) module: _ansible_invalid. Supported parameters include: "
             }
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
             $actual | Assert-DictionaryEquals -Expected $expected
         }
         $failed | Assert-Equals -Expected $true
@@ -1324,7 +1367,7 @@ test_no_log - Invoked with:
         try {
             $m.ExitJson()
         } catch [System.Management.Automation.RuntimeException] {
-            $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $false
         (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
@@ -1369,7 +1412,7 @@ test_no_log - Invoked with:
         try {
             $m.ExitJson()
         } catch [System.Management.Automation.RuntimeException] {
-            $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $false
         (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
@@ -1402,7 +1445,7 @@ test_no_log - Invoked with:
         try {
             $m.ExitJson()
         } catch [System.Management.Automation.RuntimeException] {
-            $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         (Test-Path -Path $actual_tmpdir -PathType Container) | Assert-Equals -Expected $true
         (Test-Path -Path $remote_tmp -PathType Container) | Assert-Equals -Expected $true
@@ -1420,7 +1463,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1452,7 +1495,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1477,7 +1520,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1504,7 +1547,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1532,7 +1575,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1561,7 +1604,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1593,7 +1636,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1626,7 +1669,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1679,7 +1722,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1718,7 +1761,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1750,7 +1793,7 @@ test_no_log - Invoked with:
         try {
             $m.ExitJson()
         } catch [System.Management.Automation.RuntimeException] {
-            $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $output.Keys.Count | Assert-Equals -Expected 2
         $output.changed | Assert-Equals -Expected $false
@@ -1773,7 +1816,7 @@ test_no_log - Invoked with:
         try {
             $m.ExitJson()
         } catch [System.Management.Automation.RuntimeException] {
-            $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $expected_warning = "value of option_key was a case insensitive match of one of: abc, def. "
         $expected_warning += "Checking of choices will be case sensitive in a future Ansible release. "
@@ -1802,7 +1845,7 @@ test_no_log - Invoked with:
         try {
             $m.ExitJson()
         } catch [System.Management.Automation.RuntimeException] {
-            $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $expected_warning = "value of option_key was a case insensitive match of one of: abc, def. "
         $expected_warning += "Checking of choices will be case sensitive in a future Ansible release. "
@@ -1832,7 +1875,7 @@ test_no_log - Invoked with:
         try {
             $m.ExitJson()
         } catch [System.Management.Automation.RuntimeException] {
-            $output = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $output = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $expected_warning = "value of option_key was a case insensitive match of one or more of: abc, def, ghi, JKL. "
         $expected_warning += "Checking of choices will be case sensitive in a future Ansible release. "
@@ -1862,7 +1905,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1894,7 +1937,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1926,7 +1969,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1958,7 +2001,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -1988,7 +2031,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2022,7 +2065,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2057,7 +2100,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2088,7 +2131,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2129,7 +2172,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2161,7 +2204,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2189,7 +2232,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2222,7 +2265,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2251,7 +2294,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2283,7 +2326,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 1"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2317,7 +2360,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2338,7 +2381,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
         }
         $failed | Assert-Equals -Expected $true
 
@@ -2370,7 +2413,6 @@ try {
     foreach ($test_impl in $tests.GetEnumerator()) {
         # Reset the variables before each test
         $complex_args = @{}
-        $_test_out = $null
 
         $test = $test_impl.Key
         &$test_impl.Value
@@ -2384,7 +2426,7 @@ try {
 
     if ($_.Exception.Message.StartSwith("exit: ")) {
         # The exception was caused by an unexpected Exit call, log that on the output
-        $module.Result.output = (ConvertFrom-Json -InputObject $_test_out)
+        $module.Result.output = (ConvertFrom-Json -InputObject $_.Exception.InnerException.Output)
         $module.Result.msg = "Uncaught AnsibleModule exit in tests, see output"
     } else {
         # Unrelated exception

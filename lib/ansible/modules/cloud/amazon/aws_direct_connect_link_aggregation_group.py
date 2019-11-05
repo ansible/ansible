@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -28,24 +31,31 @@ options:
     choices:
       - present
       - absent
+    type: str
   name:
     description:
       - The name of the Direct Connect link aggregation group.
+    type: str
   link_aggregation_group_id:
     description:
       - The ID of the Direct Connect link aggregation group.
+    type: str
   num_connections:
     description:
-      - The number of connections with which to intialize the link aggregation group.
+      - The number of connections with which to initialize the link aggregation group.
+    type: int
   min_links:
     description:
       - The minimum number of physical connections that must be operational for the LAG itself to be operational.
+    type: int
   location:
     description:
       - The location of the link aggregation group.
+    type: str
   bandwidth:
     description:
       - The bandwidth of the link aggregation group.
+    type: str
   force_delete:
     description:
       - This allows the minimum number of links to be set to 0, any hosted connections disassociated,
@@ -54,6 +64,7 @@ options:
   connection_id:
     description:
       - A connection ID to link with the link aggregation group upon creation.
+    type: str
   delete_with_disassociation:
     description:
       - To be used with I(state=absent) to delete connections after disassociating them with the LAG.
@@ -67,6 +78,7 @@ options:
     description:
       - The duration in seconds to wait if I(wait) is True.
     default: 120
+    type: int
 """
 
 EXAMPLES = """
@@ -353,7 +365,7 @@ def ensure_absent(client, lag_id, lag_name, force_delete, delete_with_disassocia
 
     latest_status = lag_status(client, lag_id)
 
-    # determinine the associated connections and virtual interfaces to disassociate
+    # determine the associated connections and virtual interfaces to disassociate
     virtual_interfaces, connections = get_connections_and_virtual_interfaces(client, lag_id)
 
     # If min_links is not 0, there are associated connections, or if there are virtual interfaces, ask for force_delete

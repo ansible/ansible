@@ -38,6 +38,7 @@ options:
       - You can also specify category name by specifying colon separated value. For example, "category_name:tag_name".
       - You can skip category name if you have unique tag names.
       required: True
+      type: list
     state:
       description:
       - If C(state) is set to C(add) or C(present) will add the tags to the existing tag list of the given object.
@@ -45,16 +46,19 @@ options:
       - If C(state) is set to C(set) will replace the tags of the given objects with the user defined list of tags.
       default: add
       choices: [ present, absent, add, remove, set ]
+      type: str
     object_type:
       description:
       - Type of object to work with.
       required: True
       choices: [ VirtualMachine, Datacenter, ClusterComputeResource, HostSystem, DistributedVirtualSwitch, DistributedVirtualPortgroup ]
+      type: str
     object_name:
       description:
       - Name of the object to work with.
       - For DistributedVirtualPortgroups the format should be "switch_name:portgroup_name"
       required: True
+      type: str
 extends_documentation_fragment: vmware_rest_client.documentation
 '''
 

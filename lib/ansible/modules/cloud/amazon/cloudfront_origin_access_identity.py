@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -11,8 +14,8 @@ DOCUMENTATION = '''
 
 module: cloudfront_origin_access_identity
 
-short_description: create, update and delete origin access identities for a
-                   cloudfront distribution.
+short_description: Create, update and delete origin access identities for a
+                   cloudfront distribution
 
 description:
     - Allows for easy creation, updating and deletion of origin access
@@ -36,22 +39,26 @@ options:
       choices:
         - present
         - absent
-      default: update_origin_access_identity
+      default: present
+      type: str
     origin_access_identity_id:
       description:
         - The origin_access_identity_id of the cloudfront distribution.
       required: false
+      type: str
     comment:
       description:
         - A comment to describe the cloudfront origin access identity.
       required: false
+      type: str
     caller_reference:
       description:
         - A unique identifier to reference the origin access identity by.
       required: false
+      type: str
 
 notes:
-  - does not support check mode
+  - Does not support check mode.
 
 '''
 
@@ -101,7 +108,7 @@ cloud_front_origin_access_identity:
       returned: always
       type: str
     s3_canonical_user_id:
-      description: the cannonical user id of the user who created the oai
+      description: the canonical user id of the user who created the oai
       returned: always
       type: str
 e_tag:

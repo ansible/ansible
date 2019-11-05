@@ -18,16 +18,12 @@
 
     - name: create IAM role needed for CodeBuild
       iam_role:
-        name: "ansible-test-sts-{{ resource_prefix }}-codebuild-service-role"
+        name: "{{ iam_role_name }}"
         description: Role with permissions for CodeBuild actions.
         assume_role_policy_document: "{{ lookup('file', 'codebuild_iam_trust_policy.json') }}"
         state: present
         <<: *aws_connection_info
       register: codebuild_iam_role
-
-    - name: Wait until IAM role is available
-      pause:
-        seconds: 10
 
     - name: Set variable with aws account id
       set_fact:
@@ -61,6 +57,9 @@
         state: present
         <<: *aws_connection_info
       register: output
+      retries: 10
+      delay: 5
+      until: output is success
 
     - assert:
         that:
@@ -115,6 +114,6 @@
 
     - name: cleanup IAM role created for CodeBuild test
       iam_role:
-        name: "{{ resource_prefix }}-codebuild-service-role"
+        name: "{{ iam_role_name }}"
         state: absent
         <<: *aws_connection_info

@@ -335,7 +335,7 @@ class ModuleParameters(Parameters):
         if 0 <= self._values['syn_rto_base'] <= 5000:
             return self._values['syn_rto_base']
         raise F5ModuleError(
-            "Valid 'syn_rto_base' must be in range 0 - 5000 miliseconds."
+            "Valid 'syn_rto_base' must be in range 0 - 5000 milliseconds."
         )
 
 

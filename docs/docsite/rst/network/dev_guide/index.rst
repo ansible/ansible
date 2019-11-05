@@ -18,6 +18,7 @@ If you want to extend Ansible for Network Automation by creating a module or plu
 
 Find the network developer task that best describes what you want to do:
 
+   * I want to :ref:`develop a network resource module <developing_resource_modules>`.
    * I want to :ref:`develop a network connection plugin <developing_plugins_network>`.
    * I want to :ref:`document my set of modules for a network platform <documenting_modules_network>`.
 
@@ -26,5 +27,6 @@ If you prefer to read the entire guide, here's a list of the pages in order.
 .. toctree::
   :maxdepth: 1
 
+  developing_resource_modules_network
   developing_plugins_network
   documenting_modules_network

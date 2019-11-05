@@ -1,0 +1,335 @@
+---
+# ============================================================
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+# ============================================================
+- name: test add s3 bucket notification
+  block:
+    - name: move lambda into place for archive module
+      copy:
+        src: "mini_lambda.py"
+        dest: "{{output_dir}}/mini_lambda.py"
+
+    - name: bundle lambda into a zip
+      archive:
+        format: zip
+        path: "{{output_dir}}/mini_lambda.py"
+        dest: "{{output_dir}}/mini_lambda.zip"
+      register: function_res
+
+    - name: register bucket
+      s3_bucket:
+        name: "{{resource_prefix}}-bucket"
+        state: present
+        <<: *aws_connection_info
+      register: bucket_info
+
+    - name: register lambda
+      lambda:
+        name: "{{resource_prefix}}-lambda"
+        state: present
+        role: "ansible_lambda_role"
+        runtime: "python3.7"
+        zip_file: "{{function_res.dest}}"
+        handler: "lambda_function.lambda_handler"
+        memory_size: "128"
+        timeout: "30"
+        <<: *aws_connection_info
+      register: lambda_info
+
+    - name: register notification without invoke permissions
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+        prefix: images/
+        suffix: .jpg
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+    - name: assert nice message returned
+      assert:
+        that:
+          - result is failed
+          - result.msg != 'MODULE FAILURE'
+
+    - name: Add invocation permission of Lambda function on AWS
+      lambda_policy:
+        function_name: "{{ lambda_info.configuration.function_arn }}"
+        statement_id: allow_lambda_invoke
+        action: lambda:InvokeFunction
+        principal: "s3.amazonaws.com"
+        source_arn: "arn:aws:s3:::{{bucket_info.name}}"
+        <<: *aws_connection_info
+
+    - name: register s3 bucket notification
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+        prefix: images/
+        suffix: .jpg
+        <<: *aws_connection_info
+      register: result
+    - name: assert result.changed == True
+      assert:
+        that:
+          - result.changed == True
+
+  # ============================================================
+    - name: test check_mode without change
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+        prefix: images/
+        suffix: .jpg
+        <<: *aws_connection_info
+      register: result
+      check_mode: yes
+    - name: assert result.changed == False
+      assert:
+        that:
+          - result.changed == False
+
+    - name: test check_mode change events
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:*"]
+        prefix: images/
+        suffix: .jpg
+        <<: *aws_connection_info
+      register: result
+      check_mode: yes
+    - name: assert result.changed == True
+      assert:
+        that:
+          - result.changed == True
+
+    - name: test that check_mode didn't change events
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+        prefix: images/
+        suffix: .jpg
+        <<: *aws_connection_info
+      register: result
+    - name: assert result.changed == False
+      assert:
+        that:
+          - result.changed == False
+
+  # ============================================================
+    - name: test mutually exclusive parameters
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:Post"]
+        prefix: photos/
+        suffix: .gif
+        lambda_version: 0
+        lambda_alias: 0
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+    - name: assert task failed
+      assert:
+        that:
+          - result is failed
+          - "result.msg == 'parameters are mutually exclusive: lambda_alias|lambda_version'"
+
+  # ============================================================
+  # Test configuration changes
+    - name: test configuration change on suffix
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+        prefix: images/
+        suffix: .gif
+        <<: *aws_connection_info
+      register: result
+    - name: assert result.changed == True
+      assert:
+        that:
+          - result.changed == True
+
+    - name: test configuration change on prefix
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+        prefix: photos/
+        suffix: .gif
+        <<: *aws_connection_info
+      register: result
+    - name: assert result.changed == True
+      assert:
+        that:
+          - result.changed == True
+
+    - name: test configuration change on new events added
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:*", "s3:ObjectRemoved:*", "s3:ObjectRestore:Post"]
+        prefix: photos/
+        suffix: .gif
+        <<: *aws_connection_info
+      register: result
+    - name: assert result.changed == True
+      assert:
+        that:
+          - result.changed == True
+
+    - name: test configuration change on events removed
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:Post"]
+        prefix: photos/
+        suffix: .gif
+        <<: *aws_connection_info
+      register: result
+    - name: assert result.changed == True
+      assert:
+        that:
+          - result.changed == True
+
+  # ============================================================
+  # Test idempotency of CRUD
+
+    - name: change events
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:*", "s3:ObjectRemoved:*", "s3:ObjectRestore:Post"]
+        prefix: photos/
+        suffix: .gif
+        <<: *aws_connection_info
+      register: result
+
+    - name: test that event order does not matter
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectRestore:Post", "s3:ObjectRemoved:*", "s3:ObjectCreated:*"]
+        prefix: photos/
+        suffix: .gif
+        <<: *aws_connection_info
+      register: result
+    - name: assert result.changed == False
+      assert:
+        that:
+          - result.changed == False
+
+    - name: test that configuration is the same as previous task
+      s3_bucket_notification:
+        state: present
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        lambda_function_arn: "{{ lambda_info.configuration.function_arn }}"
+        events: ["s3:ObjectCreated:*", "s3:ObjectRemoved:*", "s3:ObjectRestore:Post"]
+        prefix: photos/
+        suffix: .gif
+        <<: *aws_connection_info
+      register: result
+    - name: assert result.changed == False
+      assert:
+        that:
+          - result.changed == False
+
+    - name: test remove notification
+      s3_bucket_notification:
+        state: absent
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        <<: *aws_connection_info
+      register: result
+    - name: assert result.changed == True
+      assert:
+        that:
+          - result.changed == True
+
+    - name: test that events is already removed
+      s3_bucket_notification:
+        state: absent
+        event_name: "{{resource_prefix}}-on_file_add_or_remove"
+        bucket_name: "{{resource_prefix}}-bucket"
+        <<: *aws_connection_info
+      register: result
+    - name: assert result.changed == False
+      assert:
+        that:
+          - result.changed == False
+
+  always:
+    - name: clean-up bucket
+      s3_bucket:
+        name: "{{resource_prefix}}-bucket"
+        state: absent
+        <<: *aws_connection_info
+
+    - name: clean-up lambda
+      lambda:
+        name: "{{resource_prefix}}-lambda"
+        state: absent
+        <<: *aws_connection_info
+# ============================================================
+-
+- block:
+    # ============================================================
+    - name: test with no parameters except state absent
+      s3_bucket_notification:
+        state=absent
+      register: result
+      ignore_errors: true
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments: event_name, bucket_name")'
+
+    # ============================================================
+    - name: test abesnt
+      s3_bucket_notification:
+        state=absent
+      register: result
+      ignore_errors: true
+    - name: assert failure when called with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - 'result.msg.startswith("missing required arguments: event_name, bucket_name")'

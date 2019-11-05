@@ -160,6 +160,11 @@ Please refer the documentation of the respective package for such dependencies a
 Common Platform Issues
 ++++++++++++++++++++++
 
+What customer platforms does Red Hat support?
+---------------------------------------------
+
+A number of them! For a definitive list please see this `Knowledge Base article <https://access.redhat.com/articles/3168091>`_.
+
 Running in a virtualenv
 -----------------------
 
@@ -241,7 +246,7 @@ There are a few common errors that one might run into when trying to execute Ans
 * When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with
 
   .. error::
-      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
+      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see https://python.org/dev/peps/pep-0263/ for details
 
   To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
 
@@ -489,8 +494,8 @@ In OpenBSD, a similar option is available in the base system called encrypt(1):
 
 .. _dot_or_array_notation:
 
-Ansible supports dot notation and array notation for variables. Which notation should I use?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Ansible allows dot notation and array notation for variables. Which notation should I use?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 The dot notation comes from Jinja and works fine for variables without special
 characters. If your variable contains dots (.), colons (:), or dashes (-), if
@@ -633,9 +638,8 @@ For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
 Why don't you ship in X format?
 +++++++++++++++++++++++++++++++
 
-Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
-In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
-
+In most cases it has to do with maintainability. There are many ways to ship software and we do not have the resources to release Ansible on every platform.
+In some cases there are technical issues. For example, our dependencies are not present on Python Wheels.
 
 .. _ansible_host_delegated:
 
@@ -647,7 +651,7 @@ but you can still access the original via ``hostvars``::
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
-This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+This works for all overridden connection variables, like ``ansible_user``, ``ansible_port``, etc.
 
 
 .. _scp_protocol_error_filename:

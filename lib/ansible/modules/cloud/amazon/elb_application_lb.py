@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -40,12 +43,14 @@ options:
       - The bucket must exist in the same
         region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.
     required: false
+    type: str
   access_logs_s3_prefix:
     description:
       - The prefix for the log location in the S3 bucket.
       - If you don't specify a prefix, the access logs are stored in the root of the bucket.
       - Cannot begin or end with a slash.
     required: false
+    type: str
   deletion_protection:
     description:
       - Indicates whether deletion protection for the ELB is enabled.
@@ -63,17 +68,62 @@ options:
     description:
       - The number of seconds to wait before an idle connection is closed.
     required: false
-    default: 60
+    type: int
   listeners:
     description:
       - A list of dicts containing listeners to attach to the ELB. See examples for detail of the dict required. Note that listener keys
         are CamelCased.
     required: false
+    type: list
+    suboptions:
+        Port:
+            description: The port on which the load balancer is listening.
+            type: int
+        Protocol:
+            description: The protocol for connections from clients to the load balancer.
+            type: str
+        Certificates:
+            description: The SSL server certificate.
+            type: list
+            suboptions:
+                CertificateArn:
+                    description: The Amazon Resource Name (ARN) of the certificate.
+                    type: str
+        SslPolicy:
+            description: The security policy that defines which ciphers and protocols are supported.
+            type: str
+        DefaultActions:
+            description: The default actions for the listener.
+            type: list
+            suboptions:
+                Type:
+                    description: The type of action.
+                    type: str
+                TargetGroupArn:
+                    description: The Amazon Resource Name (ARN) of the target group.
+                    type: str
+        Rules:
+            type: list
+            description:
+              - A list of ALB Listener Rules.
+              - 'For the complete documentation of possible Conditions and Actions please see the boto3 documentation:'
+              - 'https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/elbv2.html#ElasticLoadBalancingv2.Client.create_rule'
+            suboptions:
+                Conditions:
+                    type: list
+                    description: Conditions which must be met for the actions to be applied.
+                Priority:
+                    type: int
+                    description: The rule priority.
+                Actions:
+                    type: list
+                    description: Actions to apply if all of the rule's conditions are met.
   name:
     description:
       - The name of the load balancer. This name must be unique within your AWS account, can have a maximum of 32 characters, must contain only alphanumeric
         characters or hyphens, and must not begin or end with a hyphen.
     required: true
+    type: str
   purge_listeners:
     description:
       - If yes, existing listeners will be purged from the ELB to match exactly what is defined by I(listeners) parameter. If the I(listeners) parameter is
@@ -92,26 +142,31 @@ options:
       - A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from
         at least two Availability Zones. Required if state=present.
     required: false
+    type: list
   security_groups:
     description:
       - A list of the names or IDs of the security groups to assign to the load balancer. Required if state=present.
     required: false
     default: []
+    type: list
   scheme:
     description:
       - Internet-facing or internal load balancer. An ELB scheme can not be modified after creation.
     required: false
     default: internet-facing
     choices: [ 'internet-facing', 'internal' ]
+    type: str
   state:
     description:
       - Create or destroy the load balancer.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   tags:
     description:
       - A dictionary of one or more tags to assign to the load balancer.
     required: false
+    type: dict
   wait:
     description:
       - Wait for the load balancer to have a state of 'active' before completing. A status check is
@@ -123,6 +178,7 @@ options:
     description:
       - The time in seconds to use in conjunction with I(wait).
     version_added: 2.6
+    type: int
   purge_rules:
     description:
       - When set to no, keep the existing load balancer rules in place. Will modify and add, but will not delete.
@@ -157,7 +213,7 @@ EXAMPLES = '''
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
-          - Type: forward # Required. Only 'forward' is accepted at this time
+          - Type: forward # Required.
             TargetGroupName: # Required. The name of the target group
     state: present
 
@@ -181,7 +237,7 @@ EXAMPLES = '''
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
-          - Type: forward # Required. Only 'forward' is accepted at this time
+          - Type: forward # Required.
             TargetGroupName: # Required. The name of the target group
     state: present
 
@@ -212,6 +268,31 @@ EXAMPLES = '''
             Actions:
               - TargetGroupName: test-target-group
                 Type: forward
+          - Conditions:
+              - Field: path-pattern
+                Values:
+                  - "/redirect-path/*"
+            Priority: '2'
+            Actions:
+              - Type: redirect
+                RedirectConfig:
+                  Host: "#{host}"
+                  Path: "/example/redir" # or /#{path}
+                  Port: "#{port}"
+                  Protocol: "#{protocol}"
+                  Query: "#{query}"
+                  StatusCode: "HTTP_302" # or HTTP_301
+          - Conditions:
+              - Field: path-pattern
+                Values:
+                  - "/fixed-response-path/"
+            Priority: '3'
+            Actions:
+              - Type: fixed-response
+                FixedResponseConfig:
+                  ContentType: "text/plain"
+                  MessageBody: "This is the page you're looking for"
+                  StatusCode: "200"
     state: present
 
 # Remove an ELB
@@ -265,7 +346,7 @@ dns_name:
 idle_timeout_timeout_seconds:
     description: The idle timeout value, in seconds.
     returned: when state is present
-    type: str
+    type: int
     sample: 60
 ip_address_type:
     description:  The type of IP addresses used by the subnets for the load balancer.
@@ -545,7 +626,7 @@ def main():
                                   ('state', 'present', ['subnets', 'security_groups'])
                               ],
                               required_together=[
-                                  ['access_logs_enabled', 'access_logs_s3_bucket', 'access_logs_s3_prefix']
+                                  ['access_logs_enabled', 'access_logs_s3_bucket']
                               ]
                               )
 

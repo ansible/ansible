@@ -1,3 +1,0 @@
----
-minor_changes:
-  - os_network - added MTU support when creating/updating a network

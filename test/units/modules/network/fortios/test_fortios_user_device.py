@@ -20,6 +20,7 @@ __metaclass__ = type
 import os
 import json
 import pytest
+from mock import ANY
 from ansible.module_utils.network.fortios.fortios import FortiOSHandler
 
 try:
@@ -47,30 +48,28 @@ def test_user_device_creation(mocker):
         'username': 'admin',
         'state': 'present',
         'user_device': {
+            'alias': 'test_value_3',
+            'avatar': 'test_value_4',
             'category': 'none',
             'comment': 'Comment.',
-            'master_device': 'master',
-            'alias': 'myuser',
-            'mac': '00:01:04:03:ab:c3:32',
-            'user': 'myuser',
+            'mac': 'test_value_7',
+            'master_device': 'test_value_8',
             'type': 'unknown',
-            'tagging': 'tag',
-            'avatar': 'avatar1'
+            'user': 'test_value_10'
         },
         'vdom': 'root'}
 
     is_error, changed, response = fortios_user_device.fortios_user(input_data, fos_instance)
 
     expected_data = {
-        'alias': 'myuser',
+        'alias': 'test_value_3',
+        'avatar': 'test_value_4',
         'category': 'none',
         'comment': 'Comment.',
-        'mac': '00:01:04:03:ab:c3:32',
+        'mac': 'test_value_7',
+        'master-device': 'test_value_8',
         'type': 'unknown',
-        'user': 'myuser',
-        'tagging': 'tag',
-        'avatar': 'avatar1',
-        'master-device': 'master'
+                'user': 'test_value_10'
     }
 
     set_method_mock.assert_called_with('user', 'device', data=expected_data, vdom='root')
@@ -91,30 +90,28 @@ def test_user_device_creation_fails(mocker):
         'username': 'admin',
         'state': 'present',
         'user_device': {
+            'alias': 'test_value_3',
+            'avatar': 'test_value_4',
             'category': 'none',
             'comment': 'Comment.',
-            'master_device': 'master',
-            'alias': 'myuser',
-            'mac': '00:01:04:03:ab:c3:32',
-            'user': 'myuser',
+            'mac': 'test_value_7',
+            'master_device': 'test_value_8',
             'type': 'unknown',
-            'tagging': 'tag',
-            'avatar': 'avatar1'
+            'user': 'test_value_10'
         },
         'vdom': 'root'}
 
     is_error, changed, response = fortios_user_device.fortios_user(input_data, fos_instance)
 
     expected_data = {
-        'alias': 'myuser',
+        'alias': 'test_value_3',
+        'avatar': 'test_value_4',
         'category': 'none',
         'comment': 'Comment.',
-        'mac': '00:01:04:03:ab:c3:32',
+        'mac': 'test_value_7',
+        'master-device': 'test_value_8',
         'type': 'unknown',
-        'user': 'myuser',
-        'tagging': 'tag',
-        'avatar': 'avatar1',
-        'master-device': 'master'
+                'user': 'test_value_10'
     }
 
     set_method_mock.assert_called_with('user', 'device', data=expected_data, vdom='root')
@@ -125,7 +122,7 @@ def test_user_device_creation_fails(mocker):
     assert response['http_status'] == 500
 
 
-def test_users_device_removal(mocker):
+def test_user_device_removal(mocker):
     schema_method_mock = mocker.patch('ansible.module_utils.network.fortios.fortios.FortiOSHandler.schema')
 
     delete_method_result = {'status': 'success', 'http_method': 'POST', 'http_status': 200}
@@ -135,21 +132,20 @@ def test_users_device_removal(mocker):
         'username': 'admin',
         'state': 'absent',
         'user_device': {
+            'alias': 'test_value_3',
+            'avatar': 'test_value_4',
             'category': 'none',
             'comment': 'Comment.',
-            'master_device': 'master',
-            'alias': 'myuser',
-            'mac': '00:01:04:03:ab:c3:32',
-            'user': 'myuser',
+            'mac': 'test_value_7',
+            'master_device': 'test_value_8',
             'type': 'unknown',
-            'tagging': 'tag',
-            'avatar': 'avatar1'
+            'user': 'test_value_10'
         },
         'vdom': 'root'}
 
     is_error, changed, response = fortios_user_device.fortios_user(input_data, fos_instance)
 
-    delete_method_mock.assert_called_with('user', 'device', mkey='myuser', vdom='root')
+    delete_method_mock.assert_called_with('user', 'device', mkey=ANY, vdom='root')
     schema_method_mock.assert_not_called()
     assert not is_error
     assert changed
@@ -167,21 +163,20 @@ def test_user_device_deletion_fails(mocker):
         'username': 'admin',
         'state': 'absent',
         'user_device': {
+            'alias': 'test_value_3',
+            'avatar': 'test_value_4',
             'category': 'none',
             'comment': 'Comment.',
-            'master_device': 'master',
-            'alias': 'myuser',
-            'mac': '00:01:04:03:ab:c3:32',
-            'user': 'myuser',
+            'mac': 'test_value_7',
+            'master_device': 'test_value_8',
             'type': 'unknown',
-            'tagging': 'tag',
-            'avatar': 'avatar1'
+            'user': 'test_value_10'
         },
         'vdom': 'root'}
 
     is_error, changed, response = fortios_user_device.fortios_user(input_data, fos_instance)
 
-    delete_method_mock.assert_called_with('user', 'device', mkey='myuser', vdom='root')
+    delete_method_mock.assert_called_with('user', 'device', mkey=ANY, vdom='root')
     schema_method_mock.assert_not_called()
     assert is_error
     assert not changed
@@ -199,30 +194,28 @@ def test_user_device_idempotent(mocker):
         'username': 'admin',
         'state': 'present',
         'user_device': {
+            'alias': 'test_value_3',
+            'avatar': 'test_value_4',
             'category': 'none',
             'comment': 'Comment.',
-            'master_device': 'master',
-            'alias': 'myuser',
-            'mac': '00:01:04:03:ab:c3:32',
-            'user': 'myuser',
+            'mac': 'test_value_7',
+            'master_device': 'test_value_8',
             'type': 'unknown',
-            'tagging': 'tag',
-            'avatar': 'avatar1'
+            'user': 'test_value_10'
         },
         'vdom': 'root'}
 
     is_error, changed, response = fortios_user_device.fortios_user(input_data, fos_instance)
 
     expected_data = {
-        'alias': 'myuser',
+        'alias': 'test_value_3',
+        'avatar': 'test_value_4',
         'category': 'none',
         'comment': 'Comment.',
-        'mac': '00:01:04:03:ab:c3:32',
+        'mac': 'test_value_7',
+        'master-device': 'test_value_8',
         'type': 'unknown',
-        'user': 'myuser',
-        'tagging': 'tag',
-        'avatar': 'avatar1',
-        'master-device': 'master'
+                'user': 'test_value_10'
     }
 
     set_method_mock.assert_called_with('user', 'device', data=expected_data, vdom='root')
@@ -231,49 +224,6 @@ def test_user_device_idempotent(mocker):
     assert not changed
     assert response['status'] == 'error'
     assert response['http_status'] == 404
-
-
-def test_user_device_filter_null_attributes(mocker):
-    schema_method_mock = mocker.patch('ansible.module_utils.network.fortios.fortios.FortiOSHandler.schema')
-
-    set_method_result = {'status': 'success', 'http_method': 'POST', 'http_status': 200}
-    set_method_mock = mocker.patch('ansible.module_utils.network.fortios.fortios.FortiOSHandler.set', return_value=set_method_result)
-
-    input_data = {
-        'username': 'admin',
-        'state': 'present',
-        'user_device': {
-            'category': 'none',
-            'comment': 'Comment.',
-            'master_device': 'master',
-            'alias': 'myuser',
-            'mac': '00:01:04:03:ab:c3:32',
-            'user': 'myuser',
-            'type': 'unknown',
-            'tagging': 'tag',
-            'avatar': None
-        },
-        'vdom': 'root'}
-
-    is_error, changed, response = fortios_user_device.fortios_user(input_data, fos_instance)
-
-    expected_data = {
-        'alias': 'myuser',
-        'category': 'none',
-        'comment': 'Comment.',
-        'mac': '00:01:04:03:ab:c3:32',
-        'type': 'unknown',
-        'user': 'myuser',
-        'tagging': 'tag',
-        'master-device': 'master'
-    }
-
-    set_method_mock.assert_called_with('user', 'device', data=expected_data, vdom='root')
-    schema_method_mock.assert_not_called()
-    assert not is_error
-    assert changed
-    assert response['status'] == 'success'
-    assert response['http_status'] == 200
 
 
 def test_user_device_filter_foreign_attributes(mocker):
@@ -286,31 +236,29 @@ def test_user_device_filter_foreign_attributes(mocker):
         'username': 'admin',
         'state': 'present',
         'user_device': {
+            'random_attribute_not_valid': 'tag',
+            'alias': 'test_value_3',
+            'avatar': 'test_value_4',
             'category': 'none',
             'comment': 'Comment.',
-            'master_device': 'master',
-            'alias': 'myuser',
-            'mac': '00:01:04:03:ab:c3:32',
-            'user': 'myuser',
+            'mac': 'test_value_7',
+            'master_device': 'test_value_8',
             'type': 'unknown',
-            'tagging': 'tag',
-            'avatar': 'avatar1',
-            'random_attribute_not_valid': 'tag'
+            'user': 'test_value_10'
         },
         'vdom': 'root'}
 
     is_error, changed, response = fortios_user_device.fortios_user(input_data, fos_instance)
 
     expected_data = {
-        'alias': 'myuser',
+        'alias': 'test_value_3',
+        'avatar': 'test_value_4',
         'category': 'none',
         'comment': 'Comment.',
-        'mac': '00:01:04:03:ab:c3:32',
+        'mac': 'test_value_7',
+        'master-device': 'test_value_8',
         'type': 'unknown',
-        'user': 'myuser',
-        'tagging': 'tag',
-        'avatar': 'avatar1',
-        'master-device': 'master'
+                'user': 'test_value_10'
     }
 
     set_method_mock.assert_called_with('user', 'device', data=expected_data, vdom='root')

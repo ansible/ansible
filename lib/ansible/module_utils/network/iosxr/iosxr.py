@@ -29,7 +29,6 @@
 import json
 import re
 from difflib import Differ
-from copy import deepcopy
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import env_fallback
@@ -90,16 +89,6 @@ command_spec = {
     'prompt': dict(default=None),
     'answer': dict(default=None)
 }
-
-iosxr_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-    'timeout': dict(removed_in_version=2.9, type='int'),
-}
-iosxr_argument_spec.update(iosxr_top_spec)
 
 CONFIG_MISPLACED_CHILDREN = [
     re.compile(r'^end-\s*(.+)$')
@@ -433,7 +422,7 @@ def check_existing_commit_labels(conn, label):
 
 
 def load_config(module, command_filter, commit=False, replace=False,
-                comment=None, admin=False, running=None, nc_get_filter=None,
+                comment=None, admin=False, exclusive=False, running=None, nc_get_filter=None,
                 label=None):
 
     conn = get_connection(module)
@@ -472,7 +461,8 @@ def load_config(module, command_filter, commit=False, replace=False,
                         ' and rerun task' % label
                     )
 
-            response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin, replace=replace, comment=comment, label=label)
+            response = conn.edit_config(candidate=command_filter, commit=commit, admin=admin,
+                                        exclusive=exclusive, replace=replace, comment=comment, label=label)
             if module._diff:
                 diff = response.get('diff')
 

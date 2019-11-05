@@ -217,7 +217,7 @@ class QuotasModule(BaseModule):
         # -- FIXME --
         # Note that we here always remove all cluster/storage limits, because
         # it's not currently possible to update them and then re-create the limits
-        # appropriatelly, this shouldn't have any side-effects, but it's not considered
+        # appropriately, this shouldn't have any side-effects, but it's not considered
         # as a correct approach.
         # This feature is tracked here: https://bugzilla.redhat.com/show_bug.cgi?id=1398576
         #

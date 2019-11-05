@@ -1,2 +1,0 @@
-minor_changes:
-  - rabbitmq_binding - added missing SSL options for HTTP GET and DELETE requests

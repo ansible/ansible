@@ -22,8 +22,6 @@ __metaclass__ = type
 import sys
 import copy
 
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.junos.junos import junos_provider_spec
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
@@ -31,7 +29,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_command']
+CLI_SUPPORTED_MODULES = ['junos_netconf', 'junos_ping', 'junos_command']
 
 
 class ActionModule(ActionNetworkModule):
@@ -39,8 +37,8 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        self._config_module = True if self._task.action == 'junos_config' else False
-        socket_path = None
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'junos_config' else False
 
         if self._play_context.connection == 'local':
             provider = load_provider(junos_provider_spec, self._task.args)
@@ -48,12 +46,12 @@ class ActionModule(ActionNetworkModule):
             pc.network_os = 'junos'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
 
-            if provider['transport'] == 'cli' and self._task.action not in CLI_SUPPORTED_MODULES:
+            if provider['transport'] == 'cli' and module_name not in CLI_SUPPORTED_MODULES:
                 return {'failed': True, 'msg': "Transport type '%s' is not valid for '%s' module. "
                                                "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
-                                               % (provider['transport'], self._task.action)}
+                                               % (provider['transport'], module_name)}
 
-            if self._task.action == 'junos_netconf' or (provider['transport'] == 'cli' and self._task.action == 'junos_command'):
+            if module_name == 'junos_netconf' or (provider['transport'] == 'cli' and module_name == 'junos_command'):
                 pc.connection = 'network_cli'
                 pc.port = int(provider['port'] or self._play_context.port or 22)
             else:
@@ -83,28 +81,15 @@ class ActionModule(ActionNetworkModule):
             if any(provider.values()):
                 # for legacy reasons provider value is required for junos_facts(optional) and junos_package
                 # modules as it uses junos_eznc library to connect to remote host
-                if not (self._task.action == 'junos_facts' or self._task.action == 'junos_package'):
+                if not (module_name == 'junos_facts' or module_name == 'junos_package'):
                     display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
                     del self._task.args['provider']
 
-            if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
-                    (self._play_context.connection == 'netconf' and self._task.action == 'junos_netconf'):
+            if (self._play_context.connection == 'network_cli' and module_name not in CLI_SUPPORTED_MODULES) or \
+                    (self._play_context.connection == 'netconf' and module_name in CLI_SUPPORTED_MODULES[0:2]):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module. "
                                                "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
-                                               % (self._play_context.connection, self._task.action)}
-
-        if (self._play_context.connection == 'local' and pc.connection == 'network_cli') or self._play_context.connection == 'network_cli':
-            # make sure we are in the right cli context which should be
-            # enable mode and not config module
-            if socket_path is None:
-                socket_path = self._connection.socket_path
-
-            conn = Connection(socket_path)
-            out = conn.get_prompt()
-            while to_text(out, errors='surrogate_then_replace').strip().endswith('#'):
-                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                conn.send_command('exit')
-                out = conn.get_prompt()
+                                               % (self._play_context.connection, module_name)}
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result

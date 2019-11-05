@@ -13,22 +13,22 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
   tasks:
     - name: Install, configure, and start Apache
       block:
-      - name: install httpd and memcached
-        yum:
-          name:
-          - httpd
-          - memcached
-          state: present
+        - name: install httpd and memcached
+          yum:
+            name:
+            - httpd
+            - memcached
+            state: present
 
-      - name: apply the foo config template
-        template:
-          src: templates/src.j2
-          dest: /etc/foo.conf
-      - name: start service bar and enable it
-        service:
-          name: bar
-          state: started
-          enabled: True
+        - name: apply the foo config template
+          template:
+            src: templates/src.j2
+            dest: /etc/foo.conf
+        - name: start service bar and enable it
+          service:
+            name: bar
+            state: started
+            enabled: True
       when: ansible_facts['distribution'] == 'CentOS'
       become: true
       become_user: root

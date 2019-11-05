@@ -25,151 +25,211 @@ description:
 options:
   command:
     description:
-      - Specifies the action to take. The 'reboot' option is available starting at version 2.0
+      - Specifies the action to take. The 'reboot' option is available starting at version 2.0.
     required: true
     choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'reboot', 'restore' ]
+    type: str
   instance_name:
     description:
-      - Database instance identifier. Required except when using command=facts or command=delete on just a snapshot
+      - Database instance identifier.
+      - Required except when using I(command=facts) or I(command=delete) on just a snapshot.
+    type: str
   source_instance:
     description:
-      - Name of the database to replicate. Used only when command=replicate.
+      - Name of the database to replicate.
+      - Used only when I(command=replicate).
+    type: str
   db_engine:
     description:
-      - The type of database.  Used only when command=create.
-      - mariadb was added in version 2.2
+      - The type of database.
+      - Used only when I(command=create).
+      - mariadb was added in version 2.2.
     choices: ['mariadb', 'MySQL', 'oracle-se1', 'oracle-se2', 'oracle-se', 'oracle-ee',
               'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres', 'aurora']
+    type: str
   size:
     description:
-      - Size in gigabytes of the initial storage for the DB instance. Used only when command=create or command=modify.
+      - Size in gigabytes of the initial storage for the DB instance.
+      - Used only when I(command=create) or I(command=modify).
+    type: str
   instance_type:
     description:
-      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore.
-        If not specified then the replica inherits the same instance type as the source instance.
+      - The instance type of the database.
+      - If not specified then the replica inherits the same instance type as the source instance.
+      - Required when I(command=create).
+      - Optional when I(command=replicate), I(command=modify) or I(command=restore).
+    aliases: ['type']
+    type: str
   username:
     description:
-      - Master database username. Used only when command=create.
+      - Master database username.
+      - Used only when I(command=create).
+    type: str
   password:
     description:
-      - Password for the master database username. Used only when command=create or command=modify.
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: true
-    aliases: [ 'aws_region', 'ec2_region' ]
+      - Password for the master database username.
+      - Used only when I(command=create) or I(command=modify).
+    type: str
   db_name:
     description:
-      - Name of a database to create within the instance.  If not specified then no database is created. Used only when command=create.
+      - Name of a database to create within the instance.
+      - If not specified then no database is created.
+      - Used only when I(command=create).
+    type: str
   engine_version:
     description:
-      - Version number of the database engine to use. Used only when command=create. If not specified then the current Amazon RDS default engine version is used
+      - Version number of the database engine to use.
+      - If not specified then the current Amazon RDS default engine version is used
+      - Used only when I(command=create).
+    type: str
   parameter_group:
     description:
-      - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only
-        when command=create or command=modify.
+      - Name of the DB parameter group to associate with this instance.
+      - If omitted then the RDS default DBParameterGroup will be used.
+      - Used only when I(command=create) or I(command=modify).
+    type: str
   license_model:
     description:
-      - The license model for this DB instance. Used only when command=create or command=restore.
+      - The license model for this DB instance.
+      - Used only when I(command=create) or I(command=restore).
     choices:  [ 'license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license' ]
+    type: str
   multi_zone:
     description:
-      - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when command=create or
-        command=modify.
+      - Specifies if this is a Multi-availability-zone deployment.
+      - Can not be used in conjunction with I(zone) parameter.
+      - Used only when I(command=create) or I(command=modify).
     type: bool
   iops:
     description:
-      - Specifies the number of IOPS for the instance.  Used only when command=create or command=modify. Must be an integer greater than 1000.
+      - Specifies the number of IOPS for the instance.
+      - Used only when I(command=create) or I(command=modify).
+      - Must be an integer greater than 1000.
+    type: str
   security_groups:
     description:
-      - Comma separated list of one or more security groups.  Used only when command=create or command=modify.
+      - Comma separated list of one or more security groups.
+      - Used only when I(command=create) or I(command=modify).
+    type: str
   vpc_security_groups:
     description:
-      - Comma separated list of one or more vpc security group ids. Also requires `subnet` to be specified. Used only when command=create or command=modify.
+      - Comma separated list of one or more vpc security group ids.
+      - Also requires I(subnet) to be specified.
+      - Used only when I(command=create) or I(command=modify).
+    type: list
+    elements: str
   port:
     description:
-      - Port number that the DB instance uses for connections. Used only when command=create or command=replicate.
-      - Prior to 2.0 it always defaults to null and the API would use 3306, it had to be set to other DB default values when not using MySql.
-        Starting at 2.0 it automatically defaults to what is expected for each C(db_engine).
-    default: 3306 for mysql, 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL.
+      - Port number that the DB instance uses for connections.
+      - Used only when I(command=create) or I(command=replicate).
+      - 'Defaults to the standard ports for each I(db_engine): C(3306) for MySQL and MariaDB, C(1521) for Oracle
+        C(1433) for SQL Server, C(5432) for PostgreSQL.'
+    type: int
   upgrade:
     description:
       - Indicates that minor version upgrades should be applied automatically.
-      - Used only when command=create or command=modify or command=restore or command=replicate.
+      - Used only when I(command=create) or I(command=modify) or I(command=restore) or I(command=replicate).
     type: bool
-    default: 'no'
+    default: false
   option_group:
     description:
-      - The name of the option group to use.  If not specified then the default option group is used. Used only when command=create.
+      - The name of the option group to use.
+      - If not specified then the default option group is used.
+      - Used only when I(command=create).
+    type: str
   maint_window:
     description:
-      - >
-        Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is
-        assigned. Used only when command=create or command=modify.
+      - 'Maintenance window in format of C(ddd:hh24:mi-ddd:hh24:mi).  (Example: C(Mon:22:00-Mon:23:15))'
+      - Times are specified in UTC.
+      - If not specified then a random maintenance window is assigned.
+      - Used only when I(command=create) or I(command=modify).
+    type: str
   backup_window:
     description:
-      - Backup window in format of hh24:mi-hh24:mi.  If not specified then a random backup window is assigned. Used only when command=create or command=modify.
+      - 'Backup window in format of C(hh24:mi-hh24:mi). (Example: C(18:00-20:30))'
+      - Times are specified in UTC.
+      - If not specified then a random backup window is assigned.
+      - Used only when command=create or command=modify.
+    type: str
   backup_retention:
     description:
-      - >
-        Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when command=create or
-        command=modify.
+      - Number of days backups are retained.
+      - Set to 0 to disable backups.
+      - Default is 1 day.
+      - 'Valid range: 0-35.'
+      - Used only when I(command=create) or I(command=modify).
+    type: str
   zone:
     description:
-      - availability zone in which to launch the instance. Used only when command=create, command=replicate or command=restore.
+      - availability zone in which to launch the instance.
+      - Used only when I(command=create), I(command=replicate) or I(command=restore).
+      - Can not be used in conjunction with I(multi_zone) parameter.
     aliases: ['aws_zone', 'ec2_zone']
+    type: str
   subnet:
     description:
-      - VPC subnet group.  If specified then a VPC instance is created. Used only when command=create.
+      - VPC subnet group.
+      - If specified then a VPC instance is created.
+      - Used only when I(command=create).
+    type: str
   snapshot:
     description:
-      - Name of snapshot to take. When command=delete, if no snapshot name is provided then no snapshot is taken. If used with command=delete with
-        no instance_name, the snapshot is deleted. Used with command=facts, command=delete or command=snapshot.
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    aliases: [ 'ec2_access_key', 'access_key' ]
+      - Name of snapshot to take.
+      - When I(command=delete), if no I(snapshot) name is provided then no snapshot is taken.
+      - When I(command=delete), if no I(instance_name) is provided the snapshot is deleted.
+      - Used with I(command=facts), I(command=delete) or I(command=snapshot).
+    type: str
   wait:
     description:
-      - When command=create, replicate, modify or restore then wait for the database to enter the 'available' state.  When command=delete wait for
-        the database to be terminated.
+      - When I(command=create), replicate, modify or restore then wait for the database to enter the 'available' state.
+      - When I(command=delete), wait for the database to be terminated.
     type: bool
-    default: 'no'
+    default: false
   wait_timeout:
     description:
-      - how long before wait gives up, in seconds
+      - How long before wait gives up, in seconds.
+      - Used when I(wait=true).
     default: 300
+    type: int
   apply_immediately:
     description:
-      - Used only when command=modify.  If enabled, the modifications will be applied as soon as possible rather than waiting for the next
-        preferred maintenance window.
+      - When I(apply_immediately=trye), the modifications will be applied as soon as possible rather than waiting for the
+        next preferred maintenance window.
+      - Used only when I(command=modify).
     type: bool
-    default: 'no'
+    default: false
   force_failover:
     description:
-      - Used only when command=reboot.  If enabled, the reboot is done using a MultiAZ failover.
+      - If enabled, the reboot is done using a MultiAZ failover.
+      - Used only when I(command=reboot).
     type: bool
-    default: 'no'
+    default: false
     version_added: "2.0"
   new_instance_name:
     description:
-      - Name to rename an instance to. Used only when command=modify.
+      - Name to rename an instance to.
+      - Used only when I(command=modify).
+    type: str
     version_added: "1.5"
   character_set_name:
     description:
-      - Associate the DB instance with a specified character set. Used with command=create.
+      - Associate the DB instance with a specified character set.
+      - Used with I(command=create).
     version_added: "1.9"
+    type: str
   publicly_accessible:
     description:
-      - explicitly set whether the resource should be publicly accessible or not. Used with command=create, command=replicate. Requires boto >= 2.26.0
+      - Explicitly set whether the resource should be publicly accessible or not.
+      - Used with I(command=create), I(command=replicate).
+      - Requires boto >= 2.26.0
+    type: str
     version_added: "1.9"
   tags:
     description:
-      - tags dict to apply to a resource. Used with command=create, command=replicate, command=restore. Requires boto >= 2.26.0
+      - tags dict to apply to a resource.
+      - Used with I(command=create), I(command=replicate), I(command=restore).
+      - Requires boto >= 2.26.0
+    type: dict
     version_added: "1.9"
 requirements:
     - "python >= 2.6"
@@ -269,67 +329,67 @@ instance:
         engine:
             description: the name of the database engine
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "oracle-se"
         engine_version:
             description: the version of the database engine
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "11.2.0.4.v6"
         license_model:
             description: the license model information
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "bring-your-own-license"
         character_set_name:
             description: the name of the character set that this instance is associated with
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "AL32UTF8"
         allocated_storage:
             description: the allocated storage size in gigabytes (GB)
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "100"
         publicly_accessible:
             description: the accessibility options for the DB instance
             returned: when RDS instance exists
-            type: boolean
+            type: bool
             sample: "true"
         latest_restorable_time:
             description: the latest time to which a database can be restored with point-in-time restore
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "1489707802.0"
         secondary_availability_zone:
             description: the name of the secondary AZ for a DB instance with multi-AZ support
             returned: when RDS instance exists and is multy-AZ
-            type: string
+            type: str
             sample: "eu-west-1b"
         backup_window:
             description: the daily time range during which automated backups are created if automated backups are enabled
             returned: when RDS instance exists and automated backups are enabled
-            type: string
+            type: str
             sample: "03:00-03:30"
         auto_minor_version_upgrade:
             description: indicates that minor engine upgrades will be applied automatically to the DB instance during the maintenance window
             returned: when RDS instance exists
-            type: boolean
+            type: bool
             sample: "true"
         read_replica_source_dbinstance_identifier:
             description: the identifier of the source DB instance if this RDS instance is a read replica
             returned: when read replica RDS instance exists
-            type: string
+            type: str
             sample: "null"
         db_name:
             description: the name of the database to create when the DB instance is created
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "ASERTG"
         endpoint:
             description: the endpoint uri of the database instance
             returned: when RDS instance exists
-            type: string
+            type: str
             sample: "my-ansible-database.asdfaosdgih.us-east-1.rds.amazonaws.com"
         port:
             description: the listening port of the database instance
@@ -344,12 +404,12 @@ instance:
                 parameter_apply_status:
                     description: the status of parameter updates
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "in-sync"
                 parameter_group_name:
                     description: the name of the DP parameter group
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "testawsrpprodb01spfile-1ujg7nrs7sgyz"
         option_groups:
             description: the list of option group memberships for this RDS instance
@@ -359,12 +419,12 @@ instance:
                 option_group_name:
                     description: the option group name for this RDS instance
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "default:oracle-se-11-2"
                 status:
                     description: the status of the RDS instance's option group membership
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "in-sync"
         pending_modified_values:
             description: a dictionary of changes to the RDS instance that are pending
@@ -374,47 +434,47 @@ instance:
                 db_instance_class:
                     description: the new DB instance class for this RDS instance that will be applied or is in progress
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "null"
                 db_instance_identifier:
                     description: the new DB instance identifier this RDS instance that will be applied or is in progress
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "null"
                 allocated_storage:
                     description: the new allocated storage size for this RDS instance that will be applied or is in progress
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "null"
                 backup_retention_period:
                     description: the pending number of days for which automated backups are retained
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "null"
                 engine_version:
                     description: indicates the database engine version
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "null"
                 iops:
                     description: the new provisioned IOPS value for this RDS instance that will be applied or is being applied
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "null"
                 master_user_password:
                     description: the pending or in-progress change of the master credentials for this RDS instance
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "null"
                 multi_az:
                     description: indicates that the single-AZ RDS instance is to change to a multi-AZ deployment
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "null"
                 port:
                     description: specifies the pending port for this RDS instance
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "null"
         db_subnet_groups:
             description: information on the subnet group associated with this RDS instance
@@ -424,17 +484,17 @@ instance:
                 description:
                     description: the subnet group associated with the DB instance
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "Subnets for the UAT RDS SQL DB Instance"
                 name:
                     description: the name of the DB subnet group
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "samplesubnetgrouprds-j6paiqkxqp4z"
                 status:
                     description: the status of the DB subnet group
                     returned: when RDS instance exists
-                    type: string
+                    type: str
                     sample: "complete"
                 subnets:
                     description: the description of the DB subnet group
@@ -447,24 +507,24 @@ instance:
                             type: complex
                             contains:
                                 name:
-                                    description: avaialbility zone
+                                    description: availability zone
                                     returned: when RDS instance exists
-                                    type: string
+                                    type: str
                                     sample: "eu-west-1b"
                                 provisioned_iops_capable:
                                     description: whether provisioned iops are available in AZ subnet
                                     returned: when RDS instance exists
-                                    type: boolean
+                                    type: bool
                                     sample: "false"
                         identifier:
                             description: the identifier of the subnet
                             returned: when RDS instance exists
-                            type: string
+                            type: str
                             sample: "subnet-3fdba63e"
                         status:
                             description: the status of the subnet
                             returned: when RDS instance exists
-                            type: string
+                            type: str
                             sample: "active"
 '''
 

@@ -33,4 +33,4 @@ To ensure that your module documentation matches your ``argument_spec``:
 
 #. run the ``validate-modules`` test::
 
-   ./test/sanity/validate-modules/validate-modules --arg-spec --warnings lib/ansible/modules/$CATEGORY/mymodule.py
+    ansible-test sanity --test validate-modules mymodule

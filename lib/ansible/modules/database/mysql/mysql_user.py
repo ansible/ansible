@@ -103,6 +103,12 @@ notes:
      the file."
    - Currently, there is only support for the `mysql_native_password` encrypted password hash module.
 
+seealso:
+- module: mysql_info
+- name: MySQL access control and account management reference
+  description: Complete reference of the MySQL access control and account management documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/access-control.html
+
 author:
 - Jonathan Mainguy (@Jmainguy)
 - Benjamin Malynovytch (@bmalynovytch)
@@ -229,7 +235,8 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'REPLICATION SLAVE ADMIN', 'RESOURCE GROUP ADMIN',
                          'RESOURCE GROUP USER', 'ROLE ADMIN', 'SET USER ID',
                          'SESSION VARIABLES ADMIN', 'SYSTEM VARIABLES ADMIN',
-                         'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN'))
+                         'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN',
+                         'LOAD FROM S3', 'SELECT INTO S3'))
 
 
 class InvalidPrivsError(Exception):

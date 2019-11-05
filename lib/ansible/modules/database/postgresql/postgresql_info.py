@@ -33,6 +33,7 @@ options:
     - If you pass including and excluding values to the filter, for example, I(filter=!settings,ver),
       the excluding values will be ignored.
     type: list
+    elements: str
   db:
     description:
     - Name of database to connect.
@@ -46,6 +47,8 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
+seealso:
+- module: postgresql_ping
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
@@ -179,16 +182,16 @@ databases:
               returned: always
               type: dict
               contains:
-              major:
-                description: Extension major version.
-                returned: always
-                type: int
-                sample: 1
-              minor:
-                description: Extension minor version.
-                returned: always
-                type: int
-                sample: 0
+                major:
+                  description: Extension major version.
+                  returned: always
+                  type: int
+                  sample: 1
+                minor:
+                  description: Extension minor version.
+                  returned: always
+                  type: int
+                  sample: 0
             nspname:
               description: Namespace where the extension is.
               returned: always

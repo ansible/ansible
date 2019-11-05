@@ -11,28 +11,29 @@ Extreme EXOS Ansible modules support multiple connections. This page offers deta
 Connections Available
 ================================================================================
 
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-|..                         | CLI                                           | EXOS-API                                |
-+===========================+===============================================+=========================================+
-| **Protocol**              |  SSH                                          | HTTP(S)                                 |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Credentials**         | | uses SSH keys / SSH-agent if present        | | uses HTTPS certificates if present    |
-| |                         | | accepts ``-u myuser -k`` if using password  | |                                       |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| **Indirect Access**       | via a bastion (jump host)                     | via a web proxy                         |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Connection Settings** | | ``ansible_connection: network_cli``         | | ``ansible_connection: httpapi``       |
-| |                         | |                                             | |                                       |
-| |                         | |                                             | |                                       |
-| |                         | |                                             | |                                       |
-| |                         | |                                             | |                                       |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| | **Enable Mode**         | | not supported by EXOS                       | | not supported by EXOS                 |
-| | (Privilege Escalation)  | |                                             | |                                       |
-| |                         | |                                             | |                                       |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
-| **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``              |
-+---------------------------+-----------------------------------------------+-----------------------------------------+
+
+.. table::
+    :class: documentation-table
+
+    ====================  ==========================================  =========================
+    ..                    CLI                                         EXOS-API
+    ====================  ==========================================  =========================
+    Protocol              SSH                                         HTTP(S)
+
+    Credentials           uses SSH keys / SSH-agent if present        uses HTTPS certificates if present
+
+                          accepts ``-u myuser -k`` if using password
+
+    Indirect Access       via a bastion (jump host)                   via a web proxy
+
+    Connection Settings   ``ansible_connection: network_cli``         ``ansible_connection: httpapi``
+
+    |enable_mode|         not supported by EXOS                       not supported by EXOS
+
+    Returned Data Format  ``stdout[0].``                              ``stdout[0].messages[0].``
+    ====================  ==========================================  =========================
+
+.. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 EXOS does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli`` or ``ansible_connection: httpapi``
 

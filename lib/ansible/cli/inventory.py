@@ -18,6 +18,7 @@ from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.loader import vars_loader
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
+from ansible.vars.plugins import get_vars_from_inventory_sources
 
 display = Display()
 
@@ -64,8 +65,8 @@ class InventoryCLI(CLI):
         opt_help.add_basedir_options(self.parser)
 
         # remove unused default options
-        self.parser.add_argument('--limit', default=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --limit'))
-        self.parser.add_argument('--list-hosts', default=argparse.SUPPRESS, type=lambda v: self.parser.error('unrecognized arguments: --list-hosts'))
+        self.parser.add_argument('-l', '--limit', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument, nargs='?')
+        self.parser.add_argument('--list-hosts', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument)
 
         self.parser.add_argument('args', metavar='host|group', nargs='?')
 
@@ -112,7 +113,7 @@ class InventoryCLI(CLI):
 
         # set host pattern to default if not supplied
         if options.args:
-            options.pattern = options.args[0]
+            options.pattern = options.args
         else:
             options.pattern = 'all'
 
@@ -180,45 +181,16 @@ class InventoryCLI(CLI):
         else:
             import json
             from ansible.parsing.ajson import AnsibleJSONEncoder
-            results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4)
+            results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True)
 
         return results
-
-    # FIXME: refactor to use same for VM
-    def get_plugin_vars(self, path, entity):
-
-        data = {}
-
-        def _get_plugin_vars(plugin, path, entities):
-            data = {}
-            try:
-                data = plugin.get_vars(self.loader, path, entity)
-            except AttributeError:
-                try:
-                    if isinstance(entity, Host):
-                        data = combine_vars(data, plugin.get_host_vars(entity.name))
-                    else:
-                        data = combine_vars(data, plugin.get_group_vars(entity.name))
-                except AttributeError:
-                    if hasattr(plugin, 'run'):
-                        raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-                    else:
-                        raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-            return data
-
-        for plugin in vars_loader.all():
-            data = combine_vars(data, _get_plugin_vars(plugin, path, entity))
-
-        return data
 
     def _get_group_variables(self, group):
 
         # get info from inventory source
         res = group.get_vars()
 
-        # FIXME: add switch to skip vars plugins, add vars plugin info
-        for inventory_dir in self.inventory._sources:
-            res = combine_vars(res, self.get_plugin_vars(inventory_dir, group))
+        res = combine_vars(res, get_vars_from_inventory_sources(self.loader, self.inventory._sources, [group], 'inventory'))
 
         if group.priority != 1:
             res['ansible_group_priority'] = group.priority
@@ -231,12 +203,10 @@ class InventoryCLI(CLI):
             # only get vars defined directly host
             hostvars = host.get_vars()
 
-            # FIXME: add switch to skip vars plugins, add vars plugin info
-            for inventory_dir in self.inventory._sources:
-                hostvars = combine_vars(hostvars, self.get_plugin_vars(inventory_dir, host))
+            hostvars = combine_vars(hostvars, get_vars_from_inventory_sources(self.loader, self.inventory._sources, [host], 'inventory'))
         else:
             # get all vars flattened by host, but skip magic hostvars
-            hostvars = self.vm.get_vars(host=host, include_hostvars=False)
+            hostvars = self.vm.get_vars(host=host, include_hostvars=False, stage='inventory')
 
         return self._remove_internal(hostvars)
 

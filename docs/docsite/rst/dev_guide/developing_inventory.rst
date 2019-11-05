@@ -74,6 +74,8 @@ The first thing you want to do is use the base class:
 
         NAME = 'myplugin'  # used internally by Ansible, it should match the file name but not required
 
+If the inventory plugin is in a collection the NAME should be in the format of 'namespace.collection_name.myplugin'.
+
 This class has a couple of methods each plugin should implement and a few helpers for parsing the inventory source and updating the inventory.
 
 After you have the basic plugin working you might want to to incorporate other features by adding more base classes:
@@ -151,7 +153,7 @@ The base class does some minimal assignment for reuse in other methods.
         self.templar = Templar(loader=loader)
 
 It is up to the plugin now to deal with the inventory source provided and translate that into the Ansible inventory.
-To facilitate this the example below uses a few helper functions:
+To facilitate this, the example below uses a few helper functions:
 
 .. code-block:: python
 

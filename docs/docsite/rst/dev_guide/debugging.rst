@@ -12,6 +12,11 @@ To break into a module running on ``localhost`` and step through with the debugg
 - Set a breakpoint in the module: ``import pdb; pdb.set_trace()``
 - Run the module on the local machine: ``$ python -m pdb ./my_new_test_module.py ./args.json``
 
+Example
+-------
+
+`echo '{"msg": "hello"}' | python ./my_new_test_module.py`
+
 Debugging (remote)
 ==================
 
@@ -36,11 +41,11 @@ Debugging AnsibleModule-based modules
 
 .. tip::
 
-    If you're using the :file:`hacking/test-module` script then most of this
+    If you're using the :file:`hacking/test-module.py` script then most of this
     is taken care of for you.  If you need to do some debugging of the module
     on the remote machine that the module will actually run on or when the
     module is used in a playbook then you may need to use this information
-    instead of relying on test-module.
+    instead of relying on :file:`test-module.py`.
 
 Starting with Ansible 2.1, AnsibleModule-based modules are put together as
 a zip file consisting of the module file and the various python module

@@ -35,6 +35,7 @@ from ansible.module_utils.common.dict_transformations import dict_merge
 try:
     import yaml
     from openshift.dynamic.exceptions import DynamicApiError, NotFoundError, ConflictError, ForbiddenError, KubernetesValidateMissing
+    import urllib3
 except ImportError:
     # Exceptions handled in common
     pass
@@ -52,6 +53,13 @@ try:
 except ImportError:
     K8S_CONFIG_HASH_IMP_ERR = traceback.format_exc()
     HAS_K8S_CONFIG_HASH = False
+
+HAS_K8S_APPLY = None
+try:
+    from openshift.dynamic.apply import apply_object
+    HAS_K8S_APPLY = True
+except ImportError:
+    HAS_K8S_APPLY = False
 
 
 class KubernetesRawModule(KubernetesAnsibleModule):
@@ -78,11 +86,12 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         argument_spec.update(copy.deepcopy(AUTH_ARG_SPEC))
         argument_spec['merge_type'] = dict(type='list', choices=['json', 'merge', 'strategic-merge'])
         argument_spec['wait'] = dict(type='bool', default=False)
+        argument_spec['wait_sleep'] = dict(type='int', default=5)
         argument_spec['wait_timeout'] = dict(type='int', default=120)
         argument_spec['wait_condition'] = dict(type='dict', default=None, options=self.condition_spec)
         argument_spec['validate'] = dict(type='dict', default=None, options=self.validate_spec)
         argument_spec['append_hash'] = dict(type='bool', default=False)
-        argument_spec['apply'] = dict(type='bool')
+        argument_spec['apply'] = dict(type='bool', default=False)
         return argument_spec
 
     def __init__(self, k8s_kind=None, *args, **kwargs):
@@ -115,12 +124,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         if self.params['merge_type']:
             if LooseVersion(self.openshift_version) < LooseVersion("0.6.2"):
                 self.fail_json(msg=missing_required_lib("openshift >= 0.6.2", reason="for merge_type"))
-        if self.params.get('apply') is not None:
-            if LooseVersion(self.openshift_version) < LooseVersion("0.9.0"):
-                self.fail_json(msg=missing_required_lib("openshift >= 0.9.0", reason="for apply"))
-            self.apply = self.params['apply']
-        else:
-            self.apply = LooseVersion(self.openshift_version) >= LooseVersion("0.9.0")
+        self.apply = self.params.get('apply', False)
+        if self.apply:
+            if not HAS_K8S_APPLY:
+                self.fail_json(msg=missing_required_lib("openshift >= 0.9.2", reason="for apply"))
 
         if resource_definition:
             if isinstance(resource_definition, string_types):
@@ -135,6 +142,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         src = self.params.get('src')
         if src:
             self.resource_definitions = self.load_resource_definitions(src)
+        try:
+            self.resource_definitions = [item for item in self.resource_definitions if item]
+        except AttributeError:
+            pass
 
         if not resource_definition and not src:
             implicit_definition = dict(
@@ -158,7 +169,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
     def execute_module(self):
         changed = False
         results = []
-        self.client = self.get_api_client()
+        try:
+            self.client = self.get_api_client()
+        # Hopefully the kubernetes client will provide its own exception class one day
+        except (urllib3.exceptions.RequestError) as e:
+            self.fail_json(msg="Couldn't connect to Kubernetes: %s" % str(e))
 
         flattened_definitions = []
         for definition in self.resource_definitions:
@@ -226,6 +241,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         namespace = definition['metadata'].get('namespace')
         existing = None
         wait = self.params.get('wait')
+        wait_sleep = self.params.get('wait_sleep')
         wait_timeout = self.params.get('wait_timeout')
         wait_condition = None
         if self.params.get('wait_condition') and self.params['wait_condition'].get('type'):
@@ -274,7 +290,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                         self.fail_json(msg="Failed to delete object: {0}".format(exc.body),
                                        error=exc.status, status=exc.status, reason=exc.reason)
                     if wait:
-                        success, resource, duration = self.wait(resource, definition, wait_timeout, 'absent')
+                        success, resource, duration = self.wait(resource, definition, wait_sleep, wait_timeout, 'absent')
                         result['duration'] = duration
                         if not success:
                             self.fail_json(msg="Resource deletion timed out", **result)
@@ -282,7 +298,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         else:
             if self.apply:
                 if self.check_mode:
-                    k8s_obj = definition
+                    ignored, k8s_obj = apply_object(resource, definition)
                 else:
                     try:
                         k8s_obj = resource.apply(definition, namespace=namespace).to_dict()
@@ -294,7 +310,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 success = True
                 result['result'] = k8s_obj
                 if wait:
-                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout)
+                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_sleep, wait_timeout, condition=wait_condition)
                 if existing:
                     existing = existing.to_dict()
                 else:
@@ -328,7 +344,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 success = True
                 result['result'] = k8s_obj
                 if wait and not self.check_mode:
-                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout, condition=wait_condition)
+                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_sleep, wait_timeout, condition=wait_condition)
                 result['changed'] = True
                 result['method'] = 'create'
                 if not success:
@@ -353,7 +369,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 success = True
                 result['result'] = k8s_obj
                 if wait:
-                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout, condition=wait_condition)
+                    success, result['result'], result['duration'] = self.wait(resource, definition, wait_sleep, wait_timeout, condition=wait_condition)
                 match, diffs = self.diff_objects(existing.to_dict(), result['result'])
                 result['changed'] = not match
                 result['method'] = 'replace'
@@ -381,7 +397,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             success = True
             result['result'] = k8s_obj
             if wait:
-                success, result['result'], result['duration'] = self.wait(resource, definition, wait_timeout, condition=wait_condition)
+                success, result['result'], result['duration'] = self.wait(resource, definition, wait_sleep, wait_timeout, condition=wait_condition)
             match, diffs = self.diff_objects(existing.to_dict(), result['result'])
             result['changed'] = not match
             result['method'] = 'patch'
@@ -422,7 +438,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         result['method'] = 'create'
         return result
 
-    def _wait_for(self, resource, name, namespace, predicate, timeout, state):
+    def _wait_for(self, resource, name, namespace, predicate, sleep, timeout, state):
         start = datetime.now()
 
         def _wait_for_elapsed():
@@ -437,7 +453,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                         return True, response.to_dict(), _wait_for_elapsed()
                     else:
                         return True, {}, _wait_for_elapsed()
-                time.sleep(timeout // 20)
+                time.sleep(sleep)
             except NotFoundError:
                 if state == 'absent':
                     return True, {}, _wait_for_elapsed()
@@ -445,7 +461,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             response = response.to_dict()
         return False, response, _wait_for_elapsed()
 
-    def wait(self, resource, definition, timeout, state='present', condition=None):
+    def wait(self, resource, definition, sleep, timeout, state='present', condition=None):
 
         def _deployment_ready(deployment):
             # FIXME: frustratingly bool(deployment.status) is True even if status is empty
@@ -500,4 +516,4 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             predicate = _custom_condition
         else:
             predicate = _resource_absent
-        return self._wait_for(resource, definition['metadata']['name'], definition['metadata'].get('namespace'), predicate, timeout, state)
+        return self._wait_for(resource, definition['metadata']['name'], definition['metadata'].get('namespace'), predicate, sleep, timeout, state)

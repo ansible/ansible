@@ -77,7 +77,8 @@ EXAMPLES = '''
 import grp
 
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.sys_info import get_platform_subclass
 
 
 class Group(object):
@@ -98,7 +99,8 @@ class Group(object):
     GROUPFILE = '/etc/group'
 
     def __new__(cls, *args, **kwargs):
-        return load_platform_subclass(Group, args, kwargs)
+        new_cls = get_platform_subclass(Group)
+        return super(cls, new_cls).__new__(new_cls)
 
     def __init__(self, module):
         self.module = module
@@ -120,9 +122,16 @@ class Group(object):
         cmd = [self.module.get_bin_path(command_name, True), self.name]
         return self.execute_command(cmd)
 
+    def _local_check_gid_exists(self):
+        if self.gid:
+            for gr in grp.getgrall():
+                if self.gid == gr.gr_gid and self.name != gr.gr_name:
+                    self.module.fail_json(msg="GID '{0}' already exists with group '{1}'".format(self.gid, gr.gr_name))
+
     def group_add(self, **kwargs):
         if self.local:
             command_name = 'lgroupadd'
+            self._local_check_gid_exists()
         else:
             command_name = 'groupadd'
         cmd = [self.module.get_bin_path(command_name, True)]
@@ -140,6 +149,7 @@ class Group(object):
     def group_mod(self, **kwargs):
         if self.local:
             command_name = 'lgroupmod'
+            self._local_check_gid_exists()
         else:
             command_name = 'groupmod'
         cmd = [self.module.get_bin_path(command_name, True)]

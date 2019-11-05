@@ -28,6 +28,10 @@ short_description: Manages BFD global configuration on HUAWEI CloudEngine device
 description:
     - Manages BFD global configuration on HUAWEI CloudEngine devices.
 author: QijunPan (@QijunPan)
+notes:
+  - This module requires the netconf system service be enabled on the remote device being managed.
+  - Recommended connection is C(netconf).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
     bfd_enable:
         description:
@@ -284,7 +288,8 @@ class BfdGlobal(object):
         glb = root.find("bfd/bfdSchGlobal")
         if glb:
             for attr in glb:
-                bfd_dict["global"][attr.tag] = attr.text
+                if attr.text is not None:
+                    bfd_dict["global"][attr.tag] = attr.text
 
         return bfd_dict
 

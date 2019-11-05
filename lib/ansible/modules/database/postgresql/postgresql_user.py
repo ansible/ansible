@@ -21,8 +21,7 @@ description:
 - Adds or removes a user (role) from a PostgreSQL server instance
   ("cluster" in PostgreSQL terminology) and, optionally,
   grants the user access to an existing database or tables.
-  A user is a role with login privilege
-  (see U(https://www.postgresql.org/docs/11/role-attributes.html) for more information).
+- A user is a role with login privilege.
 - The fundamental function of the module is to create, or delete, users from
   a PostgreSQL instances. Privilege assignment, or removal, is an optional
   step, which works on one database at a time. This allows for the module to
@@ -147,11 +146,24 @@ options:
     type: str
     aliases: [ ssl_rootcert ]
     version_added: '2.3'
+  groups:
+    description:
+    - The list of groups (roles) that need to be granted to the user.
+    type: list
+    elements: str
+    version_added: '2.9'
 notes:
 - The module creates a user (role) with login privilege by default.
   Use NOLOGIN role_attr_flags to change this behaviour.
 - If you specify PUBLIC as the user (role), then the privilege changes will apply to all users (roles).
   You may not specify password or role_attr_flags when the PUBLIC user is specified.
+seealso:
+- module: postgresql_privs
+- module: postgresql_membership
+- module: postgresql_owner
+- name: PostgreSQL database roles
+  description: Complete reference of the PostgreSQL database roles documentation.
+  link: https://www.postgresql.org/docs/current/user-manag.html
 author:
 - Ansible Core Team
 extends_documentation_fragment: postgres
@@ -205,6 +217,13 @@ EXAMPLES = r'''
     db: test
     user: test
     password: ""
+
+- name: Create user test and grant group user_ro and user_rw to it
+  postgresql_user:
+    name: test
+    groups:
+    - user_ro
+    - user_rw
 '''
 
 RETURN = r'''
@@ -234,6 +253,7 @@ from ansible.module_utils.database import pg_quote_identifier, SQLParseError
 from ansible.module_utils.postgres import (
     connect_to_db,
     get_conn_params,
+    PgMembership,
     postgres_common_argument_spec,
 )
 from ansible.module_utils._text import to_bytes, to_native
@@ -282,8 +302,8 @@ def user_add(cursor, user, password, role_attr_flags, encrypted, expires, conn_l
     # Note: role_attr_flags escaped by parse_role_attrs and encrypted is a
     # literal
     query_password_data = dict(password=password, expires=expires)
-    query = ['CREATE USER %(user)s' %
-             {"user": pg_quote_identifier(user, 'role')}]
+    query = ['CREATE USER "%(user)s"' %
+             {"user": user}]
     if password is not None and password != '':
         query.append("WITH %(crypt)s" % {"crypt": encrypted})
         query.append("PASSWORD %(password)s")
@@ -400,7 +420,7 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         if not pwchanging and not role_attr_flags_changing and not expires_changing and not conn_limit_changing:
             return False
 
-        alter = ['ALTER USER %(user)s' % {"user": pg_quote_identifier(user, 'role')}]
+        alter = ['ALTER USER "%(user)s"' % {"user": user}]
         if pwchanging:
             if password != '':
                 alter.append("WITH %(crypt)s" % {"crypt": encrypted})
@@ -455,8 +475,8 @@ def user_alter(db_connection, module, user, password, role_attr_flags, encrypted
         if not role_attr_flags_changing:
             return False
 
-        alter = ['ALTER USER %(user)s' %
-                 {"user": pg_quote_identifier(user, 'role')}]
+        alter = ['ALTER USER "%(user)s"' %
+                 {"user": user}]
         if role_attr_flags:
             alter.append('WITH %s' % role_attr_flags)
 
@@ -486,7 +506,7 @@ def user_delete(cursor, user):
     """Try to remove a user. Returns True if successful otherwise False"""
     cursor.execute("SAVEPOINT ansible_pgsql_user_delete")
     try:
-        query = "DROP USER %s" % pg_quote_identifier(user, 'role')
+        query = 'DROP USER "%s"' % user
         executed_queries.append(query)
         cursor.execute(query)
     except Exception:
@@ -529,8 +549,8 @@ def get_table_privileges(cursor, user, table):
 def grant_table_privileges(cursor, user, table, privs):
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
-    query = 'GRANT %s ON TABLE %s TO %s' % (
-        privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role'))
+    query = 'GRANT %s ON TABLE %s TO "%s"' % (
+        privs, pg_quote_identifier(table, 'table'), user)
     executed_queries.append(query)
     cursor.execute(query)
 
@@ -538,8 +558,8 @@ def grant_table_privileges(cursor, user, table, privs):
 def revoke_table_privileges(cursor, user, table, privs):
     # Note: priv escaped by parse_privs
     privs = ', '.join(privs)
-    query = 'REVOKE %s ON TABLE %s FROM %s' % (
-        privs, pg_quote_identifier(table, 'table'), pg_quote_identifier(user, 'role'))
+    query = 'REVOKE %s ON TABLE %s FROM "%s"' % (
+        privs, pg_quote_identifier(table, 'table'), user)
     executed_queries.append(query)
     cursor.execute(query)
 
@@ -588,9 +608,8 @@ def grant_database_privileges(cursor, user, db, privs):
         query = 'GRANT %s ON DATABASE %s TO PUBLIC' % (
                 privs, pg_quote_identifier(db, 'database'))
     else:
-        query = 'GRANT %s ON DATABASE %s TO %s' % (
-                privs, pg_quote_identifier(db, 'database'),
-                pg_quote_identifier(user, 'role'))
+        query = 'GRANT %s ON DATABASE %s TO "%s"' % (
+                privs, pg_quote_identifier(db, 'database'), user)
 
     executed_queries.append(query)
     cursor.execute(query)
@@ -603,9 +622,8 @@ def revoke_database_privileges(cursor, user, db, privs):
         query = 'REVOKE %s ON DATABASE %s FROM PUBLIC' % (
                 privs, pg_quote_identifier(db, 'database'))
     else:
-        query = 'REVOKE %s ON DATABASE %s FROM %s' % (
-                privs, pg_quote_identifier(db, 'database'),
-                pg_quote_identifier(user, 'role'))
+        query = 'REVOKE %s ON DATABASE %s FROM "%s"' % (
+                privs, pg_quote_identifier(db, 'database'), user)
 
     executed_queries.append(query)
     cursor.execute(query)
@@ -754,7 +772,6 @@ def get_valid_flags_by_version(cursor):
 # Module execution.
 #
 
-
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
@@ -770,6 +787,7 @@ def main():
         expires=dict(type='str', default=None),
         conn_limit=dict(type='int', default=None),
         session_role=dict(type='str'),
+        groups=dict(type='list'),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -791,6 +809,9 @@ def main():
     expires = module.params["expires"]
     conn_limit = module.params["conn_limit"]
     role_attr_flags = module.params["role_attr_flags"]
+    groups = module.params["groups"]
+    if groups:
+        groups = [e.strip() for e in groups]
 
     conn_params = get_conn_params(module, module.params, warn_db_default=False)
     db_connection = connect_to_db(module, conn_params)
@@ -826,6 +847,14 @@ def main():
             changed = grant_privileges(cursor, user, privs) or changed
         except SQLParseError as e:
             module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+
+        if groups:
+            target_roles = []
+            target_roles.append(user)
+            pg_membership = PgMembership(module, cursor, groups, target_roles)
+            changed = pg_membership.grant()
+            executed_queries.extend(pg_membership.executed_queries)
+
     else:
         if user_exists(cursor, user):
             if module.check_mode:

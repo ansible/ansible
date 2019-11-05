@@ -243,3 +243,5 @@
 - include: state_dump_import.yml format_type=gz  file=dbdata.gz format_msg_type=gzip file2=dump2.gz file3=dump3.gz
 
 - include: state_dump_import.yml format_type=bz2 file=dbdata.bz2 format_msg_type=bzip2 file2=dump2.bz2 file3=dump3.bz2
+
+- include: multi_db_create_delete.yml 

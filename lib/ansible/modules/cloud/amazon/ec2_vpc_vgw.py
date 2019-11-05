@@ -28,31 +28,40 @@ options:
         - absent to remove resource
     default: present
     choices: [ "present", "absent"]
+    type: str
   name:
     description:
         - name of the vgw to be created or deleted
+    type: str
   type:
     description:
         - type of the virtual gateway to be created
     choices: [ "ipsec.1" ]
+    default: "ipsec.1"
+    type: str
   vpn_gateway_id:
     description:
         - vpn gateway id of an existing virtual gateway
+    type: str
   vpc_id:
     description:
         - the vpc-id of a vpc to attach or detach
+    type: str
   asn:
     description:
         - the BGP ASN of the amazon side
     version_added: "2.6"
+    type: int
   wait_timeout:
     description:
         - number of seconds to wait for status during vpc attach and detach
     default: 320
+    type: int
   tags:
     description:
         - dictionary of resource tags
     aliases: [ "resource_tags" ]
+    type: dict
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
   - ec2
@@ -171,7 +180,13 @@ def attach_vgw(client, module, vpn_gateway_id):
     params['VpcId'] = module.params.get('vpc_id')
 
     try:
-        response = AWSRetry.jittered_backoff()(client.attach_vpn_gateway)(VpnGatewayId=vpn_gateway_id, VpcId=params['VpcId'])
+        # Immediately after a detachment, the EC2 API sometimes will report the VpnGateways[0].State
+        # as available several seconds before actually permitting a new attachment.
+        # So we catch and retry that error.  See https://github.com/ansible/ansible/issues/53185
+        response = AWSRetry.jittered_backoff(retries=5,
+                                             catch_extra_error_codes=['InvalidParameterValue']
+                                             )(client.attach_vpn_gateway)(VpnGatewayId=vpn_gateway_id,
+                                                                          VpcId=params['VpcId'])
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -400,7 +415,7 @@ def ensure_vgw_present(client, module):
                     # detach the existing vpc from the virtual gateway
                     vpc_to_detach = current_vpc_attachments[0]['VpcId']
                     detach_vgw(client, module, vpn_gateway_id, vpc_to_detach)
-                    time.sleep(5)
+                    get_waiter(client, 'vpn_gateway_detached').wait(VpnGatewayIds=[vpn_gateway_id])
                     attached_vgw = attach_vgw(client, module, vpn_gateway_id)
                     changed = True
             else:
@@ -488,7 +503,7 @@ def ensure_vgw_absent(client, module):
     else:
         # Check that a name and type argument has been supplied if no vgw-id
         if not module.params.get('name') or not module.params.get('type'):
-            module.fail_json(msg='A name and type is required when no vgw-id and a status of \'absent\' is suppled')
+            module.fail_json(msg='A name and type is required when no vgw-id and a status of \'absent\' is supplied')
 
         existing_vgw = find_vgw(client, module)
         if existing_vgw != [] and existing_vgw[0]['State'] != 'deleted':
@@ -532,7 +547,6 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(default='present', choices=['present', 'absent']),
-        region=dict(required=True),
         name=dict(),
         vpn_gateway_id=dict(),
         vpc_id=dict(),

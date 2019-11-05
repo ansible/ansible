@@ -45,12 +45,13 @@ options:
   type:
     description:
     - Type of database object to set privileges on.
-    - The `default_prives` choice is available starting at version 2.7.
-    - The 'foreign_data_wrapper' and 'foreign_server' object types are available from Ansible version '2.8'.
+    - The C(default_privs) choice is available starting at version 2.7.
+    - The C(foreign_data_wrapper) and C(foreign_server) object types are available from Ansible version '2.8'.
+    - The C(type) choice is available from Ansible version '2.10'.
     type: str
     default: table
     choices: [ database, default_privs, foreign_data_wrapper, foreign_server, function,
-               group, language, table, tablespace, schema, sequence ]
+               group, language, table, tablespace, schema, sequence, type ]
   objs:
     description:
     - Comma separated list of database objects to set privileges on.
@@ -69,8 +70,10 @@ options:
   schema:
     description:
     - Schema that contains the database objects specified via I(objs).
-    - May only be provided if I(type) is C(table), C(sequence), C(function)
-      or C(default_privs). Defaults to  C(public) in these cases.
+    - May only be provided if I(type) is C(table), C(sequence), C(function), C(type),
+      or C(default_privs). Defaults to C(public) in these cases.
+    - Pay attention, for embedded types when I(type=type)
+      I(schema) can be C(pg_catalog) or C(information_schema) respectively.
     type: str
   roles:
     description:
@@ -171,6 +174,20 @@ notes:
   specified via I(login). If R has been granted the same privileges by
   another user also, R can still access database objects via these privileges.
 - When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
+
+seealso:
+- module: postgresql_user
+- module: postgresql_owner
+- module: postgresql_membership
+- name: PostgreSQL privileges
+  description: General information about PostgreSQL privileges.
+  link: https://www.postgresql.org/docs/current/ddl-priv.html
+- name: PostgreSQL GRANT command reference
+  description: Complete reference of the PostgreSQL GRANT command documentation.
+  link: https://www.postgresql.org/docs/current/sql-grant.html
+- name: PostgreSQL REVOKE command reference
+  description: Complete reference of the PostgreSQL REVOKE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-revoke.html
 
 extends_documentation_fragment:
 - postgres
@@ -312,6 +329,15 @@ EXAMPLES = r'''
     type: foreign_data_wrapper
     role: reader
 
+# Available since version 2.10
+- name: GRANT ALL PRIVILEGES ON TYPE customtype TO reader
+  postgresql_privs:
+    db: test
+    objs: customtype
+    privs: ALL
+    type: type
+    role: reader
+
 # Available since version 2.8
 - name: GRANT ALL PRIVILEGES ON FOREIGN SERVER fdw_server TO reader
   postgresql_privs:
@@ -362,6 +388,16 @@ EXAMPLES = r'''
     type: default_privs
     role: reader
     target_roles: librarian
+
+# Available since version 2.10
+- name: Grant type privileges for pg_catalog.numeric type to alice
+  postgresql_privs:
+    type: type
+    roles: alice
+    privs: ALL
+    objs: numeric
+    schema: pg_catalog
+    db: acme
 '''
 
 RETURN = r'''
@@ -608,6 +644,13 @@ class Connection(object):
         self.cursor.execute(query, (fs,))
         return [t[0] for t in self.cursor.fetchall()]
 
+    def get_type_acls(self, schema, types):
+        query = """SELECT t.typacl FROM pg_catalog.pg_type t
+                   JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+                   WHERE n.nspname = %s AND t.typname = ANY (%s) ORDER BY typname"""
+        self.cursor.execute(query, (schema, types))
+        return [t[0] for t in self.cursor.fetchall()]
+
     # Manipulating privileges
 
     def manipulate_privs(self, obj_type, privs, objs, roles, target_roles,
@@ -655,6 +698,8 @@ class Connection(object):
             get_status = self.get_foreign_data_wrapper_acls
         elif obj_type == 'foreign_server':
             get_status = self.get_foreign_server_acls
+        elif obj_type == 'type':
+            get_status = partial(self.get_type_acls, schema_qualifier)
         else:
             raise Error('Unsupported database object type "%s".' % obj_type)
 
@@ -671,7 +716,7 @@ class Connection(object):
                 except Exception:
                     raise Error('Illegal function signature: "%s".' % obj)
                 obj_ids.append('"%s"."%s"(%s' % (schema_qualifier, f, args))
-        elif obj_type in ['table', 'sequence']:
+        elif obj_type in ['table', 'sequence', 'type']:
             obj_ids = ['"%s"."%s"' % (schema_qualifier, o) for o in objs]
         else:
             obj_ids = ['"%s"' % o for o in objs]
@@ -679,7 +724,7 @@ class Connection(object):
         # set_what: SQL-fragment specifying what to set for the target roles:
         # Either group membership or privileges on objects of a certain type
         if obj_type == 'group':
-            set_what = ','.join(pg_quote_identifier(i, 'role') for i in obj_ids)
+            set_what = ','.join('"%s"' % i for i in obj_ids)
         elif obj_type == 'default_privs':
             # We don't want privs to be quoted here
             set_what = ','.join(privs)
@@ -706,7 +751,7 @@ class Connection(object):
                     else:
                         self.module.warn("Role '%s' does not exist, pass it" % r.strip())
                 else:
-                    for_whom.append(pg_quote_identifier(r, 'role'))
+                    for_whom.append('"%s"' % r)
 
             if not for_whom:
                 return False
@@ -716,7 +761,7 @@ class Connection(object):
         # as_who:
         as_who = None
         if target_roles:
-            as_who = ','.join(pg_quote_identifier(r, 'role') for r in target_roles)
+            as_who = ','.join('"%s"' % r for r in target_roles)
 
         status_before = get_status(objs)
 
@@ -878,7 +923,8 @@ def main():
                            'group',
                            'default_privs',
                            'foreign_data_wrapper',
-                           'foreign_server']),
+                           'foreign_server',
+                           'type', ]),
         objs=dict(required=False, aliases=['obj']),
         schema=dict(required=False),
         roles=dict(required=True, aliases=['role']),
@@ -903,7 +949,7 @@ def main():
     # Create type object as namespace for module params
     p = type('Params', (), module.params)
     # param "schema": default, allowed depends on param "type"
-    if p.type in ['table', 'sequence', 'function', 'default_privs']:
+    if p.type in ['table', 'sequence', 'function', 'type', 'default_privs']:
         p.schema = p.schema or 'public'
     elif p.schema:
         module.fail_json(msg='Argument "schema" is not allowed '
@@ -942,7 +988,7 @@ def main():
 
     if p.session_role:
         try:
-            conn.cursor.execute('SET ROLE %s' % pg_quote_identifier(p.session_role, 'role'))
+            conn.cursor.execute('SET ROLE "%s"' % p.session_role)
         except Exception as e:
             module.fail_json(msg="Could not switch to role %s: %s" % (p.session_role, to_native(e)), exception=traceback.format_exc())
 

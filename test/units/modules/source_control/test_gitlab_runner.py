@@ -23,7 +23,7 @@ try:
                          resp_find_runners_list, resp_get_runner,
                          resp_create_runner, resp_delete_runner)
 
-    # Gitlab module requirements
+    # GitLab module requirements
     if python_version_match_requirement():
         from gitlab.v4.objects import Runner
 except ImportError:

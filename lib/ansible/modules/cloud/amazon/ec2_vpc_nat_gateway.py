@@ -25,23 +25,28 @@ options:
       - Ensure NAT Gateway is present or absent.
     default: "present"
     choices: ["present", "absent"]
+    type: str
   nat_gateway_id:
     description:
       - The id AWS dynamically allocates to the NAT Gateway on creation.
         This is required when the absent option is present.
+    type: str
   subnet_id:
     description:
       - The id of the subnet to create the NAT Gateway in. This is required
         with the present option.
+    type: str
   allocation_id:
     description:
       - The id of the elastic IP allocation. If this is not passed and the
         eip_address is not passed. An EIP is generated for this NAT Gateway.
+    type: str
   eip_address:
     description:
       - The elastic IP address of the EIP you want attached to this NAT Gateway.
         If this is not passed and the allocation_id is not passed,
         an EIP is generated for this NAT Gateway.
+    type: str
   if_exist_do_not_create:
     description:
       - if a NAT Gateway exists already in the subnet_id, then do not create a new one.
@@ -53,22 +58,24 @@ options:
       - Deallocate the EIP from the VPC.
       - Option is only valid with the absent state.
       - You should use this with the wait option. Since you can not release an address while a delete operation is happening.
-    default: 'yes'
+    default: false
     type: bool
   wait:
     description:
       - Wait for operation to complete before returning.
-    default: 'no'
+    default: false
     type: bool
   wait_timeout:
     description:
       - How many seconds to wait for an operation to complete before timing out.
-    default: 300
+    default: 320
+    type: int
   client_token:
     description:
       - Optional unique token to be used during create to ensure idempotency.
         When specifying this option, ensure you specify the eip_address parameter
         as well otherwise any subsequent runs will fail.
+    type: str
 author:
   - Allen Sanabria (@linuxdynasty)
   - Jon Hadfield (@jonhadfield)
@@ -103,7 +110,7 @@ EXAMPLES = '''
     state: present
     subnet_id: subnet-12345678
     eip_address: 52.1.1.1
-    wait: yes
+    wait: true
     region: ap-southeast-2
   register: new_nat_gateway
 
@@ -111,7 +118,7 @@ EXAMPLES = '''
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
-    wait: yes
+    wait: true
     region: ap-southeast-2
   register: new_nat_gateway
 
@@ -119,7 +126,7 @@ EXAMPLES = '''
   ec2_vpc_nat_gateway:
     state: present
     subnet_id: subnet-12345678
-    wait: yes
+    wait: true
     region: ap-southeast-2
     if_exist_do_not_create: true
   register: new_nat_gateway
@@ -128,9 +135,9 @@ EXAMPLES = '''
   ec2_vpc_nat_gateway:
     state: absent
     region: ap-southeast-2
-    wait: yes
+    wait: true
     nat_gateway_id: "{{ item.NatGatewayId }}"
-    release_eip: yes
+    release_eip: true
   register: delete_nat_gateway_result
   loop: "{{ gateways_to_remove.result }}"
 
@@ -138,7 +145,7 @@ EXAMPLES = '''
   ec2_vpc_nat_gateway:
     state: absent
     nat_gateway_id: nat-12345678
-    wait: yes
+    wait: true
     wait_timeout: 500
     region: ap-southeast-2
 
@@ -146,7 +153,7 @@ EXAMPLES = '''
   ec2_vpc_nat_gateway:
     state: absent
     nat_gateway_id: nat-12345678
-    release_eip: yes
+    release_eip: true
     wait: yes
     wait_timeout: 300
     region: ap-southeast-2
@@ -179,7 +186,7 @@ vpc_id:
   type: str
   sample: "vpc-12345"
 nat_gateway_addresses:
-  description: List of dictionairies containing the public_ip, network_interface_id, private_ip, and allocation_id.
+  description: List of dictionaries containing the public_ip, network_interface_id, private_ip, and allocation_id.
   returned: In all cases.
   type: str
   sample: [
@@ -447,7 +454,7 @@ def gateway_in_subnet_exists(client, subnet_id, allocation_id=None,
     allocation_id_exists = False
     gateways = []
     states = ['available', 'pending']
-    gws_retrieved, _, gws = (
+    gws_retrieved, err_msg, gws = (
         get_nat_gateways(
             client, subnet_id, states=states, check_mode=check_mode
         )
@@ -874,7 +881,7 @@ def remove(client, nat_gateway_id, wait=False, wait_timeout=0,
     results = list()
     states = ['pending', 'available']
     try:
-        exist, _, gw = (
+        exist, err_msg, gw = (
             get_nat_gateways(
                 client, nat_gateway_id=nat_gateway_id,
                 states=states, check_mode=check_mode

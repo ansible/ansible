@@ -187,43 +187,43 @@ state:
         fqdn:
             description:
                 - Fully qualified domain name of the record set.
-            return: always
+            returned: always
             type: str
             sample: www.b57dc95985712e4523282.com
         etag:
             description:
                 - The etag of the record set.
-            return: always
+            returned: always
             type: str
             sample: 692c3e92-a618-46fc-aecd-8f888807cd6c
         provisioning_state:
             description:
                 - The DNS record set state.
-            return: always
+            returned: always
             type: str
             sample: Succeeded
         target_resource:
             description:
                 - The target resource of the record set.
-            return: always
+            returned: always
             type: dict
             sample: {}
         ttl:
             description:
                 - The TTL(time-to-live) of the records in the records set.
-            return: always
+            returned: always
             type: int
             sample: 3600
         type:
             description:
                 - The type of DNS record in this record set.
-            return: always
+            returned: always
             type: str
             sample: A
         arecords:
             description:
                 - A list of records in the record set.
-            return: always
+            returned: always
             type: list
             sample: [
             {
@@ -364,8 +364,6 @@ class AzureRMRecordSet(AzureRMModuleBase):
         for key in self.module_arg_spec.keys():
             setattr(self, key, kwargs[key])
 
-        # retrieve resource group to make sure it exists
-        self.get_resource_group(self.resource_group)
         zone = self.dns_client.zones.get(self.resource_group, self.zone_name)
         if not zone:
             self.fail('The zone {0} does not exist in the resource group {1}'.format(self.zone_name, self.resource_group))

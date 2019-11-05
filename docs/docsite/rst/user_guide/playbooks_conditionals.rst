@@ -352,6 +352,7 @@ Possible values (sample, not complete list)::
     Archlinux
     ClearLinux
     Coreos
+    CentOS
     Debian
     Fedora
     Gentoo
@@ -363,6 +364,7 @@ Possible values (sample, not complete list)::
     Slackware
     SMGL
     SUSE
+    Ubuntu
     VMwareESX
 
 .. See `OSDIST_LIST`

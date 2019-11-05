@@ -1,0 +1,12 @@
+- name: loop_control/extended/include https://github.com/ansible/ansible/issues/61218
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: loop on an include
+      include_tasks: inner.yml
+      loop:
+        - first
+        - second
+        - third
+      loop_control:
+        extended: yes

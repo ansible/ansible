@@ -1,0 +1,4 @@
+cloud/azure
+shippable/azure/group2
+disabled  # See: https://github.com/ansible/ansible/issues/61852
+destructive

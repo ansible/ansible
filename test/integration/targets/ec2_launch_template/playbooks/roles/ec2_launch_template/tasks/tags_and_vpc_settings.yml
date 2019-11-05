@@ -66,7 +66,6 @@
       - device_name: /dev/sda1
         ebs:
           delete_on_termination: true
-      <<: *aws_connection_info
     register: in_test_vpc
 
   - name: Try to re-make the instance, hopefully this shows changed=False
@@ -83,7 +82,6 @@
       security_groups: "{{ sg.group_id }}"
       vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
       instance_type: t2.micro
-      <<: *aws_connection_info
     register: remake_in_test_vpc
   - name: "Remaking the same instance resulted in no changes"
     assert:
@@ -105,12 +103,10 @@
       security_groups: "{{ sg.group_id }}"
       vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
       instance_type: t2.micro
-      <<: *aws_connection_info
     register: add_another_tag
 
   - ec2_instance_info:
       instance_ids: "{{ add_another_tag.instance_ids }}"
-      <<: *aws_connection_info
     register: check_tags
   - name: "Remaking the same instance resulted in no changes"
     assert:
@@ -129,10 +125,8 @@
       security_groups: "{{ sg.group_id }}"
       vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
       instance_type: t2.micro
-      <<: *aws_connection_info
   - ec2_instance_info:
       instance_ids: "{{ add_another_tag.instance_ids }}"
-      <<: *aws_connection_info
     register: check_tags
   - name: "Remaking the same instance resulted in no changes"
     assert:
@@ -144,7 +138,6 @@
       filters:
         tag:TestId: "{{ resource_prefix }}"
       state: absent
-      <<: *aws_connection_info
     register: result
   - assert:
       that: result.changed
@@ -153,7 +146,6 @@
     ec2_instance:
       instance_ids: "{{ in_test_vpc.instance_ids }}"
       state: absent
-      <<: *aws_connection_info
     register: result
   - assert:
       that: not result.changed

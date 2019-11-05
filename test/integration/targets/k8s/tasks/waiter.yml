@@ -53,6 +53,7 @@
                 app: "{{ k8s_pod_name }}"
             template: "{{ k8s_pod_template }}"
         wait: yes
+        wait_sleep: 3
         wait_timeout: 180
       vars:
         k8s_pod_name: wait-ds
@@ -80,6 +81,7 @@
               type: RollingUpdate
             template: "{{ k8s_pod_template }}"
         wait: yes
+        wait_sleep: 3
         wait_timeout: 180
       vars:
         k8s_pod_name: wait-ds
@@ -107,6 +109,7 @@
               type: RollingUpdate
             template: "{{ k8s_pod_template }}"
         wait: yes
+        wait_sleep: 3
         wait_timeout: 180
       vars:
         k8s_pod_name: wait-ds
@@ -138,6 +141,7 @@
             namespace: "{{ wait_namespace }}"
           spec: "{{ k8s_pod_spec }}"
         wait: yes
+        wait_sleep: 1
         wait_timeout: 30
       vars:
         k8s_pod_name: wait-crash-pod
@@ -162,6 +166,7 @@
             namespace: "{{ wait_namespace }}"
           spec: "{{ k8s_pod_spec }}"
         wait: yes
+        wait_sleep: 1
         wait_timeout: 30
       vars:
         k8s_pod_name: wait-no-image-pod
@@ -330,6 +335,7 @@
         namespace: "{{ wait_namespace }}"
         state: absent
         wait: yes
+        wait_sleep: 2
         wait_timeout: 5
       ignore_errors: yes
       register: short_wait_remove_pod

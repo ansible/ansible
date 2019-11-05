@@ -288,8 +288,8 @@ The ``__future__`` imports do the following:
     * `PEP 0238: Division <https://www.python.org/dev/peps/pep-0238>`_
     * `PEP 3105: Print function <https://www.python.org/dev/peps/pep-3105>`_
 
-Prefix byte strings with ``b\_``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Prefix byte strings with ``b_``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Since mixing text and bytes types leads to tracebacks we want to be clear
 about what variables hold text and what variables hold bytes.  We do this by

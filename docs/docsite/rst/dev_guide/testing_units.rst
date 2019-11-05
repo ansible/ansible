@@ -76,10 +76,10 @@ install all the required dependencies needed for unit tests. For example:
    When using ``ansible-test`` with ``--tox`` requires tox >= 2.5.0
 
 
-The full list of requirements can be found at `test/runner/requirements
-<https://github.com/ansible/ansible/tree/devel/test/runner/requirements>`_. Requirements
+The full list of requirements can be found at `test/lib/ansible_test/_data/requirements
+<https://github.com/ansible/ansible/tree/devel/test/lib/ansible_test/_data/requirements>`_. Requirements
 files are named after their respective commands. See also the `constraints
-<https://github.com/ansible/ansible/blob/devel/test/runner/requirements/constraints.txt>`_
+<https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/requirements/constraints.txt>`_
 applicable to all commands.
 
 

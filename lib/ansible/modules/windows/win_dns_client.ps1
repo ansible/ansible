@@ -96,11 +96,12 @@ Function Set-DnsClientServerAddressLegacy {
     $adapter_config = Get-CIMInstance Win32_NetworkAdapterConfiguration -Filter "Index=$idx"
 
     If($ResetServerAddresses) {
-        $res = $adapter_config.SetDNSServerSearchOrder()
+        $arguments = @{}
     }
     Else {
-        $res = $adapter_config.SetDNSServerSearchOrder($ServerAddresses)
+        $arguments = @{ DNSServerSearchOrder = $ServerAddresses }
     }
+    $res = Invoke-CimMethod -InputObject $adapter_config -MethodName SetDNSServerSearchOrder -Arguments $arguments
 
     If($res.ReturnValue -ne 0) {
         throw "Set-DnsClientServerAddressLegacy: Error calling SetDNSServerSearchOrder, code $($res.ReturnValue))"

@@ -108,7 +108,8 @@ function Format-AnsibleVolume {
         $Full,
         $UseLargeFRS,
         $Compress,
-        $SetIntegrityStreams
+        $SetIntegrityStreams,
+        $AllocationUnitSize
     )
     $parameters = @{
         Path = $Path
@@ -129,6 +130,9 @@ function Format-AnsibleVolume {
     if ($null -ne $FileSystem) {
         $parameters.Add("FileSystem", $FileSystem)
     }
+    if ($null -ne $AllocationUnitSize) {
+        $parameters.Add("AllocationUnitSize", $AllocationUnitSize)
+    }
 
     Format-Volume @parameters -Confirm:$false | Out-Null
 
@@ -137,31 +141,43 @@ function Format-AnsibleVolume {
 $ansible_volume = Get-AnsibleVolume -DriveLetter $drive_letter -Path $path -Label $label
 $ansible_file_system = $ansible_volume.FileSystem
 $ansible_volume_size = $ansible_volume.Size
+$ansible_volume_alu = (Get-CimInstance -ClassName Win32_Volume -Filter "DeviceId = '$($ansible_volume.path.replace('\','\\'))'" -Property BlockSize).BlockSize
 
 $ansible_partition = Get-Partition -Volume $ansible_volume
 
+if (-not $force_format -and $null -ne $allocation_unit_size -and $ansible_volume_alu -ne 0 -and $null -ne $ansible_volume_alu -and $allocation_unit_size -ne $ansible_volume_alu) {
+        $module.FailJson("Force format must be specified since target allocation unit size: $($allocation_unit_size) is different from the current allocation unit size of the volume: $($ansible_volume_alu)")
+}
+
 foreach ($access_path in $ansible_partition.AccessPaths) {
     if ($access_path -ne $Path) {
-        $files_in_volume = (Get-ChildItem -LiteralPath $access_path -ErrorAction SilentlyContinue | Measure-Object).Count
-
-        if (-not $force_format -and $files_in_volume -gt 0) {
-            $module.FailJson("Force format must be specified to format non-pristine volumes")
-        } else {
-            if (-not $force_format -and
-                -not $null -eq $file_system -and
-                -not [string]::IsNullOrEmpty($ansible_file_system) -and
-                $file_system -ne $ansible_file_system) {
-                $module.FailJson("Force format must be specified since target file system: $($file_system) is different from the current file system of the volume: $($ansible_file_system.ToLower())")
-            } else {
-                $pristine = $true
+        if ($null -ne $file_system -and
+            -not [string]::IsNullOrEmpty($ansible_file_system) -and
+            $file_system -ne $ansible_file_system)
+        {
+            if (-not $force_format)
+            {
+                $no_files_in_volume = (Get-ChildItem -LiteralPath $access_path -ErrorAction SilentlyContinue | Measure-Object).Count -eq 0
+                if($no_files_in_volume)
+                {
+                    $module.FailJson("Force format must be specified since target file system: $($file_system) is different from the current file system of the volume: $($ansible_file_system.ToLower())")
+                }
+                else
+                {
+                    $module.FailJson("Force format must be specified to format non-pristine volumes")
+                }
             }
+        }
+        else
+        {
+            $pristine = -not $force_format
         }
     }
 }
 
 if ($force_format) {
     if (-not $module.CheckMode) {
-        Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
+        Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume -AllocationUnitSize $allocation_unit_size
     }
     $module.Result.changed = $true
 }
@@ -174,7 +190,7 @@ else {
         if ($ansible_volume_size -eq 0 -or
             $ansible_volume.FileSystemLabel -ne $new_label) {
             if (-not $module.CheckMode) {
-                Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume
+                Format-AnsibleVolume -Path $ansible_volume.Path -Full $full_format -Label $new_label -FileSystem $file_system -SetIntegrityStreams $integrity_streams -UseLargeFRS $large_frs -Compress $compress_volume -AllocationUnitSize $allocation_unit_size
             }
             $module.Result.changed = $true
         }

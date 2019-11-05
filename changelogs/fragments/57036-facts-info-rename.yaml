@@ -1,2 +1,0 @@
-minor_changes:
-- The ``ali_instance_facts`` module has been renamed to ``ali_instance_info``.

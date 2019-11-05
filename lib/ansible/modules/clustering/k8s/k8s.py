@@ -41,10 +41,11 @@ extends_documentation_fragment:
   - k8s_auth_options
 
 notes:
-  - If you are trying to remove an item from an associative array/dictionary,
-    for example a label or an annotation, you will need to explicitly set the
-    value of the item to be removed to `null`. Simply deleting the entry in the
-    dictionary will not remove it from openshift or kubernetes.
+  - If your OpenShift Python library is not 0.9.0 or newer and you are trying to
+    remove an item from an associative array/dictionary, for example a label or
+    an annotation, you will need to explicitly set the value of the item to be
+    removed to `null`. Simply deleting the entry in the dictionary will not
+    remove it from openshift or kubernetes.
 
 options:
   merge_type:
@@ -75,6 +76,11 @@ options:
     default: no
     type: bool
     version_added: "2.8"
+  wait_sleep:
+    description:
+    - Number of seconds to sleep between checks.
+    default: 5
+    version_added: "2.9"
   wait_timeout:
     description:
     - How long in seconds to wait for the resource to end up in the desired state. Ignored if C(wait) is not set.
@@ -136,7 +142,6 @@ options:
     - C(apply) compares the desired resource definition with the previously supplied resource definition,
       ignoring properties that are automatically generated
     - C(apply) works better with Services than 'force=yes'
-    - C(apply) defaults to True if the openshift library is new enough to support it (0.9.0 or newer)
     - mutually exclusive with C(merge_type)
     type: bool
     version_added: "2.9"

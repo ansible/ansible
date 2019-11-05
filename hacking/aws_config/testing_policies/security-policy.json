@@ -29,12 +29,30 @@
         },
         {
             "Action": [
+                "iam:CreatePolicy",
+                "iam:ListPolicyVersions",
+                "iam:ListEntitiesForPolicy",
+                "iam:DeletePolicy"
+             ],
+            "Resource": "arn:aws:iam::{{ aws_account }}:policy/ansible-test-*",
+            "Effect": "Allow",
+            "Sid": "AllowManagementOfSpecificPolicies"
+        },
+        {
+            "Action": [
                 "iam:AttachRolePolicy",
                 "iam:CreateRole",
                 "iam:DeleteRole",
+                "iam:DeleteRolePolicy",
+                "iam:DeleteRolePermissionsBoundary",
                 "iam:DetachRolePolicy",
+                "iam:PutRolePolicy",
                 "iam:PassRole",
+                "iam:PutRolePolicy",
+                "iam:PutRolePermissionsBoundary",
                 "iam:UpdateAssumeRolePolicy",
+                "iam:UpdateRole",
+                "iam:UpdateRoleDescription",
                 "sts:AssumeRole"
              ],
             "Resource": "arn:aws:iam::{{ aws_account }}:role/ansible-test-*",
@@ -82,6 +100,28 @@
             ]
         },
         {
+            "Sid": "AllowModifyingCloudtrail",
+            "Effect": "Allow",
+            "Action": [
+                "cloudtrail:*"
+            ],
+            "Resource": [
+                "arn:aws:cloudtrail:{{aws_region}}:{{aws_account}}:trail/ansible-test-*"
+            ]
+        },
+        {
+            "Sid": "AllowDescribingCloudtrails",
+            "Effect": "Allow",
+            "Action": [
+                "cloudtrail:DescribeTrails",
+                "cloudtrail:ListTags",
+                "cloudtrail:ListPublicKeys"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
             "Sid": "AllowModifyingCloudwatchLogs",
             "Effect": "Allow",
             "Action": [
@@ -90,7 +130,7 @@
                 "logs:DeleteLogGroup"
             ],
             "Resource": [
-                "arn:aws:logs:{{aws_region}}:{{aws_account}}:log-group:ansible-testing*"
+                "arn:aws:logs:{{aws_region}}:{{aws_account}}:log-group:ansible-test*"
             ]
         },
         {
@@ -108,6 +148,7 @@
                 "kms:GenerateRandom",
                 "kms:Get*",
                 "kms:List*",
+                "kms:PutKeyPolicy",
                 "kms:RetireGrant",
                 "kms:ScheduleKeyDeletion",
                 "kms:TagResource",
@@ -121,10 +162,39 @@
             "Sid": "AllowAccessToServerCertificates",
             "Effect": "Allow",
             "Action": [
-                "iam:ListServerCertificates",
-                "iam:UploadServerCertificate"
+                "iam:*ServerCertificates",
+                "iam:*ServerCertificate"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowAccessToSecrets",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:*"
+            ],
+            "Resource": "arn:aws:secretsmanager:{{aws_region}}:{{aws_account}}:secret:ansible-test*"
+        },
+        {
+            "Sid": "AllowAccessToManagePasswordPolicy",
+            "Effect": "Allow",
+            "Action": [
+                "iam:*AccountPasswordPolicy"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowAccessToManageUsersAndGroups",
+            "Effect": "Allow",
+            "Action": [
+                "iam:*Group",
+                "iam:*User",
+                "iam:ListAttachedGroupPolicies"
+            ],
+            "Resource": [
+                "arn:aws:iam::{{ aws_account }}:user/ansible-test*",
+                "arn:aws:iam::{{ aws_account }}:group/ansible-test*"
+            ]
         }
     ]
 }

@@ -29,22 +29,28 @@ Function Get-MachineSid {
     # only accessible by the Local System account. This method get's the local
     # admin account (ends with -500) and lops it off to get the machine sid.
 
-    $admins_sid = "S-1-5-32-544"
+    $machine_sid = $null
+
+    try {
+        $admins_sid = "S-1-5-32-544"
     $admin_group = ([Security.Principal.SecurityIdentifier]$admins_sid).Translate([Security.Principal.NTAccount]).Value
 
-    Add-Type -AssemblyName System.DirectoryServices.AccountManagement
-    $principal_context = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
-    $group_principal = New-Object -TypeName System.DirectoryServices.AccountManagement.GroupPrincipal($principal_context, $admin_group)
-    $searcher = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalSearcher($group_principal)
-    $groups = $searcher.FindOne()
+        Add-Type -AssemblyName System.DirectoryServices.AccountManagement
+        $principal_context = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalContext([System.DirectoryServices.AccountManagement.ContextType]::Machine)
+        $group_principal = New-Object -TypeName System.DirectoryServices.AccountManagement.GroupPrincipal($principal_context, $admin_group)
+        $searcher = New-Object -TypeName System.DirectoryServices.AccountManagement.PrincipalSearcher($group_principal)
+        $groups = $searcher.FindOne()
 
-    $machine_sid = $null
-    foreach ($user in $groups.Members) {
-        $user_sid = $user.Sid
-        if ($user_sid.Value.EndsWith("-500")) {
-            $machine_sid = $user_sid.AccountDomainSid.Value
-            break
+        foreach ($user in $groups.Members) {
+            $user_sid = $user.Sid
+            if ($user_sid.Value.EndsWith("-500")) {
+                $machine_sid = $user_sid.AccountDomainSid.Value
+                break
+            }
         }
+    } catch {
+        #can fail for any number of reasons, if it does just return the original null
+        Add-Warning -obj $result -message "Error during machine sid retrieval: $($_.Exception.Message)"
     }
 
     return $machine_sid
@@ -356,7 +362,7 @@ if($gather_subset.Contains('processor')) {
     }
 
     $cpu_list = @( )
-    for ($i=1; $i -le ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors); $i++) {
+    for ($i=1; $i -le $win32_cs.NumberOfLogicalProcessors; $i++) {
         $cpu_list += $win32_cpu.Manufacturer
         $cpu_list += $win32_cpu.Name
     }
@@ -365,8 +371,8 @@ if($gather_subset.Contains('processor')) {
         ansible_processor = $cpu_list
         ansible_processor_cores = $win32_cpu.NumberOfCores
         ansible_processor_count = $win32_cs.NumberOfProcessors
-        ansible_processor_threads_per_core = ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors / $win32_cpu.NumberOfCores)
-        ansible_processor_vcpus = ($win32_cpu.NumberOfLogicalProcessors / $win32_cs.NumberOfProcessors)
+        ansible_processor_threads_per_core = ($win32_cpu.NumberOfLogicalProcessors / $win32_cpu.NumberofCores)
+        ansible_processor_vcpus = $win32_cs.NumberOfLogicalProcessors
     }
 }
 

@@ -127,56 +127,6 @@
     - dockerfile_1['image']['Config']['WorkingDir'] == '/newdata'
 
 ####################################################################
-## repository ######################################################
-####################################################################
-
-- name: Make sure image is not there
-  docker_image:
-    name: "{{ registry_address }}/test/{{ iname }}:latest"
-    state: absent
-    force_absent: yes
-
-- name: repository
-  docker_image:
-    name: "{{ iname }}"
-    build:
-      path: "{{ role_path }}/files"
-      pull: no
-    repository: "{{ registry_address }}/test/{{ iname }}"
-    source: build
-  register: repository_1
-
-- name: repository (idempotent)
-  docker_image:
-    name: "{{ iname }}"
-    build:
-      path: "{{ role_path }}/files"
-      pull: no
-    repository: "{{ registry_address }}/test/{{ iname }}"
-    source: build
-  register: repository_2
-
-- assert:
-    that:
-    - repository_1 is changed
-    - repository_2 is not changed
-
-- name: Get facts of image
-  docker_image_info:
-    name: "{{ registry_address }}/test/{{ iname }}:latest"
-  register: facts_1
-
-- name: cleanup
-  docker_image:
-    name: "{{ registry_address }}/test/{{ iname }}:latest"
-    state: absent
-    force_absent: yes
-
-- assert:
-    that:
-    - facts_1.images | length == 1
-
-####################################################################
 ## force ###########################################################
 ####################################################################
 
@@ -316,3 +266,29 @@
     that:
     - dockerfile_2 is changed
     - dockerfile_2.image.Config.WorkingDir == '/first'
+
+####################################################################
+## build.etc_hosts #################################################
+####################################################################
+
+- name: Build image with custom etc_hosts
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      dockefile: "EtcHostsDockerfile"
+      pull: no
+      etc_hosts:
+        some-custom-host: "127.0.0.1"
+    source: build
+  register: path_1
+
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+      - path_1 is changed

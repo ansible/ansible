@@ -257,17 +257,6 @@
       - result is changed
       - "stat_result.stat.mode == '0775'"
 
-- name: Get a file that already exists
-  get_url:
-    url: 'https://{{ httpbin_host }}/get'
-    dest: '{{ remote_tmp_dir }}/test'
-  register: result
-
-- name: Assert that we didn't re-download unnecessarily
-  assert:
-    that:
-      - result is not changed
-
 - name: test checksum match in check mode
   get_url:
     url: 'https://{{ httpbin_host }}/get'
@@ -280,6 +269,41 @@
   assert:
     that:
       - result is not changed
+
+- name: Get a file that already exists with a checksum
+  get_url:
+    url: 'https://{{ httpbin_host }}/cache'
+    dest: '{{ remote_tmp_dir }}/test'
+    checksum: 'sha1:{{ stat_result.stat.checksum }}'
+  register: result
+
+- name: Assert that the file was not downloaded
+  assert:
+    that:
+      - result.msg == 'file already exists'
+
+- name: Get a file that already exists
+  get_url:
+    url: 'https://{{ httpbin_host }}/cache'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we didn't re-download unnecessarily
+  assert:
+    that:
+      - result is not changed
+      - "'304' in result.msg"
+
+- name: get a file that doesn't respond to If-Modified-Since without checksum
+  get_url:
+    url: 'https://{{ httpbin_host }}/get'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we downloaded the file
+  assert:
+    that:
+      - result is changed
 
 # https://github.com/ansible/ansible/issues/27617
 
@@ -438,6 +462,7 @@
   slurp:
     src: "{{ remote_tmp_dir }}/ssl_client_verify"
   register: result
+  when: has_httptester
 
 - name: Assert that the ssl_client_verify file contains the correct content
   assert:

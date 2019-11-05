@@ -34,6 +34,11 @@ options:
       - The rule's display name.
     type: str
     required: yes
+  group:
+    description:
+      - The group name for the rule.
+    version_added: '2.9'
+    type: str
   direction:
     description:
       - Whether this rule is for inbound or outbound traffic.
@@ -67,6 +72,7 @@ options:
       - The local port this rule applies to.
       - Set to C(any) to apply to all local ports.
       - Defaults to C(any) when creating a new rule.
+      - Must have I(protocol) set
     type: str
   remoteport:
     description:
@@ -99,13 +105,6 @@ options:
       - Defaults to C(domain,private,public) when creating a new rule.
     type: list
     aliases: [ profile ]
-  force:
-    description:
-    - Replace any existing rule by removing it first.
-    - This is no longer required in Ansible 2.4 as rules no longer need replacing when being modified.
-    - DEPRECATED in Ansible 2.4 and will be removed in Ansible 2.9.
-    type: bool
-    default: no
 seealso:
 - module: win_firewall
 author:
@@ -132,6 +131,26 @@ EXAMPLES = r'''
     direction: in
     protocol: tcp
     profiles: private
+    state: present
+    enabled: yes
+
+- name: Firewall rule to be created for application group
+  win_firewall_rule:
+    name: SMTP
+    group: application
+    localport: 25
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+    enabled: yes
+- name: Firewall rule to allow port range
+  win_firewall_rule:
+    name: Sample port range
+    localport: 5000-5010
+    action: allow
+    direction: in
+    protocol: tcp
     state: present
     enabled: yes
 '''

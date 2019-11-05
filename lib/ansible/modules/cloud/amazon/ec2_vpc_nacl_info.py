@@ -27,6 +27,7 @@ options:
     required: false
     default: []
     aliases: [nacl_id]
+    type: list
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See \
@@ -34,6 +35,7 @@ options:
       names and values are case sensitive.
     required: false
     default: {}
+    type: dict
 notes:
   - By default, the module will return all Network ACLs.
 
@@ -85,20 +87,23 @@ nacls:
         subnets:
             description: A list of subnet IDs that are associated with the NACL.
             returned: always
-            type: list of string
+            type: list
+            elements: str
         ingress:
             description:
               - A list of NACL ingress rules with the following format.
-              - [rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to]
+              - "C([rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to])"
             returned: always
-            type: list of list
+            type: list
+            elements: list
             sample: [[100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]]
         egress:
             description:
               - A list of NACL egress rules with the following format.
-              - [rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to]
+              - "C([rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to])"
             returned: always
-            type: list of list
+            type: list
+            elements: list
             sample: [[100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]]
 '''
 
@@ -109,10 +114,9 @@ try:
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (ec2_argument_spec, boto3_conn, get_aws_connection_info,
-                                      ansible_dict_to_boto3_filter_list, HAS_BOTO3,
+from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list,
                                       camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict)
 
 
@@ -132,11 +136,9 @@ def list_ec2_vpc_nacls(connection, module):
     try:
         nacls = connection.describe_network_acls(NetworkAclIds=nacl_ids, Filters=filters)
     except ClientError as e:
-        module.fail_json(msg="Unable to describe network ACLs {0}: {1}".format(nacl_ids, to_native(e)),
-                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json_aws(e, msg="Unable to describe network ACLs {0}: {1}".format(nacl_ids, to_native(e)))
     except BotoCoreError as e:
-        module.fail_json(msg="Unable to describe network ACLs {0}: {1}".format(nacl_ids, to_native(e)),
-                         exception=traceback.format_exc())
+        module.fail_json_aws(e, msg="Unable to describe network ACLs {0}: {1}".format(nacl_ids, to_native(e)))
 
     # Turn the boto3 result in to ansible_friendly_snaked_names
     snaked_nacls = []
@@ -203,24 +205,15 @@ def nacl_entry_to_list(entry):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            nacl_ids=dict(default=[], type='list', aliases=['nacl_id']),
-            filters=dict(default={}, type='dict')
-        )
-    )
+    argument_spec = dict(
+        nacl_ids=dict(default=[], type='list', aliases=['nacl_id']),
+        filters=dict(default={}, type='dict'))
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._name == 'ec2_vpc_nacl_facts':
         module.deprecate("The 'ec2_vpc_nacl_facts' module has been renamed to 'ec2_vpc_nacl_info'", version='2.13')
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
-
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='ec2',
-                            region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     list_ec2_vpc_nacls(connection, module)
 

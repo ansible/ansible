@@ -52,7 +52,6 @@ options:
             for either connecting or sending commands.  If the timeout is
             exceeded before the operation is completed, the module will error.
         type: int
-        default: 10
       ssh_keyfile:
         description:
           - Specifies the SSH keyfile to use to authenticate the connection to
@@ -66,6 +65,11 @@ options:
         type: str
         choices: [ cli, rest ]
         default: rest
+      auth_provider:
+        description:
+          - Configures the auth provider for to obtain authentication tokens from the remote device.
+          - This option is really used when working with BIG-IQ devices.
+        type: str
 notes:
   - For more information on using Ansible to manage F5 Networks devices see U(https://www.ansible.com/integrations/networks/f5).
   - Requires BIG-IP software version >= 12.

@@ -43,6 +43,7 @@
     - result.changed == false
     - result.version != {}
     - result.settings != {}
+    - result.global_status != {}
     - result.databases != {}
     - result.engines != {}
     - result.users != {}
@@ -92,6 +93,7 @@
     that:
     - result.changed == false
     - result.version != {}
+    - result.global_status != {}
     - result.databases != {}
     - result.engines != {}
     - result.settings is not defined
@@ -114,4 +116,5 @@
     - result.databases != {}
     - result.engines is not defined
     - result.settings is not defined
+    - result.global_status is not defined
     - result.users is not defined

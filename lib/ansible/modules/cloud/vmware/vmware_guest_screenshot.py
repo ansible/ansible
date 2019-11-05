@@ -32,12 +32,18 @@ options:
    name:
      description:
      - Name of the virtual machine.
-     - This is a required parameter, if parameter C(uuid) is not supplied.
+     - This is a required parameter, if parameter C(uuid) or C(moid) is not supplied.
      type: str
    uuid:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
-     - This is a required parameter, if parameter C(name) is not supplied.
+     - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
+     type: str
+   moid:
+     description:
+     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+     - This is required if C(name) or C(uuid) is not supplied.
+     version_added: '2.9'
      type: str
    folder:
      description:
@@ -78,7 +84,7 @@ options:
        downloaded from ESXi host to the local directory.'
      - 'If not download screenshot file to local machine, you can open it through the returned file URL in screenshot
        facts manually.'
-     type: str
+     type: path
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -92,6 +98,19 @@ EXAMPLES = '''
     datacenter: "{{ datacenter_name }}"
     folder: "{{ folder_name }}"
     name: "{{ vm_name }}"
+    local_path: "/tmp/"
+  delegate_to: localhost
+  register: take_screenshot
+
+- name: Take a screenshot of the virtual machine console using MoID
+  vmware_guest_screenshot:
+    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    folder: "{{ folder_name }}"
+    moid: vm-42
     local_path: "/tmp/"
   delegate_to: localhost
   register: take_screenshot
@@ -123,7 +142,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import urlencode, quote
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import open_url
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, get_parent_datacenter
 import os
 
 
@@ -144,11 +163,7 @@ class PyVmomiHelper(PyVmomi):
         if not self.is_vcenter():
             datacenter = 'ha-datacenter'
         else:
-            if self.params.get('datacenter'):
-                datacenter = self.params['datacenter']
-            else:
-                datacenter = self.get_parent_datacenter(self.current_vm_obj).name
-            datacenter = datacenter.replace('&', '%26')
+            datacenter = get_parent_datacenter(self.current_vm_obj).name.replace('&', '%26')
         params['dcPath'] = datacenter
         url_path = "https://%s%s?%s" % (self.params['hostname'], path, urlencode(params))
 
@@ -158,8 +173,6 @@ class PyVmomiHelper(PyVmomi):
         response = None
         download_size = 0
         # file is downloaded as local_file_name when specified, or use original file name
-        if not local_file_path.startswith("/"):
-            local_file_path = "/" + local_file_path
         if local_file_path.endswith('.png'):
             local_file_name = local_file_path.split('/')[-1]
             local_file_path = local_file_path.rsplit('/', 1)[0]
@@ -244,18 +257,24 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         folder=dict(type='str'),
         datacenter=dict(type='str'),
         esxi_hostname=dict(type='str'),
         cluster=dict(type='str'),
-        local_path=dict(type='str'),
+        local_path=dict(type='path'),
     )
-    module = AnsibleModule(argument_spec=argument_spec, required_one_of=[['name', 'uuid']])
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        required_one_of=[
+            ['name', 'uuid', 'moid']
+        ]
+    )
     pyv = PyVmomiHelper(module)
     vm = pyv.get_vm()
     if not vm:
-        module.fail_json(msg='Unable to find the specified virtual machine uuid: %s, name: %s '
-                             % ((module.params.get('uuid')), (module.params.get('name'))))
+        vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
+        module.fail_json(msg='Unable to find the specified virtual machine : %s' % vm_id)
 
     result = pyv.take_vm_screenshot()
     if result['failed']:

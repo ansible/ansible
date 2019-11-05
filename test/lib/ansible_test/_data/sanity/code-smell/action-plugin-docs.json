@@ -1,0 +1,13 @@
+{
+    "all_targets": true,
+    "prefixes": [
+        "lib/ansible/modules/",
+        "lib/ansible/plugins/action/",
+        "plugins/modules/",
+        "plugins/action/"
+    ],
+    "extensions": [
+        ".py"
+    ],
+    "output": "path-message"
+}

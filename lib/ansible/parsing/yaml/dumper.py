@@ -23,7 +23,7 @@ import yaml
 
 from ansible.module_utils.six import PY3
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
 from ansible.vars.hostvars import HostVars, HostVarsVars
 
 
@@ -46,8 +46,10 @@ def represent_vault_encrypted_unicode(self, data):
 
 if PY3:
     represent_unicode = yaml.representer.SafeRepresenter.represent_str
+    represent_binary = yaml.representer.SafeRepresenter.represent_binary
 else:
     represent_unicode = yaml.representer.SafeRepresenter.represent_unicode
+    represent_binary = yaml.representer.SafeRepresenter.represent_str
 
 AnsibleDumper.add_representer(
     AnsibleUnicode,
@@ -57,6 +59,11 @@ AnsibleDumper.add_representer(
 AnsibleDumper.add_representer(
     AnsibleUnsafeText,
     represent_unicode,
+)
+
+AnsibleDumper.add_representer(
+    AnsibleUnsafeBytes,
+    represent_binary,
 )
 
 AnsibleDumper.add_representer(

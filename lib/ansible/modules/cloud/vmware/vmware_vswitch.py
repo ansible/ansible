@@ -38,30 +38,36 @@ options:
     - Alias C(switch) is added in version 2.4.
     required: yes
     aliases: [ switch_name ]
+    type: str
   nics:
     description:
     - A list of vmnic names or vmnic name to attach to vSwitch.
     - Alias C(nics) is added in version 2.4.
     aliases: [ nic_name ]
     default: []
+    type: list
   number_of_ports:
     description:
     - Number of port to configure on vSwitch.
     default: 128
+    type: int
   mtu:
     description:
     - MTU to configure on vSwitch.
     default: 1500
+    type: int
   state:
     description:
     - Add or remove the switch.
     default: present
     choices: [ absent, present ]
+    type: str
   esxi_hostname:
     description:
     - Manage the vSwitch using this ESXi host system.
     version_added: "2.5"
     aliases: [ 'host' ]
+    type: str
 extends_documentation_fragment:
 - vmware.documentation
 '''

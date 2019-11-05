@@ -1,6 +1,10 @@
 # Copyright (c) 2018, Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import json
 import sys
 
@@ -31,7 +35,7 @@ def removed_module(removed_in, msg='This module has been removed. The module doc
     version = removed_in.split('.')
     try:
         numeric_minor = int(version[-1])
-    except Exception as e:
+    except Exception:
         last_version = None
     else:
         version = version[:-1]

@@ -1,8 +1,9 @@
----
+- debug:
+    msg: Running tests/basic.yml
+
 ####################################################################
 ## Errors ##########################################################
 ####################################################################
-
 - name: Test parameters with state=join
   docker_swarm:
     state: join
@@ -140,16 +141,18 @@
 - name: assert changed when remove a swarm cluster
   assert:
     that:
-       - 'output_1 is changed'
-       - 'output_1.diff.before is defined'
-       - 'output_1.diff.after is defined'
-       - 'output_2 is changed'
-       - 'output_2.actions[0] == "Node has left the swarm cluster"'
-       - 'output_2.diff.before is defined'
-       - 'output_2.diff.after is defined'
-       - 'output_3 is not changed'
-       - 'output_3.diff.before is defined'
-       - 'output_3.diff.after is defined'
-       - 'output_4 is not changed'
-       - 'output_4.diff.before is defined'
-       - 'output_4.diff.after is defined'
+        - 'output_1 is changed'
+        - 'output_1.diff.before is defined'
+        - 'output_1.diff.after is defined'
+        - 'output_2 is changed'
+        - 'output_2.actions[0] == "Node has left the swarm cluster"'
+        - 'output_2.diff.before is defined'
+        - 'output_2.diff.after is defined'
+        - 'output_3 is not changed'
+        - 'output_3.diff.before is defined'
+        - 'output_3.diff.after is defined'
+        - 'output_4 is not changed'
+        - 'output_4.diff.before is defined'
+        - 'output_4.diff.after is defined'
+
+- include_tasks: cleanup.yml
