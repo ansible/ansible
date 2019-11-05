@@ -222,7 +222,7 @@ options:
     type: bool
   cpu_credit_specification:
     description:
-      - For T2 series instances, choose whether to allow increased charges to buy CPU credits if the default pool is depleted.
+      - For T series instances, choose whether to allow increased charges to buy CPU credits if the default pool is depleted.
       - Choose I(unlimited) to enable buying additional CPU credits.
     choices: ['unlimited', 'standard']
     type: str
