@@ -52,14 +52,8 @@ def main():
         from ansible.module_utils._text import to_bytes
 
         def get_source(self, fullname):
-            mod = sys.modules.get(fullname)
-            if not mod:
-                mod = self.load_module(fullname)
-
-            with open(to_bytes(mod.__file__), 'rb') as mod_file:
-                source = mod_file.read()
-
-            return source
+            with open(to_bytes(self.get_filename(fullname)), 'rb') as mod_file:
+                return mod_file.read()
 
         def get_code(self, fullname):
             return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
