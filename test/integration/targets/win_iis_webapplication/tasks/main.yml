@@ -67,4 +67,4 @@
       that:
         - "stat_result.stat.checksum == copy_result.checksum"
 
-  when: ansible_distribution_version is version('6.1','ge')
+  when: ansible_distribution_version is version('6.2','ge')
