@@ -325,7 +325,7 @@ options:
     restore_time:
         description:
           - If using I(creation_source=instance) this indicates the UTC date and time to restore from the source instance.
-            For example, "2009-09-07T23:45:00Z". May alternatively set c(use_latest_restore_time) to True.
+            For example, "2009-09-07T23:45:00Z". May alternatively set C(use_latest_restore_time) to True.
         type: str
     s3_bucket_name:
         description:
