@@ -41,4 +41,7 @@ class BaseVarsPlugin(AnsiblePlugin):
     def get_vars(self, loader, path, entities):
         """ Gets variables. """
         if not hasattr(self, '_basedir'):
-            self._basedir = os.path.realpath(os.path.dirname(path))
+            if os.path.isdir(path):
+                self._basedir = path
+            else:
+                self._basedir = os.path.realpath(os.path.dirname(path))
