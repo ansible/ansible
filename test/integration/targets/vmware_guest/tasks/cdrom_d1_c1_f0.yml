@@ -228,6 +228,49 @@
     that:
       - "cdrom_vm.changed == true"
 
+- name: Set fact of controller number and unit number - GitHub issue 62397
+  set_fact:
+    test_ctl_num: 0
+    test_unit_num: '0'
+- name: Create VM with multiple CDROMs - GitHub issue 62397
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: vm
+    name: test_vm1
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
+    resource_pool: Resources
+    guest_id: centos64Guest
+    hardware:
+      memory_mb: 512
+      num_cpus: 1
+      scsi: paravirtual
+    disk:
+    - size_mb: 128
+      type: thin
+      datastore: "{{ ds2 }}"
+    cdrom:
+    - controller_type: ide
+      controller_number: "{{ test_ctl_num }}"
+      unit_number: "{{ test_unit_num }}"
+      type: iso
+      iso_path: "[{{ ds1 }}] centos.iso"
+    - controller_type: ide
+      controller_number: 0
+      unit_number: 1
+      type: client
+  register: cdrom_vm
+
+- debug: var=cdrom_vm
+
+- name: assert the VM was created
+  assert:
+    that:
+      - "cdrom_vm.changed == true"
+
 # VCSIM fails with invalidspec exception but real vCenter PASS testcase
 # Commenting this testcase till the time
 - when: vcsim is not defined
