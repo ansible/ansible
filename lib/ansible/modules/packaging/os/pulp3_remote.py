@@ -70,7 +70,7 @@ options:
   upstream_name:
     description:
     - Name of the upstream repository.
-    - Required when C(pulp_plugin=docker).
+    - Only required by the following plugins - C(docker)
     type: str
 
 
@@ -117,19 +117,11 @@ PULP_API_DATA = {
 }
 
 PULP_REMOTE_ARG_SPEC = {
-    'common': {
-        'name': {'required': True, 'type': 'str'},
-        'remote_url': {'required': True, 'type': 'str'},
-        'proxy_url': {'type': 'str'},
-        'ssl_validation': {'default': True, 'type': 'bool'}
-    },
-    'file': {
-    },
-    'docker': {
-        'upstream_name': {'required': True, 'type': 'str'}
-    },
-    'rpm': {
-    }
+    'name': {'required': True, 'type': 'str'},
+    'remote_url': {'required': True, 'type': 'str'},
+    'proxy_url': {'type': 'str'},
+    'ssl_validation': {'default': True, 'type': 'bool'},
+    'upstream_name': {'type': 'str'}
 }
 
 
@@ -152,8 +144,7 @@ class PulpRemoteAnsibleModule(PulpPluginAnsibleModule):
             repositories=dict(type='list', elements='str'),
             sync=dict(type='bool', default='false')
         )
-        arg_spec.update(PULP_REMOTE_ARG_SPEC['common'])
-        arg_spec.update(PULP_REMOTE_ARG_SPEC[self.pulp_plugin])
+        arg_spec.update(PULP_REMOTE_ARG_SPEC)
         return {'argument_spec': arg_spec, 'required_if': [('sync', True, ['repositories'])]}
 
     def execute(self):

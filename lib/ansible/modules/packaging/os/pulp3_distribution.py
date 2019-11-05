@@ -53,7 +53,8 @@ options:
     description:
     - Specification of a publication which this distribution will connect to.
     - If no matching publication is found one is created.
-    - Required only for the following plugins - C(file)
+    - Required only for the following plugins - C(file), C(rpm)
+    type: dict
     suboptions:
       repository:
         description:
@@ -68,6 +69,7 @@ options:
     description:
     - Name of the repository to distribute.
     - Only required by the following plugins - C(docker)
+    type: str
   repository_version:
     description:
     - Version of the I(repository). Defaults to latest if not specified.
@@ -122,20 +124,11 @@ PULP_PUBLICATION = {
 }
 
 PULP_DISTRIBUTION_ARG_SPEC = {
-    'common': {
-        'base_path': {'required': True, 'type': 'str'},
-        'name': {'required': True, 'type': 'str'}
-    },
-    'file': {
-        'publication': PULP_PUBLICATION
-    },
-    'docker': {
-        'repository': {'type': 'str'},
-        'repository_version': {'type': 'int'}
-    },
-    'rpm': {
-        'publication': PULP_PUBLICATION
-    }
+    'base_path': {'required': True, 'type': 'str'},
+    'name': {'required': True, 'type': 'str'},
+    'publication': PULP_PUBLICATION,
+    'repository': {'type': 'str'},
+    'repository_version': {'type': 'int'},
 }
 
 
@@ -156,8 +149,7 @@ class PulpDistributionAnsibleModule(PulpPluginAnsibleModule):
                 default="present",
                 choices=['absent', 'present'])
         )
-        arg_spec.update(PULP_DISTRIBUTION_ARG_SPEC['common'])
-        arg_spec.update(PULP_DISTRIBUTION_ARG_SPEC[self.pulp_plugin])
+        arg_spec.update(PULP_DISTRIBUTION_ARG_SPEC)
         return {'argument_spec': arg_spec}
 
     def execute(self):
@@ -166,10 +158,10 @@ class PulpDistributionAnsibleModule(PulpPluginAnsibleModule):
 
         if self.state == 'present':
 
-            if 'publication' in self.module.params:
+            if self.module.params['publication'] is not None:
                 self.api_data.update(self.process_publication())
 
-            if 'repository' in self.module.params:
+            if self.module.params['repository'] is not None:
                 self.api_data.update(self.process_repository())
 
             changed = self.create_or_update()
@@ -233,7 +225,7 @@ class PulpDistributionAnsibleModule(PulpPluginAnsibleModule):
     def process_repository(self):
         data = {}
         repository = get_repo(self.module, self.module.params['repository'])
-        if 'repository_version' in self.module.params:
+        if self.module.params['repository_version'] is not None:
             repository_version = get_repo_version(self.module, repository, self.module.params['repository_version'])
             data['repository_version'] = repository_version.pulp_href
         else:
