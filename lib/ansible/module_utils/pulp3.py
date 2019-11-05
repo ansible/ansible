@@ -1,6 +1,9 @@
 # Copyright: (c) 2019, Timo Funke <timoses@msn.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 try:
     from pulpcore.client.pulpcore.exceptions import ApiException
     HAS_PULPCORE_EXCEPTIONS = True
@@ -72,6 +75,7 @@ TASK_API = {
     'module': 'tasks_api'
 }
 
+
 def load_pulp_api(module, api):
     from importlib import import_module
     from pulpcore.client.pulpcore.api_client import ApiClient
@@ -83,7 +87,7 @@ def load_pulp_api(module, api):
         api_module = import_module('pulpcore.client.pulpcore.api.%s' % api['module'])
     except ImportError as e:
         module.fail_json(msg="Failed to load module '%s'. Ensure pulpcore-client python module is installed on the target host. Error: %s"
-                            % (api['module'], e))
+                         % (api['module'], e))
 
     config = Configuration(host=module.params['url'],
                            username=module.params['url_username'],
@@ -95,6 +99,7 @@ def load_pulp_api(module, api):
 
     return api_class(client)
 
+
 def load_pulp_plugin_api(module, plugin, api):
     from importlib import import_module
     plugin_base = 'pulpcore.client.pulp_' + plugin
@@ -103,18 +108,21 @@ def load_pulp_plugin_api(module, plugin, api):
     try:
         config_module = import_module('%s.configuration' % plugin_base)
         client_module = import_module('%s.api_client' % plugin_base)
-        api_module = import_module('%s.api.%s' % (plugin_base,plugin_api['module']))
+        api_module = import_module('%s.api.%s' % (plugin_base, plugin_api['module']))
     except ImportError as e:
         module.fail_json(msg="Python module pulp-%s-client may not be installed on the target host! Error: %s"
                          % (plugin, e))
+
     config = config_module.Configuration(host=module.params['url'],
-                           username=module.params['url_username'],
-                           password=module.params['url_password'])
+                                         username=module.params['url_username'],
+                                         password=module.params['url_password'])
     config.safe_chars_for_path_param = '/'
     client = client_module.ApiClient(configuration=config)
 
     api_class = getattr(api_module, plugin_api['class'])
+
     return api_class(client)
+
 
 def get_repo(module, name):
     repo_api = load_pulp_api(module, REPOSITORY_API)
@@ -123,6 +131,7 @@ def get_repo(module, name):
         module.fail_json(msg="Repository '%s' was not found." % name)
     else:
         return repo_state.results[0]
+
 
 def get_repo_version(module, repository, version=None):
     """ Returns latest version if it is None """
@@ -146,6 +155,7 @@ def get_repo_version(module, repository, version=None):
             module.fail_json(msg="Failed to fetch latest version: %s" % e)
 
     module.fail_json(msg="Repository '%s' does not appear to have any versions." % repository.name)
+
 
 class PulpAnsibleModule(AnsibleModule):
 
@@ -179,7 +189,9 @@ class PulpAnsibleModule(AnsibleModule):
             return True
         elif res.count == 1:
             resource = res.results[0]
-            api_data_diff = dict((k, self.api_data[k]) for k in self.api_data.keys() if self.api_data[k] is not None and self.api_data[k] != getattr(resource, k))
+            api_data_diff = dict((k, self.api_data[k]) for k in self.api_data.keys()
+                                 if self.api_data[k] is not None
+                                 and self.api_data[k] != getattr(resource, k))
             if api_data_diff:
                 self.api.update(resource.pulp_href, self.api_data)
                 return True
@@ -194,6 +206,7 @@ class PulpAnsibleModule(AnsibleModule):
             resource = res.results[0]
             self.api.delete(resource.pulp_href)
             return True
+
 
 class PulpPluginAnsibleModule(PulpAnsibleModule):
 
