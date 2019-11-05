@@ -21,6 +21,7 @@ def main():
     ansible_path = os.environ['PYTHONPATH']
     temp_path = os.environ['SANITY_TEMP_PATH'] + os.path.sep
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
+    collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATHS')
 
     try:
         # noinspection PyCompatibility
@@ -67,9 +68,26 @@ def main():
             return self.get_filename(fullname).endswith('__init__.py')
 
         def get_filename(self, fullname):
-            mod = sys.modules.get(fullname) or self.load_module(fullname)
+            if fullname in sys.modules:
+                return sys.modules[fullname].__file__
 
-            return mod.__file__
+            # find the module without importing it
+            # otherwise an ImportError during module load will prevent us from getting the filename of the module
+            loader = self.find_module(fullname)
+
+            if not loader:
+                raise ImportError('module {0} not found'.format(fullname))
+
+            # determine the filename of the module that was found
+            filename = os.path.join(collection_root, fullname.replace('.', os.path.sep))
+
+            if os.path.isdir(filename):
+                init_filename = os.path.join(filename, '__init__.py')
+                filename = init_filename if os.path.exists(init_filename) else os.path.join(filename, '__synthetic__')
+            else:
+                filename += '.py'
+
+            return filename
 
         # monkeypatch collection loader to work with runpy
         # remove this (and the associated code above) once implemented natively in the collection loader
