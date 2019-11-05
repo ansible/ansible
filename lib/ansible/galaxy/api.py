@@ -21,6 +21,12 @@ from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
 
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    # Python 2
+    from urlparse import urlparse
+
 display = Display()
 
 
@@ -289,14 +295,20 @@ class GalaxyAPI:
             data = self._call_galaxy(url)
             results = data['results']
             done = (data.get('next_link', None) is None)
+
+            # https://github.com/ansible/ansible/issues/64355
+            # api_server contains part of the API path but next_link includes the the /api part so strip it out.
+            url_info = urlparse(self.api_server)
+            base_url = "%s://%s/" % (url_info.scheme, url_info.netloc)
+
             while not done:
-                url = _urljoin(self.api_server, data['next_link'])
+                url = _urljoin(base_url, data['next_link'])
                 data = self._call_galaxy(url)
                 results += data['results']
                 done = (data.get('next_link', None) is None)
         except Exception as e:
-            display.vvvv("Unable to retrive role (id=%s) data (%s), but this is not fatal so we continue: %s"
-                         % (role_id, related, to_text(e)))
+            display.warning("Unable to retrieve role (id=%s) data (%s), but this is not fatal so we continue: %s"
+                            % (role_id, related, to_text(e)))
         return results
 
     @g_connect(['v1'])
