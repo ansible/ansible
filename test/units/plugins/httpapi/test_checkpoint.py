@@ -65,7 +65,7 @@ class TestCheckpointHttpApi(unittest.TestCase):
         temp_domain = self.checkpoint_plugin.hostvars['domain']
         self.checkpoint_plugin.hostvars['domain'] = 'test_domain'
         self.connection_mock.send.return_value = self._connection_response(
-            {'NOSIDKEY': 'NOSIDVALUE'}
+            {'sid': 'SID', 'uid': 'UID'}
         )
 
         self.checkpoint_plugin.login('username', 'password')
