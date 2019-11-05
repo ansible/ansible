@@ -4534,7 +4534,6 @@ lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py validate-modules:undoc
 lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/remote_management/wakeonlan.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/source_control/_github_hooks.py validate-modules:doc-missing-type
 lib/ansible/modules/source_control/bzr.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/source_control/git.py pylint:blacklisted-name
 lib/ansible/modules/source_control/git.py use-argspec-type-path
@@ -4542,16 +4541,17 @@ lib/ansible/modules/source_control/git.py validate-modules:parameter-type-not-in
 lib/ansible/modules/source_control/git.py validate-modules:doc-missing-type
 lib/ansible/modules/source_control/git_config.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/source_control/git_config.py validate-modules:doc-missing-type
-lib/ansible/modules/source_control/github_deploy_key.py validate-modules:parameter-invalid
-lib/ansible/modules/source_control/github_deploy_key.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/source_control/github_deploy_key.py validate-modules:doc-missing-type
-lib/ansible/modules/source_control/github_issue.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/source_control/github_issue.py validate-modules:doc-missing-type
-lib/ansible/modules/source_control/github_key.py validate-modules:doc-missing-type
-lib/ansible/modules/source_control/github_release.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/source_control/github_release.py validate-modules:doc-missing-type
-lib/ansible/modules/source_control/github_webhook.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/source_control/github_webhook_info.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/source_control/github/_github_hooks.py validate-modules:doc-missing-type
+lib/ansible/modules/source_control/github/github_deploy_key.py validate-modules:parameter-invalid
+lib/ansible/modules/source_control/github/github_deploy_key.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/source_control/github/github_deploy_key.py validate-modules:doc-missing-type
+lib/ansible/modules/source_control/github/github_issue.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/source_control/github/github_issue.py validate-modules:doc-missing-type
+lib/ansible/modules/source_control/github/github_key.py validate-modules:doc-missing-type
+lib/ansible/modules/source_control/github/github_release.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/source_control/github/github_release.py validate-modules:doc-missing-type
+lib/ansible/modules/source_control/github/github_webhook.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/source_control/github/github_webhook_info.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/source_control/hg.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/source_control/subversion.py validate-modules:undocumented-parameter
 lib/ansible/modules/source_control/subversion.py validate-modules:parameter-type-not-in-doc
@@ -5054,7 +5054,7 @@ lib/ansible/modules/windows/win_webpicmd.ps1 pslint:PSAvoidUsingInvokeExpression
 lib/ansible/modules/windows/win_xml.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
 lib/ansible/playbook/base.py pylint:blacklisted-name
-lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
+lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github/github.com/ansible/ansible/issues/61460
 lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/action/aireos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
