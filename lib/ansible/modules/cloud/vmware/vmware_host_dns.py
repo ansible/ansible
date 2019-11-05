@@ -172,9 +172,6 @@ class VmwareHostDNS(PyVmomi):
                 self.module.fail_json(
                     msg="You connected to a vCenter but didn't specify the cluster_name or esxi_hostname you want to configure."
                 )
-            self.hosts = self.get_all_host_objs(cluster_name=self.cluster_name, esxi_host_name=self.esxi_host_name)
-            if not self.hosts:
-                self.module.fail_json(msg="Failed to find host system(s).")
         else:
             if self.cluster_name:
                 self.module.warn(
@@ -184,6 +181,9 @@ class VmwareHostDNS(PyVmomi):
                 self.module.warn(
                     "You connected directly to an ESXi host, esxi_host_name will be ignored."
                 )
+        self.hosts = self.get_all_host_objs(cluster_name=self.cluster_name, esxi_host_name=self.esxi_host_name)
+        if not self.hosts:
+            self.module.fail_json(msg="Failed to find host system(s).")
         self.network_type = self.params.get('type')
         self.vmkernel_device = self.params.get('device')
         self.host_name = self.params.get('host_name')
@@ -243,12 +243,12 @@ class VmwareHostDNS(PyVmomi):
 
                             # Check domain
                             results['result'][host.name]['domain'] = self.domain
-                            if self.domain_name:
+                            if self.domain:
                                 if instance.dnsConfig.domainName != self.domain:
                                     results['result'][host.name]['domain_previous'] = instance.dnsConfig.domainName
                                     changed = True
                                     changed_list.append("Domain")
-                                    dns_config.domainName = self.domain_name
+                                    dns_config.domainName = self.domain
                             else:
                                 dns_config.domainName = instance.dnsConfig.domainName
 
