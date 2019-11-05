@@ -208,11 +208,10 @@ options:
           will be disconnected but present.'
     - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso).
           Required if type is set C(iso).'
-    - ' - C(controller_type) (string): Default value is C(ide). Only C(ide) controller type for CD-ROM is supported for
-          now, will add SATA controller type in the future.'
-    - ' - C(controller_number) (int): For C(ide) controller, valid value is 0 or 1.'
-    - ' - C(unit_number) (int): For CD-ROM device attach to C(ide) controller, valid value is 0 or 1.
-          C(controller_number) and C(unit_number) are mandatory attributes.'
+    - ' - C(controller_type) (string): Valid options are C(ide), C(sata). Default value is C(ide).'
+    - ' - C(controller_number) (int): For C(ide) controller, valid value is 0 or 1. For C(sata) controller, valid value is 0 to 3.'
+    - ' - C(unit_number) (int): For CD-ROM device attach to C(ide) controller, valid value is 0 or 1, attach to C(sata)
+          controller, valid value is 0 to 29. C(controller_number) and C(unit_number) are mandatory attributes.'
     - ' - C(state) (string): Valid value is C(present) or C(absent). Default is C(present). If set to C(absent), then
           the specified CD-ROM will be removed. For C(ide) controller, hot-add or hot-remove CD-ROM is not supported.'
     version_added: '2.5'
@@ -688,12 +687,26 @@ class PyVmomiDeviceHelper(object):
         return ide_ctl
 
     @staticmethod
-    def create_cdrom(ide_device, cdrom_type, iso_path=None, unit_number=0):
+    def create_sata_controller(bus_number=0):
+        sata_ctl = vim.vm.device.VirtualDeviceSpec()
+        sata_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        sata_ctl.device = vim.vm.device.VirtualAHCIController()
+        sata_ctl.device.deviceInfo = vim.Description()
+        sata_ctl.device.key = -randint(15000, 15999)
+        sata_ctl.device.busNumber = bus_number
+
+        return sata_ctl
+
+    @staticmethod
+    def create_cdrom(ctl_device, cdrom_type, iso_path=None, unit_number=0):
         cdrom_spec = vim.vm.device.VirtualDeviceSpec()
         cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         cdrom_spec.device = vim.vm.device.VirtualCdrom()
-        cdrom_spec.device.controllerKey = ide_device.key
-        cdrom_spec.device.key = -randint(3000, 3999)
+        cdrom_spec.device.controllerKey = ctl_device.key
+        if isinstance(ctl_device, vim.vm.device.VirtualIDEController):
+            cdrom_spec.device.key = -randint(3000, 3999)
+        elif isinstance(ctl_device, vim.vm.device.VirtualAHCIController):
+            cdrom_spec.device.key = -randint(16000, 16999)
         cdrom_spec.device.unitNumber = unit_number
         cdrom_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
         cdrom_spec.device.connectable.allowGuestControl = True
@@ -702,6 +715,7 @@ class PyVmomiDeviceHelper(object):
             cdrom_spec.device.backing = vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo()
         elif cdrom_type == "iso":
             cdrom_spec.device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo(fileName=iso_path)
+            cdrom_spec.device.connectable.connected = True
 
         return cdrom_spec
 
@@ -1107,8 +1121,7 @@ class PyVmomiHelper(PyVmomi):
                 self.change_detected = True
 
     def sanitize_cdrom_params(self):
-        # cdroms {'ide': [{num: 0, cdrom: []}, {}], 'sata': [{num: 0, cdrom: []}, {}, ...]}
-        cdroms = {'ide': [], 'sata': []}
+        cdrom_specs = []
         expected_cdrom_spec = self.params.get('cdrom')
         if expected_cdrom_spec:
             for cdrom_spec in expected_cdrom_spec:
@@ -1132,24 +1145,33 @@ class PyVmomiHelper(PyVmomi):
                 if cdrom_spec['controller_type'] == 'ide' and \
                         (cdrom_spec.get('controller_number') not in [0, 1] or cdrom_spec.get('unit_number') not in [0, 1]):
                     self.module.fail_json(msg="Invalid cdrom.controller_number: %s or cdrom.unit_number: %s, valid"
-                                              " values are 0 or 1 for IDE controller." % (cdrom_spec.get('controller_number'), cdrom_spec.get('unit_number')))
+                                              " values are 0 or 1 for IDE controller."
+                                              % (cdrom_spec.get('controller_number'), cdrom_spec.get('unit_number')))
 
                 if cdrom_spec['controller_type'] == 'sata' and \
                         (cdrom_spec.get('controller_number') not in range(0, 4) or cdrom_spec.get('unit_number') not in range(0, 30)):
                     self.module.fail_json(msg="Invalid cdrom.controller_number: %s or cdrom.unit_number: %s,"
                                               " valid controller_number value is 0-3, valid unit_number is 0-29"
-                                              " for SATA controller." % (cdrom_spec.get('controller_number'), cdrom_spec.get('unit_number')))
+                                              " for SATA controller." % (cdrom_spec.get('controller_number'),
+                                                                         cdrom_spec.get('unit_number')))
 
                 ctl_exist = False
-                for exist_spec in cdroms.get(cdrom_spec['controller_type']):
-                    if exist_spec['num'] == cdrom_spec['controller_number']:
+                for exist_spec in cdrom_specs:
+                    if exist_spec.get('ctl_num') == cdrom_spec['controller_number'] and \
+                            exist_spec.get('ctl_type') == cdrom_spec['controller_type']:
+                        for cdrom_same_ctl in exist_spec['cdroms']:
+                            if cdrom_same_ctl['unit_number'] == cdrom_spec['unit_number']:
+                                self.module.fail_json(msg="Duplicate cdrom.controller_type: %s, cdrom.controller_number: %s,"
+                                                          "cdrom.unit_number: %s parameters specified."
+                                                          % (cdrom_spec['controller_type'], cdrom_spec['controller_number'], cdrom_spec['unit_number']))
                         ctl_exist = True
-                        exist_spec['cdrom'].append(cdrom_spec)
+                        exist_spec['cdroms'].append(cdrom_spec)
                         break
                 if not ctl_exist:
-                    cdroms.get(cdrom_spec['controller_type']).append({'num': cdrom_spec['controller_number'], 'cdrom': [cdrom_spec]})
+                    cdrom_specs.append({'ctl_num': cdrom_spec['controller_number'],
+                                        'ctl_type': cdrom_spec['controller_type'], 'cdroms': [cdrom_spec]})
 
-        return cdroms
+        return cdrom_specs
 
     def configure_cdrom(self, vm_obj):
         # Configure the VM CD-ROM
@@ -1187,7 +1209,7 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="hardware.cdrom specified for a VM or template which already has 4"
                                               " IDE devices of which none are a cdrom")
 
-            cdrom_spec = self.device_helper.create_cdrom(ide_device=ide_device, cdrom_type=self.params["cdrom"]["type"],
+            cdrom_spec = self.device_helper.create_cdrom(ctl_device=ide_device, cdrom_type=self.params["cdrom"]["type"],
                                                          iso_path=iso_path)
             if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
                 cdrom_spec.device.connectable.connected = (self.params["cdrom"]["type"] != "none")
@@ -1205,61 +1227,77 @@ class PyVmomiHelper(PyVmomi):
 
     def configure_cdrom_list(self, vm_obj):
         configured_cdroms = self.sanitize_cdrom_params()
+        # get existing CDROM devices
         cdrom_devices = self.get_vm_cdrom_devices(vm=vm_obj)
-        # configure IDE CD-ROMs
-        if configured_cdroms['ide']:
-            ide_devices = self.get_vm_ide_devices(vm=vm_obj)
-            for expected_cdrom_spec in configured_cdroms['ide']:
-                ide_device = None
+        # get existing IDE and SATA controllers
+        ide_devices = self.get_vm_ide_devices(vm=vm_obj)
+        sata_devices = self.get_vm_sata_devices(vm=vm_obj)
+
+        for expected_cdrom_spec in configured_cdroms:
+            ctl_device = None
+            if expected_cdrom_spec['ctl_type'] == 'ide' and ide_devices:
                 for device in ide_devices:
-                    if device.busNumber == expected_cdrom_spec['num']:
-                        ide_device = device
+                    if device.busNumber == expected_cdrom_spec['ctl_num']:
+                        ctl_device = device
                         break
-                # if not find the matched ide controller or no existing ide controller
-                if not ide_device:
-                    ide_ctl = self.device_helper.create_ide_controller(bus_number=expected_cdrom_spec['num'])
-                    ide_device = ide_ctl.device
+            if expected_cdrom_spec['ctl_type'] == 'sata' and sata_devices:
+                for device in sata_devices:
+                    if device.busNumber == expected_cdrom_spec['ctl_num']:
+                        ctl_device = device
+                        break
+            # if not find create new ide or sata controller
+            if not ctl_device:
+                if expected_cdrom_spec['ctl_type'] == 'ide':
+                    ide_ctl = self.device_helper.create_ide_controller(bus_number=expected_cdrom_spec['ctl_num'])
+                    ctl_device = ide_ctl.device
                     self.change_detected = True
                     self.configspec.deviceChange.append(ide_ctl)
+                if expected_cdrom_spec['ctl_type'] == 'sata':
+                    sata_ctl = self.device_helper.create_sata_controller(bus_number=expected_cdrom_spec['ctl_num'])
+                    ctl_device = sata_ctl.device
+                    self.change_detected = True
+                    self.configspec.deviceChange.append(sata_ctl)
 
-                for cdrom in expected_cdrom_spec['cdrom']:
-                    cdrom_device = None
-                    iso_path = cdrom.get('iso_path')
-                    unit_number = cdrom.get('unit_number')
-                    for target_cdrom in cdrom_devices:
-                        if target_cdrom.controllerKey == ide_device.key and target_cdrom.unitNumber == unit_number:
-                            cdrom_device = target_cdrom
-                            break
-                    # create new CD-ROM
-                    if not cdrom_device and cdrom.get('state') != 'absent':
-                        if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
-                            self.module.fail_json(msg='CD-ROM attach to IDE controller not support hot-add.')
-                        if len(ide_device.device) == 2:
-                            self.module.fail_json(msg='Maximum number of CD-ROMs attached to IDE controller is 2.')
-                        cdrom_spec = self.device_helper.create_cdrom(ide_device=ide_device, cdrom_type=cdrom['type'],
-                                                                     iso_path=iso_path, unit_number=unit_number)
-                        self.change_detected = True
-                        self.configspec.deviceChange.append(cdrom_spec)
-                    # re-configure CD-ROM
-                    elif cdrom_device and cdrom.get('state') != 'absent' and \
-                            not self.device_helper.is_equal_cdrom(vm_obj=vm_obj, cdrom_device=cdrom_device,
-                                                                  cdrom_type=cdrom['type'], iso_path=iso_path):
-                        self.device_helper.update_cdrom_config(vm_obj, cdrom, cdrom_device, iso_path=iso_path)
-                        cdrom_spec = vim.vm.device.VirtualDeviceSpec()
-                        cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-                        cdrom_spec.device = cdrom_device
-                        self.change_detected = True
-                        self.configspec.deviceChange.append(cdrom_spec)
-                    # delete CD-ROM
-                    elif cdrom_device and cdrom.get('state') == 'absent':
-                        if vm_obj and vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOff:
-                            self.module.fail_json(msg='CD-ROM attach to IDE controller not support hot-remove.')
-                        cdrom_spec = self.device_helper.remove_cdrom(cdrom_device)
-                        self.change_detected = True
-                        self.configspec.deviceChange.append(cdrom_spec)
-        # configure SATA CD-ROMs is not supported yet
-        if configured_cdroms['sata']:
-            pass
+            for cdrom in expected_cdrom_spec['cdroms']:
+                cdrom_device = None
+                iso_path = cdrom.get('iso_path')
+                unit_number = cdrom.get('unit_number')
+                for target_cdrom in cdrom_devices:
+                    if target_cdrom.controllerKey == ctl_device.key and target_cdrom.unitNumber == unit_number:
+                        cdrom_device = target_cdrom
+                        break
+                # create new CD-ROM
+                if not cdrom_device and cdrom.get('state') != 'absent':
+                    if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn and \
+                            isinstance(ctl_device, vim.vm.device.VirtualIDEController):
+                        self.module.fail_json(msg='CD-ROM attach to IDE controller not support hot-add.')
+                    if len(ctl_device.device) == 2 and isinstance(ctl_device, vim.vm.device.VirtualIDEController):
+                        self.module.fail_json(msg='Maximum number of CD-ROMs attached to IDE controller is 2.')
+                    if len(ctl_device.device) == 30 and isinstance(ctl_device, vim.vm.device.VirtualAHCIController):
+                        self.module.fail_json(msg='Maximum number of CD-ROMs attached to SATA controller is 30.')
+
+                    cdrom_spec = self.device_helper.create_cdrom(ctl_device=ctl_device, cdrom_type=cdrom['type'],
+                                                                 iso_path=iso_path, unit_number=unit_number)
+                    self.change_detected = True
+                    self.configspec.deviceChange.append(cdrom_spec)
+                # re-configure CD-ROM
+                elif cdrom_device and cdrom.get('state') != 'absent' and \
+                        not self.device_helper.is_equal_cdrom(vm_obj=vm_obj, cdrom_device=cdrom_device,
+                                                              cdrom_type=cdrom['type'], iso_path=iso_path):
+                    self.device_helper.update_cdrom_config(vm_obj, cdrom, cdrom_device, iso_path=iso_path)
+                    cdrom_spec = vim.vm.device.VirtualDeviceSpec()
+                    cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+                    cdrom_spec.device = cdrom_device
+                    self.change_detected = True
+                    self.configspec.deviceChange.append(cdrom_spec)
+                # delete CD-ROM
+                elif cdrom_device and cdrom.get('state') == 'absent':
+                    if vm_obj and vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOff and \
+                            isinstance(ctl_device, vim.vm.device.VirtualIDEController):
+                        self.module.fail_json(msg='CD-ROM attach to IDE controller not support hot-remove.')
+                    cdrom_spec = self.device_helper.remove_cdrom(cdrom_device)
+                    self.change_detected = True
+                    self.configspec.deviceChange.append(cdrom_spec)
 
     def configure_hardware_params(self, vm_obj):
         """
@@ -1374,6 +1412,9 @@ class PyVmomiHelper(PyVmomi):
 
     def get_vm_ide_devices(self, vm=None):
         return self.get_device_by_type(vm=vm, type=vim.vm.device.VirtualIDEController)
+
+    def get_vm_sata_devices(self, vm=None):
+        return self.get_device_by_type(vm=vm, type=vim.vm.device.VirtualAHCIController)
 
     def get_vm_network_interfaces(self, vm=None):
         device_list = []
