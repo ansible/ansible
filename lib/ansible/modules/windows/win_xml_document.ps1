@@ -751,7 +751,7 @@ $insertafter = $module.Params.insertafter
 $namespaces = $module.Params.namespaces
 
 # check if the file exists
-if ($null -eq $xml_string -and -not (Test-Path -Path $xml_file -PathType Leaf))
+if ($null -eq $xml_string -and -not (Test-Path -LiteralPath $xml_file -PathType Leaf))
 {
     $module.FailJson("The target xml source $xml_file does not exist.")
 }

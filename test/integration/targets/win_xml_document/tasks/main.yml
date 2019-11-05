@@ -5,6 +5,22 @@
     state: directory
     path: \tmp\
 
+# first make sure we don't add more \r by removing all of them
+- name: change our results files to windowsstyle line endings (1/2)
+  shell: sed -i 's/\r//' results/*
+  args:
+    chdir: '{{ role_path }}'
+    warn: no
+  delegate_to: localhost
+
+# now add \r before each line ending
+- name: 'change our results file to windows-style line endings (2/2)'
+  shell: sed -i 's/$/\r/' results/*
+  args:
+    chdir: '{{ role_path }}'
+    warn: no
+  delegate_to: localhost
+
 - name: run tests
   block:
 
