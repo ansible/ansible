@@ -37,7 +37,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: nxos_lldp_interfaces
-version_added: 2.10
+version_added: "2.10"
 short_description: Manages interfaces' configuration for Link Layer Discovery Protocol (LLDP) on NX-OS platforms.
 description: This module manages interfaces' configuration for Link Layer Discovery Protocol (LLDP) on NX-OS platforms.
 author: Adharsh Srivats Rangarajan (@adharshsrivatsr)
