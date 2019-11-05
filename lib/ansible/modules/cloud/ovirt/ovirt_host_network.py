@@ -245,7 +245,9 @@ def get_bond_options(mode, usr_opts):
 class HostNetworksModule(BaseModule):
 
     def __compare_options(self, new_options, old_options):
-        return sorted(get_dict_of_struct(opt) for opt in new_options) != sorted(get_dict_of_struct(opt) for opt in old_options)
+        return sorted((get_dict_of_struct(opt) for opt in new_options),
+                      key=lambda x: x["name"]) != sorted((get_dict_of_struct(opt) for opt in old_options),
+                                                         key=lambda x: x["name"])
 
     def build_entity(self):
         return otypes.Host()
