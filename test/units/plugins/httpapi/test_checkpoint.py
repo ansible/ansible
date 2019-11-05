@@ -63,7 +63,7 @@ class TestCheckpointHttpApi(unittest.TestCase):
 
     def test_login_to_global_domain(self):
         temp_domain = self.checkpoint_plugin.hostvars['domain']
-        self.ftd_plugin.hostvars['domain'] = 'test_domain'
+        self.checkpoint_plugin.hostvars['domain'] = 'test_domain'
         self.connection_mock.send.return_value = self._connection_response(
             200, {}
         )
