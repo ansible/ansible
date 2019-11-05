@@ -308,15 +308,16 @@ class WapiModule(WapiBase):
         if (ib_obj_type == NIOS_HOST_RECORD):
             # this check is for idempotency, as if the same ip address shall be passed
             # add param will be removed, and same exists true for remove case as well.
-            for each in current_object['ipv4addrs']:
-                if each['ipv4addr'] == proposed_object['ipv4addrs'][0]['ipv4addr']:
-                    if 'add' in proposed_object['ipv4addrs'][0]:
-                        del proposed_object['ipv4addrs'][0]['add']
-                        break
-                check_remove += each.values()
-            if proposed_object['ipv4addrs'][0]['ipv4addr'] not in check_remove:
-                if 'remove' in proposed_object['ipv4addrs'][0]:
-                    del proposed_object['ipv4addrs'][0]['remove']
+            if 'ipv4addrs' in [current_object and proposed_object]:
+                for each in current_object['ipv4addrs']:
+                    if each['ipv4addr'] == proposed_object['ipv4addrs'][0]['ipv4addr']:
+                        if 'add' in proposed_object['ipv4addrs'][0]:
+                            del proposed_object['ipv4addrs'][0]['add']
+                            break
+                    check_remove += each.values()
+                if proposed_object['ipv4addrs'][0]['ipv4addr'] not in check_remove:
+                    if 'remove' in proposed_object['ipv4addrs'][0]:
+                        del proposed_object['ipv4addrs'][0]['remove']
 
         res = None
         modified = not self.compare_objects(current_object, proposed_object)
@@ -346,18 +347,23 @@ class WapiModule(WapiBase):
                     run_update = True
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     if 'ipv4addrs' in proposed_object:
-                        if ('address_add' or 'address_remove') in proposed_object['ipv4addrs'][0]:
-                            proposed_object = self.check_if_add_remove_ip_exists(proposed_object)
-                    res = self.update_object(ref, proposed_object)
+                        if ('add' or 'remove') in proposed_object['ipv4addrs'][0]:
+                            run_update, proposed_object = self.check_if_add_remove_ip_arg_exists(proposed_object)
+                            if run_update:
+                                res = self.update_object(ref, proposed_object)
+                                result['changed'] = True
+                            else:
+                                res = ref
                 if (ib_obj_type in (NIOS_A_RECORD, NIOS_AAAA_RECORD, NIOS_PTR_RECORD, NIOS_SRV_RECORD)):
                     # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record/srv:record/ptr:record
-                    if 'add' in proposed_object['ipv4addrs'][0]:
-                        run_update, proposed_object = self.check_if_add_remove_ip_arg_exists(proposed_object)
-                        if run_update:
-                            res = self.update_object(ref, proposed_object)
-                            result['changed'] = True
-                        else:
-                            res = ref
+                    if 'ipv4addrs' in proposed_object:
+                        if 'add' in proposed_object['ipv4addrs'][0]:
+                            run_update, proposed_object = self.check_if_add_remove_ip_arg_exists(proposed_object)
+                            if run_update:
+                                res = self.update_object(ref, proposed_object)
+                                result['changed'] = True
+                            else:
+                                res = ref
                 if (ib_obj_type in (NIOS_A_RECORD, NIOS_AAAA_RECORD)):
                     # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record
                     proposed_object = self.on_update(proposed_object, ib_spec)
