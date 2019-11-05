@@ -78,7 +78,7 @@ options:
           type. After you connect to the instance, you must mount the volume.
         type: str
       ebs:
-        description: Parameters used to automatically set up EBS volumes when the instance is launched
+        description: Parameters used to automatically set up EBS volumes when the instance is launched.
         type: dict
         suboptions:
           delete_on_termination:
