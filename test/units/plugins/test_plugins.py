@@ -30,12 +30,6 @@ from ansible.plugins.loader import PluginLoader
 
 class TestErrors(unittest.TestCase):
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     @patch.object(PluginLoader, '_get_paths')
     def test_print_paths(self, mock_method):
         mock_method.return_value = ['/path/one', '/path/two', '/path/three']
