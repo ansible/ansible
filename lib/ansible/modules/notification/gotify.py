@@ -133,10 +133,10 @@ def main():
     }
 
     response, info = fetch_url(module=module,
-        url=full_url,
-        headers=headers,
-        method='POST',
-        data=payload)
+                              url=full_url,
+                              headers=headers,
+                              method='POST',
+                              data=payload)
 
     result['http result'] = info['status']
 
