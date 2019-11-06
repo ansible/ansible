@@ -9,7 +9,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import jinja2
 import operator
+from distutils.version import LooseVersion
 
 
 def test_in(value, seq):
@@ -27,6 +29,9 @@ class TestModule:
     """
 
     def tests(self):
+        if LooseVersion(str(jinja2.__version__)) >= LooseVersion('2.10'):
+            return {}
+
         return {
             'in': test_in,
             '==': operator.eq,
