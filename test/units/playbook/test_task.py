@@ -87,8 +87,8 @@ class TestTask(unittest.TestCase):
         self.assertIn("The error appears to be in 'test_task_faux_playbook.yml", cm.exception.message)
         self.assertIn(kv_bad_args_str, cm.exception.message)
         self.assertIn('apk', cm.exception.message)
-        self.assertEquals(cm.exception.message.count('The offending line'), 1)
-        self.assertEquals(cm.exception.message.count('The error appears to be in'), 1)
+        self.assertEqual(cm.exception.message.count('The offending line'), 1)
+        self.assertEqual(cm.exception.message.count('The error appears to be in'), 1)
 
     def test_task_auto_name(self):
         assert 'name' not in kv_command_task

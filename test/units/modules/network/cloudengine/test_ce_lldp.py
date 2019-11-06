@@ -79,7 +79,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
             bind_name='bind-name')
         )
         result = self.execute_module(changed=True)
-        self.assertEquals(sorted(result['updates']), sorted(update))
+        self.assertEqual(sorted(result['updates']), sorted(update))
 
     def test_lacp_sys_parameter_present(self):
         update = ['lldp enable',
@@ -110,4 +110,4 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
             bind_name='bind-name')
         )
         result = self.execute_module(changed=True)
-        self.assertEquals(sorted(result['updates']), sorted(update))
+        self.assertEqual(sorted(result['updates']), sorted(update))

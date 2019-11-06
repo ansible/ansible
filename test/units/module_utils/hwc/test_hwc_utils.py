@@ -15,10 +15,10 @@ class HwcUtilsTestCase(unittest.TestCase):
             }
         }
 
-        self.assertEquals(navigate_value(value, ["foo", "quiet", "tree"]),
-                          "test")
+        self.assertEqual(navigate_value(value, ["foo", "quiet", "tree"]),
+                         "test")
 
-        self.assertEquals(
+        self.assertEqual(
             navigate_value(value, ["foo", "quiet", "trees"],
                            {"foo.quiet.trees": 1}),
             1)

@@ -84,7 +84,7 @@ class TestHost(unittest.TestCase):
 
         hostA_clone = Host()
         hostA_clone.deserialize(hostA_data)
-        self.assertEquals(self.hostA, hostA_clone)
+        self.assertEqual(self.hostA, hostA_clone)
 
     def test_set_state(self):
         group = Group('some_group')
@@ -93,7 +93,7 @@ class TestHost(unittest.TestCase):
         pickled_hostA = pickle.dumps(self.hostA)
 
         hostA_clone = pickle.loads(pickled_hostA)
-        self.assertEquals(self.hostA, hostA_clone)
+        self.assertEqual(self.hostA, hostA_clone)
 
 
 class TestHostWithPort(TestHost):
@@ -105,4 +105,4 @@ class TestHostWithPort(TestHost):
 
     def test_get_vars_ansible_port(self):
         host_vars = self.hostA.get_vars()
-        self.assertEquals(host_vars['ansible_port'], self.ansible_port)
+        self.assertEqual(host_vars['ansible_port'], self.ansible_port)

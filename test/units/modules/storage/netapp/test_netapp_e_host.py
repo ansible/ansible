@@ -256,7 +256,7 @@ class HostTest(ModuleTestCase):
             host = Host()
             host.host_exists()
             self.assertTrue(host.needs_update())
-            self.assertEquals(host.assigned_host_ports(), {})
+            self.assertEqual(host.assigned_host_ports(), {})
 
         # Change port name (force)
         with mock.patch(self.REQ_FUNC, return_value=(200, self.EXISTING_HOSTS)):
@@ -266,7 +266,7 @@ class HostTest(ModuleTestCase):
             host = Host()
             host.host_exists()
             self.assertTrue(host.needs_update())
-            self.assertEquals(host.assigned_host_ports(), {'84000000600A098000A4B9D10030370B5D430109': ['89000000600A098000A4B28D00303CFC5D4300F7']})
+            self.assertEqual(host.assigned_host_ports(), {'84000000600A098000A4B9D10030370B5D430109': ['89000000600A098000A4B28D00303CFC5D4300F7']})
 
         # Change port type
         with mock.patch(self.REQ_FUNC, return_value=(200, self.EXISTING_HOSTS)):
@@ -275,7 +275,7 @@ class HostTest(ModuleTestCase):
             host = Host()
             host.host_exists()
             self.assertTrue(host.needs_update())
-            self.assertEquals(host.assigned_host_ports(), {})
+            self.assertEqual(host.assigned_host_ports(), {})
 
         # take port from another host by force
         with mock.patch(self.REQ_FUNC, return_value=(200, self.EXISTING_HOSTS)):
@@ -284,7 +284,7 @@ class HostTest(ModuleTestCase):
             host = Host()
             host.host_exists()
             self.assertTrue(host.needs_update())
-            self.assertEquals(host.assigned_host_ports(), {'84000000600A098000A4B9D10030370B5D430109': ['89000000600A098000A4B28D00303CFC5D4300F7']})
+            self.assertEqual(host.assigned_host_ports(), {'84000000600A098000A4B9D10030370B5D430109': ['89000000600A098000A4B28D00303CFC5D4300F7']})
 
         # take port from another host by force
         with mock.patch(self.REQ_FUNC, side_effect=[(200, self.EXISTING_HOSTS), (200, {})]):
@@ -293,8 +293,8 @@ class HostTest(ModuleTestCase):
             host = Host()
             host.host_exists()
             self.assertTrue(host.needs_update())
-            self.assertEquals(host.assigned_host_ports(apply_unassigning=True),
-                              {'84000000600A098000A4B9D10030370B5D430109': ['89000000600A098000A4B28D00303CFC5D4300F7']})
+            self.assertEqual(host.assigned_host_ports(apply_unassigning=True),
+                             {'84000000600A098000A4B9D10030370B5D430109': ['89000000600A098000A4B28D00303CFC5D4300F7']})
 
     def test_assigned_host_ports_fail(self):
         """Verify assigned_host_ports gives expected exceptions."""
@@ -486,4 +486,4 @@ class HostTest(ModuleTestCase):
         self._set_args({'state': 'present', 'name': 'beegfs_metadata1', 'host_type': 'windows', 'force_port': True, 'group': 'test_group',
                         'ports': [{'label': 'beegfs_metadata1_iscsi_1', 'type': 'iscsi', 'port': 'iqn.1993-08.org.debian.beegfs-storage1:01:b0621126818'}]})
         host = Host()
-        self.assertEquals(host.build_success_payload(), {'api_url': 'http://localhost/', 'ssid': '1'})
+        self.assertEqual(host.build_success_payload(), {'api_url': 'http://localhost/', 'ssid': '1'})

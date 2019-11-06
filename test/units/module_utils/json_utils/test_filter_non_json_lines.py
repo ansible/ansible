@@ -55,29 +55,29 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
     def test_just_json(self):
         for i in self.all_inputs:
             filtered, warnings = _filter_non_json_lines(i)
-            self.assertEquals(filtered, i)
-            self.assertEquals(warnings, [])
+            self.assertEqual(filtered, i)
+            self.assertEqual(warnings, [])
 
     def test_leading_junk(self):
         for i in self.all_inputs:
             for j in self.junk:
                 filtered, warnings = _filter_non_json_lines(j + "\n" + i)
-                self.assertEquals(filtered, i)
-                self.assertEquals(warnings, [])
+                self.assertEqual(filtered, i)
+                self.assertEqual(warnings, [])
 
     def test_trailing_junk(self):
         for i in self.all_inputs:
             for j in self.junk:
                 filtered, warnings = _filter_non_json_lines(i + "\n" + j)
-                self.assertEquals(filtered, i)
-                self.assertEquals(warnings, [u"Module invocation had junk after the JSON data: %s" % j.strip()])
+                self.assertEqual(filtered, i)
+                self.assertEqual(warnings, [u"Module invocation had junk after the JSON data: %s" % j.strip()])
 
     def test_leading_and_trailing_junk(self):
         for i in self.all_inputs:
             for j in self.junk:
                 filtered, warnings = _filter_non_json_lines("\n".join([j, i, j]))
-                self.assertEquals(filtered, i)
-                self.assertEquals(warnings, [u"Module invocation had junk after the JSON data: %s" % j.strip()])
+                self.assertEqual(filtered, i)
+                self.assertEqual(warnings, [u"Module invocation had junk after the JSON data: %s" % j.strip()])
 
     def test_unparsable_filter_non_json_lines(self):
         for i in self.unparsable_cases:

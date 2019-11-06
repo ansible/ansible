@@ -452,4 +452,4 @@ class FactsTest(ModuleTestCase):
         facts.is_embedded = lambda: True
         with mock.patch(self.GET_CONTROLLERS_FUNC, return_value={"070000000000000000000001": "A", "070000000000000000000002": "B"}):
             with mock.patch(self.REQUEST_FUNC, side_effect=[(200, self.GRAPH_RESPONSE), (200, self.WORKLOAD_RESPONSE)]):
-                self.assertEquals(facts.get_array_facts(), self.EXPECTED_GET_ARRAY_FACTS)
+                self.assertEqual(facts.get_array_facts(), self.EXPECTED_GET_ARRAY_FACTS)

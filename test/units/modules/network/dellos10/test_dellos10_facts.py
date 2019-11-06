@@ -74,10 +74,10 @@ class TestDellos10Facts(TestDellos10Module):
         self.assertIn('hardware', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
-        self.assertEquals('os10', ansible_facts['ansible_net_hostname'])
+        self.assertEqual('os10', ansible_facts['ansible_net_hostname'])
         self.assertIn('ethernet1/1/8', ansible_facts['ansible_net_interfaces'].keys())
-        self.assertEquals(7936, ansible_facts['ansible_net_memtotal_mb'])
-        self.assertEquals(5693, ansible_facts['ansible_net_memfree_mb'])
+        self.assertEqual(7936, ansible_facts['ansible_net_memtotal_mb'])
+        self.assertEqual(5693, ansible_facts['ansible_net_memfree_mb'])
 
     def test_dellos10_facts_gather_subset_config(self):
         set_module_args({'gather_subset': 'config'})
@@ -85,7 +85,7 @@ class TestDellos10Facts(TestDellos10Module):
         ansible_facts = result['ansible_facts']
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('config', ansible_facts['ansible_net_gather_subset'])
-        self.assertEquals('os10', ansible_facts['ansible_net_hostname'])
+        self.assertEqual('os10', ansible_facts['ansible_net_hostname'])
         self.assertIn('ansible_net_config', ansible_facts)
 
     def test_dellos10_facts_gather_subset_hardware(self):
@@ -94,9 +94,9 @@ class TestDellos10Facts(TestDellos10Module):
         ansible_facts = result['ansible_facts']
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('hardware', ansible_facts['ansible_net_gather_subset'])
-        self.assertEquals('x86_64', ansible_facts['ansible_net_cpu_arch'])
-        self.assertEquals(7936, ansible_facts['ansible_net_memtotal_mb'])
-        self.assertEquals(5693, ansible_facts['ansible_net_memfree_mb'])
+        self.assertEqual('x86_64', ansible_facts['ansible_net_cpu_arch'])
+        self.assertEqual(7936, ansible_facts['ansible_net_memtotal_mb'])
+        self.assertEqual(5693, ansible_facts['ansible_net_memfree_mb'])
 
     def test_dellos10_facts_gather_subset_interfaces(self):
         set_module_args({'gather_subset': 'interfaces'})
@@ -105,6 +105,6 @@ class TestDellos10Facts(TestDellos10Module):
         self.assertIn('default', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('interfaces', ansible_facts['ansible_net_gather_subset'])
         self.assertIn('ethernet1/1/8', ansible_facts['ansible_net_interfaces'].keys())
-        self.assertEquals(sorted(['mgmt1/1/1', 'ethernet1/1/4', 'ethernet1/1/2', 'ethernet1/1/3', 'ethernet1/1/1']),
-                          sorted(list(ansible_facts['ansible_net_neighbors'].keys())))
+        self.assertEqual(sorted(['mgmt1/1/1', 'ethernet1/1/4', 'ethernet1/1/2', 'ethernet1/1/3', 'ethernet1/1/1']),
+                         sorted(list(ansible_facts['ansible_net_neighbors'].keys())))
         self.assertIn('ansible_net_interfaces', ansible_facts)
