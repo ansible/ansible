@@ -233,9 +233,8 @@ def assemble_json(cpmmodule, existing):
                 loopcounter += 1
     if cpmmodule.params["timeout"] is not None:
         if (existing["ntp"]["timeout"] != to_native(cpmmodule.params["timeout"])):
-            if ((int(to_native(cpmmodule.params["timeout"])) > 0) and (int(to_native(cpmmodule.params["timeout"])) <= 60)):
-                total_change = (total_change | 8)
-                localtimeout = to_native(cpmmodule.params["timeout"])
+            total_change = (total_change | 8)
+            localtimeout = to_native(cpmmodule.params["timeout"])
 
     if (total_change > 0):
         protocol = protocolchanged = 0
@@ -322,11 +321,11 @@ def run_module():
         cpm_password=dict(type='str', required=True, no_log=True),
         date=dict(type='str', required=False, default=None),
         time=dict(type='str', required=False, default=None),
-        timezone=dict(type='int', required=False, default=None),
+        timezone=dict(type='int', required=False, default=None, choices=list(range(1,38))),
         ntpenable=dict(type='int', required=False, default=None, choices=[0, 1]),
         ipv4address=dict(type='str', required=False, default=None),
         ipv6address=dict(type='str', required=False, default=None),
-        timeout=dict(type='int', required=False, default=None),
+        timeout=dict(type='int', required=False, default=None, choices=list(range(1,61))),
         use_https=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
         use_proxy=dict(type='bool', default=False)
