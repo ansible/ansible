@@ -7,7 +7,6 @@
       security_token: '{{ security_token | default(omit) }}'
       region: '{{ aws_region | default(omit) }}'
 
-- name: Integration test for lightsail module
   block:
 
     # ==== Tests ===================================================
