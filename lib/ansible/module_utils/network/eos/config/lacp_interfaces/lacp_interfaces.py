@@ -208,7 +208,6 @@ def generate_commands(interface, to_set, to_remove):
 
         commands.append("lacp {0} {1}".format(key.replace("_", "-"), value))
 
-
     if commands:
         commands.insert(0, "interface {0}".format(interface))
 
