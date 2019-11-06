@@ -111,6 +111,12 @@ class HostVars(Mapping):
             out[host] = self.get(host)
         return repr(out)
 
+    def __deepcopy__(self, memo):
+        # We do not need to deepcopy because HostVars is immutable,
+        # however we have to implement the method so we can deepcopy
+        # variables' dicts that contain HostVars.
+        return self
+
 
 class HostVarsVars(Mapping):
 
