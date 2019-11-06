@@ -447,7 +447,7 @@ files:
   $modules/source_control/git.py: $team_ansible
   $modules/source_control/github/github_key.py:
     ignored: erydo
-  $modules/source_control/gitlab_: &gitlab
+  $modules/source_control/gitlab/: &gitlab
     keywords: [ gitlab, source_control ]
     labels: gitlab
     maintainers: $team_gitlab
@@ -1576,6 +1576,7 @@ files:
   test/units/modules/network/iosxr: *iosxr
   test/units/modules/network/nso: *nso
   test/units/modules/network/nxos: *nxos
+  test/units/modules/source_control/gitlab/: *gitlab
   test/units/modules/storage/hpe3par: *hpe3par
   test/units/modules/storage/netapp:
     maintainers: $team_netapp
