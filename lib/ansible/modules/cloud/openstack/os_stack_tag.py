@@ -135,8 +135,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    sdk, cloud = openstack_cloud_from_module(module)
-
     stack_name = module.params['stack']
     state = module.params['state']
     tags = module.params['tags']
