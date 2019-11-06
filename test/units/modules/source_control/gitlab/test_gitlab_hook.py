@@ -55,11 +55,11 @@ class TestGitlabHook(GitlabModuleTestCase):
 
         rvalue = self.moduleUtil.existsHook(project, "http://example.com/hook")
 
-        self.assertEqual(rvalue, True)
+        self.assertIs(rvalue, True)
 
         rvalue = self.moduleUtil.existsHook(project, "http://gitlab.com/hook")
 
-        self.assertEqual(rvalue, False)
+        self.assertIs(rvalue, False)
 
     @with_httmock(resp_get_project)
     @with_httmock(resp_create_project_hook)
@@ -79,13 +79,13 @@ class TestGitlabHook(GitlabModuleTestCase):
 
         changed, newHook = self.moduleUtil.updateHook(hook, {"url": "http://gitlab.com/hook"})
 
-        self.assertEqual(changed, True)
+        self.assertIs(changed, True)
         self.assertEqual(type(newHook), ProjectHook)
         self.assertEqual(newHook.url, "http://gitlab.com/hook")
 
         changed, newHook = self.moduleUtil.updateHook(hook, {"url": "http://gitlab.com/hook"})
 
-        self.assertEqual(changed, False)
+        self.assertIs(changed, False)
         self.assertEqual(newHook.url, "http://gitlab.com/hook")
 
     @with_httmock(resp_get_project)

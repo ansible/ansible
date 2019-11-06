@@ -41,7 +41,7 @@ class TestBucketAccessKeyModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(create_deploy_key_mock.call_count, 1)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_access_key, 'get_existing_deploy_key', return_value=None)
@@ -61,7 +61,7 @@ class TestBucketAccessKeyModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(create_deploy_key_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_access_key, 'get_existing_deploy_key', return_value={
@@ -112,7 +112,7 @@ class TestBucketAccessKeyModule(ModuleTestCase):
 
                 self.assertEqual(delete_deploy_key_mock.call_count, 1)
                 self.assertEqual(create_deploy_key_mock.call_count, 1)
-                self.assertEqual(exec_info.exception.args[0]['changed'], True)
+                self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_access_key, 'get_existing_deploy_key', return_value={
@@ -163,7 +163,7 @@ class TestBucketAccessKeyModule(ModuleTestCase):
 
                 self.assertEqual(delete_deploy_key_mock.call_count, 0)
                 self.assertEqual(create_deploy_key_mock.call_count, 0)
-                self.assertEqual(exec_info.exception.args[0]['changed'], False)
+                self.assertIs(exec_info.exception.args[0]['changed'], False)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_access_key, 'get_existing_deploy_key', return_value={
@@ -215,7 +215,7 @@ class TestBucketAccessKeyModule(ModuleTestCase):
 
                 self.assertEqual(delete_deploy_key_mock.call_count, 0)
                 self.assertEqual(create_deploy_key_mock.call_count, 0)
-                self.assertEqual(exec_info.exception.args[0]['changed'], True)
+                self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_access_key, 'get_existing_deploy_key', return_value={
@@ -263,7 +263,7 @@ class TestBucketAccessKeyModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(delete_deploy_key_mock.call_count, 1)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_access_key, 'get_existing_deploy_key', return_value=None)
@@ -281,7 +281,7 @@ class TestBucketAccessKeyModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(delete_deploy_key_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], False)
+            self.assertIs(exec_info.exception.args[0]['changed'], False)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_access_key, 'get_existing_deploy_key', return_value={
@@ -330,7 +330,7 @@ class TestBucketAccessKeyModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(delete_deploy_key_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
 
 if __name__ == '__main__':

@@ -75,12 +75,12 @@ class FirmwareTest(ModuleTestCase):
         self._set_args({"firmware": "test.dlp", "nvsram": "test.dlp"})
         with patch(builtin_path, mock_open(read_data=b"firmwarexxxxxxxx")) as mock_file:
             firmware = NetAppESeriesFirmware()
-            self.assertEqual(firmware.is_firmware_bundled(), False)
+            self.assertIs(firmware.is_firmware_bundled(), False)
 
         self._set_args({"firmware": "test.dlp", "nvsram": "test.dlp"})
         with patch(builtin_path, mock_open(read_data=self.BUNDLE_HEADER[:16])) as mock_file:
             firmware = NetAppESeriesFirmware()
-            self.assertEqual(firmware.is_firmware_bundled(), True)
+            self.assertIs(firmware.is_firmware_bundled(), True)
 
     def test_is_firmware_bundles_fail(self):
         """Verify non-firmware fails."""

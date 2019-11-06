@@ -151,7 +151,7 @@ class TestCompareType5(unittest.TestCase):
         unencrypted_password = 'cisco'
         encrypted_password = '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
         parsed = comp_type5(unencrypted_password, encrypted_password)
-        self.assertEqual(parsed, True)
+        self.assertIs(parsed, True)
 
     def test_compare_type5_string(self):
         unencrypted_password = 'cisco'
@@ -163,7 +163,7 @@ class TestCompareType5(unittest.TestCase):
         unencrypted_password = 'invalid_password'
         encrypted_password = '$1$nTc1$Z28sUTcWfXlvVe2x.3XAa.'
         parsed = comp_type5(unencrypted_password, encrypted_password)
-        self.assertEqual(parsed, False)
+        self.assertIs(parsed, False)
 
 
 class TestVlanParser(unittest.TestCase):

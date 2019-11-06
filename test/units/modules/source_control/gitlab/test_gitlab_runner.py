@@ -54,11 +54,11 @@ class TestGitlabRunner(GitlabModuleTestCase):
     def test_runner_exist(self):
         rvalue = self.moduleUtil.existsRunner("test-1-20150125")
 
-        self.assertEqual(rvalue, True)
+        self.assertIs(rvalue, True)
 
         rvalue = self.moduleUtil.existsRunner("test-3-00000000")
 
-        self.assertEqual(rvalue, False)
+        self.assertIs(rvalue, False)
 
     @with_httmock(resp_create_runner)
     def test_create_runner(self):
@@ -74,13 +74,13 @@ class TestGitlabRunner(GitlabModuleTestCase):
 
         changed, newRunner = self.moduleUtil.updateRunner(runner, {"description": "Runner description"})
 
-        self.assertEqual(changed, True)
+        self.assertIs(changed, True)
         self.assertEqual(type(newRunner), Runner)
         self.assertEqual(newRunner.description, "Runner description")
 
         changed, newRunner = self.moduleUtil.updateRunner(runner, {"description": "Runner description"})
 
-        self.assertEqual(changed, False)
+        self.assertIs(changed, False)
         self.assertEqual(newRunner.description, "Runner description")
 
     @with_httmock(resp_find_runners_list)

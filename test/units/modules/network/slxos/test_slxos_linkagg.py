@@ -150,7 +150,7 @@ class TestSlxosLinkaggModule(TestSlxosModule):
             shawshank='Redemption'
         ))
         result = self.execute_module(failed=True)
-        self.assertEqual(result['failed'], True)
+        self.assertIs(result['failed'], True)
         self.assertTrue(re.match(
             r'Unsupported parameters for \((basic.pyc|basic.py)\) module: '
             'shawshank Supported parameters include: aggregate, group, '

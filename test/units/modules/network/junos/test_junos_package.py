@@ -70,4 +70,4 @@ class TestJunosPackageModule(TestJunosModule):
 
         args, kwargs = jnpr_mock.junos.utils.sw.SW().install.call_args
         self.assertEqual(args, ('junos-vsrx-12.1X46-D10.2-domestic.tgz',))
-        self.assertEqual(kwargs['no_copy'], True)
+        self.assertIs(kwargs['no_copy'], True)

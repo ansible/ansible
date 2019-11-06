@@ -93,7 +93,7 @@ class TestSlxosL3InterfaceModule(TestSlxosModule):
             shawshank='Redemption'
         ))
         result = self.execute_module(failed=True)
-        self.assertEqual(result['failed'], True)
+        self.assertIs(result['failed'], True)
         self.assertTrue(re.match(
             r'Unsupported parameters for \((basic.py|basic.pyc)\) module: '
             'shawshank Supported parameters include: aggregate, ipv4, ipv6, '

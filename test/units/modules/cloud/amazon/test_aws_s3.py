@@ -26,7 +26,7 @@ class TestUrlparse(unittest.TestCase):
 
     def test_is_fakes3(self):
         actual = s3.is_fakes3("fakes3://bla.blubb")
-        self.assertEqual(True, actual)
+        self.assertIs(actual, True)
 
     def test_get_s3_connection(self):
         aws_connect_kwargs = dict(aws_access_key_id="access_key",
@@ -35,4 +35,4 @@ class TestUrlparse(unittest.TestCase):
         rgw = True
         s3_url = "http://bla.blubb"
         actual = s3.get_s3_connection(None, aws_connect_kwargs, location, rgw, s3_url)
-        self.assertEqual(bool("bla.blubb" in str(actual._endpoint)), True)
+        self.assertIs(bool("bla.blubb" in str(actual._endpoint)), True)

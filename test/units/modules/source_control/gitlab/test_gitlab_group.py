@@ -55,13 +55,13 @@ class TestGitlabGroup(GitlabModuleTestCase):
     def test_exist_group(self):
         rvalue = self.moduleUtil.existsGroup(1)
 
-        self.assertEqual(rvalue, True)
+        self.assertIs(rvalue, True)
 
     @with_httmock(resp_get_missing_group)
     def test_exist_group(self):
         rvalue = self.moduleUtil.existsGroup(1)
 
-        self.assertEqual(rvalue, False)
+        self.assertIs(rvalue, False)
 
     @with_httmock(resp_create_group)
     def test_create_group(self):
@@ -87,13 +87,13 @@ class TestGitlabGroup(GitlabModuleTestCase):
         group = self.gitlab_instance.groups.get(1)
         changed, newGroup = self.moduleUtil.updateGroup(group, {'name': "BarFoo Group", "visibility": "private"})
 
-        self.assertEqual(changed, True)
+        self.assertIs(changed, True)
         self.assertEqual(newGroup.name, "BarFoo Group")
         self.assertEqual(newGroup.visibility, "private")
 
         changed, newGroup = self.moduleUtil.updateGroup(group, {'name': "BarFoo Group"})
 
-        self.assertEqual(changed, False)
+        self.assertIs(changed, False)
 
     @with_httmock(resp_get_group)
     @with_httmock(resp_find_group_project)

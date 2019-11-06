@@ -113,7 +113,7 @@ class TestRoute53Module(ModuleTestCase):
                 'CallerReference': 'example.com.-1',
             })
 
-        self.assertEqual(exec_info.exception.args[0]['changed'], True)
+        self.assertIs(exec_info.exception.args[0]['changed'], True)
         self.assertTrue(is_subdict(response, exec_info.exception.args[0]))
 
     @parameterized([
@@ -185,7 +185,7 @@ class TestRoute53Module(ModuleTestCase):
                 },
             })
 
-        self.assertEqual(exec_info.exception.args[0]['changed'], True)
+        self.assertIs(exec_info.exception.args[0]['changed'], True)
         self.assertTrue(is_subdict(response, exec_info.exception.args[0]))
 
     @parameterized([
@@ -248,7 +248,7 @@ class TestRoute53Module(ModuleTestCase):
                 'Comment': 'new',
             })
 
-        self.assertEqual(exec_info.exception.args[0]['changed'], True)
+        self.assertIs(exec_info.exception.args[0]['changed'], True)
         self.assertTrue(is_subdict(response, exec_info.exception.args[0]))
 
     @patch.object(route53_zone, 'find_zones', return_value=[{
@@ -277,7 +277,7 @@ class TestRoute53Module(ModuleTestCase):
             route53_zone.main()
 
         client_mock.return_value.update_hosted_zone_comment.assert_not_called()
-        self.assertEqual(exec_info.exception.args[0]['changed'], False)
+        self.assertIs(exec_info.exception.args[0]['changed'], False)
 
     @parameterized([
         {
@@ -342,7 +342,7 @@ class TestRoute53Module(ModuleTestCase):
                 'Comment': 'new',
             })
 
-        self.assertEqual(exec_info.exception.args[0]['changed'], True)
+        self.assertIs(exec_info.exception.args[0]['changed'], True)
         self.assertTrue(is_subdict(response, exec_info.exception.args[0]))
 
     @parameterized([
@@ -426,7 +426,7 @@ class TestRoute53Module(ModuleTestCase):
                 },
             })
 
-        self.assertEqual(exec_info.exception.args[0]['changed'], True)
+        self.assertIs(exec_info.exception.args[0]['changed'], True)
         self.assertTrue(is_subdict(response, exec_info.exception.args[0]))
 
     @patch.object(route53_zone, 'find_zones', return_value=[{
@@ -458,7 +458,7 @@ class TestRoute53Module(ModuleTestCase):
             route53_zone.main()
 
         client_mock.return_value.update_hosted_zone_comment.assert_not_called()
-        self.assertEqual(exec_info.exception.args[0]['changed'], False)
+        self.assertIs(exec_info.exception.args[0]['changed'], False)
 
         response = {
             'private_zone': True,
@@ -499,7 +499,7 @@ class TestRoute53Module(ModuleTestCase):
                 'Id': '/hostedzone/ZONE_ID',
             })
 
-        self.assertEqual(exec_info.exception.args[0]['changed'], True)
+        self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @parameterized([
         {'check_mode': False},
@@ -540,7 +540,7 @@ class TestRoute53Module(ModuleTestCase):
                 'Id': '/hostedzone/ZONE_ID',
             })
 
-        self.assertEqual(exec_info.exception.args[0]['changed'], True)
+        self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @parameterized([
         {'check_mode': False},
@@ -588,7 +588,7 @@ class TestRoute53Module(ModuleTestCase):
         else:
             client_mock.return_value.delete_hosted_zone.assert_has_calls(call_params)
 
-        self.assertEqual(exec_info.exception.args[0]['changed'], True)
+        self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(route53_zone, 'find_zones', return_value=[])
     def test_delete_absent_zone(self, find_zones_mock, time_mock, client_mock):
@@ -603,7 +603,7 @@ class TestRoute53Module(ModuleTestCase):
             route53_zone.main()
 
         client_mock.return_value.delete_hosted_zone.assert_not_called()
-        self.assertEqual(exec_info.exception.args[0]['changed'], False)
+        self.assertIs(exec_info.exception.args[0]['changed'], False)
 
 
 if __name__ == '__main__':

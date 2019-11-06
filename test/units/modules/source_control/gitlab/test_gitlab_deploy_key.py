@@ -56,11 +56,11 @@ class TestGitlabDeployKey(GitlabModuleTestCase):
 
         rvalue = self.moduleUtil.existsDeployKey(project, "Public key")
 
-        self.assertEqual(rvalue, True)
+        self.assertIs(rvalue, True)
 
         rvalue = self.moduleUtil.existsDeployKey(project, "Private key")
 
-        self.assertEqual(rvalue, False)
+        self.assertIs(rvalue, False)
 
     @with_httmock(resp_get_project)
     @with_httmock(resp_create_project_deploy_key)
@@ -85,13 +85,13 @@ class TestGitlabDeployKey(GitlabModuleTestCase):
 
         changed, newDeploy_key = self.moduleUtil.updateDeployKey(deployKey, {"title": "Private key"})
 
-        self.assertEqual(changed, True)
+        self.assertIs(changed, True)
         self.assertEqual(type(newDeploy_key), ProjectKey)
         self.assertEqual(newDeploy_key.title, "Private key")
 
         changed, newDeploy_key = self.moduleUtil.updateDeployKey(deployKey, {"title": "Private key"})
 
-        self.assertEqual(changed, False)
+        self.assertIs(changed, False)
         self.assertEqual(newDeploy_key.title, "Private key")
 
     @with_httmock(resp_get_project)

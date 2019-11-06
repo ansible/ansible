@@ -60,11 +60,11 @@ class TestGitlabProject(GitlabModuleTestCase):
 
         rvalue = self.moduleUtil.existsProject(group, "diaspora-client")
 
-        self.assertEqual(rvalue, True)
+        self.assertIs(rvalue, True)
 
         rvalue = self.moduleUtil.existsProject(group, "missing-project")
 
-        self.assertEqual(rvalue, False)
+        self.assertIs(rvalue, False)
 
     @with_httmock(resp_get_group)
     @with_httmock(resp_create_project)
@@ -81,13 +81,13 @@ class TestGitlabProject(GitlabModuleTestCase):
 
         changed, newProject = self.moduleUtil.updateProject(project, {"name": "New Name"})
 
-        self.assertEqual(changed, True)
+        self.assertIs(changed, True)
         self.assertEqual(type(newProject), Project)
         self.assertEqual(newProject.name, "New Name")
 
         changed, newProject = self.moduleUtil.updateProject(project, {"name": "New Name"})
 
-        self.assertEqual(changed, False)
+        self.assertIs(changed, False)
         self.assertEqual(newProject.name, "New Name")
 
     @with_httmock(resp_get_group)

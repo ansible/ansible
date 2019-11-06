@@ -28,15 +28,15 @@ class TestSELinux(ModuleTestCase):
         )
 
         basic.HAVE_SELINUX = False
-        self.assertEqual(am.selinux_mls_enabled(), False)
+        self.assertIs(am.selinux_mls_enabled(), False)
 
         basic.HAVE_SELINUX = True
         basic.selinux = Mock()
         with patch.dict('sys.modules', {'selinux': basic.selinux}):
             with patch('selinux.is_selinux_mls_enabled', return_value=0):
-                self.assertEqual(am.selinux_mls_enabled(), False)
+                self.assertIs(am.selinux_mls_enabled(), False)
             with patch('selinux.is_selinux_mls_enabled', return_value=1):
-                self.assertEqual(am.selinux_mls_enabled(), True)
+                self.assertIs(am.selinux_mls_enabled(), True)
         delattr(basic, 'selinux')
 
     def test_module_utils_basic_ansible_module_selinux_initial_context(self):
@@ -72,7 +72,7 @@ class TestSELinux(ModuleTestCase):
         am.run_command.return_value = (0, '', '')
         self.assertRaises(SystemExit, am.selinux_enabled)
         am.get_bin_path.return_value = None
-        self.assertEqual(am.selinux_enabled(), False)
+        self.assertIs(am.selinux_enabled(), False)
 
         # finally we test the case where the python selinux lib is installed,
         # and both possibilities there (enabled vs. disabled)
@@ -80,9 +80,9 @@ class TestSELinux(ModuleTestCase):
         basic.selinux = Mock()
         with patch.dict('sys.modules', {'selinux': basic.selinux}):
             with patch('selinux.is_selinux_enabled', return_value=0):
-                self.assertEqual(am.selinux_enabled(), False)
+                self.assertIs(am.selinux_enabled(), False)
             with patch('selinux.is_selinux_enabled', return_value=1):
-                self.assertEqual(am.selinux_enabled(), True)
+                self.assertIs(am.selinux_enabled(), True)
         delattr(basic, 'selinux')
 
     def test_module_utils_basic_ansible_module_selinux_default_context(self):
@@ -219,8 +219,8 @@ class TestSELinux(ModuleTestCase):
         basic.HAVE_SELINUX = False
 
         am.selinux_enabled = MagicMock(return_value=False)
-        self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True), True)
-        self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), False)
+        self.assertIs(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], True), True)
+        self.assertIs(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), False)
 
         basic.HAVE_SELINUX = True
 
@@ -231,12 +231,12 @@ class TestSELinux(ModuleTestCase):
         basic.selinux = Mock()
         with patch.dict('sys.modules', {'selinux': basic.selinux}):
             with patch('selinux.lsetfilecon', return_value=0) as m:
-                self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
+                self.assertIs(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
                 m.assert_called_with('/path/to/file', 'foo_u:foo_r:foo_t:s0')
                 m.reset_mock()
                 am.check_mode = True
-                self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                self.assertEqual(m.called, False)
+                self.assertIs(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
+                self.assertIs(m.called, False)
                 am.check_mode = False
 
             with patch('selinux.lsetfilecon', return_value=1) as m:
@@ -248,7 +248,7 @@ class TestSELinux(ModuleTestCase):
             am.is_special_selinux_path = MagicMock(return_value=(True, ['sp_u', 'sp_r', 'sp_t', 's0']))
 
             with patch('selinux.lsetfilecon', return_value=0) as m:
-                self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
+                self.assertIs(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
                 m.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')
 
         delattr(basic, 'selinux')

@@ -69,7 +69,7 @@ class TestBucketPipelineVariableModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(create_pipeline_variable_mock.call_count, 1)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value=None)
@@ -89,7 +89,7 @@ class TestBucketPipelineVariableModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(create_pipeline_variable_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
@@ -114,7 +114,7 @@ class TestBucketPipelineVariableModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(update_pipeline_variable_mock.call_count, 1)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
@@ -139,7 +139,7 @@ class TestBucketPipelineVariableModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(update_pipeline_variable_mock.call_count, 1)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
@@ -165,7 +165,7 @@ class TestBucketPipelineVariableModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(update_pipeline_variable_mock.call_count, 1)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
@@ -190,7 +190,7 @@ class TestBucketPipelineVariableModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(update_pipeline_variable_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], False)
+            self.assertIs(exec_info.exception.args[0]['changed'], False)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
@@ -216,7 +216,7 @@ class TestBucketPipelineVariableModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(update_pipeline_variable_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
@@ -240,7 +240,7 @@ class TestBucketPipelineVariableModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(delete_pipeline_variable_mock.call_count, 1)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value=None)
@@ -258,7 +258,7 @@ class TestBucketPipelineVariableModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(delete_pipeline_variable_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], False)
+            self.assertIs(exec_info.exception.args[0]['changed'], False)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(bitbucket_pipeline_variable, 'get_existing_pipeline_variable', return_value={
@@ -283,7 +283,7 @@ class TestBucketPipelineVariableModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(delete_pipeline_variable_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
 
 if __name__ == '__main__':

@@ -202,32 +202,32 @@ class TestGalaxy(unittest.TestCase):
         ''' testing the options parser when the action 'import' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "import", "foo", "bar"])
         gc.parse()
-        self.assertEqual(context.CLIARGS['wait'], True)
+        self.assertIs(context.CLIARGS['wait'], True)
         self.assertEqual(context.CLIARGS['reference'], None)
-        self.assertEqual(context.CLIARGS['check_status'], False)
+        self.assertIs(context.CLIARGS['check_status'], False)
         self.assertEqual(context.CLIARGS['verbosity'], 0)
 
     def test_parse_info(self):
         ''' testing the options parser when the action 'info' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "info", "foo", "bar"])
         gc.parse()
-        self.assertEqual(context.CLIARGS['offline'], False)
+        self.assertIs(context.CLIARGS['offline'], False)
 
     def test_parse_init(self):
         ''' testing the options parser when the action 'init' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "init", "foo"])
         gc.parse()
-        self.assertEqual(context.CLIARGS['offline'], False)
-        self.assertEqual(context.CLIARGS['force'], False)
+        self.assertIs(context.CLIARGS['offline'], False)
+        self.assertIs(context.CLIARGS['force'], False)
 
     def test_parse_install(self):
         ''' testing the options parser when the action 'install' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "install"])
         gc.parse()
-        self.assertEqual(context.CLIARGS['ignore_errors'], False)
-        self.assertEqual(context.CLIARGS['no_deps'], False)
+        self.assertIs(context.CLIARGS['ignore_errors'], False)
+        self.assertIs(context.CLIARGS['no_deps'], False)
         self.assertEqual(context.CLIARGS['role_file'], None)
-        self.assertEqual(context.CLIARGS['force'], False)
+        self.assertIs(context.CLIARGS['force'], False)
 
     def test_parse_list(self):
         ''' testing the options parser when the action 'list' is given '''
@@ -262,7 +262,7 @@ class TestGalaxy(unittest.TestCase):
         gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
         self.assertEqual(context.CLIARGS['remove_id'], None)
-        self.assertEqual(context.CLIARGS['setup_list'], False)
+        self.assertIs(context.CLIARGS['setup_list'], False)
 
 
 class ValidRoleTests(object):

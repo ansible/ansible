@@ -30,7 +30,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(create_known_host_mock.call_count, 1)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
     @patch.object(BitbucketHelper, 'request', return_value=(dict(status=201), dict()))
@@ -50,7 +50,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(get_host_key_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @pytest.mark.skipif(not HAS_PARAMIKO, reason='paramiko must be installed to test key creation')
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
@@ -80,7 +80,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(create_known_host_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], False)
+            self.assertIs(exec_info.exception.args[0]['changed'], False)
 
     @pytest.mark.skipif(not HAS_PARAMIKO, reason='paramiko must be installed to test key creation')
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
@@ -100,7 +100,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(create_known_host_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @pytest.mark.skipif(not HAS_PARAMIKO, reason='paramiko must be installed to test key creation')
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
@@ -130,7 +130,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(delete_known_host_mock.call_count, 1)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
     @pytest.mark.skipif(not HAS_PARAMIKO, reason='paramiko must be installed to test key creation')
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
@@ -149,7 +149,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(delete_known_host_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], False)
+            self.assertIs(exec_info.exception.args[0]['changed'], False)
 
     @pytest.mark.skipif(not HAS_PARAMIKO, reason='paramiko must be installed to test key creation')
     @patch.object(BitbucketHelper, 'fetch_access_token', return_value='token')
@@ -180,7 +180,7 @@ class TestBucketPipelineKnownHostModule(ModuleTestCase):
                 self.module.main()
 
             self.assertEqual(delete_known_host_mock.call_count, 0)
-            self.assertEqual(exec_info.exception.args[0]['changed'], True)
+            self.assertIs(exec_info.exception.args[0]['changed'], True)
 
 
 if __name__ == '__main__':

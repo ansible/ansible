@@ -380,7 +380,7 @@ class TestRole(unittest.TestCase):
         self.assertEqual(type(role_deps[0]), Role)
         self.assertEqual(len(role_deps[0].get_parents()), 1)
         self.assertEqual(role_deps[0].get_parents()[0], r)
-        self.assertEqual(r._metadata.allow_duplicates, True)
+        self.assertIs(r._metadata.allow_duplicates, True)
         self.assertEqual(r._metadata.galaxy_info, dict(a=1, b=2, c=3))
 
         all_deps = r.get_all_dependencies()

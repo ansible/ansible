@@ -33,8 +33,8 @@ class TestSafeEval(unittest.TestCase):
         # locals dictionary, to ensure we don't run into problems like
         # ansible/ansible/issues/12206 again
         for locals_vars in (dict(), defaultdict(dict)):
-            self.assertEqual(safe_eval('True', locals=locals_vars), True)
-            self.assertEqual(safe_eval('False', locals=locals_vars), False)
+            self.assertIs(safe_eval('True', locals=locals_vars), True)
+            self.assertIs(safe_eval('False', locals=locals_vars), False)
             self.assertEqual(safe_eval('0', locals=locals_vars), 0)
             self.assertEqual(safe_eval('[]', locals=locals_vars), [])
             self.assertEqual(safe_eval('{}', locals=locals_vars), {})

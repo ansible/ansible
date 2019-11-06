@@ -399,66 +399,66 @@ class TestIpFilter(unittest.TestCase):
     def test_network_in_usable(self):
         subnet = '1.12.1.0/24'
         address = '1.12.1.10'
-        self.assertEqual(network_in_usable(subnet, address), True)
+        self.assertIs(network_in_usable(subnet, address), True)
         subnet = '1.12.1.0/24'
         address = '1.12.0.10'
-        self.assertEqual(network_in_usable(subnet, address), False)
+        self.assertIs(network_in_usable(subnet, address), False)
         subnet = '1.12.1.32/28'
         address = '1.12.1.36'
-        self.assertEqual(network_in_usable(subnet, address), True)
+        self.assertIs(network_in_usable(subnet, address), True)
         subnet = '1.12.1.32/28'
         address = '1.12.1.36/31'
-        self.assertEqual(network_in_usable(subnet, address), True)
+        self.assertIs(network_in_usable(subnet, address), True)
         subnet = '1.12.1.32/28'
         address = '1.12.1.48/31'
-        self.assertEqual(network_in_usable(subnet, address), False)
+        self.assertIs(network_in_usable(subnet, address), False)
         subnet = '1.12.1.32/255.255.255.240'
         address = '1.12.1.31'
-        self.assertEqual(network_in_usable(subnet, address), False)
+        self.assertIs(network_in_usable(subnet, address), False)
         subnet = '1.12.1.36/31'
         address = '1.12.1.36'
-        self.assertEqual(network_in_usable(subnet, address), True)
+        self.assertIs(network_in_usable(subnet, address), True)
         subnet = '1.12.1.37/31'
         address = '1.12.1.35'
-        self.assertEqual(network_in_usable(subnet, address), False)
+        self.assertIs(network_in_usable(subnet, address), False)
         subnet = '1.12.1.36/32'
         address = '1.12.1.36'
-        self.assertEqual(network_in_usable(subnet, address), True)
+        self.assertIs(network_in_usable(subnet, address), True)
         subnet = '1.12.1.0/24'
         address = '1.12.2.0'
-        self.assertEqual(network_in_usable(subnet, address), False)
+        self.assertIs(network_in_usable(subnet, address), False)
 
     def test_network_in_network(self):
         subnet = '1.12.1.0/24'
         address = '1.12.1.0'
-        self.assertEqual(network_in_network(subnet, address), True)
+        self.assertIs(network_in_network(subnet, address), True)
         subnet = '1.12.1.0/24'
         address = '1.12.0.10'
-        self.assertEqual(network_in_network(subnet, address), False)
+        self.assertIs(network_in_network(subnet, address), False)
         subnet = '1.12.1.32/28'
         address = '1.12.1.32/28'
-        self.assertEqual(network_in_network(subnet, address), True)
+        self.assertIs(network_in_network(subnet, address), True)
         subnet = '1.12.1.32/28'
         address = '1.12.1.47'
-        self.assertEqual(network_in_network(subnet, address), True)
+        self.assertIs(network_in_network(subnet, address), True)
         subnet = '1.12.1.32/28'
         address = '1.12.1.48/31'
-        self.assertEqual(network_in_network(subnet, address), False)
+        self.assertIs(network_in_network(subnet, address), False)
         subnet = '1.12.1.32/255.255.255.240'
         address = '1.12.1.31'
-        self.assertEqual(network_in_network(subnet, address), False)
+        self.assertIs(network_in_network(subnet, address), False)
         subnet = '1.12.1.36/31'
         address = '1.12.1.36'
-        self.assertEqual(network_in_network(subnet, address), True)
+        self.assertIs(network_in_network(subnet, address), True)
         subnet = '1.12.1.37/31'
         address = '1.12.1.35'
-        self.assertEqual(network_in_network(subnet, address), False)
+        self.assertIs(network_in_network(subnet, address), False)
         subnet = '1.12.1.36/32'
         address = '1.12.1.36'
-        self.assertEqual(network_in_network(subnet, address), True)
+        self.assertIs(network_in_network(subnet, address), True)
         subnet = '1.12.1.0/24'
         address = '1.12.2.0'
-        self.assertEqual(network_in_network(subnet, address), False)
+        self.assertIs(network_in_network(subnet, address), False)
 
     def test_cidr_merge(self):
         self.assertEqual(cidr_merge([]), [])

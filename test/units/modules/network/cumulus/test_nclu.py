@@ -138,7 +138,7 @@ class TestNclu(unittest.TestCase):
         self.assertEqual(module.command_history, ['/usr/bin/net pending',
                                                   '/usr/bin/net pending'])
         self.assertEqual(module.fail_code, {})
-        self.assertEqual(changed, False)
+        self.assertIs(changed, False)
 
     def test_command_list(self):
         module = FakeModule()
@@ -151,7 +151,7 @@ class TestNclu(unittest.TestCase):
                                                   '/usr/bin/net pending'])
         self.assertNotEqual(len(module.pending), 0)
         self.assertEqual(module.fail_code, {})
-        self.assertEqual(changed, True)
+        self.assertIs(changed, True)
 
     def test_command_list_commit(self):
         module = FakeModule()
@@ -167,7 +167,7 @@ class TestNclu(unittest.TestCase):
                                                   '/usr/bin/net show commit last'])
         self.assertEqual(len(module.pending), 0)
         self.assertEqual(module.fail_code, {})
-        self.assertEqual(changed, True)
+        self.assertIs(changed, True)
 
     def test_command_atomic(self):
         module = FakeModule()
@@ -184,7 +184,7 @@ class TestNclu(unittest.TestCase):
                                                   '/usr/bin/net show commit last'])
         self.assertEqual(len(module.pending), 0)
         self.assertEqual(module.fail_code, {})
-        self.assertEqual(changed, True)
+        self.assertIs(changed, True)
 
     def test_command_abort_first(self):
         module = FakeModule()
@@ -207,7 +207,7 @@ class TestNclu(unittest.TestCase):
                                                   '/usr/bin/net show commit last'])
         self.assertEqual(len(module.pending), 0)
         self.assertEqual(module.fail_code, {})
-        self.assertEqual(changed, True)
+        self.assertIs(changed, True)
 
     def test_commit_ignored(self):
         module = FakeModule()
@@ -219,4 +219,4 @@ class TestNclu(unittest.TestCase):
                                                   '/usr/bin/net abort'])
         self.assertEqual(len(module.pending), 0)
         self.assertEqual(module.fail_code, {})
-        self.assertEqual(changed, False)
+        self.assertIs(changed, False)

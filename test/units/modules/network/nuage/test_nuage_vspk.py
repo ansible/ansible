@@ -295,7 +295,7 @@ class TestNuageVSPKModule(TestNuageModule):
 
         result = exc.exception.args[0]
 
-        self.assertEqual(result['changed'], True)
+        self.assertIs(result['changed'], True)
         self.assertEqual(result['id'], 'user-id')
         self.assertEqual(result['entities'][0]['firstName'], 'John')
         self.assertEqual(result['entities'][0]['lastName'], 'Doe')
@@ -315,7 +315,7 @@ class TestNuageVSPKModule(TestNuageModule):
 
         result = exc.exception.args[0]
 
-        self.assertEqual(result['changed'], True)
+        self.assertIs(result['changed'], True)
         self.assertEqual(result['id'], 'job-id')
         self.assertEqual(result['entities'][0]['command'], 'EXPORT')
         self.assertEqual(result['entities'][0]['status'], 'SUCCESS')
@@ -387,7 +387,7 @@ class TestNuageVSPKModule(TestNuageModule):
 
         result = exc.exception.args[0]
 
-        self.assertEqual(result['changed'], True)
+        self.assertIs(result['changed'], True)
         self.assertEqual(len(result['entities']), 1)
         self.assertEqual(result['id'], 'enterprise-id-create')
         self.assertEqual(result['entities'][0]['name'], 'test-enterprise-create')
@@ -407,7 +407,7 @@ class TestNuageVSPKModule(TestNuageModule):
 
         result = exc.exception.args[0]
 
-        self.assertEqual(result['changed'], True)
+        self.assertIs(result['changed'], True)
         self.assertEqual(len(result['entities']), 1)
         self.assertEqual(result['id'], 'enterprise-id')
         self.assertEqual(result['entities'][0]['name'], 'test-enterprise-update')
@@ -456,7 +456,7 @@ class TestNuageVSPKModule(TestNuageModule):
 
         result = exc.exception.args[0]
 
-        self.assertEqual(result['changed'], True)
+        self.assertIs(result['changed'], True)
         self.assertEqual(len(result['entities']), 1)
         self.assertEqual(result['id'], 'user-id')
 
@@ -484,7 +484,7 @@ class TestNuageVSPKModule(TestNuageModule):
 
         result = exc.exception.args[0]
 
-        self.assertEqual(result['changed'], True)
+        self.assertIs(result['changed'], True)
         self.assertEqual(len(result['entities']), 2)
 
     def test_state_present_children_create(self):

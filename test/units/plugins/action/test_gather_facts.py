@@ -55,7 +55,7 @@ class TestNetworkFacts(unittest.TestCase):
         plugin._execute_module = MagicMock()
 
         res = plugin.run(task_vars=self.task_vars)
-        self.assertEqual(res['ansible_facts']['_ansible_facts_gathered'], True)
+        self.assertIs(res['ansible_facts']['_ansible_facts_gathered'], True)
 
         mod_args = plugin._get_module_args('ios_facts', task_vars=self.task_vars)
         self.assertEqual(mod_args['gather_subset'], 'min')
