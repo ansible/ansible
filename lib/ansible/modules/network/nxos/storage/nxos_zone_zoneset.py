@@ -12,7 +12,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: nxos_zone_zoneset
-extends_documentation_fragment: nxos
 version_added: "2.10"
 short_description: Configuration of zone/zoneset.
 description:
