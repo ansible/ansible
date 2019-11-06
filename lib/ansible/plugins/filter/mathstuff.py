@@ -46,16 +46,16 @@ display = Display()
 
 
 @environmentfilter
-def unique(environment, a, case_sensitive=True, attribute=None):
+def unique(environment, a, case_sensitive=None, attribute=None):
 
     def _do_fail(e):
-        if not case_sensitive or attribute:
+        if not case_sensitive and case_sensitive is not None or attribute:
             raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
                                      "as it does not support the parameters supplied", orig_exc=e)
 
     error = e = None
     try:
-        if HAS_UNIQUE:
+        if HAS_UNIQUE and (case_sensitive is not None or attribute is not None):
             c = do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute)
             if isinstance(a, Hashable):
                 c = set(c)
@@ -69,10 +69,10 @@ def unique(environment, a, case_sensitive=True, attribute=None):
         _do_fail(e)
         display.warning('Falling back to Ansible unique filter as Jinja2 one failed: %s' % to_text(e))
 
-    if not HAS_UNIQUE or error:
+    if not HAS_UNIQUE or (case_sensitive is None and attribute is None) or error:
 
         # handle Jinja2 specific attributes when using Ansible's version
-        if not case_sensitive or attribute:
+        if not case_sensitive and case_sensitive is not None or attribute:
             raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive nor attribute parameters, "
                                      "you need a newer version of Jinja2 that provides their version of the filter.")
 
