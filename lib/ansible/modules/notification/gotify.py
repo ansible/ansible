@@ -42,11 +42,6 @@ options:
       - The message priority (0 to 5)
     default: 2
     type: int
-  validate_certs:
-    description:
-      - Verify the TLS certificate
-    default: true
-    type: bool
 
 author: 
     - "Sebastien Wains <swains@redhat.com>"
@@ -68,17 +63,9 @@ EXAMPLES = '''
     msg: Ansible task finished
     priority: 4
 
-# send a message to a non TLS Gotify instance, running under /mygotify/ path
+# send a message to a non TLS Gotify instance, running on a non standard port and under /mygotify/ path
 - gotify:
     url: http://www.example.org:88/gotify/
-    token: APuAua7NNgVwhV5
-    title: My Ansible Notification
-    msg: Ansible task finished
-
-# send a message to a self-signed Gotify, skipping certificate validation
-- gotify:
-    url: https://gotify.example.org
-    validate_certs: false
     token: APuAua7NNgVwhV5
     title: My Ansible Notification
     msg: Ansible task finished
@@ -95,7 +82,6 @@ def run_module():
         msg=dict(type='str', required=True),
         priority=dict(type='int', default=2, required=False),
         title=dict(type='str', default='Ansible Notification', required=False),
-        validate_certs=dict(type='bool', default=True, required=False)
     )
 
     result = dict(
@@ -112,7 +98,6 @@ def run_module():
     title = module.params['title']
     url = module.params['url']
     priority = module.params['priority']
-    validate_certs = module.params['validate_certs']
 
     # If URL has no trailing slash, add it
     if url[len(url)-1] != "/":
