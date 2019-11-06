@@ -41,7 +41,7 @@ information about running from source. It's not necessary to install the program
 Control Node Requirements
 ````````````````````````````
 
-Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Windows isn't supported for the control node.
+Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Windows is not supported for the control node.
 
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 
@@ -121,13 +121,13 @@ To enable the Ansible Engine repository for RHEL 8, run the following command:
 
 .. code-block:: bash
 
-    $ sudo subscription-manager repos --enable ansible-2.8-for-rhel-8-x86_64-rpms
+    $ sudo subscription-manager repos --enable ansible-2.9-for-rhel-8-x86_64-rpms
 
 To enable the Ansible Engine repository for RHEL 7, run the following command:
 
 .. code-block:: bash
 
-    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.8-rpms
+    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.9-rpms
 
 RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
 
