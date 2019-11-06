@@ -242,7 +242,7 @@ class TaskExecutor:
                 setattr(mylookup, '_subdir', subdir + 's')
 
                 # run lookup
-                items = mylookup.run(terms=loop_terms, variables=self._job_vars, wantlist=True)
+                items = wrap_var(mylookup.run(terms=loop_terms, variables=self._job_vars, wantlist=True))
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop_with)
 
@@ -263,11 +263,6 @@ class TaskExecutor:
                 self._job_vars[k] = old_vars[k]
             else:
                 del self._job_vars[k]
-
-        if items:
-            for idx, item in enumerate(items):
-                if item is not None and not isinstance(item, AnsibleUnsafe):
-                    items[idx] = wrap_var(item)
 
         return items
 

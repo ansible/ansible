@@ -115,7 +115,7 @@ def _wrap_set(v):
 
 
 def wrap_var(v):
-    if isinstance(v, AnsibleUnsafe):
+    if v is None or isinstance(v, AnsibleUnsafe):
         return v
 
     if isinstance(v, Mapping):

@@ -359,3 +359,33 @@
 - assert:
     that:
       - loop_out['results'][1]['ansible_remote_tmp'] == '/tmp/test1'
+
+# https://github.com/ansible/ansible/issues/64169
+- include_vars: 64169.yml
+
+- set_fact: "{{ item.key }}={{ hostvars[inventory_hostname][item.value] }}"
+  with_dict:
+    foo: __foo
+
+- debug:
+    var: foo
+
+- assert:
+    that:
+      - foo[0] != 'foo1.0'
+      - foo[0] == unsafe_value
+  vars:
+    unsafe_value: !unsafe 'foo{{ version_64169 }}'
+
+- set_fact: "{{ item.key }}={{ hostvars[inventory_hostname][item.value] }}"
+  loop: "{{ dicty_dict|dict2items }}"
+  vars:
+    dicty_dict:
+      foo: __foo
+
+- debug:
+    var: foo
+
+- assert:
+    that:
+      - foo[0] == 'foo1.0'
