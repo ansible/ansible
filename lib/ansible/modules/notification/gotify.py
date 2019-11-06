@@ -4,7 +4,7 @@
 # (c) 2019, Sebastien Wains <swains@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -47,8 +47,7 @@ options:
     default: 2
     type: int
 
-author: 
-    - "Sebastien Wains <swains@redhat.com>"
+author: "Sebastien Wains <swains@redhat.com>"
 '''
 
 EXAMPLES = '''
