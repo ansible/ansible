@@ -445,7 +445,7 @@ files:
     maintainers: $team_ucs
   $modules/remote_management/dellemc/: rajeevarakkal
   $modules/source_control/git.py: $team_ansible
-  $modules/source_control/github_key.py:
+  $modules/source_control/github/github_key.py:
     ignored: erydo
   $modules/source_control/gitlab_: &gitlab
     keywords: [ gitlab, source_control ]
