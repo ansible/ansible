@@ -158,6 +158,8 @@
     aws_acm_info:
       domain_name: "{{ original_cert.domain }}"
       <<: *aws_connection_info
+      tags:
+        Name: "{{ original_cert.name }}"
     register: fetch_after_up_domain
     with_items: "{{ upload.results }}"
     vars:
@@ -306,7 +308,7 @@
     aws_acm:
       <<: *aws_connection_info
       state: absent
-      domain_name: "{{ local_certs[2].domain }}"
+      name_tag: "{{ local_certs[2].name }}"
     register: delete_third
     
   - name: check cert 3 deletion went as expected
@@ -329,7 +331,7 @@
     aws_acm:
       <<: *aws_connection_info
       state: absent
-      domain_name: "{{ local_certs[2].domain }}"
+      name_tag: "{{ local_certs[2].name }}"
     register: delete_third
     
   - name: check deletion of cert 3 not changed, because already deleted
