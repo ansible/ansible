@@ -6,6 +6,11 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 module: uptimerobot
 short_description: Create, remove, pause and start monitors in Uptimerobot
@@ -67,11 +72,6 @@ EXAMPLES = '''
     check_type: http
     apikey: 12345-1234512345
 '''
-
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
 
 import json
 from ansible.module_utils.basic import AnsibleModule
