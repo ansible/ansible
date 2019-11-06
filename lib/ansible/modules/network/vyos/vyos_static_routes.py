@@ -38,7 +38,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: vyos_static_routes
-version_added: 2.10
+version_added: '2.10'
 short_description: Manages attributes of static routes on VyOS network devices.
 description: This module manages attributes of static routes on VyOS network devices.
 notes:
