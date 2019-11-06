@@ -50,6 +50,8 @@ options:
 author: Sebastien Wains (@sebw)
 '''
 
+RETURN = r''' # '''
+
 EXAMPLES = '''
 # send a message
 - gotify:
