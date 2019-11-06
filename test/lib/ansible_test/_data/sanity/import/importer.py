@@ -21,6 +21,7 @@ def main():
     ansible_path = os.environ['PYTHONPATH']
     temp_path = os.environ['SANITY_TEMP_PATH'] + os.path.sep
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
+    collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATHS')
 
     try:
         # noinspection PyCompatibility
@@ -51,25 +52,36 @@ def main():
         from ansible.module_utils._text import to_bytes
 
         def get_source(self, fullname):
-            mod = sys.modules.get(fullname)
-            if not mod:
-                mod = self.load_module(fullname)
-
-            with open(to_bytes(mod.__file__), 'rb') as mod_file:
-                source = mod_file.read()
-
-            return source
+            with open(to_bytes(self.get_filename(fullname)), 'rb') as mod_file:
+                return mod_file.read()
 
         def get_code(self, fullname):
             return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
 
         def is_package(self, fullname):
-            return self.get_filename(fullname).endswith('__init__.py')
+            return os.path.basename(self.get_filename(fullname)) in ('__init__.py', '__synthetic__')
 
         def get_filename(self, fullname):
-            mod = sys.modules.get(fullname) or self.load_module(fullname)
+            if fullname in sys.modules:
+                return sys.modules[fullname].__file__
 
-            return mod.__file__
+            # find the module without importing it
+            # otherwise an ImportError during module load will prevent us from getting the filename of the module
+            loader = self.find_module(fullname)
+
+            if not loader:
+                raise ImportError('module {0} not found'.format(fullname))
+
+            # determine the filename of the module that was found
+            filename = os.path.join(collection_root, fullname.replace('.', os.path.sep))
+
+            if os.path.isdir(filename):
+                init_filename = os.path.join(filename, '__init__.py')
+                filename = init_filename if os.path.exists(init_filename) else os.path.join(filename, '__synthetic__')
+            else:
+                filename += '.py'
+
+            return filename
 
         # monkeypatch collection loader to work with runpy
         # remove this (and the associated code above) once implemented natively in the collection loader
