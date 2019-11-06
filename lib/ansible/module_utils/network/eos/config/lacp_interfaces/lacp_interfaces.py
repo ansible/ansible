@@ -126,8 +126,6 @@ class Lacp_interfaces(ConfigBase):
             add_config = dict_diff(extant, desired)
             del_config = dict_diff(desired, extant)
 
-            import q
-            q(desired,extant,add_config,del_config)
             commands.extend(generate_commands(key, add_config, del_config))
 
         return commands
