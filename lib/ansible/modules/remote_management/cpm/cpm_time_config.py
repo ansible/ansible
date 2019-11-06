@@ -30,7 +30,7 @@ DOCUMENTATION = """
 module: cpm_time_config
 version_added: "2.10"
 author: "Western Telematic Inc. (@wtinetworkgear)"
-short_description: Set Time/Date parameters in WTI OOB and PDU devices
+short_description: Set Time/Date parameters in WTI OOB and PDU devices.
 description:
     - "Set Time/Date and NTP parameters parameters in WTI OOB and PDU devices"
 options:
@@ -82,7 +82,6 @@ options:
       - This is timezone that is assigned to the WTI device.
     required: false
     type: int
-    choices: list(range(1,38))
   ntpenable:
     description:
       - This enables or disables the NTP client service.
@@ -104,7 +103,6 @@ options:
       - Set the network timeout in seconds of contacting the NTP servers, valid options can be from 1-60.
     required: false
     type: int
-    choices: list(range(1,61))
 notes:
   - Use C(groups/cpm) in C(module_defaults) to set common options used between CPM modules.
 """
@@ -235,8 +233,9 @@ def assemble_json(cpmmodule, existing):
                 loopcounter += 1
     if cpmmodule.params["timeout"] is not None:
         if (existing["ntp"]["timeout"] != to_native(cpmmodule.params["timeout"])):
-            total_change = (total_change | 8)
-            localtimeout = to_native(cpmmodule.params["timeout"])
+            if ((int(to_native(cpmmodule.params["timeout"])) > 0) and (int(to_native(cpmmodule.params["timeout"])) <= 60)):
+                total_change = (total_change | 8)
+                localtimeout = to_native(cpmmodule.params["timeout"])
 
     if (total_change > 0):
         protocol = protocolchanged = 0
@@ -323,11 +322,11 @@ def run_module():
         cpm_password=dict(type='str', required=True, no_log=True),
         date=dict(type='str', required=False, default=None),
         time=dict(type='str', required=False, default=None),
-        timezone=dict(type='int', required=False, default=None, choices=list(range(1,38))),
+        timezone=dict(type='int', required=False, default=None),
         ntpenable=dict(type='int', required=False, default=None, choices=[0, 1]),
         ipv4address=dict(type='str', required=False, default=None),
         ipv6address=dict(type='str', required=False, default=None),
-        timeout=dict(type='int', required=False, default=None, choices=list(range(1,61))),
+        timeout=dict(type='int', required=False, default=None),
         use_https=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
         use_proxy=dict(type='bool', default=False)
