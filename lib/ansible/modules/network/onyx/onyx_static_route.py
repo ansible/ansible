@@ -76,7 +76,7 @@ options:
         description:
             - Add a domain name to use when resolving hostnames
         type: str
-    remove_domain:
+    domain_remove:
         description:
             - Remove domain name
         type: str
