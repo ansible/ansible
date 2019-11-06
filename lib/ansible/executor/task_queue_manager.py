@@ -333,8 +333,8 @@ class TaskQueueManager:
         self.terminate()
         self._final_q.put(_sentinel)
         #self._results_thread.join()
-        self._final_q.close()
         self._cleanup_processes()
+        self._final_q.close()
 
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
