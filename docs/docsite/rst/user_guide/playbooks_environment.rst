@@ -5,7 +5,7 @@ Setting the Environment (and Working With Proxies)
 
 .. versionadded:: 1.1
 
-The ``environment`` keyword allows you to set an environment varaible for the action to be taken on the remote target.
+The ``environment`` keyword allows you to set an environment variable for the action to be taken on the remote target.
 For example, it is quite possible that you may need to set a proxy for a task that does http requests.
 Or maybe a utility or script that are called may also need certain environment variables set to run properly.
 
