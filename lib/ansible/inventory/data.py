@@ -25,12 +25,68 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.six import iteritems, string_types
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import basedir
 
 display = Display()
+
+
+class PendingTransaction(MutableMapping):
+    def __init__(self, fallback_data_source, inventory_type, *args, **kwargs):
+        self.fallback = fallback_data_source
+        self.inventory_type = inventory_type
+        self.store = dict()
+        self.update(dict(*args, **kwargs))
+
+    def create_duplicate(self, name):
+        if self.inventory_type == 'group':
+            new_entity = Group()
+        else:
+            new_entity = Host()
+
+        # Update the new object with the same data
+        new_entity.deserialize(self.fallback()[name].serialize())
+
+        # Groups keep the same host objects even with serialization
+        # Instantiate hosts with the same data to prevent cross-contamination
+        if self.inventory_type == 'group':
+            hosts = []
+            for i in range(0, len(self.fallback()[name].hosts)):
+                h = Host()
+                h.deserialize(self.fallback()[name].hosts[i].serialize())
+                hosts.append(h)
+            new_entity.hosts = hosts
+
+        return new_entity
+
+    def __getitem__(self, key):
+        if key not in self.store and key in self.fallback():
+            self.store[key] = self.create_duplicate(key)
+
+        return self.store[key]
+
+    def __setitem__(self, key, value):
+        self.store[key] = value
+
+    def __delitem__(self, key):
+        del self.store[key]
+
+    def __contains__(self, key):
+        return self.store.__contains__(key) or self.fallback().__contains__(key)
+
+    def __iter__(self):
+        for i in self.fallback():
+            if i in self.store:
+                continue
+            yield i
+        for i in self.store:
+            yield i
+
+    def __len__(self):
+        return len(set(list(self.store) + list(self.fallback())))
 
 
 class InventoryData(object):
@@ -44,8 +100,8 @@ class InventoryData(object):
         # the inventory object holds a list of groups
         self._groups = {}
         self._hosts = {}
-        self._temp_groups = {}
-        self._temp_hosts = {}
+
+        self.initialize_pending_inventory()
         self.in_transaction = False
 
         # provides 'groups' magic var, host object has group_names
@@ -60,6 +116,16 @@ class InventoryData(object):
         for group in ('all', 'ungrouped'):
             self.add_group(group)
         self.add_child('all', 'ungrouped')
+
+    def initialize_pending_inventory(self):
+        self._temp_groups = PendingTransaction(self._read_only_groups, 'group')
+        self._temp_hosts = PendingTransaction(self._read_only_hosts, 'host')
+
+    def _read_only_groups(self):
+        return self._groups
+
+    def _read_only_hosts(self):
+        return self._hosts
 
     @property
     def groups(self):
@@ -76,24 +142,63 @@ class InventoryData(object):
             return self._hosts
 
     def start_transaction(self):
+        if self.needs_rollback():
+            self.rollback_transaction()
+
         self.in_transaction = True
 
+    def update_host(self, original, updated):
+        # This must only perform additive updates on the original object
+
+        original.vars.update(updated.vars)
+
+        original_group_names = [g.name for g in original.groups]
+        for group in updated.groups:
+            if group.name not in original_group_names:
+                original.groups.append(group)
+
+    def update_group(self, original, updated):
+        # This must only perform additive updates on the original object
+
+        original.vars.update(updated.vars)
+
+        original_host_names = [h.name for h in original.hosts]
+        original.hosts += [h for h in updated.hosts if h.name not in original_host_names]
+
+        original_parent_groups = dict((g.name, g) for g in original.parent_groups)
+        updated_parent_groups = dict((g.name, g) for g in updated.parent_groups)
+        for parent_group in updated_parent_groups:
+            if parent_group in original_parent_groups:
+                self.update_group(original_parent_groups[parent_group], updated_parent_groups[parent_group])
+            else:
+                original.parent_groups.append(updated_parent_groups[parent_group])
+
     def end_transaction(self):
+        updated_groups = list(self._temp_groups.store.keys())
+        updated_hosts = list(self._temp_hosts.store.keys())
+
+        for group_name in updated_groups:
+            if group_name not in self._groups:
+                self._groups[group_name] = self._temp_groups.pop(group_name)
+            else:
+                self.update_group(self._groups[group_name], self._temp_groups.pop(group_name))
+        for host_name in updated_hosts:
+            if host_name not in self._hosts:
+                self._hosts[host_name] = self._temp_hosts.pop(host_name)
+            else:
+                self.update_host(self._hosts[host_name], self._temp_hosts.pop(host_name))
+
         self.in_transaction = False
-        self._groups.update(self._temp_groups)
-        self._hosts.update(self._temp_hosts)
-        self._temp_groups = {}
-        self._temp_hosts = {}
+        self.initialize_pending_inventory()
 
     def needs_rollback(self):
-        if self.in_transaction and (self._temp_groups or self._temp_hosts):
+        if self._temp_groups.store or self._temp_hosts.store:
             return True
         return False
 
     def rollback_transaction(self):
         self.in_transaction = False
-        self._temp_groups = {}
-        self._temp_hosts = {}
+        self.initialize_pending_inventory()
 
     def serialize(self):
         self._groups_dict_cache = None
