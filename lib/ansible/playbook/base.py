@@ -69,7 +69,7 @@ def _generic_g_parent(prop_name, self):
 
 
 def _generic_s(prop_name, self, value):
-    self._props_dirty = True
+    self._dumped_attrs = None
     self._attributes[prop_name] = value
 
 
@@ -298,7 +298,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         self._validated = False
         self._squashed = False
         self._finalized = False
-        self._props_dirty = True
+        self._dumped_attrs = None
 
         # every object gets a random uuid:
         self._uuid = None
@@ -538,7 +538,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
         Dumps all attributes to a dictionary
         '''
-        if self._props_dirty:
+        if self._dumped_attrs is None:
             attrs = {}
             for (name, attribute) in iteritems(self._valid_attrs):
                 attr = getattr(self, name)
@@ -547,7 +547,6 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 else:
                     attrs[name] = attr
             self._dumped_attrs = attrs
-            self._props_dirty = False
         return self._dumped_attrs
 
     def from_attrs(self, attrs):
