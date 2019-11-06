@@ -125,7 +125,10 @@ class RabbitMqPolicy(object):
     def _rabbit_version(self):
         status = self._exec(['status'], True, False, False)
 
-        version_match = re.search('{rabbit,".*","(?P<version>.*)"}', status)
+        version_match = re.search(
+            r'({rabbit,".*","|RabbitMQ version:)\s?(?P<version>[0-9.]{3,})("})?',
+            status
+        )
         if version_match:
             return Version(version_match.group('version'))
 
