@@ -2,20 +2,37 @@
   - debug:
       msg: "Start nxos_lldp_global replaced integration tests connection = {{ansible_connection}}"
 
-  - name: Enable lldp feature
-    nxos_feature:
-      feature: lldp
-      state: enabled
-
+  # N35 skips all tests, image issues.
   - block:
+    - set_fact:
+        port_id: 1
+        tlv_power_mgmt:
+          power_management: false
+      when: platform is not search('N[567]K') and imagetag is not search("I[2345]")
+
+    - name: feature off to cleanup lldp
+      nxos_feature: &feature_off
+        feature: lldp
+        state: disabled
+
+    - name: Enable lldp feature
+      nxos_feature:
+        feature: lldp
+        state: enabled
+
     - name: Setup
       cli_config:
         config: |
           lldp holdtime 125
+          lldp tlv-select system-name
+          no lldp tlv-select port-vlan
+
+    - name: Setup2
+      cli_config:
+        config: |
           lldp portid-subtype 1
-          lldp tlv-select system-name 
-          no lldp tlv-select port-vlan 
           no lldp tlv-select power-management
+      when: port_id is defined
 
     - name: Replaced
       nxos_lldp_global: &replaced
@@ -23,7 +40,7 @@
           holdtime: 125
           timer: 35
           tlv_select:
-            system: 
+            system:
                name: false
                description: false
             port:
@@ -36,35 +53,41 @@
         that:
           - "result.changed == true"
           - "'lldp timer 35' in result.commands"
-          - "'lldp tlv-select power-management' in result.commands"
-          - "'no lldp portid-subtype 1' in result.commands"
           - "'no lldp tlv-select system-name' in result.commands"
           - "'no lldp tlv-select system-description' in result.commands"
           - "'no lldp tlv-select dcbxp' in result.commands"
-          - "result.commands|length == 6"
+
+    - assert:
+        that:
+          - "'no lldp portid-subtype 1' in result.commands"
+      when: port_id is defined
+
+    - assert:
+        that:
+          - "'lldp tlv-select power-management' in result.commands"
+      when: tlv_power_mgmt is defined
 
     - name: Gather lldp_global post facts
-      nxos_facts: 
+      nxos_facts:
         gather_subset:
           - '!all'
           - '!min'
         gather_network_resources: lldp_global
 
-    - assert: 
+    - assert:
         that:
           - "ansible_facts.network_resources.lldp_global == result.after"
 
     - name: Idempotence - Replaced
       nxos_lldp_global: *replaced
       register: result
- 
+
     - assert:
         that:
           - "result.changed == false"
           - "result.commands|length == 0"
-
     always:
     - name: teardown
-      nxos_feature:
-        feature: lldp
-        state: disabled
+      nxos_feature: *feature_off
+
+    when: platform is not search('N35')
