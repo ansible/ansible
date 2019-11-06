@@ -21,6 +21,8 @@ short_description: Run PostgreSQL queries
 description:
 - Runs arbitrary PostgreSQL queries.
 - Can run queries from SQL script files.
+- Does not run against backup files. Use M(postgresql_db) with I(state=restore)
+  to run queries on files made by pg_dump/pg_dumpall utilities.
 version_added: '2.8'
 options:
   query:
@@ -68,6 +70,8 @@ notes:
   systems, install the postgresql, libpq-dev, and python-psycopg2 packages
   on the remote host before using this module.
 requirements: [ psycopg2 ]
+seealso:
+- module: postgresql_db
 author:
 - Felix Archambault (@archf)
 - Andrew Klychkov (@Andersson007)
