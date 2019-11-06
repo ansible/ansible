@@ -207,10 +207,10 @@ def main():
         ],
     )
 
-    leaf_profile = module.params['leaf_profile']
+    leaf_profile = module.params.get('leaf_profile')
     # WARNING: interface_selector accepts non existing interface_profile names and they appear on APIC gui with a state of "missing-target"
-    interface_selector = module.params['interface_selector']
-    state = module.params['state']
+    interface_selector = module.params.get('interface_selector')
+    state = module.params.get('state')
 
     # Defining the interface profile tDn for clarity
     interface_selector_tDn = 'uni/infra/accportprof-{0}'.format(interface_selector)
