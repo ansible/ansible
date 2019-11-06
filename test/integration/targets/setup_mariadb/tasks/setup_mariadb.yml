@@ -9,10 +9,6 @@
     gpgkey: "{{ repo_gpgkey }}"
     gpgcheck: yes
   notify: cleanup mariadb
-  register: result
-  until: result is successful
-  retries: 10
-  delay: 3
 
 - name: Install MariaDB packages on RedHat family OS
   yum:
@@ -20,6 +16,10 @@
     enablerepo: epel
   when: ansible_os_family == 'RedHat'
   notify: cleanup mariadb
+  register: result
+  until: result is successful
+  retries: 10
+  delay: 3
 
 - name: Create directories for instances
   file:
