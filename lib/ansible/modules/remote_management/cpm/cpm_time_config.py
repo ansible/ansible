@@ -82,6 +82,7 @@ options:
       - This is timezone that is assigned to the WTI device.
     required: false
     type: int
+    choices: list(range(1,38))
   ntpenable:
     description:
       - This enables or disables the NTP client service.
@@ -103,6 +104,7 @@ options:
       - Set the network timeout in seconds of contacting the NTP servers, valid options can be from 1-60.
     required: false
     type: int
+    choices: list(range(1,61))
 notes:
   - Use C(groups/cpm) in C(module_defaults) to set common options used between CPM modules.
 """
