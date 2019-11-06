@@ -73,12 +73,12 @@ class GenericBsdIfconfigNetwork(Network):
     def get_default_interfaces(self, route_path):
 
         # Use the commands:
-        #     route -n get 8.8.8.8                            -> Google public DNS
-        #     route -n get -inet6 2404:6800:400a:800::1012    -> ipv6.google.com
+        #     route -n get default
+        #     route -n get -inet6 default
         # to find out the default outgoing interface, address, and gateway
 
-        command = dict(v4=[route_path, '-n', 'get', '8.8.8.8'],
-                       v6=[route_path, '-n', 'get', '-inet6', '2404:6800:400a:800::1012'])
+        command = dict(v4=[route_path, '-n', 'get', 'default'],
+                       v6=[route_path, '-n', 'get', '-inet6', 'default'])
 
         interface = dict(v4={}, v6={})
 
@@ -92,13 +92,19 @@ class GenericBsdIfconfigNetwork(Network):
                 #   RTNETLINK answers: Invalid argument
                 continue
             for line in out.splitlines():
-                words = line.split()
+                words = line.strip().split(': ')
                 # Collect output from route command
                 if len(words) > 1:
-                    if words[0] == 'interface:':
+                    if words[0] == 'interface':
                         interface[v]['interface'] = words[1]
-                    if words[0] == 'gateway:':
+                    if words[0] == 'gateway':
                         interface[v]['gateway'] = words[1]
+                    # help pick the right interface address on OpenBSD
+                    if words[0] == 'if address':
+                        interface[v]['address'] = words[1]
+                    # help pick the right interface address on NetBSD
+                    if words[0] == 'local addr':
+                        interface[v]['address'] = words[1]
 
         return interface['v4'], interface['v6']
 
@@ -291,6 +297,14 @@ class GenericBsdIfconfigNetwork(Network):
         for item in ifinfo:
             if item != 'ipv4' and item != 'ipv6':
                 defaults[item] = ifinfo[item]
-        if len(ifinfo[ip_type]) > 0:
-            for item in ifinfo[ip_type][0]:
-                defaults[item] = ifinfo[ip_type][0][item]
+
+        ipinfo = []
+        if 'address' in defaults:
+            ipinfo = [x for x in ifinfo[ip_type] if x['address'] == defaults['address']]
+
+        if len(ipinfo) == 0:
+            ipinfo = ifinfo[ip_type]
+
+        if len(ipinfo) > 0:
+            for item in ipinfo[0]:
+                defaults[item] = ipinfo[0][item]
