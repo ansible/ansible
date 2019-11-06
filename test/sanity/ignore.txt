@@ -208,8 +208,8 @@ lib/ansible/module_utils/gcp.py future-import-boilerplate
 lib/ansible/module_utils/gcp.py metaclass-boilerplate
 lib/ansible/module_utils/gcp_utils.py future-import-boilerplate
 lib/ansible/module_utils/gcp_utils.py metaclass-boilerplate
-lib/ansible/module_utils/gitlab/gitlab.py future-import-boilerplate
-lib/ansible/module_utils/gitlab/gitlab.py metaclass-boilerplate
+lib/ansible/module_utils/gitlab.py future-import-boilerplate
+lib/ansible/module_utils/gitlab.py metaclass-boilerplate
 lib/ansible/module_utils/hwc_utils.py future-import-boilerplate
 lib/ansible/module_utils/hwc_utils.py metaclass-boilerplate
 lib/ansible/module_utils/infinibox.py future-import-boilerplate
