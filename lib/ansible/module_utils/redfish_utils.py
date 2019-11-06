@@ -2263,3 +2263,91 @@ class RedfishUtils(object):
 
     def get_multi_manager_health_report(self):
         return self.aggregate_managers(self.get_manager_health_report)
+
+    def set_manager_nic(self, nic_addr, nic_config):
+        # Get EthernetInterface collection
+        response = self.get_request(self.root_uri + self.manager_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'EthernetInterfaces' not in data:
+            return {'ret': False, 'msg': "EthernetInterfaces resource not found"}
+        ethernetinterfaces_uri = data["EthernetInterfaces"]["@odata.id"]
+        response = self.get_request(self.root_uri + ethernetinterfaces_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        uris = [a.get('@odata.id') for a in data.get('Members', []) if
+                a.get('@odata.id')]
+
+        # Find target EthernetInterface
+        target_ethernet_uri = None
+        target_ethernet_current_setting = None
+        if nic_addr == 'null':
+            # Find root_uri matched EthernetInterface when nic_addr is not specified
+            nic_addr = (self.root_uri).split('/')[-1]
+        for uri in uris:
+            response = self.get_request(self.root_uri + uri)
+            if response['ret'] is False:
+                return response
+            data = response['data']
+            if nic_addr in str(data):
+                target_ethernet_uri = uri
+                target_ethernet_current_setting = data
+                break
+        if target_ethernet_uri is None:
+            return {'ret': False, 'msg': "No matched EthernetInterface found under Manager"}
+
+        # Convert input to payload and check validity
+        payload = {}
+        for property in nic_config.keys():
+            value = nic_config[property]
+            if property not in target_ethernet_current_setting:
+                return {'ret': False, 'msg': "Property %s in nic_config is invalid" % property}
+            if isinstance(value, dict):
+                if isinstance(target_ethernet_current_setting[property], dict):
+                    payload[property] = value
+                elif isinstance(target_ethernet_current_setting[property], list):
+                    payload[property] = list()
+                    payload[property].append(value)
+                else:
+                    return {'ret': False, 'msg': "Value of property %s in nic_config is invalid" % property}
+            else:
+                payload[property] = value
+
+        # If no need change, nothing to do. If error detected, report it
+        need_change = False
+        for property in payload.keys():
+            setValue = payload[property]
+            curValue = target_ethernet_current_setting[property]
+            # type is simple(not dict/list)
+            if not isinstance(setValue, dict) and not isinstance(setValue, list):
+                if setValue != curValue:
+                    need_change = True
+            # type is dict
+            if isinstance(setValue, dict):
+                for subprop in payload[property].keys():
+                    if subprop not in target_ethernet_current_setting[property]:
+                        return {'ret': False, 'msg': "Sub-property %s in nic_config is invalid" % subprop}
+                    sub_setValue = payload[property][subprop]
+                    sub_curValue = target_ethernet_current_setting[property][subprop]
+                    if sub_setValue != sub_curValue:
+                        need_change = True
+            # type is list
+            if isinstance(setValue, list):
+                for i in range(len(setValue)):
+                    for subprop in payload[property][i].keys():
+                        if subprop not in target_ethernet_current_setting[property][i]:
+                            return {'ret': False, 'msg': "Sub-property %s in nic_config is invalid" % subprop}
+                        sub_setValue = payload[property][i][subprop]
+                        sub_curValue = target_ethernet_current_setting[property][i][subprop]
+                        if sub_setValue != sub_curValue:
+                            need_change = True
+
+        if not need_change:
+            return {'ret': True, 'changed': False, 'msg': "Manager NIC already set"}
+
+        response = self.patch_request(self.root_uri + target_ethernet_uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True, 'msg': "Modified Manager NIC"}
