@@ -1515,10 +1515,10 @@ lib/ansible/modules/cloud/xenserver/xenserver_guest.py validate-modules:undocume
 lib/ansible/modules/cloud/xenserver/xenserver_guest.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/cloud/xenserver/xenserver_guest.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/xenserver/xenserver_guest.py validate-modules:missing-suboption-docs
-lib/ansible/modules/clustering/consul.py validate-modules:undocumented-parameter
-lib/ansible/modules/clustering/consul.py validate-modules:doc-missing-type
-lib/ansible/modules/clustering/consul_acl.py validate-modules:doc-missing-type
-lib/ansible/modules/clustering/consul_kv.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/clustering/consul/consul.py validate-modules:undocumented-parameter
+lib/ansible/modules/clustering/consul/consul.py validate-modules:doc-missing-type
+lib/ansible/modules/clustering/consul/consul_acl.py validate-modules:doc-missing-type
+lib/ansible/modules/clustering/consul/consul_kv.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/clustering/etcd3.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/clustering/etcd3.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/clustering/k8s/k8s.py validate-modules:doc-default-does-not-match-spec
