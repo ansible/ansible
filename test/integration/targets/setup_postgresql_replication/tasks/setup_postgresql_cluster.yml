@@ -1,0 +1,93 @@
+# We run two servers listening different ports
+# to be able to check replication (one server for master, another for standby).
+
+- name: Install packages
+  apt:
+    name: '{{ pg_package_list }}'
+  notify: cleanup postgresql
+
+- name: Create root dirs
+  file:
+    state: directory
+    path: "{{ item }}"
+    owner: postgres
+    group: postgres
+    mode: 0700
+  loop:
+  - "{{ master_root_dir }}"
+  - "{{ master_data_dir }}"
+  - "{{ replica_root_dir }}"
+  - "{{ replica_data_dir }}"
+  notify: cleanup postgresql
+
+- name: Find initdb
+  shell: find /usr/lib -type f -name "initdb"
+  register: result
+
+- name: Set path to initdb
+  set_fact:
+    initdb: '{{ result.stdout }}'
+
+- name: Initialize databases
+  become: yes
+  become_user: '{{ pg_user }}'
+  shell: '{{ initdb }} --pgdata {{ item }}'
+  loop:
+  - "{{ master_data_dir }}"
+  - "{{ replica_data_dir }}"
+
+- name: Copy config templates
+  template:
+    src: '{{ item.conf_templ }}'
+    dest: '{{ item.conf_dest }}'
+    owner: postgres
+    group: postgres
+    force: yes
+  loop:
+  - { conf_templ: master_postgresql.conf.j2, conf_dest: '{{ master_postgresql_conf }}' }
+  - { conf_templ: replica_postgresql.conf.j2, conf_dest: '{{ replica_postgresql_conf }}' }
+  - { conf_templ: pg_hba.conf.j2, conf_dest: '{{ master_pg_hba_conf }}' }
+  - { conf_templ: pg_hba.conf.j2, conf_dest: '{{ replica_pg_hba_conf }}' }
+
+- name: Find pg_ctl
+  shell: find /usr/lib -type f -name "pg_ctl"
+  register: result
+
+- name: Set path to initdb
+  set_fact:
+    pg_ctl: '{{ result.stdout }}'
+
+- name: Start servers
+  become: yes
+  become_user: '{{ pg_user }}'
+  shell: '{{ pg_ctl }} -D {{ item.datadir }} -o "-p {{ item.port }}" start'
+  loop:
+  - { datadir: '{{ master_data_dir }}', port: '{{ master_port }}' }
+  - { datadir: '{{ replica_data_dir }}', port: '{{ replica_port }}' }
+  notify: stop postgresql
+
+- name: Check connectivity to the master and get PostgreSQL version
+  become: yes
+  become_user: '{{ pg_user }}'
+  postgresql_ping:
+    db: '{{ db_default }}'
+    login_user: '{{ pg_user }}'
+    login_port: '{{ master_port }}'
+  register: result
+
+- name: Check connectivity to the replica and get PostgreSQL version
+  become: yes
+  become_user: '{{ pg_user }}'
+  postgresql_ping:
+    db: '{{ db_default }}'
+    login_user: '{{ pg_user }}'
+    login_port: '{{ replica_port }}'
+
+- name: Define server version
+  set_fact:
+    pg_major_version: '{{ result.server_version.major }}'
+    pg_minor_version: '{{ result.server_version.minor }}'
+
+- name: Print PostgreSQL version
+  debug:
+    msg: 'PostgreSQL version is {{ pg_major_version }}.{{ pg_minor_version }}'

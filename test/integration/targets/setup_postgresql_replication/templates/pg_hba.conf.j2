@@ -1,0 +1,7 @@
+local  all          all                                trust
+local  replication  logical_replication                trust
+host   replication  logical_replication  127.0.0.1/32  trust
+host   replication  logical_replication  0.0.0.0/0     trust
+local  all          logical_replication                trust
+host   all          logical_replication  127.0.0.1/32  trust
+host   all          logical_replication  0.0.0.0/0     trust
