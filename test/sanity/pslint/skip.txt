@@ -1,1 +1,3 @@
 test/integration/targets/win_ping/library/win_ping_syntax_error.ps1
+test/integration/targets/win_psmodule/files/module/template.psd1
+test/integration/targets/win_psmodule/files/module/template.psm1
