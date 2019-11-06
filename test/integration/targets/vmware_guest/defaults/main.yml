@@ -4,6 +4,7 @@ vmware_guest_test_playbooks:
   - cdrom_d1_c1_f0.yml
   - check_mode.yml
   - clone_customize_guest_test.yml
+  - clone_set_manual_mac_address.yml
   - clone_d1_c1_f0.yml
   - clone_resize_disks.yml
   - clone_with_convert.yml

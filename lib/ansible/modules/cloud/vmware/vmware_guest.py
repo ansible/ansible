@@ -626,6 +626,7 @@ except ImportError:
     pass
 
 from random import randint
+from distutils.version import StrictVersion
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.network import is_mac
 from ansible.module_utils._text import to_text, to_native
@@ -907,6 +908,7 @@ class PyVmomiHelper(PyVmomi):
         self.change_applied = False   # a change was applied meaning at least one task succeeded
         self.customspec = None
         self.cache = PyVmomiCache(self.content, dc_name=self.params['datacenter'])
+        self.vcenter_version = StrictVersion(self.content.about.version)
 
     def gather_facts(self, vm):
         return gather_vm_facts(self.content, vm)
@@ -1464,7 +1466,7 @@ class PyVmomiHelper(PyVmomi):
 
         return network_devices
 
-    def configure_network(self, vm_obj):
+    def configure_network(self, vm_obj, is_clone=False):
         # Ignore empty networks, this permits to keep networks when deploying a template/cloning a VM
         if len(self.params['networks']) == 0:
             return
@@ -1510,10 +1512,13 @@ class PyVmomiHelper(PyVmomi):
                     if not isinstance(nic.device, device_class):
                         self.module.fail_json(msg="Changing the device type is not possible when interface is already present. "
                                                   "The failing device type is %s" % network_devices[key]['device_type'])
-                # Changing mac address has no effect when editing interface
-                if 'mac' in network_devices[key] and nic.device.macAddress != current_net_devices[key].macAddress:
-                    self.module.fail_json(msg="Changing MAC address has not effect when interface is already present. "
-                                              "The failing new MAC address is %s" % nic.device.macAddress)
+                if 'mac' in network_devices[key] and nic.device.macAddress != network_devices[key]['mac']:
+                    if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                        self.module.fail_json(msg="Changing the device MAC address is not "
+                                                  "possible when the guest is powered on.")
+                    nic.device.addressType = 'manual'
+                    nic.device.macAddress = network_devices[key]['mac']
+                    nic_change_detected = True
 
             else:
                 # Default device type is vmxnet3, VMware best practice
@@ -1590,10 +1595,9 @@ class PyVmomiHelper(PyVmomi):
                     nic_change_detected = True
 
             if nic_change_detected:
-                # Change to fix the issue found while configuring opaque network
-                # VMs cloned from a template with opaque network will get disconnected
-                # Replacing deprecated config parameter with relocation Spec
-                if isinstance(self.cache.get_network(network_name), vim.OpaqueNetwork):
+                # Use relospec for device changes when cloning instead of
+                # configspec, which was deprecated with vSphere API 6.0
+                if is_clone and self.vcenter_version >= StrictVersion("6.0"):
                     self.relospec.deviceChange.append(nic)
                 else:
                     self.configspec.deviceChange.append(nic)
@@ -2377,6 +2381,11 @@ class PyVmomiHelper(PyVmomi):
         else:
             (datastore, datastore_name) = self.select_datastore(vm_obj)
 
+        if self.params['template']:
+            is_clone = True
+        else:
+            is_clone = False
+
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
         # create the relocation spec
@@ -2388,7 +2397,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_resource_alloc_info(vm_obj=vm_obj)
         self.configure_vapp_properties(vm_obj=vm_obj)
         self.configure_disks(vm_obj=vm_obj)
-        self.configure_network(vm_obj=vm_obj)
+        self.configure_network(vm_obj=vm_obj, is_clone=is_clone)
         self.configure_cdrom(vm_obj=vm_obj)
 
         # Find if we need network customizations (find keys in dictionary that requires customizations)

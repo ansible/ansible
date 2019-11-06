@@ -1,0 +1,28 @@
+- name: clone VM from template and set manual mac address
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    template: "{{ virtual_machines[0].name }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    folder: "{{ virtual_machines[0].folder }}"
+    networks:
+      - name: VM Network
+        ip: 192.168.10.10
+        netmask: 255.255.255.0
+        gateway: 192.168.10.254
+        mac: aa:bb:cc:dd:aa:b0
+  register: clone_manual_mac_address
+
+- debug:
+    var: clone_manual_mac_address
+
+- name: assert that changes were made
+  assert:
+    that:
+      - "clone_manual_mac_address.changed == true"
+      - "clone_manual_mac_address['instance']['hw_eth0']['addresstype'] == 'manual'"
+      - "clone_manual_mac_address['instance']['hw_eth0']['macaddress'] == 'aa:bb:cc:dd:aa:b0'"
