@@ -52,7 +52,7 @@ options:
     description:
       - Maximum number of items to return for various get/list requests.
     required: false
-    type: int
+    type: str
   next_marker:
     description:
       - "Some requests such as list_command: hosted_zones will return a maximum
@@ -417,7 +417,7 @@ def main():
         ], required=True),
         change_id=dict(),
         hosted_zone_id=dict(),
-        max_items=dict(type='int'),
+        max_items=dict(),
         next_marker=dict(type='int'),
         delegation_set_id=dict(),
         start_record_name=dict(),
