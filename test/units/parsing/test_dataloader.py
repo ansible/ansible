@@ -39,9 +39,6 @@ class TestDataLoader(unittest.TestCase):
     def setUp(self):
         self._loader = DataLoader()
 
-    def tearDown(self):
-        pass
-
     @patch('os.path.exists')
     def test__is_role(self, p_exists):
         p_exists.side_effect = lambda p: p == b'test_path/tasks/main.yml'
