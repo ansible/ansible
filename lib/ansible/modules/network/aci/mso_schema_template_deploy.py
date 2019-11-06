@@ -107,10 +107,10 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    template = module.params['template']
-    site = module.params['site']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    site = module.params.get('site')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 

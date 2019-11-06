@@ -318,42 +318,42 @@ def main():
 
     aci = ACIModule(module)
 
-    tenant = module.params['tenant']
-    ospf = module.params['ospf']
-    description = module.params['description']
+    tenant = module.params.get('tenant')
+    ospf = module.params.get('ospf')
+    description = module.params.get('description')
 
-    if module.params['controls'] is None:
+    if module.params.get('controls') is None:
         controls = None
     else:
-        controls = ','.join(module.params['controls'])
+        controls = ','.join(module.params.get('controls'))
 
-    cost = module.params['cost']
+    cost = module.params.get('cost')
     if cost is not None and cost not in range(1, 451):
         module.fail_json(msg="Parameter 'cost' is only valid in range between 1 and 450.")
 
-    dead_interval = module.params['dead_interval']
+    dead_interval = module.params.get('dead_interval')
     if dead_interval is not None and dead_interval not in range(1, 65536):
         module.fail_json(msg="Parameter 'dead_interval' is only valid in range between 1 and 65536.")
 
-    hello_interval = module.params['hello_interval']
+    hello_interval = module.params.get('hello_interval')
     if hello_interval is not None and hello_interval not in range(1, 65536):
         module.fail_json(msg="Parameter 'hello_interval' is only valid in range between 1 and 65536.")
 
-    network_type = module.params['network_type']
-    prefix_suppression = aci.boolean(module.params['prefix_suppression'], 'enabled', 'disabled')
-    priority = module.params['priority']
+    network_type = module.params.get('network_type')
+    prefix_suppression = aci.boolean(module.params.get('prefix_suppression'), 'enabled', 'disabled')
+    priority = module.params.get('priority')
     if priority is not None and priority not in range(0, 256):
         module.fail_json(msg="Parameter 'priority' is only valid in range between 1 and 255.")
 
-    retransmit_interval = module.params['retransmit_interval']
+    retransmit_interval = module.params.get('retransmit_interval')
     if retransmit_interval is not None and retransmit_interval not in range(1, 65536):
         module.fail_json(msg="Parameter 'retransmit_interval' is only valid in range between 1 and 65536.")
 
-    transmit_delay = module.params['transmit_delay']
+    transmit_delay = module.params.get('transmit_delay')
     if transmit_delay is not None and transmit_delay not in range(1, 451):
         module.fail_json(msg="Parameter 'transmit_delay' is only valid in range between 1 and 450.")
 
-    state = module.params['state']
+    state = module.params.get('state')
 
     aci.construct_url(
         root_class=dict(

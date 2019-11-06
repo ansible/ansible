@@ -267,17 +267,17 @@ def main():
         ],
     )
 
-    state = module.params['state']
-    name = module.params['name']
-    windowname = module.params['windowname']
-    recurring = module.params['recurring']
-    date = module.params['date']
-    hour = module.params['hour']
-    minute = module.params['minute']
-    maxTime = module.params['maxTime']
-    concurCap = module.params['concurCap']
-    day = module.params['day']
-    description = module.params['description']
+    state = module.params.get('state')
+    name = module.params.get('name')
+    windowname = module.params.get('windowname')
+    recurring = module.params.get('recurring')
+    date = module.params.get('date')
+    hour = module.params.get('hour')
+    minute = module.params.get('minute')
+    maxTime = module.params.get('maxTime')
+    concurCap = module.params.get('concurCap')
+    day = module.params.get('day')
+    description = module.params.get('description')
 
     if recurring:
         child_configs = [dict(trigRecurrWindowP=dict(attributes=dict(name=windowname, hour=hour, minute=minute,

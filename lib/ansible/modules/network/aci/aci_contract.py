@@ -254,13 +254,13 @@ def main():
         ],
     )
 
-    contract = module.params['contract']
-    description = module.params['description']
-    scope = module.params['scope']
-    priority = module.params['priority']
-    dscp = module.params['dscp']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    contract = module.params.get('contract')
+    description = module.params.get('description')
+    scope = module.params.get('scope')
+    priority = module.params.get('priority')
+    dscp = module.params.get('dscp')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci = ACIModule(module)
     aci.construct_url(

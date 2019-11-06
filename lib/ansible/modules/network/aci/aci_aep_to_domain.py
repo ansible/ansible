@@ -250,11 +250,11 @@ def main():
         ],
     )
 
-    aep = module.params['aep']
-    domain = module.params['domain']
-    domain_type = module.params['domain_type']
-    vm_provider = module.params['vm_provider']
-    state = module.params['state']
+    aep = module.params.get('aep')
+    domain = module.params.get('domain')
+    domain_type = module.params.get('domain_type')
+    vm_provider = module.params.get('vm_provider')
+    state = module.params.get('state')
 
     # Report when vm_provider is set when type is not virtual
     if domain_type != 'vmm' and vm_provider is not None:

@@ -229,13 +229,13 @@ def main():
         ],
     )
 
-    pod_id = module.params['pod_id']
-    serial = module.params['serial']
-    node_id = module.params['node_id']
-    switch = module.params['switch']
-    description = module.params['description']
-    role = module.params['role']
-    state = module.params['state']
+    pod_id = module.params.get('pod_id')
+    serial = module.params.get('serial')
+    node_id = module.params.get('node_id')
+    switch = module.params.get('switch')
+    description = module.params.get('description')
+    role = module.params.get('role')
+    state = module.params.get('state')
 
     aci = ACIModule(module)
     aci.construct_url(

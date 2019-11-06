@@ -202,11 +202,11 @@ def main():
         ],
     )
 
-    rtp = module.params['rtp']
-    description = module.params['description']
-    tag = module.params['tag']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    rtp = module.params.get('rtp')
+    description = module.params.get('description')
+    tag = module.params.get('tag')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci = ACIModule(module)
     aci.construct_url(

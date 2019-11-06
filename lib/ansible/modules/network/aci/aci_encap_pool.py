@@ -248,11 +248,11 @@ def main():
         ],
     )
 
-    description = module.params['description']
-    pool = module.params['pool']
-    pool_type = module.params['pool_type']
-    pool_allocation_mode = module.params['pool_allocation_mode']
-    state = module.params['state']
+    description = module.params.get('description')
+    pool = module.params.get('pool')
+    pool_type = module.params.get('pool_type')
+    pool_allocation_mode = module.params.get('pool_allocation_mode')
+    state = module.params.get('state')
 
     aci_class = ACI_POOL_MAPPING[pool_type]['aci_class']
     aci_mo = ACI_POOL_MAPPING[pool_type]['aci_mo']

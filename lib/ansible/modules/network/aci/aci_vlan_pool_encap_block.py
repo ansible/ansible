@@ -264,14 +264,14 @@ def main():
         ],
     )
 
-    allocation_mode = module.params['allocation_mode']
-    description = module.params['description']
-    pool = module.params['pool']
-    pool_allocation_mode = module.params['pool_allocation_mode']
-    block_end = module.params['block_end']
-    block_name = module.params['block_name']
-    block_start = module.params['block_start']
-    state = module.params['state']
+    allocation_mode = module.params.get('allocation_mode')
+    description = module.params.get('description')
+    pool = module.params.get('pool')
+    pool_allocation_mode = module.params.get('pool_allocation_mode')
+    block_end = module.params.get('block_end')
+    block_name = module.params.get('block_name')
+    block_start = module.params.get('block_start')
+    state = module.params.get('state')
 
     if block_end is not None:
         encap_end = 'vlan-{0}'.format(block_end)

@@ -232,11 +232,11 @@ def main():
         ],
     )
 
-    taboo_contract = module.params['taboo_contract']
-    description = module.params['description']
-    scope = module.params['scope']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    taboo_contract = module.params.get('taboo_contract')
+    description = module.params.get('description')
+    scope = module.params.get('scope')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci = ACIModule(module)
     aci.construct_url(

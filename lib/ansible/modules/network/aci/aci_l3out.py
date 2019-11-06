@@ -269,16 +269,16 @@ def main():
 
     aci = ACIModule(module)
 
-    l3out = module.params['l3out']
-    domain = module.params['domain']
-    dscp = module.params['dscp']
-    description = module.params['description']
-    enforceRtctrl = module.params['route_control']
-    vrf = module.params['vrf']
-    l3protocol = module.params['l3protocol']
-    asn = module.params['asn']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    l3out = module.params.get('l3out')
+    domain = module.params.get('domain')
+    dscp = module.params.get('dscp')
+    description = module.params.get('description')
+    enforceRtctrl = module.params.get('route_control')
+    vrf = module.params.get('vrf')
+    l3protocol = module.params.get('l3protocol')
+    asn = module.params.get('asn')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     if l3protocol:
         if 'eigrp' in l3protocol and asn is None:

@@ -259,14 +259,14 @@ def main():
 
     aci = ACIModule(module)
 
-    tenant = module.params['tenant']
-    l3out = module.params['l3out']
-    extepg = module.params['extepg']
-    network = module.params['network']
-    description = module.params['description']
-    subnet_name = module.params['subnet_name']
-    scope = ','.join(sorted(module.params['scope']))
-    state = module.params['state']
+    tenant = module.params.get('tenant')
+    l3out = module.params.get('l3out')
+    extepg = module.params.get('extepg')
+    network = module.params.get('network')
+    description = module.params.get('description')
+    subnet_name = module.params.get('subnet_name')
+    scope = ','.join(sorted(module.params.get('scope')))
+    state = module.params.get('state')
 
     aci.construct_url(
         root_class=dict(

@@ -144,12 +144,12 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    site = module.params['site']
-    template = module.params['template']
-    bd = module.params['bd']
-    l3out = module.params['l3out']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    site = module.params.get('site')
+    template = module.params.get('template')
+    bd = module.params.get('bd')
+    l3out = module.params.get('l3out')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
@@ -159,13 +159,13 @@ def main():
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     schema_path = 'schemas/{id}'.format(**schema_obj)
-    schema_id = schema_obj['id']
+    schema_id = schema_obj.get('id')
 
     # Get site
     site_id = mso.lookup_site(site)
 
     # Get site_idx
-    sites = [(s['siteId'], s['templateName']) for s in schema_obj['sites']]
+    sites = [(s.get('siteId'), s.get('templateName')) for s in schema_obj.get('sites')]
     if (site_id, template) not in sites:
         mso.fail_json(msg="Provided site/template '{0}-{1}' does not exist. Existing sites/templates: {2}".format(site, template, ', '.join(sites)))
 
@@ -176,22 +176,22 @@ def main():
 
     # Get BD
     bd_ref = mso.bd_ref(schema_id=schema_id, template=template, bd=bd)
-    bds = [v['bdRef'] for v in schema_obj['sites'][site_idx]['bds']]
+    bds = [v.get('bdRef') for v in schema_obj.get('sites')[site_idx]['bds']]
     if bd_ref not in bds:
         mso.fail_json(msg="Provided BD '{0}' does not exist. Existing BDs: {1}".format(bd, ', '.join(bds)))
     bd_idx = bds.index(bd_ref)
 
     # Get L3out
-    l3outs = schema_obj['sites'][site_idx]['bds'][bd_idx]['l3Outs']
+    l3outs = schema_obj.get('sites')[site_idx]['bds'][bd_idx]['l3Outs']
     if l3out is not None and l3out in l3outs:
         l3out_idx = l3outs.index(l3out)
         # FIXME: Changes based on index are DANGEROUS
         l3out_path = '/sites/{0}/bds/{1}/l3Outs/{2}'.format(site_template, bd, l3out_idx)
-        mso.existing = schema_obj['sites'][site_idx]['bds'][bd_idx]['l3Outs'][l3out_idx]
+        mso.existing = schema_obj.get('sites')[site_idx]['bds'][bd_idx]['l3Outs'][l3out_idx]
 
     if state == 'query':
         if l3out is None:
-            mso.existing = schema_obj['sites'][site_idx]['bds'][bd_idx]['l3Outs']
+            mso.existing = schema_obj.get('sites')[site_idx]['bds'][bd_idx]['l3Outs']
         elif not mso.existing:
             mso.fail_json(msg="L3out '{l3out}' not found".format(l3out=l3out))
         mso.exit_json()

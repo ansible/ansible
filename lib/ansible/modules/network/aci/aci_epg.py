@@ -316,16 +316,16 @@ def main():
 
     aci = ACIModule(module)
 
-    epg = module.params['epg']
-    bd = module.params['bd']
-    description = module.params['description']
-    priority = module.params['priority']
-    intra_epg_isolation = module.params['intra_epg_isolation']
-    fwd_control = module.params['fwd_control']
-    preferred_group = aci.boolean(module.params['preferred_group'], 'include', 'exclude')
-    state = module.params['state']
-    tenant = module.params['tenant']
-    ap = module.params['ap']
+    epg = module.params.get('epg')
+    bd = module.params.get('bd')
+    description = module.params.get('description')
+    priority = module.params.get('priority')
+    intra_epg_isolation = module.params.get('intra_epg_isolation')
+    fwd_control = module.params.get('fwd_control')
+    preferred_group = aci.boolean(module.params.get('preferred_group'), 'include', 'exclude')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
+    ap = module.params.get('ap')
 
     aci.construct_url(
         root_class=dict(

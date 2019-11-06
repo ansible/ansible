@@ -182,9 +182,9 @@ def main():
         ],
     )
 
-    state = module.params['state']
-    group = module.params['group']
-    policy = module.params['policy']
+    state = module.params.get('state')
+    group = module.params.get('group')
+    policy = module.params.get('policy')
 
     aci = ACIModule(module)
     aci.construct_url(

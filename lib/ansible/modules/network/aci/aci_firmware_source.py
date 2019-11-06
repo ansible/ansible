@@ -236,13 +236,13 @@ def main():
         ],
     )
 
-    polling_interval = module.params['polling_interval']
-    url_protocol = module.params['url_protocol']
-    state = module.params['state']
-    source = module.params['source']
-    url = module.params['url']
-    url_password = module.params['url_password']
-    url_username = module.params['url_username']
+    polling_interval = module.params.get('polling_interval')
+    url_protocol = module.params.get('url_protocol')
+    state = module.params.get('state')
+    source = module.params.get('source')
+    url = module.params.get('url')
+    url_password = module.params.get('url_password')
+    url_username = module.params.get('url_username')
 
     aci = ACIModule(module)
     aci.construct_url(

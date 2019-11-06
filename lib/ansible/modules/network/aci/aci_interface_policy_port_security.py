@@ -199,15 +199,15 @@ def main():
         ],
     )
 
-    port_security = module.params['port_security']
-    description = module.params['description']
-    max_end_points = module.params['max_end_points']
-    port_security_timeout = module.params['port_security_timeout']
+    port_security = module.params.get('port_security')
+    description = module.params.get('description')
+    max_end_points = module.params.get('max_end_points')
+    port_security_timeout = module.params.get('port_security_timeout')
     if max_end_points is not None and max_end_points not in range(12001):
         module.fail_json(msg='The "max_end_points" must be between 0 and 12000')
     if port_security_timeout is not None and port_security_timeout not in range(60, 3601):
         module.fail_json(msg='The "port_security_timeout" must be between 60 and 3600')
-    state = module.params['state']
+    state = module.params.get('state')
 
     aci = ACIModule(module)
     aci.construct_url(

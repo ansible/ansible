@@ -200,11 +200,11 @@ def main():
         ],
     )
 
-    state = module.params['state']
-    name = module.params['name']
-    version = module.params['version']
+    state = module.params.get('state')
+    name = module.params.get('name')
+    version = module.params.get('version')
 
-    if module.params['ignoreCompat']:
+    if module.params.get('ignoreCompat'):
         ignore = 'yes'
     else:
         ignore = 'no'

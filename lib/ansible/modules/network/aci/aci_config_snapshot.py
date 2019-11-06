@@ -246,20 +246,20 @@ def main():
 
     aci = ACIModule(module)
 
-    description = module.params['description']
-    export_policy = module.params['export_policy']
-    file_format = module.params['format']
-    include_secure = aci.boolean(module.params['include_secure'])
-    max_count = module.params['max_count']
+    description = module.params.get('description')
+    export_policy = module.params.get('export_policy')
+    file_format = module.params.get('format')
+    include_secure = aci.boolean(module.params.get('include_secure'))
+    max_count = module.params.get('max_count')
     if max_count is not None:
         if max_count in range(1, 11):
             max_count = str(max_count)
         else:
             module.fail_json(msg="Parameter 'max_count' must be a number between 1 and 10")
-    snapshot = module.params['snapshot']
+    snapshot = module.params.get('snapshot')
     if snapshot is not None and not snapshot.startswith('run-'):
         snapshot = 'run-' + snapshot
-    state = module.params['state']
+    state = module.params.get('state')
 
     if state == 'present':
         aci.construct_url(

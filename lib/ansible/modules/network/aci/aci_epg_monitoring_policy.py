@@ -194,10 +194,10 @@ def main():
         ],
     )
 
-    monitoring_policy = module.params['monitoring_policy']
-    description = module.params['description']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    monitoring_policy = module.params.get('monitoring_policy')
+    description = module.params.get('description')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci = ACIModule(module)
     aci.construct_url(

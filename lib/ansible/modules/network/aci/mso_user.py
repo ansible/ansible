@@ -163,19 +163,19 @@ def main():
         ],
     )
 
-    user_name = module.params['user']
-    user_password = module.params['user_password']
-    first_name = module.params['first_name']
-    last_name = module.params['last_name']
-    email = module.params['email']
-    phone = module.params['phone']
-    account_status = module.params['account_status']
-    state = module.params['state']
+    user_name = module.params.get('user')
+    user_password = module.params.get('user_password')
+    first_name = module.params.get('first_name')
+    last_name = module.params.get('last_name')
+    email = module.params.get('email')
+    phone = module.params.get('phone')
+    account_status = module.params.get('account_status')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
-    roles = mso.lookup_roles(module.params['roles'])
-    domain = mso.lookup_domain(module.params['domain'])
+    roles = mso.lookup_roles(module.params.get('roles'))
+    domain = mso.lookup_domain(module.params.get('domain'))
 
     user_id = None
     path = 'users'
@@ -184,7 +184,7 @@ def main():
     if user_name:
         mso.existing = mso.get_obj(path, username=user_name)
         if mso.existing:
-            user_id = mso.existing['id']
+            user_id = mso.existing.get('id')
             # If we found an existing object, continue with it
             path = 'users/{id}'.format(id=user_id)
     else:
