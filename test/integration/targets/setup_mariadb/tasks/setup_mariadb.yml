@@ -1,11 +1,6 @@
 # We run two servers listening different ports
 # to be able to check replication (one server for master, another for standby).
 
-- uri:
-    url: http://yum.mariadb.org/10.1/centos7-amd64/rpms/MariaDB-client-10.1.42-1.el7.centos.x86_64.rpm
-    return_content: false
-  ignore_errors: true
-
 - name: Install MariaDB repo
   yum_repository:
     name: MariaDB
@@ -14,6 +9,10 @@
     gpgkey: "{{ repo_gpgkey }}"
     gpgcheck: yes
   notify: cleanup mariadb
+  register: result
+  until: result is successful
+  retries: 10
+  delay: 3
 
 - name: Install MariaDB packages on RedHat family OS
   yum:
