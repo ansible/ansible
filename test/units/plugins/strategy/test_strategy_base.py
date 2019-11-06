@@ -36,12 +36,6 @@ from ansible.plugins.strategy import StrategyBase
 
 class TestStrategyBase(unittest.TestCase):
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_strategy_base_init(self):
         queue_items = []
 
