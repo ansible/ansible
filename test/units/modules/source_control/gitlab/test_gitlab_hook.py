@@ -6,7 +6,7 @@
 from __future__ import absolute_import
 import pytest
 
-from ansible.modules.source_control.gitlab_hook import GitLabHook
+from ansible.modules.source_control.gitlab.gitlab_hook import GitLabHook
 
 
 def _dummy(x):
