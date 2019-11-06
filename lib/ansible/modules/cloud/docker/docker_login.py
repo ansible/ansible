@@ -259,7 +259,8 @@ class LoginManager(DockerBaseClass):
 
     def write_config(self, path, config):
         try:
-            json.dump(config, open(path, "w"), indent=5, sort_keys=True)
+            with open(path, "w") as file:
+                json.dump(config, file, indent=5, sort_keys=True)
         except Exception as exc:
             self.fail("Error: failed to write config to %s - %s" % (path, str(exc)))
 
@@ -277,7 +278,8 @@ class LoginManager(DockerBaseClass):
 
         try:
             # read the existing config
-            config = json.load(open(path, "r"))
+            with open(path, "r") as file:
+                config = json.load(file)
         except ValueError:
             self.log("Error reading config from %s" % (path))
             config = dict()
