@@ -47,7 +47,7 @@ options:
     default: 2
     type: int
 
-author: "Sebastien Wains <swains@redhat.com>"
+author: Sebastien Wains (@sebw)
 '''
 
 EXAMPLES = '''
@@ -78,7 +78,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
 
-def run_module():
+def main():
 
     module_args = dict(
         url=dict(type='str', required=True),
@@ -147,4 +147,4 @@ def run_module():
 
 
 if __name__ == '__main__':
-    run_module()
+    main()
