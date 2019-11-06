@@ -370,6 +370,8 @@ class OnyxStaticRouteModule(BaseOnyxModule):
             route_distance = required_config.get('route_distance')
             mroute_preference = required_config.get('mroute_preference')
             network_prefix = required_config.get('network_prefix')
+            netmask = required_config.get('netmask')
+            nexthop = required_config.get('nexthop')
             current_route = None
             if vrf_name is not None:
                 current_vrf = current_config.get(vrf_name)
@@ -379,35 +381,36 @@ class OnyxStaticRouteModule(BaseOnyxModule):
                 current_route = current_config.get(network_prefix)
             required_route = {
                 'network_prefix': network_prefix,
-                'netmask': required_config.get('netmask'),
-                'nexthop': required_config.get('nexthop')
+                'netmask': netmask,
+                'nexthop': nexthop
             }
+            required_str = network_prefix + ' ' + netmask + ' ' + nexthop
 
             ''' [route_distance, mroute_preference] one of them will be setted or None '''
             if route_distance is not None:
                 required_route['route_distance'] = route_distance
+                required_str = required_str + ' ' + str(route_distance)
             elif mroute_preference is not None:
                 required_route['mroute_preference'] = mroute_preference
-            required_str_list = list(map(str, required_route.values()))  # cast to string to able to join them
+                required_str = required_str + ' ' + str(mroute_preference)
+
             if current_route is not None:
                 is_no_change = self._dict_match(current_route, required_route)
-
                 if vrf_name is not None:
                     if route_enable is False and is_no_change is True:
-                        self._commands.append('no ip {0} vrf {1} {2}'.format(route_cmd, vrf_name, ' '.join(required_str_list)))
+                        self._commands.append('no ip {0} vrf {1} {2}'.format(route_cmd, vrf_name, required_str))
                     elif route_enable is True and is_no_change is False:  # just add a new route
-                        self._commands.append('ip {0} vrf {1} {2}'.format(route_cmd, vrf_name, ' '.join(required_str_list)))
+                        self._commands.append('ip {0} vrf {1} {2}'.format(route_cmd, vrf_name, required_str))
                 else:
                     if route_enable is False and is_no_change is True:
-                        self._commands.append('no ip {0} {1}'.format(route_cmd, ' '.join(required_str_list)))
+                        self._commands.append('no ip {0} {1}'.format(route_cmd, required_str))
                     elif is_no_change is False:
-                        print(required_str_list)
-                        self._commands.append('ip {0} {1}'.format(route_cmd, ' '.join(required_str_list)))
+                        self._commands.append('ip {0} {1}'.format(route_cmd, required_str))
             elif route_enable is True:  # new route
                 if vrf_name is not None:
-                    self._commands.append('ip {0} vrf {1} {2}'.format(route_cmd, vrf_name, ' '.join(required_str_list)))
+                    self._commands.append('ip {0} vrf {1} {2}'.format(route_cmd, vrf_name, required_str))
                 else:
-                    self._commands.append('ip {0} {1}'.format(route_cmd, ' '.join(required_str_list)))
+                    self._commands.append('ip {0} {1}'.format(route_cmd, required_str))
 
         mapping_hostname = required_config.get('hostname_map')  # its a command no need to check current config
         if mapping_hostname is not None:
