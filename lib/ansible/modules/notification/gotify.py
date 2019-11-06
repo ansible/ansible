@@ -77,6 +77,7 @@ EXAMPLES = '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
+
 def run_module():
 
     module_args = dict(
@@ -102,7 +103,7 @@ def run_module():
     url = module.params['url']
     priority = module.params['priority']
 
-    # If URL has no trailing slash, add it
+    # If URL has no trailing slash add it
     if url[len(url)-1] != "/":
         url += "/"
 
@@ -114,7 +115,7 @@ def run_module():
     if module.check_mode:
         module.exit_json(changed=False)
 
-    payload = { 
+    payload = {
             "message": msg,
             "priority": priority,
             "title": title
@@ -129,7 +130,7 @@ def run_module():
         'Accept': 'application/json',
     }
 
-    response, info = fetch_url(module=module, 
+    response, info = fetch_url(module=module,
                                 url=full_url,
                                 headers=headers,
                                 method='POST',
@@ -143,6 +144,7 @@ def run_module():
 
     result['changed'] = True
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     run_module()
