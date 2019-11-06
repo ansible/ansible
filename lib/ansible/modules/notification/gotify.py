@@ -104,7 +104,7 @@ def run_module():
     priority = module.params['priority']
 
     # If URL has no trailing slash add it
-    if url[len(url)-1] != "/":
+    if url[len(url) - 1] != "/":
         url += "/"
 
     full_url = "%smessage?token=%s" % (url, token)
@@ -116,9 +116,9 @@ def run_module():
         module.exit_json(changed=False)
 
     payload = {
-            "message": msg,
-            "priority": priority,
-            "title": title
+        "message": msg,
+        "priority": priority,
+        "title": title
     }
 
     result = module.params
@@ -131,10 +131,10 @@ def run_module():
     }
 
     response, info = fetch_url(module=module,
-                                url=full_url,
-                                headers=headers,
-                                method='POST',
-                                data=payload)
+        url=full_url,
+        headers=headers,
+        method='POST',
+        data=payload)
 
     result['http result'] = info['status']
 
