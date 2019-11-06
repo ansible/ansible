@@ -1396,12 +1396,23 @@ To search a string with a regex, use the "regex_search" filter::
     # case insensitive search in multiline mode
     {{ 'foo\nBAR' | regex_search("^bar", multiline=True, ignorecase=True) }}
 
+.. versionadded:: 2.10
+
+    # find the username and uid of a user in a passwd-formatted line,
+    # returned as a dictionary
+    {{ 'user:x:1000:1000:John Doe:/home/user:/bin/bash' | regex_search('^(?P<id>[^:]*):[^:]*:(?P<uid>[^:]*)', groupdict=True) }}
+
 
 To search for all occurrences of regex matches, use the "regex_findall" filter::
 
     # Return a list of all IPv4 addresses in the string
     {{ 'Some DNS servers are 8.8.8.8 and 8.8.4.4' | regex_findall('\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b') }}
 
+.. versionadded:: 2.10
+
+    # find list of username, uid, and gid for each user in a passwd-formatted
+    # file, returned as a list of dictionaries
+    {{ lookup('file', '/etc/passwd') | regex_findall('^(?P<id>[^:]*):[^:]*:(?P<uid>[^:]*):(?P<gid>[^:]*)', groupdict=True, multiline=True) }}
 
 To replace text in a string with regex, use the "regex_replace" filter::
 
