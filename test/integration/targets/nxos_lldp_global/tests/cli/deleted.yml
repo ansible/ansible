@@ -1,22 +1,37 @@
 ---
   - debug:
       msg: "Start nxos_lldp_global deleted integration tests connection = {{ ansible_connection }}"
-  
-  - name: Enable LLDP feature
-    nxos_feature:
-      feature: lldp
-      state: enabled
 
+  # N35 skips all tests, image issues.
   - block:
+    - set_fact: cfg_port_id=True
+      when: platform is not search('N[567]K') and imagetag is not search("I[2345]")
+
+    - name: feature off to cleanup lldp
+      nxos_feature: &feature_off
+        feature: lldp
+        state: disabled
+
+    - name: Enable LLDP feature
+      nxos_feature:
+        feature: lldp
+        state: enabled
+
     - name: Setup
       cli_config:
         config: |
           lldp holdtime 125
           lldp timer 32
-          no lldp tlv-select dcbxp 
+          no lldp tlv-select dcbxp
           lldp tlv-select system-name
           no lldp tlv-select system-description
-          lldp tlv-select power-management
+
+    - name: Setup2
+      cli_config:
+        config: |
+          lldp portid-subtype 1
+          no lldp tlv-select power-management
+      when: cfg_port_id is defined
 
     - name: Gather lldp_global facts
       nxos_facts: &facts
@@ -40,6 +55,12 @@
           - "result.changed == true "
           - "result.after | length == 0"
 
+    - assert:
+        that:
+          - "'no lldp portid-subtype 1' in result.commands"
+          - "'lldp tlv-select power-management' in result.commands"
+      when: cfg_port_id is defined
+
     - name: Gather lldp_global post facts
       nxos_facts: *facts
 
@@ -55,9 +76,8 @@
         that:
           - "result.changed == false"
           - "result.commands|length == 0"
-
     always:
-    - name: teardown
-      nxos_feature:
-        feature: lldp
-        state: disabled
+      - name: teardown
+        nxos_feature: *feature_off
+
+    when: platform is not search('N35')
