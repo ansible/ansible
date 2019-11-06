@@ -24,19 +24,23 @@ options:
     description:
       - URL to connect to
     required: true
+    type: str
   token:
     description:
       - Application token
     required: true
+    type: str
   title:
     description:
       - The title of the message
     default: Ansible Notification
     required: False
+    type: str
   msg:
     description:
       - The message body
     required: true
+    type: str
   priority:
     description:
       - The message priority (0 to 5)
@@ -106,12 +110,12 @@ def run_module():
     full_url = "%smessage?token=%s" % (url, token)
 
     # In check mode, exit before actually sending the message
-    # Check mode will only tell you if a required option is missing and won't 
+    # Check mode will only tell you if a required option is missing and won't
     # check if Gotify is available or if the token is valid.
     if module.check_mode:
         module.exit_json(changed=False)
 
-    payload={
+    payload = { 
             "message": msg,
             "priority": priority,
             "title": title
@@ -127,9 +131,9 @@ def run_module():
     }
 
     response, info = fetch_url(module=module, 
-                                url=full_url, 
-                                headers=headers, 
-                                method='POST', 
+                                url=full_url,
+                                headers=headers,
+                                method='POST',
                                 data=payload)
 
     result['http result'] = info['status']
