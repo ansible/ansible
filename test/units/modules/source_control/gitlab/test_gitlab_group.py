@@ -105,4 +105,4 @@ class TestGitlabGroup(GitlabModuleTestCase):
 
         rvalue = self.moduleUtil.deleteGroup()
 
-        self.assertEqual(rvalue, None)
+        self.assertIs(rvalue, None)

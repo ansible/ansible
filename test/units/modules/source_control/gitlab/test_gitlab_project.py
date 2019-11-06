@@ -100,4 +100,4 @@ class TestGitlabProject(GitlabModuleTestCase):
 
         rvalue = self.moduleUtil.deleteProject()
 
-        self.assertEqual(rvalue, None)
+        self.assertIs(rvalue, None)

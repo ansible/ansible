@@ -89,7 +89,7 @@ class TestCopyResultExclude(unittest.TestCase):
         self.mock_am._low_level_execute_command = Mock(return_value={})
         self.mock_am.display = Mock()
 
-        self.assertEqual(task.environment, None)
+        self.assertIs(task.environment, None)
 
     def test_raw_task_vars_is_not_None(self):
 
@@ -105,4 +105,4 @@ class TestCopyResultExclude(unittest.TestCase):
         self.mock_am.display = Mock()
 
         self.mock_am.run(task_vars={'a': 'b'})
-        self.assertEqual(task.environment, None)
+        self.assertIs(task.environment, None)

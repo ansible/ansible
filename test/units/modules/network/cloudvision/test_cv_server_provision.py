@@ -332,7 +332,7 @@ class TestCvServerProvision(unittest.TestCase):
         module.client.api.get_device_by_name.return_value = None
         info = cv_server_provision.switch_info(module)
         self.assertEqual(module.client.api.get_device_by_name.call_count, 1)
-        self.assertEqual(info, None)
+        self.assertIs(info, None)
         module.fail_json.assert_called_once_with(
             msg="Device with name 'eos' does not exist.")
 

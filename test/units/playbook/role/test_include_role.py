@@ -182,14 +182,14 @@ class TestIncludeRole(unittest.TestCase):
             # Outer-most role must not have variables from inner roles yet
             if role == 'l1':
                 self.assertEqual(task_vars.get('l1_variable'), 'l1-main')
-                self.assertEqual(task_vars.get('l2_variable'), None)
-                self.assertEqual(task_vars.get('l3_variable'), None)
+                self.assertIs(task_vars.get('l2_variable'), None)
+                self.assertIs(task_vars.get('l3_variable'), None)
                 self.assertEqual(task_vars.get('test_variable'), 'l1-main')
             # Middle role must have variables from outer role, but not inner
             elif role == 'l2':
                 self.assertEqual(task_vars.get('l1_variable'), 'l1-main')
                 self.assertEqual(task_vars.get('l2_variable'), 'l2-main')
-                self.assertEqual(task_vars.get('l3_variable'), None)
+                self.assertIs(task_vars.get('l3_variable'), None)
                 self.assertEqual(task_vars.get('test_variable'), 'l2-main')
             # Inner role must have variables from both outer roles
             elif role == 'l3':
@@ -228,14 +228,14 @@ class TestIncludeRole(unittest.TestCase):
             # Outer-most role must not have variables from inner roles yet
             if role == 'l1':
                 self.assertEqual(task_vars.get('l1_variable'), 'l1-alt')
-                self.assertEqual(task_vars.get('l2_variable'), None)
-                self.assertEqual(task_vars.get('l3_variable'), None)
+                self.assertIs(task_vars.get('l2_variable'), None)
+                self.assertIs(task_vars.get('l3_variable'), None)
                 self.assertEqual(task_vars.get('test_variable'), 'l1-alt')
             # Middle role must have variables from outer role, but not inner
             elif role == 'l2':
                 self.assertEqual(task_vars.get('l1_variable'), 'l1-alt')
                 self.assertEqual(task_vars.get('l2_variable'), 'l2-alt')
-                self.assertEqual(task_vars.get('l3_variable'), None)
+                self.assertIs(task_vars.get('l3_variable'), None)
                 self.assertEqual(task_vars.get('test_variable'), 'l2-alt')
             # Inner role must have variables from both outer roles
             elif role == 'l3':

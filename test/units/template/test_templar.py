@@ -457,7 +457,7 @@ class TestAnsibleContext(BaseTemplar, unittest.TestCase):
     def test_resolve_none(self):
         context = self._context(variables={'some_key': None})
         res = context.resolve('some_key')
-        self.assertEqual(res, None)
+        self.assertIs(res, None)
         # self.assertNotIsInstance(res, AnsibleUnsafe)
         self.assertFalse(self.is_unsafe(res),
                          'return of AnsibleContext.resolve (%s) was not expected to be marked unsafe but was' % res)

@@ -103,7 +103,7 @@ class TestGitlabUser(GitlabModuleTestCase):
         self.moduleUtil.existsUser("john_smith")
         rvalue = self.moduleUtil.deleteUser()
 
-        self.assertEqual(rvalue, None)
+        self.assertIs(rvalue, None)
 
     @with_httmock(resp_get_user)
     @with_httmock(resp_get_user_keys)

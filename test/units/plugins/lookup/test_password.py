@@ -225,7 +225,7 @@ class TestReadPasswordFile(unittest.TestCase):
 
     def test_no_password_file(self):
         password.os.path.exists = lambda x: False
-        self.assertEqual(password._read_password_file(b'/nonexistent'), None)
+        self.assertIs(password._read_password_file(b'/nonexistent'), None)
 
     def test_with_password_file(self):
         password.os.path.exists = lambda x: True

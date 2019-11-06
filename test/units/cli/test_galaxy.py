@@ -203,7 +203,7 @@ class TestGalaxy(unittest.TestCase):
         gc = GalaxyCLI(args=["ansible-galaxy", "import", "foo", "bar"])
         gc.parse()
         self.assertIs(context.CLIARGS['wait'], True)
-        self.assertEqual(context.CLIARGS['reference'], None)
+        self.assertIs(context.CLIARGS['reference'], None)
         self.assertIs(context.CLIARGS['check_status'], False)
         self.assertEqual(context.CLIARGS['verbosity'], 0)
 
@@ -226,7 +226,7 @@ class TestGalaxy(unittest.TestCase):
         gc.parse()
         self.assertIs(context.CLIARGS['ignore_errors'], False)
         self.assertIs(context.CLIARGS['no_deps'], False)
-        self.assertEqual(context.CLIARGS['role_file'], None)
+        self.assertIs(context.CLIARGS['role_file'], None)
         self.assertIs(context.CLIARGS['force'], False)
 
     def test_parse_list(self):
@@ -240,7 +240,7 @@ class TestGalaxy(unittest.TestCase):
         gc = GalaxyCLI(args=["ansible-galaxy", "login"])
         gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
-        self.assertEqual(context.CLIARGS['token'], None)
+        self.assertIs(context.CLIARGS['token'], None)
 
     def test_parse_remove(self):
         ''' testing the options parser when the action 'remove' is given '''
@@ -252,16 +252,16 @@ class TestGalaxy(unittest.TestCase):
         ''' testing the options parswer when the action 'search' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "search"])
         gc.parse()
-        self.assertEqual(context.CLIARGS['platforms'], None)
-        self.assertEqual(context.CLIARGS['galaxy_tags'], None)
-        self.assertEqual(context.CLIARGS['author'], None)
+        self.assertIs(context.CLIARGS['platforms'], None)
+        self.assertIs(context.CLIARGS['galaxy_tags'], None)
+        self.assertIs(context.CLIARGS['author'], None)
 
     def test_parse_setup(self):
         ''' testing the options parser when the action 'setup' is given '''
         gc = GalaxyCLI(args=["ansible-galaxy", "setup", "source", "github_user", "github_repo", "secret"])
         gc.parse()
         self.assertEqual(context.CLIARGS['verbosity'], 0)
-        self.assertEqual(context.CLIARGS['remove_id'], None)
+        self.assertIs(context.CLIARGS['remove_id'], None)
         self.assertIs(context.CLIARGS['setup_list'], False)
 
 

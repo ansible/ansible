@@ -251,10 +251,10 @@ class GCPUtilsTestCase(unittest.TestCase):
         self.assertEqual('forwardingRule', actual)
         input_data = ''
         actual = GCPUtils.get_entity_name_from_resource_name(input_data)
-        self.assertEqual(None, actual)
+        self.assertIs(actual, None)
         input_data = 666
         actual = GCPUtils.get_entity_name_from_resource_name(input_data)
-        self.assertEqual(None, actual)
+        self.assertIs(actual, None)
 
     def test_are_params_equal(self):
         params1 = {'one': 1}

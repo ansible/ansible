@@ -103,7 +103,7 @@ class TestImports(ModuleTestCase):
         self.assertEqual(mod.module_utils.basic.literal_eval("[1]"), [1])
         self.assertIs(mod.module_utils.basic.literal_eval("True"), True)
         self.assertIs(mod.module_utils.basic.literal_eval("False"), False)
-        self.assertEqual(mod.module_utils.basic.literal_eval("None"), None)
+        self.assertIs(mod.module_utils.basic.literal_eval("None"), None)
         # self.assertEqual(mod.module_utils.basic.literal_eval('{"a": 1}'), dict(a=1))
         self.assertRaises(ValueError, mod.module_utils.basic.literal_eval, "asdfasdfasdf")
 

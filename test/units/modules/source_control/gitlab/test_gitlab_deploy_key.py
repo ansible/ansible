@@ -104,4 +104,4 @@ class TestGitlabDeployKey(GitlabModuleTestCase):
 
         rvalue = self.moduleUtil.deleteDeployKey()
 
-        self.assertEqual(rvalue, None)
+        self.assertIs(rvalue, None)

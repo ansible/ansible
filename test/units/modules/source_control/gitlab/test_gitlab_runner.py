@@ -91,4 +91,4 @@ class TestGitlabRunner(GitlabModuleTestCase):
 
         rvalue = self.moduleUtil.deleteRunner()
 
-        self.assertEqual(rvalue, None)
+        self.assertIs(rvalue, None)
