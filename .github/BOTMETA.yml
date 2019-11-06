@@ -250,7 +250,7 @@ files:
   $modules/messaging/rabbitmq/: $team_rabbitmq
   $modules/monitoring/airbrake_deployment.py:
     ignored: bpennypacker
-  $modules/monitoring/datadog_event.py:
+  $modules/monitoring/datadog/datadog_event.py:
     ignored: arturaz
   $modules/monitoring/grafana:
     labels: grafana
