@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = """
 ---
-module: onyx_routes
+module: onyx_static_route
 version_added: "2.10"
 author: "Anas Shami (@anass)"
 short_description: Configure ip routes module
@@ -30,21 +30,22 @@ options:
         description:
             - Specify the type of routing
         choices: ['default', 'multicast']
+        type: str
     vrf_name:
         description:
             - Static route or multicast this vrf
         type: str
     network_prefix:
         description:
-            - The current network prefix eg: 1.1.1.1
+            - The current network prefix
         type: str
     netmask:
         description:
-            - Set the netmask/netmask length for the network prefix eg: 255.255.255.0 or /24
+            - Set the netmask/netmask length for the network prefix
         type: str
     nexthop:
         description:
-            - The next hop in static route eg: 2.2.2.2.
+            - The next hop in static route
         type: str
     routing:
         description:
@@ -79,7 +80,7 @@ options:
     domain_remove:
         description:
             - Remove domain name
-        type: str
+        type: bool
         default: False
     mroute_preference:
         description:
