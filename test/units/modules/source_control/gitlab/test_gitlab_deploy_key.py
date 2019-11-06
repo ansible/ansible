@@ -7,7 +7,7 @@ from __future__ import absolute_import
 
 import pytest
 
-from ansible.modules.source_control.gitlab_deploy_key import GitLabDeployKey
+from ansible.modules.source_control.gitlab.gitlab_deploy_key import GitLabDeployKey
 
 
 def _dummy(x):
