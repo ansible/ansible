@@ -1,0 +1,60 @@
+# Sets up a local repo that contains mock packages for testing.
+#
+# PSRepo 1 contains
+#     ansible-test1 - 1.0.0
+#     ansible-clobber - 1.0.0
+#
+# These modules will have the following cmdlets
+#     ansible-test1
+#         Get-AnsibleTest1
+#
+#     ansible-clobber
+#         Enable-PSTrace (clobbers the Enable-PSTrace cmdlet)
+#
+# All cmdlets return
+#     [PSCustomObject]@{
+#         Name = "the name of the module"
+#         Version = "the version of the module"
+#         Repo = "the repo where the module was sourced from"
+#     }
+---
+- name: create test repo folder
+  win_file:
+    path: '{{ remote_tmp_dir }}\PSRepo 1'
+    state: directory
+
+- name: register test repo
+  win_shell: |
+    $name = 'PSRepo 1'
+    $source_location = '{{ remote_tmp_dir }}\PSRepo 1'
+    if (-not (Get-PSRepository -Name $name -ErrorAction SilentlyContinue)) {
+        Register-PSRepository -Name $name -SourceLocation $source_location -InstallationPolicy Trusted
+    }
+  notify: remove registered repo
+
+- name: remove PSGallery repository
+  win_shell: |
+    if ((Get-PSRepository -Name 'PSGallery' -ErrorAction SilentlyContinue)) {
+        Unregister-PSRepository -Name 'PSGallery'
+        $true
+    } else {
+        $false
+    }
+  register: remove_gallery
+  changed_when: remove_gallery.stdout | trim | bool
+  notify: re-add PSGallery repository
+
+- name: copy across module template files
+  win_copy:
+    src: module/
+    dest: '{{ remote_tmp_dir }}'
+
+# Used in the script below to create the .nupkg for each test module
+- name: download NuGet binary for module publishing
+  win_get_url:
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/win_psmodule/nuget.exe
+    dest: '{{ remote_tmp_dir }}'
+
+- name: create test PowerShell modules
+  script: setup_modules.ps1 "{{ remote_tmp_dir }}"
+  notify: remove test packages
