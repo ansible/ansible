@@ -76,17 +76,15 @@ options:
             managed_image:
                 description:
                     - Managed image reference, could be resource ID, or dictionary containing I(resource_group) and I(name).
-                type: raw
             snapshot:
                 description:
                     - Source snapshot to be used.
-                type: raw
             replica_count:
                 description:
                     - The number of replicas of the Image Version to be created per region.
                     - This property would take effect for a region when regionalReplicaCount is not specified.
                     - This property is updatable.
-                type: number
+                type: int
             exclude_from_latest:
                 description:
                     If I(exclude_from_latest=true), Virtual Machines deployed from the latest version of the Image Definition won't use this Image Version.
