@@ -74,9 +74,16 @@ class ACMServiceManager(object):
     @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
     def get_certificate_with_backoff(self, client, certificate_arn):
         response = client.get_certificate(CertificateArn=certificate_arn)
-        # strip out response metadata
-        return {'Certificate': response['Certificate'],
-                'CertificateChain': response['CertificateChain']}
+
+        try:
+            # strip out response metadata
+            return {'Certificate': response['Certificate'],
+                    'CertificateChain': response['CertificateChain']}
+        except KeyError:
+            # There will be no certificate if the resource is
+            # PENDING_VALIDATION, VALIDATION_TIMED_OUT,
+            # FAILED, INACTIVE, EXPIRED or REVOKED
+            return None
 
     @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
     def describe_certificate_with_backoff(self, client, certificate_arn):
@@ -113,13 +120,17 @@ class ACMServiceManager(object):
             except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg="Couldn't obtain certificate metadata for domain %s" % certificate['DomainName'])
 
-            # in some states, ACM resources do not have a corresponding cert
-            if cert_data['Status'] not in ['PENDING_VALIDATION', 'VALIDATION_TIMED_OUT', 'FAILED']:
-                try:
-                    cert_data.update(self.get_certificate_with_backoff(client, certificate['CertificateArn']))
-                except (BotoCoreError, ClientError, KeyError) as e:
-                    if e.response['Error']['Code'] != "RequestInProgressException":
-                        module.fail_json_aws(e, msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'])
+            try:
+                cert = self.get_certificate_with_backoff(client, certificate['CertificateArn'])
+            except BotoCoreError as e:
+                module.fail_json_aws(e, msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'])
+            except ClientError as e:
+                if e.response['Error']['Code'] != "RequestInProgressException":
+                    module.fail_json_aws(e, msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'])
+            else:
+                if cert:
+                    cert_data.update(cert)
+
             cert_data = camel_dict_to_snake_dict(cert_data)
             try:
                 tags = self.list_certificate_tags_with_backoff(client, certificate['CertificateArn'])
