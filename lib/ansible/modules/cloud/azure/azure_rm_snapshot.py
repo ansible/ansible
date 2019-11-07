@@ -127,10 +127,8 @@ id:
 
 import time
 import json
-import re
 from ansible.module_utils.azure_rm_common_ext import AzureRMModuleBaseExt
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
-from copy import deepcopy
 try:
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
@@ -191,7 +189,6 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
                         type='str',
                         disposition='createOption',
                         choices=['Import', 'Copy'],
-                        default='Import'
                     ),
                     source_uri=dict(
                         type='str',
