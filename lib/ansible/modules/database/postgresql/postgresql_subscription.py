@@ -679,7 +679,7 @@ def main():
         # Information has been collected already, so nothing is needed:
         pass
 
-    if state == 'present':
+    elif state == 'present':
         if not subscription.exists:
             if subsparams:
                 subsparams = convert_subscr_params(subsparams)
@@ -712,7 +712,8 @@ def main():
         changed = subscription.refresh(check_mode=module.check_mode)
 
     # Get final subscription info if needed:
-    final_state = subscription.get_info()
+    if state != 'stat':
+        final_state = subscription.get_info()
 
     # Connection is not needed any more:
     cursor.close()
