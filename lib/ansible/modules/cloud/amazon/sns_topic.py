@@ -534,7 +534,7 @@ def main():
                 protocol=dict(type='str', required=True),
                 endpoint=dict(type='str', required=True),
                 raw_message_delivery=dict(type='str', required=False),
-                filter_policy=dict(type='json', required=False)
+                filter_policy=dict(type='str', required=False)
             )
         ),
         purge_subscriptions=dict(type='bool', default=True),
