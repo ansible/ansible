@@ -444,9 +444,9 @@ def main():
                 if size_opt == 'l':
                     module.fail_json(changed=False, msg="Thin volume sizing with percentage not supported.")
                 size_opt = 'V'
-                cmd = "%s %s -n %s -%s %s%s %s -T %s/%s" % (lvcreate_cmd, yesopt, lv, size_opt, size, size_unit, opts, vg, thinpool)
+                cmd = "%s %s %s -n %s -%s %s%s %s -T %s/%s" % (lvcreate_cmd, test_opt, yesopt, lv, size_opt, size, size_unit, opts, vg, thinpool)
             elif thinpool and not lv:
-                cmd = "%s %s -%s %s%s %s -T %s/%s" % (lvcreate_cmd, yesopt, size_opt, size, size_unit, opts, vg, thinpool)
+                cmd = "%s %s %s -%s %s%s %s -T %s/%s" % (lvcreate_cmd, test_opt, yesopt, size_opt, size, size_unit, opts, vg, thinpool)
             else:
                 cmd = "%s %s %s -n %s -%s %s%s %s %s %s" % (lvcreate_cmd, test_opt, yesopt, lv, size_opt, size, size_unit, opts, vg, pvs)
             rc, _, err = module.run_command(cmd)
