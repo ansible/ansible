@@ -1,0 +1,3 @@
+---
+log_group_name: '{{ resource_prefix }}/integrationtest'
+filter_name: '{{ resource_prefix }}/AnsibleTest'
