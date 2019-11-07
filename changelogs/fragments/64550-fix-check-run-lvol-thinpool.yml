@@ -1,0 +1,2 @@
+bugfixes:
+  - lvol - Fix check run for lvol thinpool creation
