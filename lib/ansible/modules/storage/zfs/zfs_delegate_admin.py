@@ -55,7 +55,7 @@ options:
     description:
       - The list of permission(s) to delegate (required if C(state) is C(present)).
     type: list
-    choices: [ allow, clone, create, destroy, mount, promote, readonly, receive, rename, rollback, send, share, snapshot, unallow ]
+    choices: [ allow, clone, create, destroy, diff, hold, mount, promote, readonly, receive, release, rename, rollback, send, share, snapshot, unallow ]
   local:
     description:
       - Apply permissions to C(name) locally (C(zfs allow -l)).
@@ -251,8 +251,9 @@ def main():
             groups=dict(type='list'),
             everyone=dict(type='bool', default=False),
             permissions=dict(type='list',
-                             choices=['allow', 'clone', 'create', 'destroy', 'mount', 'promote', 'readonly', 'receive',
-                                      'rename', 'rollback', 'send', 'share', 'snapshot', 'unallow']),
+                             choices=['allow', 'clone', 'create', 'destroy', 'diff', 'hold', 'mount', 'promote',
+                                      'readonly', 'receive', 'release', 'rename', 'rollback', 'send', 'share',
+                                      'snapshot', 'unallow']),
             local=dict(type='bool'),
             descendents=dict(type='bool'),
             recursive=dict(type='bool', default=False),
