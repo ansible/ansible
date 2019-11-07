@@ -103,7 +103,7 @@ options:
       Global HTTP(S) LB. The value of EXTERNAL means that this will be used for External
       Global Load Balancing (HTTP(S) LB, External TCP/UDP LB, SSL Proxy) NOTE: Currently
       global forwarding rules cannot be used for INTERNAL load balancing.'
-    - 'Some valid choices include: "INTERNAL_SELF_MANAGED", "EXTERNAL"'
+    - 'Some valid choices include: "EXTERNAL", "INTERNAL_SELF_MANAGED"'
     required: false
     default: EXTERNAL
     type: str
