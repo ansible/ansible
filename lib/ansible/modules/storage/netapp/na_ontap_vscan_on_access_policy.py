@@ -185,7 +185,7 @@ class NetAppOntapVscanOnAccessPolicy(object):
             if int(result.get_child_content('num-records')) == 1:
                 return result
             elif int(result.get_child_content('num-records')) > 1:
-                self.module.fail_json(msg='Mutiple Vscan on Access Policy matching %s:' % self.policy_name)
+                self.module.fail_json(msg='Multiple Vscan on Access Policy matching %s:' % self.policy_name)
         return None
 
     def create_on_access_policy(self):
