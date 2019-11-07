@@ -57,9 +57,11 @@ options:
       endpoint:
         description: Endpoint of subscription.
         required: true
+        type: str
       protocol:
         description: Protocol of subscription
-        required: yes
+        required: true
+        type: str
       raw_message_delivery:
         description: Raw messages are free of JSON formatting and can be sent to HTTP/S and Amazon SQS endpoints.
         required: no
@@ -67,13 +69,9 @@ options:
       filter_policy:
         description: The filter policy JSON assigned to the subscription
         required: no
-<<<<<<< HEAD
-        type: str
+        type: json
     type: list
     elements: dict
-=======
-        type: json
->>>>>>> Fix docs syntax
     default: []
   purge_subscriptions:
     description:
