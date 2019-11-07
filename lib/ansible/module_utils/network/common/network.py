@@ -218,7 +218,7 @@ def get_resource_connection(module):
         module._connection = NetconfConnection(module._socket_path)
     elif network_api == "local":
         # This isn't supported, but we shouldn't fail here.
-        # Set the connection to None to indicate failure and move on.
+        # Set the connection to a fake connection so it fails sensibly.
         module._connection = LocalResourceConnection(module)
     else:
         module.fail_json(msg='Invalid connection type {0!s}'.format(network_api))
