@@ -237,7 +237,7 @@ class VmwareHostDNS(PyVmomi):
                                     results['dns_config_result'][host.name]['host_name_previous'] = instance.dnsConfig.hostName
                                     changed = True
                                     changed_list.append("Host name")
-                                    dns_config.hostName = self.host_name
+                                dns_config.hostName = self.host_name
                             else:
                                 dns_config.hostName = instance.dnsConfig.hostName
 
@@ -248,38 +248,44 @@ class VmwareHostDNS(PyVmomi):
                                     results['dns_config_result'][host.name]['domain_previous'] = instance.dnsConfig.domainName
                                     changed = True
                                     changed_list.append("Domain")
-                                    dns_config.domainName = self.domain
+                                dns_config.domainName = self.domain
                             else:
                                 dns_config.domainName = instance.dnsConfig.domainName
 
                             # Check DNS server(s)
                             results['dns_config_result'][host.name]['dns_servers'] = self.dns_servers
-                            if instance.dnsConfig.address != self.dns_servers:
-                                results['dns_config_result'][host.name]['dns_servers_previous'] = instance.dnsConfig.address
-                                results['dns_config_result'][host.name]['dns_servers_changed'] = (
-                                    self.get_differt_entries(instance.dnsConfig.address, self.dns_servers)
-                                )
-                                changed = True
-                                # build verbose message
-                                if verbose:
-                                    dns_servers_verbose_message = self.build_changed_message(
-                                        instance.dnsConfig.address,
-                                        self.dns_servers
+                            if self.dns_servers:
+                                if instance.dnsConfig.address != self.dns_servers:
+                                    results['dns_config_result'][host.name]['dns_servers_previous'] = instance.dnsConfig.address
+                                    results['dns_config_result'][host.name]['dns_servers_changed'] = (
+                                        self.get_differt_entries(instance.dnsConfig.address, self.dns_servers)
                                     )
-                                else:
-                                    changed_list.append("DNS servers")
+                                    changed = True
+                                    # build verbose message
+                                    if verbose:
+                                        dns_servers_verbose_message = self.build_changed_message(
+                                            instance.dnsConfig.address,
+                                            self.dns_servers
+                                        )
+                                    else:
+                                        changed_list.append("DNS servers")
                                 dns_config.address = self.dns_servers
+                            else:
+                                dns_config.address = instance.dnsConfig.address
 
                             # Check search domain config
                             results['dns_config_result'][host.name]['search_domains'] = self.search_domains
-                            if self.search_domains and instance.dnsConfig.searchDomain != self.search_domains:
-                                results['dns_config_result'][host.name]['search_domains_previous'] = instance.dnsConfig.searchDomain
-                                results['dns_config_result'][host.name]['search_domains_changed'] = (
-                                    self.get_differt_entries(instance.dnsConfig.searchDomain, self.search_domains)
-                                )
-                                changed = True
-                                changed_list.append("Search domains")
+                            if self.search_domains:
+                                if instance.dnsConfig.searchDomain != self.search_domains:
+                                    results['dns_config_result'][host.name]['search_domains_previous'] = instance.dnsConfig.searchDomain
+                                    results['dns_config_result'][host.name]['search_domains_changed'] = (
+                                        self.get_differt_entries(instance.dnsConfig.searchDomain, self.search_domains)
+                                    )
+                                    changed = True
+                                    changed_list.append("Search domains")
                                 dns_config.searchDomain = self.search_domains
+                            else:
+                                dns_config.searchDomain = instance.dnsConfig.searchDomain
                     elif self.network_type == 'dhcp' and not instance.dnsConfig.dhcp:
                         results['dns_config_result'][host.name]['device'] = self.vmkernel_device
                         results['dns_config_result'][host.name]['dns_config_previous'] = 'static'
