@@ -1,0 +1,69 @@
+# Test code for the vmware_export_ovf module
+# Copyright: (c) 2019, Diane Wang (Tomorrow9) <dianew@vmware.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+  - name: create temporary build directory
+    tempfile:
+      state: directory
+      suffix: build
+    register: temp_dir
+  - debug: var=temp_dir
+
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_attach_host: true
+      setup_datastore: true
+      setup_virtualmachines: true
+
+  - name: set state to poweroff on the tested VM
+    vmware_guest:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines_in_cluster[0].name }}"
+      state: poweredoff
+
+  - name: export VM to ovf template
+    vmware_export_ovf:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines_in_cluster[0].name }}"
+      datacenter: "{{ dc1 }}"
+      export_dir: "{{ temp_dir.path }}"
+    register: ovf_template
+  - debug: var=ovf_template
+  - name: assert the ovf template exported
+    assert:
+      that:
+        - "ovf_template.changed == true"
+        - "ovf_template.instance.device_files | length >= 1"
+
+  - name: export VM to ovf template with timeout set
+    vmware_export_ovf:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "{{ virtual_machines_in_cluster[0].name }}"
+      datacenter: "{{ dc1 }}"
+      export_dir: "{{ temp_dir.path }}"
+      download_timeout: 30
+    register: ovf_template
+  - debug: var=ovf_template
+  - name: assert the ovf template exported
+    assert:
+      that:
+        - "ovf_template.changed == true"
+        - "ovf_template.instance.device_files | length >= 1"
+  rescue:
+  - name: Clean up the temporary dir
+    file:
+      path: "{{ temp_dir.path }}"
+      state: absent
+    when: temp_dir.path is defined
