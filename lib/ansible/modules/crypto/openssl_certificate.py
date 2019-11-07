@@ -136,7 +136,7 @@ options:
             - If this value is not specified, the certificate will stop being valid 10 years from now.
             - This is only used by the C(selfsigned) provider.
         type: str
-        default: +3650d
+        default: +825d
         aliases: [ selfsigned_notAfter ]
 
     selfsigned_create_subject_key_identifier:
@@ -217,7 +217,7 @@ options:
             - If this value is not specified, the certificate will stop being valid 10 years from now.
             - This is only used by the C(ownca) provider.
         type: str
-        default: +3650d
+        default: +825d
         version_added: "2.7"
 
     ownca_create_subject_key_identifier:
@@ -2442,7 +2442,7 @@ def main():
             selfsigned_version=dict(type='int', default=3),
             selfsigned_digest=dict(type='str', default='sha256'),
             selfsigned_not_before=dict(type='str', default='+0s', aliases=['selfsigned_notBefore']),
-            selfsigned_not_after=dict(type='str', default='+3650d', aliases=['selfsigned_notAfter']),
+            selfsigned_not_after=dict(type='str', default='+825d', aliases=['selfsigned_notAfter']),
             selfsigned_create_subject_key_identifier=dict(
                 type='str',
                 default='create_if_not_provided',
@@ -2456,7 +2456,7 @@ def main():
             ownca_digest=dict(type='str', default='sha256'),
             ownca_version=dict(type='int', default=3),
             ownca_not_before=dict(type='str', default='+0s'),
-            ownca_not_after=dict(type='str', default='+3650d'),
+            ownca_not_after=dict(type='str', default='+825d'),
             ownca_create_subject_key_identifier=dict(
                 type='str',
                 default='create_if_not_provided',
