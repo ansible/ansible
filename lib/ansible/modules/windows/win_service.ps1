@@ -495,11 +495,11 @@ Function Set-ServiceRecovery($name, $reset_interval, $actions) {
     $reset_fail_count_after = ReversedHexValue $reset_interval
 
     if ($actions.Count -eq 3) {
-      $on_first_failure = ReversedHexValue ($recovery_actions_map.$actions[0].action)
+      $on_first_failure = ReversedHexValue ($recovery_actions_map.($actions[0].action))
       $first_failure_timeout = ReversedHexValue $actions[0].delay
-      $on_second_failure = ReversedHexValue ($recovery_actions_map.$actions[1].action)
+      $on_second_failure = ReversedHexValue ($recovery_actions_map.($actions[1].action))
       $second_failure_timeout = ReversedHexValue $actions[1].delay
-      $on_subsequent_failure = ReversedHexValue ($recovery_actions_map.$actions[2].action)
+      $on_subsequent_failure = ReversedHexValue ($recovery_actions_map.($actions[2].action))
       $subsequent_failure_timeout = ReversedHexValue $actions[2].delay
     } else {
       Fail-Json $result ("You need to specify the three states of recovery_actions.")
