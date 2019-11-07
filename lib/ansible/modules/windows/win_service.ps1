@@ -30,6 +30,15 @@ $result = @{
     changed = $false
 }
 
+$recovery_actions_map = @{
+	no_action = 0
+	restart = 1
+	reboot = 2
+	0 = 'no_action'
+	1 = 'restart'
+	2 = 'reboot'
+}
+
 # parse the username to SID and back so we get the full username with domain in a way WMI understands
 if ($null -ne $username) {
     if ($username -eq "LocalSystem") {
@@ -85,21 +94,6 @@ Function DecValue ($v) {
   return $res
 }
 
-Function RecoveryActionMapping ($a) {
-
-    $res = switch($a) {
-        'no_action' { 0 }
-        'restart' { 1 }
-        'reboot' { 2 }
-        0 { 'no_action' }
-        1 { 'restart' }
-        2 { 'reboot' }
-        default { 0 }
-    }
-
-    return $res
-}
-
 Function Convert-RecoveryActionsToHuman ($s) {
     $res = (("{0:x8}" -f $s) -split '(........)' | Where-Object { $_ }).split(" ")
 
@@ -109,11 +103,11 @@ Function Convert-RecoveryActionsToHuman ($s) {
 
     $recovery_actions = @{
                             'reset_fail_count_after' = $res[0];
-                            'on_first_failure' = RecoveryActionMapping($res[5]);
+                            'on_first_failure' = $recovery_actions_map.$res[5];
                             'first_failure_timeout' = $res[6];
-                            'on_second_failure' = RecoveryActionMapping($res[7]);
+                            'on_second_failure' = $recovery_actions_map.$res[7];
                             'second_failure_timeout' = $res[8];
-                            'on_subsequent_failure' = RecoveryActionMapping($res[9]);
+                            'on_subsequent_failure' = $recovery_actions_map.$res[9];
                             'subsequent_failure_timeout' = $res[10];
                         }
 
@@ -501,11 +495,11 @@ Function Set-ServiceRecovery($name, $reset_interval, $actions) {
     $reset_fail_count_after = ReversedHexValue $reset_interval
 
     if ($actions.Count -eq 3) {
-      $on_first_failure = ReversedHexValue (RecoveryActionMapping($actions[0].action))
+      $on_first_failure = ReversedHexValue ($recovery_actions_map.$actions[0].action)
       $first_failure_timeout = ReversedHexValue $actions[0].delay
-      $on_second_failure = ReversedHexValue (RecoveryActionMapping($actions[1].action))
+      $on_second_failure = ReversedHexValue ($recovery_actions_map.$actions[1].action)
       $second_failure_timeout = ReversedHexValue $actions[1].delay
-      $on_subsequent_failure = ReversedHexValue (RecoveryActionMapping($actions[2].action))
+      $on_subsequent_failure = ReversedHexValue ($recovery_actions_map.$actions[2].action)
       $subsequent_failure_timeout = ReversedHexValue $actions[2].delay
     } else {
       Fail-Json $result ("You need to specify the three states of recovery_actions.")
