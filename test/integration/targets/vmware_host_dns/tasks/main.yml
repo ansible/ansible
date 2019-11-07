@@ -2,23 +2,24 @@
 # Copyright: (c) 2019, Mario Lenz <m@riolenz.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- import_role:
-    name: prepare_vmware_tests
-  vars:
-    setup_attach_host: true
-
 - when: vcsim is not defined
   block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
     - name: Gather DNS facts about ESXi Host
       vmware_host_dns_info:
-        hostname: '{{ esxi1 }}'
-        username: '{{ esxi_user }}'
-        password: '{{ esxi_password }}'
-        esxi_hostname: "{{ esxi1 }}"
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        esxi_hostname: "{{ item }}"
         validate_certs: False
-      register: res
+      loop: "{{ esxi_hosts }}"
+      register: dns
 
     - include_tasks: dhcp.yml
-      when: res['hosts_dns_facts']['{{ esxi1 }}']['dhcp']
+      when: dns['results'][0]['hosts_dns_info'][esxi1]['dhcp']
     - include_tasks: static.yml
-      when: not res['hosts_dns_facts']['{{ esxi1 }}']['dhcp']
+      when: not dns['results'][0]['hosts_dns_info'][esxi1]['dhcp']
