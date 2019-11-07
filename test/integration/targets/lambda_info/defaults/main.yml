@@ -1,4 +1,4 @@
 ---
 # defaults file for lambda_info test
 
-lambda_function_name: '{{ resource_prefix }}'
+lambda_function_name: '{{ resource_prefix }}-lambda-info-test'
