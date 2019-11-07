@@ -1,9 +1,11 @@
 ---
-- debug: msg="START eapi/default_facts.yaml"
+- debug: msg="START eapi/default_facts.yaml on connection={{ ansible_connection }}"
 
 - name: Make sure LLDP is running (setup)
   eos_config:
     lines: lldp run
+    provider:
+      authorize: yes
   become: yes
 
 - name: test getting default facts
@@ -32,4 +34,4 @@
       # ... and not present
       - "result.ansible_facts.ansible_net_config is not defined" # config
 
-- debug: msg="END eapi/default.yaml"
+- debug: msg="END eapi/default_facts.yaml on connection={{ ansible_connection }}"

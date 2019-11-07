@@ -1,6 +1,12 @@
 ---
 - debug: msg="START cli/not_hardware.yaml on connection={{ ansible_connection }}"
 
+- name: Make sure LLDP is running (setup)
+  eos_config:
+    lines: lldp run
+    provider:
+      authorize: yes
+  become: yes
 
 - name: test not hardware
   eos_facts:

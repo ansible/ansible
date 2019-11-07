@@ -1,9 +1,11 @@
 ---
-- debug: msg="START eapi/not_hardware.yaml"
+- debug: msg="START eapi/not_hardware.yaml on connection={{ ansible_connection }}"
 
 - name: Make sure LLDP is running (setup)
   eos_config:
     lines: lldp run
+    provider:
+      authorize: yes
   become: yes
 
 - name: test not hardware
@@ -31,4 +33,4 @@
       # ... and not present
       - "result.ansible_facts.ansible_net_filesystems is not defined"
 
-- debug: msg="END eapi/not_hardware.yaml"
+- debug: msg="END eapi/not_hardware.yaml on connection={{ ansible_connection }}"
