@@ -67,10 +67,6 @@ class Group:
 
     def __init__(self, name=None):
 
-        self._deserialized_parent_group_names = []
-        self._deserialized_child_group_names = []
-        self._deserialized_host_names = []
-
         self.depth = 0
         self.name = to_safe_group_name(name)
         self.hosts = []
@@ -87,21 +83,6 @@ class Group:
     def __str__(self):
         return self.get_name()
 
-    def __hash__(self):
-        return id(self)
-
-    def __eq__(self, other):
-        return not self.__ne__(other)
-
-    def __ne__(self, other):
-        if not isinstance(other, Group):
-            return True
-
-        if self.serialize() != other.serialize():
-            return True
-
-        return False
-
     def __getstate__(self):
         return self.serialize()
 
@@ -109,17 +90,18 @@ class Group:
         return self.deserialize(data)
 
     def serialize(self):
-        parent_groups = [g.name for g in self.parent_groups]
-        child_groups = [g.name for g in self.child_groups]
-        host_names = [h.name for h in self.hosts]
+        parent_groups = []
+        for parent in self.parent_groups:
+            parent_groups.append(parent.serialize())
+
+        self._hosts = None
 
         result = dict(
             name=self.name,
             vars=self.vars.copy(),
             parent_groups=parent_groups,
-            child_groups=child_groups,
             depth=self.depth,
-            hosts=host_names,
+            hosts=self.hosts,
         )
 
         return result
@@ -130,9 +112,14 @@ class Group:
         self.vars = data.get('vars', dict())
         self.depth = data.get('depth', 0)
 
-        self._deserialized_host_names = data.get('hosts', [])
-        self._deserialized_parent_group_names = data.get('parent_groups', [])
-        self._deserialized_child_group_names = data.get('child_groups', [])
+        self.hosts = data.get('hosts', [])
+        self._hosts = None
+
+        parent_groups = data.get('parent_groups', [])
+        for parent_data in parent_groups:
+            g = Group()
+            g.deserialize(parent_data)
+            self.parent_groups.append(g)
 
     def _walk_relationship(self, rel, include_self=False, preserve_ordering=False):
         '''
