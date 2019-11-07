@@ -216,6 +216,10 @@ def get_resource_connection(module):
         module._connection = Connection(module._socket_path)
     elif network_api == 'netconf':
         module._connection = NetconfConnection(module._socket_path)
+    elif network_api == "local":
+        # This isn't supported, but we shouldn't fail here.
+        # Set the connection to None to indicate failure and move on.
+        module._connection = None
     else:
         module.fail_json(msg='Invalid connection type {0!s}'.format(network_api))
 
@@ -229,6 +233,9 @@ def get_capabilities(module):
         capabilities = Connection(module._socket_path).get_capabilities()
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    except AssertionError:
+        # No socket_path, connection most likely local.
+        return dict(network_api="local")
     module._capabilities = json.loads(capabilities)
 
     return module._capabilities
