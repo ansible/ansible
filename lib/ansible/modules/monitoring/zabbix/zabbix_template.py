@@ -454,7 +454,7 @@ class Template(object):
         try:
             dump = self._zapi.configuration.export({'format': template_type, 'options': {'templates': template_ids}})
             if template_type == 'xml':
-                return str(ET.tostring(ET.fromstring(dump.encode('utf-8')), encoding='utf-8'))
+                return str(ET.tostring(ET.fromstring(dump.encode('utf-8')), encoding='utf-8').decode('utf-8'))
             else:
                 return self.load_json_template(dump)
 
