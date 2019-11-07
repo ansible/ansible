@@ -38,7 +38,8 @@
         that:
           - lambda_create_result is not failed
           - lambda_create_result.configuration is defined
-          - lambda_create_result.configuration.version == '1'
+          - lambda_create_result.configuration.function_name == lambda_function_name
+          - lambda_create_result.configuration.version is defined
 
     # =========================
     # Tests for lambda_info module
