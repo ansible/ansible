@@ -28,6 +28,7 @@
 import traceback
 import json
 
+from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
@@ -219,7 +220,7 @@ def get_resource_connection(module):
     elif network_api == "local":
         # This isn't supported, but we shouldn't fail here.
         # Set the connection to None to indicate failure and move on.
-        module._connection = None
+        module._connection = LocalResourceConnection(module)
     else:
         module.fail_json(msg='Invalid connection type {0!s}'.format(network_api))
 
@@ -239,3 +240,11 @@ def get_capabilities(module):
     module._capabilities = json.loads(capabilities)
 
     return module._capabilities
+
+
+class LocalResourceConnection:
+    def __init__(self, module):
+        self.module = module
+
+    def get(self, *args, **kwargs):
+        self.module.fail_json(msg="Network resource modules not supported over local connection.")
