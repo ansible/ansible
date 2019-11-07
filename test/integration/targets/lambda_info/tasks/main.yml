@@ -1,0 +1,137 @@
+---
+# tasks file for lambda_info test
+
+- name: Set connection information for AWS modules and run tests
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+
+  block:
+
+    # setup an AWS Lambda function for testing
+    - name: Move lambda code into place for archiving
+      copy:
+        src: "mini_lambda.py"
+        dest: "{{ output_dir }}/mini_lambda.py"
+
+    - name: Package lambda code into a zip file
+      archive:
+        format: zip
+        path: "{{output_dir}}/mini_lambda.py"
+        dest: "{{output_dir}}/mini_lambda.zip"
+      register: zip_res
+
+    - name: Create the lambda function through the lambda module using the zip file
+      lambda:
+        name: "{{ lambda_function_name }}"
+        runtime: "python2.7"
+        handler: "mini_lambda.handler"
+        role: "ansible_lambda_role"
+        zip_file: "{{ zip_res.dest }}"
+      register: lambda_create_result
+
+    - name: Assert tha Lambda creation succeeded
+      assert:
+        that:
+          - lambda_create_result is not failed
+          - lambda_create_result.configuration is defined
+          - lambda_create_result.configuration.version == '1'
+
+    # =========================
+    # Tests for lambda_info module
+
+    - name: Gather all infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: all
+      register: lambda_infos_all
+
+    - name: Assert successfull retrieval of all information
+      assert:
+        that:
+          - lambda_infos_all is not failed
+          - lambda_infos_all.function[lambda_function_name].function_name == lambda_function_name
+          - lambda_infos_all.function[lambda_function_name].runtime == "python2.7"
+          - lambda_infos_all.function[lambda_function_name].versions is defined
+          - lambda_infos_all.function[lambda_function_name].aliases is defined
+          - lambda_infos_all.function[lambda_function_name].policy is defined
+          - lambda_infos_all.function[lambda_function_name].mappings is defined
+          - lambda_infos_all.function[lambda_function_name].description == ""
+          - lambda_infos_all.function[lambda_function_name].function_arn is defined
+          - lambda_infos_all.function[lambda_function_name].handler == "mini_lambda.handler"
+
+    - name: Gather version infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: versions
+      register: lambda_infos_versions
+
+    - name: Assert successfull retrieval of versions information
+      assert:
+        that:
+          - lambda_infos_versions is not failed
+          - lambda_infos_versions.function[lambda_function_name].versions|length > 0
+          - lambda_infos_versions.function[lambda_function_name].function_name is undefined
+
+    - name: Gather config infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: config
+      register: lambda_infos_config
+
+    - name: Assert successfull retrieval of config information
+      assert:
+        that:
+          - lambda_infos_config is not failed
+          - lambda_infos_config.function[lambda_function_name].function_name == lambda_function_name
+          - lambda_infos_config.function[lambda_function_name].description is defined
+          - lambda_infos_config.function[lambda_function_name].versions is undefined
+
+    - name: Gather policy infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: policy
+      register: lambda_infos_policy
+
+    - name: Assert successfull retrieval of policy information
+      assert:
+        that:
+          - lambda_infos_policy is not failed
+          - lambda_infos_policy.function[lambda_function_name].policy is defined
+          - lambda_infos_policy.function[lambda_function_name].versions is undefined
+
+    - name: Gather aliases infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: aliases
+      register: lambda_infos_aliases
+
+    - name: Assert successfull retrieval of aliases information
+      assert:
+        that:
+          - lambda_infos_aliases is not failed
+          - lambda_infos_aliases.function[lambda_function_name].aliases is defined
+
+    - name: Gather mappings infos for given lambda function
+      lambda_info:
+        name: "{{ lambda_function_name }}"
+        query: mappings
+      register: lambda_infos_mappings
+
+    - name: Assert successfull retrieval of mappings information
+      assert:
+        that:
+          - lambda_infos_mappings is not failed
+          - lambda_infos_mappings.function[lambda_function_name].mappings is defined
+
+  # ============================================================
+  always:
+
+    - name: Ensure function is absent at end of test
+      lambda:
+        name: "{{ lambda_function_name }}"
+        state: absent
+      ignore_errors: true

@@ -1,0 +1,6 @@
+---
+# meta file for lambda_info test
+
+dependencies:
+  - prepare_tests
+  - setup_ec2
