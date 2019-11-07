@@ -17,30 +17,28 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_galleryimage_info
 version_added: '2.9'
-short_description: Get Azure SIG Image info.
+short_description: Get Azure SIG Image info
 description:
-  - Get info of Azure SIG Image.
+    - Get info of Azure SIG Image.
 options:
-  resource_group:
-    description:
-      - The name of the resource group.
-    type: str
-    required: true
-  gallery_name:
-    description:
-      - >-
-        The name of the shared image gallery from which the image definitions
-        are to be retrieved.
-    type: str
-    required: true
-  name:
-    description:
-      - Resource name
-    type: str
+    resource_group:
+        description:
+            - The name of the resource group.
+        type: str
+        required: true
+    gallery_name:
+        description:
+            - The name of the shared image gallery from which the image definitions are to be retrieved.
+        type: str
+        required: true
+    name:
+        description:
+            - Resource name.
+        type: str
 extends_documentation_fragment:
-  - azure
+    - azure
 author:
-  - Liu Qingyi (@smile37773)
+    - Liu Qingyi (@smile37773)
 
 '''
 
@@ -59,68 +57,66 @@ EXAMPLES = '''
 
 RETURN = '''
 images:
-  description: >-
-    A list of dict results where the key is the name of the image and the
-    values are the info for that image.
-  returned: always
-  type: complex
-  contains:
-    id:
-      description:
-        - Resource Id
-      returned: always
-      type: str
-      sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
-      /providers/Microsoft.Compute/galleries/myGallery/images/myImage"
-    name:
-      description:
-        - Resource name
-      returned: always
-      type: str
-      sample: myImage
-    location:
-      description:
-        - Resource location
-      returned: always
-      type: str
-      sample: "eastus"
-    tags:
-      description:
-        - Resource tags
-      returned: always
-      type: dict
-      sample: { "tag": "value" }
-    os_state:
-      description:
-        - The allowed values for OS State are 'Generalized'.
-      type: OperatingSystemStateTypes
-      sample: "Generalized"
-    os_type:
-      description: >-
-        This property allows you to specify the type of the OS that is included in the disk
-        when creating a VM from a managed image.
-      type: OperatingSystemTypes
-      sample: "linux/windows"
-    identifier:
-      description:
-        - This is the gallery image definition identifier.
-      type: dict
-      contains:
-        offer:
-          description:
-            - The name of the gallery image definition offer.
-          type: str
-          sample: "myOfferName"
-        publisher:
-          description:
-            - The name of the gallery image definition publisher.
-          type: str
-          sample: "myPublisherName"
-        sku:
-          description:
-            - The name of the gallery image definition sku.
-          type: str
-          sample: "mySkuName"
+    description:
+        - A list of dict results where the key is the name of the image and the values are the info for that image.
+    returned: always
+    type: complex
+    contains:
+        id:
+            description:
+                - Resource ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
+                    /providers/Microsoft.Compute/galleries/myGallery/images/myImage"
+        name:
+            description:
+                - Resource name.
+            returned: always
+            type: str
+            sample: myImage
+        location:
+            description:
+                - Resource location.
+            returned: always
+            type: str
+            sample: "eastus"
+        tags:
+            description:
+                - Resource tags.
+            returned: always
+            type: dict
+            sample: { "tag": "value" }
+        os_state:
+            description:
+                - The allowed values for OS State are C(generalized).
+            type: OperatingSystemStateTypes
+            sample: "Generalized"
+        os_type:
+            description:
+                - This property allows you to specify the type of the OS that is included in the disk when creating a VM from a managed image.
+            type: OperatingSystemTypes
+            sample: "linux/windows"
+        identifier:
+            description:
+                - This is the gallery image definition identifier.
+            type: dict
+            contains:
+                offer:
+                    description:
+                        - The name of the gallery image definition offer.
+                    type: str
+                    sample: "myOfferName"
+                publisher:
+                    description:
+                        - The name of the gallery image definition publisher.
+                    type: str
+                    sample: "myPublisherName"
+                sku:
+                    description:
+                        - The name of the gallery image definition sku.
+                    type: str
+                    sample: "mySkuName"
 
 '''
 

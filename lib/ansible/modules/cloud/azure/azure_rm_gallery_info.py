@@ -17,22 +17,22 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_gallery_info
 version_added: '2.9'
-short_description: Get Azure Shared Image Gallery info.
+short_description: Get Azure Shared Image Gallery info
 description:
-  - Get info of Azure Shared Image Gallery.
+    - Get info of Azure Shared Image Gallery.
 options:
-  resource_group:
-    description:
-      - The name of the resource group.
-    type: str
-  name:
-    description:
-      - Resource name
-    type: str
+    resource_group:
+        description:
+            - The name of the resource group.
+        type: str
+    name:
+        description:
+            - Resource name
+        type: str
 extends_documentation_fragment:
-  - azure
+    - azure
 author:
-  - Liu Qingyi (@smile37773)
+    - Liu Qingyi (@smile37773)
 
 '''
 
@@ -51,47 +51,47 @@ EXAMPLES = '''
 
 RETURN = '''
 galleries:
-  description: >-
-    A list of dict results where the key is the name of the gallery and the
-    values are the info for that gallery.
-  returned: always
-  type: complex
-  contains:
-    id:
-      description:
-        - Resource Id
-      returned: always
-      type: str
-      sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-      /resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGallery"
-    name:
-      description:
-        - Resource name
-      returned: always
-      type: str
-      sample: "myGallery"
-    location:
-      description:
-        - Resource location
-      returned: always
-      type: str
-      sample: "eastus"
-    tags:
-      description:
-        - Resource tags
-      returned: always
-      type: dict
-      sample: { "tag": "value" }
     description:
-      description:
-        - This is the gallery description.
-      type: str
-      sample: "This is the gallery description."
-    provisioning_state:
+        - A list of dict results where the key is the name of the gallery and the values are the info for that gallery.
+    returned: always
+    type: complex
+    contains:
+        id:
+            description:
+                - Resource ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGallery"
+        name:
+            description:
+                - Resource name.
+            returned: always
+            type: str
+            sample: "myGallery"
+        location:
+            description:
+                - Resource location.
+            returned: always
+            type: str
+            sample: "eastus"
+        tags:
+            description:
+                - Resource tags.
+            returned: always
+            type: dict
+            sample: { "tag": "value" }
         description:
-          - The current state of the gallery.
-        type: str
-        sample: "Succeeded"
+            description:
+                - This is the gallery description.
+            returned: always
+            type: str
+            sample: "This is the gallery description."
+        provisioning_state:
+            description:
+                - The current state of the gallery.
+            returned: always
+            type: str
+            sample: "Succeeded"
 
 '''
 
