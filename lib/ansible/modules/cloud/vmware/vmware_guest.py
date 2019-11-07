@@ -1282,7 +1282,7 @@ class PyVmomiHelper(PyVmomi):
             if 'version' in self.params['hardware']:
                 hw_version_check_failed = False
                 temp_version = self.params['hardware'].get('version', 10)
-                if temp_version.lower() == 'latest':
+                if isinstance(temp_version, str) and temp_version.lower() == 'latest':
                     # Check is to make sure vm_obj is not of type template
                     if vm_obj and not vm_obj.config.template:
                         try:
