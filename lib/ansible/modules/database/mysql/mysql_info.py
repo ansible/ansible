@@ -400,13 +400,14 @@ class MySQL_Info(object):
 
     def __get_databases(self, exclude_fields):
         """Get info about databases."""
-        if not exclude_fields or 'db_size' not in exclude_fields:
+        if not exclude_fields:
             query = ('SELECT table_schema AS "name", '
                      'SUM(data_length + index_length) AS "size" '
                      'FROM information_schema.TABLES GROUP BY table_schema')
         else:
-            query = ('SELECT table_schema AS "name" '
-                     'FROM information_schema.TABLES GROUP BY table_schema')
+            if 'db_size' in exclude_fields:
+                query = ('SELECT table_schema AS "name" '
+                         'FROM information_schema.TABLES GROUP BY table_schema')
 
         res = self.__exec_sql(query)
 
