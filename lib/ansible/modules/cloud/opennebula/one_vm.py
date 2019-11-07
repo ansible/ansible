@@ -152,7 +152,7 @@ options:
   disk_size:
     description:
       - The size of the disk created for new instances (in MB, GB, TB,...).
-      - NOTE':' If The Template hats Mutiple Disks the Order of the Sizes is
+      - NOTE':' If The Template hats Multiple Disks the Order of the Sizes is
       - matched against the order specified in C(template_id)/C(template_name).
   cpu:
     description:

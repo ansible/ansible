@@ -252,7 +252,7 @@ class TestMyModule(unittest.TestCase):
             self.get_mock_object('policy').apply()
         assert exc.value.args[0]['changed']
 
-    def test_successful_modify_mutiple_ips(self):
+    def test_successful_modify_multiple_ips(self):
         ''' Test successful modify allow_list '''
         data = self.mock_policy_args()
         data['allow_list'] = ['1.2.0.0/16', '1.0.0.0/8']
