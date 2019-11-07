@@ -1,28 +1,23 @@
 ---
-- name: set up aws connection info
-  set_fact:
-    aws_connection_info: &aws_connection_info
+
+- module_defaults:
+    group/aws:
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
       security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
-  no_log: yes
-
-- name: test cloudwatch log group metric filter
 
   block:
     - name: create cloudwatch log group for integration test
       cloudwatchlogs_log_group:
-        <<: *aws_connection_info
         state: present
-        log_group_name: ansible/integrationtest
+        log_group_name: '{{ log_group_name }}'
         retention: 1
 
-    - name: check_mode set metric filter on ansible/integrationtest
+    - name: check_mode set metric filter on '{{ log_group_name }}'
       cloudwatchlogs_log_group_metric_filter:
-        <<: *aws_connection_info
-        log_group_name: ansible/integrationtest
-        filter_name: MadeWithAnsible
+        log_group_name: '{{ log_group_name }}'
+        filter_name: '{{ filter_name }}'
         filter_pattern: '{ ($.value = *) && ($.hostname = "box")}'
         state: present
         metric_transformation:
@@ -37,11 +32,10 @@
         that:
           - out is changed
 
-    - name: set metric filter on ansible/integrationtest
+    - name: set metric filter on '{{ log_group_name }}'
       cloudwatchlogs_log_group_metric_filter:
-        <<: *aws_connection_info
-        log_group_name: ansible/integrationtest
-        filter_name: MadeWithAnsible
+        log_group_name: '{{ log_group_name }}'
+        filter_name: '{{ filter_name }}'
         filter_pattern: '{ ($.value = *) && ($.hostname = "box")}'
         state: present
         metric_transformation:
@@ -55,11 +49,10 @@
         that:
           - out is changed
 
-    - name: re-set metric filter on ansible/integrationtest
+    - name: re-set metric filter on '{{ log_group_name }}'
       cloudwatchlogs_log_group_metric_filter:
-        <<: *aws_connection_info
-        log_group_name: ansible/integrationtest
-        filter_name: MadeWithAnsible
+        log_group_name: '{{ log_group_name }}'
+        filter_name: '{{ filter_name }}'
         filter_pattern: '{ ($.value = *) && ($.hostname = "box")}'
         state: present
         metric_transformation:
@@ -73,11 +66,10 @@
         that:
           - out is not changed
 
-    - name: update matric transformation on ansible/integrationtest
+    - name: update metric transformation on '{{ log_group_name }}'
       cloudwatchlogs_log_group_metric_filter:
-        <<: *aws_connection_info
-        log_group_name: ansible/integrationtest
-        filter_name: MadeWithAnsible
+        log_group_name: '{{ log_group_name }}'
+        filter_name: '{{ filter_name }}'
         filter_pattern: '{ ($.value = *) && ($.hostname = "box")}'
         state: present
         metric_transformation:
@@ -91,11 +83,10 @@
         that:
           - out is changed
 
-    - name: update filter_pattern on ansible/integrationtest
+    - name: update filter_pattern on '{{ log_group_name }}'
       cloudwatchlogs_log_group_metric_filter:
-        <<: *aws_connection_info
-        log_group_name: ansible/integrationtest
-        filter_name: MadeWithAnsible
+        log_group_name: '{{ log_group_name }}'
+        filter_name: '{{ filter_name }}'
         filter_pattern: '{ ($.value = *) && ($.hostname = "ansible")}'
         state: present
         metric_transformation:
@@ -109,11 +100,10 @@
         that:
           - out is changed
 
-    - name: checkmode delete metric filter on ansible/integrationtest
+    - name: checkmode delete metric filter on '{{ log_group_name }}'
       cloudwatchlogs_log_group_metric_filter:
-        <<: *aws_connection_info
-        log_group_name: ansible/integrationtest
-        filter_name: MadeWithAnsible
+        log_group_name: '{{ log_group_name }}'
+        filter_name: '{{ filter_name }}'
         state: absent
       check_mode: yes
       register: out
@@ -123,11 +113,10 @@
         that:
           - out is changed
 
-    - name: delete metric filter on ansible/integrationtest
+    - name: delete metric filter on '{{ log_group_name }}'
       cloudwatchlogs_log_group_metric_filter:
-        <<: *aws_connection_info
-        log_group_name: ansible/integrationtest
-        filter_name: MadeWithAnsible
+        log_group_name: '{{ log_group_name }}'
+        filter_name: '{{ filter_name }}'
         state: absent
       register: out
 
@@ -139,13 +128,11 @@
   always:
     - name: delete metric filter
       cloudwatchlogs_log_group_metric_filter:
-        <<: *aws_connection_info
-        log_group_name: ansible/integrationtest
-        filter_name: MadeWithAnsible
+        log_group_name: '{{ log_group_name }}'
+        filter_name: '{{ filter_name }}'
         state: absent
 
     - name: delete cloudwatch log group for integration test
       cloudwatchlogs_log_group:
-        <<: *aws_connection_info
         state: absent
-        log_group_name: ansible/integrationtest
+        log_group_name: '{{ log_group_name }}'

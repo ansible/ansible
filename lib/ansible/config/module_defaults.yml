@@ -143,6 +143,8 @@ groupings:
   - aws
   cloudwatchlogs_log_group_info:
   - aws
+  cloudwatchlogs_log_group_metric_filter:
+  - aws
   cpm_plugconfig:
   - cpm
   cpm_plugcontrol:

@@ -24,7 +24,7 @@ requirements:
 options:
     state:
       description:
-        - Whether the rule is present, absent or get
+        - Whether the rule is present or absent.
       choices: ["present", "absent"]
       required: true
       type: str
