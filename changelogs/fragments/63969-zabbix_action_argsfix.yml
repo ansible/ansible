@@ -1,0 +1,2 @@
+bugfixes:
+- zabbix_action - arguments ``event_source`` and ``esc_period`` no longer required when ``state=absent``
