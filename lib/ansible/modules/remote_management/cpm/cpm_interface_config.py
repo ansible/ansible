@@ -71,7 +71,7 @@ options:
     description:
       - This is the ethernet port name that is getting configured.
     required: false
-    type: list
+    type: str
   negotiation:
     description:
       - This is the speed of the interface port being configured.
@@ -110,7 +110,6 @@ options:
       - IPv4 DHCP Lease Time.
     required: false
     type: int
-    choices: [ 0, 1 ]
   ipv4dhcpobdns:
     description:
       - IPv6 DHCP Obtain DNS addresses auto.
@@ -320,7 +319,8 @@ def assemble_json(cpmmodule, existing_interface):
 
         for protocol in range(0, 2):
             protocolchanged = 0
-            if ((address[protocol] is not None) or (netmask[protocol] is not None) or (gateway[protocol] is not None) or (dhcpdefgateway[protocol] is not None)):
+            if ((address[protocol] is not None) or (netmask[protocol] is not None) or (gateway[protocol] is not None) or
+                    (dhcpdefgateway[protocol] is not None)):
                 protocolchanged += 1
                 ietfstring = ""
 
@@ -352,7 +352,8 @@ def assemble_json(cpmmodule, existing_interface):
 
                 json_load = '%s%s}]' % (json_load, ietfstring)
 
-            if ((dhcphostname[protocol] is not None) or (dhcpenable[protocol] is not None) or (dhcplease[protocol] is not None) or (dhcpobdns[protocol] is not None) or (dhcpupdns[protocol] is not None)):
+            if ((dhcphostname[protocol] is not None) or (dhcpenable[protocol] is not None) or (dhcplease[protocol] is not None) or
+                    (dhcpobdns[protocol] is not None) or (dhcpupdns[protocol] is not None)):
                 if (protocolchanged == 0):
                     if (protocol == 0):
                         json_load = '%s,"ietf-ipv4": { ' % (json_load)
