@@ -23,7 +23,7 @@ auto_legacy : (default in 2.8)
   and issues a warning.
   This exception provides temporary compatibility with previous versions of
   Ansible that always defaulted to ``/usr/bin/python``, so if you have
-  installed Python and other dependencies at ``usr/bin/python`` on some hosts,
+  installed Python and other dependencies at ``/usr/bin/python`` on some hosts,
   Ansible will find and use them with this setting.
   If no entry is found, or the listed Python is not present on the
   target host, searches a list of common Python interpreter
