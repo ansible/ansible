@@ -324,6 +324,16 @@ be install using ``pip``:
     pip install pywinrm[kerberos]
 
 
+.. note::
+     While Ansible has supported Kerberos auth through ``pywinrm`` for some
+     time, optional features or more secure options may only be available in
+     newer versions of the ``pywinrm`` and/or ``pykerberos`` libraries. It is
+     recommended you upgrade each version to the latest available to resolve
+     any warnings or errors. This can be done through tools like ``pip`` or a
+     system package manager like ``dnf``, ``yum``, ``apt`` but the package
+     names and versions available may differ between tools.
+
+
 Configuring Host Kerberos
 +++++++++++++++++++++++++
 Once the dependencies have been installed, Kerberos needs to be configured so
