@@ -53,11 +53,11 @@ import sys
 
 def ismount(path):
     """python issue 2466 is fixed then ismount() was rewritten"""
-    #check python version
+    # check python version
 
     current_version = sys.version_info
     if (current_version.major == 3 and 5 <= current_version.minor <= 6) or (current_version.major == 2 and current_version.minor == 7):
-        #clone upstream version of ismount() from Cpython
+        # clone upstream version of ismount() from Cpython
         """Test whether a path is a mount point"""
         try:
             s1 = os.lstat(path)
