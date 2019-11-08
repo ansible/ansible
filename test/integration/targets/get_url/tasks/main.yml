@@ -479,3 +479,26 @@
     that:
       - '(result.content | b64decode) == "ansible.http.tests:SUCCESS"'
   when: has_httptester
+
+- name: Define test file for force==no shouldnt redownload dsturl
+  set_fact:
+    geturl_dstfile: "{{ remote_tmp_dir }}/force_no_redownload_test.txt"
+
+- name: Create dstfile by getting dsturl
+  get_url:
+    url: 'https://{{ httpbin_host }}/html'
+    dest: "{{ geturl_dstfile }}"
+  register: download_check
+
+- name: Run get_url a second time but this time with dstfile already existing and force==no
+  get_url:
+    url: 'https://{{ httpbin_host }}/html'
+    dest: "{{ geturl_dstfile }}"
+    force: no
+  register: result
+
+- name: Assert success if dstfile is NOT changed
+  assert:
+    that:
+    - download_check is changed
+    - result is not changed
