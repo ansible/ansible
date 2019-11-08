@@ -94,35 +94,36 @@ options:
       - IPv4 format Gateway address for the defined interface Port.
     required: false
     type: str
-  dhcp4enable:
+  ipv4dhcpenable:
     description:
       - Enable IPv4 DHCP request call to obtain confufuration information.
     required: false
     type: int
-  dhcp4hostname:
+    choices: [ 0, 1 ]
+  ipv4dhcphostname:
     description:
       - Define IPv4 DHCP Hostname.
     required: false
     type: str
-  dhcp4lease:
+  ipv4dhcplease:
     description:
       - IPv4 DHCP Lease Time.
     required: false
     type: int
     choices: [ 0, 1 ]
-  dhcp4obdns:
+  ipv4dhcpobdns:
     description:
       - IPv6 DHCP Obtain DNS addresses auto.
     required: false
     type: int
     choices: [ 0, 1 ]
-  dhcp4updns:
+  ipv4dhcpupdns:
     description:
       - IPv4 DHCP DNS Server Update.
     required: false
     type: int
     choices: [ 0, 1 ]
-  dhcp4defgateway:
+  ipv4dhcpdefgateway:
     description:
       - Enable or Disable this ports configuration as the default IPv4 route for the device.
     required: false
@@ -143,12 +144,6 @@ options:
       - IPv6 format Gateway address for the defined interface Port.
     required: false
     type: str
-  dhcp6defgateway:
-    description:
-      - Enable or Disable this ports configuration as the default IPv6 route for the device.
-    required: false
-    type: int
-    choices: [ 0, 1 ]
 notes:
   - Use C(groups/cpm) in C(module_defaults) to set common options used between CPM modules.
 """
@@ -178,12 +173,12 @@ EXAMPLES = """
     validate_certs: false
     interface: "eth1"
     negotiation: 0
-    dhcp4enable: 1
-    dhcp4hostname: ""
-    dhcp4lease: -1
-    dhcp4obdns: 0
-    dhcp4updns: 0
-    dhcp4defgateway: 0
+    ipv4dhcpenable: 1
+    ipv4dhcphostname: ""
+    ipv4dhcplease: -1
+    ipv4dhcpobdns: 0
+    ipv4dhcpupdns: 0
+    ipv4dhcpdefgateway: 0
 """
 
 RETURN = """
@@ -306,10 +301,10 @@ def assemble_json(cpmmodule, existing_interface):
             total_change = (total_change | 2)
             address.insert(protocol, to_native(cpmmodule.params["ipv6address"]))
 
-    if cpmmodule.params["ipv6netmask"] is not None:
-        if (existing_interface["interface"][0]["ietf-ipv6"]["address"][0]["netmask"] != cpmmodule.params["ipv6netmask"]):
+    if cpmmodule.params["ipv6subnetprefix"] is not None:
+        if (existing_interface["interface"][0]["ietf-ipv6"]["address"][0]["netmask"] != cpmmodule.params["ipv6subnetprefix"]):
             total_change = (total_change | 4)
-            netmask.insert(protocol, to_native(cpmmodule.params["ipv6netmask"]))
+            netmask.insert(protocol, to_native(cpmmodule.params["ipv6subnetprefix"]))
 
     if cpmmodule.params["ipv6gateway"] is not None:
         if (existing_interface["interface"][0]["ietf-ipv6"]["address"][0]["gateway"] != cpmmodule.params["ipv6gateway"]):
@@ -415,7 +410,7 @@ def run_module():
         cpm_url=dict(type='str', required=True),
         cpm_username=dict(type='str', required=True),
         cpm_password=dict(type='str', required=True, no_log=True),
-        interface=dict(type='str', required=True, default=None),
+        interface=dict(type='str', required=True),
         negotiation=dict(type='int', required=False, default=None, choices=[0, 1, 2, 3, 4, 5, 6]),
         ipv4address=dict(type='str', required=False, default=None),
         ipv4netmask=dict(type='str', required=False, default=None),
@@ -427,7 +422,7 @@ def run_module():
         ipv4dhcpupdns=dict(type='int', required=False, default=None, choices=[0, 1]),
         ipv4dhcpdefgateway=dict(type='int', required=False, default=None, choices=[0, 1]),
         ipv6address=dict(type='str', required=False, default=None),
-        ipv6netmask=dict(type='str', required=False, default=None),
+        ipv6subnetprefix=dict(type='str', required=False, default=None),
         ipv6gateway=dict(type='str', required=False, default=None),
         use_https=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
