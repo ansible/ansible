@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_publication - fix typo in module.warn method name (https://github.com/ansible/ansible/issues/64582).

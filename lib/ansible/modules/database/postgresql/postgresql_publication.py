@@ -603,7 +603,7 @@ def main():
             module.warn('parameter "owner" is ignored when "state=absent"')
 
     if state == 'present' and cascade:
-        module.warm('parameter "cascade" is ignored when "state=present"')
+        module.warn('parameter "cascade" is ignored when "state=present"')
 
     # Connect to DB and make cursor object:
     conn_params = get_conn_params(module, module.params)
