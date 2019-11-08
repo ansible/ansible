@@ -235,7 +235,7 @@ a tarball of the built collection in the current directory which can be uploaded
 
 .. note::
     * Certain files and folders are excluded when building the collection artifact. This is not currently configurable and is a work in progress so the collection artifact may contain files you would not wish to distribute.
-    * This includes any files built with ``mazer`` so delete those from :file:`releases/` before you build your collection with ``ansible-galaxy``.
+    * If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``.
     * You must also delete the :file:`tests/output` directory if you have been testing with ``ansible-test``.
     * The current Galaxy maximum tarball size is 2 MB.
 
