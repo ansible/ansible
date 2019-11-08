@@ -183,7 +183,7 @@ options:
       - Only files really transfered are considered as changes. Changing of permissions, ownership or times is NOT considered a change
     type: bool
     default: no
-    version_added: "2.9"
+    version_added: "2.10"
 notes:
    - rsync must be installed on both the local and remote host.
    - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host
