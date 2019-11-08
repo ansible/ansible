@@ -278,7 +278,7 @@ def construct_parameters(**kwargs):
     """
     if kwargs['transport_type'] == 'email':
         return dict(
-            description=kwargs['name'],
+            name=kwargs['name'],
             status=to_numeric_value(kwargs['status'],
                                     {'enabled': '0',
                                      'disabled': '1'}),
@@ -318,7 +318,7 @@ def construct_parameters(**kwargs):
         else:
             _script_params = '\n'.join(str(i) for i in kwargs['script_params']) + '\n'
         return dict(
-            description=kwargs['name'],
+            name=kwargs['name'],
             status=to_numeric_value(kwargs['status'],
                                     {'enabled': '0',
                                      'disabled': '1'}),
@@ -336,7 +336,7 @@ def construct_parameters(**kwargs):
         )
     elif kwargs['transport_type'] == 'sms':
         return dict(
-            description=kwargs['name'],
+            name=kwargs['name'],
             status=to_numeric_value(kwargs['status'],
                                     {'enabled': '0',
                                      'disabled': '1'}),
@@ -353,7 +353,7 @@ def construct_parameters(**kwargs):
         )
     elif kwargs['transport_type'] == 'jabber':
         return dict(
-            description=kwargs['name'],
+            name=kwargs['name'],
             status=to_numeric_value(kwargs['status'],
                                     {'enabled': '0',
                                      'disabled': '1'}),
@@ -371,7 +371,7 @@ def construct_parameters(**kwargs):
         )
     elif kwargs['transport_type'] == 'ez_texting':
         return dict(
-            description=kwargs['name'],
+            name=kwargs['name'],
             status=to_numeric_value(kwargs['status'],
                                     {'enabled': '0',
                                      'disabled': '1'}),
@@ -406,7 +406,7 @@ def check_if_mediatype_exists(module, zbx, name):
     try:
         mediatype_list = zbx.mediatype.get({
             'output': 'extend',
-            'filter': {'description': [name]}
+            'filter': {'name': [name]}
         })
         if len(mediatype_list) < 1:
             return False, None
@@ -486,7 +486,7 @@ def create_mediatype(module, zbx, **kwargs):
     try:
         mediatype_id = zbx.mediatype.create(kwargs)
     except Exception as e:
-        module.fail_json(msg="Failed to create mediatype '{name}': {e}".format(name=kwargs['description'], e=e))
+        module.fail_json(msg="Failed to create mediatype '{name}': {e}".format(name=kwargs['name'], e=e))
 
 
 def main():
