@@ -17,7 +17,7 @@ author:
 short_description: Manage CloudWatch log group metric filter
 description:
   - Create, modify and delete Cloudwatch log group metric filter.
-  - Cloudwatch log group metric filter can be use with I(ec2_metric_alarm).
+  - Cloudwatch log group metric filter can be use with M(ec2_metric_alarm).
 requirements:
   - boto3
   - botocore
@@ -40,34 +40,29 @@ options:
       type: str
     filter_pattern:
       description:
-        - A filter pattern for extracting metric data out of ingested log events.
-      required: true
+        - A filter pattern for extracting metric data out of ingested log events. Required when I(state=present).
       type: str
     metric_transformation:
       description:
-        - A collection of information that defines how metric data gets emitted.
+        - A collection of information that defines how metric data gets emitted. Required when I(state=present).
       type: dict
       suboptions:
         metric_name:
           description:
-            - The name of the cloudwatch metric.
-          required: true
+            - The name of the cloudWatch metric.
           type: str
         metric_namespace:
           description:
             - The namespace of the cloudwatch metric.
-          required: true
           type: str
         matric_value:
           description:
             - The value to publish to the cloudwatch metric when a filter pattern matches a log event.
-          required: true
           type: str
         default_value:
           description:
             - The value to emit when a filter pattern does not match a log event.
-          required: false
-          type: str
+          type: float
 extends_documentation_fragment:
     - aws
     - ec2
@@ -125,7 +120,7 @@ def metricTransformationHandler(metricTransformations, originMetricTransformatio
     else:
         change = True
 
-    defaultValue = metricTransformations.get("defaultValue")
+    defaultValue = metricTransformations.get("default_value")
     if isinstance(defaultValue, int) or isinstance(defaultValue, float):
         retval = [
             {
@@ -153,14 +148,15 @@ def main():
         state=dict(type='str', required=True, choices=['present', 'absent']),
         log_group_name=dict(type='str', required=True),
         filter_name=dict(type='str', required=True),
-        filter_pattern=dict(type='str', required=True),
+        filter_pattern=dict(type='str'),
         metric_transformation=dict(
-            type='dict', required=True),
+            type='dict'),
     )
 
     module = AnsibleAWSModule(
         argument_spec=arg_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_if = [('state', 'present', ['metric_transformation', 'filter_pattern'])]
     )
 
     log_group_name = module.params.get("log_group_name")
@@ -186,6 +182,7 @@ def main():
         originMetricTransformations = None
         originFilterPattern = None
     change = False
+    metricTransformation = None
 
     if state == "absent" and originMetricTransformations:
         if not module.check_mode:
@@ -194,6 +191,7 @@ def main():
                 filterName=filter_name
             )
         change = True
+        metricTransformation = [camel_dict_to_snake_dict(item) for item in [originMetricTransformations]]
 
     elif state == "present":
         metricTransformation, change = metricTransformationHandler(
@@ -209,14 +207,11 @@ def main():
                     filterPattern=filter_pattern,
                     metricTransformations=metricTransformation
                 )
+        
+        metricTransformation = [camel_dict_to_snake_dict(item) for item in metricTransformation]
 
-    retval = None
-    if response.get("metricFilters"):
-        retval = [camel_dict_to_snake_dict(item)
-                  for item in response['metricFilters']]
 
-    module.exit_json(
-        changed=change, metric_filters=retval)
+    module.exit_json(changed=change, metric_filters=metricTransformation)
 
 
 if __name__ == '__main__':
