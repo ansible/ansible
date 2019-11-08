@@ -27,17 +27,17 @@
         - z1 is changed
         - "z1.comment == 'Created in Ansible test {{ resource_prefix }}'"
 
-  - name: List hosted zones
+  - name: Get zone details
     route53_info:
       query: hosted_zone
       hosted_zone_id: '{{ z1.zone_id }}'
-      max_items: 50
+      hosted_zone_method: details
     register: hosted_zones
 
-  - name: Assert hosted zones information
+  - name: Assert newly created hosted zone only has NS and SOA records
     assert:
       that:
-        - hosted_zones.HostedZones|length == 1
+        - hosted_zones.HostedZone.ResourceRecordSetCount == 2
 
   - name: Create A record using zone fqdn
     route53:
@@ -114,6 +114,7 @@
       query: record_sets
       hosted_zone_id: '{{ z1.zone_id }}'
       start_record_name: 'order_test.{{ zone_one }}'
+      max_items: 50
     register: records
   - assert:
       that:
@@ -160,6 +161,7 @@
       query: record_sets
       hosted_zone_id: '{{ z1.zone_id }}'
       start_record_name: 'order_test.{{ zone_one }}'
+      max_items: 50
     register: records
   - assert:
       that:
