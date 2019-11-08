@@ -482,17 +482,18 @@
 
 - name: Define test file for force==no shouldnt redownload dsturl
   set_fact:
-    geturl_dstfile: "{{ remote_tmp_dir }}/force_no_redownload_test.txt"
+    geturl_dstfile: "{{ remote_tmp_dir }}/test_force_no"
 
 - name: Create dstfile by getting dsturl
   get_url:
-    url: 'https://{{ httpbin_host }}/html'
+    url: 'https://{{ httpbin_host }}/get'
     dest: "{{ geturl_dstfile }}"
+    force: yes
   register: download_check
 
 - name: Run get_url a second time but this time with dstfile already existing and force==no
   get_url:
-    url: 'https://{{ httpbin_host }}/html'
+    url: 'https://{{ httpbin_host }}/get'
     dest: "{{ geturl_dstfile }}"
     force: no
   register: result

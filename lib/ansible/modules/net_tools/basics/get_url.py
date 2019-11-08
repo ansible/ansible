@@ -529,37 +529,37 @@ def main():
             module.fail_json(msg='The checksum format is invalid', **result)
 
     if not dest_is_dir and os.path.exists(dest):
-        checksum_mismatch = False
+        checksum_match = True
 
-        # If the download is not forced and there is a checksum, allow
-        # checksum match to skip the download.
-        if not force and checksum != '':
-            destination_checksum = module.digest_from_file(dest, algorithm)
+        if not force:
+            # If the download is not forced and there is a checksum, allow
+            # checksum match to skip the download.
+            if checksum != '':
+                destination_checksum = module.digest_from_file(dest, algorithm)
 
-            if checksum != destination_checksum:
-                checksum_mismatch = True
+                if checksum != destination_checksum:
+                    checksum_match = False
 
-        # Not forcing redownload, unless checksum does not match
-        if not force and checksum and not checksum_mismatch:
             # Not forcing redownload, unless checksum does not match
             # allow file attribute changes
-            module.params['path'] = dest
-            file_args = module.load_file_common_arguments(module.params)
-            file_args['path'] = dest
-            result['changed'] = module.set_fs_attributes_if_different(file_args, False)
-            if result['changed']:
-                module.exit_json(msg="file already exists but file attributes changed", **result)
-            module.exit_json(msg="file already exists", **result)
+            if checksum and checksum_match:
+                module.params['path'] = dest
+                file_args = module.load_file_common_arguments(module.params)
+                file_args['path'] = dest
+                result['changed'] = module.set_fs_attributes_if_different(file_args, False)
+                if result['changed']:
+                    module.exit_json(msg="file already exists but file attributes changed", **result)
+                module.exit_json(msg="file already exists", **result)
 
-        # If the file already exists, prepare the last modified time for the
-        # request.
-        mtime = os.path.getmtime(dest)
-        last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
+            # If the file already exists, prepare the last modified time for the
+            # request.
+            mtime = os.path.getmtime(dest)
+            last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
 
-        # If the checksum does not match we have to force the download
-        # because last_mod_time may be newer than on remote
-        if checksum_mismatch:
-            force = True
+            # If the checksum does not match we have to force the download
+            # because last_mod_time may be newer than on remote
+            if not checksum_match:
+                force = True
 
     # download to tmpsrc
     start = datetime.datetime.utcnow()
