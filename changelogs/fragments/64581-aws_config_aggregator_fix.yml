@@ -1,0 +1,2 @@
+minor_changes:
+- Fixes update_resource and delete_resource API for correct number of arguments in aws_config_aggregator (https://github.com/ansible/ansible/pull/64581).
