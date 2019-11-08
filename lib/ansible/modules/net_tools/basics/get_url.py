@@ -529,6 +529,7 @@ def main():
             module.fail_json(msg='The checksum format is invalid', **result)
 
     if not dest_is_dir and os.path.exists(dest):
+        # should start with checksum_match = False for more clarity
         checksum_match = True
 
         if not force:
@@ -542,7 +543,7 @@ def main():
 
             # Not forcing redownload, unless checksum does not match
             # allow file attribute changes
-            if checksum and checksum_match:
+            if (checksum and checksum_match) or not checksum:
                 module.params['path'] = dest
                 file_args = module.load_file_common_arguments(module.params)
                 file_args['path'] = dest
