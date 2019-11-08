@@ -413,9 +413,9 @@ class SnsTopicManager(object):
                                                                     AttributeValue=sub['raw_message_delivery'])
                     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                         self.module.fail_json_aws(e, msg="Couldn't set subscription attribute - raw_message_delivery")
-            if sub['filter_policy'] is not None and 'FilterPolicy'in sub_attributes and compare_policies(
+            if sub['filter_policy'] is not None and ('FilterPolicy' not in sub_attributes or compare_policies(
                     json.loads(sub['filter_policy']),
-                    json.loads(sub_attributes['FilterPolicy'])):
+                    json.loads(sub_attributes['FilterPolicy']))):
                 self.changed = True
                 if not self.check_mode:
                     try:
