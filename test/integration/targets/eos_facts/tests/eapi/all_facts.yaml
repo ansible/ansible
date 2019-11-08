@@ -1,17 +1,11 @@
 ---
 - debug: msg="START eapi/all_facts.yaml on connection={{ ansible_connection }}"
 
-- name: Make sure LLDP is running (setup)
-  eos_config:
-    lines: lldp run
-    provider:
-      authorize: yes
-  become: yes
-
 - name: test getting all facts
   eos_facts:
     gather_subset:
       - all
+    provider: "{{ eapi }}"
   become: yes
   register: result
 
