@@ -114,7 +114,7 @@ def create_resource(client, module, params, result):
         module.fail_json_aws(e, msg="Couldn't create AWS Config configuration aggregator")
 
 
-def update_resource(client, module, resource_type, params, result):
+def update_resource(client, module, params, result):
     current_params = client.describe_configuration_aggregators(
         ConfigurationAggregatorNames=[params['name']]
     )
@@ -137,7 +137,7 @@ def update_resource(client, module, resource_type, params, result):
             module.fail_json_aws(e, msg="Couldn't create AWS Config configuration aggregator")
 
 
-def delete_resource(client, module, resource_type, params, result):
+def delete_resource(client, module, params, result):
     try:
         client.delete_configuration_aggregator(
             ConfigurationAggregatorName=params['ConfigurationAggregatorName']
