@@ -49,42 +49,70 @@
 # Agreement.
 
 import os
-
+import sys
 
 def ismount(path):
-    """Test whether a path is a mount point
-    clone of os.path.ismount (from cpython Lib/posixpath.py)
-    fixed to solve https://github.com/ansible/ansible-modules-core/issues/2186
-    and workaround non-fixed http://bugs.python.org/issue2466
-    this should be rewritten as soon as python issue 2466 is fixed
-    probably check for python version and use os.path.ismount if fixed
+    """python issue 2466 is fixed then ismount() was rewritten"""
+    #check python version
 
-    to remove replace in this file ismount( -> os.path.ismount( and remove this
-    function"""
+    current_version = sys.version_info
+    if (current_version.major == 3 and 5 <= current_version.minor <= 6) or (current_version.major == 2 and current_version.minor == 7):
+        #clone upstream version of ismount() from Cpython
+        """Test whether a path is a mount point"""
+        try:
+            s1 = os.lstat(path)
+        except (OSError, ValueError):
+            # It doesn't exist -- so not a mount point. :-)
+            return False
+        else:
+            # A symlink can never be a mount point
+            if os.path.stat.S_ISLNK(s1.st_mode):
+                return False
 
-    try:
-        s1 = os.lstat(path)
-    except OSError:
-        # the OSError should be handled with more care
-        # it could be a "permission denied" but path is still a mount
-        return False
-    else:
-        # A symlink can never be a mount point
-        if os.path.stat.S_ISLNK(s1.st_mode):
+        if isinstance(path, bytes):
+            parent = os.path.join(path, b'..')
+        else:
+            parent = os.path.join(path, '..')
+        parent = os.path.realpath(parent)
+        try:
+            s2 = os.lstat(parent)
+        except (OSError, ValueError):
             return False
 
-    parent = os.path.join(path, os.path.pardir)
-    parent = os.path.realpath(parent)
-
-    try:
-        s2 = os.lstat(parent)
-    except OSError:
-        # one should handle the returned OSError with more care to figure
-        # out whether this is still a mount
+        dev1 = s1.st_dev
+        dev2 = s2.st_dev
+        if dev1 != dev2:
+            return True     # path/.. on a different device as path
+        ino1 = s1.st_ino
+        ino2 = s2.st_ino
+        if ino1 == ino2:
+            return True     # path/.. is the same i-node as path
         return False
+    else:
 
-    if s1.st_dev != s2.st_dev:
-        return True     # path/.. on a different device as path
-    if s1.st_ino == s2.st_ino:
-        return True     # path/.. is the same i-node as path, i.e. path=='/'
-    return False
+        try:
+            s1 = os.lstat(path)
+        except OSError:
+            # the OSError should be handled with more care
+            # it could be a "permission denied" but path is still a mount
+            return False
+        else:
+            # A symlink can never be a mount point
+            if os.path.stat.S_ISLNK(s1.st_mode):
+                return False
+
+        parent = os.path.join(path, os.path.pardir)
+        parent = os.path.realpath(parent)
+
+        try:
+            s2 = os.lstat(parent)
+        except OSError:
+            # one should handle the returned OSError with more care to figure
+            # out whether this is still a mount
+            return False
+
+        if s1.st_dev != s2.st_dev:
+            return True     # path/.. on a different device as path
+        if s1.st_ino == s2.st_ino:
+            return True     # path/.. is the same i-node as path, i.e. path=='/'
+        return False
