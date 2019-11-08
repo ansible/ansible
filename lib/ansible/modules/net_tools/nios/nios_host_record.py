@@ -60,7 +60,9 @@ options:
         description:
           - Configures the IPv4 address for the host record. Users can dynamically
             allocate ipv4 address to host record by passing dictionary containing,
-            I(nios_next_ip) and I(CIDR network range). See example
+            I(nios_next_ip) and I(CIDR network range). If user wants to add or
+            remove the ipv4 address from existing record, I(add/remove)
+            params need to be used. See examples
         required: true
         aliases:
           - address
@@ -78,6 +80,26 @@ options:
         required: false
         aliases:
           - mac
+      add:
+        version_added: "2.10"
+        description:
+          - If user wants to add the ipv4 address to an existing host record.
+            Note that with I(add) user will have to keep the I(state) as I(present),
+            as new IP address is allocated to existing host record. See examples.
+        type: bool
+        required: false
+        aliases:
+          - add
+      remove:
+        version_added: "2.10"
+        description:
+          - If user wants to remove the ipv4 address from an existing host record.
+            Note that with I(remove) user will have to change the I(state) to I(absent),
+            as IP address is de-allocated from an existing host record. See examples.
+        type: bool
+        required: false
+        aliases:
+          - remove
   ipv6addrs:
     description:
       - Configures the IPv6 addresses for the host record.  This argument
@@ -212,6 +234,30 @@ EXAMPLES = '''
       username: admin
       password: admin
   connection: local
+- name: add ip to host record
+  nios_host_record:
+    name: host.ansible.com
+    ipv4:
+      - address: 192.168.10.2
+        add: true
+    state: present
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
+- name: remove ip to host record
+  nios_host_record:
+    name: host.ansible.com
+    ipv4:
+      - address: 192.168.10.1
+        remove: true
+    state: absent
+    provider:
+      host: "{{ inventory_hostname_short }}"
+      username: admin
+      password: admin
+  connection: local
 '''
 
 RETURN = ''' # '''
@@ -254,7 +300,9 @@ def main():
     ipv4addr_spec = dict(
         ipv4addr=dict(required=True, aliases=['address'], ib_req=True),
         configure_for_dhcp=dict(type='bool', required=False, aliases=['dhcp'], ib_req=True),
-        mac=dict(required=False, aliases=['mac'], ib_req=True)
+        mac=dict(required=False, aliases=['mac'], ib_req=True),
+        add=dict(type='bool', aliases=['add'], required=False),
+        remove=dict(type='bool', aliases=['remove'], required=False)
     )
 
     ipv6addr_spec = dict(
