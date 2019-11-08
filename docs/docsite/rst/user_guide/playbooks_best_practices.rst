@@ -45,6 +45,8 @@ The top level of the directory would contain files and directories like so::
     site.yml                  # master playbook
     webservers.yml            # playbook for webserver tier
     dbservers.yml             # playbook for dbserver tier
+    tasks/                    # task files included from playbooks
+        webservers-extra.yml  # <-- avoids confusing playbook with task files
 
     roles/
         common/               # this hierarchy represents a "role"
