@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: idrac_redfish_config
-version_added: '2.10'
+version_added: '2.8'
 short_description: Manages servers through iDRAC using Dell Redfish APIs
 description:
   - For use with Dell iDRAC operations that require Redfish OEM extensions
@@ -30,6 +30,9 @@ options:
     required: true
     description:
       - List of commands to execute on iDRAC
+      - I(SetManagerAttributes), I(SetLifecycleControllerAttributes) and
+        I(SetSystemAttributes) are mutually exclusive commands when C(category)
+        is I(Manager)
     type: list
   baseuri:
     required: true
@@ -50,21 +53,23 @@ options:
     required: false
     description:
       - (deprecated) name of iDRAC attribute to update
-    default: 'null'
+    default: None
     type: str
+    version_added: "2.8"
   manager_attribute_value:
     required: false
     description:
       - (deprecated) value of iDRAC attribute to update
-    default: 'null'
+    default: None
     type: str
+    version_added: "2.8"
   manager_attributes:
     required: false
     description:
       - dictionary of iDRAC attribute name and value pairs to update
     default: {}
     type: 'dict'
-    version_added: '2.9'
+    version_added: '2.10'
   timeout:
     description:
       - Timeout in seconds for URL requests to iDRAC controller
@@ -123,6 +128,25 @@ EXAMPLES = '''
       username: "{{ username}}"
       password: "{{ password }}"
 
+  - name: Enable CSIOR
+    idrac_redfish_config:
+      category: Manager
+      command: SetLifecycleControllerAttributes
+      manager_attributes:
+        LCAttributes.1.CollectSystemInventoryOnRestart: "Enabled"
+      baseuri: "{{ baseuri }}"
+      username: "{{ username}}"
+      password: "{{ password }}"
+
+  - name: Set Power Supply Redundancy Policy to A/B Grid Redundant
+    idrac_redfish_config:
+      category: Manager
+      command: SetSystemAttributes
+      manager_attributes:
+        ServerPwr.1.PSRedPolicy: "A/B Grid Redundant"
+      baseuri: "{{ baseuri }}"
+      username: "{{ username}}"
+      password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -134,62 +158,92 @@ msg:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.validation import (
+    check_mutually_exclusive,
+    check_required_arguments
+)
 from ansible.module_utils.redfish_utils import RedfishUtils
 from ansible.module_utils._text import to_native
 
 
 class IdracRedfishUtils(RedfishUtils):
 
-    def set_manager_attributes(self, attr):
+    def set_manager_attributes(self, command):
 
         result = {}
-        # Here I'm making the assumption that the key 'Attributes' is part of the URI.
-        # It may not, but in the hardware I tested with, getting to the final URI where
-        # the Manager Attributes are, appear to be part of a specific OEM extension.
+        required_arg_spec = {'manager_attributes': {'required': True}}
+
+        try:
+            check_required_arguments(required_arg_spec, self.module.params)
+
+        except TypeError as e:
+            msg = to_native(e)
+            self.module.fail_json(msg=msg)
+
         key = "Attributes"
-        manager_attr = {}
-        exclude_manager_attr = {}
+        command_manager_attributes_uri_map = {
+                "SetManagerAttributes": self.manager_uri,
+                "SetLifecycleControllerAttributes": "/redfish/v1/Managers/LifecycleController.Embedded.1",
+                "SetSystemAttributes": "/redfish/v1/Managers/System.Embedded.1"
+                }
+        manager_uri = command_manager_attributes_uri_map.get(command, self.manager_uri)
+
+        attributes = self.module.params['manager_attributes']
+        manager_attr_name = self.module.params.get('manager_attribute_name')
+        manager_attr_value = self.module.params.get('manager_attribute_value')
+
+        # manager attributes to update
+        if manager_attr_name:
+            attributes.update({manager_attr_name: manager_attr_value})
+
+        attrs_to_patch = {}
+        attrs_skipped = {}
 
         # Search for key entry and extract URI from it
-        response = self.get_request(self.root_uri + self.manager_uri + "/" + key)
+        response = self.get_request(self.root_uri + manager_uri + "/" + key)
         if response['ret'] is False:
             return response
         result['ret'] = True
         data = response['data']
 
         if key not in data:
-            return {'ret': False, 'msg': "Key %s not found" % key}
+            return {'ret': False,
+                    'msg': "%s: Key %s not found" % (command, key)}
 
-        for mgr_attr_name, mgr_attr_value in attr.items():
+        for attr_name, attr_value in attributes.items():
             # Check if attribute exists
-            if mgr_attr_name not in data[key]:
-                return {'ret': False, 'msg': "Manager attribute %s not found" % mgr_attr_name}
-
-            # Example: manager_attr = {\"name\":\"value\"}
-            # Check if value is a number. If so, convert to int.
-            mgr_attr_value = int(mgr_attr_value) if mgr_attr_value.isdigit() else mgr_attr_value
+            if attr_name not in data[u'Attributes']:
+                return {'ret': False,
+                        'msg': "%s: Manager attribute %s not found" % (command, attr_name)}
 
             # Find out if value is already set to what we want. If yes, exclude
             # those attributes
-            if data[key][mgr_attr_name] == mgr_attr_value:
-                exclude_manager_attr.update({mgr_attr_name: mgr_attr_value})
+            if data[u'Attributes'][attr_name] == attr_value:
+                attrs_skipped.update({attr_name: attr_value})
             else:
-                manager_attr.update({mgr_attr_name: mgr_attr_value})
+                attrs_to_patch.update({attr_name: attr_value})
 
-        if not manager_attr:
-            return {'ret': True, 'changed': False, 'msg': "Manager attributes already set"}
+        if not attrs_to_patch:
+            return {'ret': True, 'changed': False,
+                    'msg': "Manager attributes already set"}
 
-        payload = {"Attributes": manager_attr}
-        response = self.patch_request(self.root_uri + self.manager_uri + "/" + key, payload)
+        payload = {"Attributes": attrs_to_patch}
+        response = self.patch_request(self.root_uri + manager_uri + "/" + key, payload)
         if response['ret'] is False:
             return response
-        return {'ret': True, 'changed': True, 'msg': "Modified Manager attributes %s" % manager_attr}
+        return {'ret': True, 'changed': True, 'msg': "Modified Manager attributes %s" % attrs_to_patch}
 
 
 CATEGORY_COMMANDS_ALL = {
-    "Manager": ["SetManagerAttributes"]
+    "Manager": ["SetManagerAttributes", "SetLifecycleControllerAttributes",
+                "SetSystemAttributes"]
 }
 
+# list of mutually exclusive commands for a category
+CATEGORY_COMMANDS_MUTUALLY_EXCLUSIVE = {
+    "Manager": [ ["SetManagerAttributes", "SetLifecycleControllerAttributes",
+                "SetSystemAttributes"] ]
+}
 
 def main():
     result = {}
@@ -219,12 +273,6 @@ def main():
     # timeout
     timeout = module.params['timeout']
 
-    # iDRAC attributes to update
-    mgr_attributes = {
-        module.params['manager_attribute_name']: module.params['manager_attribute_value']
-    }
-    mgr_attributes.update(module.params['manager_attributes'])
-
     # System, Manager or Chassis ID to modify
     resource_id = module.params['resource_id']
 
@@ -243,6 +291,17 @@ def main():
         if cmd not in CATEGORY_COMMANDS_ALL[category]:
             module.fail_json(msg=to_native("Invalid Command '%s'. Valid Commands = %s" % (cmd, CATEGORY_COMMANDS_ALL[category])))
 
+    # check for mutually exclusive commands
+    try:
+        # check_mutually_exclusive accepts a single list or list of lists that
+        # are groups of terms that should be mutually exclusive with one another
+        # and checks that against a dictionary 
+        check_mutually_exclusive(CATEGORY_COMMANDS_MUTUALLY_EXCLUSIVE[category],
+                                 dict.fromkeys(command_list, True))
+
+    except TypeError as e:
+        module.fail_json(msg=to_native(e))
+
     # Organize by Categories / Commands
 
     if category == "Manager":
@@ -252,20 +311,20 @@ def main():
             module.fail_json(msg=to_native(result['msg']))
 
         for command in command_list:
-            if command == "SetManagerAttributes":
-                result = rf_utils.set_manager_attributes(mgr_attributes)
+            if command in ["SetManagerAttributes", "SetLifecycleControllerAttributes", "SetSystemAttributes"]:
+                result = rf_utils.set_manager_attributes(command)
 
     if any((module.params['manager_attribute_name'], module.params['manager_attribute_value'])):
-        result['warnings'] = [('Arguments `manager_attribute_name` and `manager_attribute_value` '
-                               'are deprecated since Ansible 2.9. Use '
-                               '`manager_attributes` instead for passing in the '
-                               'manager attribute name and value pairs.')]
+        module.deprecate(msg='Arguments `manager_attribute_name` and '
+                             '`manager_attribute_value` are deprecated. '
+                             'Use `manager_attributes` instead for passing in '
+                             'the manager attribute name and value pairs',
+                             version='2.13')
 
     # Return data back or fail with proper message
     if result['ret'] is True:
         module.exit_json(changed=result['changed'],
-                         msg=to_native(result['msg']),
-                         warnings=to_native(result['warnings']))
+                         msg=to_native(result['msg']))
     else:
         module.fail_json(msg=to_native(result['msg']))
 
