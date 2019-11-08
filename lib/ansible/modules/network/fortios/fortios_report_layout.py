@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_report_layout
 short_description: Report layout configuration in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify report feature and layout category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,50 +41,79 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     report_layout:
         description:
             - Report layout configuration.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            body-item:
+            body_item:
                 description:
                     - Configure report body item.
+                type: list
                 suboptions:
                     chart:
                         description:
                             - Report item chart name.
-                    chart-options:
+                        type: str
+                    chart_options:
                         description:
                             - Report chart options.
+                        type: str
                         choices:
                             - include-no-data
                             - hide-title
@@ -95,21 +121,27 @@ options:
                     column:
                         description:
                             - Report section column number.
+                        type: int
                     content:
                         description:
                             - Report item text content.
+                        type: str
                     description:
                         description:
                             - Description.
-                    drill-down-items:
+                        type: str
+                    drill_down_items:
                         description:
                             - Control how drill down charts are shown.
-                    drill-down-types:
+                        type: str
+                    drill_down_types:
                         description:
                             - Control whether keys from the parent being combined or not.
+                        type: str
                     hide:
                         description:
                             - Enable/disable hide item in report.
+                        type: str
                         choices:
                             - enable
                             - disable
@@ -117,29 +149,36 @@ options:
                         description:
                             - Report item ID.
                         required: true
-                    img-src:
+                        type: int
+                    img_src:
                         description:
                             - Report item image file name.
+                        type: str
                     list:
                         description:
                             - Configure report list item.
+                        type: list
                         suboptions:
                             content:
                                 description:
                                     - List entry content.
+                                type: str
                             id:
                                 description:
                                     - List entry ID.
                                 required: true
-                    list-component:
+                                type: int
+                    list_component:
                         description:
                             - Report item list component.
+                        type: str
                         choices:
                             - bullet
                             - numbered
-                    misc-component:
+                    misc_component:
                         description:
                             - Report item miscellaneous component.
+                        type: str
                         choices:
                             - hline
                             - page-break
@@ -148,38 +187,49 @@ options:
                     parameters:
                         description:
                             - Parameters.
+                        type: list
                         suboptions:
                             id:
                                 description:
                                     - ID.
                                 required: true
+                                type: int
                             name:
                                 description:
                                     - Field name that match field of parameters defined in dataset.
+                                type: str
                             value:
                                 description:
                                     - Value to replace corresponding field of parameters defined in dataset.
+                                type: str
                     style:
                         description:
                             - Report item style.
-                    table-caption-style:
+                        type: str
+                    table_caption_style:
                         description:
                             - Table chart caption style.
-                    table-column-widths:
+                        type: str
+                    table_column_widths:
                         description:
                             - Report item table column widths.
-                    table-even-row-style:
+                        type: str
+                    table_even_row_style:
                         description:
                             - Table chart even row style.
-                    table-head-style:
+                        type: str
+                    table_head_style:
                         description:
                             - Table chart head style.
-                    table-odd-row-style:
+                        type: str
+                    table_odd_row_style:
                         description:
                             - Table chart odd row style.
-                    text-component:
+                        type: str
+                    text_component:
                         description:
                             - Report item text component.
+                        type: str
                         choices:
                             - text
                             - heading1
@@ -188,29 +238,35 @@ options:
                     title:
                         description:
                             - Report section title.
-                    top-n:
+                        type: str
+                    top_n:
                         description:
                             - Value of top.
+                        type: int
                     type:
                         description:
                             - Report item type.
+                        type: str
                         choices:
                             - text
                             - image
                             - chart
                             - misc
-            cutoff-option:
+            cutoff_option:
                 description:
                     - Cutoff-option is either run-time or custom.
+                type: str
                 choices:
                     - run-time
                     - custom
-            cutoff-time:
+            cutoff_time:
                 description:
                     - "Custom cutoff time to generate report [hh:mm]."
+                type: str
             day:
                 description:
                     - Schedule days of week to generate report.
+                type: str
                 choices:
                     - sunday
                     - monday
@@ -222,30 +278,37 @@ options:
             description:
                 description:
                     - Description.
-            email-recipients:
+                type: str
+            email_recipients:
                 description:
                     - Email recipients for generated reports.
-            email-send:
+                type: str
+            email_send:
                 description:
                     - Enable/disable sending emails after reports are generated.
+                type: str
                 choices:
                     - enable
                     - disable
             format:
                 description:
                     - Report format.
+                type: str
                 choices:
                     - pdf
-            max-pdf-report:
+            max_pdf_report:
                 description:
                     - Maximum number of PDF reports to keep at one time (oldest report is overwritten).
+                type: int
             name:
                 description:
                     - Report layout name.
                 required: true
+                type: str
             options:
                 description:
                     - Report layout options.
+                type: str
                 choices:
                     - include-table-of-content
                     - auto-numbering-heading
@@ -255,10 +318,12 @@ options:
             page:
                 description:
                     - Configure report page.
+                type: dict
                 suboptions:
-                    column-break-before:
+                    column_break_before:
                         description:
                             - Report page auto column break before heading.
+                        type: str
                         choices:
                             - heading1
                             - heading2
@@ -266,78 +331,98 @@ options:
                     footer:
                         description:
                             - Configure report page footer.
+                        type: dict
                         suboptions:
-                            footer-item:
+                            footer_item:
                                 description:
                                     - Configure report footer item.
+                                type: list
                                 suboptions:
                                     content:
                                         description:
                                             - Report item text content.
+                                        type: str
                                     description:
                                         description:
                                             - Description.
+                                        type: str
                                     id:
                                         description:
                                             - Report item ID.
                                         required: true
-                                    img-src:
+                                        type: int
+                                    img_src:
                                         description:
                                             - Report item image file name.
+                                        type: str
                                     style:
                                         description:
                                             - Report item style.
+                                        type: str
                                     type:
                                         description:
                                             - Report item type.
+                                        type: str
                                         choices:
                                             - text
                                             - image
                             style:
                                 description:
                                     - Report footer style.
+                                type: str
                     header:
                         description:
                             - Configure report page header.
+                        type: dict
                         suboptions:
-                            header-item:
+                            header_item:
                                 description:
                                     - Configure report header item.
+                                type: list
                                 suboptions:
                                     content:
                                         description:
                                             - Report item text content.
+                                        type: str
                                     description:
                                         description:
                                             - Description.
+                                        type: str
                                     id:
                                         description:
                                             - Report item ID.
                                         required: true
-                                    img-src:
+                                        type: int
+                                    img_src:
                                         description:
                                             - Report item image file name.
+                                        type: str
                                     style:
                                         description:
                                             - Report item style.
+                                        type: str
                                     type:
                                         description:
                                             - Report item type.
+                                        type: str
                                         choices:
                                             - text
                                             - image
                             style:
                                 description:
                                     - Report header style.
+                                type: str
                     options:
                         description:
                             - Report page options.
+                        type: str
                         choices:
                             - header-on-first-page
                             - footer-on-first-page
-                    page-break-before:
+                    page_break_before:
                         description:
                             - Report page auto page break before heading.
+                        type: str
                         choices:
                             - heading1
                             - heading2
@@ -345,28 +430,34 @@ options:
                     paper:
                         description:
                             - Report page paper.
+                        type: str
                         choices:
                             - a4
                             - letter
-            schedule-type:
+            schedule_type:
                 description:
                     - Report schedule type.
+                type: str
                 choices:
                     - demand
                     - daily
                     - weekly
-            style-theme:
+            style_theme:
                 description:
                     - Report style theme.
+                type: str
             subtitle:
                 description:
                     - Report subtitle.
+                type: str
             time:
                 description:
                     - "Schedule time to generate report [hh:mm]."
+                type: str
             title:
                 description:
                     - Report title.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -376,6 +467,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Report layout configuration.
     fortios_report_layout:
@@ -384,78 +476,78 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       report_layout:
-        state: "present"
-        body-item:
+        body_item:
          -
             chart: "<your_own_value>"
-            chart-options: "include-no-data"
+            chart_options: "include-no-data"
             column: "6"
             content: "<your_own_value>"
             description: "<your_own_value>"
-            drill-down-items: "<your_own_value>"
-            drill-down-types: "<your_own_value>"
+            drill_down_items: "<your_own_value>"
+            drill_down_types: "<your_own_value>"
             hide: "enable"
             id:  "12"
-            img-src: "<your_own_value>"
+            img_src: "<your_own_value>"
             list:
              -
                 content: "<your_own_value>"
                 id:  "16"
-            list-component: "bullet"
-            misc-component: "hline"
+            list_component: "bullet"
+            misc_component: "hline"
             parameters:
              -
                 id:  "20"
                 name: "default_name_21"
                 value: "<your_own_value>"
             style: "<your_own_value>"
-            table-caption-style: "<your_own_value>"
-            table-column-widths: "<your_own_value>"
-            table-even-row-style: "<your_own_value>"
-            table-head-style: "<your_own_value>"
-            table-odd-row-style: "<your_own_value>"
-            text-component: "text"
+            table_caption_style: "<your_own_value>"
+            table_column_widths: "<your_own_value>"
+            table_even_row_style: "<your_own_value>"
+            table_head_style: "<your_own_value>"
+            table_odd_row_style: "<your_own_value>"
+            text_component: "text"
             title: "<your_own_value>"
-            top-n: "31"
+            top_n: "31"
             type: "text"
-        cutoff-option: "run-time"
-        cutoff-time: "<your_own_value>"
+        cutoff_option: "run-time"
+        cutoff_time: "<your_own_value>"
         day: "sunday"
         description: "<your_own_value>"
-        email-recipients: "<your_own_value>"
-        email-send: "enable"
+        email_recipients: "<your_own_value>"
+        email_send: "enable"
         format: "pdf"
-        max-pdf-report: "40"
+        max_pdf_report: "40"
         name: "default_name_41"
         options: "include-table-of-content"
         page:
-            column-break-before: "heading1"
+            column_break_before: "heading1"
             footer:
-                footer-item:
+                footer_item:
                  -
                     content: "<your_own_value>"
                     description: "<your_own_value>"
                     id:  "49"
-                    img-src: "<your_own_value>"
+                    img_src: "<your_own_value>"
                     style: "<your_own_value>"
                     type: "text"
                 style: "<your_own_value>"
             header:
-                header-item:
+                header_item:
                  -
                     content: "<your_own_value>"
                     description: "<your_own_value>"
                     id:  "58"
-                    img-src: "<your_own_value>"
+                    img_src: "<your_own_value>"
                     style: "<your_own_value>"
                     type: "text"
                 style: "<your_own_value>"
             options: "header-on-first-page"
-            page-break-before: "heading1"
+            page_break_before: "heading1"
             paper: "a4"
-        schedule-type: "demand"
-        style-theme: "<your_own_value>"
+        schedule_type: "demand"
+        style_theme: "<your_own_value>"
         subtitle: "<your_own_value>"
         time: "<your_own_value>"
         title: "<your_own_value>"
@@ -521,14 +613,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -536,15 +630,15 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_report_layout_data(json):
-    option_list = ['body-item', 'cutoff-option', 'cutoff-time',
-                   'day', 'description', 'email-recipients',
-                   'email-send', 'format', 'max-pdf-report',
+    option_list = ['body_item', 'cutoff_option', 'cutoff_time',
+                   'day', 'description', 'email_recipients',
+                   'email_send', 'format', 'max_pdf_report',
                    'name', 'options', 'page',
-                   'schedule-type', 'style-theme', 'subtitle',
+                   'schedule_type', 'style_theme', 'subtitle',
                    'time', 'title']
     dictionary = {}
 
@@ -555,83 +649,95 @@ def filter_report_layout_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
 
 def report_layout(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['report_layout'] and data['report_layout']:
+        state = data['report_layout']['state']
+    else:
+        state = True
     report_layout_data = data['report_layout']
-    flattened_data = flatten_multilists_attributes(report_layout_data)
-    filtered_data = filter_report_layout_data(flattened_data)
-    if report_layout_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_report_layout_data(report_layout_data))
+
+    if state == "present":
         return fos.set('report',
                        'layout',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif report_layout_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('report',
                           'layout',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_report(data, fos):
-    login(data)
 
     if data['report_layout']:
         resp = report_layout(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "report_layout": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "body-item": {"required": False, "type": "list",
+                "body_item": {"required": False, "type": "list",
                               "options": {
                                   "chart": {"required": False, "type": "str"},
-                                  "chart-options": {"required": False, "type": "str",
+                                  "chart_options": {"required": False, "type": "str",
                                                     "choices": ["include-no-data", "hide-title", "show-caption"]},
                                   "column": {"required": False, "type": "int"},
                                   "content": {"required": False, "type": "str"},
                                   "description": {"required": False, "type": "str"},
-                                  "drill-down-items": {"required": False, "type": "str"},
-                                  "drill-down-types": {"required": False, "type": "str"},
+                                  "drill_down_items": {"required": False, "type": "str"},
+                                  "drill_down_types": {"required": False, "type": "str"},
                                   "hide": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
                                   "id": {"required": True, "type": "int"},
-                                  "img-src": {"required": False, "type": "str"},
+                                  "img_src": {"required": False, "type": "str"},
                                   "list": {"required": False, "type": "list",
                                            "options": {
                                                "content": {"required": False, "type": "str"},
                                                "id": {"required": True, "type": "int"}
                                            }},
-                                  "list-component": {"required": False, "type": "str",
+                                  "list_component": {"required": False, "type": "str",
                                                      "choices": ["bullet", "numbered"]},
-                                  "misc-component": {"required": False, "type": "str",
+                                  "misc_component": {"required": False, "type": "str",
                                                      "choices": ["hline", "page-break", "column-break",
                                                                  "section-start"]},
                                   "parameters": {"required": False, "type": "list",
@@ -641,50 +747,50 @@ def main():
                                                      "value": {"required": False, "type": "str"}
                                                  }},
                                   "style": {"required": False, "type": "str"},
-                                  "table-caption-style": {"required": False, "type": "str"},
-                                  "table-column-widths": {"required": False, "type": "str"},
-                                  "table-even-row-style": {"required": False, "type": "str"},
-                                  "table-head-style": {"required": False, "type": "str"},
-                                  "table-odd-row-style": {"required": False, "type": "str"},
-                                  "text-component": {"required": False, "type": "str",
+                                  "table_caption_style": {"required": False, "type": "str"},
+                                  "table_column_widths": {"required": False, "type": "str"},
+                                  "table_even_row_style": {"required": False, "type": "str"},
+                                  "table_head_style": {"required": False, "type": "str"},
+                                  "table_odd_row_style": {"required": False, "type": "str"},
+                                  "text_component": {"required": False, "type": "str",
                                                      "choices": ["text", "heading1", "heading2",
                                                                  "heading3"]},
                                   "title": {"required": False, "type": "str"},
-                                  "top-n": {"required": False, "type": "int"},
+                                  "top_n": {"required": False, "type": "int"},
                                   "type": {"required": False, "type": "str",
                                            "choices": ["text", "image", "chart",
                                                        "misc"]}
                               }},
-                "cutoff-option": {"required": False, "type": "str",
+                "cutoff_option": {"required": False, "type": "str",
                                   "choices": ["run-time", "custom"]},
-                "cutoff-time": {"required": False, "type": "str"},
+                "cutoff_time": {"required": False, "type": "str"},
                 "day": {"required": False, "type": "str",
                         "choices": ["sunday", "monday", "tuesday",
                                     "wednesday", "thursday", "friday",
                                     "saturday"]},
                 "description": {"required": False, "type": "str"},
-                "email-recipients": {"required": False, "type": "str"},
-                "email-send": {"required": False, "type": "str",
+                "email_recipients": {"required": False, "type": "str"},
+                "email_send": {"required": False, "type": "str",
                                "choices": ["enable", "disable"]},
                 "format": {"required": False, "type": "str",
                            "choices": ["pdf"]},
-                "max-pdf-report": {"required": False, "type": "int"},
+                "max_pdf_report": {"required": False, "type": "int"},
                 "name": {"required": True, "type": "str"},
                 "options": {"required": False, "type": "str",
                             "choices": ["include-table-of-content", "auto-numbering-heading", "view-chart-as-heading",
                                         "show-html-navbar-before-heading", "dummy-option"]},
                 "page": {"required": False, "type": "dict",
                          "options": {
-                             "column-break-before": {"required": False, "type": "str",
+                             "column_break_before": {"required": False, "type": "str",
                                                      "choices": ["heading1", "heading2", "heading3"]},
                              "footer": {"required": False, "type": "dict",
                                         "options": {
-                                            "footer-item": {"required": False, "type": "list",
+                                            "footer_item": {"required": False, "type": "list",
                                                             "options": {
                                                                 "content": {"required": False, "type": "str"},
                                                                 "description": {"required": False, "type": "str"},
                                                                 "id": {"required": True, "type": "int"},
-                                                                "img-src": {"required": False, "type": "str"},
+                                                                "img_src": {"required": False, "type": "str"},
                                                                 "style": {"required": False, "type": "str"},
                                                                 "type": {"required": False, "type": "str",
                                                                          "choices": ["text", "image"]}
@@ -693,12 +799,12 @@ def main():
                                         }},
                              "header": {"required": False, "type": "dict",
                                         "options": {
-                                            "header-item": {"required": False, "type": "list",
+                                            "header_item": {"required": False, "type": "list",
                                                             "options": {
                                                                 "content": {"required": False, "type": "str"},
                                                                 "description": {"required": False, "type": "str"},
                                                                 "id": {"required": True, "type": "int"},
-                                                                "img-src": {"required": False, "type": "str"},
+                                                                "img_src": {"required": False, "type": "str"},
                                                                 "style": {"required": False, "type": "str"},
                                                                 "type": {"required": False, "type": "str",
                                                                          "choices": ["text", "image"]}
@@ -707,14 +813,14 @@ def main():
                                         }},
                              "options": {"required": False, "type": "str",
                                          "choices": ["header-on-first-page", "footer-on-first-page"]},
-                             "page-break-before": {"required": False, "type": "str",
+                             "page_break_before": {"required": False, "type": "str",
                                                    "choices": ["heading1", "heading2", "heading3"]},
                              "paper": {"required": False, "type": "str",
                                        "choices": ["a4", "letter"]}
                          }},
-                "schedule-type": {"required": False, "type": "str",
+                "schedule_type": {"required": False, "type": "str",
                                   "choices": ["demand", "daily", "weekly"]},
-                "style-theme": {"required": False, "type": "str"},
+                "style_theme": {"required": False, "type": "str"},
                 "subtitle": {"required": False, "type": "str"},
                 "time": {"required": False, "type": "str"},
                 "title": {"required": False, "type": "str"}
@@ -725,15 +831,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_report(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_report(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_report(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

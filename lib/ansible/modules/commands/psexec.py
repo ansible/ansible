@@ -93,7 +93,7 @@ options:
   asynchronous:
     description:
     - Will run the command as a detached process and the module returns
-      immediately after starting the processs while the process continues to
+      immediately after starting the process while the process continues to
       run in the background.
     - The I(stdout) and I(stderr) return values will be null when this is set
       to C(yes).
@@ -281,7 +281,7 @@ EXAMPLES = r'''
 
 - name: Download and run ConfigureRemotingForAnsible.ps1 to setup WinRM
   psexec:
-    hostname: '{{ ansible_host }}'
+    hostname: '{{ hostvars[inventory_hostname]["ansible_host"] | default(inventory_hostname) }}'
     connection_username: '{{ ansible_user }}'
     connection_password: '{{ ansible_password }}'
     encrypt: yes
@@ -443,7 +443,7 @@ def main():
     process_timeout = module.params['process_timeout']
     stdin = module.params['stdin']
 
-    if connection_username is None or connection_password is None and \
+    if (connection_username is None or connection_password is None) and \
             not HAS_KERBEROS:
         module.fail_json(msg=missing_required_lib("gssapi"),
                          execption=KERBEROS_IMP_ERR)
@@ -476,7 +476,8 @@ def main():
     b_stdin = to_bytes(stdin, encoding='utf-8') if stdin else None
     run_args = dict(
         executable=executable, arguments=arguments, asynchronous=asynchronous,
-        load_profile=load_profile, interactive_session=interactive_session,
+        load_profile=load_profile, interactive=interactive,
+        interactive_session=interactive_session,
         run_elevated=elevated, run_limited=limited,
         username=process_username, password=process_password,
         use_system_account=use_system, working_dir=working_directory,

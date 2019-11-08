@@ -1,17 +1,9 @@
 #!/usr/bin/python
 #
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -31,33 +23,43 @@ author: "Rob White (@wimnat)"
 options:
   eni_id:
     description:
-      - The ID of the ENI (to modify); if null and state is present, a new eni will be created.
+      - The ID of the ENI (to modify).
+      - If I(eni_id=None) and I(state=present), a new eni will be created.
+    type: str
   instance_id:
     description:
-      - Instance ID that you wish to attach ENI to. Since version 2.2, use the 'attached' parameter to attach or
-        detach an ENI. Prior to 2.2, to detach an ENI from an instance, use 'None'.
+      - Instance ID that you wish to attach ENI to.
+      - Since version 2.2, use the I(attached) parameter to attach or detach an ENI. Prior to 2.2, to detach an ENI from an instance, use C(None).
+    type: str
   private_ip_address:
     description:
       - Private IP address.
+    type: str
   subnet_id:
     description:
       - ID of subnet in which to create the ENI.
+    type: str
   description:
     description:
       - Optional description of the ENI.
+    type: str
   security_groups:
     description:
-      - List of security groups associated with the interface. Only used when state=present. Since version 2.2, you
-        can specify security groups by ID or by name or a combination of both. Prior to 2.2, you can specify only by ID.
+      - List of security groups associated with the interface. Only used when I(state=present).
+      - Since version 2.2, you can specify security groups by ID or by name or a combination of both. Prior to 2.2, you can specify only by ID.
+    type: list
+    elements: str
   state:
     description:
-      - Create or delete ENI
+      - Create or delete ENI.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   device_index:
     description:
       - The index of the device for the network interface attachment on the instance.
     default: 0
+    type: int
   attached:
     description:
       - Specifies if network interface should be attached or detached from instance. If omitted, attachment status
@@ -66,9 +68,9 @@ options:
     type: bool
   force_detach:
     description:
-      - Force detachment of the interface. This applies either when explicitly detaching the interface by setting instance_id
-        to None or when deleting an interface with state=absent.
-    default: 'no'
+      - Force detachment of the interface. This applies either when explicitly detaching the interface by setting I(instance_id=None)
+        or when deleting an interface with I(state=absent).
+    default: false
     type: bool
   delete_on_termination:
     description:
@@ -85,35 +87,38 @@ options:
   secondary_private_ip_addresses:
     description:
       - A list of IP addresses to assign as secondary IP addresses to the network interface.
-        This option is mutually exclusive of secondary_private_ip_address_count
+        This option is mutually exclusive of I(secondary_private_ip_address_count)
     required: false
     version_added: 2.2
+    type: list
+    elements: str
   purge_secondary_private_ip_addresses:
     description:
       - To be used with I(secondary_private_ip_addresses) to determine whether or not to remove any secondary IP addresses other than those specified.
-        Set secondary_private_ip_addresses to an empty list to purge all secondary addresses.
-    default: no
+      - Set I(secondary_private_ip_addresses=[]) to purge all secondary addresses.
+    default: false
     type: bool
     version_added: 2.5
   secondary_private_ip_address_count:
     description:
-      - The number of secondary IP addresses to assign to the network interface. This option is mutually exclusive of secondary_private_ip_addresses
+      - The number of secondary IP addresses to assign to the network interface. This option is mutually exclusive of I(secondary_private_ip_addresses)
     required: false
     version_added: 2.2
+    type: int
   allow_reassignment:
     description:
       - Indicates whether to allow an IP address that is already assigned to another network interface or instance
         to be reassigned to the specified network interface.
     required: false
-    default: 'no'
+    default: false
     type: bool
     version_added: 2.7
 extends_documentation_fragment:
     - aws
     - ec2
 notes:
-    - This module identifies and ENI based on either the eni_id, a combination of private_ip_address and subnet_id,
-      or a combination of instance_id and device_id. Any of these options will let you specify a particular ENI.
+    - This module identifies and ENI based on either the I(eni_id), a combination of I(private_ip_address) and I(subnet_id),
+      or a combination of I(instance_id) and I(device_id). Any of these options will let you specify a particular ENI.
 '''
 
 EXAMPLES = '''
@@ -158,7 +163,7 @@ EXAMPLES = '''
 # Destroy an ENI, detaching it from any instance if necessary
 - ec2_eni:
     eni_id: eni-xxxxxxx
-    force_detach: yes
+    force_detach: true
     state: absent
 
 # Update an ENI
@@ -209,7 +214,8 @@ interface:
       sample: Firewall network interface
     groups:
       description: list of security groups
-      type: list of dictionaries
+      type: list
+      elements: dict
       sample: [ { "sg-f8a8a9da": "default" } ]
     id:
       description: network interface id
@@ -229,7 +235,8 @@ interface:
       sample: 10.20.30.40
     private_ip_addresses:
       description: list of all private ip addresses associated to this interface
-      type: list of dictionaries
+      type: list
+      elements: dict
       sample: [ { "primary_address": true, "private_ip_address": "10.20.30.40" } ]
     source_dest_check:
       description: value of source/dest check flag

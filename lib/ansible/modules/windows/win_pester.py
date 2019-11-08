@@ -29,8 +29,13 @@ options:
   tags:
     description:
       - Runs only tests in Describe blocks with specified Tags values.
-      - Accepts multiple comma seperated tags.
+      - Accepts multiple comma separated tags.
     type: list
+    version_added: '2.9'
+  test_parameters:
+    description:
+      - Allows to specify parameters to the test script.
+    type: dict
     version_added: '2.9'
   version:
     description:
@@ -64,6 +69,13 @@ EXAMPLES = r'''
   win_pester:
     path: C:\Pester\test01.test.ps1
     version: 4.1.0
+
+- name: Run the pester test present in a folder with given script parameters.
+  win_pester:
+    path: C:\Pester\test04.test.ps1
+    test_parameters:
+      Process: lsass
+      Service: bits
 '''
 
 RETURN = r'''

@@ -1,23 +1,13 @@
 - block:
-    - name: set up aws connection info
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: True
-
     - name: create t3.nano with cpu options (fails gracefully)
       ec2_instance:
         state: present
         name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-ec2"
-        image_id: "{{ ec2_ami_image[aws_region] }}"
-        instance_type: t3.nano
+        image_id: "{{ ec2_ami_image }}"
+        instance_type: "t3.nano"
         cpu_options:
             core_count: 1
             threads_per_core: 1
-        <<: *aws_connection_info
       register: ec2_instance_cpu_options_creation
       ignore_errors: yes
 
@@ -32,5 +22,5 @@
       ec2_instance:
         state: absent
         name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-ec2"
-        <<: *aws_connection_info
+        wait: no
       ignore_errors: yes

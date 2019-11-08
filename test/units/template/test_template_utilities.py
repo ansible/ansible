@@ -74,9 +74,6 @@ class TestBackslashEscape(unittest.TestCase):
     def setUp(self):
         self.env = jinja2.Environment()
 
-    def tearDown(self):
-        pass
-
     def test_backslash_escaping(self):
 
         for test in self.test_data:
@@ -88,12 +85,6 @@ class TestBackslashEscape(unittest.TestCase):
 
 
 class TestCountNewlines(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     def test_zero_length_string(self):
         self.assertEquals(_count_newlines_from_end(u''), 0)

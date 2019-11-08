@@ -71,15 +71,13 @@
       register: result
       until: result is success
 
-    - block:
-        # output_dir is hardcoded/created in test/runner/lib/executor.py and
-        # contains '~': expand remote path
+    - vars:
+        remote_dir: '{{ echo_output_dir.stdout }}'
+      block:
         - command: 'echo {{ output_dir }}'
           register: echo_output_dir
 
         - name: 'Create configuration file'
-          vars:
-            remote_dir: '{{ echo_output_dir.stdout }}'
           template:
             src: consul_config.hcl.j2
             dest: '{{ output_dir }}/consul_config.hcl'

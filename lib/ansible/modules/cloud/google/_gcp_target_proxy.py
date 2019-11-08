@@ -125,7 +125,7 @@ def get_target_http_proxy(client, name, project_id=None):
     """
     Get a Target HTTP Proxy from GCP.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param name: Name of the Target Proxy.
@@ -146,7 +146,7 @@ def create_target_http_proxy(client, params, project_id):
     """
     Create a new Target_Proxy.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param params: Dictionary of arguments from AnsibleModule.
@@ -200,7 +200,7 @@ def update_target_http_proxy(client, target_proxy, params, name, project_id):
 
     If the target_proxy has not changed, the update will not occur.
 
-    :param client: An initialized GCE Compute Disovery resource.
+    :param client: An initialized GCE Compute Discovery resource.
     :type client:  :class: `googleapiclient.discovery.Resource`
 
     :param target_proxy: Name of the Target Proxy.

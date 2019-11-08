@@ -33,7 +33,7 @@ module: gcp_tpu_node
 description:
 - A Cloud TPU instance.
 short_description: Creates a GCP Node
-version_added: 2.9
+version_added: '2.9'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -47,28 +47,34 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - The immutable name of the TPU.
     required: true
+    type: str
   description:
     description:
     - The user-supplied description of the TPU. Maximum of 512 characters.
     required: false
+    type: str
   accelerator_type:
     description:
     - The type of hardware accelerators associated with this node.
     required: true
+    type: str
   tensorflow_version:
     description:
     - The version of Tensorflow running in the Node.
     required: true
+    type: str
   network:
     description:
     - The name of a network to peer the TPU node to. It must be a preexisting Compute
       Engine network inside of the project on which this API has been activated. If
       none is provided, "default" will be used.
     required: false
+    type: str
   cidr_block:
     description:
     - The CIDR block that the TPU node will use when selecting an IP address. This
@@ -80,10 +86,12 @@ options:
       network, or the provided network is peered with another network that is using
       that CIDR block.
     required: true
+    type: str
   scheduling_config:
     description:
     - Sets the scheduling options for this TPU instance.
     required: false
+    type: dict
     suboptions:
       preemptible:
         description:
@@ -95,14 +103,62 @@ options:
     description:
     - Resource labels to represent user provided metadata.
     required: false
+    type: dict
   zone:
     description:
     - The GCP location for the TPU.
     required: true
-extends_documentation_fragment: gcp
+    type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/tpu/docs/reference/rest/)'
 - 'Official Documentation: U(https://cloud.google.com/tpu/docs/)'
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -402,7 +458,7 @@ def wait_for_operation(module, response):
         return {}
     status = navigate_hash(op_result, ['done'])
     wait_done = wait_for_completion(status, op_result, module)
-    raise_if_errors(op_result, ['error'], module)
+    raise_if_errors(wait_done, ['error'], module)
     return navigate_hash(wait_done, ['response'])
 
 

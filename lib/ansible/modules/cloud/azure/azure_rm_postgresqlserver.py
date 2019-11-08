@@ -63,6 +63,7 @@ options:
             - '9.5'
             - '9.6'
             - '10'
+            - '11'
     enforce_ssl:
         description:
             - Enable SSL enforcement.
@@ -119,7 +120,7 @@ id:
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/mysqlsrv1b6dd89593
 version:
     description:
-        - Server version. Possible values include C(9.5), C(9.6), C(10).
+        - Server version. Possible values include C(9.5), C(9.6), C(10), C(11).
     returned: always
     type: str
     sample: 9.6
@@ -178,7 +179,7 @@ class AzureRMPostgreSqlServers(AzureRMModuleBase):
             ),
             version=dict(
                 type='str',
-                choices=['9.5', '9.6', '10']
+                choices=['9.5', '9.6', '10', '11']
             ),
             enforce_ssl=dict(
                 type='bool',

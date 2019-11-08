@@ -138,7 +138,13 @@ except ImportError:
     pass
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.docker.common import AnsibleDockerClient, DEFAULT_DOCKER_REGISTRY, DockerBaseClass, EMAIL_REGEX
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DEFAULT_DOCKER_REGISTRY,
+    DockerBaseClass,
+    EMAIL_REGEX,
+    RequestException,
+)
 
 
 class LoginManager(DockerBaseClass):
@@ -218,6 +224,15 @@ class LoginManager(DockerBaseClass):
         (rc, out, err) = self.client.module.run_command(cmd)
         if rc != 0:
             self.fail("Could not log out: %s" % err)
+        if 'Not logged in to ' in out:
+            self.results['changed'] = False
+        elif 'Removing login credentials for ' in out:
+            self.results['changed'] = True
+        else:
+            self.client.module.warn('Unable to determine whether logout was successful.')
+
+        # Adding output to actions, so that user can inspect what was actually returned
+        self.results['actions'].append(to_text(out))
 
     def config_file_exists(self, path):
         if os.path.exists(path):
@@ -244,7 +259,8 @@ class LoginManager(DockerBaseClass):
 
     def write_config(self, path, config):
         try:
-            json.dump(config, open(path, "w"), indent=5, sort_keys=True)
+            with open(path, "w") as file:
+                json.dump(config, file, indent=5, sort_keys=True)
         except Exception as exc:
             self.fail("Error: failed to write config to %s - %s" % (path, str(exc)))
 
@@ -262,7 +278,8 @@ class LoginManager(DockerBaseClass):
 
         try:
             # read the existing config
-            config = json.load(open(path, "r"))
+            with open(path, "r") as file:
+                config = json.load(file)
         except ValueError:
             self.log("Error reading config from %s" % (path))
             config = dict()
@@ -331,6 +348,8 @@ def main():
         client.module.exit_json(**results)
     except DockerException as e:
         client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

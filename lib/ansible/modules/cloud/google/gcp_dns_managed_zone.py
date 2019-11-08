@@ -34,7 +34,7 @@ description:
 - A zone is a subtree of the DNS namespace under one administrative responsibility.
   A ManagedZone is a resource that represents a DNS zone hosted by the Cloud DNS service.
 short_description: Creates a GCP ManagedZone
-version_added: 2.5
+version_added: '2.5'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -48,43 +48,51 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - A mutable string of at most 1024 characters associated with this resource for
       the user's convenience. Has no effect on the managed zone's function.
     required: true
+    type: str
   dns_name:
     description:
     - The DNS name of this managed zone, for instance "example.com.".
     required: true
+    type: str
   dnssec_config:
     description:
     - DNSSEC configuration.
     required: false
-    version_added: 2.9
+    type: dict
+    version_added: '2.9'
     suboptions:
       kind:
         description:
         - Identifies what kind of resource this is.
         required: false
         default: dns#managedZoneDnsSecConfig
+        type: str
       non_existence:
         description:
         - Specifies the mechanism used to provide authenticated denial-of-existence
           responses.
         - 'Some valid choices include: "nsec", "nsec3"'
         required: false
+        type: str
       state:
         description:
         - Specifies whether DNSSEC is enabled, and what mode it is in.
         - 'Some valid choices include: "off", "on", "transfer"'
         required: false
+        type: str
       default_key_specs:
         description:
         - Specifies parameters that will be used for generating initial DnsKeys for
           this ManagedZone. If you provide a spec for keySigning or zoneSigning, you
           must also provide one for the other.
         required: false
+        type: list
         suboptions:
           algorithm:
             description:
@@ -92,10 +100,12 @@ options:
             - 'Some valid choices include: "ecdsap256sha256", "ecdsap384sha384", "rsasha1",
               "rsasha256", "rsasha512"'
             required: false
+            type: str
           key_length:
             description:
             - Length of the keys in bits.
             required: false
+            type: int
           key_type:
             description:
             - Specifies whether this is a key signing key (KSK) or a zone signing
@@ -105,27 +115,32 @@ options:
               and will be used to sign all other types of resource record sets. .
             - 'Some valid choices include: "keySigning", "zoneSigning"'
             required: false
+            type: str
           kind:
             description:
             - Identifies what kind of resource this is.
             required: false
             default: dns#dnsKeySpec
+            type: str
   name:
     description:
     - User assigned name for this resource.
     - Must be unique within the project.
     required: true
+    type: str
   name_server_set:
     description:
     - Optionally specifies the NameServerSet for this ManagedZone. A NameServerSet
       is a set of DNS name servers that all host the same ManagedZones. Most users
       will leave this field unset.
     required: false
+    type: str
   labels:
     description:
     - A set of key/value label pairs to assign to this ManagedZone.
     required: false
-    version_added: 2.8
+    type: dict
+    version_added: '2.8'
   visibility:
     description:
     - 'The zone''s visibility: public zones are exposed to the Internet, while private
@@ -134,18 +149,21 @@ options:
     - 'Some valid choices include: "private", "public"'
     required: false
     default: public
-    version_added: 2.8
+    type: str
+    version_added: '2.8'
   private_visibility_config:
     description:
     - For privately visible zones, the set of Virtual Private Cloud resources that
       the zone is visible from.
     required: false
-    version_added: 2.8
+    type: dict
+    version_added: '2.8'
     suboptions:
       networks:
         description:
         - The list of VPC networks that can see this zone.
         required: false
+        type: list
         suboptions:
           network_url:
             description:
@@ -153,10 +171,57 @@ options:
             - This should be formatted like `U(https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`)
               .
             required: false
-extends_documentation_fragment: gcp
+            type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/dns/api/v1/managedZones)'
 - 'Managing Zones: U(https://cloud.google.com/dns/zones/)'
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''

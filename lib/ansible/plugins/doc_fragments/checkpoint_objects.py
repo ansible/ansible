@@ -13,7 +13,7 @@ options:
     description:
       - State of the access rule (present or absent). Defaults to present.
     type: str
-    required: True
+    default: present
     choices:
       - 'present'
       - 'absent'

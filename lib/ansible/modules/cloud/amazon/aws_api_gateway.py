@@ -24,7 +24,7 @@ description:
        this is run.
      - Beware that there are very hard limits on the rate that
        you can call API Gateway's REST API.  You may need to patch
-       your boto.  See https://github.com/boto/boto3/issues/876
+       your boto.  See U(https://github.com/boto/boto3/issues/876)
        and discuss with your AWS rep.
      - swagger_file and swagger_text are passed directly on to AWS
        transparently whilst swagger_dict is an ansible dict which is
@@ -35,32 +35,40 @@ options:
   api_id:
     description:
       - The ID of the API you want to manage.
+    type: str
   state:
     description:
       - NOT IMPLEMENTED Create or delete API - currently we always create.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   swagger_file:
     description:
       - JSON or YAML file containing swagger definitions for API.
         Exactly one of swagger_file, swagger_text or swagger_dict must
         be present.
+    type: path
+    aliases: ['src', 'api_file']
   swagger_text:
     description:
       - Swagger definitions for API in JSON or YAML as a string direct
         from playbook.
+    type: str
   swagger_dict:
     description:
       - Swagger definitions API ansible dictionary which will be
         converted to JSON and uploaded.
+    type: json
   stage:
     description:
       - The name of the stage the API should be deployed to.
+    type: str
   deploy_desc:
     description:
       - Description of the deployment - recorded and visible in the
         AWS console.
     default: Automatic deployment by Ansible.
+    type: str
 author:
     - 'Michael De La Rue (@mikedlr)'
 extends_documentation_fragment:

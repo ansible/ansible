@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_router_multicast
 short_description: Configure router multicast in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify router feature and multicast category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,287 +41,361 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     router_multicast:
         description:
             - Configure router multicast.
         default: null
+        type: dict
         suboptions:
             interface:
                 description:
                     - PIM interfaces.
+                type: list
                 suboptions:
                     bfd:
                         description:
                             - Enable/disable Protocol Independent Multicast (PIM) Bidirectional Forwarding Detection (BFD).
+                        type: str
                         choices:
                             - enable
                             - disable
-                    cisco-exclude-genid:
+                    cisco_exclude_genid:
                         description:
                             - Exclude GenID from hello packets (compatibility with old Cisco IOS).
+                        type: str
                         choices:
                             - enable
                             - disable
-                    dr-priority:
+                    dr_priority:
                         description:
                             - DR election priority.
-                    hello-holdtime:
+                        type: int
+                    hello_holdtime:
                         description:
-                            - Time before old neighbor information expires (0 - 65535 sec, default = 105).
-                    hello-interval:
+                            - Time before old neighbor information expires (0 - 65535 sec).
+                        type: int
+                    hello_interval:
                         description:
-                            - Interval between sending PIM hello messages (0 - 65535 sec, default = 30).
+                            - Interval between sending PIM hello messages (0 - 65535 sec).
+                        type: int
                     igmp:
                         description:
                             - IGMP configuration options.
+                        type: dict
                         suboptions:
-                            access-group:
+                            access_group:
                                 description:
                                     - Groups IGMP hosts are allowed to join. Source router.access-list.name.
-                            immediate-leave-group:
+                                type: str
+                            immediate_leave_group:
                                 description:
                                     - Groups to drop membership for immediately after receiving IGMPv2 leave. Source router.access-list.name.
-                            last-member-query-count:
+                                type: str
+                            last_member_query_count:
                                 description:
-                                    - Number of group specific queries before removing group (2 - 7, default = 2).
-                            last-member-query-interval:
+                                    - Number of group specific queries before removing group (2 - 7).
+                                type: int
+                            last_member_query_interval:
                                 description:
-                                    - Timeout between IGMPv2 leave and removing group (1 - 65535 msec, default = 1000).
-                            query-interval:
+                                    - Timeout between IGMPv2 leave and removing group (1 - 65535 msec).
+                                type: int
+                            query_interval:
                                 description:
-                                    - Interval between queries to IGMP hosts (1 - 65535 sec, default = 125).
-                            query-max-response-time:
+                                    - Interval between queries to IGMP hosts (1 - 65535 sec).
+                                type: int
+                            query_max_response_time:
                                 description:
-                                    - Maximum time to wait for a IGMP query response (1 - 25 sec, default = 10).
-                            query-timeout:
+                                    - Maximum time to wait for a IGMP query response (1 - 25 sec).
+                                type: int
+                            query_timeout:
                                 description:
-                                    - Timeout between queries before becoming querier for network (60 - 900, default = 255).
-                            router-alert-check:
+                                    - Timeout between queries before becoming querier for network (60 - 900).
+                                type: int
+                            router_alert_check:
                                 description:
                                     - Enable/disable require IGMP packets contain router alert option.
+                                type: str
                                 choices:
                                     - enable
                                     - disable
                             version:
                                 description:
                                     - Maximum version of IGMP to support.
+                                type: str
                                 choices:
                                     - 3
                                     - 2
                                     - 1
-                    join-group:
+                    join_group:
                         description:
                             - Join multicast groups.
+                        type: list
                         suboptions:
                             address:
                                 description:
                                     - Multicast group IP address.
                                 required: true
-                    multicast-flow:
+                                type: str
+                    multicast_flow:
                         description:
                             - Acceptable source for multicast group. Source router.multicast-flow.name.
+                        type: str
                     name:
                         description:
                             - Interface name. Source system.interface.name.
                         required: true
-                    neighbour-filter:
+                        type: str
+                    neighbour_filter:
                         description:
                             - Routers acknowledged as neighbor routers. Source router.access-list.name.
+                        type: str
                     passive:
                         description:
                             - Enable/disable listening to IGMP but not participating in PIM.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    pim-mode:
+                    pim_mode:
                         description:
                             - PIM operation mode.
+                        type: str
                         choices:
                             - sparse-mode
                             - dense-mode
-                    propagation-delay:
+                    propagation_delay:
                         description:
-                            - Delay flooding packets on this interface (100 - 5000 msec, default = 500).
-                    rp-candidate:
+                            - Delay flooding packets on this interface (100 - 5000 msec).
+                        type: int
+                    rp_candidate:
                         description:
                             - Enable/disable compete to become RP in elections.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    rp-candidate-group:
+                    rp_candidate_group:
                         description:
                             - Multicast groups managed by this RP. Source router.access-list.name.
-                    rp-candidate-interval:
+                        type: str
+                    rp_candidate_interval:
                         description:
-                            - RP candidate advertisement interval (1 - 16383 sec, default = 60).
-                    rp-candidate-priority:
+                            - RP candidate advertisement interval (1 - 16383 sec).
+                        type: int
+                    rp_candidate_priority:
                         description:
                             - Router's priority as RP.
-                    state-refresh-interval:
+                        type: int
+                    state_refresh_interval:
                         description:
-                            - Interval between sending state-refresh packets (1 - 100 sec, default = 60).
-                    static-group:
+                            - Interval between sending state-refresh packets (1 - 100 sec).
+                        type: int
+                    static_group:
                         description:
                             - Statically set multicast groups to forward out. Source router.multicast-flow.name.
-                    ttl-threshold:
+                        type: str
+                    ttl_threshold:
                         description:
-                            - Minimum TTL of multicast packets that will be forwarded (applied only to new multicast routes) (1 - 255, default = 1).
-            multicast-routing:
+                            - Minimum TTL of multicast packets that will be forwarded (applied only to new multicast routes) (1 - 255).
+                        type: int
+            multicast_routing:
                 description:
                     - Enable/disable IP multicast routing.
+                type: str
                 choices:
                     - enable
                     - disable
-            pim-sm-global:
+            pim_sm_global:
                 description:
                     - PIM sparse-mode global settings.
+                type: dict
                 suboptions:
-                    accept-register-list:
+                    accept_register_list:
                         description:
                             - Sources allowed to register packets with this Rendezvous Point (RP). Source router.access-list.name.
-                    accept-source-list:
+                        type: str
+                    accept_source_list:
                         description:
                             - Sources allowed to send multicast traffic. Source router.access-list.name.
-                    bsr-allow-quick-refresh:
+                        type: str
+                    bsr_allow_quick_refresh:
                         description:
                             - Enable/disable accept BSR quick refresh packets from neighbors.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    bsr-candidate:
+                    bsr_candidate:
                         description:
                             - Enable/disable allowing this router to become a bootstrap router (BSR).
+                        type: str
                         choices:
                             - enable
                             - disable
-                    bsr-hash:
+                    bsr_hash:
                         description:
-                            - BSR hash length (0 - 32, default = 10).
-                    bsr-interface:
+                            - BSR hash length (0 - 32).
+                        type: int
+                    bsr_interface:
                         description:
                             - Interface to advertise as candidate BSR. Source system.interface.name.
-                    bsr-priority:
+                        type: str
+                    bsr_priority:
                         description:
-                            - BSR priority (0 - 255, default = 0).
-                    cisco-crp-prefix:
+                            - BSR priority (0 - 255).
+                        type: int
+                    cisco_crp_prefix:
                         description:
                             - Enable/disable making candidate RP compatible with old Cisco IOS.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    cisco-ignore-rp-set-priority:
+                    cisco_ignore_rp_set_priority:
                         description:
                             - Use only hash for RP selection (compatibility with old Cisco IOS).
+                        type: str
                         choices:
                             - enable
                             - disable
-                    cisco-register-checksum:
+                    cisco_register_checksum:
                         description:
                             - Checksum entire register packet(for old Cisco IOS compatibility).
+                        type: str
                         choices:
                             - enable
                             - disable
-                    cisco-register-checksum-group:
+                    cisco_register_checksum_group:
                         description:
                             - Cisco register checksum only these groups. Source router.access-list.name.
-                    join-prune-holdtime:
+                        type: str
+                    join_prune_holdtime:
                         description:
-                            - Join/prune holdtime (1 - 65535, default = 210).
-                    message-interval:
+                            - Join/prune holdtime (1 - 65535).
+                        type: int
+                    message_interval:
                         description:
-                            - Period of time between sending periodic PIM join/prune messages in seconds (1 - 65535, default = 60).
-                    null-register-retries:
+                            - Period of time between sending periodic PIM join/prune messages in seconds (1 - 65535).
+                        type: int
+                    null_register_retries:
                         description:
-                            - Maximum retries of null register (1 - 20, default = 1).
-                    register-rate-limit:
+                            - Maximum retries of null register (1 - 20).
+                        type: int
+                    register_rate_limit:
                         description:
-                            - Limit of packets/sec per source registered through this RP (0 - 65535, default = 0 which means unlimited).
-                    register-rp-reachability:
+                            - Limit of packets/sec per source registered through this RP (0 - 65535).
+                        type: int
+                    register_rp_reachability:
                         description:
                             - Enable/disable check RP is reachable before registering packets.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    register-source:
+                    register_source:
                         description:
                             - Override source address in register packets.
+                        type: str
                         choices:
                             - disable
                             - interface
                             - ip-address
-                    register-source-interface:
+                    register_source_interface:
                         description:
                             - Override with primary interface address. Source system.interface.name.
-                    register-source-ip:
+                        type: str
+                    register_source_ip:
                         description:
                             - Override with local IP address.
-                    register-supression:
+                        type: str
+                    register_supression:
                         description:
-                            - Period of time to honor register-stop message (1 - 65535 sec, default = 60).
-                    rp-address:
+                            - Period of time to honor register-stop message (1 - 65535 sec).
+                        type: int
+                    rp_address:
                         description:
                             - Statically configure RP addresses.
+                        type: list
                         suboptions:
                             group:
                                 description:
                                     - Groups to use this RP. Source router.access-list.name.
+                                type: str
                             id:
                                 description:
                                     - ID.
                                 required: true
-                            ip-address:
+                                type: int
+                            ip_address:
                                 description:
                                     - RP router address.
-                    rp-register-keepalive:
+                                type: str
+                    rp_register_keepalive:
                         description:
-                            - Timeout for RP receiving data on (S,G) tree (1 - 65535 sec, default = 185).
-                    spt-threshold:
+                            - Timeout for RP receiving data on (S,G) tree (1 - 65535 sec).
+                        type: int
+                    spt_threshold:
                         description:
                             - Enable/disable switching to source specific trees.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    spt-threshold-group:
+                    spt_threshold_group:
                         description:
                             - Groups allowed to switch to source tree. Source router.access-list.name.
+                        type: str
                     ssm:
                         description:
                             - Enable/disable source specific multicast.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    ssm-range:
+                    ssm_range:
                         description:
                             - Groups allowed to source specific multicast. Source router.access-list.name.
-            route-limit:
+                        type: str
+            route_limit:
                 description:
                     - Maximum number of multicast routes.
-            route-threshold:
+                type: int
+            route_threshold:
                 description:
                     - Generate warnings when the number of multicast routes exceeds this number, must not be greater than route-limit.
+                type: int
 '''
 
 EXAMPLES = '''
@@ -334,6 +405,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure router multicast.
     fortios_router_multicast:
@@ -346,70 +418,70 @@ EXAMPLES = '''
         interface:
          -
             bfd: "enable"
-            cisco-exclude-genid: "enable"
-            dr-priority: "6"
-            hello-holdtime: "7"
-            hello-interval: "8"
+            cisco_exclude_genid: "enable"
+            dr_priority: "6"
+            hello_holdtime: "7"
+            hello_interval: "8"
             igmp:
-                access-group: "<your_own_value> (source router.access-list.name)"
-                immediate-leave-group: "<your_own_value> (source router.access-list.name)"
-                last-member-query-count: "12"
-                last-member-query-interval: "13"
-                query-interval: "14"
-                query-max-response-time: "15"
-                query-timeout: "16"
-                router-alert-check: "enable"
+                access_group: "<your_own_value> (source router.access-list.name)"
+                immediate_leave_group: "<your_own_value> (source router.access-list.name)"
+                last_member_query_count: "12"
+                last_member_query_interval: "13"
+                query_interval: "14"
+                query_max_response_time: "15"
+                query_timeout: "16"
+                router_alert_check: "enable"
                 version: "3"
-            join-group:
+            join_group:
              -
                 address: "<your_own_value>"
-            multicast-flow: "<your_own_value> (source router.multicast-flow.name)"
+            multicast_flow: "<your_own_value> (source router.multicast-flow.name)"
             name: "default_name_22 (source system.interface.name)"
-            neighbour-filter: "<your_own_value> (source router.access-list.name)"
+            neighbour_filter: "<your_own_value> (source router.access-list.name)"
             passive: "enable"
-            pim-mode: "sparse-mode"
-            propagation-delay: "26"
-            rp-candidate: "enable"
-            rp-candidate-group: "<your_own_value> (source router.access-list.name)"
-            rp-candidate-interval: "29"
-            rp-candidate-priority: "30"
-            state-refresh-interval: "31"
-            static-group: "<your_own_value> (source router.multicast-flow.name)"
-            ttl-threshold: "33"
-        multicast-routing: "enable"
-        pim-sm-global:
-            accept-register-list: "<your_own_value> (source router.access-list.name)"
-            accept-source-list: "<your_own_value> (source router.access-list.name)"
-            bsr-allow-quick-refresh: "enable"
-            bsr-candidate: "enable"
-            bsr-hash: "40"
-            bsr-interface: "<your_own_value> (source system.interface.name)"
-            bsr-priority: "42"
-            cisco-crp-prefix: "enable"
-            cisco-ignore-rp-set-priority: "enable"
-            cisco-register-checksum: "enable"
-            cisco-register-checksum-group: "<your_own_value> (source router.access-list.name)"
-            join-prune-holdtime: "47"
-            message-interval: "48"
-            null-register-retries: "49"
-            register-rate-limit: "50"
-            register-rp-reachability: "enable"
-            register-source: "disable"
-            register-source-interface: "<your_own_value> (source system.interface.name)"
-            register-source-ip: "<your_own_value>"
-            register-supression: "55"
-            rp-address:
+            pim_mode: "sparse-mode"
+            propagation_delay: "26"
+            rp_candidate: "enable"
+            rp_candidate_group: "<your_own_value> (source router.access-list.name)"
+            rp_candidate_interval: "29"
+            rp_candidate_priority: "30"
+            state_refresh_interval: "31"
+            static_group: "<your_own_value> (source router.multicast-flow.name)"
+            ttl_threshold: "33"
+        multicast_routing: "enable"
+        pim_sm_global:
+            accept_register_list: "<your_own_value> (source router.access-list.name)"
+            accept_source_list: "<your_own_value> (source router.access-list.name)"
+            bsr_allow_quick_refresh: "enable"
+            bsr_candidate: "enable"
+            bsr_hash: "40"
+            bsr_interface: "<your_own_value> (source system.interface.name)"
+            bsr_priority: "42"
+            cisco_crp_prefix: "enable"
+            cisco_ignore_rp_set_priority: "enable"
+            cisco_register_checksum: "enable"
+            cisco_register_checksum_group: "<your_own_value> (source router.access-list.name)"
+            join_prune_holdtime: "47"
+            message_interval: "48"
+            null_register_retries: "49"
+            register_rate_limit: "50"
+            register_rp_reachability: "enable"
+            register_source: "disable"
+            register_source_interface: "<your_own_value> (source system.interface.name)"
+            register_source_ip: "<your_own_value>"
+            register_supression: "55"
+            rp_address:
              -
                 group: "<your_own_value> (source router.access-list.name)"
                 id:  "58"
-                ip-address: "<your_own_value>"
-            rp-register-keepalive: "60"
-            spt-threshold: "enable"
-            spt-threshold-group: "<your_own_value> (source router.access-list.name)"
+                ip_address: "<your_own_value>"
+            rp_register_keepalive: "60"
+            spt_threshold: "enable"
+            spt_threshold_group: "<your_own_value> (source router.access-list.name)"
             ssm: "enable"
-            ssm-range: "<your_own_value> (source router.access-list.name)"
-        route-limit: "65"
-        route-threshold: "66"
+            ssm_range: "<your_own_value> (source router.access-list.name)"
+        route_limit: "65"
+        route_threshold: "66"
 '''
 
 RETURN = '''
@@ -472,14 +544,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -487,12 +561,12 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_router_multicast_data(json):
-    option_list = ['interface', 'multicast-routing', 'pim-sm-global',
-                   'route-limit', 'route-threshold']
+    option_list = ['interface', 'multicast_routing', 'pim_sm_global',
+                   'route_limit', 'route_threshold']
     dictionary = {}
 
     for attribute in option_list:
@@ -502,17 +576,15 @@ def filter_router_multicast_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
@@ -520,125 +592,131 @@ def flatten_multilists_attributes(data):
 def router_multicast(data, fos):
     vdom = data['vdom']
     router_multicast_data = data['router_multicast']
-    flattened_data = flatten_multilists_attributes(router_multicast_data)
-    filtered_data = filter_router_multicast_data(flattened_data)
+    filtered_data = underscore_to_hyphen(filter_router_multicast_data(router_multicast_data))
+
     return fos.set('router',
                    'multicast',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_router(data, fos):
-    login(data)
 
     if data['router_multicast']:
         resp = router_multicast(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "router_multicast": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "interface": {"required": False, "type": "list",
                               "options": {
                                   "bfd": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                                  "cisco-exclude-genid": {"required": False, "type": "str",
+                                  "cisco_exclude_genid": {"required": False, "type": "str",
                                                           "choices": ["enable", "disable"]},
-                                  "dr-priority": {"required": False, "type": "int"},
-                                  "hello-holdtime": {"required": False, "type": "int"},
-                                  "hello-interval": {"required": False, "type": "int"},
+                                  "dr_priority": {"required": False, "type": "int"},
+                                  "hello_holdtime": {"required": False, "type": "int"},
+                                  "hello_interval": {"required": False, "type": "int"},
                                   "igmp": {"required": False, "type": "dict",
                                            "options": {
-                                               "access-group": {"required": False, "type": "str"},
-                                               "immediate-leave-group": {"required": False, "type": "str"},
-                                               "last-member-query-count": {"required": False, "type": "int"},
-                                               "last-member-query-interval": {"required": False, "type": "int"},
-                                               "query-interval": {"required": False, "type": "int"},
-                                               "query-max-response-time": {"required": False, "type": "int"},
-                                               "query-timeout": {"required": False, "type": "int"},
-                                               "router-alert-check": {"required": False, "type": "str",
+                                               "access_group": {"required": False, "type": "str"},
+                                               "immediate_leave_group": {"required": False, "type": "str"},
+                                               "last_member_query_count": {"required": False, "type": "int"},
+                                               "last_member_query_interval": {"required": False, "type": "int"},
+                                               "query_interval": {"required": False, "type": "int"},
+                                               "query_max_response_time": {"required": False, "type": "int"},
+                                               "query_timeout": {"required": False, "type": "int"},
+                                               "router_alert_check": {"required": False, "type": "str",
                                                                       "choices": ["enable", "disable"]},
                                                "version": {"required": False, "type": "str",
                                                            "choices": ["3", "2", "1"]}
                                            }},
-                                  "join-group": {"required": False, "type": "list",
+                                  "join_group": {"required": False, "type": "list",
                                                  "options": {
                                                      "address": {"required": True, "type": "str"}
                                                  }},
-                                  "multicast-flow": {"required": False, "type": "str"},
+                                  "multicast_flow": {"required": False, "type": "str"},
                                   "name": {"required": True, "type": "str"},
-                                  "neighbour-filter": {"required": False, "type": "str"},
+                                  "neighbour_filter": {"required": False, "type": "str"},
                                   "passive": {"required": False, "type": "str",
                                               "choices": ["enable", "disable"]},
-                                  "pim-mode": {"required": False, "type": "str",
+                                  "pim_mode": {"required": False, "type": "str",
                                                "choices": ["sparse-mode", "dense-mode"]},
-                                  "propagation-delay": {"required": False, "type": "int"},
-                                  "rp-candidate": {"required": False, "type": "str",
+                                  "propagation_delay": {"required": False, "type": "int"},
+                                  "rp_candidate": {"required": False, "type": "str",
                                                    "choices": ["enable", "disable"]},
-                                  "rp-candidate-group": {"required": False, "type": "str"},
-                                  "rp-candidate-interval": {"required": False, "type": "int"},
-                                  "rp-candidate-priority": {"required": False, "type": "int"},
-                                  "state-refresh-interval": {"required": False, "type": "int"},
-                                  "static-group": {"required": False, "type": "str"},
-                                  "ttl-threshold": {"required": False, "type": "int"}
+                                  "rp_candidate_group": {"required": False, "type": "str"},
+                                  "rp_candidate_interval": {"required": False, "type": "int"},
+                                  "rp_candidate_priority": {"required": False, "type": "int"},
+                                  "state_refresh_interval": {"required": False, "type": "int"},
+                                  "static_group": {"required": False, "type": "str"},
+                                  "ttl_threshold": {"required": False, "type": "int"}
                               }},
-                "multicast-routing": {"required": False, "type": "str",
+                "multicast_routing": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "pim-sm-global": {"required": False, "type": "dict",
+                "pim_sm_global": {"required": False, "type": "dict",
                                   "options": {
-                                      "accept-register-list": {"required": False, "type": "str"},
-                                      "accept-source-list": {"required": False, "type": "str"},
-                                      "bsr-allow-quick-refresh": {"required": False, "type": "str",
+                                      "accept_register_list": {"required": False, "type": "str"},
+                                      "accept_source_list": {"required": False, "type": "str"},
+                                      "bsr_allow_quick_refresh": {"required": False, "type": "str",
                                                                   "choices": ["enable", "disable"]},
-                                      "bsr-candidate": {"required": False, "type": "str",
+                                      "bsr_candidate": {"required": False, "type": "str",
                                                         "choices": ["enable", "disable"]},
-                                      "bsr-hash": {"required": False, "type": "int"},
-                                      "bsr-interface": {"required": False, "type": "str"},
-                                      "bsr-priority": {"required": False, "type": "int"},
-                                      "cisco-crp-prefix": {"required": False, "type": "str",
+                                      "bsr_hash": {"required": False, "type": "int"},
+                                      "bsr_interface": {"required": False, "type": "str"},
+                                      "bsr_priority": {"required": False, "type": "int"},
+                                      "cisco_crp_prefix": {"required": False, "type": "str",
                                                            "choices": ["enable", "disable"]},
-                                      "cisco-ignore-rp-set-priority": {"required": False, "type": "str",
+                                      "cisco_ignore_rp_set_priority": {"required": False, "type": "str",
                                                                        "choices": ["enable", "disable"]},
-                                      "cisco-register-checksum": {"required": False, "type": "str",
+                                      "cisco_register_checksum": {"required": False, "type": "str",
                                                                   "choices": ["enable", "disable"]},
-                                      "cisco-register-checksum-group": {"required": False, "type": "str"},
-                                      "join-prune-holdtime": {"required": False, "type": "int"},
-                                      "message-interval": {"required": False, "type": "int"},
-                                      "null-register-retries": {"required": False, "type": "int"},
-                                      "register-rate-limit": {"required": False, "type": "int"},
-                                      "register-rp-reachability": {"required": False, "type": "str",
+                                      "cisco_register_checksum_group": {"required": False, "type": "str"},
+                                      "join_prune_holdtime": {"required": False, "type": "int"},
+                                      "message_interval": {"required": False, "type": "int"},
+                                      "null_register_retries": {"required": False, "type": "int"},
+                                      "register_rate_limit": {"required": False, "type": "int"},
+                                      "register_rp_reachability": {"required": False, "type": "str",
                                                                    "choices": ["enable", "disable"]},
-                                      "register-source": {"required": False, "type": "str",
+                                      "register_source": {"required": False, "type": "str",
                                                           "choices": ["disable", "interface", "ip-address"]},
-                                      "register-source-interface": {"required": False, "type": "str"},
-                                      "register-source-ip": {"required": False, "type": "str"},
-                                      "register-supression": {"required": False, "type": "int"},
-                                      "rp-address": {"required": False, "type": "list",
+                                      "register_source_interface": {"required": False, "type": "str"},
+                                      "register_source_ip": {"required": False, "type": "str"},
+                                      "register_supression": {"required": False, "type": "int"},
+                                      "rp_address": {"required": False, "type": "list",
                                                      "options": {
                                                          "group": {"required": False, "type": "str"},
                                                          "id": {"required": True, "type": "int"},
-                                                         "ip-address": {"required": False, "type": "str"}
+                                                         "ip_address": {"required": False, "type": "str"}
                                                      }},
-                                      "rp-register-keepalive": {"required": False, "type": "int"},
-                                      "spt-threshold": {"required": False, "type": "str",
+                                      "rp_register_keepalive": {"required": False, "type": "int"},
+                                      "spt_threshold": {"required": False, "type": "str",
                                                         "choices": ["enable", "disable"]},
-                                      "spt-threshold-group": {"required": False, "type": "str"},
+                                      "spt_threshold_group": {"required": False, "type": "str"},
                                       "ssm": {"required": False, "type": "str",
                                               "choices": ["enable", "disable"]},
-                                      "ssm-range": {"required": False, "type": "str"}
+                                      "ssm_range": {"required": False, "type": "str"}
                                   }},
-                "route-limit": {"required": False, "type": "int"},
-                "route-threshold": {"required": False, "type": "int"}
+                "route_limit": {"required": False, "type": "int"},
+                "route_threshold": {"required": False, "type": "int"}
 
             }
         }
@@ -646,15 +724,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_router(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_router(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_router(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

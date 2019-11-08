@@ -1,3 +1,0 @@
----
-bugfixes:
-- redfish_facts - add MACAddress to properties fetched by Redfish GetNicInventory command

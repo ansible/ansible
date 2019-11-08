@@ -57,7 +57,7 @@ class Play(Base, Taggable, CollectionSearch):
 
     # Facts
     _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
-    _gather_subset = FieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
+    _gather_subset = FieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
     _gather_timeout = FieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
     _fact_path = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
 
@@ -192,7 +192,8 @@ class Play(Base, Taggable, CollectionSearch):
             ds = []
 
         try:
-            role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+            role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager,
+                                               loader=self._loader, collection_search_list=self.collections)
         except AssertionError as e:
             raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
 

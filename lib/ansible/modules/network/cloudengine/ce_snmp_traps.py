@@ -29,6 +29,9 @@ description:
     - Manages SNMP traps configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@QijunPan)
+notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     feature_name:
         description:
@@ -127,7 +130,7 @@ updates:
 
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config, ce_argument_spec, run_commands
+from ansible.module_utils.network.cloudengine.ce import load_config, ce_argument_spec, run_commands
 from ansible.module_utils.connection import exec_command
 
 
@@ -308,6 +311,9 @@ class SnmpTraps(object):
             else:
                 del self.end_state["snmp-agent trap"]
                 del self.end_state["undo snmp-agent trap"]
+        if self.end_state == self.existing:
+            self.changed = False
+            self.updates_cmd = list()
 
     def cli_load_config(self, commands):
         """ Load configure through cli """

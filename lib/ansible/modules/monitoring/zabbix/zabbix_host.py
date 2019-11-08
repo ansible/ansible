@@ -281,19 +281,7 @@ import copy
 import traceback
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
-
-    # Extend the ZabbixAPI
-    # Since the zabbix-api python module too old (version 1.0, no higher version so far),
-    # it does not support the 'hostinterface' api calls,
-    # so we have to inherit the ZabbixAPI class to add 'hostinterface' support.
-    class ZabbixAPIExtends(ZabbixAPI):
-        hostinterface = None
-
-        def __init__(self, server, timeout, user, passwd, validate_certs, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd, validate_certs=validate_certs)
-            self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
-
+    from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
     ZBX_IMP_ERR = traceback.format_exc()
@@ -490,20 +478,20 @@ class Host(object):
         if interfaces is not None:
             if len(interfaces) >= 1:
                 for interface in interfaces:
-                    interfaces_port_list.append(int(interface['port']))
+                    interfaces_port_list.append(str(interface['port']))
 
         exist_interface_ports = []
         if len(exist_interface_list) >= 1:
             for exist_interface in exist_interface_list:
-                exist_interface_ports.append(int(exist_interface['port']))
+                exist_interface_ports.append(str(exist_interface['port']))
 
         if set(interfaces_port_list) != set(exist_interface_ports):
             return True
 
         for exist_interface in exist_interface_list:
-            exit_interface_port = int(exist_interface['port'])
+            exit_interface_port = str(exist_interface['port'])
             for interface in interfaces:
-                interface_port = int(interface['port'])
+                interface_port = str(interface['port'])
                 if interface_port == exit_interface_port:
                     for key in interface.keys():
                         if str(exist_interface[key]) != str(interface[key]):
@@ -751,8 +739,8 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                               validate_certs=validate_certs)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)

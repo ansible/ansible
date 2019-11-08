@@ -1,0 +1,2 @@
+bugfixes:
+  - clean_facts - use correct variable to avoid unnecessary handling of ``AttributeError``

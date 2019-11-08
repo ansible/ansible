@@ -18,6 +18,7 @@ import traceback
 PIKA_IMP_ERR = None
 try:
     import pika
+    import pika.exceptions
     from pika import spec
     HAS_PIKA = True
 except ImportError:
@@ -193,4 +194,8 @@ class RabbitClient():
         if args['exchange'] is None:
             args['exchange'] = ''
 
-        return self.conn_channel.basic_publish(**args)
+        try:
+            self.conn_channel.basic_publish(**args)
+            return True
+        except pika.exceptions.UnroutableError:
+            return False

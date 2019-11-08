@@ -7,12 +7,12 @@ infra:
   datastores:
     LocalDS_0:
       type: nfs
-      server: gateway.test
+      server: datastore.test
       path: /srv/share/isos
       ro: true
     LocalDS_1:
       type: nfs
-      server: gateway.test
+      server: datastore.test
       path: /srv/share/vms
       ro: false
 virtual_machines:
@@ -27,3 +27,5 @@ virtual_machines_in_cluster:
   - name: DC0_C0_RP0_VM1
     folder: '{{ f0 }}'
     cluster: '{{ ccr1 }}'
+cluster_tag: test_cluster_tag_0001
+cluster_category: test_cluster_cat_0001

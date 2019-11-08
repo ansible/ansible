@@ -35,26 +35,31 @@ options:
     description:
     - The name of the qtree to manage.
     required: true
+    type: str
 
   from_name:
     description:
     - Name of the qtree to be renamed.
     version_added: '2.7'
+    type: str
 
   flexvol_name:
     description:
     - The name of the FlexVol the qtree should exist on. Required when C(state=present).
     required: true
+    type: str
 
   vserver:
     description:
     - The name of the vserver to use.
     required: true
+    type: str
 
   export_policy:
     description:
     - The name of the export policy to apply.
     version_added: '2.9'
+    type: str
 
   security_style:
     description:
@@ -72,6 +77,7 @@ options:
     description:
     - File permissions bits of the qtree.
     version_added: '2.9'
+    type: str
 
 '''
 
@@ -81,6 +87,10 @@ EXAMPLES = """
     state: present
     name: ansibleQTree
     flexvol_name: ansibleVolume
+    export_policy: policyName
+    security_style: mixed
+    oplocks: disabled
+    unix_permissions:
     vserver: ansibleVServer
     hostname: "{{ netapp_hostname }}"
     username: "{{ netapp_username }}"
@@ -169,7 +179,7 @@ class NetAppOntapQTree(object):
         qtree_list_iter.add_child_elem(query)
         result = self.server.invoke_successfully(qtree_list_iter,
                                                  enable_tunneling=True)
-        return_q = False
+        return_q = None
         if (result.get_child_by_name('num-records') and
                 int(result.get_child_content('num-records')) >= 1):
             return_q = {'export_policy': result['attributes-list']['qtree-info']['export-policy'],
@@ -259,48 +269,28 @@ class NetAppOntapQTree(object):
 
     def apply(self):
         '''Call create/delete/modify/rename operations'''
-        # changed = False
-        # rename_qtree = False
-        # modified_qtree = None
-        changed, rename_qtree, modified_qtree = False, False, None
         netapp_utils.ems_log_event("na_ontap_qtree", self.server)
-        qtree_detail = self.get_qtree()
-        if qtree_detail:
-            # delete or modify qtree
-            if self.parameters['state'] == 'absent':  # delete
-                changed = True
-            else:
-                modified_qtree = self.na_helper.get_modified_attributes(
-                    qtree_detail, self.parameters)
-                if modified_qtree is not None:
-                    changed = True
-        elif self.parameters['state'] == 'present':
-            # create or rename qtree
-            if self.parameters.get('from_name'):
-                if self.get_qtree(self.parameters['from_name']) is None:
-                    self.module.fail_json(
-                        msg="Error renaming qtree %s: does not exists"
-                        % self.parameters['from_name'])
-                else:
-                    changed = True
-                    rename_qtree = True
-            else:
-                changed = True
-        if changed:
+        current = self.get_qtree()
+        rename, cd_action, modify = None, None, None
+        if self.parameters.get('from_name'):
+            rename = self.na_helper.is_rename_action(self.get_qtree(self.parameters['from_name']), current)
+        else:
+            cd_action = self.na_helper.get_cd_action(current, self.parameters)
+        if cd_action is None and self.parameters['state'] == 'present':
+            modify = self.na_helper.get_modified_attributes(current, self.parameters)
+        if self.na_helper.changed:
             if self.module.check_mode:
                 pass
             else:
-                if self.parameters['state'] == 'present':
-                    if rename_qtree:
-                        self.rename_qtree()
-                    elif modified_qtree:
-                        self.modify_qtree()
-                    else:
-                        self.create_qtree()
-                elif self.parameters['state'] == 'absent':
+                if rename:
+                    self.rename_qtree()
+                if cd_action == 'create':
+                    self.create_qtree()
+                elif cd_action == 'delete':
                     self.delete_qtree()
-
-        self.module.exit_json(changed=changed)
+                elif modify:
+                    self.modify_qtree()
+        self.module.exit_json(changed=self.na_helper.changed)
 
 
 def main():

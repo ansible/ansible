@@ -57,7 +57,7 @@ options:
     - The name of the IE connection to set the proxy settings for.
     - These are the connections under the I(Dial-up and Virtual Private Network)
       header in the IE settings.
-    - When ommited, the default LAN connection is used.
+    - When omitted, the default LAN connection is used.
     type: str
   proxy:
     description:

@@ -51,6 +51,10 @@
 - name: call module that imports module_utils with further imports
   recursive_requires:
   register: recursive_requires
+  vars:
+    # Our coverage runner does not work with recursive required. This is a limitation on PowerShell so we need to
+    # disable coverage for this task
+    _ansible_coverage_remote_output: ''
 
 - assert:
     that:

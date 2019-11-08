@@ -7,6 +7,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import os
 import errno
 import json
 from itertools import product
@@ -27,7 +28,7 @@ def atomic_am(am, mocker):
 
 
 @pytest.fixture
-def atomic_mocks(mocker):
+def atomic_mocks(mocker, monkeypatch):
     environ = dict()
     mocks = {
         'chmod': mocker.patch('os.chmod'),
@@ -52,6 +53,9 @@ def atomic_mocks(mocker):
     mocks['getpwuid'].return_value = ('root', '', 0, 0, '', '', '')
     mocks['umask'].side_effect = [18, 0]
     mocks['rename'].return_value = None
+
+    # normalize OS specific features
+    monkeypatch.delattr(os, 'chflags', raising=False)
 
     yield mocks
 

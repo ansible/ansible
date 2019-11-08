@@ -10,6 +10,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import distutils.spawn
 import shlex
 import shutil
 import subprocess
@@ -48,6 +49,25 @@ DOCUMENTATION = """
           - name: ANSIBLE_REMOTE_USER
         vars:
           - name: ansible_user
+      podman_extra_args:
+        description:
+          - Extra arguments to pass to the podman command line.
+        default: ''
+        ini:
+          - section: defaults
+            key: podman_extra_args
+        vars:
+          - name: ansible_podman_extra_args
+        env:
+          - name: ANSIBLE_PODMAN_EXTRA_ARGS
+      podman_executable:
+        description:
+          - Executable for podman command.
+        default: podman
+        vars:
+          - name: ansible_podman_executable
+        env:
+          - name: ANSIBLE_PODMAN_EXECUTABLE
 """
 
 
@@ -59,6 +79,7 @@ class Connection(ConnectionBase):
 
     # String used to identify this Connection class from other classes
     transport = 'podman'
+    has_pipelining = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -78,7 +99,17 @@ class Connection(ConnectionBase):
         :param in_data: data passed to podman's stdin
         :return: return code, stdout, stderr
         """
-        local_cmd = ['podman', cmd]
+        podman_exec = self.get_option('podman_executable')
+        podman_cmd = distutils.spawn.find_executable(podman_exec)
+        if not podman_cmd:
+            raise AnsibleError("%s command not found in PATH" % podman_exec)
+        local_cmd = [podman_cmd]
+        if self.get_option('podman_extra_args'):
+            local_cmd += shlex.split(
+                to_native(
+                    self.get_option('podman_extra_args'),
+                    errors='surrogate_or_strict'))
+        local_cmd.append(cmd)
         if use_container_id:
             local_cmd.append(self._container_id)
         if cmd_args:
@@ -121,7 +152,7 @@ class Connection(ConnectionBase):
         if self.user:
             cmd_args_list += ["--user", self.user]
 
-        rc, stdout, stderr = self._podman("exec", cmd_args_list)
+        rc, stdout, stderr = self._podman("exec", cmd_args_list, in_data)
 
         display.vvvvv("STDOUT %r STDERR %r" % (stderr, stderr))
         return rc, stdout, stderr

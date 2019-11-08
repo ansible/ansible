@@ -9,10 +9,10 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     name: new_vm_1
-    template: "{{ infra.vm_list[0] }}"
+    template: "{{ virtual_machines[0].name }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
-    folder: D1/C1/F0
+    folder: "{{ f0 }}"
     linked_clone: True
   register: linked_clone_d1_c1_f0
   ignore_errors: True
@@ -32,10 +32,10 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     name: new_vm_2
-    template: "{{ infra.vm_list[0] }}"
+    template: "{{ virtual_machines[0].name }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
-    folder: D1/C1/F0
+    folder: "{{ f0 }}"
     snapshot_src: "snap_shot1"
   register: linked_clone_d1_c1_f0
   ignore_errors: True

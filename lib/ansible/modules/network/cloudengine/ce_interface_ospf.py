@@ -28,6 +28,10 @@ short_description: Manages configuration of an OSPF interface instanceon HUAWEI 
 description:
     - Manages configuration of an OSPF interface instanceon HUAWEI CloudEngine switches.
 author: QijunPan (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     interface:
         description:
@@ -474,7 +478,7 @@ class InterfaceOSPF(object):
 
         # interface view
         self.updates_cmd.append("interface %s" % self.interface)
-        self.updates_cmd.append("ospf enable process %s area %s" % (
+        self.updates_cmd.append("ospf enable %s area %s" % (
             self.process_id, self.get_area_ip()))
         if self.cost:
             xml_intf += CE_NC_XML_SET_COST % self.cost

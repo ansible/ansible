@@ -1,2 +1,0 @@
-bugfixes:
-  - docker_network module - fix idempotency when using ``aux_addresses`` in ``ipam_config``.

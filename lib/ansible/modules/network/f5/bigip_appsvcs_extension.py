@@ -445,7 +445,7 @@ class ModuleManager(object):
 
         # This deals with cases where you're comparing a passphrase.
         #
-        # Passphrases will always cause an idepotent operation to register
+        # Passphrases will always cause an idempotent operation to register
         # a change. Therefore, by specifying "force", you are instructing
         # the module to **not** ignore the passphrase.
         #

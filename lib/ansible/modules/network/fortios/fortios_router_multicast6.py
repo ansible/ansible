@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_router_multicast6
 short_description: Configure IPv6 multicast in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify router feature and multicast6 category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,78 +41,99 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     router_multicast6:
         description:
             - Configure IPv6 multicast.
         default: null
+        type: dict
         suboptions:
             interface:
                 description:
                     - Protocol Independent Multicast (PIM) interfaces.
+                type: list
                 suboptions:
-                    hello-holdtime:
+                    hello_holdtime:
                         description:
-                            - Time before old neighbour information expires (1 - 65535 sec, default = 105).
-                    hello-interval:
+                            - Time before old neighbour information expires (1 - 65535 sec).
+                        type: int
+                    hello_interval:
                         description:
-                            - Interval between sending PIM hello messages  (1 - 65535 sec, default = 30)..
+                            - Interval between sending PIM hello messages  (1 - 65535 sec)..
+                        type: int
                     name:
                         description:
                             - Interface name. Source system.interface.name.
                         required: true
-            multicast-pmtu:
+                        type: str
+            multicast_pmtu:
                 description:
                     - Enable/disable PMTU for IPv6 multicast.
+                type: str
                 choices:
                     - enable
                     - disable
-            multicast-routing:
+            multicast_routing:
                 description:
                     - Enable/disable IPv6 multicast routing.
+                type: str
                 choices:
                     - enable
                     - disable
-            pim-sm-global:
+            pim_sm_global:
                 description:
                     - PIM sparse-mode global settings.
+                type: dict
                 suboptions:
-                    register-rate-limit:
+                    register_rate_limit:
                         description:
                             - Limit of packets/sec per source registered through this RP (0 means unlimited).
-                    rp-address:
+                        type: int
+                    rp_address:
                         description:
                             - Statically configured RP addresses.
+                        type: list
                         suboptions:
                             id:
                                 description:
                                     - ID of the entry.
                                 required: true
-                            ip6-address:
+                                type: int
+                            ip6_address:
                                 description:
                                     - RP router IPv6 address.
+                                type: str
 '''
 
 EXAMPLES = '''
@@ -125,6 +143,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure IPv6 multicast.
     fortios_router_multicast6:
@@ -136,17 +155,17 @@ EXAMPLES = '''
       router_multicast6:
         interface:
          -
-            hello-holdtime: "4"
-            hello-interval: "5"
+            hello_holdtime: "4"
+            hello_interval: "5"
             name: "default_name_6 (source system.interface.name)"
-        multicast-pmtu: "enable"
-        multicast-routing: "enable"
-        pim-sm-global:
-            register-rate-limit: "10"
-            rp-address:
+        multicast_pmtu: "enable"
+        multicast_routing: "enable"
+        pim_sm_global:
+            register_rate_limit: "10"
+            rp_address:
              -
                 id:  "12"
-                ip6-address: "<your_own_value>"
+                ip6_address: "<your_own_value>"
 '''
 
 RETURN = '''
@@ -209,14 +228,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -224,12 +245,12 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_router_multicast6_data(json):
-    option_list = ['interface', 'multicast-pmtu', 'multicast-routing',
-                   'pim-sm-global']
+    option_list = ['interface', 'multicast_pmtu', 'multicast_routing',
+                   'pim_sm_global']
     dictionary = {}
 
     for attribute in option_list:
@@ -239,17 +260,15 @@ def filter_router_multicast6_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
@@ -257,51 +276,57 @@ def flatten_multilists_attributes(data):
 def router_multicast6(data, fos):
     vdom = data['vdom']
     router_multicast6_data = data['router_multicast6']
-    flattened_data = flatten_multilists_attributes(router_multicast6_data)
-    filtered_data = filter_router_multicast6_data(flattened_data)
+    filtered_data = underscore_to_hyphen(filter_router_multicast6_data(router_multicast6_data))
+
     return fos.set('router',
                    'multicast6',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_router(data, fos):
-    login(data)
 
     if data['router_multicast6']:
         resp = router_multicast6(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "router_multicast6": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "interface": {"required": False, "type": "list",
                               "options": {
-                                  "hello-holdtime": {"required": False, "type": "int"},
-                                  "hello-interval": {"required": False, "type": "int"},
+                                  "hello_holdtime": {"required": False, "type": "int"},
+                                  "hello_interval": {"required": False, "type": "int"},
                                   "name": {"required": True, "type": "str"}
                               }},
-                "multicast-pmtu": {"required": False, "type": "str",
+                "multicast_pmtu": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
-                "multicast-routing": {"required": False, "type": "str",
+                "multicast_routing": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "pim-sm-global": {"required": False, "type": "dict",
+                "pim_sm_global": {"required": False, "type": "dict",
                                   "options": {
-                                      "register-rate-limit": {"required": False, "type": "int"},
-                                      "rp-address": {"required": False, "type": "list",
+                                      "register_rate_limit": {"required": False, "type": "int"},
+                                      "rp_address": {"required": False, "type": "list",
                                                      "options": {
                                                          "id": {"required": True, "type": "int"},
-                                                         "ip6-address": {"required": False, "type": "str"}
+                                                         "ip6_address": {"required": False, "type": "str"}
                                                      }}
                                   }}
 
@@ -311,15 +336,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_router(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_router(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_router(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

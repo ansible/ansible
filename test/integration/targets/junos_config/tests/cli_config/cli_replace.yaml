@@ -1,0 +1,60 @@
+---
+- debug: msg="START cli_config/cli_replace.yaml on connection={{ ansible_connection }}"
+
+- name: set interface config
+  cli_config:
+    config: "{{ item }}"
+  loop:
+    - "delete interfaces ge-0/0/11"
+    - set interfaces ge-0/0/11 description "test cli_config"
+
+- name: get running configuration
+  cli_command:
+    command: show configuration
+  register: result
+
+- name: copy configuration to file
+  copy:
+    content: "{{ result['stdout'] }}"
+    dest: /tmp/junos01.cfg
+
+- name: "modify interface ge-0/0/11 configuration"
+  replace:
+    path: /tmp/junos01.cfg
+    regexp: 'test cli_config'
+    replace: 'test cli_config replaced'
+
+- name: copy config file to remote host
+  net_put:
+    src: /tmp/junos01.cfg
+    dest: /var/home/{{ ansible_user }}/junos01.cfg
+
+- name: replace syslog test file configuration
+  cli_config:
+    replace: "/var/home/{{ ansible_user }}/junos01.cfg"
+
+- name: get interface configuration
+  cli_command:
+    command: show configuration interfaces ge-0/0/11
+  register: result
+
+- name: assert that interface config change is reflected on device
+  assert:
+    that:
+      - "'test cli_config replaced' in  result.stdout"
+
+- name: replace interface configuration (idempotent)
+  cli_config:
+    replace: "/var/home/{{ ansible_user }}/junos01.cfg"
+  register: result
+
+- name: Assert that the previous task was idempotent
+  assert:
+    that:
+      - "result['changed'] == false"
+
+- name: delete interface config
+  cli_config:
+    config: "delete interfaces ge-0/0/11"
+
+- debug: msg="END cli_config/cli_replace.yaml on connection={{ ansible_connection }}"

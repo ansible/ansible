@@ -26,6 +26,7 @@ options:
     description:
       - The name of the server certificate you are retrieving attributes for.
     required: true
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2

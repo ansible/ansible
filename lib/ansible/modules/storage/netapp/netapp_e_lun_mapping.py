@@ -174,6 +174,11 @@ class LunMapping(object):
             volume_name.update({volume["name"]: volume["volumeRef"]})
             if volume["listOfMappings"]:
                 lun_name.update({volume["name"]: volume["listOfMappings"][0]["lun"]})
+        for volume in response["highLevelVolBundle"]["thinVolume"]:
+            volume_reference.update({volume["volumeRef"]: volume["name"]})
+            volume_name.update({volume["name"]: volume["volumeRef"]})
+            if volume["listOfMappings"]:
+                lun_name.update({volume["name"]: volume["listOfMappings"][0]["lun"]})
 
         # Build current mapping object
         self.mapping_info = dict(lun_mapping=[dict(volume_reference=mapping["volumeRef"],
@@ -202,9 +207,10 @@ class LunMapping(object):
         # Verify that when a lun is specified that it does not match an existing lun value unless it is associated with
         # the specified volume (ie for an update)
         if self.lun and any((self.lun == lun_mapping["lun"] and
+                             self.target == self.mapping_info["target_by_reference"][lun_mapping["map_reference"]] and
                              self.volume != self.mapping_info["volume_by_reference"][lun_mapping["volume_reference"]]
                              ) for lun_mapping in self.mapping_info["lun_mapping"]):
-            self.module.fail_json(msg="Option lun value is already in use! Id [%s]." % self.ssid)
+            self.module.fail_json(msg="Option lun value is already in use for target! Array Id [%s]." % self.ssid)
 
         # Verify that when target_type is specified then it matches the target's actually type
         if self.target and self.target_type and self.target in self.mapping_info["target_type_by_name"].keys() and \
@@ -246,7 +252,7 @@ class LunMapping(object):
                     target = None if not self.target else self.mapping_info["target_by_name"][self.target]
                     if target:
                         body.update(dict(targetId=target))
-                    if self.lun:
+                    if self.lun is not None:
                         body.update(dict(lun=self.lun))
 
                     if lun_reference:

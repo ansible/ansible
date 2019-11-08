@@ -2,6 +2,10 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -108,7 +112,7 @@ def get_dms_client(module, aws_connect_params, client_region, ec2_url):
 
 
 def replication_subnet_exists(subnet):
-    """ Returns boolean based on the existance of the endpoint
+    """ Returns boolean based on the existence of the endpoint
     :param endpoint: dict containing the described endpoint
     :return: bool
     """
@@ -140,7 +144,7 @@ def compare_params(module, param_described):
     """
     modparams = create_module_params(module)
     changed = False
-    # need to sanitize values that get retured from the API
+    # need to sanitize values that get returned from the API
     if 'VpcId' in param_described.keys():
         param_described.pop('VpcId')
     if 'SubnetGroupStatus' in param_described.keys():

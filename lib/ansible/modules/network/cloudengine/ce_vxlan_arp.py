@@ -28,6 +28,9 @@ short_description: Manages ARP attributes of VXLAN on HUAWEI CloudEngine devices
 description:
     - Manages ARP attributes of VXLAN on HUAWEI CloudEngine devices.
 author: QijunPan (@QijunPan)
+notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     evn_bgp:
         description:
@@ -286,12 +289,12 @@ class VxlanArp(object):
         """get current configuration"""
 
         flags = list()
-        exp = "| ignore-case section include evn bgp|host collect protocol bgp"
+        exp = r"| ignore-case section include evn bgp|host collect protocol bgp"
         if self.vbdif_name:
-            exp += "|^interface %s$" % self.vbdif_name
+            exp += r"|^#\s+interface %s\s+" % self.vbdif_name.lower().capitalize().replace(" ", "")
 
         if self.bridge_domain_id:
-            exp += "|^bridge-domain %s$" % self.bridge_domain_id
+            exp += r"|^#\s+bridge-domain %s\s+" % self.bridge_domain_id
 
         flags.append(exp)
         cfg_str = self.get_config(flags)

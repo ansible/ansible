@@ -91,6 +91,13 @@ options:
         required: false
         default: "no"
         type: bool
+    force_resolution:
+        version_added: "2.10"
+        description:
+          - Adds C(--force-resolution) option to I(zypper). Allows to (un)install packages with conflicting requirements (resolver will choose a solution).
+        required: false
+        default: "no"
+        type: bool
     update_cache:
         version_added: "2.2"
         description:
@@ -118,7 +125,7 @@ notes:
     it is much more efficient to pass the list directly to the `name` option.
 # informational: requirements for nodes
 requirements:
-    - "zypper >= 1.0  # included in openSuSE >= 11.1 or SuSE Linux Enterprise Server/Desktop >= 11.0"
+    - "zypper >= 1.0  # included in openSUSE >= 11.1 or SUSE Linux Enterprise Server/Desktop >= 11.0"
     - python-xml
     - rpm
 '''
@@ -338,6 +345,8 @@ def get_cmd(m, subcommand):
             cmd.append('--no-recommends')
         if m.params['force']:
             cmd.append('--force')
+        if m.params['force_resolution']:
+            cmd.append('--force-resolution')
         if m.params['oldpackage']:
             cmd.append('--oldpackage')
     if m.params['extra_args']:
@@ -479,6 +488,7 @@ def main():
             disable_gpg_check=dict(required=False, default='no', type='bool'),
             disable_recommends=dict(required=False, default='yes', type='bool'),
             force=dict(required=False, default='no', type='bool'),
+            force_resolution=dict(required=False, default='no', type='bool'),
             update_cache=dict(required=False, aliases=['refresh'], default='no', type='bool'),
             oldpackage=dict(required=False, default='no', type='bool'),
             extra_args=dict(required=False, default=None),

@@ -10,8 +10,6 @@ import sys
 import copy
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.cloudengine.ce import ce_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
@@ -84,19 +82,6 @@ class ActionModule(ActionNetworkModule):
                     (self._play_context.connection == 'netconf' and self._task.action in CLI_SUPPORTED_MODULES):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module."
                         % (self._play_context.connection, self._task.action)}
-
-        if (self._play_context.connection == 'local' and transport == 'cli' and self._task.action in CLI_SUPPORTED_MODULES) \
-                or self._play_context.connection == 'network_cli':
-            # make sure we are in the right cli context which should be
-            # enable mode and not config module
-            if socket_path is None:
-                socket_path = self._connection.socket_path
-            conn = Connection(socket_path)
-            out = conn.get_prompt()
-            while to_text(out, errors='surrogate_then_replace').strip().endswith(']'):
-                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                conn.exec_command('return')
-                out = conn.get_prompt()
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result

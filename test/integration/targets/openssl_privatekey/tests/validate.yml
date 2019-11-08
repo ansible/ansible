@@ -160,3 +160,29 @@
       - privatekey_mode_3 is changed
       - privatekey_mode_3_stat.stat.mode == '0400'
       - privatekey_mode_1_stat.stat.mtime != privatekey_mode_3_stat.stat.mtime
+
+- name: Validate format 1
+  assert:
+    that:
+      - privatekey_fmt_1_step_1 is changed
+      - privatekey_fmt_1_step_2 is not changed
+      - privatekey_fmt_1_step_3 is not changed
+      - privatekey_fmt_1_step_4 is changed
+      - privatekey_fmt_1_step_5 is not changed
+      - privatekey_fmt_1_step_6 is not changed
+      - privatekey_fmt_1_step_7 is changed
+      - privatekey_fmt_1_step_8 is failed
+      - privatekey_fmt_1_step_9 is changed
+      - privatekey_fmt_1_step_9_before.public_key == privatekey_fmt_1_step_9_after.public_key
+  when: 'select_crypto_backend == "cryptography"'
+
+- name: Validate format 2
+  assert:
+    that:
+      - privatekey_fmt_2_step_1 is changed
+      - privatekey_fmt_2_step_2 is not changed
+      - privatekey_fmt_2_step_3 is changed
+      - privatekey_fmt_2_step_4 is not changed
+      - privatekey_fmt_2_step_5 is not changed
+      - privatekey_fmt_2_step_6 is changed
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")'

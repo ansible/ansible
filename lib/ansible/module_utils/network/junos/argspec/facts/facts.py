@@ -6,9 +6,6 @@
 """
 The arg spec for the junos facts module.
 """
-CHOICES = [
-    'all',
-]
 
 
 class FactsArgs(object):
@@ -21,5 +18,5 @@ class FactsArgs(object):
     argument_spec = {
         'gather_subset': dict(default=['!config'], type='list'),
         'config_format': dict(default='text', choices=['xml', 'text', 'set', 'json']),
-        'gather_network_resources': dict(choices=CHOICES, type='list'),
+        'gather_network_resources': dict(type='list'),
     }

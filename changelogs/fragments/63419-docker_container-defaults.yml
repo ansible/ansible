@@ -1,0 +1,4 @@
+minor_changes:
+- "docker_container - add new ``container_default_behavior`` option (PR https://github.com/ansible/ansible/pull/63419)."
+deprecated_features:
+- "docker_container - the default of ``container_default_behavior`` will change from ``compatibility`` to ``no_defaults`` in Ansible 2.14. Set the option to an explicit value to avoid a deprecation warning."

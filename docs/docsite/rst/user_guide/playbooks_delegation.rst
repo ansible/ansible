@@ -312,7 +312,7 @@ use the default remote connection type::
 Interrupt execution on any error
 ````````````````````````````````
 
-With the ''any_errors_fatal'' option, any failure on any host in a multi-host play will be treated as fatal and Ansible will exit immediately without waiting for the other hosts.
+With the ''any_errors_fatal'' option, any failure on any host in a multi-host play will be treated as fatal and Ansible will exit as soon as all hosts in the current batch have finished the fatal task. Subsequent tasks and plays will not be executed. You can recover from what would be a fatal error by adding a rescue section to the block.
 
 Sometimes ''serial'' execution is unsuitable; the number of hosts is unpredictable (because of dynamic inventory) and speed is crucial (simultaneous execution is required), but all tasks must be 100% successful to continue playbook execution.
 

@@ -68,7 +68,8 @@ class HttpApi(HttpApiBase):
 
     def send_request(self, data, **message_kwargs):
         data = to_list(data)
-        if self._become:
+        become = self._become
+        if become:
             self.connection.queue_message('vvvv', 'firing event: on_become')
             data.insert(0, {"cmd": "enable", "input": self._become_pass})
 
@@ -87,7 +88,7 @@ class HttpApi(HttpApiBase):
 
         results = handle_response(response_data)
 
-        if self._become:
+        if become:
             results = results[1:]
         if len(results) == 1:
             results = results[0]
@@ -101,7 +102,7 @@ class HttpApi(HttpApiBase):
         device_info = {}
 
         device_info['network_os'] = 'eos'
-        reply = self.send_request('show version | json')
+        reply = self.send_request('show version', output='json')
         data = json.loads(reply)
 
         device_info['network_os_version'] = data['version']

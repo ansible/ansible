@@ -225,7 +225,7 @@ data:
                      type: str
                      sample: read-only
         tags:
-            description: Tags the adminsitrator has access on.
+            description: Tags the administrator has access on.
             returned: success
             type: complex
             contains:

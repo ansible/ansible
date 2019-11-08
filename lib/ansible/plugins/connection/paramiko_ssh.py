@@ -354,7 +354,7 @@ class Connection(ConnectionBase):
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
         except paramiko.ssh_exception.AuthenticationException as e:
-            msg = 'Invalid/incorrect username/password. {0}'.format(to_text(e))
+            msg = 'Failed to authenticate: {0}'.format(to_text(e))
             raise AnsibleAuthenticationFailure(msg)
         except Exception as e:
             msg = to_text(e)
