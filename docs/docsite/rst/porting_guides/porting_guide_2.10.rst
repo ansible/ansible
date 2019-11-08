@@ -79,6 +79,7 @@ Noteworthy module changes
 * :ref:`vmware_tag <vmware_tag_module>` now returns ``tag_status`` instead of Ansible internal key ``results``.
 * The deprecated ``recurse`` option in :ref:`pacman <pacman_module>` module has been removed, you should use ``extra_args=--recursive`` instead.
 * :ref:`vmware_guest_custom_attributes <vmware_guest_custom_attributes_module>` module does not require VM name which was a required parameter for releases prior to Ansible 2.10.
+* :ref:`zabbix_action <zabbix_action_module>` no longer requires ``esc_period`` and ``event_source`` arguments when ``state=absent``.
 
 Plugins
 =======
