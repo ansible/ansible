@@ -51,6 +51,7 @@
 import os
 import sys
 
+
 def ismount(path):
     """python issue 2466 is fixed then ismount() was rewritten"""
     # check python version
