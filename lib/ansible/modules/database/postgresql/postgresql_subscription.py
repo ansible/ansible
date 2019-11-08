@@ -639,17 +639,17 @@ def main():
     relinfo = module.params['relinfo']
 
     if state == 'present' and cascade:
-        module.warm('parameter "cascade" is ignored when state is not absent')
+        module.warn('parameter "cascade" is ignored when state is not absent')
 
     if state != 'present':
         if owner:
-            module.warm("parameter 'owner' is ignored when state is not 'present'")
+            module.warn("parameter 'owner' is ignored when state is not 'present'")
         if publications:
-            module.warm("parameter 'publications' is ignored when state is not 'present'")
+            module.warn("parameter 'publications' is ignored when state is not 'present'")
         if connparams:
-            module.warm("parameter 'connparams' is ignored when state is not 'present'")
+            module.warn("parameter 'connparams' is ignored when state is not 'present'")
         if subsparams:
-            module.warm("parameter 'subsparams' is ignored when state is not 'present'")
+            module.warn("parameter 'subsparams' is ignored when state is not 'present'")
 
     # Connect to DB and make cursor object:
     pg_conn_params = get_conn_params(module, module.params)
