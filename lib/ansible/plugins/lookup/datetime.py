@@ -27,7 +27,7 @@ EXAMPLES = """
 
 - name: do some really long operations
 
-- name: gather the time at the start of an operation
+- name: gather the time at the end of an operation
   set_fact:
     end_time: "{{ lookup('datetime') }}"
 
