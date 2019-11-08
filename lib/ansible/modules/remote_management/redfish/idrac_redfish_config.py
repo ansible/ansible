@@ -229,7 +229,8 @@ class IdracRedfishUtils(RedfishUtils):
         response = self.patch_request(self.root_uri + manager_uri + "/" + key, payload)
         if response['ret'] is False:
             return response
-        return {'ret': True, 'changed': True, 'msg': "Modified Manager attributes %s" % attrs_to_patch}
+        return {'ret': True, 'changed': True,
+                'msg': "%s: Modified Manager attributes %s" % (comman, attrs_to_patch)}
 
 
 CATEGORY_COMMANDS_ALL = {
@@ -322,8 +323,7 @@ def main():
 
     # Return data back or fail with proper message
     if result['ret'] is True:
-        module.exit_json(changed=result['changed'],
-                         msg=to_native(result['msg']))
+        module.exit_json(changed=result['changed'], msg=to_native(result['msg']))
     else:
         module.fail_json(msg=to_native(result['msg']))
 
