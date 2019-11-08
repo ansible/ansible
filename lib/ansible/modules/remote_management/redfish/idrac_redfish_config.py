@@ -230,7 +230,7 @@ class IdracRedfishUtils(RedfishUtils):
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True,
-                'msg': "%s: Modified Manager attributes %s" % (comman, attrs_to_patch)}
+                'msg': "%s: Modified Manager attributes %s" % (command, attrs_to_patch)}
 
 
 CATEGORY_COMMANDS_ALL = {
