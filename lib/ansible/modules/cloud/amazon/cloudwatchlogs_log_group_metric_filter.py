@@ -16,8 +16,8 @@ author:
   - "Markus Bergholz (@markuman)"
 short_description: Manage CloudWatch log group metric filter
 description:
-  - Create, modify and delete Cloudwatch log group metric filter.
-  - Cloudwatch log group metric filter can be use with M(ec2_metric_alarm).
+  - Create, modify and delete CloudWatch log group metric filter.
+  - CloudWatch log group metric filter can be use with M(ec2_metric_alarm).
 requirements:
   - boto3
   - botocore
@@ -53,11 +53,11 @@ options:
           type: str
         metric_namespace:
           description:
-            - The namespace of the cloudwatch metric.
+            - The namespace of the cloudWatch metric.
           type: str
         matric_value:
           description:
-            - The value to publish to the cloudwatch metric when a filter pattern matches a log event.
+            - The value to publish to the cloudWatch metric when a filter pattern matches a log event.
           type: str
         default_value:
           description:
@@ -156,7 +156,7 @@ def main():
     module = AnsibleAWSModule(
         argument_spec=arg_spec,
         supports_check_mode=True,
-        required_if = [('state', 'present', ['metric_transformation', 'filter_pattern'])]
+        required_if=[('state', 'present', ['metric_transformation', 'filter_pattern'])]
     )
 
     log_group_name = module.params.get("log_group_name")
@@ -207,9 +207,8 @@ def main():
                     filterPattern=filter_pattern,
                     metricTransformations=metricTransformation
                 )
-        
-        metricTransformation = [camel_dict_to_snake_dict(item) for item in metricTransformation]
 
+        metricTransformation = [camel_dict_to_snake_dict(item) for item in metricTransformation]
 
     module.exit_json(changed=change, metric_filters=metricTransformation)
 
