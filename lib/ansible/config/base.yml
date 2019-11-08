@@ -2,10 +2,10 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 ALLOW_WORLD_READABLE_TMPFILES:
-  name: Allow world readable temporary files
+  name: Allow world-readable temporary files
   default: False
   description:
-    - This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task.
+    - This makes the temporary files created on the machine world-readable and will issue a warning instead of failing the task.
     - It is useful when becoming an unprivileged user.
   env: []
   ini:
@@ -1489,7 +1489,7 @@ TRANSFORM_INVALID_GROUP_CHARS:
     - Make ansible transform invalid characters in group names supplied by inventory sources.
     - If 'never' it will allow for the group name but warn about the issue.
     - When 'ignore', it does the same as 'never', without issuing a warning.
-    - When 'always' it will replace any invalid charachters with '_' (underscore) and warn the user
+    - When 'always' it will replace any invalid characters with '_' (underscore) and warn the user
     - When 'silently', it does the same as 'always', without issuing a warning.
   env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
   ini:
