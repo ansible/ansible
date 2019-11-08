@@ -53,16 +53,12 @@ options:
     required: false
     description:
       - (deprecated) name of iDRAC attribute to update
-    default: None
     type: str
-    version_added: "2.8"
   manager_attribute_value:
     required: false
     description:
       - (deprecated) value of iDRAC attribute to update
-    default: None
     type: str
-    version_added: "2.8"
   manager_attributes:
     required: false
     description:
@@ -184,10 +180,10 @@ class IdracRedfishUtils(RedfishUtils):
 
         key = "Attributes"
         command_manager_attributes_uri_map = {
-                "SetManagerAttributes": self.manager_uri,
-                "SetLifecycleControllerAttributes": "/redfish/v1/Managers/LifecycleController.Embedded.1",
-                "SetSystemAttributes": "/redfish/v1/Managers/System.Embedded.1"
-                }
+            "SetManagerAttributes": self.manager_uri,
+            "SetLifecycleControllerAttributes": "/redfish/v1/Managers/LifecycleController.Embedded.1",
+            "SetSystemAttributes": "/redfish/v1/Managers/System.Embedded.1"
+        }
         manager_uri = command_manager_attributes_uri_map.get(command, self.manager_uri)
 
         attributes = self.module.params['manager_attributes']
@@ -243,9 +239,10 @@ CATEGORY_COMMANDS_ALL = {
 
 # list of mutually exclusive commands for a category
 CATEGORY_COMMANDS_MUTUALLY_EXCLUSIVE = {
-    "Manager": [ ["SetManagerAttributes", "SetLifecycleControllerAttributes",
-                "SetSystemAttributes"] ]
+    "Manager": [["SetManagerAttributes", "SetLifecycleControllerAttributes",
+                 "SetSystemAttributes"]]
 }
+
 
 def main():
     result = {}
