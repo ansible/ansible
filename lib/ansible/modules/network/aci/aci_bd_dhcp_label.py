@@ -18,6 +18,10 @@ description:
 - Manage DHCP Labels on Cisco ACI fabrics.
 version_added: '2.10'
 options:
+  annotation:
+    description:
+    - An annotation for the DHCP Label.
+    type: str
   bd:
     description:
     - The name of the Bridge Domain.
@@ -221,6 +225,7 @@ from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
+        annotation=dict(type='str'),
         bd=dict(type='str', aliases=['bd_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         dhcp_label=dict(type='str', aliases=['name']),  # Not required for querying all objects
@@ -234,8 +239,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['bd', 'tenant', 'dhcp_label', 'owner']],
-            ['state', 'present', ['bd', 'tenant', 'dhcp_label', 'owner']],
+            ['state', 'absent', ['bd', 'tenant', 'dhcp_label', 'scope']],
+            ['state', 'present', ['bd', 'tenant', 'dhcp_label', 'scope']],
         ],
     )
 
@@ -244,6 +249,7 @@ def main():
     description = module.params.get('description')
     dhcp_label = module.params.get('dhcp_label')
     dhcp_option = module.params.get('dhcp_option')
+    annotation = module.params.get('annotation')
     scope = module.params.get('scope')
     state = module.params.get('state')
 
@@ -278,6 +284,7 @@ def main():
             class_config=dict(
                 descr=description,
                 name=dhcp_label,
+                annotation=annotation,
                 owner=scope,
             ),
             child_configs=[
