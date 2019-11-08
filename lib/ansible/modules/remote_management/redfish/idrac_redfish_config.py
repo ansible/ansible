@@ -132,6 +132,7 @@ EXAMPLES = '''
     idrac_redfish_config:
       category: Manager
       command: SetLifecycleControllerAttributes
+      resource_id: iDRAC.Embedded.1
       manager_attributes:
         LCAttributes.1.CollectSystemInventoryOnRestart: "Enabled"
       baseuri: "{{ baseuri }}"
@@ -142,6 +143,7 @@ EXAMPLES = '''
     idrac_redfish_config:
       category: Manager
       command: SetSystemAttributes
+      resource_id: iDRAC.Embedded.1
       manager_attributes:
         ServerPwr.1.PSRedPolicy: "A/B Grid Redundant"
       baseuri: "{{ baseuri }}"
@@ -295,7 +297,7 @@ def main():
     try:
         # check_mutually_exclusive accepts a single list or list of lists that
         # are groups of terms that should be mutually exclusive with one another
-        # and checks that against a dictionary 
+        # and checks that against a dictionary
         check_mutually_exclusive(CATEGORY_COMMANDS_MUTUALLY_EXCLUSIVE[category],
                                  dict.fromkeys(command_list, True))
 
