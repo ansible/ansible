@@ -52,7 +52,7 @@ options:
     description:
       - Maximum number of items to return for various get/list requests.
     required: false
-    type: int
+    type: str
   next_marker:
     description:
       - "Some requests such as list_command: hosted_zones will return a maximum
@@ -61,7 +61,7 @@ options:
         using the NextMarker entry from the first response to get the next page
         of results."
     required: false
-    type: int
+    type: str
   delegation_set_id:
     description:
       - The DNS Zone delegation set ID.
@@ -417,8 +417,8 @@ def main():
         ], required=True),
         change_id=dict(),
         hosted_zone_id=dict(),
-        max_items=dict(type='int'),
-        next_marker=dict(type='int'),
+        max_items=dict(),
+        next_marker=dict(),
         delegation_set_id=dict(),
         start_record_name=dict(),
         type=dict(choices=[
