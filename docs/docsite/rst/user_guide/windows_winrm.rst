@@ -27,6 +27,14 @@ with the Ansible package, but can be installed by running the following:
 .. Note:: on distributions with multiple python versions, use pip2 or pip2.x,
     where x matches the python minor version Ansible is running under.
 
+.. Warning::
+     Using the ``winrm`` or ``psrp`` connection plugins in Ansible on MacOS in
+     the latest releases typically fail. This is a known problem that occurs
+     deep within the Python stack and cannot be changed by Ansible. The only
+     workaround today is to set the environment variable ``no_proxy=*`` and
+     avoid using Kerberos auth.
+
+
 Authentication Options
 ``````````````````````
 When connecting to a Windows host, there are several different options that can be used
