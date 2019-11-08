@@ -61,7 +61,7 @@ options:
         using the NextMarker entry from the first response to get the next page
         of results."
     required: false
-    type: int
+    type: str
   delegation_set_id:
     description:
       - The DNS Zone delegation set ID.
@@ -418,7 +418,7 @@ def main():
         change_id=dict(),
         hosted_zone_id=dict(),
         max_items=dict(),
-        next_marker=dict(type='int'),
+        next_marker=dict(),
         delegation_set_id=dict(),
         start_record_name=dict(),
         type=dict(choices=[
