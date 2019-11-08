@@ -212,11 +212,6 @@ class VmwareHostDNS(PyVmomi):
                     results['dns_config_result'][host.name]['dns_config'] = self.network_type
                     if self.network_type == 'static':
                         if instance.dnsConfig.dhcp:
-                            if self.cluster_name:
-                                self.module.fail_json(msg="Changing the DNS config from DHCP to static is not supported on a cluster.")
-                            if not self.host_name or not self.domain or not self.dns_servers or not self.search_domains:
-                                self.module.fail_json(msg="Changing DHCP to static requires all of host_name, domain, search_domains and dns_servers.")
-                            results['dns_config_result'][host.name]['host_name'] = self.host_name
                             results['dns_config_result'][host.name]['domain'] = self.domain
                             results['dns_config_result'][host.name]['dns_servers'] = self.dns_servers
                             results['dns_config_result'][host.name]['search_domains'] = self.search_domains
@@ -225,7 +220,10 @@ class VmwareHostDNS(PyVmomi):
                             changed_list.append("DNS configuration")
                             dns_config.dhcp = False
                             dns_config.virtualNicDevice = None
-                            dns_config.hostName = self.host_name
+                            if self.host_name:
+                                dns_config.hostName = self.host_name
+                            else:
+                                dns_config.hostName = instance.dnsConfig.hostName
                             dns_config.domainName = self.domain
                             dns_config.address = self.dns_servers
                             dns_config.searchDomain = self.search_domains
