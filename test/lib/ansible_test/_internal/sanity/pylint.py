@@ -225,7 +225,7 @@ class PylintTest(SanitySingleVersion):
             config = dict()
 
         disable_plugins = set(i.strip() for i in config.get('disable-plugins', '').split(',') if i)
-        load_plugins = set(plugin_names) - disable_plugins
+        load_plugins = set(plugin_names + ['pylint.extensions.mccabe']) - disable_plugins
 
         cmd = [
             python,
@@ -233,6 +233,7 @@ class PylintTest(SanitySingleVersion):
             '--jobs', '0',
             '--reports', 'n',
             '--max-line-length', '160',
+            '--max-complexity', '20',
             '--rcfile', rcfile,
             '--output-format', 'json',
             '--load-plugins', ','.join(load_plugins),
