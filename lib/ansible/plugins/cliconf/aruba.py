@@ -72,7 +72,7 @@ class Cliconf(CliconfBase):
         if source == 'running':
             cmd = 'show running-config all'
         else:
-            cmd = 'show startup-config'
+            cmd = 'show configuration'
         return self.send_command(cmd)
 
     @enable_mode
