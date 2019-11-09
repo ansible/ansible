@@ -27,7 +27,7 @@ author:
 - Mario Lenz (@mariolenz)
 notes:
 - This module is a replacement for the module C(vmware_dns_config)
-- Tested on vSphere 6.5
+- Tested on vSphere 6.7
 requirements:
 - python >= 2.6
 - PyVmomi
@@ -37,51 +37,49 @@ options:
     - Type of IP assignment. Either C(dhcp) or C(static).
     - A VMkernel adapter needs to be set to DHCP if C(type) is set to C(dhcp).
     type: str
-    default: 'static'
     choices: [ 'dhcp', 'static' ]
-    required: False
+    required: true
   device:
     description:
     - The VMkernel network adapter to obtain DNS settings from.
+    - Needs to get its IP through DHCP, a static network configuration combined with a dynamic DNS configuration doesn't work.
     - The parameter is only required in case of C(type) is set to C(dhcp).
     type: str
   host_name:
     description:
     - The hostname to be used for the ESXi host.
+    - Cannot be used when configuring a complete cluster.
     type: str
-    required: True
   domain:
     description:
     - The domain name to be used for the the ESXi host.
     type: str
-    required: True
   dns_servers:
     description:
     - A list of DNS servers to be used.
     - The order of the DNS servers is important as they are used consecutively in order.
     type: list
-    required: True
   search_domains:
     description:
     - A list of domains to be searched through by the resolver.
     type: list
-    required: False
   verbose:
     description:
     - Verbose output of the DNS server configuration change.
     - Explains if an DNS server was added, removed, or if the DNS server sequence was changed.
     type: bool
-    required: false
     default: false
   esxi_hostname:
     description:
     - Name of the host system to work with.
-    - This parameter is required if C(cluster_name) is not specified.
+    - This parameter is required if C(cluster_name) is not specified and you connect to a vCenter.
+    - Cannot be used when you connect directly to an ESXi host.
     type: str
   cluster_name:
     description:
     - Name of the cluster from which all host systems will be used.
-    - This parameter is required if C(esxi_hostname) is not specified.
+    - This parameter is required if C(esxi_hostname) is not specified and you connect to a vCenter.
+    - Cannot be used when you connect directly to an ESXi host.
     type: str
 extends_documentation_fragment: vmware.documentation
 '''
@@ -436,7 +434,7 @@ def main():
     """Main"""
     argument_spec = vmware_argument_spec()
     argument_spec.update(
-        type=dict(default='static', type='str', choices=['dhcp', 'static']),
+        type=dict(required=True, type='str', choices=['dhcp', 'static']),
         device=dict(type='str'),
         host_name=dict(required=False, type='str'),
         domain=dict(required=False, type='str'),
@@ -451,7 +449,6 @@ def main():
         argument_spec=argument_spec,
         required_if=[
             ['type', 'dhcp', ['device']],
-            ['type', 'static', ['dns_servers', 'search_domains']],
         ],
         mutually_exclusive=[
             ['cluster_name', 'host_name'],
