@@ -70,6 +70,12 @@ options:
     type: bool
     default: no
     version_added: "2.7"
+  aws_accelerate:
+    description:
+      - Enables S3 Transfer Acceleration making uploading artifacts much faster.
+    type: bool
+    default: no
+    version_added: "2.10"
 notes:
    - Currently, the C(serverless) command must be in the path of the node executing the task.
      In the future this may be a flag.
@@ -181,6 +187,7 @@ def main():
             serverless_bin_path=dict(type='path'),
             force=dict(type='bool', default=False),
             verbose=dict(type='bool', default=False),
+            aws_accelerate=dict(type='bool', default=False),
         ),
     )
 
@@ -221,6 +228,8 @@ def main():
         command += '--stage {0} '.format(stage)
     if verbose:
         command += '--verbose '
+    if aws_accelerate:
+        command += '--aws-s3-accelerate '
 
     rc, out, err = module.run_command(command, cwd=service_path)
     if rc != 0:
