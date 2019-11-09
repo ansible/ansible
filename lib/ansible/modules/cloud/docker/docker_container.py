@@ -519,7 +519,7 @@ options:
     required: yes
   network_mode:
     description:
-      - Connect the container to a network. Choices are C(bridge), C(host), C(none) or C(container:<name|id>).
+      - Connect the container to a network. Choices are C(bridge), C(host), C(none), C(container:<name|id>), C(<network_name>) or C(default).
     type: str
   userns_mode:
     description:
