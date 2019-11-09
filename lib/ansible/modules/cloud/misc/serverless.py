@@ -203,6 +203,7 @@ def main():
     force = module.params.get('force', False)
     verbose = module.params.get('verbose', False)
     serverless_bin_path = module.params.get('serverless_bin_path')
+    aws_accelerate = module.params.get('aws_accelerate', False)
 
     if serverless_bin_path is not None:
         command = serverless_bin_path + " "
