@@ -76,8 +76,8 @@
         state: "present"
         enabled: True
         description: "basic_description"
-        source_port_transmitted: [13, 14]
-        source_port_received: [13, 14]
+        source_port_transmitted: [13, 11]
+        source_port_received: [13, 11]
         destination_port: 12
       register: vspan_session_create_result
     - debug: var=vspan_session_create_result
