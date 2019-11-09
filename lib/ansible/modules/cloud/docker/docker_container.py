@@ -520,6 +520,10 @@ options:
   network_mode:
     description:
       - Connect the container to a network. Choices are C(bridge), C(host), C(none), C(container:<name|id>), C(<network_name>) or C(default).
+      - "*Note* that from Ansible 2.14 on, if I(networks_cli_compatible) is C(true) and I(networks) contains at least one network,
+         the default value for I(network_mode) will be the name of the first network in the I(networks) list. You can prevent this
+         by explicitly specifying a value for I(network_mode), like the default value C(default) which will be used by Docker if
+         I(network_mode) is not specified."
     type: str
   userns_mode:
     description:
@@ -574,10 +578,13 @@ options:
       - "If I(networks_cli_compatible) is set to C(yes), this module will behave as
          C(docker run --network) and will *not* add the default network if I(networks) is
          specified. If I(networks) is not specified, the default network will be attached."
-      - "Note that docker CLI also sets I(network_mode) to the name of the first network
+      - "*Note* that docker CLI also sets I(network_mode) to the name of the first network
          added if C(--network) is specified. For more compatibility with docker CLI, you
          explicitly have to set I(network_mode) to the name of the first network you're
-         adding."
+         adding. This behavior will change for Ansible 2.14: then I(network_mode) will
+         automatically be set to the first network name in I(networks) if I(network_mode)
+         is not specified, I(networks) has at least one entry and I(networks_cli_compatible)
+         is C(true)."
       - Current value is C(no). A new default of C(yes) will be set in Ansible 2.12.
     type: bool
     version_added: "2.8"
@@ -3347,6 +3354,18 @@ def main():
             'the new `networks_cli_compatible` option to `yes`, and remove this warning by setting '
             'it to `no`',
             version='2.12'
+        )
+    if client.module.params['networks_cli_compatible'] is True and client.module.params['networks'] and client.module.params['network_mode'] is None:
+        client.module.deprecate(
+            'Please note that the default value for `network_mode` will change from not specified '
+            '(which is equal to `default`) to the name of the first network in `networks` if '
+            '`networks` has at least one entry and `networks_cli_compatible` is `true`. You can '
+            'change the behavior now by explicitly setting `network_mode` to the name of the first '
+            'network in `networks`, and remove this warning by setting `network_mode` to `default`. '
+            'Please make sure that the value you set to `network_mode` equals the inspection result '
+            'for existing containers, otherwise the module will recreate them. You can find out the '
+            'correct value by running "docker inspect --format \'{{.HostConfig.NetworkMode}}\' <container_name>"',
+            version='2.14'
         )
 
     try:
