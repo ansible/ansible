@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_* modules - fix Docker SDK for Python import problem when Python 2 is used and a newer Ansible version is installed on the target machine."
