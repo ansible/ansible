@@ -2,6 +2,9 @@
 # Copyright: (c) 2019, Mario Lenz <m@riolenz.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+# This tests assume that all ESXi hosts either have a static or a dynamic DNS
+# configuration. They probably will fail if on host is 'static' and the other
+# is 'dhcp' configured.
 - when: vcsim is not defined
   block:
     - import_role:
