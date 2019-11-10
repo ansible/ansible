@@ -233,17 +233,14 @@ class RollBack(object):
             self.module.fail_json(
                 msg='Error: Configuration file name include spaces.')
 
-        iftype = None
-
         if filename.endswith('.cfg'):
-            iftype = 'cfg'
+            return 'cfg'
         elif filename.endswith('.zip'):
-            iftype = 'zip'
+            return 'zip'
         elif filename.endswith('.dat'):
-            iftype = 'dat'
+            return 'dat'
         else:
             return None
-        return iftype.lower()
 
     def set_config(self):
 

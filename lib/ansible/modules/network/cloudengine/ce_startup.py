@@ -210,7 +210,6 @@ class StartUp(object):
                         dict(nextStartupFile=mem[5], configSysSoft=mem[1], curentSysSoft=mem[2],
                              nextSysSoft=mem[3], curentStartupFile=mem[4], curentPatchFile=mem[8],
                              nextPatchFile=mem[9], postion=mem[0]))
-                return startup_info
             return startup_info
 
     def get_cfg_filename_type(self, filename):
@@ -222,17 +221,14 @@ class StartUp(object):
             self.module.fail_json(
                 msg='Error: Configuration file name include spaces.')
 
-        iftype = None
-
         if filename.endswith('.cfg'):
-            iftype = 'cfg'
+            return 'cfg'
         elif filename.endswith('.zip'):
-            iftype = 'zip'
+            return 'zip'
         elif filename.endswith('.dat'):
-            iftype = 'dat'
+            return 'dat'
         else:
             return None
-        return iftype.lower()
 
     def get_pat_filename_type(self, filename):
         """Gets the type of patch filename, such as cfg, zip, dat..."""
@@ -243,13 +239,10 @@ class StartUp(object):
             self.module.fail_json(
                 msg='Error: Patch file name include spaces.')
 
-        iftype = None
-
         if filename.endswith('.PAT'):
-            iftype = 'PAT'
+            return 'PAT'
         else:
             return None
-        return iftype.upper()
 
     def get_software_filename_type(self, filename):
         """Gets the type of software filename, such as cfg, zip, dat..."""
@@ -260,13 +253,10 @@ class StartUp(object):
             self.module.fail_json(
                 msg='Error: Software file name include spaces.')
 
-        iftype = None
-
         if filename.endswith('.cc'):
-            iftype = 'cc'
+            return 'cc'
         else:
             return None
-        return iftype.lower()
 
     def startup_next_cfg_file(self):
         """set next cfg file"""

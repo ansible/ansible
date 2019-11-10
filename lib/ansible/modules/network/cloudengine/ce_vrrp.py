@@ -382,28 +382,24 @@ def get_interface_type(interface):
     if interface is None:
         return None
 
-    iftype = None
-
     if interface.upper().startswith('GE'):
-        iftype = 'ge'
+        return 'ge'
     elif interface.upper().startswith('10GE'):
-        iftype = '10ge'
+        return '10ge'
     elif interface.upper().startswith('25GE'):
-        iftype = '25ge'
+        return '25ge'
     elif interface.upper().startswith('40GE'):
-        iftype = '40ge'
+        return '40ge'
     elif interface.upper().startswith('100GE'):
-        iftype = '100ge'
+        return '100ge'
     elif interface.upper().startswith('ETH-TRUNK'):
-        iftype = 'eth-trunk'
+        return 'eth-trunk'
     elif interface.upper().startswith('NULL'):
-        iftype = 'null'
+        return 'null'
     elif interface.upper().startswith('VLANIF'):
-        iftype = 'vlanif'
+        return 'vlanif'
     else:
         return None
-
-    return iftype.lower()
 
 
 class Vrrp(object):
