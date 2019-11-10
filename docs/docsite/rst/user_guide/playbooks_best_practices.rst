@@ -104,10 +104,10 @@ Alternatively you can put each inventory file with its ``group_vars``/``host_var
     library/
     module_utils/
     filter_plugins/
-
-    site.yml
-    webservers.yml
-    dbservers.yml
+    plays/
+       site.yml
+       webservers.yml
+       dbservers.yml
 
     roles/
         common/
