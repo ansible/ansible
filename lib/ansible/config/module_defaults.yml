@@ -41,6 +41,8 @@ groupings:
   - aws
   aws_codepipeline:
   - aws
+  aws_cognito_info:
+  - aws
   aws_config_aggregation_authorization:
   - aws
   aws_config_aggregator:
