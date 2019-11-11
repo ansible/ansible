@@ -124,6 +124,7 @@ options:
       - Specify how much of the available CPU resources a container can use.
       - A value of C(1.5) means that at most one and a half CPU (core) will be used.
     type: float
+    version_added: '2.10'
   cpuset_cpus:
     description:
       - CPUs in which to allow execution C(1,3) or C(1-3).
