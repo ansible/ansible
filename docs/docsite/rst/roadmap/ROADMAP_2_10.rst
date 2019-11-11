@@ -27,7 +27,9 @@ PRs must be raised well in advance of the dates below to have a chance of being 
 Release Manager
 ---------------
 
-Toshio Kuratomi (IRC: abadger1999; GitHub: @abadger)
+TBD
+
+Temporarily, Matt Davis (@nitzmahone) or Matt Clay (@mattclay) on IRC or github.
 
 Planned work
 ============
