@@ -140,7 +140,6 @@ class TestEosLagInterfacesModule(TestEosModule):
     #                'interface Ethernet1', 'no channel-group']
     #    self.execute_module(changed=True, commands=commands)
 
-
     def test_eos_lag_interfaces_overridden_idempotent(self):
         set_module_args(dict(
             config=[dict(
