@@ -911,7 +911,8 @@ def remove_disk(module, client, network_domain_id, server, disk):
     try:
         client.remove_disk(disk.get('id'))
         if module.params.get('wait'):
-            wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, False, wait_poll_interval)
+            wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, False,
+                            wait_poll_interval)
     except NTTMCPAPIException as e:
         module.fail_json(msg='Could not remove the disk {0} - {1}'.format(disk.get('id'), e))
 
@@ -951,7 +952,8 @@ def server_command(module, client, server, command):
             if command == 'start' or command == 'reboot':
                 # Temporarily enable waiting for VMWare Tools
                 CORE['wait_for_vmtools'] = True
-            wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', check_for_start, check_for_stop, wait_poll_interval)
+            wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', check_for_start,
+                            check_for_stop, wait_poll_interval)
             if command == 'start' or command == 'reboot':
                 # Disable any waiting for VMWare Tools
                 CORE['wait_for_vmtools'] = False
@@ -959,7 +961,8 @@ def server_command(module, client, server, command):
         module.fail_json(msg='Could not {0} the server - {1}'.format(command, e))
 
 
-def wait_for_server(module, client, name, datacenter, network_domain_id, state, check_for_start=False, check_for_stop=False, wait_poll_interval=None):
+def wait_for_server(module, client, name, datacenter, network_domain_id, state, check_for_start=False,
+                    check_for_stop=False, wait_poll_interval=None):
     """
     Wait for an operation on a server. Polls based on wait_time and wait_poll_interval values.
 
@@ -1081,7 +1084,10 @@ def main():
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
-    client = NTTMCPClient(credentials, module.params.get('region'))
+    try:
+        client = NTTMCPClient(credentials, module.params.get('region'))
+    except NTTMCPAPIException as e:
+        module.fail_json(msg=e.msg)
 
     # Get the CND object based on the supplied name
     try:
@@ -1147,7 +1153,8 @@ def main():
         try:
             disk = get_disk(module, server)
             if not disk:
-                module.fail_json(msg='Controller {0} has no disk {1}'.format(module.params.get('controller_number'), module.params.get('disk_number')))
+                module.fail_json(msg='Controller {0} has no disk {1}'.format(module.params.get('controller_number'),
+                                 module.params.get('disk_number')))
             # Implement Check Mode
             if module.check_mode:
                 module.exit_json(msg='The disk with ID {0} will be removed from the server {1}'.format(

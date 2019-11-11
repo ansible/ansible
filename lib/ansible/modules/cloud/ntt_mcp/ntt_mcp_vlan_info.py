@@ -217,7 +217,7 @@ def main():
     try:
         client = NTTMCPClient(credentials, module.params.get('region'))
     except NTTMCPAPIException as e:
-        module.fail_json(msg='{0}'.format(e))
+        module.fail_json(msg=e.msg)
 
     # Get the CND
     try:

@@ -296,6 +296,8 @@ def get_irules(module, client, network_domain_id):
                 for cc_irule in cc_irules:
                     if irule.get('name') == cc_irule.get('irule').get('name'):
                         irule_id_list.append(cc_irule.get('irule').get('id'))
+        except TypeError:
+            module.fail(msg='No iRules are available at this location.')
         except (KeyError, IndexError, AttributeError, NTTMCPAPIException):
             module.warn(warning='The supplied iRule list will not be included as the module could not get a list of iRules from the API.')
     return irule_id_list
@@ -624,7 +626,10 @@ def main():
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
-    client = NTTMCPClient(credentials, module.params.get('region'))
+    try:
+        client = NTTMCPClient(credentials, module.params.get('region'))
+    except NTTMCPAPIException as e:
+        module.fail_json(msg=e.msg)
 
     # Get the CND
     try:

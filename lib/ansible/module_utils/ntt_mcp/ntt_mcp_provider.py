@@ -109,7 +109,7 @@ class NTTMCPClient():
             else:
                 raise NTTMCPAPIException('Could not determine the Home Geo for user: %s') % (self.credentials[0])
         except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
-            raise NTTMCPAPIException(e)
+            raise NTTMCPAPIException(e.msg)
 
     def get_org_id(self):
         """
@@ -183,7 +183,7 @@ class NTTMCPClient():
         network_exists = [x for x in networks if x['name'] == name]
         try:
             return network_exists[0]
-        except IndexError as e:
+        except IndexError:
             return None
 
     def create_network_domain(self, datacenter=None, name=None, network_type=None, description=None):
@@ -3366,20 +3366,24 @@ class NTTMCPClient():
         :kw params: The parameters for the GET request
         :returns: API response
         """
-        response = REQ.get(url,
-                           auth=(self.credentials.get('user_id'), self.credentials.get('password')),
-                           headers=HTTP_HEADERS,
-                           params=params)
         try:
+            response = REQ.get(url,
+                               auth=(self.credentials.get('user_id'), self.credentials.get('password')),
+                               headers=HTTP_HEADERS,
+                               params=params)
             if response is not None:
                 if response.status_code == 200:
                     return response
+                elif response.status_code == 401:
+                    raise NTTMCPAPIException('Not Authorized for {0}. Check the supplied credentials used'.format(url))
                 elif response.json().get('responseCode') == 'RESOURCE_NOT_FOUND':
                     return response
                 else:
                     raise NTTMCPAPIException(response.text)
             else:
                 raise Exception('No response from the API for url: {0}'.format(url))
+        except REQ.exceptions.ConnectionError:
+            raise NTTMCPAPIException('Could not connect to the API')
         except Exception as e:
             raise NTTMCPAPIException('{0} {1}'.format(e, response.text))
 
@@ -3391,17 +3395,21 @@ class NTTMCPClient():
         :kw params: The parameters for the POST request
         :returns: API response
         """
-        response = REQ.post(url,
-                            auth=(self.credentials.get('user_id'), self.credentials.get('password')),
-                            headers=HTTP_HEADERS,
-                            json=params)
         try:
+            response = REQ.post(url,
+                                auth=(self.credentials.get('user_id'), self.credentials.get('password')),
+                                headers=HTTP_HEADERS,
+                                json=params)
             if response is not None:
                 if response.status_code == 200:
                     return response
+                elif response.status_code == 401:
+                    raise NTTMCPAPIException('Not Authorized for {0}. Check the supplied credentials used'.format(url))
                 else:
                     raise Exception('{0}'.format(response.text))
             else:
                 raise Exception('No response from the API for url: {0}'.format(url))
+        except REQ.exceptions.ConnectionError:
+            raise NTTMCPAPIException('Could not connect to the API')
         except Exception as e:
             raise NTTMCPAPIException('{0} {1}'.format(e, response.text))
