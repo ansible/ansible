@@ -84,14 +84,13 @@ except ImportError:
     pass  # will be detected by imported HAS_BOTO3
 
 
-def describe_log_group(client, log_group_name, log_group_next_token, module):
+def describe_log_group(client, log_group_name, module):
     params = {}
     if log_group_name:
         params['logGroupNamePrefix'] = log_group_name
-    if log_group_next_token:
-        params['nextToken'] = log_group_next_token
     try:
-        desc_log_group = client.describe_log_groups(**params)
+        paginator = client.get_paginator('describe_log_groups')
+        desc_log_group = paginator.paginate(**params).build_full_result()
         return desc_log_group
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable to describe log group {0}: {1}".format(log_group_name, to_native(e)),
@@ -117,22 +116,13 @@ def main():
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     logs = boto3_conn(module, conn_type='client', resource='logs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
 
+    desc_log_group = describe_log_group(client=logs,
+                                        log_group_name=module.params['log_group_name'],
+                                        module=module)
     final_log_group_snake = []
-    group_next_token = None
 
-    while True:
-        desc_log_group = describe_log_group(client=logs,
-                                            log_group_name=module.params['log_group_name'],
-                                            log_group_next_token=group_next_token,
-                                            module=module)
-
-        for log_group in desc_log_group['logGroups']:
-            final_log_group_snake.append(camel_dict_to_snake_dict(log_group))
-
-        if 'nextToken' in desc_log_group.keys():
-            group_next_token = desc_log_group['nextToken']
-        else:
-            break
+    for log_group in desc_log_group['logGroups']:
+        final_log_group_snake.append(camel_dict_to_snake_dict(log_group))
 
     desc_log_group_result = dict(changed=False, log_groups=final_log_group_snake)
     module.exit_json(**desc_log_group_result)
