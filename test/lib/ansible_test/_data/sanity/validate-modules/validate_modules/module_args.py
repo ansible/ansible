@@ -114,7 +114,7 @@ def get_py_argument_spec(filename, collection):
     with setup_env(filename) as fake:
         try:
             with CaptureStd():
-                runpy.run_module(name, run_name='__main__')
+                runpy.run_module(name, run_name='__main__', alter_sys=True)
         except AnsibleModuleCallError:
             pass
         except BaseException as e:
