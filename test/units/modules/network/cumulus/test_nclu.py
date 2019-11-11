@@ -144,7 +144,7 @@ class TestNclu(unittest.TestCase):
     def test_command_list(self):
         module = FakeModule()
         changed, output, diff = nclu.run_nclu(module, ['add int swp1', 'add int swp2'],
-                                        None, False, False, False, "")
+                                              None, False, False, False, "")
 
         self.assertEqual(module.command_history, ['/usr/bin/net pending',
                                                   '/usr/bin/net add int swp1',
@@ -157,8 +157,8 @@ class TestNclu(unittest.TestCase):
     def test_command_list_commit(self):
         module = FakeModule()
         changed, output, diff = nclu.run_nclu(module,
-                                        ['add int swp1', 'add int swp2'],
-                                        None, True, False, False, "committed")
+                                              ['add int swp1', 'add int swp2'],
+                                              None, True, False, False, "committed")
 
         self.assertEqual(module.command_history, ['/usr/bin/net pending',
                                                   '/usr/bin/net add int swp1',
@@ -173,8 +173,8 @@ class TestNclu(unittest.TestCase):
     def test_command_atomic(self):
         module = FakeModule()
         changed, output, diff = nclu.run_nclu(module,
-                                        ['add int swp1', 'add int swp2'],
-                                        None, False, True, False, "atomically")
+                                              ['add int swp1', 'add int swp2'],
+                                              None, False, True, False, "atomically")
 
         self.assertEqual(module.command_history, ['/usr/bin/net abort',
                                                   '/usr/bin/net pending',
@@ -197,8 +197,8 @@ class TestNclu(unittest.TestCase):
     def test_command_template_commit(self):
         module = FakeModule()
         changed, output, diff = nclu.run_nclu(module, None,
-                                        "    add int swp1\n    add int swp2",
-                                        True, False, False, "committed")
+                                              "    add int swp1\n    add int swp2",
+                                              True, False, False, "committed")
 
         self.assertEqual(module.command_history, ['/usr/bin/net pending',
                                                   '/usr/bin/net add int swp1',
@@ -226,7 +226,7 @@ class TestNclu(unittest.TestCase):
         module = FakeModule()
         module.check_mode = True
         changed, output, diff = nclu.run_nclu(module, ['add int swp1', 'add int swp2'],
-                                        None, True, False, False, '')
+                                              None, True, False, False, '')
 
         self.assertEqual(module.command_history, ["/usr/bin/net pending",
                                                   "/usr/bin/net add int swp1",
@@ -240,7 +240,7 @@ class TestNclu(unittest.TestCase):
     def test_diff(self):
         module = FakeModule()
         changed, output, diff = nclu.run_nclu(module, ['add int swp1', 'add int swp2'],
-                                        None, False, False, False, '')
+                                              None, False, False, False, '')
 
         print(module.command_history)
         self.assertEqual(diff, {'prepared': '/usr/bin/net add int swp1/usr/bin/net add int swp2'})

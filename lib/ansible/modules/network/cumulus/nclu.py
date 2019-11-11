@@ -200,7 +200,7 @@ def run_nclu(module, command_list, command_string, commit, atomic, abort, descri
         diff = {"prepared": after}
 
     if module.check_mode:
-      command_helper(module, "abort")
+        command_helper(module, "abort")
 
     # Do the commit.
     if do_commit and not module.check_mode:
@@ -235,13 +235,13 @@ def main(testing=False):
     description = module.params.get('description')
 
     if module.check_mode:
-      commit = False
+        commit = False
 
     _changed, output, diff = run_nclu(module, command_list, command_string, commit, atomic, abort, description)
     result = {
-      "changed": _changed,
-      "msg": output,
-      "diff": diff
+        "changed": _changed,
+        "msg": output,
+        "diff": diff
     }
 
     _changed, output = run_nclu(module, command_list, command_string, commit, atomic, abort, description)
