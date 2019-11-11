@@ -734,7 +734,7 @@ test_no_log - Invoked with:
         } catch [System.Management.Automation.RuntimeException] {
             $failed = $true
             $_.Exception.Message | Assert-Equals -Expected "exit: 0"
-            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
         }
         $failed | Assert-Equals -Expected $true
 
