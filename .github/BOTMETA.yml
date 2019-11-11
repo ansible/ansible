@@ -148,7 +148,7 @@ files:
   $modules/cloud/misc/virt_pool.py: *virt
   $modules/cloud/misc/xenserver_facts.py:
     ignored: andyhky
-  $modules/cloud/opennebula/: ilicmilan kustodian xorel rsmontero meerkampdvv
+  $modules/cloud/opennebula/: ilicmilan xorel rsmontero meerkampdvv
   $modules/cloud/openstack/: $team_openstack
   $modules/cloud/oracle/: &oracle
     labels: [ cloud, oracle ]
@@ -1642,7 +1642,7 @@ macros:
   team_openswitch: Qalthos danielmellado
   team_oracle: nalsaber manojmeda mross22
   team_ovirt: machacekondra mwperina mnecas
-  team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem tcraxs
+  team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko matburt nerzhul sebasmannem tcraxs
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych opslounge dnix101
   team_rabbitmq: chrishoffman manuel-sousa
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
