@@ -52,9 +52,9 @@ options:
         description:
             - Creates a wrapper script and exports the path as GIT_SSH
               which git then automatically uses to override ssh arguments.
-              An example value could be "-o StrictHostKeyChecking=no"
-              (although this particular option is better set via
-              C(accept_hostkey)).
+              Needs I(git>=2.3.0) to work correctly. An example value could
+              be "-o StrictHostKeyChecking=no" (although this particular
+              option is better set via C(accept_hostkey)).
         version_added: "1.5"
     key_file:
         description:
@@ -1151,6 +1151,9 @@ def main():
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
         result['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
         depth = None
+
+    if ssh_opts is not None and git_version_used < LooseVersion('2.3.0'):
+        result['warnings'].append("Your git version is too old to support the ssh_opts argument. Consider using an SSH config file.")
 
     recursive = module.params['recursive']
     track_submodules = module.params['track_submodules']
