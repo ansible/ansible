@@ -31,6 +31,9 @@ description:
     for segmenting configuration into sections.  This module provides
     an implementation for working with CloudEngine configuration sections in
     a deterministic way.  This module works with CLI transports.
+notes:
+  - Recommended connection is C(network_cli).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
   lines:
     description:

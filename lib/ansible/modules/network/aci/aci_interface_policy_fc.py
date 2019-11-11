@@ -190,10 +190,10 @@ def main():
         ],
     )
 
-    fc_policy = module.params['fc_policy']
-    port_mode = module.params['port_mode']
-    description = module.params['description']
-    state = module.params['state']
+    fc_policy = module.params.get('fc_policy')
+    port_mode = module.params.get('port_mode')
+    description = module.params.get('description')
+    state = module.params.get('state')
 
     aci = ACIModule(module)
     aci.construct_url(

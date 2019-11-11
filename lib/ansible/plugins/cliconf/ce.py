@@ -34,6 +34,7 @@ import json
 
 from itertools import chain
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
@@ -98,3 +99,24 @@ class Cliconf(CliconfBase):
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            out = self._connection.get_prompt()
+
+            if out is None:
+                raise AnsibleConnectionFailure(message=u'cli prompt is not identified from the last received'
+                                                       u' response window: %s' % self._connection._last_recv_window)
+
+            prompt = to_text(out, errors='surrogate_then_replace').strip()
+            while prompt.endswith(']'):
+                self._connection.queue_message('vvvv', 'wrong context, sending return to device')
+                if prompt.startswith('[*'):
+                    self._connection.exec_command('clear configuration candidate')
+                self._connection.exec_command('return')
+                out = self._connection.get_prompt()
+                prompt = to_text(out, errors='surrogate_then_replace').strip()

@@ -17,83 +17,78 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_snapshot
 version_added: '2.9'
-short_description: Manage Azure Snapshot instance.
+short_description: Manage Azure Snapshot instance
 description:
-  - 'Create, update and delete instance of Azure Snapshot.'
+    - Create, update and delete instance of Azure Snapshot.
 options:
-  resource_group:
-    description:
-      - The name of the resource group.
-    required: true
-    type: str
-  name:
-    description:
-      - Resource name
-    type: str
-  location:
-    description:
-      - Resource location
-    type: str
-  sku:
-    description:
-      - SKU
-    type: dict
-    suboptions:
-      name:
+    resource_group:
         description:
-          - The sku name.
+            - The name of the resource group.
+        required: true
+        type: str
+    name:
+        description:
+            - Resource name.
+        type: str
+    location:
+        description:
+            - Resource location.
+        type: str
+    sku:
+        description:
+            - The snapshots SKU.
+        type: dict
+        suboptions:
+            name:
+                description:
+                    - The sku name.
+                type: str
+                choices:
+                    - Standard_LRS
+                    - Premium_LRS
+                    - Standard_ZRS
+            tier:
+                description:
+                    - The sku tier.
+                type: str
+    os_type:
+        description:
+            - The Operating System type.
         type: str
         choices:
-          - Standard_LRS
-          - Premium_LRS
-          - Standard_ZRS
-      tier:
+            - Linux
+            - Windows
+    creation_data:
         description:
-          - The sku tier.
-        type: str
-  os_type:
-    description:
-      - The Operating System type.
-    type: str
-    choices:
-      - Linux
-      - Windows
-  creation_data:
-    description:
-      - >-
-        Disk source information. CreationData information cannot be changed
-        after the disk has been created.
-    type: dict
-    suboptions:
-      create_option:
+            - Disk source information.
+            - CreationData information cannot be changed after the disk has been created.
+        type: dict
+        suboptions:
+            create_option:
+                description:
+                    - This enumerates the possible sources of a disk's creation.
+                type: str
+                default: Import
+                choices:
+                    - Import
+            source_uri:
+                description:
+                    - If I(createOption=Import), this is the URI of a blob to be imported into a managed disk.
+                type: str
+    state:
         description:
-          - This enumerates the possible sources of a disk's creation.
+            - Assert the state of the Snapshot.
+            - Use C(present) to create or update an Snapshot and C(absent) to delete it.
+        default: present
         type: str
-        default: Import
         choices:
-          - Import
-      source_uri:
-        description:
-          - >-
-            If createOption is Import, this is the URI of a blob to be imported
-            into a managed disk.
-        type: str
-  state:
-    description:
-      - Assert the state of the Snapshot.
-      - >-
-        Use C(present) to create or update an Snapshot and C(absent) to delete
-        it.
-    default: present
-    type: str
-    choices:
-      - absent
-      - present
+            - absent
+            - present
 extends_documentation_fragment:
-  - azure
-  - azure_tags
+    - azure
+    - azure_tags
 author:
-  - Zim Kalinowski (@zikalino)
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -110,11 +105,11 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-  description:
-    - Resource Id
-  returned: always
-  type: str
-  sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot
+    description:
+        - Resource ID.
+    returned: always
+    type: str
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot
 '''
 
 import time

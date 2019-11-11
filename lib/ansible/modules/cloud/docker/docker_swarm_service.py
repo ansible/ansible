@@ -284,8 +284,8 @@ options:
       source:
         description:
           - Mount source (e.g. a volume name or a host path).
+          - Must be specified if I(type) is not C(tmpfs).
         type: str
-        required: yes
       target:
         description:
           - Container path.
@@ -1706,7 +1706,9 @@ class DockerService(DockerBaseClass):
                 service_m = {}
                 service_m['readonly'] = param_m['readonly']
                 service_m['type'] = param_m['type']
-                service_m['source'] = param_m['source']
+                if param_m['source'] is None and param_m['type'] != 'tmpfs':
+                    raise ValueError('Source must be specified for mounts which are not of type tmpfs')
+                service_m['source'] = param_m['source'] or ''
                 service_m['target'] = param_m['target']
                 service_m['labels'] = param_m['labels']
                 service_m['no_copy'] = param_m['no_copy']
@@ -2624,7 +2626,7 @@ def main():
         image=dict(type='str'),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         mounts=dict(type='list', elements='dict', options=dict(
-            source=dict(type='str', required=True),
+            source=dict(type='str'),
             target=dict(type='str', required=True),
             type=dict(
                 type='str',

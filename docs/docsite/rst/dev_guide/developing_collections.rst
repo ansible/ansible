@@ -43,7 +43,7 @@ and other tools need in order to package, build and publish the collection::
 
 
 .. note::
-    * Ansible only accepts ``.yml`` extensions for galaxy.yml.
+    * Ansible only accepts ``.yml`` extensions for :file:`galaxy.yml`, and ``.md`` for the :file:`README` file and any files in the :file:`/docs` folder.
     * See the `draft collection <https://github.com/bcoca/collection>`_ for an example of a full collection structure.
     * Not all directories are currently in use. Those are placeholders for future features.
 
@@ -234,8 +234,11 @@ a tarball of the built collection in the current directory which can be uploaded
 
 
 .. note::
-    Certain files and folders are excluded when building the collection artifact. This is not currently configurable
-    and is a work in progress so the collection artifact may contain files you would not wish to distribute.
+    * Certain files and folders are excluded when building the collection artifact. This is not currently configurable and is a work in progress so the collection artifact may contain files you would not wish to distribute.
+    * If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``.
+    * You must also delete the :file:`tests/output` directory if you have been testing with ``ansible-test``.
+    * The current Galaxy maximum tarball size is 2 MB.
+
 
 This tarball is mainly intended to upload to Galaxy
 as a distribution method, but you can use it directly to install the collection on target systems.

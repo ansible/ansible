@@ -17,7 +17,7 @@
       nv_overlay_evpn: true
 
   - name: "Apply N7K specific setup config"
-    include: targets/nxos_overlay_global/tasks/platform/n7k/setup.yaml
+    include: tasks/platform/n7k/setup.yaml
     when: platform is match('N7K')
 
   - name: "Configure Additional N7K requiste features"
@@ -86,7 +86,7 @@
 
   always:
   - name: "Apply N7K specific cleanup config"
-    include: targets/nxos_overlay_global/tasks/platform/n7k/cleanup.yaml
+    include: tasks/platform/n7k/cleanup.yaml
     when: platform is match('N7K')
 
   - name: "Disable nv overlay evpn"

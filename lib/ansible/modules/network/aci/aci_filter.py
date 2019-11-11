@@ -227,10 +227,10 @@ def main():
         ],
     )
 
-    filter_name = module.params['filter']
-    description = module.params['description']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    filter_name = module.params.get('filter')
+    description = module.params.get('description')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci = ACIModule(module)
     aci.construct_url(

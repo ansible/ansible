@@ -22,7 +22,7 @@
   ignore_errors: yes
 
 - block:
-  
+
   - name: put interface in L3 and enable PIM
     nxos_config:
       commands:
@@ -175,5 +175,6 @@
     nxos_feature:
       feature: pim
       state: disabled
+    ignore_errors: yes
 
   - debug: msg="END connection={{ ansible_connection }} nxos_igmp_interface sanity test"

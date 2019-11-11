@@ -758,6 +758,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
     def __init__(self, module):
         super(CertificateSigningRequestCryptography, self).__init__(module)
         self.cryptography_backend = cryptography.hazmat.backends.default_backend()
+        self.module = module
         if self.version != 1:
             module.warn('The cryptography backend only supports version 1. (The only valid value according to RFC 2986.)')
 
@@ -816,20 +817,26 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             )
 
         digest = None
-        if self.digest == 'sha256':
-            digest = cryptography.hazmat.primitives.hashes.SHA256()
-        elif self.digest == 'sha384':
-            digest = cryptography.hazmat.primitives.hashes.SHA384()
-        elif self.digest == 'sha512':
-            digest = cryptography.hazmat.primitives.hashes.SHA512()
-        elif self.digest == 'sha1':
-            digest = cryptography.hazmat.primitives.hashes.SHA1()
-        elif self.digest == 'md5':
-            digest = cryptography.hazmat.primitives.hashes.MD5()
-        # FIXME
-        else:
-            raise CertificateSigningRequestError('Unsupported digest "{0}"'.format(self.digest))
-        self.request = csr.sign(self.privatekey, digest, self.cryptography_backend)
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.privatekey):
+            if self.digest == 'sha256':
+                digest = cryptography.hazmat.primitives.hashes.SHA256()
+            elif self.digest == 'sha384':
+                digest = cryptography.hazmat.primitives.hashes.SHA384()
+            elif self.digest == 'sha512':
+                digest = cryptography.hazmat.primitives.hashes.SHA512()
+            elif self.digest == 'sha1':
+                digest = cryptography.hazmat.primitives.hashes.SHA1()
+            elif self.digest == 'md5':
+                digest = cryptography.hazmat.primitives.hashes.MD5()
+            # FIXME
+            else:
+                raise CertificateSigningRequestError('Unsupported digest "{0}"'.format(self.digest))
+        try:
+            self.request = csr.sign(self.privatekey, digest, self.cryptography_backend)
+        except TypeError as e:
+            if str(e) == 'Algorithm must be a registered hash algorithm.' and digest is None:
+                self.module.fail_json(msg='Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.')
+            raise
 
         return self.request.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
 

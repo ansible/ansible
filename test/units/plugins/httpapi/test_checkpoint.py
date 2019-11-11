@@ -20,6 +20,15 @@ EXPECTED_BASE_HEADERS = {
 class FakeCheckpointHttpApiPlugin(HttpApi):
     def __init__(self, conn):
         super(FakeCheckpointHttpApiPlugin, self).__init__(conn)
+        self.hostvars = {
+            'domain': None
+        }
+
+    def get_option(self, var):
+        return self.hostvars[var]
+
+    def set_option(self, var, val):
+        self.hostvars[var] = val
 
 
 class TestCheckpointHttpApi(unittest.TestCase):
@@ -51,6 +60,19 @@ class TestCheckpointHttpApi(unittest.TestCase):
         resp = self.checkpoint_plugin.send_request('/test', None)
 
         assert resp == (500, {'errorMessage': 'ERROR'})
+
+    def test_login_to_global_domain(self):
+        temp_domain = self.checkpoint_plugin.hostvars['domain']
+        self.checkpoint_plugin.hostvars['domain'] = 'test_domain'
+        self.connection_mock.send.return_value = self._connection_response(
+            {'sid': 'SID', 'uid': 'UID'}
+        )
+
+        self.checkpoint_plugin.login('USERNAME', 'PASSWORD')
+
+        self.connection_mock.send.assert_called_once_with('/web_api/login', mock.ANY, headers=mock.ANY,
+                                                          method=mock.ANY)
+        self.checkpoint_plugin.hostvars['domain'] = temp_domain
 
     @staticmethod
     def _connection_response(response, status=200):

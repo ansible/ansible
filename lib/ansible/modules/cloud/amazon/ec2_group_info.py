@@ -31,6 +31,7 @@ options:
       instead of dashes (-) in the filter keys, which will take precedence in case of conflict.
     required: false
     default: {}
+    type: dict
 notes:
   - By default, the module will return all security groups. To limit results use the appropriate filters.
 

@@ -4,6 +4,10 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -14,7 +18,7 @@ module: rds_instance_info
 version_added: "2.6"
 short_description: obtain information about one or more RDS instances
 description:
-  - obtain information about one or more RDS instances
+  - Obtain information about one or more RDS instances.
   - This module was called C(rds_instance_facts) before Ansible 2.9. The usage did not change.
 options:
   db_instance_identifier:
@@ -23,10 +27,12 @@ options:
     required: false
     aliases:
       - id
+    type: str
   filters:
     description:
       - A filter that specifies one or more DB instances to describe.
         See U(https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DescribeDBInstances.html)
+    type: dict
 requirements:
     - "python >= 2.7"
     - "boto3"

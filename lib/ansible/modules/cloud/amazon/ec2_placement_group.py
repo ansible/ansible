@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -23,12 +26,14 @@ options:
     description:
       - The name for the placement group.
     required: true
+    type: str
   state:
     description:
       - Create or delete placement group.
     required: false
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   strategy:
     description:
       - Placement group strategy. Cluster will cluster instances into a
@@ -37,6 +42,7 @@ options:
     required: false
     default: cluster
     choices: [ 'cluster', 'spread' ]
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2

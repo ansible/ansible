@@ -603,6 +603,8 @@ class HttpApi:
             if opts.get('ignore_timeout') and code:
                 responses.append(code)
                 return responses
+            elif opts.get('catch_clierror') and '400' in code:
+                return [code, err]
             elif code and 'no graceful-restart' in err:
                 if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
                     msg = ['']

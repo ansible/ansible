@@ -284,12 +284,12 @@ def main():
         ],
     )
 
-    domain = module.params['domain']
-    domain_type = module.params['domain_type']
-    pool = module.params['pool']
-    pool_allocation_mode = module.params['pool_allocation_mode']
-    vm_provider = module.params['vm_provider']
-    state = module.params['state']
+    domain = module.params.get('domain')
+    domain_type = module.params.get('domain_type')
+    pool = module.params.get('pool')
+    pool_allocation_mode = module.params.get('pool_allocation_mode')
+    vm_provider = module.params.get('vm_provider')
+    state = module.params.get('state')
 
     # Report when vm_provider is set when type is not virtual
     if domain_type != 'vmm' and vm_provider is not None:

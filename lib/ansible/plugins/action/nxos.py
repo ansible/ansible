@@ -24,8 +24,6 @@ import re
 import sys
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.nxos.nxos import nxos_provider_spec
@@ -56,8 +54,6 @@ class ActionModule(ActionNetworkModule):
                 self._task.args['username'] = self._play_context.connection_user
 
         if module_name == 'nxos_install_os':
-            persistent_command_timeout = 0
-            persistent_connect_timeout = 0
             connection = self._connection
             if connection.transport == 'local':
                 persistent_command_timeout = C.PERSISTENT_COMMAND_TIMEOUT
@@ -123,21 +119,6 @@ class ActionModule(ActionNetworkModule):
                 self._task.args['provider'] = ActionModule.nxapi_implementation(provider, self._play_context)
         else:
             return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
-
-        if (self._play_context.connection == 'local' and transport == 'cli') or self._play_context.connection == 'network_cli':
-            # make sure we are in the right cli context which should be
-            # enable mode and not config module
-            if socket_path is None:
-                socket_path = self._connection.socket_path
-
-            conn = Connection(socket_path)
-            # Match prompts ending in )# except those with (maint-mode)#
-            config_prompt = re.compile(r'^.*\((?!maint-mode).*\)#$')
-            out = conn.get_prompt()
-            while config_prompt.match(to_text(out, errors='surrogate_then_replace').strip()):
-                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                conn.send_command('exit')
-                out = conn.get_prompt()
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result

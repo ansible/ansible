@@ -36,7 +36,7 @@
 #           supershipit - supershipiteers can turn a shipit into a supershipit
 #
 
-automerge: False
+automerge: True
 files:
   .github/BOTMETA.yml:
     labels: botmeta
@@ -250,7 +250,7 @@ files:
   $modules/messaging/rabbitmq/: $team_rabbitmq
   $modules/monitoring/airbrake_deployment.py:
     ignored: bpennypacker
-  $modules/monitoring/datadog_event.py:
+  $modules/monitoring/datadog/datadog_event.py:
     ignored: arturaz
   $modules/monitoring/grafana:
     labels: grafana
@@ -284,9 +284,12 @@ files:
     maintainers: $team_aci
   $modules/network/aireos/: &aireos
     maintainers: $team_aireos
+    ignored: jmighion
     labels: [ aireos, cisco, networking ]
   $modules/network/aos/: dgarros jeremyschulman
-  $modules/network/aruba/: jmighion
+  $modules/network/aruba/:
+    maintainers: $team_aruba
+    ignored: jmighion
   $modules/network/asa/: &asa
     maintainers: $team_asa
     labels: [ asa, cisco, networking ]
@@ -442,9 +445,9 @@ files:
     maintainers: $team_ucs
   $modules/remote_management/dellemc/: rajeevarakkal
   $modules/source_control/git.py: $team_ansible
-  $modules/source_control/github_key.py:
+  $modules/source_control/github/github_key.py:
     ignored: erydo
-  $modules/source_control/gitlab_: &gitlab
+  $modules/source_control/gitlab/: &gitlab
     keywords: [ gitlab, source_control ]
     labels: gitlab
     maintainers: $team_gitlab
@@ -734,7 +737,8 @@ files:
   $module_utils/network/aos:
     maintainers: dgarros jeremyschulman
   $module_utils/network/aruba:
-    maintainers: jmighion
+    maintainers: $team_aruba
+    ignored: jmighion
   $module_utils/network/asa: *asa
   $module_utils/network/avi:
     maintainers: $team_avi
@@ -949,7 +953,7 @@ files:
   $plugins/action/asa: *asa
   $plugins/action/aireos: *aireos
   $plugins/action/aruba:
-    maintainers: jmighion
+    maintainers: $team_aruba
     labels: networking
   $plugins/action/bigip:
     maintainers: caphrim007 wojtek0806
@@ -1052,6 +1056,8 @@ files:
 
   $plugins/cliconf/:
     labels: networking
+  $plugins/cliconf/aruba.py:
+    maintainers: $team_aruba
   $plugins/cliconf/ce.py:
     <<: *cloudengine
   $plugins/cliconf/edgeswitch.py:
@@ -1368,6 +1374,8 @@ files:
     labels: networking
   $plugins/terminal/__init__.py:
     support: network
+  $plugins/terminal/aruba.py:
+    maintainers: $team_aruba
   $plugins/terminal/asa.py: *asa
   $plugins/terminal/ce.py:
     <<: *cloudengine
@@ -1568,6 +1576,7 @@ files:
   test/units/modules/network/iosxr: *iosxr
   test/units/modules/network/nso: *nso
   test/units/modules/network/nxos: *nxos
+  test/units/modules/source_control/gitlab/: *gitlab
   test/units/modules/storage/hpe3par: *hpe3par
   test/units/modules/storage/netapp:
     maintainers: $team_netapp
@@ -1583,8 +1592,9 @@ macros:
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
-  team_aireos: jmighion
+  team_aireos: $team_ansible
   team_aix: bcoca dagwieers d-little flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
+  team_aruba: karthikeyan-dhandapani
   team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore

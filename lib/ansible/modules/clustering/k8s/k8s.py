@@ -107,7 +107,7 @@ options:
       reason:
         description:
         - The value of the reason field in your desired condition
-        - For example, if a C(Deployment) is paused, The C(Progressing) c(type) will have the C(DeploymentPaused) reason.
+        - For example, if a C(Deployment) is paused, The C(Progressing) C(type) will have the C(DeploymentPaused) reason.
         - The possible reasons in a condition are specific to each resource type in Kubernetes. See the API documentation of the status field
           for a given resource to see possible choices.
     version_added: "2.8"

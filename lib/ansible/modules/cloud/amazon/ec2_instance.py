@@ -15,7 +15,11 @@ DOCUMENTATION = '''
 module: ec2_instance
 short_description: Create & manage EC2 instances
 description:
-    - Create and manage AWS EC2 instance
+  - Create and manage AWS EC2 instances.
+  - >
+    Note: This module does not support creating
+    L(EC2 Spot instances,https://aws.amazon.com/ec2/spot/). The M(ec2) module
+    can create and manage spot instances.
 version_added: "2.5"
 author:
   - Ryan Scott Brown (@ryansb)
@@ -222,7 +226,7 @@ options:
     type: bool
   cpu_credit_specification:
     description:
-      - For T2 series instances, choose whether to allow increased charges to buy CPU credits if the default pool is depleted.
+      - For T series instances, choose whether to allow increased charges to buy CPU credits if the default pool is depleted.
       - Choose I(unlimited) to enable buying additional CPU credits.
     choices: ['unlimited', 'standard']
     type: str
@@ -1220,7 +1224,10 @@ def build_top_level_options(params):
     if params.get('tenancy') is not None:
         spec['Placement'] = {'Tenancy': params.get('tenancy')}
     if params.get('placement_group'):
-        spec.setdefault('Placement', {'GroupName': str(params.get('placement_group'))})
+        if 'Placement' in spec:
+            spec['Placement']['GroupName'] = str(params.get('placement_group'))
+        else:
+            spec.setdefault('Placement', {'GroupName': str(params.get('placement_group'))})
     if params.get('ebs_optimized') is not None:
         spec['EbsOptimized'] = params.get('ebs_optimized')
     if params.get('instance_initiated_shutdown_behavior'):

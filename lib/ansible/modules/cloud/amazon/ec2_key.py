@@ -24,10 +24,12 @@ options:
     description:
       - Name of the key pair.
     required: true
+    type: str
   key_material:
     description:
       - Public key material.
     required: false
+    type: str
   force:
     description:
       - Force overwrite of already existing key pair if key has changed.
@@ -41,19 +43,18 @@ options:
     required: false
     choices: [ present, absent ]
     default: 'present'
+    type: str
   wait:
     description:
-      - Wait for the specified action to complete before returning. This option has no effect since version 2.5.
-    required: false
-    default: false
-    type: bool
+      - This option has no effect since version 2.5 and will be removed in 2.14.
     version_added: "1.6"
+    type: bool
   wait_timeout:
     description:
-      - How long before wait gives up, in seconds. This option has no effect since version 2.5.
-    required: false
-    default: 300
+      - This option has no effect since version 2.5 and will be removed in 2.14.
     version_added: "1.6"
+    type: int
+    required: false
 
 extends_documentation_fragment:
   - aws
@@ -248,8 +249,8 @@ def main():
             key_material=dict(),
             force=dict(type='bool', default=True),
             state=dict(default='present', choices=['present', 'absent']),
-            wait=dict(type='bool', default=False),
-            wait_timeout=dict(default=300, type='int')
+            wait=dict(type='bool', removed_in_version='2.14'),
+            wait_timeout=dict(type='int', removed_in_version='2.14')
         )
     )
 
