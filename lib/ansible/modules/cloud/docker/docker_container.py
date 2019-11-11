@@ -112,11 +112,18 @@ options:
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period.
+      - See I(cpus) for an easier to use alternative.
     type: int
   cpu_quota:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) quota.
+      - See I(cpus) for an easier to use alternative.
     type: int
+  cpus:
+    description:
+      - Specify how much of the available CPU resources a container can use.
+      - A value of C(1.5) means that at most one and a half CPU (core) will be used.
+    type: float
   cpuset_cpus:
     description:
       - CPUs in which to allow execution C(1,3) or C(1-3).
@@ -1207,6 +1214,7 @@ class TaskParameters(DockerBaseClass):
         self.command = None
         self.cpu_period = None
         self.cpu_quota = None
+        self.cpus = None
         self.cpuset_cpus = None
         self.cpuset_mems = None
         self.cpu_shares = None
@@ -1292,6 +1300,9 @@ class TaskParameters(DockerBaseClass):
         # Only the container's name is needed.
         if self.state == 'absent':
             return
+
+        if self.cpus is not None:
+            self.cpus = int(round(self.cpus * 1E9))
 
         if self.groups:
             # In case integers are passed as groups, we need to convert them to
@@ -1544,6 +1555,7 @@ class TaskParameters(DockerBaseClass):
             device_write_iops='device_write_iops',
             pids_limit='pids_limit',
             mounts='mounts',
+            nano_cpus='cpus',
         )
 
         if self.client.docker_py_version >= LooseVersion('1.9') and self.client.docker_api_version >= LooseVersion('1.22'):
@@ -2125,6 +2137,7 @@ class Container(DockerBaseClass):
             # The previous tag, v1.9.1, has API version 1.21 and does not have
             # HostConfig.Mounts. I have no idea what about API 1.25...
             expected_mounts=self._decode_mounts(host_config.get('Mounts')),
+            cpus=host_config.get('NanoCpus'),
         )
         # Options which don't make sense without their accompanying option
         if self.parameters.restart_policy:
@@ -3156,6 +3169,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             uts=dict(docker_py_version='3.5.0', docker_api_version='1.25'),
             pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
             mounts=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
+            cpus=dict(docker_py_version='2.3.0', docker_api_version='1.25'),
             # specials
             ipvX_address_supported=dict(docker_py_version='1.9.0', docker_api_version='1.22',
                                         detect_usage=detect_ipvX_address_usage,
@@ -3212,6 +3226,7 @@ def main():
         container_default_behavior=dict(type='str', choices=['compatibility', 'no_defaults']),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
+        cpus=dict(type='float'),
         cpuset_cpus=dict(type='str'),
         cpuset_mems=dict(type='str'),
         cpu_shares=dict(type='int'),
