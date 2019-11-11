@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix for performance regression in handler invocation (https://github.com/ansible/ansible/issues/59017)
