@@ -1255,7 +1255,7 @@ def has_list_changed(new_list, old_list, sort_lists=True):
         return True
 
     if sort_lists:
-        zip_data = zip(sort(new_list), sort(old_list))
+        zip_data = zip(sorted(new_list), sorted(old_list))
     else:
         zip_data = zip(new_list, old_list)
     for new_item, old_item in zip_data:
