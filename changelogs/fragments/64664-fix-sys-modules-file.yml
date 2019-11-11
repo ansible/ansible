@@ -1,0 +1,4 @@
+bugfixes:
+- module executor - Address issue where changes to Ansiballz module code, change the behavior
+  of module execution as it pertains to ``__file__`` and ``sys.modules``
+  (https://github.com/ansible/ansible/issues/64664)

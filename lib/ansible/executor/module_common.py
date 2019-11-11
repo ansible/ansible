@@ -192,7 +192,7 @@ def _ansiballz_main():
         basic._ANSIBLE_ARGS = json_params
 %(coverage)s
         # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-        runpy.run_module(mod_name='%(module_fqn)s', init_globals=None, run_name='__main__', alter_sys=False)
+        runpy.run_module(mod_name='%(module_fqn)s', init_globals=None, run_name='__main__', alter_sys=True)
 
         # Ansible modules must exit themselves
         print('{"msg": "New-style module did not handle its own exit", "failed": true}')
@@ -286,7 +286,7 @@ def _ansiballz_main():
             basic._ANSIBLE_ARGS = json_params
 
             # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-            runpy.run_module(mod_name='%(module_fqn)s', init_globals=None, run_name='__main__', alter_sys=False)
+            runpy.run_module(mod_name='%(module_fqn)s', init_globals=None, run_name='__main__', alter_sys=True)
 
             # Ansible modules must exit themselves
             print('{"msg": "New-style module did not handle its own exit", "failed": true}')
