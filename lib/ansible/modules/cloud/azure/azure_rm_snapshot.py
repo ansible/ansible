@@ -105,7 +105,7 @@ EXAMPLES = '''
     creation_data:
       create_option: Import
       source_uri: 'https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd'
-      
+
 - name: Create a snapshot by copying an existing managed disk.
   azure_rm_snapshot:
     resource_group: myResourceGroup
