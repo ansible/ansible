@@ -182,7 +182,7 @@ class InventoryModule(BaseInventoryPlugin):
     def parse(self, inventory, loader, path, cache=True):
         """Dynamically parse Linode the cloud inventory."""
         if not HAS_LINODE_API4:
-            raise AnsibleParserError('the Linode dynamic inventory plugin requires linode_api4.')
+            raise AnsibleParserError('The Linode dynamic inventory plugin requires linode_api4.')
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
