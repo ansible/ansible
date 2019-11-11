@@ -63,9 +63,8 @@ options:
     type: str
   reset_type:
     description:
-      -  Here we have 2 reset types:
-         first : no-clear-history which means to unlock <all or specific user> accounts, but do not clear auth history
-         second: no-unlock which means to clear auth history for <all or specific user> accounts, but do not unlock them
+      -  Here we have 2 reset types, one of them is no-clear-history which means to unlock <all or specific user> accounts, but do not clear auth history, the 
+         second one is no-unlock which means to clear auth history for <all or specific user> accounts, but do not unlock them
     type: str
     choices: ['no-clear-history', 'no-unlock']
   admin_no_lockout_enabled:
@@ -281,7 +280,7 @@ class OnyxAaaAuthenticationModule(BaseOnyxModule):
             self._current_config['admin_no_lockout_enabled'] = True
         else:
             self._current_config['admin_no_lockout_enabled'] = False
-        if aaa_config.get('Delay after each auth failure (fail delay)') !="none":
+        if aaa_config.get('Delay after each auth failure (fail delay)') != "none":
             self._current_config['auth_fail_delay_time'] = aaa_config.get('Delay after each auth failure (fail delay)').split(' ')[1]
         else:
             self._current_config['auth_fail_delay_time'] = aaa_config.get('Delay after each auth failure (fail delay)')
@@ -427,7 +426,7 @@ class OnyxAaaAuthenticationModule(BaseOnyxModule):
 
         if lock_time is not None:
             if curr_lock_time != "none":
-                if  lock_time != int(curr_lock_time):
+                if lock_time != int(curr_lock_time):
                     self._commands.append('aaa authentication attempts lockout lock-time {0}' .format(lock_time))
             else:
                 self._commands.append('aaa authentication attempts lockout lock-time {0}' .format(lock_time))
