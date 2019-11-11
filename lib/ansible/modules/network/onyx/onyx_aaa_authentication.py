@@ -63,8 +63,8 @@ options:
     type: str
   reset_type:
     description:
-      -  Here we have 2 reset types, one of them is no-clear-history which means to unlock <all or specific user> accounts, but do not clear auth history, the 
-         second one is no-unlock which means to clear auth history for <all or specific user> accounts, but do not unlock them
+      - Here we have 2 reset types, one of them is no-clear-history which means to unlock <all or specific user> accounts, but do not clear auth history, the
+        second one is no-unlock which means to clear auth history for <all or specific user> accounts, but do not unlock them
     type: str
     choices: ['no-clear-history', 'no-unlock']
   admin_no_lockout_enabled:
