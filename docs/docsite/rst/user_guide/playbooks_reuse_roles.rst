@@ -284,7 +284,7 @@ Role dependencies allow you to automatically pull in other roles when using a ro
 
 .. note::
     Role dependencies must use the classic role definition style.
-    
+
 Role dependencies are always executed before the role that includes them, and may be recursive. Dependencies also follow the duplication rules specified above. If another role also lists it as a dependency, it will not be run again based on the same rules given above. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
 
 .. note::
@@ -397,9 +397,9 @@ Ansible Galaxy
 
 `Ansible Galaxy <https://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
 
-The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy, and also provides an excellent default framework for creating your own roles. 
+The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy, and also provides an excellent default framework for creating your own roles.
 
-Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page for more information
+Read the `Ansible Galaxy documentation <https://docs.ansible.com/ansible-galaxy/latest/>`_ page for more information
 
 .. seealso::
 
@@ -425,4 +425,3 @@ Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page
        Complete playbook files from the GitHub project source
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-

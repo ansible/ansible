@@ -297,7 +297,7 @@ The Ansible Galaxy page for a role lists all available versions. To update a loc
 
 .. seealso::
 
-       `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_
+       `Ansible Galaxy documentation <https://docs.ansible.com/ansible-galaxy/latest/>`_
            Ansible Galaxy user guide
        `Ansible supported network roles <https://galaxy.ansible.com/ansible-network>`_
            List of Ansible-supported network and cloud roles on Ansible Galaxy
