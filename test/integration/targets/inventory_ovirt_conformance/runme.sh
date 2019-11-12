@@ -22,6 +22,9 @@ ovirt_pasdword = 'fake'
 ovirt_cafile = 'fake'
 EOF
 
+export OVIRT_URL=fake
+export OVIRT_USERNAME=fake
+export OVIRT_PASSWORD=fake
 export OVIRT_INI_PATH=${OUTPUT_DIR}/ovirt.ini
 ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i ./ovirt.sh --list --output="$OUTPUT_DIR/script.out"
 RC=$?
