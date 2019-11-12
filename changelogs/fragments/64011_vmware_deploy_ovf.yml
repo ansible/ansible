@@ -1,0 +1,2 @@
+bugfixes:
+- vmware_deploy_ovf - backport content fix from 2.9 (https://github.com/ansible/ansible/pull/59614)
