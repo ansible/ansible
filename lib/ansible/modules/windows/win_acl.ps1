@@ -176,7 +176,11 @@ Try {
     If ($state -eq "present" -And $match -eq $false) {
         Try {
             $objACL.AddAccessRule($objACE)
-            Set-ACL -LiteralPath $path -AclObject $objACL
+            If ($path_item.PSProvider.Name -eq "Registry") {
+                Set-ACL -LiteralPath $path -AclObject $objACL
+            } else {
+                (Get-Item -LiteralPath $path).SetAccessControl($objACL)
+            }
             $result.changed = $true
         }
         Catch {
@@ -186,7 +190,11 @@ Try {
     ElseIf ($state -eq "absent" -And $match -eq $true) {
         Try {
             $objACL.RemoveAccessRule($objACE)
-            Set-ACL -LiteralPath $path -AclObject $objACL
+            If ($path_item.PSProvider.Name -eq "Registry") {
+                Set-ACL -LiteralPath $path -AclObject $objACL
+            } else {
+                (Get-Item -LiteralPath $path).SetAccessControl($objACL)
+            }
             $result.changed = $true
         }
         Catch {
