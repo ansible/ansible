@@ -1,0 +1,2 @@
+bugfixes:
+  - "ovirt_disk: add host parameter to specify where should be the lun disk added."
