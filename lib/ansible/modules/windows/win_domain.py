@@ -71,6 +71,12 @@ options:
     type: str
     choices: [ Win2003, Win2008, Win2008R2, Win2012, Win2012R2, WinThreshold ]
     version_added: '2.8'
+  install_dns:
+    description:
+    - Whether to install the DNS service when creating the domain controller.
+    type: bool
+    default: yes
+    version_added: '2.10'
 seealso:
 - module: win_domain_controller
 - module: win_domain_computer
