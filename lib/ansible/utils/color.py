@@ -90,7 +90,7 @@ def stringc(text, color):
 
     if ANSIBLE_COLOR:
         color_code = parsecolor(color)
-        return u"\n".join([u"\033[%sm%s\033[0m" % (color_code, t) for t in text.split(u'\n')])
+        return u"\n".join([u"\001\033[%sm\002%s\001\033[0m\002" % (color_code, t) for t in text.split(u'\n')])
     else:
         return text
 
