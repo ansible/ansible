@@ -1,0 +1,3 @@
+minor_changes:
+  - git - add warning if ssh_opts argument is provided, but the version of git
+  does not support it (https://github.com/ansible/ansible/issues/64673)
