@@ -265,6 +265,18 @@ namespace Ansible.Process
         public static Result CreateProcess(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory,
             IDictionary environment, string stdin)
         {
+            return CreateProcess(lpApplicationName, lpCommandLine, lpCurrentDirectory, environment, stdin, null);
+        }
+
+        public static Result CreateProcess(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory,
+            IDictionary environment, byte[] stdin)
+        {
+            return CreateProcess(lpApplicationName, lpCommandLine, lpCurrentDirectory, environment, stdin, null);
+        }
+
+        public static Result CreateProcess(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory,
+            IDictionary environment, string stdin, string outputEncoding)
+        {
             byte[] stdinBytes;
             if (String.IsNullOrEmpty(stdin))
                 stdinBytes = new byte[0];
@@ -274,7 +286,7 @@ namespace Ansible.Process
                     stdin += Environment.NewLine;
                 stdinBytes = new UTF8Encoding(false).GetBytes(stdin);
             }
-            return CreateProcess(lpApplicationName, lpCommandLine, lpCurrentDirectory, environment, stdinBytes);
+            return CreateProcess(lpApplicationName, lpCommandLine, lpCurrentDirectory, environment, stdinBytes, outputEncoding);
         }
 
         /// <summary>
@@ -285,9 +297,10 @@ namespace Ansible.Process
         /// <param name="lpCurrentDirectory">The full path to the current directory for the process, null will have the same cwd as the calling process</param>
         /// <param name="environment">A dictionary of key/value pairs to define the new process environment</param>
         /// <param name="stdin">A byte array to send over the stdin pipe</param>
+        /// <param name="outputEncoding">The character encoding for decoding stdout/stderr output of the process.</param>
         /// <returns>Result object that contains the command output and return code</returns>
         public static Result CreateProcess(string lpApplicationName, string lpCommandLine, string lpCurrentDirectory,
-            IDictionary environment, byte[] stdin)
+            IDictionary environment, byte[] stdin, string outputEncoding)
         {
             NativeHelpers.ProcessCreationFlags creationFlags = NativeHelpers.ProcessCreationFlags.CREATE_UNICODE_ENVIRONMENT |
                 NativeHelpers.ProcessCreationFlags.EXTENDED_STARTUPINFO_PRESENT;
@@ -337,7 +350,8 @@ namespace Ansible.Process
                 }
             }
 
-            return WaitProcess(stdoutRead, stdoutWrite, stderrRead, stderrWrite, stdinStream, stdin, pi.hProcess);
+            return WaitProcess(stdoutRead, stdoutWrite, stderrRead, stderrWrite, stdinStream, stdin, pi.hProcess,
+                outputEncoding);
         }
 
         internal static void CreateStdioPipes(NativeHelpers.STARTUPINFOEX si, out SafeFileHandle stdoutRead,
@@ -383,16 +397,18 @@ namespace Ansible.Process
         }
 
         internal static Result WaitProcess(SafeFileHandle stdoutRead, SafeFileHandle stdoutWrite, SafeFileHandle stderrRead,
-            SafeFileHandle stderrWrite, FileStream stdinStream, byte[] stdin, IntPtr hProcess)
+            SafeFileHandle stderrWrite, FileStream stdinStream, byte[] stdin, IntPtr hProcess, string outputEncoding = null)
         {
-            // Setup the output buffers and get stdout/stderr
-            UTF8Encoding utf8Encoding = new UTF8Encoding(false);
+            // Default to using UTF-8 as the output encoding, this should be a sane default for most scenarios.
+            outputEncoding = String.IsNullOrEmpty(outputEncoding) ? "utf-8" : outputEncoding;
+            Encoding encodingInstance = Encoding.GetEncoding(outputEncoding);
+
             FileStream stdoutFS = new FileStream(stdoutRead, FileAccess.Read, 4096);
-            StreamReader stdout = new StreamReader(stdoutFS, utf8Encoding, true, 4096);
+            StreamReader stdout = new StreamReader(stdoutFS, encodingInstance, true, 4096);
             stdoutWrite.Close();
 
             FileStream stderrFS = new FileStream(stderrRead, FileAccess.Read, 4096);
-            StreamReader stderr = new StreamReader(stderrFS, utf8Encoding, true, 4096);
+            StreamReader stderr = new StreamReader(stderrFS, encodingInstance, true, 4096);
             stderrWrite.Close();
 
             stdinStream.Write(stdin, 0, stdin.Length);

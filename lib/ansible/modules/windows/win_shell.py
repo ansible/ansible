@@ -54,6 +54,15 @@ options:
     type: bool
     default: no
     version_added: '2.8'
+  output_encoding_override:
+    description:
+    - This option overrides the encoding of stdout/stderr output.
+    - You can use this option when you need to run a command which ignore the console's codepage.
+    - You should only need to use this option in very rare circumstances.
+    - This value can be any valid encoding C(Name) based on the output of C([System.Text.Encoding]::GetEncodings()).
+      See U(https://docs.microsoft.com/dotnet/api/system.text.encoding.getencodings).
+    type: str
+    version_added: '2.10'
 notes:
    -  If you want to run an executable securely and predictably, it may be
       better to use the M(win_command) module instead. Best practices when writing
