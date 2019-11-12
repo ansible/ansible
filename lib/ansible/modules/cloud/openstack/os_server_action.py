@@ -76,6 +76,7 @@ from ansible.module_utils.openstack import openstack_full_argument_spec, opensta
 
 _action_map = {'stop': 'SHUTOFF',
                'start': 'ACTIVE',
+               'reboot': 'ACTIVE',
                'pause': 'PAUSED',
                'unpause': 'ACTIVE',
                'lock': 'ACTIVE',  # API doesn't show lock/unlock status
@@ -85,7 +86,8 @@ _action_map = {'stop': 'SHUTOFF',
                'rebuild': 'ACTIVE'}
 
 _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
-_reboot_states = ['ACTIVE', 'ERROR', 'HARD_REBOOT', 'PAUSED', 'REBOOT', 'SHUTOFF', 'SUSPENDED']
+_reboot_states = {'hard': ['ACTIVE', 'ERROR', 'HARD_REBOOT', 'PAUSED', 'REBOOT', 'SHUTOFF', 'SUSPENDED'],
+                  'soft': ['ACTIVE']}
 
 
 def _action_url(server_id):
@@ -117,9 +119,9 @@ def _system_state_change(action, status):
     return True
 
 
-def _reboot_state(status):
+def _reboot_state(status, reboot_type):
     """Check if system state is suitable for HARD reboot"""
-    if status in _reboot_states:
+    if status in _reboot_states[reboot_type]:
         return True
     return False
 
@@ -131,6 +133,7 @@ def main():
                                             'lock', 'unlock', 'suspend', 'resume',
                                             'rebuild', 'reboot']),
         image=dict(required=False),
+        reboot_type=dict(required=False, default='soft', choices=['hard', 'soft']),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -142,6 +145,7 @@ def main():
     wait = module.params['wait']
     timeout = module.params['timeout']
     image = module.params['image']
+    reboot_type = module.params['reboot_type']
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
@@ -248,12 +252,12 @@ def main():
             module.exit_json(changed=True)
 
         elif action == 'reboot':
-            if not _reboot_state(status):
+            if not _reboot_state(status, reboot_type):
                 module.exit_json(changed=False)
 
             cloud.compute.post(
                 _action_url(server.id),
-                json={'reboot': {'type': 'HARD'}})
+                json={'reboot': {'type': reboot_type.upper()}})
             if wait:
                 _wait(timeout, cloud, server, action, module, sdk)
             module.exit_json(changed=True)
