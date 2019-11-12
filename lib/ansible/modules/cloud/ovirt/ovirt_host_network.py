@@ -214,7 +214,7 @@ def get_bond_options(mode, usr_opts):
             None,
             'Dynamic link aggregation (802.3ad)',
         ]
-        if (not 0 < mode_number <= len(modes) - 1):
+        if (not 0 < mode_number <= len(modes)):
             return None
         return modes[mode_number - 1]
 
@@ -245,7 +245,9 @@ def get_bond_options(mode, usr_opts):
 class HostNetworksModule(BaseModule):
 
     def __compare_options(self, new_options, old_options):
-        return sorted(get_dict_of_struct(opt) for opt in new_options) != sorted(get_dict_of_struct(opt) for opt in old_options)
+        return sorted((get_dict_of_struct(opt) for opt in new_options),
+                      key=lambda x: x["name"]) != sorted((get_dict_of_struct(opt) for opt in old_options),
+                                                         key=lambda x: x["name"])
 
     def build_entity(self):
         return otypes.Host()
