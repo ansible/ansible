@@ -75,6 +75,9 @@ EXAMPLES = '''
   when: inventory_hostname==groups['group_name'][0]
 '''
 
+
+import atexit
+
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
     from zabbix_api import Already_Exists
@@ -165,6 +168,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
