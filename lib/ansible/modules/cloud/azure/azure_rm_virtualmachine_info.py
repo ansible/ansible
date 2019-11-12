@@ -117,6 +117,12 @@ vms:
             returned: always
             type: complex
             contains:
+                name:
+                    description:
+                        - Name of data disk.
+                    returned: always
+                    type: str
+                    sample: My-Data-Disk
                 caching:
                     description:
                         - Type of data disk caching.
@@ -433,6 +439,7 @@ class AzureRMVirtualMachineInfo(AzureRMModuleBase):
         disks = result['properties']['storageProfile']['dataDisks']
         for disk_index in range(len(disks)):
             new_result['data_disks'].append({
+                'name': disks[disk_index].get('name'),
                 'lun': disks[disk_index].get('lun'),
                 'disk_size_gb': disks[disk_index].get('diskSizeGB'),
                 'managed_disk_type': disks[disk_index].get('managedDisk', {}).get('storageAccountType'),
