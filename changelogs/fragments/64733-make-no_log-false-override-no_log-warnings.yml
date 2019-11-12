@@ -1,0 +1,2 @@
+bugfixes:
+  - "core: Make no_log=False override the no_log warnings - fixes #49465 and #64656"
