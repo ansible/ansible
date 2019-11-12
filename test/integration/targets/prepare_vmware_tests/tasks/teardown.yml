@@ -33,6 +33,19 @@
     - test_vm2
     - test_vm3
 
+- name: Remove the DVS portgroups
+  vmware_dvs_portgroup:
+    switch_name: "{{ dvswitch1 }}"
+    portgroup_name: '{{ item }}'
+    vlan_id: 0
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: absent
+  loop:
+  - DC0_DVPG0
+  - DVPG/1
+  ignore_errors: yes
+
 - name: Remove the DVSwitch
   vmware_dvswitch:
     datacenter_name: '{{ dc1 }}'

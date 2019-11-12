@@ -11,6 +11,7 @@
     setup_dvswitch: true
     setup_resource_pool: true
     setup_virtualmachines: true
+    setup_dvs_portgroup: true
 
 - include_tasks: run_test_playbook.yml
   with_items: '{{ vmware_guest_test_playbooks }}'

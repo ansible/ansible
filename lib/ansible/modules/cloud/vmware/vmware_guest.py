@@ -633,7 +633,7 @@ from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi,
                                          find_dvs_by_name, find_dvspg_by_name, wait_for_vm_ip,
-                                         wait_for_task, TaskError)
+                                         wait_for_task, TaskError, quote_obj_name)
 
 
 def list_or_dict(value):
@@ -862,6 +862,8 @@ class PyVmomiCache(object):
         return objects
 
     def get_network(self, network):
+        network = quote_obj_name(network)
+
         if network not in self.networks:
             self.networks[network] = self.find_obj(self.content, [vim.Network], network)
 
