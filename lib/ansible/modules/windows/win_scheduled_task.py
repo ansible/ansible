@@ -260,6 +260,8 @@ options:
     - The user to run the scheduled task as.
     - Will default to the current user under an interactive token if not
       specified during creation.
+    - The user account specified must have the C(SeBatchLogonRight) logon right
+      which can be added with M(win_user_right).
     type: str
     aliases: [ user ]
   password:
@@ -432,6 +434,7 @@ notes:
   read up on this guide if coming across any issues U(https://msdn.microsoft.com/en-us/library/windows/desktop/aa382542.aspx).
 seealso:
 - module: win_scheduled_task_stat
+- module: win_user_right
 author:
 - Peter Mounce (@petemounce)
 - Jordan Borean (@jborean93)
@@ -467,6 +470,14 @@ EXAMPLES = r'''
     run_level: highest
     state: present
 
+- name: Update Local Security Policy to allow users to run scheduled tasks
+  win_user_right:
+    name: SeBatchLogonRight
+    users:
+    - LocalUser
+    - DOMAIN\NetworkUser
+    action: add
+
 - name: Change above task to run under a domain user account, storing the passwords
   win_scheduled_task:
     name: TaskName2
@@ -500,14 +511,6 @@ EXAMPLES = r'''
     username: Administrator
     password: password
     update_password: no
-
-- name: Update Local Security Policy to allow users to run scheduled tasks
-  win_user_right:
-    name: SeBatchLogonRight
-    users:
-    - LocalUser
-    - DOMAIN\NetworkUser
-    action: add
 
 - name: Disable a task that already exists
   win_scheduled_task:
