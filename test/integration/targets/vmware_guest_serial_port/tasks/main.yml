@@ -73,7 +73,7 @@
     - type: 'network'
       state: 'present'
       direction: 'server'
-      service_uri: 'tcp://1000'
+      service_uri: 'tcp://6000'
   register: modify_network_port
 
 - debug: var=modify_network_port

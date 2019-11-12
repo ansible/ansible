@@ -116,7 +116,7 @@ EXAMPLES = '''
 
 # Modify existing serial port
 - name: Modify Network backing type
-  vmware_serial_port:
+  vmware_guest_serial_port:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
@@ -130,7 +130,7 @@ EXAMPLES = '''
 
 # Remove serial port
 - name: Remove pipe backing type
-  vmware_serial_port:
+  vmware_guest_serial_port:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
@@ -178,6 +178,7 @@ class PyVmomiHelper(PyVmomi):
         self.change_applied = False   # a change was applied meaning at least one task succeeded
         self.config_spec = vim.vm.ConfigSpec()
         self.config_spec.deviceChange = []
+        self.serial_ports = []
 
     def check_vm_state(self, vm_obj):
         """
@@ -212,8 +213,8 @@ class PyVmomiHelper(PyVmomi):
                 # create a new serial port
                 serial_port_spec = self.create_serial_port(backing)
                 serial_port_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+                self.serial_ports.append(serial_port_spec)
                 self.change_applied = True
-                self.config_spec.deviceChange.append(serial_port_spec)
             else:
                 if serial_port is not None and 'state' in backing_keys:
                     serial_spec = vim.vm.device.VirtualDeviceSpec()
@@ -238,6 +239,16 @@ class PyVmomiHelper(PyVmomi):
         """
         self.get_serial_port_config_spec(vm_obj)
         try:
+            # configure create tasks first
+            if self.serial_ports:
+                for serial_port in self.serial_ports:
+                    # each type of serial port is of config_spec.device = vim.vm.device.VirtualSerialPort() object type
+                    # because serial ports differ in the backing types and config_spec.device has to be unique,
+                    # we are creating a new spec for every create port configuration
+                    spec = vim.vm.ConfigSpec()
+                    spec.deviceChange.append(serial_port)
+                    task = vm_obj.ReconfigVM_Task(spec=spec)
+                    wait_for_task(task)
             task = vm_obj.ReconfigVM_Task(spec=self.config_spec)
             wait_for_task(task)
         except vim.fault.InvalidDatastorePath as e:
@@ -350,21 +361,25 @@ def get_serial_port(vm_obj, backing):
     for device in vm_obj.config.hardware.device:
         if isinstance(device, vim.vm.device.VirtualSerialPort):
             if isinstance(device.backing, backing_type_mapping[backing['type']]):
-                if 'service_uri' in valid_params and device.backing.serviceURI == backing['service_uri']:
+                if 'service_uri' in valid_params:
                     # network backing type
-                    serial_port = device
+                    if device.backing.serviceURI == backing['service_uri']:
+                        serial_port = device
                     break
-                elif 'pipe_name' in valid_params and device.backing.pipeName == backing['pipe_name']:
+                elif 'pipe_name' in valid_params:
                     # named pipe backing type
-                    serial_port = device
+                    if device.backing.pipeName == backing['pipe_name']:
+                        serial_port = device
                     break
-                elif 'device_name' in valid_params and device.backing.deviceName == backing['device_name']:
+                elif 'device_name' in valid_params:
                     # physical serial device backing type
-                    serial_port = device
+                    if device.backing.deviceName == backing['device_name']:
+                        serial_port = device
                     break
-                elif 'file_path' in valid_params and device.backing.fileName == backing['file_path']:
+                elif 'file_path' in valid_params:
                     # file backing type
-                    serial_port = device
+                    if device.backing.fileName == backing['file_path']:
+                        serial_port = device
                     break
                 # if there is a backing of only one type, user need not provide secondary details like service_uri, pipe_name, device_name or file_path
                 # we will match the serial port with backing type only
