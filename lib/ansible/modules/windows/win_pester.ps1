@@ -15,6 +15,8 @@ $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -d
 
 $path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true
 $tags = Get-AnsibleParam -obj $params -name "tags" -type "list"
+$output_file = Get-AnsibleParam -obj $params -name "output_file" -type "str"
+$output_format = Get-AnsibleParam -obj $params -name "output_format" -type "str" -default "NunitXML"
 $test_parameters = Get-AnsibleParam -obj $params -name "test_parameters" -type "dict"
 $minimum_version = Get-AnsibleParam -obj $params -name "minimum_version" -type "str" -failifempty $false
 
@@ -76,6 +78,11 @@ If ($result.pester_version -ge "4.0.0") {
 
 if($tags.count){
     $Parameters.Tag = $tags
+}
+
+if($output_file){
+    $Parameters.OutputFile   = $output_file
+    $Parameters.OutputFormat = $output_format
 }
 # Run Pester tests
 If (Test-Path -LiteralPath $path -PathType Leaf) {
