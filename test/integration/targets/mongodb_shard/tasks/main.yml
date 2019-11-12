@@ -548,14 +548,20 @@
     login_user: admin
     login_password: admin
     shard: "{{ mongodb_replicaset1 }}/localhost:3001"
-    state: present
-
+    ssl_cert_reqs: CERT_OPTIONAL
+    ssl_ca_certs: "{{ remote_tmp_dir }}/ca-chain.pem"
+    ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
+    
 - name: Add shard 2
   mongodb_shard:
     login_user: admin
     login_password: admin
     shard: "{{ mongodb_replicaset2 }}/localhost:3004"
     state: present
+    ssl_cert_reqs: CERT_OPTIONAL
+    ssl_ca_certs: "{{ remote_tmp_dir }}/ca-chain.pem"
+    ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
+
 
 # TODO - Readd this test once we support serverSelectionTimeoutMS / connectTimeoutMS
 #- name: Run test with unknown host
