@@ -46,6 +46,11 @@ options:
      choices: [stop, start, pause, unpause, lock, unlock, suspend, resume,
                rebuild, reboot]
      default: present
+   reboot_type:
+     description:
+       - The type of reboot which should be executed.
+     choices: [soft, hard]
+     default: soft
    image:
      description:
        - Image the server should be rebuilt with
