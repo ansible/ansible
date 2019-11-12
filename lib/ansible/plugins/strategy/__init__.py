@@ -375,8 +375,8 @@ class StrategyBase:
                     if handler_task.name:
                         if not handler_task.cached_name:
                             if handler_templar.is_template(handler_task.name):
-                                handler_templar.available_variables = self._variable_manager.get_vars(play=iterator._play,
-                                                                                                      task=handler_task)
+                                handler_templar.set_available_variables(self._variable_manager.get_vars(play=iterator._play,
+                                                                                                        task=handler_task))
                                 handler_task.name = handler_templar.template(handler_task.name)
                             handler_task.cached_name = True
 
