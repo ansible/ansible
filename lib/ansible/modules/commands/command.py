@@ -25,16 +25,20 @@ description:
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), C(";") and C("&") will not work.
        Use the M(shell) module if you need these features.
-     - To create C(command) tasks that are easier to read,
-       pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task).
+     - To create C(command) tasks that are easier to read than the ones using space-delimited
+       arguments, pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task)
+       or use C(cmd) parameter.
+     - Either a free form command or C(cmd) parameter is required, see the examples.
      - For Windows targets, use the M(win_command) module instead.
 options:
   free_form:
     description:
       - The command module takes a free form command to run.
       - There is no actual parameter named 'free form'.
-      - See the examples on how to use this module.
-    required: yes
+  cmd:
+    type: str
+    description:
+      - The command to run.
   argv:
     type: list
     description:
@@ -105,13 +109,19 @@ EXAMPLES = r'''
   command: cat /etc/motd
   register: mymotd
 
-- name: Run command if /path/to/database does not exist (without 'args').
+- name: Run command if /path/to/database does not exist (without 'args' keyword).
   command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
 
 # 'args' is a task keyword, passed at the same level as the module
-- name: Run command if /path/to/database does not exist (with 'args').
+- name: Run command if /path/to/database does not exist (with 'args' keyword).
   command: /usr/bin/make_database.sh db_user db_name
   args:
+    creates: /path/to/database
+
+# 'cmd' is module parameter
+- name: Run command if /path/to/database does not exist (with 'cmd' parameter).
+  command:
+    cmd: /usr/bin/make_database.sh db_user db_name
     creates: /path/to/database
 
 - name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist.
