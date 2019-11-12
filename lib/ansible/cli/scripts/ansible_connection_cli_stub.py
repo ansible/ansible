@@ -266,6 +266,7 @@ def main():
 
         socket_path = unfrackpath(cp % dict(directory=tmp_path))
         lock_path = unfrackpath("%s/.ansible_pc_lock_%s" % os.path.split(socket_path))
+        prev_ppid = os.getppid()
 
         with file_lock(lock_path):
             if not os.path.exists(socket_path):
@@ -305,7 +306,9 @@ def main():
                 pc_data = to_text(init_data)
                 try:
                     conn.update_play_context(pc_data)
-                    conn.set_cli_prompt_context()
+                    if prev_ppid != os.getppid():
+                        # update cli context at start on new task run only
+                        conn.set_cli_prompt_context()
                 except Exception as exc:
                     # Only network_cli has update_play context and set_cli_prompt_context, so missing this is
                     # not fatal e.g. netconf
