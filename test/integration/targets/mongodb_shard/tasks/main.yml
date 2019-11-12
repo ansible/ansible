@@ -502,7 +502,7 @@
      - "localhost:3006"
 
 - name: Launch cfg server
-  command: mongod --configsvr --port 4000 --dbpath {{ remote_tmp_dir }}/config --logpath {{ remote_tmp_dir }}/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork
+  command: mongod  --sslMode requireSSL --sslAllowConnectionsWithoutCertificates --sslCAFile {{ remote_tmp_dir }}/ca.pem --sslPEMKeyFile  {{ remote_tmp_dir }}/mongo-chain.pem --sslAllowInvalidHostnames --configsvr --port 4000 --dbpath {{ remote_tmp_dir }}/config --logpath {{ remote_tmp_dir }}/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork
 
 - name: Create config srv replicaset with module
   mongodb_replicaset:
@@ -511,12 +511,15 @@
     login_port: 4000
     login_database: "admin"
     replica_set: "{{ configsrv_replicaset }}"
+    ssl_cert_reqs: CERT_OPTIONAL
+    ssl_ca_certs: "{{ remote_tmp_dir }}/ca-chain.pem"
+    ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
     validate: no
     members:
      - "localhost:4000"
 
 - name: Get config server replset mongo_output
-  command: mongo admin --port 4000 --eval "rs.status();"
+  command: mongo --ssl --sslAllowInvalidHostnames --sslCAFile {{ remote_tmp_dir }}/ca.pem  --sslPEMKeyFile {{ remote_tmp_dir }}/mongo-client-chain.pem admin --port 4000 --eval "rs.status();"
   register: cfg_replset_output
 
 - name: Assert that replset is a config server
@@ -526,7 +529,7 @@
       - "'\"set\" : \"{{ configsrv_replicaset }}\"' in cfg_replset_output.stdout"
 
 - name: Launch mongos
-  command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath "{{ remote_tmp_dir }}/tests/mongos.log" --port 27017 --fork
+  command: mongos --sslMode requireSSL --sslAllowConnectionsWithoutCertificates --sslCAFile {{ remote_tmp_dir }}/ca.pem --sslPEMKeyFile  {{ remote_tmp_dir }}/mongo-chain.pem --sslAllowInvalidHostnames --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath "{{ remote_tmp_dir }}/tests/mongos.log" --port 27017 --fork
 
 - name: Ensure is_primary script exists on host
   copy:
@@ -541,27 +544,86 @@
   command: mongo admin --ssl --sslAllowInvalidHostnames --sslCAFile {{ remote_tmp_dir }}/ca.pem  --sslPEMKeyFile {{ remote_tmp_dir }}/mongo-client-chain.pem --port 3004 "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Ensure host reaches primary before proceeding 4000
-  command: mongo admin --port 4000 "{{ remote_tmp_dir }}/tests/is_primary.js"
+  command: mongo admin --ssl --sslAllowInvalidHostnames --sslCAFile {{ remote_tmp_dir }}/ca.pem  --sslPEMKeyFile {{ remote_tmp_dir }}/mongo-client-chain.pem  --port 4000 "{{ remote_tmp_dir }}/tests/is_primary.js"
 
 - name: Add shard 1
   mongodb_shard:
     login_user: admin
     login_password: admin
     shard: "{{ mongodb_replicaset1 }}/localhost:3001"
+    ssl: true
     ssl_cert_reqs: CERT_OPTIONAL
     ssl_ca_certs: "{{ remote_tmp_dir }}/ca-chain.pem"
     ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
-    
+
 - name: Add shard 2
   mongodb_shard:
     login_user: admin
     login_password: admin
     shard: "{{ mongodb_replicaset2 }}/localhost:3004"
     state: present
+    ssl: true
     ssl_cert_reqs: CERT_OPTIONAL
     ssl_ca_certs: "{{ remote_tmp_dir }}/ca-chain.pem"
     ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
 
+- name: Get replicaset info
+  command: mongo admin --ssl --sslAllowInvalidHostnames --sslCAFile {{ remote_tmp_dir }}/ca.pem  --sslPEMKeyFile {{ remote_tmp_dir }}/mongo-client-chain.pem --eval "sh.status()" --port 27017
+  register: mongo_output
+
+- name: Assert shard name is in mongo_output
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset1 }}/localhost:3001,localhost:3002,localhost:3003' in mongo_output.stdout"
+      - "'{{ mongodb_replicaset2 }}/localhost:3004,localhost:3005,localhost:3006' in mongo_output.stdout"
+      - "'balancer' in mongo_output.stdout"
+
+- name: Remove shard 2
+  mongodb_shard:
+    login_user: admin
+    login_password: admin
+    shard: "{{ mongodb_replicaset2 }}"
+    state: absent
+    ssl: true
+    ssl_cert_reqs: CERT_OPTIONAL
+    ssl_ca_certs: "{{ remote_tmp_dir }}/ca-chain.pem"
+    ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
+
+- name: Get replicaset info
+  command: mongo admin --ssl --sslAllowInvalidHostnames --sslCAFile {{ remote_tmp_dir }}/ca.pem  --sslPEMKeyFile {{ remote_tmp_dir }}/mongo-client-chain.pem --eval "sh.status()" --port 27017
+  register: mongo_output
+
+- name: Assert shard 2 is draining
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset1 }}/localhost:3001,localhost:3002,localhost:3003' in mongo_output.stdout"
+      - "'\"draining\" : true' in mongo_output.stdout"
+      - "'balancer' in mongo_output.stdout"
+
+- name: Run remove command again to finalize shard removal
+  mongodb_shard:
+    login_user: admin
+    login_password: admin
+    shard: "{{ mongodb_replicaset2 }}"
+    state: absent
+    ssl: true
+    ssl_cert_reqs: CERT_OPTIONAL
+    ssl_ca_certs: "{{ remote_tmp_dir }}/ca-chain.pem"
+    ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
+
+- name: Get replicaset info
+  command: mongo admin --ssl --sslAllowInvalidHostnames --sslCAFile {{ remote_tmp_dir }}/ca.pem  --sslPEMKeyFile {{ remote_tmp_dir }}/mongo-client-chain.pem --eval "sh.status()" --port 27017
+  register: mongo_output
+
+- name: Assert shard 2 is not present
+  assert:
+    that:
+      - "mongo_output.changed == true"
+      - "'{{ mongodb_replicaset1 }}/localhost:3001,localhost:3002,localhost:3003' in mongo_output.stdout"
+      - "'{{ mongodb_replicaset2 }}/localhost:3004,localhost:3005,localhost:3006' not in mongo_output.stdout"
+      - "'balancer' in mongo_output.stdout"
 
 # TODO - Readd this test once we support serverSelectionTimeoutMS / connectTimeoutMS
 #- name: Run test with unknown host
