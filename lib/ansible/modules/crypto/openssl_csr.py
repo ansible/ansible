@@ -58,6 +58,8 @@ options:
     version:
         description:
             - The version of the certificate signing request.
+            - "The only allowed value according to L(RFC 2986,https://tools.ietf.org/html/rfc2986#section-4.1)
+               is 1."
         type: int
         default: 1
     force:
@@ -755,6 +757,8 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
     def __init__(self, module):
         super(CertificateSigningRequestCryptography, self).__init__(module)
         self.cryptography_backend = cryptography.hazmat.backends.default_backend()
+        if self.version != 1:
+            module.warn('The cryptography backend only supports version 1. (The only valid value according to RFC 2986.)')
 
     def _generate_csr(self):
         csr = cryptography.x509.CertificateSigningRequestBuilder()
