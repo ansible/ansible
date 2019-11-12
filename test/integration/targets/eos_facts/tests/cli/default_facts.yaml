@@ -1,9 +1,9 @@
 ---
 - debug: msg="START cli/default_facts.yaml on connection={{ ansible_connection }}"
 
-
 - name: test getting default facts
   eos_facts:
+    provider: "{{ cli }}"
   become: yes
   register: result
 
@@ -28,4 +28,4 @@
       # ... and not present
       - "result.ansible_facts.ansible_net_config is not defined" # config
 
-- debug: msg="END cli/default.yaml on connection={{ ansible_connection }}"
+- debug: msg="END cli/default_facts.yaml on connection={{ ansible_connection }}"

@@ -1,15 +1,11 @@
 ---
-- debug: msg="START eapi/all_facts.yaml"
-
-- name: Make sure LLDP is running (setup)
-  eos_config:
-    lines: lldp run
-  become: yes
+- debug: msg="START eapi/all_facts.yaml on connection={{ ansible_connection }}"
 
 - name: test getting all facts
   eos_facts:
     gather_subset:
       - all
+    provider: "{{ eapi }}"
   become: yes
   register: result
 
@@ -30,4 +26,4 @@
       - "result.ansible_facts.ansible_net_memfree_mb > 1"
       - "result.ansible_facts.ansible_net_memtotal_mb > 1"
 
-- debug: msg="END eapi/all_facts.yaml"
+- debug: msg="END eapi/all_facts.yaml on connection={{ ansible_connection }}"
