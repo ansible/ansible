@@ -73,7 +73,7 @@ options:
     version_added: '2.8'
   install_dns:
     description:
-    - Whether to install the DNS service.
+    - Whether to install the DNS service when creating the domain controller.
     type: bool
     default: yes
     version_added: '2.10'
