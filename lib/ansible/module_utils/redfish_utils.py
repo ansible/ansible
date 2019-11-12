@@ -2286,12 +2286,13 @@ class RedfishUtils(object):
         if nic_addr == 'null':
             # Find root_uri matched EthernetInterface when nic_addr is not specified
             nic_addr = (self.root_uri).split('/')[-1]
+            nic_addr = nic_addr.split(':')[0]  #split port if existing
         for uri in uris:
             response = self.get_request(self.root_uri + uri)
             if response['ret'] is False:
                 return response
             data = response['data']
-            if nic_addr in str(data):
+            if '"'+nic_addr+'"' in str(data) or "'"+nic_addr+"'" in str(data):
                 target_ethernet_uri = uri
                 target_ethernet_current_setting = data
                 break
@@ -2318,30 +2319,30 @@ class RedfishUtils(object):
         # If no need change, nothing to do. If error detected, report it
         need_change = False
         for property in payload.keys():
-            setValue = payload[property]
-            curValue = target_ethernet_current_setting[property]
+            set_value = payload[property]
+            cur_value = target_ethernet_current_setting[property]
             # type is simple(not dict/list)
-            if not isinstance(setValue, dict) and not isinstance(setValue, list):
-                if setValue != curValue:
+            if not isinstance(set_value, dict) and not isinstance(set_value, list):
+                if set_value != cur_value:
                     need_change = True
             # type is dict
-            if isinstance(setValue, dict):
+            if isinstance(set_value, dict):
                 for subprop in payload[property].keys():
                     if subprop not in target_ethernet_current_setting[property]:
                         return {'ret': False, 'msg': "Sub-property %s in nic_config is invalid" % subprop}
-                    sub_setValue = payload[property][subprop]
-                    sub_curValue = target_ethernet_current_setting[property][subprop]
-                    if sub_setValue != sub_curValue:
+                    sub_set_value = payload[property][subprop]
+                    sub_cur_value = target_ethernet_current_setting[property][subprop]
+                    if sub_set_value != sub_cur_value:
                         need_change = True
             # type is list
-            if isinstance(setValue, list):
-                for i in range(len(setValue)):
+            if isinstance(set_value, list):
+                for i in range(len(set_value)):
                     for subprop in payload[property][i].keys():
                         if subprop not in target_ethernet_current_setting[property][i]:
                             return {'ret': False, 'msg': "Sub-property %s in nic_config is invalid" % subprop}
-                        sub_setValue = payload[property][i][subprop]
-                        sub_curValue = target_ethernet_current_setting[property][i][subprop]
-                        if sub_setValue != sub_curValue:
+                        sub_set_value = payload[property][i][subprop]
+                        sub_cur_value = target_ethernet_current_setting[property][i][subprop]
+                        if sub_set_value != sub_cur_value:
                             need_change = True
 
         if not need_change:
