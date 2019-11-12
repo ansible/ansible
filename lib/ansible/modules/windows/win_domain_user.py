@@ -30,9 +30,7 @@ options:
         C(objectSid) or C(sAMAccountName).
       - Default to C(name) if not set.
     type: str
-    required: false
-    default: $name
-    version_added: '2.9'
+    version_added: '2.10'
   state:
     description:
       - When C(present), creates or updates the user account.
