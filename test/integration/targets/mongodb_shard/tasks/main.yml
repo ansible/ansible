@@ -488,7 +488,7 @@
     login_user: admin
     login_password: secret
     login_host: "localhost"
-    login_port: 3001
+    login_port: 3004
     login_database: "admin"
     replica_set: "{{ mongodb_replicaset2 }}"
     ssl_cert_reqs: CERT_OPTIONAL
