@@ -444,7 +444,10 @@
 - include_tasks: mongod_teardown.yml
 
 - set_fact:
-    mongo_ssl: True
+    mongo_ssl: true
+
+- set_fact:
+    mongod_auth: false
 
 - set_fact:
     current_replicaset: "{{ mongodb_replicaset1 }}"
@@ -461,6 +464,98 @@
     mongodb_nodes: [ 3004, 3005, 3006 ]
 
 - include_tasks: mongod_replicaset.yml
+
+- name: Create replicaset with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset1 }}"
+    ssl_cert_reqs: CERT_OPTIONAL
+    ssl_ca_certs: "{{ remote_tmp_dir }}/ca-chain.pem"
+    ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
+    heartbeat_timeout_secs: 1
+    election_timeout_millis: 1000
+    members:
+     - "localhost:3001"
+     - "localhost:3002"
+     - "localhost:3003"
+
+- name: Create replicaset with module
+  mongodb_replicaset:
+    login_user: admin
+    login_password: secret
+    login_host: "localhost"
+    login_port: 3001
+    login_database: "admin"
+    replica_set: "{{ mongodb_replicaset2 }}"
+    ssl_cert_reqs: CERT_OPTIONAL
+    ssl_ca_certs: "{{ remote_tmp_dir }}/ca-chain.pem"
+    ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
+    heartbeat_timeout_secs: 1
+    election_timeout_millis: 1000
+    members:
+     - "localhost:3004"
+     - "localhost:3005"
+     - "localhost:3006"
+
+- name: Launch cfg server
+  command: mongod --configsvr --port 4000 --dbpath {{ remote_tmp_dir }}/config --logpath {{ remote_tmp_dir }}/config.log --smallfiles --replSet "{{ configsrv_replicaset }}" --fork
+
+- name: Create config srv replicaset with module
+  mongodb_replicaset:
+    login_user: "{{ mongodb_admin_user }}"
+    login_password: "{{ mongodb_admin_password }}"
+    login_port: 4000
+    login_database: "admin"
+    replica_set: "{{ configsrv_replicaset }}"
+    validate: no
+    members:
+     - "localhost:4000"
+
+- name: Get config server replset mongo_output
+  command: mongo admin --port 4000 --eval "rs.status();"
+  register: cfg_replset_output
+
+- name: Assert that replset is a config server
+  assert:
+    that:
+      - "'\"configsvr\" : true' in cfg_replset_output.stdout"
+      - "'\"set\" : \"{{ configsrv_replicaset }}\"' in cfg_replset_output.stdout"
+
+- name: Launch mongos
+  command: mongos --configdb "{{ configsrv_replicaset }}/localhost:4000" --logpath "{{ remote_tmp_dir }}/tests/mongos.log" --port 27017 --fork
+
+- name: Ensure is_primary script exists on host
+  copy:
+    src: js/is_primary.js
+    dest: "{{ remote_tmp_dir }}/tests/is_primary.js"
+
+
+- name: Ensure host reaches primary before proceeding 3001
+  command: mongo admin --ssl --sslAllowInvalidHostnames --sslCAFile {{ remote_tmp_dir }}/ca.pem  --sslPEMKeyFile {{ remote_tmp_dir }}/mongo-client-chain.pem --port 3001 "{{ remote_tmp_dir }}/tests/is_primary.js"
+
+- name: Ensure host reaches primary before proceeding 3004
+  command: mongo admin --ssl --sslAllowInvalidHostnames --sslCAFile {{ remote_tmp_dir }}/ca.pem  --sslPEMKeyFile {{ remote_tmp_dir }}/mongo-client-chain.pem --port 3004 "{{ remote_tmp_dir }}/tests/is_primary.js"
+
+- name: Ensure host reaches primary before proceeding 4000
+  command: mongo admin --port 4000 "{{ remote_tmp_dir }}/tests/is_primary.js"
+
+- name: Add shard 1
+  mongodb_shard:
+    login_user: admin
+    login_password: admin
+    shard: "{{ mongodb_replicaset1 }}/localhost:3001"
+    state: present
+
+- name: Add shard 2
+  mongodb_shard:
+    login_user: admin
+    login_password: admin
+    shard: "{{ mongodb_replicaset2 }}/localhost:3004"
+    state: present
 
 # TODO - Readd this test once we support serverSelectionTimeoutMS / connectTimeoutMS
 #- name: Run test with unknown host

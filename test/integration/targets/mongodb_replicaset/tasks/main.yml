@@ -161,7 +161,7 @@
     login_port: 3001
     login_database: "admin"
     replica_set: "{{ mongodb_replicaset1 }}"
-    ssl_cert_reqs: CERT_NONE
+    ssl_cert_reqs: CERT_OPTIONAL
     ssl_ca_certs: "{{ remote_tmp_dir }}/ca-chain.pem"
     ssl_certfile: "{{ remote_tmp_dir }}/mongo-client-chain.pem"
     heartbeat_timeout_secs: 1

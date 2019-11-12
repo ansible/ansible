@@ -33,7 +33,7 @@
 
 - name: generate openssl keys
   openssl_privatekey:
-    path: "{{ remote_tmp_dir }}/{{item}}_key.pem"
+    path: "{{ remote_tmp_dir }}/{{item}}-key.pem"
   with_items:
     - ca
     - mongo
@@ -43,21 +43,64 @@
 - name: Generate CSRs
   openssl_csr:
     path: "{{ remote_tmp_dir }}/{{item}}.csr"
-    privatekey_path: "{{ remote_tmp_dir }}/{{item}}_key.pem"
+    privatekey_path: "{{ remote_tmp_dir }}/{{item}}-key.pem"
     country_name: US
     organization_name: Ansible
     email_address: integration-tests@ansible.com
-    common_name: localhost"
+    common_name: "{{ item }}.ansible.com"
+    extended_key_usage:
+      - clientAuth
+      - serverAuth
+    keyUsage:
+      - digitalSignature
+      - keyAgreement
+      - keyCertSign
+  with_items:
+    - mongo-client
+  when: mongo_ssl == True
+
+- name: Generate CSRs
+  openssl_csr:
+    path: "{{ remote_tmp_dir }}/{{item}}.csr"
+    privatekey_path: "{{ remote_tmp_dir }}/{{item}}-key.pem"
+    country_name: US
+    organization_name: Ansible
+    email_address: integration-tests@ansible.com
+    common_name: "{{ item }}.ansible.com"
+    extended_key_usage:
+      - clientAuth
+      - serverAuth
+    keyUsage:
+      - digitalSignature
+      - keyAgreement
+      - keyCertSign
   with_items:
     - ca
+  when: mongo_ssl == True
+
+- name: Generate CSRs
+  openssl_csr:
+    path: "{{ remote_tmp_dir }}/{{item}}.csr"
+    privatekey_path: "{{ remote_tmp_dir }}/{{item}}-key.pem"
+    country_name: US
+    organization_name: Ansible
+    email_address: integration-tests@ansible.com
+    common_name: "localhost"
+    extended_key_usage:
+      - clientAuth
+      - serverAuth
+    keyUsage:
+      - digitalSignature
+      - keyAgreement
+      - keyCertSign
+  with_items:
     - mongo
-    - mongo-client
   when: mongo_ssl == True
 
 - name: Generate a Self Signed OpenSSL CA certificate
   openssl_certificate:
     path: "{{ remote_tmp_dir }}/ca.pem"
-    privatekey_path: "{{ remote_tmp_dir }}/ca_key.pem"
+    privatekey_path: "{{ remote_tmp_dir }}/ca-key.pem"
     csr_path: "{{ remote_tmp_dir }}/ca.csr"
     provider: selfsigned
   when: mongo_ssl == True
@@ -67,7 +110,7 @@
     path: "{{ remote_tmp_dir }}/{{item}}.pem"
     csr_path: "{{ remote_tmp_dir }}/{{item}}.csr"
     ownca_path: "{{ remote_tmp_dir }}/ca.pem"
-    ownca_privatekey_path: "{{ remote_tmp_dir }}/ca_key.pem"
+    ownca_privatekey_path: "{{ remote_tmp_dir }}/ca-key.pem"
     provider: ownca
   with_items:
     - mongo
@@ -75,10 +118,11 @@
   when: mongo_ssl == True
 
 - name: create cert chains
-  shell: "cat {{ item }}.pem {{ item }}_key.pem > {{ item }}-chain.pem"
+  shell: "cat {{ item }}.pem {{ item }}-key.pem > {{ item }}-chain.pem"
   args:
     chdir: "{{remote_tmp_dir}}"
   with_items:
+    - ca
     - mongo
     - mongo-client
   when: mongo_ssl == True
