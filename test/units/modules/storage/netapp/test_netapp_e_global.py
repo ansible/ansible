@@ -46,7 +46,7 @@ class GlobalSettingsTest(ModuleTestCase):
         with mock.patch(self.REQ_FUNC, return_value=(200, expected)) as req:
             with mock.patch.object(namer, 'get_name', return_value='y'):
                 update = namer.update_name()
-                self.assertEquals(0, req.called)
+                self.assertEqual(0, req.called)
                 self.assertTrue(update)
 
     def test_get_name(self):
@@ -58,7 +58,7 @@ class GlobalSettingsTest(ModuleTestCase):
 
         with mock.patch(self.REQ_FUNC, return_value=(200, expected)) as req:
             name = namer.get_name()
-            self.assertEquals(name, expected['name'])
+            self.assertEqual(name, expected['name'])
 
     def test_get_name_fail(self):
         """Ensure we can successfully set the name"""

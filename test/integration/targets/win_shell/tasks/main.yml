@@ -258,6 +258,21 @@
     - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
     - nonascii_output.stderr == ''
 
+- name: echo some non ascii characters with us-ascii output encoding
+  win_shell: Write-Host über den Fußgängerübergang gehen
+  args:
+    output_encoding_override: us-ascii
+  register: nonascii_output_us_ascii_encoding
+
+- name: assert echo some non ascii characters with us-ascii output encoding
+  assert:
+    that:
+    - nonascii_output_us_ascii_encoding is changed
+    - nonascii_output_us_ascii_encoding.rc == 0
+    - nonascii_output_us_ascii_encoding.stdout_lines|count == 1
+    - nonascii_output_us_ascii_encoding.stdout_lines[0] == '??ber den Fu??g??nger??bergang gehen'
+    - nonascii_output_us_ascii_encoding.stderr == ''
+
 - name: execute powershell without no_profile
   win_shell: '[System.Environment]::CommandLine'
   register: no_profile

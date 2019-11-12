@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_snapshot
 version_added: '2.9'
-short_description: Manage Azure Snapshot instance
+short_description: Manage Azure Snapshot instance.
 description:
     - Create, update and delete instance of Azure Snapshot.
 options:
@@ -68,12 +68,16 @@ options:
                 description:
                     - This enumerates the possible sources of a disk's creation.
                 type: str
-                default: Import
                 choices:
                     - Import
+                    - Copy
             source_uri:
                 description:
                     - If I(createOption=Import), this is the URI of a blob to be imported into a managed disk.
+                type: str
+            source_id:
+                description:
+                    - If I(createOption=Copy), this is the resource ID of a managed disk to be copied from.
                 type: str
     state:
         description:
@@ -82,8 +86,8 @@ options:
         default: present
         type: str
         choices:
-            - absent
-            - present
+          - absent
+          - present
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -101,6 +105,15 @@ EXAMPLES = '''
     creation_data:
       create_option: Import
       source_uri: 'https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd'
+
+- name: Create a snapshot by copying an existing managed disk.
+  azure_rm_snapshot:
+    resource_group: myResourceGroup
+    name: mySnapshot
+    location: eastus
+    creation_data:
+      create_option: Copy
+      source_id: '/subscriptions/sub123/resourceGroups/group123/providers/Microsoft.Compute/disks/disk123'
 '''
 
 RETURN = '''
@@ -114,10 +127,8 @@ id:
 
 import time
 import json
-import re
 from ansible.module_utils.azure_rm_common_ext import AzureRMModuleBaseExt
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
-from copy import deepcopy
 try:
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
@@ -177,12 +188,17 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
                     create_option=dict(
                         type='str',
                         disposition='createOption',
-                        choices=['Import'],
-                        default='Import'
+                        choices=['Import', 'Copy'],
                     ),
                     source_uri=dict(
                         type='str',
-                        disposition='sourceUri'
+                        disposition='sourceUri',
+                        purgeIfNone=True
+                    ),
+                    source_id=dict(
+                        type='str',
+                        disposition='sourceResourceId',
+                        purgeIfNone=True
                     )
                 )
             ),
@@ -355,6 +371,7 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
                                               expected_status_codes=self.status_code,
                                               polling_timeout=600,
                                               polling_interval=30)
+            response = json.loads(response.text)
             found = True
             self.log("Response : {0}".format(response))
             # self.log("Snapshot instance : {0} found".format(response.name))

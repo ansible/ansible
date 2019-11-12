@@ -44,6 +44,15 @@ options:
     - Set the stdin of the command directly to the specified value.
     type: str
     version_added: '2.5'
+  output_encoding_override:
+    description:
+    - This option overrides the encoding of stdout/stderr output.
+    - You can use this option when you need to run a command which ignore the console's codepage.
+    - You should only need to use this option in very rare circumstances.
+    - This value can be any valid encoding C(Name) based on the output of C([System.Text.Encoding]::GetEncodings()).
+      See U(https://docs.microsoft.com/dotnet/api/system.text.encoding.getencodings).
+    type: str
+    version_added: '2.10'
 notes:
     - If you want to run a command through a shell (say you are using C(<),
       C(>), C(|), etc), you actually want the M(win_shell) module instead. The
