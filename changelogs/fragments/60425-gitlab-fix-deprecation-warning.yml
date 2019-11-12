@@ -1,0 +1,3 @@
+bugfixes:
+  - Fix deprecation warning on GitLab modules
+  - Fix requirements on non required module parameters
