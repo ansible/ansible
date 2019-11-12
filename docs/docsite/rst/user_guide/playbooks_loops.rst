@@ -323,7 +323,9 @@ Pausing within a loop
 ---------------------
 .. versionadded:: 2.2
 
-To control the time (in seconds) between the execution of each item in a task loop, use the ``pause`` directive with ``loop_control``::
+To control the time (in seconds) between the execution of each item in a task loop, use the ``pause`` directive with ``loop_control``
+
+.. code-block:: yaml
 
     # main.yml
     - name: create servers, pause 3s before creating next
@@ -336,7 +338,9 @@ To control the time (in seconds) between the execution of each item in a task lo
       loop_control:
         pause: 3
 
-To avoid pausing after skipped tasks add ``pause_after_skipped_tasks: no`` to ``loop_control``::
+To avoid pausing after skipped tasks add ``pause_after_skipped_tasks: no`` to ``loop_control``
+
+.. code-block:: yaml
 
     # main.yml
     - name: create servers for students only, don't pause when iterating through teachers
