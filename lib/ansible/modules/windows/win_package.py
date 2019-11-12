@@ -32,7 +32,7 @@ options:
       module will escape the arguments as necessary, it is recommended to use a
       string when dealing with MSI packages due to the unique escaping issues
       with msiexec.
-    type: str
+    type: raw
   chdir:
     description:
     - Set the specified path as the current working directory before installing
