@@ -455,6 +455,8 @@ groupings:
   - aws
   iam_policy:
   - aws
+  iam_policy_info:
+  - aws
   iam_role:
   - aws
   iam_role_facts:
@@ -1029,6 +1031,162 @@ groupings:
   - os
   os_zone:
   - os
+  ovirt_affinity_group:
+  - ovirt
+  ovirt_affinity_label_facts:
+  - ovirt
+  ovirt_affinity_label_info:
+  - ovirt
+  ovirt_affinity_label:
+  - ovirt
+  ovirt_api_facts:
+  - ovirt
+  ovirt_api_info:
+  - ovirt
+  ovirt_auth:
+  - ovirt
+  ovirt_cluster_facts:
+  - ovirt
+  ovirt_cluster_info:
+  - ovirt
+  ovirt_cluster:
+  - ovirt
+  ovirt_datacenter_facts:
+  - ovirt
+  ovirt_datacenter_info:
+  - ovirt
+  ovirt_datacenter:
+  - ovirt
+  ovirt_disk_facts:
+  - ovirt
+  ovirt_disk_info:
+  - ovirt
+  ovirt_disk:
+  - ovirt
+  ovirt_event_facts:
+  - ovirt
+  ovirt_event_info:
+  - ovirt
+  ovirt_event:
+  - ovirt
+  ovirt_external_provider_facts:
+  - ovirt
+  ovirt_external_provider_info:
+  - ovirt
+  ovirt_external_provider:
+  - ovirt
+  ovirt_group_facts:
+  - ovirt
+  ovirt_group_info:
+  - ovirt
+  ovirt_group:
+  - ovirt
+  ovirt_host_facts:
+  - ovirt
+  ovirt_host_info:
+  - ovirt
+  ovirt_host_network:
+  - ovirt
+  ovirt_host_pm:
+  - ovirt
+  ovirt_host:
+  - ovirt
+  ovirt_host_storage_facts:
+  - ovirt
+  ovirt_host_storage_info:
+  - ovirt
+  ovirt_instance_type:
+  - ovirt
+  ovirt_job:
+  - ovirt
+  ovirt_mac_pool:
+  - ovirt
+  ovirt_network_facts:
+  - ovirt
+  ovirt_network_info:
+  - ovirt
+  ovirt_network:
+  - ovirt
+  ovirt_nic_facts:
+  - ovirt
+  ovirt_nic_info:
+  - ovirt
+  ovirt_nic:
+  - ovirt
+  ovirt_permission_facts:
+  - ovirt
+  ovirt_permission_info:
+  - ovirt
+  ovirt_permission:
+  - ovirt
+  ovirt_quota_facts:
+  - ovirt
+  ovirt_quota_info:
+  - ovirt
+  ovirt_quota:
+  - ovirt
+  ovirt_role:
+  - ovirt
+  ovirt_scheduling_policy_facts:
+  - ovirt
+  ovirt_scheduling_policy_info:
+  - ovirt
+  ovirt_snapshot_facts:
+  - ovirt
+  ovirt_snapshot_info:
+  - ovirt
+  ovirt_snapshot:
+  - ovirt
+  ovirt_storage_connection:
+  - ovirt
+  ovirt_storage_domain_facts:
+  - ovirt
+  ovirt_storage_domain_info:
+  - ovirt
+  ovirt_storage_domain:
+  - ovirt
+  ovirt_storage_template_facts:
+  - ovirt
+  ovirt_storage_template_info:
+  - ovirt
+  ovirt_storage_vm_facts:
+  - ovirt
+  ovirt_storage_vm_info:
+  - ovirt
+  ovirt_tag_facts:
+  - ovirt
+  ovirt_tag_info:
+  - ovirt
+  ovirt_tag:
+  - ovirt
+  ovirt_template_facts:
+  - ovirt
+  ovirt_template_info:
+  - ovirt
+  ovirt_template:
+  - ovirt
+  ovirt_user_facts:
+  - ovirt
+  ovirt_user_info:
+  - ovirt
+  ovirt_user:
+  - ovirt
+  ovirt_vm_facts:
+  - ovirt
+  ovirt_vm_info:
+  - ovirt
+  ovirt_vmpool_facts:
+  - ovirt
+  ovirt_vmpool_info:
+  - ovirt
+  ovirt_vmpool:
+  - ovirt
+  ovirt_vm:
+  - ovirt
+  ovirt_vnic_profile_info:
+  - ovirt
+  ovirt_vnic_profile:
+  - ovirt
   vcenter_extension:
   - vmware
   vcenter_extension_info:

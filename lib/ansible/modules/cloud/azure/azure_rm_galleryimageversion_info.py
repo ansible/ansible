@@ -17,37 +17,33 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_galleryimageversion_info
 version_added: '2.9'
-short_description: Get Azure SIG Image Version info.
+short_description: Get Azure SIG Image Version info
 description:
-  - Get info of Azure SIG Image Version.
+    - Get info of Azure SIG Image Version.
 options:
-  resource_group:
-    description:
-      - The name of the resource group.
-    type: str
-    required: true
-  gallery_name:
-    description:
-      - >-
-        The name of the Shared Image Gallery in which the Image Definition
-        resides.
-    type: str
-    required: true
-  gallery_image_name:
-    description:
-      - >-
-        The name of the gallery Image Definition in which the Image Version
-        resides.
-    type: str
-    required: true
-  name:
-    description:
-      - Resource name
-    type: str
+    resource_group:
+        description:
+            - The name of the resource group.
+        type: str
+        required: true
+    gallery_name:
+        description:
+            - The name of the Shared Image Gallery in which the Image Definition resides.
+        type: str
+        required: true
+    gallery_image_name:
+        description:
+            - The name of the gallery Image Definition in which the Image Version resides.
+        type: str
+        required: true
+    name:
+        description:
+            - Resource name.
+        type: str
 extends_documentation_fragment:
-  - azure
+    - azure
 author:
-  - Liu Qingyi (@smile37773)
+    - Liu Qingyi (@smile37773)
 
 '''
 
@@ -68,47 +64,45 @@ EXAMPLES = '''
 
 RETURN = '''
 versions:
-  description: >-
-    A list of dict results where the key is the name of the version
-    and the values are the info for that version.
-  returned: always
-  type: complex
-  contains:
-    id:
-      description:
-        - Resource Id
-      returned: always
-      type: str
-      sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups
-      /myResourceGroup/providers/Microsoft.Compute/galleries/myGallery/
-      images/myImage/versions/myVersion"
-    name:
-      description:
-        - Resource name
-      returned: always
-      type: str
-      sample: "myVersion"
-    location:
-      description:
-        - Resource location
-      returned: always
-      type: str
-      sample: "eastus"
-    tags:
-      description:
-        - Resource tags
-      returned: always
-      type: dict
-      sample: { "tag": "value" }
-    publishing_profile:
-      description:
-        - The publishing profile of a gallery image version.
-      type: dict
-    provisioning_state:
-      description:
-        - The current state of the gallery.
-      type: str
-      sample: "Succeeded"
+    description:
+        A list of dict results where the key is the name of the version and the values are the info for that version.
+    returned: always
+    type: complex
+    contains:
+        id:
+            description:
+                - Resource ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups
+      /myResourceGroup/providers/Microsoft.Compute/galleries/myGallery/images/myImage/versions/myVersion"
+        name:
+            description:
+                - Resource name.
+            returned: always
+            type: str
+            sample: "myVersion"
+        location:
+            description:
+                - Resource location.
+            returned: always
+            type: str
+            sample: "eastus"
+        tags:
+            description:
+                - Resource tags.
+            returned: always
+            type: dict
+            sample: { "tag": "value" }
+        publishing_profile:
+            description:
+                - The publishing profile of a gallery image version.
+            type: dict
+        provisioning_state:
+            description:
+                - The current state of the gallery.
+            type: str
+            sample: "Succeeded"
 
 '''
 

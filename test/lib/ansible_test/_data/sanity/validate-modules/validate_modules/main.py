@@ -38,10 +38,12 @@ from fnmatch import fnmatch
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import fragment_loader
+from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
-from .module_args import AnsibleModuleImportError, get_argument_spec
+from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
 
 from .schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schema, return_schema
 
@@ -517,13 +519,7 @@ class ModuleValidator(Validator):
                                 name.name == 'basic'):
                             found_basic = True
 
-        if not linenos:
-            self.reporter.error(
-                path=self.object_path,
-                code='missing-module-utils-import',
-                msg='Did not find a module_utils import'
-            )
-        elif not found_basic:
+        if not found_basic:
             self.reporter.warning(
                 path=self.object_path,
                 code='missing-module-utils-basic-import',
@@ -751,7 +747,7 @@ class ModuleValidator(Validator):
             if len(module_list) > 1:
                 self.reporter.error(
                     path=self.object_path,
-                    code='multiple-c#-utils-per-requires',
+                    code='multiple-csharp-utils-per-requires',
                     msg='Ansible C# util requirements do not support multiple utils per statement: "%s"' % req_stmt.group(0)
                 )
                 continue
@@ -769,7 +765,7 @@ class ModuleValidator(Validator):
         if not found_requires and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
-                code='missing-module-utils-import-c#-requirements',
+                code='missing-module-utils-import-csharp-requirements',
                 msg='No Ansible.ModuleUtils or C# Ansible util requirements/imports found'
             )
 
@@ -1133,7 +1129,14 @@ class ModuleValidator(Validator):
 
     def _validate_ansible_module_call(self, docs):
         try:
-            spec, args, kwargs = get_argument_spec(self.path)
+            spec, args, kwargs = get_argument_spec(self.path, self.collection)
+        except AnsibleModuleNotInitialized:
+            self.reporter.error(
+                path=self.object_path,
+                code='ansible-module-not-initialized',
+                msg="Execution of the module did not result in initialization of AnsibleModule",
+            )
+            return
         except AnsibleModuleImportError as e:
             self.reporter.error(
                 path=self.object_path,
@@ -1698,6 +1701,42 @@ class PythonPackageValidator(Validator):
             )
 
 
+def setup_collection_loader():
+    def get_source(self, fullname):
+        mod = sys.modules.get(fullname)
+        if not mod:
+            mod = self.load_module(fullname)
+
+        with open(to_bytes(mod.__file__), 'rb') as mod_file:
+            source = mod_file.read()
+
+        return source
+
+    def get_code(self, fullname):
+        return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
+
+    def is_package(self, fullname):
+        return self.get_filename(fullname).endswith('__init__.py')
+
+    def get_filename(self, fullname):
+        mod = sys.modules.get(fullname) or self.load_module(fullname)
+
+        return mod.__file__
+
+    # monkeypatch collection loader to work with runpy
+    # remove this (and the associated code above) once implemented natively in the collection loader
+    AnsibleCollectionLoader.get_source = get_source
+    AnsibleCollectionLoader.get_code = get_code
+    AnsibleCollectionLoader.is_package = is_package
+    AnsibleCollectionLoader.get_filename = get_filename
+
+    collection_loader = AnsibleCollectionLoader()
+
+    # allow importing code from collections when testing a collection
+    # noinspection PyCallingNonCallable
+    sys.meta_path.insert(0, collection_loader)
+
+
 def re_compile(value):
     """
     Argparse expects things to raise TypeError, re.compile raises an re.error
@@ -1744,6 +1783,9 @@ def run():
     git_cache = GitCache(args.base_branch)
 
     check_dirs = set()
+
+    if args.collection:
+        setup_collection_loader()
 
     for module in args.modules:
         if os.path.isfile(module):

@@ -37,6 +37,8 @@ options:
         description:
             - list of names of packages to install/remove
         aliases: ['pkg', 'package', 'formula']
+        type: list
+        elements: str
     path:
         description:
             - "A ':' separated list of paths to search for 'brew' executable.
@@ -814,6 +816,7 @@ def main():
                 aliases=["pkg", "package", "formula"],
                 required=False,
                 type='list',
+                elements='str',
             ),
             path=dict(
                 default="/usr/local/bin",

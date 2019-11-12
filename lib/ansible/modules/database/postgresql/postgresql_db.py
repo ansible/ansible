@@ -71,7 +71,7 @@ options:
       pg_dump returns rc 1 in this case.
     - C(restore) also requires a target definition from which the database will be restored. (Added in Ansible 2.4)
     - The format of the backup will be detected based on the target name.
-    - Supported compression formats for dump and restore include C(.bz2), C(.gz) and C(.xz)
+    - Supported compression formats for dump and restore include C(.pgc), C(.bz2), C(.gz) and C(.xz)
     - Supported formats for dump and restore include C(.sql) and C(.tar)
     type: str
     choices: [ absent, dump, present, restore ]
@@ -207,9 +207,9 @@ class NotSupportedError(Exception):
 
 
 def set_owner(cursor, db, owner):
-    query = "ALTER DATABASE %s OWNER TO %s" % (
+    query = 'ALTER DATABASE %s OWNER TO "%s"' % (
             pg_quote_identifier(db, 'database'),
-            pg_quote_identifier(owner, 'role'))
+            owner)
     cursor.execute(query)
     return True
 
@@ -263,7 +263,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_
     if not db_exists(cursor, db):
         query_fragments = ['CREATE DATABASE %s' % pg_quote_identifier(db, 'database')]
         if owner:
-            query_fragments.append('OWNER %s' % pg_quote_identifier(owner, 'role'))
+            query_fragments.append('OWNER "%s"' % owner)
         if template:
             query_fragments.append('TEMPLATE %s' % pg_quote_identifier(template, 'database'))
         if encoding:
@@ -346,6 +346,8 @@ def db_dump(module, target, target_opts="",
 
     if os.path.splitext(target)[-1] == '.tar':
         flags.append(' --format=t')
+    elif os.path.splitext(target)[-1] == '.pgc':
+        flags.append(' --format=c')
     if os.path.splitext(target)[-1] == '.gz':
         if module.get_bin_path('pigz'):
             comp_prog_path = module.get_bin_path('pigz', True)
@@ -390,6 +392,10 @@ def db_restore(module, target, target_opts="",
 
     elif os.path.splitext(target)[-1] == '.tar':
         flags.append(' --format=Tar')
+        cmd = module.get_bin_path('pg_restore', True)
+
+    elif os.path.splitext(target)[-1] == '.pgc':
+        flags.append(' --format=Custom')
         cmd = module.get_bin_path('pg_restore', True)
 
     elif os.path.splitext(target)[-1] == '.gz':
@@ -561,7 +567,7 @@ def main():
 
         if session_role:
             try:
-                cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
+                cursor.execute('SET ROLE "%s"' % session_role)
             except Exception as e:
                 module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 

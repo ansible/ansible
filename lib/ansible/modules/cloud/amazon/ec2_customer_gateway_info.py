@@ -2,6 +2,9 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -21,9 +24,12 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeCustomerGateways.html) for possible filters.
+    type: dict
   customer_gateway_ids:
     description:
       - Get details of a specific customer gateways using customer gateway ID/IDs. This value should be provided as a list.
+    type: list
+    elements: str
 extends_documentation_fragment:
     - aws
     - ec2

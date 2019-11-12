@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -19,14 +22,17 @@ options:
     description:
       - The path to the role. For more information about paths, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html).
     default: "/"
+    type: str
   name:
     description:
       - The name of the role to create.
     required: true
+    type: str
   description:
     description:
       - Provide a description of the new role
     version_added: "2.5"
+    type: str
   boundary:
     description:
       - Add the ARN of an IAM managed policy to restrict the permissions this role can pass on to IAM roles/users that it creates.
@@ -35,45 +41,50 @@ options:
       - For more information on boundaries, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
     aliases: [boundary_policy_arn]
     version_added: "2.7"
+    type: str
   assume_role_policy_document:
     description:
       - The trust relationship policy document that grants an entity permission to assume the role.
       - "This parameter is required when C(state=present)."
+    type: json
   managed_policy:
     description:
       - A list of managed policy ARNs or, since Ansible 2.4, a list of either managed policy ARNs or friendly names.
         To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
     aliases: [ managed_policies ]
+    type: list
   max_session_duration:
     description:
       - The maximum duration (in seconds) of a session when assuming the role.
       - Valid values are between 1 and 12 hours (3600 and 43200 seconds).
     version_added: "2.10"
+    type: int
   purge_policies:
     description:
       - Detaches any managed policies not listed in the "managed_policy" option. Set to false if you want to attach policies elsewhere.
-    type: bool
     default: true
     version_added: "2.5"
+    type: bool
   state:
     description:
       - Create or remove the IAM role
     default: present
     choices: [ present, absent ]
+    type: str
   create_instance_profile:
     description:
       - Creates an IAM instance profile along with the role
-    type: bool
     default: true
     version_added: "2.5"
+    type: bool
   delete_instance_profile:
     description:
       - When deleting a role will also delete the instance profile created with
         the same name as the role
       - Only applies when C(state=absent)
-    type: bool
     default: false
     version_added: "2.10"
+    type: bool
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws
@@ -169,13 +180,11 @@ iam_role:
             ]
 '''
 
-from ansible.module_utils._text import to_native
+import json
+
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, compare_policies
 from ansible.module_utils.ec2 import AWSRetry
-
-import json
-import traceback
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError

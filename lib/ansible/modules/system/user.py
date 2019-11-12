@@ -420,8 +420,9 @@ import subprocess
 import time
 
 from ansible.module_utils import distro
-from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
+from ansible.module_utils._text import to_native, to_bytes
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.sys_info import get_platform_subclass
 
 try:
     import spwd
@@ -458,7 +459,8 @@ class User(object):
     DATE_FORMAT = '%Y-%m-%d'
 
     def __new__(cls, *args, **kwargs):
-        return load_platform_subclass(User, args, kwargs)
+        new_cls = get_platform_subclass(User)
+        return super(cls, new_cls).__new__(new_cls)
 
     def __init__(self, module):
         self.module = module
@@ -911,7 +913,7 @@ class User(object):
                 # Python 3.6 raises PermissionError instead of KeyError
                 # Due to absence of PermissionError in python2.7 need to check
                 # errno
-                if e.errno in (errno.EACCES, errno.EPERM):
+                if e.errno in (errno.EACCES, errno.EPERM, errno.ENOENT):
                     return passwd, expires
                 raise
 

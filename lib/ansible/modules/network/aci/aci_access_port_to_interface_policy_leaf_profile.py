@@ -314,18 +314,18 @@ def main():
         ],
     )
 
-    leaf_interface_profile = module.params['leaf_interface_profile']
-    access_port_selector = module.params['access_port_selector']
-    description = module.params['description']
-    leaf_port_blk = module.params['leaf_port_blk']
-    leaf_port_blk_description = module.params['leaf_port_blk_description']
-    from_port = module.params['from_port']
-    to_port = module.params['to_port']
-    from_card = module.params['from_card']
-    to_card = module.params['to_card']
-    policy_group = module.params['policy_group']
-    interface_type = module.params['interface_type']
-    state = module.params['state']
+    leaf_interface_profile = module.params.get('leaf_interface_profile')
+    access_port_selector = module.params.get('access_port_selector')
+    description = module.params.get('description')
+    leaf_port_blk = module.params.get('leaf_port_blk')
+    leaf_port_blk_description = module.params.get('leaf_port_blk_description')
+    from_port = module.params.get('from_port')
+    to_port = module.params.get('to_port')
+    from_card = module.params.get('from_card')
+    to_card = module.params.get('to_card')
+    policy_group = module.params.get('policy_group')
+    interface_type = module.params.get('interface_type')
+    state = module.params.get('state')
 
     # Build child_configs dynamically
     child_configs = [dict(

@@ -1,13 +1,15 @@
 # Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Install Repo
+- name: Install MySQL repo
   yum:
     name: '{{ repo_link }}'
+  notify: cleanup mysql8
 
 - name: Install MySQL community server
   yum:
-    name: '{{ mysql_package_name }}'
+    name: '{{ mysql_packages }}'
+  notify: cleanup mysql8
 
 - name: Copy my.cnf
   copy:
@@ -31,8 +33,7 @@
   shell: "echo \"SHOW VARIABLES LIKE '%version%';\" | mysql"
 
 - name: Detect socket path
-  shell: >
-    echo "show variables like 'socket'\G" | mysql | grep 'Value: ' | sed 's/[ ]\+Value: //'
+  shell: 'echo "show variables like ''socket''\G" | mysql | grep ''Value: '' | sed ''s/[ ]\+Value: //'''
   register: _socket_path
 
 - name: Set socket path
@@ -44,8 +45,7 @@
     root_pass: "dlsafjlkjdsaK1#"
 
 - name: Set root password
-  shell: >
-    echo "flush privileges; ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ root_pass }}';" | mysql
+  shell: 'echo "flush privileges; ALTER USER ''root''@''localhost'' IDENTIFIED WITH mysql_native_password BY ''{{ root_pass }}'';" | mysql'
 
 - name: Change configuration
   lineinfile:

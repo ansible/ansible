@@ -1,0 +1,2 @@
+minor_changes:
+- postgresql_idx - add a new option ``stat`` to the ``state`` parameter (https://github.com/ansible/ansible/pull/64138).

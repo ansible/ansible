@@ -238,12 +238,12 @@ def main():
         ],
     )
 
-    description = module.params['description']
-    policy_control_direction = module.params['policy_control_direction']
-    policy_control_preference = module.params['policy_control_preference']
-    state = module.params['state']
-    tenant = module.params['tenant']
-    vrf = module.params['vrf']
+    description = module.params.get('description')
+    policy_control_direction = module.params.get('policy_control_direction')
+    policy_control_preference = module.params.get('policy_control_preference')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
+    vrf = module.params.get('vrf')
 
     aci = ACIModule(module)
     aci.construct_url(

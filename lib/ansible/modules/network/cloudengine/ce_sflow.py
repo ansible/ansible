@@ -30,16 +30,20 @@ description:
       detect abnormal traffic, and locate the source of attack traffic,
       ensuring stable running of the network.
 author: QijunPan (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     agent_ip:
         description:
-            - Specifies the IPv4/IPv6 address of a sFlow agent.
+            - Specifies the IPv4/IPv6 address of an sFlow agent.
     source_ip:
         description:
             - Specifies the source IPv4/IPv6 address of sFlow packets.
     collector_id:
         description:
-            - Specifies the ID of a sFlow collector. This ID is used when you specify
+            - Specifies the ID of an sFlow collector. This ID is used when you specify
               the collector in subsequent sFlow configuration.
         choices: ['1', '2']
     collector_ip:
@@ -72,7 +76,7 @@ options:
         choices: ['meth', 'enhanced']
     collector_description:
         description:
-            - Specifies the description of a sFlow collector.
+            - Specifies the description of an sFlow collector.
               The value is a string of 1 to 255 case-sensitive characters without spaces.
     sflow_interface:
         description:
@@ -104,6 +108,30 @@ options:
         description:
             - Configures the sFlow packets sent by the switch not to carry routing information.
         choices: ['enable', 'disable']
+    rate_limit:
+        description:
+            - Specifies the rate of sFlow packets sent from a card to the control plane.
+              The value is an integer that ranges from 100 to 1500, in pps.
+        version_added: "2.10"
+        type: str
+    rate_limit_slot:
+        description:
+            - Specifies the slot where the rate of output sFlow packets is limited.
+              If this parameter is not specified, the rate of sFlow packets sent from
+              all cards to the control plane is limited.
+              The value is an integer or a string of characters.
+        version_added: "2.10"
+        type: str
+    forward_enp_slot:
+        description:
+            - Enable the Embedded Network Processor (ENP) chip function.
+              The switch uses the ENP chip to perform sFlow sampling,
+              and the maximum sFlow sampling interval is 65535.
+              If you set the sampling interval to be larger than 65535,
+              the switch automatically restores it to 65535.
+              The value is an integer or 'all'.
+        version_added: "2.10"
+        type: str
     state:
         description:
             - Determines whether the config should be present or not
@@ -187,7 +215,7 @@ changed:
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr, to_string
+from ansible.module_utils.network.cloudengine.ce import get_nc_config, set_nc_config, ce_argument_spec, check_ip_addr
 
 CE_NC_GET_SFLOW = """
 <filter type="subtree">
@@ -345,6 +373,9 @@ class Sflow(object):
         self.source_ip = self.module.params['source_ip']
         self.source_version = None
         self.export_route = self.module.params['export_route']
+        self.rate_limit = self.module.params['rate_limit']
+        self.rate_limit_slot = self.module.params['rate_limit_slot']
+        self.forward_enp_slot = self.module.params['forward_enp_slot']
         self.collector_id = self.module.params['collector_id']
         self.collector_ip = self.module.params['collector_ip']
         self.collector_version = None
@@ -394,12 +425,6 @@ class Sflow(object):
         if "<ok/>" not in rcv_xml:
             self.module.fail_json(msg='Error: %s failed.' % xml_name)
 
-    def netconf_get_config(self, xml_str):
-        """netconf set config"""
-
-        if xml_str is not None:
-            return get_nc_config(self.module, xml_str)
-
     def get_sflow_dict(self):
         """ sflow config dict"""
 
@@ -411,7 +436,7 @@ class Sflow(object):
         if not self.collector_meth:
             conf_str = conf_str.replace("<meth></meth>", "")
 
-        rcv_xml = self.netconf_get_config(conf_str)
+        rcv_xml = get_nc_config(self.module, conf_str)
 
         if "<data/>" in rcv_xml:
             return sflow_dict
@@ -497,15 +522,11 @@ class Sflow(object):
                 xml_str += '</agent></agents>'
 
         else:
-            flag = False
-            if self.agent_ip == self.sflow_dict["agent"].get("ipv4Addr"):
-                self.updates_cmd.append("undo sflow agent ip %s" % self.agent_ip)
-                flag = True
-            elif self.agent_ip == self.sflow_dict["agent"].get("ipv6Addr"):
-                self.updates_cmd.append("undo sflow agent ipv6 %s" % self.agent_ip)
-                flag = True
-            if flag is True:
+            if self.agent_ip == self.sflow_dict["agent"].get("ipv4Addr") \
+                    or self.agent_ip == self.sflow_dict["agent"].get("ipv6Addr"):
                 xml_str += '<agents><agent operation="delete"></agent></agents>'
+                self.updates_cmd.append("undo sflow agent")
+
         return xml_str
 
     def config_source(self):
@@ -630,7 +651,7 @@ class Sflow(object):
         # update or delete
         if self.state == "absent":
             xml_str += '<collectors><collector operation="delete"><collectorID>%s</collectorID>' % self.collector_id
-            self.updates_cmd.append("undo sflow collector %s" % self.collector_id)
+            self.updates_cmd.append("undo collector %s" % self.collector_id)
         else:
             xml_str += '<collectors><collector operation="merge"><collectorID>%s</collectorID>' % self.collector_id
             cmd = "sflow collector %s" % self.collector_id
@@ -926,12 +947,11 @@ class Sflow(object):
                     msg="Error: interface %s is not support sFlow." % self.sflow_interface)
 
             # check sample_collector
-            if 0 < len(self.sample_collector) < 3:
-                self.sample_collector = [str(i) for i in self.sample_collector]
-                for id in self.sample_collector:
-                    if id not in ("1", "2"):
-                        self.module.fail_json(
-                            msg="Error: sample_collector is invalid.")
+            if self.sample_collector:
+                self.sample_collector.sort()
+                if self.sample_collector not in [["1"], ["2"], ["1", "2"]]:
+                    self.module.fail_json(
+                        msg="Error: sample_collector is invalid.")
 
             # check sample_rate ranges from 1 to 4294967295
             if self.sample_rate:
@@ -952,12 +972,11 @@ class Sflow(object):
                         msg="Error: sample_length is not ranges from 18 to 512.")
 
             # check counter_collector
-            if 0 < len(self.counter_collector) < 3:
-                self.counter_collector = [str(i) for i in self.counter_collector]
-                for id in self.counter_collector:
-                    if id not in ("1", "2"):
-                        self.module.fail_json(
-                            msg="Error: counter_collector is invalid.")
+            if self.counter_collector:
+                self.counter_collector.sort()
+                if self.counter_collector not in [["1"], ["2"], ["1", "2"]]:
+                    self.module.fail_json(
+                        msg="Error: counter_collector is invalid.")
 
             # counter_interval ranges from 10 to 4294967295
             if self.counter_interval:
@@ -967,6 +986,10 @@ class Sflow(object):
                 if int(self.counter_interval) < 10 or int(self.counter_interval) > 4294967295:
                     self.module.fail_json(
                         msg="Error: sample_length is not ranges from 10 to 4294967295.")
+
+        if self.rate_limit or self.rate_limit_slot or self.forward_enp_slot:
+            self.module.fail_json(msg="Error: The following parameters cannot be configured"
+                                      "because XML mode is not supported:rate_limit,rate_limit_slot,forward_enp_slot.")
 
     def get_proposed(self):
         """get proposed info"""
@@ -978,6 +1001,11 @@ class Sflow(object):
             self.proposed["source_ip"] = self.source_ip
         if self.export_route:
             self.proposed["export_route"] = self.export_route
+        if self.rate_limit:
+            self.proposed["rate_limit"] = self.rate_limit
+            self.proposed["rate_limit_slot"] = self.rate_limit_slot
+        if self.forward_enp_slot:
+            self.proposed["forward_enp_slot"] = self.forward_enp_slot
         if self.collector_id:
             self.proposed["collector_id"] = self.collector_id
             if self.collector_ip:
@@ -1034,7 +1062,6 @@ class Sflow(object):
     def get_end_state(self):
         """get end state info"""
 
-        # else:
         sflow_dict = self.get_sflow_dict()
         if not sflow_dict:
             return
@@ -1051,6 +1078,8 @@ class Sflow(object):
         if self.sflow_interface:
             self.end_state["sampling"] = sflow_dict["sampling"]
             self.end_state["counter"] = sflow_dict["counter"]
+        if self.existing == self.end_state:
+            self.changed = False
 
     def work(self):
         """worker"""
@@ -1107,6 +1136,9 @@ def main():
         source_ip=dict(required=False, type='str'),
         export_route=dict(required=False, type='str',
                           choices=['enable', 'disable']),
+        rate_limit=dict(required=False, removed_in_version=2.13, type='str'),
+        rate_limit_slot=dict(required=False, removed_in_version=2.13, type='str'),
+        forward_enp_slot=dict(required=False, removed_in_version=2.13, type='str'),
         collector_id=dict(required=False, type='str', choices=['1', '2']),
         collector_ip=dict(required=False, type='str'),
         collector_ip_vpn=dict(required=False, type='str'),

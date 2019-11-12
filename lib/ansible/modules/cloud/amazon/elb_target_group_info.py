@@ -25,14 +25,17 @@ options:
     description:
       - The Amazon Resource Name (ARN) of the load balancer.
     required: false
+    type: str
   target_group_arns:
     description:
       - The Amazon Resource Names (ARN) of the target groups.
     required: false
+    type: list
   names:
     description:
       - The names of the target groups.
     required: false
+    type: list
   collect_targets_health:
     description:
       - When set to "yes", output contains targets health description

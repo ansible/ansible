@@ -102,8 +102,7 @@ options:
         - For Network Endpoint Groups this defines list of endpoints. All endpoints
           of Network Endpoint Group must be hosted on instances located in the same
           zone as the Network Endpoint Group.
-        - Backend service can not contain mix of Instance Group and Network Endpoint
-          Group backends.
+        - Backend services cannot mix Instance Group and Network Endpoint Group backends.
         - Note that you must specify an Instance Group or Network Endpoint Group resource
           using the fully-qualified URL, rather than a partial URL.
         required: false
@@ -378,9 +377,9 @@ options:
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/backendServices)'
 - 'Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/http/backend-service)'
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -475,8 +474,7 @@ backends:
       - For Network Endpoint Groups this defines list of endpoints. All endpoints
         of Network Endpoint Group must be hosted on instances located in the same
         zone as the Network Endpoint Group.
-      - Backend service can not contain mix of Instance Group and Network Endpoint
-        Group backends.
+      - Backend services cannot mix Instance Group and Network Endpoint Group backends.
       - Note that you must specify an Instance Group or Network Endpoint Group resource
         using the fully-qualified URL, rather than a partial URL.
       returned: success

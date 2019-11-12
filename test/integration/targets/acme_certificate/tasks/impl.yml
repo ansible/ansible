@@ -58,9 +58,14 @@
     terms_agreed: yes
     account_email: "example@example.org"
     retrieve_all_alternates: yes
+    acme_expected_root_number: 1
+    select_chain:
+      - test_certificates: last
+        issuer: "{{ acme_roots[1].subject }}"
 - name: Store obtain results for cert 1
   set_fact:
     cert_1_obtain_results: "{{ certificate_obtain_result }}"
+    cert_1_alternate: "{{ 1 if select_crypto_backend == 'cryptography' else 0 }}"
 - name: Obtain cert 2
   include_tasks: obtain-cert.yml
   vars:
@@ -77,9 +82,21 @@
     remaining_days: 10
     terms_agreed: no
     account_email: ""
+    acme_expected_root_number: 0
+    retrieve_all_alternates: yes
+    select_chain:
+      # All intermediates have the same subject, so always the first
+      # chain will be found, and we need a second condition to make sure
+      # that the first condition actually works. (The second condition
+      # has been tested above.)
+      - test_certificates: all
+        subject: "{{ acme_intermediates[0].subject }}"
+      - test_certificates: all
+        issuer: "{{ acme_roots[2].subject }}"
 - name: Store obtain results for cert 2
   set_fact:
     cert_2_obtain_results: "{{ certificate_obtain_result }}"
+    cert_2_alternate: "{{ 0 if select_crypto_backend == 'cryptography' else 0 }}"
 - name: Obtain cert 3
   include_tasks: obtain-cert.yml
   vars:
@@ -96,6 +113,15 @@
     remaining_days: 10
     terms_agreed: no
     account_email: ""
+    acme_expected_root_number: 0
+    retrieve_all_alternates: yes
+    select_chain:
+      - test_certificates: last
+        subject: "{{ acme_roots[1].subject }}"
+- name: Store obtain results for cert 3
+  set_fact:
+    cert_3_obtain_results: "{{ certificate_obtain_result }}"
+    cert_3_alternate: "{{ 0 if select_crypto_backend == 'cryptography' else 0 }}"
 - name: Obtain cert 4
   include_tasks: obtain-cert.yml
   vars:
@@ -113,6 +139,16 @@
     remaining_days: 10
     terms_agreed: no
     account_email: ""
+    acme_expected_root_number: 2
+    select_chain:
+      - test_certificates: last
+        issuer: "{{ acme_roots[2].subject }}"
+      - test_certificates: last
+        issuer: "{{ acme_roots[1].subject }}"
+- name: Store obtain results for cert 4
+  set_fact:
+    cert_4_obtain_results: "{{ certificate_obtain_result }}"
+    cert_4_alternate: "{{ 2 if select_crypto_backend == 'cryptography' else 0 }}"
 - name: Obtain cert 5
   include_tasks: obtain-cert.yml
   vars:
@@ -129,6 +165,10 @@
     remaining_days: 10
     terms_agreed: no
     account_email: ""
+- name: Store obtain results for cert 5a
+  set_fact:
+    cert_5a_obtain_results: "{{ certificate_obtain_result }}"
+    cert_5_alternate: "{{ 0 if select_crypto_backend == 'cryptography' else 0 }}"
 - name: Obtain cert 5 (should not, since already there and valid for more than 10 days)
   include_tasks: obtain-cert.yml
   vars:
@@ -145,7 +185,8 @@
     remaining_days: 10
     terms_agreed: no
     account_email: ""
-- set_fact:
+- name: Store obtain results for cert 5b
+  set_fact:
     cert_5_recreate_1: "{{ challenge_data is changed }}"
 - name: Obtain cert 5 (should again by less days)
   include_tasks: obtain-cert.yml
@@ -163,8 +204,10 @@
     remaining_days: 1000
     terms_agreed: no
     account_email: ""
-- set_fact:
+- name: Store obtain results for cert 5c
+  set_fact:
     cert_5_recreate_2: "{{ challenge_data is changed }}"
+    cert_5c_obtain_results: "{{ certificate_obtain_result }}"
 - name: Obtain cert 5 (should again by force)
   include_tasks: obtain-cert.yml
   vars:
@@ -181,8 +224,10 @@
     remaining_days: 10
     terms_agreed: no
     account_email: ""
-- set_fact:
+- name: Store obtain results for cert 5d
+  set_fact:
     cert_5_recreate_3: "{{ challenge_data is changed }}"
+    cert_5d_obtain_results: "{{ certificate_obtain_result }}"
 - name: Obtain cert 6
   include_tasks: obtain-cert.yml
   vars:
@@ -200,6 +245,20 @@
     remaining_days: 10
     terms_agreed: yes
     account_email: "example@example.org"
+    acme_expected_root_number: 0
+    select_chain:
+      # All intermediates have the same subject key identifier, so always
+      # the first chain will be found, and we need a second condition to
+      # make sure that the first condition actually works. (The second
+      # condition has been tested above.)
+      - test_certificates: last
+        subject_key_identifier: "{{ acme_intermediates[0].subject_key_identifier }}"
+      - test_certificates: last
+        issuer: "{{ acme_roots[1].subject }}"
+- name: Store obtain results for cert 6
+  set_fact:
+    cert_6_obtain_results: "{{ certificate_obtain_result }}"
+    cert_6_alternate: "{{ 0 if select_crypto_backend == 'cryptography' else 0 }}"
 - name: Obtain cert 7
   include_tasks: obtain-cert.yml
   vars:
@@ -219,6 +278,14 @@
     remaining_days: 10
     terms_agreed: yes
     account_email: "example@example.org"
+    acme_expected_root_number: 2
+    select_chain:
+      - test_certificates: last
+        authority_key_identifier: "{{ acme_roots[2].subject_key_identifier }}"
+- name: Store obtain results for cert 7
+  set_fact:
+    cert_7_obtain_results: "{{ certificate_obtain_result }}"
+    cert_7_alternate: "{{ 2 if select_crypto_backend == 'cryptography' else 0 }}"
 - name: Obtain cert 8
   include_tasks: obtain-cert.yml
   vars:
@@ -240,6 +307,10 @@
     remaining_days: 10
     terms_agreed: yes
     account_email: "example@example.org"
+- name: Store obtain results for cert 8
+  set_fact:
+    cert_8_obtain_results: "{{ certificate_obtain_result }}"
+    cert_8_alternate: "{{ 0 if select_crypto_backend == 'cryptography' else 0 }}"
 ## DISSECT CERTIFICATES #######################################################################
 # Make sure certificates are valid. Root certificate for Pebble equals the chain certificate.
 - name: Verifying cert 1
@@ -299,6 +370,39 @@
 - name: Dumping cert 8
   command: openssl x509 -in "{{ output_dir }}/cert-8.pem" -noout -text
   register: cert_8_text
+# Dump certificate info
+- name: Dumping cert 1
+  openssl_certificate_info:
+    path: "{{ output_dir }}/cert-1.pem"
+  register: cert_1_info
+- name: Dumping cert 2
+  openssl_certificate_info:
+    path: "{{ output_dir }}/cert-2.pem"
+  register: cert_2_info
+- name: Dumping cert 3
+  openssl_certificate_info:
+    path: "{{ output_dir }}/cert-3.pem"
+  register: cert_3_info
+- name: Dumping cert 4
+  openssl_certificate_info:
+    path: "{{ output_dir }}/cert-4.pem"
+  register: cert_4_info
+- name: Dumping cert 5
+  openssl_certificate_info:
+    path: "{{ output_dir }}/cert-5.pem"
+  register: cert_5_info
+- name: Dumping cert 6
+  openssl_certificate_info:
+    path: "{{ output_dir }}/cert-6.pem"
+  register: cert_6_info
+- name: Dumping cert 7
+  openssl_certificate_info:
+    path: "{{ output_dir }}/cert-7.pem"
+  register: cert_7_info
+- name: Dumping cert 8
+  openssl_certificate_info:
+    path: "{{ output_dir }}/cert-8.pem"
+  register: cert_8_info
 ## GET ACCOUNT ORDERS #########################################################################
 - name: Don't retrieve orders
   acme_account_info:

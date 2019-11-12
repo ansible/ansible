@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: vultr_user_info
-short_description: Get infos about the Vultr user available.
+short_description: Get information about the Vultr user available.
 description:
   - Get infos about users available in Vultr.
 version_added: "2.9"

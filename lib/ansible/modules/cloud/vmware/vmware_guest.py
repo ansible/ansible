@@ -1282,7 +1282,7 @@ class PyVmomiHelper(PyVmomi):
             if 'version' in self.params['hardware']:
                 hw_version_check_failed = False
                 temp_version = self.params['hardware'].get('version', 10)
-                if temp_version.lower() == 'latest':
+                if isinstance(temp_version, str) and temp_version.lower() == 'latest':
                     # Check is to make sure vm_obj is not of type template
                     if vm_obj and not vm_obj.config.template:
                         try:
@@ -1813,7 +1813,8 @@ class PyVmomiHelper(PyVmomi):
             ident.userData.computerName = vim.vm.customization.FixedName()
             # computer name will be truncated to 15 characters if using VM name
             default_name = self.params['name'].replace(' ', '')
-            default_name = ''.join([c for c in default_name if c not in string.punctuation])
+            punctuation = string.punctuation.replace('-', '')
+            default_name = ''.join([c for c in default_name if c not in punctuation])
             ident.userData.computerName.name = str(self.params['customization'].get('hostname', default_name[0:15]))
             ident.userData.fullName = str(self.params['customization'].get('fullname', 'Administrator'))
             ident.userData.orgName = str(self.params['customization'].get('orgname', 'ACME'))

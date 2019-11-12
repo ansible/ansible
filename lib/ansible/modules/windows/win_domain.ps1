@@ -34,6 +34,7 @@ $sysvol_path = Get-AnsibleParam -obj $params -name "sysvol_path" -type "path"
 $create_dns_delegation = Get-AnsibleParam -obj $params -name "create_dns_delegation" -type "bool"
 $domain_mode = Get-AnsibleParam -obj $params -name "domain_mode" -type "str"
 $forest_mode = Get-AnsibleParam -obj $params -name "forest_mode" -type "str"
+$install_dns = Get-AnsibleParam -obj $params -name "install_dns" -type "bool" -default $true
 
 # FUTURE: Support down to Server 2012?
 if ([System.Environment]::OSVersion.Version -lt [Version]"6.3.9600.0") {
@@ -89,7 +90,7 @@ if (-not $forest) {
         SafeModeAdministratorPassword=$sm_cred;
         Confirm=$false;
         SkipPreChecks=$true;
-        InstallDns=$true;
+        InstallDns=$install_dns;
         NoRebootOnCompletion=$true;
         WhatIf=$check_mode;
     }

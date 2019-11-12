@@ -28,7 +28,7 @@
         validate_certs: False
         library_name: Sample_Library
         library_description: Sample Description
-        datastore_name: '{{ ds1 }}'
+        datastore_name: '{{ ds2 }}'
         state: present
       register: content_lib_create_result
 

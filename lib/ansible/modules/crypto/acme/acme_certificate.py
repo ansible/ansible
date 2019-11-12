@@ -203,13 +203,67 @@ options:
     version_added: 2.6
   retrieve_all_alternates:
     description:
-      - "When set to C(yes), will retrieve all alternate chains offered by the ACME CA.
+      - "When set to C(yes), will retrieve all alternate trust chains offered by the ACME CA.
          These will not be written to disk, but will be returned together with the main
          chain as C(all_chains). See the documentation for the C(all_chains) return
          value for details."
     type: bool
     default: no
     version_added: "2.9"
+  select_chain:
+    description:
+      - "Allows to specify criteria by which an (alternate) trust chain can be selected."
+      - "The list of criteria will be processed one by one until a chain is found
+         matching a criterium. If such a chain is found, it will be used by the
+         module instead of the default chain."
+      - "If a criterium matches multiple chains, the first one matching will be
+         returned. The order is determined by the ordering of the C(Link) headers
+         returned by the ACME server and might not be deterministic."
+      - "Every criterium can consist of multiple different conditions, like I(issuer)
+         and I(subject). For the criterium to match a chain, all conditions must apply
+         to the same certificate in the chain."
+      - "This option can only be used with the C(cryptography) backend."
+    type: list
+    version_added: "2.10"
+    suboptions:
+      test_certificates:
+        description:
+          - "Determines which certificates in the chain will be tested."
+          - "I(all) tests all certificates in the chain (excluding the leaf, which is
+             identical in all chains)."
+          - "I(last) only tests the last certificate in the chain, i.e. the one furthest
+             away from the leaf. Its issuer is the root certificate of this chain."
+        type: str
+        default: all
+        choices: [last, all]
+      issuer:
+        description:
+          - "Allows to specify parts of the issuer of a certificate in the chain must
+             have to be selected."
+          - "If I(issuer) is empty, any certificate will match."
+          - 'An example value would be C({"commonName": "My Preferred CA Root"}).'
+        type: dict
+      subject:
+        description:
+          - "Allows to specify parts of the subject of a certificate in the chain must
+             have to be selected."
+          - "If I(subject) is empty, any certificate will match."
+          - 'An example value would be C({"CN": "My Preferred CA Intermediate"})'
+        type: dict
+      subject_key_identifier:
+        description:
+          - "Checks for the SubjectKeyIdentifier extension. This is an identifier based
+             on the private key of the intermediate certificate."
+          - "The identifier must be of the form
+             C(A8:4A:6A:63:04:7D:DD:BA:E6:D1:39:B7:A6:45:65:EF:F3:A8:EC:A1)."
+        type: str
+      authority_key_identifier:
+        description:
+          - "Checks for the AuthorityKeyIdentifier extension. This is an identifier based
+             on the private key of the issuer of the intermediate certificate."
+          - "The identifier must be of the form
+             C(C4:A7:B1:A4:7B:2C:71:FA:DB:E1:4B:90:75:FF:C4:15:60:85:89:10)."
+        type: str
 '''
 
 EXAMPLES = r'''
@@ -311,6 +365,33 @@ EXAMPLES = r'''
     acme_directory: https://acme-v01.api.letsencrypt.org/directory
     remaining_days: 60
     data: "{{ sample_com_challenge }}"
+  when: sample_com_challenge is changed
+
+# Alternative second step:
+- name: Let the challenge be validated and retrieve the cert and intermediate certificate
+  acme_certificate:
+    account_key_src: /etc/pki/cert/private/account.key
+    account_email: myself@sample.com
+    src: /etc/pki/cert/csr/sample.com.csr
+    cert: /etc/httpd/ssl/sample.com.crt
+    fullchain: /etc/httpd/ssl/sample.com-fullchain.crt
+    chain: /etc/httpd/ssl/sample.com-intermediate.crt
+    challenge: tls-alpn-01
+    remaining_days: 60
+    data: "{{ sample_com_challenge }}"
+    # We use Let's Encrypt's ACME v2 endpoint
+    acme_directory: https://acme-v02.api.letsencrypt.org/directory
+    acme_version: 2
+    # The following makes sure that if a chain with /CN=DST Root CA X3 in its issuer is provided
+    # as an alternative, it will be selected. These are the roots cross-signed by IdenTrust.
+    # As long as Let's Encrypt provides alternate chains with the cross-signed root(s) when
+    # switching to their own ISRG Root X1 root, this will use the chain ending with a cross-signed
+    # root. This chain is more compatible with older TLS clients.
+    select_chain:
+      - test_certificates: last
+        issuer:
+          CN: DST Root CA X3
+          O: Digital Signature Trust Co.
   when: sample_com_challenge is changed
 '''
 
@@ -432,16 +513,29 @@ from ansible.module_utils.acme import (
 )
 
 import base64
+import binascii
 import hashlib
 import os
 import re
 import textwrap
 import time
+import traceback
 from datetime import datetime
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
+from ansible.module_utils import crypto as crypto_utils
+
+try:
+    import cryptography
+    import cryptography.hazmat.backends
+    import cryptography.x509
+except ImportError:
+    CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
+    CRYPTOGRAPHY_FOUND = False
+else:
+    CRYPTOGRAPHY_FOUND = True
 
 
 def get_cert_days(module, cert_file):
@@ -765,7 +859,7 @@ class ACMEClient(object):
             if relation == 'up':
                 chain_result, chain_info = self.account.get_request(link, parse_json_result=False)
                 if chain_info['status'] in [200, 201]:
-                    chain.clear()
+                    del chain[:]
                     chain.append(self._der_to_pem(chain_result))
 
         process_links(info, f)
@@ -907,6 +1001,60 @@ class ACMEClient(object):
                 identifier_type, identifier = type_identifier.split(':', 1)
                 self._validate_challenges(identifier_type, identifier, auth)
 
+    def _chain_matches(self, chain, criterium):
+        '''
+        Check whether an alternate chain matches the specified criterium.
+        '''
+        if criterium['test_certificates'] == 'last':
+            chain = chain[-1:]
+        for cert in chain:
+            try:
+                x509 = cryptography.x509.load_pem_x509_certificate(to_bytes(cert), cryptography.hazmat.backends.default_backend())
+                matches = True
+                if criterium['subject']:
+                    for k, v in crypto_utils.parse_name_field(criterium['subject']):
+                        oid = crypto_utils.cryptography_name_to_oid(k)
+                        value = to_native(v)
+                        found = False
+                        for attribute in x509.subject:
+                            if attribute.oid == oid and value == to_native(attribute.value):
+                                found = True
+                                break
+                        if not found:
+                            matches = False
+                            break
+                if criterium['issuer']:
+                    for k, v in crypto_utils.parse_name_field(criterium['issuer']):
+                        oid = crypto_utils.cryptography_name_to_oid(k)
+                        value = to_native(v)
+                        found = False
+                        for attribute in x509.issuer:
+                            if attribute.oid == oid and value == to_native(attribute.value):
+                                found = True
+                                break
+                        if not found:
+                            matches = False
+                            break
+                if criterium['subject_key_identifier']:
+                    try:
+                        ext = x509.extensions.get_extension_for_class(cryptography.x509.SubjectKeyIdentifier)
+                        if criterium['subject_key_identifier'] != ext.value.digest:
+                            matches = False
+                    except cryptography.x509.ExtensionNotFound:
+                        matches = False
+                if criterium['authority_key_identifier']:
+                    try:
+                        ext = x509.extensions.get_extension_for_class(cryptography.x509.AuthorityKeyIdentifier)
+                        if criterium['authority_key_identifier'] != ext.value.key_identifier:
+                            matches = False
+                    except cryptography.x509.ExtensionNotFound:
+                        matches = False
+                if matches:
+                    return True
+            except Exception as e:
+                self.module.warn('Error while loading certificate {0}: {1}'.format(cert, e))
+        return False
+
     def get_certificate(self):
         '''
         Request a new certificate and write it to the destination file.
@@ -927,7 +1075,8 @@ class ACMEClient(object):
         else:
             cert_uri = self._finalize_cert()
             cert = self._download_cert(cert_uri)
-            if self.module.params['retrieve_all_alternates']:
+            if self.module.params['retrieve_all_alternates'] or self.module.params['select_chain']:
+                # Retrieve alternate chains
                 alternate_chains = []
                 for alternate in cert['alternates']:
                     try:
@@ -936,18 +1085,46 @@ class ACMEClient(object):
                         self.module.warn('Error while downloading alternative certificate {0}: {1}'.format(alternate, e))
                         continue
                     alternate_chains.append(alt_cert)
-                self.all_chains = []
 
-                def _append_all_chains(cert_data):
-                    self.all_chains.append(dict(
-                        cert=cert_data['cert'].encode('utf8'),
-                        chain=("\n".join(cert_data.get('chain', []))).encode('utf8'),
-                        full_chain=(cert_data['cert'] + "\n".join(cert_data.get('chain', []))).encode('utf8'),
-                    ))
+                # Prepare return value for all alternate chains
+                if self.module.params['retrieve_all_alternates']:
+                    self.all_chains = []
 
-                _append_all_chains(cert)
-                for alt_chain in alternate_chains:
-                    _append_all_chains(alt_chain)
+                    def _append_all_chains(cert_data):
+                        self.all_chains.append(dict(
+                            cert=cert_data['cert'].encode('utf8'),
+                            chain=("\n".join(cert_data.get('chain', []))).encode('utf8'),
+                            full_chain=(cert_data['cert'] + "\n".join(cert_data.get('chain', []))).encode('utf8'),
+                        ))
+
+                    _append_all_chains(cert)
+                    for alt_chain in alternate_chains:
+                        _append_all_chains(alt_chain)
+
+                # Try to select alternate chain depending on criteria
+                if self.module.params['select_chain']:
+                    matching_chain = None
+                    all_chains = [cert] + alternate_chains
+                    for criterium_idx, criterium in enumerate(self.module.params['select_chain']):
+                        for v in ('subject_key_identifier', 'authority_key_identifier'):
+                            if criterium[v]:
+                                try:
+                                    criterium[v] = binascii.unhexlify(criterium[v].replace(':', ''))
+                                except Exception:
+                                    self.module.warn('Criterium {0} in select_chain has invalid {1} value. '
+                                                     'Ignoring criterium.'.format(criterium_idx, v))
+                                    continue
+                        for alt_chain in all_chains:
+                            if self._chain_matches(alt_chain.get('chain', []), criterium):
+                                self.module.debug('Found matching chain for criterium {0}'.format(criterium_idx))
+                                matching_chain = alt_chain
+                                break
+                        if matching_chain:
+                            break
+                    if matching_chain:
+                        cert.update(matching_chain)
+                    else:
+                        self.module.debug('Found no matching alternative chain')
 
         if cert['cert'] is not None:
             pem_cert = cert['cert']
@@ -1009,6 +1186,13 @@ def main():
         deactivate_authzs=dict(type='bool', default=False),
         force=dict(type='bool', default=False),
         retrieve_all_alternates=dict(type='bool', default=False),
+        select_chain=dict(type='list', elements='dict', options=dict(
+            test_certificates=dict(type='str', default='all', choices=['last', 'all']),
+            issuer=dict(type='dict'),
+            subject=dict(type='dict'),
+            subject_key_identifier=dict(type='str'),
+            authority_key_identifier=dict(type='str'),
+        )),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -1021,7 +1205,12 @@ def main():
         ),
         supports_check_mode=True,
     )
-    handle_standard_module_arguments(module)
+    backend = handle_standard_module_arguments(module)
+    if module.params['select_chain']:
+        if backend != 'cryptography':
+            module.fail_json(msg="The 'select_chain' can only be used with the 'cryptography' backend.")
+        elif not CRYPTOGRAPHY_FOUND:
+            module.fail_json(msg=missing_required_lib('cryptography'))
 
     try:
         if module.params.get('dest'):

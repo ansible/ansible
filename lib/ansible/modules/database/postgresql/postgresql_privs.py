@@ -724,7 +724,7 @@ class Connection(object):
         # set_what: SQL-fragment specifying what to set for the target roles:
         # Either group membership or privileges on objects of a certain type
         if obj_type == 'group':
-            set_what = ','.join(pg_quote_identifier(i, 'role') for i in obj_ids)
+            set_what = ','.join('"%s"' % i for i in obj_ids)
         elif obj_type == 'default_privs':
             # We don't want privs to be quoted here
             set_what = ','.join(privs)
@@ -751,7 +751,7 @@ class Connection(object):
                     else:
                         self.module.warn("Role '%s' does not exist, pass it" % r.strip())
                 else:
-                    for_whom.append(pg_quote_identifier(r, 'role'))
+                    for_whom.append('"%s"' % r)
 
             if not for_whom:
                 return False
@@ -761,7 +761,7 @@ class Connection(object):
         # as_who:
         as_who = None
         if target_roles:
-            as_who = ','.join(pg_quote_identifier(r, 'role') for r in target_roles)
+            as_who = ','.join('"%s"' % r for r in target_roles)
 
         status_before = get_status(objs)
 
@@ -988,7 +988,7 @@ def main():
 
     if p.session_role:
         try:
-            conn.cursor.execute('SET ROLE %s' % pg_quote_identifier(p.session_role, 'role'))
+            conn.cursor.execute('SET ROLE "%s"' % p.session_role)
         except Exception as e:
             module.fail_json(msg="Could not switch to role %s: %s" % (p.session_role, to_native(e)), exception=traceback.format_exc())
 
