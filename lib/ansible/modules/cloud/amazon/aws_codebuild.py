@@ -395,6 +395,7 @@ def main():
         name=dict(required=True),
         description=dict(),
         source=dict(required=True, type='dict'),
+        source_version=dict(required=False, type='str'),
         artifacts=dict(required=True, type='dict'),
         cache=dict(type='dict'),
         environment=dict(type='dict'),
