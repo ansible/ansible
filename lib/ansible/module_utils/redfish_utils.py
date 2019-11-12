@@ -2286,13 +2286,13 @@ class RedfishUtils(object):
         if nic_addr == 'null':
             # Find root_uri matched EthernetInterface when nic_addr is not specified
             nic_addr = (self.root_uri).split('/')[-1]
-            nic_addr = nic_addr.split(':')[0]  #split port if existing
+            nic_addr = nic_addr.split(':')[0]  # split port if existing
         for uri in uris:
             response = self.get_request(self.root_uri + uri)
             if response['ret'] is False:
                 return response
             data = response['data']
-            if '"'+nic_addr+'"' in str(data) or "'"+nic_addr+"'" in str(data):
+            if '"' + nic_addr + '"' in str(data) or "'" + nic_addr + "'" in str(data):
                 target_ethernet_uri = uri
                 target_ethernet_current_setting = data
                 break
