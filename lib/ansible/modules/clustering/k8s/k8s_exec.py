@@ -54,6 +54,11 @@ options:
     - The pod name
     type: str
     required: yes
+  container:
+    description:
+    - The name of the container in the pod to connect to. Defaults to only container if there is only one container in the pod.
+    type: str
+    required: no
   command:
     description:
     - The command to execute
@@ -109,6 +114,7 @@ class KubernetesExecCommand(KubernetesAnsibleModule):
         spec = copy.deepcopy(AUTH_ARG_SPEC)
         spec['namespace'] = {'type': 'str'}
         spec['pod'] = {'type': 'str'}
+        spec['container'] = {'type': 'str'}
         spec['command'] = {'type': 'str'}
         return spec
 
@@ -118,6 +124,11 @@ def main():
     # Load kubernetes.client.Configuration
     module.get_api_client()
     api = core_v1_api.CoreV1Api()
+
+    # hack because passing the container as None breaks things
+    optional_kwargs = {}
+    if module.params.get('container'):
+        optional_kwargs['container'] = module.params['container']
     resp = stream(
         api.connect_get_namespaced_pod_exec,
         module.params["pod"],
@@ -127,7 +138,7 @@ def main():
         stderr=True,
         stdin=False,
         tty=False,
-        _preload_content=False)
+        _preload_content=False, **optional_kwargs)
     stdout, stderr = [], []
     while resp.is_open():
         resp.update(timeout=1)
