@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 module: os_server_action
 short_description: Perform actions on Compute Instances from OpenStack
 extends_documentation_fragment: openstack
-version_added: "2.0"
+version_added: "2.10"
 author: "Jesse Keating (@omgjlk)"
 description:
    - Perform server actions on an existing compute instance from OpenStack.
