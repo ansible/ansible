@@ -73,12 +73,6 @@ options:
       - If C(yes), prepend list values with X-ORDERED index numbers in all
         attributes specified in the current task. This is useful mostly with
         I(olcAccess) attribute to easily manage LDAP Access Control Lists.
-  params:
-    description:
-      - Additional module parameters. This parameter can be used to define
-        various LDAP connection options in a dictionary variable and reuse them in
-        separate Ansible tasks.
-    type: dict
 extends_documentation_fragment:
 - ldap.documentation
 '''
@@ -154,22 +148,6 @@ EXAMPLES = r'''
     server_uri: ldap://localhost/
     bind_dn: cn=admin,dc=example,dc=com
     bind_pw: password
-
-#
-# The same as in the previous example but with the authentication details
-# stored in the ldap_auth variable:
-#
-# ldap_auth:
-#   server_uri: ldap://localhost/
-#   bind_dn: cn=admin,dc=example,dc=com
-#   bind_pw: password
-- name: Get rid of an unneeded attribute
-  ldap_attrs:
-    dn: uid=jdoe,ou=people,dc=example,dc=com
-    attributes:
-        shadowExpire: ""
-    state: exact
-    params: "{{ ldap_auth }}"
 '''
 
 
@@ -294,7 +272,6 @@ class LdapAttrs(LdapGeneric):
 def main():
     module = AnsibleModule(
         argument_spec=gen_specs(
-            params=dict(type='dict'),
             attributes=dict(type='dict', required=True),
             ordered=dict(type='bool', default=False, required=False),
             state=dict(type='str', default='present', choices=['absent', 'exact', 'present']),
@@ -305,12 +282,6 @@ def main():
     if not HAS_LDAP:
         module.fail_json(msg=missing_required_lib('python-ldap'),
                          exception=LDAP_IMP_ERR)
-
-    # Update module parameters with user's parameters if defined
-    if 'params' in module.params and isinstance(module.params['params'], dict):
-        module.params.update(module.params['params'])
-        # Remove the params
-        module.params.pop('params', None)
 
     # Instantiate the LdapAttr object
     ldap = LdapAttrs(module)
