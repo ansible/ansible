@@ -292,7 +292,7 @@ class PKG(CLIMgr):
                 pass
 
         if 'automatic' in pkg:
-            pkg['automatic'] = bool(pkg['automatic'])
+            pkg['automatic'] = bool(int(pkg['automatic']))
 
         if 'category' in pkg:
             pkg['category'] = pkg['category'].split('/', 1)[0]
@@ -309,7 +309,7 @@ class PKG(CLIMgr):
                 pkg['revision'] = '0'
 
         if 'vital' in pkg:
-            pkg['vital'] = bool(pkg['vital'])
+            pkg['vital'] = bool(int(pkg['vital']))
 
         return pkg
 
