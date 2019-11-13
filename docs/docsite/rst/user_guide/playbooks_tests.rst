@@ -37,7 +37,7 @@ Such as::
 Testing strings
 ```````````````
 
-To match strings against a substring or a regular expression, use the "match", "search" or "regex" filters::
+To match strings against a substring or a regular expression, use the ``match``, ``search`` or ``regex`` filters::
 
     vars:
       url: "http://example.com/users/foo/resources/bar"
@@ -59,7 +59,7 @@ To match strings against a substring or a regular expression, use the "match", "
             msg: "matched pattern 4"
           when: url is regex("example.com/\w+/foo")
 
-'match' succeeds if it finds the pattern at the beginning of the string, while 'search' succeeds if it finds the pattern anywhere within string. By default, 'regex' works like `search`, but `regex` can be configured to perform other tests as well.
+``match`` succeeds if it finds the pattern at the beginning of the string, while ``search`` succeeds if it finds the pattern anywhere within string. By default, ``regex`` works like ``search``, but ``regex`` can be configured to perform other tests as well.
 
 .. _testing_truthiness:
 
