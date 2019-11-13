@@ -73,6 +73,7 @@ options:
         port name, multiple ethernet port names separated by commas or not defined for all ports.
     required: false
     type: list
+    choices: [ "eth0", "eth1", "ppp0" ]
 notes:
  - Use C(groups/cpm) in C(module_defaults) to set common options used between CPM modules.)
 """
