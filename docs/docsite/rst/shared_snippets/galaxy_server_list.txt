@@ -1,17 +1,22 @@
 
 
-If you use the ``ansible-galaxy`` command, you need to first configure the server lists that command communicates with. You can configure this as follows:
+If you use the ``ansible-galaxy`` command, you may need to first configure the server lists that command communicates with. By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`).
 
-* Set the server list in the :ref:`galaxy_server_list` configuration option in :ref:`ansible_configuration_settings_locations` file.
+You can configure this to use other servers (such as Red Hat Automation Hub or a custom Galaxy server) as follows:
+
+* Set the server list in the :ref:`galaxy_server_list` configuration option in :ref:`ansible_configuration_settings_locations`.
 * Use the ``--server`` command line argument to limit to an individual server.
 
-To configure a Galaxy server list:
+To configure a Galaxy server list in ``ansible.cfg``:
 
 #. Add the ``server_list``  option under the ``[galaxy]`` section to one or more server names.
 #. Create a new section for each server name.
 #. Set the ``url`` option for each server name.
+
+For Red Hat Automation Hub, you additionally need to:
+
 #. Set the ``auth_url`` option for each server name.
-#. Set the authentication for each server name. Use either the ``token`` option or the ``username`` and ``password`` options.
+#. Set the authentication ``token`` for each server name. See Red Hat Automation Hub documentation for how to get a token.
 
 The following example shows how to configure multiple servers:
 
@@ -21,8 +26,9 @@ The following example shows how to configure multiple servers:
     server_list = automation_hub, my_org_hub, release_galaxy, test_galaxy
 
     [galaxy_server.automation_hub]
-    url=https://ci.cloud.redhat.com/api/automation-hub/
-    auth_url=https://sso.qa.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+    url=https://cloud.redhat.com/api/automation-hub/
+    auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+
     token=my_token
 
     [galaxy_server.my_org_hub]
