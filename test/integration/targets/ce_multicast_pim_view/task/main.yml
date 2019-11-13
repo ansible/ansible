@@ -1,4 +1,2 @@
 ---
 - { include: netconf.yaml, tags: ['netconf'] }
-
-

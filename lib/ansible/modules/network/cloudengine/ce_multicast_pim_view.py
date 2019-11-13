@@ -733,16 +733,16 @@ class MulticastPim(object):
         self.trigcache = self.module.params['trigcache']
         self.bid_enable = self.module.params['bid_enable']
         self.src_name = self.module.params['src_name']
-
-        if self.bid.lower() == 'true':
-            self.bid = 'Bidir'
+        if self.bid is not None:
+            if str(self.bid).lower() == 'true':
+                self.bid = 'Bidir'
         else:
             self.bid = 'NotBidir'
-
-        if self.pre.lower() == 'true':
-            self.pre = 'Prefer'
-        else:
-            self.pre = 'NotPrefer'
+        if self.pre is not None:
+            if str(self.pre).lower() == 'true':
+                self.pre = 'Prefer'
+            else:
+                self.pre = 'NotPrefer'
 
         self.pri = self.module.params['pri']
         if self.method == 'hello_option':
@@ -1021,7 +1021,7 @@ class MulticastPim(object):
                         if method == 'assert':
                             if str(self.interval) != data["assertHoldTime"]:
                                 change = True
-                        if self.trigcache.lower() != data["jpTrigCacheDisable"].lower():
+                        if str(self.trigcache).lower() != data["jpTrigCacheDisable"].lower():
                             change = True
             # new
             else:
@@ -1039,7 +1039,7 @@ class MulticastPim(object):
         if self.pim_data["pim"] and pim_info:
             for data in self.pim_data["pim"]:
                 if self.version == pim_info[0]["addressFamily"] and self.vrf == pim_info[0]["vrfName"]:
-                    if self.bid_enable.lower() != data["bidirPimEnable"].lower():
+                    if str(self.bid_enable).lower() != data["bidirPimEnable"].lower():
                         change = True
         else:
             change = True
@@ -1093,9 +1093,9 @@ class MulticastPim(object):
                                 change = True
                         if self.addr != data["staticRpAddr"]:
                             change = True
-                        if self.bid.lower() != data["bidirEnable"].lower():
+                        if str(self.bid).lower() != data["bidirEnable"].lower():
                             change = True
-                        if self.pre.lower() != data["preference"].lower():
+                        if str(self.pre).lower() != data["preference"].lower():
                             change = True
             # new
             else:
@@ -1128,7 +1128,7 @@ class MulticastPim(object):
                             change = True
                         if str(self.adinterval) != data["cRpAdvInterval"]:
                             change = True
-                        if self.bid.lower() != data["cRpBidir"].lower():
+                        if str(self.bid).lower() != data["cRpBidir"].lower():
                             change = True
             # new
             else:
@@ -1157,7 +1157,7 @@ class MulticastPim(object):
                         if str(self.pri) != data["cBsrPriority"]:
                             change = True
                         if self.frag:
-                            if self.frag.lower() != data["isFragable"].lower():
+                            if str(self.frag).lower() != data["isFragable"].lower():
                                 change = True
             # new
             else:
@@ -1232,7 +1232,7 @@ class MulticastPim(object):
                 interval_xml = get_xml(CE_NC_MERGE_MULTICAST_PIM_INFO_ASSRETTIME, self.interval)
             if method == 'hello_option':
                 pri_xml = get_xml(CE_NC_MERGE_MULTICAST_PIM_INFO_DRPRI, self.pri)
-            trigcache_xml = get_xml(CE_NC_MERGE_MULTICAST_PIM_INFO_CACHE, self.trigcache.lower())
+            trigcache_xml = get_xml(CE_NC_MERGE_MULTICAST_PIM_INFO_CACHE, str(self.trigcache).lower())
             configxmlstr = CE_NC_MERGE_MULTICAST_PIM_INFO % (
                 self.vrf, self.version, src_name_xml, interval_xml, pri_xml, trigcache_xml)
         else:
@@ -1337,7 +1337,7 @@ class MulticastPim(object):
 
     def _setbidcmd_(self):
         """set bidir-pim cmd"""
-        if self.bid_enable.lower() != 'true':
+        if str(self.bid_enable).lower() != 'true':
             self.updates_cmd.append('undo bidir-pim')
         else:
             self.updates_cmd.append('bidir-pim')
@@ -1345,7 +1345,7 @@ class MulticastPim(object):
     def _setcbsrcmd_(self):
         """set c-bsr cmd"""
         if self.state == "present":
-            if self.frag.lower() != 'true':
+            if str(self.frag).lower() != 'true':
                 self.updates_cmd.append('undo bsm semantic fragmentation')
             else:
                 self.updates_cmd.append('bsm semantic fragmentation')
@@ -1416,7 +1416,7 @@ class MulticastPim(object):
                     self.updates_cmd.append(' hello-option dr-priority %s ' % self.pri)
                 else:
                     self.updates_cmd.append(' undo hello-option dr-priority ')
-            if self.trigcache.lower() == 'true':
+            if str(self.trigcache).lower() == 'true':
                 self.updates_cmd.append(' join-prune triggered-message-cache disable ')
             else:
                 self.updates_cmd.append(' undo join-prune triggered-message-cache disable ')
@@ -1454,9 +1454,9 @@ class MulticastPim(object):
                     self.updates_cmd.append(' %s ' % self.name)
                 else:
                     self.updates_cmd.append(' acl-name %s ' % self.name)
-            if self.pre.lower() != 'notprefer':
+            if str(self.pre).lower() != 'notprefer':
                 self.updates_cmd.append(' preferred ')
-            if self.bid.lower() != 'notbidir':
+            if str(self.bid).lower() != 'notbidir':
                 self.updates_cmd.append(' bidir')
         else:
             self.updates_cmd.append('undo static-rp %s ' % self.addr)
@@ -1476,7 +1476,7 @@ class MulticastPim(object):
                 self.updates_cmd.append(' holdtime %s ' % self.interval)
             if self.adinterval != 60:
                 self.updates_cmd.append(' advertisement-interval %s ' % self.adinterval)
-            if self.bid.lower() != 'notbidir':
+            if str(self.bid).lower() != 'notbidir':
                 self.updates_cmd.append(' bidir')
         else:
             self.updates_cmd.append('undo c-rp %s ' % self.ifname)
@@ -1685,7 +1685,7 @@ class MulticastPim(object):
         if self.pim_data["pim"] != []:
             self.end_state["pim"] = self.pim_data["pim"]
         if self.existing == self.end_state:
-            self.changed = alse
+            self.changed = False
             self.updates_cmd = list()
 
     def work(self):

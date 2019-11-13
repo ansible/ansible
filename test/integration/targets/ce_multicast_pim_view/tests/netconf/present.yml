@@ -1,4 +1,245 @@
+---
+- debug:
+    msg: "START ce_multicast_pim_view presnet integration tests on connection={{ ansible_connection }}"
 
+- name: Merge the provided configuration with the exisiting running configuration(part 1)
+  ce_multicast_pim_view:
+    aftype: v4
+    vrf: _public_
+    features: bid
+    bid_enable: false
+    state: present
+  register: result_1
 
+- name: Merge the provided configuration with the exisiting running configuration(part 2)
+  ce_multicast_pim_view:
+    aftype: v4
+    vrf: _public_
+    ifname: vlanif3111
+    pri: 125
+    hashlen: 0
+    features: c_bsr
+    frag: true
+    state: present
+  register: result_2
 
+- name: Merge the provided configuration with the exisiting running configuration(part 3)
+  ce_multicast_pim_view: &absent_2
+    aftype: v4
+    vrf: _public_
+    ifname: vlanif3111
+    features: c_rp
+    bid: true
+    name: 2003
+    interval: 2000
+    adinterval: 3000
+    state: present
+  register: result_3
+
+- name: Merge the provided configuration with the exisiting running configuration(part 4)
+  ce_multicast_pim_view:
+    aftype: v4
+    vrf: _public_
+    ifname: vlanif3111
+    features: pim
+    method: lifetime
+    interval: 2000
+    trigcache: false
+    src_name: 2004
+    state: present
+  register: result_4
+
+- name: Merge the provided configuration with the exisiting running configuration(part 5)
+  ce_multicast_pim_view:
+    aftype: v4
+    vrf: _public_
+    ifname: vlanif3111
+    features: static_rp
+    addr: 12.12.12.12
+    pre: true
+    state: present
+  register: result_5
+
+- name: Delete existing configurations(part 6)
+  ce_multicast_pim_view:
+    aftype: v4
+    vrf: _public_
+    ifname: vlanif3111
+    features: anycast_rp
+    addr: 12.12.12.12
+    local_addr: 13.13.13.13
+    pre: true
+    state: present
+  register: result_6
+
+- name: Assert the configuration is reflected on host
+  assert:
+    that:
+      - "result_1['changed'] == true"
+      - "result_2['changed'] == true"
+      - "result_3['changed'] == true"
+      - "result_4['changed'] == true"
+      - "result_5['changed'] == true"
+      - "result_6['changed'] == true"
+
+- name: Get lacp config by ce_netconf(part 1).
+  ce_netconf:
+    rpc: get
+    cfg_xml: '<filter type="subtree">
+                  <pim xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                      <pimafspro>
+                        <pimAfsSiteCfgs>
+                          <pimAfsSiteCfg>
+                            <vrfName>_public_</vrfName>
+                            <addressFamily>ipv4unicast</addressFamily>
+                            <pimAfsBidirCfg>
+                              <bidirPimEnable></bidirPimEnable>
+                            </pimAfsBidirCfg>
+                          </pimAfsSiteCfg>
+                        </pimAfsSiteCfgs>
+                      </pimafspro>
+                  </pim>
+              </filter>'
+  register: result_merged_1
+
+- name: Get lacp config by ce_netconf(part 2).
+  ce_netconf:
+    rpc: get
+    cfg_xml: '<filter type="subtree">
+                  <pim xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                      <bsrafspro>
+                      <bsrAfsSiteCfgs>
+                          <bsrAfsSiteCfg>
+                          <vrfName>_public_</vrfName>
+                          <addressFamily>ipv4unicast</addressFamily>
+                          <cBsrIfName></cBsrIfName>
+                          <cBsrHashLen></cBsrHashLen>
+                          <cBsrPriority></cBsrPriority>
+                          <isFragable></isFragable>
+                          </bsrAfsSiteCfg>
+                      </bsrAfsSiteCfgs>
+                      </bsrafspro>
+                  </pim>
+              </filter>'
+  register: result_merged_2
+
+- name: Get lacp config by ce_netconf(part 3).
+  ce_netconf:
+    rpc: get
+    cfg_xml: '<filter type="subtree">
+                  <pim xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                    <bsrafspro>
+                      <bsrAf4CrpCfgs>
+                        <bsrAf4CrpCfg>
+                          <vrfName>_public_</vrfName>
+                          <cRpIfName>vlanif3111</cRpIfName>
+                          <cRpGrpPlyName></cRpGrpPlyName>
+                          <cRpPriority></cRpPriority>
+                          <cRpHoldTime></cRpHoldTime>
+                          <cRpAdvInterval></cRpAdvInterval>
+                          <cRpBidir></cRpBidir>
+                        </bsrAf4CrpCfg>
+                      </bsrAf4CrpCfgs>
+                    </bsrafspro>
+                  </pim>
+              </filter>'
+  register: result_merged_3
+
+- name: Get lacp config by ce_netconf(part 4).
+  ce_netconf:
+    rpc: get
+    cfg_xml: '<filter type="subtree">
+                  <pim xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                      <pimafspro>
+                        <pimAfsSiteCfgs>
+                          <pimAfsSiteCfg>
+                            <vrfName>_public_</vrfName>
+                            <addressFamily>ipv4unicast</addressFamily>
+                            <sourceLifeTime></sourceLifeTime>
+                            <srcPlyName></srcPlyName>
+                            <helloInterval></helloInterval>
+                            <helloHoldtime></helloHoldtime>
+                            <drPriority></drPriority>
+                            <jpTimerInterval></jpTimerInterval>
+                            <jpTrigCacheDisable></jpTrigCacheDisable>
+                            <helloOverride></helloOverride>
+                            <helloLandelay></helloLandelay>
+                            <assertHoldTime></assertHoldTime>
+                            <jpHoldTime></jpHoldTime>
+                          </pimAfsSiteCfg>
+                        </pimAfsSiteCfgs>
+                      </pimafspro>
+                  </pim>
+              </filter>'
+  register: result_merged_4
+
+- name: Get lacp config by ce_netconf(part 5).
+  ce_netconf:
+    rpc: get
+    cfg_xml: '<filter type="subtree">
+                   <pim xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                      <pimafspro>
+                        <pimAfsSiteCfgs>
+                          <pimAfsSiteCfg>
+                            <vrfName>_public_</vrfName>
+                            <addressFamily>ipv4unicast</addressFamily>
+                            <pimAfsStaticRps>
+                              <pimAfsStaticRp>
+                                <staticRpAddr></staticRpAddr>
+                                <staticRpPlyName></staticRpPlyName>
+                                <preference></preference>
+                                <bidirEnable></bidirEnable>
+                              </pimAfsStaticRp>
+                            </pimAfsStaticRps>
+                          </pimAfsSiteCfg>
+                        </pimAfsSiteCfgs>
+                      </pimafspro>
+                   </pim>
+              </filter>'
+  register: result_merged_5
+
+- name: Get lacp config by ce_netconf(part 6).
+  ce_netconf:
+    rpc: get
+    cfg_xml: '<filter type="subtree">
+                   <pim xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                      <pimafspro>
+                        <pimAfsSiteCfgs>
+                          <pimAfsSiteCfg>
+                            <vrfName>_public_</vrfName>
+                            <addressFamily>ipv4unicast</addressFamily>>
+                            <pimAfsAnyRps>
+                              <pimAfsAnyRp>
+                                <rpAddress></rpAddress>
+                                <localAddress></localAddress>
+                              </pimAfsAnyRp>
+                            </pimAfsAnyRps>
+                          </pimAfsSiteCfg>
+                        </pimAfsSiteCfgs>
+                      </pimafspro>
+                   </pim>
+              </filter>'
+  register: result_merged_6
+
+ - name: Assert that the previous task was idempotent, some become ot default values, others depend on devices.
+  assert:
+    that:
+      - "'<bidirPimEnable>true</bidirPimEnable>' == result_merged_1.end_state.result"
+      - "'<cBsrHashLen>0</cBsrHashLen>' == result_merged_2.end_state.result"
+      - "'<cBsrPriority>125</cBsrPriority>' == result_merged_2.end_state.result"
+      - "'<isFragable>true</isFragable>' == result_merged_2.end_state.result"
+      - "'<cRpGrpPlyName>2003</cRpGrpPlyName>' == result_merged_3.end_state.result"
+      - "'<cRpPriority>0</cRpPriority>' == result_merged_3.end_state.result"
+      - "'<cRpHoldTime>2000</cRpHoldTime>' == result_merged_3.end_state.result"
+      - "'<cRpAdvInterval>3000</cRpAdvInterval>' == result_merged_3.end_state.result"
+      - "'<cRpBidir>Bidir</cRpBidir>' == result_merged_3.end_state.result"
+      - "'<sourceLifeTime>2000</sourceLifeTime>' == result_merged_4.end_state.result"
+      - "'<jpTrigCacheDisable>false</jpTrigCacheDisable>' == result_merged_4.end_state.result"
+      - "'<srcPlyName>2004</srcPlyName>' == result_merged_4.end_state.result"
+      - "'<preference>Prefer</preference>' == result_merged_5.end_state.result"
+      - "'<rpAddress>12.12.12.12</rpAddress>' == result_merged_6.end_state.result"
+      - "'<localAddress>13.13.13.13</localAddress>' == result_merged_6.end_state.result"
+
+- debug:
+    msg: "END ce_multicast_pim_view present integration tests on connection={{ ansible_connection }}"
 
