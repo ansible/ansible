@@ -55,7 +55,7 @@ options:
     type: str
     aliases: [ importer_ssl_ca_cert, ca_cert ]
   feed_client_cert:
-    version_added: 2.10
+    version_added: "2.10"
     description:
       - Certificate used as the client certificate when synchronizing the
         repository. This is used to communicate authentication information to
@@ -66,7 +66,7 @@ options:
     type: str
     aliases: [ importer_ssl_client_cert ]
   feed_client_key:
-    version_added: 2.10
+    version_added: "2.10"
     description:
       - Private key to the certificate specified in I(importer_ssl_client_cert),
         assuming it is not included in the certificate file itself. This can be
@@ -537,7 +537,7 @@ def main():
         add_export_distributor=dict(default=False, type='bool'),
         feed=dict(),
         generate_sqlite=dict(default=False, type='bool'),
-        feed_ca_cert=dict(aliases=['importer_ssl_ca_cert','ca_cert']),
+        feed_ca_cert=dict(aliases=['importer_ssl_ca_cert', 'ca_cert']),
         feed_client_cert=dict(aliases=['importer_ssl_client_cert']),
         feed_client_key=dict(aliases=['importer_ssl_client_key']),
         name=dict(required=True, aliases=['repo']),
@@ -566,12 +566,12 @@ def main():
     importer_ssl_ca_cert = module.params['feed_ca_cert']
     importer_ssl_client_cert = module.params['feed_client_cert']
     if importer_ssl_client_cert is None and module.params['client_cert'] is not None:
-      importer_ssl_client_cert = module.params['client_cert']
-      module.deprecate("In Ansible 2.10 a new `feed_client_cert` option was added.  Until Ansible 2.14 the default value will come from the client_cert option", version="2.14")
+        importer_ssl_client_cert = module.params['client_cert']
+        module.deprecate("In Ansible 2.10 `feed_client_cert` option was added. Until 2.14 the default value will come from client_cert option", version="2.14")
     importer_ssl_client_key = module.params['feed_client_key']
     if importer_ssl_client_key is None and module.params['client_key'] is not None:
-      importer_ssl_client_key = module.params['client_key']
-      module.deprecate("In Ansible 2.10 a new `feed_client_key` option was added.  Until Ansible 2.14 the default value will come from the client_key option", version="2.14")
+        importer_ssl_client_key = module.params['client_key']
+        module.deprecate("In Ansible 2.10 `feed_client_key` option was added. Until 2.14 the default value will come from client_key option", version="2.14")
     proxy_host = module.params['proxy_host']
     proxy_port = module.params['proxy_port']
     proxy_username = module.params['proxy_username']
