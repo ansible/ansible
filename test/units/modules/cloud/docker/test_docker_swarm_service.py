@@ -201,6 +201,11 @@ def test_has_list_changed(docker_swarm_service):
         "command --with args",
         ['command', '--with', 'args']
     )
+    assert docker_swarm_service.has_list_changed(
+        ['sleep', '3400'],
+        [u'sleep', u'3600'],
+        sort_lists=False
+    )
 
     # List comparisons with dictionaries
     assert not docker_swarm_service.has_list_changed(
@@ -300,6 +305,112 @@ def test_has_list_changed(docker_swarm_service):
         [{'id': '123', 'aliases': []}],
         [{'id': '123'}],
         sort_key='id'
+    )
+
+
+def test_have_networks_changed(docker_swarm_service):
+    assert not docker_swarm_service.have_networks_changed(
+        [{'id': 1}],
+        [{'id': 1}]
+    )
+
+    assert docker_swarm_service.have_networks_changed(
+        [{'id': 1}],
+        [{'id': 1}, {'id': 2}]
+    )
+
+    assert not docker_swarm_service.have_networks_changed(
+        [{'id': 1}, {'id': 2}],
+        [{'id': 1}, {'id': 2}]
+    )
+
+    assert docker_swarm_service.have_networks_changed(
+        [{'id': 1}, {'id': 2}],
+        [{'id': 2}, {'id': 1}]
+    )
+
+    assert not docker_swarm_service.have_networks_changed(
+        [
+            {'id': 1},
+            {'id': 2, 'aliases': []}
+        ],
+        [
+            {'id': 1},
+            {'id': 2}
+        ]
+    )
+
+    assert docker_swarm_service.have_networks_changed(
+        [
+            {'id': 1},
+            {'id': 2, 'aliases': ['alias1']}
+        ],
+        [
+            {'id': 1},
+            {'id': 2}
+        ]
+    )
+
+    assert docker_swarm_service.have_networks_changed(
+        [
+            {'id': 1},
+            {'id': 2, 'aliases': ['alias1', 'alias2']}
+        ],
+        [
+            {'id': 1}, {'id': 2, 'aliases': ['alias1']}
+        ]
+    )
+
+    assert not docker_swarm_service.have_networks_changed(
+        [
+            {'id': 1},
+            {'id': 2, 'aliases': ['alias1', 'alias2']}
+        ],
+        [
+            {'id': 1},
+            {'id': 2, 'aliases': ['alias1', 'alias2']}
+        ]
+    )
+
+    assert not docker_swarm_service.have_networks_changed(
+        [
+            {'id': 1},
+            {'id': 2, 'aliases': ['alias1', 'alias2']}
+        ],
+        [
+            {'id': 1},
+            {'id': 2, 'aliases': ['alias2', 'alias1']}
+        ]
+    )
+
+    assert not docker_swarm_service.have_networks_changed(
+        [
+            {'id': 1, 'options': {}},
+            {'id': 2, 'aliases': ['alias1', 'alias2']}],
+        [
+            {'id': 1},
+            {'id': 2, 'aliases': ['alias2', 'alias1']}
+        ]
+    )
+
+    assert not docker_swarm_service.have_networks_changed(
+        [
+            {'id': 1, 'options': {'option1': 'value1'}},
+            {'id': 2, 'aliases': ['alias1', 'alias2']}],
+        [
+            {'id': 1, 'options': {'option1': 'value1'}},
+            {'id': 2, 'aliases': ['alias2', 'alias1']}
+        ]
+    )
+
+    assert docker_swarm_service.have_networks_changed(
+        [
+            {'id': 1, 'options': {'option1': 'value1'}},
+            {'id': 2, 'aliases': ['alias1', 'alias2']}],
+        [
+            {'id': 1, 'options': {'option1': 'value2'}},
+            {'id': 2, 'aliases': ['alias2', 'alias1']}
+        ]
     )
 
 

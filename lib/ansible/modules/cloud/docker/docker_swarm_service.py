@@ -1305,6 +1305,33 @@ def has_list_changed(new_list, old_list, sort_lists=True, sort_key=None):
     return False
 
 
+def have_networks_changed(new_networks, old_networks):
+    """Special case list checking for networks to sort aliases"""
+
+    if not has_list_changed(new_networks, old_networks, sort_lists=False):
+        # The default checking determined no changes
+        return False
+
+    if len(new_networks) != len(old_networks):
+        return True
+
+    for new_item, old_item in zip(new_networks, old_networks):
+        if new_item['id'] != old_item['id']:
+            # The networks are in a different order
+            return True
+
+        # Sort the aliases
+        if 'aliases' in new_item:
+            new_item['aliases'].sort()
+        if 'aliases' in old_item:
+            old_item['aliases'].sort()
+
+        if has_dict_changed(new_item, old_item):
+            return True
+
+    return False
+
+
 class DockerService(DockerBaseClass):
     def __init__(self, docker_api_version, docker_py_version):
         super(DockerService, self).__init__()
@@ -1813,7 +1840,7 @@ class DockerService(DockerBaseClass):
             differences.add('configs', parameter=self.configs, active=os.configs)
         if has_list_changed(self.secrets, os.secrets, sort_key='secret_name'):
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
-        if has_list_changed(self.networks, os.networks):
+        if have_networks_changed(self.networks, os.networks):
             differences.add('networks', parameter=self.networks, active=os.networks)
             needs_rebuild = not self.can_update_networks
         if self.replicas != os.replicas:
@@ -1824,7 +1851,7 @@ class DockerService(DockerBaseClass):
             differences.add('args', parameter=self.args, active=os.args)
         if has_list_changed(self.constraints, os.constraints):
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
-        if has_list_changed(self.placement_preferences, os.placement_preferences, sort_key='spread'):
+        if has_list_changed(self.placement_preferences, os.placement_preferences, sort_lists=False):
             differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
         if has_list_changed(self.groups, os.groups):
             differences.add('groups', parameter=self.groups, active=os.groups)
@@ -1875,9 +1902,9 @@ class DockerService(DockerBaseClass):
             differences.add('image', parameter=self.image, active=change)
         if self.user and self.user != os.user:
             differences.add('user', parameter=self.user, active=os.user)
-        if has_list_changed(self.dns, os.dns):
+        if has_list_changed(self.dns, os.dns, sort_lists=False):
             differences.add('dns', parameter=self.dns, active=os.dns)
-        if has_list_changed(self.dns_search, os.dns_search):
+        if has_list_changed(self.dns_search, os.dns_search, sort_lists=False):
             differences.add('dns_search', parameter=self.dns_search, active=os.dns_search)
         if has_list_changed(self.dns_options, os.dns_options):
             differences.add('dns_options', parameter=self.dns_options, active=os.dns_options)
