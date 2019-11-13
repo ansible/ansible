@@ -112,14 +112,14 @@ Function Set-ConstructedState($initial_state, $desired_state) {
   If ($initial_state.distinguished_name -cne $desired_state.distinguished_name) {
     # Move computer to OU
     Try {
-      Get-ADComputer -Identity $desired_state.name |
+      Get-ADComputer -Identity $desired_state.name @extra_args |
           Move-ADObject `
             -TargetPath $desired_state.ou `
             -Confirm:$False `
             -WhatIf:$check_mode `
             @extra_args
     } Catch {
-      Fail-Json -obj $result -message "Failed to move the AD object $($desired_state.name) to $($desired_state.ou) OU: $($_.Exception.Message)"
+      Fail-Json -obj $result -message "Failed to move the AD object $($initial_state.distinguished_name) to $($desired_state.distinguished_name): $($_.Exception.Message)"
     }
   }
   $result.changed = $true
@@ -147,12 +147,12 @@ Function Add-ConstructedState($desired_state) {
 # ------------------------------------------------------------------------------
 Function Remove-ConstructedState($initial_state) {
   Try {
-    Get-ADComputer $initial_state.name `
-    | Remove-ADObject `
-      -Recursive `
-      -Confirm:$False `
-      -WhatIf:$check_mode `
-      @extra_args
+    Get-ADComputer -Identity $initial_state.name @extra_args |
+      Remove-ADObject `
+        -Recursive `
+        -Confirm:$False `
+        -WhatIf:$check_mode `
+        @extra_args
   } Catch {
     Fail-Json -obj $result -message "Failed to remove the AD object $($desired_state.name): $($_.Exception.Message)"
   }
