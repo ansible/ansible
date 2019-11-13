@@ -267,6 +267,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         except Exception:
             raise
 
+    def _get_api_version(self, resource_id):
+        if '/Microsoft.Network/' in resource_id:
+            return self._network_api_version
+        else:
+            return self._compute_api_version
+
     def _credential_setup(self):
         auth_options = dict(
             auth_source=self.get_option('auth_source'),
@@ -517,7 +523,7 @@ class AzureHost(object):
         for nic in nic_refs:
             # single-nic instances don't set primary, so figure it out...
             is_primary = nic.get('properties', {}).get('primary', len(nic_refs) == 1)
-            inventory_client._enqueue_get(url=nic['id'], api_version=self._inventory_client._network_api_version,
+            inventory_client._enqueue_get(url=nic['id'], api_version=inventory_client._get_api_version(nic['id']),
                                           handler=self._on_nic_response,
                                           handler_args=dict(is_primary=is_primary))
 
@@ -634,7 +640,8 @@ class AzureNic(object):
             for ipc in nic_model['properties']['ipConfigurations']:
                 pip = ipc['properties'].get('publicIPAddress')
                 if pip:
-                    self._inventory_client._enqueue_get(url=pip['id'], api_version=self._inventory_client._network_api_version, handler=self._on_pip_response)
+                    self._inventory_client._enqueue_get(url=pip['id'], api_version=self._inventory_client._get_api_version(pip['id']),
+                                                        handler=self._on_pip_response)
 
     def _on_pip_response(self, pip_model):
         self.public_ips[pip_model['id']] = AzurePip(pip_model)
