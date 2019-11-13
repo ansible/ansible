@@ -616,7 +616,7 @@ def main():
     except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
         module.fail_json(msg='Failed attempting to locate any existing server - {0}'.format(e))
 
-    monitoring = server.get('monitoring', False).get('data', False)
+    monitoring = server.get('monitoring').get('data')
 
     if state == 'present':
         # Implement Check Mode
