@@ -1281,7 +1281,21 @@ def has_list_changed(new_list, old_list, sort_lists=True, sort_key=None):
     for new_item, old_item in zip_data:
         is_same_type = type(new_item) == type(old_item)
         if not is_same_type:
-            return True
+            if isinstance(new_item, string_types) and isinstance(old_item, string_types):
+                # Even though the types are different between these items,
+                # they are both strings. Try matching on the same string type.
+                try:
+                    new_item_type = type(new_item)
+                    old_item_casted = new_item_type(old_item)
+                    if new_item != old_item_casted:
+                        return True
+                    else:
+                        continue
+                except UnicodeEncodeError:
+                    # Fallback to assuming the strings are different
+                    return True
+            else:
+                return True
         if isinstance(new_item, dict):
             if has_dict_changed(new_item, old_item):
                 return True
