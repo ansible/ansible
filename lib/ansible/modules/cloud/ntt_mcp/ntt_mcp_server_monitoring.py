@@ -617,7 +617,6 @@ def main():
         module.fail_json(msg='Failed attempting to locate any existing server - {0}'.format(e))
 
     monitoring = server.get('monitoring', False)
-    module.exit_json(data=monitoring)
 
     if state == 'present':
         # Implement Check Mode
