@@ -54,7 +54,6 @@ options:
         This can be the file content or the path to the file.
     type: str
     aliases: [ importer_ssl_ca_cert ]
-    version_added: "2.10"
   feed_client_cert:
     description:
       - Certificate used as the client certificate when synchronizing the
@@ -65,7 +64,6 @@ options:
         the file content or the path to the file.
     type: str
     aliases: [ importer_ssl_client_cert ]
-    version_added: "2.10"
   feed_client_key:
     description:
       - Private key to the certificate specified in I(importer_ssl_client_cert),
@@ -73,7 +71,6 @@ options:
         the file content or the path to the file.
     type: str
     aliases: [ importer_ssl_client_key ]
-    version_added: "2.10"
   name:
     description:
       - Name of the repo to add or remove. This correlates to repo-id in Pulp.
