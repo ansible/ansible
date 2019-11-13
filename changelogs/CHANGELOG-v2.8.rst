@@ -5,6 +5,53 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.7
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-11-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - switch from testing RHEL 8.0 and RHEL 8.1 Beta to RHEL 8.1
+
+Bugfixes
+--------
+
+- **security issue** - Ansible: Splunk and Sumologic callback plugins leak sensitive data in logs (CVE-2019-14864)
+- ACME modules: make sure some connection errors are handled properly
+- Ansible.Basic - Fix issue when setting a ``no_log`` parameter to an empty string - https://github.com/ansible/ansible/issues/62613
+- Fix deprecation warning on GitLab modules
+- Fix for performance regression in handler invocation (https://github.com/ansible/ansible/issues/59017)
+- Fix requirements on non required module parameters
+- Remove a temp directory created by wait_for_connection action plugin (https://github.com/ansible/ansible/issues/62407).
+- Remove the unnecessary warning about aptitude not being installed (https://github.com/ansible/ansible/issues/56832).
+- action/ce - fix a bug, some new version os will not discard uncommitted configure with a return directly.(https://github.com/ansible/ansible/pull/63513).
+- ansible-vault - fix error when multiple vault password files are specified (https://github.com/ansible/ansible/issues/57172)
+- ce_acl_interface - update to fix some bugs - Modified the prompt statement when the switch device cannot be configured. (https://github.com/ansible/ansible/pull/64018)
+- ce_config - fixed issue - Re-building commands(config src) by replacing '#' with 'quit','quit' commands may close connection (https://github.com/ansible/ansible/issues/62872)
+- copy - recursive copy with ``remote_src=yes`` now recurses beyond first level. (Fixes https://github.com/ansible/ansible/issues/58284)
+- docker_login - Use ``with`` statement when accessing files, to prevent that invalid JSON output is produced.
+- docker_swarm_service - ``source`` must no longer be specified for ``tmpfs`` mounts.
+- lineinfile - don't attempt mkdirs when path doesn't contain directory path
+- lineinfile - properly handle inserting a line when backrefs are enabled and the line already exists in the file (https://github.com/ansible/ansible/issues/63756)
+- lineinfile - use correct index value when inserting a line at the end of a file (https://github.com/ansible/ansible/issues/63684)
+- openssl_certificate and openssl_csr - fix Ed25519 and Ed448 private key support for ``cryptography`` backend. This probably needs at least cryptography 2.8, since older versions have problems with signing certificates or CSRs with such keys. (https://github.com/ansible/ansible/issues/59039, PR https://github.com/ansible/ansible/pull/63984)
+- openssl_csr - a warning is issued if an unsupported value for ``version`` is used for the ``cryptography`` backend.
+- paramiko_ssh - improve authentication error message so it is less confusing
+- sysctl - fix err referenced before assignment (https://github.com/ansible/ansible/issues/58158)
+- vmware_deploy_ovf - backport content fix from 2.9 (https://github.com/ansible/ansible/pull/59614)
+- win_acl - Fixed error when setting rights on directory for which inheritance from parent directory has been disabled.
+- win_domain_computer - Honour the explicit domain server and credentials when moving or removing a computer object - https://github.com/ansible/ansible/pull/63093
+- win_iis_website - Actually restart the site when ``state=restarted`` - https://github.com/ansible/ansible/issues/63828
+- win_partition - Fix invalid variable name causing a failure on checks - https://github.com/ansible/ansible/issues/62401
+- zabbix_* modules - modules will now properly disconnect existing sessions from Zabbix server (see https://github.com/ansible/ansible/pull/58525)
+
 v2.8.6
 ======
 
@@ -1803,9 +1850,9 @@ vmware
 xenserver
 ^^^^^^^^^
 
-- xenserver_guest - Manages virtual machines running on Citrix XenServer host or pool
-- xenserver_guest_facts - Gathers facts for virtual machines running on Citrix XenServer host or pool
-- xenserver_guest_powerstate - Manages power states of virtual machines running on Citrix XenServer host or pool
+- xenserver_guest - Manages virtual machines running on Citrix Hypervisor/XenServer host or pool
+- xenserver_guest_facts - Gathers facts for virtual machines running on Citrix Hypervisor/XenServer host or pool
+- xenserver_guest_powerstate - Manages power states of virtual machines running on Citrix Hypervisor/XenServer host or pool
 
 Clustering
 ~~~~~~~~~~

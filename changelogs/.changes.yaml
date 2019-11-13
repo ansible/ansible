@@ -1961,3 +1961,36 @@ releases:
     - vmware-use_non_default.yml
     - win_exec-error.yaml
     release_date: '2019-10-17'
+  2.8.7:
+    codename: How Many More Times
+    fragments:
+    - 56832-remove-aptitude-warning.yml
+    - 57804-win_acl-no-longer-needs-SeSecurityPrivilege.yml
+    - 58158-sysctl-fix-referenced-before-assignment.yaml
+    - 58323-copy-deep-recursive-with-remote_src.yaml
+    - 58525-zabbix-modules-logout.yml
+    - 59017-perf-regression-handlers.yml
+    - 60425-gitlab-fix-deprecation-warning.yml
+    - 62407-wait_for_connection.yml
+    - 62872-ce_config_too_many_quit_close_connection.yml
+    - 63140-acme-fix-fetch-url-status-codes.yaml
+    - 63432-openssl_csr-version.yml
+    - 63513-ce_action_wait_prompt_trigger_time_out.yaml
+    - 63522-remove-args-from-sumologic-and-splunk-callbacks.yml
+    - 63919-lineinfile-create-no-dir-path.yml
+    - 63984-openssl-ed25519-ed448.yml
+    - 64011_vmware_deploy_ovf.yml
+    - 64018-ce_acl_interface-to-fix-bugs.yml
+    - 64382-docker_login-fix-invalid-json.yml
+    - 64637-docker_swarm_service-tmpfs-source.yml
+    - ansible-test-rhel-8.1-testing.yml
+    - ansible_basic_no_log_empty_string.yaml
+    - lineinfile-backrefs-match-object-type.yaml
+    - lineinfile-use-correct-index-value.yaml
+    - paramiko_ssh-improve-error-message.yaml
+    - v2.8.7_summary.yaml
+    - vault-ensure-vault-password-files-are-list.yaml
+    - win_domain_computer-credential.yaml
+    - win_iis_website-restarted.yaml
+    - win_partition-var.yaml
+    release_date: '2019-11-13'
