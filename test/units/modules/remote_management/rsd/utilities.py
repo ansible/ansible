@@ -14,6 +14,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+MIN_PYTHON_VERSION = (2, 7)
 RSD_NODES_ENDPOINT = 'v1/Nodes/'
 PODM_PORT = 8443
 RSD_NODE_URL = \

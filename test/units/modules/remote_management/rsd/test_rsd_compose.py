@@ -20,8 +20,12 @@ import units.modules.remote_management.rsd.utilities as rsd_utils
 
 import json
 import pytest
+import sys
 
 
+@pytest.mark.skipif(sys.version_info < rsd_utils.MIN_PYTHON_VERSION,
+                    reason="Requires Python {0} or higher."
+                    .format(rsd_utils.MIN_PYTHON_VERSION))
 class TestRsdNodeCompose():
 
     @pytest.fixture()
