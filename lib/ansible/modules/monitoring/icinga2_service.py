@@ -21,7 +21,7 @@ description:
    - "Add or remove a services to Icinga2 through the API"
    - "See U(https://www.icinga.com/docs/icinga2/latest/doc/12-icinga2-api/)"
    - "Many option defaults are controlled by the Icinga2 configuration."
-version_added: "2.9"
+version_added: "2.10"
 author: "Joost van der Knaap (@knaapjvd)"
 options:
   cascade:
