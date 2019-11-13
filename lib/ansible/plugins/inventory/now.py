@@ -77,7 +77,6 @@ except ImportError:
     raise AnsibleError('This script requires python-requests')
 import sys
 
-
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'now'
@@ -94,7 +93,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         #build url
         self.url = "https://%s/%s" % (self.get_option('instance'), path)
         url = self.url
-        #results = []
+        results = []
         try:
             results = self._cache[self.cache_key][self.url]
         except KeyError:
