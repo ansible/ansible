@@ -22,14 +22,14 @@
     disk:
     - size_gb: 1
       type: thin
-      datastore: '{{ ds2 }}'
+      datastore: '{{ rw_datastore }}'
     hardware:
       memory_mb: 128
       num_cpus: 1
       scsi: paravirtual
     cdrom:
       type: iso
-      iso_path: "[{{ ds1 }}] fedora.iso"
+      iso_path: "[{{ ro_datastore }}] fedora.iso"
     networks:
     - name: VM Network
 

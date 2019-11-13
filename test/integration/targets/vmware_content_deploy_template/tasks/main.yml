@@ -7,14 +7,14 @@
     setup_datacenter: true
 
 - when: vcsim is not defined
-  block: 
+  block:
     - &deploy_vm_from_content_library_template
       vmware_content_deploy_template:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
         password: '{{ vcenter_password }}'
         template: '{{ test_vm_temp }}'
-        datastore: '{{ ds1 }}'
+        datastore: '{{ rw_datastore }}'
         datacenter: '{{ dc1 }}'
         folder: '{{ f0 }}'
         host: '{{ esx1 }}'
