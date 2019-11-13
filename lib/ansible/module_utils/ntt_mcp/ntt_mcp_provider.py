@@ -3355,6 +3355,62 @@ class NTTMCPClient():
         else:
             raise NTTMCPAPIException('No response from the API')
 
+    def enable_server_monitoring(self, update=False, server_id=None, service_plan=None):
+        """
+        Enable/Update server monitoring configuration
+
+        :kw update: Is this an update for an existing configuration
+        :kw server_id: The UUID of the server being enabled for Monitoring
+        :kw service_plan: The Service Plan name (e.g. ADVANCED)
+        :returns: API response
+        """
+
+        params = {}
+        if server_id is None:
+            raise NTTMCPAPIException('A Server is required, server_id cannot be None')
+        if service_plan is None:
+            raise NTTMCPAPIException('A Service Plan is required, service_plan cannot be None')
+
+        params['serverId'] = server_id
+        params['servicePlan'] = service_plan
+
+        if update:
+            url = self.base_url + 'server/changeServerMonitoringPlan'
+        else:
+            url = self.base_url + 'server/enableServerMonitoring'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            if response.json()['requestId']:
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Snapshot Service was successfully enabled')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def disable_server_monitoring(self, server_id=None):
+        """
+        Disable server monitoring configuration
+
+        :kw server_id: The UUID of the server being enabled for Monitoring
+        :returns: API response
+        """
+
+        params = {}
+        if server_id is None:
+            raise NTTMCPAPIException('A Server is required, server_id cannot be None')
+
+        url = self.base_url + 'server/disableServerMonitoring'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            if response.json()['requestId']:
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Snapshot Service was successfully disabled')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
     #
     # API Calls
     #

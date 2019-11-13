@@ -523,38 +523,25 @@ CORE = {
     'wait_for_vmtools': False}
 
 
-def add_monitoring(module, client, server_id):
+def add_monitoring(module, client, update, server_id):
     """
     Add monitoring to an existing server
 
     :arg module: The Ansible module instance
     :arg client: The CC API client instance
+    :arg update: Is this an update to an existing service
     :arg server_id: The UUID of the server to be updated
     :returns: The updated server
     """
     plan = module.params.get('plan')
 
     try:
-        client.add_monitoring(server_id, plan)
+        if update:
+            client.enable_monitoring(True, server_id, plan)
+        else:
+            client.enable_monitoring(False, server_id, plan)
     except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
         module.fail_json(msg='Could not configure server monitoring - {0}'.format(e))
-
-
-def update_monitoring(module, client, server_id):
-    """
-    Update monitoring on an existing server
-
-    :arg module: The Ansible module instance
-    :arg client: The CC API client instance
-    :arg server_id: The UUID of the server to be updated
-    :returns: The updated server
-    """
-    plan = module.params.get('plan')
-
-    try:
-        client.update_monitoring(server_id, plan)
-    except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
-        module.fail_json(msg='Could update the server monitoring - {0}'.format(e))
 
 
 def remove_monitoring(module, client, server_id):
@@ -566,10 +553,9 @@ def remove_monitoring(module, client, server_id):
     :arg server_id: The UUID of the server to be updated
     :returns: The updated server
     """
-    plan = module.params.get('plan')
 
     try:
-        client.delete_monitoring(server_id, plan)
+        client.disable_server_monitoring(server_id)
     except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
         module.fail_json(msg='Could remove the server monitoring - {0}'.format(e))
 
@@ -631,6 +617,7 @@ def main():
         module.fail_json(msg='Failed attempting to locate any existing server - {0}'.format(e))
 
     monitoring = server.get('monitoring', False)
+    module.exit_json(data=monitoring)
 
     if state == 'present':
         if not monitoring:
@@ -642,10 +629,10 @@ def main():
                         server.get('id')))
                 else:
                     module.exit_json(msg='No changes are required')
-            add_monitoring(module, client, server.get('id'))
+            add_monitoring(module, client, False, server.get('id'))
         else:
             if not monitoring.get('servicePlan') != module.params.get('plan'):
-                update_monitoring(module, client, server.get('id'))
+                add_monitoring(module, client, True, server.get('id'))
             else:
                 module.exit_json(changed=False, data=server)
         try:
