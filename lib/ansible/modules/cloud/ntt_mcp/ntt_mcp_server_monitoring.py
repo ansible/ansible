@@ -513,15 +513,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ntt_mcp.ntt_mcp_utils import get_credentials, get_ntt_mcp_regions
 from ansible.module_utils.ntt_mcp.ntt_mcp_provider import NTTMCPClient, NTTMCPAPIException
 
-CORE = {
-    'module': None,
-    'client': None,
-    'region': None,
-    'datacenter': None,
-    'network_domain_id': None,
-    'name': None,
-    'wait_for_vmtools': False}
-
 
 def add_monitoring(module, client, update, server_id):
     """
@@ -537,9 +528,9 @@ def add_monitoring(module, client, update, server_id):
 
     try:
         if update:
-            client.enable_monitoring(True, server_id, plan)
+            client.enable_server_monitoring(True, server_id, plan)
         else:
-            client.enable_monitoring(False, server_id, plan)
+            client.enable_server_monitoring(False, server_id, plan)
     except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
         module.fail_json(msg='Could not configure server monitoring - {0}'.format(e))
 
@@ -616,12 +607,12 @@ def main():
     except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
         module.fail_json(msg='Failed attempting to locate any existing server - {0}'.format(e))
 
-    monitoring = server.get('monitoring').get('data')
+    monitoring = server.get('monitoring', {})
 
     if state == 'present':
         # Implement Check Mode
         if module.check_mode:
-            if not monitoring.get('servicePlan') != module.params.get('plan'):
+            if not monitoring.get('servicePlan') == module.params.get('plan'):
                 module.exit_json(msg='Monitoring of type {0} will be applied to server with ID {1}'.format(
                     module.params.get('plan'),
                     server.get('id')))
@@ -630,7 +621,7 @@ def main():
         if not monitoring:
             add_monitoring(module, client, False, server.get('id'))
         else:
-            if not monitoring.get('servicePlan') != module.params.get('plan'):
+            if monitoring.get('servicePlan') != module.params.get('plan'):
                 add_monitoring(module, client, True, server.get('id'))
             else:
                 module.exit_json(changed=False, data=server)

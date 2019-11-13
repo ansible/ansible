@@ -3371,7 +3371,7 @@ class NTTMCPClient():
         if service_plan is None:
             raise NTTMCPAPIException('A Service Plan is required, service_plan cannot be None')
 
-        params['serverId'] = server_id
+        params['id'] = server_id
         params['servicePlan'] = service_plan
 
         if update:
@@ -3399,6 +3399,8 @@ class NTTMCPClient():
         params = {}
         if server_id is None:
             raise NTTMCPAPIException('A Server is required, server_id cannot be None')
+
+        params['id'] = server_id
 
         url = self.base_url + 'server/disableServerMonitoring'
 
