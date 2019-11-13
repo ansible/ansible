@@ -3,5 +3,5 @@
     library_name: test-content-lib
     library_description: 'Library created by the prepare_vmware_tests role'
     library_type: local
-    datastore_name: '{{ ds2 }}'
+    datastore_name: '{{ rw_datastore }}'
     state: present
