@@ -169,7 +169,7 @@ if HAS_DOCKER_PY:
             from dockerpycreds.errors import StoreError, CredentialsNotFound
             from dockerpycreds.store import Store
         except ImportError as exc:
-            HAS_DOCKER_ERRROR = str(exc)
+            HAS_DOCKER_ERROR = str(exc)
             NEEDS_DOCKER_PYCREDS = True
 
 
