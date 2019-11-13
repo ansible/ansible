@@ -1,0 +1,2 @@
+bugfixes:
+  - pulp_repo - fix for module shadowing url_argument_spec params (https://github.com/ansible/ansible/issues/59513)
