@@ -56,61 +56,11 @@ options:
             - The name of the server
         required: true
         type: str
-    type:
+    plan:
         description:
-            - The type of controller for this disk
-            - Currently this is limited to SCSI controllers only
+            - The type of monitoring plan
         required: false
         type: str
-        default: SCSI
-        choices:
-            - SCSI
-    controller_number:
-        description:
-            - The bus number on the controller as an integer
-        required: false
-        type: int
-    adapter_type:
-        description:
-            - The type of controller adapter to be added
-        required: false
-        type: str
-        default: LSI_LOGIC_PARALLEL
-        choices:
-            - LSI_LOGIC_PARALLEL
-            - LSI_LOGIC_SAS
-            - VMWARE_PARAVIRTUAL
-            - BUS_LOGIC
-    stop:
-        description:
-            - Should the server be stopped if it is running
-            - Disk operations can only be performed while the server is stopped
-        required: false
-        type: bool
-        default: True
-    start:
-        description:
-            - Should the server be started after the disk operations have completed
-        required: false
-        type: bool
-        default: true
-    wait:
-        description:
-            - Should Ansible wait for the task to complete before continuing
-        required: false
-        type: bool
-        default: true
-    wait_time:
-        description: The maximum time the Ansible should wait for the task to complete in seconds
-        required: false
-        type: int
-        default: 1200
-    wait_poll_interval:
-        description:
-            - The time in between checking the status of the task in seconds
-        required: false
-        type: int
-        default: 30
     state:
         description:
             - The action to be performed
@@ -131,24 +81,21 @@ EXAMPLES = '''
   connection: local
   tasks:
 
-  - name: Add a controller to a server
-    ntt_mcp_server_controller:
+  - name: Enable/Update Monitoring on a Server
+    ntt_mcp_server_monitoring:
       region: na
       datacenter: NA12
       network_domain: myCND
       server: myServer01
-      type: SCSI
-      adapter_type: VMWARE_PARAVIRTUAL
+      plan: ADVANCED
       state: present
 
-  - name: Delete a controller from a server
-    ntt_mcp_server_controller:
+  - name: Disable Monitoring on a Server
+    ntt_mcp_server_monitoring:
       region: na
       datacenter: NA12
       network_domain: myCND
       server: myServer01
-      type: SCSI
-      controller_number: 1
       state: absent
 '''
 
@@ -161,11 +108,11 @@ data:
         started:
             description: Is the server running
             type: bool
-            returned: when state == present and wait is True
+            returned: when state == present
         guest:
             description: Information about the guest OS
             type: complex
-            returned: when state == present and wait is True
+            returned: when state == present
             contains:
                 osCustomization:
                     description: Does the image support guest OS customization
@@ -213,7 +160,7 @@ data:
         source:
             description: The source of the image
             type: complex
-            returned: when state == present and wait is True
+            returned: when state == present
             contains:
                 type:
                     description: The id type of the image
@@ -226,7 +173,7 @@ data:
         floppy:
             description: List of the attached floppy drives
             type: complex
-            returned: when state == present and wait is True
+            returned: when state == present
             contains:
                 driveNumber:
                     description: The drive number
@@ -247,7 +194,7 @@ data:
         networkInfo:
             description: Server network information
             type: complex
-            returned: when state == present and wait is True
+            returned: when state == present
             contains:
                 networkDomainId:
                     description: The UUID of the Cloud Network Domain the server resides in
@@ -299,7 +246,7 @@ data:
         ideController:
             description: List of the server's IDE controllers
             type: complex
-            returned: when state == present and wait is True
+            returned: when state == present
             contains:
                 state:
                     description: The state of the controller
@@ -348,17 +295,17 @@ data:
         createTime:
             description: The creation date of the server
             type: str
-            returned: when state == present and wait is True
+            returned: when state == present
             sample: "2019-01-14T11:12:31.000Z"
         datacenterId:
             description: Datacenter id/location
             type: str
-            returned: when state == present and wait is True
+            returned: when state == present
             sample: NA9
         scsiController:
             description: List of the SCSI controllers and disk configuration for the image
             type: complex
-            returned: when state == present and wait is True
+            returned: when state == present
             contains:
                 adapterType:
                     description: The name of the adapter
@@ -399,12 +346,12 @@ data:
         state:
             description: The state of the server
             type: str
-            returned: when state == present and wait is True
+            returned: when state == present
             sample: NORMAL
         tag:
             description: List of informational tags associated with the server
             type: complex
-            returned: when state == present and wait is True
+            returned: when state == present
             contains:
                 value:
                     description: The tag value
@@ -421,7 +368,7 @@ data:
         virtualHardware:
             description: Information on the virtual hardware of the server
             type: complex
-            returned: when state == present and wait is True
+            returned: when state == present
             contains:
                 upToDate:
                     description: Is the VM hardware up to date
@@ -433,7 +380,7 @@ data:
         memoryGb:
             description: Server memory in GB
             type: int
-            returned: when state == present and wait is True
+            returned: when state == present
             sample: 4
         id:
             description: The UUID of the server
@@ -443,7 +390,7 @@ data:
         sataController:
             description: List of SATA controllers on the server
             type: list
-            returned: when state == present and wait is True
+            returned: when state == present
             contains:
                 adapterType:
                     description: The name of the adapter
@@ -484,7 +431,7 @@ data:
         cpu:
             description: The default CPU specifications for the image
             type: complex
-            returned: when state == present and wait is True
+            returned: when state == present
             contains:
                 coresPerSocket:
                     description: The number of cores per CPU socket
@@ -501,12 +448,29 @@ data:
         deployed:
             description: Is the server deployed
             type: bool
-            returned: when state == present and wait is True
+            returned: when state == present
         name:
             description: The name of the server
             type: str
-            returned: when state == present and wait is True
+            returned: when state == present
             sample: my_server
+        monitoring:
+            description: Monitoring service
+            type: complex
+            returned: when state == present
+            contains:
+                monitoringId:
+                    description: The ID of the monitoring instance
+                    type: str
+                    sample: "188"
+                servicePlan:
+                    description: The monitoring service plan
+                    type: str
+                    sample: ADVANCED
+                state:
+                    description: The state of the monitoring service
+                    type: str
+                    sample: NORMAL
 '''
 
 from ansible.module_utils.basic import AnsibleModule
