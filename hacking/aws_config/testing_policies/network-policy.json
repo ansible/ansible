@@ -14,6 +14,16 @@
             "Resource": "*"
         },
         {
+            "Sid": "AllowInternetGatewayManagement",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateInternetGateway",
+                "ec2:DeleteInternetGateway",
+                "ec2:DescribeInternetGateways"
+            ],
+            "Resource": "*"
+        },
+        {
             "Sid": "AllowTransitGatewayManagement",
             "Effect": "Allow",
             "Action": [

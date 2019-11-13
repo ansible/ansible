@@ -32,20 +32,21 @@ options:
   public_ip:
     description:
       - The IP address of a previously allocated EIP.
-      - If C(present) and device is specified, the EIP is associated with the device.
-      - If C(absent) and device is specified, the EIP is disassociated from the device.
+      - When I(public_ip=present) and device is specified, the EIP is associated with the device.
+      - When I(public_ip=absent) and device is specified, the EIP is disassociated from the device.
     aliases: [ ip ]
     type: str
   state:
     description:
-      - If C(present), allocate an EIP or associate an existing EIP with a device.
-      - If C(absent), disassociate the EIP from the device and optionally release it.
+      - When C(state=present), allocate an EIP or associate an existing EIP with a device.
+      - When C(state=absent), disassociate the EIP from the device and optionally release it.
     choices: ['present', 'absent']
     default: present
     type: str
   in_vpc:
     description:
-      - Allocate an EIP inside a VPC or not. Required if specifying an ENI with I(device_id).
+      - Allocate an EIP inside a VPC or not.
+      - Required if specifying an ENI with I(device_id).
     default: false
     type: bool
     version_added: "1.4"
@@ -87,7 +88,7 @@ options:
   public_ipv4_pool:
     description:
       - Allocates the new Elastic IP from the provided public IPv4 pool (BYOIP)
-        only applies to newly allocated Elastic IPs, isn't validated when reuse_existing_ip_allowed is true.
+        only applies to newly allocated Elastic IPs, isn't validated when I(reuse_existing_ip_allowed=true).
     version_added: "2.9"
     type: str
   wait_timeout:
@@ -248,10 +249,11 @@ def associate_ip_and_device(ec2, module, address, private_ip_address, device_id,
             try:
                 params = dict(
                     InstanceId=device_id,
-                    PrivateIpAddress=private_ip_address,
                     AllowReassociation=allow_reassociation,
                 )
-                if address.domain == "vpc":
+                if private_ip_address:
+                    params['PrivateIPAddress'] = private_ip_address
+                if address['Domain'] == 'vpc':
                     params['AllocationId'] = address['AllocationId']
                 else:
                     params['PublicIp'] = address['PublicIp']
@@ -323,6 +325,9 @@ def find_address(ec2, module, public_ip, device_id, is_instance=True):
     try:
         addresses = ec2.describe_addresses(**kwargs)
     except is_boto3_error_code('InvalidAddress.NotFound') as e:
+        # If we're releasing and we can't find it, it's already gone...
+        if module.params.get('state') == 'absent':
+            module.exit_json(changed=False)
         module.fail_json_aws(e, msg="Couldn't obtain list of existing Elastic IP addresses")
 
     addresses = addresses["Addresses"]

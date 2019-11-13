@@ -1,144 +1,767 @@
 ---
+# Tests for Elastic IP allocation: ec2_eip and ec2_eip_info
+#
+# Tests ec2_eip:
+# - Basic allocation (no conditions)
+# - Allocation matching a Public IP
+# - Allocation matching a tag name
+# - Allocation matching a tag name + value
+# - Allocation from a specific pool
+# - Attaching an EIP to an ENI
+#
+# Tests ec2_eip_info:
+# - Listing all eips
+# - Searching for a specific eip by public IP
+# - Searching for a specific eip by allocation-id
+#
+# Possible Bugs:
+# - check_mode not honoured #62318
+#
 - name: Integration testing for ec2_eip
-  block:
-    - name: set up aws connection info
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: True
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+    ec2_eip:
+      in_vpc: yes
 
-    - name: Allocate a new eip - attempt reusing unallocated ones
+  block:
+    - name: Get the current caller identity facts
+      aws_caller_info:
+      register: caller_info
+
+    - name: list available AZs
+      aws_az_info:
+      register: region_azs
+
+    - name: pick an AZ for testing
+      set_fact:
+        subnet_az: "{{ region_azs.availability_zones[0].zone_name }}"
+
+    - name: create a VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "{{ vpc_cidr }}"
+        tags:
+            AnsibleEIPTest: "Pending"
+            AnsibleEIPTestPrefix: "{{ resource_prefix }}"
+      register: vpc_result
+
+    - name: create subnet
+      ec2_vpc_subnet:
+        cidr: "{{ subnet_cidr }}"
+        az: "{{ subnet_az }}"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: present
+      register: vpc_subnet_create
+
+    - ec2_vpc_igw:
+        state: present
+        vpc_id: "{{ vpc_result.vpc.id }}"
+      register: vpc_igw
+
+    # =================================================
+    # A rough Lock using the VPC...
+    #
+    # Because we're testing the behaviour when dealing with objects that are
+    # both tagged and untagged, we need to know that EIPs aren't being poached
+    # underneath us.  See specifically the behaviour around
+    # I(reuse_existing_ip_allowed), I(tag_name) and I(tag_value)
+    #
+    # We also want to know that things like only 1 EIP was allocated / released.
+    #
+    # Because Python 2.x and Python 3.x tests are run concurrently there's a
+    # high chance of the tests interfering with each other if we don't try to
+    # perform some kind of locking here.
+
+    - name: Look for signs of concurrent EIP tests.  Pause if they are running or their prefix comes before ours.
+      vars:
+        running_query: "vpcs[?tags.AnsibleEIPTest=='Running']"
+        pending_query: "vpcs[?tags.AnsibleEIPTest=='Pending'].tags.AnsibleEIPTestPrefix"
+      ec2_vpc_net_info:
+        filters:
+          "tag:AnsibleEIPTest": ["Pending", "Running"]
+      register: vpc_info
+      retries: 120
+      delay: 5
+      until:
+        # Anyone else running?
+      - ( vpc_info | json_query(running_query) | length == 0 )
+        # Are we first in the queue?
+      - ( vpc_info | json_query(pending_query) | sort | first == resource_prefix )
+
+    - name: Make a crude lock
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-vpc"
+        state: present
+        cidr_block: "{{ vpc_cidr }}"
+        tags:
+            AnsibleEIPTest: "Running"
+            AnsibleEIPTestPrefix: "{{ resource_prefix }}"
+
+    # =================================================
+
+    - name: Get current state of EIPs
+      ec2_eip_info:
+      register: eip_info_start
+
+    - name: Require that there are no free IPs when we start, otherwise we can't test things properly
+      assert:
+        that:
+          - eip_info_start is defined
+          - '"addresses" in eip_info_start'
+          - ( eip_info_start.addresses | length ) == ( eip_info_start | json_query("addresses[].association_id") | length )
+
+    #==================================================================
+    # EIP Creation 'no conditions'
+
+    # XXX check_mode not honoured
+    #- name: Allocate a new eip (CHECK MODE)
+    #  ec2_eip:
+    #    state: present
+    #  register: eip
+    #  check_mode: yes
+    #- ec2_eip_info:
+    #  register: eip_info
+    #- assert:
+    #    that:
+    #      - eip is defined
+    #      - eip is changed
+    #      - ( eip_info_start.addresses | length ) == ( eip_info.addresses | length )
+
+    - name: Allocate a new eip (no conditions)
       ec2_eip:
         state: present
-        in_vpc: yes
-        reuse_existing_ip_allowed: yes
-        <<: *aws_connection_info
       register: eip
-
+    - ec2_eip_info:
+      register: eip_info
     - assert:
         that:
           - eip is defined
-          - eip.public_ip is defined and eip.public_ip != ""
-          - eip.allocation_id is defined and eip.allocation_id != ""
+          - eip is changed
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
+          - ( eip_info_start.addresses | length ) + 1 == ( eip_info.addresses | length )
+
+    # Get the info for our specific eip
+    - ec2_eip_info:
+        filters:
+          public-ip: '{{ eip.public_ip }}'
+    - assert:
+        that:
+          - '"addresses" in eip_info'
+          - eip_info.addresses | length == 1
+          - eip_info.addresses[0].allocation_id == eip.allocation_id
+          - eip_info.addresses[0].domain == "vpc"
+          - eip_info.addresses[0].public_ip == eip.public_ip
+
+    # Get the info for our specific eip
+    - ec2_eip_info:
+        filters:
+          allocation-id: '{{ eip.allocation_id }}'
+    - assert:
+        that:
+          - '"addresses" in eip_info'
+          - eip_info.addresses | length == 1
+          - eip_info.addresses[0].allocation_id == eip.allocation_id
+          - eip_info.addresses[0].domain == "vpc"
+          - eip_info.addresses[0].public_ip == eip.public_ip
+
+    # Clean up EIPs as we go to reduce the risk of hitting limits
+    - name: Release eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+      register: eip_release
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - eip_release is defined
+          - eip_release is changed
+          - ( eip_info_start.addresses | length ) == ( eip_info.addresses | length )
+
+    #==================================================================
+    # EIP Creation: reuse allowed
+
+    - name: Allocate a new eip - attempt reusing unallocated ones (none available)
+      ec2_eip:
+        state: present
+        reuse_existing_ip_allowed: yes
+      register: eip
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - eip is defined
+          - eip is changed
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
+          - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
+
+    - name: Re-Allocate a new eip - attempt reusing unallocated ones (one available)
+      ec2_eip:
+        state: present
+        reuse_existing_ip_allowed: yes
+      register: reallocate_eip
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - reallocate_eip is defined
+          - reallocate_eip is not changed
+          - reallocate_eip.public_ip is defined and ( reallocate_eip.public_ip | ipaddr )
+          - reallocate_eip.allocation_id is defined and reallocate_eip.allocation_id.startswith("eipalloc-")
+          - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
+
+    - name: Release eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+      register: eip_release
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - ( eip_info_start.addresses | length ) == ( eip_info.addresses | length )
+          - eip_release is defined
+          - eip_release is changed
+
+    #==================================================================
+    # EIP Creation: Matching an existing IP
 
     - name: Allocate a new eip
       ec2_eip:
         state: present
-        in_vpc: yes
-        <<: *aws_connection_info
-      register: new_eip
-
+      register: eip
+    - ec2_eip_info:
+      register: eip_info
     - assert:
         that:
-          - new_eip is defined
-          - new_eip is changed
-          - new_eip.public_ip is defined and new_eip.public_ip != ""
-          - new_eip.allocation_id is defined and new_eip.allocation_id != ""
+          - eip is defined
+          - eip is changed
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
+          - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
 
     - name: Match an existing eip (changed == false)
       ec2_eip:
         state: present
-        in_vpc: yes
-        <<: *aws_connection_info
         public_ip: "{{ eip.public_ip }}"
-      register: existing_eip
-
+      register: reallocate_eip
+    - ec2_eip_info:
+      register: eip_info
     - assert:
         that:
-          - existing_eip is defined
-          - existing_eip is not changed
-          - existing_eip.public_ip is defined and existing_eip.public_ip != ""
-          - existing_eip.allocation_id is defined and existing_eip.allocation_id != ""
+          - reallocate_eip is defined
+          - reallocate_eip is not changed
+          - reallocate_eip.public_ip is defined and ( reallocate_eip.public_ip | ipaddr )
+          - reallocate_eip.allocation_id is defined and reallocate_eip.allocation_id.startswith("eipalloc-")
+          - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
 
-    - name: attempt reusing an existing eip with a tag (or allocate a new one)
+    - name: Release eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+      register: eip_release
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - eip_release is defined
+          - eip_release is changed
+          - ( eip_info_start.addresses | length )  == ( eip_info.addresses | length )
+
+    #==================================================================
+    # EIP Creation: Matching Tags
+
+    - name: Allocate a new eip (no tags)
       ec2_eip:
         state: present
-        in_vpc: yes
-        <<: *aws_connection_info
+      register: eip
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - eip is defined
+          - eip is changed
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
+          - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
+
+    - name: attempt reusing an existing eip with a tag (No match available)
+      ec2_eip:
+        state: present
         reuse_existing_ip_allowed: yes
         tag_name: Team
-      register: tagged_eip
-
+      register: no_tagged_eip
+    - ec2_eip_info:
+      register: eip_info
     - assert:
         that:
-          - tagged_eip is defined
-          - tagged_eip.public_ip is defined and tagged_eip.public_ip != ""
-          - tagged_eip.allocation_id is defined and tagged_eip.allocation_id != ""
+          - no_tagged_eip is defined
+          - no_tagged_eip is changed
+          - no_tagged_eip.public_ip is defined and ( no_tagged_eip.public_ip | ipaddr )
+          - no_tagged_eip.allocation_id is defined and no_tagged_eip.allocation_id.startswith("eipalloc-")
+          - ( eip_info_start.addresses | length ) + 2  == ( eip_info.addresses | length )
 
-    - name: attempt reusing an existing eip with a tag and it's value (or allocate a new one)
+    - name: tag eip so we can try matching it
+      ec2_tag:
+        state: present
+        resource: '{{ eip.allocation_id }}'
+        tags:
+          Team: Frontend
+
+    - name: attempt reusing an existing eip with a tag (Match available)
       ec2_eip:
         state: present
-        in_vpc: yes
-        <<: *aws_connection_info
-        public_ip: "{{ eip.public_ip }}"
+        reuse_existing_ip_allowed: yes
+        tag_name: Team
+      register: reallocate_eip
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - reallocate_eip is defined
+          - reallocate_eip is not changed
+          - reallocate_eip.public_ip is defined and ( reallocate_eip.public_ip | ipaddr )
+          - reallocate_eip.allocation_id is defined and reallocate_eip.allocation_id.startswith("eipalloc-")
+          - ( eip_info_start.addresses | length ) + 2  == ( eip_info.addresses | length )
+
+    - name: attempt reusing an existing eip with a tag and it's value (no match available)
+      ec2_eip:
+        state: present
         reuse_existing_ip_allowed: yes
         tag_name: Team
         tag_value: Backend
       register: backend_eip
-
+    - ec2_eip_info:
+      register: eip_info
     - assert:
         that:
           - backend_eip is defined
-          - backend_eip.public_ip is defined and backend_eip.public_ip != ""
-          - backend_eip.allocation_id is defined and backend_eip.allocation_id != ""
+          - backend_eip is changed
+          - backend_eip.public_ip is defined and ( backend_eip.public_ip | ipaddr )
+          - backend_eip.allocation_id is defined and backend_eip.allocation_id.startswith("eipalloc-")
+          - ( eip_info_start.addresses | length ) + 3  == ( eip_info.addresses | length )
 
-    - name: attempt reusing an existing eip with a tag and it's value (or allocate a new one from pool)
+    - name: tag eip so we can try matching it
+      ec2_tag:
+        state: present
+        resource: '{{ eip.allocation_id }}'
+        tags:
+          Team: Backend
+
+    - name: attempt reusing an existing eip with a tag and it's value (match available)
       ec2_eip:
         state: present
-        in_vpc: yes
-        <<: *aws_connection_info
         reuse_existing_ip_allowed: yes
         tag_name: Team
         tag_value: Backend
-        public_ipv4_pool: amazon
-      register: amazon_eip
-
+      register: reallocate_eip
+    - ec2_eip_info:
+      register: eip_info
     - assert:
         that:
-          - amazon_eip is defined
-          - amazon_eip.public_ip is defined and amazon_eip.public_ip != ""
-          - amazon_eip.allocation_id is defined and amazon_eip.allocation_id != ""
+          - reallocate_eip is defined
+          - reallocate_eip is not changed
+          - reallocate_eip.public_ip is defined and reallocate_eip.public_ip != ""
+          - reallocate_eip.allocation_id is defined and reallocate_eip.allocation_id != ""
+          - ( eip_info_start.addresses | length ) + 3  == ( eip_info.addresses | length )
+
+    - name: Release backend_eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ backend_eip.public_ip }}"
+      register: eip_release
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - eip_release is defined
+          - eip_release is changed
+          - ( eip_info_start.addresses | length ) + 2  == ( eip_info.addresses | length )
+
+    - name: Release no_tagged_eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ no_tagged_eip.public_ip }}"
+      register: eip_release
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - eip_release is defined
+          - eip_release is changed
+          - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
+
+    - name: Release eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+      register: eip_release
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - eip_release is defined
+          - eip_release is changed
+          - ( eip_info_start.addresses | length ) == ( eip_info.addresses | length )
+
+    #==================================================================
+    # Allocation from a pool
 
     - name: allocate a new eip from a pool
       ec2_eip:
         state: present
-        in_vpc: yes
-        <<: *aws_connection_info
         public_ipv4_pool: amazon
-      register: pool_eip
-
+      register: eip
+    - ec2_eip_info:
+      register: eip_info
     - assert:
         that:
-          - pool_eip is defined
-          - pool_eip is changed
-          - pool_eip.public_ip is defined and pool_eip.public_ip != ""
-          - pool_eip.allocation_id is defined and pool_eip.allocation_id != ""
-  always:
-    - debug:
-        msg: "{{ item }}"
-      when: item is defined and item.public_ip is defined and item.allocation_id is defined
-      loop:
-        - eip
-        - new_eip
-        - pool_eip
-        - tagged_eip
-        - backend_eip
-        - amazon_eip
-    - name: Cleanup newly allocated eip
+          - eip is defined
+          - eip is changed
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
+          - ( eip_info_start.addresses | length ) + 1  == ( eip_info.addresses | length )
+
+    #==================================================================
+    # Assigning EIP to an ENI
+
+    - name: create ENI A
+      ec2_eni:
+        subnet_id: '{{ vpc_subnet_create.subnet.id }}'
+      register: eni_create_a
+
+    - name: create ENI B
+      ec2_eni:
+        subnet_id: '{{ vpc_subnet_create.subnet.id }}'
+      register: eni_create_b
+
+    # Test attaching EIP to ENI
+    - name: Attach EIP to ENI A
+      ec2_eip:
+        public_ip: "{{ eip.public_ip }}"
+        device_id: "{{ eni_create_a.interface.id }}"
+      register: associate_eip
+    - ec2_eip_info:
+        filters:
+          public-ip: '{{ eip.public_ip }}'
+      register: eip_info
+    - assert:
+        that:
+          - associate_eip is defined
+          - associate_eip is changed
+          - eip_info.addresses | length == 1
+          - associate_eip.public_ip is defined and eip.public_ip == associate_eip.public_ip
+          - associate_eip.allocation_id is defined and eip.allocation_id == associate_eip.allocation_id
+          - eip_info.addresses[0].allocation_id == eip.allocation_id
+          - eip_info.addresses[0].domain == "vpc"
+          - eip_info.addresses[0].public_ip == eip.public_ip
+          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id.startswith("eipassoc-")
+          - eip_info.addresses[0].network_interface_id == eni_create_a.interface.id
+          - eip_info.addresses[0].private_ip_address is defined and ( eip_info.addresses[0].private_ip_address | ipaddr )
+          - eip_info.addresses[0].network_interface_owner_id == caller_info.account
+
+    - name: Re-Attach EIP to ENI A (no change)
+      ec2_eip:
+        public_ip: "{{ eip.public_ip }}"
+        device_id: "{{ eni_create_a.interface.id }}"
+      register: associate_eip
+    - ec2_eip_info:
+        filters:
+          public-ip: '{{ eip.public_ip }}'
+      register: eip_info
+    - assert:
+        that:
+          - associate_eip is defined
+          - associate_eip is not changed
+          - associate_eip.public_ip is defined and eip.public_ip == associate_eip.public_ip
+          - associate_eip.allocation_id is defined and eip.allocation_id == associate_eip.allocation_id
+          - eip_info.addresses | length == 1
+          - eip_info.addresses[0].allocation_id == eip.allocation_id
+          - eip_info.addresses[0].domain == "vpc"
+          - eip_info.addresses[0].public_ip == eip.public_ip
+          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id.startswith("eipassoc-")
+          - eip_info.addresses[0].network_interface_id == eni_create_a.interface.id
+          - eip_info.addresses[0].private_ip_address is defined and ( eip_info.addresses[0].private_ip_address | ipaddr )
+
+    # Test attaching EIP to ENI B
+    - name: Attach EIP to ENI B (should fail, already associated)
+      ec2_eip:
+        public_ip: "{{ eip.public_ip }}"
+        device_id: "{{ eni_create_b.interface.id }}"
+      register: associate_eip
+      ignore_errors: yes
+    - ec2_eip_info:
+        filters:
+          public-ip: '{{ eip.public_ip }}'
+      register: eip_info
+    - assert:
+        that:
+          - associate_eip is defined
+          - associate_eip is failed
+          - eip_info.addresses | length == 1
+          - eip_info.addresses[0].allocation_id == eip.allocation_id
+          - eip_info.addresses[0].domain == "vpc"
+          - eip_info.addresses[0].public_ip == eip.public_ip
+          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id.startswith("eipassoc-")
+          - eip_info.addresses[0].network_interface_id == eni_create_a.interface.id
+          - eip_info.addresses[0].private_ip_address is defined and ( eip_info.addresses[0].private_ip_address | ipaddr )
+
+    - name: Attach EIP to ENI B
+      ec2_eip:
+        public_ip: "{{ eip.public_ip }}"
+        device_id: "{{ eni_create_b.interface.id }}"
+        allow_reassociation: yes
+      register: associate_eip
+    - ec2_eip_info:
+        filters:
+          public-ip: '{{ eip.public_ip }}'
+      register: eip_info
+    - assert:
+        that:
+          - associate_eip is defined
+          - associate_eip is changed
+          - associate_eip.public_ip is defined and eip.public_ip == associate_eip.public_ip
+          - associate_eip.allocation_id is defined and eip.allocation_id == associate_eip.allocation_id
+          - eip_info.addresses | length == 1
+          - eip_info.addresses[0].allocation_id == eip.allocation_id
+          - eip_info.addresses[0].domain == "vpc"
+          - eip_info.addresses[0].public_ip == eip.public_ip
+          - eip_info.addresses[0].association_id is defined and eip_info.addresses[0].association_id.startswith("eipassoc-")
+          - eip_info.addresses[0].network_interface_id == eni_create_b.interface.id
+          - eip_info.addresses[0].private_ip_address is defined and ( eip_info.addresses[0].private_ip_address | ipaddr )
+
+    - name: Detach EIP from ENI B, without enabling release on disassociation
       ec2_eip:
         state: absent
-        public_ip: "{{ item.public_ip }}"
-        in_vpc: yes
-        <<: *aws_connection_info
-      when: item is defined and item is changed and item.public_ip is defined and item.public_ip != ""
-      loop:
-        - "{{ eip }}"
-        - "{{ new_eip }}"
-        - "{{ pool_eip }}"
-        - "{{ tagged_eip }}"
-        - "{{ backend_eip }}"
-        - "{{ amazon_eip }}"
-...
+        public_ip: "{{ eip.public_ip }}"
+        device_id: "{{ eni_create_b.interface.id }}"
+      register: disassociate_eip
+    - ec2_eip_info:
+        filters:
+          public-ip: '{{ eip.public_ip }}'
+      register: eip_info
+    - assert:
+        that:
+          - associate_eip is defined
+          - associate_eip is changed
+          - eip_info.addresses | length == 1
+
+    - name: Re-detach EIP from ENI B, without enabling release on disassociation
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+        device_id: "{{ eni_create_b.interface.id }}"
+      register: associate_eip
+    - ec2_eip_info:
+        filters:
+          public-ip: '{{ eip.public_ip }}'
+      register: eip_info
+    - assert:
+        that:
+          - associate_eip is defined
+          - associate_eip is not changed
+          - eip_info.addresses | length == 1
+
+    - name: Attach EIP to ENI A
+      ec2_eip:
+        public_ip: "{{ eip.public_ip }}"
+        device_id: "{{ eni_create_a.interface.id }}"
+      register: associate_eip
+    - ec2_eip_info:
+        filters:
+          public-ip: '{{ eip.public_ip }}'
+      register: eip_info
+    - assert:
+        that:
+          - associate_eip is defined
+          - associate_eip is changed
+          - associate_eip.public_ip is defined and eip.public_ip == associate_eip.public_ip
+          - associate_eip.allocation_id is defined and eip.allocation_id == associate_eip.allocation_id
+          - eip_info.addresses[0].network_interface_id == eni_create_a.interface.id
+
+    - name: Detach EIP from ENI A, enabling release on disassociation
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+        device_id: "{{ eni_create_a.interface.id }}"
+        release_on_disassociation: yes
+      register: disassociate_eip
+    - ec2_eip_info:
+        filters:
+          public-ip: '{{ eip.public_ip }}'
+      register: eip_info
+    - assert:
+        that:
+          - associate_eip is defined
+          - associate_eip is changed
+          - eip_info.addresses | length == 0
+
+    - name: Re-detach EIP from ENI A, enabling release on disassociation
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+        device_id: "{{ eni_create_a.interface.id }}"
+        release_on_disassociation: yes
+      register: associate_eip
+    - ec2_eip_info:
+        filters:
+          public-ip: '{{ eip.public_ip }}'
+      register: eip_info
+    - assert:
+        that:
+          - associate_eip is defined
+          - associate_eip is not changed
+          - eip_info.addresses | length == 0
+
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - ( eip_info_start.addresses | length ) == ( eip_info.addresses | length )
+
+    - name: Cleanup ENI B
+      ec2_eni:
+        state: absent
+        eni_id: "{{ eni_create_b.interface.id }}"
+
+    - name: Cleanup ENI A
+      ec2_eni:
+        state: absent
+        eni_id: "{{ eni_create_a.interface.id }}"
+
+    - name: Cleanup IGW
+      ec2_vpc_igw:
+        state: absent
+        vpc_id: "{{ vpc_result.vpc.id }}"
+      register: vpc_igw
+
+    - name: Cleanup Subnet
+      ec2_vpc_subnet:
+        state: absent
+        cidr: "{{ subnet_cidr }}"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+
+    - name: Release eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+      register: eip_release
+      ignore_errors: true
+
+    #==================================================================
+    # EIP Deletion
+
+    - name: allocate a new eip
+      ec2_eip:
+        state: present
+      register: eip
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - eip is defined
+          - eip is changed
+          - eip.public_ip is defined and ( eip.public_ip | ipaddr )
+          - eip.allocation_id is defined and eip.allocation_id.startswith("eipalloc-")
+          - ( eip_info_start.addresses | length ) + 1 == ( eip_info.addresses | length )
+
+    - name: Release eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+      register: eip_release
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - eip_release is defined
+          - eip_release is changed
+          - ( eip_info_start.addresses | length ) == ( eip_info.addresses | length )
+
+    - name: Rerelease eip (no change)
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+      register: eip_release
+    - ec2_eip_info:
+      register: eip_info
+    - assert:
+        that:
+          - eip_release is defined
+          - eip_release is not changed
+          - ( eip_info_start.addresses | length ) == ( eip_info.addresses | length )
+
+    - name: Cleanup VPC
+      ec2_vpc_net:
+        state: absent
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: "{{ vpc_cidr }}"
+
+  always:
+
+    - name: Cleanup ENI A
+      ec2_eni:
+        state: absent
+        eni_id: "{{ eni_create_a.interface.id }}"
+      ignore_errors: yes
+
+    - name: Cleanup ENI B
+      ec2_eni:
+        state: absent
+        eni_id: "{{ eni_create_b.interface.id }}"
+      ignore_errors: yes
+
+    - name: Cleanup IGW
+      ec2_vpc_igw:
+        state: absent
+        vpc_id: "{{ vpc_result.vpc.id }}"
+      register: vpc_igw
+
+    - name: Cleanup Subnet
+      ec2_vpc_subnet:
+        state: absent
+        cidr: "{{ subnet_cidr }}"
+        vpc_id: "{{ vpc_result.vpc.id }}"
+      ignore_errors: yes
+
+    - name: Cleanup eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ eip.public_ip }}"
+      when: eip is changed
+      ignore_errors: yes
+
+    - name: Cleanup reallocate_eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ reallocate_eip.public_ip }}"
+      when: reallocate_eip is changed
+      ignore_errors: yes
+
+    - name: Cleanup backend_eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ backend_eip.public_ip }}"
+      when: backend_eip is changed
+      ignore_errors: yes
+
+    - name: Cleanup no_tagged_eip
+      ec2_eip:
+        state: absent
+        public_ip: "{{ no_tagged_eip.public_ip }}"
+      when: no_tagged_eip is changed
+      ignore_errors: yes
+
+    - name: Cleanup VPC
+      ec2_vpc_net:
+        state: absent
+        name: "{{ resource_prefix }}-vpc"
+        cidr_block: "{{ vpc_cidr }}"
+      ignore_errors: yes
