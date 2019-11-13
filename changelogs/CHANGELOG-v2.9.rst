@@ -5,6 +5,138 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.1
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-11-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Fixed typo in inventory_discovery.rst document.
+- Fixes update_resource and delete_resource API for correct number of arguments in aws_config_aggregator (https://github.com/ansible/ansible/pull/64581).
+- Fixing typo mistake in testbed with section. Deploy template from content library is supported from 67U3 (https://github.com/ansible/ansible/issues/62957).
+- ansible-test - module validation now allows ``elements:`` for return value documentation.
+- ansible-test - switch from testing RHEL 8.0 and RHEL 8.1 Beta to RHEL 8.1
+- ansible-test no longer tries to install sanity test dependencies on unsupported Python versions
+- ovirt_vm: correct cpu_threads documentation
+- vmware_host_firewall_manager - ``allowed_hosts`` excpects a dict as parameter, list is deprecated
+
+Bugfixes
+--------
+
+- (https://github.com/ansible/ansible/pull/63901)
+- **security issue** - Ansible: Splunk and Sumologic callback plugins leak sensitive data in logs (CVE-2019-14864)
+- ACI modules - Fix a whitespace issue in filters for ACI 4.2 strict validation
+- ACME modules: fix bug in ACME v1 account update code
+- ACME modules: make sure some connection errors are handled properly
+- ACME modules: support Buypass' ACME v1 endpoint
+- Ansible.Basic - Fix issue when setting a ``no_log`` parameter to an empty string - https://github.com/ansible/ansible/issues/62613
+- Can't use plugin options vars in playbook when using collections  (https://github.com/ansible/ansible/issues/63975)
+- Cloudengine module_utils - the ``set-id`` (RPC-REPLY XML attribute) may change over the time althougth ``set-id`` is the identity of the next RPC packet.
+- Cloudengine netconf plugin - add a dispatch RPC function,just return original RPC-REPLY, the function is used by ``Cloudengine module_utils``.
+- Fix IOS_VLANS override operation for new VLANs(https://github.com/ansible/ansible/pull/63624)
+- Fix deprecation warning on GitLab modules
+- Fix for backup option dest key for network modules (https://github.com/ansible/ansible/issues/57131).
+- Fix for performance regression in handler invocation (https://github.com/ansible/ansible/issues/59017)
+- Fix ios_l2_interfaces skipping relevant L2 interfaces facts(https://github.com/ansible/ansible/pull/63779)
+- Fix requirements on non required module parameters
+- Fix the ``xml`` module to use ``list(elem)`` instead of ``elem.getchildren()`` since it is being removed in Python 3.9
+- Handle empty extra vars in ansible cli (https://github.com/ansible/ansible/issues/61497).
+- HostVarsVars - Template the __repr__ value (https://github.com/ansible/ansible/issues/64128).
+- Ovirt correct resolving nested atributes which are false.
+- Remove a temp directory created by wait_for_connection action plugin (https://github.com/ansible/ansible/issues/62407).
+- Remove the unnecessary warning about aptitude not being installed (https://github.com/ansible/ansible/issues/56832).
+- Remove unused variable in junos_user to fix flake8 failure.
+- TaskQueueManager - Explicitly set the mutliprocessing start method to ``fork`` to avoid issues with the default on macOS now being ``spawn``.
+- To fix ios_interfaces where non-existing virtual/loopback interfaces was not getting configured
+- account for empty strings in when splitting the host pattern (https://github.com/ansible/ansible/issues/61964)
+- acl - fixed module failure if there are spaces in a path
+- acme_certificate - fix crash when module is used with Python 2.x.
+- action/ce - fix a bug, some new version os will not discard uncommitted configure with a return directly.(https://github.com/ansible/ansible/pull/63513).
+- ansible-galaxy - Fix pagination issue when retrieving role versions for install - https://github.com/ansible/ansible/issues/64355
+- ansible-test - bump version of ACME test container. The new version includes updated dependencies.
+- ansible-test now limits ``pathspec`` to versions prior to 0.6.0 on Python 2.6 to avoid installation errors
+- ansible-test now properly reports import errors for collections when running the import sanity test
+- ansible-test now properly uses a fresh copy of environment variables for each command invocation to avoid mixing vars between commands
+- ansible-test now shows the correct source path instead of ``%s`` for collection role based test targets when the ``-v`` option is used
+- ansible-test validate-modules sanity test code ``missing-module-utils-import-c#-requirements`` is now ``missing-module-utils-import-csharp-requirements`` (fixes ignore bug).
+- ansible-test validate-modules sanity test code ``multiple-c#-utils-per-requires`` is now ``multiple-csharp-utils-per-requires`` (fixes ignore bug).
+- ansible-test validate-modules sanity test now checks for AnsibleModule initialization instead of module_utils imports, which did not work in many cases.
+- ansible-test validate-modules sanity test now properly handles collections imports using the Ansible collection loader.
+- ansible-test validate-modules sanity test now properly handles relative imports.
+- ansible-test validate-modules sanity test now properly handles sys.exit in modules.
+- ansible-test validate-modules sanity test now properly invokes Ansible modules as scripts.
+- ce_acl_interface - update to fix some bugs - Modified the prompt statement when the switch device cannot be configured. (https://github.com/ansible/ansible/pull/64018)
+- ce_bgp - update to fix some bugs - When the vrf_name parameter is in the module and the configuration is repeatedly sent to the device, the module displays change = True. (https://github.com/ansible/ansible/pull/60573)
+- ce_bgp_af - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/62589)
+- ce_bgp_neighbor - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/60934)
+- ce_bgp_neighbor_af - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/60937)
+- ce_config - fixed issue - Re-building commands(config src) by replacing '#' with 'quit','quit' commands may close connection (https://github.com/ansible/ansible/issues/62872)
+- ce_evpn_bgp - update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61136)
+- ce_evpn_bgp_rr - update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61168)
+- ce_evpn_global - update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61013)
+- ce_facts - update to fix some bugs - Modifying regular expression errors. (https://github.com/ansible/ansible/pull/63331)
+- ce_info_center_global- update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/61283)
+- ce_interface_ospf- update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/61431)
+- ce_link_status - fix some bugs, result of interface <get> operation involves a large amount of data,interact with the device through the <get-next>.(https://github.com/ansible/ansible/pull/62417).
+- ce_mtu- update to fix some bugs - Contrast before and after adding configuration. (https://github.com/ansible/ansible/pull/61442)
+- ce_netstream_aging - Fix bugs(list index out of range).
+- ce_netstream_aging- update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61653)
+- ce_netstream_export- update to fix some bugs - Modify the configured query statement and replace get_config with exec_command. (https://github.com/ansible/ansible/pull/61652)
+- ce_netstream_global -  Fix bugs(list index out of range and key error).
+- ce_netstream_template - Fix bugs(list index out of range and update commands error).
+- ce_ntp - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/61654)
+- ce_vrf_af - update to fix some bugs - Add some update statements. (https://github.com/ansible/ansible/pull/61683)
+- copy - recursive copy with ``remote_src=yes`` now recurses beyond first level. (Fixes https://github.com/ansible/ansible/issues/58284)
+- debug - fixed an issue introduced in Ansible 2.4 where a loop of debug tasks would lose the "changed" status on each item.
+- docker_container - fix idempotency for IP addresses for networks. The old implementation checked the effective IP addresses assigned by the Docker daemon, and not the specified ones. This causes idempotency issues for containers which are not running, since they have no effective IP addresses assigned.
+- docker_container - make sure that when image is missing, check mode indicates a change (image will be pulled).
+- docker_image - make sure that deprecated options also emit proper deprecation warnings next to warnings which indicate how to replace them.
+- docker_login - Use ``with`` statement when accessing files, to prevent that invalid JSON output is produced.
+- docker_node_info - improve error handling when service inspection fails, for example because node name being ambiguous (https://github.com/ansible/ansible/issues/63353, PR https://github.com/ansible/ansible/pull/63418).
+- docker_swarm_service - ``source`` must no longer be specified for ``tmpfs`` mounts.
+- eos_vlans - Fixed behavior of when state=overridden
+- facts/virtual
+- gitlab_user - Fix adding ssh key to new/changed user and adding group membership for new/changed user
+- grafana_datasource module no longer fails if datasource name contains space characters.
+- iosxr - Make sure that empty configs don't throw a traceback for Resource Modules (https://github.com/ansible/ansible/pull/62515)
+- jenkins modules - CSRF handling fixed accordingly the latest updates in Jenkins Security model for versions > 2.173.3
+- junos_user - fixed issue with adding multiple values for a Junos account with aggregate mode
+- lineinfile - don't attempt mkdirs when path doesn't contain directory path
+- lineinfile - fix bug that caused multiple line insertions (https://github.com/ansible/ansible/issues/58923).
+- lineinfile - properly handle inserting a line when backrefs are enabled and the line already exists in the file (https://github.com/ansible/ansible/issues/63756)
+- lineinfile - use correct index value when inserting a line at the end of a file (https://github.com/ansible/ansible/issues/63684)
+- loops - Do not indiscriminately mark loop items as unsafe, only apply unsafe to ``with_`` style loops. The items from ``loop`` should not be explicitly wrapped in unsafe. The underlying templating mechanism should dictate this. (https://github.com/ansible/ansible/issues/64379)
+- module executor - Address issue where changes to Ansiballz module code, change the behavior of module execution as it pertains to ``__file__`` and ``sys.modules`` (https://github.com/ansible/ansible/issues/64664)
+- openssl_certificate - fix ``assertonly`` provider certificate verification, causing 'private key mismatch' and 'subject mismatch' errors.
+- openssl_certificate and openssl_csr - fix Ed25519 and Ed448 private key support for ``cryptography`` backend. This probably needs at least cryptography 2.8, since older versions have problems with signing certificates or CSRs with such keys. (https://github.com/ansible/ansible/issues/59039, PR https://github.com/ansible/ansible/pull/63984)
+- openssl_csr - a warning is issued if an unsupported value for ``version`` is used for the ``cryptography`` backend.
+- ovirt: Fix fetching of nested attributes
+- ovirt_disk: add host parameter to specify where should be the lun disk added.
+- ovirt_host_network: correct dictionary check.
+- package_facts - fix value of ``vital`` attribute which is returned when ``pkg`` manager is used
+- package_facts - use module warnings rather than a custom implementation for reporting warnings
+- paramiko_ssh - improve authentication error message so it is less confusing
+- plugins-netconf-ce - to get attribute 'set-id' from rpc-reply.
+- postgresql_publication - fix typo in module.warn method name (https://github.com/ansible/ansible/issues/64582).
+- syslogger callback plugin - remove check mode support since it did nothing anyway
+- template lookup - fix regression when templating hostvars (https://github.com/ansible/ansible/issues/63940)
+- user - fix stack trace on AIX when attempting to parse shadow file that does not exist (https://github.com/ansible/ansible/issues/62510)
+- vmware_host_firewall_manager - Ensure we can set rule with no ``allowed_hosts`` key (https://github.com/ansible/ansible/issues/61332)
+- vyos - Make sure that empty configs don't throw a traceback for Resource Modules (https://github.com/ansible/ansible/pull/62520)
+- win_acl - Fixed error when setting rights on directory for which inheritance from parent directory has been disabled.
+- win_domain_computer - Honour the explicit domain server and credentials when moving or removing a computer object - https://github.com/ansible/ansible/pull/63093
+- win_iis_website - Actually restart the site when ``state=restarted`` - https://github.com/ansible/ansible/issues/63828
+- win_packages - fixed issue where Test-Path failed to find files with special characters (https://github.com/ansible/ansible/issues/62521)
+- win_partition - Fix invalid variable name causing a failure on checks - https://github.com/ansible/ansible/issues/62401
+- zabbix_host - module will now properly logout from Zabbix server and won't leave open session behind (see https://github.com/ansible/ansible/issues/63774)
+
 v2.9.0
 ======
 
