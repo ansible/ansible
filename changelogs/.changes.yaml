@@ -666,6 +666,12 @@ releases:
     - no-log-sub-options-invalid-parameter.yaml
     - v2.7.14_summary.yaml
     release_date: '2019-10-17'
+  2.7.15:
+    codename: In the Light
+    fragments:
+    - 63522-remove-args-from-sumologic-and-splunk-callbacks.yml
+    - v2.7.15_summary.yaml
+    release_date: '2019-11-13'
   2.7.2:
     codename: In the Light
     fragments:

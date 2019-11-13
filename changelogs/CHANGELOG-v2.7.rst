@@ -5,6 +5,21 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.15
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-11-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- **security issue** - Ansible: Splunk and Sumologic callback plugins leak sensitive data in logs (CVE-2019-14864)
+
 v2.7.14
 =======
 
