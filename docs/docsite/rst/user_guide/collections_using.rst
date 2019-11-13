@@ -17,6 +17,8 @@ You can install and use collections through `Ansible Galaxy <https://galaxy.ansi
 Installing collections
 ======================
 
+.. _galaxy_server_config:
+
 Configuring the ``ansible-galaxy`` client
 ------------------------------------------
 
@@ -40,14 +42,6 @@ Install multiple collections with a requirements file
 -----------------------------------------------------
 
 .. include:: ../shared_snippets/installing_multiple_collections.txt
-
-
-.. _galaxy_server_config:
-
-Galaxy server configuration list
---------------------------------
-
-.. include:: ../shared_snippets/galaxy_server_list.txt
 
 
 .. _using_collections:
