@@ -651,6 +651,7 @@ class GalaxyCLI(CLI):
                 documentation='http://docs.example.com',
                 homepage='http://example.com',
                 issues='http://example.com/issue/tracker',
+                build_ignore=[],
             ))
 
             obj_path = os.path.join(init_path, namespace, collection_name)

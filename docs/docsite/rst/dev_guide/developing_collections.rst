@@ -234,14 +234,49 @@ a tarball of the built collection in the current directory which can be uploaded
 
 
 .. note::
-    * Certain files and folders are excluded when building the collection artifact. This is not currently configurable and is a work in progress so the collection artifact may contain files you would not wish to distribute.
+    * Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not wish to distribute.
     * If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``.
-    * You must also delete the :file:`tests/output` directory if you have been testing with ``ansible-test``.
     * The current Galaxy maximum tarball size is 2 MB.
 
 
 This tarball is mainly intended to upload to Galaxy
 as a distribution method, but you can use it directly to install the collection on target systems.
+
+.. _ignoring_files_and_folders_collections:
+
+Ignoring files and folders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default the build step will include all the files in the collection directory in the final build artifact except for the following:
+
+* ``galaxy.yml``
+* ``*.pyc``
+* ``*.retry``
+* ``tests/output``
+* previously built artifacts in the root directory
+* Various version control directories like ``.git/``
+
+To exclude other files and folders when building the collection, you can set a list of file glob-like patterns in the
+``build_ignore`` key in the collection's ``galaxy.yml`` file. These patterns use the following special characters for
+wildcard matching:
+
+* ``*``: Matches everything
+* ``?``: Matches any single character
+* ``[seq]``: Matches and character in seq
+* ``[!seq]``:Matches any character not in seq
+
+For example, if you wanted to exclude the :file:`sensitive` folder within the ``playbooks`` folder as well any ``.tar.gz`` archives you
+can set the following in your ``galaxy.yml`` file:
+
+.. code-block:: yaml
+
+     build_ignore:
+     - playbooks/sensitive
+     - '*.tar.gz'
+
+.. note::
+     This feature is only supported when running ``ansible-galaxy collection build`` with Ansible 2.10 or newer.
+
 
 .. _trying_collection_locally:
 
