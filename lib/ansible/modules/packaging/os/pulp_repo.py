@@ -53,8 +53,9 @@ options:
       - CA certificate string used to validate the feed source SSL certificate.
         This can be the file content or the path to the file.
     type: str
-    aliases: [ importer_ssl_ca_cert ]
+    aliases: [ importer_ssl_ca_cert, ca_cert ]
   feed_client_cert:
+    version_added: 2.10
     description:
       - Certificate used as the client certificate when synchronizing the
         repository. This is used to communicate authentication information to
@@ -65,6 +66,7 @@ options:
     type: str
     aliases: [ importer_ssl_client_cert ]
   feed_client_key:
+    version_added: 2.10
     description:
       - Private key to the certificate specified in I(importer_ssl_client_cert),
         assuming it is not included in the certificate file itself. This can be
@@ -535,7 +537,7 @@ def main():
         add_export_distributor=dict(default=False, type='bool'),
         feed=dict(),
         generate_sqlite=dict(default=False, type='bool'),
-        feed_ca_cert=dict(aliases=['importer_ssl_ca_cert']),
+        feed_ca_cert=dict(aliases=['importer_ssl_ca_cert','ca_cert']),
         feed_client_cert=dict(aliases=['importer_ssl_client_cert']),
         feed_client_key=dict(aliases=['importer_ssl_client_key']),
         name=dict(required=True, aliases=['repo']),
