@@ -14,32 +14,44 @@ merged:
     - "set protocols static route6 2001:db8::0/32"
 
   after:
-    - address: 192.0.0.0/24
-      blackhole_config:
-        type: 'blackhole'
-      next_hop:
-        - address: '192.11.11.11'
-        - address: '192.11.11.12'
-    - address:  '2001:db8::0/32'
-      blackhole_config:
-        distance: 2 
-      next_hop:
-        - address: '2001:db8::1'  
-        - address: '2001:db8::5'
+    - address_families:
+      - route_address_type: 'route'
+        routes:      
+          - dest: '192.0.0.0/24'
+            blackhole_config:
+              type: 'blackhole'
+            next_hops:
+              - forward_router_address: '192.11.11.11'
+              - forward_router_address: '192.11.11.12'
+    - address_families:
+      - route_address_type: 'route6'
+        routes:      
+          - dest: '2001:db8::0/32'
+            blackhole_config:
+              distance: 2
+            next_hops:
+              - forward_router_address: '2001:db8::1'
+              - forward_router_address: '2001:db8::5'
 
 populate:
-  - address: 192.0.0.0/24
-    blackhole_config:
-      type: 'blackhole'
-    next_hop:
-      - address: 192.11.11.11
-      - address: 192.11.11.12
-  - address:  2001:db8::0/32
-    blackhole_config:
-      distance: 2 
-    next_hop:
-      - address: 2001:db8::1  
-      - address: 2001:db8::5
+  - address_families:
+    - route_address_type: 'route'
+      routes:      
+        - dest: '192.0.0.0/24'
+          blackhole_config:
+            type: 'blackhole'
+          next_hops:
+            - forward_router_address: '192.11.11.11'
+            - forward_router_address: '192.11.11.12'
+  - address_families:
+    - route_address_type: 'route6'
+      routes:      
+        - dest: '2001:db8::0/32'
+          blackhole_config:
+            distance: 2
+          next_hops:
+            - forward_router_address: '2001:db8::1'
+            - forward_router_address: '2001:db8::5'
 
 replaced:
   commands:
@@ -50,20 +62,26 @@ replaced:
     - "set protocols static route 192.0.0.0/24 blackhole distance '2'"
 
   after:
-    - address: 192.0.0.0/24
-      blackhole_config:
-        distance: 2
-      next_hop:
-        - address: 192.1.1.11
-        - address: 192.3.3.13  
-        - address: 192.11.11.12
+    - address_families:
+      - route_address_type: route
+        routes:      
+          - dest: 192.0.0.0/24
+            blackhole_config:
+              distance: 2
+            next_hops:
+              - forward_router_address: 192.1.1.11
+              - forward_router_address: 192.3.3.13
+              - forward_router_address: 192.11.11.12
 
-    - address:  2001:db8::0/32
-      blackhole_config:
-        distance: 2 
-      next_hop:
-        - address: 2001:db8::1  
-        - address: 2001:db8::5
+    - address_families:
+      - route_address_type: route6
+        routes:      
+          - dest: 2001:db8::0/32
+            blackhole_config:
+              distance: 2
+            next_hops:
+              - forward_router_address: 2001:db8::1
+              - forward_router_address: 2001:db8::5
 
 overridden:
   commands:
@@ -73,9 +91,12 @@ overridden:
     - "set protocols static route 198.0.0.0/24"
 
   after:
-    - address: '198.0.0.0/24'
-      next_hop:
-        - address: 198.98.98.98
+    - address_families:
+      - route_address_type: 'route'
+        routes:      
+          - dest: 198.0.0.0/24
+            next_hops:
+              - forward_router_address: '198.98.98.98'
 
 deleted:
   commands:
@@ -86,17 +107,23 @@ deleted:
 
 round_trip:
   after:
-    - address: 192.0.0.0/24
-      blackhole_config:
-        distance: 2
-      next_hop:
-        - address: 192.1.1.11
-        - address: 192.3.3.13
-        - address: 192.11.11.11
-        - address: 192.11.11.12
-    - address:  2001:db8::0/32
-      blackhole_config:
-        distance: 2 
-      next_hop:
-        - address: 2001:db8::1
-        - address: 2001:db8::5
+    - address_families:
+      - route_address_type: 'route'
+        routes:      
+          - dest: 192.0.0.0/24
+            blackhole_config:
+              distance: 2
+            next_hops:
+              - forward_router_address: '192.1.1.11'
+              - forward_router_address: '192.3.3.13'
+              - forward_router_address: '192.11.11.11'
+              - forward_router_address: '192.11.11.12'
+    - address_families:
+      - route_address_type: 'route6'
+        routes:      
+          - dest: '2001:db8::0/32'
+            blackhole_config:
+              distance: 2
+            next_hops:
+              - forward_router_address: '2001:db8::1'
+              - forward_router_address: '2001:db8::5'

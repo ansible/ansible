@@ -50,50 +50,65 @@ options:
   config:
     description: A provided static route configuration.
     type: list
+    elements: dict
     suboptions:
-      address:
-        description:
-          - Static IPv4/v6 route to be set.
-          - The address format is <ipv4/v6 address>/<mask>
-          - The mask is number in range 0-32 for IPv4 and in range 0-128 for IPv6.
-          - for example, 192.168.0.1/32,  2001:db8:2201:1::0/64.
-        type: str
-        required: True
-      blackhole_config:
-        description:
-          - Configured to silently discard packets.
-        type: dict
-        suboptions:
-          type:
-            description:
-              - Configured to discard packets in blackhole mode.
-            type: str
-          distance:
-            description:
-              - Distance for the route.
-            type: int
-      next_hop:
-        description:
-          - IP address of next-hop router.
+      address_families:
+        description: A dictionary specifying the address family to which the static route(s) belong.
         type: list
+        elements: dict
         suboptions:
-          address:
+          route_address_type:
             description:
-              - IPv4/v6 address of the next hop.
+              - Specifies the type of route.
             type: str
+            choices: ['route', 'route6']
             required: True
-          enabled:
-            description:
-              - Disable IPv4/v6 next-hop static route.
-            type: bool
-          distance:
-            description:
-              - Distance value for the route.
-            type: int
-          interface:
-            description:
-              - Name of the outgoing interface.
-            type: str
+          routes:
+            description: A ditionary that specify the static route configurations.
+            type: list
+            elements: dict
+            suboptions:
+              dest:
+                description:
+                  - An IPv4/v6 address in CIDR notation that specifies the destination network for the static route.
+                type: str
+                required: True
+              blackhole_config:
+                description:
+                  - Configured to silently discard packets.
+                type: dict
+                suboptions:
+                  type:
+                    description:
+                      - This is to configure only blackhole.
+                    type: str
+                  distance:
+                    description:
+                      - Distance for the route.
+                    type: int
+              next_hops:
+                description:
+                  - Next hops to the specified destination.
+                type: list
+                elements: dict
+                suboptions:
+                  forward_router_address:
+                    description:
+                      - The IP address of the next hop that can be used to reach the destination network.
+                    type: str
+                    required: True
+                  enabled:
+                    description:
+                      - Disable IPv4/v6 next-hop static route.
+                    type: bool
+                  admin_distance:
+                    description:
+                      - Distance value for the route.
+                    type: int
+                  interface:
+                    description:
+                      - Name of the outgoing interface.
+                    type: str
 
   state:
     description:
@@ -104,6 +119,8 @@ options:
     - replaced
     - overridden
     - deleted
+    - gathered
+    - rendered
     default: merged
 """
 EXAMPLES = """
@@ -114,21 +131,27 @@ EXAMPLES = """
 #
 # vyos@vyos:~$ show configuration  commands | grep static
 #
-- name: Merge provided configuration with device configuration
+- name: Merge the provided configuration with the exisiting running configuration
   vyos_static_routes:
     config:
-     - address: 192.0.0.0/24
-       blackhole_config:
-         type: "blackhole"
-       next_hop:
-         - address: 192.11.11.11
-         - address: 192.11.11.12
-     - address:  2001:db8::0/32
-       blackhole_config:
-         distance: 2
-       next_hop:
-         - address: 2001:db8::5
-         - address: 2001:db8::1
+     - address_families:
+       - route_address_type: 'route'
+         routes:
+         - dest: 192.0.0.0/24
+           blackhole_config:
+             type: 'blackhole'
+           next_hops:
+             - forward_router_address: 192.11.11.11
+             - forward_router_address: 192.11.11.12
+     - address_families:
+       - route_address_type: 'route6'
+         routes:
+         - dest: 2001:db8::0/32
+           blackhole_config:
+             distance: 2
+           next_hops:
+             - forward_router_address: 2001:db8::5
+             - forward_router_address: 2001:db8::1
     state: merged
 #
 #
@@ -139,45 +162,64 @@ EXAMPLES = """
 # before": []
 #
 #    "commands": [
+#        "set protocols static route 192.0.0.0/24",
+#        "set protocols static route 192.0.0.0/24 blackhole",
 #        "set protocols static route 192.0.0.0/24 next-hop '192.11.11.11'",
 #        "set protocols static route 192.0.0.0/24 next-hop '192.11.11.12'",
-#        "set protocols static route 192.0.0.0/24 blackhole",
-#        "set protocols static route 192.0.0.0/24",
-#        "set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5'",
-#        "set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'",
+#        "set protocols static route6 2001:db8::0/32",
 #        "set protocols static route6 2001:db8::0/32 blackhole distance '2'",
-#        "set protocols static route6 2001:db8::0/32"
+#        "set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5'",
+#        "set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'"
+#    ]
 #
 # "after": [
-#     {
-#            "address": "192.0.0.0/24",
-#            "blackhole_config": {
-#                "type": "blackhole"
-#            },
-#            "next_hop": [
+#        {
+#            "address_families": [
 #                {
-#                    "address": "192.11.11.11"
-#                },
-#                {
-#                    "address": "192.11.11.12"
+#                    "route_address_type": "route",
+#                    "routes": [
+#                        {
+#                            "blackhole_config": {
+#                                "type": "blackhole"
+#                            },
+#                            "dest": "192.0.0.0/24",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "192.11.11.11"
+#                                },
+#                                {
+#                                    "forward_router_address": "192.11.11.12"
+#                                }
+#                            ]
+#                        }
+#                    ]
 #                }
 #            ]
 #        },
 #        {
-#            "address": "2001:db8::0/32",
-#            "blackhole_config": {
-#                "distance": 2
-#            },
-#            "next_hop": [
+#            "address_families": [
 #                {
-#                    "address": "2001:db8::1"
-#                },
-#                {
-#                    "address": "2001:db8::5"
+#                    "route_address_type": "route6",
+#                    "routes": [
+#                        {
+#                            "blackhole_config": {
+#                                "distance": 2
+#                            },
+#                            "dest": "2001:db8::0/32",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "2001:db8::1"
+#                                },
+#                                {
+#                                    "forward_router_address": "2001:db8::5"
+#                                }
+#                            ]
+#                        }
+#                    ]
 #                }
 #            ]
 #        }
-#    ],
+#    ]
 #
 # After state:
 # -------------
@@ -204,16 +246,19 @@ EXAMPLES = """
 # set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'
 # set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5'
 #
-- name: Replace provided configuration with device configuration
+- name: Replace device configurations of listed static routes with provided configurations
   vyos_static_routes:
     config:
-      - address: 192.0.0.0/24
-        blackhole_config:
-          distance: 2
-        next_hop:
-          - address: 192.1.1.11
-          - address: 192.11.11.12
-          - address: 192.3.3.13
+     - address_families:
+       - route_address_type: 'route'
+         routes:
+         - dest: 192.0.0.0/24
+           blackhole_config:
+             distance: 2
+           next_hops:
+             - forward_router_address: 192.1.1.11
+             - forward_router_address: 192.11.11.12
+             - forward_router_address: 192.3.3.13
     state: replaced
 #
 #
@@ -223,36 +268,54 @@ EXAMPLES = """
 #
 #    "before": [
 #        {
-#            "address": "192.0.0.0/24",
-#            "blackhole_config": {
-#                "type": "blackhole"
-#            },
-#            "next_hop": [
+#            "address_families": [
 #                {
-#                    "address": "192.11.11.11"
-#                },
-#                {
-#                    "address": "192.11.11.12"
+#                    "route_address_type": "route",
+#                    "routes": [
+#                        {
+#                            "blackhole_config": {
+#                                "type": "blackhole"
+#                            },
+#                            "dest": "192.0.0.0/24",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "192.11.11.11"
+#                                },
+#                                {
+#                                    "forward_router_address": "192.11.11.12"
+#                                }
+#                            ]
+#                        }
+#                    ]
 #                }
 #            ]
 #        },
 #        {
-#            "address": "2001:db8::0/32",
-#            "blackhole_config": {
-#                "distance": 2
-#            },
-#            "next_hop": [
+#            "address_families": [
 #                {
-#                    "address": "2001:db8::1"
-#                },
-#                {
-#                    "address": "2001:db8::5"
+#                    "route_address_type": "route6",
+#                    "routes": [
+#                        {
+#                            "blackhole_config": {
+#                                "distance": 2
+#                            },
+#                            "dest": "2001:db8::0/32",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "2001:db8::1"
+#                                },
+#                                {
+#                                    "forward_router_address": "2001:db8::5"
+#                                }
+#                            ]
+#                        }
+#                    ]
 #                }
 #            ]
 #        }
 #    ]
 #
-#    "commands": [
+# "commands": [
 #        "delete protocols static route 192.0.0.0/24 blackhole",
 #        "delete protocols static route 192.0.0.0/24 next-hop '192.11.11.11'",
 #        "set protocols static route 192.0.0.0/24 next-hop '192.1.1.11'",
@@ -262,33 +325,51 @@ EXAMPLES = """
 #
 #    "after": [
 #        {
-#            "address": "192.0.0.0/24",
-#            "blackhole_config": {
-#                "distance": 2
-#            },
-#            "next_hop": [
+#            "address_families": [
 #                {
-#                    "address": "192.1.1.11"
-#                },
-#                {
-#                    "address": "192.3.3.13"
-#                },
-#                {
-#                    "address": "192.11.11.12"
+#                    "route_address_type": "route",
+#                    "routes": [
+#                        {
+#                            "blackhole_config": {
+#                                "distance": 2
+#                            },
+#                            "dest": "192.0.0.0/24",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "192.1.1.11"
+#                                },
+#                                {
+#                                    "forward_router_address": "192.3.3.13"
+#                                },
+#                                {
+#                                    "forward_router_address": "192.11.11.12"
+#                                }
+#                            ]
+#                        }
+#                    ]
 #                }
 #            ]
 #        },
 #        {
-#            "address": "2001:db8::0/32",
-#            "blackhole_config": {
-#                "distance": 2
-#            },
-#            "next_hop": [
+#            "address_families": [
 #                {
-#                    "address": "2001:db8::1"
-#                },
-#                {
-#                    "address": "2001:db8::5"
+#                    "route_address_type": "route6",
+#                    "routes": [
+#                        {
+#                            "blackhole_config": {
+#                                "distance": 2
+#                            },
+#                            "dest": "2001:db8::0/32",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "2001:db8::1"
+#                                },
+#                                {
+#                                    "forward_router_address": "2001:db8::5"
+#                                }
+#                            ]
+#                        }
+#                    ]
 #                }
 #            ]
 #        }
@@ -317,16 +398,19 @@ EXAMPLES = """
 # set protocols static route 192.0.0.0/24 next-hop '192.1.1.11'
 # set protocols static route 192.0.0.0/24 next-hop '192.3.3.13'
 # set protocols static route 192.0.0.0/24 next-hop '192.11.11.12'
-# set protocols static route6 2001:db8:1000::0/38 blackhole distance '2'
-# set protocols static route6 2001:db8:1000::0/38 next-hop '2001:db8::1'
-# set protocols static route6 2001:db8:1000::0/38 next-hop '2000:db7:2000::5'
+# set protocols static route6 2001:db8::0/32 blackhole distance '2'
+# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'
+# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5'
 #
 - name: Overrides all device configuration with provided configuration
-  vyos_lag_interfaces:
+  vyos_static_routes:
     config:
-      - address: 198.0.0.0/24
-        next_hop:
-          - address: 198.98.98.98
+     - address_families:
+       - route_address_type: 'route'
+         routes:
+         - dest: 198.0.0.0/24
+           next_hops:
+             - forward_router_address: 198.98.98.98
     state: overridden
 #
 #
@@ -336,33 +420,51 @@ EXAMPLES = """
 #
 # "before": [
 #        {
-#            "address": "192.0.0.0/24",
-#            "blackhole_config": {
-#                "distance": 2
-#            },
-#            "next_hop": [
+#            "address_families": [
 #                {
-#                    "address": "192.1.1.11"
-#                },
-#                {
-#                    "address": "192.3.3.13"
-#                },
-#                {
-#                    "address": "192.11.11.12"
+#                    "route_address_type": "route",
+#                    "routes": [
+#                        {
+#                            "blackhole_config": {
+#                                "distance": 2
+#                            },
+#                            "dest": "192.0.0.0/24",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "192.1.1.11"
+#                                },
+#                                {
+#                                    "forward_router_address": "192.3.3.13"
+#                                },
+#                                {
+#                                    "forward_router_address": "192.11.11.12"
+#                                }
+#                            ]
+#                        }
+#                    ]
 #                }
 #            ]
 #        },
 #        {
-#            "address": "2001:db8:1000::0/38",
-#            "blackhole_config": {
-#                "distance": 2
-#            },
-#            "next_hop": [
+#            "address_families": [
 #                {
-#                    "address": "2001:db8::1"
-#                },
-#                {
-#                    "address": "2000:db7:2000::5"
+#                    "route_address_type": "route6",
+#                    "routes": [
+#                        {
+#                            "blackhole_config": {
+#                                "distance": 2
+#                            },
+#                            "dest": "2001:db8::0/32",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "2001:db8::1"
+#                                },
+#                                {
+#                                    "forward_router_address": "2001:db8::5"
+#                                }
+#                            ]
+#                        }
+#                    ]
 #                }
 #            ]
 #        }
@@ -377,10 +479,19 @@ EXAMPLES = """
 #
 #    "after": [
 #        {
-#            "address": "198.0.0.0/24",
-#            "next_hop": [
+#            "address_families": [
 #                {
-#                    "address": "198.98.98.98"
+#                    "route_address_type": "route",
+#                    "routes": [
+#                        {
+#                            "dest": "198.0.0.0/24",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "198.98.98.98"
+#                                }
+#                            ]
+#                        }
+#                    ]
 #                }
 #            ]
 #        }
@@ -405,11 +516,19 @@ EXAMPLES = """
 # set protocols static route 192.0.0.0/24 next-hop '192.11.11.12'
 # set protocols static route6 2001:db8::0/32 blackhole distance '2'
 # set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'
-# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5''
+# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5'
 #
 - name: Delete attributes of given static routes.
   vyos_static_routes:
     config:
+     - address_families:
+       - route_address_type: 'route'
+         routes:
+         - dest: '192.0.0.0/24'
+     - address_families:
+       - route_address_type: 'route6'
+         routes:
+         - dest: '2001:db8::0/32'
     state: deleted
 #
 #
@@ -419,30 +538,48 @@ EXAMPLES = """
 #
 #    "before": [
 #        {
-#            "address": "192.0.0.0/24",
-#            "blackhole_config": {
-#                "type": "blackhole"
-#            },
-#            "next_hop": [
+#            "address_families": [
 #                {
-#                    "address": "192.11.11.11"
-#                },
-#                {
-#                    "address": "192.11.11.12"
+#                    "route_address_type": "route",
+#                    "routes": [
+#                        {
+#                            "blackhole_config": {
+#                                "type": "blackhole"
+#                            },
+#                            "dest": "192.0.0.0/24",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "192.11.11.11"
+#                                },
+#                                {
+#                                    "forward_router_address": "192.11.11.12"
+#                                }
+#                            ]
+#                        }
+#                    ]
 #                }
 #            ]
 #        },
 #        {
-#            "address": "2001:db8::0/32",
-#            "blackhole_config": {
-#                "distance": 2
-#            },
-#            "next_hop": [
+#            "address_families": [
 #                {
-#                    "address": "2001:db8::1"
-#                },
-#                {
-#                    "address": "2001:db8::5"
+#                    "route_address_type": "route6",
+#                    "routes": [
+#                        {
+#                            "blackhole_config": {
+#                                "distance": 2
+#                            },
+#                            "dest": "2001:db8::0/32",
+#                            "next_hops": [
+#                                {
+#                                    "forward_router_address": "2001:db8::1"
+#                                },
+#                                {
+#                                    "forward_router_address": "2001:db8::5"
+#                                }
+#                            ]
+#                        }
+#                    ]
 #                }
 #            ]
 #        }

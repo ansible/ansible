@@ -39,36 +39,53 @@ class Static_routesArgs(object):  # pylint: disable=R0903
         'config': {
             'elements': 'dict',
             'options': {
-                'address': {
-                    'required': True,
-                    'type': 'str'
-                },
-                'blackhole_config': {
-                    'options': {
-                        'type': {
-                            'type': 'str'
-                        },
-                        'distance': {
-                            'type': 'int'
-                        }
-                    },
-                    'type': 'dict'
-                },
-                'next_hop': {
+                'address_families': {
                     'elements': 'dict',
                     'options': {
-                        'address': {
+                        'route_address_type': {
+                            'choices': ['route', 'route6'],
                             'required': True,
                             'type': 'str'
                         },
-                        'distance': {
-                            'type': 'int'
-                        },
-                        'enabled': {
-                            'type': 'bool'
-                        },
-                        'interface': {
-                            'type': 'str'
+                        'routes': {
+                            'elements': 'dict',
+                            'options': {
+                                'blackhole_config': {
+                                    'options': {
+                                        'distance': {
+                                            'type': 'int'
+                                        },
+                                        'type': {
+                                            'type': 'str'
+                                        }
+                                    },
+                                    'type': 'dict'
+                                },
+                                'dest': {
+                                    'required': True,
+                                    'type': 'str'
+                                },
+                                'next_hops': {
+                                    'elements': 'dict',
+                                    'options': {
+                                        'admin_distance': {
+                                            'type': 'int'
+                                        },
+                                        'enabled': {
+                                            'type': 'bool'
+                                        },
+                                        'forward_router_address': {
+                                            'required': True,
+                                            'type': 'str'
+                                        },
+                                        'interface': {
+                                            'type': 'str'
+                                        }
+                                    },
+                                    'type': 'list'
+                                }
+                            },
+                            'type': 'list'
                         }
                     },
                     'type': 'list'
@@ -77,8 +94,13 @@ class Static_routesArgs(object):  # pylint: disable=R0903
             'type': 'list'
         },
         'state': {
-            'choices': ['merged', 'replaced', 'overridden', 'deleted'],
-            'default': 'merged',
-            'type': 'str'
+            'choices': [
+                'merged', 'replaced', 'overridden', 'deleted', 'gathered',
+                'rendered'
+            ],
+            'default':
+            'merged',
+            'type':
+            'str'
         }
     }  # pylint: disable=C0301

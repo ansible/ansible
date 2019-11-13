@@ -10,9 +10,12 @@
   - name: Overrides all device configuration with provided configuration
     vyos_static_routes: &overridden
        config:
-         - address: 198.0.0.0/24
-           next_hop:
-             - address: 198.98.98.98
+         - address_families:
+           - route_address_type: 'route'
+             routes:
+               - dest: 198.0.0.0/24
+                 next_hops:
+                   - forward_router_address: 198.98.98.98
        state: overridden
     register: result
 

@@ -8,8 +8,14 @@
   - name: Delete attributes of given static routes.
     vyos_static_routes: &deleted
       config:
-        - address: '192.0.0.0/24'
-        - address: '2001:db8::0/32'
+        - address_families:
+          - route_address_type: 'route'
+            routes:
+              - dest: '192.0.0.0/24'      
+        - address_families:
+          - route_address_type: 'route6'      
+            routes:
+              - dest: '2001:db8::0/32'      
       state: deleted
     register: result
 

@@ -13,7 +13,6 @@ created
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 from copy import deepcopy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, dict_diff, remove_empties
@@ -37,7 +36,7 @@ class Static_routes(ConfigBase):
         'static_routes',
     ]
 
-    params = ['address', 'blackhole_config', 'next_hop']
+    # params = ['address_families', 'blackhole_config', 'next_hops']
 
     def __init__(self, module):
         super(Static_routes, self).__init__(module)
@@ -115,22 +114,49 @@ class Static_routes(ConfigBase):
             commands.extend(self._state_overridden(want=want, have=have))
         elif state == 'deleted':
             if want:
-                for item in want:
-                    route = item['address']
-                    have_item = search_obj_in_list(route, have, 'address')
-                    commands.extend(self._state_deleted(want=None, have=have_item))
+                for want_item in want:
+                    af_want = want_item['address_families']
+                    for element in af_want:
+                        want_routes = element['routes']
+                        for route in want_routes:
+                            have_route = self.search_route_in_have(have, route['dest'])
+                            if have_route:
+                                commands.extend(self._state_deleted(want=None, have=have_route))
             else:
                 for have_item in have:
-                    commands.extend(self._state_deleted(want=None, have=have_item))
+                    af_have = have_item['address_families']
+                    for element in af_have:
+                        have_routes = element['routes']
+                        for have_route in have_routes:
+                            commands.extend(self._state_deleted(want=None, have=have_route))
         else:
             for want_item in want:
-                route = want_item['address']
-                have_item = search_obj_in_list(route, have, 'address')
-                if state == 'merged':
-                    commands.extend(self._state_merged(want=want_item, have=have_item))
-                else:
-                    commands.extend(self._state_replaced(want=want_item, have=have_item))
+                af_want = want_item['address_families']
+                for element in af_want:
+                    want_routes = element['routes']
+                    for route in want_routes:
+                        have_item = self.search_route_in_have(have, route['dest'])
+                        if state == 'merged':
+                            commands.extend(self._state_merged(want=route, have=have_item))
+                        else:
+                            commands.extend(self._state_replaced(want=route, have=have_item))
         return commands
+
+    def search_route_in_have(self, have, want_dest):
+        """
+
+        :param have:
+        :param dest:
+        :return:
+        """
+        for have_item in have:
+            af_have = have_item['address_families']
+            for element in af_have:
+                have_routes = element['routes']
+                for item in have_routes:
+                    if item['dest'] == want_dest:
+                        return item
+        return None
 
     def _state_replaced(self, want, have):
         """ The command generator when state is replaced
@@ -152,19 +178,27 @@ class Static_routes(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
+
         commands = []
         for have_item in have:
-            route_address = have_item['address']
-            route_in_want = search_obj_in_list(route_address, want, 'address')
-            if not route_in_want:
-                commands.append(
-                    self._compute_command(have_item['address'], remove=True)
-                )
+            af_have = have_item['address_families']
+            for element in af_have:
+                have_routes = element['routes']
+                for route in have_routes:
+                    route_in_want = self.search_route_in_have(want, route['dest'])
+                    if not route_in_want:
+                        commands.append(
+                            self._compute_command(route['dest'], remove=True)
+                        )
 
         for want_item in want:
-            route_address = want_item['address']
-            route_in_have = search_obj_in_list(route_address, have, 'address')
-            commands.extend(self._state_replaced(want_item, route_in_have))
+            af_want = want_item['address_families']
+            for element in af_want:
+                want_routes = element['routes']
+                for route in want_routes:
+                    route_in_have = self.search_route_in_have(have, route['dest'])
+                    commands.extend(self._state_replaced(route, route_in_have))
+
         return commands
 
     def _state_merged(self, want, have):
@@ -188,17 +222,19 @@ class Static_routes(ConfigBase):
         :returns: the commands necessary to remove the current configuration
                   of the provided objects
         """
+
         commands = []
         if want:
-            params = Static_routes.params
-            for attrib in params:
-                if attrib == 'next_hop':
-                    commands.extend(self._update_next_hop(want, have))
-                elif attrib == 'blackhole_config':
-                    commands.extend(self._update_blackhole(attrib, want, have))
+            for key, value in iteritems(want):
+                if value:
+                    if key == 'next_hops':
+                        commands.extend(self._update_next_hop(want, have))
+                    elif key == 'blackhole_config':
+                        commands.extend(self._update_blackhole(key, want, have))
+
         elif have:
             commands.append(
-                self._compute_command(address=have['address'], remove=True)
+                self._compute_command(dest=have['dest'], remove=True)
             )
         return commands
 
@@ -207,14 +243,14 @@ class Static_routes(ConfigBase):
         have = {}
         for key, value in iteritems(want):
             if value:
-                if key == 'address':
+                if key == 'dest':
                     commands.append(
-                        self._compute_command(address=want['address'])
+                        self._compute_command(dest=want['dest'])
                     )
                 elif key == 'blackhole_config':
                     commands.extend(self._add_blackhole(key, want, have))
 
-                elif key == 'next_hop':
+                elif key == 'next_hops':
                     commands.extend(self._add_next_hop(want, have))
 
         return commands
@@ -233,12 +269,12 @@ class Static_routes(ConfigBase):
                 if value:
                     if attrib == 'distance':
                         commands.append(
-                            self._compute_command(address=want['address'], key='blackhole',
+                            self._compute_command(dest=want['dest'], key='blackhole',
                                                   attrib=attrib, remove=False, value=str(value))
                         )
                     elif attrib == 'type':
                         commands.append(
-                            self._compute_command(address=want['address'], key='blackhole')
+                            self._compute_command(dest=want['dest'], key='blackhole')
                         )
         return commands
 
@@ -246,24 +282,24 @@ class Static_routes(ConfigBase):
         commands = []
         want_copy = deepcopy(remove_empties(want))
         have_copy = deepcopy(remove_empties(have))
-        diff_next_hops = get_lst_diff_for_dicts(want_copy, have_copy, 'next_hop')
+        diff_next_hops = get_lst_diff_for_dicts(want_copy, have_copy, 'next_hops')
         if diff_next_hops:
             for hop in diff_next_hops:
                 for element in hop:
-                    if element == 'address':
+                    if element == 'forward_router_address':
                         commands.append(
-                            self._compute_command(address=want['address'],
+                            self._compute_command(dest=want['dest'],
                                                   key='next-hop', value=hop[element])
                         )
                     elif element == 'enabled' and not hop[element]:
                         commands.append(
-                            self._compute_command(address=want['address'],
-                                                  key='next-hop', attrib=hop['address'], value='disable')
+                            self._compute_command(dest=want['dest'],
+                                                  key='next-hop', attrib=hop['forward_router'], value='disable')
                         )
-                    elif element == 'distance':
+                    elif element == 'admin_distance':
                         commands.append(
-                            self._compute_command(address=want['address'], key='next-hop',
-                                                  attrib=hop['address'] + element, value=str(hop[element]))
+                            self._compute_command(dest=want['dest'], key='next-hop',
+                                                  attrib=hop['forward_router_address'] + element, value=str(hop[element]))
                         )
         return commands
 
@@ -280,12 +316,12 @@ class Static_routes(ConfigBase):
                 if value:
                     if attrib == 'distance':
                         commands.append(
-                            self._compute_command(address=want['address'], key='blackhole',
+                            self._compute_command(dest=want['dest'], key='blackhole',
                                                   attrib=attrib, remove=True, value=str(value))
                         )
                     elif attrib == 'type':
                         commands.append(
-                            self._compute_command(address=want['address'], key='blackhole', remove=True)
+                            self._compute_command(dest=want['dest'], key='blackhole', remove=True)
                         )
         return commands
 
@@ -295,38 +331,37 @@ class Static_routes(ConfigBase):
         want_copy = deepcopy(remove_empties(want))
         have_copy = deepcopy(remove_empties(have))
 
-        diff_next_hops = get_lst_diff_for_dicts(have_copy, want_copy, 'next_hop')
+        diff_next_hops = get_lst_diff_for_dicts(have_copy, want_copy, 'next_hops')
         if diff_next_hops:
             for hop in diff_next_hops:
                 for element in hop:
-                    if element == 'address':
+                    if element == 'forward_router_address':
                         commands.append(
-                            self._compute_command(address=want['address'], key='next-hop', value=hop[element], remove=True)
+                            self._compute_command(dest=want['dest'], key='next-hop', value=hop[element], remove=True)
                         )
                     elif element == 'enabled':
                         commands.append(
-                            self._compute_command(address=want['address'],
-                                                  key='next-hop', attrib=hop['address'], value='disable', remove=True)
+                            self._compute_command(dest=want['dest'],
+                                                  key='next-hop', attrib=hop['forward_router_address'], value='disable', remove=True)
                         )
-                    elif element == 'distance':
+                    elif element == 'admin_distance':
                         commands.append(
-                            self._compute_command(address=want['address'], key='next-hop',
-                                                  attrib=hop['address'] + element, value=str(hop[element]), remove=True)
+                            self._compute_command(dest=want['dest'], key='next-hop',
+                                                  attrib=hop['forward_router_address'] + element, value=str(hop[element]), remove=True)
                         )
         return commands
 
     def _render_updates(self, want, have):
         commands = []
-
-        temp_have_next_hops = have.pop('next_hop', None)
-        temp_want_next_hops = want.pop('next_hop', None)
+        temp_have_next_hops = have.pop('next_hops', None)
+        temp_want_next_hops = want.pop('next_hops', None)
 
         updates = dict_diff(have, want)
 
         if temp_have_next_hops:
-            have['next_hop'] = temp_have_next_hops
+            have['next_hops'] = temp_have_next_hops
         if temp_want_next_hops:
-            want['next_hop'] = temp_want_next_hops
+            want['next_hops'] = temp_want_next_hops
 
         commands.extend(self._add_next_hop(want, have))
 
@@ -337,18 +372,18 @@ class Static_routes(ConfigBase):
                         commands.extend(
                             self._add_blackhole(key, want, have)
                         )
-                    elif key == 'next_hop':
+                    elif key == 'next_hops':
                         commands.extend(
                             self._add_next_hop(want, have)
                         )
         return commands
 
-    def _compute_command(self, address, key=None, attrib=None, value=None, remove=False):
+    def _compute_command(self, dest, key=None, attrib=None, value=None, remove=False):
         if remove:
-            cmd = 'delete protocols static ' + get_route_type(address)
+            cmd = 'delete protocols static ' + get_route_type(dest)
         else:
-            cmd = 'set protocols static ' + get_route_type(address)
-        cmd += (' ' + address)
+            cmd = 'set protocols static ' + get_route_type(dest)
+        cmd += (' ' + dest)
         if key:
             cmd += (' ' + key)
         if attrib:

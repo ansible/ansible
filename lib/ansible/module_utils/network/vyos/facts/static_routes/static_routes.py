@@ -18,6 +18,7 @@ from re import findall, search, M
 from copy import deepcopy
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.vyos.argspec.static_routes.static_routes import Static_routesArgs
+from ansible.module_utils.network. vyos.utils.utils import get_route_type
 
 
 class Static_routesFacts(object):
@@ -53,13 +54,19 @@ class Static_routesFacts(object):
             # data = connection.get('show running-config | section ^interface')
             # using mock data instead
             objs = []
-            static_routes = findall(r'^set protocols static route(6)? (\S+)', data, M)
+            static_routes = findall(r'set protocols static route(6)? (\S+)', data, M)
             if static_routes:
                 for route in set(static_routes):
                     route_regex = r' %s .+$' % route[1]
                     cfg = findall(route_regex, data, M)
                     obj = self.render_config(cfg)
-                    obj['address'] = route[1].strip("'")
+                    dest = route[1].strip("'")
+                    af = obj['address_families']
+                    for element in af:
+                        routes = element['routes']
+                    for static_route in routes:
+                        static_route['dest'] = dest
+                        element['route_address_type'] = get_route_type(static_route['dest'])
                     if obj:
                         objs.append(obj)
 
@@ -85,10 +92,19 @@ class Static_routesFacts(object):
         :returns: The generated config
         """
         config = {}
-        next_hop_conf = '\n'.join(filter(lambda x: ('next-hop' in x), conf))
+        routes_dict = {}
+        address_families = []
+        af_dict = {}
+        routes = []
+        next_hops_conf = '\n'.join(filter(lambda x: ('next-hop' in x), conf))
         blackhole_conf = '\n'.join(filter(lambda x: ('blackhole' in x), conf))
-        config['blackhole_config'] = self.parse_blackhole(blackhole_conf)
-        config['next_hop'] = self.parse_next_hop(next_hop_conf)
+        routes_dict['blackhole_config'] = self.parse_blackhole(blackhole_conf)
+        routes_dict['next_hops'] = self.parse_next_hop(next_hops_conf)
+        routes.append(routes_dict)
+        af_dict['routes'] = routes
+        address_families.append(af_dict)
+        config['address_families'] = address_families
+
         return utils.remove_empties(config)
 
     def parse_blackhole(self, conf):
@@ -104,6 +120,7 @@ class Static_routesFacts(object):
             elif bh:
                 blackhole = {}
                 blackhole['type'] = 'blackhole'
+
         return blackhole
 
     def parse_next_hop(self, conf):
@@ -118,10 +135,10 @@ class Static_routesFacts(object):
                     dis = hop.find('disable')
                     hop_info = hop.split(' ')
                     next_hop_info = {}
-                    next_hop_info['address'] = hop_info[0].strip("'")
+                    next_hop_info['forward_router_address'] = hop_info[0].strip("'")
                     if distance:
                         value = distance.group(1).strip("'")
-                        next_hop_info['distance'] = int(value)
+                        next_hop_info['admin_distance'] = int(value)
                     elif dis >= 1:
                         next_hop_info['enabled'] = False
                     next_hop_list.append(next_hop_info)
