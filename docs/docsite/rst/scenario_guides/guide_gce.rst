@@ -244,7 +244,7 @@ rest.
    - name: Manage new instances
      hosts: new_instances
      connection: ssh
-     sudo: True
+     become: True
      roles:
        - base_configuration
        - production_server
