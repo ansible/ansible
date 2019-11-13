@@ -1227,7 +1227,6 @@
           - result is successful
           - result is not changed
           - vpc_info.vpcs | length == 1
-          - vpc_info.vpcs | length == 1
           - result.vpc.cidr_block == vpc_cidr
           - vpc_info.vpcs[0].cidr_block == vpc_cidr
           - result.vpc | json_query(cidr_query) | list | length == 2
