@@ -94,7 +94,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # build url
         self.url = "https://%s/%s" % (self.get_option('instance'), path)
         url = self.url
-        results = []
+
         try:
             results = self._cache[self.cache_key][self.url]
         except KeyError:
