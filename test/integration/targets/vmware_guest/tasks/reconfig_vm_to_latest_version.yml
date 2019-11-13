@@ -9,7 +9,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: test_vm_version12
+    name: test_vm1
     guest_id: centos7_64Guest
     datacenter: "{{ dc1 }}"
     folder: "{{ f0 }}"
@@ -32,7 +32,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: test_vm_version_latest
+    name: test_vm1
     guest_id: centos7_64Guest
     datacenter: "{{ dc1 }}"
     folder: "{{ f0 }}"
@@ -55,7 +55,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: test_vm_version12
+    name: test_vm1
     guest_id: centos7_64Guest
     datacenter: "{{ dc1 }}"
     folder: "{{ f0 }}"
