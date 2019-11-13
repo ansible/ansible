@@ -565,7 +565,13 @@ def main():
     generate_sqlite = module.params['generate_sqlite']
     importer_ssl_ca_cert = module.params['feed_ca_cert']
     importer_ssl_client_cert = module.params['feed_client_cert']
+    if importer_ssl_client_cert is None and module.params['client_cert'] is not None:
+      importer_ssl_client_cert = module.params['client_cert']
+      module.deprecate("In Ansible 2.10 a new `feed_client_cert` option was added.  Until Ansible 2.14 the default value will come from the client_cert option", version="2.14")
     importer_ssl_client_key = module.params['feed_client_key']
+    if importer_ssl_client_key is None and module.params['client_key'] is not None:
+      importer_ssl_client_key = module.params['client_key']
+      module.deprecate("In Ansible 2.10 a new `feed_client_key` option was added.  Until Ansible 2.14 the default value will come from the client_key option", version="2.14")
     proxy_host = module.params['proxy_host']
     proxy_port = module.params['proxy_port']
     proxy_username = module.params['proxy_username']
