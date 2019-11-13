@@ -167,6 +167,12 @@ options:
             - Subnet name.
         aliases:
             - subnet
+    public_ip_per_vm:
+        description:
+            - Assign a public IP to each virtual machine of the scale set
+        type: bool
+        default: False
+        version_added: "2.10"
     load_balancer:
         description:
             - Load balancer name.
@@ -443,6 +449,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             managed_disk_type=dict(type='str', choices=['Standard_LRS', 'Premium_LRS']),
             data_disks=dict(type='list'),
             subnet_name=dict(type='str', aliases=['subnet']),
+            public_ip_per_vm=dict(type='bool', default=False),
             load_balancer=dict(type='str'),
             application_gateway=dict(type='str'),
             virtual_network_resource_group=dict(type='str'),
@@ -477,6 +484,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.subnet_name = None
         self.virtual_network_resource_group = None
         self.virtual_network_name = None
+        self.public_ip_per_vm = None
         self.tags = None
         self.differences = None
         self.load_balancer = None
@@ -541,6 +549,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         application_gateway = None
         application_gateway_backend_address_pools = None
         support_lb_change = True
+        public_ip_address_configuration = None
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -617,6 +626,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 application_gateway_backend_address_pools = ([self.compute_models.SubResource(id=resource.id)
                                                               for resource in application_gateway.backend_address_pools]
                                                              if application_gateway.backend_address_pools else None)
+
+            if self.public_ip_per_vm:
+                public_ip_address_configuration = self.compute_models.VirtualMachineScaleSetPublicIPAddressConfiguration(name='instancepublicip')
 
         try:
             self.log("Fetching virtual machine scale set {0}".format(self.name))
@@ -738,9 +750,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             self.fail("Parameter error: ssh_public_keys required when disabling SSH password.")
 
                     if not self.virtual_network_name:
-                        default_vnet = self.create_default_vnet()
-                        virtual_network = default_vnet.id
-                        self.virtual_network_name = default_vnet.name
+                        self.fail("Parameter error: virtual_network_name is required.")
 
                     if self.subnet_name:
                         subnet = self.get_subnet(self.virtual_network_name, self.subnet_name)
@@ -800,6 +810,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                                 subnet=self.compute_models.ApiEntityReference(
                                                     id=subnet.id
                                                 ),
+                                                public_ip_address_configuration=public_ip_address_configuration,
                                                 primary=True,
                                                 load_balancer_backend_address_pools=load_balancer_backend_address_pools,
                                                 load_balancer_inbound_nat_pools=load_balancer_inbound_nat_pools,
