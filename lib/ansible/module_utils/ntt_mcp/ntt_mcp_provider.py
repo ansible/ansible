@@ -3409,7 +3409,7 @@ class NTTMCPClient():
                     raise Exception('{0}'.format(response.text))
             else:
                 raise Exception('No response from the API for url: {0}'.format(url))
-        except REQ.exceptions.ConnectionError:
-            raise NTTMCPAPIException('Could not connect to the API')
+        except REQ.exceptions.ConnectionError as e:
+            raise NTTMCPAPIException('Could not connect to the API: {0}'.format(e))
         except Exception as e:
             raise NTTMCPAPIException('{0} {1}'.format(e, response.text))

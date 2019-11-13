@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2019 NTT Communications Cloud Infrastructure Services
+# Copyright (c) 2019, Ken Sinfield <ken.sinfield@cis.ntt.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

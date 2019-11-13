@@ -297,7 +297,7 @@ def get_irules(module, client, network_domain_id):
                     if irule.get('name') == cc_irule.get('irule').get('name'):
                         irule_id_list.append(cc_irule.get('irule').get('id'))
         except TypeError:
-            module.fail(msg='No iRules are available at this location.')
+            module.fail_json(msg='No iRules are available at this location.')
         except (KeyError, IndexError, AttributeError, NTTMCPAPIException):
             module.warn(warning='The supplied iRule list will not be included as the module could not get a list of iRules from the API.')
     return irule_id_list
