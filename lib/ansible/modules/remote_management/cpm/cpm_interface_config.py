@@ -72,6 +72,7 @@ options:
       - This is the ethernet port name that is getting configured.
     required: false
     type: str
+    choices: [ "eth0", "eth1" ]
   negotiation:
     description:
       - This is the speed of the interface port being configured.
@@ -411,7 +412,7 @@ def run_module():
         cpm_url=dict(type='str', required=True),
         cpm_username=dict(type='str', required=True),
         cpm_password=dict(type='str', required=True, no_log=True),
-        interface=dict(type='str', required=True),
+        interface=dict(type='str', default=None, choices=["eth0", "eth1"]),
         negotiation=dict(type='int', required=False, default=None, choices=[0, 1, 2, 3, 4, 5, 6]),
         ipv4address=dict(type='str', required=False, default=None),
         ipv4netmask=dict(type='str', required=False, default=None),
