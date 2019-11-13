@@ -13,7 +13,7 @@
     guest_id: centos7_64Guest
     datacenter: "{{ dc1 }}"
     folder: "{{ f0 }}"
-    datastore: '{{ ds2 }}'
+    datastore: '{{ rw_datastore }}'
     hardware:
         num_cpus: 4
         memory_mb: 1028
@@ -32,11 +32,11 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: test_vm1
+    name: test_vm2
     guest_id: centos7_64Guest
     datacenter: "{{ dc1 }}"
     folder: "{{ f0 }}"
-    datastore: '{{ ds2 }}'
+    datastore: '{{ rw_datastore }}'
     hardware:
         num_cpus: 4
         memory_mb: 1028
@@ -59,7 +59,7 @@
     guest_id: centos7_64Guest
     datacenter: "{{ dc1 }}"
     folder: "{{ f0 }}"
-    datastore: '{{ ds2 }}'
+    datastore: '{{ rw_datastore }}'
     hardware:
         num_cpus: 4
         memory_mb: 1028

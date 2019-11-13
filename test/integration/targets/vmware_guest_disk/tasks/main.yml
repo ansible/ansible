@@ -16,7 +16,7 @@
     validate_certs: no
     name: "{{ virtual_machines[0].name }}"
     disk:
-        - datastore: "{{ ds1 }}"
+        - datastore: "{{ rw_datastore }}"
           disk_mode: "invalid_disk_mode"
           scsi_controller: 0
           scsi_type: 'paravirtual'
@@ -44,7 +44,7 @@
     validate_certs: no
     name: "{{ virtual_machines[0].name }}"
     disk:
-        - datastore: "{{ ds1 }}"
+        - datastore: "{{ rw_datastore }}"
           disk_mode: "independent_persistent"
           scsi_controller: 0
           scsi_type: 'paravirtual'
@@ -52,7 +52,7 @@
           state: present
           type: eagerzeroedthick
           unit_number: 2
-        - datastore: "{{ ds1 }}"
+        - datastore: "{{ rw_datastore }}"
           disk_mode: "independent_nonpersistent"
           scsi_controller: 0
           scsi_type: 'paravirtual'
@@ -60,7 +60,7 @@
           state: present
           type: eagerzeroedthick
           unit_number: 3
-        - datastore: "{{ ds1 }}"
+        - datastore: "{{ rw_datastore }}"
           disk_mode: "persistent"
           scsi_controller: 0
           scsi_type: 'paravirtual'

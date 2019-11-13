@@ -51,7 +51,7 @@
     - type: 'device'
       device_name: '/dev/char/serial/uart0'
     - type: 'file'
-      file_path: '[{{ ds2 }}]/file1'
+      file_path: '[{{ rw_datastore }}]/file1'
       yield_on_poll:  True
   register: create_multiple_ports
  

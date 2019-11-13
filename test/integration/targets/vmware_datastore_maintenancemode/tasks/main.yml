@@ -17,7 +17,7 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       state: present
-      datastore: "{{ ds1 }}"
+      datastore: "{{ ro_datastore }}"
       validate_certs: no
     register: test_result_0001
 
@@ -35,7 +35,7 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       state: present
-      datastore: "{{ ds1 }}"
+      datastore: "{{ ro_datastore }}"
       validate_certs: no
     register: test_result_0002
 
@@ -53,7 +53,7 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       state: absent
-      datastore: "{{ ds1 }}"
+      datastore: "{{ ro_datastore }}"
       validate_certs: no
     register: test_result_0003
 
@@ -71,7 +71,7 @@
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
       state: absent
-      datastore: "{{ ds1 }}"
+      datastore: "{{ ro_datastore }}"
       validate_certs: no
     register: test_result_0004
 

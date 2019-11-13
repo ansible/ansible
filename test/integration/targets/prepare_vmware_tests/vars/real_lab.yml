@@ -9,12 +9,12 @@ infra:
       type: nfs
       server: datastore.test
       path: /srv/share/isos
-      ro: true
+      ro: false
     LocalDS_1:
       type: nfs
       server: datastore.test
       path: /srv/share/vms
-      ro: false
+      ro: true
 virtual_machines:
   - name: DC0_H0_VM0
     folder: '{{ f0 }}'
