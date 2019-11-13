@@ -620,15 +620,15 @@ def main():
     module.exit_json(data=monitoring)
 
     if state == 'present':
+        # Implement Check Mode
+        if module.check_mode:
+            if not monitoring.get('servicePlan') != module.params.get('plan'):
+                module.exit_json(msg='Monitoring of type {0} will be applied to server with ID {1}'.format(
+                    module.params.get('plan'),
+                    server.get('id')))
+            else:
+                module.exit_json(msg='No changes are required')
         if not monitoring:
-            # Implement Check Mode
-            if module.check_mode:
-                if not monitoring.get('servicePlan') != module.params.get('plan'):
-                    module.exit_json(msg='Monitoring of type {0} will be applied to server with ID {1}'.format(
-                        module.params.get('plan'),
-                        server.get('id')))
-                else:
-                    module.exit_json(msg='No changes are required')
             add_monitoring(module, client, False, server.get('id'))
         else:
             if not monitoring.get('servicePlan') != module.params.get('plan'):
