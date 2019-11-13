@@ -134,7 +134,7 @@ def run_module():
         cpm_url=dict(type='str', required=True),
         cpm_username=dict(type='str', required=True),
         cpm_password=dict(type='str', required=True, no_log=True),
-        interface=dict(type='list', default=None, choices=["eth0", "eth1", "ppp0"]),
+        interface=dict(type='list', element='str', default=None, choices=["eth0", "eth1", "ppp0"]),
         use_https=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
         use_proxy=dict(type='bool', default=False)
