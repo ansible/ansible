@@ -77,8 +77,8 @@ except ImportError:
     raise AnsibleError('This script requires python-requests')
 import sys
 
-class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     NAME = 'now'
 
