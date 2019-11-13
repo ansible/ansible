@@ -1,11 +1,19 @@
 
 
+If you use the ``ansible-galaxy`` command, you need to first configure the server lists that command communicates with. You can configure this as follows:
 
-By default running ``ansible-galaxy`` will use the :ref:`galaxy_server` config value or the ``--server`` command line
-argument when it performs an action against a Galaxy server. The ``ansible-galaxy collection install`` supports
-installing collections from multiple servers as defined in the :ref:`ansible_configuration_settings_locations` file
-using the :ref:`galaxy_server_list` configuration option. To define multiple Galaxy servers you have to create the
-following entries like so:
+* Set the server list in the :ref:`galaxy_server_list` configuration option in :ref:`ansible_configuration_settings_locations` file.
+* Use the ``--server`` command line argument to limit to an individual server.
+
+To configure a Galaxy server list:
+
+#. Add the ``server_list``  option under the ``[galaxy]`` section to one or more server names.
+#. Create a new section for each server name.
+#. Set the ``url`` option for each server name.
+#. Set the ``auth_url`` option for each server name.
+#. Set the authentication for each server name. Use either the ``token`` option or the ``username`` and ``password`` options.
+
+The following example shows how to configure multiple servers:
 
 .. code-block:: ini
 
@@ -32,14 +40,13 @@ following entries like so:
 
 .. note::
     You can use the ``--server`` command line argument to select an explicit Galaxy server in the ``server_list`` and
-    the value of this arg should match the name of the server. If the value of ``--server`` is not a pre-defined server
-    in ``ansible.cfg`` then the value specified will be the URL used to access that server and all pre-defined servers
-    are ignored. Also the ``--api-key`` argument is not applied to any of the pre-defined servers, it is only applied
+    the value of this argument should match the name of the server. To use a server not in the server list, set the value to the URL to access that server (all servers in the server list will be ignored). Also the ``--api-key`` argument is not applied to any of the predefined servers. It is only applied
     if no server list is defined or a URL was specified by ``--server``.
 
+**Galaxy server list configuration options**
 
 The :ref:`galaxy_server_list` option is a list of server identifiers in a prioritized order. When searching for a
-collection, the install process will search in that order, e.g. ``my_org_hub`` first, then ``release_galaxy``, and
+collection, the install process will search in that order, e.g. ``automation_hub`` first, then ``my_org_hub``, ``release_galaxy``, and
 finally ``test_galaxy`` until the collection is found. The actual Galaxy instance is then defined under the section
 ``[galaxy_server.{{ id }}]`` where ``{{ id }}`` is the server identifier defined in the list. This section can then
 define the following keys:

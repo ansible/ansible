@@ -276,6 +276,8 @@ You can publish collections to Galaxy using the ``ansible-galaxy collection publ
 Upload using ansible-galaxy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+See :ref:`Configuring the ansible-galaxy client <collections_installing>` to set up your Galaxy server list before trying to publish a collection to Galaxy.
+
 To upload the collection artifact with the ``ansible-galaxy`` command:
 
 .. code-block:: bash
