@@ -171,31 +171,38 @@ def test_has_dict_changed(docker_swarm_service):
 def test_has_list_changed(docker_swarm_service):
 
     # List comparisons without dictionaries
-    assert not docker_swarm_service.has_list_changed(None , None)
-    assert not docker_swarm_service.has_list_changed(None , [])
-    assert not docker_swarm_service.has_list_changed(None , [1,2])
-    assert not docker_swarm_service.has_list_changed([]   , None)
-    assert not docker_swarm_service.has_list_changed([]   , [])
-    assert     docker_swarm_service.has_list_changed([]   , [1,2])
-    assert     docker_swarm_service.has_list_changed([1,2], None)
-    assert     docker_swarm_service.has_list_changed([1,2], [])
-    assert     docker_swarm_service.has_list_changed([1,2,3], [1,2])
-    assert     docker_swarm_service.has_list_changed([1,2]  , [1,2,3])
+    # I could improve the indenting, but pycodestyle wants this instead
+    assert not docker_swarm_service.has_list_changed(None, None)
+    assert not docker_swarm_service.has_list_changed(None, [])
+    assert not docker_swarm_service.has_list_changed(None, [1, 2])
+
+    assert not docker_swarm_service.has_list_changed([], None)
+    assert not docker_swarm_service.has_list_changed([], [])
+    assert docker_swarm_service.has_list_changed([], [1, 2])
+
+    assert docker_swarm_service.has_list_changed([1, 2], None)
+    assert docker_swarm_service.has_list_changed([1, 2], [])
+
+    assert docker_swarm_service.has_list_changed([1, 2, 3], [1, 2])
+    assert docker_swarm_service.has_list_changed([1, 2], [1, 2, 3])
 
     # Check list sorting
-    assert not docker_swarm_service.has_list_changed([1,2], [2,1])
-    assert     docker_swarm_service.has_list_changed([1,2], [2,1],
-                                                            sort_lists=False)
-
-    # Check type matching
-    assert docker_swarm_service.has_list_changed([None, 1], [2,1])
-    assert docker_swarm_service.has_list_changed([2, 1], [None,1])
+    assert not docker_swarm_service.has_list_changed([1, 2], [2, 1])
     assert docker_swarm_service.has_list_changed(
-        "command --with args",
-        ['command','--with','args']
+        [1, 2],
+        [2, 1],
+        sort_lists=False
     )
 
-    ### List comparisons with dictionaries ###
+    # Check type matching
+    assert docker_swarm_service.has_list_changed([None, 1], [2, 1])
+    assert docker_swarm_service.has_list_changed([2, 1], [None, 1])
+    assert docker_swarm_service.has_list_changed(
+        "command --with args",
+        ['command', '--with', 'args']
+    )
+
+    # List comparisons with dictionaries
     assert not docker_swarm_service.has_list_changed(
         [{'a': 1}],
         [{'a': 1}],
