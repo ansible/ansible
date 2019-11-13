@@ -1,4 +1,21 @@
 ---
+
+- name: Clean up the firewall rules
+  vmware_host_firewall_manager:
+    cluster_name: '{{ ccr1 }}'
+    rules:
+        - name: vvold
+          enabled: False
+        - name: CIMHttpServer
+          enabled: True
+          allowed_hosts:
+            all_ip: True
+        - name: NFC
+          enabled: True
+          allowed_hosts:
+            all_ip: True
+  ignore_errors: yes
+
 - name: Remove the VM prepared by prepare_vmware_tests
   vmware_guest:
     hostname: "{{ vcenter_hostname }}"
