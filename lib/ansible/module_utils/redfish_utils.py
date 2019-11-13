@@ -991,7 +991,7 @@ class RedfishUtils(object):
             return {'ret': True, 'changed': False}
 
         payload = {'UserName': ''}
-        if 'Enabled' in data:
+        if data.get('Enabled', False):
             payload['Enabled'] = False
         response = self.patch_request(self.root_uri + uri, payload)
         if response['ret'] is False:
