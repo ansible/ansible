@@ -100,6 +100,27 @@ options:
               Note that the key I(resource_group) is optional and if omitted, all images in the subscription will be searched for by I(name).
             - Custom image support was added in Ansible 2.5.
         required: true
+    plan:
+        description:
+            - Third-party billing plan for the VM.
+        version_added: "2.10"
+        type: dict
+        suboptions:
+            name:
+                description:
+                    - Billing plan name.
+                required: true
+            product:
+                description:
+                    - Product name.
+                required: true
+            publisher:
+                description:
+                    - Publisher offering the plan.
+                required: true
+            promotion_code:
+                description:
+                    - Optional promotion code.
     os_disk_caching:
         description:
             - Type of OS disk caching.
@@ -437,6 +458,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             ssh_password_enabled=dict(type='bool', default=True),
             ssh_public_keys=dict(type='list'),
             image=dict(type='raw'),
+            plan=dict(type='dict'),
             os_disk_caching=dict(type='str', aliases=['disk_caching'], choices=['ReadOnly', 'ReadWrite'],
                                  default='ReadOnly'),
             os_type=dict(type='str', choices=['Linux', 'Windows'], default='Linux'),
@@ -470,6 +492,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.ssh_password_enabled = None
         self.ssh_public_keys = None
         self.image = None
+        self.plan = None
         self.os_disk_caching = None
         self.managed_disk_type = None
         self.data_disks = None
@@ -534,6 +557,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         virtual_network = None
         subnet = None
         image_reference = None
+        plan = None
         custom_image = False
         load_balancer_backend_address_pools = None
         load_balancer_inbound_nat_pools = None
@@ -600,6 +624,13 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 image_reference = self.get_custom_image_reference(self.image)
             elif self.image:
                 self.fail("parameter error: expecting image to be a string or dict not {0}".format(type(self.image).__name__))
+
+            if self.plan:
+                if not self.plan.get('name') or not self.plan.get('product') or not self.plan.get('publisher'):
+                    self.fail("parameter error: plan must include name, product, and publisher")
+                plan = self.compute_models.Plan(name=self.plan.get('name'), product=self.plan.get('product'),
+                                                publisher=self.plan.get('publisher'),
+                                                promotion_code=self.plan.get('promotion_code'))
 
             disable_ssh_password = not self.ssh_password_enabled
 
@@ -779,6 +810,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             capacity=self.capacity,
                             tier=self.tier,
                         ),
+                        plan=plan,
                         virtual_machine_profile=self.compute_models.VirtualMachineScaleSetVMProfile(
                             os_profile=os_profile,
                             storage_profile=self.compute_models.VirtualMachineScaleSetStorageProfile(
