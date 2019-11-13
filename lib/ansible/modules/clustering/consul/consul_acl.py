@@ -187,7 +187,10 @@ from collections import defaultdict
 from ansible.module_utils.basic import to_text, AnsibleModule
 
 
-RULE_SCOPES = ["agent", "event", "key", "keyring", "node", "operator", "query", "service", "session"]
+RULE_SCOPES = [
+    "agent", "agent_prefix", "event", "event_prefix", "key", "key_prefix", "keyring", "node", "node_prefix", "operator", "query", "query_prefix",
+    "service", "service_prefix", "session", "session_prefix",
+]
 
 MANAGEMENT_PARAMETER_NAME = "mgmt_token"
 HOST_PARAMETER_NAME = "host"
