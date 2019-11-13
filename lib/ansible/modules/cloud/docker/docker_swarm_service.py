@@ -1244,10 +1244,30 @@ def has_dict_changed(new_dict, old_dict):
     return False
 
 
-def has_list_changed(new_list, old_list, sort_lists=True):
+def has_list_changed(new_list, old_list, sort_lists=True, sort_key=None):
     """
     Check two lists have differences. Sort lists by default.
     """
+
+    def sort_list(unsorted_list):
+        """
+        Sort a given list.
+        The list may contain dictionaries, so use the sort key to handle them.
+        """
+
+        try:
+            return sorted(unsorted_list)
+        except TypeError:
+            if isinstance(unsorted_list[0], dict):
+                if not sort_key:
+                    raise Exception(
+                        "A sort key was not specified when sorting list"
+                    )
+                else:
+                    return sorted(unsorted_list, key=lambda k: k[sort_key])
+            else:
+                return unsorted_list
+
     if new_list is None:
         return False
     old_list = old_list or []
@@ -1255,7 +1275,7 @@ def has_list_changed(new_list, old_list, sort_lists=True):
         return True
 
     if sort_lists:
-        zip_data = zip(sorted(new_list), sorted(old_list))
+        zip_data = zip(sort_list(new_list), sort_list(old_list))
     else:
         zip_data = zip(new_list, old_list)
     for new_item, old_item in zip_data:
@@ -1773,11 +1793,11 @@ class DockerService(DockerBaseClass):
         if self.mode != os.mode:
             needs_rebuild = True
             differences.add('mode', parameter=self.mode, active=os.mode)
-        if has_list_changed(self.mounts, os.mounts):
+        if has_list_changed(self.mounts, os.mounts, sort_key='target'):
             differences.add('mounts', parameter=self.mounts, active=os.mounts)
-        if has_list_changed(self.configs, os.configs):
+        if has_list_changed(self.configs, os.configs, sort_key='config_name'):
             differences.add('configs', parameter=self.configs, active=os.configs)
-        if has_list_changed(self.secrets, os.secrets):
+        if has_list_changed(self.secrets, os.secrets, sort_key='secret_name'):
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
         if has_list_changed(self.networks, os.networks):
             differences.add('networks', parameter=self.networks, active=os.networks)
@@ -1790,7 +1810,7 @@ class DockerService(DockerBaseClass):
             differences.add('args', parameter=self.args, active=os.args)
         if has_list_changed(self.constraints, os.constraints):
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
-        if has_list_changed(self.placement_preferences, os.placement_preferences):
+        if has_list_changed(self.placement_preferences, os.placement_preferences, sort_key='spread'):
             differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
         if has_list_changed(self.groups, os.groups):
             differences.add('groups', parameter=self.groups, active=os.groups)

@@ -169,60 +169,69 @@ def test_has_dict_changed(docker_swarm_service):
 
 
 def test_has_list_changed(docker_swarm_service):
+
+    # List comparisons without dictionaries
+    assert not docker_swarm_service.has_list_changed(None , None)
+    assert not docker_swarm_service.has_list_changed(None , [])
+    assert not docker_swarm_service.has_list_changed(None , [1,2])
+    assert not docker_swarm_service.has_list_changed([]   , None)
+    assert not docker_swarm_service.has_list_changed([]   , [])
+    assert     docker_swarm_service.has_list_changed([]   , [1,2])
+    assert     docker_swarm_service.has_list_changed([1,2], None)
+    assert     docker_swarm_service.has_list_changed([1,2], [])
+    assert     docker_swarm_service.has_list_changed([1,2,3], [1,2])
+    assert     docker_swarm_service.has_list_changed([1,2]  , [1,2,3])
+
+    # Check list sorting
+    assert not docker_swarm_service.has_list_changed([1,2], [2,1])
+    assert     docker_swarm_service.has_list_changed([1,2], [2,1],
+                                                            sort_lists=False)
+
+    # Check type matching
+    assert docker_swarm_service.has_list_changed([None, 1], [2,1])
+    assert docker_swarm_service.has_list_changed([2, 1], [None,1])
     assert docker_swarm_service.has_list_changed(
-        [
-            {"a": 1},
-            {"b": 1}
-        ],
-        [
-            {"a": 1}
-        ]
+        "command --with args",
+        ['command','--with','args']
+    )
+
+    ### List comparisons with dictionaries ###
+    assert not docker_swarm_service.has_list_changed(
+        [{'a': 1}],
+        [{'a': 1}],
+        sort_key='a'
+    )
+
+    assert not docker_swarm_service.has_list_changed(
+        [{'a': 1}, {'a': 2}],
+        [{'a': 1}, {'a': 2}],
+        sort_key='a'
+    )
+
+    # List sort checking with sort key
+    assert not docker_swarm_service.has_list_changed(
+        [{'a': 1}, {'a': 2}],
+        [{'a': 2}, {'a': 1}],
+        sort_key='a'
     )
     assert docker_swarm_service.has_list_changed(
-        [
-            {"a": 1},
-        ],
-        [
-            {"a": 1},
-            {"b": 1},
-        ]
+        [{'a': 1}, {'a': 2}],
+        [{'a': 2}, {'a': 1}],
+        sort_lists=False
     )
-    assert not docker_swarm_service.has_list_changed(
-        [
-            {"a": 1},
-            {"b": 1},
-        ],
-        [
-            {"a": 1},
-            {"b": 1}
-        ]
-    )
-    assert not docker_swarm_service.has_list_changed(
-        None,
-        [
-            {"b": 1},
-            {"a": 1}
-        ]
+
+    assert docker_swarm_service.has_list_changed(
+        [{'a': 1}, {'a': 2}, {'a': 3}],
+        [{'a': 2}, {'a': 1}],
+        sort_key='a'
     )
     assert docker_swarm_service.has_list_changed(
-        [],
-        [
-            {"b": 1},
-            {"a": 1}
-        ]
+        [{'a': 1}, {'a': 2}],
+        [{'a': 1}, {'a': 2}, {'a': 3}],
+        sort_lists=False
     )
-    assert not docker_swarm_service.has_list_changed(
-        None,
-        None
-    )
-    assert not docker_swarm_service.has_list_changed(
-        [],
-        None
-    )
-    assert not docker_swarm_service.has_list_changed(
-        None,
-        []
-    )
+
+    # Additional dictionary elements
     assert not docker_swarm_service.has_list_changed(
         [
             {"src": 1, "dst": 2},
@@ -231,7 +240,8 @@ def test_has_list_changed(docker_swarm_service):
         [
             {"src": 1, "dst": 2, "protocol": "tcp"},
             {"src": 1, "dst": 2, "protocol": "udp"},
-        ]
+        ],
+        sort_key='dst'
     )
     assert not docker_swarm_service.has_list_changed(
         [
@@ -241,7 +251,8 @@ def test_has_list_changed(docker_swarm_service):
         [
             {"src": 1, "dst": 2, "protocol": "udp"},
             {"src": 1, "dst": 3, "protocol": "tcp"},
-        ]
+        ],
+        sort_key='dst'
     )
     assert docker_swarm_service.has_list_changed(
         [
@@ -253,7 +264,8 @@ def test_has_list_changed(docker_swarm_service):
             {"src": 1, "dst": 3, "protocol": "udp"},
             {"src": 1, "dst": 2, "protocol": "tcp"},
             {"src": 3, "dst": 4, "protocol": "tcp"},
-        ]
+        ],
+        sort_key='dst'
     )
     assert docker_swarm_service.has_list_changed(
         [
@@ -263,7 +275,8 @@ def test_has_list_changed(docker_swarm_service):
         [
             {"src": 1, "dst": 2, "protocol": "tcp"},
             {"src": 1, "dst": 2, "protocol": "udp"},
-        ]
+        ],
+        sort_key='dst'
     )
     assert docker_swarm_service.has_list_changed(
         [
@@ -273,11 +286,13 @@ def test_has_list_changed(docker_swarm_service):
         [
             {"src": 1, "dst": 2, "protocol": "udp"},
             {"src": 1, "dst": 2, "protocol": "tcp"},
-        ]
+        ],
+        sort_key='dst'
     )
     assert not docker_swarm_service.has_list_changed(
         [{'id': '123', 'aliases': []}],
-        [{'id': '123'}]
+        [{'id': '123'}],
+        sort_key='id'
     )
 
 
