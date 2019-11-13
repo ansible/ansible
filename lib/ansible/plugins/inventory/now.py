@@ -65,8 +65,8 @@ DOCUMENTATION = r'''
 EXAMPLES = r'''
 plugin: now
 instance: demo.service-now.com
-username=admin
-password=password
+username: admin
+password: password
 '''
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, to_safe_group_name, Cacheable
@@ -79,6 +79,7 @@ import sys
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
+
     NAME = 'now'
 
     def invoke(self, verb, path, data):
@@ -90,7 +91,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         }
         proxy = self.get_option('proxy')
 
-        #build url
+        # build url
         self.url = "https://%s/%s" % (self.get_option('instance'), path)
         url = self.url
         results = []
@@ -108,7 +109,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             session = requests.Session()
 
             while url:
-                #perform REST operation, accumulating page results
+                # perform REST operation, accumulating page results
                 response = session.get(url,
                                        auth=auth,
                                        headers=headers,
