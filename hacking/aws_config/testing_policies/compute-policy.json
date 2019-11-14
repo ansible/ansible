@@ -250,12 +250,14 @@
             "Sid": "AllowLightsail",
             "Effect": "Allow",
             "Action": [
-                "lightsail:DeleteInstance",
-                "lightsail:StartInstance",
-                "lightsail:StopInstance",
-                "lightsail:RebootInstance",
-                "lightsail:CreateInstances",
-                "lightsail:GetInstance"
+              "lightsail:CreateInstances",
+              "lightsail:CreateKeyPair",
+              "lightsail:DeleteInstance",
+              "lightsail:GetInstance",
+              "lightsail:GetInstances",
+              "lightsail:RebootInstance",
+              "lightsail:StartInstance",
+              "lightsail:StopInstance"
             ],
             "Resource": "arn:aws:lightsail:*:*:*"
         }
