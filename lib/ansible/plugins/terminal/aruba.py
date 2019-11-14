@@ -41,6 +41,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"[pP]assword:$"),
         re.compile(br"(?<=\s)[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\s*#\s*$"),
         re.compile(br"[\r\n]?[\w\+\-\.:\/\[\]]+(?:\([^\)]+\)){0,3}(?:[>#]) ?$"),
+        re.compile(br"[\r\n]?[\w]*(.+)?#(?:\s*)$")
     ]
 
     terminal_stderr_re = [
