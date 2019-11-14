@@ -120,12 +120,7 @@ def grafana_user_id_by_name(graf: GrafanaFace, name: str) -> int:
   return int(user[0]['id'])
 
 
-def grafana_add_permission(graf: GrafanaFace, module: AnsibleModule, data):
-  perms, did, _ = grafana_get_permission(graf, data['dashboard'])
-  found = grafana_search_permission(perms, data['type'], data['target_name'])
-
-  mapPermNameToID = {'view': 1, 'edit': 2, 'admin': 4}
-
+def grafana_prepare_permission(perms):
   newPerms = {"items": []}
   for perm in perms:
     for i in ['dashboardId', 'created', 'updated', 'userAvatarUrl', 'teamAvatarUrl', 'permissionName', 'uid', 'title', 'slug', 'isFolder', 'url', 'inherited']:
@@ -136,6 +131,17 @@ def grafana_add_permission(graf: GrafanaFace, module: AnsibleModule, data):
         if perm[i] == '' or perm[i] == "0" or perm[i] == 0:
           del(perm[i])
     newPerms['items'].append(perm)
+
+  return newPerms
+
+
+def grafana_add_permission(graf: GrafanaFace, module: AnsibleModule, data):
+  perms, did, _ = grafana_get_permission(graf, data['dashboard'])
+  found = grafana_search_permission(perms, data['type'], data['target_name'])
+
+  mapPermNameToID = {'view': 1, 'edit': 2, 'admin': 4}
+
+  newPerms = grafana_prepare_permission(perms)
 
   if not found:
     newPerm = {'permission': mapPermNameToID[data['permission']]}
@@ -149,7 +155,7 @@ def grafana_add_permission(graf: GrafanaFace, module: AnsibleModule, data):
     newPerms['items'].append(newPerm)
 
     try:
-      return graf.dashboard.update_dashboard_permissions(did, newPerms)
+      return {'changed': True, 'msg': graf.dashboard.update_dashboard_permissions(did, newPerms)}
     except Exception as e:
       raise Exception("%s %s" % (e, newPerms))
 
@@ -157,7 +163,26 @@ def grafana_add_permission(graf: GrafanaFace, module: AnsibleModule, data):
 
 
 def grafana_delete_permission(graf: GrafanaFace, module: AnsibleModule, data):
-  pass
+  perms, did, _ = grafana_get_permission(graf, data['dashboard'])
+  found = grafana_search_permission(perms, data['type'], data['target_name'])
+  newPerms = grafana_prepare_permission(perms)
+  if found:
+    index = 0
+    for perm in newPerms['items']:
+      if data['type'] == 'team' and 'teamId' in perm and perm['teamId'] == grafana_team_id_by_name(graf, data['target_name']):
+        del(newPerms['items'][index])
+      elif data['type'] == 'user' and 'userId' in perm and perm['userId'] == grafana_user_id_by_name(graf, data['target_name']):
+        del(newPerms['items'][index])
+      elif data['type'] == 'role' and 'role' in perm and perm['role'] == str(data['target_name']).capitalize():
+        del(newPerms['items'][index])
+      index += 1
+
+    try:
+      return {'changed': True, 'msg': graf.dashboard.update_dashboard_permissions(did, newPerms)}
+    except Exception as e:
+      raise Exception("%s %s" % (e, newPerms))
+
+  return {'changed': False}
 
 
 def main():
@@ -208,7 +233,7 @@ def main():
     if module.params['state'] == 'present':
       result = grafana_add_permission(graf, module, module.params)
     else:
-      result = grafana_delete_permission(graf, module, module.param)
+      result = grafana_delete_permission(graf, module, module.params)
   except Exception as e:
     module.fail_json(
         failed=True,
