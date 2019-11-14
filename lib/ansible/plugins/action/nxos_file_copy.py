@@ -218,6 +218,7 @@ class ActionModule(ActionBase):
             self.results['changed'] = True
             file_exists = False
         else:
+            self.results['changed'] = False
             self.results['transfer_status'] = 'No Transfer: File already copied to remote device.'
             file_exists = True
 
@@ -447,6 +448,7 @@ class ActionModule(ActionBase):
 
         local_file = local_file or self.playvals['remote_file'].split('/')[-1]
 
+        self.results['changed'] = False
         if not self.play_context.check_mode:
             self.copy_file_from_remote(local_file, local_file_dir, file_system)
 
