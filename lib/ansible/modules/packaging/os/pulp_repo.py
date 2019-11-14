@@ -52,6 +52,7 @@ options:
     description:
       - CA certificate string used to validate the feed source SSL certificate.
         This can be the file content or the path to the file.
+        The ca_cert alias will be removed in Ansible 2.14.
     type: str
     aliases: [ importer_ssl_ca_cert, ca_cert ]
   feed_client_cert:
@@ -569,6 +570,8 @@ def main():
     generate_sqlite = module.params['generate_sqlite']
     importer_ssl_ca_cert = module.params['feed_ca_cert']
     importer_ssl_client_cert = module.params['feed_client_cert']
+    if module.params['ca_cert']:
+               module.deprecate("use feed_ca_cert, ca_cert alias will be removed in 2.14", version="2.14")
     if importer_ssl_client_cert is None and module.params['client_cert'] is not None:
         importer_ssl_client_cert = module.params['client_cert']
         module.deprecate(("To specify client certificates to be used with the repo to sync, and not for communication with pulp.io, use the new options "
