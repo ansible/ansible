@@ -129,13 +129,18 @@ $protocol = Get-AnsibleParam -obj $params -name "protocol" -type "str"
 $interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "list"
 $edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -validateset "no","yes","deferapp","deferuser"
 $security = Get-AnsibleParam -obj $params -name "security" -type "str" -validateset "notrequired","authnoencap","authenticate","authdynenc","authenc"
-$icmp_type_code = Get-AnsibleParam -obj $params -name "icmptypecode" -type "str"
+$icmp_type_code = Get-AnsibleParam -obj $params -name "icmp_type_code" -type "list"
 
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 
 if ($diff_support) {
     $result.diff = @{}
     $result.diff.prepared = ""
+}
+
+if ($null -ne $icmp_type_code) {
+    # COM representation is just "<type>:<code>,<type2>:<code>" so we just join our list
+    $icmp_type_code = $icmp_type_code -join ","
 }
 
 try {

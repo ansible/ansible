@@ -465,7 +465,7 @@
     action: allow
     direction: in
     protocol: icmpv4
-    icmptypecode: '8:*'
+    icmp_type_code: '8:*'
   register: add_firewall_rule_with_icmptypecode
 
 - name: Check that creating same firewall rule with expanded vars identified
