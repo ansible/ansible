@@ -711,7 +711,13 @@ def main():
         except TimeoutError:
             module.fail_json(msg='Timeout waiting for changes to replicate')
 
-    module.exit_json(changed=True)
+    module.exit_json(
+        changed=True,
+        diff=dict(
+            before=record,
+            after=to_dict(wanted_rset, zone_in, zone_id) if command != 'delete' else {},
+        ),
+    )
 
 
 if __name__ == '__main__':
