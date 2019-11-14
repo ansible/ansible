@@ -23,8 +23,8 @@
     - name: assert failure
       assert:
         that:
-          - 'result is failed'
-          - 'result.msg.startswith("missing required arguments")'
+          - result is failed
+          - result.msg.startswith("missing required arguments")
 
     # ============================================================
 
@@ -41,7 +41,7 @@
     - name: assert connection failure
       assert:
         that:
-          - 'result is failed'
+          - result is failed
           - '"Unable to locate credentials" in result.msg'
 
     # ============================================================
@@ -54,7 +54,7 @@
     - name: Check no-one is using the Prefix before we start
       assert:
         that:
-          - 'vpc_info.vpcs | length == 0'
+          - vpc_info.vpcs | length == 0
 
     - name: test check mode creating a VPC
       ec2_vpc_net:
@@ -71,8 +71,8 @@
     - name: check for a change
       assert:
         that:
-          - 'result is changed'
-          - 'vpc_info.vpcs | length == 0'
+          - result is changed
+          - vpc_info.vpcs | length == 0
 
     # ============================================================
 
@@ -91,31 +91,31 @@
     - name: assert the VPC was created successfully
       assert:
         that:
-          - 'result is successful'
-          - 'result is changed'
-          - 'vpc_info.vpcs | length == 1'
+          - result is successful
+          - result is changed
+          - vpc_info.vpcs | length == 1
 
     - name: assert the output
       assert:
         that:
           - '"cidr_block" in result.vpc'
-          - 'result.vpc.cidr_block == vpc_cidr'
-          - 'result.vpc.cidr_block_association_set | length == 1'
-          - 'result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")'
-          - 'result.vpc.cidr_block_association_set[0].cidr_block == vpc_cidr'
-          - 'result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"'
+          - result.vpc.cidr_block == vpc_cidr
+          - result.vpc.cidr_block_association_set | length == 1
+          - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
+          - result.vpc.cidr_block_association_set[0].cidr_block == vpc_cidr
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
           - '"classic_link_enabled" in result.vpc'
-          - 'result.vpc.dhcp_options_id.startswith("dopt-")'
-          - 'result.vpc.id.startswith("vpc-")'
+          - result.vpc.dhcp_options_id.startswith("dopt-")
+          - result.vpc.id.startswith("vpc-")
           - '"instance_tenancy" in result.vpc'
-          - 'result.vpc.ipv6_cidr_block_association_set | length == 1'
-          - 'result.vpc.ipv6_cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")'
-          - 'result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block | ipv6'
-          - 'result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"'
+          - result.vpc.ipv6_cidr_block_association_set | length == 1
+          - result.vpc.ipv6_cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
+          - result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block | ipv6
+          - result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"
           - '"is_default" in result.vpc'
           - '"state" in result.vpc'
-          - 'result.vpc.tags.keys() | length == 1'
-          - 'result.vpc.tags.Name == resource_prefix'
+          - result.vpc.tags.keys() | length == 1
+          - result.vpc.tags.Name == resource_prefix
 
     - name: set the first VPC's details as facts for comparison and cleanup
       set_fact:
@@ -139,27 +139,27 @@
     - name: assert nothing changed
       assert:
         that:
-          - 'result is successful'
-          - 'result is not changed'
-          - 'vpc_info.vpcs | length == 1'
+          - result is successful
+          - result is not changed
+          - vpc_info.vpcs | length == 1
           - '"cidr_block" in result.vpc'
-          - 'result.vpc.cidr_block == vpc_cidr'
-          - 'result.vpc.cidr_block_association_set | length == 1'
-          - 'result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")'
-          - 'result.vpc.cidr_block_association_set[0].cidr_block == vpc_cidr'
-          - 'result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"'
+          - result.vpc.cidr_block == vpc_cidr
+          - result.vpc.cidr_block_association_set | length == 1
+          - result.vpc.cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
+          - result.vpc.cidr_block_association_set[0].cidr_block == vpc_cidr
+          - result.vpc.cidr_block_association_set[0].cidr_block_state.state == "associated"
           - '"classic_link_enabled" in result.vpc'
-          - 'result.vpc.dhcp_options_id.startswith("dopt-")'
-          - 'result.vpc.id.startswith("vpc-")'
+          - result.vpc.dhcp_options_id.startswith("dopt-")
+          - result.vpc.id.startswith("vpc-")
           - '"instance_tenancy" in result.vpc'
-          - 'result.vpc.ipv6_cidr_block_association_set | length == 1'
-          - 'result.vpc.ipv6_cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")'
-          - 'result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block | ipv6'
-          - 'result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"'
+          - result.vpc.ipv6_cidr_block_association_set | length == 1
+          - result.vpc.ipv6_cidr_block_association_set[0].association_id.startswith("vpc-cidr-assoc-")
+          - result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block | ipv6
+          - result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"
           - '"is_default" in result.vpc'
           - '"state" in result.vpc'
-          - 'result.vpc.tags.keys() | length == 1'
-          - 'result.vpc.tags.Name == resource_prefix'
+          - result.vpc.tags.keys() | length == 1
+          - result.vpc.tags.Name == resource_prefix
 
     # ============================================================
 
@@ -170,7 +170,7 @@
     - name: Test that our new VPC shows up in the results
       assert:
         that:
-          - 'vpc_1 in ( vpc_info | json_query("vpcs[].vpc_id") | list )'
+          - vpc_1 in ( vpc_info | json_query("vpcs[].vpc_id") | list )
 
     - name: VPC info (Simple tag filter)
       ec2_vpc_net_info:
@@ -181,26 +181,26 @@
     - name: Test vpc_info results
       assert:
         that:
-          - 'vpc_info.vpcs[0].cidr_block == vpc_cidr'
-          - 'vpc_info.vpcs[0].cidr_block_association_set | length == 1'
-          - 'vpc_info.vpcs[0].cidr_block_association_set[0].association_id == result.vpc.cidr_block_association_set[0].association_id'
-          - 'vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block == result.vpc.cidr_block_association_set[0].cidr_block'
-          - 'vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"'
+          - vpc_info.vpcs[0].cidr_block == vpc_cidr
+          - vpc_info.vpcs[0].cidr_block_association_set | length == 1
+          - vpc_info.vpcs[0].cidr_block_association_set[0].association_id == result.vpc.cidr_block_association_set[0].association_id
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block == result.vpc.cidr_block_association_set[0].cidr_block
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
           - '"classic_link_dns_supported" in vpc_info.vpcs[0]'
           - '"classic_link_enabled" in vpc_info.vpcs[0]'
-          - 'vpc_info.vpcs[0].dhcp_options_id == result.vpc.dhcp_options_id'
-          - '( vpc_info.vpcs[0].enable_dns_hostnames | bool ) == True'
-          - '( vpc_info.vpcs[0].enable_dns_support | bool ) == True'
-          - 'vpc_info.vpcs[0].id == result.vpc.id'
+          - vpc_info.vpcs[0].dhcp_options_id == result.vpc.dhcp_options_id
+          - ( vpc_info.vpcs[0].enable_dns_hostnames | bool ) == True
+          - ( vpc_info.vpcs[0].enable_dns_support | bool ) == True
+          - vpc_info.vpcs[0].id == result.vpc.id
           - '"instance_tenancy" in vpc_info.vpcs[0]'
-          - 'vpc_info.vpcs[0].ipv6_cidr_block_association_set | length == 1'
-          - 'vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].association_id == result.vpc.ipv6_cidr_block_association_set[0].association_id'
-          - 'vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block == result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block'
-          - 'vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"'
+          - vpc_info.vpcs[0].ipv6_cidr_block_association_set | length == 1
+          - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].association_id == result.vpc.ipv6_cidr_block_association_set[0].association_id
+          - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block == result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block
+          - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"
           - '"is_default" in vpc_info.vpcs[0]'
-          - 'vpc_info.vpcs[0].owner_id == caller_facts.account'
+          - vpc_info.vpcs[0].owner_id == caller_facts.account
           - '"state" in vpc_info.vpcs[0]'
-          - 'vpc_info.vpcs[0].vpc_id == result.vpc.id'
+          - vpc_info.vpcs[0].vpc_id == result.vpc.id
 
     # ============================================================
 
@@ -220,8 +220,8 @@
       assert:
         that:
           - '"Only one IPv6 CIDR is permitted per VPC, {{ result.vpc.id }} already has CIDR {{ vpc_1_ipv6_cidr }}" in result.warnings'
-          - 'result is not changed'
-          - 'vpc_info.vpcs | length == 1'
+          - result is not changed
+          - vpc_info.vpcs | length == 1
 
     # ============================================================
 
@@ -242,11 +242,11 @@
     - name: assert a change would be made
       assert:
         that:
-          - 'result is changed'
+          - result is changed
     - name: assert a change was not actually made
       assert:
         that:
-          - 'vpc_info.vpcs | length == 1'
+          - vpc_info.vpcs | length == 1
 
     # ============================================================
 
@@ -267,11 +267,11 @@
     - name: assert a new VPC was created
       assert:
         that:
-          - 'result is successful'
-          - 'result is changed'
-          - 'result.vpc.instance_tenancy == "dedicated"'
-          - 'result.vpc.id != vpc_1'
-          - 'vpc_info.vpcs | length == 2'
+          - result is successful
+          - result is changed
+          - result.vpc.instance_tenancy == "dedicated"
+          - result.vpc.id != vpc_1
+          - vpc_info.vpcs | length == 2
 
     - name: set the second VPC's details as facts for comparison and cleanup
       set_fact:
@@ -289,26 +289,26 @@
     - name: Test vpc_info results
       assert:
         that:
-          - 'vpc_info.vpcs[0].cidr_block == vpc_cidr'
-          - 'vpc_info.vpcs[0].cidr_block_association_set | length == 1'
-          - 'vpc_info.vpcs[0].cidr_block_association_set[0].association_id == result.vpc.cidr_block_association_set[0].association_id'
-          - 'vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block == result.vpc.cidr_block_association_set[0].cidr_block'
-          - 'vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"'
+          - vpc_info.vpcs[0].cidr_block == vpc_cidr
+          - vpc_info.vpcs[0].cidr_block_association_set | length == 1
+          - vpc_info.vpcs[0].cidr_block_association_set[0].association_id == result.vpc.cidr_block_association_set[0].association_id
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block == result.vpc.cidr_block_association_set[0].cidr_block
+          - vpc_info.vpcs[0].cidr_block_association_set[0].cidr_block_state.state == "associated"
           - '"classic_link_dns_supported" in vpc_info.vpcs[0]'
           - '"classic_link_enabled" in vpc_info.vpcs[0]'
-          - 'vpc_info.vpcs[0].dhcp_options_id == result.vpc.dhcp_options_id'
-          - '( vpc_info.vpcs[0].enable_dns_hostnames | bool ) == True'
-          - '( vpc_info.vpcs[0].enable_dns_support | bool ) == True'
-          - 'vpc_info.vpcs[0].id == result.vpc.id'
+          - vpc_info.vpcs[0].dhcp_options_id == result.vpc.dhcp_options_id
+          - ( vpc_info.vpcs[0].enable_dns_hostnames | bool ) == True
+          - ( vpc_info.vpcs[0].enable_dns_support | bool ) == True
+          - vpc_info.vpcs[0].id == vpc_2
           - '"instance_tenancy" in vpc_info.vpcs[0]'
-          - 'vpc_info.vpcs[0].ipv6_cidr_block_association_set | length == 1'
-          - 'vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].association_id == result.vpc.ipv6_cidr_block_association_set[0].association_id'
-          - 'vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block == result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block'
-          - 'vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"'
+          - vpc_info.vpcs[0].ipv6_cidr_block_association_set | length == 1
+          - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].association_id == result.vpc.ipv6_cidr_block_association_set[0].association_id
+          - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block == result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block
+          - vpc_info.vpcs[0].ipv6_cidr_block_association_set[0].ipv6_cidr_block_state.state == "associated"
           - '"is_default" in vpc_info.vpcs[0]'
-          - 'vpc_info.vpcs[0].owner_id == caller_facts.account'
+          - vpc_info.vpcs[0].owner_id == caller_facts.account
           - '"state" in vpc_info.vpcs[0]'
-          - 'vpc_info.vpcs[0].vpc_id == result.vpc.id'
+          - vpc_info.vpcs[0].vpc_id == vpc_2
 
     # ============================================================
 
@@ -332,9 +332,9 @@
     - name: assert failure
       assert:
         that:
-          - 'new_result is failed'
+          - new_result is failed
           - '"If you would like to create the VPC anyway please pass True to the multi_ok param" in new_result.msg'
-          - 'vpc_info.vpcs | length == 2'
+          - vpc_info.vpcs | length == 2
 
     # ============================================================
 
@@ -368,9 +368,9 @@
     - name: assert success
       assert:
         that:
-          - 'result is changed'
-          - 'not result.vpc'
-          - 'vpc_info.vpcs | length == 1'
+          - result is changed
+          - not result.vpc
+          - vpc_info.vpcs | length == 1
 
     # ============================================================
 
@@ -384,8 +384,8 @@
     - name: assert no changes were made
       assert:
         that:
-          - 'result is not changed'
-          - 'not result.vpc'
+          - result is not changed
+          - not result.vpc
 
     # ============================================================
 
@@ -400,7 +400,7 @@
     - name: assert the DHCP option set was successfully created
       assert:
         that:
-          - 'new_dhcp is changed'
+          - new_dhcp is changed
 
     - name: modify the DHCP options set for a VPC (check_mode)
       ec2_vpc_net:
@@ -418,9 +418,9 @@
     - name: assert the DHCP option set changed but didn't update
       assert:
         that:
-          - 'result is changed'
-          - 'vpc_info.vpcs | length == 1'
-          - 'vpc_info.vpcs[0].dhcp_options_id == default_dhcp_options_id'
+          - result is changed
+          - vpc_info.vpcs | length == 1
+          - vpc_info.vpcs[0].dhcp_options_id == default_dhcp_options_id
 
     - name: modify the DHCP options set for a VPC
       ec2_vpc_net:
@@ -437,11 +437,11 @@
     - name: assert the DHCP option set changed
       assert:
         that:
-          - 'result is changed'
-          - 'default_dhcp_options_id != result.vpc.dhcp_options_id'
-          - 'result.vpc.dhcp_options_id == new_dhcp.dhcp_options_id'
-          - 'vpc_info.vpcs | length == 1'
-          - 'vpc_info.vpcs[0].dhcp_options_id == new_dhcp.dhcp_options_id'
+          - result is changed
+          - default_dhcp_options_id != result.vpc.dhcp_options_id
+          - result.vpc.dhcp_options_id == new_dhcp.dhcp_options_id
+          - vpc_info.vpcs | length == 1
+          - vpc_info.vpcs[0].dhcp_options_id == new_dhcp.dhcp_options_id
 
     - name: modify the DHCP options set for a VPC (retry)
       ec2_vpc_net:
@@ -458,10 +458,10 @@
     - name: assert the DHCP option set changed
       assert:
         that:
-          - 'result is not changed'
-          - 'result.vpc.dhcp_options_id == new_dhcp.dhcp_options_id'
-          - 'vpc_info.vpcs | length == 1'
-          - 'vpc_info.vpcs[0].dhcp_options_id == new_dhcp.dhcp_options_id'
+          - result is not changed
+          - result.vpc.dhcp_options_id == new_dhcp.dhcp_options_id
+          - vpc_info.vpcs | length == 1
+          - vpc_info.vpcs[0].dhcp_options_id == new_dhcp.dhcp_options_id
 
     # ============================================================
 
@@ -482,11 +482,11 @@
     #- name: assert changed was set but not made
     #  assert:
     #    that:
-    #      - 'result is successful'
-    #      - 'result is changed'
-    #      - 'vpc_info.vpcs | length == 1'
-    #      - 'vpc_info.vpcs[0].enable_dns_hostnames | bool == True'
-    #      - 'vpc_info.vpcs[0].enable_dns_support | bool == True'
+    #      - result is successful
+    #      - result is changed
+    #      - vpc_info.vpcs | length == 1
+    #      - vpc_info.vpcs[0].enable_dns_hostnames | bool == True
+    #      - vpc_info.vpcs[0].enable_dns_support | bool == True
 
     - name: disable dns_hostnames
       ec2_vpc_net:
@@ -503,11 +503,11 @@
     - name: assert a change was made
       assert:
         that:
-          - 'result is successful'
-          - 'result is changed'
-          - 'vpc_info.vpcs | length == 1'
-          - 'vpc_info.vpcs[0].enable_dns_hostnames | bool == False'
-          - 'vpc_info.vpcs[0].enable_dns_support | bool == True'
+          - result is successful
+          - result is changed
+          - vpc_info.vpcs | length == 1
+          - vpc_info.vpcs[0].enable_dns_hostnames | bool == False
+          - vpc_info.vpcs[0].enable_dns_support | bool == True
 
     - name: disable dns_hostnames (retry)
       ec2_vpc_net:
@@ -524,11 +524,11 @@
     - name: assert a change was made
       assert:
         that:
-          - 'result is successful'
-          - 'result is not changed'
-          - 'vpc_info.vpcs | length == 1'
-          - 'vpc_info.vpcs[0].enable_dns_hostnames | bool == False'
-          - 'vpc_info.vpcs[0].enable_dns_support | bool == True'
+          - result is successful
+          - result is not changed
+          - vpc_info.vpcs | length == 1
+          - vpc_info.vpcs[0].enable_dns_hostnames | bool == False
+          - vpc_info.vpcs[0].enable_dns_support | bool == True
 
     # XXX #62677
     #- name: disable dns_support (check mode)
@@ -548,11 +548,11 @@
     #- name: assert changed was set but not made
     #  assert:
     #    that:
-    #      - 'result is successful'
-    #      - 'result is changed'
-    #      - 'vpc_info.vpcs | length == 1'
-    #      - 'vpc_info.vpcs[0].enable_dns_hostnames | bool == False'
-    #      - 'vpc_info.vpcs[0].enable_dns_support | bool == True'
+    #      - result is successful
+    #      - result is changed
+    #      - vpc_info.vpcs | length == 1
+    #      - vpc_info.vpcs[0].enable_dns_hostnames | bool == False
+    #      - vpc_info.vpcs[0].enable_dns_support | bool == True
 
     - name: disable dns_support
       ec2_vpc_net:
@@ -570,11 +570,11 @@
     - name: assert a change was made
       assert:
         that:
-          - 'result is successful'
-          - 'result is changed'
-          - 'vpc_info.vpcs | length == 1'
-          - 'vpc_info.vpcs[0].enable_dns_hostnames | bool == False'
-          - 'vpc_info.vpcs[0].enable_dns_support | bool == False'
+          - result is successful
+          - result is changed
+          - vpc_info.vpcs | length == 1
+          - vpc_info.vpcs[0].enable_dns_hostnames | bool == False
+          - vpc_info.vpcs[0].enable_dns_support | bool == False
 
     - name: disable dns_support (retry)
       ec2_vpc_net:
@@ -592,11 +592,11 @@
     - name: assert a change was not made
       assert:
         that:
-          - 'result is successful'
-          - 'result is not changed'
-          - 'vpc_info.vpcs | length == 1'
-          - 'vpc_info.vpcs[0].enable_dns_hostnames | bool == False'
-          - 'vpc_info.vpcs[0].enable_dns_support | bool == False'
+          - result is successful
+          - result is not changed
+          - vpc_info.vpcs | length == 1
+          - vpc_info.vpcs[0].enable_dns_hostnames | bool == False
+          - vpc_info.vpcs[0].enable_dns_support | bool == False
 
     # XXX #62677
     #- name: re-enable dns_support (check mode)
@@ -614,11 +614,11 @@
     #- name: assert a change was made
     #  assert:
     #    that:
-    #      - 'result is successful'
-    #      - 'result is changed'
-    #      - 'vpc_info.vpcs | length == 1'
-    #      - 'vpc_info.vpcs[0].enable_dns_hostnames | bool == True'
-    #      - 'vpc_info.vpcs[0].enable_dns_support | bool == True'
+    #      - result is successful
+    #      - result is changed
+    #      - vpc_info.vpcs | length == 1
+    #      - vpc_info.vpcs[0].enable_dns_hostnames | bool == True
+    #      - vpc_info.vpcs[0].enable_dns_support | bool == True
 
     - name: re-enable dns_support
       ec2_vpc_net:
@@ -634,11 +634,11 @@
     - name: assert a change was made
       assert:
         that:
-          - 'result is successful'
-          - 'result is changed'
-          - 'vpc_info.vpcs | length == 1'
-          - 'vpc_info.vpcs[0].enable_dns_hostnames | bool == True'
-          - 'vpc_info.vpcs[0].enable_dns_support | bool == True'
+          - result is successful
+          - result is changed
+          - vpc_info.vpcs | length == 1
+          - vpc_info.vpcs[0].enable_dns_hostnames | bool == True
+          - vpc_info.vpcs[0].enable_dns_support | bool == True
 
     - name: re-enable dns_support (retry)
       ec2_vpc_net:
@@ -654,11 +654,11 @@
     - name: assert a change was not made
       assert:
         that:
-          - 'result is successful'
-          - 'result is not changed'
-          - 'vpc_info.vpcs | length == 1'
-          - 'vpc_info.vpcs[0].enable_dns_hostnames | bool == True'
-          - 'vpc_info.vpcs[0].enable_dns_support | bool == True'
+          - result is successful
+          - result is not changed
+          - vpc_info.vpcs | length == 1
+          - vpc_info.vpcs[0].enable_dns_hostnames | bool == True
+          - vpc_info.vpcs[0].enable_dns_support | bool == True
 
     # ============================================================
 
@@ -681,11 +681,11 @@
         that:
           - result is successful
           - result is changed
-          - result.vpc.tags|length == 1
-          - 'result.vpc.tags.Name == "{{ resource_prefix }}"'
-          - 'vpc_info.vpcs | length == 1'
-          - vpc_info.vpcs[0].tags|length == 1
-          - 'vpc_info.vpcs[0].tags.Name == "{{ resource_prefix }}"'
+          - result.vpc.tags | length == 1
+          - result.vpc.tags.Name == resource_prefix
+          - vpc_info.vpcs | length == 1
+          - vpc_info.vpcs[0].tags | length == 1
+          - vpc_info.vpcs[0].tags.Name == resource_prefix
 
     - name: modify tags
       ec2_vpc_net:
@@ -705,13 +705,13 @@
         that:
           - result is successful
           - result is changed
-          - result.vpc.tags|length == 2
-          - 'result.vpc.tags.Ansible == "Test"'
-          - 'result.vpc.tags.Name == "{{ resource_prefix }}"'
-          - 'vpc_info.vpcs | length == 1'
-          - vpc_info.vpcs[0].tags|length == 2
-          - 'vpc_info.vpcs[0].tags.Ansible == "Test"'
-          - 'vpc_info.vpcs[0].tags.Name == "{{ resource_prefix }}"'
+          - result.vpc.tags | length == 2
+          - result.vpc.tags.Ansible == "Test"
+          - result.vpc.tags.Name == resource_prefix
+          - vpc_info.vpcs | length == 1
+          - vpc_info.vpcs[0].tags | length == 2
+          - vpc_info.vpcs[0].tags.Ansible == "Test"
+          - vpc_info.vpcs[0].tags.Name == resource_prefix
 
     - name: modify tags (no change)
       ec2_vpc_net:
@@ -734,12 +734,12 @@
           - result is successful
           - result is not changed
           - result.vpc.tags|length == 2
-          - 'result.vpc.tags.Ansible == "Test"'
-          - 'result.vpc.tags.Name == "{{ resource_prefix }}"'
-          - 'vpc_info.vpcs | length == 1'
+          - result.vpc.tags.Ansible == "Test"
+          - result.vpc.tags.Name == resource_prefix
+          - vpc_info.vpcs | length == 1
           - vpc_info.vpcs[0].tags|length == 2
-          - 'vpc_info.vpcs[0].tags.Ansible == "Test"'
-          - 'vpc_info.vpcs[0].tags.Name == "{{ resource_prefix }}"'
+          - vpc_info.vpcs[0].tags.Ansible == "Test"
+          - vpc_info.vpcs[0].tags.Name == resource_prefix
 
     # ============================================================
 
@@ -1256,7 +1256,7 @@
     - name: assert that a change would have been made
       assert:
         that:
-          - 'result is changed'
+          - result is changed
 
     # ============================================================
 
