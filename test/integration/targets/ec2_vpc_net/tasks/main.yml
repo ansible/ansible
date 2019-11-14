@@ -160,6 +160,7 @@
           - '"state" in result.vpc'
           - result.vpc.tags.keys() | length == 1
           - result.vpc.tags.Name == resource_prefix
+          - result.vpc.id == vpc_1
 
     # ============================================================
 
@@ -419,6 +420,7 @@
       assert:
         that:
           - result is changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - vpc_info.vpcs[0].dhcp_options_id == default_dhcp_options_id
 
@@ -438,6 +440,7 @@
       assert:
         that:
           - result is changed
+          - result.vpc.id == vpc_1
           - default_dhcp_options_id != result.vpc.dhcp_options_id
           - result.vpc.dhcp_options_id == new_dhcp.dhcp_options_id
           - vpc_info.vpcs | length == 1
@@ -459,6 +462,7 @@
       assert:
         that:
           - result is not changed
+          - result.vpc.id == vpc_1
           - result.vpc.dhcp_options_id == new_dhcp.dhcp_options_id
           - vpc_info.vpcs | length == 1
           - vpc_info.vpcs[0].dhcp_options_id == new_dhcp.dhcp_options_id
@@ -505,6 +509,7 @@
         that:
           - result is successful
           - result is changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - vpc_info.vpcs[0].enable_dns_hostnames | bool == False
           - vpc_info.vpcs[0].enable_dns_support | bool == True
@@ -526,6 +531,7 @@
         that:
           - result is successful
           - result is not changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - vpc_info.vpcs[0].enable_dns_hostnames | bool == False
           - vpc_info.vpcs[0].enable_dns_support | bool == True
@@ -550,6 +556,7 @@
     #    that:
     #      - result is successful
     #      - result is changed
+    #      - result.vpc.id == vpc_1
     #      - vpc_info.vpcs | length == 1
     #      - vpc_info.vpcs[0].enable_dns_hostnames | bool == False
     #      - vpc_info.vpcs[0].enable_dns_support | bool == True
@@ -572,6 +579,7 @@
         that:
           - result is successful
           - result is changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - vpc_info.vpcs[0].enable_dns_hostnames | bool == False
           - vpc_info.vpcs[0].enable_dns_support | bool == False
@@ -594,6 +602,7 @@
         that:
           - result is successful
           - result is not changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - vpc_info.vpcs[0].enable_dns_hostnames | bool == False
           - vpc_info.vpcs[0].enable_dns_support | bool == False
@@ -616,6 +625,7 @@
     #    that:
     #      - result is successful
     #      - result is changed
+    #      - result.vpc.id == vpc_1
     #      - vpc_info.vpcs | length == 1
     #      - vpc_info.vpcs[0].enable_dns_hostnames | bool == True
     #      - vpc_info.vpcs[0].enable_dns_support | bool == True
@@ -636,6 +646,7 @@
         that:
           - result is successful
           - result is changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - vpc_info.vpcs[0].enable_dns_hostnames | bool == True
           - vpc_info.vpcs[0].enable_dns_support | bool == True
@@ -656,6 +667,7 @@
         that:
           - result is successful
           - result is not changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - vpc_info.vpcs[0].enable_dns_hostnames | bool == True
           - vpc_info.vpcs[0].enable_dns_support | bool == True
@@ -681,6 +693,7 @@
         that:
           - result is successful
           - result is changed
+          - result.vpc.id == vpc_1
           - result.vpc.tags | length == 1
           - result.vpc.tags.Name == resource_prefix
           - vpc_info.vpcs | length == 1
@@ -705,6 +718,7 @@
         that:
           - result is successful
           - result is changed
+          - result.vpc.id == vpc_1
           - result.vpc.tags | length == 2
           - result.vpc.tags.Ansible == "Test"
           - result.vpc.tags.Name == resource_prefix
@@ -733,6 +747,7 @@
         that:
           - result is successful
           - result is not changed
+          - result.vpc.id == vpc_1
           - result.vpc.tags|length == 2
           - result.vpc.tags.Ansible == "Test"
           - result.vpc.tags.Name == resource_prefix
@@ -763,6 +778,7 @@
     #    that:
     #      - result is successful
     #      - result is changed
+    #      - result.vpc.id == vpc_1
     #      - vpc_info.vpcs | length == 1
     #      - vpc_info.vpcs[0].cidr_block == vpc_cidr
     #      - vpc_cidr in (result.vpc | json_query("cidr_block_association_set[*].cidr_block") | list)
@@ -795,6 +811,7 @@
         that:
           - result is successful
           - result is changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - result.vpc.cidr_block == vpc_cidr
           - vpc_info.vpcs[0].cidr_block == vpc_cidr
@@ -833,6 +850,7 @@
         that:
           - result is successful
           - result is not changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - result.vpc.cidr_block == vpc_cidr
           - vpc_info.vpcs[0].cidr_block == vpc_cidr
@@ -905,6 +923,7 @@
         that:
           - result is successful
           - result is changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - result.vpc.cidr_block == vpc_cidr
           - vpc_info.vpcs[0].cidr_block == vpc_cidr
@@ -1198,6 +1217,7 @@
         that:
           - result is successful
           - result is changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - result.vpc.cidr_block == vpc_cidr
           - vpc_info.vpcs[0].cidr_block == vpc_cidr
@@ -1231,6 +1251,7 @@
         that:
           - result is successful
           - result is not changed
+          - result.vpc.id == vpc_1
           - vpc_info.vpcs | length == 1
           - result.vpc.cidr_block == vpc_cidr
           - vpc_info.vpcs[0].cidr_block == vpc_cidr
