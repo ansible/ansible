@@ -34,6 +34,12 @@ options:
     - List of commands assigned to the rule.
     - If an empty list is passed all commands will be removed from the rule.
     - If option is omitted commands will not be checked or changed.
+  cmdgroup:
+    description:
+    - List of command groups assigned to the rule.
+    - If an empty list is passed all command groups will be removed from the rule.
+    - If option is omitted command groups will not be checked or changed.
+    version_added: "2.10"
   description:
     description:
     - Description of the sudo rule.
@@ -185,7 +191,13 @@ class SudoRuleIPAClient(IPAClient):
         return self._post_json(method='sudorule_add_allow_command', name=name, item={'sudocmd': item})
 
     def sudorule_remove_allow_command(self, name, item):
-        return self._post_json(method='sudorule_remove_allow_command', name=name, item=item)
+        return self._post_json(method='sudorule_remove_allow_command', name=name, item={'sudocmd': item})
+
+    def sudorule_add_allow_command_group(self, name, item):
+        return self._post_json(method='sudorule_add_allow_command', name=name, item={'sudocmdgroup': item})
+
+    def sudorule_remove_allow_command(self, name, item):
+        return self._post_json(method='sudorule_remove_allow_command', name=name, item={'sudocmdgroup': item})
 
     def sudorule_add_user(self, name, item):
         return self._post_json(method='sudorule_add_user', name=name, item=item)
@@ -239,6 +251,7 @@ def ensure(module, client):
     state = module.params['state']
     name = module.params['cn']
     cmd = module.params['cmd']
+    cmdgroup = module.params['cmdgroup']
     cmdcategory = module.params['cmdcategory']
     host = module.params['host']
     hostcategory = module.params['hostcategory']
@@ -287,9 +300,15 @@ def ensure(module, client):
 
         if cmd is not None:
             changed = category_changed(module, client, 'cmdcategory', ipa_sudorule) or changed
-            if not module.check_mode:
-                client.sudorule_add_allow_command(name=name, item=cmd)
+            changed = client.modify_if_diff(name, ipa_sudorule.get('memberallowcmd_sudocmd', []), cmd,
+                                            client.sudorule_add_allow_command,
+                                            client.sudorule_remove_allow_command) or changed
 
+        if cmdgroup is not None:
+            changed = category_changed(module, client, 'cmdcategory', ipa_sudorule) or changed
+            changed = client.modify_if_diff(name, ipa_sudorule.get('memberallowcmd_sudocmdgroup', []), cmdgroup,
+                                            client.sudorule_add_allow_command_group,
+                                            client.sudorule_remove_allow_command_group) or changed
         if runasusercategory is not None:
             changed = category_changed(module, client, 'iparunasusercategory', ipa_sudorule) or changed
 
@@ -346,6 +365,7 @@ def ensure(module, client):
 def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(cmd=dict(type='list'),
+                         cmdgroup=dict(type='list'),
                          cmdcategory=dict(type='str', choices=['all']),
                          cn=dict(type='str', required=True, aliases=['name']),
                          description=dict(type='str'),
@@ -362,6 +382,7 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=[['cmdcategory', 'cmd'],
+                                               ['cmdcategory', 'cmdgroup'],
                                                ['hostcategory', 'host'],
                                                ['hostcategory', 'hostgroup'],
                                                ['usercategory', 'user'],
