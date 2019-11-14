@@ -43,12 +43,16 @@ Modules removed
 
 The following modules no longer exist:
 
-* ldap_attr use :ref:`ldap_attrs <ldap_attrs_module>` instead.
 * letsencrypt use :ref:`acme_certificate <acme_certificate_module>` instead.
 
 
 Deprecation notices
 -------------------
+
+The following modules will be removed in Ansible 2.14. Please update your playbooks accordingly.
+
+* ldap_attr use :ref:`ldap_attrs <ldap_attrs_module>` instead.
+
 
 The following functionality will be removed in Ansible 2.14. Please update update your playbooks accordingly.
 

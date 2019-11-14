@@ -139,11 +139,21 @@ EXAMPLES = r'''
         olcRootPW: "{SSHA}tabyipcHzhwESzRaGA7oQ/SDoBZQOGND"
     state: exact
 
-- name: Get rid of an unneeded attribute
+- name: Remove an attribute with a specific value
   ldap_attrs:
     dn: uid=jdoe,ou=people,dc=example,dc=com
     attributes:
-        shadowExpire: ""
+        description: "An example user account"
+    state: absent
+    server_uri: ldap://localhost/
+    bind_dn: cn=admin,dc=example,dc=com
+    bind_pw: password
+
+- name: Remove specified attribute(s) from an entry
+  ldap_attrs:
+    dn: uid=jdoe,ou=people,dc=example,dc=com
+    attributes:
+        description: ""
     state: exact
     server_uri: ldap://localhost/
     bind_dn: cn=admin,dc=example,dc=com
