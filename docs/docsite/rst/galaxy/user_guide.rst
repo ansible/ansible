@@ -32,10 +32,6 @@ Galaxy presents a list of collections that match your search criteria.
 Installing collections from Galaxy
 ==================================
 
-Configuring the ``ansible-galaxy`` client
-------------------------------------------
-
-.. include:: ../shared_snippets/galaxy_server_list.txt
 
 Installing a collection
 -----------------------
@@ -53,6 +49,11 @@ Install multiple collections with a requirements file
 
 .. include:: ../shared_snippets/installing_multiple_collections.txt
 
+
+Configuring the ``ansible-galaxy`` client
+------------------------------------------
+
+.. include:: ../shared_snippets/galaxy_server_list.txt
 
 .. _finding_galaxy_roles:
 

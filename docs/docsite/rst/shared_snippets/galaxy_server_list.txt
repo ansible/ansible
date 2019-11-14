@@ -1,6 +1,6 @@
 
 
-If you use the ``ansible-galaxy`` command, you may need to first configure the server lists that command communicates with. By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`).
+By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`).
 
 You can configure this to use other servers (such as Red Hat Automation Hub or a custom Galaxy server) as follows:
 
@@ -16,7 +16,7 @@ To configure a Galaxy server list in ``ansible.cfg``:
 For Red Hat Automation Hub, you additionally need to:
 
 #. Set the ``auth_url`` option for each server name.
-#. Set the authentication ``token`` for each server name. See Red Hat Automation Hub documentation for how to get a token.
+#. Set the API token for each server name. Go to https://cloud.redhat.com/ansible/automation-hub/token/ and click ::guilabel:`Get API token` from the version dropdown to copy your API token.
 
 The following example shows how to configure multiple servers:
 
@@ -29,7 +29,7 @@ The following example shows how to configure multiple servers:
     url=https://cloud.redhat.com/api/automation-hub/
     auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
 
-    token=my_token
+    token=my_ah_token
 
     [galaxy_server.my_org_hub]
     url=https://automation.my_org/
@@ -42,7 +42,7 @@ The following example shows how to configure multiple servers:
 
     [galaxy_server.test_galaxy]
     url=https://galaxy-dev.ansible.com/
-    token=my_token
+    token=my_test_token
 
 .. note::
     You can use the ``--server`` command line argument to select an explicit Galaxy server in the ``server_list`` and
