@@ -248,13 +248,13 @@ The next step in testing your new module is to consume it with an Ansible playbo
 Testing basics
 ====================
 
-These two examples will get you started with testing your module code. Please review our :ref:`testing <developing_testing>` section for more detailed
-information, including instructions for :ref:`testing module documentation <testing_module_documentation>`, adding :ref:`integration tests <testing_integration>`, and more.
+These two examples will get you started with testing your module code. The :ref:`testing <developing_testing>` section has more detailed
+information, including instructions for :ref:`testing module documentation <testing_module_documentation>`, adding :ref:`integration tests <testing_integration>`, and more. The :ref:`ansible-test` documentation provides details about the flags available with the ``ansible-test`` command.
 
 Sanity tests
 ------------
 
-You can run through Ansible's sanity checks in a container:
+You can run through the Ansible sanity checks in a container. By default the test command will run tests on all supported versions of Python. To limit your test run to a specific Python version:
 
 ``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
 
@@ -264,14 +264,16 @@ container for this, you can choose to use ``--venv`` instead of ``--docker``.
 Unit tests
 ----------
 
-You can add unit tests for your module in ``./test/units/modules``. You must first setup your testing environment. In this example, we're using Python 3.5.
+You can add unit tests for your module in ``./test/units/modules``. You can run these in a container as well. Be sure to set up your development environment:
 
-- Install the requirements (outside of your virtual environment): ``$ pip3 install -r ./test/units/requirements.txt``
-- To run all tests do the following: ``$ ansible-test units --python 3.5`` (you must run ``. hacking/env-setup`` prior to this)
+``. hacking/env-setup``
 
-.. note:: Ansible uses pytest for unit testing.
+Then run the unit tests in the container of your choice. These commands install any missing requirements in your container or virtual environment before exercising the tests:
 
-To run pytest against a single test module, you can do the following (provide the path to the test module appropriately):
+``ansible-test units --docker default MODULE_NAME``
+``ansible-test units --venv MODULE_NAME``
+
+Ansible uses pytest for unit testing. You can run pytest against a single test module (use the correct path for your test module):
 
 ``$ pytest -r a --cov=. --cov-report=html --fulltrace --color yes
 test/units/modules/.../test/my_test.py``
