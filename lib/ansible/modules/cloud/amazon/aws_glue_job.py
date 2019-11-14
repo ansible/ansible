@@ -229,12 +229,13 @@ worker_type:
 number_of_workers:
     description: The number of workers of a defined workerType that are allocated when a job runs.
                  The maximum number of workers you can define are 299 for G.1X , and 149 for G.2X
-    required: false
+    returned: when state is present
     type: int
     sample: 1
 glue_version:
     description: Glue version determines the versions of Apache Spark and Python that AWS Glue supports.
-    required: false
+    returned: when state is present
+    type: str
     sample: 0.9
 '''
 
