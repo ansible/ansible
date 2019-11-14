@@ -29,6 +29,10 @@
 
     # ==== Tests ===================================================
 
+    - name: Create a random component for state machine name
+      set_fact:
+        random_num: "{{ 999999999 | random }}"
+
     - name: Create a new state machine -- check_mode
       aws_step_functions_state_machine:
         name: "{{ state_machine_name }}"
