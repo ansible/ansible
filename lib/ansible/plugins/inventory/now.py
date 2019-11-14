@@ -43,7 +43,7 @@ DOCUMENTATION = r'''
         fields:
             description: Comma seperated string providing additional table columns to add as host vars to each inventory host.
             type: list
-            default: []
+            default: [name,host_name,fqdn,ip_address,sys_class_name]
         sn_groups:
             description: Comma seperated string providing additional table columns to use as groups. Groups can overlap with fields
             type: list
