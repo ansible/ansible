@@ -162,7 +162,7 @@ serial_port_data:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, set_vm_power_state, wait_for_task, gather_vm_facts
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task
 from ansible.module_utils._text import to_native
 try:
     from pyVmomi import vim
@@ -188,14 +188,13 @@ class PyVmomiHelper(PyVmomi):
           - vm: Virtual Machine
 
         Output:
-          - [proceed, current_state]
+          - True if vm is in poweredOff state
+          - module fails otherwise
         """
-        facts = gather_vm_facts(self.content, vm_obj)
-        current_state = facts['hw_power_status'].lower()
-        if current_state == "poweredoff":
+        if vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOff:
             return True
         else:
-            self.module.fail_json(msg="A serial device cannot be added to a VM in the current state( " + current_state + ")."
+            self.module.fail_json(msg="A serial device cannot be added to a VM in the current state(" + vm_obj.runtime.powerState + ")."
                                   + "Please use the vmware_guest_powerstate module to power off the VM")
 
     def get_serial_port_config_spec(self, vm_obj):
