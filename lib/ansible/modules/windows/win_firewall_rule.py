@@ -155,7 +155,7 @@ EXAMPLES = r'''
     state: present
     enabled: yes
 
-- name: Firewall rule to allow ICMP v4 echo (ping)
+- name: Firewall rule to allow ICMP v4 (ping)
   win_firewall_rule:
     name: ICMP Allow incoming V4 echo request
     enabled: yes
@@ -163,5 +163,5 @@ EXAMPLES = r'''
     profiles: private
     action: allow
     direction: in
-    protocol: "icmpv4:8,any"
+    protocol: icmpv4
 '''
