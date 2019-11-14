@@ -37,6 +37,11 @@ options:
       - The S3 path to a script that executes a job.
     required: true
     type: str
+  command_python_version:
+    description:
+      - The version of python to use in glue.
+    required: false
+    type: str
   connections:
     description:
       - A list of Glue connections used for this job.
@@ -86,6 +91,24 @@ options:
       - The job timeout in minutes.
     required: false
     type: int
+  worker_type:
+    description:
+      - The type of predefined worker that is allocated when a job runs. Accepts a value of Standard, G.1X, or G.2X.
+    required: false
+    choices: [ 'Standard', 'G.1X', 'G.2X' ]
+    type: str
+  number_of_workers:
+    description:
+      - The number of workers of a defined workerType that are allocated when a job runs.
+        The maximum number of workers you can define are 299 for G.1X , and 149 for G.2X
+    required: false
+    type: int
+  glue_version:
+    description:
+      - Glue version determines the versions of Apache Spark and Python that AWS Glue supports.
+    required: false
+    choices: [ '0.9', '1.0' ]
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -131,6 +154,11 @@ command:
             returned: when state is present
             type: str
             sample: mybucket/myscript.py
+        python_version:
+            description: Specifies the python version to use in the glue job
+            returned: when state is present
+            type: str
+            sample: 3
 connections:
     description: The connections used for this job.
     returned: when state is present
@@ -193,6 +221,21 @@ timeout:
     returned: when state is present
     type: int
     sample: 300
+worker_type:
+    description: The type of predefined worker that is allocated when a job runs. Accepts a value of Standard, G.1X, or G.2X.
+    returned: when state is present
+    type: str
+    sample: Standard
+number_of_workers:
+    description: The number of workers of a defined workerType that are allocated when a job runs.
+                 The maximum number of workers you can define are 299 for G.1X , and 149 for G.2X
+    required: false
+    type: int
+    sample: 1
+glue_version:
+    description: Glue version determines the versions of Apache Spark and Python that AWS Glue supports.
+    required: false
+    sample: 0.9
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -246,6 +289,8 @@ def _compare_glue_job_params(user_params, current_params):
         return True
     if 'Command' in user_params and user_params['Command']['ScriptLocation'] != current_params['Command']['ScriptLocation']:
         return True
+    if 'Command' in user_params and user_params['Command'].get('PythonVersion') != current_params['Command'].get('PythonVersion'):
+        return True
     if 'Connections' in user_params and set(user_params['Connections']) != set(current_params['Connections']):
         return True
     if 'DefaultArguments' in user_params and set(user_params['DefaultArguments']) != set(current_params['DefaultArguments']):
@@ -257,6 +302,12 @@ def _compare_glue_job_params(user_params, current_params):
     if 'MaxRetries' in user_params and user_params['MaxRetries'] != current_params['MaxRetries']:
         return True
     if 'Timeout' in user_params and user_params['Timeout'] != current_params['Timeout']:
+        return True
+    if 'WorkerType' in user_params and user_params['WorkerType'] != current_params['WorkerType']:
+        return True
+    if 'NumberOfWorkers' in user_params and user_params['NumberOfWorkers'] != current_params['NumberOfWorkers']:
+        return True
+    if 'GlueVersion' in user_params and user_params['GlueVersion'] != current_params['GlueVersion']:
         return True
 
     return False
@@ -280,6 +331,8 @@ def create_or_update_glue_job(connection, module, glue_job):
         params['AllocatedCapacity'] = module.params.get("allocated_capacity")
     if module.params.get("command_script_location") is not None:
         params['Command'] = {'Name': module.params.get("command_name"), 'ScriptLocation': module.params.get("command_script_location")}
+        if module.params.get("command_python_version") is not None:
+            params['Command']['PythonVersion'] = module.params.get("command_python_version")
     if module.params.get("connections") is not None:
         params['Connections'] = {'Connections': module.params.get("connections")}
     if module.params.get("default_arguments") is not None:
@@ -292,6 +345,12 @@ def create_or_update_glue_job(connection, module, glue_job):
         params['MaxRetries'] = module.params.get("max_retries")
     if module.params.get("timeout") is not None:
         params['Timeout'] = module.params.get("timeout")
+    if module.params.get("worker_type") is not None:
+        params['WorkerType'] = module.params.get("worker_type")
+    if module.params.get("number_of_workers") is not None:
+        params['NumberOfWorkers'] = module.params.get("number_of_workers")
+    if module.params.get("glue_version") is not None:
+        params['GlueVersion'] = module.params.get("glue_version")
 
     # If glue_job is not None then check if it needs to be modified, else create it
     if glue_job:
@@ -347,6 +406,7 @@ def main():
             allocated_capacity=dict(type='int'),
             command_name=dict(type='str', default='glueetl'),
             command_script_location=dict(type='str'),
+            command_python_version=dict(type='str'),
             connections=dict(type='list'),
             default_arguments=dict(type='dict'),
             description=dict(type='str'),
@@ -355,7 +415,10 @@ def main():
             name=dict(required=True, type='str'),
             role=dict(type='str'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
-            timeout=dict(type='int')
+            timeout=dict(type='int'),
+            worker_type=dict(choices=['Standard', 'G.1X', 'G.2X'], type='str'),
+            number_of_workers=dict(type='int'),
+            glue_version=dict(choices=['0.9', '1.0'], type='str'),
         )
     )
 
