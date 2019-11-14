@@ -1,3 +1,3 @@
 instance_name: "{{ resource_prefix }}_instance"
-keypair_name: "lightsail"
+keypair_name: "lightsail_ci"
 zone: "{{ aws_region }}a"

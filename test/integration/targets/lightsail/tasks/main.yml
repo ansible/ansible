@@ -11,6 +11,10 @@
 
     # ==== Tests ===================================================
 
+    - name: Create a new keypair in lightsail
+      lightsail_keypair:
+        name: "{{ keypair_name }}"
+
     - name: Create a new instance
       lightsail:
         name: "{{ instance_name }}"
