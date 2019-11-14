@@ -15,7 +15,7 @@ module: aws_glue_job
 short_description: Manage an AWS Glue job
 description:
     - Manage an AWS Glue job. See U(https://aws.amazon.com/glue/) for details.
-version_added: "2.6"
+version_added: "2.10"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
