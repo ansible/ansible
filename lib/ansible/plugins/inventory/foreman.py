@@ -182,9 +182,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
 
         return results
 
-    def to_safe(self, word):
+    def to_safe_group_name(self, word):
         '''Converts 'bad' characters in a string to underscores so they can be used as Ansible groups
-        #> ForemanInventory.to_safe("foo-bar baz")
+        #> ForemanInventory.to_safe_group_name("foo-bar baz")
         'foo_barbaz'
         '''
         regex = r"[^A-Za-z0-9\_]"
@@ -232,7 +232,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
         self.use_cache = cache and self.get_option('cache')
         self.cache_key = self.get_cache_key(path)
 
-        hosts = self._get_all_hosts(self.foreman_url)
+        hosts = self._get_all_hosts("%s/api/v2/hosts" % self.foreman_url)
 
         for host in hosts:
             if host.get('name'):
@@ -241,7 +241,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                 # create directly mapped groups
                 group_name = host.get('hostgroup_title', host.get('hostgroup_name'))
                 if group_name:
-                    group_name = self.to_safe('%s%s' % (self.get_option('group_prefix'), group_name.lower()))
+                    group_name = self.to_safe_group_name('%s%s' % (self.get_option('group_prefix'), group_name.lower()))
                     self.inventory.add_group(group_name)
                     self.inventory.add_child(group_name, host['name'])
 
