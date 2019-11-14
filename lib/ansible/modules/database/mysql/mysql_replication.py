@@ -168,9 +168,16 @@ EXAMPLES = r'''
   mysql_replication:
     mode: stopslave
 
-- name: Get master binlog file name and binlog position
+
+- name: replication "show  master status;"
   mysql_replication:
     mode: getmaster
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  register: masterstatus
+  become: yes
+- debug: var=masterstatus.File
+- debug: var=masterstatus.Position
+
 
 - name: Change master to master server 192.0.2.1 and use binary log 'mysql-bin.000009' with position 4578
   mysql_replication:
