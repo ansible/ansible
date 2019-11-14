@@ -221,7 +221,7 @@
               </filter>'
   register: result_merged_6
 
- - name: Assert that the previous task was idempotent, some become ot default values, others depend on devices.
+- name: Assert that the previous task was idempotent, some become ot default values, others depend on devices.
   assert:
     that:
       - "'<bidirPimEnable>true</bidirPimEnable>' == result_merged_1.end_state.result"
@@ -242,4 +242,3 @@
 
 - debug:
     msg: "END ce_multicast_pim_view present integration tests on connection={{ ansible_connection }}"
-

@@ -247,7 +247,7 @@
   ce_lacp: *absent_5
   register: result_re_merged_6
 
- - name: Assert that the previous task was idempotent, some become ot default values, others depend on devices.
+- name: Assert that the previous task was idempotent, some become ot default values, others depend on devices.
   assert:
     that:
       - "result_re_merged_1.changed == false"
