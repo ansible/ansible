@@ -130,41 +130,75 @@ class L3_interfaces(ConfigBase):
                     commands.extend(self._state_replaced(w, have))
         return commands
 
-    def _state_replaced(self, w, have):
+    def _state_replaced(self, want, have):
         """ The command generator when state is replaced
+        Scope is limited to interface objects defined in the playbook.
 
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        commands = []
-        merged_commands = self.set_commands(w, have)
-        replaced_commands = self.del_delta_attribs(w, have)
+        cmds = []
+        obj_in_have = search_obj_in_list(want['name'], have, 'name')
 
-        if merged_commands:
-            cmds = set(replaced_commands).intersection(set(merged_commands))
-            for cmd in cmds:
-                merged_commands.remove(cmd)
-            commands.extend(replaced_commands)
-            commands.extend(merged_commands)
-        return commands
+        have_v4 = obj_in_have.pop('ipv4', []) if obj_in_have else []
+        have_v6 = obj_in_have.pop('ipv6', []) if obj_in_have else []
+
+        # Process lists of dicts separately
+        v4_cmds = self._v4_cmds(want.pop('ipv4', []), have_v4, state='replaced')
+        v6_cmds = self._v6_cmds(want.pop('ipv6', []), have_v6, state='replaced')
+
+        # Process remaining attrs
+        if obj_in_have:
+            # Find 'want' changes first
+            diff = self.diff_of_dicts(want, obj_in_have)
+            rmv = {}
+            haves_not_in_want = set(obj_in_have.keys()) - set(want.keys()) - set(diff.keys())
+            for i in haves_not_in_want:
+                rmv[i] = obj_in_have[i]
+            cmds.extend(self.generate_delete_commands(rmv))
+        else:
+            diff = want
+
+        cmds.extend(self.add_commands(diff, obj_in_have=obj_in_have))
+        cmds.extend(v4_cmds)
+        cmds.extend(v6_cmds)
+        if cmds:
+            cmds.insert(0, 'interface ' + want['name'])
+        return cmds
 
     def _state_overridden(self, want, have):
         """ The command generator when state is overridden
+        Scope includes all interface objects on the device.
 
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        commands = []
-        for h in have:
-            obj_in_want = search_obj_in_list(h['name'], want, 'name')
-            if h == obj_in_want:
+        # overridden behavior is the same as replaced except for scope.
+        cmds = []
+        existing_vlans = []
+        for i in have:
+            obj_in_want = search_obj_in_list(i['name'], want, 'name')
+            if obj_in_want:
+                if i != obj_in_want:
+                    v4_cmds = self._v4_cmds(obj_in_want.pop('ipv4', []), i.pop('ipv4', []), state='overridden')
+                    replaced_cmds = self._state_replaced(obj_in_want, [i])
+                    replaced_cmds.extend(v4_cmds)
+                    if replaced_cmds:
+                        if not [i for i in replaced_cmds if i.startswith('interface')]:
+                            replaced_cmds.insert(0, 'interface %s' % obj_in_want['name'])
+                        cmds.extend(replaced_cmds)
+            else:
+                cmds.append('interface ' + i['name'])
+                cmds.extend(self.generate_delete_commands(i))
+
+        for i in want:
+            if [item for item in have if i['name'] == item['name']]:
                 continue
-            commands.extend(self.del_all_attribs(h))
-        for w in want:
-            commands.extend(self.set_commands(w, have))
-        return commands
+            cmds.extend(self.add_commands(i, name=i['name']))
+
+        return cmds
 
     def _state_merged(self, w, have):
         """ The command generator when state is merged
@@ -174,6 +208,112 @@ class L3_interfaces(ConfigBase):
                   the current configuration
         """
         return self.set_commands(w, have)
+
+    def _v4_cmds(self, want, have, state=None):
+        """Helper method for processing ipv4 changes.
+        This is needed to handle primary/secondary address changes, which require a specific sequence when changing.
+        """
+        # The ip address cli does not allow removing primary addresses while
+        # secondaries are present, but it does allow changing a primary to a
+        # new address as long as the address is not a current secondary.
+        # Be aware of scenarios where a secondary is taking over
+        # the role of the primary, which must be changed in sequence.
+        # In general, primaries/secondaries should change in this order:
+        # Step 1. Remove secondaries that are being changed or removed
+        # Step 2. Change the primary if needed
+        # Step 3. Merge secondaries
+
+        # Normalize inputs (add tag key if not present)
+        for i in want:
+            i['tag'] = i.get('tag')
+        for i in have:
+            i['tag'] = i.get('tag')
+
+        merged = True if state == 'merged' else False
+        replaced = True if state == 'replaced' else False
+        overridden = True if state == 'overridden' else False
+
+        # Create secondary and primary wants/haves
+        sec_w = [ i for i in want if i.get('secondary')]
+        sec_h = [ i for i in have if i.get('secondary')]
+        pri_w = [ i for i in want if not i.get('secondary')]
+        pri_h = [ i for i in have if not i.get('secondary')]
+        pri_w = pri_w[0] if pri_w else {}
+        pri_h = pri_h[0] if pri_h else {}
+        cmds = []
+
+        # 1. Determine which secondaries are changing and remove them. Need a have/want
+        # diff instead of want/have because a have sec addr may be changing to a pri.
+        sec_to_rmv = []
+        sec_diff = self.diff_list_of_dicts(sec_h, sec_w)
+        for i in sec_diff:
+            if overridden or [w for w in sec_w if w['address'] == i['address']]:
+                sec_to_rmv.append(i['address'])
+
+        # Check if new primary is currently a secondary
+        if pri_w and [h for h in sec_h if h['address'] == pri_w['address']]:
+            if not overridden:
+                sec_to_rmv.append(pri_w['address'])
+
+        # Remove the changing secondaries
+        cmds.extend(['no ip address %s secondary' % i for i in sec_to_rmv])
+
+        # 2. change primary
+        if pri_w:
+            diff = dict(set(pri_w.items()) - set(pri_h.items()))
+            if diff:
+                cmd = 'ip address %s' % diff['address']
+                tag = diff.get('tag')
+                cmd += ' tag %s' % tag if tag else ''
+                cmds.append(cmd)
+        elif pri_h and not merged:
+            cmds.append('no ip address %s' % pri_h['address'])
+
+        # 3. process remaining secondaries last
+        sec_w_to_chg = self.diff_list_of_dicts(sec_w, sec_h)
+        for i in sec_w_to_chg:
+            cmd = 'ip address %s secondary' %i['address']
+            cmd += ' tag %s' % i['tag'] if i['tag'] else ''
+            cmds.append(cmd)
+
+        return cmds
+
+    def _v6_cmds(self, want, have, state=''):
+        """Helper method for processing ipv6 changes.
+        This is needed to avoid unnecessary churn on the device when removing or changing multiple addresses.
+        """
+        # Normalize inputs (add tag key if not present)
+        for i in want:
+            i['tag'] = i.get('tag')
+        for i in have:
+            i['tag'] = i.get('tag')
+
+        cmds = []
+        # items to remove (items in 'have' only)
+        if state == 'replaced':
+            for i in self.diff_list_of_dicts(have, want):
+                want_addr = [w for w in want if w['address'] == i['address']]
+                if not want_addr:
+                    cmds.append('no ipv6 address %s' % i['address'])
+                elif i['tag'] and not want_addr[0]['tag']:
+                    # Must remove entire cli when removing tag
+                    cmds.append('no ipv6 address %s' % i['address'])
+
+        # items to merge/add
+        for i in self.diff_list_of_dicts(want, have):
+            addr = i['address']
+            tag = i['tag']
+            if not tag and state == 'merged':
+                # When want is IP-no-tag and have is IP+tag it will show up in diff,
+                # but for merged nothing has changed, so ignore it for idempotence.
+                have_addr = [h for h in have if h['address'] == addr]
+                if have_addr and have_addr[0].get('tag'):
+                    continue
+            cmd = 'ipv6 address %s' % i['address']
+            cmd += ' tag %s' % tag if tag else ''
+            cmds.append(cmd)
+
+        return cmds
 
     def _state_deleted(self, want, have):
         """ The command generator when state is deleted
@@ -203,28 +343,15 @@ class L3_interfaces(ConfigBase):
             commands.insert(0, 'interface ' + obj['name'])
         return commands
 
-    def del_delta_attribs(self, w, have):
-        commands = []
-        obj_in_have = search_obj_in_list(w['name'], have, 'name')
-        if obj_in_have:
-            lst_to_del = []
-            ipv4_intersect = self.intersect_list_of_dicts(w.get('ipv4'), obj_in_have.get('ipv4'))
-            ipv6_intersect = self.intersect_list_of_dicts(w.get('ipv6'), obj_in_have.get('ipv6'))
-            if ipv4_intersect:
-                lst_to_del.append({'ipv4': ipv4_intersect})
-            if ipv6_intersect:
-                lst_to_del.append({'ipv6': ipv6_intersect})
-            if lst_to_del:
-                for item in lst_to_del:
-                    commands.extend(self.generate_delete_commands(item))
-            else:
-                commands.extend(self.generate_delete_commands(obj_in_have))
-            if commands:
-                commands.insert(0, 'interface ' + obj_in_have['name'])
-        return commands
-
     def generate_delete_commands(self, obj):
         commands = []
+        if 'dot1q' in obj:
+            commands.append('no encapsulation dot1q')
+        if 'redirects' in obj:
+            # Note: device will auto-disable redirects when secondaries are present
+            commands.append('ip redirects')
+        if 'unreachables' in obj:
+            commands.append('no ip unreachables')
         if 'ipv4' in obj:
             commands.append('no ip address')
         if 'ipv6' in obj:
@@ -247,35 +374,28 @@ class L3_interfaces(ConfigBase):
             diff.append(dict((x, y) for x, y in element))
         return diff
 
-    def intersect_list_of_dicts(self, w, h):
-        intersect = []
-        waddr = []
-        haddr = []
-        set_w = set()
-        set_h = set()
-        if w:
-            for d in w:
-                waddr.append({'address': d['address']})
-            set_w = set(tuple(sorted(d.items())) for d in waddr) if waddr else set()
-        if h:
-            for d in h:
-                haddr.append({'address': d['address']})
-            set_h = set(tuple(sorted(d.items())) for d in haddr) if haddr else set()
-        intersection = set_w.intersection(set_h)
-        for element in intersection:
-            intersect.append(dict((x, y) for x, y in element))
-        return intersect
-
-    def add_commands(self, diff, name):
+    def add_commands(self, diff, obj_in_have=None, name=''):
         commands = []
         if not diff:
             return commands
-
+        if obj_in_have is None:
+            obj_in_have = {}
+        if 'dot1q' in diff:
+            commands.append('encapsulation dot1q ' + str(diff['dot1q']))
+        if 'redirects' in diff:
+            # Note: device will auto-disable redirects when secondaries are present
+            if diff['redirects'] != obj_in_have.get('redirects', True):
+                no_cmd = 'no ' if diff['redirects'] is False else ''
+                commands.append(no_cmd + 'ip redirects')
+        if 'unreachables' in diff:
+            if diff['unreachables'] != obj_in_have.get('unreachables', False):
+                no_cmd = 'no ' if diff['unreachables'] is False else ''
+                commands.append(no_cmd + 'ip unreachables')
         if 'ipv4' in diff:
             commands.extend(self.generate_commands(diff['ipv4'], flag='ipv4'))
         if 'ipv6' in diff:
             commands.extend(self.generate_commands(diff['ipv6'], flag='ipv6'))
-        if commands:
+        if commands and name:
             commands.insert(0, 'interface ' + name)
         return commands
 
@@ -303,10 +423,18 @@ class L3_interfaces(ConfigBase):
         commands = []
         obj_in_have = search_obj_in_list(w['name'], have, 'name')
         if not obj_in_have:
-            commands = self.add_commands(w, w['name'])
+            commands = self.add_commands(w, name=w['name'])
         else:
-            diff = {}
-            diff.update({'ipv4': self.diff_list_of_dicts(w.get('ipv4'), obj_in_have.get('ipv4'))})
-            diff.update({'ipv6': self.diff_list_of_dicts(w.get('ipv6'), obj_in_have.get('ipv6'))})
-            commands = self.add_commands(diff, w['name'])
+            # lists of dicts must be processed separately from non-list attrs
+            v4_cmds = self._v4_cmds(w.pop('ipv4', []), obj_in_have.pop('ipv4', []), state='merged')
+            v6_cmds = self._v6_cmds(w.pop('ipv6', []), obj_in_have.pop('ipv6', []), state='merged')
+
+            # diff remaining attrs
+            diff = self.diff_of_dicts(w, obj_in_have)
+            commands = self.add_commands(diff, obj_in_have=obj_in_have)
+            commands.extend(v4_cmds)
+            commands.extend(v6_cmds)
+            if commands:
+                commands.insert(0, 'interface ' + w['name'])
+
         return commands

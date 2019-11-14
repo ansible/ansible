@@ -2,15 +2,21 @@
 - debug:
     msg: "Start nxos_l3_interfaces merged integration tests connection={{ ansible_connection }}"
 
-- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact:
+    test_int1: "{{ nxos_int1 }}"
+    subint1: "{{ nxos_int1 }}.42"
 
 - name: setup1
   cli_config: &cleanup
     config: |
       default interface {{ test_int1 }}
 
+- name: setup2 cleanup all L3 states on all interfaces
+  nxos_l3_interfaces:
+    state: deleted
+
 - block:
-  - name: setup2
+  - name: setup3
     cli_config:
       config: |
         interface {{ test_int1 }}
@@ -19,7 +25,10 @@
   - name: Merged
     nxos_l3_interfaces: &merged
       config:
-        - name: "{{ test_int1 }}"
+        - name: "{{ subint1 }}"
+          dot1q: 42
+          redirects: false
+          unreachables: true
           ipv4:
             - address: 192.168.10.2/24
       state:  merged
@@ -29,9 +38,12 @@
       that:
         - "result.changed == true"
         - "result.before|length == 0"
-        - "'interface {{ test_int1 }}' in result.commands"
+        - "'interface {{ subint1 }}' in result.commands"
+        - "'encapsulation dot1q 42' in result.commands"
+        - "'no ip redirects' in result.commands"
+        - "'ip unreachables' in result.commands"
         - "'ip address 192.168.10.2/24' in result.commands"
-        - "result.commands|length == 2"
+        - "result.commands|length == 5"
 
   - name: Gather l3_interfaces facts
     nxos_facts:
@@ -60,3 +72,7 @@
   always:
   - name: teardown
     cli_config: *cleanup
+
+  - name: teardown2 cleanup all L3 states on all interfaces
+    nxos_l3_interfaces:
+      state: deleted

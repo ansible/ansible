@@ -2,20 +2,30 @@
 - debug:
     msg: "Start nxos_l3_interfaces replaced integration tests connection={{ ansible_connection }}"
 
-- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact:
+    test_int1: "{{ nxos_int1 }}"
+    subint1: "{{ nxos_int1 }}.42"
 
 - name: setup1
   cli_config: &cleanup
     config: |
       default interface {{ test_int1 }}
 
+- name: setup2 cleanup all L3 states on all interfaces
+  nxos_l3_interfaces:
+    state: deleted
+
 - block:
-  - name: setup2
+  - name: setup3
     cli_config:
       config: |
         interface {{ test_int1 }}
           no switchport
+        interface {{ subint1 }}
+          encapsulation dot1q 42
           ip address 192.168.10.2/24
+          no ip redirects
+          ip unreachables
 
   - name: Gather l3_interfaces facts
     nxos_facts: &facts
@@ -27,7 +37,12 @@
   - name: Replaced
     nxos_l3_interfaces: &replaced
       config:
-        - name: "{{ test_int1 }}"
+        - name: "{{ subint1 }}"
+          dot1q: 442
+          redirects: true
+          unreachables: false
+          ipv4:
+            - address: 192.168.20.2/24
           ipv6:
             - address: "fd5d:12c9:2201:1::1/64"
               tag: 6
@@ -38,10 +53,13 @@
       that:
         - "result.before|length == (ansible_facts.network_resources.l3_interfaces|length - 1)"
         - "result.changed == true"
-        - "'interface {{ test_int1 }}' in result.commands"
-        - "'no ip address' in result.commands"
+        - "'interface {{ subint1 }}' in result.commands"
+        - "'encapsulation dot1q 442' in result.commands"
+        - "'ip redirects' in result.commands"
+        - "'no ip unreachables' in result.commands"
+        - "'ip address 192.168.20.2/24' in result.commands"
         - "'ipv6 address fd5d:12c9:2201:1::1/64 tag 6' in result.commands"
-        - "result.commands|length == 3"
+        - "result.commands|length == 6"
 
   - name: Gather l3_interfaces post facts
     nxos_facts: *facts
@@ -62,3 +80,7 @@
   always:
   - name: teardown
     cli_config: *cleanup
+
+  - name: teardown2 cleanup all L3 states on all interfaces
+    nxos_l3_interfaces:
+      state: deleted

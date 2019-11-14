@@ -13,8 +13,12 @@
       default interface {{ test_int2 }}
       default interface {{ test_int3 }}
 
+- name: setup2 cleanup all L3 states on all interfaces
+  nxos_l3_interfaces:
+    state: deleted
+
 - block:
-  - name: setup2
+  - name: setup3
     cli_config:
       config: |
         interface {{ test_int1 }}
