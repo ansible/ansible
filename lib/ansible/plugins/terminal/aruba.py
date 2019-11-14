@@ -25,7 +25,9 @@ import re
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.plugins.terminal import TerminalBase
+from ansible.utils.display import Display
 
+display = Display()
 
 class TerminalModule(TerminalBase):
 
@@ -66,4 +68,4 @@ class TerminalModule(TerminalBase):
         try:
             self._exec_cli_command(b'no pag')
         except AnsibleConnectionFailure:
-            raise AnsibleConnectionFailure('unable to set terminal parameters')
+            self._connection.queue_message('warning', 'Unable to configure paging, command responses may be truncated')
