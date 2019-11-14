@@ -73,8 +73,12 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, to_saf
 from ansible.errors import AnsibleError, AnsibleParserError
 try:
     import requests
-except ImportError:
-    raise AnsibleError('This script requires python-requests')
+    HAS_REQUESTS = True 
+except ImportError: 
+    HAS_REQUESTS = False 
+if not HAS_REQUESTS:
+    raise AnsibleParserError('Please install "requests" Python module as this is required'
+                              ' for ServiceNow dynamic inventory plugin.')
 import sys
 
 
@@ -94,18 +98,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # build url
         self.url = "https://%s/%s" % (self.get_option('instance'), path)
         url = self.url
+        results = []
+        
+        if not self.update_cache:
+            try:    
+                results = self._cache[self.cache_key][self.url]
+            except KeyError:
+                pass
 
-        try:
-            results = self._cache[self.cache_key][self.url]
-        except KeyError:
-            self.update_cache = True
-
-        if not self.use_cache or self.url not in self._cache.get(
-                self.cache_key, {}):
+        if not results:
             if self.cache_key not in self._cache:
                 self._cache[self.cache_key] = {self.url: ''}
 
-            results = []
             session = requests.Session()
 
             while url:
