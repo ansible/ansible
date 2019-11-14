@@ -109,7 +109,7 @@ except ImportError:
 if not HAS_REQUESTS:
     raise AnsibleParserError('Please install "requests" Python module as this is required'
                              ' for ServiceNow dynamic inventory plugin.')
-    import sys
+import sys
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
