@@ -215,18 +215,16 @@ class TestNxosL3InterfacesModule(TestNxosModule):
         self.get_resource_connection_facts.return_value = {self.SHOW_CMD: existing}
         playbook = dict(config=[
             dict(name='Ethernet1/1',
-                 ipv4=[{'address': '10.1.1.1/24', 'secondary':True}, # prim->sec
-                       {'address': '10.2.2.2/24', 'secondary':True}, # rmv tag
-                       {'address': '10.3.3.3/24', 'tag': 3},         # become prim
-                       {'address': '10.4.4.4/24', 'secondary':True, 'tag': 14}, # no chg
-                       {'address': '10.5.5.5/24', 'secondary':True, 'tag': 55}, # chg tag
-                       {'address': '10.7.7.7/24', 'secondary':True, 'tag': 77}  # new ip
-                      ]),
+                 ipv4=[{'address': '10.1.1.1/24', 'secondary': True},  # prim->sec
+                       {'address': '10.2.2.2/24', 'secondary': True},  # rmv tag
+                       {'address': '10.3.3.3/24', 'tag': 3},           # become prim
+                       {'address': '10.4.4.4/24', 'secondary': True, 'tag': 14},  # no chg
+                       {'address': '10.5.5.5/24', 'secondary': True, 'tag': 55},  # chg tag
+                       {'address': '10.7.7.7/24', 'secondary': True, 'tag': 77}]),  # new ip
             dict(name='Ethernet1/2'),
             dict(name='Ethernet1/4',
                  ipv4=[{'address': '10.40.40.40/24'},
-                       {'address': '10.41.41.41/24', 'secondary':True}
-                      ]),
+                       {'address': '10.41.41.41/24', 'secondary': True}]),
         ])
         # Expected result commands for each 'state'
         merged = [
@@ -315,12 +313,12 @@ class TestNxosL3InterfacesModule(TestNxosModule):
         self.get_resource_connection_facts.return_value = {self.SHOW_CMD: existing}
         playbook = dict(config=[
             dict(name='Ethernet1/1',
-                 ipv6=[{'address': '10::1/128'},              # no chg
-                       {'address': '10::3/128'},              # tag rmv
-                       {'address': '10::4/128', 'tag': 44},   # tag chg
-                       {'address': '10::5/128',},             # new addr
-                       {'address': '10::6/128', 'tag': 66}]), # new addr+tag
-           dict(name='Ethernet1/2'),
+                 ipv6=[{'address': '10::1/128'},               # no chg
+                       {'address': '10::3/128'},               # tag rmv
+                       {'address': '10::4/128', 'tag': 44},    # tag chg
+                       {'address': '10::5/128'},               # new addr
+                       {'address': '10::6/128', 'tag': 66}]),  # new addr+tag
+            dict(name='Ethernet1/2'),
         ])
         # Expected result commands for each 'state'
         merged = [
@@ -392,7 +390,7 @@ class TestNxosL3InterfacesModule(TestNxosModule):
             dict(name='Ethernet1/1', redirects=True, unreachables=False,
                  ipv4=[{'address': '192.168.1.1/24'}]),
             dict(name='Ethernet1/2'),
-            dict(name='Ethernet1/3', redirects=True, unreachables=False), # defaults
+            dict(name='Ethernet1/3', redirects=True, unreachables=False),  # defaults
             dict(name='Ethernet1/4', redirects=False, unreachables=True),
         ])
         merged = [
@@ -469,8 +467,7 @@ class TestNxosL3InterfacesModule(TestNxosModule):
                        {'address': '10.3.3.3/24', 'secondary': True, 'tag': 3},
                        {'address': '10.4.4.4/24', 'secondary': True}],
                  ipv6=[{'address': '10::1/128'},
-                       {'address': '10::2/128', 'tag': 2}],
-                ),
+                       {'address': '10::2/128', 'tag': 2}]),
             dict(name='Ethernet1/2')
         ])
         playbook['state'] = 'merged'

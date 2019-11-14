@@ -14,6 +14,7 @@ created
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+from copy import deepcopy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties
 from ansible.module_utils.network.nxos.facts.facts import Facts
@@ -100,7 +101,7 @@ class L3_interfaces(ConfigBase):
                 if get_interface_type(w['name']) == 'management':
                     self._module.fail_json(msg="The 'management' interface is not allowed to be managed by this module")
                 want.append(remove_empties(w))
-        have = existing_l3_interfaces_facts
+        have = deepcopy(existing_l3_interfaces_facts)
         resp = self.set_state(want, have)
         return to_list(resp)
 
@@ -234,10 +235,10 @@ class L3_interfaces(ConfigBase):
         overridden = True if state == 'overridden' else False
 
         # Create secondary and primary wants/haves
-        sec_w = [ i for i in want if i.get('secondary')]
-        sec_h = [ i for i in have if i.get('secondary')]
-        pri_w = [ i for i in want if not i.get('secondary')]
-        pri_h = [ i for i in have if not i.get('secondary')]
+        sec_w = [i for i in want if i.get('secondary')]
+        sec_h = [i for i in have if i.get('secondary')]
+        pri_w = [i for i in want if not i.get('secondary')]
+        pri_h = [i for i in have if not i.get('secondary')]
         pri_w = pri_w[0] if pri_w else {}
         pri_h = pri_h[0] if pri_h else {}
         cmds = []
@@ -272,7 +273,7 @@ class L3_interfaces(ConfigBase):
         # 3. process remaining secondaries last
         sec_w_to_chg = self.diff_list_of_dicts(sec_w, sec_h)
         for i in sec_w_to_chg:
-            cmd = 'ip address %s secondary' %i['address']
+            cmd = 'ip address %s secondary' % i['address']
             cmd += ' tag %s' % i['tag'] if i['tag'] else ''
             cmds.append(cmd)
 

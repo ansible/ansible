@@ -26,6 +26,7 @@
           ip address 192.168.10.2/24
           no ip redirects
           ip unreachables
+    ignore_errors: yes
 
   - name: Gather l3_interfaces facts
     nxos_facts: &facts

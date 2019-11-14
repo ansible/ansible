@@ -29,6 +29,7 @@
           ip address 10.1.1.1/24
         interface {{ test_int3 }}
           no switchport
+    ignore_errors: yes
 
   - name: Gather l3_interfaces facts
     nxos_facts: &facts

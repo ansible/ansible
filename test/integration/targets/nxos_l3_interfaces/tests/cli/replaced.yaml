@@ -26,6 +26,7 @@
           ip address 192.168.10.2/24
           no ip redirects
           ip unreachables
+    ignore_errors: yes
 
   - name: Gather l3_interfaces facts
     nxos_facts: &facts
@@ -43,9 +44,6 @@
           unreachables: false
           ipv4:
             - address: 192.168.20.2/24
-          ipv6:
-            - address: "fd5d:12c9:2201:1::1/64"
-              tag: 6
       state: replaced
     register: result
 
@@ -58,8 +56,7 @@
         - "'ip redirects' in result.commands"
         - "'no ip unreachables' in result.commands"
         - "'ip address 192.168.20.2/24' in result.commands"
-        - "'ipv6 address fd5d:12c9:2201:1::1/64 tag 6' in result.commands"
-        - "result.commands|length == 6"
+        - "result.commands|length == 5"
 
   - name: Gather l3_interfaces post facts
     nxos_facts: *facts

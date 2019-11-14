@@ -21,6 +21,7 @@
       config: |
         interface {{ test_int1 }}
           no switchport
+    ignore_errors: yes
 
   - name: Merged
     nxos_l3_interfaces: &merged
