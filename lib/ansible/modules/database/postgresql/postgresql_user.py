@@ -852,7 +852,7 @@ def main():
             target_roles = []
             target_roles.append(user)
             pg_membership = PgMembership(module, cursor, groups, target_roles)
-            changed = pg_membership.grant()
+            changed = pg_membership.grant() or changed
             executed_queries.extend(pg_membership.executed_queries)
 
     else:
