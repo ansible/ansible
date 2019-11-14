@@ -10,19 +10,15 @@
   cli_config: &cleanup
     config: |
       default interface {{ test_int1 }}
+      interface {{ test_int1 }}
+        no switchport
+  ignore_errors: yes
 
 - name: setup2 cleanup all L3 states on all interfaces
   nxos_l3_interfaces:
     state: deleted
 
 - block:
-  - name: setup3
-    cli_config:
-      config: |
-        interface {{ test_int1 }}
-          no switchport
-    ignore_errors: yes
-
   - name: Merged
     nxos_l3_interfaces: &merged
       config:
@@ -73,6 +69,7 @@
   always:
   - name: teardown
     cli_config: *cleanup
+    ignore_errors: yes
 
   - name: teardown2 cleanup all L3 states on all interfaces
     nxos_l3_interfaces:

@@ -12,6 +12,13 @@
       default interface {{ test_int1 }}
       default interface {{ test_int2 }}
       default interface {{ test_int3 }}
+      interface {{ test_int1 }}
+        no switchport
+      interface {{ test_int2 }}
+        no switchport
+      interface {{ test_int3 }}
+        no switchport
+  ignore_errors: yes
 
 - name: setup2 cleanup all L3 states on all interfaces
   nxos_l3_interfaces:
@@ -22,14 +29,9 @@
     cli_config:
       config: |
         interface {{ test_int1 }}
-          no switchport
           ip address 192.168.10.2/24 tag 5
         interface {{ test_int2 }}
-          no switchport
           ip address 10.1.1.1/24
-        interface {{ test_int3 }}
-          no switchport
-    ignore_errors: yes
 
   - name: Gather l3_interfaces facts
     nxos_facts: &facts
@@ -78,3 +80,8 @@
   always:
   - name: teardown
     cli_config: *cleanup
+    ignore_errors: yes
+
+  - name: teardown cleanup all L3 interfaces on device
+    nxos_l3_interfaces:
+      state: deleted

@@ -10,6 +10,9 @@
   cli_config: &cleanup
     config: |
       default interface {{ test_int1 }}
+      interface {{ test_int1 }}
+        no switchport
+  ignore_errors: yes
 
 - name: setup2 cleanup all L3 interfaces on device
   nxos_l3_interfaces:
@@ -19,14 +22,11 @@
   - name: setup3
     cli_config:
       config: |
-        interface {{ test_int1 }}
-          no switchport
         interface {{ subint1 }}
           encapsulation dot1q 42
           ip address 192.168.10.2/24
           no ip redirects
           ip unreachables
-    ignore_errors: yes
 
   - name: Gather l3_interfaces facts
     nxos_facts: &facts
@@ -64,6 +64,7 @@
   always:
   - name: teardown
     cli_config: *cleanup
+    ignore_errors: yes
 
   - name: teardown cleanup all L3 interfaces on device
     nxos_l3_interfaces:
