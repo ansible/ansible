@@ -43,6 +43,7 @@ options:
      description:
         - Size of local disk, in GB.
      default: 0
+     type: int
    ephemeral:
      description:
         - Ephemeral space size, in GB.
