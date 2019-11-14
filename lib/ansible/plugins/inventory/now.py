@@ -43,11 +43,11 @@ DOCUMENTATION = r'''
         fields:
             description: Comma seperated string providing additional table columns to add as host vars to each inventory host.
             type: list
-            default: [name,host_name,fqdn,ip_address,sys_class_name]
+            default: [host_name,fqdn,ip_address,sys_class_name]
         selection_order:
             description: Comma seperated string providing ability to define selection preference order.
             type: list
-            default: 'name,fqdn,ip_address'
+            default: 'host_name,fqdn,ip_address'
         filter_results:
             description: Filter results with sysparm_query encoded query string syntax. Complete list of operators available for filters and queries.
             type: string
@@ -64,7 +64,7 @@ instance: demo.service-now.com
 username: admin
 password: password
 keyed_groups:
-  - key: sn_sys_class_name
+  - key: sn_sys_class_name | lower
     prefix: ''
     separator: ''
 
@@ -74,15 +74,15 @@ username: admin
 password: password
 fields: [name,host_name,fqdn,ip_address,sys_class_name, install_status, classification,vendor]
 keyed_groups:
-  - key: sn_classification
+  - key: sn_classification | lower
     prefix: 'env'
-  - key: sn_vendor
+  - key: sn_vendor | lower
     prefix: ''
     separator: ''
-  - key: sn_sys_class_name
+  - key: sn_sys_class_name | lower
     prefix: ''
     separator: ''
-  - key: sn_install_status
+  - key: sn_install_status | lower
     prefix: 'status'
 
 plugin: now
@@ -94,21 +94,19 @@ fields:
   - sys_tags
 compose:
   sn_tags: sn_sys_tags.replace(" ", "").split(',')
+  ansible_host: sn_ip_address
 keyed_groups:
-  - key: sn_tags
+  - key: sn_tags | lower
     prefix: 'tag'
 '''
 
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, to_safe_group_name, Cacheable
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.errors import AnsibleError, AnsibleParserError
 try:
     import requests
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
-if not HAS_REQUESTS:
-    raise AnsibleParserError('Please install "requests" Python module as this is required'
-                             ' for ServiceNow dynamic inventory plugin.')
+    HAS_REQUESTS = True 
+except ImportError: 
+    HAS_REQUESTS = False 
 import sys
 
 
@@ -129,9 +127,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.url = "https://%s/%s" % (self.get_option('instance'), path)
         url = self.url
         results = []
-
+        
         if not self.update_cache:
-            try:
+            try:    
                 results = self._cache[self.cache_key][self.url]
             except KeyError:
                 pass
@@ -166,9 +164,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def parse(self, inventory, loader, path,
               cache=True):  # Plugin interface (2)
         super(InventoryModule, self).parse(inventory, loader, path)
-        self._read_config_data(path)
-        self.load_cache_plugin()
 
+        if not HAS_REQUESTS:
+            raise AnsibleParserError('Please install "requests" Python module as this is required'
+                                     ' for ServiceNow dynamic inventory plugin.')
+
+        self._read_config_data(path)
         self.cache_key = self.get_cache_key(path)
 
         self.use_cache = self.get_option('cache') and cache
