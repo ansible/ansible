@@ -436,15 +436,15 @@ def wait_for_status(client, stream_name, status, wait_timeout=300,
                         status_achieved = True
                         break
 
-            elif status == 'DELETING' and not check_mode:
+            else:
                 if not find_success:
                     status_achieved = True
                     break
 
-            else:
-                time.sleep(polling_increment_secs)
         except botocore.exceptions.ClientError as e:
             err_msg = to_native(e)
+
+        time.sleep(polling_increment_secs)
 
     if not status_achieved:
         err_msg = "Wait time out reached, while waiting for results"
