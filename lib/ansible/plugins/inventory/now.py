@@ -213,4 +213,3 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                                               dict(), host_name, strict)
             self._add_host_to_keyed_groups(self.get_option('keyed_groups'),
                                            dict(), host_name, strict)
-
