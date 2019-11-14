@@ -940,7 +940,7 @@ def main():
             target_roles = []
             target_roles.append(user)
             pg_membership = PgMembership(module, cursor, target_roles, groups)
-            changed = pg_membership.grant()
+            changed = pg_membership.grant() or changed
 
     else:
         if user_exists(cursor, user):
