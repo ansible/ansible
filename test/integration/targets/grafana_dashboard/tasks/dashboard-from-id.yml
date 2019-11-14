@@ -1,0 +1,40 @@
+---
+- name: Check import grafana dashboard from id
+  grafana_dashboard:
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    state: present
+    message: Updated by ansible
+    dashboard_id: "6098"
+    dashboard_revision: "1"
+    overwrite: true
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.msg == 'Dashboard Zabbix Host Status created'"
+
+- name: Check import grafana dashboard from id idempotency
+  grafana_dashboard:
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    state: present
+    message: Updated by ansible
+    dashboard_id: "6098"
+    dashboard_revision: "1"
+    overwrite: true
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.msg == 'Dashboard Zabbix Host Status unchanged.'"

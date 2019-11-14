@@ -167,7 +167,6 @@ uid:
 '''
 
 import json
-import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 from ansible.module_utils.six.moves.urllib.parse import urlencode
@@ -311,7 +310,7 @@ def grafana_dashboard_changed(payload, dashboard):
         del(dashboard['meta'])
 
     # new dashboards don't require an id attribute (or, it can be 'null'), Grafana's API will generate it
-    if payload['dashboard']['id'] is None:
+    if payload['dashboard'].get('id'):
         del(dashboard['dashboard']['id'])
         del(payload['dashboard']['id'])
 
@@ -417,6 +416,10 @@ def grafana_create_dashboard(module, data):
         if folder_exists is True:
             payload['folderId'] = folder_id
 
+        # Ensure there is no id in payload
+        if 'id' in payload['dashboard']:
+            del payload['dashboard']['id']
+
         r, info = fetch_url(module, '%s/api/dashboards/db' % data['grafana_url'],
                             data=json.dumps(payload), headers=headers, method='POST')
         if info['status'] == 200:
@@ -430,8 +433,8 @@ def grafana_create_dashboard(module, data):
                     raise GrafanaAPIException(e)
             result['uid'] = uid
         else:
-            raise GrafanaAPIException('Unable to create the new dashboard %s : %s - %s.' %
-                                      (payload['dashboard']['title'], info['status'], info))
+            raise GrafanaAPIException('Unable to create the new dashboard %s : %s - %s. (headers : %s)' %
+                                      (payload['dashboard']['title'], info['status'], info, headers))
 
     return result
 

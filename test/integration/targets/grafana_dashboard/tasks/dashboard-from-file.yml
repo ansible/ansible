@@ -1,0 +1,44 @@
+---
+- name: copy dashboard file
+  copy:
+    src: "files/dashboard.json"
+    dest: "/tmp/dashboard.json"
+
+
+- name: Check import grafana dashboard from file
+  grafana_dashboard:
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    state: present
+    message: Updated by ansible
+    path: /tmp/dashboard.json
+    overwrite: true
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.msg == 'Dashboard test created'"
+
+- name: Check import grafana dashboard from file idempotency
+  grafana_dashboard:
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    state: present
+    message: Updated by ansible
+    path: /tmp/dashboard.json
+    overwrite: true
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.msg == 'Dashboard test unchanged.'"

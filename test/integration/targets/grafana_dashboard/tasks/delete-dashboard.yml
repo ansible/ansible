@@ -1,0 +1,16 @@
+- name: Check delete dashboard is working
+  grafana_dashboard:
+    grafana_url: "http://127.0.0.1:3000"
+    grafana_user: "admin"
+    grafana_password: "admin"
+    state: absent
+    uid: "{{ result.uid }}"
+  register: result
+
+- debug:
+    var: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "result.msg == 'Dashboard {{ result.uid }} deleted'"
