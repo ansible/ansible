@@ -15,7 +15,7 @@ module: aws_glue_job
 short_description: Manage an AWS Glue job
 description:
     - Manage an AWS Glue job. See U(https://aws.amazon.com/glue/) for details.
-version_added: "2.10"
+version_added: "2.6"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
@@ -42,6 +42,7 @@ options:
       - The version of python to use in glue.
     required: false
     type: str
+    version_added: "2.10"
   connections:
     description:
       - A list of Glue connections used for this job.
@@ -97,18 +98,21 @@ options:
     required: false
     choices: [ 'Standard', 'G.1X', 'G.2X' ]
     type: str
+    version_added: "2.10"
   number_of_workers:
     description:
       - The number of workers of a defined workerType that are allocated when a job runs.
         The maximum number of workers you can define are 299 for G.1X , and 149 for G.2X
     required: false
     type: int
+    version_added: "2.10"
   glue_version:
     description:
       - Glue version determines the versions of Apache Spark and Python that AWS Glue supports.
     required: false
     choices: [ '0.9', '1.0' ]
     type: str
+    version_added: "2.10"
 extends_documentation_fragment:
     - aws
     - ec2
