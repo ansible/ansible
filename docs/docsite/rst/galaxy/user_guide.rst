@@ -29,15 +29,44 @@ Galaxy presents a list of collections that match your search criteria.
 .. _installing_galaxy_collections:
 
 
-Installing collections from Galaxy
-==================================
+Installing collections
+======================
 
 
-Installing a collection
------------------------
+Installing a collection from Galaxy
+-----------------------------------
 
 .. include:: ../shared_snippets/installing_collections.txt
 
+.. _installing_ah_collection:
+
+Downloading a collection from Automation Hub
+----------------------------------------------------
+
+To download a collection from Automation Hub with the ``ansible-galaxy`` command:
+
+#. Get your Automation Hub API token. Go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Get API token` from the version dropdown to copy your API token.
+#. Configure Red Hat Automation Hub server in the ``server_list``  option under the ``[galaxy]`` section in your :file:`ansible.cfg` file.
+
+  .. code-block:: ini
+
+      [galaxy]
+      server_list = automation_hub
+
+      [galaxy_server.automation_hub]
+      url=https://cloud.redhat.com/api/automation-hub/
+      auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+      token=my_ah_token
+
+3. Download the collection hosted in Automation Hub.
+
+  .. code-block:: bash
+
+     ansible-galaxy collection install my_namespace.my_collection
+
+.. seealso::
+  `Getting started with Automation Hub <https://www.ansible.com/blog/getting-started-with-ansible-hub>`_
+    An introduction to Automation Hub
 
 Installing an older version of a collection
 -------------------------------------------

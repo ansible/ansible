@@ -13,7 +13,7 @@ To configure a Galaxy server list in ``ansible.cfg``:
 #. Create a new section for each server name.
 #. Set the ``url`` option for each server name.
 
-For Red Hat Automation Hub, you additionally need to:
+For Automation Hub, you additionally need to:
 
 #. Set the ``auth_url`` option for each server name.
 #. Set the API token for each server name. Go to https://cloud.redhat.com/ansible/automation-hub/token/ and click ::guilabel:`Get API token` from the version dropdown to copy your API token.

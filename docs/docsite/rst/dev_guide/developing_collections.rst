@@ -271,7 +271,7 @@ You can publish collections to Galaxy using the ``ansible-galaxy collection publ
 
 .. note:: Once you upload a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before you upload it.
 
-.. _galaxy_token:
+.. _galaxy_get_token:
 
 Getting your token or API key
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -281,7 +281,7 @@ To upload your collection to Galaxy, you must first obtain an API token (``--api
 To get your API token:
 
 * For galaxy, go to `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API token`.
-* for Red Hat Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click ::guilabel:`Get API token` from the version dropdown.
+* for Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Get API token` from the version dropdown.
 
 .. _upload_collection_ansible_galaxy:
 
@@ -303,8 +303,7 @@ The command waits until the import process completes before reporting the status
 without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your
 `My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
 
-The API key is a secret token used by Ansible Galaxy to protect your content. You can find your API key at your
-`Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page.
+The API key is a secret token used by Ansible Galaxy to protect your content. See :ref:`galaxy_get_token` for details.
 
 .. _upload_collection_galaxy:
 
