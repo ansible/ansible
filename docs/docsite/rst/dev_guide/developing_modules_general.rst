@@ -254,9 +254,9 @@ information, including instructions for :ref:`testing module documentation <test
 Sanity tests
 ------------
 
-You can run through the Ansible sanity checks in a container. By default the test command will run tests on all supported versions of Python. To limit your test run to a specific Python version:
+You can run through the Ansible sanity checks in a container. By default the test command will run tests on all supported versions of Python. To limit your test run to a specific Python version::
 
-``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
+  $ ansible-test sanity -v --docker default --python 2.7 MODULE_NAME
 
 Note that this example requires Docker to be installed and running. If you'd rather not use a
 container for this, you can choose to use ``--venv`` instead of ``--docker``.
@@ -264,19 +264,18 @@ container for this, you can choose to use ``--venv`` instead of ``--docker``.
 Unit tests
 ----------
 
-You can add unit tests for your module in ``./test/units/modules``. You can run these in a container as well. Be sure to set up your development environment:
+You can add unit tests for your module in ``./test/units/modules``. You can run these in a container as well. Be sure to set up your development environment::
 
-``. hacking/env-setup``
+  ./hacking/env-setup
 
-Then run the unit tests in the container of your choice. These commands install any missing requirements in your container or virtual environment before exercising the tests:
+Then run the unit tests in the container of your choice. These commands install any missing requirements in your container or virtual environment before exercising the tests::
 
-``ansible-test units --docker default MODULE_NAME``
-``ansible-test units --venv MODULE_NAME``
+  ansible-test units --docker default MODULE_NAME
+  ansible-test units --venv MODULE_NAME
 
-Ansible uses pytest for unit testing. You can run pytest against a single test module (use the correct path for your test module):
+Ansible uses pytest for unit testing. You can run pytest against a single test module (use the correct path for your test module)::
 
-``$ pytest -r a --cov=. --cov-report=html --fulltrace --color yes
-test/units/modules/.../test/my_test.py``
+  $ pytest -r a --cov=. --cov-report=html --fulltrace --color yes test/units/modules/.../test/my_test.py
 
 Contributing back to Ansible
 ============================
