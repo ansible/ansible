@@ -249,7 +249,7 @@ Testing basics
 ====================
 
 These two examples will get you started with testing your module code. The :ref:`testing <developing_testing>` section has more detailed
-information, including instructions for :ref:`testing module documentation <testing_module_documentation>`, adding :ref:`integration tests <testing_integration>`, and more. The :ref:`ansible-test` documentation provides details about the flags available with the ``ansible-test`` command.
+information, including instructions for :ref:`testing module documentation <testing_module_documentation>`, adding :ref:`integration tests <testing_integration>`, and more.
 
 Sanity tests
 ------------
