@@ -543,6 +543,7 @@ def main():
         feed=dict(),
         generate_sqlite=dict(default=False, type='bool'),
         feed_ca_cert=dict(aliases=['importer_ssl_ca_cert', 'ca_cert']),
+        deprecated_aliases=[dict(name='ca_cert', version='2.14')],
         feed_client_cert=dict(aliases=['importer_ssl_client_cert']),
         feed_client_key=dict(aliases=['importer_ssl_client_key']),
         name=dict(required=True, aliases=['repo']),
@@ -570,8 +571,6 @@ def main():
     generate_sqlite = module.params['generate_sqlite']
     importer_ssl_ca_cert = module.params['feed_ca_cert']
     importer_ssl_client_cert = module.params['feed_client_cert']
-    if module.params['ca_cert']:
-        module.deprecate("use feed_ca_cert, ca_cert alias will be removed in 2.14", version="2.14")
     if importer_ssl_client_cert is None and module.params['client_cert'] is not None:
         importer_ssl_client_cert = module.params['client_cert']
         module.deprecate(("To specify client certificates to be used with the repo to sync, and not for communication with pulp.io, use the new options "
