@@ -13,6 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
@@ -38,15 +41,18 @@ options:
     description:
       - Name of the s3 bucket
     required: true
+    type: str
   policy:
     description:
       - The JSON policy as a string.
+    type: json
   s3_url:
     description:
       - S3 URL endpoint for usage with DigitalOcean, Ceph, Eucalyptus and fakes3 etc.
       - Assumes AWS if not specified.
       - For Walrus, use FQDN of the endpoint without scheme nor path.
     aliases: [ S3_URL ]
+    type: str
   ceph:
     description:
       - Enable API compatibility with Ceph. It takes into account the S3 API subset working
@@ -65,9 +71,11 @@ options:
     required: false
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   tags:
     description:
       - tags dict to apply to bucket
+    type: dict
   purge_tags:
     description:
       - whether to remove tags that aren't present in the C(tags) parameter
@@ -84,10 +92,12 @@ options:
         In order to remove the server-side encryption, the encryption needs to be set to 'none' explicitly.
     choices: [ 'none', 'AES256', 'aws:kms' ]
     version_added: "2.9"
+    type: str
   encryption_key_id:
     description: KMS master key ID to use for the default encryption. This parameter is allowed if encryption is aws:kms. If
                  not specified then it will default to the AWS provided KMS key.
     version_added: "2.9"
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -133,6 +143,24 @@ EXAMPLES = '''
     name: mydobucket
     s3_url: 'https://nyc3.digitaloceanspaces.com'
 
+# Create a bucket with AES256 encryption
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "AES256"
+
+# Create a bucket with aws:kms encryption, KMS key
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "aws:kms"
+    encryption_key_id: "arn:aws:kms:us-east-1:1234/5678example"
+
+# Create a bucket with aws:kms encryption, default key
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "aws:kms"
 '''
 
 import json
@@ -326,7 +354,7 @@ def create_or_update_bucket(s3_client, module, location):
             changed = True
         elif encryption != 'none' and (encryption != current_encryption_algorithm) or (encryption == 'aws:kms' and current_encryption_key != encryption_key_id):
             expected_encryption = {'SSEAlgorithm': encryption}
-            if encryption == 'aws:kms':
+            if encryption == 'aws:kms' and encryption_key_id is not None:
                 expected_encryption.update({'KMSMasterKeyID': encryption_key_id})
             try:
                 put_bucket_encryption(s3_client, name, expected_encryption)
@@ -660,7 +688,6 @@ def main():
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
-        required_if=[['encryption', 'aws:kms', ['encryption_key_id']]]
     )
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)

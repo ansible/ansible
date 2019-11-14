@@ -1,0 +1,7 @@
+---
+- name: Populate config
+  exos_config:
+    lines:
+      - create vlan vlan_10 tag 10
+      - create vlan vlan_20 tag 20
+      - disable vlan_20

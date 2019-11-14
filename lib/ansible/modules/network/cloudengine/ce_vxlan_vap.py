@@ -28,6 +28,10 @@ short_description: Manages VXLAN virtual access point on HUAWEI CloudEngine Devi
 description:
     - Manages VXLAN Virtual access point on HUAWEI CloudEngine Devices.
 author: QijunPan (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     bridge_domain_id:
         description:

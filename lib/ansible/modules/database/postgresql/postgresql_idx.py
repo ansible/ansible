@@ -49,11 +49,15 @@ options:
   state:
     description:
     - Index state.
-    - I(state=present) implies the index will be created if it does not exist.
-    - I(state=absent) implies the index will be dropped if it exists.
+    - C(present) implies the index will be created if it does not exist.
+    - C(absent) implies the index will be dropped if it exists.
+    - C(stat) returns index statistics information from the ``pg_stat_user_indexes`` standard view.
+      Supported from Ansible 2.10.
+    - "When C(stat) following parameters will be ignored:"
+    - I(schema), I(table), I(columns), I(cond), I(idxtype), I(tablespace), I(concurrent), I(cascade).
     type: str
     default: present
-    choices: [ absent, present ]
+    choices: [ absent, present, stat ]
   table:
     description:
     - Table to create index on it.
@@ -65,6 +69,7 @@ options:
     - List of index columns that need to be covered by index.
     - Mutually exclusive with I(state=absent).
     type: list
+    elements: str
     aliases:
     - column
   cond:
@@ -100,6 +105,7 @@ options:
     - Storage parameters like fillfactor, vacuum_cleanup_index_scale_factor, etc.
     - Mutually exclusive with I(state=absent).
     type: list
+    elements: str
   cascade:
     description:
     - Automatically drop objects that depend on the index,
@@ -193,6 +199,12 @@ EXAMPLES = r'''
     columns: id,comment
     idxname: test_idx
     cond: id > 1
+
+- name: Get index statistics of test_idx from mydb
+  postgresql_idx:
+    db: mydb
+    idxname: test_idx
+    state: stat
 '''
 
 RETURN = r'''
@@ -231,6 +243,11 @@ valid:
   returned: always
   type: bool
   sample: true
+stat:
+  description: Index statistics.
+  returned: if state is stat
+  type: bool
+  sample: { 'idx_scan': 19239, 'idx_tup_read': 929329, 'idx_tup_fetch': 4949459 }
 '''
 
 try:
@@ -311,6 +328,21 @@ class Index(object):
         self.__exists_in_db()
         return self.info
 
+    def get_stat(self):
+        """Get and return index statistics.
+
+        Return index statistics dictionary if index exists, otherwise False.
+        """
+        query = ("SELECT * FROM pg_stat_user_indexes "
+                 "WHERE indexrelname = '%s' "
+                 "AND schemaname = '%s'" % (self.name, self.schema))
+
+        result = exec_sql(self, query, add_to_executed=False)
+        if result:
+            return [dict(row) for row in result]
+        else:
+            return False
+
     def __exists_in_db(self):
         """Check index existence, collect info, add it to self.info dict.
 
@@ -361,7 +393,6 @@ class Index(object):
         if self.exists:
             return False
 
-        changed = False
         if idxtype is None:
             idxtype = "BTREE"
 
@@ -408,7 +439,6 @@ class Index(object):
                 default False
             concurrent (bool) -- build index in concurrent mode, default True
         """
-        changed = False
         if not self.exists:
             return False
 
@@ -443,7 +473,7 @@ def main():
     argument_spec.update(
         idxname=dict(type='str', required=True, aliases=['name']),
         db=dict(type='str', aliases=['login_db']),
-        state=dict(type='str', default='present', choices=['absent', 'present']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'stat']),
         concurrent=dict(type='bool', default=True),
         table=dict(type='str'),
         idxtype=dict(type='str', aliases=['type']),
@@ -504,7 +534,14 @@ def main():
     #
     # check_mode start
     if module.check_mode:
-        if state == 'present' and index.exists:
+        if state == 'stat':
+            if index.exists:
+                kw['stat'] = index.get_stat()
+
+            kw['changed'] = False
+            module.exit_json(**kw)
+
+        elif state == 'present' and index.exists:
             kw['changed'] = False
             module.exit_json(**kw)
 
@@ -522,7 +559,14 @@ def main():
     # check_mode end
     #
 
-    if state == "present":
+    if state == 'stat':
+        if index.exists:
+            kw['stat'] = index.get_stat()
+
+        kw['changed'] = False
+        module.exit_json(**kw)
+
+    elif state == "present":
         if idxtype and idxtype.upper() not in VALID_IDX_TYPES:
             module.fail_json(msg="Index type '%s' of %s is not in valid types" % (idxtype, idxname))
 

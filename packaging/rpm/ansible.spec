@@ -63,10 +63,11 @@ BuildRequires: python3-pytest
 BuildRequires: python3-pytest-xdist
 BuildRequires: python3-pytest-mock
 BuildRequires: python3-requests
-BuildRequires: python3-coverage
+BUildRequires: %{py3_dist coverage}
 BuildRequires: python3-mock
-BuildRequires: python3-boto3
-BuildRequires: python3-botocore
+# Not available in RHEL8, we'll just skip the tests where they apply
+#BuildRequires: python3-boto3
+#BuildRequires: python3-botocore
 BuildRequires: python3-systemd
 
 BuildRequires: git-core
@@ -283,6 +284,7 @@ ln -s /usr/bin/pytest-3 bin/pytest
 %files
 %defattr(-,root,root)
 %{_bindir}/ansible*
+%exclude %{_bindir}/ansible-test
 %config(noreplace) %{_sysconfdir}/ansible/
 %doc README.rst PKG-INFO COPYING changelogs/CHANGELOG*.rst
 %doc %{_mandir}/man1/ansible*

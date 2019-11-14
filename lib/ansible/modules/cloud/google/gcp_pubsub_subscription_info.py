@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_pubsub_subscription_info
 description:
 - Gather info for GCP Subscription
-- This module was called C(gcp_pubsub_subscription_facts) before Ansible 2.9. The
-  usage has not changed.
 short_description: Gather info for GCP Subscription
 version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
@@ -80,9 +78,9 @@ options:
     - This only alters the User Agent string for any API requests.
     type: str
 notes:
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -129,6 +127,31 @@ resources:
       returned: success
       type: complex
       contains:
+        oidcToken:
+          description:
+          - If specified, Pub/Sub will generate and attach an OIDC JWT token as an
+            Authorization header in the HTTP request for every pushed message.
+          returned: success
+          type: complex
+          contains:
+            serviceAccountEmail:
+              description:
+              - Service account email to be used for generating the OIDC token.
+              - The caller (for subscriptions.create, subscriptions.patch, and subscriptions.modifyPushConfig
+                RPCs) must have the iam.serviceAccounts.actAs permission for the service
+                account.
+              returned: success
+              type: str
+            audience:
+              description:
+              - 'Audience to be used when generating OIDC token. The audience claim
+                identifies the recipients that the JWT is intended for. The audience
+                value is a single case-sensitive string. Having multiple values (array)
+                for the audience field is not supported. More info about the OIDC
+                JWT token audience here: U(https://tools.ietf.org/html/rfc7519#section-4.1.3)
+                Note: if not specified, the Push endpoint URL will be used.'
+              returned: success
+              type: str
         pushEndpoint:
           description:
           - A URL locating the endpoint to which messages should be pushed.
@@ -198,18 +221,16 @@ resources:
       - A subscription is considered active as long as any connected subscriber is
         successfully consuming messages from the subscription or is issuing operations
         on the subscription. If expirationPolicy is not set, a default policy with
-        ttl of 31 days will be used. The minimum allowed value for expirationPolicy.ttl
-        is 1 day.
+        ttl of 31 days will be used. If it is set but left empty, the resource never
+        expires. The minimum allowed value for expirationPolicy.ttl is 1 day.
       returned: success
       type: complex
       contains:
         ttl:
           description:
           - Specifies the "time-to-live" duration for an associated resource. The
-            resource expires if it is not active for a period of ttl. The definition
-            of "activity" depends on the type of the associated resource. The minimum
-            and maximum allowed values for ttl depend on the type of the associated
-            resource, as well. If ttl is not set, the associated resource never expires.
+            resource expires if it is not active for a period of ttl.
+          - If ttl is not set, the associated resource never expires.
           - A duration in seconds with up to nine fractional digits, terminated by
             's'.
           - Example - "3.5s".
@@ -230,9 +251,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict())
-
-    if module._name == 'gcp_pubsub_subscription_facts':
-        module.deprecate("The 'gcp_pubsub_subscription_facts' module has been renamed to 'gcp_pubsub_subscription_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/pubsub']

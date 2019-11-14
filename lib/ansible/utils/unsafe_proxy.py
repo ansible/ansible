@@ -66,11 +66,15 @@ class AnsibleUnsafe(object):
 
 
 class AnsibleUnsafeBytes(binary_type, AnsibleUnsafe):
-    pass
+    def decode(self, *args, **kwargs):
+        """Wrapper method to ensure type conversions maintain unsafe context"""
+        return AnsibleUnsafeText(super(AnsibleUnsafeBytes, self).decode(*args, **kwargs))
 
 
 class AnsibleUnsafeText(text_type, AnsibleUnsafe):
-    pass
+    def encode(self, *args, **kwargs):
+        """Wrapper method to ensure type conversions maintain unsafe context"""
+        return AnsibleUnsafeBytes(super(AnsibleUnsafeText, self).encode(*args, **kwargs))
 
 
 class UnsafeProxy(object):
@@ -111,7 +115,7 @@ def _wrap_set(v):
 
 
 def wrap_var(v):
-    if isinstance(v, AnsibleUnsafe):
+    if v is None or isinstance(v, AnsibleUnsafe):
         return v
 
     if isinstance(v, Mapping):

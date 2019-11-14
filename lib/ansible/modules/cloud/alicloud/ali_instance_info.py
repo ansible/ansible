@@ -309,18 +309,19 @@ instances:
         security_groups:
             description: One or more security groups for the instance.
             returned: always
-            type: complex
+            type: list
+            elements: dict
             contains:
-                - group_id:
-                      description: The ID of the security group.
-                      returned: always
-                      type: str
-                      sample: sg-0123456
-                - group_name:
-                      description: The name of the security group.
-                      returned: always
-                      type: str
-                      sample: my-security-group
+                group_id:
+                    description: The ID of the security group.
+                    returned: always
+                    type: str
+                    sample: sg-0123456
+                group_name:
+                    description: The name of the security group.
+                    returned: always
+                    type: str
+                    sample: my-security-group
         status:
             description: The current status of the instance.
             returned: always

@@ -122,13 +122,14 @@ RETURN = '''
 containers:
     description:
       - List of IDs of deleted containers.
-    returned: C(containers) is C(true)
+    returned: I(containers) is C(true)
     type: list
+    elements: str
     sample: '[]'
 containers_space_reclaimed:
     description:
       - Amount of reclaimed disk space from container pruning in bytes.
-    returned: C(containers) is C(true)
+    returned: I(containers) is C(true)
     type: int
     sample: '0'
 
@@ -136,13 +137,14 @@ containers_space_reclaimed:
 images:
     description:
       - List of IDs of deleted images.
-    returned: C(images) is C(true)
+    returned: I(images) is C(true)
     type: list
+    elements: str
     sample: '[]'
 images_space_reclaimed:
     description:
       - Amount of reclaimed disk space from image pruning in bytes.
-    returned: C(images) is C(true)
+    returned: I(images) is C(true)
     type: int
     sample: '0'
 
@@ -150,21 +152,23 @@ images_space_reclaimed:
 networks:
     description:
       - List of IDs of deleted networks.
-    returned: C(networks) is C(true)
+    returned: I(networks) is C(true)
     type: list
+    elements: str
     sample: '[]'
 
 # volumes
 volumes:
     description:
       - List of IDs of deleted volumes.
-    returned: C(volumes) is C(true)
+    returned: I(volumes) is C(true)
     type: list
+    elements: str
     sample: '[]'
 volumes_space_reclaimed:
     description:
       - Amount of reclaimed disk space from volumes pruning in bytes.
-    returned: C(volumes) is C(true)
+    returned: I(volumes) is C(true)
     type: int
     sample: '0'
 
@@ -172,7 +176,7 @@ volumes_space_reclaimed:
 builder_cache_space_reclaimed:
     description:
       - Amount of reclaimed disk space from builder cache pruning in bytes.
-    returned: C(builder_cache) is C(true)
+    returned: I(builder_cache) is C(true)
     type: int
     sample: '0'
 '''

@@ -1,19 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -27,7 +18,7 @@ version_added: "1.3"
 requirements: [ boto3 ]
 short_description: maintain an ec2 VPC security group.
 description:
-    - maintains ec2 security groups. This module has a dependency on python-boto >= 2.5
+    - Maintains ec2 security groups. This module has a dependency on python-boto >= 2.5.
 options:
   name:
     description:
@@ -35,20 +26,24 @@ options:
       - One of and only one of I(name) or I(group_id) is required.
       - Required if I(state=present).
     required: false
+    type: str
   group_id:
     description:
       - Id of group to delete (works only with absent).
       - One of and only one of I(name) or I(group_id) is required.
     required: false
     version_added: "2.4"
+    type: str
   description:
     description:
       - Description of the security group. Required when C(state) is C(present).
     required: false
+    type: str
   vpc_id:
     description:
       - ID of the VPC to create the group in.
     required: false
+    type: str
   rules:
     description:
       - List of firewall inbound rules to enforce in this group (see example). If none are supplied,
@@ -58,6 +53,60 @@ options:
         source type as well as multiple source types per rule. Prior to 2.4 an individual source is allowed.
         In version 2.5 support for rule descriptions was added.
     required: false
+    type: list
+    elements: dict
+    suboptions:
+        cidr_ip:
+            type: str
+            description:
+            - The IPv4 CIDR range traffic is coming from.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        cidr_ipv6:
+            type: str
+            description:
+            - The IPv6 CIDR range traffic is coming from.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        ip_prefix:
+            type: str
+            description:
+            - The IP Prefix U(https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-prefix-lists.html)
+              that traffic is coming from.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_id:
+            type: str
+            description:
+            - The ID of the Security Group that traffic is coming from.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_name:
+            type: str
+            description:
+            - Name of the Security Group that traffic is coming from.
+            - If the Security Group doesn't exist a new Security Group will be
+              created with I(group_desc) as the description.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_desc:
+            type: str
+            description:
+            - If the I(group_name) is set and the Security Group doesn't exist a new Security Group will be
+              created with I(group_desc) as the description.
+        proto:
+            type: str
+            description:
+            - The IP protocol name (C(tcp), C(udp), C(icmp), C(icmpv6)) or number (U(https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers))
+        from_port:
+            type: int
+            description: The start of the range of ports that traffic is coming from.  A value of C(-1) indicates all ports.
+        to_port:
+            type: int
+            description: The end of the range of ports that traffic is coming from.  A value of C(-1) indicates all ports.
+        rule_desc:
+            type: str
+            description: A description for the rule.
   rules_egress:
     description:
       - List of firewall outbound rules to enforce in this group (see example). If none are supplied,
@@ -66,18 +115,73 @@ options:
         was added.
     required: false
     version_added: "1.6"
+    type: list
+    elements: dict
+    suboptions:
+        cidr_ip:
+            type: str
+            description:
+            - The IPv4 CIDR range traffic is going to.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        cidr_ipv6:
+            type: str
+            description:
+            - The IPv6 CIDR range traffic is going to.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        ip_prefix:
+            type: str
+            description:
+            - The IP Prefix U(https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-prefix-lists.html)
+              that traffic is going to.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_id:
+            type: str
+            description:
+            - The ID of the Security Group that traffic is going to.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_name:
+            type: str
+            description:
+            - Name of the Security Group that traffic is going to.
+            - If the Security Group doesn't exist a new Security Group will be
+              created with I(group_desc) as the description.
+            - You can specify only one of I(cidr_ip), I(cidr_ipv6), I(ip_prefix), I(group_id)
+              and I(group_name).
+        group_desc:
+            type: str
+            description:
+            - If the I(group_name) is set and the Security Group doesn't exist a new Security Group will be
+              created with I(group_desc) as the description.
+        proto:
+            type: str
+            description:
+            - The IP protocol name (C(tcp), C(udp), C(icmp), C(icmpv6)) or number (U(https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers))
+        from_port:
+            type: int
+            description: The start of the range of ports that traffic is going to.  A value of C(-1) indicates all ports.
+        to_port:
+            type: int
+            description: The end of the range of ports that traffic is going to.  A value of C(-1) indicates all ports.
+        rule_desc:
+            type: str
+            description: A description for the rule.
   state:
     version_added: "1.4"
     description:
-      - Create or delete a security group
+      - Create or delete a security group.
     required: false
     default: 'present'
     choices: [ "present", "absent" ]
     aliases: []
+    type: str
   purge_rules:
     version_added: "1.8"
     description:
-      - Purge existing rules on security group that are not found in rules
+      - Purge existing rules on security group that are not found in rules.
     required: false
     default: 'true'
     aliases: []
@@ -85,7 +189,7 @@ options:
   purge_rules_egress:
     version_added: "1.8"
     description:
-      - Purge existing rules_egress on security group that are not found in rules_egress
+      - Purge existing rules_egress on security group that are not found in rules_egress.
     required: false
     default: 'true'
     aliases: []
@@ -95,6 +199,8 @@ options:
     description:
       - A dictionary of one or more tags to assign to the security group.
     required: false
+    type: dict
+    aliases: ['resource_tags']
   purge_tags:
     version_added: "2.4"
     description:

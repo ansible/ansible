@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_bigquery_dataset_info
 description:
 - Gather info for GCP Dataset
-- This module was called C(gcp_bigquery_dataset_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP Dataset
 version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
@@ -80,9 +78,9 @@ options:
     - This only alters the User Agent string for any API requests.
     type: str
 notes:
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -280,6 +278,22 @@ resources:
       - Changing this forces a new resource to be created.
       returned: success
       type: str
+    defaultEncryptionConfiguration:
+      description:
+      - The default encryption key for all tables in the dataset. Once this property
+        is set, all newly-created partitioned tables in the dataset will have encryption
+        key set to this value, unless table creation request (or query) overrides
+        the key.
+      returned: success
+      type: complex
+      contains:
+        kmsKeyName:
+          description:
+          - Describes the Cloud KMS encryption key that will be used to protect destination
+            BigQuery table. The BigQuery Service Account associated with your project
+            requires access to this encryption key.
+          returned: success
+          type: str
 '''
 
 ################################################################################
@@ -295,9 +309,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict())
-
-    if module._name == 'gcp_bigquery_dataset_facts':
-        module.deprecate("The 'gcp_bigquery_dataset_facts' module has been renamed to 'gcp_bigquery_dataset_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/bigquery']

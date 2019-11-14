@@ -129,12 +129,18 @@ $protocol = Get-AnsibleParam -obj $params -name "protocol" -type "str"
 $interfacetypes = Get-AnsibleParam -obj $params -name "interfacetypes" -type "list"
 $edge = Get-AnsibleParam -obj $params -name "edge" -type "str" -validateset "no","yes","deferapp","deferuser"
 $security = Get-AnsibleParam -obj $params -name "security" -type "str" -validateset "notrequired","authnoencap","authenticate","authdynenc","authenc"
+$icmp_type_code = Get-AnsibleParam -obj $params -name "icmp_type_code" -type "list"
 
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 
 if ($diff_support) {
     $result.diff = @{}
     $result.diff.prepared = ""
+}
+
+if ($null -ne $icmp_type_code) {
+    # COM representation is just "<type>:<code>,<type2>:<code>" so we just join our list
+    $icmp_type_code = $icmp_type_code -join ","
 }
 
 try {
@@ -160,6 +166,7 @@ try {
     if ($null -ne $remoteport -and $remoteport -ne "any") { $new_rule.RemotePorts = $remoteport }
     if ($null -ne $localip -and $localip -ne "any") { $new_rule.LocalAddresses = $localip }
     if ($null -ne $remoteip -and $remoteip -ne "any") { $new_rule.RemoteAddresses = $remoteip }
+    if ($null -ne $icmp_type_code -and $icmp_type_code -ne "any") { $new_rule.IcmpTypesAndCodes = $icmp_type_code }
     if ($null -ne $direction) { $new_rule.Direction = Parse-Direction -directionStr $direction }
     if ($null -ne $action) { $new_rule.Action = Parse-Action -actionStr $action }
     # Profiles value cannot be a uint32, but the "all profiles" value (0x7FFFFFFF) will often become a uint32, so must cast to [int]
@@ -178,8 +185,8 @@ try {
         }
     }
 
-    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','Grouping','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions', 'SecureFlags')
-    $userPassedArguments = @($name, $description, $direction, $action, $program, $group, $service, $enabled, $profiles, $localip, $remoteip, $localport, $remoteport, $protocol, $interfacetypes, $edge, $security)
+    $fwPropertiesToCompare = @('Name','Description','Direction','Action','ApplicationName','Grouping','ServiceName','Enabled','Profiles','LocalAddresses','RemoteAddresses','LocalPorts','RemotePorts','Protocol','InterfaceTypes', 'EdgeTraversalOptions', 'SecureFlags','IcmpTypesAndCodes')
+    $userPassedArguments = @($name, $description, $direction, $action, $program, $group, $service, $enabled, $profiles, $localip, $remoteip, $localport, $remoteport, $protocol, $interfacetypes, $edge, $security, $icmp_type_code)
 
     if ($state -eq "absent") {
         if ($null -eq $existingRule) {

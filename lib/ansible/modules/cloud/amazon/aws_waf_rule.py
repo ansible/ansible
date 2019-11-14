@@ -3,6 +3,9 @@
 # Copyright (c) 2015 Mike Mochan
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -25,25 +28,41 @@ options:
     name:
         description: Name of the Web Application Firewall rule
         required: yes
+        type: str
     metric_name:
         description:
         - A friendly name or description for the metrics for the rule
         - The name can contain only alphanumeric characters (A-Z, a-z, 0-9); the name can't contain whitespace.
         - You can't change metric_name after you create the rule
         - Defaults to the same as name with disallowed characters removed
+        type: str
     state:
         description: whether the rule should be present or absent
         choices:
         - present
         - absent
         default: present
+        type: str
     conditions:
         description: >
-          list of conditions used in the rule. Each condition should
-          contain I(type): which is one of [C(byte), C(geo), C(ip), C(size), C(sql) or C(xss)]
-          I(negated): whether the condition should be negated, and C(condition),
-          the name of the existing condition. M(aws_waf_condition) can be used to
+          list of conditions used in the rule.  M(aws_waf_condition) can be used to
           create new conditions
+        type: list
+        elements: dict
+        suboptions:
+            type:
+                required: true
+                type: str
+                choices: ['byte','geo','ip','size','sql','xss']
+                description: The type of rule to match.
+            negated:
+                required: true
+                type: bool
+                description: Whether the condition should be negated.
+            condition:
+                required: true
+                type: str
+                description: The name of the condition.  The condition must already exist.
     purge_conditions:
         description:
           - Whether or not to remove conditions that are not passed when updating `conditions`.

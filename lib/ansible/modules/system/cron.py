@@ -212,7 +212,7 @@ import re
 import sys
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import shlex_quote
 
 
@@ -647,7 +647,7 @@ def main():
         module.fail_json(msg="You must specify time and date fields or special time.")
 
     # cannot support special_time on solaris
-    if (special_time or reboot) and get_platform() == 'SunOS':
+    if (special_time or reboot) and platform.system() == 'SunOS':
         module.fail_json(msg="Solaris does not support special_time=... or @reboot")
 
     if cron_file and do_install:

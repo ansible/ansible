@@ -27,7 +27,7 @@ description:
       to emulate C(assertonly) usage with M(openssl_certificate_info), M(openssl_csr_info),
       M(openssl_privatekey_info) and M(assert). This also allows more flexible checks than
       the ones offered by the C(assertonly) provider.
-    - The C(ownca) provider is intended for generate OpenSSL certificate signed with your own
+    - The C(ownca) provider is intended for generating OpenSSL certificate signed with your own
       CA (Certificate Authority) certificate (self-signed certificate).
     - Many properties that can be specified in this module are for validation of an
       existing or newly generated certificate. The proper place to specify them, if you
@@ -939,7 +939,7 @@ class Certificate(crypto_utils.OpenSSLObject):
             except OpenSSL.SSL.Error:
                 return False
         elif self.backend == 'cryptography':
-            return self.cert.public_key().public_numbers() == self.privatekey.public_key().public_numbers()
+            return crypto_utils.cryptography_compare_public_keys(self.cert.public_key(), self.privatekey.public_key())
 
     def _validate_csr(self):
         if self.backend == 'pyopenssl':
@@ -966,7 +966,7 @@ class Certificate(crypto_utils.OpenSSLObject):
             # Verify that CSR is signed by certificate's private key
             if not self.csr.is_signature_valid:
                 return False
-            if self.csr.public_key().public_numbers() != self.cert.public_key().public_numbers():
+            if not crypto_utils.cryptography_compare_public_keys(self.csr.public_key(), self.cert.public_key()):
                 return False
             # Check subject
             if self.csr.subject != self.cert.subject:
@@ -1106,10 +1106,13 @@ class SelfSignedCertificateCryptography(Certificate):
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=to_native(exc))
 
-        if self.digest is None:
-            raise CertificateError(
-                'The digest %s is not supported with the cryptography backend' % module.params['selfsigned_digest']
-            )
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.privatekey):
+            if self.digest is None:
+                raise CertificateError(
+                    'The digest %s is not supported with the cryptography backend' % module.params['selfsigned_digest']
+                )
+        else:
+            self.digest = None
 
     def generate(self, module):
         if not os.path.exists(self.privatekey_path):
@@ -1144,10 +1147,15 @@ class SelfSignedCertificateCryptography(Certificate):
             except ValueError as e:
                 raise CertificateError(str(e))
 
-            certificate = cert_builder.sign(
-                private_key=self.privatekey, algorithm=self.digest,
-                backend=default_backend()
-            )
+            try:
+                certificate = cert_builder.sign(
+                    private_key=self.privatekey, algorithm=self.digest,
+                    backend=default_backend()
+                )
+            except TypeError as e:
+                if str(e) == 'Algorithm must be a registered hash algorithm.' and self.digest is None:
+                    module.fail_json(msg='Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.')
+                raise
 
             self.cert = certificate
 
@@ -1318,6 +1326,14 @@ class OwnCACertificateCryptography(Certificate):
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=str(exc))
 
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.ca_private_key):
+            if self.digest is None:
+                raise CertificateError(
+                    'The digest %s is not supported with the cryptography backend' % module.params['ownca_digest']
+                )
+        else:
+            self.digest = None
+
     def generate(self, module):
 
         if not os.path.exists(self.ca_cert_path):
@@ -1372,10 +1388,15 @@ class OwnCACertificateCryptography(Certificate):
                         critical=False
                     )
 
-            certificate = cert_builder.sign(
-                private_key=self.ca_private_key, algorithm=self.digest,
-                backend=default_backend()
-            )
+            try:
+                certificate = cert_builder.sign(
+                    private_key=self.ca_private_key, algorithm=self.digest,
+                    backend=default_backend()
+                )
+            except TypeError as e:
+                if str(e) == 'Algorithm must be a registered hash algorithm.' and self.digest is None:
+                    module.fail_json(msg='Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.')
+                raise
 
             self.cert = certificate
 
@@ -1856,12 +1877,12 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
         super(AssertOnlyCertificateCryptography, self).__init__(module, 'cryptography')
 
     def _validate_privatekey(self):
-        return self.cert.public_key().public_numbers() == self.privatekey.public_key().public_numbers()
+        return crypto_utils.cryptography_compare_public_keys(self.cert.public_key(), self.privatekey.public_key())
 
     def _validate_csr_signature(self):
         if not self.csr.is_signature_valid:
             return False
-        return self.csr.public_key().public_numbers() == self.cert.public_key().public_numbers()
+        return crypto_utils.cryptography_compare_public_keys(self.csr.public_key(), self.cert.public_key())
 
     def _validate_csr_subject(self):
         return self.csr.subject == self.cert.subject

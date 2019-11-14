@@ -33,6 +33,7 @@ options:
       - When identifying the node use either the hostname of the node (as registered in Swarm) or node ID.
       - If I(self) is C(true) then this parameter is ignored.
     type: list
+    elements: str
   self:
     description:
       - If C(true), queries the node (i.e. the docker daemon) the module communicates with.
@@ -85,6 +86,7 @@ nodes:
         managers and nodes that are unreachable.
     returned: always
     type: list
+    elements: dict
 '''
 
 import traceback

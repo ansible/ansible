@@ -27,6 +27,8 @@
 #           ignored - these people should never be notified
 #           deprecated - this file is deprecated but probably not yet renamed
 #           keywords - used to identify this file based on the issue description
+#           migrated_to - Location on Galaxy,
+#                         see https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html
 #           support - used for files without internal ANSIBLE_METADATA, see
 #                     https://github.com/ansible/ansible/labels?q=support for full list
 #           labels - list of GitHub labels to apply. Path components of 'file' parent key
@@ -146,7 +148,7 @@ files:
   $modules/cloud/misc/virt_pool.py: *virt
   $modules/cloud/misc/xenserver_facts.py:
     ignored: andyhky
-  $modules/cloud/opennebula/: ilicmilan kustodian xorel rsmontero meerkampdvv
+  $modules/cloud/opennebula/: ilicmilan xorel rsmontero meerkampdvv
   $modules/cloud/openstack/: $team_openstack
   $modules/cloud/oracle/: &oracle
     labels: [ cloud, oracle ]
@@ -158,6 +160,10 @@ files:
     ignored: sivel angstwad
   $modules/cloud/scaleway/scaleway_volume.py:
     ignored: hekonsek
+  $modules/cloud/scaleway/: &scaleway
+    maintainers: $team_scaleway
+    labels:
+      - cloud
   $modules/cloud/smartos/: &solaris
     keywords: [ beadm, dladm, illumos, ipadm, nexenta, omnios, openindiana, pfexec, smartos, solaris, sunos, zfs, zpool ]
     labels: solaris
@@ -169,6 +175,8 @@ files:
     labels: [ cloud, vmware ]
     maintainers: $team_vmware
     notified: lparkes
+  $modules/cloud/vmware/vmware_deploy_ovf.py:
+    ignored: sivel
   $modules/cloud/vmware_httpapi/: &vmware_httpapi
     keywords: [ esx, vcenter, vcsa, vcsim, vsphere ]
     labels: [ cloud, vmware_httpapi ]
@@ -242,8 +250,11 @@ files:
   $modules/messaging/rabbitmq/: $team_rabbitmq
   $modules/monitoring/airbrake_deployment.py:
     ignored: bpennypacker
-  $modules/monitoring/datadog_event.py:
+  $modules/monitoring/datadog/datadog_event.py:
     ignored: arturaz
+  $modules/monitoring/grafana:
+    labels: grafana
+    maintainers: $team_grafana
   $modules/monitoring/logentries.py:
     ignored: ivanvanderbyl
   $modules/monitoring/monit.py: brian-brazil
@@ -273,16 +284,20 @@ files:
     maintainers: $team_aci
   $modules/network/aireos/: &aireos
     maintainers: $team_aireos
+    ignored: jmighion
     labels: [ aireos, cisco, networking ]
   $modules/network/aos/: dgarros jeremyschulman
-  $modules/network/aruba/: jmighion
+  $modules/network/aruba/:
+    maintainers: $team_aruba
+    ignored: jmighion
   $modules/network/asa/: &asa
     maintainers: $team_asa
     labels: [ asa, cisco, networking ]
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
-  $modules/network/cloudengine/:
+  $modules/network/cloudengine/: &cloudengine
     maintainers: $team_huawei
+    labels: [ huawei, cloudengine, networking ]
   $modules/network/cnos/: dkasberg amuraleedhar
   $modules/network/cumulus/: $team_cumulus
   $modules/network/dellos10/: skg-net
@@ -360,6 +375,8 @@ files:
     ignored: chrishoffman
     maintainers: shane-walker xcambar
   $modules/packaging/language/pip.py: Lujeni webknjaz
+  $modules/packaging/language/pear.py:
+    ignored: jle64
   $modules/packaging/os/apk.py:
     ignored: kbrebanov
     maintainers: tdtrask
@@ -428,9 +445,9 @@ files:
     maintainers: $team_ucs
   $modules/remote_management/dellemc/: rajeevarakkal
   $modules/source_control/git.py: $team_ansible
-  $modules/source_control/github_key.py:
+  $modules/source_control/github/github_key.py:
     ignored: erydo
-  $modules/source_control/gitlab_: &gitlab
+  $modules/source_control/gitlab/: &gitlab
     keywords: [ gitlab, source_control ]
     labels: gitlab
     maintainers: $team_gitlab
@@ -720,14 +737,15 @@ files:
   $module_utils/network/aos:
     maintainers: dgarros jeremyschulman
   $module_utils/network/aruba:
-    maintainers: jmighion
+    maintainers: $team_aruba
+    ignored: jmighion
   $module_utils/network/asa: *asa
   $module_utils/network/avi:
     maintainers: $team_avi
   $module_utils/network/bigswitch:
     maintainers: jayakody tedelhourani vuile
   $module_utils/network/cloudengine:
-    maintainers: $team_huawei
+    <<: *cloudengine
   $module_utils/network/cnos:
     maintainers: dkasberg amuraleedhar
   $module_utils/network/common:
@@ -825,10 +843,7 @@ files:
   $module_utils/remote_management/ucs: *ucs
   $module_utils/remote_management/dellemc:
     maintainers: rajeevarakkal
-  $module_utils/scaleway.py: &scaleway
-    maintainers: $team_scaleway
-    labels:
-      - cloud
+  $module_utils/scaleway.py: *scaleway
   $module_utils/utm_utils.py:
     maintainers: $team_e_spirit
   $module_utils/vmware: *vmware
@@ -938,7 +953,7 @@ files:
   $plugins/action/asa: *asa
   $plugins/action/aireos: *aireos
   $plugins/action/aruba:
-    maintainers: jmighion
+    maintainers: $team_aruba
     labels: networking
   $plugins/action/bigip:
     maintainers: caphrim007 wojtek0806
@@ -946,6 +961,9 @@ files:
   $plugins/action/bigiq:
     maintainers: caphrim007 wojtek0806
     labels: networking
+  $plugins/action/ce:
+    <<: *cloudengine
+    support: network
   $plugins/action/dellos:
     maintainers: skg-net
     labels: networking
@@ -1011,7 +1029,8 @@ files:
   $plugins/callback/default:
     support: core
   $plugins/callback/grafana_annotations.py:
-    maintainers: rrey
+    maintainers: $team_grafana
+    labels: monitoring grafana
   $plugins/callback/foreman.py:
     maintainers: $team_foreman
   $plugins/callback/junit:
@@ -1037,6 +1056,10 @@ files:
 
   $plugins/cliconf/:
     labels: networking
+  $plugins/cliconf/aruba.py:
+    maintainers: $team_aruba
+  $plugins/cliconf/ce.py:
+    <<: *cloudengine
   $plugins/cliconf/edgeswitch.py:
     maintainers: f-bor
   $plugins/cliconf/eos.py:
@@ -1243,6 +1266,8 @@ files:
 
 ###############################
 # plugins/lookup
+  $plugins/lookup/:
+    support: community
   $plugins/lookup/__init__.py:
     support: core
   $plugins/lookup/config.py:
@@ -1257,6 +1282,9 @@ files:
     support: core
   $plugins/lookup/first_found.py:
     support: core
+  $plugins/lookup/grafana_dashboard.py:
+    maintainers: $team_grafana
+    labels: monitoring grafana
   $plugins/lookup/indexed_items.py:
     support: core
   $plugins/lookup/inventory_hostnames.py:
@@ -1327,8 +1355,7 @@ files:
     maintainers: Im0
     support: community
   $plugins/netconf/ce.py:
-    maintainers: $team_huawei
-    labels: networking
+    <<: *cloudengine
   $plugins/netconf/sros.py:
     maintainers: wisotzky $team_networking
     labels: networking
@@ -1347,7 +1374,11 @@ files:
     labels: networking
   $plugins/terminal/__init__.py:
     support: network
+  $plugins/terminal/aruba.py:
+    maintainers: $team_aruba
   $plugins/terminal/asa.py: *asa
+  $plugins/terminal/ce.py:
+    <<: *cloudengine
   $plugins/terminal/dellos10:
     maintainers: skg-net
   $plugins/terminal/edgeos.py:
@@ -1472,6 +1503,7 @@ files:
   test/integration/targets/asa_: *asa
   test/integration/targets/acme: *crypto
   test/integration/targets/aix: *aix
+  test/integration/targets/ce_: *cloudengine
   test/integration/targets/cloudscale:
     maintainers: $team_cloudscale
     labels: cloud
@@ -1537,12 +1569,14 @@ files:
     maintainers: $team_networking
     labels: networking
   test/units/modules/network/aireos: *aireos
+  test/units/modules/network/cloudengine: *cloudengine
   test/units/modules/network/exos: $team_extreme
   test/units/modules/network/ftd: *ftd
   test/units/modules/network/ios: *ios
   test/units/modules/network/iosxr: *iosxr
   test/units/modules/network/nso: *nso
   test/units/modules/network/nxos: *nxos
+  test/units/modules/source_control/gitlab/: *gitlab
   test/units/modules/storage/hpe3par: *hpe3par
   test/units/modules/storage/netapp:
     maintainers: $team_netapp
@@ -1558,8 +1592,9 @@ macros:
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
-  team_aireos: jmighion
+  team_aireos: $team_ansible
   team_aix: bcoca dagwieers d-little flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
+  team_aruba: karthikeyan-dhandapani
   team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
@@ -1579,6 +1614,7 @@ macros:
   team_ftd: annikulin
   team_gitlab: dj-wasabi Lunik marwatk Shaps waheedi
   team_google: rambleraptor erjohnso
+  team_grafana: rrey seuf
   team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
   team_huawei: zhongjun2 zengchen1024 niuzhenguo freesky-edward TommyLike edisonxiang QijunPan xuxiaowei0512 hwDCN
@@ -1606,7 +1642,7 @@ macros:
   team_openswitch: Qalthos danielmellado
   team_oracle: nalsaber manojmeda mross22
   team_ovirt: machacekondra mwperina mnecas
-  team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem tcraxs
+  team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko matburt nerzhul sebasmannem tcraxs
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych opslounge dnix101
   team_rabbitmq: chrishoffman manuel-sousa
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd

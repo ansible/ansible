@@ -228,6 +228,9 @@ overridden:
     - "mtu 1000"
     - "no vlan 20"
     - "no vlan 30"
+    - "vlan 40"
+    - "name VLAN_40"
+    - "mtu 850"
 
   after:
     - mtu: 1500
@@ -240,6 +243,11 @@ overridden:
       shutdown: disabled
       state: active
       vlan_id: 10
+    - mtu: 850
+      name: VLAN_40
+      shutdown: disabled
+      state: active
+      vlan_id: 40
     - mtu: 1500
       name: fddi-default
       shutdown: enabled

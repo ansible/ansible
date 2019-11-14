@@ -41,6 +41,7 @@ options:
       nothing will be changed. If you need to add all tables to the publication with the same name,
       drop existent and create new without passing I(tables).
     type: list
+    elements: str
   state:
     description:
     - The publication state.
@@ -602,7 +603,7 @@ def main():
             module.warn('parameter "owner" is ignored when "state=absent"')
 
     if state == 'present' and cascade:
-        module.warm('parameter "cascade" is ignored when "state=present"')
+        module.warn('parameter "cascade" is ignored when "state=present"')
 
     # Connect to DB and make cursor object:
     conn_params = get_conn_params(module, module.params)
@@ -637,7 +638,7 @@ def main():
 
     # Get final publication info:
     pub_fin_info = {}
-    if state != 'absent' or (state == 'absent' and module.check_mode):
+    if state == 'present' or (state == 'absent' and module.check_mode):
         pub_fin_info = publication.get_info()
     elif state == 'absent' and not module.check_mode:
         publication.exists = False

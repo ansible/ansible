@@ -17,22 +17,22 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_azurefirewall_info
 version_added: '2.9'
-short_description: Get AzureFirewall info.
+short_description: Get AzureFirewall info
 description:
-  - Get info of AzureFirewall.
+    - Get info of AzureFirewall.
 options:
-  resource_group:
-    description:
-      - The name of the resource group.
-    type: str
-  name:
-    description:
-      - Resource name.
-    type: str
+    resource_group:
+        description:
+            - The name of the resource group.
+        type: str
+    name:
+        description:
+            - Resource name.
+        type: str
 extends_documentation_fragment:
-  - azure
+    - azure
 author:
-  - Liu Qingyi (@smile37773)
+    - Liu Qingyi (@smile37773)
 
 '''
 
@@ -51,62 +51,59 @@ EXAMPLES = '''
 
 RETURN = '''
 firewalls:
-  description: >-
-    A list of dict results where the key is the name of the AzureFirewall and
-    the values are the facts for that AzureFirewall.
-  returned: always
-  type: complex
-  contains:
-    id:
-      description:
-        - Resource ID.
-      returned: always
-      type: str
-      sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/
-      myResourceGroup/providers/Microsoft.Network/azureFirewalls/myAzureFirewall"
-    name:
-      description:
-        - Resource name.
-      returned: always
-      type: str
-      sample: "myAzureFirewall"
-    location:
-      description:
-        - Resource location.
-      returned: always
-      type: str
-      sample: "eastus"
-    tags:
-      description:
-        - Resource tags.
-      returned: always
-      type: dict
-      sample: { "tag": "value" }
-    etag:
-      description:
-        - >-
-          Gets a unique read-only string that changes whenever the resource
-          is updated.
-      returned: always
-      type: str
-      sample: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-    nat_rule_collections:
-      description:
-        - Collection of NAT rule collections used by Azure Firewall.
-      type: list
-    network_rule_collections:
-      description:
-        - Collection of network rule collections used by Azure Firewall.
-      type: list
-    ip_configurations:
-      description:
-        - IP configuration of the Azure Firewall resource.
-      type: list
-    provisioning_state:
-        description:
-          - The current state of the gallery.
-        type: str
-        sample: "Succeeded"
+    description:
+        - A list of dict results where the key is the name of the AzureFirewall and the values are the facts for that AzureFirewall.
+    returned: always
+    type: complex
+    contains:
+        id:
+            description:
+                - Resource ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/
+                     myResourceGroup/providers/Microsoft.Network/azureFirewalls/myAzureFirewall"
+        name:
+            description:
+                - Resource name.
+            returned: always
+            type: str
+            sample: "myAzureFirewall"
+        location:
+            description:
+                - Resource location.
+            returned: always
+            type: str
+            sample: "eastus"
+        tags:
+            description:
+                - Resource tags.
+            returned: always
+            type: dict
+            sample: { "tag": "value" }
+        etag:
+            description:
+                - Gets a unique read-only string that changes whenever the resource is updated.
+            returned: always
+            type: str
+            sample: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        nat_rule_collections:
+            description:
+                - Collection of NAT rule collections used by Azure Firewall.
+            type: list
+        network_rule_collections:
+            description:
+                - Collection of network rule collections used by Azure Firewall.
+            type: list
+        ip_configurations:
+            description:
+                - IP configuration of the Azure Firewall resource.
+            type: list
+        provisioning_state:
+            description:
+                - The current state of the gallery.
+            type: str
+            sample: "Succeeded"
 
 '''
 

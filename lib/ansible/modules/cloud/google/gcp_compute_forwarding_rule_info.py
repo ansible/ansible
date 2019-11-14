@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_compute_forwarding_rule_info
 description:
 - Gather info for GCP ForwardingRule
-- This module was called C(gcp_compute_forwarding_rule_facts) before Ansible 2.9.
-  The usage has not changed.
 short_description: Gather info for GCP ForwardingRule
 version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
@@ -92,9 +90,9 @@ options:
     - This only alters the User Agent string for any API requests.
     type: str
 notes:
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -180,11 +178,13 @@ resources:
       type: str
     loadBalancingScheme:
       description:
-      - 'This signifies what the ForwardingRule will be used for and can only take
-        the following values: INTERNAL, EXTERNAL The value of INTERNAL means that
-        this will be used for Internal Network Load Balancing (TCP, UDP). The value
-        of EXTERNAL means that this will be used for External Load Balancing (HTTP(S)
-        LB, External TCP/UDP LB, SSL Proxy) .'
+      - This signifies what the ForwardingRule will be used for and can be EXTERNAL,
+        INTERNAL, or INTERNAL_MANAGED. EXTERNAL is used for Classic Cloud VPN gateways,
+        protocol forwarding to VMs from an external IP address, and HTTP(S), SSL Proxy,
+        TCP Proxy, and Network TCP/UDP load balancers.
+      - INTERNAL is used for protocol forwarding to VMs from an internal IP address,
+        and internal TCP/UDP load balancers.
+      - INTERNAL_MANAGED is used for internal HTTP(S) load balancers.
       returned: success
       type: str
     name:
@@ -300,9 +300,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str'), region=dict(required=True, type='str')))
-
-    if module._name == 'gcp_compute_forwarding_rule_facts':
-        module.deprecate("The 'gcp_compute_forwarding_rule_facts' module has been renamed to 'gcp_compute_forwarding_rule_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']

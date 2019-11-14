@@ -26,6 +26,7 @@ options:
       - List arguments to be passed to the container.
       - Corresponds to the C(ARG) parameter of C(docker service create).
     type: list
+    elements: str
   command:
     description:
       - Command to execute when the container starts.
@@ -39,6 +40,7 @@ options:
       - Corresponds to the C(--config) option of C(docker service create).
       - Requires API version >= 1.30.
     type: list
+    elements: dict
     suboptions:
       config_id:
         description:
@@ -72,6 +74,7 @@ options:
       - Corresponds to the C(--constraint) option of C(docker service create).
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(placement.constraints) instead.
     type: list
+    elements: str
   container_labels:
     description:
       - Dictionary of key value pairs.
@@ -83,18 +86,21 @@ options:
       - Corresponds to the C(--dns) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: str
   dns_search:
     description:
       - List of custom DNS search domains.
       - Corresponds to the C(--dns-search) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: str
   dns_options:
     description:
       - List of custom DNS options.
       - Corresponds to the C(--dns-option) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: str
   endpoint_mode:
     description:
       - Service endpoint mode.
@@ -120,6 +126,7 @@ options:
         variable that shows up more than once.
       - If variable also present in I(env), then I(env) value will override.
     type: list
+    elements: path
     version_added: "2.8"
   force_update:
     description:
@@ -134,6 +141,7 @@ options:
       - Corresponds to the C(--group) option of C(docker service update).
       - Requires API version >= 1.25.
     type: list
+    elements: str
     version_added: "2.8"
   healthcheck:
     description:
@@ -203,7 +211,7 @@ options:
         type: float
       memory:
         description:
-          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
           - C(0) equals no reservation.
@@ -220,7 +228,7 @@ options:
     type: float
   limit_memory:
     description:
-      - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Service memory limit in format C(<number>[<unit>]). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - C(0) equals no limit.
@@ -271,12 +279,13 @@ options:
       - List of dictionaries describing the service mounts.
       - Corresponds to the C(--mount) option of C(docker service create).
     type: list
+    elements: dict
     suboptions:
       source:
         description:
           - Mount source (e.g. a volume name or a host path).
+          - Must be specified if I(type) is not C(tmpfs).
         type: str
-        required: yes
       target:
         description:
           - Container path.
@@ -338,7 +347,7 @@ options:
         version_added: "2.8"
       tmpfs_size:
         description:
-          - "Size of the tmpfs mount (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Size of the tmpfs mount in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
           - Can only be used when I(mode) is C(tmpfs).
@@ -359,12 +368,13 @@ options:
   networks:
     description:
       - List of the service networks names or dictionaries.
-      - When passed dictionaries valid sub-options are C(name) which is required and
-        C(aliases) and C(options).
+      - When passed dictionaries valid sub-options are I(name), which is required, and
+        I(aliases) and I(options).
       - Prior to API version 1.29, updating and removing networks is not supported.
         If changes are made the service will then be removed and recreated.
       - Corresponds to the C(--network) option of C(docker service create).
     type: list
+    elements: raw
   placement:
     description:
       - Configures service placement preferences and constraints.
@@ -374,12 +384,14 @@ options:
           - List of the service constraints.
           - Corresponds to the C(--constraint) option of C(docker service create).
         type: list
+        elements: str
       preferences:
         description:
           - List of the placement preferences as key value pairs.
           - Corresponds to the C(--placement-pref) option of C(docker service create).
           - Requires API version >= 1.27.
         type: list
+        elements: dict
     type: dict
     version_added: "2.8"
   publish:
@@ -388,6 +400,7 @@ options:
       - Corresponds to the C(--publish) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: dict
     suboptions:
       published_port:
         description:
@@ -440,7 +453,7 @@ options:
         type: float
       memory:
         description:
-          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+          - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
           - C(0) equals no reservation.
@@ -457,7 +470,7 @@ options:
     type: float
   reserve_memory:
     description:
-      - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+      - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - C(0) equals no reservation.
@@ -593,6 +606,7 @@ options:
       - Corresponds to the C(--secret) option of C(docker service create).
       - Requires API version >= 1.25.
     type: list
+    elements: dict
     suboptions:
       secret_id:
         description:
@@ -622,8 +636,8 @@ options:
         type: int
   state:
     description:
-      - I(absent) - A service matching the specified name will be removed and have its tasks stopped.
-      - I(present) - Asserts the existence of a service matching the name and provided configuration parameters.
+      - C(absent) - A service matching the specified name will be removed and have its tasks stopped.
+      - C(present) - Asserts the existence of a service matching the name and provided configuration parameters.
         Unspecified configuration parameters will be set to docker defaults.
     type: str
     required: yes
@@ -887,6 +901,7 @@ changes:
   description:
     - List of changed service attributes if a service has been altered, [] otherwise.
   type: list
+  elements: str
   sample: ['container_labels', 'replicas']
 rebuilt:
   returned: always
@@ -1691,7 +1706,9 @@ class DockerService(DockerBaseClass):
                 service_m = {}
                 service_m['readonly'] = param_m['readonly']
                 service_m['type'] = param_m['type']
-                service_m['source'] = param_m['source']
+                if param_m['source'] is None and param_m['type'] != 'tmpfs':
+                    raise ValueError('Source must be specified for mounts which are not of type tmpfs')
+                service_m['source'] = param_m['source'] or ''
                 service_m['target'] = param_m['target']
                 service_m['labels'] = param_m['labels']
                 service_m['no_copy'] = param_m['no_copy']
@@ -2609,7 +2626,7 @@ def main():
         image=dict(type='str'),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         mounts=dict(type='list', elements='dict', options=dict(
-            source=dict(type='str', required=True),
+            source=dict(type='str'),
             target=dict(type='str', required=True),
             type=dict(
                 type='str',
@@ -2673,14 +2690,14 @@ def main():
             mode=dict(type='str', choices=['ingress', 'host']),
         )),
         placement=dict(type='dict', options=dict(
-            constraints=dict(type='list'),
-            preferences=dict(type='list'),
+            constraints=dict(type='list', elements='str'),
+            preferences=dict(type='list', elements='dict'),
         )),
-        constraints=dict(type='list', removed_in_version='2.12'),
+        constraints=dict(type='list', elements='str', removed_in_version='2.12'),
         tty=dict(type='bool'),
-        dns=dict(type='list'),
-        dns_search=dict(type='list'),
-        dns_options=dict(type='list'),
+        dns=dict(type='list', elements='str'),
+        dns_search=dict(type='list', elements='str'),
+        dns_options=dict(type='list', elements='str'),
         healthcheck=dict(type='dict', options=dict(
             test=dict(type='raw'),
             interval=dict(type='str'),

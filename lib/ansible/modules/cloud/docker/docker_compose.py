@@ -47,6 +47,7 @@ options:
       - List of Compose file names relative to I(project_src). Overrides C(docker-compose.yml) or C(docker-compose.yaml).
       - Files are loaded and merged in the order given.
     type: list
+    elements: path
   state:
     description:
       - Desired state of the project.
@@ -64,6 +65,7 @@ options:
         on a subset of services.
       - If empty, which is the default, the operation will be performed on all services defined in the Compose file (or inline I(definition)).
     type: list
+    elements: str
   scale:
     description:
       - When I(state) is C(present) scale services. Provide a dictionary of key/value pairs where the key
@@ -326,6 +328,7 @@ services:
                   description: One or more commands to be executed in the container.
                   returned: success
                   type: list
+                  elements: str
                   example: ["postgres"]
               image:
                   description: Name of the image from which the container was built.
@@ -335,12 +338,13 @@ services:
               labels:
                   description: Meta data assigned to the container.
                   returned: success
-                  type: complex
+                  type: dict
                   example: {...}
               networks:
                   description: Contains a dictionary for each network to which the container is a member.
                   returned: success
-                  type: complex
+                  type: list
+                  elements: dict
                   contains:
                       IPAddress:
                           description: The IP address assigned to the container.
@@ -356,6 +360,7 @@ services:
                           description: Aliases assigned to the container by the network.
                           returned: success
                           type: list
+                          elements: str
                           example: ['db']
                       globalIPv6:
                           description: IPv6 address assigned to the container.
@@ -371,6 +376,7 @@ services:
                           description: List of container names to which this container is linked.
                           returned: success
                           type: list
+                          elements: str
                           example: null
                       macAddress:
                           description: Mac Address assigned to the virtual NIC.
@@ -380,7 +386,7 @@ services:
               state:
                   description: Information regarding the current disposition of the container.
                   returned: success
-                  type: complex
+                  type: dict
                   contains:
                       running:
                           description: Whether or not the container is up with a running process.
@@ -434,6 +440,7 @@ actions:
                   description: A descriptive name of the action to be performed on the service's containers.
                   returned: always
                   type: list
+                  elements: str
                   contains:
                       id:
                           description: the container's long ID

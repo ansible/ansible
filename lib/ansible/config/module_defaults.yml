@@ -155,6 +155,50 @@ groupings:
   - aws
   dms_replication_subnet_group:
   - aws
+  docker_compose:
+  - docker
+  docker_config:
+  - docker
+  docker_container_info:
+  - docker
+  docker_container:
+  - docker
+  docker_host_info:
+  - docker
+  docker_image_facts:
+  - docker
+  docker_image_info:
+  - docker
+  docker_image:
+  - docker
+  docker_login:
+  - docker
+  docker_network_info:
+  - docker
+  docker_network:
+  - docker
+  docker_node_info:
+  - docker
+  docker_node:
+  - docker
+  docker_prune:
+  - docker
+  docker_secret:
+  - docker
+  docker_service:
+  - docker
+  docker_swarm_info:
+  - docker
+  docker_swarm:
+  - docker
+  docker_swarm_service_info:
+  - docker
+  docker_swarm_service:
+  - docker
+  docker_volume_info:
+  - docker
+  docker_volume:
+  - docker
   dynamodb_table:
   - aws
   dynamodb_ttl:
@@ -410,6 +454,8 @@ groupings:
   iam_password_policy:
   - aws
   iam_policy:
+  - aws
+  iam_policy_info:
   - aws
   iam_role:
   - aws
@@ -985,3 +1031,401 @@ groupings:
   - os
   os_zone:
   - os
+  ovirt_affinity_group:
+  - ovirt
+  ovirt_affinity_label_facts:
+  - ovirt
+  ovirt_affinity_label_info:
+  - ovirt
+  ovirt_affinity_label:
+  - ovirt
+  ovirt_api_facts:
+  - ovirt
+  ovirt_api_info:
+  - ovirt
+  ovirt_auth:
+  - ovirt
+  ovirt_cluster_facts:
+  - ovirt
+  ovirt_cluster_info:
+  - ovirt
+  ovirt_cluster:
+  - ovirt
+  ovirt_datacenter_facts:
+  - ovirt
+  ovirt_datacenter_info:
+  - ovirt
+  ovirt_datacenter:
+  - ovirt
+  ovirt_disk_facts:
+  - ovirt
+  ovirt_disk_info:
+  - ovirt
+  ovirt_disk:
+  - ovirt
+  ovirt_event_facts:
+  - ovirt
+  ovirt_event_info:
+  - ovirt
+  ovirt_event:
+  - ovirt
+  ovirt_external_provider_facts:
+  - ovirt
+  ovirt_external_provider_info:
+  - ovirt
+  ovirt_external_provider:
+  - ovirt
+  ovirt_group_facts:
+  - ovirt
+  ovirt_group_info:
+  - ovirt
+  ovirt_group:
+  - ovirt
+  ovirt_host_facts:
+  - ovirt
+  ovirt_host_info:
+  - ovirt
+  ovirt_host_network:
+  - ovirt
+  ovirt_host_pm:
+  - ovirt
+  ovirt_host:
+  - ovirt
+  ovirt_host_storage_facts:
+  - ovirt
+  ovirt_host_storage_info:
+  - ovirt
+  ovirt_instance_type:
+  - ovirt
+  ovirt_job:
+  - ovirt
+  ovirt_mac_pool:
+  - ovirt
+  ovirt_network_facts:
+  - ovirt
+  ovirt_network_info:
+  - ovirt
+  ovirt_network:
+  - ovirt
+  ovirt_nic_facts:
+  - ovirt
+  ovirt_nic_info:
+  - ovirt
+  ovirt_nic:
+  - ovirt
+  ovirt_permission_facts:
+  - ovirt
+  ovirt_permission_info:
+  - ovirt
+  ovirt_permission:
+  - ovirt
+  ovirt_quota_facts:
+  - ovirt
+  ovirt_quota_info:
+  - ovirt
+  ovirt_quota:
+  - ovirt
+  ovirt_role:
+  - ovirt
+  ovirt_scheduling_policy_facts:
+  - ovirt
+  ovirt_scheduling_policy_info:
+  - ovirt
+  ovirt_snapshot_facts:
+  - ovirt
+  ovirt_snapshot_info:
+  - ovirt
+  ovirt_snapshot:
+  - ovirt
+  ovirt_storage_connection:
+  - ovirt
+  ovirt_storage_domain_facts:
+  - ovirt
+  ovirt_storage_domain_info:
+  - ovirt
+  ovirt_storage_domain:
+  - ovirt
+  ovirt_storage_template_facts:
+  - ovirt
+  ovirt_storage_template_info:
+  - ovirt
+  ovirt_storage_vm_facts:
+  - ovirt
+  ovirt_storage_vm_info:
+  - ovirt
+  ovirt_tag_facts:
+  - ovirt
+  ovirt_tag_info:
+  - ovirt
+  ovirt_tag:
+  - ovirt
+  ovirt_template_facts:
+  - ovirt
+  ovirt_template_info:
+  - ovirt
+  ovirt_template:
+  - ovirt
+  ovirt_user_facts:
+  - ovirt
+  ovirt_user_info:
+  - ovirt
+  ovirt_user:
+  - ovirt
+  ovirt_vm_facts:
+  - ovirt
+  ovirt_vm_info:
+  - ovirt
+  ovirt_vmpool_facts:
+  - ovirt
+  ovirt_vmpool_info:
+  - ovirt
+  ovirt_vmpool:
+  - ovirt
+  ovirt_vm:
+  - ovirt
+  ovirt_vnic_profile_info:
+  - ovirt
+  ovirt_vnic_profile:
+  - ovirt
+  vcenter_extension:
+  - vmware
+  vcenter_extension_info:
+  - vmware
+  vcenter_folder:
+  - vmware
+  vcenter_license:
+  - vmware
+  vmware_about_info:
+  - vmware
+  vmware_category:
+  - vmware
+  vmware_category_info:
+  - vmware
+  vmware_cfg_backup:
+  - vmware
+  vmware_cluster:
+  - vmware
+  vmware_cluster_drs:
+  - vmware
+  vmware_cluster_ha:
+  - vmware
+  vmware_cluster_info:
+  - vmware
+  vmware_cluster_vsan:
+  - vmware
+  vmware_content_deploy_template:
+  - vmware
+  vmware_content_library_info:
+  - vmware
+  vmware_content_library_manager:
+  - vmware
+  vmware_datacenter:
+  - vmware
+  vmware_datastore_cluster:
+  - vmware
+  vmware_datastore_info:
+  - vmware
+  vmware_datastore_maintenancemode:
+  - vmware
+  vmware_deploy_ovf:
+  - vmware
+  vmware_dns_config:
+  - vmware
+  vmware_drs_group:
+  - vmware
+  vmware_drs_group_info:
+  - vmware
+  vmware_drs_rule_info:
+  - vmware
+  vmware_dvs_host:
+  - vmware
+  vmware_dvs_portgroup:
+  - vmware
+  vmware_dvs_portgroup_find:
+  - vmware
+  vmware_dvs_portgroup_info:
+  - vmware
+  vmware_dvswitch:
+  - vmware
+  vmware_dvswitch_lacp:
+  - vmware
+  vmware_dvswitch_nioc:
+  - vmware
+  vmware_dvswitch_pvlans:
+  - vmware
+  vmware_dvswitch_uplink_pg:
+  - vmware
+  vmware_evc_mode:
+  - vmware
+  vmware_export_ovf:
+  - vmware
+  vmware_folder_info:
+  - vmware
+  vmware_guest:
+  - vmware
+  vmware_guest_boot_info:
+  - vmware
+  vmware_guest_boot_manager:
+  - vmware
+  vmware_guest_custom_attribute_defs:
+  - vmware
+  vmware_guest_custom_attributes:
+  - vmware
+  vmware_guest_customization_info:
+  - vmware
+  vmware_guest_disk:
+  - vmware
+  vmware_guest_disk_info:
+  - vmware
+  vmware_guest_file_operation:
+  - vmware
+  vmware_guest_find:
+  - vmware
+  vmware_guest_info:
+  - vmware
+  vmware_guest_move:
+  - vmware
+  vmware_guest_network:
+  - vmware
+  vmware_guest_powerstate:
+  - vmware
+  vmware_guest_screenshot:
+  - vmware
+  vmware_guest_sendkey:
+  - vmware
+  vmware_guest_snapshot:
+  - vmware
+  vmware_guest_snapshot_info:
+  - vmware
+  vmware_guest_tools_upgrade:
+  - vmware
+  vmware_guest_tools_wait:
+  - vmware
+  vmware_guest_video:
+  - vmware
+  vmware_guest_vnc:
+  - vmware
+  vmware_host:
+  - vmware
+  vmware_host_acceptance:
+  - vmware
+  vmware_host_active_directory:
+  - vmware
+  vmware_host_capability_info:
+  - vmware
+  vmware_host_config_info:
+  - vmware
+  vmware_host_config_manager:
+  - vmware
+  vmware_host_datastore:
+  - vmware
+  vmware_host_dns_info:
+  - vmware
+  vmware_host_facts:
+  - vmware
+  vmware_host_feature_info:
+  - vmware
+  vmware_host_firewall_info:
+  - vmware
+  vmware_host_firewall_manager:
+  - vmware
+  vmware_host_hyperthreading:
+  - vmware
+  vmware_host_ipv6:
+  - vmware
+  vmware_host_kernel_manager:
+  - vmware
+  vmware_host_lockdown:
+  - vmware
+  vmware_host_ntp:
+  - vmware
+  vmware_host_ntp_info:
+  - vmware
+  vmware_host_package_info:
+  - vmware
+  vmware_host_powermgmt_policy:
+  - vmware
+  vmware_host_powerstate:
+  - vmware
+  vmware_host_scanhba:
+  - vmware
+  vmware_host_service_info:
+  - vmware
+  vmware_host_service_manager:
+  - vmware
+  vmware_host_snmp:
+  - vmware
+  vmware_host_ssl_info:
+  - vmware
+  vmware_host_vmhba_info:
+  - vmware
+  vmware_host_vmnic_info:
+  - vmware
+  vmware_local_role_info:
+  - vmware
+  vmware_local_role_manager:
+  - vmware
+  vmware_local_user_info:
+  - vmware
+  vmware_local_user_manager:
+  - vmware
+  vmware_maintenancemode:
+  - vmware
+  vmware_migrate_vmk:
+  - vmware
+  vmware_object_role_permission:
+  - vmware
+  vmware_portgroup:
+  - vmware
+  vmware_portgroup_info:
+  - vmware
+  vmware_resource_pool:
+  - vmware
+  vmware_resource_pool_info:
+  - vmware
+  vmware_tag:
+  - vmware
+  vmware_tag_info:
+  - vmware
+  vmware_tag_manager:
+  - vmware
+  vmware_target_canonical_info:
+  - vmware
+  vmware_vcenter_settings:
+  - vmware
+  vmware_vcenter_statistics:
+  - vmware
+  vmware_vm_host_drs_rule:
+  - vmware
+  vmware_vm_info:
+  - vmware
+  vmware_vm_shell:
+  - vmware
+  vmware_vm_storage_policy_info:
+  - vmware
+  vmware_vm_vm_drs_rule:
+  - vmware
+  vmware_vm_vss_dvs_migrate:
+  - vmware
+  vmware_vmkernel:
+  - vmware
+  vmware_vmkernel_info:
+  - vmware
+  vmware_vmkernel_ip_config:
+  - vmware
+  vmware_vmotion:
+  - vmware
+  vmware_vsan_cluster:
+  - vmware
+  vmware_vsan_health_info:
+  - vmware
+  vmware_vspan_session:
+  - vmware
+  vmware_vswitch:
+  - vmware
+  vmware_vswitch_info:
+  - vmware
+  vsphere_copy:
+  - vmware
+  vsphere_file:
+  - vmware

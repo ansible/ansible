@@ -258,6 +258,24 @@ class Cliconf(CliconfBase):
 
         return json.dumps(result)
 
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli context
+        :return: None
+        """
+        if self._connection.connected:
+            out = self._connection.get_prompt()
+            if out is None:
+                raise AnsibleConnectionFailure(message=u'cli prompt is not identified from the last received'
+                                                       u' response window: %s' % self._connection._last_recv_window)
+            # Match prompts ending in )# except those with (maint-mode)#
+            config_prompt = re.compile(r'^.*\((?!maint-mode).*\)#$')
+
+            while config_prompt.match(to_text(out, errors='surrogate_then_replace').strip()):
+                self._connection.queue_message('vvvv', 'wrong context, sending exit to device')
+                self._connection.send_command('exit')
+                out = self._connection.get_prompt()
+
     def _get_command_with_output(self, command, output):
         options_values = self.get_option_values()
         if output not in options_values['output']:

@@ -69,6 +69,7 @@ decide to do something conditionally based on success or failure::
 
 
 .. note:: both `success` and `succeeded` work (`fail`/`failed`, etc).
+.. warning:: You might expect a variable of a skipped task to be undefined and use `defined` or `default` to check that. **This is incorrect**! Even when a task is failed or skipped the variable is still registered with a failed or skipped status. See :ref:`registered_variables`.
 
 
 To see what facts are available on a particular system, you can do the following in a playbook::
@@ -352,6 +353,7 @@ Possible values (sample, not complete list)::
     Archlinux
     ClearLinux
     Coreos
+    CentOS
     Debian
     Fedora
     Gentoo
@@ -363,6 +365,7 @@ Possible values (sample, not complete list)::
     Slackware
     SMGL
     SUSE
+    Ubuntu
     VMwareESX
 
 .. See `OSDIST_LIST`

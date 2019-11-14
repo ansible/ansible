@@ -40,9 +40,7 @@ except ImportError:
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
-from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import env_fallback, missing_required_lib
-from ansible.module_utils.urls import generic_urlparse
 
 
 class TaskError(Exception):
@@ -117,7 +115,7 @@ def find_obj(content, vimtype, name, first=True, folder=None):
 
 
 def find_dvspg_by_name(dv_switch, portgroup_name):
-
+    portgroup_name = quote_obj_name(portgroup_name)
     portgroups = dv_switch.portgroup
 
     for pg in portgroups:
@@ -185,7 +183,7 @@ def find_resource_pool_by_name(content, resource_pool_name):
 
 
 def find_network_by_name(content, network_name):
-    return find_object_by_name(content, network_name, [vim.Network])
+    return find_object_by_name(content, quote_obj_name(network_name), [vim.Network])
 
 
 def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None,
@@ -365,7 +363,8 @@ def gather_vm_facts(content, vm):
     vmnet = _get_vm_prop(vm, ('guest', 'net'))
     if vmnet:
         for device in vmnet:
-            net_dict[device.macAddress] = list(device.ipAddress)
+            if device.deviceConfigId > 0:
+                net_dict[device.macAddress] = list(device.ipAddress)
 
     if vm.guest.ipAddress:
         if ':' in vm.guest.ipAddress:
@@ -839,6 +838,28 @@ def is_truthy(value):
     if str(value).lower() in ['true', 'on', 'yes']:
         return True
     return False
+
+
+def quote_obj_name(object_name=None):
+    """
+    Replace special characters in object name
+    with urllib quote equivalent
+
+    """
+    if not object_name:
+        return None
+
+    from collections import OrderedDict
+    SPECIAL_CHARS = OrderedDict({
+        '%': '%25',
+        '/': '%2f',
+        '\\': '%5c'
+    })
+    for key in SPECIAL_CHARS.keys():
+        if key in object_name:
+            object_name = object_name.replace(key, SPECIAL_CHARS[key])
+
+    return object_name
 
 
 class PyVmomi(object):

@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_cloudbuild_trigger_info
 description:
 - Gather info for GCP Trigger
-- This module was called C(gcp_cloudbuild_trigger_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP Trigger
 version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
@@ -80,9 +78,9 @@ options:
     - This only alters the User Agent string for any API requests.
     type: str
 notes:
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -109,6 +107,11 @@ resources:
     id:
       description:
       - The unique identifier for the trigger.
+      returned: success
+      type: str
+    name:
+      description:
+      - Name of the trigger. Must be unique within the project.
       returned: success
       type: str
     description:
@@ -193,12 +196,14 @@ resources:
           description:
           - Name of the branch to build. Exactly one a of branch name, tag, or commit
             SHA must be provided.
+          - This field is a regular expression.
           returned: success
           type: str
         tagName:
           description:
           - Name of the tag to build. Exactly one of a branch name, tag, or commit
             SHA must be provided.
+          - This field is a regular expression.
           returned: success
           type: str
         commitSha:
@@ -364,9 +369,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict())
-
-    if module._name == 'gcp_cloudbuild_trigger_facts':
-        module.deprecate("The 'gcp_cloudbuild_trigger_facts' module has been renamed to 'gcp_cloudbuild_trigger_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']

@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_sql_database_info
 description:
 - Gather info for GCP Database
-- This module was called C(gcp_sql_database_facts) before Ansible 2.9. The usage has
-  not changed.
 short_description: Gather info for GCP Database
 version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
@@ -85,9 +83,9 @@ options:
     - This only alters the User Agent string for any API requests.
     type: str
 notes:
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -154,9 +152,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(instance=dict(required=True, type='str')))
-
-    if module._name == 'gcp_sql_database_facts':
-        module.deprecate("The 'gcp_sql_database_facts' module has been renamed to 'gcp_sql_database_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/sqlservice.admin']

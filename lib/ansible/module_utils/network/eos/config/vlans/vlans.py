@@ -94,8 +94,8 @@ class Vlans(ConfigBase):
                   to the desired configuration
         """
         state = self._module.params['state']
-        want = param_list_to_dict(want, "vlan_id", False)
-        have = param_list_to_dict(have, "vlan_id", False)
+        want = param_list_to_dict(want, "vlan_id", remove_key=False)
+        have = param_list_to_dict(have, "vlan_id", remove_key=False)
         if state == 'overridden':
             commands = self._state_overridden(want, have)
         elif state == 'deleted':
@@ -115,16 +115,16 @@ class Vlans(ConfigBase):
                   to the desired configuration
         """
         commands = []
-        for key, desired in want.items():
-            if key in have:
-                extant = have[key]
+        for vlan_id, desired in want.items():
+            if vlan_id in have:
+                extant = have[vlan_id]
             else:
-                extant = dict(vlan_id=key)
+                extant = dict()
 
             add_config = dict_diff(extant, desired)
             del_config = dict_diff(desired, extant)
 
-            commands.extend(generate_commands(key, add_config, del_config))
+            commands.extend(generate_commands(vlan_id, add_config, del_config))
 
         return commands
 
@@ -137,16 +137,25 @@ class Vlans(ConfigBase):
                   to the desired configuration
         """
         commands = []
-        for key, extant in have.items():
-            if key in want:
-                desired = want[key]
+        for vlan_id, extant in have.items():
+            if vlan_id in want:
+                desired = want[vlan_id]
             else:
-                desired = dict(vlan_id=key)
+                desired = dict()
 
             add_config = dict_diff(extant, desired)
             del_config = dict_diff(desired, extant)
 
-            commands.extend(generate_commands(key, add_config, del_config))
+            commands.extend(generate_commands(vlan_id, add_config, del_config))
+
+        # Handle vlans not already in config
+        new_vlans = [vlan_id for vlan_id in want if vlan_id not in have]
+        for vlan_id in new_vlans:
+            desired = want[vlan_id]
+            extant = dict(vlan_id=vlan_id)
+            add_config = dict_diff(extant, desired)
+
+            commands.extend(generate_commands(vlan_id, add_config, {}))
 
         return commands
 
@@ -159,15 +168,15 @@ class Vlans(ConfigBase):
                   the current configuration
         """
         commands = []
-        for key, desired in want.items():
-            if key in have:
-                extant = have[key]
+        for vlan_id, desired in want.items():
+            if vlan_id in have:
+                extant = have[vlan_id]
             else:
-                extant = dict(vlan_id=key)
+                extant = dict()
 
             add_config = dict_diff(extant, desired)
 
-            commands.extend(generate_commands(key, add_config, {}))
+            commands.extend(generate_commands(vlan_id, add_config, {}))
 
         return commands
 
@@ -180,29 +189,32 @@ class Vlans(ConfigBase):
                   of the provided objects
         """
         commands = []
-        for key in want.keys():
-            desired = dict(vlan_id=key)
-            if key in have:
-                extant = have[key]
+        for vlan_id in want:
+            desired = dict()
+            if vlan_id in have:
+                extant = have[vlan_id]
             else:
-                extant = dict(vlan_id=key)
+                continue
 
             del_config = dict_diff(desired, extant)
 
-            commands.extend(generate_commands(key, {}, del_config))
+            commands.extend(generate_commands(vlan_id, {}, del_config))
 
         return commands
 
 
 def generate_commands(vlan_id, to_set, to_remove):
     commands = []
+    if "vlan_id" in to_remove:
+        return ["no vlan {0}".format(vlan_id)]
+
     for key, value in to_set.items():
-        if value is None:
+        if key == "vlan_id" or value is None:
             continue
 
         commands.append("{0} {1}".format(key, value))
 
-    for key in to_remove.keys():
+    for key in to_remove:
         commands.append("no {0}".format(key))
 
     if commands:

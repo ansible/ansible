@@ -181,9 +181,9 @@ notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/beta/subnetworks)'
 - 'Private Google Access: U(https://cloud.google.com/vpc/docs/configure-private-google-access)'
 - 'Cloud Networking: U(https://cloud.google.com/vpc/docs/using-vpc)'
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.

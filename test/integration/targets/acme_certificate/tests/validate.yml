@@ -11,10 +11,13 @@
   assert:
     that:
       - "'all_chains' in cert_1_obtain_results"
-      - "'chain' in cert_1_obtain_results.all_chains[0]"
-      - "'full_chain' in cert_1_obtain_results.all_chains[0]"
-      - "lookup('file', output_dir ~ '/cert-1-chain.pem', rstrip=False) == cert_1_obtain_results.all_chains[0].chain"
-      - "lookup('file', output_dir ~ '/cert-1-fullchain.pem', rstrip=False) == cert_1_obtain_results.all_chains[0].full_chain"
+      - "cert_1_obtain_results.all_chains | length > 1"
+      - "'cert' in cert_1_obtain_results.all_chains[cert_1_alternate | int]"
+      - "'chain' in cert_1_obtain_results.all_chains[cert_1_alternate | int]"
+      - "'full_chain' in cert_1_obtain_results.all_chains[cert_1_alternate | int]"
+      - "lookup('file', output_dir ~ '/cert-1.pem', rstrip=False) == cert_1_obtain_results.all_chains[cert_1_alternate | int].cert"
+      - "lookup('file', output_dir ~ '/cert-1-chain.pem', rstrip=False) == cert_1_obtain_results.all_chains[cert_1_alternate | int].chain"
+      - "lookup('file', output_dir ~ '/cert-1-fullchain.pem', rstrip=False) == cert_1_obtain_results.all_chains[cert_1_alternate | int].full_chain"
 
 - name: Check that certificate 2 is valid
   assert:
@@ -25,10 +28,17 @@
     that:
       - "'DNS:*.example.com' in cert_2_text.stdout"
       - "'DNS:example.com' in cert_2_text.stdout"
-- name: Check that certificate 2 retrieval did not get all chains
+- name: Check that certificate 1 retrieval got all chains
   assert:
     that:
-      - "'all_chains' not in cert_2_obtain_results"
+      - "'all_chains' in cert_2_obtain_results"
+      - "cert_2_obtain_results.all_chains | length > 1"
+      - "'cert' in cert_2_obtain_results.all_chains[cert_2_alternate | int]"
+      - "'chain' in cert_2_obtain_results.all_chains[cert_2_alternate | int]"
+      - "'full_chain' in cert_2_obtain_results.all_chains[cert_2_alternate | int]"
+      - "lookup('file', output_dir ~ '/cert-2.pem', rstrip=False) == cert_2_obtain_results.all_chains[cert_2_alternate | int].cert"
+      - "lookup('file', output_dir ~ '/cert-2-chain.pem', rstrip=False) == cert_2_obtain_results.all_chains[cert_2_alternate | int].chain"
+      - "lookup('file', output_dir ~ '/cert-2-fullchain.pem', rstrip=False) == cert_2_obtain_results.all_chains[cert_2_alternate | int].full_chain"
 
 - name: Check that certificate 3 is valid
   assert:
@@ -40,6 +50,17 @@
       - "'DNS:*.example.com' in cert_3_text.stdout"
       - "'DNS:example.org' in cert_3_text.stdout"
       - "'DNS:t1.example.com' in cert_3_text.stdout"
+- name: Check that certificate 1 retrieval got all chains
+  assert:
+    that:
+      - "'all_chains' in cert_3_obtain_results"
+      - "cert_3_obtain_results.all_chains | length > 1"
+      - "'cert' in cert_3_obtain_results.all_chains[cert_3_alternate | int]"
+      - "'chain' in cert_3_obtain_results.all_chains[cert_3_alternate | int]"
+      - "'full_chain' in cert_3_obtain_results.all_chains[cert_3_alternate | int]"
+      - "lookup('file', output_dir ~ '/cert-3.pem', rstrip=False) == cert_3_obtain_results.all_chains[cert_3_alternate | int].cert"
+      - "lookup('file', output_dir ~ '/cert-3-chain.pem', rstrip=False) == cert_3_obtain_results.all_chains[cert_3_alternate | int].chain"
+      - "lookup('file', output_dir ~ '/cert-3-fullchain.pem', rstrip=False) == cert_3_obtain_results.all_chains[cert_3_alternate | int].full_chain"
 
 - name: Check that certificate 4 is valid
   assert:
@@ -53,6 +74,10 @@
       - "'DNS:test.t2.example.com' in cert_4_text.stdout"
       - "'DNS:example.org' in cert_4_text.stdout"
       - "'DNS:test.example.org' in cert_4_text.stdout"
+- name: Check that certificate 4 retrieval did not get all chains
+  assert:
+    that:
+      - "'all_chains' not in cert_4_obtain_results"
 
 - name: Check that certificate 5 is valid
   assert:

@@ -314,6 +314,7 @@ class Connection(NetworkConnectionBase):
         self._last_response = None
         self._history = list()
         self._command_response = None
+        self._last_recv_window = None
 
         self._terminal = None
         self.cliconf = None
@@ -329,8 +330,9 @@ class Connection(NetworkConnectionBase):
 
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
-                self.queue_message('vvvv', 'loaded cliconf plugin for network_os %s' % self._network_os)
-                self._sub_plugin = {'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf}
+                self._sub_plugin = {'type': 'cliconf', 'name': self.cliconf._load_name, 'obj': self.cliconf}
+                self.queue_message('vvvv', 'loaded cliconf plugin %s from path %s for network_os %s' %
+                                   (self.cliconf._load_name, self.cliconf._original_path, self._network_os))
             else:
                 self.queue_message('vvvv', 'unable to load cliconf for network_os %s' % self._network_os)
         else:
@@ -451,13 +453,13 @@ class Connection(NetworkConnectionBase):
 
             self.receive(prompts=terminal_initial_prompt, answer=terminal_initial_answer, newline=newline, check_all=check_all)
 
-            self.queue_message('vvvv', 'firing event: on_open_shell()')
-            self._terminal.on_open_shell()
-
             if self._play_context.become and self._play_context.become_method == 'enable':
                 self.queue_message('vvvv', 'firing event: on_become')
                 auth_pass = self._play_context.become_pass
                 self._terminal.on_become(passwd=auth_pass)
+
+            self.queue_message('vvvv', 'firing event: on_open_shell()')
+            self._terminal.on_open_shell()
 
             self.queue_message('vvvv', 'ssh connection has completed successfully')
 
@@ -540,6 +542,7 @@ class Connection(NetworkConnectionBase):
             recv.seek(offset)
 
             window = self._strip(recv.read())
+            self._last_recv_window = window
             window_count += 1
 
             if prompts and not handled:

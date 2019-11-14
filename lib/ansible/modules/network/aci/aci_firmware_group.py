@@ -184,9 +184,9 @@ def main():
         ],
     )
 
-    state = module.params['state']
-    group = module.params['group']
-    firmwarepol = module.params['firmwarepol']
+    state = module.params.get('state')
+    group = module.params.get('group')
+    firmwarepol = module.params.get('firmwarepol')
 
     aci = ACIModule(module)
     aci.construct_url(

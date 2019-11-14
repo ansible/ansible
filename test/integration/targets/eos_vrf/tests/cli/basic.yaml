@@ -4,7 +4,6 @@
   eos_vrf:
     name: "{{ item }}"
     state: absent
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   with_items:
@@ -20,7 +19,6 @@
     name: test
     rd: 1:200
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -38,7 +36,6 @@
     name: test
     rd: 1:200
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -55,7 +52,6 @@
     name: test
     rd: 1:201
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -73,7 +69,6 @@
     name: test
     rd: 1:201
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -90,7 +85,6 @@
     name: test
     rd: 1:201
     state: present
-    authorize: yes
     interfaces:
       - Ethernet2
     associated_interfaces:
@@ -112,7 +106,6 @@
     name: test
     rd: 1:201
     state: present
-    authorize: yes
     interfaces:
       - ethernet 2  # interface name modified to test case insensitive and space scenario
     provider: "{{ cli }}"
@@ -130,7 +123,6 @@
   eos_vrf:
     name: test
     state: present
-    authorize: yes
     associated_interfaces:
       - test
     provider: "{{ cli }}"
@@ -147,7 +139,6 @@
     name: test1
     rd: 1:202
     state: present
-    authorize: yes
     interfaces:
       - loopback10
       - loopback11
@@ -184,7 +175,6 @@
     name: test1
     rd: 1:202
     state: present
-    authorize: yes
     interfaces:
       - loopback10
       - loopback11
@@ -206,7 +196,6 @@
   eos_vrf:
     name: "{{ item }}"
     state: absent
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   with_items:
@@ -220,7 +209,6 @@
       - { name: test2, rd: "1:202" }
       - { name: test3, rd: "1:203" }
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -241,7 +229,6 @@
       - { name: test2, rd: "1:202" }
       - { name: test3, rd: "1:203" }
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -260,7 +247,6 @@
       - { name: test5, rd: "1:205" }
     state: present
     purge: yes
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -282,7 +268,6 @@
   eos_vrf:
     name: test
     state: absent
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -290,7 +275,6 @@
   eos_vrf:
     name: test
     state: absent
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -303,7 +287,6 @@
       - { name: test4 }
       - { name: test5 }
     state: absent
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -316,7 +299,6 @@
       - { name: test4 }
       - { name: test5 }
     state: absent
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 

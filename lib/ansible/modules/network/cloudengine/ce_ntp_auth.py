@@ -35,6 +35,8 @@ notes:
       If a matching key configuration isn't found on the device, the module will fail.
     - If C(state=absent) and C(authentication=on), authentication will be turned on.
     - If C(state=absent) and C(authentication=off), authentication will be turned off.
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     key_id:
         description:

@@ -438,6 +438,7 @@
   assert:
     that:
     - add_firewall_rule_with_var_expand_path.changed == false
+
 - name: Add firewall rule for application group
   win_firewall_rule:
     name: Rule for application group
@@ -454,3 +455,20 @@
   assert:
     that:
     - add_firewall_rule_with_group.changed == true
+
+# Test icmptypecode
+- name: Add rule with icmptypecode
+  win_firewall_rule:
+    name: icmptest
+    enabled: yes
+    state: present
+    action: allow
+    direction: in
+    protocol: icmpv4
+    icmp_type_code: '8:*'
+  register: add_firewall_rule_with_icmptypecode
+
+- name: Check that creating same firewall rule with expanded vars identified
+  assert:
+    that:
+    - add_firewall_rule_with_icmptypecode.changed == true
