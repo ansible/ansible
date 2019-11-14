@@ -1458,6 +1458,8 @@ INTERPRETER_PYTHON_DISTRO_MAP:
     centos: &rhelish
       '6': /usr/bin/python
       '8': /usr/libexec/platform-python
+    debian:
+      '10': /usr/bin/python3
     fedora:
       '23': /usr/bin/python3
     redhat: *rhelish
