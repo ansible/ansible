@@ -123,4 +123,10 @@
       lightsail:
         name: "{{ instance_name }}"
         state: absent
-      ignore_errors: true
+      ignore_errors: yes
+
+    - name: Cleanup - delete keypair
+      lightsail_keypair:
+        name: "{{ keypair_name }}"
+        state: absent
+      ignore_errors: yes

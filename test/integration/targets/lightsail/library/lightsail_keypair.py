@@ -36,10 +36,26 @@ def create_keypair(module, client, keypair_name):
     module.exit_json(changed=True)
 
 
+def delete_keypair(module, client, keypair_name):
+    """
+    Delete a keypair in lightsail
+    """
+
+    try:
+        client.delete_key_pair(keyPairName=keypair_name)
+    except ClientError as e:
+        if e.response['Error']['Code'] == "NotFoundException":
+            module.exit_json(changed=False)
+        module.fail_json_aws(e)
+
+    module.exit_json(changed=True)
+
+
 def main():
 
     argument_spec = dict(
         name=dict(type='str', required=True),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
@@ -51,7 +67,12 @@ def main():
         module.fail_json_aws(e)
 
     keypair_name = module.params.get('name')
-    create_keypair(module, client, keypair_name)
+    state = module.params.get('state')
+
+    if state == 'present':
+        create_keypair(module, client, keypair_name)
+    else:
+        delete_keypair(module, client, keypair_name)
 
 
 if __name__ == '__main__':
