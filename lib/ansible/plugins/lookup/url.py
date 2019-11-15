@@ -42,7 +42,8 @@ options:
   force_basic_auth:
     description: Force basic authentication
     type: boolean
-    version_added: "2.9"
+    version_added: "2.10"
+    default: False
 """
 
 EXAMPLES = """
