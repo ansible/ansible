@@ -699,7 +699,7 @@ def main():
                                           check_mode=module.check_mode)
 
         if owner and subscription.attrs['owner'] != owner:
-            changed = subscription.set_owner(owner, check_mode=module.check_mode)
+            changed = subscription.set_owner(owner, check_mode=module.check_mode) or changed
 
     elif state == 'absent':
         changed = subscription.drop(cascade, check_mode=module.check_mode)
