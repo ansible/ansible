@@ -120,14 +120,42 @@ options:
                 description:
                   - Used to specify the system name TLV
                 type: bool
+  running_config:
+    description:
+      - The module, by default, will connect to the remote device and
+        retrieve the current running-config to use as a base for comparing
+        against the contents of source. There are times when it is not
+        desirable to have the task get the current running-config for
+        every task in a playbook.  The I(running_config) argument allows the
+        implementer to pass in the configuration to use as the base
+        config for comparison. This value of this option should be the
+        output received from device by executing command
+        C(show running-config | include lldp)
+    version_added: "2.10"
   state:
     description:
-      - The state of the configuration after module completion
+      - The state of the configuration after module completion. 
+      - The states I(rendered), I(gathered) and I(parsed) does not perform any
+        change on the device. 
+      - The state I(rendered) will transform the configuration in C(config) option to platform
+        specific CLI commands which will be returned in the I(rendered) key within the result.
+        For state I(rendered) active connection to remote host is not required.
+      - The state I(gathered) will fetch the running configuration from device and transform
+        it into structured data in the format as per the resource module argspec and the
+        value is returned in the I(gathered) key within the result.
+      - The state I(parsed) reads the configuration from C(running_config) option and transforms
+        it into JSON format as per the resource module parameters and the value is returned in
+        the I(parsed) key within the result. The value of C(running_config) option should be the
+        same format as the output of command I(show running-config | include lldp) executed
+        on device. For state I(parsed) active connection to remote host is not required.
     type: str
     choices:
       - merged
       - replaced
       - deleted
+      - rendered
+      - gathered
+      - parsed
     default: merged
 """
 EXAMPLES = """
@@ -239,8 +267,13 @@ def main():
 
     :returns: the result form module invocation
     """
+    required_if = [['state', 'parsed', ['running_config']]]
+    mutually_exclusive = [('config', 'running_config')]
+
     module = AnsibleModule(argument_spec=Lldp_globalArgs.argument_spec,
-                           supports_check_mode=True)
+                           supports_check_mode=True,
+                           required_if=required_if,
+                           mutually_exclusive=mutually_exclusive)
 
     result = Lldp_global(module).execute_module()
     module.exit_json(**result)

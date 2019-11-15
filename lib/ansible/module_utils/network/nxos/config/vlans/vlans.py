@@ -39,13 +39,13 @@ class Vlans(ConfigBase):
     def __init__(self, module):
         super(Vlans, self).__init__(module)
 
-    def get_vlans_facts(self):
+    def get_vlans_facts(self, data=None):
         """ Get the 'facts' (the current configuration)
 
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
+        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources, data=data)
         vlans_facts = facts['ansible_network_resources'].get('vlans')
         if not vlans_facts:
             return []
@@ -61,19 +61,35 @@ class Vlans(ConfigBase):
         commands = list()
         warnings = list()
 
-        existing_vlans_facts = self.get_vlans_facts()
-        commands.extend(self.set_config(existing_vlans_facts))
-        if commands:
+        if self.state in self.ACTION_STATES:
+            existing_vlans_facts = self.get_vlans_facts()
+        else:
+            existing_vlans_facts = []
+
+        if self.state in self.ACTION_STATES or self.state == 'rendered':
+            commands.extend(self.set_config(existing_vlans_facts))
+
+        if commands and self.state in self.ACTION_STATES:
             if not self._module.check_mode:
                 self._connection.edit_config(commands)
             result['changed'] = True
-        result['commands'] = commands
 
-        changed_vlans_facts = self.get_vlans_facts()
+        if self.state in self.ACTION_STATES:
+            result['commands'] = commands
 
-        result['before'] = existing_vlans_facts
-        if result['changed']:
-            result['after'] = changed_vlans_facts
+        if self.state in self.ACTION_STATES or self.state == 'gathered':
+            changed_vlans_facts = self.get_vlans_facts()
+        elif self.state == 'rendered':
+            result['rendered'] = commands
+        elif self.state == 'parsed':
+            result['parsed'] = self.get_vlans_facts(data=self._module.params['running_config'])
+        else:
+            changed_vlans_facts = []
+
+        if self.state in self.ACTION_STATES:
+            result['before'] = existing_vlans_facts
+            if result['changed']:
+                result['after'] = changed_vlans_facts
 
         result['warnings'] = warnings
         return result
@@ -104,20 +120,19 @@ class Vlans(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        state = self._module.params['state']
-        if state in ('overridden', 'merged', 'replaced') and not want:
+        if self.state in ('overridden', 'merged', 'replaced') and not want:
             self._module.fail_json(msg='config is required for state {0}'.format(state))
 
         commands = list()
-        if state == 'overridden':
+        if self.state == 'overridden':
             commands.extend(self._state_overridden(want, have))
-        elif state == 'deleted':
+        elif self.state == 'deleted':
             commands.extend(self._state_deleted(want, have))
         else:
             for w in want:
-                if state == 'merged':
+                if self.state == 'merged' or self.state == 'rendered':
                     commands.extend(self._state_merged(w, have))
-                elif state == 'replaced':
+                elif self.state == 'replaced':
                     commands.extend(self._state_replaced(w, have))
         return commands
 

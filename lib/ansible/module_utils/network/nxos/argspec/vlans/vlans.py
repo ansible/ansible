@@ -46,6 +46,7 @@ class VlansArgs(object):
                                             'state': {'choices': ['active', 'suspend'],
                                                       'type': 'str'}},
                                 'type': 'list'},
-                     'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
+                     'running_config': {'type': 'str'},
+                     'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted', 'rendered', 'gathered', 'parsed'],
                                'default': 'merged',
                                'type': 'str'}}

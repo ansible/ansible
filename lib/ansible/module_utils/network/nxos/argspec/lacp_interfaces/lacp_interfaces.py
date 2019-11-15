@@ -82,8 +82,9 @@ class Lacp_interfacesArgs(object):
             },
             'type': 'list'
         },
+        'running_config': {'type': 'str'},
         'state': {
-            'choices': ['merged', 'replaced', 'overridden', 'deleted'],
+            'choices': ['merged', 'replaced', 'overridden', 'deleted', 'rendered', 'gathered', 'parsed'],
             'default': 'merged',
             'type': 'str'
         }

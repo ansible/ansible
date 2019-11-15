@@ -36,12 +36,12 @@ class Bfd_interfaces(ConfigBase):
     def __init__(self, module):
         super(Bfd_interfaces, self).__init__(module)
 
-    def get_bfd_interfaces_facts(self):
+    def get_bfd_interfaces_facts(self, data=None):
         """ Get the 'facts' (the current configuration)
 
         :returns: A list of interface configs and a platform string
         """
-        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
+        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources, data=data)
         bfd_interfaces_facts = facts['ansible_network_resources'].get('bfd_interfaces', [])
         platform = facts.get('ansible_net_platform', '')
         return bfd_interfaces_facts, platform
@@ -59,18 +59,35 @@ class Bfd_interfaces(ConfigBase):
         warnings = list()
         cmds = list()
 
-        existing_bfd_interfaces_facts, platform = self.get_bfd_interfaces_facts()
-        cmds.extend(self.set_config(existing_bfd_interfaces_facts, platform))
-        if cmds:
+        if self.state in self.ACTION_STATES:
+            existing_bfd_interfaces_facts, platform = self.get_bfd_interfaces_facts()
+        else:
+            existing_interfaces_facts, platform = [], ''
+
+        if self.state in self.ACTION_STATES or self.state == 'rendered':
+            cmds.extend(self.set_config(existing_bfd_interfaces_facts, platform))
+
+        if cmds and self.state in self.ACTION_STATES:
             if not self._module.check_mode:
                 self.edit_config(cmds)
             result['changed'] = True
-        result['commands'] = cmds
 
-        changed_bfd_interfaces_facts, platform = self.get_bfd_interfaces_facts()
-        result['before'] = existing_bfd_interfaces_facts
-        if result['changed']:
-            result['after'] = changed_bfd_interfaces_facts
+        if self.state in self.ACTION_STATES:
+            result['commands'] = cmds
+
+        if self.state in self.ACTION_STATES or self.state == 'gathered':
+            changed_bfd_interfaces_facts, platform = self.get_bfd_interfaces_facts()
+        elif self.state == 'rendered':
+            result['rendered'] = cmds
+        elif self.state == 'parsed':
+            result['parsed'] = self.get_bfd_interfaces_facts(data=self._module.params['running_config'])
+        else:
+            changed_bfd_interfaces_facts = []
+
+        if self.state in self.ACTION_STATES:
+            result['before'] = existing_bfd_interfaces_facts
+            if result['changed']:
+                result['after'] = changed_bfd_interfaces_facts
 
         result['warnings'] = warnings
         return result
@@ -112,20 +129,19 @@ class Bfd_interfaces(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        state = self._module.params['state']
-        if state in ('overridden', 'merged', 'replaced') and not want:
-            self._module.fail_json(msg='config is required for state {0}'.format(state))
+        if self.state in ('overridden', 'merged', 'replaced') and not want:
+            self._module.fail_json(msg='config is required for state {0}'.format(self.state))
 
         cmds = list()
-        if state == 'overridden':
+        if self.state == 'overridden':
             cmds.extend(self._state_overridden(want, have))
-        elif state == 'deleted':
+        elif self.state == 'deleted':
             cmds.extend(self._state_deleted(want, have))
         else:
             for w in want:
-                if state == 'merged':
+                if self.state == 'merged' or self.state == 'rendered':
                     cmds.extend(self._state_merged(flatten_dict(w), have))
-                elif state == 'replaced':
+                elif self.state == 'replaced':
                     cmds.extend(self._state_replaced(flatten_dict(w), have))
         return cmds
 
