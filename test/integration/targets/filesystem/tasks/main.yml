@@ -26,7 +26,7 @@
     # https://www.kernel.org/pub/linux/utils/util-linux/v2.21/v2.21-ChangeLog
     # https://anonscm.debian.org/cgit/collab-maint/pkg-util-linux.git/commit/?id=04f7020eadf31efc731558df92daa0a1c336c46c
     - 'not (item.0.key == "btrfs" and (ansible_distribution == "Ubuntu" and ansible_distribution_release == "trusty"))'
-    - 'not (item.0.key == "btrfs" and (ansible_distribution == "RedHat" and ansible_distribution_major_version|int >= 8))'
+    - 'not (item.0.key == "btrfs" and (ansible_facts.os_family == "RedHat" and ansible_facts.distribution_major_version is version("8", ">=")))'
     - 'not (item.0.key == "lvm" and ansible_system == "FreeBSD")' # LVM not available on FreeBSD
     - 'not (item.0.key == "lvm" and ansible_virtualization_type == "docker")' # Tests use losetup which can not be used inside unprivileged container
     - 'not (item.0.key == "ocfs2" and ansible_os_family != "Debian")' # ocfs2 only available on Debian based distributions
