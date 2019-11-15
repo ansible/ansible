@@ -263,6 +263,7 @@ class SudoRuleIPAClient(IPAClient):
     def sudorule_remove_run_as_group(self, name, item):
         return self._post_json(method='sudorule_remove_runasgroup', name=name, item={'group': item})
 
+
 def get_sudorule_dict(cmdcategory=None, description=None, hostcategory=None, ipaenabledflag=None, usercategory=None,
                       runasgroupcategory=None, runasusercategory=None):
     data = {}
