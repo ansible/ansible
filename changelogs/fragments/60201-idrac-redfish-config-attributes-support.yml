@@ -1,0 +1,2 @@
+minor_changes:
+  - idrac_redfish_config - Support for multiple manager attributes configuration
