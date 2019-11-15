@@ -92,7 +92,7 @@ options:
     type: dict
   purge_tags:
     description:
-      - Remove tags not listed in I(tags) when tags is not None.
+      - Remove tags not listed in I(tags) when tags is specified.
     default: true
     version_added: "2.10"
     type: bool
