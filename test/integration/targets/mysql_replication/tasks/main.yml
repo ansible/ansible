@@ -3,16 +3,24 @@
 
 # Initial CI tests of mysql_replication module:
 - import_tasks: mysql_replication_initial.yml
-  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - ansible_facts.distribution_major_version is version('7', '==')
 
 # Tests of master_delay parameter:
 - import_tasks: mysql_replication_master_delay.yml
-  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - ansible_facts.distribution_major_version is version('7', '==')
 
 # Tests of channel parameter:
 - import_tasks: mysql_replication_channel.yml
-  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - ansible_facts.distribution_major_version is version('7', '==')
 
 # Tests of resetmaster mode:
 - import_tasks: mysql_replication_resetmaster_mode.yml
-  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - ansible_facts.distribution_major_version is version('7', '==')

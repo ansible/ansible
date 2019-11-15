@@ -1,4 +1,5 @@
-repo_link: https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
+# There is no MySQL 5.7 for RHEL 8. This will need to be retooled to use 8.0 for RHEL 8 or use the setup_mysql8 role for everything
+repo_link: https://repo.mysql.com/mysql57-community-release-el{{ ansible_facts.distribution_major_version }}.rpm
 repo_name: mysql-community
 mysql_package_name: mysql-community-server
 
