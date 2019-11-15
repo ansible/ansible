@@ -6,9 +6,16 @@
     name: '{{ repo_link }}'
   notify: cleanup mysql8
 
+# These packages come from AppStream in RHEL 8, so they need to be done in a separate task
+- name: Install MySQL support packages
+  yum:
+    name: "{{ mysql_support_packages }}"
+  notify: cleanup mysql8
+
 - name: Install MySQL community server
   yum:
-    name: '{{ mysql_packages }}'
+    name: '{{ mysql_server_packages }}'
+    disablerepo: '{{ mysql_disablerepo | default(omit) }}'
   notify: cleanup mysql8
 
 - name: Copy my.cnf
