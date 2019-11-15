@@ -1,0 +1,39 @@
+#!/usr/bin/python
+
+import base64
+import requests
+import syslog
+
+from ansible.module_utils._text import to_bytes
+
+CMD_SITE_TYPE = 'site'
+CMD_APP_TYPE = 'app'
+CMD_AMSS_TYPE = 'amss'
+
+
+class PrestModule(object):
+    def __init__(self):
+        self.headers = {'Authorization': '',
+                        'Content-Type': ''}
+
+    def basic_auth(self, username, password):
+        return "Basic %s" % base64.b64encode(to_bytes(
+            "%s:%s" % (username, password), errors='surrogate_or_strict'))
+
+    def set_headers(self, username, password):
+        self.headers['Authorization'] = self.basic_auth(username, password)
+        self.headers['Content-Type'] = 'application/json'
+
+    def get(self, url):
+        return requests.get(url, headers=self.headers, verify=False)
+
+    def post(self, url, data):
+        return requests.post(url, headers=self.headers,
+                             json=data, verify=False)
+
+    def put(self, url, data):
+        return requests.put(url, headers=self.headers, json=data, verify=False)
+
+    def delete(self, url, data):
+        return requests.delete(url, headers=self.headers,
+                               json=data, verify=False)
