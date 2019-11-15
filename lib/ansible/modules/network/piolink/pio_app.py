@@ -16,28 +16,33 @@ module: pio_app
 short_description: Configuring WEBFRONT-K Applications
 description:
    - You can manage the WEBFRONT-K applications.
-version_added: 2.9
+version_added: 2.10
 options:
   host:
     description:
       - Enter the IPv4 address of the WEBFRONT-K.
     required: True
+    type: String
   port:
     description:
       - Enter the port number of the WEBFRONT-K.
     required: True
+    type: String
   username:
     description:
       - Enter the User ID of the WEBFRONT-K. The ID must have permissions for the WEBFRONT-K.
     required: True
+    type: String
   password:
     description:
       - Enter the user's password.
     required: True
+    type: String
   app_name:
     description:
       - Enter the application name. "Application" means the applications provided by the WEBFRONT-K.
     required: True
+    type: String
   app_ip_list:
     description:
       - Enter the lists of IP addresses of the WEBFRONT-K application.
@@ -46,9 +51,11 @@ options:
       app_ip:
         description:
           - Enter the IP addresses of the WEBFRONT-K application.
+        type: String
       app_port:
         description:
           - Enter the port numbers of the WEBFRONT-K application.
+        type: String
   app_domain_list:
     description:
       - Enter the lists of the domain names of the WEBFRONT-K application.
@@ -57,7 +64,8 @@ options:
       app_domain:
         description:
           - Enter the domain names of the WEBFRONT-K application.
-author: Piolink
+        type: String
+author: Seonil Kim(@sikim-piolink)
 '''
 
 EXAMPLES = r'''

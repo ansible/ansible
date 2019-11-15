@@ -7,6 +7,10 @@
 import os
 import re
 import ast
+import requests
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 from ansible.module_utils.network.piolink.prest_module import PrestModule,\
     CMD_SITE_TYPE, CMD_APP_TYPE, CMD_AMSS_TYPE
@@ -35,7 +39,7 @@ class PrestUtils(PrestModule):
 
     def init_args(self):
         # set prefix url
-        self.prefix_url = 'https://{}:{}/api/v2'.format(
+        self.prefix_url = 'https://{0}:{1}/api/v2'.format(
             self.module.params['host'], self.module.params['port'])
 
         # set header
