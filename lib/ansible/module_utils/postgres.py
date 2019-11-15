@@ -122,7 +122,7 @@ def connect_to_db(module, conn_params, autocommit=False, fail_on_conn=True):
     return db_connection
 
 
-def exec_sql(obj, query, ddl=False, add_to_executed=True):
+def exec_sql(obj, query, query_params=None, ddl=False, add_to_executed=True, dont_exec=False):
     """Execute SQL.
 
     Auxiliary function for PostgreSQL user classes.
@@ -130,20 +130,42 @@ def exec_sql(obj, query, ddl=False, add_to_executed=True):
     Returns a query result if possible or True/False if ddl=True arg was passed.
     It necessary for statements that don't return any result (like DDL queries).
 
-    Arguments:
+    Args:
         obj (obj) -- must be an object of a user class.
             The object must have module (AnsibleModule class object) and
             cursor (psycopg cursor object) attributes
         query (str) -- SQL query to execute
+
+    Kwargs:
+        query_params (dict or tuple) -- Query parameters to prevent SQL injections,
+            could be a dict or tuple
         ddl (bool) -- must return True or False instead of rows (typical for DDL queries)
             (default False)
         add_to_executed (bool) -- append the query to obj.executed_queries attribute
+        dont_exec (bool) -- used with add_to_executed=True to generate a query, add it
+            to obj.executed_queries list and return True (default False)
     """
-    try:
-        obj.cursor.execute(query)
 
+    if dont_exec:
+        # This is usually needed to return queries in check_mode
+        # without execution
+        query = obj.cursor.mogrify(query, query_params)
         if add_to_executed:
             obj.executed_queries.append(query)
+
+        return True
+
+    try:
+        if query_params is not None:
+            obj.cursor.execute(query, query_params)
+        else:
+            obj.cursor.execute(query)
+
+        if add_to_executed:
+            if query_params is not None:
+                obj.executed_queries.append(obj.cursor.mogrify(query, query_params))
+            else:
+                obj.executed_queries.append(query)
 
         if not ddl:
             res = obj.cursor.fetchall()
