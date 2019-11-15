@@ -491,3 +491,25 @@ class TestNxosL3InterfacesModule(TestNxosModule):
         playbook['state'] = 'deleted'
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=False)
+
+    def test_8(self):
+        # no 'config' key in playbook
+        existing = dedent('''\
+          interface Ethernet1/1
+            ip address 10.1.1.1/24
+        ''')
+        self.get_resource_connection_facts.return_value = {self.SHOW_CMD: existing}
+        playbook = dict()
+
+        for i in ['merged', 'replaced', 'overridden']:
+            playbook['state'] = i
+            set_module_args(playbook, ignore_provider_arg)
+            self.execute_module(failed=True)
+
+        deleted = [
+            'interface Ethernet1/1',
+            'no ip address',
+        ]
+        playbook['state'] = 'deleted'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=deleted)
