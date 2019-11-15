@@ -1429,3 +1429,9 @@ groupings:
   - vmware
   vsphere_file:
   - vmware
+  vmware_guest_register_operation:
+  - vmware
+  vmware_guest_serial_port:
+  - vmware
+  vmware_guest_tools_info:
+  - vmware
