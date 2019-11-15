@@ -153,7 +153,7 @@ EXAMPLES = r'''
   ldap_attrs:
     dn: uid=jdoe,ou=people,dc=example,dc=com
     attributes:
-        description: ""
+        description: []
     state: exact
     server_uri: ldap://localhost/
     bind_dn: cn=admin,dc=example,dc=com
