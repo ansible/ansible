@@ -244,6 +244,8 @@ class AzureRMPostgreSqlServersInfo(AzureRMModuleBase):
             'sku': d['sku'],
             'location': d['location'],
             'storage_mb': d['storage_profile']['storage_mb'],
+            'geo_redundant_backup': d['storage_profile']['geo_redundant_backup'],
+            'backup_retention_days': d['storage_profile']['backup_retention_days'],
             'version': d['version'],
             'enforce_ssl': (d['ssl_enforcement'] == 'Enabled'),
             'admin_username': d['administrator_login'],
