@@ -284,23 +284,21 @@ Function Install-Chocolatey {
         # locate the newly installed choco.exe
         $choco_app = Get-Command -Name choco.exe -CommandType Application -ErrorAction SilentlyContinue
         if ($null -eq $choco_app) {
-            $choco_path = $env:ChocolateyInstall
-            if ($null -ne $choco_path) {
-                $choco_path = "$choco_path\bin\choco.exe"
-            } else {
-                $choco_path = "$env:SYSTEMDRIVE\ProgramData\Chocolatey\bin\choco.exe"
+            $choco_dir = $env:ChocolateyInstall
+            if ($null -eq $choco_dir) {
+                $choco_dir = "$env:SYSTEMDRIVE\ProgramData\Chocolatey"
             }
-
-            $choco_app = Get-Command -Name $choco_path -CommandType Application -ErrorAction SilentlyContinue
+            $choco_app = Get-Command -Name "$choco_dir\bin\choco.exe" -CommandType Application -ErrorAction SilentlyContinue
         }
     }
+
     if ($module.CheckMode -and $null -eq $choco_app) {
         $module.Result.skipped = $true
         $module.Result.msg = "Skipped check mode run on win_chocolatey as choco.exe cannot be found on the system"
         $module.ExitJson()
     }
 
-    if (-not (Test-Path -Path $choco_app.Path)) {
+    if ($null -eq $choco_app -or -not (Test-Path -LiteralPath $choco_app.Path)) {
         $module.FailJson("Failed to find choco.exe, make sure it is added to the PATH or the env var 'ChocolateyInstall' is set")
     }
 
@@ -321,6 +319,7 @@ Function Install-Chocolatey {
         }
         $module.Warn("Chocolatey was older than v0.10.5 so it was upgraded during this task run.")
         Update-ChocolateyPackage -choco_path $choco_app.Path -packages @("chocolatey") `
+
             -proxy_url $proxy_url -proxy_username $proxy_username `
             -proxy_password $proxy_password -source $source `
             -source_username $source_username -source_password $source_password
