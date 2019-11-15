@@ -21,19 +21,30 @@ description:
 version_added: "2.8"
 requirements: [ "boto3", "botocore" ]
 options:
+  cluster_name:
+    description:
+      - The name of the cluster who's resources we are tagging
+    required: true
   resource:
     description:
-      - The ecs cluster name
-    required: true
+      - The ecs resource name. Can be none only if resource_type is cluster.
+    required: false
+  resource_type:
+    description:
+      - The type of resource
+      default: cluster
+      choices: ['cluster', 'task', 'service', task_definition', 'container']
   state:
     description:
-      - Whether the tags should be present or absent on the resource. Use list to interrogate the tags of a ecs resource.
+      - Whether the tags should be present or absent on the resource. Use 
+        list to interrogate the tags of a ecs resource.
     default: present
     choices: ['present', 'absent', 'list']
   tags:
     description:
       - A dictionary of tags to add or remove from the resource.
-      - If the value provided for a tag is null and C(state) is I(absent), the tag will be removed regardless of its current value.
+      - If the value provided for a tag is null and C(state) is I(absent), the 
+        tag will be removed regardless of its current value.
     required: true
   purge_tags:
     description:
@@ -56,7 +67,8 @@ EXAMPLES = '''
 - name: Ensure tags are present on a resource
   ecs_cluster_tag:
     region: eu-west-1
-    resource: mycluster
+    cluster_name: mycluster
+    resource_type: cluster
     state: present
     tags:
       Name: ubervol
@@ -65,14 +77,17 @@ EXAMPLES = '''
 - name: Retrieve all tags on a cluster
   ecs_cluster_tag:
     region: eu-west-1
-    resource: mycluster 
+    cluster_name: mycluster
+    resource: http_task
+    resource_type: task 
     state: list
   register: ecs_cluster_tags
 
 - name: Remove the Env tag
   ecs_cluster_tag:
     region: eu-west-1
-    resource: mycluster
+    cluster_name: mycluster
+    resource_type: cluster
     tags:
       Env:
     state: absent
@@ -80,7 +95,8 @@ EXAMPLES = '''
 - name: Remove the Env tag if it's currently 'development'
   ecs_cluster_tag:
     region: eu-west-1
-    resource: mycluster
+    cluster_name: mycluster
+    resource_type: cluster
     tags:
       Env: development
     state: absent
@@ -88,7 +104,8 @@ EXAMPLES = '''
 - name: Remove all tags except for Name from a cluster
   ecs_cluster_tag:
     region: eu-west-1
-    resource: mycluster
+    cluster_name: mycluster
+    resource_type: cluster
     tags:
         Name: ''
     state: absent
@@ -128,16 +145,23 @@ def get_tags(ecs, module, resource):
 
 def main():
     argument_spec = dict(
-        resource=dict(required=True),
+        cluster_name=dict(required=True),
+        resource=dict(required=False),
         tags=dict(type='dict'),
         purge_tags=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent', 'list']),
+        resource_type=dict(default='cluster', choices=['cluster', 'task', 'service', 'task_definition', 'container'])
     )
     required_if = [('state', 'present', ['tags']), ('state', 'absent', ['tags'])]
 
     module = AnsibleAWSModule(argument_spec=argument_spec, required_if=required_if, supports_check_mode=True)
 
-    resource = module.params['resource']
+    resource_type = module.params['resource_type']
+    cluster_name = module.params['cluster_name']
+    if resource_type == 'cluster':
+        resource = cluster_name
+    else:
+        resource = module.params['resource']
     tags = module.params['tags']
     state = module.params['state']
     purge_tags = module.params['purge_tags']
@@ -147,14 +171,35 @@ def main():
     ecs = module.client('ecs')
 
     try:
-        cluster_description = ecs.describe_clusters(clusters=[resource])
-        if len(cluster_description['clusters']) == 0:
-            module.fail_json(msg='Failed to find cluster {0}'.format(resource))
-        resourceARN = cluster_description['clusters'][0]['clusterArn']
+        if resource_type == 'cluster':
+            description = ecs.describe_clusters(clusters=[resource])
+            if len(description['clusters']) == 0:
+                module.fail_json(msg='Failed to find {0} {1}'.format(resource_type, resource))
+            resource_arn = description['clusters'][0]['clusterArn']
+        elif resource_type == 'task':
+            description = ecs.describe_tasks(cluster=cluster_name, tasks=[resource])
+            if len(description['tasks']) == 0:
+                module.fail_json(msg='Failed to find {0} {1}'.format(resource_type, resource))
+            resource_arn = description['tasks'][0]['taskArn']
+        elif resource_type == 'service':
+            description = ecs.describe_services(cluster=cluster_name, services=[resource])
+            if len(description['services']) == 0:
+                module.fail_json(msg='Failed to find {0} {1}'.format(resource_type, resource))
+            resource_arn = description['services'][0]['serviceArn']
+        elif resource_type == 'task_definition':
+            description = ecs.describe_task_definition(taskDefinition=resource)
+            if 'taskDefinition' not in description or 'taskDefinitionArn' not in description['taskDefinition']:
+                module.fail_json(msg='Failed to find {0} {1}'.format(resource_type, resource))
+            resource_arn = description['taskDefinition']['taskDefinitionArn']
+        elif resource_type == 'container':
+            description = ecs.describe_container_instances(clusters=[resource])
+            if len(description['containerInstances']) == 0:
+                module.fail_json(msg='Failed to find {0} {1}'.format(resource_type, resource))
+            resource_arn = description['containerInstances'][0]['containerInstanceArn']
     except (BotoCoreError, ClientError) as e:
-        module.fail_json_aws(e, msg='Failed to find cluster {0}'.format(resource))
+        module.fail_json_aws(e, msg='Failed to find {0} {1}'.format(resource_type, resource))
 
-    current_tags = get_tags(ecs, module, resourceARN)
+    current_tags = get_tags(ecs, module, resource_arn)
 
     if state == 'list':
         module.exit_json(changed=False, tags=current_tags)
@@ -175,7 +220,7 @@ def main():
         result['removed_tags'] = remove_tags
         if not module.check_mode:
             try:
-                ecs.untag_resource(resourceArn=resourceARN, tagKeys=remove_tags.keys())
+                ecs.untag_resource(resourceArn=resource_arn, tagKeys=remove_tags.keys())
             except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg='Failed to remove tags {0} from resource {1}'.format(remove_tags, resource))
 
@@ -186,11 +231,11 @@ def main():
         if not module.check_mode:
             try:
                 tags = ansible_dict_to_boto3_tag_list(add_tags, tag_name_key_name='key', tag_value_key_name='value')
-                ecs.tag_resource(resourceArn=resourceARN, tags=tags)
+                ecs.tag_resource(resourceArn=resource_arn, tags=tags)
             except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg='Failed to set tags {0} on resource {1}'.format(add_tags, resource))
 
-    result['tags'] = get_tags(ecs, module, resourceARN)
+    result['tags'] = get_tags(ecs, module, resource_arn)
     module.exit_json(**result)
 
 
