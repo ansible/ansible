@@ -325,9 +325,9 @@ class Index(object):
                  "ON i.indexname = c.relname "
                  "JOIN pg_catalog.pg_index AS pi "
                  "ON c.oid = pi.indexrelid "
-                 "WHERE i.indexname = '%s'" % self.name)
+                 "WHERE i.indexname = %(name)s")
 
-        res = exec_sql(self, query, add_to_executed=False)
+        res = exec_sql(self, query, query_params={'name': self.name}, add_to_executed=False)
         if res:
             self.exists = True
             self.info = dict(
