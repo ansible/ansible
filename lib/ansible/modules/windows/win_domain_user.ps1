@@ -126,7 +126,7 @@ if ($null -ne $domain_server) {
 }
 
 Function Get-PrincipalGroups {
-    Param (identity, $args_extra)
+    Param ($identity, $args_extra)
     try{
         $groups = Get-ADPrincipalGroupMembership -Identity $identity @args_extra -ErrorAction Stop
     } catch {
