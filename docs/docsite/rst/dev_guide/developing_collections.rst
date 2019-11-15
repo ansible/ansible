@@ -223,8 +223,7 @@ To build a collection, run ``ansible-galaxy collection build`` from inside the r
 
     collection_dir#> ansible-galaxy collection build
 
-This creates
-a tarball of the built collection in the current directory which can be uploaded to Galaxy.::
+This creates a tarball of the built collection in the current directory which can be uploaded to Galaxy.::
 
     my_collection/
     ├── galaxy.yml
@@ -245,8 +244,8 @@ as a distribution method, but you can use it directly to install the collection 
 
 .. _trying_collection_locally:
 
-Trying collection locally
--------------------------
+Trying collections locally
+--------------------------
 
 You can try your collection locally by installing it from the tarball. The following will enable an adjacent playbook to
 access the collection:
@@ -276,21 +275,20 @@ You can publish collections to Galaxy using the ``ansible-galaxy collection publ
 Getting your token or API key
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To upload your collection to Galaxy, you must first obtain an API token (``--api-key`` in the ``ansible-galaxy`` CLI command). The API token is a secret token used by Ansible Galaxy to protect your content.
+To upload your collection to Galaxy, you must first obtain an API token (``--api-key`` in the ``ansible-galaxy`` CLI command). The API token is a secret token used to protect your content.
 
 To get your API token:
 
-* For galaxy, go to `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API token`.
-* for Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Get API token` from the version dropdown.
+* For galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API token`.
+* For Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Get API token` from the version dropdown.
 
 .. _upload_collection_ansible_galaxy:
 
 Upload using ansible-galaxy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
 .. note::
-  By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`). You do not need any further configuration. See :ref:`Configuring the ansible-galaxy client <galaxy_server_config>` if you are using any other Galaxy server, such as Red Hat Automation Hub).
+  By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`). If you are only publishing your collection to Ansible Galaxy, you do not need any further configuration. If you are using Red Hat Automation Hub or any other Galaxy server, see :ref:`Configuring the ansible-galaxy client <galaxy_server_config>`.
 
 To upload the collection artifact with the ``ansible-galaxy`` command:
 
@@ -303,7 +301,7 @@ The command waits until the import process completes before reporting the status
 without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your
 `My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
 
-The API key is a secret token used by Ansible Galaxy to protect your content. See :ref:`galaxy_get_token` for details.
+The API key is a secret token used by the Galaxy server to protect your content. See :ref:`galaxy_get_token` for details.
 
 .. _upload_collection_galaxy:
 
@@ -331,7 +329,7 @@ Once you upload a version of a collection, you cannot delete or modify that vers
 uploading. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number)
 will be the version displayed everywhere in Galaxy; however, users will still be able to download older versions.
 
-Collection versions use `Sematic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
+Collection versions use `Semantic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
 
 * Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
 * Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner.
