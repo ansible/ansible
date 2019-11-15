@@ -114,6 +114,7 @@ from ansible.module_utils._text import to_native
 def is_csrf_protection_enabled(module):
     resp, info = fetch_url(module,
                            module.params['url'] + '/api/json',
+                           timeout=module.params['timeout'],
                            method='GET')
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
@@ -126,6 +127,7 @@ def get_crumb(module, cookies):
     resp, info = fetch_url(module,
                            module.params['url'] + '/crumbIssuer/api/json',
                            method='GET',
+                           timeout=module.params['timeout'],
                            cookies=cookies)
     if info["status"] != 200:
         module.fail_json(msg="HTTP error " + str(info["status"]) + " " + info["msg"], output='')
