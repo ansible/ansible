@@ -86,6 +86,8 @@ options:
       - replaced
       - overridden
       - deleted
+      - gathered
+      - rendered
     default: merged
 """
 EXAMPLES = """
