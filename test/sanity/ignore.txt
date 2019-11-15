@@ -4981,7 +4981,6 @@ lib/ansible/modules/windows/setup.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_acl_inheritance.ps1 pslint:PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_audit_rule.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_certificate_store.ps1 validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/windows/win_chocolatey.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_chocolatey_config.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_chocolatey_facts.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_chocolatey_source.ps1 pslint:PSCustomUseLiteralPath
@@ -5023,7 +5022,6 @@ lib/ansible/modules/windows/win_package.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/modules/windows/win_pagefile.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_pagefile.ps1 pslint:PSUseDeclaredVarsMoreThanAssignments # New PR - bug test_path should be testPath
 lib/ansible/modules/windows/win_pagefile.ps1 pslint:PSUseSupportsShouldProcess
-lib/ansible/modules/windows/win_pester.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_product_facts.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_psexec.ps1 validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/windows/win_rabbitmq_plugin.ps1 pslint:PSAvoidUsingInvokeExpression

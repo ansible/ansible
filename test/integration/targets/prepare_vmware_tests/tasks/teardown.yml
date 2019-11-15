@@ -83,8 +83,7 @@
       hostname: '{{ item }}'
       username: '{{ esxi_user }}'
       password: '{{ esxi_password }}'
-      esxi_hostname: '{{ item }}'  # Won't be necessary with  https://github.com/ansible/ansible/pull/56516
-      datastore_name: '{{ ds1 }}'
+      datastore_name: '{{ ro_datastore }}'
       state: absent
   with_items: "{{ esxi_hosts }}"
 
@@ -93,8 +92,7 @@
       hostname: '{{ item }}'
       username: '{{ esxi_user }}'
       password: '{{ esxi_password }}'
-      esxi_hostname: '{{ item }}'  # Won't be necessary with  https://github.com/ansible/ansible/pull/56516
-      datastore_name: '{{ ds2 }}'
+      datastore_name: '{{ rw_datastore }}'
       state: absent
   with_items: "{{ esxi_hosts }}"
 

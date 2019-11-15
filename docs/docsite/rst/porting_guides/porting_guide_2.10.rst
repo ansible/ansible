@@ -80,6 +80,8 @@ Noteworthy module changes
 * The deprecated ``recurse`` option in :ref:`pacman <pacman_module>` module has been removed, you should use ``extra_args=--recursive`` instead.
 * :ref:`vmware_guest_custom_attributes <vmware_guest_custom_attributes_module>` module does not require VM name which was a required parameter for releases prior to Ansible 2.10.
 * :ref:`zabbix_action <zabbix_action_module>` no longer requires ``esc_period`` and ``event_source`` arguments when ``state=absent``.
+* :ref:`gitlab_user <gitlab_user_module>` no longer requires ``name``, ``email`` and ``password`` arguments when ``state=absent``.
+* :ref:`win_pester <win_pester_module>` no longer runs all ``*.ps1`` file in the directory specified due to it executing potentially unknown scripts. It will follow the default behaviour of only running tests for files that are like ``*.tests.ps1`` which is built into Pester itself
 
 Plugins
 =======

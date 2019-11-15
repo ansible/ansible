@@ -20,6 +20,8 @@ description:
   - When the user does not exist in GitLab, it will be created.
   - When the user does exists and state=absent, the user will be deleted.
   - When changes are made to user, the user will be updated.
+notes:
+  - From Ansible 2.10 and onwards, name, email and password are optional while deleting the user.
 version_added: "2.1"
 author:
   - Werner Dijkerman (@dj-wasabi)
@@ -37,8 +39,8 @@ options:
     type: str
   name:
     description:
-      - Name of the user you want to create
-    required: true
+      - Name of the user you want to create.
+      - Required only if C(state) is set to C(present).
     type: str
   username:
     description:
@@ -49,12 +51,12 @@ options:
     description:
       - The password of the user.
       - GitLab server enforces minimum password length to 8, set this value with 8 or more characters.
-    required: true
+      - Required only if C(state) is set to C(present).
     type: str
   email:
     description:
       - The email that belongs to the user.
-    required: true
+      - Required only if C(state) is set to C(present).
     type: str
   sshkey_name:
     description:
@@ -66,7 +68,7 @@ options:
     type: str
   group:
     description:
-      - Id or Full path of parent group in the form of group/name
+      - Id or Full path of parent group in the form of group/name.
       - Add user as an member to this group.
     type: str
   access_level:
@@ -96,13 +98,13 @@ options:
     version_added: "2.4"
   isadmin:
     description:
-      - Grant admin privileges to the user
+      - Grant admin privileges to the user.
     type: bool
     default: no
     version_added: "2.8"
   external:
     description:
-      - Define external parameter for this user
+      - Define external parameter for this user.
     type: bool
     default: no
     version_added: "2.8"
@@ -397,11 +399,11 @@ def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
         api_token=dict(type='str', no_log=True),
-        name=dict(type='str', required=True),
+        name=dict(type='str'),
         state=dict(type='str', default="present", choices=["absent", "present"]),
         username=dict(type='str', required=True),
-        password=dict(type='str', required=True, no_log=True),
-        email=dict(type='str', required=True),
+        password=dict(type='str', no_log=True),
+        email=dict(type='str'),
         sshkey_name=dict(type='str'),
         sshkey_file=dict(type='str'),
         group=dict(type='str'),
@@ -424,6 +426,9 @@ def main():
             ['api_username', 'api_token']
         ],
         supports_check_mode=True,
+        required_if=(
+            ('state', 'present', ['name', 'email', 'password']),
+        )
     )
 
     gitlab_url = module.params['api_url']
