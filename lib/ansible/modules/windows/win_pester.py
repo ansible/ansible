@@ -52,6 +52,9 @@ options:
   version:
     description:
       - Minimum version of the pester module that has to be available on the remote host.
+    type: str
+    aliases:
+    - minimum_version
 author:
     - Erwan Quelin (@equelin)
     - Prasoon Karunan V (@prasoonkarunan)
