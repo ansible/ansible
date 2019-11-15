@@ -285,7 +285,7 @@ Function Install-Chocolatey {
         $choco_app = Get-Command -Name choco.exe -CommandType Application -ErrorAction SilentlyContinue
         if ($null -eq $choco_app) {
             $choco_dir = $env:ChocolateyInstall
-            if ($null -eq $choco_path) {
+            if ($null -eq $choco_dir) {
                 $choco_dir = "$env:SYSTEMDRIVE\ProgramData\Chocolatey"
             }
             $choco_app = Get-Command -Name "$choco_dir\bin\choco.exe" -CommandType Application -ErrorAction SilentlyContinue
