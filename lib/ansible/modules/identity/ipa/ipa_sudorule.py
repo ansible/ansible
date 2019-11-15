@@ -34,11 +34,13 @@ options:
     - List of commands assigned to the rule.
     - If an empty list is passed all commands will be removed from the rule.
     - If option is omitted commands will not be checked or changed.
+    - C(cmdcategory) and C(cmd) are mutually exclusive parameters.
   cmdgroup:
     description:
     - List of command groups assigned to the rule.
     - If an empty list is passed all command groups will be removed from the rule.
     - If option is omitted command groups will not be checked or changed.
+    - C(cmdcategory) and C(cmdgroup) are mutually exclusive parameters.
     version_added: "2.10"
   description:
     description:
@@ -49,6 +51,7 @@ options:
     - If an empty list is passed all hosts will be removed from the rule.
     - If option is omitted hosts will not be checked or changed.
     - Option C(hostcategory) must be omitted to assign hosts.
+    - C(hostcategory) and C(host) are mutually exclusive parameters.
   hostcategory:
     description:
     - Host category the rule applies to.
@@ -61,14 +64,36 @@ options:
     - If an empty list is passed all host groups will be removed from the rule.
     - If option is omitted host groups will not be checked or changed.
     - Option C(hostcategory) must be omitted to assign host groups.
-  runasusercategory:
+    - C(hostcategory) and C(hostgroup) are mutually exclusive parameters.
+  runasgroup:
     description:
-    - RunAs User category the rule applies to.
-    choices: ['all']
-    version_added: "2.5"
+    - List of RunAs Groups to allow sudo actions to be run as
+    - If an empty list is passed all RunAs Groups will be removed from the rule.
+    - If option is omitted entries will not be checked or changed.
+    - C(runasgroupcategory) and C(runasgroup) are mutually exclusive parameters.
+    version_added: "2.10"
   runasgroupcategory:
     description:
       - RunAs Group category the rule applies to.
+    choices: ['all']
+    version_added: "2.5"
+  runasgroupofuser:
+    description:
+    - List of Groups of RunAs Users to allow sudo actions to be run as
+    - If an empty list is passed all Groups of RunAs Users will be removed from the rule.
+    - If option is omitted entries will not be checked or changed.
+    - C(runasusercategory) and C(runasgroupofuser) are mutually exclusive parameters.
+    version_added: "2.10"
+  runasuser:
+    description:
+    - List of RunAs Users to allow sudo actions to be run as, may be external or ipa users
+    - If an empty list is passed all RunAs Users will be removed from the rule.
+    - If option is omitted entries will not be checked or changed.
+    - C(runasusercategory) and C(runasuser) are mutually exclusive parameters.
+    version_added: "2.10"
+  runasusercategory:
+    description:
+    - RunAs User category the rule applies to.
     choices: ['all']
     version_added: "2.5"
   sudoopt:
@@ -196,6 +221,9 @@ class SudoRuleIPAClient(IPAClient):
     def sudorule_add_allow_command_group(self, name, item):
         return self._post_json(method='sudorule_add_allow_command', name=name, item={'sudocmdgroup': item})
 
+    def sudorule_remove_allow_command_group(self, name, item):
+        return self._post_json(method='sudorule_remove_allow_command', name=name, item={'sudocmdgroup': item})
+
     def sudorule_remove_allow_command(self, name, item):
         return self._post_json(method='sudorule_remove_allow_command', name=name, item={'sudocmdgroup': item})
 
@@ -217,6 +245,23 @@ class SudoRuleIPAClient(IPAClient):
     def sudorule_remove_user_group(self, name, item):
         return self.sudorule_remove_user(name=name, item={'group': item})
 
+    def sudorule_add_run_as_user(self, name, item):
+        return self._post_json(method='sudorule_add_runasuser', name=name, item={'user': item})
+
+    def sudorule_add_run_as_group_of_user(self, name, item):
+        return self._post_json(method='sudorule_add_runasuser', name=name, item={'group': item})
+
+    def sudorule_add_run_as_group(self, name, item):
+        return self._post_json(method='sudorule_add_runasgroup', name=name, item={'group': item})
+
+    def sudorule_remove_run_as_user(self, name, item):
+        return self._post_json(method='sudorule_remove_runasuser', name=name, item={'user': item})
+
+    def sudorule_remove_run_as_group_of_user(self, name, item):
+        return self._post_json(method='sudorule_remove_runasuser', name=name, item={'group': item})
+
+    def sudorule_remove_run_as_group(self, name, item):
+        return self._post_json(method='sudorule_remove_runasgroup', name=name, item={'group': item})
 
 def get_sudorule_dict(cmdcategory=None, description=None, hostcategory=None, ipaenabledflag=None, usercategory=None,
                       runasgroupcategory=None, runasusercategory=None):
@@ -256,8 +301,11 @@ def ensure(module, client):
     host = module.params['host']
     hostcategory = module.params['hostcategory']
     hostgroup = module.params['hostgroup']
-    runasusercategory = module.params['runasusercategory']
+    runasgroup = module.params['runasgroup']
     runasgroupcategory = module.params['runasgroupcategory']
+    runasgroupofuser = module.params['runasgroupofuser']
+    runasuser = module.params['runasuser']
+    runasusercategory = module.params['runasusercategory']
 
     if state in ['present', 'enabled']:
         ipaenabledflag = 'TRUE'
@@ -309,11 +357,25 @@ def ensure(module, client):
             changed = client.modify_if_diff(name, ipa_sudorule.get('memberallowcmd_sudocmdgroup', []), cmdgroup,
                                             client.sudorule_add_allow_command_group,
                                             client.sudorule_remove_allow_command_group) or changed
-        if runasusercategory is not None:
-            changed = category_changed(module, client, 'iparunasusercategory', ipa_sudorule) or changed
 
-        if runasgroupcategory is not None:
+        if runasuser is not None:
+            changed = category_changed(module, client, 'iparunasusercategory', ipa_sudorule) or changed
+            runasusers = ipa_sudorule.get('ipasudorunas_user', []) + ipa_sudorule.get('ipasudorunasextuser', [])
+            changed = client.modify_if_diff(name, runasusers, runasuser,
+                                            client.sudorule_add_run_as_user,
+                                            client.sudorule_remove_run_as_user) or changed
+
+        if runasgroupofuser is not None:
+            changed = category_changed(module, client, 'iparunasusercategory', ipa_sudorule) or changed
+            changed = client.modify_if_diff(name, ipa_sudorule.get('ipasudorunas_group', []), runasgroupofuser,
+                                            client.sudorule_add_run_as_group_of_user,
+                                            client.sudorule_remove_run_as_group_of_user) or changed
+
+        if runasgroup is not None:
             changed = category_changed(module, client, 'iparunasgroupcategory', ipa_sudorule) or changed
+            changed = client.modify_if_diff(name, ipa_sudorule.get('ipasudorunasgroup_group', []), runasgroup,
+                                            client.sudorule_add_run_as_group,
+                                            client.sudorule_remove_run_as_group) or changed
 
         if host is not None:
             changed = category_changed(module, client, 'hostcategory', ipa_sudorule) or changed
@@ -372,7 +434,10 @@ def main():
                          host=dict(type='list'),
                          hostcategory=dict(type='str', choices=['all']),
                          hostgroup=dict(type='list'),
+                         runasuser=dict(type='list'),
+                         runasgroupofuser=dict(type='list'),
                          runasusercategory=dict(type='str', choices=['all']),
+                         runasgroup=dict(type='list'),
                          runasgroupcategory=dict(type='str', choices=['all']),
                          sudoopt=dict(type='list'),
                          state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']),
@@ -386,7 +451,10 @@ def main():
                                                ['hostcategory', 'host'],
                                                ['hostcategory', 'hostgroup'],
                                                ['usercategory', 'user'],
-                                               ['usercategory', 'usergroup']],
+                                               ['usercategory', 'usergroup'],
+                                               ['runasusercategory', 'runasuser'],
+                                               ['runasusercategory', 'runasgroupofuser'],
+                                               ['runasgroupcategory', 'runasgroup']],
                            supports_check_mode=True)
 
     client = SudoRuleIPAClient(module=module,
