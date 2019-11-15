@@ -217,7 +217,7 @@ class LdapAttrs(LdapGeneric):
                                                                values)))))
             else:
                 norm_values = list(map(to_bytes, values))
-        elif values != "":
+        else:
             norm_values = [to_bytes(str(values))]
 
         return norm_values
