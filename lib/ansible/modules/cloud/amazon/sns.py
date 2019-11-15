@@ -191,9 +191,11 @@ def main():
 
     sns_kwargs = dict(
         Message=module.params['msg'],
-        Subject=module.params['subject'],
-        MessageStructure=module.params['message_structure'],
+        MessageStructure=module.params['message_structure']
     )
+  
+    if module.params['subject']:
+        sns_kwargs.update({"Subject": module.params['subject']})
 
     if module.params['message_attributes']:
         if module.params['message_structure'] != 'string':
