@@ -1,13 +1,12 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/all_facts.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
 - name: test getting all facts
   nxos_facts:
     gather_subset:
       - all
-    provider: "{{ connection }}"
+    timeout: 60
   register: result
 
 - assert:

@@ -4,7 +4,6 @@
 - name: "Disable feature BGP"
   nxos_feature:
     feature: bgp
-    provider: "{{ connection }}"
     state: disabled
 
 - block:
@@ -22,14 +21,12 @@
   - name: "Enable feature BGP"
     nxos_feature:
       feature: bgp
-      provider: "{{ connection }}"
       state: enabled
 
   - name: "Configure BGP defaults"
     nxos_bgp: &configure_default
       asn: 65535
       router_id: 192.0.2.1
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -64,7 +61,6 @@
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
-      provider: "{{ connection }}"
       state: disabled
 
 - debug: msg="END nxapi/sanity.yaml on connection={{ ansible_connection }}"

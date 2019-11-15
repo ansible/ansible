@@ -12,6 +12,5 @@
     - name: wrong transport specified in provider
       eos_command:
           commands: show version
-          provider: "{{ nxapi }}"
 
   when: "ansible_connection != 'local'"

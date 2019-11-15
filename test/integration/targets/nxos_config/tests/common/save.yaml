@@ -12,12 +12,11 @@
     parents:
       - "interface {{ intname }}"
     match: none
-    provider: "{{ connection }}"
 
 - name: save config
   nxos_config:
     save_when: always
-    provider: "{{ connection }}"
+    timeout: 300
   register: result
 
 - assert:
@@ -27,7 +26,7 @@
 - name: save should always run
   nxos_config:
     save_when: always
-    provider: "{{ connection }}"
+    timeout: 300
   register: result
 
 - assert:

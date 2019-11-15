@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_banner sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
 - set_fact: banner_exec_image_ok

@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vxlan_vtep sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
 - block:
@@ -46,7 +45,6 @@
         - feature nv overlay
         - nv overlay evpn
       match: none
-      provider: "{{ connection }}"
 
   - block:
     - name: "Enable feature ngmvpn"
@@ -54,7 +52,6 @@
         commands:
           - feature ngmvpn
         match: none
-        provider: "{{ connection }}"
     when: global_mcast_group_L3 is defined
 
   - block:
@@ -69,7 +66,6 @@
         global_suppress_arp: "{{ global_suppress_arp|default(omit) }}"
         global_mcast_group_L3: "{{ global_mcast_group_L3|default(omit) }}"
         shutdown: false
-        provider: "{{ connection }}"
       register: result
 
     - assert: &true
@@ -95,7 +91,6 @@
         global_suppress_arp: "{{ def_global_suppress_arp|default(omit) }}"
         global_mcast_group_L3: "{{ def_global_mcast_group_L3|default(omit) }}"
         shutdown: true
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -111,7 +106,6 @@
         interface: nve1
         host_reachability: true
         global_mcast_group_L2: "{{ global_mcast_group_L2|default(omit) }}"
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -127,7 +121,6 @@
         interface: nve1
         host_reachability: false
         global_mcast_group_L2: "{{ def_global_mcast_group_L2|default(omit) }}"
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -148,7 +141,6 @@
         host_reachability: true
         source_interface: Loopback0
         shutdown: false
-        provider: "{{ connection }}"
       register: result
 
     - assert:
@@ -170,7 +162,6 @@
         host_reachability: false
         source_interface: default
         shutdown: true
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -191,7 +182,6 @@
       source_interface: Loopback0
       source_interface_hold_down_time: 30
       shutdown: true
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -219,13 +209,11 @@
       commands:
         - no nv overlay evpn
       match: none
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: "Disable feature nv overlay"
     nxos_feature:
       feature: nve
-      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 
