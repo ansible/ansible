@@ -121,7 +121,7 @@ RETURN = '''
 json:
     description: The HTTP response body of the request
     returned: always
-    type: complex
+    type: dict
     sample: ["Template-2"]
 query_id:
     description: The API query ID of the request
