@@ -249,9 +249,14 @@ class PacketInventory(object):
 
     def get_projects(self):
         '''Makes a Packet API call to get the list of projects'''
+
+        params = {
+            'per_page': self.items_per_page
+        }
+
         try:
             manager = self.connect()
-            projects = manager.list_projects()
+            projects = manager.list_projects(params=params)
             return projects
         except Exception as e:
             traceback.print_exc()
