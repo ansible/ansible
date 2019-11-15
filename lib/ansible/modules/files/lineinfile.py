@@ -209,6 +209,45 @@ import tempfile
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
+try:
+    import fcntl
+    HAS_FCNTL = True
+except ImportError:
+    HAS_FCNTL = False
+
+
+class ExclusiveLock(object):
+
+    def __init__(self, filepath):
+        self.fp = None
+        self.locked = False
+        if HAS_FCNTL:
+            self.fp = open(filepath, "a+")
+
+    def __enter__(self):
+        if HAS_FCNTL:
+            try:
+                fcntl.flock(self.fp, fcntl.LOCK_EX)
+                self.locked = True
+            except OSError:
+                try:
+                    self.fp.close()
+                finally:
+                    self.fp = None
+        return self
+
+    def unlock(self):
+        if self.locked:
+            fcntl.flock(self.fp, fcntl.LOCK_UN)
+            try:
+                self.fp.close()
+            finally:
+                self.fp = None
+                self.locked = False
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.locked:
+            self.unlock()
 
 
 def write_changes(module, b_lines, dest):
@@ -560,13 +599,15 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        present(module, path, regexp, line,
-                ins_aft, ins_bef, create, backup, backrefs, firstmatch)
+        with ExclusiveLock(path) as ctx:
+            present(module, path, regexp, line,
+                    ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
         if regexp is None and line is None:
             module.fail_json(msg='one of line or regexp is required with state=absent')
 
-        absent(module, path, regexp, line, backup)
+        with ExclusiveLock(path) as ctx:
+            absent(module, path, regexp, line, backup)
 
 
 if __name__ == '__main__':
