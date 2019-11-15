@@ -175,13 +175,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         final_environment = dict()
         self._compute_environment_string(final_environment)
 
-        become_kwargs = {
-            'become': False,
-            'become_method': None,
-            'become_user': None,
-            'become_password': None,
-            'become_flags': None
-        }
+        become_kwargs = {}
         if self._connection.become:
             become_kwargs['become'] = True
             become_kwargs['become_method'] = self._connection.become.name
@@ -311,7 +305,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         # if we don't use become then we know we aren't switching to a
         # different unprivileged user
-        if self._connection.become is None:
+        if not self._connection.become:
             return False
 
         # if we use become and the user is not an admin (or same user) then
