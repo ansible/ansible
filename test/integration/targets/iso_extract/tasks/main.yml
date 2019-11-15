@@ -21,18 +21,18 @@
     output_dir_test: '{{ output_dir }}/test_iso_extract'
 
 - name: Install 7zip
-  include_tasks: 7zip.yml
+  import_tasks: 7zip.yml
 
 - name: Prepare environment
-  include_tasks: prepare.yml
+  import_tasks: prepare.yml
 
 - name: Test in normal mode
-  include_tasks: tests.yml
+  import_tasks: tests.yml
   vars:
     in_check_mode: no
 
 - name: Prepare environment
-  include_tasks: prepare.yml
+  import_tasks: prepare.yml
 
 - name: Test in check-mode
   import_tasks: tests.yml

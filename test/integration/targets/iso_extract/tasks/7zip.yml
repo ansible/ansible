@@ -21,72 +21,46 @@
   setup:
   become: yes
 
-- name: Add EPEL repository
-  yum_repository:
-    name: epel
-    description: EPEL yum repo
-    baseurl: https://download.fedoraproject.org/pub/epel/{{ ansible_distribution_major_version }}/{{ ansible_architecture }}/
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.distribution }}.yml"
+        - "{{ ansible_facts.os_family }}.yml"
+        - default.yml
+      paths:
+        - "{{ role_path }}/vars"
+
+- name: "{{ ansible_facts.os_family | upper }} | Install 7zip package"
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: "{{ iso_extract_7zip_package }}"
     state: present
-  when: ansible_distribution in ['CentOS']
+  when: ansible_facts.distribution != 'MacOSX'
 
-- name: Install 7zip package if we are on Fedora
-  dnf:
-    name: p7zip-plugins
-    state: installed
-  become: yes
-  when: ansible_distribution in ['Fedora']
+- name: macOS
+  when: ansible_facts.distribution == 'MacOSX'
+  block:
+    - name: MACOS | Find brew binary
+      command: which brew
+      register: brew_which
+      when: ansible_distribution in ['MacOSX']
 
-- name: Install 7zip package if we are on CentOS
-  yum:
-    name: p7zip-plugins
-    state: installed
-    update_cache: yes
-  become: yes
-  when: ansible_distribution in ['CentOS']
+    - name: MACOS | Get owner of brew binary
+      stat:
+        path: "{{ brew_which.stdout }}"
+      register: brew_stat
+      when: ansible_distribution in ['MacOSX']
 
-- name: Install 7zip package if we are on OpenSUSE
-  zypper:
-    name: p7zip
-    state: installed
-    update_cache: yes
-  become: yes
-  when: ansible_distribution in ['openSUSE Leap']
-
-- name: Install 7zip package if we are on Ubuntu
-  apt:
-    name: p7zip-full
-    state: present
-    update_cache: yes
-  become: yes
-  when: ansible_distribution in ['Ubuntu']
-
-- name: Find brew binary
-  command: which brew
-  register: brew_which
-  when: ansible_distribution in ['MacOSX']
-
-- name: Get owner of brew binary
-  stat:
-    path: "{{ brew_which.stdout }}"
-  register: brew_stat
-  when: ansible_distribution in ['MacOSX']
-
-- name: Install 7zip package if we are on MacOSX
-  homebrew:
-    name: p7zip
-    state: present
-    update_homebrew: no
-  become: yes
-  become_user: "{{ brew_stat.stat.pw_name }}"
-  when: ansible_distribution in ['MacOSX']
-  # Newer versions of brew want to compile a package which takes a long time. Do not upgrade homebrew until a
-  # proper solution can be found
-  environment:
-    HOMEBREW_NO_AUTO_UPDATE: True
-
-- name: Install 7zip package if we are on FreeBSD
-  pkgng:
-    name: p7zip
-    state: present
-  become: yes
-  when: ansible_distribution in ['FreeBSD']
+    - name: MACOS | Install 7zip package
+      homebrew:
+        name: p7zip
+        state: present
+        update_homebrew: no
+      become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"
+      # Newer versions of brew want to compile a package which takes a long time. Do not upgrade homebrew until a
+      # proper solution can be found
+      environment:
+        HOMEBREW_NO_AUTO_UPDATE: True
