@@ -148,6 +148,9 @@ def main():
         if not stack:
             module.fail_json(msg="Stack not found: {0}".format(stack))
 
+        if not stack.tags:
+            stack.tags = []
+
         if state == 'present':
             new_tags = _add_stack_tags(stack_tags=stack.tags,
                                        tags_to_add=tags,
