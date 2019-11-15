@@ -1,3 +1,12 @@
+- name: Stop MariaDB services
+  service:
+    name: mariadb@{{ item }}
+    state: stopped
+  loop:
+    - "{{ primary_db.name }}"
+    - "{{ replica_db.name }}"
+  listen: cleanup mariadb
+
 - name: Remove MariaDB repo
   yum_repository:
     name: MariaDB
@@ -6,7 +15,7 @@
 
 - name: Remove MariaDB related packages
   yum:
-    name: "{{ packages_to_cleanup }}"
+    name: "{{ packages_to_cleanup | union(mariadb_packages) }}"
     state: absent
   listen: cleanup mariadb
 

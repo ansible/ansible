@@ -3,5 +3,5 @@
 
 - import_tasks: setup_mariadb.yml
   when:
-  - ansible_distribution == 'CentOS'
-  - ansible_distribution_major_version >= '7'
+    - ansible_distribution == 'CentOS'
+    - ansible_distribution_major_version is version('7', '>=')
