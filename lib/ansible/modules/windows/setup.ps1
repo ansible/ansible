@@ -207,6 +207,13 @@ if($gather_subset.Contains('distribution')) {
         default { "unknown" }
     }
 
+    $installation_type = $null
+    $current_version_path = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+    if (Test-Path -LiteralPath $current_version_path) {
+        $install_type_prop = Get-ItemProperty -LiteralPath $current_version_path -ErrorAction SilentlyContinue
+        $installation_type = [String]$install_type_prop.InstallationType
+    }
+
     $ansible_facts += @{
         ansible_distribution = $win32_os.Caption
         ansible_distribution_version = $osversion.Version.ToString()
@@ -214,6 +221,7 @@ if($gather_subset.Contains('distribution')) {
         ansible_os_family = "Windows"
         ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
         ansible_os_product_type = $product_type
+        ansible_os_installation_type = $installation_type
     }
 }
 
