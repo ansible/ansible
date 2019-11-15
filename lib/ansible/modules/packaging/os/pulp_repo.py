@@ -64,7 +64,7 @@ options:
         certificate. The specified file may be the certificate itself or a
         single file containing both the certificate and private key. This can be
         the file content or the path to the file.
-        If not specified the default value will come from client_cert. Which will
+      - If not specified the default value will come from client_cert. Which will
         change in Ansible 2.14.
     type: str
     aliases: [ importer_ssl_client_cert ]
@@ -74,7 +74,7 @@ options:
       - Private key to the certificate specified in I(importer_ssl_client_cert),
         assuming it is not included in the certificate file itself. This can be
         the file content or the path to the file.
-        If not specified the default value will come from client_key. Which will
+      - If not specified the default value will come from client_key. Which will
         change in Ansible 2.14.
     type: str
     aliases: [ importer_ssl_client_key ]
