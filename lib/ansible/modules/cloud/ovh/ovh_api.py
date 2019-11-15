@@ -18,7 +18,7 @@ short_description: Interacts with OVH API
 description:
     - Interacts with OVH (French European hosting provider) APIv6 and support
         the specific authentication and hearders
-version_added: "2.11"
+version_added: "2.10"
 author: Yoann LAMOUREUX (@YoannAtOVH)
 notes:
     - Uses the python OVH Api U(https://github.com/ovh/python-ovh).
@@ -31,32 +31,44 @@ options:
         required: true
         description:
             - Uniform Resource Identifier of the request
+        type: str
     method:
         default: GET
         choices: ['GET', 'POST', 'PUT', 'DELETE']
         description:
             - The HTTP method of the request
+        type: str
     endpoint:
         required: true
         description:
             - The endpoint to use ( for instance ovh-eu)
+        type: str
+    body:
+        required: false
+        description:
+            - Payload of the request
+        type: dict
     application_key:
         required: true
         description:
             - The applicationKey to use
+        type: str
     application_secret:
         required: true
         description:
             - The application secret to use
+        type: str
     consumer_key:
         required: true
         description:
             - The consumer key to use
+        type: str
     timeout:
         default: 120
         description:
             - The timeout in seconds used to wait for a task to be
               completed.
+        type: int
 '''
 
 EXAMPLES = '''
@@ -94,7 +106,7 @@ EXAMPLES = '''
     lang: "en"
 
 # Delete all installationTemplate with OLD in item id
--  ovh_api:
+- ovh_api:
     uri: "/me/installationTemplate/{{ item }}"
     method: "DELETE"
     endpoint: "ovh-eu"
@@ -109,7 +121,7 @@ RETURN = '''
 json:
     description: The HTTP response body of the request
     returned: always
-    type: json
+    type: complex
     sample: ["Template-2"]
 query_id:
     description: The API query ID of the request
@@ -128,6 +140,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def getovhclient(ansibleModule):
     endpoint = ansibleModule.params.get('endpoint')
     application_key = ansibleModule.params.get('application_key')
@@ -140,6 +153,7 @@ def getovhclient(ansibleModule):
         application_secret=application_secret,
         consumer_key=consumer_key
     )
+
 
 def main():
     module_args = dict(
@@ -206,6 +220,7 @@ def main():
     result['json'] = uresp
     result['changed'] = moduleChanged
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
