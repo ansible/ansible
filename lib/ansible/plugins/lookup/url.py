@@ -39,6 +39,10 @@ options:
     type: dictionary
     default: {}
     version_added: "2.9"
+  force_basic_auth:
+    description: Force basic authentication
+    type: boolean
+    version_added: "2.9"
 """
 
 EXAMPLES = """
@@ -51,6 +55,9 @@ EXAMPLES = """
 
 - name: url lookup using authentication
   debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
+
+- name: url lookup using basic authentication
+  debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
 
 - name: url lookup using headers
   debug: msg="{{ lookup('url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
@@ -85,7 +92,8 @@ class LookupModule(LookupBase):
                                     use_proxy=self.get_option('use_proxy'),
                                     url_username=self.get_option('username'),
                                     url_password=self.get_option('password'),
-                                    headers=self.get_option('headers'))
+                                    headers=self.get_option('headers'),
+                                    force_basic_auth=self.get_option('force_basic_auth'))
             except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, to_native(e)))
             except URLError as e:
