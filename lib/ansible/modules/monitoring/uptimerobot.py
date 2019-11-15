@@ -113,20 +113,22 @@ class UptimeRobot:
                 return mid
 
     def get_monitors(self):
-        data = {}
-        data['api_key'] = self.params['api_key']
-        data = json.dumps(data)
+        self.body = {}
+        self.body['api_key'] = self.params['api_key']
+        self.body = json.dumps(self.body)
         self.uri = API_BASE + "getMonitors"
-        req = Request()
-        state = req.post(url=self.uri, data=data, headers=self.headers)
-        state = json.loads(to_text(state.read(), errors='surrogate_or_strict'))
+        state = self.api_call()
         return state
+
+    def api_call(self):
+        req = Request()
+        state = req.post(url=self.uri, data=self.body, headers=self.headers)
+        json_response = json.loads(to_text(state.read(), errors='surrogate_or_strict'))
+        return json_response
 
     def api_request(self):
         self.uri = API_BASE + self.api_method
-        req = Request()
-        state = req.post(url=self.uri, data=self.body, headers=self.headers)
-        state = json.loads(to_text(state.read(), errors='surrogate_or_strict'))
+        state = self.api_call()
         return state, self.api_method
 
     def check_dict(self, dictionary):
