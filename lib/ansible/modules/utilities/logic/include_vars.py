@@ -114,8 +114,8 @@ EXAMPLES = r'''
   include_vars:
     dir: vars/all
     extensions:
-        - json
-        - jsn
+      - 'json'
+      - 'jsn'
 
 - name: Include all default extension files in vars/all and all nested directories and save the output in test. (2.2)
   include_vars:
@@ -135,14 +135,20 @@ EXAMPLES = r'''
 - name: Include all .yaml files except bastion.yaml (2.3)
   include_vars:
     dir: vars
-    ignore_files: [bastion.yaml]
-    extensions: [yaml]
+    ignore_files:
+      - 'bastion.yaml'
+    extensions:
+      - 'yaml'
 
 - name: Ignore warnings raised for files with unknown extensions while loading (2.7)
   include_vars:
     dir: vars
     ignore_unknown_extensions: True
-    extensions: ['', 'yaml', 'yml', 'json']
+    extensions:
+      - ''
+      - 'yaml'
+      - 'yml'
+      - 'json'
 '''
 
 RETURN = r'''

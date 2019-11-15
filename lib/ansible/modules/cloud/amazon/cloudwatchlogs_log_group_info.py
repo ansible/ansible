@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: cloudwatchlogs_log_group_info
-short_description: get information about log_group in CloudWatchLogs
+short_description: Get information about log_group in CloudWatchLogs
 description:
     - Lists the specified log groups. You can list all your log groups or filter the results by prefix.
     - This module was called C(cloudwatchlogs_log_group_facts) before Ansible 2.9. The usage did not change.
@@ -25,6 +25,7 @@ options:
     log_group_name:
       description:
         - The name or prefix of the log group to filter by.
+      type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -88,7 +89,8 @@ def describe_log_group(client, log_group_name, module):
     if log_group_name:
         params['logGroupNamePrefix'] = log_group_name
     try:
-        desc_log_group = client.describe_log_groups(**params)
+        paginator = client.get_paginator('describe_log_groups')
+        desc_log_group = paginator.paginate(**params).build_full_result()
         return desc_log_group
     except botocore.exceptions.ClientError as e:
         module.fail_json(msg="Unable to describe log group {0}: {1}".format(log_group_name, to_native(e)),

@@ -30,23 +30,14 @@ options:
             - Name or list of names of the package(s) or file(s) to install, upgrade, or remove.
               Can't be used in combination with C(upgrade).
         aliases: [ package, pkg ]
+        type: list
+        elements: str
 
     state:
         description:
             - Desired state of the package.
         default: present
         choices: [ absent, latest, present ]
-
-    recurse:
-        description:
-            - When removing a package, also remove its dependencies, provided
-              that they are not required by other packages and were not
-              explicitly installed by a user.
-              This option is deprecated since 2.8 and will be removed in 2.10,
-              use `extra_args=--recursive`.
-        default: no
-        type: bool
-        version_added: "1.3"
 
     force:
         description:
@@ -427,9 +418,8 @@ def expand_package_groups(module, pacman_path, pkgs):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='list', aliases=['pkg', 'package']),
+            name=dict(type='list', elements='str', aliases=['pkg', 'package']),
             state=dict(type='str', default='present', choices=['present', 'installed', 'latest', 'absent', 'removed']),
-            recurse=dict(type='bool', default=False),
             force=dict(type='bool', default=False),
             extra_args=dict(type='str', default=''),
             upgrade=dict(type='bool', default=False),
@@ -451,13 +441,6 @@ def main():
         p['state'] = 'present'
     elif p['state'] in ['absent', 'removed']:
         p['state'] = 'absent'
-
-    if p['recurse']:
-        module.deprecate('Option `recurse` is deprecated and will be removed in '
-                         'version 2.10. Please use `extra_args=--recursive` '
-                         'instead', '2.10')
-        if p['state'] == 'absent':
-            p['extra_args'] += " --recursive"
 
     if p["update_cache"] and not module.check_mode:
         update_package_db(module, pacman_path)

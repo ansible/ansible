@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix to return XML as a string even for python3 (https://github.com/ansible/ansible/pull/64032).

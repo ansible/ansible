@@ -111,7 +111,8 @@ openstack_networks:
         subnets:
             description: Subnet(s) included in this network.
             returned: success
-            type: list of strings
+            type: list
+            elements: str
         tenant_id:
             description: Tenant id associated with this network.
             returned: success

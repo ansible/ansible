@@ -37,7 +37,7 @@ description:
 - For managed internal load balancing, use a regional backend service instead.
 - Currently self-managed internal load balancing is only available in beta.
 short_description: Creates a GCP BackendService
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -102,8 +102,7 @@ options:
         - For Network Endpoint Groups this defines list of endpoints. All endpoints
           of Network Endpoint Group must be hosted on instances located in the same
           zone as the Network Endpoint Group.
-        - Backend service can not contain mix of Instance Group and Network Endpoint
-          Group backends.
+        - Backend services cannot mix Instance Group and Network Endpoint Group backends.
         - Note that you must specify an Instance Group or Network Endpoint Group resource
           using the fully-qualified URL, rather than a partial URL.
         required: false
@@ -134,7 +133,7 @@ options:
           must be set.
         required: false
         type: int
-        version_added: 2.9
+        version_added: '2.9'
       max_rate:
         description:
         - The max requests per second (RPS) of the group.
@@ -159,7 +158,7 @@ options:
           must be set.
         required: false
         type: str
-        version_added: 2.9
+        version_added: '2.9'
       max_utilization:
         description:
         - Used when balancingMode is UTILIZATION. This ratio defines the CPU utilization
@@ -225,7 +224,7 @@ options:
         required: false
         default: '3600'
         type: int
-        version_added: 2.8
+        version_added: '2.8'
   connection_draining:
     description:
     - Settings for connection draining .
@@ -263,7 +262,7 @@ options:
     - Settings for enabling Cloud Identity Aware Proxy.
     required: false
     type: dict
-    version_added: 2.7
+    version_added: '2.7'
     suboptions:
       enabled:
         description:
@@ -290,7 +289,7 @@ options:
     required: false
     default: EXTERNAL
     type: str
-    version_added: 2.7
+    version_added: '2.7'
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -321,13 +320,13 @@ options:
     - The security policy associated with this backend service.
     required: false
     type: str
-    version_added: 2.8
+    version_added: '2.8'
   session_affinity:
     description:
-    - Type of session affinity to use. The default is NONE.
-    - When the load balancing scheme is EXTERNAL, can be NONE, CLIENT_IP, or GENERATED_COOKIE.
-    - When the protocol is UDP, this field is not used.
-    - 'Some valid choices include: "NONE", "CLIENT_IP", "GENERATED_COOKIE"'
+    - Type of session affinity to use. The default is NONE. Session affinity is not
+      applicable if the protocol is UDP.
+    - 'Some valid choices include: "NONE", "CLIENT_IP", "CLIENT_IP_PORT_PROTO", "CLIENT_IP_PROTO",
+      "GENERATED_COOKIE", "HEADER_FIELD", "HTTP_COOKIE"'
     required: false
     type: str
   timeout_sec:
@@ -338,10 +337,56 @@ options:
     type: int
     aliases:
     - timeout_seconds
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/backendServices)'
 - 'Official Documentation: U(https://cloud.google.com/compute/docs/load-balancing/http/backend-service)'
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -429,8 +474,7 @@ backends:
       - For Network Endpoint Groups this defines list of endpoints. All endpoints
         of Network Endpoint Group must be hosted on instances located in the same
         zone as the Network Endpoint Group.
-      - Backend service can not contain mix of Instance Group and Network Endpoint
-        Group backends.
+      - Backend services cannot mix Instance Group and Network Endpoint Group backends.
       - Note that you must specify an Instance Group or Network Endpoint Group resource
         using the fully-qualified URL, rather than a partial URL.
       returned: success
@@ -660,9 +704,8 @@ securityPolicy:
   type: str
 sessionAffinity:
   description:
-  - Type of session affinity to use. The default is NONE.
-  - When the load balancing scheme is EXTERNAL, can be NONE, CLIENT_IP, or GENERATED_COOKIE.
-  - When the protocol is UDP, this field is not used.
+  - Type of session affinity to use. The default is NONE. Session affinity is not
+    applicable if the protocol is UDP.
   returned: success
   type: str
 timeoutSec:

@@ -32,10 +32,8 @@ DOCUMENTATION = '''
 module: gcp_compute_health_check_info
 description:
 - Gather info for GCP HealthCheck
-- This module was called C(gcp_compute_health_check_facts) before Ansible 2.9. The
-  usage has not changed.
 short_description: Gather info for GCP HealthCheck
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -48,7 +46,54 @@ options:
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
     type: list
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
+notes:
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -347,6 +392,64 @@ resources:
             and `portName` fields.
           returned: success
           type: str
+    http2HealthCheck:
+      description:
+      - A nested object resource.
+      returned: success
+      type: complex
+      contains:
+        host:
+          description:
+          - The value of the host header in the HTTP2 health check request.
+          - If left empty (default value), the public IP on behalf of which this health
+            check is performed will be used.
+          returned: success
+          type: str
+        requestPath:
+          description:
+          - The request path of the HTTP2 health check request.
+          - The default value is /.
+          returned: success
+          type: str
+        response:
+          description:
+          - The bytes to match against the beginning of the response data. If left
+            empty (the default value), any response will indicate health. The response
+            data can only be ASCII.
+          returned: success
+          type: str
+        port:
+          description:
+          - The TCP port number for the HTTP2 health check request.
+          - The default value is 443.
+          returned: success
+          type: int
+        portName:
+          description:
+          - Port name as defined in InstanceGroup#NamedPort#name. If both port and
+            port_name are defined, port takes precedence.
+          returned: success
+          type: str
+        proxyHeader:
+          description:
+          - Specifies the type of proxy header to append before sending data to the
+            backend, either NONE or PROXY_V1. The default is NONE.
+          returned: success
+          type: str
+        portSpecification:
+          description:
+          - 'Specifies how port is selected for health checking, can be one of the
+            following values: * `USE_FIXED_PORT`: The port number in `port` is used
+            for health checking.'
+          - "* `USE_NAMED_PORT`: The `portName` is used for health checking."
+          - "* `USE_SERVING_PORT`: For NetworkEndpointGroup, the port specified for
+            each network endpoint is used for health checking. For other backends,
+            the port or named port specified in the Backend Service is used for health
+            checking."
+          - If not specified, HTTP2 health check follows behavior specified in `port`
+            and `portName` fields.
+          returned: success
+          type: str
 '''
 
 ################################################################################
@@ -362,9 +465,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
-
-    if module._name == 'gcp_compute_health_check_facts':
-        module.deprecate("The 'gcp_compute_health_check_facts' module has been renamed to 'gcp_compute_health_check_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']

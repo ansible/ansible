@@ -184,18 +184,18 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    template = module.params['template']
-    contract = module.params['contract']
-    contract_display_name = module.params['contract_display_name']
-    contract_filter_type = module.params['contract_filter_type']
-    contract_scope = module.params['contract_scope']
-    filter_name = module.params['filter']
-    filter_directives = module.params['filter_directives']
-    filter_template = module.params['filter_template']
-    filter_schema = module.params['filter_schema']
-    filter_type = module.params['filter_type']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    contract = module.params.get('contract')
+    contract_display_name = module.params.get('contract_display_name')
+    contract_filter_type = module.params.get('contract_filter_type')
+    contract_scope = module.params.get('contract_scope')
+    filter_name = module.params.get('filter')
+    filter_directives = module.params.get('filter_directives')
+    filter_template = module.params.get('filter_template')
+    filter_schema = module.params.get('filter_schema')
+    filter_type = module.params.get('filter_type')
+    state = module.params.get('state')
 
     contract_ftype = 'bothWay' if contract_filter_type == 'both-way' else 'oneWay'
 
@@ -219,14 +219,14 @@ def main():
     # Get schema object
     schema_obj = mso.get_obj('schemas', displayName=schema)
     if schema_obj:
-        schema_id = schema_obj['id']
+        schema_id = schema_obj.get('id')
     else:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
-    templates = [t['name'] for t in schema_obj['templates']]
+    templates = [t.get('name') for t in schema_obj.get('templates')]
     if template not in templates:
         mso.fail_json(msg="Provided template '{0}' does not exist. Existing templates: {1}".format(template, ', '.join(templates)))
     template_idx = templates.index(template)
@@ -235,24 +235,24 @@ def main():
     mso.existing = {}
     contract_idx = None
     filter_idx = None
-    contracts = [c['name'] for c in schema_obj['templates'][template_idx]['contracts']]
+    contracts = [c.get('name') for c in schema_obj.get('templates')[template_idx]['contracts']]
 
     if contract in contracts:
         contract_idx = contracts.index(contract)
 
-        filters = [f['filterRef'] for f in schema_obj['templates'][template_idx]['contracts'][contract_idx][filter_key]]
+        filters = [f.get('filterRef') for f in schema_obj.get('templates')[template_idx]['contracts'][contract_idx][filter_key]]
         filter_ref = mso.filter_ref(schema_id=filter_schema_id, template=filter_template, filter=filter_name)
         if filter_ref in filters:
             filter_idx = filters.index(filter_ref)
             filter_path = '/templates/{0}/contracts/{1}/{2}/{3}'.format(template, contract, filter_key, filter_name)
-            mso.existing = schema_obj['templates'][template_idx]['contracts'][contract_idx][filter_key][filter_idx]
+            mso.existing = schema_obj.get('templates')[template_idx]['contracts'][contract_idx][filter_key][filter_idx]
 
     if state == 'query':
         if contract_idx is None:
             mso.fail_json(msg="Provided contract '{0}' does not exist. Existing contracts: {1}".format(contract, ', '.join(contracts)))
 
         if filter_name is None:
-            mso.existing = schema_obj['templates'][template_idx]['contracts'][contract_idx][filter_key]
+            mso.existing = schema_obj.get('templates')[template_idx]['contracts'][contract_idx][filter_key]
         elif not mso.existing:
             mso.fail_json(msg="FilterRef '{filter_ref}' not found".format(filter_ref=filter_ref))
         mso.exit_json()

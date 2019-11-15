@@ -34,7 +34,7 @@ description:
 - Represents an InterconnectAttachment (VLAN attachment) resource. For more information,
   see Creating VLAN Attachments.
 short_description: Creates a GCP InterconnectAttachment
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -55,7 +55,7 @@ options:
       this will Pre-Activate the interconnect attachment .
     required: false
     type: bool
-    version_added: 2.9
+    version_added: '2.9'
   interconnect:
     description:
     - URL of the underlying Interconnect object that this attachment's traffic will
@@ -81,7 +81,7 @@ options:
       "BPS_50G"'
     required: false
     type: str
-    version_added: 2.9
+    version_added: '2.9'
   edge_availability_domain:
     description:
     - Desired availability domain for the attachment. Only available for type PARTNER,
@@ -143,7 +143,43 @@ options:
     - Region where the regional interconnect attachment resides.
     required: true
     type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''

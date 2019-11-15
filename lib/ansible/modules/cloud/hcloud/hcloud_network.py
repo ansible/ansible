@@ -49,6 +49,11 @@ options:
         description:
             - User-defined labels (key-value pairs).
         type: dict
+    delete_protection:
+        description:
+            - Protect the Network for deletion.
+        type: bool
+        version_added: "2.10"
     state:
         description:
             - State of the Network.
@@ -88,7 +93,7 @@ hcloud_network:
             sample: 12345
         name:
             description: Name of the Network
-            type: string
+            type: str
             returned: always
             sample: my-volume
         ip_range:
@@ -96,6 +101,12 @@ hcloud_network:
             type: str
             returned: always
             sample: 10.0.0.0/8
+        delete_protection:
+            description: True if Network is protected for deletion
+            type: bool
+            returned: always
+            sample: false
+            version_added: "2.10"
         labels:
             description: User-defined labels (key-value pairs)
             type: dict
@@ -125,6 +136,7 @@ class AnsibleHcloudNetwork(Hcloud):
             "id": to_native(self.hcloud_network.id),
             "name": to_native(self.hcloud_network.name),
             "ip_range": to_native(self.hcloud_network.ip_range),
+            "delete_protection": self.hcloud_network.protection["delete"],
             "labels": self.hcloud_network.labels,
         }
 
@@ -159,19 +171,26 @@ class AnsibleHcloudNetwork(Hcloud):
         self._get_network()
 
     def _update_network(self):
+        try:
+            labels = self.module.params.get("labels")
+            if labels is not None and labels != self.hcloud_network.labels:
+                if not self.module.check_mode:
+                    self.hcloud_network.update(labels=labels)
+                self._mark_as_changed()
 
-        labels = self.module.params.get("labels")
-        if labels is not None and labels != self.hcloud_network.labels:
-            if not self.module.check_mode:
-                self.hcloud_network.update(labels=labels)
-            self._mark_as_changed()
+            ip_range = self.module.params.get("ip_range")
+            if ip_range is not None and ip_range != self.hcloud_network.ip_range:
+                if not self.module.check_mode:
+                    self.hcloud_network.change_ip_range(ip_range=ip_range).wait_until_finished()
+                self._mark_as_changed()
 
-        ip_range = self.module.params.get("ip_range")
-        if ip_range is not None and ip_range != self.hcloud_network.ip_range:
-            if not self.module.check_mode:
-                self.hcloud_network.change_ip_range(ip_range=ip_range).wait_until_finished()
-            self._mark_as_changed()
-
+            delete_protection = self.module.params.get("delete_protection")
+            if delete_protection is not None and delete_protection != self.hcloud_network.protection["delete"]:
+                if not self.module.check_mode:
+                    self.hcloud_network.change_protection(delete=delete_protection).wait_until_finished()
+                self._mark_as_changed()
+        except APIException as e:
+            self.module.fail_json(msg=e.message)
         self._get_network()
 
     def present_network(self):
@@ -182,11 +201,14 @@ class AnsibleHcloudNetwork(Hcloud):
             self._update_network()
 
     def delete_network(self):
-        self._get_network()
-        if self.hcloud_network is not None:
-            if not self.module.check_mode:
-                self.client.networks.delete(self.hcloud_network)
-            self._mark_as_changed()
+        try:
+            self._get_network()
+            if self.hcloud_network is not None:
+                if not self.module.check_mode:
+                    self.client.networks.delete(self.hcloud_network)
+                self._mark_as_changed()
+        except APIException as e:
+            self.module.fail_json(msg=e.message)
         self.hcloud_network = None
 
     @staticmethod
@@ -197,6 +219,7 @@ class AnsibleHcloudNetwork(Hcloud):
                 name={"type": "str"},
                 ip_range={"type": "str"},
                 labels={"type": "dict"},
+                delete_protection={"type": "bool"},
                 state={
                     "choices": ["absent", "present"],
                     "default": "present",

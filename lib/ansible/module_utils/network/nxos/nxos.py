@@ -83,42 +83,15 @@ nxos_provider_spec = {
 nxos_argument_spec = {
     'provider': dict(type='dict', options=nxos_provider_spec),
 }
-nxos_top_spec = {
-    'host': dict(type='str', removed_in_version=2.9),
-    'port': dict(type='int', removed_in_version=2.9),
-
-    'username': dict(type='str', removed_in_version=2.9),
-    'password': dict(type='str', no_log=True, removed_in_version=2.9),
-    'ssh_keyfile': dict(type='str', removed_in_version=2.9),
-
-    'authorize': dict(type='bool', fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE'])),
-    'auth_pass': dict(type='str', no_log=True, removed_in_version=2.9),
-
-    'use_ssl': dict(type='bool', removed_in_version=2.9),
-    'validate_certs': dict(type='bool', removed_in_version=2.9),
-    'timeout': dict(type='int', removed_in_version=2.9),
-
-    'transport': dict(type='str', choices=['cli', 'nxapi'], removed_in_version=2.9)
-}
-nxos_argument_spec.update(nxos_top_spec)
 
 
 def get_provider_argspec():
     return nxos_provider_spec
 
 
-def load_params(module):
-    provider = module.params.get('provider') or dict()
-    for key, value in iteritems(provider):
-        if key in nxos_provider_spec:
-            if module.params.get(key) is None and value is not None:
-                module.params[key] = value
-
-
 def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
-        load_params(module)
         if is_local_nxapi(module):
             conn = LocalNxapi(module)
         else:
@@ -278,13 +251,14 @@ class LocalNxapi:
         self._device_configs = {}
         self._module_context = {}
 
-        self._module.params['url_username'] = self._module.params['username']
-        self._module.params['url_password'] = self._module.params['password']
+        provider = self._module.params.get("provider") or {}
+        self._module.params['url_username'] = provider.get('username')
+        self._module.params['url_password'] = provider.get('password')
 
-        host = self._module.params['host']
-        port = self._module.params['port']
+        host = provider.get('host')
+        port = provider.get('port')
 
-        if self._module.params['use_ssl']:
+        if provider.get('use_ssl'):
             proto = 'https'
             port = port or 443
         else:
@@ -355,7 +329,7 @@ class LocalNxapi:
 
         headers = {'Content-Type': 'application/json'}
         result = list()
-        timeout = self._module.params['timeout']
+        timeout = self._module.params['provider']['timeout']
         use_proxy = self._module.params['provider']['use_proxy']
 
         for req in requests:
@@ -629,6 +603,8 @@ class HttpApi:
             if opts.get('ignore_timeout') and code:
                 responses.append(code)
                 return responses
+            elif opts.get('catch_clierror') and '400' in code:
+                return [code, err]
             elif code and 'no graceful-restart' in err:
                 if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
                     msg = ['']
@@ -1174,10 +1150,10 @@ def is_text(cmd):
 
 
 def is_local_nxapi(module):
-    transport = module.params.get('transport')
     provider = module.params.get('provider')
-    provider_transport = provider['transport'] if provider else None
-    return 'nxapi' in (transport, provider_transport)
+    if provider:
+        return provider.get("transport") == 'nxapi'
+    return False
 
 
 def to_command(module, commands):

@@ -61,3 +61,8 @@
 
       # custom module returned the correct answer
       - custom_module_return.answer == 42
+
+# https://github.com/ansible/ansible/issues/64664
+# https://github.com/ansible/ansible/issues/64479
+- name: Run module that tries to access itself via sys.modules
+  sys_check:

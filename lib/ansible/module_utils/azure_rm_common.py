@@ -52,6 +52,24 @@ AZURE_CREDENTIAL_ENV_MAPPING = dict(
     adfs_authority_url='AZURE_ADFS_AUTHORITY_URL'
 )
 
+
+class SDKProfile(object):  # pylint: disable=too-few-public-methods
+
+    def __init__(self, default_api_version, profile=None):
+        """Constructor.
+
+        :param str default_api_version: Default API version if not overridden by a profile. Nullable.
+        :param profile: A dict operation group name to API version.
+        :type profile: dict[str, str]
+        """
+        self.profile = profile if profile is not None else {}
+        self.profile[None] = default_api_version
+
+    @property
+    def default_api_version(self):
+        return self.profile[None]
+
+
 # FUTURE: this should come from the SDK or an external location.
 # For now, we have to copy from azure-cli
 AZURE_API_PROFILES = {
@@ -73,12 +91,64 @@ AZURE_API_PROFILES = {
         'MariaDBManagementClient': '2019-03-01',
         'ManagementLockClient': '2016-09-01'
     },
-
+    '2019-03-01-hybrid': {
+        'StorageManagementClient': '2017-10-01',
+        'NetworkManagementClient': '2017-10-01',
+        'ComputeManagementClient': SDKProfile('2017-12-01', {
+            'resource_skus': '2017-09-01',
+            'disks': '2017-03-30',
+            'snapshots': '2017-03-30'
+        }),
+        'ManagementLinkClient': '2016-09-01',
+        'ManagementLockClient': '2016-09-01',
+        'PolicyClient': '2016-12-01',
+        'ResourceManagementClient': '2018-05-01',
+        'SubscriptionClient': '2016-06-01',
+        'DnsManagementClient': '2016-04-01',
+        'KeyVaultManagementClient': '2016-10-01',
+        'AuthorizationManagementClient': SDKProfile('2015-07-01', {
+            'classic_administrators': '2015-06-01',
+            'policy_assignments': '2016-12-01',
+            'policy_definitions': '2016-12-01'
+        }),
+        'KeyVaultClient': '2016-10-01',
+        'azure.multiapi.storage': '2017-11-09',
+        'azure.multiapi.cosmosdb': '2017-04-17'
+    },
+    '2018-03-01-hybrid': {
+        'StorageManagementClient': '2016-01-01',
+        'NetworkManagementClient': '2017-10-01',
+        'ComputeManagementClient': SDKProfile('2017-03-30'),
+        'ManagementLinkClient': '2016-09-01',
+        'ManagementLockClient': '2016-09-01',
+        'PolicyClient': '2016-12-01',
+        'ResourceManagementClient': '2018-02-01',
+        'SubscriptionClient': '2016-06-01',
+        'DnsManagementClient': '2016-04-01',
+        'KeyVaultManagementClient': '2016-10-01',
+        'AuthorizationManagementClient': SDKProfile('2015-07-01', {
+            'classic_administrators': '2015-06-01'
+        }),
+        'KeyVaultClient': '2016-10-01',
+        'azure.multiapi.storage': '2017-04-17',
+        'azure.multiapi.cosmosdb': '2017-04-17'
+    },
     '2017-03-09-profile': {
-        'ComputeManagementClient': '2016-03-30',
+        'StorageManagementClient': '2016-01-01',
         'NetworkManagementClient': '2015-06-15',
+        'ComputeManagementClient': SDKProfile('2016-03-30'),
+        'ManagementLinkClient': '2016-09-01',
+        'ManagementLockClient': '2015-01-01',
+        'PolicyClient': '2015-10-01-preview',
         'ResourceManagementClient': '2016-02-01',
-        'StorageManagementClient': '2016-01-01'
+        'SubscriptionClient': '2016-06-01',
+        'DnsManagementClient': '2016-04-01',
+        'KeyVaultManagementClient': '2016-10-01',
+        'AuthorizationManagementClient': SDKProfile('2015-07-01', {
+            'classic_administrators': '2015-06-01'
+        }),
+        'KeyVaultClient': '2016-10-01',
+        'azure.multiapi.storage': '2015-04-05'
     }
 }
 

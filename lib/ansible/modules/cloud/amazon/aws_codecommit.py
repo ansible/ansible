@@ -3,6 +3,9 @@
 # Copyright: (c) 2018, Shuang Wang <ooocamel@icloud.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -27,18 +30,20 @@ options:
     description:
       - name of repository.
     required: true
+    type: str
   description:
     description:
       - description or comment of repository.
     required: false
     aliases:
       - comment
+    type: str
   state:
     description:
       - Specifies the state of repository.
     required: true
     choices: [ 'present', 'absent' ]
-
+    type: str
 extends_documentation_fragment:
   - aws
   - ec2
@@ -73,7 +78,7 @@ repository_metadata:
     creation_date:
       description: "The date and time the repository was created, in timestamp format."
       returned: when state is present
-      type: datetime
+      type: str
       sample: "2018-10-16T13:21:41.261000+09:00"
     last_modified_date:
       description: "The date and time the repository was last modified, in timestamp format."
@@ -104,7 +109,7 @@ response_metadata:
     http_headers:
       description: "http headers of http response"
       returned: always
-      type: complex
+      type: dict
     http_status_code:
       description: "http status code of http response"
       returned: always

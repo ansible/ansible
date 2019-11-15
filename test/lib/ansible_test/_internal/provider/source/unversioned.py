@@ -40,9 +40,6 @@ class UnversionedSource(SourceProvider):
         )
 
         kill_sub_dir = {
-            'test/runner': (
-                '.tox',
-            ),
             'test': (
                 'results',
                 'cache',

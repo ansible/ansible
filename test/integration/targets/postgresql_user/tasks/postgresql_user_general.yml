@@ -3,7 +3,8 @@
 # Integration tests for postgresql_user module.
 
 - vars:
-    test_user: hello_user
+    test_user: hello.user.with.dots
+    test_user2: hello
     test_group1: group1
     test_group2: group2
     test_table: test
@@ -490,18 +491,24 @@
   #
   # fail_on_user
   #
+  - name: Create role for test
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_user2 }}'
+
   - name: Create test table, set owner as test_user
     <<: *task_parameters
     postgresql_table:
       <<: *pg_parameters
       name: '{{ test_table }}'
-      owner: '{{ test_user }}'
+      owner: '{{ test_user2 }}'
 
   - name: Test fail_on_user
     <<: *task_parameters
     postgresql_user:
       <<: *pg_parameters
-      name: '{{ test_user }}'
+      name: '{{ test_user2 }}'
       state: absent
     ignore_errors: yes
 
@@ -666,5 +673,6 @@
       state: absent
     loop:
     - '{{ test_user }}'
+    - '{{ test_user2 }}'
     - '{{ test_group1 }}'
     - '{{ test_group2 }}'

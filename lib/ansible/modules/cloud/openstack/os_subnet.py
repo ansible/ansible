@@ -202,7 +202,7 @@ def _needs_update(subnet, module, cloud, filters=None):
     if host_routes:
         curr_hr = sorted(subnet['host_routes'], key=lambda t: t.keys())
         new_hr = sorted(host_routes, key=lambda t: t.keys())
-        if sorted(curr_hr) != sorted(new_hr):
+        if curr_hr != new_hr:
             return True
     if no_gateway_ip and subnet['gateway_ip']:
         return True

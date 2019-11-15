@@ -58,6 +58,9 @@ options:
     version:
         description:
             - The version of the certificate signing request.
+            - "The only allowed value according to L(RFC 2986,https://tools.ietf.org/html/rfc2986#section-4.1)
+               is 1."
+            - This option will no longer accept unsupported values from Ansible 2.14 on.
         type: int
         default: 1
     force:
@@ -365,26 +368,31 @@ subject:
     description: A list of the subject tuples attached to the CSR
     returned: changed or success
     type: list
+    elements: list
     sample: "[('CN', 'www.ansible.com'), ('O', 'Ansible')]"
 subjectAltName:
     description: The alternative names this CSR is valid for
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'DNS:www.ansible.com', 'DNS:m.ansible.com' ]
 keyUsage:
     description: Purpose for which the public key may be used
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'digitalSignature', 'keyAgreement' ]
 extendedKeyUsage:
     description: Additional restriction on the public key purposes
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'clientAuth' ]
 basicConstraints:
     description: Indicates if the certificate belongs to a CA
     returned: changed or success
     type: list
+    elements: str
     sample: ['CA:TRUE', 'pathLenConstraint:0']
 ocsp_must_staple:
     description: Indicates whether the certificate has the OCSP
@@ -750,6 +758,9 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
     def __init__(self, module):
         super(CertificateSigningRequestCryptography, self).__init__(module)
         self.cryptography_backend = cryptography.hazmat.backends.default_backend()
+        self.module = module
+        if self.version != 1:
+            module.warn('The cryptography backend only supports version 1. (The only valid value according to RFC 2986.)')
 
     def _generate_csr(self):
         csr = cryptography.x509.CertificateSigningRequestBuilder()
@@ -806,20 +817,26 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             )
 
         digest = None
-        if self.digest == 'sha256':
-            digest = cryptography.hazmat.primitives.hashes.SHA256()
-        elif self.digest == 'sha384':
-            digest = cryptography.hazmat.primitives.hashes.SHA384()
-        elif self.digest == 'sha512':
-            digest = cryptography.hazmat.primitives.hashes.SHA512()
-        elif self.digest == 'sha1':
-            digest = cryptography.hazmat.primitives.hashes.SHA1()
-        elif self.digest == 'md5':
-            digest = cryptography.hazmat.primitives.hashes.MD5()
-        # FIXME
-        else:
-            raise CertificateSigningRequestError('Unsupported digest "{0}"'.format(self.digest))
-        self.request = csr.sign(self.privatekey, digest, self.cryptography_backend)
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.privatekey):
+            if self.digest == 'sha256':
+                digest = cryptography.hazmat.primitives.hashes.SHA256()
+            elif self.digest == 'sha384':
+                digest = cryptography.hazmat.primitives.hashes.SHA384()
+            elif self.digest == 'sha512':
+                digest = cryptography.hazmat.primitives.hashes.SHA512()
+            elif self.digest == 'sha1':
+                digest = cryptography.hazmat.primitives.hashes.SHA1()
+            elif self.digest == 'md5':
+                digest = cryptography.hazmat.primitives.hashes.MD5()
+            # FIXME
+            else:
+                raise CertificateSigningRequestError('Unsupported digest "{0}"'.format(self.digest))
+        try:
+            self.request = csr.sign(self.privatekey, digest, self.cryptography_backend)
+        except TypeError as e:
+            if str(e) == 'Algorithm must be a registered hash algorithm.' and digest is None:
+                self.module.fail_json(msg='Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.')
+            raise
 
         return self.request.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
 
@@ -1021,6 +1038,10 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True,
     )
+
+    if module.params['version'] != 1:
+        module.deprecate('The version option will only support allowed values from Ansible 2.14 on. '
+                         'Currently, only the value 1 is allowed by RFC 2986', version='2.14')
 
     base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):

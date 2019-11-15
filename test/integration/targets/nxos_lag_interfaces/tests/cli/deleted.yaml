@@ -10,14 +10,8 @@
     feature: lacp
 
 - name: Setup1
-  nxos_config:
-    lines:
-      - "no channel-group 10"
-    parents: "{{ item }}"
-  ignore_errors: yes
-  loop:
-    - "interface {{ test_int1 }}"
-    - "interface {{ test_int2 }}"
+  nxos_lag_interfaces: &remove_lags
+    state: deleted
 
 - block:
   - name: Setup2
@@ -63,14 +57,8 @@
 
   always:
   - name: Teardown
-    nxos_config:
-      lines:
-        - "no channel-group 10"
-      parents: "{{ item }}"
+    nxos_lag_interfaces: *remove_lags
     ignore_errors: yes
-    loop:
-      - "interface {{ test_int1 }}"
-      - "interface {{ test_int2 }}"
 
   - name: disable feature lacp
     nxos_feature:

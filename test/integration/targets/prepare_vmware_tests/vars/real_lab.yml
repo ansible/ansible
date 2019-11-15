@@ -7,16 +7,14 @@ infra:
   datastores:
     LocalDS_0:
       type: nfs
-      server: gateway.test
+      server: datastore.test
       path: /srv/share/isos
-      # https://github.com/ansible/ansible/issues/58541 prevents us
-      # from using the "ro: true" mode
       ro: false
     LocalDS_1:
       type: nfs
-      server: gateway.test
+      server: datastore.test
       path: /srv/share/vms
-      ro: false
+      ro: true
 virtual_machines:
   - name: DC0_H0_VM0
     folder: '{{ f0 }}'

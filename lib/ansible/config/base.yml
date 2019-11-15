@@ -2,10 +2,10 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 ALLOW_WORLD_READABLE_TMPFILES:
-  name: Allow world readable temporary files
+  name: Allow world-readable temporary files
   default: False
   description:
-    - This makes the temporary files created on the machine to be world readable and will issue a warning instead of failing the task.
+    - This makes the temporary files created on the machine world-readable and will issue a warning instead of failing the task.
     - It is useful when becoming an unprivileged user.
   env: []
   ini:
@@ -692,6 +692,10 @@ DEFAULT_HASH_BEHAVIOUR:
   env: [{name: ANSIBLE_HASH_BEHAVIOUR}]
   ini:
   - {key: hash_behaviour, section: defaults}
+  deprecated:
+    why: This feature is fragile and not portable, leading to continual confusion and misuse
+    version: "2.13"
+    alternatives: the ``combine`` filter explicitly
 DEFAULT_HOST_LIST:
   name: Inventory Source
   default: /etc/ansible/hosts
@@ -1311,6 +1315,10 @@ CONNECTION_FACTS_MODULES:
     junos: junos_facts
     nxos: nxos_facts
     vyos: vyos_facts
+    exos: exos_facts
+    slxos: slxos_facts
+    voss: voss_facts
+    ironware: ironware_facts
   description: "Which modules to run during a play's fact gathering stage based on connection"
   env: [{name: ANSIBLE_CONNECTION_FACTS_MODULES}]
   ini:
@@ -1450,6 +1458,8 @@ INTERPRETER_PYTHON_DISTRO_MAP:
     centos: &rhelish
       '6': /usr/bin/python
       '8': /usr/libexec/platform-python
+    debian:
+      '10': /usr/bin/python3
     fedora:
       '23': /usr/bin/python3
     redhat: *rhelish
@@ -1481,7 +1491,7 @@ TRANSFORM_INVALID_GROUP_CHARS:
     - Make ansible transform invalid characters in group names supplied by inventory sources.
     - If 'never' it will allow for the group name but warn about the issue.
     - When 'ignore', it does the same as 'never', without issuing a warning.
-    - When 'always' it will replace any invalid charachters with '_' (underscore) and warn the user
+    - When 'always' it will replace any invalid characters with '_' (underscore) and warn the user
     - When 'silently', it does the same as 'always', without issuing a warning.
   env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
   ini:
@@ -1601,7 +1611,7 @@ MAX_FILE_SIZE_FOR_DIFF:
   type: int
 NETWORK_GROUP_MODULES:
   name: Network module families
-  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf]
+  default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf, exos, voss, slxos]
   description: 'TODO: write it'
   env:
   - name: NETWORK_GROUP_MODULES
@@ -1680,6 +1690,14 @@ PERSISTENT_COMMAND_TIMEOUT:
   ini:
   - {key: command_timeout, section: persistent_connection}
   type: int
+PLAYBOOK_DIR:
+  name: playbook dir override for non-playbook CLIs (ala --playbook-dir)
+  version_added: "2.9"
+  description:
+    - A number of non-playbook CLIs have a ``--playbook-dir`` argument; this sets the default value for it.
+  env: [{name: ANSIBLE_PLAYBOOK_DIR}]
+  ini: [{key: playbook_dir, section: defaults}]
+  type: path
 PLAYBOOK_VARS_ROOT:
   name: playbook vars files root
   default: top
@@ -1741,6 +1759,19 @@ RETRY_FILES_SAVE_PATH:
   ini:
   - {key: retry_files_save_path, section: defaults}
   type: path
+RUN_VARS_PLUGINS:
+  name: When should vars plugins run relative to inventory
+  default: demand
+  description:
+    - This setting can be used to optimize vars_plugin usage depending on user's inventory size and play selection.
+    - Setting to C(demand) will run vars_plugins relative to inventory sources anytime vars are 'demanded' by tasks.
+    - Setting to C(start) will run vars_plugins relative to inventory sources after importing that inventory source.
+  env: [{name: ANSIBLE_RUN_VARS_PLUGINS}]
+  ini:
+  - {key: run_vars_plugins, section: defaults}
+  type: str
+  choices: ['demand', 'start']
+  version_added: "2.10"
 SHOW_CUSTOM_STATS:
   name: Display custom stats
   default: False
@@ -1795,6 +1826,15 @@ USE_PERSISTENT_CONNECTIONS:
   ini:
   - {key: use_persistent_connections, section: defaults}
   type: boolean
+VARIABLE_PLUGINS_ENABLED:
+  name: Vars plugin whitelist
+  default: ['host_group_vars']
+  description: Whitelist for variable plugins that require it.
+  env: [{name: ANSIBLE_VARS_ENABLED}]
+  ini:
+  - {key: vars_plugins_enabled, section: defaults}
+  type: list
+  version_added: "2.10"
 VARIABLE_PRECEDENCE:
   name: Group variable precedence
   default: ['all_inventory', 'groups_inventory', 'all_plugins_inventory', 'all_plugins_play', 'groups_plugins_inventory', 'groups_plugins_play']

@@ -30,6 +30,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+import sys
 from distutils.version import LooseVersion
 
 try:
@@ -46,6 +47,7 @@ try:
     from cryptography.hazmat.backends import default_backend as cryptography_backend
     from cryptography.hazmat.primitives.serialization import load_pem_private_key
     from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives import serialization
     import ipaddress
 
     # Older versions of cryptography (< 2.1) do not have __hash__ functions for
@@ -78,9 +80,42 @@ try:
             # https://github.com/pyca/cryptography/commit/d1b5681f6db2bde7a14625538bd7907b08dfb486
             x509.RFC822Name.__hash__ = simple_hash
             x509.UniformResourceIdentifier.__hash__ = simple_hash
+
+    # Test whether we have support for X25519, X448, Ed25519 and/or Ed448
+    try:
+        import cryptography.hazmat.primitives.asymmetric.x25519
+        CRYPTOGRAPHY_HAS_X25519 = True
+        try:
+            cryptography.hazmat.primitives.asymmetric.x25519.X25519PrivateKey.private_bytes
+            CRYPTOGRAPHY_HAS_X25519_FULL = True
+        except AttributeError:
+            CRYPTOGRAPHY_HAS_X25519_FULL = False
+    except ImportError:
+        CRYPTOGRAPHY_HAS_X25519 = False
+        CRYPTOGRAPHY_HAS_X25519_FULL = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.x448
+        CRYPTOGRAPHY_HAS_X448 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_X448 = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.ed25519
+        CRYPTOGRAPHY_HAS_ED25519 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_ED25519 = False
+    try:
+        import cryptography.hazmat.primitives.asymmetric.ed448
+        CRYPTOGRAPHY_HAS_ED448 = True
+    except ImportError:
+        CRYPTOGRAPHY_HAS_ED448 = False
+
 except ImportError:
     # Error handled in the calling module.
-    pass
+    CRYPTOGRAPHY_HAS_X25519 = False
+    CRYPTOGRAPHY_HAS_X25519_FULL = False
+    CRYPTOGRAPHY_HAS_X448 = False
+    CRYPTOGRAPHY_HAS_ED25519 = False
+    CRYPTOGRAPHY_HAS_ED448 = False
 
 
 import abc
@@ -1883,3 +1918,86 @@ def quick_is_not_prime(n):
     # TODO: maybe do some iterations of Miller-Rabin to increase confidence
     # (https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test)
     return False
+
+
+python_version = (sys.version_info[0], sys.version_info[1])
+if python_version >= (2, 7) or python_version >= (3, 1):
+    # Ansible still supports Python 2.6 on remote nodes
+    def count_bits(no):
+        no = abs(no)
+        if no == 0:
+            return 0
+        return no.bit_length()
+else:
+    # Slow, but works
+    def count_bits(no):
+        no = abs(no)
+        count = 0
+        while no > 0:
+            no >>= 1
+            count += 1
+        return count
+
+
+PEM_START = '-----BEGIN '
+PEM_END = '-----'
+PKCS8_PRIVATEKEY_NAMES = ('PRIVATE KEY', 'ENCRYPTED PRIVATE KEY')
+PKCS1_PRIVATEKEY_SUFFIX = ' PRIVATE KEY'
+
+
+def identify_private_key_format(content):
+    '''Given the contents of a private key file, identifies its format.'''
+    # See https://github.com/openssl/openssl/blob/master/crypto/pem/pem_pkey.c#L40-L85
+    # (PEM_read_bio_PrivateKey)
+    # and https://github.com/openssl/openssl/blob/master/include/openssl/pem.h#L46-L47
+    # (PEM_STRING_PKCS8, PEM_STRING_PKCS8INF)
+    try:
+        lines = content.decode('utf-8').splitlines(False)
+        if lines[0].startswith(PEM_START) and lines[0].endswith(PEM_END) and len(lines[0]) > len(PEM_START) + len(PEM_END):
+            name = lines[0][len(PEM_START):-len(PEM_END)]
+            if name in PKCS8_PRIVATEKEY_NAMES:
+                return 'pkcs8'
+            if len(name) > len(PKCS1_PRIVATEKEY_SUFFIX) and name.endswith(PKCS1_PRIVATEKEY_SUFFIX):
+                return 'pkcs1'
+            return 'unknown-pem'
+    except UnicodeDecodeError:
+        pass
+    return 'raw'
+
+
+def cryptography_key_needs_digest_for_signing(key):
+    '''Tests whether the given private key requires a digest algorithm for signing.
+
+    Ed25519 and Ed448 keys do not; they need None to be passed as the digest algorithm.
+    '''
+    if CRYPTOGRAPHY_HAS_ED25519 and isinstance(key, cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey):
+        return False
+    if CRYPTOGRAPHY_HAS_ED448 and isinstance(key, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PrivateKey):
+        return False
+    return True
+
+
+def cryptography_compare_public_keys(key1, key2):
+    '''Tests whether two public keys are the same.
+
+    Needs special logic for Ed25519 and Ed448 keys, since they do not have public_numbers().
+    '''
+    if CRYPTOGRAPHY_HAS_ED25519:
+        a = isinstance(key1, cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey)
+        b = isinstance(key2, cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PublicKey)
+        if a or b:
+            if not a or not b:
+                return False
+            a = key1.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+            b = key2.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+            return a == b
+    if CRYPTOGRAPHY_HAS_ED448:
+        a = isinstance(key1, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PublicKey)
+        b = isinstance(key2, cryptography.hazmat.primitives.asymmetric.ed448.Ed448PublicKey)
+        if a or b:
+            if not a or not b:
+                return False
+            a = key1.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+            b = key2.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+            return a == b
+    return key1.public_numbers() == key2.public_numbers()

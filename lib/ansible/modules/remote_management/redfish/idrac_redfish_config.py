@@ -30,6 +30,9 @@ options:
     required: true
     description:
       - List of commands to execute on iDRAC
+      - I(SetManagerAttributes), I(SetLifecycleControllerAttributes) and
+        I(SetSystemAttributes) are mutually exclusive commands when C(category)
+        is I(Manager)
     type: list
   baseuri:
     required: true
@@ -49,49 +52,96 @@ options:
   manager_attribute_name:
     required: false
     description:
-      - name of iDRAC attribute to update
-    default: 'null'
+      - (deprecated) name of iDRAC attribute to update
     type: str
   manager_attribute_value:
     required: false
     description:
-      - value of iDRAC attribute to update
-    default: 'null'
+      - (deprecated) value of iDRAC attribute to update
     type: str
+  manager_attributes:
+    required: false
+    description:
+      - dictionary of iDRAC attribute name and value pairs to update
+    default: {}
+    type: 'dict'
+    version_added: '2.10'
   timeout:
     description:
       - Timeout in seconds for URL requests to iDRAC controller
     default: 10
     type: int
+  resource_id:
+    required: false
+    description:
+      - The ID of the System, Manager or Chassis to modify
+    type: str
+    version_added: '2.10'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
 
 EXAMPLES = '''
-  - name: Enable NTP in iDRAC
+  - name: Enable NTP and set NTP server and Time zone attributes in iDRAC
     idrac_redfish_config:
       category: Manager
       command: SetManagerAttributes
-      manager_attribute_name: NTPConfigGroup.1.NTPEnable
-      manager_attribute_value: Enabled
+      resource_id: iDRAC.Embedded.1
+      manager_attributes:
+        NTPConfigGroup.1.NTPEnable: "Enabled"
+        NTPConfigGroup.1.NTP1: "{{ ntpserver1 }}"
+        Time.1.Timezone: "{{ timezone }}"
       baseuri: "{{ baseuri }}"
       username: "{{ username}}"
       password: "{{ password }}"
-  - name: Set NTP server 1 to {{ ntpserver1 }} in iDRAC
+
+  - name: Enable Syslog and set Syslog servers in iDRAC
     idrac_redfish_config:
       category: Manager
       command: SetManagerAttributes
-      manager_attribute_name: NTPConfigGroup.1.NTP1
-      manager_attribute_value: "{{ ntpserver1 }}"
+      resource_id: iDRAC.Embedded.1
+      manager_attributes:
+        SysLog.1.SysLogEnable: "Enabled"
+        SysLog.1.Server1: "{{ syslog_server1 }}"
+        SysLog.1.Server2: "{{ syslog_server2 }}"
       baseuri: "{{ baseuri }}"
       username: "{{ username}}"
       password: "{{ password }}"
-  - name: Set Timezone to {{ timezone }} in iDRAC
+
+  - name: Configure SNMP community string, port, protocol and trap format
     idrac_redfish_config:
       category: Manager
       command: SetManagerAttributes
-      manager_attribute_name: Time.1.Timezone
-      manager_attribute_value: "{{ timezone }}"
+      resource_id: iDRAC.Embedded.1
+      manager_attributes:
+        SNMP.1.AgentEnable: "Enabled"
+        SNMP.1.AgentCommunity: "public_community_string"
+        SNMP.1.TrapFormat: "SNMPv1"
+        SNMP.1.SNMPProtocol: "All"
+        SNMP.1.DiscoveryPort: 161
+        SNMP.1.AlertPort: 162
+      baseuri: "{{ baseuri }}"
+      username: "{{ username}}"
+      password: "{{ password }}"
+
+  - name: Enable CSIOR
+    idrac_redfish_config:
+      category: Manager
+      command: SetLifecycleControllerAttributes
+      resource_id: iDRAC.Embedded.1
+      manager_attributes:
+        LCAttributes.1.CollectSystemInventoryOnRestart: "Enabled"
+      baseuri: "{{ baseuri }}"
+      username: "{{ username}}"
+      password: "{{ password }}"
+
+  - name: Set Power Supply Redundancy Policy to A/B Grid Redundant
+    idrac_redfish_config:
+      category: Manager
+      command: SetSystemAttributes
+      resource_id: iDRAC.Embedded.1
+      manager_attributes:
+        ServerPwr.1.PSRedPolicy: "A/B Grid Redundant"
       baseuri: "{{ baseuri }}"
       username: "{{ username}}"
       password: "{{ password }}"
@@ -105,55 +155,93 @@ msg:
     sample: "Action was successful"
 '''
 
-import json
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.validation import (
+    check_mutually_exclusive,
+    check_required_arguments
+)
 from ansible.module_utils.redfish_utils import RedfishUtils
 from ansible.module_utils._text import to_native
 
 
 class IdracRedfishUtils(RedfishUtils):
 
-    def set_manager_attributes(self, attr):
+    def set_manager_attributes(self, command):
+
         result = {}
-        # Here I'm making the assumption that the key 'Attributes' is part of the URI.
-        # It may not, but in the hardware I tested with, getting to the final URI where
-        # the Manager Attributes are, appear to be part of a specific OEM extension.
+        required_arg_spec = {'manager_attributes': {'required': True}}
+
+        try:
+            check_required_arguments(required_arg_spec, self.module.params)
+
+        except TypeError as e:
+            msg = to_native(e)
+            self.module.fail_json(msg=msg)
+
         key = "Attributes"
+        command_manager_attributes_uri_map = {
+            "SetManagerAttributes": self.manager_uri,
+            "SetLifecycleControllerAttributes": "/redfish/v1/Managers/LifecycleController.Embedded.1",
+            "SetSystemAttributes": "/redfish/v1/Managers/System.Embedded.1"
+        }
+        manager_uri = command_manager_attributes_uri_map.get(command, self.manager_uri)
+
+        attributes = self.module.params['manager_attributes']
+        manager_attr_name = self.module.params.get('manager_attribute_name')
+        manager_attr_value = self.module.params.get('manager_attribute_value')
+
+        # manager attributes to update
+        if manager_attr_name:
+            attributes.update({manager_attr_name: manager_attr_value})
+
+        attrs_to_patch = {}
+        attrs_skipped = {}
 
         # Search for key entry and extract URI from it
-        response = self.get_request(self.root_uri + self.manager_uri + "/" + key)
+        response = self.get_request(self.root_uri + manager_uri + "/" + key)
         if response['ret'] is False:
             return response
         result['ret'] = True
         data = response['data']
 
         if key not in data:
-            return {'ret': False, 'msg': "Key %s not found" % key}
+            return {'ret': False,
+                    'msg': "%s: Key %s not found" % (command, key)}
 
-        # Check if attribute exists
-        if attr['mgr_attr_name'] not in data[key]:
-            return {'ret': False, 'msg': "Manager attribute %s not found" % attr['mgr_attr_name']}
+        for attr_name, attr_value in attributes.items():
+            # Check if attribute exists
+            if attr_name not in data[u'Attributes']:
+                return {'ret': False,
+                        'msg': "%s: Manager attribute %s not found" % (command, attr_name)}
 
-        # Example: manager_attr = {\"name\":\"value\"}
-        # Check if value is a number. If so, convert to int.
-        if attr['mgr_attr_value'].isdigit():
-            manager_attr = "{\"%s\": %i}" % (attr['mgr_attr_name'], int(attr['mgr_attr_value']))
-        else:
-            manager_attr = "{\"%s\": \"%s\"}" % (attr['mgr_attr_name'], attr['mgr_attr_value'])
+            # Find out if value is already set to what we want. If yes, exclude
+            # those attributes
+            if data[u'Attributes'][attr_name] == attr_value:
+                attrs_skipped.update({attr_name: attr_value})
+            else:
+                attrs_to_patch.update({attr_name: attr_value})
 
-        # Find out if value is already set to what we want. If yes, return
-        if data[key][attr['mgr_attr_name']] == attr['mgr_attr_value']:
-            return {'ret': True, 'changed': False, 'msg': "Manager attribute already set"}
+        if not attrs_to_patch:
+            return {'ret': True, 'changed': False,
+                    'msg': "Manager attributes already set"}
 
-        payload = {"Attributes": json.loads(manager_attr)}
-        response = self.patch_request(self.root_uri + self.manager_uri + "/" + key, payload)
+        payload = {"Attributes": attrs_to_patch}
+        response = self.patch_request(self.root_uri + manager_uri + "/" + key, payload)
         if response['ret'] is False:
             return response
-        return {'ret': True, 'changed': True, 'msg': "Modified Manager attribute %s" % attr['mgr_attr_name']}
+        return {'ret': True, 'changed': True,
+                'msg': "%s: Modified Manager attributes %s" % (command, attrs_to_patch)}
 
 
 CATEGORY_COMMANDS_ALL = {
-    "Manager": ["SetManagerAttributes"]
+    "Manager": ["SetManagerAttributes", "SetLifecycleControllerAttributes",
+                "SetSystemAttributes"]
+}
+
+# list of mutually exclusive commands for a category
+CATEGORY_COMMANDS_MUTUALLY_EXCLUSIVE = {
+    "Manager": [["SetManagerAttributes", "SetLifecycleControllerAttributes",
+                 "SetSystemAttributes"]]
 }
 
 
@@ -166,9 +254,11 @@ def main():
             baseuri=dict(required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
-            manager_attribute_name=dict(default='null'),
-            manager_attribute_value=dict(default='null'),
-            timeout=dict(type='int', default=10)
+            manager_attribute_name=dict(default=None),
+            manager_attribute_value=dict(default=None),
+            manager_attributes=dict(type='dict', default={}),
+            timeout=dict(type='int', default=10),
+            resource_id=dict()
         ),
         supports_check_mode=False
     )
@@ -183,13 +273,13 @@ def main():
     # timeout
     timeout = module.params['timeout']
 
-    # iDRAC attributes to update
-    mgr_attributes = {'mgr_attr_name': module.params['manager_attribute_name'],
-                      'mgr_attr_value': module.params['manager_attribute_value']}
+    # System, Manager or Chassis ID to modify
+    resource_id = module.params['resource_id']
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_utils = IdracRedfishUtils(creds, root_uri, timeout, module)
+    rf_utils = IdracRedfishUtils(creds, root_uri, timeout, module,
+                                 resource_id=resource_id, data_modification=True)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -201,6 +291,17 @@ def main():
         if cmd not in CATEGORY_COMMANDS_ALL[category]:
             module.fail_json(msg=to_native("Invalid Command '%s'. Valid Commands = %s" % (cmd, CATEGORY_COMMANDS_ALL[category])))
 
+    # check for mutually exclusive commands
+    try:
+        # check_mutually_exclusive accepts a single list or list of lists that
+        # are groups of terms that should be mutually exclusive with one another
+        # and checks that against a dictionary
+        check_mutually_exclusive(CATEGORY_COMMANDS_MUTUALLY_EXCLUSIVE[category],
+                                 dict.fromkeys(command_list, True))
+
+    except TypeError as e:
+        module.fail_json(msg=to_native(e))
+
     # Organize by Categories / Commands
 
     if category == "Manager":
@@ -210,8 +311,15 @@ def main():
             module.fail_json(msg=to_native(result['msg']))
 
         for command in command_list:
-            if command == "SetManagerAttributes":
-                result = rf_utils.set_manager_attributes(mgr_attributes)
+            if command in ["SetManagerAttributes", "SetLifecycleControllerAttributes", "SetSystemAttributes"]:
+                result = rf_utils.set_manager_attributes(command)
+
+    if any((module.params['manager_attribute_name'], module.params['manager_attribute_value'])):
+        module.deprecate(msg='Arguments `manager_attribute_name` and '
+                             '`manager_attribute_value` are deprecated. '
+                             'Use `manager_attributes` instead for passing in '
+                             'the manager attribute name and value pairs',
+                             version='2.13')
 
     # Return data back or fail with proper message
     if result['ret'] is True:

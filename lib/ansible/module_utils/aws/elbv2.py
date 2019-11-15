@@ -1,6 +1,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 # Ansible imports
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_ec2_security_group_ids_from_names, \
     ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_policies as compare_dicts, \

@@ -1,0 +1,25 @@
+- name: stop mysql service
+  service:
+    name: "{{ mysql_service }}"
+    state: stopped
+  listen: cleanup mysql
+
+- name: remove mysql packages
+  action: '{{ ansible_pkg_mgr }}'
+  args:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ mysql_packages | union(mysql_cleanup_packages) }}"
+  listen: cleanup mysql
+
+- name: remove mysql data
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ mysql_data_dirs }}"
+  listen: cleanup mysql
+
+- name: remove pip packages
+  pip:
+    name: mysql-python
+    state: absent

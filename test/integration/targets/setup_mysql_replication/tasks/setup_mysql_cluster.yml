@@ -1,0 +1,60 @@
+# We run two servers listening different ports
+# to be able to check replication (one server for master, another for standby).
+
+- name: Install Repo
+  yum:
+    name: '{{ repo_link }}'
+
+- name: Install MySQL community server
+  yum:
+    name: '{{ mysql_package_name }}'
+
+- name: Create directories
+  file:
+    state: directory
+    path: "{{ item }}"
+    owner: mysql
+    group: mysql
+  loop:
+  - "{{ master_datadir }}"
+  - "{{ standby_datadir }}"
+  - "{{ standby_logdir }}"
+  - "{{ default_logdir }}"
+
+- name: Copy cnf templates
+  template:
+    src: '{{ item.conf_templ }}'
+    dest: '{{ item.conf_dest }}'
+    owner: mysql
+    group: mysql
+    force: yes
+  loop:
+  - { conf_templ: my-1.cnf.j2, conf_dest: '{{ master_cnf }}' }
+  - { conf_templ: my-2.cnf.j2, conf_dest: '{{ standby_cnf }}' }
+
+- name: Initialize DBs
+  shell: 'mysqld --user=mysql --initialize-insecure --datadir={{ item }}'
+  loop:
+  - '{{ master_datadir }}'
+  - '{{ standby_datadir }}'
+
+- name: Start master services
+  shell: 'mysqld --defaults-file={{ master_cnf }} --user=mysql --datadir={{ master_datadir }} --log-error={{ mysqld_err_log }} &'
+
+- name: Start standby services
+  shell: 'mysqld --defaults-file={{ standby_cnf }} --user=mysql --datadir={{ standby_datadir }} --log-error={{ mysqld_err_log }} &'
+
+- name: Pause
+  pause: seconds=3
+
+########### For painful debug uncomment the lines below ##
+#- name: DEBUG Check  log
+#  shell: 'cat {{ mysqld_err_log }}'
+#  ignore_errors: yes
+##########################################################
+
+- name: Check connection to the master
+  shell: 'echo "SHOW DATABASES;" | mysql -P {{ master_port }} -h 127.0.0.1'
+
+- name: Check connection to the standby
+  shell: "echo \"SHOW VARIABLES LIKE '%version%';\" | mysql -P {{ standby_port }} -h 127.0.0.1"

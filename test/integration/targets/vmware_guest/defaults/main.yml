@@ -29,3 +29,5 @@ vmware_guest_test_playbooks:
   - poweroff_d1_c1_f1.yml
 #  - template_d1_c1_f0.yml
   - vapp_d1_c1_f0.yml
+  - reconfig_vm_to_latest_version.yml
+  - remove_vm_from_inventory.yml

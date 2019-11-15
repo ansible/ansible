@@ -70,7 +70,7 @@ vultr_startup_script_info:
   description: Response from Vultr API
   returned: success
   type: complex
-  contains:
+  sample:
     "vultr_startup_script_info": [
       {
         "date_created": "2018-07-19 08:38:36",

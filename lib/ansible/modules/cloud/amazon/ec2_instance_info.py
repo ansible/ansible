@@ -28,6 +28,7 @@ options:
       - If you specify one or more instance IDs, only instances that have the specified IDs are returned.
     required: false
     version_added: 2.4
+    type: list
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
@@ -35,6 +36,7 @@ options:
         names and values are case sensitive.
     required: false
     default: {}
+    type: dict
 
 extends_documentation_fragment:
     - aws
@@ -263,28 +265,30 @@ instances:
                 groups:
                     description: One or more security groups.
                     returned: always
-                    type: complex
+                    type: list
+                    elements: dict
                     contains:
-                        - group_id:
-                              description: The ID of the security group.
-                              returned: always
-                              type: str
-                              sample: sg-abcdef12
-                          group_name:
-                              description: The name of the security group.
-                              returned: always
-                              type: str
-                              sample: mygroup
+                        group_id:
+                            description: The ID of the security group.
+                            returned: always
+                            type: str
+                            sample: sg-abcdef12
+                        group_name:
+                            description: The name of the security group.
+                            returned: always
+                            type: str
+                            sample: mygroup
                 ipv6_addresses:
                     description: One or more IPv6 addresses associated with the network interface.
                     returned: always
-                    type: complex
+                    type: list
+                    elements: dict
                     contains:
-                        - ipv6_address:
-                              description: The IPv6 address.
-                              returned: always
-                              type: str
-                              sample: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+                        ipv6_address:
+                            description: The IPv6 address.
+                            returned: always
+                            type: str
+                            sample: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
                 mac_address:
                     description: The MAC address.
                     returned: always
@@ -308,38 +312,39 @@ instances:
                 private_ip_addresses:
                     description: The private IPv4 addresses associated with the network interface.
                     returned: always
-                    type: complex
+                    type: list
+                    elements: dict
                     contains:
-                        - association:
-                              description: The association information for an Elastic IP address (IPv4) associated with the network interface.
-                              returned: always
-                              type: complex
-                              contains:
-                                  ip_owner_id:
-                                      description: The ID of the owner of the Elastic IP address.
-                                      returned: always
-                                      type: str
-                                      sample: amazon
-                                  public_dns_name:
-                                      description: The public DNS name.
-                                      returned: always
-                                      type: str
-                                      sample: ""
-                                  public_ip:
-                                      description: The public IP address or Elastic IP address bound to the network interface.
-                                      returned: always
-                                      type: str
-                                      sample: 1.2.3.4
-                          primary:
-                              description: Indicates whether this IPv4 address is the primary private IP address of the network interface.
-                              returned: always
-                              type: bool
-                              sample: true
-                          private_ip_address:
-                              description: The private IPv4 address of the network interface.
-                              returned: always
-                              type: str
-                              sample: 10.0.0.1
+                        association:
+                            description: The association information for an Elastic IP address (IPv4) associated with the network interface.
+                            returned: always
+                            type: complex
+                            contains:
+                                ip_owner_id:
+                                    description: The ID of the owner of the Elastic IP address.
+                                    returned: always
+                                    type: str
+                                    sample: amazon
+                                public_dns_name:
+                                    description: The public DNS name.
+                                    returned: always
+                                    type: str
+                                    sample: ""
+                                public_ip:
+                                    description: The public IP address or Elastic IP address bound to the network interface.
+                                    returned: always
+                                    type: str
+                                    sample: 1.2.3.4
+                        primary:
+                            description: Indicates whether this IPv4 address is the primary private IP address of the network interface.
+                            returned: always
+                            type: bool
+                            sample: true
+                        private_ip_address:
+                            description: The private IPv4 address of the network interface.
+                            returned: always
+                            type: str
+                            sample: 10.0.0.1
                 source_dest_check:
                     description: Indicates whether source/destination checking is enabled.
                     returned: always
@@ -393,18 +398,19 @@ instances:
         product_codes:
             description: One or more product codes.
             returned: always
-            type: complex
+            type: list
+            elements: dict
             contains:
-                - product_code_id:
-                      description: The product code.
-                      returned: always
-                      type: str
-                      sample: aw0evgkw8ef3n2498gndfgasdfsd5cce
-                  product_code_type:
-                      description: The type of product code.
-                      returned: always
-                      type: str
-                      sample: marketplace
+                product_code_id:
+                    description: The product code.
+                    returned: always
+                    type: str
+                    sample: aw0evgkw8ef3n2498gndfgasdfsd5cce
+                product_code_type:
+                    description: The type of product code.
+                    returned: always
+                    type: str
+                    sample: marketplace
         public_dns_name:
             description: The public DNS name assigned to the instance.
             returned: always
@@ -428,18 +434,19 @@ instances:
         security_groups:
             description: One or more security groups for the instance.
             returned: always
-            type: complex
+            type: list
+            elements: dict
             contains:
-                - group_id:
-                      description: The ID of the security group.
-                      returned: always
-                      type: str
-                      sample: sg-0123456
-                - group_name:
-                      description: The name of the security group.
-                      returned: always
-                      type: str
-                      sample: my-security-group
+                group_id:
+                    description: The ID of the security group.
+                    returned: always
+                    type: str
+                    sample: sg-0123456
+                group_name:
+                    description: The name of the security group.
+                    returned: always
+                    type: str
+                    sample: my-security-group
         source_dest_check:
             description: Indicates whether source/destination checking is enabled.
             returned: always

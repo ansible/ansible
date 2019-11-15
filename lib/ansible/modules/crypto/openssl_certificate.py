@@ -27,7 +27,7 @@ description:
       to emulate C(assertonly) usage with M(openssl_certificate_info), M(openssl_csr_info),
       M(openssl_privatekey_info) and M(assert). This also allows more flexible checks than
       the ones offered by the C(assertonly) provider.
-    - The C(ownca) provider is intended for generate OpenSSL certificate signed with your own
+    - The C(ownca) provider is intended for generating OpenSSL certificate signed with your own
       CA (Certificate Authority) certificate (self-signed certificate).
     - Many properties that can be specified in this module are for validation of an
       existing or newly generated certificate. The proper place to specify them, if you
@@ -470,7 +470,7 @@ options:
 
     entrust_cert_type:
         description:
-            - The type of certificate product to request.
+            - Specify the type of certificate requested.
             - This is only used by the C(entrust) provider.
         type: str
         default: STANDARD_SSL
@@ -519,7 +519,7 @@ options:
 
     entrust_api_client_cert_path:
         description:
-            - The path of the client certificate used to authenticate to the Entrust Certificate Services (ECS) API.
+            - The path to the client certificate used to authenticate to the Entrust Certificate Services (ECS) API.
             - This is only used by the C(entrust) provider.
             - This is required if the provider is C(entrust).
         type: path
@@ -527,7 +527,7 @@ options:
 
     entrust_api_client_cert_key_path:
         description:
-            - The path of the key for the client certificate used to authenticate to the Entrust Certificate Services (ECS) API.
+            - The path to the private key of the client certificate used to authenticate to the Entrust Certificate Services (ECS) API.
             - This is only used by the C(entrust) provider.
             - This is required if the provider is C(entrust).
         type: path
@@ -536,15 +536,15 @@ options:
     entrust_not_after:
         description:
             - The point in time at which the certificate stops being valid.
-            - Time can be specified either as relative time or as absolute timestamp.
+            - Time can be specified either as relative time or as an absolute timestamp.
+            - A valid absolute time format is C(ASN.1 TIME) such as C(2019-06-18).
+            - A valid relative time format is C([+-]timespec) where timespec can be an integer + C([w | d | h | m | s]), such as C(+365d) or C(+32w1d2h)).
             - Time will always be interpreted as UTC.
-            - Note that only the date (day, month, year) is supported for specifying expiry date of the issued certificate.
+            - Note that only the date (day, month, year) is supported for specifying the expiry date of the issued certificate.
             - The full date-time is adjusted to EST (GMT -5:00) before issuance, which may result in a certificate with an expiration date one day
               earlier than expected if a relative time is used.
             - The minimum certificate lifetime is 90 days, and maximum is three years.
-            - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
-              + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-            - If this value is not specified, the certificate will stop being valid 365 days from now.
+            - If this value is not specified, the certificate will stop being valid 365 days the date of issue.
             - This is only used by the C(entrust) provider.
         type: str
         default: +365d
@@ -552,8 +552,8 @@ options:
 
     entrust_api_specification_path:
         description:
-            - Path to the specification file defining the Entrust Certificate Services (ECS) API.
-            - Can be used to keep a local copy of the specification to avoid downloading it every time the module is used.
+            - The path to the specification file defining the Entrust Certificate Services (ECS) API configuration.
+            - You can use this to keep a local copy of the specification to avoid downloading it every time the module is used.
             - This is only used by the C(entrust) provider.
         type: path
         default: https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml
@@ -939,7 +939,7 @@ class Certificate(crypto_utils.OpenSSLObject):
             except OpenSSL.SSL.Error:
                 return False
         elif self.backend == 'cryptography':
-            return self.cert.public_key().public_numbers() == self.privatekey.public_key().public_numbers()
+            return crypto_utils.cryptography_compare_public_keys(self.cert.public_key(), self.privatekey.public_key())
 
     def _validate_csr(self):
         if self.backend == 'pyopenssl':
@@ -966,7 +966,7 @@ class Certificate(crypto_utils.OpenSSLObject):
             # Verify that CSR is signed by certificate's private key
             if not self.csr.is_signature_valid:
                 return False
-            if self.csr.public_key().public_numbers() != self.cert.public_key().public_numbers():
+            if not crypto_utils.cryptography_compare_public_keys(self.csr.public_key(), self.cert.public_key()):
                 return False
             # Check subject
             if self.csr.subject != self.cert.subject:
@@ -1106,10 +1106,13 @@ class SelfSignedCertificateCryptography(Certificate):
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=to_native(exc))
 
-        if self.digest is None:
-            raise CertificateError(
-                'The digest %s is not supported with the cryptography backend' % module.params['selfsigned_digest']
-            )
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.privatekey):
+            if self.digest is None:
+                raise CertificateError(
+                    'The digest %s is not supported with the cryptography backend' % module.params['selfsigned_digest']
+                )
+        else:
+            self.digest = None
 
     def generate(self, module):
         if not os.path.exists(self.privatekey_path):
@@ -1144,10 +1147,15 @@ class SelfSignedCertificateCryptography(Certificate):
             except ValueError as e:
                 raise CertificateError(str(e))
 
-            certificate = cert_builder.sign(
-                private_key=self.privatekey, algorithm=self.digest,
-                backend=default_backend()
-            )
+            try:
+                certificate = cert_builder.sign(
+                    private_key=self.privatekey, algorithm=self.digest,
+                    backend=default_backend()
+                )
+            except TypeError as e:
+                if str(e) == 'Algorithm must be a registered hash algorithm.' and self.digest is None:
+                    module.fail_json(msg='Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.')
+                raise
 
             self.cert = certificate
 
@@ -1318,6 +1326,14 @@ class OwnCACertificateCryptography(Certificate):
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=str(exc))
 
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.ca_private_key):
+            if self.digest is None:
+                raise CertificateError(
+                    'The digest %s is not supported with the cryptography backend' % module.params['ownca_digest']
+                )
+        else:
+            self.digest = None
+
     def generate(self, module):
 
         if not os.path.exists(self.ca_cert_path):
@@ -1372,10 +1388,15 @@ class OwnCACertificateCryptography(Certificate):
                         critical=False
                     )
 
-            certificate = cert_builder.sign(
-                private_key=self.ca_private_key, algorithm=self.digest,
-                backend=default_backend()
-            )
+            try:
+                certificate = cert_builder.sign(
+                    private_key=self.ca_private_key, algorithm=self.digest,
+                    backend=default_backend()
+                )
+            except TypeError as e:
+                if str(e) == 'Algorithm must be a registered hash algorithm.' and self.digest is None:
+                    module.fail_json(msg='Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.')
+                raise
 
             self.cert = certificate
 
@@ -1856,12 +1877,12 @@ class AssertOnlyCertificateCryptography(AssertOnlyCertificateBase):
         super(AssertOnlyCertificateCryptography, self).__init__(module, 'cryptography')
 
     def _validate_privatekey(self):
-        return self.cert.public_key().public_numbers() == self.privatekey.public_key().public_numbers()
+        return crypto_utils.cryptography_compare_public_keys(self.cert.public_key(), self.privatekey.public_key())
 
     def _validate_csr_signature(self):
         if not self.csr.is_signature_valid:
             return False
-        return self.csr.public_key().public_numbers() == self.cert.public_key().public_numbers()
+        return crypto_utils.cryptography_compare_public_keys(self.csr.public_key(), self.cert.public_key())
 
     def _validate_csr_subject(self):
         return self.csr.subject == self.cert.subject

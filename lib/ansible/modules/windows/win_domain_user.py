@@ -23,6 +23,14 @@ options:
       - Name of the user to create, remove or modify.
     type: str
     required: true
+  identity:
+    description:
+      - Identity parameter used to find the User in the Active Directory.
+      - This value can be in the forms C(Distinguished Name), C(objectGUID),
+        C(objectSid) or C(sAMAccountName).
+      - Default to C(name) if not set.
+    type: str
+    version_added: '2.10'
   state:
     description:
       - When C(present), creates or updates the user account.

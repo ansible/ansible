@@ -3,66 +3,68 @@
 # Copyright: (c) 2017, Erwan Quelin (@equelin) <erwan.quelin@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
-$ErrorActionPreference = 'Stop'
-
-$params = Parse-Args -arguments $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
-
-# Modules parameters
-
-$path = Get-AnsibleParam -obj $params -name "path" -type "str" -failifempty $true
-$tags = Get-AnsibleParam -obj $params -name "tags" -type "list"
-$test_parameters = Get-AnsibleParam -obj $params -name "test_parameters" -type "dict"
-$minimum_version = Get-AnsibleParam -obj $params -name "minimum_version" -type "str" -failifempty $false
-
-$result = @{
-    changed = $false
+$spec = @{
+    options = @{
+        output_file = @{ type = "str" }
+        output_format = @{ type = "str"; default = "NunitXML" }
+        path = @{ type = "str"; required = $true }
+        tags = @{ type = "list"; elements = "str" }
+        test_parameters = @{ type = "dict" }
+        version = @{ type = "str"; aliases = @(,"minimum_version") }
+    }
+    supports_check_mode = $true
 }
 
-if ($diff_mode) {
-    $result.diff = @{}
-}
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
-# CODE
-# Test if parameter $version is valid
+$output_file = $module.Params.output_file
+$output_format = $module.Params.output_format
+$path = $module.Params.path
+$tags = $module.Params.tags
+$test_parameters = $module.Params.test_parameters
+$version = $module.Params.version
+
 Try {
-    $minimum_version = [version]$minimum_version
+    $version = [version]$version
 }
 Catch {
-    Fail-Json -obj $result -message "Value '$minimum_version' for parameter 'minimum_version' is not a valid version format"
+    $module.FailJson("Value '$version' for parameter 'minimum_version' is not a valid version format")
+}
+
+# Make sure path is a real path
+Try {
+    $path = $path.TrimEnd("\")
+    $path = (Get-item -LiteralPath $path).FullName
+}
+Catch {
+    $module.FailJson("Cannot find file or directory: '$path' as it does not exist")
 }
 
 # Import Pester module if available
-$Module = 'Pester'
+$Pester = 'Pester'
 
-If (-not (Get-Module -Name $Module -ErrorAction SilentlyContinue)) {
-    If (Get-Module -Name $Module -ListAvailable -ErrorAction SilentlyContinue) {
-        Import-Module $Module
+If (-not (Get-Module -Name $Pester -ErrorAction SilentlyContinue)) {
+    If (Get-Module -Name $Pester -ListAvailable -ErrorAction SilentlyContinue) {
+        Import-Module $Pester
     } else {
-        Fail-Json -obj $result -message "Cannot find module: $Module. Check if pester is installed, and if it is not, install using win_psmodule or win_chocolatey."
+        $module.FailJson("Cannot find module: $Pester. Check if pester is installed, and if it is not, install using win_psmodule or win_chocolatey.")
     }
 }
 
 # Add actual pester's module version in the ansible's result variable
-$Pester_version = (Get-Module -Name $Module).Version.ToString()
-$result.pester_version = $Pester_version
+$Pester_version = (Get-Module -Name $Pester).Version.ToString()
+$module.Result.pester_version = $Pester_version
 
 # Test if the Pester module is available with a version greater or equal than the one specified in the $version parameter
-If ((-not (Get-Module -Name $Module -ErrorAction SilentlyContinue | Where-Object {$_.Version -ge $minimum_version})) -and ($minimum_version)) {
-    Fail-Json -obj $result -message "$Module version is not greater or equal to $minimum_version"
-}
-
-# Testing if test file or directory exist
-If (-not (Test-Path -LiteralPath $path)) {
-    Fail-Json -obj $result -message "Cannot find file or directory: '$path' as it does not exist"
+If ((-not (Get-Module -Name $Pester -ErrorAction SilentlyContinue | Where-Object {$_.Version -ge $version})) -and ($version)) {
+    $module.FailJson("$Pester version is not greater or equal to $version")
 }
 
 #Prepare Invoke-Pester parameters depending of the Pester's version.
 #Invoke-Pester output deactivation behave differently depending on the Pester's version
-If ($result.pester_version -ge "4.0.0") {
+If ($module.Result.pester_version -ge "4.0.0") {
     $Parameters = @{
         "show" = "none"
         "PassThru" = $True
@@ -77,6 +79,12 @@ If ($result.pester_version -ge "4.0.0") {
 if($tags.count){
     $Parameters.Tag = $tags
 }
+
+if($output_file){
+    $Parameters.OutputFile   = $output_file
+    $Parameters.OutputFormat = $output_format
+}
+
 # Run Pester tests
 If (Test-Path -LiteralPath $path -PathType Leaf) {
     $test_parameters_check_mode_msg = ''
@@ -87,30 +95,22 @@ If (Test-Path -LiteralPath $path -PathType Leaf) {
     else {
         $Parameters.Script = $Path
     }
-    if ($check_mode) {
-        $result.output = "Run pester test in the file: $path$test_parameters_check_mode_msg"
+
+    if ($module.CheckMode) {
+        $module.Result.output = "Run pester test in the file: $path$test_parameters_check_mode_msg"
     } else {
-        try {
-            $result.output = Invoke-Pester @Parameters
-        } catch {
-            Fail-Json -obj $result -message $_.Exception
-        }
+        $module.Result.output = Invoke-Pester @Parameters
     }
 } else {
-    # Run Pester tests against all the .ps1 file in the local folder
-    $files = Get-ChildItem -Path $path | Where-Object {$_.extension -eq ".ps1"}
+    $Parameters.Script = $path
 
-    if ($check_mode) {
-        $result.output = "Run pester test(s) who are in the folder: $path"
+    if ($module.CheckMode) {
+        $module.Result.output = "Run Pester test(s): $path"
     } else {
-        try {
-            $result.output = Invoke-Pester $files.FullName @Parameters
-        } catch {
-            Fail-Json -obj $result -message $_.Exception
-        }
+        $module.Result.output = Invoke-Pester @Parameters
     }
 }
 
-$result.changed = $true
+$module.Result.changed = $true
 
-Exit-Json -obj $result
+$module.ExitJson()

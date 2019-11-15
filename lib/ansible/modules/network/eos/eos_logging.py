@@ -194,12 +194,12 @@ def map_obj_to_commands(updates, module):
                         commands.append('logging buffered {0}'.format(size))
 
             else:
-                dest_cmd = 'logging {0}'.format(dest)
-                if level:
-                    dest_cmd += ' {0}'.format(level)
+                if dest:
+                    dest_cmd = 'logging {0}'.format(dest)
+                    if level:
+                        dest_cmd += ' {0}'.format(level)
 
-                commands.append(dest_cmd)
-
+                    commands.append(dest_cmd)
     return commands
 
 

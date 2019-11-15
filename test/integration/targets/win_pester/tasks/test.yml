@@ -1,26 +1,26 @@
 ---
 - name: Run Pester test(s) specifying a fake test file
   win_pester:
-    path: '{{test_win_pester_path}}\fakefile.ps1'
+    path: '{{test_path}}\fakefile.ps1'
   register: fake_file
-  failed_when: '"Cannot find file or directory: ''" + test_win_pester_path + "\\fakefile.ps1'' as it does not exist" not in fake_file.msg'
+  failed_when: '"Cannot find file or directory: ''" + test_path + "\\fakefile.ps1'' as it does not exist" not in fake_file.msg'
 
 - name: Run Pester test(s) specifying a fake folder
   win_pester:
-    path: '{{test_win_pester_path }}\fakedir'
+    path: '{{test_path }}\fakedir'
   register: fake_folder
-  failed_when: '"Cannot find file or directory: ''" + test_win_pester_path + "\\fakedir'' as it does not exist" not in fake_folder.msg'
+  failed_when: '"Cannot find file or directory: ''" + test_path + "\\fakedir'' as it does not exist" not in fake_folder.msg'
 
 - name: Run Pester test(s) specifying a test file and a higher pester version
   win_pester:
-    path: '{{test_win_pester_path}}\test01.test.ps1'
+    path: '{{test_path}}\test01.tests.ps1'
     minimum_version: '6.0.0'
   register: invalid_version
   failed_when: '"Pester version is not greater or equal to 6.0.0" not in invalid_version.msg'
 
 - name: Run Pester test(s) specifying a test file
   win_pester:
-    path: '{{test_win_pester_path}}\test01.test.ps1'
+    path: '{{test_path}}\test01.tests.ps1'
   register: file_result
 
 - name: assert Run Pester test(s) specify a test file
@@ -32,7 +32,7 @@
 
 - name: Run Pester test(s) specifying a test file and with a minimum mandatory Pester version
   win_pester:
-    path: '{{test_win_pester_path}}\test01.test.ps1'
+    path: '{{test_path}}\test01.tests.ps1'
     minimum_version: 3.0.0
   register: file_result_with_version
 
@@ -45,7 +45,7 @@
 
 - name: Run Pester test(s) located in a folder. Folder path end with '\'
   win_pester:
-    path: '{{test_win_pester_path}}\'
+    path: '{{test_path}}\'
   register: dir_with_ending_slash
 
 - name: assert Run Pester test(s) located in a folder. Folder path end with '\'
@@ -57,7 +57,7 @@
 
 - name: Run Pester test(s) located in a folder. Folder path does not end with '\'
   win_pester:
-    path: '{{test_win_pester_path}}'
+    path: '{{test_path}}'
   register: dir_without_ending_slash
 
 - name: assert Run Pester test(s) located in a folder. Folder does not end with '\'
@@ -69,7 +69,7 @@
 
 - name: Run Pester test(s) located in a folder and with a minimum mandatory Pester version
   win_pester:
-    path: '{{test_win_pester_path}}'
+    path: '{{test_path}}'
     minimum_version: 3.0.0
   register: dir_with_version
 
@@ -82,7 +82,7 @@
 
 - name: Run Pester test(s) specifying a test file without specifying tag
   win_pester:
-    path: '{{test_win_pester_path}}\test03.test.ps1'
+    path: '{{test_path}}\test03.tests.ps1'
   register: test_no_tag
 
 - name: assert Run Pester test(s) specifying a test file and all tests executed
@@ -93,7 +93,7 @@
 
 - name: Run Pester test(s) specifying a test file with tag
   win_pester:
-    path: '{{test_win_pester_path}}\test03.test.ps1'
+    path: '{{test_path}}\test03.tests.ps1'
     tags: tag1
   register: test_with_tag
 
@@ -105,7 +105,7 @@
 
 - name: Run Pester test(s) specifying a test file with parameters
   win_pester:
-    path: '{{test_win_pester_path}}\test04.test.ps1'
+    path: '{{test_path}}\test04.tests.ps1'
     test_parameters:
       Process: lsass
       Service: bits
@@ -117,3 +117,18 @@
     - test_with_parameter.changed
     - test_with_parameter.output.PassedCount == 2
     - test_with_parameter.output.TotalCount == 2
+
+- name: Run Pester test(s) specifying a test file by generating test result xml
+  win_pester:
+    path: '{{test_path}}\test03.tests.ps1'
+    output_file: '{{test_report_file}}'
+
+- name: Checks if the output result file exists
+  win_stat:
+    path: '{{test_report_file}}'
+  register: test_output_file
+
+- name: Checks if the output result file exists
+  assert:
+    that:
+    - test_output_file.stat.exists

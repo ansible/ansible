@@ -1,0 +1,56 @@
+---
+- debug:
+    msg: "Start exos_lldp_interfaces overridden integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _reset_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- set_fact:
+    config:
+      - enabled: true
+        name: '5'
+      - enabled: false
+        name: '6'
+
+- exos_facts:
+    gather_network_resources: lldp_interfaces
+
+- block:
+  - name: Override device LLDP interface configuration with provided configurations
+    exos_lldp_interfaces: &overridden
+      config: "{{ config }}"
+      state: overridden
+    register: result
+
+  - name: Assert that correct set of results were generated
+    assert:
+      that:
+        - "overridden['requests']|symmetric_difference(result['requests']) == []"
+        - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.before) == []"
+
+  - exos_facts:
+      gather_network_resources: lldp_interfaces
+
+  - name: Assert that after dicts were correctly generated
+    assert:
+      that:
+        - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.after) == []"
+        - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"
+
+  - name: Override device LLDP interface configuration with provided configurations (IDEMPOTENT)
+    exos_lldp_interfaces: *overridden
+    register: result
+
+  - name: Assert that task was idempotent
+    assert:
+      that:
+          - "result['changed'] == false"
+  - exos_facts:
+      gather_network_resources: lldp_interfaces
+
+  - name: Assert that the before dicts were correctly generated
+    assert:
+      that:
+        - "ansible_facts.network_resources.lldp_interfaces|symmetric_difference(result.before) == []"
+        - "config|difference(ansible_facts.network_resources.lldp_interfaces) == []"

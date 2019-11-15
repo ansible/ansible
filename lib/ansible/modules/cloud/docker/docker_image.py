@@ -23,14 +23,14 @@ version_added: "1.5"
 description:
   - Build, load or pull an image, making the image available for creating containers. Also supports tagging an
     image into a repository and archiving an image to a .tar file.
-  - Since Ansible 2.8, it is recommended to explicitly specify the image's source (C(source=build),
-    C(source=load), C(source=pull) or C(source=local)). This will be required from Ansible 2.12 on.
+  - Since Ansible 2.8, it is recommended to explicitly specify the image's source (I(source) can be C(build),
+    C(load), C(pull) or C(local)). This will be required from Ansible 2.12 on.
 
 options:
   source:
     description:
       - "Determines where the module will try to retrieve the image from."
-      - "Use C(build) to build the image from a C(Dockerfile). I(path) must
+      - "Use C(build) to build the image from a C(Dockerfile). I(build.path) must
          be specified when this value is used."
       - "Use C(load) to load the image from a C(.tar) file. I(load_path) must
          be specified when this value is used."
@@ -57,6 +57,7 @@ options:
         description:
           - List of image names to consider as cache source.
         type: list
+        elements: str
       dockerfile:
         description:
           - Use with state C(present) and source C(build) to provide an alternate name for the Dockerfile to use when building an image.
@@ -126,7 +127,7 @@ options:
             type: str
       use_config_proxy:
         description:
-          - If set to `yes` and a proxy configuration is specified in the docker client configuration
+          - If set to C(yes) and a proxy configuration is specified in the docker client configuration
             (by default C($HOME/.docker/config.json)), the corresponding environment variables will
             be set in the container being built.
           - Needs Docker SDK for Python >= 3.7.0.
@@ -257,7 +258,7 @@ options:
         the image, provide a I(path) value set to a directory containing a context and Dockerfile, and set I(source)
         to C(build). To load an image, specify I(load_path) to provide a path to an archive file. To tag an image to
         a repository, provide a I(repository) path. If the name contains a repository path, it will be pushed.
-      - "NOTE: C(state=build) is DEPRECATED and will be removed in release 2.11. Specifying C(build) will behave the
+      - "*Note:* C(state=build) is DEPRECATED and will be removed in Ansible 2.11. Specifying C(build) will behave the
          same as C(present)."
     type: str
     default: present
@@ -269,7 +270,7 @@ options:
     description:
       - Used to select an image when pulling. Will be added to the image when pushing, tagging or building. Defaults to
         I(latest).
-      - If C(name) parameter format is I(name:tag), then tag value from C(name) will take precedence.
+      - If I(name) parameter format is I(name:tag), then tag value from I(name) will take precedence.
     type: str
     default: latest
   buildargs:
@@ -308,8 +309,8 @@ options:
       - "DEPRECATED. Whether to use tls to connect to the docker daemon. Set to
         C(encrypt) to use TLS. And set to C(verify) to use TLS and verify that
         the server's certificate is valid for the server."
-      - "NOTE: If you specify this option, it will set the value of the I(tls) or
-        I(tls_verify) parameters if not set to I(no)."
+      - "*Note:* If you specify this option, it will set the value of the I(tls) or
+        I(validate_certs) parameters if not set to C(no)."
       - Will be removed in Ansible 2.11.
     type: str
     choices:
@@ -833,25 +834,25 @@ def main():
             memswap=dict(type='int'),
             cpushares=dict(type='int'),
             cpusetcpus=dict(type='str'),
-        ), removedin_version='2.12'),
-        dockerfile=dict(type='str', removedin_version='2.12'),
+        ), removed_in_version='2.12'),
+        dockerfile=dict(type='str', removed_in_version='2.12'),
         force=dict(type='bool', removed_in_version='2.12'),
         force_source=dict(type='bool', default=False),
         force_absent=dict(type='bool', default=False),
         force_tag=dict(type='bool', default=False),
-        http_timeout=dict(type='int', removedin_version='2.12'),
+        http_timeout=dict(type='int', removed_in_version='2.12'),
         load_path=dict(type='path'),
         name=dict(type='str', required=True),
-        nocache=dict(type='bool', default=False, removedin_version='2.12'),
-        path=dict(type='path', aliases=['build_path'], removedin_version='2.12'),
-        pull=dict(type='bool', removedin_version='2.12'),
+        nocache=dict(type='bool', default=False, removed_in_version='2.12'),
+        path=dict(type='path', aliases=['build_path'], removed_in_version='2.12'),
+        pull=dict(type='bool', removed_in_version='2.12'),
         push=dict(type='bool', default=False),
         repository=dict(type='str'),
-        rm=dict(type='bool', default=True, removedin_version='2.12'),
+        rm=dict(type='bool', default=True, removed_in_version='2.12'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'build']),
         tag=dict(type='str', default='latest'),
         use_tls=dict(type='str', choices=['no', 'encrypt', 'verify'], removed_in_version='2.11'),
-        buildargs=dict(type='dict', removedin_version='2.12'),
+        buildargs=dict(type='dict', removed_in_version='2.12'),
     )
 
     required_if = [
@@ -899,7 +900,7 @@ def main():
     if client.module.params['use_tls']:
         client.module.warn('The "use_tls" option has been deprecated for a long time '
                            'and will be removed in Ansible 2.11. Please use the'
-                           '"tls" and "tls_verify" options instead.')
+                           '"tls" and "validate_certs" options instead.')
 
     if not is_valid_tag(client.module.params['tag'], allow_empty=True):
         client.fail('"{0}" is not a valid docker tag!'.format(client.module.params['tag']))

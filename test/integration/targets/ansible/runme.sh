@@ -18,6 +18,15 @@ ansible-config view -c ./ansible-non-existent.cfg 2> err1.txt || grep -Eq 'ERROR
 ansible-config view -c ./no-extension 2> err2.txt || grep -q 'Unsupported configuration file extension' err2.txt || (cat err2.txt; rm -f err*.txt; exit 1)
 rm -f err*.txt
 
+# test setting playbook_dir via envvar
+ANSIBLE_PLAYBOOK_DIR=/tmp ansible localhost -m debug -a var=playbook_dir | grep '"playbook_dir": "/tmp"'
+
+# test setting playbook_dir via cmdline
+ansible localhost -m debug -a var=playbook_dir --playbook-dir=/tmp | grep '"playbook_dir": "/tmp"'
+
+# test setting playbook dir via ansible.cfg
+env -u ANSIBLE_PLAYBOOK_DIR ANSIBLE_CONFIG=./playbookdir_cfg.ini ansible localhost -m debug -a var=playbook_dir | grep '"playbook_dir": "/tmp"'
+
 # Test that no tmp dirs are left behind when running ansible-config
 TMP_DIR=~/.ansible/tmptest
 if [[ -d "$TMP_DIR" ]]; then

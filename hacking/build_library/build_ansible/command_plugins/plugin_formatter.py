@@ -54,7 +54,7 @@ from ..jinja2.filters import do_max, documented_type, html_ify, rst_fmt, rst_ify
 
 # if a module is added in a version of Ansible older than this, don't print the version added information
 # in the module documentation because everyone is assumed to be running something newer than this already.
-TOO_OLD_TO_BE_NOTABLE = 2.3
+TOO_OLD_TO_BE_NOTABLE = 2.4
 
 # Get parent directory of the directory this script lives in
 MODULEDIR = os.path.abspath(os.path.join(
