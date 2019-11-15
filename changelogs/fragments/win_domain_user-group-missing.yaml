@@ -1,0 +1,2 @@
+bugfixes:
+- win_domain_user - Better handle cases when getting a new user's groups fail - https://github.com/ansible/ansible/issues/54331
