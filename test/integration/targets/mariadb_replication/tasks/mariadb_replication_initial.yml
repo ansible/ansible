@@ -49,7 +49,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ["CHANGE MASTER TO MASTER_HOST='127.0.0.1',MASTER_USER='replication_user',MASTER_PASSWORD='********',MASTER_PORT=3306,MASTER_LOG_FILE='mysql-bin.000001',MASTER_LOG_POS=765"]
+    - result.queries[0] is match("CHANGE MASTER ('\S+' )?TO MASTER_HOST='[0-9.]+',MASTER_USER='\w+',MASTER_PASSWORD='[*]{8}',MASTER_PORT=\d+,MASTER_LOG_FILE='mysql-bin.000001',MASTER_LOG_POS=\d+")
 
 # Test startslave mode:
 - name: Start slave
