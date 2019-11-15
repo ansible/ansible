@@ -5649,7 +5649,6 @@ lib/ansible/modules/windows/setup.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_acl_inheritance.ps1 pslint:PSAvoidTrailingWhitespace
 lib/ansible/modules/windows/win_audit_rule.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_certificate_store.ps1 validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/windows/win_chocolatey.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_chocolatey_config.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_chocolatey_facts.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_chocolatey_source.ps1 pslint:PSCustomUseLiteralPath
