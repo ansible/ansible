@@ -602,6 +602,16 @@ class StrategyBase:
                         self._add_group(original_host, result_item)
 
                     if 'ansible_facts' in result_item:
+                        # Ensure we always set the discovered interpreter to the delegated host
+                        _af = result_item['ansible_facts']
+                        interps = set(key for key in _af if key[:23] == 'discovered_interpreter_')
+                        if interps and original_task.delegate_to is not None:
+                            interp_facts = {
+                                'ansible_facts': dict((k, _af.pop(k)) for k in list(_af) if k in interps)
+                            }
+                            host_list = self.get_delegated_hosts(result_item, original_task)
+                            for target_host in host_list:
+                                self._variable_manager.set_host_facts(target_host, interp_facts)
 
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
