@@ -1,0 +1,2 @@
+bugfixes:
+- Fix added to get all tags for VM using vmware_vm_info module (https://github.com/ansible/ansible/issues/64815).
