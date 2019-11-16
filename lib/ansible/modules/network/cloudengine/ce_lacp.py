@@ -32,11 +32,11 @@ description:
     - Manages Eth-Trunk specific configuration parameters on HUAWEI CloudEngine switches.
 author: xuxiaowei0512 (@CloudEngine-Ansible)
 notes:
-    - C(state=absent) removes the Eth-Trunk config and interface if it
-      already exists. If members to be removed are not explicitly
-      passed, all existing members (if any), are removed,
-      and Eth-Trunk removed.
-    - Members must be a list.
+    - C(state=absent) removes the Eth-Trunk config and interface if it already exists. If members to be removed are not explicitly
+      passed, all existing members (if any), are removed, and Eth-Trunk removed.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     trunk_id:
         description:
