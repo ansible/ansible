@@ -5,7 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -88,30 +88,11 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url, to_text
 
 
-def list_tags(module, base_url):
+def list_tags(module, base_url, headers):
 
-    url = "/".join([base_url, "list"])
+    url = "/".join([base_url, "experimental/gnql/?query=tags"])
 
-    response, info = fetch_url(module=module, url=url, method='GET')
-
-    if info['status'] != 200:
-        module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
-
-    try:
-        content = to_text(response.read(), errors='surrogate_or_strict')
-    except AttributeError:
-        content = info.pop('body', '')
-
-    return info['status'], info['msg'], content, url
-
-
-def query_ip(module, base_url, ip, greynoise_api_key):
-
-    url = "/".join([base_url, "ip"])
-
-    data = 'key=%s&ip=%s' % (greynoise_api_key, ip)
-
-    response, info = fetch_url(module=module, url=url, method='POST', data=data)
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='GET')
 
     if info['status'] != 200:
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
@@ -124,13 +105,28 @@ def query_ip(module, base_url, ip, greynoise_api_key):
     return info['status'], info['msg'], content, url
 
 
-def query_tag(module, base_url, tag, greynoise_api_key):
+def query_ip(module, base_url, ip, headers):
 
-    url = "/".join([base_url, "tag"])
+    url = "/".join([base_url, "experimental/gnql/?query=ip:%s" % ip])
 
-    data = 'key=%s&tag=%s' % (greynoise_api_key, tag)
+    response, info = fetch_url(module=module, headers=json.loads(headers), url=url, method='GET')
 
-    response, info = fetch_url(module=module, url=url, method='POST', data=data)
+    if info['status'] != 200:
+        module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
+
+    try:
+        content = to_text(response.read(), errors='surrogate_or_strict')
+    except AttributeError:
+        content = info.pop('body', '')
+
+    return info['status'], info['msg'], content, url
+
+
+def query_tag(module, base_url, tag, headers):
+
+    url = "/".join([base_url, "experimental/gnql/?query=tags:%s" % tag])
+
+    response, info = fetch_url(module=module, url=url, headers=json.loads(headers), method='GET')
 
     if info['status'] != 200:
         module.fail_json(msg="Fail: %s" % ("Status: " + str(info['msg']) + ", Message: " + str(info['body'])))
@@ -158,14 +154,16 @@ def main():
     tag = module.params['tag']
     greynoise_api_key = module.params['greynoise_api_key']
 
-    base_url = "http://api.greynoise.io:8888/v1/query"
+    base_url = "https://api.greynoise.io/v2"
+    headers = '{ "Accept": "application/json", \
+                "Key": "%s" }' % greynoise_api_key
 
     if action == "query_ip":
-        status, message, content, url = query_ip(module, base_url, ip, greynoise_api_key)
+        status, message, content, url = query_ip(module, base_url, ip, headers)
     elif action == "query_tag":
-        status, message, content, url = query_tag(module, base_url, tag, greynoise_api_key)
+        status, message, content, url = query_tag(module, base_url, tag, headers)
     elif action == "list_tags":
-        status, message, content, url = list_tags(module, base_url)
+        status, message, content, url = list_tags(module, base_url, headers)
 
     uresp = {}
     content = to_text(content, encoding='UTF-8')
