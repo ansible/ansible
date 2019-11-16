@@ -1477,7 +1477,6 @@ lib/ansible/modules/cloud/vmware/vmware_vmkernel.py validate-modules:undocumente
 lib/ansible/modules/cloud/vmware/vmware_vspan_session.py validate-modules:missing-suboption-docs
 lib/ansible/modules/cloud/vmware/vmware_vspan_session.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/vmware/vmware_vspan_session.py validate-modules:undocumented-parameter
-lib/ansible/modules/cloud/vmware/vsphere_copy.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/vmware/vsphere_copy.py validate-modules:undocumented-parameter
 lib/ansible/modules/cloud/vultr/_vultr_block_storage_facts.py validate-modules:return-syntax-error
 lib/ansible/modules/cloud/vultr/_vultr_dns_domain_facts.py validate-modules:return-syntax-error
@@ -1579,17 +1578,13 @@ lib/ansible/modules/database/mongodb/mongodb_user.py validate-modules:undocument
 lib/ansible/modules/database/mssql/mssql_db.py validate-modules:doc-missing-type
 lib/ansible/modules/database/mysql/mysql_db.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/database/mysql/mysql_db.py validate-modules:use-run-command-not-popen
-lib/ansible/modules/database/mysql/mysql_user.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/database/mysql/mysql_user.py validate-modules:undocumented-parameter
 lib/ansible/modules/database/postgresql/postgresql_db.py use-argspec-type-path
-lib/ansible/modules/database/postgresql/postgresql_db.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/database/postgresql/postgresql_db.py validate-modules:use-run-command-not-popen
-lib/ansible/modules/database/postgresql/postgresql_ext.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/database/postgresql/postgresql_pg_hba.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/database/postgresql/postgresql_schema.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/database/postgresql/postgresql_privs.py validate-modules:parameter-documented-multiple-times
 lib/ansible/modules/database/postgresql/postgresql_tablespace.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/database/postgresql/postgresql_user.py validate-modules:doc-choices-do-not-match-spec
-lib/ansible/modules/database/postgresql/postgresql_user.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/database/proxysql/proxysql_backend_servers.py validate-modules:doc-missing-type
 lib/ansible/modules/database/proxysql/proxysql_backend_servers.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/database/proxysql/proxysql_backend_servers.py validate-modules:undocumented-parameter
@@ -1794,8 +1789,8 @@ lib/ansible/modules/net_tools/dnsmadeeasy.py validate-modules:parameter-type-not
 lib/ansible/modules/net_tools/ip_netns.py validate-modules:doc-missing-type
 lib/ansible/modules/net_tools/ipinfoio_facts.py validate-modules:doc-missing-type
 lib/ansible/modules/net_tools/ipinfoio_facts.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/net_tools/ldap/ldap_entry.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/net_tools/ldap/ldap_entry.py validate-modules:doc-missing-type
+lib/ansible/modules/net_tools/ldap/ldap_entry.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/net_tools/ldap/ldap_passwd.py validate-modules:doc-missing-type
 lib/ansible/modules/net_tools/netbox/netbox_device.py validate-modules:doc-missing-type
 lib/ansible/modules/net_tools/netbox/netbox_device.py validate-modules:parameter-type-not-in-doc
@@ -1825,11 +1820,13 @@ lib/ansible/modules/net_tools/nios/nios_dns_view.py validate-modules:parameter-t
 lib/ansible/modules/net_tools/nios/nios_dns_view.py validate-modules:undocumented-parameter
 lib/ansible/modules/net_tools/nios/nios_fixed_address.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/net_tools/nios/nios_fixed_address.py validate-modules:doc-missing-type
+lib/ansible/modules/net_tools/nios/nios_fixed_address.py validate-modules:parameter-alias-self
 lib/ansible/modules/net_tools/nios/nios_fixed_address.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/net_tools/nios/nios_fixed_address.py validate-modules:undocumented-parameter
 lib/ansible/modules/net_tools/nios/nios_host_record.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/net_tools/nios/nios_host_record.py validate-modules:doc-missing-type
 lib/ansible/modules/net_tools/nios/nios_host_record.py validate-modules:nonexistent-parameter-documented
+lib/ansible/modules/net_tools/nios/nios_host_record.py validate-modules:parameter-alias-self
 lib/ansible/modules/net_tools/nios/nios_host_record.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/net_tools/nios/nios_host_record.py validate-modules:undocumented-parameter
 lib/ansible/modules/net_tools/nios/nios_member.py validate-modules:doc-default-does-not-match-spec
@@ -1872,6 +1869,7 @@ lib/ansible/modules/net_tools/nios/nios_txt_record.py validate-modules:parameter
 lib/ansible/modules/net_tools/nios/nios_txt_record.py validate-modules:undocumented-parameter
 lib/ansible/modules/net_tools/nios/nios_zone.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/net_tools/nios/nios_zone.py validate-modules:doc-missing-type
+lib/ansible/modules/net_tools/nios/nios_zone.py validate-modules:parameter-alias-self
 lib/ansible/modules/net_tools/nios/nios_zone.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/net_tools/nios/nios_zone.py validate-modules:undocumented-parameter
 lib/ansible/modules/net_tools/nmcli.py validate-modules:parameter-type-not-in-doc
@@ -1882,6 +1880,10 @@ lib/ansible/modules/network/a10/a10_server_axapi3.py validate-modules:parameter-
 lib/ansible/modules/network/a10/a10_service_group.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/a10/a10_virtual_server.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/network/a10/a10_virtual_server.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/network/aci/aci_fabric_scheduler.py validate-modules:parameter-alias-self
+lib/ansible/modules/network/aci/aci_firmware_group.py validate-modules:parameter-alias-self
+lib/ansible/modules/network/aci/aci_firmware_group_node.py validate-modules:parameter-alias-self
+lib/ansible/modules/network/aci/aci_firmware_policy.py validate-modules:parameter-alias-self
 lib/ansible/modules/network/aireos/aireos_command.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/network/aireos/aireos_command.py validate-modules:doc-missing-type
 lib/ansible/modules/network/aireos/aireos_command.py validate-modules:parameter-type-not-in-doc
@@ -4223,7 +4225,6 @@ lib/ansible/modules/notification/cisco_spark.py validate-modules:doc-missing-typ
 lib/ansible/modules/notification/cisco_spark.py validate-modules:undocumented-parameter
 lib/ansible/modules/notification/flowdock.py validate-modules:doc-missing-type
 lib/ansible/modules/notification/grove.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/notification/hipchat.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/notification/hipchat.py validate-modules:doc-missing-type
 lib/ansible/modules/notification/hipchat.py validate-modules:undocumented-parameter
 lib/ansible/modules/notification/irc.py validate-modules:doc-choices-do-not-match-spec
@@ -4235,7 +4236,6 @@ lib/ansible/modules/notification/jabber.py validate-modules:doc-missing-type
 lib/ansible/modules/notification/jabber.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/notification/logentries_msg.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/notification/mail.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/notification/mail.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/notification/mail.py validate-modules:undocumented-parameter
 lib/ansible/modules/notification/matrix.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/notification/mattermost.py validate-modules:parameter-type-not-in-doc
@@ -4322,6 +4322,7 @@ lib/ansible/modules/packaging/os/homebrew.py validate-modules:parameter-invalid
 lib/ansible/modules/packaging/os/homebrew.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/packaging/os/homebrew_cask.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/packaging/os/homebrew_cask.py validate-modules:doc-missing-type
+lib/ansible/modules/packaging/os/homebrew_cask.py validate-modules:parameter-documented-multiple-times
 lib/ansible/modules/packaging/os/homebrew_cask.py validate-modules:parameter-invalid
 lib/ansible/modules/packaging/os/homebrew_cask.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/packaging/os/homebrew_tap.py validate-modules:doc-missing-type
@@ -4590,7 +4591,6 @@ lib/ansible/modules/storage/netapp/_na_cdot_user.py validate-modules:doc-missing
 lib/ansible/modules/storage/netapp/_na_cdot_user.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/storage/netapp/_na_cdot_user_role.py validate-modules:doc-missing-type
 lib/ansible/modules/storage/netapp/_na_cdot_user_role.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/storage/netapp/_na_cdot_volume.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/storage/netapp/_na_cdot_volume.py validate-modules:doc-missing-type
 lib/ansible/modules/storage/netapp/_na_cdot_volume.py validate-modules:no-default-for-required-parameter
 lib/ansible/modules/storage/netapp/_na_cdot_volume.py validate-modules:parameter-type-not-in-doc
