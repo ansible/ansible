@@ -29,6 +29,8 @@ description:
     - Configure NetStream flow statistics exporting and versions for exported packets on HUAWEI CloudEngine switches.
 author: Zhijin Zhou (@QijunPan)
 notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     type:
         description:
