@@ -265,7 +265,6 @@ certificates:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.aws.acm import ACMServiceManager
 
 
@@ -282,9 +281,7 @@ def main():
     if module._name == 'aws_acm_facts':
         module.deprecate("The 'aws_acm_facts' module has been renamed to 'aws_acm_info'", version='2.13')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='acm',
-                        region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client('acm')
 
     certificates = acm_info.get_certificates(client, module,
                                              domain_name=module.params['domain_name'],

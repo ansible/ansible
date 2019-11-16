@@ -120,25 +120,20 @@ wafs:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.aws.waf import list_web_acls, get_web_acl
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=False),
-            waf_regional=dict(type='bool', default=False),
-        )
+    argument_spec = dict(
+        name=dict(required=False),
+        waf_regional=dict(type='bool', default=False)
     )
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._name == 'aws_waf_facts':
         module.deprecate("The 'aws_waf_facts' module has been renamed to 'aws_waf_info'", version='2.13')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     resource = 'waf' if not module.params['waf_regional'] else 'waf-regional'
-    client = boto3_conn(module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client(resource)
     web_acls = list_web_acls(client, module)
     name = module.params['name']
     if name:

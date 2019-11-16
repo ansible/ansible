@@ -138,8 +138,6 @@ location:
   sample: https://cloudfront.amazonaws.com/2017-03-25/distribution/E1ZID6KZJECZY7/invalidation/I2G9MOWJZFV622
 '''
 
-from ansible.module_utils.ec2 import get_aws_connection_info
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -159,11 +157,7 @@ class CloudFrontInvalidationServiceManager(object):
 
     def __init__(self, module):
         self.module = module
-        self.create_client('cloudfront')
-
-    def create_client(self, resource):
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self.module, boto3=True)
-        self.client = boto3_conn(self.module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        self.client = module.client('cloudfront')
 
     def create_invalidation(self, distribution_id, invalidation_batch):
         current_invalidation_response = self.get_invalidation(distribution_id, invalidation_batch['CallerReference'])
@@ -251,14 +245,12 @@ class CloudFrontInvalidationValidationManager(object):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-
-    argument_spec.update(dict(
+    argument_spec = dict(
         caller_reference=dict(),
         distribution_id=dict(),
         alias=dict(),
         target_paths=dict(required=True, type='list')
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=False, mutually_exclusive=[['distribution_id', 'alias']])
 
