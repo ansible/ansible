@@ -31,6 +31,10 @@ description:
     - Manages the static routes on HUAWEI CloudEngine switches.
 author: xuxiaowei0512 (@CloudEngine-Ansible)
 notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
+notes:
   - If no vrf is supplied, vrf is set to default.
     If I(state=absent), the route configuration will be removed, regardless of the
     non-required parameters.
