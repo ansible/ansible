@@ -27,6 +27,9 @@ short_description: Manages global parameters of NetStream on HUAWEI CloudEngine 
 description:
     - Manages global parameters of NetStream on HUAWEI CloudEngine switches.
 author: YangYang (@QijunPan)
+notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     type:
         description:
