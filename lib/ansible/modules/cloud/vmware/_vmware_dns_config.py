@@ -8,7 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
@@ -25,6 +25,10 @@ notes:
 requirements:
     - "python >= 2.6"
     - PyVmomi
+deprecated:
+    removed_in: '2.14'
+    why: Will be replaced with new module vmware_host_dns.
+    alternative: Use M(vmware_host_dns) instead.
 options:
     change_hostname_to:
         description:
