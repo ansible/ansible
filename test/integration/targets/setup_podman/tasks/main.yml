@@ -10,6 +10,14 @@
         name: "{{ podman_package }}"
         state: present
       when: ansible_facts.pkg_mgr in ['yum', 'dnf']
+
+    - name: Get podman version
+      command: podman --version
+      register: podman_version
+
+    - debug:
+        msg: "{{ podman_version.stdout }}"
+
   when:
     - ansible_facts.distribution == 'RedHat'
     - ansible_facts.virtualization_type != 'docker'
