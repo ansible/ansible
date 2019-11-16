@@ -29,9 +29,6 @@ description:
     - Manages STP configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@QijunPan)
-notes:
-    - Recommended connection is C(network_cli).
-    - This module also works with C(local) connections for legacy playbooks.
 options:
     state:
         description:

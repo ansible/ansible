@@ -32,10 +32,8 @@ description:
 author: xuxiaowei0512 (@CloudEngine-Ansible)
 notes:
   - If no vrf is supplied, vrf is set to default.
-  - If I(state=absent), the route configuration will be removed, regardless of the non-required parameters.
-  - This module requires the netconf system service be enabled on the remote device being managed.
-  - Recommended connection is C(netconf).
-  - This module also works with C(local) connections for legacy playbooks.
+    If I(state=absent), the route configuration will be removed, regardless of the
+    non-required parameters.
 options:
   prefix:
     description:
