@@ -28,6 +28,35 @@ so if you have an undefined variable used or a syntax error, it will still raise
 Note that this will not prevent failures on connection or execution issues.
 This feature only works when the task must be able to run and return a value of 'failed'.
 
+Ignoring Unreachable Host Errors
+````````````````````````````````````````
+
+.. versionadded:: 2.7
+
+You may ignore task failure due to the host instance being 'UNREACHABLE' with the ``ignore_unreachable`` keyword.
+Note that task errors are what's being ignored, not the unreachable host.
+
+Here's an example explaining the behavior for an unreachable host at the task level::
+
+    - name: this executes, fails, and the failure is ignored
+      command: /bin/true
+      ignore_unreachable: yes
+
+    - name: this executes, fails, and ends the play for this host
+      command: /bin/true
+
+And at the playbook level::
+
+    - hosts: all
+      ignore_unreachable: yes
+      tasks:
+      - name: this executes, fails, and the failure is ignored
+        command: /bin/true
+
+      - name: this executes, fails, and ends the play for this host
+        command: /bin/true
+        ignore_unreachable: no
+
 .. _resetting_unreachable:
 
 Resetting Unreachable Hosts
