@@ -1,7 +1,4 @@
 - block:
-    - name: Include distribution specific variables
-      include_vars: "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
-
     - name: Enable extras repo
       command: "{{ repo_command[ansible_facts.distribution ~ ansible_facts.distribution_major_version] | default('echo') }}"
 
@@ -13,10 +10,6 @@
 
     - name: Get podman version
       command: podman --version
-      register: podman_version
-
-    - debug:
-        msg: "{{ podman_version.stdout }}"
 
   when:
     - ansible_facts.distribution == 'RedHat'
