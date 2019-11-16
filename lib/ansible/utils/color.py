@@ -85,13 +85,13 @@ def parsecolor(color):
         return u'38;5;%d' % (232 + int(matches.group('gray')))
 
 
-def stringc(text, color, for_prompt=False):
+def stringc(text, color, wrap_nonvisible_chars=False):
     """String in color."""
 
     if ANSIBLE_COLOR:
         color_code = parsecolor(color)
         fmt = u"\033[%sm%s\033[0m"
-        if for_prompt:
+        if wrap_nonvisible_chars:
             fmt = u"\001\033[%sm\002%s\001\033[0m\002"
         return u"\n".join([fmt % (color_code, t) for t in text.split(u'\n')])
     else:
