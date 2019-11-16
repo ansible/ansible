@@ -49,6 +49,11 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
+The following modules will be removed in Ansible 2.14. Please update your playbooks accordingly.
+
+* ldap_attr use :ref:`ldap_attrs <ldap_attrs_module>` instead.
+
+
 The following functionality will be removed in Ansible 2.14. Please update update your playbooks accordingly.
 
 * The :ref:`openssl_csr <openssl_csr_module>` module's option ``version`` no longer supports values other than ``1`` (the current only standardized CSR version).
@@ -63,6 +68,7 @@ The following functionality will be removed in Ansible 2.14. Please update updat
 * :ref:`ec2_key <ec2_key_module>`: the ``wait`` option will be removed. It has had no effect since Ansible 2.5.
 * :ref:`ec2_key <ec2_key_module>`: the ``wait_timeout`` option will be removed. It has had no effect since Ansible 2.5.
 * :ref:`ec2_lc <ec2_lc_module>`: the ``associate_public_ip_address`` option will be removed. It has always been ignored by the module.
+
 
 The following functionality will change in Ansible 2.14. Please update update your playbooks accordingly.
 

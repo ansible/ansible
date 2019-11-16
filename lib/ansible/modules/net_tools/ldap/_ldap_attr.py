@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
-    'status': ['preview'],
+    'status': ['deprecated'],
     'supported_by': 'community'
 }
 
@@ -36,6 +36,10 @@ notes:
     possible to see spurious changes when target and actual values are
     semantically identical but lexically distinct.
 version_added: '2.3'
+deprecated:
+  removed_in: '2.14'
+  why: 'The current "ldap_attr" module does not support LDAP attribute insertions or deletions with objectClass dependencies.'
+  alternative: 'Use M(ldap_attrs) instead. Deprecated in 2.10.'
 author:
   - Jiri Tyr (@jtyr)
 requirements:
@@ -53,6 +57,7 @@ options:
       - If C(absent), all given values will be removed if present.
       - If C(exact), the set of values will be forced to exactly those provided and no others.
       - If I(state=exact) and I(value) is an empty list, all values for this attribute will be removed.
+    type: str
     choices: [ absent, exact, present ]
     default: present
   values:
