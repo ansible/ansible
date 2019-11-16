@@ -29,10 +29,6 @@ description:
     - Sends an arbitrary netconf command on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@QijunPan)
-notes:
-    - This module requires the netconf system service be enabled on the remote device being managed.
-    - Recommended connection is C(netconf).
-    - This module also works with C(local) connections for legacy playbooks.
 options:
     rpc:
         description:
