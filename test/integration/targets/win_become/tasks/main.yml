@@ -143,6 +143,15 @@
     - '"LogonUser failed" not in become_invalid_pass.msg'
     - '"Win32ErrorCode 1326 - 0x0000052E)" not in become_invalid_pass.msg'
 
+  - name: test become password precedence
+    win_whoami:
+    become: yes
+    become_method: runas
+    become_user: '{{ become_test_username }}'
+    vars:
+      ansible_become_pass: broken
+      ansible_runas_pass: '{{ gen_pw }}'  # should have a higher precedence than ansible_become_pass
+
   - name: test become + async
     vars: *become_vars
     win_command: whoami

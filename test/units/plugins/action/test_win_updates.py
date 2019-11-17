@@ -6,11 +6,28 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import pytest
 
 from units.compat.mock import patch, MagicMock
 from ansible.plugins.action.win_updates import ActionModule
+from ansible.plugins.become.runas import BecomeModule
 from ansible.playbook.task import Task
+
+
+@pytest.fixture()
+def test_win_updates():
+    task = MagicMock(Task)
+    task.args = {}
+
+    connection = MagicMock()
+    connection.module_implementation_preferences = ('.ps1', '.exe', '')
+
+    play_context = MagicMock()
+    play_context.check_mode = False
+
+    plugin = ActionModule(task, connection, play_context, loader=None, templar=None, shared_loader_obj=None)
+    return plugin
 
 
 class TestWinUpdatesActionPlugin(object):
@@ -58,58 +75,46 @@ class TestWinUpdatesActionPlugin(object):
         assert res['failed']
         assert expected in res['msg']
 
-    BECOME_OPTIONS = (
-        (False, False, "sudo", "root", True, "runas", "SYSTEM"),
-        (False, True, "sudo", "root", True, "runas", "SYSTEM"),
-        (False, False, "runas", "root", True, "runas", "SYSTEM"),
-        (False, False, "sudo", "user", True, "runas", "user"),
-        (False, None, "sudo", None, True, "runas", "SYSTEM"),
+    def test_exec_with_become(self, test_win_updates):
+        test_become = os.urandom(8)
 
-        # use scheduled task, we shouldn't change anything
-        (True, False, "sudo", None, False, "sudo", None),
-        (True, True, "runas", "SYSTEM", True, "runas", "SYSTEM"),
-    )
+        set_become_mock = MagicMock()
+        test_win_updates._connection.become = test_become
+        test_win_updates._connection.set_become_plugin = set_become_mock
 
-    # pylint bug: https://github.com/PyCQA/pylint/issues/511
-    # pylint: disable=undefined-variable
-    @pytest.mark.parametrize('use_task, o_b, o_bmethod, o_buser, e_b, e_bmethod, e_buser',
-                             ((u, ob, obm, obu, eb, ebm, ebu)
-                              for u, ob, obm, obu, eb, ebm, ebu in BECOME_OPTIONS))
-    def test_module_exec_with_become(self, use_task, o_b, o_bmethod, o_buser,
-                                     e_b, e_bmethod, e_buser):
-        def mock_execute_module(self, **kwargs):
-            pc = self._play_context
-            return {"become": pc.become, "become_method": pc.become_method,
-                    "become_user": pc.become_user}
+        with patch('ansible.plugins.action.ActionBase._execute_module', new=MagicMock()):
+            test_win_updates._execute_module_with_become('win_updates', {}, {}, True, False)
 
-        task = MagicMock(Task)
-        task.args = {}
+        # Asserts we don't override the become plugin.
+        assert set_become_mock.call_count == 1
+        assert set_become_mock.mock_calls[0][1][0] == test_become
 
-        connection = MagicMock()
-        connection.module_implementation_preferences = ('.ps1', '.exe', '')
+    def test_exec_with_become_no_plugin_set(self, test_win_updates):
+        set_become_mock = MagicMock()
+        test_win_updates._connection.become = None
+        test_win_updates._connection.set_become_plugin = set_become_mock
 
-        play_context = MagicMock()
-        play_context.check_mode = False
-        play_context.become = o_b
-        play_context.become_method = o_bmethod
-        play_context.become_user = o_buser
+        with patch('ansible.plugins.action.ActionBase._execute_module', new=MagicMock()):
+            test_win_updates._execute_module_with_become('win_updates', {}, {}, True, False)
 
-        plugin = ActionModule(task, connection, play_context, loader=None,
-                              templar=None, shared_loader_obj=None)
-        with patch('ansible.plugins.action.ActionBase._execute_module',
-                   new=mock_execute_module):
-            actual = plugin._execute_module_with_become('win_updates', {}, {},
-                                                        True, use_task)
+        assert set_become_mock.call_count == 2
+        assert isinstance(set_become_mock.mock_calls[0][1][0], BecomeModule)
+        assert set_become_mock.mock_calls[0][1][0].name == 'runas'
+        assert set_become_mock.mock_calls[0][1][0].get_option('become_user') == 'SYSTEM'
+        assert set_become_mock.mock_calls[0][1][0].get_option('become_flags') == ''
+        assert set_become_mock.mock_calls[0][1][0].get_option('become_pass') is None
+        assert set_become_mock.mock_calls[1][1] == (None,)
 
-        # always make sure we reset back to the defaults
-        assert play_context.become == o_b
-        assert play_context.become_method == o_bmethod
-        assert play_context.become_user == o_buser
+    def test_exec_with_become_no_plugin_set_use_task(self, test_win_updates):
+        set_become_mock = MagicMock()
+        test_win_updates._connection.become = None
+        test_win_updates._connection.set_become_plugin = set_become_mock
 
-        # verify what was set when _execute_module was called
-        assert actual['become'] == e_b
-        assert actual['become_method'] == e_bmethod
-        assert actual['become_user'] == e_buser
+        with patch('ansible.plugins.action.ActionBase._execute_module', new=MagicMock()):
+            test_win_updates._execute_module_with_become('win_updates', {}, {}, True, True)
+
+        assert set_become_mock.call_count == 1
+        assert set_become_mock.mock_calls[0][1][0] is None
 
     def test_module_exec_async_result(self, monkeypatch):
         return_val = {
