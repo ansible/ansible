@@ -329,8 +329,8 @@ class WapiModule(WapiBase):
                 if (ib_obj_type in (NIOS_HOST_RECORD, NIOS_NETWORK_VIEW, NIOS_DNS_VIEW)):
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     res = self.update_object(ref, proposed_object)
-                if (ib_obj_type in (NIOS_A_RECORD, NIOS_AAAA_RECORD)):
-                    # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record
+                if (ib_obj_type in (NIOS_A_RECORD, NIOS_AAAA_RECORD, NIOS_PTR_RECORD, NIOS_SRV_RECORD)):
+                    # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record/srv:record/ptr:record
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     del proposed_object['view']
                     res = self.update_object(ref, proposed_object)
