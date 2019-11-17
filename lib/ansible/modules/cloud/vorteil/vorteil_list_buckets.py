@@ -31,12 +31,12 @@ extends_documentation_fragment:
 author:
     - Wilhelm Wonigkeit (@bigwonig)
     - Jon Alfaro (@jalfvort)
-    
+
 notes:
     - Vorteil.io repos that require permission will require a authentication key to login
     - Please set your repo_key to login.
 
-requirements: 
+requirements:
     - requests
     - toml
     - Vorteil >=3.0.6

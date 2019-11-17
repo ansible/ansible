@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright: (c) 2019, Joseph Callen <wilhelm.wonigkeit () vorteil.io>
+# Copyright: (c) 2019 Wilhelm, Wonigkeit (wilhelm.wonigkeit@vorteil.io)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
@@ -8,9 +8,9 @@ import time
 import traceback
 
 try:
-    from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
+    from ansible.module_utils.ansible_release import __version__ as ansible_version
 except Exception:
-    ANSIBLE_VERSION = 'unknown'
+    ansible_version = 'unknown'
 
 REQUESTS_IMP_ERR = None
 try:
@@ -31,22 +31,10 @@ except ImportError:
     HAS_TOML = False
 
 
-# Function to convert a list
-# of integers into a single integer
-def convert(list):
-    # Converting integer list to string list
-    s = [str(i) for i in list]
-
-    # Join list items using join()
-    res = str(" ".join(s))
-
-    return (res)
-
-
 class VorteilClient(object):
-    # Short description:    Initialise module parameters & repo_url to be used in util functions, 
+    # Short description:    Initialise module parameters & repo_url to be used in util functions,
     #                       additionally check if user has required modules.
-    # Paramaters:
+    # Parameters:
     #       module:         Module object from passed from parent ansible module, This is needs
     #                       to be passed so the VorteilClient can have a record of the module.params
     # Module Parameters:
@@ -57,7 +45,7 @@ class VorteilClient(object):
         self.module = module
         self.repo_cookie = ""
         self.repo_url = "{}://{}".format(self.module.params['repo_proto'], self.module.params['repo_address'])
-        if self.module.params['repo_port'] != None:
+        if self.module.params['repo_port'] is not None:
             self.repo_url += ":{}".format(self.module.params["repo_port"])
 
         if not HAS_REQUESTS:
@@ -69,7 +57,7 @@ class VorteilClient(object):
                                   exception=TOML_IMP_ERR)
 
     # Short description: login with user key, return cookie for subsequent sessions
-    # Module Paramaters:
+    # Module Parameters:
     #       repo_key:       user key generated as part of the initialisation of the Vorteil Repository
     def set_repo_cookie(self):
 
@@ -104,7 +92,7 @@ class VorteilClient(object):
 
         """
         Gets a list of all the buckets within the Vorteil.io repo. Please note that if the target Vorteil.io
-        repo requires authentication, it is required to run the set_repo_cookie() function to generate a 
+        repo requires authentication, it is required to run the set_repo_cookie() function to generate a
         session key, given a valid authentication key.
         """
 
@@ -119,7 +107,7 @@ class VorteilClient(object):
             'accept': "application/json",
             'content-type': "application/json"
         }
-        
+
         response = requests.request("GET", url, headers=headers, verify=False, cookies=self.repo_cookie)
         if 'errors' in response.json():
             self.module.fail_json(msg="Vorteil.io Repo Response: " + response.json()['errors'][0]['message'])
@@ -133,7 +121,7 @@ class VorteilClient(object):
 
         """
         Gets a list of all the provisioners within the Vorteil.io repo. Please note that if the target Vorteil.io
-        repo requires authentication, it is required to run the set_repo_cookie() function to generate a 
+        repo requires authentication, it is required to run the set_repo_cookie() function to generate a
         session key, given a valid authentication key.
         """
 
@@ -148,7 +136,7 @@ class VorteilClient(object):
             'accept': "application/json",
             'content-type': "application/json"
         }
-        
+
         response = requests.request("GET", url, headers=headers, verify=False, cookies=self.repo_cookie)
         if 'errors' in response.json():
             self.module.fail_json(msg="Vorteil.io Repo Response: " + response.json()['errors'][0]['message'])
@@ -158,7 +146,7 @@ class VorteilClient(object):
         return response.json()['data']['listProvisioners']['provisioners'], False
 
     # Short description: list applications within a specific bucket
-    # Module Paramaters:
+    # Module Parameters:
     #       repo_bucket:    bucket to query for applications
     def list_apps_in_bucket(self):
 
@@ -170,7 +158,8 @@ class VorteilClient(object):
         # extended as a simple URL with variable substitution where necessary
         # To test the GraphQL queries, use the Vorteil Developer Studio or the Vorteil Repository GraphQL
         # interfaces for testing
-        param = 'graphql?query=query{bucket(name:"'+ self.module.params['repo_bucket'] +'"){appsList{edges{node{name}}}}}'
+        param = 'graphql?query=query{bucket(name:"' + self.module.params['repo_bucket'] + \
+                '"){appsList{edges{node{name}}}}}'
         url = '{}/{}'.format(self.repo_url, param)
 
         headers = {
@@ -190,7 +179,7 @@ class VorteilClient(object):
         return retresponse, False
 
     # Short description: get the packageInfo for a specific application
-    # Module Paramaters:
+    # Module Parameters:
     #       repo_app:       application to query within the bucket
     #       repo_bucket:    bucket to query for applications
     def get_app(self):
@@ -201,21 +190,22 @@ class VorteilClient(object):
 
         attr_list_str = ""
         if self.module.params['repo_app_attr'] is None:
-            attr_list_str = 'app author programs{args binary stderr stdout} cpus description diskSize kernel memory summary totalNICs url version'
-        else :
-            switcher={
-                'app':'app',
-                'author':'author',
-                'programs':'programs{args binary stderr stdout}',
-                'cpus':'cpus',
-                'description':'description',
-                'diskSize':'diskSize',
-                'kernel':'kernel',
-                'memory':'memory',
-                'summary':'summary',
-                'totalNICs':'totalNICs',
-                'url':'url',
-                'version':'version'
+            attr_list_str = 'app author programs{args binary stderr stdout} cpus' + \
+                            ' description diskSize kernel memory summary totalNICs url version'
+        else:
+            switcher = {
+                'app': 'app',
+                'author': 'author',
+                'programs': 'programs{args binary stderr stdout}',
+                'cpus': 'cpus',
+                'description': 'description',
+                'diskSize': 'diskSize',
+                'kernel': 'kernel',
+                'memory': 'memory',
+                'summary': 'summary',
+                'totalNICs': 'totalNICs',
+                'url': 'url',
+                'version': 'version'
             }
             app_attr_set = set([])
             for i in self.module.params['repo_app_attr']:
@@ -245,7 +235,7 @@ class VorteilClient(object):
         return retresponse, False
 
     # Short description: create the injection URI for the disk build process
-    # Module Paramaters:
+    # Module Parameters:
     #       repo_disktype:  disk type which needs to be built (disk types can be )
     #       repo_app:       application to query within the bucket
     #       repo_bucket:    bucket to query for applications
@@ -263,9 +253,9 @@ class VorteilClient(object):
         # configurations changes we make to this specific mutation
         repo_uuid = str(uuid.uuid4())
 
-        param = 'graphql?query=mutation{build(germ: ":' + self.module.params['repo_bucket'] + '/' + self.module.params[
-            'repo_app'] + '", injections: ["' + repo_uuid + '"],kernelType: "PROD", diskFormat: "' + self.module.params[
-                    'repo_disktype'] + '"){uri,job{id}}}'
+        param = 'graphql?query=mutation{build(germ: ":' + self.module.params['repo_bucket'] + '/' + \
+                self.module.params['repo_app'] + '", injections: ["' + repo_uuid + \
+                '"],kernelType: "PROD", diskFormat: "' + self.module.params['repo_disktype'] + '"){uri,job{id}}}'
         url = '{}/{}'.format(self.repo_url, param)
 
         headers = {
@@ -278,7 +268,7 @@ class VorteilClient(object):
             self.module.fail_json(msg="Vorteil.io Repo Response: " + response.json()['errors'][0]['message'])
 
         retresponse = response.json()['data']
-        
+
         retresponse['build']['uuid'] = repo_uuid
         if response.status_code != 200:
             return Exception('GET {} {}'.format(url, response.status_code)), True
@@ -286,7 +276,7 @@ class VorteilClient(object):
         return retresponse, False
 
     # Short description: create the POST action to configure the application for disk build
-    # Module Paramaters:
+    # Module Parameters:
     #       injection_toml:     TOML configuration to inject into the build process (dictionary type)
     #       injection_uuiduri:  dictionary type with UUID and URI for the germination
     def create_injection_config(self):
@@ -295,7 +285,7 @@ class VorteilClient(object):
         This uses the mutation function of the GraphQL interface to inject Vorteil configuration data into a started
         Vorteil disk process. The targeted job is dependant on the jobs uri. This is step 2 of 3 to create the disk.
         Step 1: create_injection_uri: create the injection URI job
-        Step 2: create_injection_config: send configuration options to the job <--- THIS IS THE FUNCTION YOU'RE LOOKING AT
+        Step 2: create_injection_config: send configuration options to the job <-THIS IS THE FUNCTION YOU'RE LOOKING AT
         Step 3: create_injection_disk: create and download the disk
         """
 
@@ -350,7 +340,7 @@ class VorteilClient(object):
         return response.json(), False
 
     # Short description: download the disk to the local machine passed as an argument
-    # Paramaters:
+    # Parameters:
     #       disk_directory:directory where the disk is to be stored on the local machine
     #       injection_uuiduri:  dictionary type with UUID and URI for the germination
     #       repo_disktype:      disk type which needs to be built (disk types can be )
@@ -385,7 +375,6 @@ class VorteilClient(object):
         param = 'api/build/' + self.module.params['injection_uuiduri']['response']['build']['uri']
         url = '{}/{}'.format(self.repo_url, param)
 
-
         headers = {
             'accept': "*/*",
         }
@@ -396,8 +385,7 @@ class VorteilClient(object):
             'repo_app'] + "-" + str(
             time.time()) + "." + file_extension
         disk_response['file_location'] = self.module.params['disk_directory'] + "/" + self.module.params[
-            'repo_bucket'] + "-" + \
-                                         self.module.params['repo_app'] + "-" + str(time.time()) + "." + file_extension
+            'repo_bucket'] + "-" + self.module.params['repo_app'] + "-" + str(time.time()) + "." + file_extension
 
         if response.status_code != 200:
             return Exception('GET /api/build/ {}'.format(response.status_code)), True
@@ -406,11 +394,11 @@ class VorteilClient(object):
             try:
                 filehandle.write(response.content)
                 return disk_response, False
-            except:
+            except Exception:
                 return ('Could not create disk image file:{}'.format(disk_response['file_location'])), True
 
     # Short description: create the injection URI for provisioning the disk build process
-    # Module Paramaters:
+    # Module Parameters:
     #       repo_disktype:  disk type which needs to be built (disk types can be )
     #       repo_app:       application to query within the bucket
     #       repo_bucket:    bucket to query for applications
@@ -427,9 +415,10 @@ class VorteilClient(object):
         # configurations changes we make to this specific mutation
         repo_uuid = str(uuid.uuid4())
 
-        param = 'graphql?query=mutation{provision(germ: ":' + self.module.params['repo_bucket'] + '/' + self.module.params[
-            'repo_app'] + '", injections: ["' + repo_uuid + '"], name: "'+ self.module.params['repo_image_name'] +'" , provisioner: "' + self.module.params[
-                    'repo_provisioner'] + '"){uri,job{id}}}'
+        param = 'graphql?query=mutation{provision(germ: ":' + self.module.params['repo_bucket'] + '/' +\
+                self.module.params['repo_app'] + '", injections: ["' + repo_uuid + '"], name: "' +\
+                self.module.params['repo_image_name'] + '" , provisioner: "' +\
+                self.module.params['repo_provisioner'] + '"){uri,job{id}}}'
         url = '{}/{}'.format(self.repo_url, param)
         headers = {
             'accept': "*/*",
@@ -441,7 +430,7 @@ class VorteilClient(object):
             self.module.fail_json(msg="Vorteil.io Repo Response: " + response.json()['errors'][0]['message'])
 
         retresponse = response.json()['data']
-        
+
         retresponse['provision']['uuid'] = repo_uuid
         if response.status_code != 200:
             return Exception('GET {} {}'.format(url, response.status_code)), True
@@ -449,16 +438,18 @@ class VorteilClient(object):
         return retresponse, False
 
     # Short description: create the POST action to configure the application for provisioning the disk build
-    # Paramaters:
+    # Parameters:
     #       injection_json:     TOML configuration to inject into the build process (dictionary type)
     #       injection_uuiduri:  dictionary type with UUID and URI for the germination
     def provision_injection_config(self):
-    
+
         """
         This uses the mutation function of the GraphQL interface to inject Vorteil configuration data into a started
-        Vorteil disk process. The targeted job is dependant on the jobs uri. This is step 2 of 2 to create the disk for provisioning
+        Vorteil disk process. The targeted job is dependant on the jobs uri.
+        This is step 2 of 2 to create the disk for provisioning.
         Step 1: provision_injection_uri: create the injection URI job
-        Step 2: provision_injection_config: send configuration options to the job <--- THIS IS THE FUNCTION YOU'RE LOOKING AT
+        Step 2: provision_injection_config: send configuration options to the job <--
+        --THIS IS THE FUNCTION YOU'RE LOOKING AT
         """
 
         param = 'api/provision/' + self.module.params['injection_uuiduri']['response']['provision']['uri']
