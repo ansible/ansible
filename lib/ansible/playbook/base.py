@@ -125,10 +125,10 @@ def get_validated_value(name, attribute, value, templar):
         elif not isinstance(value, dict):
             raise TypeError("%s is not a dictionary" % value)
     # FIXME: ...
-    # elif isa == 'class':
-    #     if not isinstance(value, attribute.class_type):
-    #         raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
-    #     value.post_validate(templar=templar)
+    elif isa == 'class':
+        if not isinstance(value, attribute.class_type):
+            raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
+        value.post_validate(templar=templar)
     return value
 
 

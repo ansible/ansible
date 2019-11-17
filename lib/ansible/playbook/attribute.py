@@ -125,7 +125,7 @@ class Attribute:
             'required': self.required,
             'listof': self.listof,
             'priority': self.priority,
-            'class_type': self.class_type,
+            'class_type': None,
             'always_post_validate': self.always_post_validate,
             'inherit': self.inherit,
             'alias': self.alias,

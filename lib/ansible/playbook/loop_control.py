@@ -25,9 +25,9 @@ from ansible.playbook.base import FieldAttributeBase
 
 class LoopControl(FieldAttributeBase):
 
-    _loop_var = FieldAttribute(isa='str', default='item')
-    _index_var = FieldAttribute(isa='str')
-    _label = FieldAttribute(isa='str')
+    _loop_var = FieldAttribute(isa='string', default='item')
+    _index_var = FieldAttribute(isa='string')
+    _label = FieldAttribute(isa='string')
     _pause = FieldAttribute(isa='float', default=0)
     _extended = FieldAttribute(isa='bool')
 
