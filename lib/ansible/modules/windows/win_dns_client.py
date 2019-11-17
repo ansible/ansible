@@ -26,7 +26,8 @@ options:
     description:
       - Single or ordered list of DNS servers (IPv4 and IPv6 addresses) to configure for lookup. An empty list will configure the adapter to use the
         DHCP-assigned values on connections where DHCP is enabled, or disable DNS lookup on statically-configured connections.
-      - Before 2.9 use ipv4_addresses instead.
+      - IPv6 DNS servers can only be set on Windows Server 2012 or newer, older hosts can only set IPv4 addresses.
+      - Before 2.10 use ipv4_addresses instead.
     type: list
     required: yes
     aliases: [ "ipv4_addresses", "ip_addresses", "addresses" ]
@@ -50,6 +51,13 @@ EXAMPLES = r'''
     - 192.168.34.5
     - 192.168.34.6
     log_path: C:\dns_log.txt
+
+- name: Set IPv6 DNS servers on the adapter named Ethernet
+  win_dns_client:
+    adapter_names: Ethernet
+    dns_servers:
+    - '2001:db8::2'
+    - '2001:db8::3'
 
 - name: Configure all adapters whose names begin with Ethernet to use DHCP-assigned DNS values
   win_dns_client:
