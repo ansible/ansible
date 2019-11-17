@@ -220,6 +220,12 @@ def test_has_list_changed(docker_swarm_service):
         sort_key='a'
     )
 
+    with pytest.raises(Exception):
+        docker_swarm_service.has_list_changed(
+        [{'a': 1}, {'a': 2}],
+        [{'a': 1}, {'a': 2}]
+        )
+
     # List sort checking with sort key
     assert not docker_swarm_service.has_list_changed(
         [{'a': 1}, {'a': 2}],
@@ -310,6 +316,16 @@ def test_has_list_changed(docker_swarm_service):
 
 def test_have_networks_changed(docker_swarm_service):
     assert not docker_swarm_service.have_networks_changed(
+        None,
+        None
+    )
+
+    assert not docker_swarm_service.have_networks_changed(
+        [],
+        None
+    )
+
+    assert not docker_swarm_service.have_networks_changed(
         [{'id': 1}],
         [{'id': 1}]
     )
@@ -357,7 +373,8 @@ def test_have_networks_changed(docker_swarm_service):
             {'id': 2, 'aliases': ['alias1', 'alias2']}
         ],
         [
-            {'id': 1}, {'id': 2, 'aliases': ['alias1']}
+            {'id': 1},
+            {'id': 2, 'aliases': ['alias1']}
         ]
     )
 
