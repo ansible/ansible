@@ -1482,11 +1482,14 @@ class ModuleValidator(Validator):
                 args_from_docs.add(arg)
                 args_from_docs.update(data.get('aliases', []))
 
+            # add_file_common_args is only of interest on top-level
+            add_file_common_args = kwargs.get('add_file_common_args', False) and not context
+
             args_missing_from_docs = args_from_argspec.difference(args_from_docs)
             docs_missing_from_args = args_from_docs.difference(args_from_argspec | deprecated_args_from_argspec)
             for arg in args_missing_from_docs:
                 # args_from_argspec contains undocumented argument
-                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                if add_file_common_args and arg in file_common_arguments:
                     # add_file_common_args is handled in AnsibleModule, and not exposed earlier
                     continue
                 if arg in provider_args:
@@ -1504,7 +1507,7 @@ class ModuleValidator(Validator):
                 )
             for arg in docs_missing_from_args:
                 # args_from_docs contains argument not in the argument_spec
-                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                if add_file_common_args and arg in file_common_arguments:
                     # add_file_common_args is handled in AnsibleModule, and not exposed earlier
                     continue
                 msg = "Argument '%s'" % arg
