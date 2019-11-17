@@ -1261,7 +1261,7 @@ def has_list_changed(new_list, old_list, sort_lists=True, sort_key=None):
             if isinstance(unsorted_list[0], dict):
                 if not sort_key:
                     raise Exception(
-                        "A sort key was not specified when sorting list"
+                        'A sort key was not specified when sorting list'
                     )
                 else:
                     return sorted(unsorted_list, key=lambda k: k[sort_key])
@@ -1308,18 +1308,18 @@ def has_list_changed(new_list, old_list, sort_lists=True, sort_key=None):
 def have_networks_changed(new_networks, old_networks):
     """Special case list checking for networks to sort aliases"""
 
-    if not has_list_changed(new_networks, old_networks, sort_lists=False):
-        # The default checking determined no changes
+    if new_networks is None:
         return False
-
+    old_networks = old_networks or []
     if len(new_networks) != len(old_networks):
         return True
 
-    for new_item, old_item in zip(new_networks, old_networks):
-        if new_item['id'] != old_item['id']:
-            # The networks are in a different order
-            return True
+    zip_data = zip(
+        sorted(new_networks, key = lambda k: k['id']),
+        sorted(old_networks, key = lambda k: k['id'])
+    )
 
+    for new_item, old_item in zip_data:
         # Sort the aliases
         if 'aliases' in new_item:
             new_item['aliases'].sort()

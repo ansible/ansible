@@ -324,7 +324,7 @@ def test_have_networks_changed(docker_swarm_service):
         [{'id': 1}, {'id': 2}]
     )
 
-    assert docker_swarm_service.have_networks_changed(
+    assert not docker_swarm_service.have_networks_changed(
         [{'id': 1}, {'id': 2}],
         [{'id': 2}, {'id': 1}]
     )
