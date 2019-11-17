@@ -116,6 +116,29 @@
   # map was added to jinja2 in version 2.7
   when: "{{ ( lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"')  is version('2.7', '>=') ) }}"
 
+- name: Test extract filter with defaults
+  vars:
+    container:
+      key:
+        subkey: value
+  assert:
+    that:
+      - "'key' | extract(badcontainer) | default('a') == 'a'"
+      - "'key' | extract(badcontainer, 'subkey') | default('a') == 'a'"
+      - "('key' | extract(badcontainer)).subkey | default('a') == 'a'"
+      - "'badkey' | extract(container) | default('a') == 'a'"
+      - "'badkey' | extract(container, 'subkey') | default('a') == 'a'"
+      - "('badkey' | extract(container)).subsubkey | default('a') == 'a'"
+      - "'key' | extract(container, 'badsubkey') | default('a') == 'a'"
+      - "'key' | extract(container, ['badsubkey', 'subsubkey']) | default('a') == 'a'"
+      - "('key' | extract(container, 'badsubkey')).subsubkey | default('a') == 'a'"
+      - "'badkey' | extract(hostvars) | default('a') == 'a'"
+      - "'badkey' | extract(hostvars, 'subkey') | default('a') == 'a'"
+      - "('badkey' | extract(hostvars)).subsubkey | default('a') == 'a'"
+      - "'localhost' | extract(hostvars, 'badsubkey') | default('a') == 'a'"
+      - "'localhost' | extract(hostvars, ['badsubkey', 'subsubkey']) | default('a') == 'a'"
+      - "('localhost' | extract(hostvars, 'badsubkey')).subsubkey | default('a') == 'a'"
+
 - name: Test json_query filter
   assert:
     that:
@@ -239,10 +262,10 @@
   assert:
     that:
             - "'00' | random_mac is match('^00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
-            - "'00:00' | random_mac is match('^00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"  
+            - "'00:00' | random_mac is match('^00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
             - "'00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
             - "'00:00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
-            - "'00:00:00:00:00' | random_mac is match('^00:00:00:00:00:[a-f0-9][a-f0-9]$')"  
+            - "'00:00:00:00:00' | random_mac is match('^00:00:00:00:00:[a-f0-9][a-f0-9]$')"
             - "'00:00:00' | random_mac != '00:00:00' | random_mac"
 
 - name: Verify random_mac filter with seed
