@@ -48,7 +48,7 @@ DOCUMENTATION = """
             vars:
               - name: ansible_become_password
               - name: ansible_become_pass
-              - name: ansible_runas_runas
+              - name: ansible_runas_pass
             env:
               - name: ANSIBLE_BECOME_PASS
               - name: ANSIBLE_RUNAS_PASS

@@ -577,10 +577,6 @@ if ($bytes_read -gt 0) {
         self._connected = False
 
     def _build_kwargs(self):
-        self._become_method = self._play_context.become_method
-        self._become_user = self._play_context.become_user
-        self._become_pass = self._play_context.become_pass
-
         self._psrp_host = self.get_option('remote_addr')
         self._psrp_user = self.get_option('remote_user')
         self._psrp_pass = self._play_context.password

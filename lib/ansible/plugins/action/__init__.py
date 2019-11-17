@@ -175,6 +175,17 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         final_environment = dict()
         self._compute_environment_string(final_environment)
 
+        become_kwargs = {}
+        if self._connection.become:
+            become_kwargs['become'] = True
+            become_kwargs['become_method'] = self._connection.become.name
+            become_kwargs['become_user'] = self._connection.become.get_option('become_user',
+                                                                              playcontext=self._play_context)
+            become_kwargs['become_password'] = self._connection.become.get_option('become_pass',
+                                                                                  playcontext=self._play_context)
+            become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
+                                                                               playcontext=self._play_context)
+
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
             try:
@@ -182,12 +193,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                                                             task_vars=task_vars,
                                                                             module_compression=self._play_context.module_compression,
                                                                             async_timeout=self._task.async_val,
-                                                                            become=self._play_context.become,
-                                                                            become_method=self._play_context.become_method,
-                                                                            become_user=self._play_context.become_user,
-                                                                            become_password=self._play_context.become_pass,
-                                                                            become_flags=self._play_context.become_flags,
-                                                                            environment=final_environment)
+                                                                            environment=final_environment,
+                                                                            **become_kwargs)
                 break
             except InterpreterDiscoveryRequiredError as idre:
                 self._discovered_interpreter = AnsibleUnsafeText(discover_interpreter(
@@ -260,7 +267,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_style == "new",                     # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
             not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
-            self._play_context.become_method != 'su',  # su does not work with pipelining,
+            (self._connection.become.name if self._connection.become else '') != 'su',  # su does not work with pipelining,
             # FIXME: we might need to make become_method exclusion a configurable list
         ]:
             if not condition:
@@ -298,7 +305,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         # if we don't use become then we know we aren't switching to a
         # different unprivileged user
-        if not self._play_context.become:
+        if not self._connection.become:
             return False
 
         # if we use become and the user is not an admin (or same user) then
@@ -634,7 +641,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             become_user = self.get_become_option('become_user')
             if getattr(self._connection, '_remote_is_local', False):
                 pass
-            elif sudoable and self._play_context.become and become_user:
+            elif sudoable and self._connection.become and become_user:
                 expand_path = '~%s' % become_user
             else:
                 # use remote user instead, if none set default to current user

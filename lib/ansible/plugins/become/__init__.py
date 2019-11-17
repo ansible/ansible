@@ -40,6 +40,19 @@ class BecomeBase(AnsiblePlugin):
         self._id = ''
         self.success = ''
 
+    def get_option(self, option, hostvars=None, playcontext=None):
+        """ Overrides the base get_option to provide a fallback to playcontext vars in case a 3rd party plugin did not
+        implement the base become options required in Ansible. """
+        # TODO: add deprecation warning for ValueError in devel that removes the playcontext fallback
+        try:
+            return super(BecomeBase, self).get_option(option, hostvars=hostvars)
+        except KeyError:
+            pc_fallback = ['become_user', 'become_pass', 'become_flags', 'become_exe']
+            if option not in pc_fallback:
+                raise
+
+            return getattr(playcontext, option, None)
+
     def expect_prompt(self):
         """This function assists connection plugins in determining if they need to wait for
         a prompt. Both a prompt and a password are required.
