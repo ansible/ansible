@@ -49,8 +49,6 @@ from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
 
-from ansible.devel.cprofile_decorator import cprofile_func
-
 display = Display()
 
 
@@ -355,7 +353,7 @@ class VariableManager:
                     # raise an error, which is silently ignored at this point.
                     try:
                         for vars_file in vars_file_list:
-                            vars_file = templar.template(vars_file)
+                            vars_file = self._templar.template(vars_file)
                             if not (isinstance(vars_file, Sequence)):
                                 raise AnsibleError(
                                     "Invalid vars_files entry found: %r\n"

@@ -14,7 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.gcp_utils import GcpSession
 
 
 class GcpMockModule(object):
@@ -49,6 +48,7 @@ class GcpKmsFilter():
             return self.kms_decrypt(fake_module)
 
     def kms_decrypt(self, module):
+        from ansible.module_utils.gcp_utils import GcpSession
         payload = {"ciphertext": module.params['ciphertext']}
 
         if module.params['additional_authenticated_data']:
@@ -61,6 +61,7 @@ class GcpKmsFilter():
         return response.json()['plaintext']
 
     def kms_encrypt(self, module):
+        from ansible.module_utils.gcp_utils import GcpSession
         payload = {"plaintext": module.params['plaintext']}
 
         if module.params['additional_authenticated_data']:

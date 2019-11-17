@@ -39,6 +39,7 @@ except ImportError:
 
 display = Display()
 
+
 def get_all_plugin_loaders():
     return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginLoader)]
 
@@ -86,7 +87,7 @@ class PluginFinder:
 
     def add_directories(self, paths, recursive=False, force_rescan=False):
         if isinstance(paths, string_types):
-            paths = [ paths ]
+            paths = [paths]
 
         modified = False
         for path in paths:
@@ -135,6 +136,16 @@ class PluginFinder:
             self.package_path = os.path.dirname(m.__file__)
         return [self.package_path]
 
+    def __contains__(self, name):
+        return name in self._plugin_cache
+
+    def get(self, name):
+        path, obj_class = self._plugin_cache[name]
+        if obj_class is None:
+            obj_class = self._load_plugin_class(name, path)
+            self._plugin_cache[name] = (path, obj_class)
+        return obj_class
+
     def all(self):
         for name in self._plugin_cache.keys():
             try:
@@ -143,8 +154,8 @@ class PluginFinder:
                     obj_class = self._load_plugin_class(name, path)
                     self._plugin_cache[name] = (path, obj_class)
                 yield obj_class
-            except:
-                continue
+            except GeneratorExit:
+                break
 
     def load_plugin(self, name):
         try:
@@ -237,6 +248,7 @@ class PluginFinder:
                 msg = '%s (searched paths: %s)' % (msg, ", ".join(searched_paths))
             display.debug(msg)
 
+
 connection_loader = PluginFinder(
     'Connection',
     'ansible.plugins.connection',
@@ -246,10 +258,31 @@ connection_loader = PluginFinder(
     required_base_class='ConnectionBase',
 )
 
+filter_loader = PluginFinder(
+    'FilterModule',
+    'ansible.plugins.filter',
+    C.DEFAULT_FILTER_PLUGIN_PATH,
+    'filter_plugins',
+)
+
+lookup_loader = PluginFinder(
+    'LookupModule',
+    'ansible.plugins.lookup',
+    C.DEFAULT_LOOKUP_PLUGIN_PATH,
+    'lookup_plugins',
+    required_base_class='LookupBase',
+)
+
+test_loader = PluginFinder(
+    'TestModule',
+    'ansible.plugins.test',
+    C.DEFAULT_TEST_PLUGIN_PATH,
+    'test_plugins'
+)
+
 vars_loader = PluginFinder(
     'VarsModule',
     'ansible.plugins.vars',
     C.DEFAULT_VARS_PLUGIN_PATH,
     'vars_plugins',
 )
-

@@ -107,7 +107,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         path = ""
         if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
             path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
-        elif hasattr(self._parent._play, '_ds') and hasattr(self._parent._play._ds, '_data_source') and hasattr(self._parent._play._ds, '_line_number'):
+        elif self._parent and hasattr(self._parent._play, '_ds') and \
+                hasattr(self._parent._play._ds, '_data_source') and \
+                hasattr(self._parent._play._ds, '_line_number'):
             path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
         return path
 
@@ -402,12 +404,12 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def serialize(self):
         data = super(Task, self).serialize()
         data['search_path'] = self.get_search_path()
-        #if not self._squashed and not self._finalized:
-        #    if self._parent:
-        #        data['parent'] = self._parent.serialize()
-        #        data['parent_type'] = self._parent.__class__.__name__
-        #    if self._role:
-        #        data['role'] = self._role.serialize()
+        # if not self._squashed and not self._finalized:
+        #     if self._parent:
+        #         data['parent'] = self._parent.serialize()
+        #         data['parent_type'] = self._parent.__class__.__name__
+        #     if self._role:
+        #         data['role'] = self._role.serialize()
         return data
 
     def deserialize(self, data):

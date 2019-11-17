@@ -57,22 +57,22 @@ class IncludedFile:
         return "%s (args=%s vars=%s): %s" % (self._filename, self._args, self._vars, self._hosts)
 
     @staticmethod
-    def process_include_results(results, iterator, loader, variable_manager):
+    def process_include_results(results, inventory, iterator, loader, variable_manager):
         included_files = []
         task_vars_cache = {}
 
         for res in results:
 
-            original_host = res._host
-            original_task = res._task
+            original_host = inventory.get_host(res['host_name'])
+            original_task = iterator.get_last_task_for_host(original_host)
 
             if original_task.action in ('include', 'include_tasks', 'include_role'):
                 if original_task.loop:
-                    if 'results' not in res._result:
+                    if 'results' not in res['original_result']:
                         continue
-                    include_results = res._result['results']
+                    include_results = res['original_result']['results']
                 else:
-                    include_results = [res._result]
+                    include_results = [res['original_result']]
 
                 for include_result in include_results:
                     # if the task result was skipped or failed, continue

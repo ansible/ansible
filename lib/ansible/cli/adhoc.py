@@ -162,12 +162,14 @@ class AdHocCLI(CLI):
 
             self._tqm.send_callback('v2_playbook_on_start', playbook)
 
+            self._tqm.initialize_processes(min(self._tqm._forks, len(hosts)))
             result = self._tqm.run(play)
 
             self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
         finally:
             if self._tqm:
                 self._tqm.cleanup()
+                self._tqm.terminate()
             if loader:
                 loader.cleanup_all_tmp_files()
 

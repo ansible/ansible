@@ -32,6 +32,7 @@ from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.display import Display
 
+
 display = Display()
 
 DEFINED_REGEX = re.compile(r'(hostvars\[.+\]|[\w_]+)\s+(not\s+is|is|is\s+not)\s+(defined|undefined)')
@@ -63,6 +64,7 @@ class Conditional:
         if not isinstance(value, list):
             setattr(self, name, [value])
 
+
 def extract_defined_undefined(conditional):
     results = []
 
@@ -75,6 +77,7 @@ def extract_defined_undefined(conditional):
 
     return results
 
+
 def evaluate_conditional(when, ds, templar, all_vars):
     '''
     Loops through the conditionals set on this object, returning
@@ -82,7 +85,7 @@ def evaluate_conditional(when, ds, templar, all_vars):
     '''
 
     if not isinstance(when, list):
-        when = [ when ]
+        when = [when]
 
     try:
         for conditional in when:
@@ -95,7 +98,8 @@ def evaluate_conditional(when, ds, templar, all_vars):
 
     return True
 
-def _check_conditional(self, conditional, templar, all_vars):
+
+def _check_conditional(conditional, templar, all_vars):
     '''
     This method does the low-level evaluation of each conditional
     set on this object, using jinja2 to wrap the conditionals for

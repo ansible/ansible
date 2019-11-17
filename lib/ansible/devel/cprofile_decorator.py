@@ -1,3 +1,22 @@
+# (c) 2019, Red Hat, Inc.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 import atexit
@@ -29,8 +48,8 @@ class CProfileDecorator:
         def closure(func):
             self._clean = clean
             name = getattr(func, '__qualname__', func.__name__)
-            #for k in dir(func):
-            #    print("%s: %s" % (k, getattr(func, k)))
+            # for k in dir(func):
+            #     print("%s: %s" % (k, getattr(func, k)))
             name_dir = os.path.join(self._temp, name)
             if cache:
                 try:
@@ -83,5 +102,6 @@ class CProfileDecorator:
                 shutil.rmtree(self._temp)
             except Exception:
                 pass
+
 
 cprofile_func = CProfileDecorator()

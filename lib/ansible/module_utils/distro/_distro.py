@@ -776,7 +776,7 @@ class LinuxDistribution(object):
                 or self.lsb_release_attr('description')
             if not name:
                 name = self.distro_release_attr('name') \
-                       or self.uname_attr('name')
+                    or self.uname_attr('name')
                 version = self.version(pretty=True)
                 if version:
                     name = name + ' ' + version

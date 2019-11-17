@@ -100,12 +100,13 @@ def get_validated_value(name, attribute, value, templar):
             value = [value]
         if attribute['listof'] is not None:
             for item in value:
+                # FIXME: how can we get the ds structure back to these errors?
                 if not isinstance(item, attribute['listof']):
                     raise AnsibleParserError("the field '%s' should be a list of %s, "
-                                             "but the item '%s' is a %s" % (name, attribute['listof'], item, type(item))) #, obj=self.get_ds())
+                                             "but the item '%s' is a %s" % (name, attribute['listof'], item, type(item)))
                 elif attribute['required'] and attribute['listof'] == string_types:
                     if item is None or item.strip() == "":
-                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,)) #, obj=self.get_ds())
+                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,))
     elif isa == 'set':
         if value is None:
             value = set()
@@ -124,10 +125,10 @@ def get_validated_value(name, attribute, value, templar):
         elif not isinstance(value, dict):
             raise TypeError("%s is not a dictionary" % value)
     # FIXME: ...
-    #elif isa == 'class':
-    #    if not isinstance(value, attribute.class_type):
-    #        raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
-    #    value.post_validate(templar=templar)
+    # elif isa == 'class':
+    #     if not isinstance(value, attribute.class_type):
+    #         raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
+    #     value.post_validate(templar=templar)
     return value
 
 
@@ -169,12 +170,12 @@ def post_validate(data, templar):
             # Run the post-validator if present. These methods are responsible for
             # using the given templar to template the values, if required.
             # FIXME: this needs work
-            #method = getattr(self, '_post_validate_%s' % name, None)
-            #if method:
-            #    value = method(attribute, getattr(self, name), templar)
-            #elif attribute.isa == 'class':
-            #    value = getattr(self, name)
-            #else:
+            # method = getattr(self, '_post_validate_%s' % name, None)
+            # if method:
+            #     value = method(attribute, getattr(self, name), templar)
+            # elif attribute.isa == 'class':
+            #     value = getattr(self, name)
+            # else:
             if True:
                 # if the attribute contains a variable, template it now
                 value = templar.template(data[name])
@@ -204,7 +205,7 @@ def post_validate(data, templar):
                     msg = "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
                 else:
                     msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
-                raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
+                raise AnsibleParserError(msg, obj=data.get('ds', None), orig_exc=e)
 
     data['finalized'] = True
     return data
@@ -559,10 +560,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 if attribute.isa == 'class' and isinstance(value, dict):
                     obj = attribute.class_type()
                     obj.deserialize(value)
-                    #setattr(self, attr, obj)
                     self._attributes[attr] = obj
                 else:
-                    #setattr(self, attr, value)
                     self._attributes[attr] = value
 
     def serialize(self):

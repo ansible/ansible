@@ -20,9 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import crypt
 import glob
-import hashlib
 import itertools
 import json
 import ntpath
@@ -252,6 +250,7 @@ def randomize_list(mylist, seed=None):
 
 def get_hash(data, hashtype='sha1'):
 
+    import hashlib
     try:  # see if hash is supported
         h = hashlib.new(hashtype)
     except Exception:

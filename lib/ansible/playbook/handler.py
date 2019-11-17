@@ -28,12 +28,12 @@ class Handler(Task):
 
     _listen = FieldAttribute(isa='list', default=list, listof=string_types, static=True)
 
-    def __init__(self, block=None, role=None, task_include=None):
+    def __init__(self, block=None, role=None, task_include=None, generate_id=True):
         self.notified_hosts = []
 
         self.cached_name = False
 
-        super(Handler, self).__init__(block=block, role=role, task_include=task_include)
+        super(Handler, self).__init__(block=block, role=role, task_include=task_include, generate_id=generate_id)
 
     def __repr__(self):
         ''' returns a human readable representation of the handler '''

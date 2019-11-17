@@ -44,7 +44,7 @@ from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVar
 from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Sequence, Mapping, MutableMapping
-from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
+from ansible.plugins.new_loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
@@ -410,15 +410,6 @@ class Templar:
         else:
             self._basedir = './'
 
-        if shared_loader_obj:
-            self._filter_loader = getattr(shared_loader_obj, 'filter_loader')
-            self._test_loader = getattr(shared_loader_obj, 'test_loader')
-            self._lookup_loader = getattr(shared_loader_obj, 'lookup_loader')
-        else:
-            self._filter_loader = filter_loader
-            self._test_loader = test_loader
-            self._lookup_loader = lookup_loader
-
         # flags to determine whether certain failures during templating
         # should result in fatal errors being raised
         self._fail_on_lookup_errors = True
@@ -457,8 +448,8 @@ class Templar:
 
         self._filters = dict()
 
-        for fp in self._filter_loader.all():
-            self._filters.update(fp.filters())
+        for fp in filter_loader.all():
+            self._filters.update(fp().filters())
 
         return self._filters.copy()
 
@@ -471,8 +462,8 @@ class Templar:
             return self._tests.copy()
 
         self._tests = dict()
-        for fp in self._test_loader.all():
-            self._tests.update(fp.tests())
+        for fp in test_loader.all():
+            self._tests.update(fp().tests())
 
         return self._tests.copy()
 
@@ -748,7 +739,7 @@ class Templar:
         return self._lookup(name, *args, **kwargs)
 
     def _lookup(self, name, *args, **kwargs):
-        instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
+        instance = lookup_loader.get(name.lower())(loader=self._loader, templar=self)
 
         if instance is not None:
             wantlist = kwargs.pop('wantlist', False)

@@ -52,9 +52,9 @@ class IncludeRole(TaskInclude):
     _allow_duplicates = FieldAttribute(isa='bool', default=True, private=True)
     _public = FieldAttribute(isa='bool', default=False, private=True)
 
-    def __init__(self, block=None, role=None, task_include=None):
+    def __init__(self, block=None, role=None, task_include=None, generate_id=True):
 
-        super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include)
+        super(IncludeRole, self).__init__(block=block, role=role, task_include=task_include, generate_id=generate_id)
 
         self._from_files = {}
         self._parent_role = role

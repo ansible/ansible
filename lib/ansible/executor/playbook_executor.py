@@ -26,10 +26,13 @@ from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.urls import ParseResultDottedDict as DottedDict
 from ansible.plugins.loader import become_loader, connection_loader, shell_loader
 from ansible.playbook import Playbook
 from ansible.playbook.base import post_validate
 from ansible.template import Templar
+from ansible.utils.cpu import mask_to_bytes, sched_setaffinity
+
 from ansible.utils.helpers import pct_to_int
 from ansible.utils.path import makedirs_safe
 from ansible.utils.ssh_functions import check_for_controlpersist
@@ -88,6 +91,9 @@ class PlaybookExecutor:
             list(shell_loader.all(class_only=True))
             list(become_loader.all(class_only=True))
 
+            s = mask_to_bytes(0x01)
+            sched_setaffinity(os.getpid(), len(s), s)
+
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
                 # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
@@ -96,9 +102,8 @@ class PlaybookExecutor:
                     entry = {'playbook': playbook_path}
                     entry['plays'] = []
                 else:
-                    # make sure the tqm has callbacks loaded
-                    self._tqm.load_callbacks()
-                    self._tqm.send_callback('v2_playbook_on_start', pb)
+                    # send a direct callback to the result proc
+                    self._tqm.send_callback("v2_playbook_on_start", pb)
 
                 i = 1
                 plays = pb.get_plays()
@@ -133,9 +138,20 @@ class PlaybookExecutor:
 
                             if vname not in self._variable_manager.extra_vars:
                                 if self._tqm:
-                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
-                                                            default, unsafe)
+                                    self._tqm.send_callback(
+                                        'v2_playbook_on_vars_prompt',
+                                        vname,
+                                        private,
+                                        prompt,
+                                        encrypt,
+                                        confirm,
+                                        salt_size,
+                                        salt,
+                                        default,
+                                        unsafe,
+                                    )
                                     play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
+                                    pass
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
 
@@ -161,8 +177,13 @@ class PlaybookExecutor:
                         # we are actually running plays
                         batches = self._get_serialized_batches(play)
                         if len(batches) == 0:
-                            self._tqm.send_callback('v2_playbook_on_play_start', play)
-                            self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
+                            self._tqm.send_callback("v2_playbook_on_play_start", DottedDict(play.serialize()))
+                            self._tqm.send_callback("v2_playbook_on_no_hosts_matched")
+
+                        # adjust to # of workers to configured forks or size of batch, whatever is lower
+                        self._tqm.initialize_processes(min(self._tqm._forks, len(batches[0])))
+
+                        # start running the batches
                         for batch in batches:
                             # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)
@@ -193,6 +214,9 @@ class PlaybookExecutor:
                             # save the unreachable hosts from this batch
                             self._unreachable_hosts.update(self._tqm._unreachable_hosts)
 
+                        if self._tqm is not None:
+                            self._tqm.cleanup()
+
                         if break_play:
                             break
 
@@ -220,8 +244,6 @@ class PlaybookExecutor:
                             if self._generate_retry_inventory(filename, retries):
                                 display.display("\tto retry, use: --limit @%s\n" % filename)
 
-                    self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
-
                 # if the last result wasn't zero, break out of the playbook file name loop
                 if result != 0:
                     break
@@ -231,7 +253,8 @@ class PlaybookExecutor:
 
         finally:
             if self._tqm is not None:
-                self._tqm.cleanup()
+                self._tqm.send_callback("v2_playbook_on_stats", self._tqm._stats)
+                self._tqm.terminate()
             if self._loader:
                 self._loader.cleanup_all_tmp_files()
 

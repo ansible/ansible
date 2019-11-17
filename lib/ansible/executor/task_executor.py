@@ -24,10 +24,10 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.base import post_validate
 from ansible.playbook.conditional import evaluate_conditional
-from ansible.playbook.play_context import set_task_and_variable_override, set_become_plugin, set_attributes_from_plugin
+from ansible.playbook.play_context import set_task_and_variable_override, set_become_plugin, set_attributes_from_plugin, set_playcontext_connection
 from ansible.playbook.task import Task
 from ansible.plugins.loader import become_loader, cliconf_loader, httpapi_loader, netconf_loader, terminal_loader
-from ansible.plugins.new_loader import connection_loader
+from ansible.plugins.new_loader import connection_loader, lookup_loader
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.listify import listify_lookup_plugin_terms
@@ -241,7 +241,7 @@ class TaskExecutor:
             # to avoid reprocessing the loop
             items = loop_cache
         elif self._task.loop_with:
-            if self._task.loop_with in self._shared_loader_obj.lookup_loader:
+            if self._task.loop_with in lookup_loader:
                 fail = True
                 if self._task.loop_with == 'first_found':
                     # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
@@ -259,8 +259,7 @@ class TaskExecutor:
                     loop_terms = [t for t in loop_terms if not templar.is_template(t)]
 
                 # get lookup
-                mylookup = self._shared_loader_obj.lookup_loader.get(
-                    self._task.loop_with,
+                mylookup = lookup_loader.get(self._task.loop_with)(
                     loader=self._loader,
                     templar=templar,
                 )
@@ -321,10 +320,10 @@ class TaskExecutor:
             # FIXME: validate that these are templated now that post_validate is
             #        working on a dict of things and we don't need loop_control
             #        to be templated earlier for loop stuff
-            #loop_var = templar.template(self._task.loop_control.loop_var)
-            #index_var = templar.template(self._task.loop_control.index_var)
-            #loop_pause = templar.template(self._task.loop_control.pause)
-            #extended = templar.template(self._task.loop_control.extended)
+            loop_var = self._task.loop_control['loop_var']
+            index_var = self._task.loop_control['index_var']
+            loop_pause = self._task.loop_control['pause']
+            extended = self._task.loop_control['extended']
 
             # This may be 'None',so it is templated below after we ensure a value and an item is assigned
             label = self._task.loop_control['label']
@@ -426,12 +425,12 @@ class TaskExecutor:
 
             self._final_q.put(
                 TaskResult(
-                    self._host.name,
-                    self._task.uuid,
+                    self._host,
+                    self._task,
                     res,
                     task_fields=self._task,
                 ),
-                block=False,
+                block=True,
             )
             results.append(res)
             del task_vars[loop_var]
@@ -565,6 +564,10 @@ class TaskExecutor:
             # fields set from the play/task may be based on variables, so we have to
             # do the same kind of post validation step on it here before we use it.
             post_validate(self._play_context, templar=templar)
+
+            # set the play context connection, which may default or been set to
+            # a special connection type like 'smart' or 'persistent'
+            set_playcontext_connection(self._play_context)
 
             # now that the play context is finalized, if the remote_addr is not set
             # default to using the host's address field as the remote address
@@ -771,8 +774,8 @@ class TaskExecutor:
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
                         self._final_q.put(
                             TaskResult(
-                                self._host.name,
-                                self._task.uuid,
+                                self._host,
+                                self._task,
                                 result,
                                 task_fields=self._task,
                             ),

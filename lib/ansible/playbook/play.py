@@ -275,12 +275,18 @@ class Play(Base, Taggable, CollectionSearch):
         block_list = []
 
         block_list.extend(self.pre_tasks)
-        #block_list.append(flush_block)
+        block_list.append(flush_block)
         block_list.extend(self._compile_roles())
         block_list.extend(self.tasks)
-        #block_list.append(flush_block)
+        block_list.append(flush_block)
         block_list.extend(self.post_tasks)
-        #block_list.append(flush_block)
+        block_list.append(flush_block)
+
+        # compile the blocks, which squashes all tasks in the
+        # block now so we don't have to do it later during the
+        # main program execution
+        for block in block_list:
+            block.compile()
 
         return block_list
 

@@ -46,6 +46,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
+
 class StrategyModule(StrategyBase):
 
     noop_task = None
@@ -222,7 +223,6 @@ class StrategyModule(StrategyBase):
                 work_to_do = False
 
                 host_tasks = self._get_next_task_lockstep(hosts_left, iterator)
-                #print("done calculating next task")
 
                 # skip control
                 skip_rest = False
@@ -299,50 +299,28 @@ class StrategyModule(StrategyBase):
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
 
-                        if not callback_sent:
-                            display.debug("sending task start callback, copying the task so we can template it temporarily")
-                            saved_name = task.name
-                            display.debug("done copying, going to template now")
-                            try:
-                                task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
-                                display.debug("done templating")
-                            except Exception:
-                                # just ignore any errors during task name templating,
-                                # we don't care if it just shows the raw name
-                                display.debug("templating failed for some reason")
-                            display.debug("here goes the callback...")
-                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
-                            task.name = saved_name
-                            callback_sent = True
-                            display.debug("sending task start callback")
-
                         self._blocked_hosts[host.name] = True
-                        #print("queuing task for %s (%s)" % (host.name, time.time()))
                         self._queue_task(host, task, task_vars, play_context)
-                        #print("queued task for %s (%s)" % (host.name, time.time()))
                         del task_vars
 
                     # if we're bypassing the host loop, break out now
                     if run_once:
                         break
 
-                    results += self._process_pending_results(iterator, max_passes=max(1, int(len(self._tqm._workers) * 0.1)))
-
                 # go to next host/task group
                 if skip_rest:
                     continue
 
-                #print("done queuing things up for %s, now waiting for results queue to drain" % task)
                 display.debug("done queuing things up, now waiting for results queue to drain")
                 if self._pending_results > 0:
-                    #print("waiting on pending results")
                     results += self._wait_on_pending_results(iterator)
-                    #print("done waiting on pending results")
 
                 self.update_active_connections(results)
 
+                included_files = []
                 included_files = IncludedFile.process_include_results(
                     results,
+                    inventory=self._inventory,
                     iterator=iterator,
                     loader=self._loader,
                     variable_manager=self._variable_manager
@@ -413,15 +391,17 @@ class StrategyModule(StrategyBase):
                 display.debug("results queue empty")
 
                 display.debug("checking for any_errors_fatal")
+                # FIXME: all of this should be handled by process_pending_results
+                #        so all of the strategy specific stuff may go away?
                 failed_hosts = []
                 unreachable_hosts = []
-                for res in results:
-                    # execute_meta() does not set 'failed' in the TaskResult
-                    # so we skip checking it with the meta tasks and look just at the iterator
-                    if (res.is_failed() or res._task.action == 'meta') and iterator.is_failed(res._host):
-                        failed_hosts.append(res._host.name)
-                    elif res.is_unreachable():
-                        unreachable_hosts.append(res._host.name)
+                # for res in results:
+                #     # execute_meta() does not set 'failed' in the TaskResult
+                #     # so we skip checking it with the meta tasks and look just at the iterator
+                #     if (res.is_failed() or res._task.action == 'meta') and iterator.is_failed(res._host):
+                #         failed_hosts.append(res._host.name)
+                #     elif res.is_unreachable():
+                #         unreachable_hosts.append(res._host.name)
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):

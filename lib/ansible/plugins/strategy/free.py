@@ -138,9 +138,10 @@ class StrategyModule(StrategyBase):
 
                         if throttle > 0:
                             same_tasks = 0
-                            for worker in self._workers:
-                                if worker and worker.is_alive() and worker._task._uuid == task._uuid:
-                                    same_tasks += 1
+                            # FIXME: not sure how _task gets assigned to the worker
+                            # for worker in self._workers:
+                            #     if worker and worker.proc.is_alive() and worker._task._uuid == task._uuid:
+                            #         same_tasks += 1
 
                             display.debug("task: %s, same_tasks: %d" % (task.get_name(), same_tasks))
                             if same_tasks >= throttle:
@@ -227,6 +228,7 @@ class StrategyModule(StrategyBase):
 
             included_files = IncludedFile.process_include_results(
                 host_results,
+                inventory=self._inventory,
                 iterator=iterator,
                 loader=self._loader,
                 variable_manager=self._variable_manager

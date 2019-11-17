@@ -881,17 +881,19 @@ class Connection(ConnectionBase):
             last_time = time.time()
             total_timeout = 0.0
             while True:
-                events = selector.select(0)
+                events = selector.select(0.0001)
 
                 # We pay attention to timeouts only while negotiating a prompt.
-
                 if not events:
-                    now = time.time()
-                    total_timeout += now - last_time
-                    last_time = now
-                    if total_timeout >= timeout:
-                        # We timed out
-                        if state <= states.index('awaiting_escalation'):
+                    if states[state] == 'awaiting_exit' and not selector.get_map():
+                        p.wait()
+                        break
+                    elif state <= states.index('awaiting_escalation'):
+                        now = time.time()
+                        total_timeout += now - last_time
+                        last_time = now
+                        if total_timeout >= timeout:
+                            # We timed out
                             # If the process has already exited, then it's not really a
                             # timeout; we'll let the normal error handling deal with it.
                             if p.poll() is not None:
@@ -1001,28 +1003,6 @@ class Connection(ConnectionBase):
                         self._send_initial_data(stdin, in_data, p)
                     state += 1
 
-                # Now we're awaiting_exit: has the child process exited? If it has,
-                # and we've read all available output from it, we're done.
-
-                elif states[state] == 'awaiting_exit':
-                    if p.poll() is not None:
-                        if not selector.get_map() or not events:
-                            break
-                        # We should not see further writes to the stdout/stderr file
-                        # descriptors after the process has closed, set the select
-                        # timeout to gather any last writes we may have missed.
-                        timeout = 0
-                        continue
-
-                    # If the process has not yet exited, but we've already read EOF from
-                    # its stdout and stderr (and thus no longer watching any file
-                    # descriptors), we can just wait for it to exit.
-
-                    elif not selector.get_map():
-                        p.wait()
-                        break
-
-                    # Otherwise there may still be outstanding data to read.
         finally:
             selector.close()
             # close stdin, stdout, and stderr after process is terminated and

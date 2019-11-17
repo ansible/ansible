@@ -362,6 +362,16 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
         return value
 
+    def compile(self):
+        squashed_tasks = []
+        for item in self.block:
+            if isinstance(item, Block):
+                item.compile()
+                squashed_tasks.append(item)
+            else:
+                squashed_tasks.append(item.squash())
+        self.block = squashed_tasks
+
     def filter_tagged_tasks(self, all_vars):
         '''
         Creates a new block, with task lists filtered based on the tags.

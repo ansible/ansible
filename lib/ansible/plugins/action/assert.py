@@ -18,7 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError
-from ansible.playbook.conditional import Conditional
+from ansible.playbook.conditional import evaluate_conditional
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -73,13 +73,11 @@ class ActionModule(ActionBase):
         # the built in evaluate function. The when has already been evaluated
         # by this point, and is not used again, so we don't care about mangling
         # that value now
-        cond = Conditional(loader=self._loader)
         if not quiet:
             result['_ansible_verbose_always'] = True
 
         for that in thats:
-            cond.when = [that]
-            test_result = cond.evaluate_conditional(templar=self._templar, all_vars=task_vars)
+            test_result = evaluate_conditional([that], self._task['ds'], templar=self._templar, all_vars=task_vars)
             if not test_result:
                 result['failed'] = True
                 result['evaluated_to'] = test_result

@@ -267,6 +267,23 @@ def set_attributes_from_plugin(play_context, plugin):
                 play_context[flag] = self.connection.get_option(flag)
 
 
+def set_playcontext_connection(play_context):
+    ''' connections are special, this takes care of responding correctly '''
+    conn_type = None
+    if play_context.connection == 'smart':
+        conn_type = 'ssh'
+        # see if SSH can support ControlPersist if not use paramiko
+        if not check_for_controlpersist(play_context.ssh_executable) and paramiko is not None:
+            conn_type = "paramiko"
+
+    # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
+    elif play_context.connection == 'persistent' and paramiko is not None:
+        conn_type = 'paramiko'
+
+    if conn_type:
+        play_context.connection = conn_type
+
+
 class PlayContext(Base):
 
     '''
@@ -376,22 +393,3 @@ class PlayContext(Base):
 
         # Not every cli that uses PlayContext has these command line args so have a default
         self.start_at_task = context.CLIARGS.get('start_at_task', None)  # Else default
-
-    def _get_attr_connection(self):
-        ''' connections are special, this takes care of responding correctly '''
-        conn_type = None
-        if self._attributes['connection'] == 'smart':
-            conn_type = 'ssh'
-            # see if SSH can support ControlPersist if not use paramiko
-            if not check_for_controlpersist(self.ssh_executable) and paramiko is not None:
-                conn_type = "paramiko"
-
-        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
-        elif self._attributes['connection'] == 'persistent' and paramiko is not None:
-            conn_type = 'paramiko'
-
-        if conn_type:
-            self.connection = conn_type
-
-        return self._attributes['connection']
-

@@ -16,11 +16,12 @@ DOCUMENTATION = '''
         - The remote user is ignored, the user with which the ansible CLI was executed is used instead.
 '''
 
+import fcntl
+import getpass
 import os
 import shutil
 import subprocess
-import fcntl
-import getpass
+import time
 
 import ansible.constants as C
 from ansible.compat import selectors
@@ -98,11 +99,22 @@ class Connection(ConnectionBase):
 
             become_output = b''
             try:
+                last_time = time.time()
+                total_timeout = 0.0
+
                 while not self.become.check_success(become_output) and not self.become.check_password_prompt(become_output):
-                    events = selector.select(self._play_context.timeout)
+                    events = selector.select(0.0001)
                     if not events:
-                        stdout, stderr = p.communicate()
-                        raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output))
+                        now = time.time()
+                        total_timeout += now - last_time
+                        last_time = now
+                        if total_timeout >= self._play_context.timeout:
+                            stdout, stderr = p.communicate()
+                            raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output))
+                        continue
+
+                    # something is ready, so we reset our current timeout counter
+                    total_timeout = 0.0
 
                     for key, event in events:
                         if key.fileobj == p.stdout:

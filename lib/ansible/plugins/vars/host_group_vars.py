@@ -108,11 +108,12 @@ class VarsModule(BaseVarsPlugin):
                             self._display.debug("\tprocessing dir %s" % opath)
                             found_files = loader.find_vars_files(opath, entity.name)
                             FOUND[key] = found_files
-                        except:
-                            #if os.path.exists(b_opath):
-                            #    self._display.warning("Found something that is not a directory, skipping: %s" % (opath,))
+                        except Exception as e:
+                            # FIXME: do we care? In a large inventory this may call os.path.exists
+                            #        a LOT of times, which is a very slow operation
+                            # if os.path.exists(b_opath):
+                            #     self._display.warning("Found something that is not a directory, skipping: %s" % (opath,))
                             self._ignore_paths.append(b_opath)
-                            pass
 
                     for found in found_files:
                         new_data = loader.load_from_file(found, cache=True, unsafe=True)

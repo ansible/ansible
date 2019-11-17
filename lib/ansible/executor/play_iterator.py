@@ -52,6 +52,7 @@ class HostState:
         self.always_child_state = None
         self.did_rescue = False
         self.did_start_at_task = False
+        self.last_task = None
 
     def __repr__(self):
         return "HostState(%r)" % self._blocks
@@ -125,6 +126,7 @@ class HostState:
             new_state.rescue_child_state = self.rescue_child_state.copy()
         if self.always_child_state is not None:
             new_state.always_child_state = self.always_child_state.copy()
+        new_state.last_task = self.last_task
         return new_state
 
 
@@ -234,6 +236,10 @@ class PlayIterator:
         # are using this we're leaving it here for now
         return
 
+    def get_last_task_for_host(self, host, peek=False):
+        s = self.get_host_state(host)
+        return s.last_task
+
     def get_next_task_for_host(self, host, peek=False):
 
         display.debug("getting the next task for host %s" % host.name)
@@ -245,6 +251,7 @@ class PlayIterator:
             return (s, None)
 
         (s, task) = self._get_next_task_from_state(s, host=host, peek=peek)
+        s.last_task = task
 
         if not peek:
             self._host_states[host.name] = s
@@ -513,6 +520,17 @@ class PlayIterator:
         elif state.run_state == self.ITERATING_ALWAYS and state.always_child_state is not None:
             return self.get_active_state(state.always_child_state)
         return state
+
+    def get_current_task(self, host):
+        s = self.get_active_state(self.get_host_state(host))
+        cur_block = s._blocks[s.cur_block]
+        if s.run_state == self.ITERATING_TASKS:
+            return cur_block.block[s.cur_regular_task]
+        elif s.run_state == self.ITERATING_RESCUE:
+            return cur_block.block[s.cur_rescue_task]
+        elif s.run_state == self.ITERATING_ALWAYS:
+            return cur_block.block[s.cur_always_task]
+        return None
 
     def get_original_task(self, host, task):
         # now a noop because we've changed the way we do caching
