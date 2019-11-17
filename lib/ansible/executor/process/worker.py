@@ -112,8 +112,8 @@ class WorkerProcess(AnsibleProcessBase):
             atfork()
 
         # every CPU except 0 and 1
-        s = mask_to_bytes(0xFFFFFFFFFFFFFFFC)
-        sched_setaffinity(os.getpid(), len(s), s)
+        #s = mask_to_bytes(0xFFFFFFFFFFFFFFFC)
+        #sched_setaffinity(os.getpid(), len(s), s)
 
         while True:
             try:

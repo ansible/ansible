@@ -91,8 +91,8 @@ class PlaybookExecutor:
             list(shell_loader.all(class_only=True))
             list(become_loader.all(class_only=True))
 
-            s = mask_to_bytes(0x01)
-            sched_setaffinity(os.getpid(), len(s), s)
+            #s = mask_to_bytes(0x01)
+            #sched_setaffinity(os.getpid(), len(s), s)
 
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)

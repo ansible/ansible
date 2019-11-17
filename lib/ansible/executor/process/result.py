@@ -60,8 +60,8 @@ class ResultProcess(AnsibleProcessBase):
         self.load_callbacks()
 
     def _run(self):
-        s = mask_to_bytes(0x02)
-        sched_setaffinity(os.getpid(), len(s), s)
+        #s = mask_to_bytes(0x02)
+        #sched_setaffinity(os.getpid(), len(s), s)
 
         while True:
             try:
