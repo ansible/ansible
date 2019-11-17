@@ -1,0 +1,63 @@
+- name: Test podman_network_info
+  when:
+    - ansible_facts.virtualization_type != 'docker'
+    - ansible_facts.distribution == 'RedHat'
+  become: true
+  block:
+
+    - name: Print podman version
+      command: podman version
+
+    - name: Generate random value for network name
+      set_fact:
+        network_name: "{{ 'ansible-test-podman-%0x' % ((2**32) | random) }}"
+
+    - name: Make sure network doesn't exist
+      command: podman network rm {{ network_name }}
+      ignore_errors: true
+
+    - name: Get missing network info
+      podman_network_info:
+        name: "{{ network_name }}"
+      register: nonexist
+      ignore_errors: true
+
+    - name: Check results
+      assert:
+        that:
+          - "'networks' not in nonexist"
+          - nonexist is failed
+
+    - name: Make sure network exists
+      command: podman network create {{ network_name }}
+
+    - name: Get existing network info
+      podman_network_info:
+        name: "{{ network_name }}"
+      register: existing_network
+
+    - name: Dump podman network inspect result
+      debug: var=existing_network
+
+    - name: Comparison with 'podman network inspect'
+      command: podman network inspect "{{ network_name }}"
+      register: podman_inspect
+
+    - name: Convert podman inspect output to JSON
+      set_fact:
+        podman_inspect_result: "{{ podman_inspect.stdout | from_json }}"
+
+    - name: Cleanup
+      command: podman network rm {{ network_name }}
+
+    - name: Make checks
+      assert:
+        that:
+          - "'networks' in existing_network"
+          - existing_network.networks
+          - "existing_network.networks == podman_inspect_result"
+  always:
+
+    - name: Cleanup
+      command: podman network rm {{ network_name }}
+      ignore_errors: true
