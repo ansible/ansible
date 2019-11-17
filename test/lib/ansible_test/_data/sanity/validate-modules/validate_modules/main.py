@@ -1291,16 +1291,7 @@ class ModuleValidator(Validator):
                 if alias in doc_options:
                     doc_options_args.append(alias)
             if len(doc_options_args) == 0:
-                if not data.get('removed_in_version', None) and not arg.startswith('_'):
-                    msg = "Argument '%s' in argument_spec" % arg
-                    if context:
-                        msg += " found in %s" % " -> ".join(context)
-                    msg += " is not documented"
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='undocumented-parameter',
-                        msg=msg
-                    )
+                # Undocumented arguments will be handled later (search for undocumented-parameter)
                 doc_options_arg = {}
             else:
                 doc_options_arg = doc_options[doc_options_args[0]]
