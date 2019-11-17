@@ -12,6 +12,21 @@ Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
 $ConfirmPreference = "None"
 
+Set-Variable -Visibility Public -Option ReadOnly,AllScope,Constant -Name "AddressFamilies" -Value @(
+    [System.Net.Sockets.AddressFamily]::InterNetworkV6,
+    [System.Net.Sockets.AddressFamily]::InterNetwork
+)
+$result = @{changed=$false}
+
+$params = Parse-Args -arguments $args -supports_check_mode $true
+Set-Variable -Visibility Public -Option ReadOnly,AllScope,Constant -Name "log_path" -Value (
+    Get-AnsibleParam $params "log_path"
+)
+$adapter_names = Get-AnsibleParam $params "adapter_names" -Default "*"
+$dns_servers = Get-AnsibleParam $params "dns_servers" -aliases "ipv4_addresses","ip_addresses","addresses" -FailIfEmpty $result
+$check_mode = Get-AnsibleParam $params "_ansible_check_mode" -Default $false
+
+
 Function Write-DebugLog {
     Param(
     [string]$msg
@@ -23,10 +38,6 @@ Function Write-DebugLog {
     $msg = "$date_str $msg"
 
     Write-Debug $msg
-
-    $log_path = $null
-    $log_path = Get-AnsibleParam -obj $params -name "log_path"
-
     if($log_path) {
         Add-Content $log_path $msg
     }
@@ -74,7 +85,7 @@ Function Get-DnsClientServerAddressLegacy {
     return @(
         # IPv4 values
         [PSCustomObject]@{InterfaceAlias=$InterfaceAlias;InterfaceIndex=$idx;AddressFamily=2;ServerAddresses=$adapter_config.DNSServerSearchOrder};
-        # IPv6, only here for completeness since we don't support it yet
+        # IPv6 values
         [PSCustomObject]@{InterfaceAlias=$InterfaceAlias;InterfaceIndex=$idx;AddressFamily=23;ServerAddresses=@()};
     )
 }
@@ -99,7 +110,7 @@ Function Set-DnsClientServerAddressLegacy {
         $arguments = @{}
     }
     Else {
-        $arguments = @{ DNSServerSearchOrder = $ServerAddresses }
+        $arguments = @{ DNSServerSearchOrder = [string[]]$ServerAddresses }
     }
     $res = Invoke-CimMethod -InputObject $adapter_config -MethodName SetDNSServerSearchOrder -Arguments $arguments
 
@@ -112,40 +123,47 @@ If(-not $(Get-Command Set-DnsClientServerAddress -ErrorAction SilentlyContinue))
     New-Alias Set-DnsClientServerAddress Set-DnsClientServerAddressLegacy
 }
 
-Function Get-DnsClientMatch {
+Function Test-DnsClientMatch {
     Param(
         [string] $adapter_name,
-        [string[]] $ipv4_addresses
+        [System.Net.IPAddress[]] $dns_servers
     )
-
     Write-DebugLog ("Getting DNS config for adapter {0}" -f $adapter_name)
 
-    $current_dns_all = Get-DnsClientServerAddress -InterfaceAlias $adapter_name
+    $current_dns = ([System.Net.IPAddress[]](
+        (Get-DnsClientServerAddress -InterfaceAlias $adapter_name).ServerAddresses) | Where-Object {
+            (Assert-IPAddress $_) -and ($_.AddressFamily -in $AddressFamilies)
+        }
+    )
+    Write-DebugLog ("Current DNS settings: {0}" -f ([string[]]$dns_servers -join ", "))
 
-    Write-DebugLog ("Current DNS settings: " + $($current_dns_all | Out-String))
-
-    $current_dns_v4 = ($current_dns_all | Where-Object AddressFamily -eq 2 <# IPv4 #>).ServerAddresses
-
-    If (($null -eq $current_dns_v4) -and ($null -eq $ipv4_addresses)) {
-        $v4_match = $True
+    if(($null -eq $current_dns) -and ($null -eq $dns_servers)) {
+        Write-DebugLog "Neither are dns servers configured nor specified within the playbook."
+        return $true
+    } elseif ($null -eq $current_dns) {
+        Write-DebugLog "There are currently no dns servers specified, but they should be present."
+        return $false
+    } elseif ($null -eq $dns_servers) {
+        Write-DebugLog "There are currently dns servers specified, but they should be absent."
+        return $false
     }
-
-    ElseIf (($null -eq $current_dns_v4) -or ($null -eq $ipv4_addresses)) {
-        $v4_match = $False
+    foreach($address in $current_dns) {
+        if($address -notin $dns_servers) {
+            Write-DebugLog "There are currently fewer dns servers present than specified within the playbook."
+            return $false
+        }
     }
-
-    Else {
-        $v4_match = @(Compare-Object $current_dns_v4 $ipv4_addresses -SyncWindow 0).Count -eq 0
+    foreach($address in $dns_servers) {
+        if($address -notin $current_dns) {
+            Write-DebugLog "There are currently further dns servers present than specified within the playbook."
+            return $false
+        }
     }
-
-    # TODO: implement IPv6
-
-    Write-DebugLog ("Current DNS settings match ({0}) : {1}" -f ($ipv4_addresses -join ", "), $v4_match)
-
-    return $v4_match
+    Write-DebugLog ("Current DNS settings match ({0})." -f ([string[]]$dns_servers -join ", "))
+    return $true
 }
 
-Function Validate-IPAddress {
+Function Assert-IPAddress {
     Param([string] $address)
 
     $addrout = $null
@@ -157,72 +175,54 @@ Function Set-DnsClientAddresses
 {
     Param(
         [string] $adapter_name,
-        [string[]] $ipv4_addresses
+        [System.Net.IPAddress[]] $dns_servers
     )
 
-    Write-DebugLog ("Setting DNS addresses for adapter {0} to ({1})" -f $adapter_name, ($ipv4_addresses -join ", "))
+    Write-DebugLog ("Setting DNS addresses for adapter {0} to ({1})" -f $adapter_name, ([string[]]$dns_servers -join ", "))
 
-    If ($null -eq $ipv4_addresses) {
+    If ($dns_servers) {
+        Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ServerAddresses $dns_servers
+    } Else {
         Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ResetServerAddress
     }
-
-    Else {
-    # this silently ignores invalid IPs, so we validate parseability ourselves up front...
-        Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ServerAddresses $ipv4_addresses
-    }
-
-    # TODO: implement IPv6
 }
 
-$result = @{changed=$false}
-
-$params = Parse-Args -arguments $args -supports_check_mode $true
-
-$adapter_names = Get-AnsibleParam $params "adapter_names" -Default "*"
-$ipv4_addresses = Get-AnsibleParam $params "ipv4_addresses" -FailIfEmpty $result
-
-If($ipv4_addresses -is [string]) {
-    If($ipv4_addresses.Length -gt 0) {
-        $ipv4_addresses = @($ipv4_addresses)
-    }
-    Else {
-        $ipv4_addresses = @()
+if($dns_servers -is [string]) {
+    if($dns_servers.Length -gt 0) {
+        $dns_servers = @($dns_servers)
+    } else {
+        $dns_servers = @()
     }
 }
+# Using object equals here, to check for exact match (without implicit type conversion)
+if([System.Object]::Equals($adapter_names, "*")) {
+    $adapter_names = Get-NetAdapter | Select-Object -ExpandProperty Name
+}
+if($adapter_names -is [string]) {
+    $adapter_names = @($adapter_names)
+}
 
-$check_mode = Get-AnsibleParam $params "_ansible_check_mode" -Default $false
 
 Try {
 
-    Write-DebugLog ("Validating adapter name {0}" -f $adapter_names)
-
-    $adapters = @($adapter_names)
-
-    If($adapter_names -eq "*") {
-        $adapters = Get-NetAdapter | Select-Object -ExpandProperty Name
-    }
-    # TODO: add support for an actual list of adapter names
-    # validate network adapter names
-    ElseIf(@(Get-NetAdapter | Where-Object Name -eq $adapter_names).Count -eq 0) {
-        throw "Invalid network adapter name: {0}" -f $adapter_names
-    }
-
-    Write-DebugLog ("Validating IP addresses ({0})" -f ($ipv4_addresses -join ", "))
-
-    $invalid_addresses = @($ipv4_addresses | Where-Object  { -not (Validate-IPAddress $_) })
-
-    If($invalid_addresses.Count -gt 0) {
+    Write-DebugLog ("Validating IP addresses ({0})" -f ($dns_servers -join ", "))
+    $invalid_addresses = @($dns_servers | Where-Object { -not (Assert-IPAddress $_) })
+    if($invalid_addresses.Count -gt 0) {
         throw "Invalid IP address(es): ({0})" -f ($invalid_addresses -join ", ")
     }
 
-    ForEach($adapter_name in $adapters) {
-        $result.changed = $result.changed -or (-not (Get-DnsClientMatch $adapter_name $ipv4_addresses))
-
-        If($result.changed) {
-            If(-not $check_mode) {
-                Set-DnsClientAddresses $adapter_name $ipv4_addresses
-            }
-            Else {
+    foreach($adapter_name in $adapter_names) {
+        Write-DebugLog ("Validating adapter name {0}" -f $adapter_name)
+        if(-not (Get-DnsClientServerAddress -InterfaceAlias $adapter_name)) {
+            # TODO: add support for an actual list of adapter names
+            # validate network adapter names
+            throw "Invalid network adapter name: {0}" -f $adapter_name
+        }
+        if(-not (Test-DnsClientMatch $adapter_name $dns_servers)) {
+            $result.changed = $true
+            if(-not $check_mode) {
+                Set-DnsClientAddresses $adapter_name $dns_servers
+            } else {
                 Write-DebugLog "Check mode, skipping"
             }
         }
