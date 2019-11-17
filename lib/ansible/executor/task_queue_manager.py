@@ -172,7 +172,7 @@ class TaskQueueManager:
         ####################################################################
 
         for i in range(num):
-            in_q = multiprocessing.Queue()
+            in_q = multiprocessing_context.Queue()
             proc = WorkerProcess(
                 in_q,
                 self._final_q,
