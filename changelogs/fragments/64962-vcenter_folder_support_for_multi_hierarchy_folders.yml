@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix to support multi hierarchy folders (https://github.com/ansible/ansible/issues/64442).

@@ -122,6 +122,80 @@
         - all_folder_results.changed
         - not recreate_folders.changed
 
+- name: Create a root folder for 3 hierarchy
+  vcenter_folder:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "root_{{ item }}_folder"
+    state: present
+  register: all_folder_results
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
+
+- debug:
+    msg: "{{ all_folder_results }}"
+
+- name: Check if the root folder has been create
+  assert:
+    that:
+        - all_folder_results.changed
+
+- name: Create a sub folder for 3 hierarchy
+  vcenter_folder:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "sub_{{ item }}_folder"
+    parent_folder: "root_{{ item }}_folder"
+    state: present
+  register: all_sub_folder_results
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
+
+- debug:
+    msg: "{{ all_sub_folder_results }}"
+
+- name: Check if the sub folder has been create
+  assert:
+    that:
+        - all_sub_folder_results.changed
+
+- name: Create a child folder for 3 hierarchy
+  vcenter_folder:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ dc1 }}"
+    folder_name: "{{ item }}"
+    parent_folder: "sub_{{ item }}_folder"
+    state: present
+  register: all_child_folder_results
+  with_items:
+    - vm
+    - host
+    - datastore
+    - network
+
+- debug:
+    msg: "{{ all_child_folder_results }}"
+
+- name: Check if the child folder has been create
+  assert:
+    that:
+        - all_child_folder_results.changed
+
 ## Testcase: Delete all types of folder
 #
 # Doesn't work with vcsim. Looks like UnregisterAndDestroy isn't supported.
@@ -174,3 +248,28 @@
     assert:
       that:
           - not all_folder_results.changed
+
+  - name: Delete a child folder for 3 hierarchy
+    vcenter_folder:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ dc1 }}"
+      folder_name: "{{ item }}"
+      parent_folder: "sub_{{ item }}_folder"
+      state: absent
+    register: all_child_folder_results
+    with_items:
+      - vm
+      - host
+      - datastore
+      - network
+
+  - debug:
+      msg: "{{ all_child_folder_results }}"
+
+  - name: Check if the child folder has been delete
+    assert:
+      that:
+          - all_child_folder_results.changed

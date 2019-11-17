@@ -180,7 +180,8 @@ class VmwareFolderManager(PyVmomi):
             p_folder_obj = None
             if parent_folder:
                 p_folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                               folder_name=parent_folder,
+                                               folder_name="",
+                                               parent_folder_name=parent_folder,
                                                folder_type=folder_type)
 
                 if not p_folder_obj:
@@ -246,7 +247,8 @@ class VmwareFolderManager(PyVmomi):
             p_folder_obj = None
             if parent_folder:
                 p_folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                               folder_name=parent_folder,
+                                               folder_name="",
+                                               parent_folder_name=parent_folder,
                                                folder_type=folder_type)
 
                 if not p_folder_obj:
@@ -295,7 +297,7 @@ class VmwareFolderManager(PyVmomi):
                                               " exception %s " % to_native(gen_exec))
             self.module.exit_json(**results)
 
-    def get_folder(self, datacenter_name, folder_name, folder_type, parent_folder=None):
+    def get_folder(self, datacenter_name, folder_name, folder_type, parent_folder=None, parent_folder_name=None):
         """
         Get managed object of folder by name
         Returns: Managed object of folder by name
@@ -305,6 +307,10 @@ class VmwareFolderManager(PyVmomi):
         for folder in folder_objs:
             if parent_folder:
                 if folder.name == folder_name and \
+                   self.datacenter_folder_type[folder_type].childType == folder.childType:
+                    return folder
+            elif parent_folder_name:
+                if folder.name == parent_folder_name and \
                    self.datacenter_folder_type[folder_type].childType == folder.childType:
                     return folder
             else:
