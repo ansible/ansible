@@ -118,6 +118,7 @@ class GalaxyCLI(CLI):
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
         self.add_install_options(collection_parser, parents=[common, force])
+        self.add_list_options(collection_parser, parents=[common, collections_path])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
 
         # Add sub parser for the Galaxy role actions
@@ -175,11 +176,15 @@ class GalaxyCLI(CLI):
         delete_parser.set_defaults(func=self.execute_delete)
 
     def add_list_options(self, parser, parents=None):
+        galaxy_type = 'role'
+        if parser.metavar == 'COLLECTION_ACTION':
+            galaxy_type = 'collection'
+
         list_parser = parser.add_parser('list', parents=parents,
-                                        help='Show the name and version of each role installed in the roles_path.')
+                                        help='Show the name and version of each {0} installed in the {0}s_path.'.format(galaxy_type))
         list_parser.set_defaults(func=self.execute_list)
 
-        list_parser.add_argument('role', help='Role', nargs='?', metavar='role')
+        list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
 
     def add_search_options(self, parser, parents=None):
         search_parser = parser.add_parser('search', parents=parents,
@@ -863,6 +868,13 @@ class GalaxyCLI(CLI):
             no_deps = context.CLIARGS['no_deps']
             force_deps = context.CLIARGS['force_with_deps']
 
+            if collections and requirements_file:
+                raise AnsibleError("The positional collection_name arg and --requirements-file are mutually exclusive.")
+            elif not collections and not requirements_file:
+                raise AnsibleError("You must specify a collection name or a requirements file.")
+
+            if requirements_file:
+                requirements_file = GalaxyCLI._resolve_path(requirements_file)
             requirements = self._require_one_of_collections_requirements(collections, requirements_file)
 
             output_path = GalaxyCLI._resolve_path(output_path)
@@ -1004,7 +1016,7 @@ class GalaxyCLI(CLI):
 
     def execute_list(self):
         """
-        lists the roles installed on the local system or matches a single role passed as an argument.
+        lists the roles or collections installed on the local system or matches a single role or collection passed as an argument.
         """
 
         def _display_role(gr):
@@ -1016,39 +1028,50 @@ class GalaxyCLI(CLI):
                 version = "(unknown version)"
             display.display("- %s, %s" % (gr.name, version))
 
-        if context.CLIARGS['role']:
-            # show the requested role, if it exists
-            name = context.CLIARGS['role']
-            gr = GalaxyRole(self.galaxy, self.api, name)
-            if gr.metadata:
-                display.display('# %s' % os.path.dirname(gr.path))
-                _display_role(gr)
+        from pprint import pprint
+        with open('/tmp/out', 'a') as f:
+            pprint(context.CLIARGS, stream=f)
+
+        path_found = False
+        warnings = []
+        galaxy_type = context.CLIARGS['type']
+        if context.CLIARGS['type'] == 'role':
+            if context.CLIARGS['role']:
+                # show the requested role, if it exists
+                name = context.CLIARGS['role']
+                gr = GalaxyRole(self.galaxy, self.api, name)
+                if gr.metadata:
+                    display.display('# %s' % os.path.dirname(gr.path))
+                    _display_role(gr)
+                else:
+                    display.display("- the role %s was not found" % name)
             else:
-                display.display("- the role %s was not found" % name)
-        else:
-            # show all valid roles in the roles_path directory
-            roles_path = context.CLIARGS['roles_path']
-            path_found = False
-            warnings = []
-            for path in roles_path:
-                role_path = os.path.expanduser(path)
-                if not os.path.exists(role_path):
-                    warnings.append("- the configured path %s does not exist." % role_path)
-                    continue
-                elif not os.path.isdir(role_path):
-                    warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
-                    continue
-                display.display('# %s' % role_path)
-                path_files = os.listdir(role_path)
-                path_found = True
-                for path_file in path_files:
-                    gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
-                    if gr.metadata:
-                        _display_role(gr)
-            for w in warnings:
-                display.warning(w)
-            if not path_found:
-                raise AnsibleOptionsError("- None of the provided paths was usable. Please specify a valid path with --roles-path")
+                # show all valid roles in the roles_path directory
+                roles_path = context.CLIARGS['roles_path']
+                for path in roles_path:
+                    role_path = os.path.expanduser(path)
+                    if not os.path.exists(role_path):
+                        warnings.append("- the configured path %s does not exist." % role_path)
+                        continue
+                    elif not os.path.isdir(role_path):
+                        warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
+                        continue
+                    display.display('# %s' % role_path)
+                    path_files = os.listdir(role_path)
+                    path_found = True
+                    for path_file in path_files:
+                        gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
+                        if gr.metadata:
+                            _display_role(gr)
+
+        elif context.CLIARGS['type'] == 'collection':
+            if context.CLIARGS['collection']:
+                pass
+
+        for w in warnings:
+            display.warning(w)
+        if not path_found:
+            raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(galaxy_type))
         return 0
 
     def execute_publish(self):
