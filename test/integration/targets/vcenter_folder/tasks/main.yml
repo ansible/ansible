@@ -130,6 +130,7 @@
     validate_certs: no
     datacenter: "{{ dc1 }}"
     folder_name: "root_{{ item }}_folder"
+    folder_type: "{{ item }}"
     state: present
   register: all_folder_results
   with_items:
@@ -153,8 +154,9 @@
     password: "{{ vcenter_password }}"
     validate_certs: no
     datacenter: "{{ dc1 }}"
-    folder_name: "sub_{{ item }}_folder"
+    folder_name: "sub2_{{ item }}_folder"
     parent_folder: "root_{{ item }}_folder"
+    folder_type: "{{ item }}"
     state: present
   register: all_sub_folder_results
   with_items:
@@ -179,7 +181,8 @@
     validate_certs: no
     datacenter: "{{ dc1 }}"
     folder_name: "{{ item }}"
-    parent_folder: "sub_{{ item }}_folder"
+    folder_type: "{{ item }}"
+    parent_folder: "sub2_{{ item }}_folder"
     state: present
   register: all_child_folder_results
   with_items:
@@ -257,7 +260,8 @@
       validate_certs: no
       datacenter: "{{ dc1 }}"
       folder_name: "{{ item }}"
-      parent_folder: "sub_{{ item }}_folder"
+      folder_type: "{{ item }}"
+      parent_folder: "sub2_{{ item }}_folder"
       state: absent
     register: all_child_folder_results
     with_items:
