@@ -26,6 +26,7 @@ except Exception:
     GITLAB_IMP_ERR = traceback.format_exc()
     HAS_GITLAB_PACKAGE = False
 
+
 def request(module, api_url, project, path, access_token, private_token, rawdata='', method='GET'):
     url = "%s/v4/projects/%s%s" % (api_url, quote_plus(project), path)
     headers = {}
@@ -70,6 +71,7 @@ def findGroup(gitlab_instance, identifier):
         return None
 
     return project
+
 
 def gitlabAuthentication(module):
     gitlab_url = module.params['api_url']
