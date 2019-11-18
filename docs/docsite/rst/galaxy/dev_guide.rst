@@ -236,7 +236,7 @@ Provide the ID of the integration to be disabled. You can find the ID by using t
 
 
 .. seealso::
-  `collections <collections>`_
+  :ref:`collections`
     Sharable collections of modules, playbooks and roles
   :ref:`playbooks_reuse_roles`
     All about ansible roles
