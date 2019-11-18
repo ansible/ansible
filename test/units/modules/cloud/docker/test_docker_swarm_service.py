@@ -2,6 +2,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import pytest
+from sys import version_info as python_version_info
 
 
 class APIErrorMock(Exception):
@@ -220,11 +221,13 @@ def test_has_list_changed(docker_swarm_service):
         sort_key='a'
     )
 
-    with pytest.raises(Exception):
-        docker_swarm_service.has_list_changed(
-            [{'a': 1}, {'a': 2}],
-            [{'a': 1}, {'a': 2}]
-        )
+    if python_version_info.major >= 3:
+        # This test does not work on Python 2
+        with pytest.raises(Exception):
+            docker_swarm_service.has_list_changed(
+                [{'a': 1}, {'a': 2}],
+                [{'a': 1}, {'a': 2}]
+            )
 
     # List sort checking with sort key
     assert not docker_swarm_service.has_list_changed(
