@@ -35,6 +35,7 @@ def cs_argument_spec():
         api_http_method=dict(choices=['get', 'post'], default=os.environ.get('CLOUDSTACK_METHOD')),
         api_timeout=dict(type='int', default=os.environ.get('CLOUDSTACK_TIMEOUT')),
         api_region=dict(default=os.environ.get('CLOUDSTACK_REGION') or 'cloudstack'),
+        api_ssl_verify=dict(default=os.environ.get('CLOUDSTACK_VERIFY')),
     )
 
 
@@ -125,6 +126,7 @@ class AnsibleCloudStack:
             'secret': self.module.params.get('api_secret') or config.get('secret'),
             'timeout': self.module.params.get('api_timeout') or config.get('timeout') or 10,
             'method': self.module.params.get('api_http_method') or config.get('method') or 'get',
+            'verify': self.module.params.get('api_ssl_verify') or config.get('verify'),
         }
         self.result.update({
             'api_region': api_region,
@@ -132,6 +134,7 @@ class AnsibleCloudStack:
             'api_key': api_config['key'],
             'api_timeout': int(api_config['timeout']),
             'api_http_method': api_config['method'],
+            'api_ssl_verify': api_config['verify'],
         })
         if not all([api_config['endpoint'], api_config['key'], api_config['secret']]):
             self.fail_json(msg="Missing api credentials: can not authenticate")
