@@ -222,8 +222,8 @@ def test_has_list_changed(docker_swarm_service):
 
     with pytest.raises(Exception):
         docker_swarm_service.has_list_changed(
-        [{'a': 1}, {'a': 2}],
-        [{'a': 1}, {'a': 2}]
+            [{'a': 1}, {'a': 2}],
+            [{'a': 1}, {'a': 2}]
         )
 
     # List sort checking with sort key
