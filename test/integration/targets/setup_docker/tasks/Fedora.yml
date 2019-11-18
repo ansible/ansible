@@ -18,3 +18,4 @@
     name: "{{ docker_packages }}"
     state: present
     enablerepo: docker-ce-test
+  notify: cleanup docker
