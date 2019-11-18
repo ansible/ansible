@@ -159,7 +159,7 @@ from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
-from ansible.module_utils.gitlab import gitlabAuthentication, gitlab
+from ansible.module_utils.gitlab import gitlabAuthentication
 
 try:
     cmp

@@ -122,7 +122,7 @@ except Exception:
     GITLAB_IMP_ERR = traceback.format_exc()
     HAS_GITLAB_PACKAGE = False
 
-from ansible.module_utils.gitlab import gitlabAuthentication, gitlab
+from ansible.module_utils.gitlab import gitlabAuthentication
 
 
 class GitlabProjectVariables(object):
