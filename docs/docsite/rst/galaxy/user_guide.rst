@@ -419,7 +419,7 @@ Use ``remove`` to delete a role from *roles_path*:
 
 
 .. seealso::
-  `collections <collections>`_
+  :ref:`collections`
     Sharable collections of modules, playbooks and roles
-  `roles <playbooks_reuse_roles>`_
+  :ref:`playbooks_reuse_roles`
     Reusable tasks, handlers, and other files in a known directory structure
