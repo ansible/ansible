@@ -1,3 +1,7 @@
+- name: Backup current firewall configuration
+  win_firewall_profile:
+  register: win_firewall_profile_backup
+
 - name: Reset potentially leftovers profiles configuration
   win_firewall_profile:
     enabled: False
@@ -124,3 +128,16 @@
     - win_firewall_profile_again.Public.log_allowed == 'True'
     - win_firewall_profile_again.Public.log_blocked == 'True'
     - win_firewall_profile_again.Public.log_ignored == 'True'
+
+- name: Restore previous firewall configuration
+  win_firewall_profile:
+    enabled: "{{ item.value.enabled }}"
+    inbound: "{{ item.value.default_inbound_action }}"
+    outbound: "{{ item.value.default_outbound_action }}"
+    log_file: "{{ item.value.log_file_name }}"
+    log_max_size: "{{ item.value.log_max_size_kilobytes }}"
+    log_allowed: "{{ item.value.log_allowed }}"
+    log_blocked: "{{ item.value.log_blocked }}"
+    log_ignored: "{{ item.value.log_ignored }}"
+    profile: "{{ item.key }}"
+  loop: "{{ { 'Public': win_firewall_profile_backup.Public, 'Private': win_firewall_profile_backup.Private, 'Domain': win_firewall_profile_backup.Domain } | dict2items }}"

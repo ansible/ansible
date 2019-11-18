@@ -16,7 +16,7 @@ module: win_firewall_profile
 version_added: "2.10"
 short_description: Windows firewall profile default action automation
 description:
-  - Allows you to update settings for Windows firewall profiles default action.
+  - Allows you to update settings for Windows firewall profiles default actions.
 options:
   profiles:
     description:
