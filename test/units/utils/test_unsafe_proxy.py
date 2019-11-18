@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.six import PY3
-from ansible.utils.unsafe_proxy import AnsibleUnsafe, AnsibleUnsafeBytes, AnsibleUnsafeText, wrap_var
+from ansible.utils.unsafe_proxy import AnsibleUnsafe, AnsibleUnsafeBytes, AnsibleUnsafeText, unwrap_var, wrap_var
 
 
 def test_wrap_var_text():
@@ -108,3 +108,37 @@ def test_AnsibleUnsafeText():
 
 def test_AnsibleUnsafeBytes():
     assert isinstance(AnsibleUnsafeBytes(b'foo'), AnsibleUnsafe)
+
+
+def test_unwrap_var():
+    value = {
+        'text': AnsibleUnsafeText(u'text'),
+        'bytes': AnsibleUnsafeBytes(b'bytes'),
+        'dict': {
+            'text': AnsibleUnsafeText(u'text'),
+            'bytes': AnsibleUnsafeBytes(b'bytes'),
+        },
+        'list': [
+            AnsibleUnsafeText(u'text'),
+            AnsibleUnsafeBytes(b'bytes'),
+        ],
+        'set': set(
+            (
+                AnsibleUnsafeText(u'text'),
+                AnsibleUnsafeBytes(b'bytes'),
+            )
+        ),
+        'tuple': (
+            AnsibleUnsafeText(u'text'),
+            AnsibleUnsafeBytes(b'bytes'),
+        )
+    }
+
+    out = unwrap_var(value)
+    assert not isinstance(out['text'], AnsibleUnsafe)
+    assert not isinstance(out['bytes'], AnsibleUnsafe)
+    assert not isinstance(out['dict']['text'], AnsibleUnsafe)
+    assert not isinstance(out['list'][0], AnsibleUnsafe)
+    assert not isinstance(next(iter(out['set'])), AnsibleUnsafe)
+    assert isinstance(out['tuple'][0], AnsibleUnsafe)
+    assert not isinstance(unwrap_var(AnsibleUnsafeText(u'text')), AnsibleUnsafe)

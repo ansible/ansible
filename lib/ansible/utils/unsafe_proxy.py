@@ -114,26 +114,64 @@ def _wrap_set(v):
 
 
 def wrap_var(v):
+    """Recursively wraps a variable with ``AnsibleUnsafe`` subclasses to prevent values from being
+    templated by the template engine
+
+    Supports:
+        bytes
+        text
+        Mapping (dict)
+        MutableSequence (list)
+        Set
+    """
     if v is None or isinstance(v, AnsibleUnsafe):
         return v
 
-    if isinstance(v, Mapping):
-        v = _wrap_dict(v)
-    elif isinstance(v, Set):
-        v = _wrap_set(v)
-    elif is_sequence(v):
-        v = _wrap_sequence(v)
-    elif isinstance(v, binary_type):
-        v = AnsibleUnsafeBytes(v)
+    if isinstance(v, binary_type):
+        return AnsibleUnsafeBytes(v)
     elif isinstance(v, text_type):
-        v = AnsibleUnsafeText(v)
+        return AnsibleUnsafeText(v)
+    elif isinstance(v, Set):
+        return _wrap_set(v)
+    elif isinstance(v, Mapping):
+        return_wrap_dict(v)
+    elif is_sequence(v):
+        return _wrap_sequence(v)
 
     return v
 
 
 def to_unsafe_bytes(*args, **kwargs):
-    return wrap_var(to_bytes(*args, **kwargs))
+    """Convert a value to bytes, and wrap with ``AnsibleUnsafeBytes``"""
+    return AnsibleUnsafeBytes(to_bytes(*args, **kwargs))
 
 
 def to_unsafe_text(*args, **kwargs):
+    """Convert a value to text, and wrap with ``AnsibleUnsafeText``"""
     return wrap_var(to_text(*args, **kwargs))
+
+
+def unwrap_var(v):
+    """Recursively unwraps a variable to remove ``AnsibleUnsafe`` subclasses, converting values
+    to their native types.
+
+    This should be used minimally, and only in very specific cases, such as when passing data to a remote
+    Python API where the receiving python code does not understand our subclasses, potentially due to
+    performing type checks like ``if type(value) == 'str':``
+
+    This is not required to convert values to JSON, as the default JSON encoder will implicitly ignore the
+    subclass.
+    """
+    if isinstance(v, AnsibleUnsafeBytes):
+        return binary_type(v)
+    elif isinstance(v, AnsibleUnsafeText):
+        return text_type(v)
+    elif isinstance(v, Set):
+        return set(unwrap_var(value) for value in v)
+    elif isinstance(v, Mapping):
+        return dict((key, unwrap_var(value)) for key, value in v.items())
+    elif is_sequence(v):
+        v_type = type(v)
+        return v_type(unwrap_var(value) for value in v)
+
+    return v
