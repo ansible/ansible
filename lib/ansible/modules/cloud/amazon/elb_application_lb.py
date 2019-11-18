@@ -293,6 +293,15 @@ EXAMPLES = '''
                   ContentType: "text/plain"
                   MessageBody: "This is the page you're looking for"
                   StatusCode: "200"
+          - Conditions:
+              - Field: source-ip
+                SourceIpConfig:
+                  Values:
+                    - '192.168.10.10/32'
+            Priority: '4'
+            Actions:
+              - TargetGroupName: canary-test-target-group
+                Type: forward
     state: present
 
 # Remove an ELB
