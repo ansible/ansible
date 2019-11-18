@@ -29,6 +29,7 @@ from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
+from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils import py3compat
 from ansible.utils.path import cleanup_tmp_file, makedirs_safe, unfrackpath
 
@@ -86,6 +87,8 @@ def ensure_type(value, value_type, origin=None):
         value_type = value_type.lower()
 
     if value is not None:
+        ansible_string_types = (string_types, AnsibleVaultEncryptedUnicode)
+
         if value_type in ('boolean', 'bool'):
             value = boolean(value, strict=False)
 
@@ -96,8 +99,8 @@ def ensure_type(value, value_type, origin=None):
             value = float(value)
 
         elif value_type == 'list':
-            if isinstance(value, string_types):
-                value = [x.strip() for x in value.split(',')]
+            if isinstance(value, ansible_string_types):
+                value = [x.strip() for x in to_text(value, errors='surrogate_or_strict').split(',')]
             elif not isinstance(value, Sequence):
                 errmsg = 'list'
 
@@ -109,14 +112,14 @@ def ensure_type(value, value_type, origin=None):
                 errmsg = 'None'
 
         elif value_type == 'path':
-            if isinstance(value, string_types):
-                value = resolve_path(value, basedir=basedir)
+            if isinstance(value, ansible_string_types):
+                value = resolve_path(to_text(value, errors='surrogate_or_strict'), basedir=basedir)
             else:
                 errmsg = 'path'
 
         elif value_type in ('tmp', 'temppath', 'tmppath'):
-            if isinstance(value, string_types):
-                value = resolve_path(value, basedir=basedir)
+            if isinstance(value, ansible_string_types):
+                value = resolve_path(to_text(value, errors='surrogate_or_strict'), basedir=basedir)
                 if not os.path.exists(value):
                     makedirs_safe(value, 0o700)
                 prefix = 'ansible-local-%s' % os.getpid()
@@ -126,8 +129,8 @@ def ensure_type(value, value_type, origin=None):
                 errmsg = 'temppath'
 
         elif value_type == 'pathspec':
-            if isinstance(value, string_types):
-                value = value.split(os.pathsep)
+            if isinstance(value, ansible_string_types):
+                value = to_text(value, errors='surrogate_or_strict').split(os.pathsep)
 
             if isinstance(value, Sequence):
                 value = [resolve_path(x, basedir=basedir) for x in value]
@@ -135,8 +138,8 @@ def ensure_type(value, value_type, origin=None):
                 errmsg = 'pathspec'
 
         elif value_type == 'pathlist':
-            if isinstance(value, string_types):
-                value = value.split(',')
+            if isinstance(value, ansible_string_types):
+                value = to_text(value, errors='surrogate_or_strict').split(',')
 
             if isinstance(value, Sequence):
                 value = [resolve_path(x, basedir=basedir) for x in value]
@@ -144,14 +147,14 @@ def ensure_type(value, value_type, origin=None):
                 errmsg = 'pathlist'
 
         elif value_type in ('str', 'string'):
-            if isinstance(value, string_types):
+            if isinstance(value, ansible_string_types):
                 value = unquote(to_text(value, errors='surrogate_or_strict'))
             else:
                 errmsg = 'string'
 
         # defaults to string type
-        elif isinstance(value, string_types):
-            value = unquote(value)
+        elif isinstance(value, ansible_string_types):
+            value = unquote(to_text(value, errors='surrogate_or_strict'))
 
         if errmsg:
             raise ValueError('Invalid type provided for "%s": %s' % (errmsg, to_native(value)))
