@@ -31,13 +31,19 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 10050
+        port: "10050"
+      - type: 1
+        main: 0
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "{$MACRO}"
       - type: 4
         main: 1
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 12345
+        port: "12345"
     proxy: ExampleProxy
     tls_psk_identity: test
     tls_connect: 2
@@ -80,13 +86,19 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 10050
+        port: "10050"
+      - type: 1
+        main: 0
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "{$MACRO}"
       - type: 4
         main: 1
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 12345
+        port: "12345"
     proxy: ExampleProxy
     tls_psk_identity: test
     tls_connect: 2
@@ -97,6 +109,118 @@
   assert:
       that:
           - "not zabbix_host1 is changed"
+
+- name: "test: try to create the same host with the same settings and force false"
+  zabbix_host:
+    force: false
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    visible_name: ExampleName
+    description: My ExampleHost Description
+    host_groups:
+      - Linux servers
+      - Zabbix servers
+    link_templates:
+      - Template App IMAP Service
+      - Template App NTP Service
+    status: enabled
+    state: present
+    inventory_mode: manual
+    inventory_zabbix:
+      tag: test-tag
+      alias: test-alias
+      notes: "Special Informations: test-info"
+      location: test-location
+      site_rack: test-rack
+      os: test-os
+      hardware: test-hw
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "10050"
+      - type: 1
+        main: 0
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "{$MACRO}"
+      - type: 4
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "12345"
+    proxy: ExampleProxy
+    tls_psk_identity: test
+    tls_connect: 2
+    tls_psk: 123456789abcdef123456789abcdef12
+  register: zabbix_host1
+
+- name: updating with same values and force false should be idempotent
+  assert:
+      that:
+          - "not zabbix_host1 is changed"
+
+- name: "test: try to create the same host changing one parameter in the inventory with force false"
+  zabbix_host:
+    force: false
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    visible_name: ExampleName
+    description: My ExampleHost Description
+    host_groups:
+      - Linux servers
+      - Zabbix servers
+    link_templates:
+      - Template App IMAP Service
+      - Template App NTP Service
+    status: enabled
+    state: present
+    inventory_mode: manual
+    inventory_zabbix:
+      tag: test-tag
+      alias: test-alias
+      notes: "Special Informations: test-info"
+      location: test-location
+      site_rack: test-rack
+      os: test-os
+      hardware: test-hw-modified
+    interfaces:
+      - type: 1
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "10050"
+      - type: 1
+        main: 0
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "{$MACRO}"
+      - type: 4
+        main: 1
+        useip: 1
+        ip: 10.1.1.1
+        dns: ""
+        port: "12345"
+    proxy: ExampleProxy
+    tls_psk_identity: test
+    tls_connect: 2
+    tls_psk: 123456789abcdef123456789abcdef12
+  register: zabbix_host1
+
+- name: changing the value of an already defined inventory should work and mark task as changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
 
 - name: "test: change visible_name"
   zabbix_host:
@@ -524,7 +648,7 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 10050
+        port: "10050"
   register: zabbix_host1
 
 - name: expect to succeed and that things have changed
@@ -544,7 +668,7 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 10050
+        port: "10050"
   register: zabbix_host1
 
 - name: expect to succeed and that things have not changed
@@ -564,7 +688,7 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 12345
+        port: "12345"
     force: no
   register: zabbix_host1
 
@@ -585,13 +709,13 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 10050
+        port: "10050"
       - type: 4
         main: 1
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 12345
+        port: "12345"
   register: zabbix_host1
 
 - name: expect to succeed and that things have not changed
