@@ -86,31 +86,31 @@ def make_become_cmd(play_context, cmd, executable=None):
         version="2.12"
     )
 
-    if not cmd or not self.become:
+    if not cmd or not play_context.become:
         return cmd
 
-    become_method = self.become_method
+    become_method = play_context.become_method
 
     # load/call become plugins here
     plugin = play_context['become_plugin']
 
     if plugin:
         options = {
-            'become_exe': self.become_exe or become_method,
-            'become_flags': self.become_flags or '',
-            'become_user': self.become_user,
-            'become_pass': self.become_pass
+            'become_exe': play_context.become_exe or become_method,
+            'become_flags': play_context.become_flags or '',
+            'become_user': play_context.become_user,
+            'become_pass': play_context.become_pass
         }
         plugin.set_options(direct=options)
 
         if not executable:
-            executable = self.executable
+            executable = play_context.executable
 
         shell = get_shell_plugin(executable=executable)
         cmd = plugin.build_become_command(cmd, shell)
         # for backwards compat:
-        if self.become_pass:
-            self.prompt = plugin.prompt
+        if play_context.become_pass:
+            play_context.prompt = plugin.prompt
     else:
         raise AnsibleError("Privilege escalation method not found: %s" % become_method)
 

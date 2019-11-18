@@ -169,14 +169,9 @@ def post_validate(data, templar):
         try:
             # Run the post-validator if present. These methods are responsible for
             # using the given templar to template the values, if required.
-            # FIXME: this needs work
-            # method = getattr(self, '_post_validate_%s' % name, None)
-            # if method:
-            #     value = method(attribute, getattr(self, name), templar)
-            # elif attribute.isa == 'class':
-            #     value = getattr(self, name)
-            # else:
-            if True:
+            if attribute['post_validate_method']:
+                value = attribute['post_validate_method'](attribute, data[name], templar)
+            else:
                 # if the attribute contains a variable, template it now
                 value = templar.template(data[name])
 
@@ -198,7 +193,7 @@ def post_validate(data, templar):
         except (TypeError, ValueError) as e:
             value = data[name]
             raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
-                                     "The error was: %s" % (name, value, attribute['isa'], e), obj=data.ds, orig_exc=e)
+                                     "The error was: %s" % (name, value, attribute['isa'], e), obj=data.get('ds', None), orig_exc=e)
         except (AnsibleUndefinedVariable, UndefinedError) as e:
             if templar._fail_on_undefined_errors and name != 'name':
                 if name == 'args':
@@ -471,8 +466,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         new_me._uuid = self._uuid
 
         # if the ds value was set on the object, copy it to the new copy too
-        if hasattr(self, '_ds'):
-            new_me._ds = self._ds
+        new_me._ds = getattr(self, '_ds', None)
 
         return new_me
 
@@ -609,6 +603,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         setattr(self, '_uuid', data.get('uuid'))
         self._finalized = data.get('finalized', False)
         self._squashed = data.get('squashed', False)
+        self._ds = data.get('ds', None)
 
         return self
 

@@ -739,7 +739,10 @@ class Templar:
         return self._lookup(name, *args, **kwargs)
 
     def _lookup(self, name, *args, **kwargs):
-        instance = lookup_loader.get(name.lower())(loader=self._loader, templar=self)
+        try:
+            instance = lookup_loader.get(name.lower())(loader=self._loader, templar=self)
+        except KeyError:
+            raise AnsibleError("lookup plugin (%s) not found" % (name.lower(),))
 
         if instance is not None:
             wantlist = kwargs.pop('wantlist', False)

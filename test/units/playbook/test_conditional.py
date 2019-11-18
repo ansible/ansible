@@ -7,21 +7,19 @@ from ansible.plugins.strategy import SharedPluginLoaderObj
 from ansible.template import Templar
 from ansible import errors
 
-from ansible.playbook import conditional
+from ansible.playbook.conditional import evaluate_conditional
 
 
 class TestConditional(unittest.TestCase):
     def setUp(self):
         self.loader = DictDataLoader({})
-        self.cond = conditional.Conditional(loader=self.loader)
         self.shared_loader = SharedPluginLoaderObj()
         self.templar = Templar(loader=self.loader, variables={})
 
     def _eval_con(self, when=None, variables=None):
         when = when or []
         variables = variables or {}
-        self.cond.when = when
-        ret = self.cond.evaluate_conditional(self.templar, variables)
+        ret = evaluate_conditional(when, None, self.templar, variables)
         return ret
 
     def test_false(self):
@@ -35,16 +33,14 @@ class TestConditional(unittest.TestCase):
         self.assertTrue(ret)
 
     def test_true_boolean(self):
-        self.cond.when = [True]
         m = MagicMock()
-        ret = self.cond.evaluate_conditional(m, {})
+        ret = evaluate_conditional([True], None, m, {})
         self.assertTrue(ret)
         self.assertFalse(m.is_template.called)
 
     def test_false_boolean(self):
-        self.cond.when = [False]
         m = MagicMock()
-        ret = self.cond.evaluate_conditional(m, {})
+        ret = evaluate_conditional([False], None, m, {})
         self.assertFalse(ret)
         self.assertFalse(m.is_template.called)
 

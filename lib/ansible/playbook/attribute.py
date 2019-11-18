@@ -37,6 +37,7 @@ class Attribute:
         priority=0,
         class_type=None,
         always_post_validate=False,
+        post_validate_method=None,
         inherit=True,
         alias=None,
         extend=False,
@@ -85,6 +86,7 @@ class Attribute:
         self.priority = priority
         self.class_type = class_type
         self.always_post_validate = always_post_validate
+        self.post_validate_method = post_validate_method
         self.inherit = inherit
         self.alias = alias
         self.extend = extend
@@ -127,6 +129,7 @@ class Attribute:
             'priority': self.priority,
             'class_type': None,
             'always_post_validate': self.always_post_validate,
+            'post_validate_method': self.post_validate_method,
             'inherit': self.inherit,
             'alias': self.alias,
             'extend': self.extend,

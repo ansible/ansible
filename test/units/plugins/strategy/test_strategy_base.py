@@ -209,6 +209,7 @@ class TestStrategyBase(unittest.TestCase):
             self.assertEqual(strategy_base._pending_results, 3)
         finally:
             tqm.cleanup()
+            tqm.terminate()
 
     def test_strategy_base_process_pending_results(self):
         mock_tqm = MagicMock()
@@ -543,3 +544,4 @@ class TestStrategyBase(unittest.TestCase):
         finally:
             strategy_base.cleanup()
             tqm.cleanup()
+            tqm.terminate()

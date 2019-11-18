@@ -202,14 +202,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         loop_var = 'item'
 
-        def _evaluate_conditional(templar, variables):
-            item = variables.get(loop_var)
-            if item == 'b':
-                return False
-            return True
-
         mock_task = MagicMock()
-        mock_task.evaluate_conditional.side_effect = _evaluate_conditional
 
         mock_play_context = MagicMock()
 
@@ -290,12 +283,14 @@ class TestTaskExecutor(unittest.TestCase):
         items = ['a', 'b', 'c']
         mock_task.action = 'yum'
         mock_task.args = {'name': '{{item}}'}
+        mock_task.when = ["item != 'b'"]
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, [['a', 'c']])
         self.assertEqual(mock_task.args, {'name': ['a', 'c']})
 
         mock_task.action = '{{pkg_mgr}}'
         mock_task.args = {'name': '{{item}}'}
+        mock_task.when = ["item != 'b'"]
         new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, [['a', 'c']])
         self.assertEqual(mock_task.args, {'name': ['a', 'c']})
@@ -303,6 +298,7 @@ class TestTaskExecutor(unittest.TestCase):
         # New loop_var
         mock_task.action = 'yum'
         mock_task.args = {'name': '{{a_loop_var_item}}'}
+        mock_task.when = ["a_loop_var_item != 'b'"]
         mock_task.loop_control = {'loop_var': 'a_loop_var_item'}
         loop_var = 'a_loop_var_item'
         new_items = te._squash_items(items=items, loop_var='a_loop_var_item', variables=job_vars)
@@ -490,7 +486,6 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.until = None
         mock_task.changed_when = None
         mock_task.failed_when = None
-        mock_task.post_validate.return_value = None
         # mock_task.async_val cannot be left unset, because on Python 3 MagicMock()
         # > 0 raises a TypeError   There are two reasons for using the value 1
         # here: on Python 2 comparing MagicMock() > 0 returns True, and the
@@ -499,7 +494,6 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.poll = 0
 
         mock_play_context = MagicMock()
-        mock_play_context.post_validate.return_value = None
         mock_play_context.update_vars.return_value = None
 
         mock_connection = MagicMock()

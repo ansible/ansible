@@ -27,7 +27,7 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
-from ansible.module_utils.six import text_type
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.display import Display
@@ -135,7 +135,7 @@ def _check_conditional(conditional, templar, all_vars):
         if bare_vars_warning and not isinstance(conditional, bool):
             display.deprecated('evaluating %s as a bare variable, this behaviour will go away and you might need to add |bool'
                                ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle.' % conditional, "2.12")
-        if not isinstance(conditional, text_type) or conditional == "":
+        if not isinstance(conditional, string_types) or conditional == "":
             return conditional
 
         # update the lookups flag, as the string returned above may now be unsafe
@@ -203,7 +203,7 @@ def _check_conditional(conditional, templar, all_vars):
             if bare_vars_warning and not isinstance(conditional, bool):
                 display.deprecated('evaluating %s as a bare variable, this behaviour will go away and you might need to add |bool'
                                    ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle' % conditional, "2.12")
-            if not isinstance(conditional, text_type) or conditional == "":
+            if not isinstance(conditional, string_types) or conditional == "":
                 return conditional
 
             # update the lookups flag, as the string returned above may now be unsafe
