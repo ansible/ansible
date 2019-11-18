@@ -8,6 +8,7 @@ from __future__ import absolute_import
 import json
 from distutils.version import StrictVersion
 
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 
