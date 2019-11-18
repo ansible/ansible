@@ -1,0 +1,2 @@
+bugfixes:
+- Support virtualization for podman container (https://github.com/ansible/ansible/issues/64954).
