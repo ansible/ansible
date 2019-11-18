@@ -3,6 +3,9 @@
 # Copyright: (c) 2019, Jason Neurohr <jason@jasonneurohr.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -15,7 +18,7 @@ module: randomstring
 
 short_description: Generates a random string of the desired length with an optional prefix and/or suffix.
 
-version_added: "2.9"
+version_added: "2.10"
 
 description:
     - A module to generate a random string of the desired length with an optional prefix and/or suffix.
@@ -26,16 +29,17 @@ options:
         description:
             - A prefix to add to the output
         required: true
-        default: None
+        type: str
     suffix:
         description:
             - A suffix to add to the output
         required: false
-        default: None
+        type: str
     length:
         description:
             - The length of the output exclusive of the prefix and/or suffix
         required: false
+        type: int
         default: 8
 
 author:
@@ -91,6 +95,7 @@ import string
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def run_module():
     module_args = dict(
         prefix=dict(type='str', required=False, default=None),
@@ -104,7 +109,7 @@ def run_module():
     )
 
     output = generate_random_string(
-        module.params['prefix'], 
+        module.params['prefix'],
         module.params['suffix'],
         module.params['length']
     )
@@ -116,6 +121,7 @@ def run_module():
     )
 
     module.exit_json(**result)
+
 
 def generate_random_string(prefix=None, suffix=None, length=8):
     """Generates a random string of letters and digits"""
@@ -132,8 +138,10 @@ def generate_random_string(prefix=None, suffix=None, length=8):
 
     return output
 
+
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()
