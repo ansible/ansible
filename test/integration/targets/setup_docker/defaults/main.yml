@@ -1,6 +1,7 @@
 docker_cli_version: '0.0'
 docker_api_version: '0.0'
 docker_py_version: '0.0'
+docker_skip_cleanup: no
 docker_prereq_packages: []
 docker_packages:
   - docker-ce
