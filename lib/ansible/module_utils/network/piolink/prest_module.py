@@ -25,7 +25,7 @@ CMD_AMSS_TYPE = 'amss'
 
 
 class PrestModule(object):
-    def __init__(self):
+    def __init__(self, module):
         self.headers = {'Authorization': '',
                         'Content-Type': ''}
 

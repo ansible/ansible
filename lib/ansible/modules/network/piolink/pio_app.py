@@ -18,6 +18,8 @@ short_description: Configuring WEBFRONT-K Applications
 description:
    - You can manage the WEBFRONT-K applications.
 version_added: '2.10'
+requirements:
+   - requests
 options:
   host:
     description:

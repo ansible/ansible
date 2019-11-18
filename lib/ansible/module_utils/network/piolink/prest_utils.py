@@ -25,7 +25,7 @@ from ansible.module_utils.basic import missing_required_lib
 class PrestUtils(PrestModule):
     def __init__(self, module):
         super(PrestUtils, self).__init__()
-        
+
         if not HAS_REQUESTS:
             module.fail_json(msg=missing_required_lib('requests'))
 
