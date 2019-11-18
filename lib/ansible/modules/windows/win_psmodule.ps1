@@ -85,7 +85,7 @@ Function Install-PrereqModule {
                         Install-Module @install_params > $null
                     }
                     else {
-                        Update-Module @install_params > null
+                        Update-Module @install_params > $null
                     }
 
                     $result.changed = $true
