@@ -47,9 +47,9 @@ class VorteilClient(object):
     def __init__(self, module):
         self.module = module
         self.repo_cookie = ""
-        self.repo_url = "{}://{}".format(self.module.params['repo_proto'], self.module.params['repo_address'])
+        self.repo_url = "{0}://{1}".format(self.module.params['repo_proto'], self.module.params['repo_address'])
         if self.module.params['repo_port'] is not None:
-            self.repo_url += ":{}".format(self.module.params["repo_port"])
+            self.repo_url += ":{0}".format(self.module.params["repo_port"])
 
         if not HAS_REQUESTS:
             self.module.fail_json(msg=missing_required_lib('requests'),
@@ -71,13 +71,13 @@ class VorteilClient(object):
 
         # For the Vorteil.io repo the /api/login endpoint services logins and Cookies
         param = "api/login"
-        url = '{}/{}'.format(self.repo_url, param)
+        url = '{0}/{1}'.format(self.repo_url, param)
 
         # Create the payload for the authentication. Example of the payload is:
         # {
         # "key" : "{{repo-key}}" <--- where repo-key is the User Authentication Key (see support.vorteil.io)
         # }
-        payload = '{{"key":"{}"}}'.format(self.module.params['repo_key'])
+        payload = '{{"key":"{0}"}}'.format(self.module.params['repo_key'])
         headers = {
             'accept': "application/json",
             'content-type': "application/json"
@@ -86,7 +86,7 @@ class VorteilClient(object):
         response = requests.request("POST", url, data=payload, headers=headers, verify=False)
 
         if response.status_code != 200:
-            return ('POST /api/login/ {}'.format(response.status_code)), True
+            return ('POST /api/login/ {0}'.format(response.status_code)), True
         self.repo_cookie = response.cookies
         return self.repo_cookie, False
 
@@ -104,7 +104,7 @@ class VorteilClient(object):
         # To test the GraphQL queries, use the Vorteil Developer Studio or the Vorteil Repository GraphQL
         # interfaces for testing
         param = "graphql?query=query{listBuckets{edges{node{name}}}}"
-        url = '{}/{}'.format(self.repo_url, param)
+        url = '{0}/{1}'.format(self.repo_url, param)
 
         headers = {
             'accept': "application/json",
@@ -116,7 +116,7 @@ class VorteilClient(object):
             self.module.fail_json(msg="Vorteil.io Repo Response: " + response.json()['errors'][0]['message'])
 
         if response.status_code != 200:
-            return Exception('GET {} {}'.format(url, response.status_code)), True
+            return Exception('GET {0} {1}'.format(url, response.status_code)), True
         return response.json()['data']['listBuckets']['edges'], False
 
     # Short description: list all of the provisioners configured in the repository
@@ -133,7 +133,7 @@ class VorteilClient(object):
         # To test the GraphQL queries, use the Vorteil Developer Studio or the Vorteil Repository GraphQL
         # interfaces for testing
         param = "graphql?query=query{listProvisioners{provisioners{name, type}}}"
-        url = '{}/{}'.format(self.repo_url, param)
+        url = '{0}/{1}'.format(self.repo_url, param)
 
         headers = {
             'accept': "application/json",
@@ -145,7 +145,7 @@ class VorteilClient(object):
             self.module.fail_json(msg="Vorteil.io Repo Response: " + response.json()['errors'][0]['message'])
 
         if response.status_code != 200:
-            return Exception('GET {} {}'.format(url, response.status_code)), True
+            return Exception('GET {0} {1}'.format(url, response.status_code)), True
         return response.json()['data']['listProvisioners']['provisioners'], False
 
     # Short description: list applications within a specific bucket
@@ -163,7 +163,7 @@ class VorteilClient(object):
         # interfaces for testing
         param = 'graphql?query=query{bucket(name:"' + self.module.params['repo_bucket'] + \
                 '"){appsList{edges{node{name}}}}}'
-        url = '{}/{}'.format(self.repo_url, param)
+        url = '{0}/{1}'.format(self.repo_url, param)
 
         headers = {
             'accept': "application/json",
@@ -178,7 +178,7 @@ class VorteilClient(object):
         retresponse['bucket'] = self.module.params['repo_bucket']
 
         if response.status_code != 200:
-            return Exception('GET {} {}'.format(url, response.status_code)), True
+            return Exception('GET {0} {1}'.format(url, response.status_code)), True
         return retresponse, False
 
     # Short description: get the packageInfo for a specific application
@@ -220,7 +220,7 @@ class VorteilClient(object):
         param = 'graphql?query=query{packageConfig(bucket:"' + self.module.params['repo_bucket'] + '",app:"' + \
                 self.module.params[
                     'repo_app'] + '",ref:""){info{' + attr_list_str + ' }}}'
-        url = '{}/{}'.format(self.repo_url, param)
+        url = '{0}/{1}'.format(self.repo_url, param)
         headers = {
             'accept': "application/json",
             'content-type': "application/json"
@@ -234,7 +234,7 @@ class VorteilClient(object):
         retresponse['bucket'] = self.module.params['repo_bucket']
         retresponse['app'] = self.module.params['repo_app']
         if response.status_code != 200:
-            return Exception('GET {} {}'.format(url, response.status_code)), True
+            return Exception('GET {0} {1}'.format(url, response.status_code)), True
         return retresponse, False
 
     # Short description: create the injection URI for the disk build process
@@ -259,7 +259,7 @@ class VorteilClient(object):
         param = 'graphql?query=mutation{build(germ: ":' + self.module.params['repo_bucket'] + '/' + \
                 self.module.params['repo_app'] + '", injections: ["' + repo_uuid + \
                 '"],kernelType: "PROD", diskFormat: "' + self.module.params['repo_disktype'] + '"){uri,job{id}}}'
-        url = '{}/{}'.format(self.repo_url, param)
+        url = '{0}/{1}'.format(self.repo_url, param)
 
         headers = {
             'accept': "*/*",
@@ -274,7 +274,7 @@ class VorteilClient(object):
 
         retresponse['build']['uuid'] = repo_uuid
         if response.status_code != 200:
-            return Exception('GET {} {}'.format(url, response.status_code)), True
+            return Exception('GET {0} {1}'.format(url, response.status_code)), True
 
         return retresponse, False
 
@@ -293,7 +293,7 @@ class VorteilClient(object):
         """
 
         param = 'api/build/' + self.module.params['injection_uuiduri']['response']['build']['uri']
-        url = '{}/{}'.format(self.repo_url, param)
+        url = '{0}/{1}'.format(self.repo_url, param)
 
         headers = {
             'accept': "*/*",
@@ -312,7 +312,7 @@ class VorteilClient(object):
         response = requests.request("POST", url, data=payload, headers=headers, verify=False, cookies=self.repo_cookie)
 
         if response.status_code != 200:
-            return Exception('POST {} {}'.format(url, response.status_code)), True
+            return Exception('POST {0} {1}'.format(url, response.status_code)), True
         return "Success", False
 
     # Short description: Get the default kernel version set on the repo
@@ -327,7 +327,7 @@ class VorteilClient(object):
         # To test the GraphQL queries, use the Vorteil Developer Studio or the Vorteil Repository GraphQL
         # interfaces for testing
         param = "graphql?query=query{getDefault{kernel}}"
-        url = '{}/{}'.format(self.repo_url, param)
+        url = '{0}/{1}'.format(self.repo_url, param)
 
         headers = {
             'accept': "application/json",
@@ -339,7 +339,7 @@ class VorteilClient(object):
             self.module.fail_json(msg="Vorteil.io Repo Response: " + response.json()['errors'][0]['message'])
 
         if response.status_code != 200:
-            return Exception('GET {} {}'.format(url, response.status_code)), True
+            return Exception('GET {0} {1}'.format(url, response.status_code)), True
         return response.json(), False
 
     # Short description: download the disk to the local machine passed as an argument
@@ -376,7 +376,7 @@ class VorteilClient(object):
         file_extension = file_extension(self.module.params['repo_disktype'])
 
         param = 'api/build/' + self.module.params['injection_uuiduri']['response']['build']['uri']
-        url = '{}/{}'.format(self.repo_url, param)
+        url = '{0}/{1}'.format(self.repo_url, param)
 
         headers = {
             'accept': "*/*",
@@ -391,14 +391,14 @@ class VorteilClient(object):
             'repo_bucket'] + "-" + self.module.params['repo_app'] + "-" + str(time.time()) + "." + file_extension
 
         if response.status_code != 200:
-            return Exception('GET /api/build/ {}'.format(response.status_code)), True
+            return Exception('GET /api/build/ {0}'.format(response.status_code)), True
 
         with open(disk_response['file_location'], 'wb') as filehandle:
             try:
                 filehandle.write(response.content)
                 return disk_response, False
             except Exception:
-                return ('Could not create disk image file:{}'.format(disk_response['file_location'])), True
+                return ('Could not create disk image file:{0}'.format(disk_response['file_location'])), True
 
     # Short description: create the injection URI for provisioning the disk build process
     # Module Parameters:
@@ -422,7 +422,7 @@ class VorteilClient(object):
                 self.module.params['repo_app'] + '", injections: ["' + repo_uuid + '"], name: "' +\
                 self.module.params['repo_image_name'] + '" , provisioner: "' +\
                 self.module.params['repo_provisioner'] + '"){uri,job{id}}}'
-        url = '{}/{}'.format(self.repo_url, param)
+        url = '{0}/{1}'.format(self.repo_url, param)
         headers = {
             'accept': "*/*",
             'content-type': "application/json"
@@ -436,7 +436,7 @@ class VorteilClient(object):
 
         retresponse['provision']['uuid'] = repo_uuid
         if response.status_code != 200:
-            return Exception('GET {} {}'.format(url, response.status_code)), True
+            return Exception('GET {0} {1}'.format(url, response.status_code)), True
 
         return retresponse, False
 
@@ -456,7 +456,7 @@ class VorteilClient(object):
         """
 
         param = 'api/provision/' + self.module.params['injection_uuiduri']['response']['provision']['uri']
-        url = '{}/{}'.format(self.repo_url, param)
+        url = '{0}/{1}'.format(self.repo_url, param)
         headers = {
             'accept': "*/*",
             'content-type': "text/plain",
@@ -474,5 +474,5 @@ class VorteilClient(object):
         response = requests.request("POST", url, data=payload, headers=headers, verify=False, cookies=self.repo_cookie)
 
         if response.status_code != 200:
-            return Exception('POST {} {}'.format(url, response.status_code)), True
+            return Exception('POST {0} {1}'.format(url, response.status_code)), True
         return "Success", False
