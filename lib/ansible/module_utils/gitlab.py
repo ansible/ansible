@@ -81,6 +81,9 @@ def gitlabAuthentication(module):
         module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
     try:
+        # python-gitlab library remove support for username/password authentication since 1.13.0
+        # Changelog : https://github.com/python-gitlab/python-gitlab/releases/tag/v1.13.0
+        # This condition allow to still support older version of the python-gitlab library
         if version.parse(gitlab.__version__) < version.parse("1.13.0"):
             gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
                                             private_token=gitlab_token, api_version=4)
