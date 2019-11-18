@@ -322,15 +322,15 @@ def main():
     else:
         command = [module.get_bin_path('terraform', required=True)]
 
+    if force_init:
+        init_plugins(command[0], project_path, backend_config, reconfigure)
+
     workspace_ctx = get_workspace_context(command[0], project_path)
     if workspace_ctx["current"] != workspace:
         if workspace not in workspace_ctx["all"]:
             create_workspace(command[0], project_path, workspace)
         else:
             select_workspace(command[0], project_path, workspace)
-
-    if force_init:
-        init_plugins(command[0], project_path, backend_config, reconfigure)
 
     if state == 'present':
         command.extend(APPLY_ARGS)
