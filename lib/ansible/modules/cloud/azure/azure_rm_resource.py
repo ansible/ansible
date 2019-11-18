@@ -121,6 +121,31 @@ EXAMPLES = '''
       resource_name: myVmss
       api_version: "2017-12-01"
       body: { body }
+
+  # Generate SAS temporary URL to download file from private blob storage
+  - name: Set expiration period
+    set_fact:
+      sas_time_start: '{{ ansible_date_time.iso8601_micro }}'
+      sas_time_expire: >-
+        {{ ('%Y-%m-%dT%H:%M:%S'
+          | strftime(ansible_date_time.epoch|int + 120))
+          ~ (ansible_date_time.iso8601_micro | splitext)[1] }}
+
+  - name: Generate access signature
+    azure_rm_resource:
+      resource_group: '{{ az_resource_group_name }}'
+      method: POST
+      url: "/subscriptions/{{ lookup('env','AZURE_SUBSCRIPTION_ID') }}\
+            /resourceGroups/{{ az_resource_group_name }}/providers/\
+            Microsoft.Storage/storageAccounts/\
+            {{ az_storage_account_name }}/ListServiceSas/"
+      body:
+        canonicalizedResource: '/blob/{{ az_storage_account_name }}/{{ az_container_name }}/{{ az_file_name }}'
+        signedResource: b
+        signedPermission: r
+        signedStart: '{{ sas_time_start }}'
+        signedExpiry: '{{ sas_time_expire }}'
+    register: storage_sig
 '''
 
 RETURN = '''
