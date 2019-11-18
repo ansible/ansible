@@ -30,22 +30,23 @@ options:
     type: str
   description:
     description:
-      - Provide a description of the new role
+      - Provide a description of the new role.
     version_added: "2.5"
     type: str
   boundary:
     description:
-      - Add the ARN of an IAM managed policy to restrict the permissions this role can pass on to IAM roles/users that it creates.
-      - Boundaries cannot be set on Instance Profiles, so if this option is specified then C(create_instance_profile) must be false.
+      - The ARN of an IAM managed policy to use to restrict the permissions this role can pass on to IAM roles/users that it creates.
+      - Boundaries cannot be set on Instance Profiles, so if this option is specified then I(create_instance_profile) must be false.
       - This is intended for roles/users that have permissions to create new IAM objects.
       - For more information on boundaries, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
+      - Requires botocore 1.10.57 or above.
     aliases: [boundary_policy_arn]
     version_added: "2.7"
     type: str
   assume_role_policy_document:
     description:
       - The trust relationship policy document that grants an entity permission to assume the role.
-      - "This parameter is required when C(state=present)."
+      - "This parameter is required when I(state=present)."
     type: json
   managed_policy:
     description:
@@ -61,28 +62,40 @@ options:
     type: int
   purge_policies:
     description:
-      - Detaches any managed policies not listed in the "managed_policy" option. Set to false if you want to attach policies elsewhere.
+      - Detaches any managed policies not listed in the I(managed_policy) option. Set to false if you want to attach policies elsewhere.
     default: true
     version_added: "2.5"
     type: bool
   state:
     description:
-      - Create or remove the IAM role
+      - Create or remove the IAM role.
     default: present
     choices: [ present, absent ]
     type: str
   create_instance_profile:
     description:
-      - Creates an IAM instance profile along with the role
+      - Creates an IAM instance profile along with the role.
     default: true
     version_added: "2.5"
     type: bool
   delete_instance_profile:
     description:
       - When deleting a role will also delete the instance profile created with
-        the same name as the role
-      - Only applies when C(state=absent)
+        the same name as the role.
+      - Only applies when I(state=absent).
     default: false
+    version_added: "2.10"
+    type: bool
+  tags:
+    description:
+      - Tag dict to apply to the queue.
+      - Requires botocore 1.12.46 or above.
+    version_added: "2.10"
+    type: dict
+  purge_tags:
+    description:
+      - Remove tags not listed in I(tags) when tags is specified.
+    default: true
     version_added: "2.10"
     type: bool
 requirements: [ botocore, boto3 ]
@@ -94,11 +107,13 @@ extends_documentation_fragment:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-- name: Create a role with description
+- name: Create a role with description and tags
   iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
     description: This is My New Role
+    tags:
+      env: dev
 
 - name: "Create a role and attach a managed policy called 'PowerUserAccess'"
   iam_role:
@@ -178,13 +193,18 @@ iam_role:
                     'policy_name': 'PowerUserAccess'
                 }
             ]
+        tags:
+            description: role tags
+            type: dict
+            returned: always
+            sample: '{"Env": "Prod"}'
 '''
 
 import json
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn, compare_policies
-from ansible.module_utils.ec2 import AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, compare_policies
+from ansible.module_utils.ec2 import AWSRetry, ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError
@@ -397,7 +417,12 @@ def create_or_update_role(connection, module):
         role = get_role(connection, module, params['RoleName'])
         role['attached_policies'] = get_attached_policy_list(connection, module, params['RoleName'])
 
-    module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role), **camel_dict_to_snake_dict(role))
+    # Manage tags
+    tags_changed = update_role_tags(connection, module)
+    changed |= tags_changed
+    role['tags'] = get_role_tags(connection, module)
+
+    module.exit_json(changed=changed, iam_role=camel_dict_to_snake_dict(role, ignore_list=['tags']), **camel_dict_to_snake_dict(role, ignore_list=['tags']))
 
 
 def destroy_role(connection, module):
@@ -496,6 +521,44 @@ def get_attached_policy_list(connection, module, name):
         module.fail_json_aws(e, msg="Unable to list attached policies for role {0}".format(name))
 
 
+def get_role_tags(connection, module):
+    role_name = module.params.get('name')
+    if not hasattr(connection, 'list_role_tags'):
+        return {}
+    try:
+        return boto3_tag_list_to_ansible_dict(connection.list_role_tags(RoleName=role_name)['Tags'])
+    except ClientError:
+        return {}
+
+
+def update_role_tags(connection, module):
+    new_tags = module.params.get('tags')
+    if new_tags is None:
+        return False
+
+    role_name = module.params.get('name')
+    purge_tags = module.params.get('purge_tags')
+
+    try:
+        existing_tags = boto3_tag_list_to_ansible_dict(connection.list_role_tags(RoleName=role_name)['Tags'])
+    except (ClientError, KeyError):
+        existing_tags = {}
+
+    tags_to_add, tags_to_remove = compare_aws_tags(existing_tags, new_tags, purge_tags=purge_tags)
+
+    if not module.check_mode:
+        try:
+            if tags_to_remove:
+                connection.untag_role(RoleName=role_name, TagKeys=tags_to_remove)
+            if tags_to_add:
+                connection.tag_role(RoleName=role_name, Tags=ansible_dict_to_boto3_tag_list(tags_to_add))
+        except (ClientError, BotoCoreError) as e:
+            module.fail_json_aws(e, msg='Unable to set tags for role %s' % role_name)
+
+    changed = bool(tags_to_add) or bool(tags_to_remove)
+    return changed
+
+
 def main():
 
     argument_spec = dict(
@@ -510,6 +573,8 @@ def main():
         create_instance_profile=dict(type='bool', default=True),
         delete_instance_profile=dict(type='bool', default=False),
         purge_policies=dict(type='bool', default=True),
+        tags=dict(type='dict'),
+        purge_tags=dict(type='bool', default=True),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               required_if=[('state', 'present', ['assume_role_policy_document'])],
@@ -520,6 +585,9 @@ def main():
             module.fail_json(msg="When using a boundary policy, `create_instance_profile` must be set to `false`.")
         if not module.params.get('boundary').startswith('arn:aws:iam'):
             module.fail_json(msg="Boundary policy must be an ARN")
+    if module.params.get('tags') is not None and not module.botocore_at_least('1.12.46'):
+        module.fail_json(msg="When managing tags botocore must be at least v1.12.46. "
+                         "Current versions: boto3-{boto3_version} botocore-{botocore_version}".format(**module._gather_versions()))
     if module.params.get('boundary') is not None and not module.botocore_at_least('1.10.57'):
         module.fail_json(msg="When using a boundary policy, botocore must be at least v1.10.57. "
                          "Current versions: boto3-{boto3_version} botocore-{botocore_version}".format(**module._gather_versions()))
