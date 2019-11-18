@@ -297,7 +297,7 @@ EXAMPLES = '''
               - Field: host-header
                 Values:
                   - "hostname.domain.com"
-                  - "alternate.domain.com
+                  - "alternate.domain.com"
             Priority: '4'
             Actions:
               - TargetGroupName: test-target-group
