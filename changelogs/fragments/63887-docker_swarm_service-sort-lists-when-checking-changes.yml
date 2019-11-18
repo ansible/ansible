@@ -1,2 +1,2 @@
 minor_changes:
-  - docker_swarm_service: Sort lists when checking for changes
+  - "docker_swarm_service - Sort lists when checking for changes."

@@ -1321,11 +1321,13 @@ def have_networks_changed(new_networks, old_networks):
     )
 
     for new_item, old_item in zip_data:
+        new_item = dict(new_item)
+        old_item = dict(old_item)
         # Sort the aliases
         if 'aliases' in new_item:
-            new_item['aliases'].sort()
+            new_item['aliases'] = sorted(new_item['aliases'] or [])
         if 'aliases' in old_item:
-            old_item['aliases'].sort()
+            old_item['aliases'] = sorted(old_item['aliases'])
 
         if has_dict_changed(new_item, old_item):
             return True
