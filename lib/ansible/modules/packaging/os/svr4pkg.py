@@ -123,7 +123,7 @@ def package_installed(module, name, category):
 
 def create_admin_file():
     (desc, filename) = tempfile.mkstemp(prefix='ansible_svr4pkg', text=True)
-    fullauto = '''
+    fullauto = b'''
 mail=
 instance=unique
 partial=nocheck
