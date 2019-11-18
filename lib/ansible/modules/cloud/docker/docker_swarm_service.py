@@ -1315,8 +1315,8 @@ def have_networks_changed(new_networks, old_networks):
         return True
 
     zip_data = zip(
-        sorted(new_networks, key = lambda k: k['id']),
-        sorted(old_networks, key = lambda k: k['id'])
+        sorted(new_networks, key=lambda k: k['id']),
+        sorted(old_networks, key=lambda k: k['id'])
     )
 
     for new_item, old_item in zip_data:
