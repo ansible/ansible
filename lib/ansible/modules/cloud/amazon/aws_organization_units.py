@@ -13,10 +13,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = """
-module: aws_organizations
-short_description: Manages AWS Organization
+module: aws_organization_units
+short_description: Manages AWS Organizations Units
 description:
-  - Creates and deletes AWS OrganizationalUnits
+  - Creates and deletes AWS OrganizationalUnits.
 version_added: "2.10"
 author:
   - Kamil Potrec (@p0tr3c)
@@ -56,17 +56,17 @@ EXAMPLES = """
 
 RETURN = """
 name:
-  description: Name of the organizational unit
+  description: Name of the organizational unit. Can be full OU path.
   returned: always
   type: str
   sample: Prod
 state:
-  description: State of the organization unit
+  description: State of the organization unit.
   returned: always
   type: str
   sample: present
 ou:
-  description: The Organization Unit details
+  description: The Organization Unit details.
   returned: always
   type: dict
   sample:
@@ -79,7 +79,6 @@ ou:
 
 try:
     import boto3
-    import botocore.exceptions
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
     # handled by AnsibleAWSModule
@@ -108,13 +107,13 @@ class AwsOrganizations():
                     children_ous.append(dict(
                         ou,
                         OrganizationalUnits=self.get_children_ous(ou['Id'], recursive=True),
-                        Accounts=self.get_children_accounts(ou['Id'])
+                        Accounts=self.get_child_accounts(ou['Id'])
                     ))
             else:
                 children_ous += page['OrganizationalUnits']
         return children_ous
 
-    def get_children_accounts(self, parent_id):
+    def get_child_accounts(self, parent_id):
         paginator = self.client.get_paginator('list_accounts_for_parent')
         children_accounts = []
         for page in paginator.paginate(ParentId=parent_id):
@@ -146,7 +145,7 @@ class AwsOrganizations():
         org_tree = dict(
             parent_ou,
             OrganizationalUnits=self.get_children_ous(parent_ou['Id'], recursive=True),
-            Accounts=self.get_children_accounts(parent_ou['Id'])
+            Accounts=self.get_child_accounts(parent_ou['Id'])
         )
         return org_tree
 
@@ -154,7 +153,7 @@ class AwsOrganizations():
         org_tree = dict(
             self.aws_org_root,
             OrganizationalUnits=self.get_children_ous(self.aws_org_root['Id'], recursive=True),
-            Accounts=self.get_children_accounts(self.aws_org_root['Id'])
+            Accounts=self.get_child_accounts(self.aws_org_root['Id'])
         )
         return org_tree
 
@@ -202,6 +201,10 @@ class AwsOrganizations():
         else:
             return ou['OrganizationalUnit']
 
+    # Name can be full ou path in form "root/parent/child"
+    # leading, and ending "/" will be stripped to handle
+    # "/root/child" or "root/parent/" inputs
+    # Parent ous will be recursively dereferenced
     def create_ou(self, name):
         ou_name = name.rstrip('/').lstrip('/')
         ou_path = ou_name.split('/')
@@ -255,27 +258,21 @@ def main():
         result['state'] = 'present'
         result['ou'] = ou
 
-    if module.check_mode:
-        if ou_state == 'absent':
-            if ou is None:
-                result['changed'] = False
-            else:
+    if ou_state == 'absent':
+        if ou is None:
+            result['changed'] = False
+        else:
+            if module.check_mode:
                 result['changed'] = True
-        elif ou_state == 'present':
-            if ou is None:
-                result['changed'] = True
-            else:
-                result['changed'] = False
-    else:
-        if ou_state == 'absent':
-            if ou is None:
-                result['changed'] = False
             else:
                 if client.delete_ou(ou['Id']):
                     result['changed'] = True
                     result['state'] = 'absent'
-        elif ou_state == 'present':
-            if ou is None:
+    elif ou_state == 'present':
+        if ou is None:
+            if module.check_mode:
+                result['changed'] = True
+            else:
                 ou = client.create_ou(ou_name)
                 if ou is not None:
                     result['changed'] = True
