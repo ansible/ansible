@@ -6,7 +6,6 @@
 
 from __future__ import absolute_import
 import json
-from packaging import version
 
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
