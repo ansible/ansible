@@ -1255,18 +1255,19 @@ def has_list_changed(new_list, old_list, sort_lists=True, sort_key=None):
         The list may contain dictionaries, so use the sort key to handle them.
         """
 
+        if unsorted_list and isinstance(unsorted_list[0], dict):
+            if not sort_key:
+                raise Exception(
+                    'A sort key was not specified when sorting list'
+                )
+            else:
+                return sorted(unsorted_list, key=lambda k: k[sort_key])
+
+        # Either the list is empty or does not contain dictionaries
         try:
             return sorted(unsorted_list)
         except TypeError:
-            if isinstance(unsorted_list[0], dict):
-                if not sort_key:
-                    raise Exception(
-                        'A sort key was not specified when sorting list'
-                    )
-                else:
-                    return sorted(unsorted_list, key=lambda k: k[sort_key])
-            else:
-                return unsorted_list
+            return unsorted_list
 
     if new_list is None:
         return False
