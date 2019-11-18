@@ -5,6 +5,7 @@
   yum:
     name: "{{ docker_prereq_packages }}"
     state: present
+  notify: cleanup docker
 
 - name: Install epel repo which is missing on rhel-7 and is needed for pigz (needed for docker-ce 18)
   include_role:
@@ -29,6 +30,7 @@
   yum:
     name: "{{ docker_packages }}"
     state: present
+  notify: cleanup docker
 
 - name: Make sure the docker daemon is running (failure expected inside docker container)
   service:

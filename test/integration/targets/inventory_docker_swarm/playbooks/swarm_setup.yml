@@ -1,10 +1,14 @@
 ---
 - hosts: 127.0.0.1
   connection: local
+  vars:
+    docker_skip_cleanup: yes
+
   tasks:
     - name: Setup docker
-      include_role:
+      import_role:
         name: setup_docker
+
     - name: Create a Swarm cluster
       docker_swarm:
         state: present

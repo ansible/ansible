@@ -5,6 +5,7 @@
   dnf:
     name: "{{ docker_prereq_packages }}"
     state: present
+  notify: cleanup docker
 
 - name: Set-up repository
   command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
@@ -15,6 +16,7 @@
   dnf:
     name: "{{ docker_packages }}"
     state: present
+  notify: cleanup docker
 
 - name: Make sure the docker daemon is running (failure expected inside docker container)
   service:

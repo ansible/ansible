@@ -12,7 +12,7 @@
             - "{{ ansible_facts.os_family }}.yml"
             - default.yml
           paths:
-            - vars
+            - "{{ role_path }}/vars"
 
     - name: Include distribution specific tasks
       include_tasks: "{{ lookup('first_found', params) }}"
@@ -24,13 +24,14 @@
             - "{{ ansible_facts.distribution }}.yml"
             - "{{ ansible_facts.os_family }}.yml"
           paths:
-            - tasks
+            - "{{ role_path }}/tasks"
 
     - name: Install Python requirements
       pip:
         state: present
         name: "{{ docker_pip_packages | union(docker_pip_extra_packages) }}"
         extra_args: "-c {{ remote_constraints }}"
+      notify: cleanup docker
 
     # Detect docker CLI, API and docker-py versions
     - name: Check Docker CLI version
