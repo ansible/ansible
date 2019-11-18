@@ -1,0 +1,9 @@
+- name: remove podman packages
+  yum:
+    name: 'podman*'
+    state: absent
+  listen: cleanup podman
+
+- name: remove extras repo
+  command: "{{ repo_command[ansible_facts.distribution ~ ansible_facts.distribution_major_version]['disable'] | default('echo') }}"
+  listen: cleanup podman
