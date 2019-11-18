@@ -28,7 +28,7 @@ options:
     description:
       - Enter the port number of the WEBFRONT-K.
     required: True
-    type: String
+    type: str
   username:
     description:
       - Enter the User ID of the WEBFRONT-K. The ID must have permissions for the WEBFRONT-K.

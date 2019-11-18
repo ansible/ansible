@@ -11,15 +11,24 @@ __metaclass__ = type
 import os
 import re
 import ast
-import requests
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 
 from ansible.module_utils.network.piolink.prest_module import PrestModule,\
     CMD_SITE_TYPE, CMD_APP_TYPE, CMD_AMSS_TYPE
+from ansible.module_utils.basic import missing_required_lib
 
 
 class PrestUtils(PrestModule):
     def __init__(self, module):
         super(PrestUtils, self).__init__()
+        
+        if not HAS_REQUESTS:
+            module.fail_json(msg=missing_required_lib('requests'))
+
         self.module = module
         self.resp = None
         self.p = re.compile('(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'

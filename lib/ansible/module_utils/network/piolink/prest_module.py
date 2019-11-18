@@ -9,10 +9,15 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import base64
-import requests
 import syslog
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
 
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.basic import missing_required_lib
 
 CMD_SITE_TYPE = 'site'
 CMD_APP_TYPE = 'app'
@@ -23,6 +28,9 @@ class PrestModule(object):
     def __init__(self):
         self.headers = {'Authorization': '',
                         'Content-Type': ''}
+
+        if not HAS_REQUESTS:
+            module.fail_json(msg=missing_required_lib('requests'))
 
     def basic_auth(self, username, password):
         return "Basic %s" % base64.b64encode(to_bytes(
