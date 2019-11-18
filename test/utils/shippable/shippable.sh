@@ -9,6 +9,8 @@ script="${args[0]}"
 
 test="$1"
 
+export S=dev
+
 docker images ansible/ansible
 docker images quay.io/ansible/*
 docker ps
