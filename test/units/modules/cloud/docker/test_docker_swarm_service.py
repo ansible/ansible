@@ -221,7 +221,7 @@ def test_has_list_changed(docker_swarm_service):
         sort_key='a'
     )
 
-    if python_version_info.major >= 3:
+    if python_version_info[0] >= 3:
         # This test does not work on Python 2
         with pytest.raises(Exception):
             docker_swarm_service.has_list_changed(
