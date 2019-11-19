@@ -563,13 +563,12 @@ except ImportError:
     HAVE_DBUS = False
 
 NM_CLIENT_IMP_ERR = None
+import gi
 try:
-    import gi
     gi.require_version('NM', '1.0')
     from gi.repository import NM
 except (ImportError, ValueError):
     try:
-        import gi
         gi.require_version('NMClient', '1.0')
         gi.require_version('NetworkManager', '1.0')
         from gi.repository import NetworkManager, NMClient
