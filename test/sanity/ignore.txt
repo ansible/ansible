@@ -46,9 +46,6 @@ hacking/tests/gen_distribution_version_testcase.py metaclass-boilerplate
 lib/ansible/cli/console.py pylint:blacklisted-name
 lib/ansible/cli/scripts/ansible_cli_stub.py shebang
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
-lib/ansible/compat/selectors/_selectors2.py future-import-boilerplate # ignore bundled
-lib/ansible/compat/selectors/_selectors2.py metaclass-boilerplate # ignore bundled
-lib/ansible/compat/selectors/_selectors2.py pylint:blacklisted-name
 lib/ansible/config/base.yml no-unwanted-files
 lib/ansible/config/module_defaults.yml no-unwanted-files
 lib/ansible/executor/playbook_executor.py pylint:blacklisted-name
@@ -63,6 +60,9 @@ lib/ansible/module_utils/api.py metaclass-boilerplate
 lib/ansible/module_utils/basic.py metaclass-boilerplate
 lib/ansible/module_utils/common/network.py future-import-boilerplate
 lib/ansible/module_utils/common/network.py metaclass-boilerplate
+lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
+lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
+lib/ansible/module_utils/compat/_selectors2.py pylint:blacklisted-name
 lib/ansible/module_utils/connection.py future-import-boilerplate
 lib/ansible/module_utils/connection.py metaclass-boilerplate
 lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override

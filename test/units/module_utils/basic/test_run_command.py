@@ -14,6 +14,7 @@ import pytest
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY2
+from ansible.module_utils.compat import selectors
 
 
 class OpenBytesIO(BytesIO):
@@ -60,13 +61,44 @@ def mock_os(mocker):
     yield os
 
 
+class DummyFileObj():
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+
+
+class DummyFileObj():
+    def __init__(self, fileobj):
+        self.fileobj = fileobj
+
+
+class MockSelector(selectors.BaseSelector):
+    def __init__(self):
+        super(MockSelector, self).__init__()
+        self._fds = []
+
+    def register(self, fileobj, events, data=None):
+        self._fds.append(fileobj)
+
+    def unregister(self, fileobj):
+        self._fds.remove(fileobj)
+
+    def select(self, timeout=None):
+        ready = []
+        for fd in self._fds:
+            ready.append((DummyFileObj(fd), selectors.EVENT_READ))
+        return ready
+
+    def get_map(self):
+        return self._fds
+
+    def close(self):
+        super(MockSelector, self).close()
+        self._fds = []
+
+
 @pytest.fixture
 def mock_subprocess(mocker):
-    def mock_select(rlist, wlist, xlist, timeout=1):
-        return (rlist, [], [])
-
-    fake_select = mocker.patch('ansible.module_utils.basic.select')
-    fake_select.select.side_effect = mock_select
+    selectors.DefaultSelector = MockSelector
 
     subprocess = mocker.patch('ansible.module_utils.basic.subprocess')
     cmd = mocker.MagicMock()
