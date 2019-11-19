@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: aws_step_functions_state_machine_execution
 
-short_description: Start or stop execution of an AWS Step Functions state machine
+short_description: Start or stop execution of an AWS Step Functions state machine.
 
 version_added: "2.10"
 
@@ -25,29 +25,29 @@ description:
 
 options:
     action:
-        description: Desired action (start or stop) for a state machine execution
+        description: Desired action (start or stop) for a state machine execution.
         default: start
         choices: [ start, stop ]
         type: str
     name:
-        description: Name of the execution
+        description: Name of the execution.
         type: str
     execution_input:
-        description: The JSON input data for the execution
+        description: The JSON input data for the execution.
         type: json
         default: {}
     state_machine_arn:
         description: The ARN of the state machine that will be executed.
         type: str
     execution_arn:
-        description: The ARN of the execution you wish to stop
+        description: The ARN of the execution you wish to stop.
         type: str
     cause:
-        description: A detailed explanation of the cause for stopping the execution
+        description: A detailed explanation of the cause for stopping the execution.
         type: str
         default: ''
     error:
-        description: The error code of the failure to pass in when stopping the execution
+        description: The error code of the failure to pass in when stopping the execution.
         type: str
         default: ''
 
@@ -76,7 +76,7 @@ EXAMPLES = '''
 
 RETURN = '''
 execution_arn:
-    description: ARN of the AWS Step Functions state machine execution
+    description: ARN of the AWS Step Functions state machine execution.
     type: str
     returned: if action == start and changed == True
     sample: "arn:aws:states:us-west-2:682285639423:execution:HelloWorldStateMachineCopy:a1e8e2b5-5dfe-d40e-d9e3-6201061047c8"
