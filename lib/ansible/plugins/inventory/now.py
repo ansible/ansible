@@ -43,11 +43,11 @@ DOCUMENTATION = r'''
         fields:
             description: Comma seperated string providing additional table columns to add as host vars to each inventory host.
             type: list
-            default: [host_name,fqdn,ip_address,sys_class_name]
+            default: 'ip_address,fqdn,host_name,sys_class_name'
         selection_order:
             description: Comma seperated string providing ability to define selection preference order.
             type: list
-            default: 'host_name,fqdn,ip_address'
+            default: 'ip_address,fqdn,host_name'
         filter_results:
             description: Filter results with sysparm_query encoded query string syntax. Complete list of operators available for filters and queries.
             type: string
@@ -197,6 +197,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 if k in record:
                     if record[k] != '':
                         target = record[k]
+                if target is not None:
+                    break
+
             if target is None:
                 continue
 
