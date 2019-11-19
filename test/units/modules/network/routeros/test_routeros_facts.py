@@ -107,3 +107,13 @@ class TestRouterosFactsModule(TestRouterosModule):
         self.assertEqual(
             len(result['ansible_facts']['ansible_net_neighbors'].keys()), 4
         )
+
+    def test_routeros_facts_interfaces_no_ipv6(self):
+        fixture = load_fixture(
+            'routeros_facts/ipv6_address_print_detail_without-paging_no-ipv6'
+        )
+        interfaces = self.module.Interfaces(module=self.module)
+        addresses = interfaces.parse_addresses(data=fixture)
+        result = interfaces.populate_ipv6_interfaces(data=addresses)
+
+        self.assertEqual(result, None)
