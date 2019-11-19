@@ -364,9 +364,14 @@ class NetworkConfig(object):
                         if p not in parents:
                             parents.append(p)
 
+            has_children = False
             updates = list()
             for item in parents:
+                if item.has_children:
+                    has_children = True
                 updates.extend(self._expand_block(item))
+            if not has_children:
+                updates = self.items
 
         visited = set()
         expanded = list()
