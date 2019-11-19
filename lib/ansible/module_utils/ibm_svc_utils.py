@@ -89,7 +89,7 @@ class IBMSVCRestApi(object):
     @property
     def resturl(self):
         if self.domain:
-            hostname = '{}.{}'.format(self.clustername, self.domain)
+            hostname = '%s.%s' % (self.clustername, self.domain)
         else:
             hostname = self.clustername
         return (getattr(self, '_resturl', None)
