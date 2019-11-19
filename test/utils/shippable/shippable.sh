@@ -75,6 +75,10 @@ function cleanup
 {
     if [ -d test/results/coverage/ ]; then
         if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
+            # save raw coverage artifacts
+            tar czf shippable/testresults/coverage.tgz test/results/coverage/
+            ls -l shippable/testresults/coverage.tgz
+
             # for complete on-demand coverage generate a report for all files with no coverage on the "other" job so we only have one copy
             if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "sanity/1" ]; then
                 stub="--stub"
