@@ -35,11 +35,12 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'netconf_config' else False
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
-        if self._play_context.connection not in ['netconf', 'local'] and module_name == 'netconf_config':
+        if persistent_connection not in ['netconf', 'local'] and module_name == 'netconf_config':
             return {'failed': True, 'msg': 'Connection type %s is not valid for netconf_config module. '
                                            'Valid connection type is netconf or local (deprecated)' % self._play_context.connection}
-        elif self._play_context.connection not in ['netconf'] and module_name != 'netconf_config':
+        elif persistent_connection not in ['netconf'] and module_name != 'netconf_config':
             return {'failed': True, 'msg': 'Connection type %s is not valid for %s module. '
                                            'Valid connection type is netconf.' % (self._play_context.connection, module_name)}
 

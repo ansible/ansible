@@ -37,8 +37,9 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'ios_config' else False
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
-        if self._play_context.connection == 'network_cli':
+        if persistent_connection == 'network_cli':
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')
