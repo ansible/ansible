@@ -34,8 +34,6 @@ class Vlans(ConfigBase):
         'vlans',
     ]
 
-    exclude_params = ['name', 'state']
-
     def __init__(self, module):
         super(Vlans, self).__init__(module)
 
@@ -49,7 +47,16 @@ class Vlans(ConfigBase):
         vlans_facts = facts['ansible_network_resources'].get('vlans')
         if not vlans_facts:
             return []
+
+        # Remove vlan 1 from facts list
+        vlans_facts = [i for i in vlans_facts if (int(i['vlan_id'])) != 1]
         return vlans_facts
+
+    def edit_config(self, commands):
+        """Wrapper method for `_connection.edit_config()`
+        This exists solely to allow the unit test framework to mock device connection calls.
+        """
+        return self._connection.edit_config(commands)
 
     def execute_module(self):
         """ Execute the module
@@ -65,7 +72,7 @@ class Vlans(ConfigBase):
         commands.extend(self.set_config(existing_vlans_facts))
         if commands:
             if not self._module.check_mode:
-                self._connection.edit_config(commands)
+                self.edit_config(commands)
             result['changed'] = True
         result['commands'] = commands
 
@@ -90,6 +97,8 @@ class Vlans(ConfigBase):
         want = []
         if config:
             for w in config:
+                if int(w['vlan_id']) == 1:
+                    self._module.fail_json(msg="Vlan 1 is not allowed to be managed by this module")
                 want.append(remove_empties(w))
         have = existing_vlans_facts
         resp = self.set_state(want, have)
@@ -121,57 +130,78 @@ class Vlans(ConfigBase):
                     commands.extend(self._state_replaced(w, have))
         return commands
 
-    def _state_replaced(self, w, have):
-        """ The command generator when state is replaced
-
-        :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
-                  to the desired configuration
+    def remove_default_states(self, obj):
+        """Removes non-empty but default states from the obj.
         """
-        commands = []
-        obj_in_have = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
-        diff = dict_diff(w, obj_in_have)
-        merged_commands = self.set_commands(w, have)
-        if 'vlan_id' not in diff:
-            diff['vlan_id'] = w['vlan_id']
-        wkeys = w.keys()
-        dkeys = diff.keys()
-        for k in wkeys:
-            if k in self.exclude_params and k in dkeys:
-                del diff[k]
-        replaced_commands = self.del_attribs(diff)
+        default_states = {
+            'enabled': True,
+            'state': 'active',
+            'mode': 'ce',
+        }
+        for k in default_states.keys():
+            if obj[k] == default_states[k]:
+                obj.pop(k, None)
+        return obj
 
-        if merged_commands:
-            cmds = set(replaced_commands).intersection(set(merged_commands))
-            for cmd in cmds:
-                merged_commands.remove(cmd)
-            commands.extend(replaced_commands)
-            commands.extend(merged_commands)
-        return commands
+    def _state_replaced(self, want, have):
+        """ The command generator when state is replaced.
+        Scope is limited to vlan objects defined in the playbook.
+        :rtype: A list
+        :returns: The minimum command set required to migrate the current
+                  configuration to the desired configuration.
+        """
+        obj_in_have = search_obj_in_list(want['vlan_id'], have, 'vlan_id')
+        if obj_in_have:
+            # ignore states that are already reset, then diff what's left
+            obj_in_have = self.remove_default_states(obj_in_have)
+            diff = dict_diff(want, obj_in_have)
+            # Remove merge items from diff; what's left will be used to
+            # remove states not specified in the playbook
+            for k in dict(set(want.items()) - set(obj_in_have.items())).keys():
+                diff.pop(k, None)
+        else:
+            diff = want
+
+        # merged_cmds: 'want' cmds to update 'have' states that don't match
+        # replaced_cmds: remaining 'have' cmds that need to be reset to default
+        merged_cmds = self.set_commands(want, have)
+        replaced_cmds = []
+        if obj_in_have:
+            # Remaining diff items are used to reset states to default
+            replaced_cmds = self.del_attribs(diff)
+        cmds = []
+        if replaced_cmds or merged_cmds:
+            cmds += ['vlan %s' % str(want['vlan_id'])]
+            cmds += merged_cmds + replaced_cmds
+        return cmds
 
     def _state_overridden(self, want, have):
-        """ The command generator when state is overridden
-
+        """ The command generator when state is overridden.
+        Scope includes all vlan objects on the device.
         :rtype: A list
-        :returns: the commands necessary to migrate the current configuration
-                  to the desired configuration
+        :returns: the minimum command set required to migrate the current
+                  configuration to the desired configuration.
         """
-        commands = []
+        # overridden behavior is the same as replaced except for scope.
+        cmds = []
+        existing_vlans = []
         for h in have:
+            existing_vlans.append(h['vlan_id'])
             obj_in_want = search_obj_in_list(h['vlan_id'], want, 'vlan_id')
-            if h == obj_in_want:
-                continue
-            for w in want:
-                if h['vlan_id'] == w['vlan_id']:
-                    wkeys = w.keys()
-                    hkeys = h.keys()
-                    for k in wkeys:
-                        if k in self.exclude_params and k in hkeys:
-                            del h[k]
-            commands.extend(self.del_attribs(h))
+            if obj_in_want:
+                if h != obj_in_want:
+                    replaced_cmds = self._state_replaced(obj_in_want, [h])
+                    if replaced_cmds:
+                        cmds.extend(replaced_cmds)
+            else:
+                cmds.append('no vlan %s' % h['vlan_id'])
+
+        # Add wanted vlans that don't exist on the device yet
         for w in want:
-            commands.extend(self.set_commands(w, have))
-        return commands
+            if w['vlan_id'] not in existing_vlans:
+                new_vlan = ['vlan %s' % w['vlan_id']]
+                cmds.extend(new_vlan + self.add_commands(w))
+        return cmds
 
     def _state_merged(self, w, have):
         """ The command generator when state is merged
@@ -180,7 +210,10 @@ class Vlans(ConfigBase):
         :returns: the commands necessary to merge the provided into
                   the current configuration
         """
-        return self.set_commands(w, have)
+        cmds = self.set_commands(w, have)
+        if cmds:
+            cmds.insert(0, 'vlan %s' % str(w['vlan_id']))
+        return(cmds)
 
     def _state_deleted(self, want, have):
         """ The command generator when state is deleted
@@ -193,7 +226,8 @@ class Vlans(ConfigBase):
         if want:
             for w in want:
                 obj_in_have = search_obj_in_list(w['vlan_id'], have, 'vlan_id')
-                commands.append('no vlan ' + str(obj_in_have['vlan_id']))
+                if obj_in_have:
+                    commands.append('no vlan ' + str(obj_in_have['vlan_id']))
         else:
             if not have:
                 return commands
@@ -202,20 +236,20 @@ class Vlans(ConfigBase):
         return commands
 
     def del_attribs(self, obj):
+        """Returns a list of commands to reset states to default
+        """
         commands = []
-        if not obj or len(obj.keys()) == 1:
+        if not obj:
             return commands
-        commands.append('vlan ' + str(obj['vlan_id']))
-        if 'name' in obj:
-            commands.append('no' + ' ' + 'name')
-        if 'state' in obj:
-            commands.append('no state')
-        if 'enabled' in obj:
-            commands.append('no shutdown')
-        if 'mode' in obj:
-            commands.append('mode ce')
-        if 'mapped_vni' in obj:
-            commands.append('no vn-segment')
+        default_cmds = {
+            'name': 'no name',
+            'state': 'no state',
+            'enabled': 'no shutdown',
+            'mode': 'mode ce',
+            'mapped_vni': 'no vn-segment',
+        }
+        for k in obj:
+            commands.append(default_cmds[k])
         return commands
 
     def diff_of_dicts(self, w, obj):
@@ -229,20 +263,19 @@ class Vlans(ConfigBase):
         commands = []
         if not d:
             return commands
-        commands.append('vlan' + ' ' + str(d['vlan_id']))
         if 'name' in d:
             commands.append('name ' + d['name'])
         if 'state' in d:
             commands.append('state ' + d['state'])
         if 'enabled' in d:
-            if d['enabled'] == 'True':
+            if d['enabled'] is True:
                 commands.append('no shutdown')
             else:
                 commands.append('shutdown')
         if 'mode' in d:
             commands.append('mode ' + d['mode'])
         if 'mapped_vni' in d:
-            commands.append('vn-segment ' + d['mapped_vni'])
+            commands.append('vn-segment %s' % d['mapped_vni'])
 
         return commands
 
