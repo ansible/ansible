@@ -263,6 +263,7 @@ class SudoRuleIPAClient(IPAClient):
     def sudorule_remove_run_as_group(self, name, item):
         return self._post_json(method='sudorule_remove_runasgroup', name=name, item={'group': item})
 
+
 def get_sudorule_dict(cmdcategory=None, description=None, hostcategory=None, ipaenabledflag=None, usercategory=None,
                       runasgroupcategory=None, runasusercategory=None):
     data = {}
@@ -335,8 +336,6 @@ def ensure(module, client):
         else:
             diff = client.get_diff(ipa_sudorule, module_sudorule)
             if len(diff) > 0:
-
-
                 changed = True
                 if not module.check_mode:
                     if 'cmdcategory' in diff:
