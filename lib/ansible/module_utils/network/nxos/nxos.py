@@ -92,12 +92,15 @@ def get_provider_argspec():
 def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
-        connection_proxy = Connection(module._socket_path)
-        cap = json.loads(connection_proxy.get_capabilities())
-        if cap['network_api'] == 'cliconf':
-            conn = Cli(module)
-        elif cap['network_api'] == 'nxapi':
-            conn = HttpApi(module)
+        if is_local_nxapi(module):
+            conn = LocalNxapi(module)
+        else:
+            connection_proxy = Connection(module._socket_path)
+            cap = json.loads(connection_proxy.get_capabilities())
+            if cap['network_api'] == 'cliconf':
+                conn = Cli(module)
+            elif cap['network_api'] == 'nxapi':
+                conn = HttpApi(module)
         _DEVICE_CONNECTION = conn
     return _DEVICE_CONNECTION
 
@@ -229,6 +232,284 @@ class Cli:
             connection.save_module_context(module_key, module_context)
         except ConnectionError as exc:
             self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+
+        return None
+
+
+class LocalNxapi:
+
+    OUTPUT_TO_COMMAND_TYPE = {
+        'text': 'cli_show_ascii',
+        'json': 'cli_show',
+        'bash': 'bash',
+        'config': 'cli_conf'
+    }
+
+    def __init__(self, module):
+        self._module = module
+        self._nxapi_auth = None
+        self._device_configs = {}
+        self._module_context = {}
+
+        provider = self._module.params.get("provider") or {}
+        self._module.params['url_username'] = provider.get('username')
+        self._module.params['url_password'] = provider.get('password')
+
+        host = provider.get('host')
+        port = provider.get('port')
+
+        if provider.get('use_ssl'):
+            proto = 'https'
+            port = port or 443
+        else:
+            proto = 'http'
+            port = port or 80
+
+        self._url = '%s://%s:%s/ins' % (proto, host, port)
+
+    def _error(self, msg, **kwargs):
+        self._nxapi_auth = None
+        if 'url' not in kwargs:
+            kwargs['url'] = self._url
+        self._module.fail_json(msg=msg, **kwargs)
+
+    def _request_builder(self, commands, output, version='1.0', chunk='0', sid=None):
+        """Encodes a NXAPI JSON request message
+        """
+        try:
+            command_type = self.OUTPUT_TO_COMMAND_TYPE[output]
+        except KeyError:
+            msg = 'invalid format, received %s, expected one of %s' % \
+                (output, ','.join(self.OUTPUT_TO_COMMAND_TYPE.keys()))
+            self._error(msg=msg)
+
+        if isinstance(commands, (list, set, tuple)):
+            commands = ' ;'.join(commands)
+
+        # Order should not matter but some versions of NX-OS software fail
+        # to process the payload properly if 'input' gets serialized before
+        # 'type' and the payload of 'input' contains the word 'type'.
+        msg = collections.OrderedDict()
+        msg['version'] = version
+        msg['type'] = command_type
+        msg['chunk'] = chunk
+        msg['sid'] = sid
+        msg['input'] = commands
+        msg['output_format'] = 'json'
+
+        return dict(ins_api=msg)
+
+    def send_request(self, commands, output='text', check_status=True,
+                     return_error=False, opts=None):
+        # only 10 show commands can be encoded in each request
+        # messages sent to the remote device
+        if opts is None:
+            opts = {}
+        if output != 'config':
+            commands = collections.deque(to_list(commands))
+            stack = list()
+            requests = list()
+
+            while commands:
+                stack.append(commands.popleft())
+                if len(stack) == 10:
+                    body = self._request_builder(stack, output)
+                    data = self._module.jsonify(body)
+                    requests.append(data)
+                    stack = list()
+
+            if stack:
+                body = self._request_builder(stack, output)
+                data = self._module.jsonify(body)
+                requests.append(data)
+
+        else:
+            body = self._request_builder(commands, 'config')
+            requests = [self._module.jsonify(body)]
+
+        headers = {'Content-Type': 'application/json'}
+        result = list()
+        timeout = self._module.params['provider']['timeout']
+        use_proxy = self._module.params['provider']['use_proxy']
+
+        for req in requests:
+            if self._nxapi_auth:
+                headers['Cookie'] = self._nxapi_auth
+
+            response, headers = fetch_url(
+                self._module, self._url, data=req, headers=headers,
+                timeout=timeout, method='POST', use_proxy=use_proxy
+            )
+            self._nxapi_auth = headers.get('set-cookie')
+
+            if opts.get('ignore_timeout') and re.search(r'(-1|5\d\d)', str(headers['status'])):
+                result.append(headers['status'])
+                return result
+            elif headers['status'] != 200:
+                self._error(**headers)
+
+            try:
+                response = self._module.from_json(response.read())
+            except ValueError:
+                self._module.fail_json(msg='unable to parse response')
+
+            if response['ins_api'].get('outputs'):
+                output = response['ins_api']['outputs']['output']
+                for item in to_list(output):
+                    if check_status is True and item['code'] != '200':
+                        if return_error:
+                            result.append(item)
+                        else:
+                            self._error(output=output, **item)
+                    elif 'body' in item:
+                        result.append(item['body'])
+                    # else:
+                        # error in command but since check_status is disabled
+                        # silently drop it.
+                        # result.append(item['msg'])
+
+            return result
+
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'show running-config '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        try:
+            return self._device_configs[cmd]
+        except KeyError:
+            out = self.send_request(cmd)
+            cfg = str(out[0]).strip()
+            self._device_configs[cmd] = cfg
+            return cfg
+
+    def run_commands(self, commands, check_rc=True):
+        """Run list of commands on remote device and return results
+        """
+        output = None
+        queue = list()
+        responses = list()
+
+        def _send(commands, output):
+            return self.send_request(commands, output, check_status=check_rc)
+
+        for item in to_list(commands):
+            if is_json(item['command']):
+                item['command'] = str(item['command']).rsplit('|', 1)[0]
+                item['output'] = 'json'
+
+            if all((output == 'json', item['output'] == 'text')) or all((output == 'text', item['output'] == 'json')):
+                responses.extend(_send(queue, output))
+                queue = list()
+
+            output = item['output'] or 'json'
+            queue.append(item['command'])
+
+        if queue:
+            responses.extend(_send(queue, output))
+
+        return responses
+
+    def load_config(self, commands, return_error=False, opts=None, replace=None):
+        """Sends the ordered set of commands to the device
+        """
+
+        if opts is None:
+            opts = {}
+
+        responses = []
+
+        if replace:
+            device_info = self.get_device_info()
+            if '9K' not in device_info.get('network_os_platform', ''):
+                self._module.fail_json(msg='replace is supported only on Nexus 9K devices')
+            commands = 'config replace {0}'.format(replace)
+
+        commands = to_list(commands)
+        try:
+            resp = self.send_request(commands, output='config', check_status=True,
+                                     return_error=return_error, opts=opts)
+        except ValueError as exc:
+            code = getattr(exc, 'code', 1)
+            message = getattr(exc, 'err', exc)
+            err = to_text(message, errors='surrogate_then_replace')
+            if opts.get('ignore_timeout') and code:
+                responses.append(code)
+                return responses
+            elif code and 'no graceful-restart' in err:
+                if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
+                    msg = ['']
+                    responses.extend(msg)
+                    return responses
+                else:
+                    self._module.fail_json(msg=err)
+            elif code:
+                self._module.fail_json(msg=err)
+
+        if return_error:
+            return resp
+        else:
+            return responses.extend(resp)
+
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
+        diff = {}
+
+        # prepare candidate configuration
+        candidate_obj = NetworkConfig(indent=2)
+        candidate_obj.load(candidate)
+
+        if running and diff_match != 'none' and diff_replace != 'config':
+            # running configuration
+            running_obj = NetworkConfig(indent=2, contents=running, ignore_lines=diff_ignore_lines)
+            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=diff_match, replace=diff_replace)
+
+        else:
+            configdiffobjs = candidate_obj.items
+
+        diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
+        return diff
+
+    def get_device_info(self):
+        device_info = {}
+
+        device_info['network_os'] = 'nxos'
+        reply = self.run_commands({'command': 'show version', 'output': 'json'})
+        data = reply[0]
+
+        platform_reply = self.run_commands({'command': 'show inventory', 'output': 'json'})
+        platform_info = platform_reply[0]
+
+        device_info['network_os_version'] = data.get('sys_ver_str') or data.get('kickstart_ver_str')
+        device_info['network_os_model'] = data['chassis_id']
+        device_info['network_os_hostname'] = data['host_name']
+        device_info['network_os_image'] = data.get('isan_file_name') or data.get('kick_file_name')
+
+        if platform_info:
+            inventory_table = platform_info['TABLE_inv']['ROW_inv']
+            for info in inventory_table:
+                if 'Chassis' in info['name']:
+                    device_info['network_os_platform'] = info['productid']
+
+        return device_info
+
+    def get_capabilities(self):
+        result = {}
+        result['device_info'] = self.get_device_info()
+        result['network_api'] = 'nxapi'
+        return result
+
+    def read_module_context(self, module_key):
+        if self._module_context.get(module_key):
+            return self._module_context[module_key]
+
+        return None
+
+    def save_module_context(self, module_key, module_context):
+        self._module_context[module_key] = module_context
 
         return None
 
