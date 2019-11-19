@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix GitLab modules authentication by handling `python-gitlab` library version >= 1.13.0 (https://github.com/ansible/ansible/issues/64770)
