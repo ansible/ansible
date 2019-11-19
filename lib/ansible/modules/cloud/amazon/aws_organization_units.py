@@ -24,6 +24,9 @@ options:
   name:
     description:
       - Name of the organizational unit
+        This can be full OU path such as "Prod/IT/Service_Desk".
+        The parent OUs will be recursively dereferenced.
+        The lookup always starts from the root node, as the names are not unique within the organization tree.
     required: true
     type: str
   state:
@@ -58,8 +61,6 @@ RETURN = """
 name:
   description:
     - Name of the organizational unit.
-      This can be full OU path such as "Prod/IT/Service_Desk".
-      The parent OUs will be recursively dereferenced.
       If the parent OU does not exist the module will fail with warning message.
   returned: always
   type: str
