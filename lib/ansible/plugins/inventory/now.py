@@ -166,8 +166,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         if not HAS_REQUESTS:
-            raise AnsibleParserError('Please install "requests" Python module as this is required'
-                                     ' for ServiceNow dynamic inventory plugin.')
+            raise AnsibleParserError(
+                'Please install "requests" Python module as this is required'
+                ' for ServiceNow dynamic inventory plugin.')
 
         self._read_config_data(path)
         self.cache_key = self.get_cache_key(path)
