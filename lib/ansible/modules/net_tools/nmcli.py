@@ -564,15 +564,17 @@ except ImportError:
 
 NM_CLIENT_IMP_ERR = None
 try:
-    import gi
+  import gi
+  gi.require_version('NM', '1.0')
+  from gi.repository import NM
+except (ImportError, ValueError):
+  try:
     gi.require_version('NMClient', '1.0')
     gi.require_version('NetworkManager', '1.0')
-
     from gi.repository import NetworkManager, NMClient
-    HAVE_NM_CLIENT = True
-except (ImportError, ValueError):
-    NM_CLIENT_IMP_ERR = traceback.format_exc()
+  except (ImportError, ValueError):
     HAVE_NM_CLIENT = False
+HAVE_NM_CLIENT = True
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
