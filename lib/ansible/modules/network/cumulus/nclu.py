@@ -244,7 +244,6 @@ def main(testing=False):
         "diff": diff
     }
 
-    _changed, output = run_nclu(module, command_list, command_string, commit, atomic, abort, description)
     if not testing:
         module.exit_json(**result)
     elif testing:
