@@ -166,6 +166,9 @@ def unwrap_var(v):
         return binary_type(v)
     elif isinstance(v, AnsibleUnsafeText):
         return text_type(v)
+    elif isinstance(v, (binary_type, text_type)):
+        # Forward thinking short circuit, to allow for other immutable sequences later
+        return v
     elif isinstance(v, Set):
         return set(unwrap_var(value) for value in v)
     elif isinstance(v, Mapping):

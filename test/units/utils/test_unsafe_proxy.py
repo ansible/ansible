@@ -131,7 +131,10 @@ def test_unwrap_var():
         'tuple': (
             AnsibleUnsafeText(u'text'),
             AnsibleUnsafeBytes(b'bytes'),
-        )
+        ),
+        'unwrapped_text': u'text',
+        'unwrapped_bytes': b'bytes',
+        'unwrapped_non_ascii': u'café',
     }
 
     out = unwrap_var(value)
@@ -141,4 +144,7 @@ def test_unwrap_var():
     assert not isinstance(out['list'][0], AnsibleUnsafe)
     assert not isinstance(next(iter(out['set'])), AnsibleUnsafe)
     assert isinstance(out['tuple'][0], AnsibleUnsafe)
+    assert not isinstance(out['unwrapped_text'], AnsibleUnsafe)
+    assert not isinstance(out['unwrapped_non_ascii'], AnsibleUnsafe)
+    assert not isinstance(out['unwrapped_bytes'], AnsibleUnsafe)
     assert not isinstance(unwrap_var(AnsibleUnsafeText(u'text')), AnsibleUnsafe)
