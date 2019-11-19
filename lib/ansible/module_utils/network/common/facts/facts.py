@@ -11,6 +11,8 @@ from ansible.module_utils.network.common.network import get_resource_connection
 from ansible.module_utils.six import iteritems
 
 
+
+
 class FactsBase(object):
     """
     The facts base class
@@ -102,7 +104,6 @@ class FactsBase(object):
                     instances.append(fact_cls_obj(self._module))
                 else:
                     self._warnings.extend(["network resource fact gathering for '%s' is not supported" % key])
-
             for inst in instances:
                 inst.populate_facts(self._connection, self.ansible_facts, data)
 

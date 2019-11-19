@@ -57,11 +57,11 @@ options:
         type: list
         elements: dict
         suboptions:
-          route_address_type:
+          afi:
             description:
               - Specifies the type of route.
             type: str
-            choices: ['route', 'route6']
+            choices: ['ipv4', 'ipv6']
             required: True
           routes:
             description: A ditionary that specify the static route configurations.
@@ -109,10 +109,35 @@ options:
                     description:
                       - Name of the outgoing interface.
                     type: str
-
+  running_config:
+    description:
+      - The module, by default, will connect to the remote device and
+        retrieve the current running-config to use as a base for comparing
+        against the contents of source. There are times when it is not
+        desirable to have the task get the current running-config for
+        every task in a playbook.  The I(running_config) argument allows the
+        implementer to pass in the configuration to use as the base
+        config for comparison. This value of this option should be the
+        output received from device by executing command
+        C(show configuration commands | grep 'static route')
+    version_added: "2.10"
+    type: str
   state:
     description:
-      - The state the configuration should be left in.
+      - The state of the configuration after module completion. 
+      - The states I(rendered), I(gathered) and I(parsed) does not perform any
+        change on the device. 
+      - The state I(rendered) will transform the configuration in C(config) option to platform
+        specific CLI commands which will be returned in the I(rendered) key within the result.
+        For state I(rendered) active connection to remote host is not required.
+      - The state I(gathered) will fetch the running configuration from device and transform
+        it into structured data in the format as per the resource module argspec and the
+        value is returned in the I(gathered) key within the result.
+      - The state I(parsed) reads the configuration from C(running_config) option and transforms
+        it into JSON format as per the resource module parameters and the value is returned in
+        the I(parsed) key within the result. The value of C(running_config) option should be the
+        same format as the output of command I(show configuration | grep 'static route')
+        executed on device. For state I(parsed) active connection to remote host is not required.
     type: str
     choices:
     - merged
@@ -121,6 +146,7 @@ options:
     - deleted
     - gathered
     - rendered
+    - parsed
     default: merged
 """
 EXAMPLES = """
@@ -135,7 +161,7 @@ EXAMPLES = """
   vyos_static_routes:
     config:
      - address_families:
-       - route_address_type: 'route'
+       - afi: 'ipv4'
          routes:
          - dest: 192.0.0.0/24
            blackhole_config:
@@ -144,7 +170,7 @@ EXAMPLES = """
              - forward_router_address: 192.11.11.11
              - forward_router_address: 192.11.11.12
      - address_families:
-       - route_address_type: 'route6'
+       - afi: 'ipv6'
          routes:
          - dest: 2001:db8::0/32
            blackhole_config:
@@ -176,7 +202,7 @@ EXAMPLES = """
 #        {
 #            "address_families": [
 #                {
-#                    "route_address_type": "route",
+#                    "afi": "ipv4",
 #                    "routes": [
 #                        {
 #                            "blackhole_config": {
@@ -199,7 +225,7 @@ EXAMPLES = """
 #        {
 #            "address_families": [
 #                {
-#                    "route_address_type": "route6",
+#                    "afi": "ipv6",
 #                    "routes": [
 #                        {
 #                            "blackhole_config": {
@@ -250,7 +276,7 @@ EXAMPLES = """
   vyos_static_routes:
     config:
      - address_families:
-       - route_address_type: 'route'
+       - afi: 'ipv4'
          routes:
          - dest: 192.0.0.0/24
            blackhole_config:
@@ -270,7 +296,7 @@ EXAMPLES = """
 #        {
 #            "address_families": [
 #                {
-#                    "route_address_type": "route",
+#                    "afi": "ipv4",
 #                    "routes": [
 #                        {
 #                            "blackhole_config": {
@@ -293,7 +319,7 @@ EXAMPLES = """
 #        {
 #            "address_families": [
 #                {
-#                    "route_address_type": "route6",
+#                    "afi": "ipv6",
 #                    "routes": [
 #                        {
 #                            "blackhole_config": {
@@ -327,7 +353,7 @@ EXAMPLES = """
 #        {
 #            "address_families": [
 #                {
-#                    "route_address_type": "route",
+#                    "afi": "ipv4",
 #                    "routes": [
 #                        {
 #                            "blackhole_config": {
@@ -353,7 +379,7 @@ EXAMPLES = """
 #        {
 #            "address_families": [
 #                {
-#                    "route_address_type": "route6",
+#                    "afi": "ipv6",
 #                    "routes": [
 #                        {
 #                            "blackhole_config": {
@@ -406,7 +432,7 @@ EXAMPLES = """
   vyos_static_routes:
     config:
      - address_families:
-       - route_address_type: 'route'
+       - afi: 'ipv4'
          routes:
          - dest: 198.0.0.0/24
            next_hops:
@@ -422,7 +448,7 @@ EXAMPLES = """
 #        {
 #            "address_families": [
 #                {
-#                    "route_address_type": "route",
+#                    "afi": "ipv4",
 #                    "routes": [
 #                        {
 #                            "blackhole_config": {
@@ -448,7 +474,7 @@ EXAMPLES = """
 #        {
 #            "address_families": [
 #                {
-#                    "route_address_type": "route6",
+#                    "afi": "ipv6",
 #                    "routes": [
 #                        {
 #                            "blackhole_config": {
@@ -481,7 +507,7 @@ EXAMPLES = """
 #        {
 #            "address_families": [
 #                {
-#                    "route_address_type": "route",
+#                    "afi": "ipv4",
 #                    "routes": [
 #                        {
 #                            "dest": "198.0.0.0/24",
@@ -522,11 +548,11 @@ EXAMPLES = """
   vyos_static_routes:
     config:
      - address_families:
-       - route_address_type: 'route'
+       - afi: 'ipv4'
          routes:
          - dest: '192.0.0.0/24'
      - address_families:
-       - route_address_type: 'route6'
+       - afi: 'ipv6'
          routes:
          - dest: '2001:db8::0/32'
     state: deleted
@@ -540,7 +566,7 @@ EXAMPLES = """
 #        {
 #            "address_families": [
 #                {
-#                    "route_address_type": "route",
+#                    "afi": "ipv4",
 #                    "routes": [
 #                        {
 #                            "blackhole_config": {
@@ -563,7 +589,7 @@ EXAMPLES = """
 #        {
 #            "address_families": [
 #                {
-#                    "route_address_type": "route6",
+#                    "afi": "ipv6",
 #                    "routes": [
 #                        {
 #                            "blackhole_config": {
@@ -619,6 +645,48 @@ commands:
   sample:
     - "set protocols static route 192.0.0.0/24 next-hop '192.11.11.11'"
     - "set protocols static route 192.0.0.0/24 'blackhole'"
+    
+rendered:
+  description: The set of CLI commands generated from the value in C(config) option
+  returned: When C(state) is I(rendered)
+  type: list
+  sample:  "address_families": [
+                {
+                    "afi": "ipv4", 
+                    "routes": [
+                        {
+                            "blackhole_config": {
+                                "type": "blackhole"
+                            }, 
+                            "dest": "192.0.0.0/24", 
+                            "next_hops": [
+                                {
+                                    "forward_router_address": "192.11.11.11"
+                                }, 
+                                {
+                                    "forward_router_address": "192.11.11.12"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+gathered:
+  description: The configuration as structured data transformed for the running configuration
+               fetched from remote host
+  returned: When C(state) is I(gathered)
+  type: list
+  sample: >
+    The configuration returned will always be in the same format
+    of the parameters above.
+parsed:
+  description: The configuration as structured data transformed for the value of
+               C(running_config) option
+  returned: When C(state) is I(parsed)
+  type: list
+  sample: >
+    The configuration returned will always be in the same format
+    of the parameters above.
 """
 
 
@@ -635,10 +703,14 @@ def main():
     """
     required_if = [('state', 'merged', ('config',)),
                    ('state', 'replaced', ('config',)),
-                   ('state', 'overridden', ('config',))]
-    module = AnsibleModule(argument_spec=Static_routesArgs.argument_spec, required_if=required_if,
-                           supports_check_mode=True)
+                   ('state', 'overridden', ('config',)),
+                   ('state', 'parsed', ('running_config',))]
+    mutually_exclusive = [('config', 'running_config')]
 
+    module = AnsibleModule(argument_spec=Static_routesArgs.argument_spec,
+                           required_if=required_if,
+                           supports_check_mode=True,
+                           mutually_exclusive=mutually_exclusive)
     result = Static_routes(module).execute_module()
     module.exit_json(**result)
 

@@ -1,12 +1,14 @@
 ---
 - debug:
-      msg: "START vyos_static_routes merged integration tests on connection={{ ansible_connection }}"
+      msg: "START vyos_static_routes rendered integration tests on connection={{ ansible_connection }}"
 
 - include_tasks: _remove_config.yaml
 
+- include_tasks: _populate.yaml
+
 - block:
-  - name: Merge the provided configuration with the exisiting running configuration
-    vyos_static_routes: &merged
+  - name:  Structure provided configuration into device specific commands
+    vyos_static_routes: &rendered
       config:
        - address_families:
          - afi: 'ipv4'
@@ -26,36 +28,22 @@
                next_hops:
                  - forward_router_address: 2001:db8::5
                  - forward_router_address: 2001:db8::1      
-      state: merged
+      state: rendered
     register: result
-
-  - name: Assert that before dicts were correctly generated
-    assert:
-        that: "{{ merged['before'] | symmetric_difference(result['before']) |length == 0 }}"
 
   - name: Assert that correct set of commands were generated
     assert:
         that:
-            - "{{ merged['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+            - "{{ rendered['commands'] | symmetric_difference(result['rendered']) |length == 0 }}"
 
-  - name: Assert that after dicts was correctly generated
-    assert:
-        that:
-            - "{{ merged['after'] | symmetric_difference(result['after']) |length == 0 }}"
-
-  - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
-    vyos_static_routes: *merged
+  - name: Structure provided configuration into device specific commands (IDEMPOTENT)
+    vyos_static_routes: *rendered
     register: result
 
   - name: Assert that the previous task was idempotent
     assert:
         that:
             - "result['changed'] == false"
-
-  - name: Assert that before dicts were correctly generated
-    assert:
-        that:
-            - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
 
   always:
   - include_tasks: _remove_config.yaml

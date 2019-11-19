@@ -11,7 +11,7 @@
     vyos_static_routes: &overridden
        config:
          - address_families:
-           - route_address_type: 'route'
+           - afi: 'ipv4'
              routes:
                - dest: 198.0.0.0/24
                  next_hops:

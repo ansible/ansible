@@ -11,7 +11,7 @@
     vyos_static_routes: &replaced
         config:
           - address_families:
-            - route_address_type: 'route'
+            - afi: 'ipv4'
               routes:
                 - dest: 192.0.0.0/24
                   blackhole_config:

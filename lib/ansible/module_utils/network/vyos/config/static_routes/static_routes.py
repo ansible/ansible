@@ -36,18 +36,17 @@ class Static_routes(ConfigBase):
         'static_routes',
     ]
 
-    # params = ['address_families', 'blackhole_config', 'next_hops']
 
     def __init__(self, module):
         super(Static_routes, self).__init__(module)
 
-    def get_static_routes_facts(self):
+    def get_static_routes_facts(self, data=None):
         """ Get the 'facts' (the current configuration)
 
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
-        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
+        facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources, data=data)
         static_routes_facts = facts['ansible_network_resources'].get('static_routes')
         if not static_routes_facts:
             return []
@@ -63,25 +62,38 @@ class Static_routes(ConfigBase):
         warnings = list()
         commands = list()
 
-        existing_static_routes_facts = self.get_static_routes_facts()
-        commands.extend(self.set_config(existing_static_routes_facts))
-        if commands:
-            if self._module.check_mode:
-                resp = self._connection.edit_config(commands, commit=False)
-            else:
-                resp = self._connection.edit_config(commands)
+        if self.state in self.ACTION_STATES:
+            existing_static_routes_facts = self.get_static_routes_facts()
+        else:
+            existing_static_routes_facts = []
+
+        if self.state in self.ACTION_STATES or self.state == 'rendered':
+            commands.extend(self.set_config(existing_static_routes_facts ))
+
+        if commands and self.state in self.ACTION_STATES:
+            if not self._module.check_mode:
+                self._connection.edit_config(commands)
             result['changed'] = True
 
-        result['commands'] = commands
+        if self.state in self.ACTION_STATES:
+            result['commands'] = commands
 
-        if self._module._diff:
-            result['diff'] = resp['diff'] if result['changed'] else None
 
-        changed_static_routes_facts = self.get_static_routes_facts()
+        if self.state in self.ACTION_STATES or self.state == 'gathered':
+            changed_static_routes_facts = self.get_static_routes_facts()
+        elif self.state == 'rendered':
+            result['rendered'] = commands
+        elif self.state == 'parsed':
+            result['parsed'] = self.get_static_routes_facts(data=self._module.params['running_config'])
+        else:
+            changed_static_routes_facts = []
 
-        result['before'] = existing_static_routes_facts
-        if result['changed']:
-            result['after'] = changed_static_routes_facts
+        if self.state in self.ACTION_STATES:
+            result['before'] = existing_static_routes_facts
+            if result['changed']:
+                result['after'] = changed_static_routes_facts
+        elif self.state == 'gathered':
+            result['gathered'] = changed_static_routes_facts
 
         result['warnings'] = warnings
         return result
@@ -109,10 +121,11 @@ class Static_routes(ConfigBase):
                   to the desired configuration
         """
         commands = []
-        state = self._module.params['state']
-        if state == 'overridden':
+        if self.state in ('merged', 'replaced', 'overridden') and not want:
+            self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(self.state))
+        if self.state == 'overridden':
             commands.extend(self._state_overridden(want=want, have=have))
-        elif state == 'deleted':
+        elif self.state == 'deleted':
             if want:
                 for want_item in want:
                     af_want = want_item['address_families']
@@ -129,16 +142,16 @@ class Static_routes(ConfigBase):
                         have_routes = element['routes']
                         for have_route in have_routes:
                             commands.extend(self._state_deleted(want=None, have=have_route))
-        else:
+        elif want:
             for want_item in want:
                 af_want = want_item['address_families']
                 for element in af_want:
                     want_routes = element['routes']
                     for route in want_routes:
                         have_item = self.search_route_in_have(have, route['dest'])
-                        if state == 'merged':
+                        if self.state == 'merged' or self.state == 'rendered':
                             commands.extend(self._state_merged(want=route, have=have_item))
-                        else:
+                        elif self.state == 'replaced':
                             commands.extend(self._state_replaced(want=route, have=have_item))
         return commands
 

@@ -9,11 +9,11 @@
     vyos_static_routes: &deleted
       config:
         - address_families:
-          - route_address_type: 'route'
+          - afi: 'ipv4'
             routes:
               - dest: '192.0.0.0/24'      
         - address_families:
-          - route_address_type: 'route6'      
+          - afi: 'ipv6'
             routes:
               - dest: '2001:db8::0/32'      
       state: deleted

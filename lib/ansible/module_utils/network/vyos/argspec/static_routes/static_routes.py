@@ -42,8 +42,8 @@ class Static_routesArgs(object):  # pylint: disable=R0903
                 'address_families': {
                     'elements': 'dict',
                     'options': {
-                        'route_address_type': {
-                            'choices': ['route', 'route6'],
+                        'afi': {
+                            'choices': ['ipv4', 'ipv6'],
                             'required': True,
                             'type': 'str'
                         },
@@ -93,10 +93,11 @@ class Static_routesArgs(object):  # pylint: disable=R0903
             },
             'type': 'list'
         },
+        'running_config': {'type': 'str'},
         'state': {
             'choices': [
                 'merged', 'replaced', 'overridden', 'deleted', 'gathered',
-                'rendered'
+                'rendered', 'parsed'
             ],
             'default':
             'merged',
