@@ -74,7 +74,7 @@ class IBMSVCRestApi(object):
 
         # Make sure we can connect via the RestApi
         self.token = self._svc_authorize()
-        self.debug("_connect token={}".format(self.token))
+        self.debug("_connect token=%s", self.token)
         if not self.token:
             self.module.fail_json(msg='Failed to obtain access token')
 
@@ -92,9 +92,9 @@ class IBMSVCRestApi(object):
             hostname = '{}.{}'.format(self.clustername, self.domain)
         else:
             hostname = self.clustername
-        return getattr(self, '_resturl',
-                       None) or "{protocol}://{host}:{port}/rest".format(
-            protocol=self.protocol, host=hostname, port=self.port)
+        return (getattr(self, '_resturl', None)
+                or "{protocol}://{host}:{port}/rest".format(
+                    protocol=self.protocol, host=hostname, port=self.port))
 
     @property
     def token(self):
@@ -133,31 +133,31 @@ class IBMSVCRestApi(object):
             postfix = '/'.join([postfix] + [quote(str(a)) for a in cmdargs])
         url = '/'.join([self.resturl] + [postfix])
         r['url'] = url  # Pass back in result for error handling
-        self.debug("_svc_rest: url={}".format(url))
+        self.debug("_svc_rest: url=%s", url)
 
         payload = cmdopts if cmdopts else None
         data = jsonify(payload, encoding="utf-8")
         r['data'] = cmdopts  # Original payload data has nicer formatting
-        self.debug("_svc_rest: payload={}".format(payload))
+        self.debug("_svc_rest: payload=%s", payload)
 
         try:
             o = open_url(url, method=method, headers=headers,
                          validate_certs=self.validate_certs, data=bytes(data))
         except HTTPError as e:
-            self.debug('_svc_rest: httperror {}'.format(str(e)))
+            self.debug('_svc_rest: httperror %s', str(e))
             r['code'] = e.getcode()
             r['out'] = e.read()
-            r['err'] = "HTTPError {}".format(str(e))
+            r['err'] = "HTTPError %s", str(e)
             return r
         except Exception as e:
-            self.debug('_svc_rest: exception : {}'.format(str(e)))
-            r['err'] = "Exception {}".format(str(e))
+            self.debug('_svc_rest: exception : %s', str(e))
+            r['err'] = "Exception %s", str(e)
             return r
 
         try:
             j = json.load(o)
         except ValueError as e:
-            self.debug("_svc_rest: value error pass: {}".format(str(e)))
+            self.debug("_svc_rest: value error pass: %s", str(e))
             # pass, will mean both data and error are None.
             return r
 
@@ -226,7 +226,7 @@ class IBMSVCRestApi(object):
         """
 
         rest = self._svc_token_wrap(cmd, cmdopts, cmdargs)
-        self.debug("svc_run_command rest={}".format(rest))
+        self.debug("svc_run_command rest=%s", rest)
 
         if rest['err']:
             msg = rest
@@ -249,7 +249,7 @@ class IBMSVCRestApi(object):
         """
 
         rest = self._svc_token_wrap(cmd, cmdopts, cmdargs)
-        self.debug("svc_obj_info rest={}".format(rest))
+        self.debug("svc_obj_info rest=%s", rest)
 
         if rest['code']:
             if rest['code'] == 500:
