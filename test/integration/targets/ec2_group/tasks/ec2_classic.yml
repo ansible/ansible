@@ -1,4 +1,10 @@
-- block:
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  block:
   - name: Get available AZs
     aws_az_facts:
       aws_access_key: "{{ aws_connection_info['aws_access_key'] }}"
