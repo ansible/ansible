@@ -1,0 +1,2 @@
+bugfixes:
+  - fortios httpapi plugin - fix the issue that fortios httpapi plugin does not support python2
