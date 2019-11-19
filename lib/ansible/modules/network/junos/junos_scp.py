@@ -53,14 +53,14 @@ options:
         This can be used if you need to provide a private key rather than loading
         the key into the ssh-key-ring/environment
     type: path
-    version_added: 2.10
+    version_added: '2.10'
   ssh_config:
     description:
       - The C(ssh_config) argument is path to the SSH configuration file.
         This can be used to load SSH information from a configuration file.
         If this option is not given by default ~/.ssh/config is queried.
     type: path
-    version_added: 2.10
+    version_added: '2.10'
 requirements:
   - junos-eznc
   - ncclient (>=v0.5.2)
@@ -69,6 +69,10 @@ notes:
     the remote device being managed.
   - Tested against vMX JUNOS version 17.3R1.10.
   - Works with C(local) connections only.
+  - Since this module uses junos-eznc to establish connection with junos
+    device the netconf configuration parameters needs to be passed
+    using module options for example C(ssh_config) unlike other junos
+    modules that uses C(netconf) connection type.
 """
 
 EXAMPLES = """
