@@ -157,7 +157,7 @@ EXAMPLES = r'''
     search_regex: completed (?P<task>\w+)
   register: waitfor
 - debug:
-    msg: Completed {{ waitfor['groupdict']['task'] }}
+    msg: Completed {{ waitfor['match_groupdict']['task'] }}
 
 - name: Wait until the lock file is removed
   wait_for:
