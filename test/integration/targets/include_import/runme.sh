@@ -107,4 +107,4 @@ ansible-playbook valid_include_keywords/playbook.yml "$@"
 
 # https://github.com/ansible/ansible/issues/64902
 ansible-playbook tasks/test_allow_single_role_dup.yml 2>&1 | tee test_allow_single_role_dup.out
-test "$(grep -c 'Tasks file inside role' test_allow_single_role_dup.out)" = 3
+test "$(grep -c 'ok=3' test_allow_single_role_dup.out)" = 1
