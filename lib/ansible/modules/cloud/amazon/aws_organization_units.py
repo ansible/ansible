@@ -262,20 +262,16 @@ def main():
         if ou is None:
             result['changed'] = False
         else:
-            if module.check_mode:
-                result['changed'] = True
-            else:
+            result['changed'] = True
+            if not module.check_mode:
                 if client.delete_ou(ou['Id']):
-                    result['changed'] = True
                     result['state'] = 'absent'
     elif ou_state == 'present':
         if ou is None:
-            if module.check_mode:
-                result['changed'] = True
-            else:
+            result['changed'] = True
+            if not module.check_mode:
                 ou = client.create_ou(ou_name)
                 if ou is not None:
-                    result['changed'] = True
                     result['ou'] = ou
                 else:
                     module.fail_json(msg="Failed to create organizational unit")
