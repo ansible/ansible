@@ -8,9 +8,7 @@ from . import types as t
 
 from .util import (
     SubprocessError,
-    display,
     raw_command,
-    to_text,
 )
 
 
@@ -126,8 +124,4 @@ class Git:
         :type str_errors: str
         :rtype: str
         """
-        try:
-            return raw_command([self.git] + cmd, cwd=self.root, capture=True, str_errors=str_errors)[0]
-        except SubprocessError as spe:
-            display.warning(to_text(spe.message))
-            return spe.stdout
+        return raw_command([self.git] + cmd, cwd=self.root, capture=True, str_errors=str_errors)[0]
