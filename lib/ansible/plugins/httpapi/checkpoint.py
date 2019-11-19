@@ -21,6 +21,7 @@ options:
       - Specifies the domain of the Check Point device
     vars:
       - name: ansible_checkpoint_domain
+    version_added: "2.10"
 """
 
 import json
