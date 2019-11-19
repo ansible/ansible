@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: Ansible Project
+# Copyright: (c) 2019, Tobias Birkefeld (@tcraxs) <t@craxs.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -187,6 +188,7 @@ extends_documentation_fragment:
 
 author:
 - Bernhard Weitzhofer (@b6d)
+- Tobias Birkefeld (@tcraxs)
 '''
 
 EXAMPLES = r'''
@@ -743,7 +745,7 @@ class Connection(object):
         executed_queries.append(query)
         self.cursor.execute(query)
         status_after = get_status(objs)
-        return status_before != status_after
+        return status_before.sort() != status_after.sort()
 
 
 class QueryBuilder(object):
