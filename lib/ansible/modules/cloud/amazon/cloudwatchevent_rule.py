@@ -137,7 +137,7 @@ EXAMPLES = '''
 
 RETURN = '''
 rule:
-    description: CloudWatch Event rule data
+    description: CloudWatch Event rule data.
     returned: success
     type: dict
     sample:
@@ -147,7 +147,7 @@ rule:
       schedule_expression: 'cron(0 20 * * ? *)'
       state: 'ENABLED'
 targets:
-    description: CloudWatch Event target(s) assigned to the rule
+    description: CloudWatch Event target(s) assigned to the rule.
     returned: success
     type: list
     sample: "[{ 'arn': 'arn:aws:lambda:us-east-1:123456789012:function:MyFunction', 'id': 'MyTargetId' }]"

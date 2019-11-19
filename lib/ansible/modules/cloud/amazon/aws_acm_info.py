@@ -133,6 +133,7 @@ certificates:
           - admin@example.com
           - postmaster@example.com
           type: list
+          elements: str
         validation_status:
           description: Validation status of the domain
           returned: always
@@ -148,6 +149,7 @@ certificates:
       returned: always
       sample: []
       type: list
+      elements: str
     issued_at:
       description: Date certificate was issued
       returned: always
@@ -200,6 +202,7 @@ certificates:
               - admin@example.com
               - postmaster@example.com
               type: list
+              elements: str
             validation_status:
               description: Validation status of the domain
               returned: always
@@ -246,6 +249,7 @@ certificates:
       sample:
       - '*.example.com'
       type: list
+      elements: str
     tags:
       description: Tags associated with the certificate
       returned: always

@@ -36,7 +36,7 @@ options:
   owners:
     description:
       - Filter the images by the owner. Valid options are an AWS account ID, self,
-      - or an AWS owner alias ( amazon | aws-marketplace | microsoft ).
+        or an AWS owner alias ( amazon | aws-marketplace | microsoft ).
     aliases: [owner]
     type: list
     elements: str
@@ -83,9 +83,10 @@ EXAMPLES = '''
 
 RETURN = '''
 images:
-  description: a list of images
+  description: A list of images.
   returned: always
-  type: complex
+  type: list
+  elements: dict
   contains:
     architecture:
       description: The architecture of the image.
@@ -95,7 +96,8 @@ images:
     block_device_mappings:
       description: Any block device mapping entries.
       returned: always
-      type: complex
+      type: list
+      elements: dict
       contains:
         device_name:
           description: The device name exposed to the instance.

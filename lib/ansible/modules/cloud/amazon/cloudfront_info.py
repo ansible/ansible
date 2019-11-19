@@ -199,7 +199,7 @@ EXAMPLES = '''
     distribution_id: my-cloudfront-distribution-id
     invalidation_id: my-cloudfront-invalidation-id
 
-# Get all information about a cloudfront origin access identity.
+# Get all information about a CloudFront origin access identity.
 - cloudfront_facts:
     origin_access_identity: true
     origin_access_identity_id: my-cloudfront-origin-access-identity-id
@@ -225,13 +225,13 @@ origin_access_identity_configuration:
     type: dict
 distribution:
     description: >
-      Facts about a cloudfront distribution. Requires I(distribution_id) or I(domain_name_alias)
+      Facts about a CloudFront distribution. Requires I(distribution_id) or I(domain_name_alias)
       to be specified. Requires I(origin_access_identity_id) to be set.
     returned: only if distribution is true
     type: dict
 distribution_config:
     description: >
-      Facts about a cloudfront distribution's config. Requires I(distribution_id) or I(domain_name_alias)
+      Facts about a CloudFront distribution's config. Requires I(distribution_id) or I(domain_name_alias)
       to be specified.
     returned: only if I(distribution_config) is true
     type: dict
@@ -259,7 +259,7 @@ summary:
     type: dict
 result:
     description: >
-        Result dict not nested under the cloudfront id to access results of module without the knowledge of that id
+        Result dict not nested under the CloudFront ID to access results of module without the knowledge of that id
         as figuring out the DistributionId is usually the reason one uses this module in the first place.
     returned: always
     type: dict
@@ -720,9 +720,9 @@ def main():
     result['changed'] = False
     result['cloudfront'].update(facts)
     if is_old_facts:
-        module.exit_json(msg="Retrieved cloudfront facts.", ansible_facts=result)
+        module.exit_json(msg="Retrieved CloudFront facts.", ansible_facts=result)
     else:
-        module.exit_json(msg="Retrieved cloudfront info.", **result)
+        module.exit_json(msg="Retrieved CloudFront info.", **result)
 
 
 if __name__ == '__main__':

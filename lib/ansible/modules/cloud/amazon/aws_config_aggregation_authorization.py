@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 module: aws_config_aggregation_authorization
 short_description: Manage cross-account AWS Config authorizations
 description:
-    - Module manages AWS Config resources
+    - Module manages AWS Config resources.
 version_added: "2.6"
 requirements: [ 'botocore', 'boto3' ]
 author:

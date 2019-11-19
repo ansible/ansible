@@ -33,7 +33,7 @@ extends_documentation_fragment:
 options:
     distribution_id:
       description:
-        - The id of the CloudFront distribution to invalidate paths for. Can be specified instead of the alias.
+        - The ID of the CloudFront distribution to invalidate paths for. Can be specified instead of the alias.
       required: false
       type: str
     alias:
@@ -201,7 +201,7 @@ class CloudFrontInvalidationServiceManager(object):
                 invalidation = self.client.get_invalidation(DistributionId=distribution_id, Id=inv_id)['Invalidation']
                 caller_ref = invalidation.get('InvalidationBatch', {}).get('CallerReference')
             except (BotoCoreError, ClientError) as e:
-                self.module.fail_json_aws(e, msg="Error getting Cloudfront invalidation {0}".format(inv_id))
+                self.module.fail_json_aws(e, msg="Error getting CloudFront invalidation {0}".format(inv_id))
             if caller_ref == caller_reference:
                 current_invalidation = invalidation
                 break
@@ -212,7 +212,7 @@ class CloudFrontInvalidationServiceManager(object):
 
 class CloudFrontInvalidationValidationManager(object):
     """
-    Manages Cloudfront validations for invalidation batches
+    Manages CloudFront validations for invalidation batches
     """
 
     def __init__(self, module):
