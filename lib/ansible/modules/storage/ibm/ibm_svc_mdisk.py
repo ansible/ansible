@@ -2,10 +2,16 @@
 # Copyright (C) 2018 IBM CORPORATION
 # Author(s): John Hetherington <john.hetherington@uk.ibm.com>
 #
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+import logging
+from traceback import format_exc
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.ibm_svc_utils import IBMSVCRestApi, svc_argument_spec
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -17,7 +23,7 @@ module: ibm_svc_mdisk
 short_description: Manage mdisk commands
 description:
   - Ansible interface to manage mdisk related commands
-version_added: "2.7"
+version_added: "2.10"
 options:
   name:
     description:
@@ -103,14 +109,6 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-import json
-import logging
-import time
-from traceback import format_exc
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.ibm_svc_utils import IBMSVCRestApi, svc_argument_spec
-
 
 class IBMSVCmdisk(object):
     def __init__(self):
@@ -119,8 +117,10 @@ class IBMSVCmdisk(object):
         argument_spec.update(
             dict(
                 name=dict(type='str', required=True),
-                state=dict(type='str', required=True, choices=['absent', 'present']),
-                level=dict(type='str', choices=['raid0', 'raid1', 'raid5', 'raid6', 'raid10']),
+                state=dict(type='str', required=True, choices=['absent',
+                                                               'present']),
+                level=dict(type='str', choices=['raid0', 'raid1', 'raid5',
+                                                'raid6', 'raid10']),
                 drive=dict(type='str', default=None),
                 encrypt=dict(type='str', default='no', choices=['yes', 'no']),
                 mdiskgrp=dict(type='str', required=True)
@@ -131,7 +131,6 @@ class IBMSVCmdisk(object):
         self.module = AnsibleModule(argument_spec=argument_spec,
                                     mutually_exclusive=mutually_exclusive,
                                     supports_check_mode=True)
-        p = self.module.params
 
         # logging setup
         log_path = self.module.params['log_path']
@@ -161,7 +160,8 @@ class IBMSVCmdisk(object):
         )
 
     def mdisk_exists(self):
-        return self.restapi.svc_obj_info(cmd='lsmdisk', cmdopts=None, cmdargs=[self.name])
+        return self.restapi.svc_obj_info(cmd='lsmdisk', cmdopts=None,
+                                         cmdargs=[self.name])
 
     def mdisk_create(self):
         if self.module.check_mode:
@@ -175,7 +175,8 @@ class IBMSVCmdisk(object):
         if not self.drive:
             self.module.fail_json(msg="You must pass in drive to the module.")
         if not self.mdiskgrp:
-            self.module.fail_json(msg="You must pass in mdiskgrp to the module.")
+            self.module.fail_json(msg="You must pass in "
+                                      "mdiskgrp to the module.")
 
         self.debug("creating mdisk '%s'", self.name)
 
@@ -190,7 +191,8 @@ class IBMSVCmdisk(object):
             cmdopts['encrypt'] = self.encrypt
         cmdopts['name'] = self.name
         cmdargs = [self.mdiskgrp]
-        self.debug("creating mdisk command=%s opts=%s args=%s", cmd, cmdopts, cmdargs)
+        self.debug("creating mdisk command=%s opts=%s args=%s",
+                   cmd, cmdopts, cmdargs)
 
         # Run command
         result = self.restapi.svc_run_command(cmd, cmdopts, cmdargs)
@@ -210,7 +212,7 @@ class IBMSVCmdisk(object):
         cmdopts['mdisk'] = self.name
         cmdargs = [self.mdiskgrp]
 
-        result = self.restapi.svc_run_command(cmd, cmdopts, cmdargs)
+        self.restapi.svc_run_command(cmd, cmdopts, cmdargs)
 
         # Any error will have been raised in svc_run_command
         # chmkdiskgrp does not output anything when successful.
@@ -220,10 +222,10 @@ class IBMSVCmdisk(object):
         # update the mdisk
         self.debug("updating mdisk '%s'", self.name)
 
-        cmd = 'chmdisk'
-        cmdopts = {}
+        # cmd = 'chmdisk'
+        # cmdopts = {}
         # chmdisk does not like mdisk arrays.
-        cmdargs = [self.name]
+        # cmdargs = [self.name]
 
         # TBD: Implement changed logic.
         # result = self.restapi.svc_run_command(cmd, cmdopts, cmdargs)
@@ -254,7 +256,8 @@ class IBMSVCmdisk(object):
 
         if mdisk_data:
             if self.state == 'absent':
-                self.debug("CHANGED: mdisk exists, but requested state is 'absent'")
+                self.debug("CHANGED: mdisk exists, but "
+                           "requested state is 'absent'")
                 changed = True
             elif self.state == 'present':
                 # This is where we detect if chmdisk should be called.
@@ -263,7 +266,8 @@ class IBMSVCmdisk(object):
                     changed = True
         else:
             if self.state == 'present':
-                self.debug("CHANGED: mdisk does not exist, but requested state is 'present'")
+                self.debug("CHANGED: mdisk does not exist, "
+                           "but requested state is 'present'")
                 changed = True
 
         if changed:
@@ -273,21 +277,21 @@ class IBMSVCmdisk(object):
                 if self.state == 'present':
                     if not mdisk_data:
                         self.mdisk_create()
-                        msg = "Mdisk group [%s] has been created." % (self.name)
+                        msg = "Mdisk group [%s] has been created." % self.name
                     else:
                         # This is where we would modify
                         self.mdisk_update(modify)
-                        msg = "Mdisk group [%s] has been modified." % (self.name)
+                        msg = "Mdisk group [%s] has been modified." % self.name
 
                 elif self.state == 'absent':
                     self.mdisk_delete()
-                    msg = "Volume [%s] has been deleted." % (self.name)
+                    msg = "Volume [%s] has been deleted." % self.name
         else:
             self.debug("exiting with no changes")
             if self.state == 'absent':
-                msg = "Mdisk group [%s] did not exist." % (self.name)
+                msg = "Mdisk group [%s] did not exist." % self.name
             else:
-                msg = "Mdisk group [%s] already exists." % (self.name)
+                msg = "Mdisk group [%s] already exists." % self.name
 
         self.module.exit_json(msg=msg, changed=changed)
 

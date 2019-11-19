@@ -4,10 +4,17 @@
 # Copyright (C) 2019 IBM CORPORATION
 # Author(s): Chun Yao <chunyao@cn.ibm.com>
 #
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+import logging
+from traceback import format_exc
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ibm_svc_utils import IBMSVCRestApi, svc_argument_spec
+from ansible.module_utils._text import to_native
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -17,7 +24,7 @@ DOCUMENTATION = '''
 ---
 module: ibm_svc_host
 short_description: Manage host commands
-version_added: "2.7"
+version_added: "2.10"
 
 description:
   - Ansible interface to managing host commands mkhost, chhost, rmhost
@@ -120,13 +127,6 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-import logging
-from traceback import format_exc
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ibm_svc_utils import IBMSVCRestApi, svc_argument_spec
-from ansible.module_utils._text import to_native
-
 
 class IBMSVChost(object):
     def __init__(self):
@@ -135,11 +135,14 @@ class IBMSVChost(object):
         argument_spec.update(
             dict(
                 name=dict(type='str', required=True),
-                state=dict(type='str', required=True, choices=['absent', 'present']),
+                state=dict(type='str', required=True, choices=['absent',
+                                                               'present']),
                 fcwwpn=dict(type='str', required=False),
                 iscsiname=dict(type='str', required=False),
                 iogrp=dict(type='str', default='0:1:2:3'),
-                protocol=dict(type='str', default='scsi', choices=['scsi', 'nvme', 'iscsi']),
+                protocol=dict(type='str', default='scsi', choices=['scsi',
+                                                                   'nvme',
+                                                                   'iscsi']),
                 type=dict(type='str')
             )
         )
@@ -178,7 +181,8 @@ class IBMSVChost(object):
     def get_existing_host(self):
         merged_result = {}
 
-        data = self.restapi.svc_obj_info(cmd='lshost', cmdopts=None, cmdargs=[self.name])
+        data = self.restapi.svc_obj_info(cmd='lshost', cmdopts=None,
+                                         cmdargs=[self.name])
 
         if isinstance(data, list):
             for d in data:
@@ -209,12 +213,15 @@ class IBMSVChost(object):
             return
 
         if (not self.fcwwpn) and (not self.iscsiname):
-            self.module.fail_json(msg="You must pass in fcwwpn or iscsiname to the module.")
+            self.module.fail_json(msg="You must pass in fcwwpn or iscsiname "
+                                      "to the module.")
         if self.fcwwpn and self.iscsiname:
-            self.module.fail_json(msg="You must not pass in both fcwwpn and iscsiname to the module.")
+            self.module.fail_json(msg="You must not pass in both fcwwpn and "
+                                      "iscsiname to the module.")
 
         if not self.protocol:
-            self.module.fail_json(msg="You must pass in protocol to the module.")
+            self.module.fail_json(msg="You must pass in protocol "
+                                      "to the module.")
 
         self.debug("creating host '%s'", self.name)
 
@@ -234,7 +241,8 @@ class IBMSVChost(object):
             cmdopts['type'] = self.type
 
         cmdopts['name'] = self.name
-        self.debug("creating host command '%s' opts '%s'", self.fcwwpn, self.type)
+        self.debug("creating host command '%s' opts '%s'",
+                   self.fcwwpn, self.type)
 
         # Run command
         result = self.restapi.svc_run_command(cmd, cmdopts, cmdargs=None)
@@ -286,7 +294,8 @@ class IBMSVChost(object):
 
         if host_data:
             if self.state == 'absent':
-                self.debug("CHANGED: host exists, but requested state is 'absent'")
+                self.debug("CHANGED: host exists, but requested "
+                           "state is 'absent'")
                 changed = True
             elif self.state == 'present':
                 # This is where we detect if chhost should be called
@@ -295,7 +304,8 @@ class IBMSVChost(object):
                     changed = True
         else:
             if self.state == 'present':
-                self.debug("CHANGED: host does not exist, but requested state is 'present'")
+                self.debug("CHANGED: host does not exist, "
+                           "but requested state is 'present'")
                 changed = True
 
         if changed:

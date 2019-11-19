@@ -4,11 +4,17 @@
 # Copyright (C) 2019 IBM CORPORATION
 # Author(s): Jamie Jordan <jamie.jordan@ibm.com>
 #
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
+import logging
+from traceback import format_exc
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ibm_svc_utils import IBMSVCRestApi, svc_argument_spec
+from ansible.module_utils._text import to_native
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -20,7 +26,7 @@ module: ibm_svc_vdisk
 short_description: Manage vdisk commands
 description:
   - Ansible interface to managing vdisk commands mkvdisk, chvdisk, rmvdisk
-version_added: "2.7"
+version_added: "2.10"
 options:
   name:
     description:
@@ -112,12 +118,6 @@ EXAMPLES = '''
 '''
 RETURN = '''
 '''
-import logging
-from traceback import format_exc
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ibm_svc_utils import IBMSVCRestApi, svc_argument_spec
-from ansible.module_utils._text import to_native
 
 
 class IBMSVCvdisk(object):
@@ -127,11 +127,15 @@ class IBMSVCvdisk(object):
         argument_spec.update(
             dict(
                 name=dict(type='str', required=True),
-                state=dict(type='str', required=True, choices=['absent', 'present']),
+                state=dict(type='str', required=True, choices=['absent',
+                                                               'present']),
                 mdiskgrp=dict(type='str', required=False),
                 size=dict(type='str', required=False),
-                unit=dict(type='str', default='mb', choices=['b', 'kb', 'mb', 'gb', 'tb', 'pb']),
-                easytier=dict(type='str', default='off', choices=['on', 'off', 'auto'])
+                unit=dict(type='str', default='mb', choices=['b', 'kb',
+                                                             'mb', 'gb',
+                                                             'tb', 'pb']),
+                easytier=dict(type='str', default='off', choices=['on', 'off',
+                                                                  'auto'])
             )
         )
 
@@ -168,7 +172,8 @@ class IBMSVCvdisk(object):
     def get_existing_vdisk(self):
         merged_result = {}
 
-        data = self.restapi.svc_obj_info(cmd='lsvdisk', cmdopts=None, cmdargs=[self.name])
+        data = self.restapi.svc_obj_info(cmd='lsvdisk', cmdopts=None,
+                                         cmdargs=[self.name])
 
         if isinstance(data, list):
             for d in data:
@@ -199,7 +204,8 @@ class IBMSVCvdisk(object):
             return
 
         if not self.mdiskgrp:
-            self.module.fail_json(msg="You must pass in mdiskgrp to the module.")
+            self.module.fail_json(msg="You must pass in "
+                                      "mdiskgrp to the module.")
         if not self.size:
             self.module.fail_json(msg="You must pass in size to the module.")
         if not self.unit:
@@ -271,7 +277,8 @@ class IBMSVCvdisk(object):
 
         if vdisk_data:
             if self.state == 'absent':
-                self.debug("CHANGED: vdisk exists, but requested state is 'absent'")
+                self.debug("CHANGED: vdisk exists, but requested "
+                           "state is 'absent'")
                 changed = True
             elif self.state == 'present':
                 # This is where we detect if chvdisk should be called
@@ -280,7 +287,8 @@ class IBMSVCvdisk(object):
                     changed = True
         else:
             if self.state == 'present':
-                self.debug("CHANGED: vdisk does not exist, but requested state is 'present'")
+                self.debug("CHANGED: vdisk does not exist, "
+                           "but requested state is 'present'")
                 changed = True
 
         if changed:
@@ -290,20 +298,20 @@ class IBMSVCvdisk(object):
                 if self.state == 'present':
                     if not vdisk_data:
                         self.vdisk_create()
-                        msg = "vdisk %s has been created." % (self.name)
+                        msg = "vdisk %s has been created." % self.name
                     else:
                         # This is where we would modify
                         self.vdisk_update(modify)
-                        msg = "vdisk [%s] has been modified." % (self.name)
+                        msg = "vdisk [%s] has been modified." % self.name
                 elif self.state == 'absent':
                     self.vdisk_delete()
-                    msg = "vdisk [%s] has been deleted." % (self.name)
+                    msg = "vdisk [%s] has been deleted." % self.name
         else:
             self.debug("exiting with no changes")
             if self.state == 'absent':
-                msg = "vdisk [%s] did not exist." % (self.name)
+                msg = "vdisk [%s] did not exist." % self.name
             else:
-                msg = "vdisk [%s] already exists." % (self.name)
+                msg = "vdisk [%s] already exists." % self.name
 
         self.module.exit_json(msg=msg, changed=changed)
 

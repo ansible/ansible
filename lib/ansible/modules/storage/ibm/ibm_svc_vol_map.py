@@ -4,11 +4,16 @@
 # Copyright (C) 2019 IBM CORPORATION
 # Author(s): Chun Yao <chunyao@cn.ibm.com>
 #
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
+import logging
+from traceback import format_exc
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.ibm_svc_utils import IBMSVCRestApi, svc_argument_spec
+from ansible.module_utils._text import to_native
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
@@ -20,7 +25,7 @@ module: ibm_svc_vol_map
 short_description: Manage vdisk commands
 description:
   - Ansible interface to managing vdisk commands mkvdisk, chvdisk, rmvdisk
-version_added: "2.7"
+version_added: "2.10"
 options:
   volname:
     description:
@@ -96,12 +101,6 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-import logging
-from traceback import format_exc
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ibm_svc_utils import IBMSVCRestApi, svc_argument_spec
-from ansible.module_utils._text import to_native
-
 
 class IBMSVCvdiskhostmap(object):
     def __init__(self):
@@ -111,7 +110,8 @@ class IBMSVCvdiskhostmap(object):
             dict(
                 volname=dict(type='str', required=True),
                 host=dict(type='str', required=True),
-                state=dict(type='str', required=True, choices=['absent', 'present']),
+                state=dict(type='str', required=True, choices=['absent',
+                                                               'present']),
             )
         )
 
@@ -145,7 +145,8 @@ class IBMSVCvdiskhostmap(object):
     def get_existing_vdiskhostmap(self):
         merged_result = {}
 
-        data = self.restapi.svc_obj_info(cmd='lsvdiskhostmap', cmdopts=None, cmdargs=[self.volname])
+        data = self.restapi.svc_obj_info(cmd='lsvdiskhostmap', cmdopts=None,
+                                         cmdargs=[self.volname])
 
         if isinstance(data, list):
             for d in data:
@@ -179,9 +180,11 @@ class IBMSVCvdiskhostmap(object):
             return
 
         if not self.volname:
-            self.module.fail_json(msg="You must pass in volname to the module.")
+            self.module.fail_json(msg="You must pass in "
+                                      "volname to the module.")
         if not self.host:
-            self.module.fail_json(msg="You must pass in host name to the module.")
+            self.module.fail_json(msg="You must pass in host "
+                                      "name to the module.")
 
         self.debug("creating vdiskhostmap '%s' '%s'", self.volname, self.host)
 
@@ -191,7 +194,8 @@ class IBMSVCvdiskhostmap(object):
         cmdopts['host'] = self.host
         cmdargs = [self.volname]
 
-        self.debug("creating vdiskhostmap command %s opts %s args %s", cmd, cmdopts, cmdargs)
+        self.debug("creating vdiskhostmap command %s opts %s args %s",
+                   cmd, cmdopts, cmdargs)
 
         # Run command
         result = self.restapi.svc_run_command(cmd, cmdopts, cmdargs)
@@ -199,7 +203,8 @@ class IBMSVCvdiskhostmap(object):
 
         if 'message' in result:
             self.changed = True
-            self.debug("create vdiskhostmap result message %s", result['message'])
+            self.debug("create vdiskhostmap result message %s",
+                       result['message'])
         else:
             self.module.fail_json(
                 msg="Failed to create vdiskhostmap [%s]" % self.name)
@@ -239,7 +244,8 @@ class IBMSVCvdiskhostmap(object):
 
         if vdiskhostmap_data:
             if self.state == 'absent':
-                self.debug("CHANGED: vdiskhostmap exists, but requested state is 'absent'")
+                self.debug("CHANGED: vdiskhostmap exists, "
+                           "but requested state is 'absent'")
                 changed = True
             elif self.state == 'present':
                 # This is where we detect if chvdisk should be called
@@ -248,7 +254,8 @@ class IBMSVCvdiskhostmap(object):
                     changed = True
         else:
             if self.state == 'present':
-                self.debug("CHANGED: vdiskhostmap does not exist, but requested state is 'present'")
+                self.debug("CHANGED: vdiskhostmap does not exist, "
+                           "but requested state is 'present'")
                 changed = True
 
         if changed:
@@ -258,20 +265,22 @@ class IBMSVCvdiskhostmap(object):
                 if self.state == 'present':
                     if not vdiskhostmap_data:
                         self.vdiskhostmap_create()
-                        msg = "vdiskhostmap %s %s has been created." % (self.volname, self.host)
+                        msg = "vdiskhostmap %s %s has been created." % (
+                            self.volname, self.host)
                     else:
                         # This is where we would modify
                         self.vdiskhostmap_update(modify)
-                        msg = "vdiskhostmap [%s] has been modified." % (self.volname)
+                        msg = "vdiskhostmap [%s] has been modified." % (
+                            self.volname)
                 elif self.state == 'absent':
                     self.vdiskhostmap_delete()
-                    msg = "vdiskhostmap [%s] has been deleted." % (self.volname)
+                    msg = "vdiskhostmap [%s] has been deleted." % self.volname
         else:
             self.debug("exiting with no changes")
             if self.state == 'absent':
-                msg = "vdiskhostmap [%s] did not exist." % (self.volname)
+                msg = "vdiskhostmap [%s] did not exist." % self.volname
             else:
-                msg = "vdiskhostmap [%s] already exists." % (self.volname)
+                msg = "vdiskhostmap [%s] already exists." % self.volname
 
         self.module.exit_json(msg=msg, changed=changed)
 

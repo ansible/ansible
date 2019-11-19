@@ -2,10 +2,17 @@
 # Copyright (C) 2018 IBM CORPORATION
 # Author(s): John Hetherington <john.hetherington@uk.ibm.com>
 #
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
+import logging
+from traceback import format_exc
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
+from ansible.module_utils.ibm_svc_utils import IBMSVCRestApi, svc_argument_spec
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -16,8 +23,9 @@ DOCUMENTATION = '''
 module: ibm_svc_mdiskgrp
 short_description: Manage mdiskgrp commands
 description:
-  - Ansible interface to managing mdiskgrp commands mkmdiskgrp, chmdiskgrp, rmmdiskgrp
-version_added: "2.7"
+  - Ansible interface to managing mdiskgrp commands
+    mkmdiskgrp, chmdiskgrp, rmmdiskgrp
+version_added: "2.10"
 options:
   name:
     description:
@@ -121,15 +129,6 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-import json
-import logging
-import time
-from traceback import format_exc
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.ibm_svc_utils import IBMSVCRestApi, svc_argument_spec
-
 
 class IBMSVCmdiskgrp(object):
     def __init__(self):
@@ -138,9 +137,12 @@ class IBMSVCmdiskgrp(object):
         argument_spec.update(
             dict(
                 name=dict(type='str', required=True),
-                state=dict(type='str', required=True, choices=['absent', 'present']),
-                datareduction=dict(type='str', default='no', choices=['yes', 'no']),
-                easytier=dict(type='str', default='off', choices=['on', 'off', 'auto']),
+                state=dict(type='str', required=True, choices=['absent',
+                                                               'present']),
+                datareduction=dict(type='str', default='no', choices=['yes',
+                                                                      'no']),
+                easytier=dict(type='str', default='off', choices=['on', 'off',
+                                                                  'auto']),
                 encrypt=dict(type='str', default='no', choices=['yes', 'no']),
                 ext=dict(type='int'),
                 parentmdiskgrp=dict(type='str'),
@@ -153,7 +155,6 @@ class IBMSVCmdiskgrp(object):
         self.module = AnsibleModule(argument_spec=argument_spec,
                                     mutually_exclusive=mutually_exclusive,
                                     supports_check_mode=True)
-        p = self.module.params
 
         # logging setup
         log_path = self.module.params['log_path']
@@ -187,7 +188,8 @@ class IBMSVCmdiskgrp(object):
         )
 
     def mdiskgrp_exists(self):
-        return self.restapi.svc_obj_info(cmd='lsmdiskgrp', cmdopts=None, cmdargs=[self.name])
+        return self.restapi.svc_obj_info(cmd='lsmdiskgrp', cmdopts=None,
+                                         cmdargs=[self.name])
 
     def mdiskgrp_create(self):
         if self.module.check_mode:
@@ -229,7 +231,8 @@ class IBMSVCmdiskgrp(object):
 
         if 'message' in result:
             self.changed = True
-            self.debug("creating mdisk group command result message %s", result['message'])
+            self.debug("creating mdisk group command result message %s",
+                       result['message'])
         else:
             self.module.fail_json(
                 msg="Failed to create mdisk group [%s]" % (self.name))
@@ -241,7 +244,7 @@ class IBMSVCmdiskgrp(object):
         cmdopts = None
         cmdargs = [self.name]
 
-        result = self.restapi.svc_run_command(cmd, cmdopts, cmdargs)
+        self.restapi.svc_run_command(cmd, cmdopts, cmdargs)
 
         # Any error will have been raised in svc_run_command
         # chmkdiskgrp does not output anything when successful.
@@ -251,8 +254,8 @@ class IBMSVCmdiskgrp(object):
         # updte the mdisk group
         self.debug("updating mdiskgrp '%s'", self.name)
 
-        cmd = 'chmdiskgrp'
-        cmdopts = {}
+        # cmd = 'chmdiskgrp'
+        # cmdopts = {}
         # TBD: Be smarter handling many properties.
         # if 'easytier' in modify:
         #    cmdopts['easytier'] = self.easytier
@@ -287,7 +290,8 @@ class IBMSVCmdiskgrp(object):
 
         if mdiskgrp_data:
             if self.state == 'absent':
-                self.debug("CHANGED: mdisk group exists, but requested state is 'absent'")
+                self.debug("CHANGED: mdisk group exists, "
+                           "but requested state is 'absent'")
                 changed = True
             elif self.state == 'present':
                 # This is where we detect if chmdiskgrp should be called.
@@ -296,7 +300,8 @@ class IBMSVCmdiskgrp(object):
                     changed = True
         else:
             if self.state == 'present':
-                self.debug("CHANGED: mdisk group does not exist, but requested state is 'present'")
+                self.debug("CHANGED: mdisk group does not exist, "
+                           "but requested state is 'present'")
                 changed = True
 
         if changed:
@@ -306,21 +311,21 @@ class IBMSVCmdiskgrp(object):
                 if self.state == 'present':
                     if not mdiskgrp_data:
                         self.mdiskgrp_create()
-                        msg = "Mdisk group [%s] has been created." % (self.name)
+                        msg = "Mdisk group [%s] has been created." % self.name
                     else:
                         # This is where we would modify
                         self.mdiskgrp_update(modify)
-                        msg = "Mdisk group [%s] has been modified." % (self.name)
+                        msg = "Mdisk group [%s] has been modified." % self.name
 
                 elif self.state == 'absent':
                     self.mdiskgrp_delete()
-                    msg = "Volume [%s] has been deleted." % (self.name)
+                    msg = "Volume [%s] has been deleted." % self.name
         else:
             self.debug("exiting with no changes")
             if self.state == 'absent':
-                msg = "Mdisk group [%s] did not exist." % (self.name)
+                msg = "Mdisk group [%s] did not exist." % self.name
             else:
-                msg = "Mdisk group [%s] already exists." % (self.name)
+                msg = "Mdisk group [%s] already exists." % self.name
 
         self.module.exit_json(msg=msg, changed=changed)
 
