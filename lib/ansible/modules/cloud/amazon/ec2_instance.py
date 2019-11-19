@@ -38,7 +38,7 @@ options:
   wait:
     description:
       - Whether or not to wait for the desired state (use wait_timeout to customize this).
-    default: true
+    default: false
     type: bool
   wait_timeout:
     description:
