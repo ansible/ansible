@@ -26,7 +26,7 @@ author:
   - Guillaume Martinez (@Lunik)
 requirements:
   - python >= 2.7
-  - python-gitlab python module
+  - python-gitlab python module <= 1.12.1
   - administrator rights on the Gitlab server
 extends_documentation_fragment:
     - auth_basic
