@@ -235,10 +235,19 @@ options:
     default: '300'
     type: int
     version_added: '2.10'
+  wait_for_customization_timeout:
+    description:
+    - Define a timeout (in seconds) for the wait_for_customization parameter.
+    - Be careful when setting this value since the time guest customization took may differ among guest OSes.
+    default: '3600'
+    type: int
+    version_added: '2.10'
   wait_for_customization:
     description:
     - Wait until vCenter detects all guest customizations as successfully completed.
     - When enabled, the VM will automatically be powered on.
+    - "If vCenter does not detect guest customization start or succeed, failed events after time
+      C(wait_for_customization_timeout) parameter specified, warning message will be printed and task result is fail."
     default: 'no'
     type: bool
     version_added: '2.8'
@@ -2527,7 +2536,7 @@ class PyVmomiHelper(PyVmomi):
                     wait_for_vm_ip(self.content, vm, self.params['wait_for_ip_address_timeout'])
 
                 if self.params['wait_for_customization']:
-                    is_customization_ok = self.wait_for_customization(vm)
+                    is_customization_ok = self.wait_for_customization(vm=vm, timeout=self.params['wait_for_customization_timeout'])
                     if not is_customization_ok:
                         vm_facts = self.gather_facts(vm)
                         return {'changed': self.change_applied, 'failed': True, 'instance': vm_facts, 'op': 'customization'}
@@ -2681,9 +2690,10 @@ class PyVmomiHelper(PyVmomi):
 
         if self.params['wait_for_customization']:
             set_vm_power_state(self.content, self.current_vm_obj, 'poweredon', force=False)
-            is_customization_ok = self.wait_for_customization(self.current_vm_obj)
+            is_customization_ok = self.wait_for_customization(vm=self.current_vm_obj, timeout=self.params['wait_for_customization_timeout'])
             if not is_customization_ok:
-                return {'changed': self.change_applied, 'failed': True, 'op': 'wait_for_customize_exist'}
+                return {'changed': self.change_applied, 'failed': True,
+                        'msg': 'Wait for customization failed due to timeout', 'op': 'wait_for_customize_exist'}
 
         return {'changed': self.change_applied, 'failed': False}
 
@@ -2711,7 +2721,8 @@ class PyVmomiHelper(PyVmomi):
         eventManager = self.content.eventManager
         return eventManager.QueryEvent(filterSpec)
 
-    def wait_for_customization(self, vm, poll=10000, sleep=10):
+    def wait_for_customization(self, vm, timeout=3600, sleep=10):
+        poll = int(timeout // sleep)
         thispoll = 0
         while thispoll <= poll:
             eventStarted = self.get_vm_events(vm, ['CustomizationStartedEvent'])
@@ -2721,18 +2732,24 @@ class PyVmomiHelper(PyVmomi):
                     eventsFinishedResult = self.get_vm_events(vm, ['CustomizationSucceeded', 'CustomizationFailed'])
                     if len(eventsFinishedResult):
                         if not isinstance(eventsFinishedResult[0], vim.event.CustomizationSucceeded):
-                            self.module.fail_json(msg='Customization failed with error {0}:\n{1}'.format(
-                                eventsFinishedResult[0]._wsdlName, eventsFinishedResult[0].fullFormattedMessage))
+                            self.module.warn("Customization failed with error {%s}:{%s}"
+                                             % (eventsFinishedResult[0]._wsdlName, eventsFinishedResult[0].fullFormattedMessage))
                             return False
-                        break
+                        else:
+                            return True
                     else:
                         time.sleep(sleep)
                         thispoll += 1
-                return True
+                if len(eventsFinishedResult) == 0:
+                    self.module.warn('Waiting for customization result event timed out.')
+                    return False
             else:
                 time.sleep(sleep)
                 thispoll += 1
-        self.module.fail_json('waiting for customizations timed out.')
+        if len(eventStarted):
+            self.module.warn('Waiting for customization result event timed out.')
+        else:
+            self.module.warn('Waiting for customization start event timed out.')
         return False
 
 
@@ -2768,6 +2785,7 @@ def main():
         customization=dict(type='dict', default={}, no_log=True),
         customization_spec=dict(type='str', default=None),
         wait_for_customization=dict(type='bool', default=False),
+        wait_for_customization_timeout=dict(type='int', default=3600),
         vapp_properties=dict(type='list', default=[]),
         datastore=dict(type='str'),
         convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),
