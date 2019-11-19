@@ -219,8 +219,9 @@ $tests = @{
     }
 
     "CreateProcess with unicode and us-ascii encoding" = {
-        $actual = [Ansible.Process.ProcessUtil]::CreateProcess($null, "cmd.exe /c echo 💩 café", $null, $null, '', 'us-ascii')
-        $actual.StandardOut | Assert-Equals -Expected "???? caf??`r`n"
+        $poop = [System.Char]::ConvertFromUtf32(0xE05A)  # Coverage breaks due to script parsing encoding issues with unicode chars, just use the code point instead
+        $actual = [Ansible.Process.ProcessUtil]::CreateProcess($null, "cmd.exe /c echo $poop café", $null, $null, '', 'us-ascii')
+        $actual.StandardOut | Assert-Equals -Expected "??? caf??`r`n"
         $actual.StandardError | Assert-Equals -Expected ""
         $actual.ExitCode | Assert-Equals -Expected 0
     }
