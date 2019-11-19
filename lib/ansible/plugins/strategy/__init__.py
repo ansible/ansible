@@ -43,7 +43,7 @@ from ansible.module_utils.six.moves import queue as Queue
 from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
-from ansible.playbook.base import post_validate
+from ansible.playbook.base import post_validate, get_validated_value
 from ansible.playbook.conditional import evaluate_conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
@@ -359,6 +359,40 @@ class StrategyBase:
         host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
         return [host_name or task.delegate_to]
 
+    def search_handler_blocks_by_name(self, handler_name, handler_blocks, handler_templar):
+        # iterate in reversed order since last handler loaded with the same name wins
+        for handler_block in reversed(handler_blocks):
+            for handler_task in handler_block.block:
+                if handler_task.name:
+                    if not handler_task.cached_name:
+                        if handler_templar.is_template(handler_task.name):
+                            handler_templar.available_variables = self._variable_manager.get_vars(
+                                play=iterator._play,
+                                task=handler_task,
+                                _hosts=self._hosts_cache,
+                                _hosts_all=self._hosts_cache_all,
+                            )
+                            handler_task.name = handler_templar.template(handler_task.name)
+                        handler_task.cached_name = True
+
+                    try:
+                        # first we check with the full result of get_name(), which may
+                        # include the role name (if the handler is from a role). If that
+                        # is not found, we resort to the simple name field, which doesn't
+                        # have anything extra added to it.
+                        if handler_task.name == handler_name:
+                            return handler_task
+                        else:
+                            if handler_task.get_name() == handler_name:
+                                return handler_task
+                    except (UndefinedError, AnsibleUndefinedVariable):
+                        # We skip this handler due to the fact that it may be using
+                        # a variable in the name that was conditionally included via
+                        # set_fact or some other method, and we don't want to error
+                        # out unnecessarily
+                        continue
+        return None
+
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
@@ -382,8 +416,6 @@ class StrategyBase:
 
             if host_status['status_type'] == 'ok':
                 self._tqm._stats.increment("ok", host_status["host_name"])
-                if host_status['changed']:
-                    self._tqm._stats.increment("changed", host_status["host_name"])
                 if original_task.loop:
                     # this task had a loop, and has more than one result, so
                     # loop over all of them instead of a single result
@@ -391,7 +423,57 @@ class StrategyBase:
                 else:
                     result_items = [host_status['original_result']]
 
+                if host_status['changed']:
+                    self._tqm._stats.increment("changed", host_status["host_name"])
+
+                handler_templar = Templar(self._loader)
                 for result_item in result_items:
+                    if '_ansible_notify' in result_item and host_status.get('changed', None):
+                        # The shared dictionary for notified handlers is a proxy, which
+                        # does not detect when sub-objects within the proxy are modified.
+                        # So, per the docs, we reassign the list so the proxy picks up and
+                        # notifies all other threads
+                        for handler_name in result_item['_ansible_notify']:
+                            found = False
+                            # Find the handler using the above helper.  First we look up the
+                            # dependency chain of the current task (if it's from a role), otherwise
+                            # we just look through the list of handlers in the current play/all
+                            # roles and use the first one that matches the notify name
+                            target_handler = self.search_handler_blocks_by_name(handler_name, iterator._play.handlers, handler_templar)
+                            if target_handler is not None:
+                                found = True
+                                if target_handler.notify_host(original_host):
+                                    self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
+
+                            for listening_handler_block in iterator._play.handlers:
+                                for listening_handler in listening_handler_block.block:
+                                    listeners = getattr(listening_handler, 'listen', []) or []
+                                    if not listeners:
+                                        continue
+
+                                    listeners = get_validated_value(
+                                        'listen',
+                                        listening_handler._valid_attrs['listen'].serialize(),
+                                        listeners,
+                                        handler_templar
+                                    )
+                                    if handler_name not in listeners:
+                                        continue
+                                    else:
+                                        found = True
+
+                                    if listening_handler.notify_host(original_host):
+                                        self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
+
+                            # and if none were found, then we raise an error
+                            if not found:
+                                msg = ("The requested handler '%s' was not found in either the main handlers list nor in the listening "
+                                       "handlers list" % handler_name)
+                                if C.ERROR_ON_MISSING_HANDLER:
+                                    raise AnsibleError(msg)
+                                else:
+                                    display.warning(msg)
+
                     if 'ansible_facts' in result_item:
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
@@ -502,7 +584,7 @@ class StrategyBase:
                 # mark the role this host ran
                 pass
 
-            del self._blocked_hosts[host_status["host_name"]]
+            self._blocked_hosts.pop(host_status["host_name"], None)
             self._pending_results -= 1
             return [host_status]
         except Queue.Empty as e:
@@ -529,8 +611,8 @@ class StrategyBase:
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
             handler_results += len([
-                r._host for r in results if r._host in notified_hosts and
-                r.task_name == handler.name])
+                r['host_name'] for r in results if r['host_name'] in notified_hosts and
+                r['task_uuid']  == handler._uuid])
             if self._pending_results > 0:
                 time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
@@ -716,6 +798,7 @@ class StrategyBase:
         included_files = IncludedFile.process_include_results(
             host_results,
             iterator=iterator,
+            inventory=self._inventory,
             loader=self._loader,
             variable_manager=self._variable_manager
         )
