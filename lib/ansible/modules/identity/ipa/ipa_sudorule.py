@@ -263,7 +263,6 @@ class SudoRuleIPAClient(IPAClient):
     def sudorule_remove_run_as_group(self, name, item):
         return self._post_json(method='sudorule_remove_runasgroup', name=name, item={'group': item})
 
-
 def get_sudorule_dict(cmdcategory=None, description=None, hostcategory=None, ipaenabledflag=None, usercategory=None,
                       runasgroupcategory=None, runasusercategory=None):
     data = {}
@@ -336,14 +335,34 @@ def ensure(module, client):
         else:
             diff = client.get_diff(ipa_sudorule, module_sudorule)
             if len(diff) > 0:
+
+
                 changed = True
                 if not module.check_mode:
+                    if 'cmdcategory' in diff:
+                        if ipa_sudorule.get('memberallowcmd_sudocmd', None) is not None:
+                            client.sudorule_remove_allow_command(name=name, item=ipa_sudorule.get('memberallowcmd_sudocmd'))
+                        if ipa_sudorule.get('memberallowcmd_sudocmdgroup', None) is not None:
+                            client.sudorule_remove_allow_command_group(name=name,
+                                                                       item=ipa_sudorule.get('memberallowcmd_sudocmdgroup'))
+
                     if 'hostcategory' in diff:
                         if ipa_sudorule.get('memberhost_host', None) is not None:
                             client.sudorule_remove_host_host(name=name, item=ipa_sudorule.get('memberhost_host'))
                         if ipa_sudorule.get('memberhost_hostgroup', None) is not None:
                             client.sudorule_remove_host_hostgroup(name=name,
                                                                   item=ipa_sudorule.get('memberhost_hostgroup'))
+
+                    if 'ipasudorunasusercategory' in diff or 'ipasudorunasgroupcategory' in diff:
+                        runasusers = ipa_sudorule.get('ipasudorunas_user', []) + ipa_sudorule.get('ipasudorunasextuser', [])
+                        if runasusers:
+                            client.sudorule_remove_run_as_user(name=name, item=runasusers)
+                        if ipa_sudorule.get('ipasudorunas_group', None) is not None:
+                            client.sudorule_remove_run_as_group_of_user(name=name,
+                                                                        item=ipa_sudorule.get('ipasudorunas_group'))
+                        if ipa_sudorule.get('ipasudorunasgroup_group', None) is not None:
+                            client.sudorule_remove_run_as_group(name=name,
+                                                                item=ipa_sudorule.get('ipasudorunasgroup_group'))
 
                     client.sudorule_mod(name=name, item=module_sudorule)
 
@@ -359,21 +378,26 @@ def ensure(module, client):
                                             client.sudorule_add_allow_command_group,
                                             client.sudorule_remove_allow_command_group) or changed
 
+        # ipasudorunasusercategory and ipasudorunasgroupcategory are shared, if either are set then
+        # ipasudorunas_user, ipasudorunas_group and ipasudorunasgroup_group cannot be.
         if runasuser is not None:
-            changed = category_changed(module, client, 'iparunasusercategory', ipa_sudorule) or changed
+            changed = category_changed(module, client, 'ipasudorunasusercategory', ipa_sudorule) or changed
+            changed = category_changed(module, client, 'ipasudorunasgroupcategory', ipa_sudorule) or changed
             runasusers = ipa_sudorule.get('ipasudorunas_user', []) + ipa_sudorule.get('ipasudorunasextuser', [])
             changed = client.modify_if_diff(name, runasusers, runasuser,
                                             client.sudorule_add_run_as_user,
                                             client.sudorule_remove_run_as_user) or changed
 
         if runasgroupofuser is not None:
-            changed = category_changed(module, client, 'iparunasusercategory', ipa_sudorule) or changed
+            changed = category_changed(module, client, 'ipasudorunasusercategory', ipa_sudorule) or changed
+            changed = category_changed(module, client, 'ipasudorunasgroupcategory', ipa_sudorule) or changed
             changed = client.modify_if_diff(name, ipa_sudorule.get('ipasudorunas_group', []), runasgroupofuser,
                                             client.sudorule_add_run_as_group_of_user,
                                             client.sudorule_remove_run_as_group_of_user) or changed
 
         if runasgroup is not None:
-            changed = category_changed(module, client, 'iparunasgroupcategory', ipa_sudorule) or changed
+            changed = category_changed(module, client, 'ipasudorunasusercategory', ipa_sudorule) or changed
+            changed = category_changed(module, client, 'ipasudorunasgroupcategory', ipa_sudorule) or changed
             changed = client.modify_if_diff(name, ipa_sudorule.get('ipasudorunasgroup_group', []), runasgroup,
                                             client.sudorule_add_run_as_group,
                                             client.sudorule_remove_run_as_group) or changed
@@ -455,6 +479,9 @@ def main():
                                                ['usercategory', 'usergroup'],
                                                ['runasusercategory', 'runasuser'],
                                                ['runasusercategory', 'runasgroupofuser'],
+                                               ['runasusercategory', 'runasgroup'],
+                                               ['runasgroupcategory', 'runasuser'],
+                                               ['runasgroupcategory', 'runasgroupofuser'],
                                                ['runasgroupcategory', 'runasgroup']],
                            supports_check_mode=True)
 
