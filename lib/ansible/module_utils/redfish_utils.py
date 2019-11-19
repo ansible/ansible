@@ -1255,6 +1255,32 @@ class RedfishUtils(object):
         else:
             return self._software_inventory(self.software_uri)
 
+    def _get_allowable_values(self, action, name, default_values=None):
+        if default_values is None:
+            default_values = []
+        allowable_values = None
+        # get Allowable values from ActionInfo
+        if '@Redfish.ActionInfo' in action:
+            action_info_uri = action.get('@Redfish.ActionInfo')
+            response = self.get_request(self.root_uri + action_info_uri)
+            if response['ret'] is True:
+                data = response['data']
+                if 'Parameters' in data:
+                    params = data['Parameters']
+                    for param in params:
+                        if param.get('Name') == name:
+                            allowable_values = param.get('AllowableValues')
+                            break
+        # fallback to @Redfish.AllowableValues annotation
+        if allowable_values is None:
+            prop = '%s@Redfish.AllowableValues' % name
+            if prop in action:
+                allowable_values = action[prop]
+        # fallback to default values
+        if allowable_values is None:
+            allowable_values = default_values
+        return allowable_values
+
     def simple_update(self, update_opts):
         image_uri = update_opts.get('update_image_uri')
         protocol = update_opts.get('update_protocol')
@@ -1278,32 +1304,25 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': 'Service does not support SimpleUpdate'}
         update_uri = action['target']
         if protocol:
-            allowable_protocols = None
-            # get AllowableValues from ActionInfo
-            if '@Redfish.ActionInfo' in action:
-                action_info_uri = action.get('@Redfish.ActionInfo')
-                response = self.get_request(self.root_uri + action_info_uri)
-                if response['ret'] is True:
-                    data = response['data']
-                    if 'Parameters' in data:
-                        params = data['Parameters']
-                        for param in params:
-                            if param.get('Name') == 'TransferProtocol':
-                                allowable_protocols = param.get('AllowableValues')
-                                break
-            # fallback to @Redfish.AllowableValues annotation
-            if allowable_protocols is None:
-                if 'TransferProtocol@Redfish.AllowableValues' in action:
-                    allowable_protocols = action['TransferProtocol@Redfish.AllowableValues']
-            # fallback to spec-defined values
-            if not allowable_protocols:
-                allowable_protocols = ['CIFS', 'FTP', 'SFTP', 'HTTP', 'HTTPS',
-                                       'NSF', 'SCP', 'TFTP', 'OEM', 'NFS']
-            if protocol not in allowable_protocols:
+            default_values = ['CIFS', 'FTP', 'SFTP', 'HTTP', 'HTTPS', 'NSF',
+                              'SCP', 'TFTP', 'OEM', 'NFS']
+            allowable_values = self._get_allowable_values(action,
+                                                          'TransferProtocol',
+                                                          default_values)
+            if protocol not in allowable_values:
                 return {'ret': False,
                         'msg': 'Specified update_protocol (%s) not supported '
                                'by service. Supported protocols: %s' %
-                               (protocol, allowable_protocols)}
+                               (protocol, allowable_values)}
+        if targets:
+            allowable_values = self._get_allowable_values(action, 'Targets')
+            if allowable_values:
+                for target in targets:
+                    if target not in allowable_values:
+                        return {'ret': False,
+                                'msg': 'Specified target (%s) not supported '
+                                       'by service. Supported targets: %s' %
+                                       (target, allowable_values)}
 
         payload = {
             'ImageURI': image_uri
