@@ -8,26 +8,6 @@ matrix:
   exclude:
     - env: T=none
   include:
-    - env: T=sanity/1
-    - env: T=sanity/2
-    - env: T=sanity/3
-    - env: T=sanity/4
-    - env: T=sanity/5
-
-    - env: T=units/2.6/1
-    - env: T=units/2.7/1
-    - env: T=units/3.5/1
-    - env: T=units/3.6/1
-    - env: T=units/3.7/1
-    - env: T=units/3.8/1
-
-    - env: T=units/2.6/2
-    - env: T=units/2.7/2
-    - env: T=units/3.5/2
-    - env: T=units/3.6/2
-    - env: T=units/3.7/2
-    - env: T=units/3.8/2
-
     - env: T=windows/2008/1
     - env: T=windows/2008-R2/1
     - env: T=windows/2012/1
