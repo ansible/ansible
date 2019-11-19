@@ -1,0 +1,13 @@
+vlan 1,3-5,8
+vlan 3
+  name test-vlan3
+vlan 5
+  shutdown
+  name test-changeme
+  mode fabricpath
+  state suspend
+  vn-segment 942
+vlan 8
+  shutdown
+  name test-changeme-not
+  state suspend
