@@ -37,7 +37,7 @@ Using vars plugins
 
 By default, vars plugins are used on demand automatically after they are enabled.
 
-Starting in Ansible 2.10, vars plugins can be made to run at specific times.
+Starting in Ansible 2.10, vars plugins can be made to run at specific times. `ansible-inventory` does not use these settings, and always loads vars plugins.
 
 The global setting ``RUN_VARS_PLUGINS`` can be set in ``ansible.cfg`` using ``run_vars_plugins`` in the ``defaults`` section or by the ``ANSIBLE_RUN_VARS_PLUGINS`` environment variable. The default option, ``demand``, runs any enabled vars plugins relative to inventory sources whenever variables are demanded by tasks. You can use the option ``start`` to run any enabled vars plugins relative to inventory sources after importing that inventory source instead.
 
