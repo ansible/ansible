@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 module: cloudfront_origin_access_identity
 
 short_description: Create, update and delete origin access identities for a
-                   cloudfront distribution
+                   CloudFront distribution
 
 description:
     - Allows for easy creation, updating and deletion of origin access
@@ -43,12 +43,12 @@ options:
       type: str
     origin_access_identity_id:
       description:
-        - The origin_access_identity_id of the cloudfront distribution.
+        - The origin_access_identity_id of the CloudFront distribution.
       required: false
       type: str
     comment:
       description:
-        - A comment to describe the cloudfront origin access identity.
+        - A comment to describe the CloudFront origin access identity.
       required: false
       type: str
     caller_reference:
@@ -108,7 +108,7 @@ cloud_front_origin_access_identity:
       returned: always
       type: str
     s3_canonical_user_id:
-      description: the canonical user id of the user who created the oai
+      description: the canonical user ID of the user who created the oai
       returned: always
       type: str
 e_tag:
@@ -142,7 +142,7 @@ except ImportError:
 
 class CloudFrontOriginAccessIdentityServiceManager(object):
     """
-    Handles cloudfront origin access identity service calls to aws
+    Handles CloudFront origin access identity service calls to aws
     """
 
     def __init__(self, module):
@@ -205,7 +205,7 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
 
 class CloudFrontOriginAccessIdentityValidationManager(object):
     """
-    Manages Cloudfront Origin Access Identities
+    Manages CloudFront Origin Access Identities
     """
 
     def __init__(self, module):

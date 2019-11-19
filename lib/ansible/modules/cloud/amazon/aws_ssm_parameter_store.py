@@ -19,12 +19,12 @@ version_added: "2.5"
 options:
   name:
     description:
-      - parameter key name.
+      - Parameter key name.
     required: true
     type: str
   description:
     description:
-      - parameter key description.
+      - Parameter key description.
     required: false
     type: str
   value:
@@ -34,15 +34,15 @@ options:
     type: str
   state:
     description:
-      - Creates or modifies an existing parameter
-      - Deletes a parameter
+      - Creates or modifies an existing parameter.
+      - Deletes a parameter.
     required: false
     choices: ['present', 'absent']
     default: present
     type: str
   string_type:
     description:
-      - Parameter String type
+      - Parameter String type.
     required: false
     choices: ['String', 'StringList', 'SecureString']
     default: String

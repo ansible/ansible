@@ -15,15 +15,16 @@ DOCUMENTATION = """
 module: ec2_asg_lifecycle_hook
 short_description: Create, delete or update AWS ASG Lifecycle Hooks.
 description:
-  - When no given Hook found, will create one.
-  - In case Hook found, but provided parameters are differes, will update existing Hook.
-  - In case state=absent and Hook exists, will delete it.
+  - Will create a new hook when I(state=present) and no given Hook is found.
+  - Will update an existing hook when I(state=present) and a Hook is found, but current and provided parameters differ.
+  - Will delete the hook when I(state=absent) and a Hook is found.
 version_added: "2.5"
 author: Igor 'Tsigankov' Eyrich (@tsiganenok) <tsiganenok@gmail.com>
 options:
   state:
     description:
-      - Create or delete Lifecycle Hook. Present updates existing one or creates if not found.
+      - Create or delete Lifecycle Hook.
+      - When I(state=present) updates existing hook or creates a new hook if not found.
     required: false
     choices: ['present', 'absent']
     default: present
@@ -53,8 +54,8 @@ options:
     description:
       - The ARN of the notification target that Auto Scaling will use to notify you when an
         instance is in the transition state for the lifecycle hook.
-        This target can be either an SQS queue or an SNS topic. If you specify an empty string,
-        this overrides the current ARN.
+      - This target can be either an SQS queue or an SNS topic.
+      - If you specify an empty string, this overrides the current ARN.
     required: false
     type: str
   notification_meta_data:
