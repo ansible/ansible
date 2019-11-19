@@ -56,7 +56,11 @@ EXAMPLES = """
 
 RETURN = """
 name:
-  description: Name of the organizational unit. Can be full OU path.
+  description:
+    - Name of the organizational unit.
+      This can be full OU path such as "Prod/IT/Service_Desk".
+      The parent OUs will be recursively dereferenced.
+      If the parent OU does not exist the module will fail with warning message.
   returned: always
   type: str
   sample: Prod
@@ -201,10 +205,6 @@ class AwsOrganizations():
         else:
             return ou['OrganizationalUnit']
 
-    # Name can be full ou path in form "root/parent/child"
-    # leading, and ending "/" will be stripped to handle
-    # "/root/child" or "root/parent/" inputs
-    # Parent ous will be recursively dereferenced
     def create_ou(self, name):
         ou_name = name.rstrip('/').lstrip('/')
         ou_path = ou_name.split('/')
