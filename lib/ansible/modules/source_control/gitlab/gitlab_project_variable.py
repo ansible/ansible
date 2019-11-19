@@ -122,6 +122,8 @@ except Exception:
     GITLAB_IMP_ERR = traceback.format_exc()
     HAS_GITLAB_PACKAGE = False
 
+from ansible.module_utils.gitlab import gitlabAuthentication
+
 
 class GitlabProjectVariables(object):
 
@@ -225,8 +227,6 @@ def main():
         supports_check_mode=True
     )
 
-    api_url = module.params['api_url']
-    gitlab_token = module.params['api_token']
     purge = module.params['purge']
     var_list = module.params['vars']
     state = module.params['state']
@@ -234,14 +234,7 @@ def main():
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
-    try:
-        gitlab_instance = gitlab.Gitlab(url=api_url, private_token=gitlab_token)
-        gitlab_instance.auth()
-    except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
-    except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to GitLab server: %s. \
-            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
+    gitlab_instance = gitlabAuthentication(module)
 
     this_gitlab = GitlabProjectVariables(module=module, gitlab_instance=gitlab_instance)
 
