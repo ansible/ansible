@@ -190,7 +190,7 @@ class InventoryCLI(CLI):
         # get info from inventory source
         res = group.get_vars()
 
-        res = combine_vars(res, get_vars_from_inventory_sources(self.loader, self.inventory._sources, [group], 'inventory'))
+        res = combine_vars(res, get_vars_from_inventory_sources(self.loader, self.inventory._sources, [group], 'all'))
 
         if group.priority != 1:
             res['ansible_group_priority'] = group.priority
@@ -203,7 +203,7 @@ class InventoryCLI(CLI):
             # only get vars defined directly host
             hostvars = host.get_vars()
 
-            hostvars = combine_vars(hostvars, get_vars_from_inventory_sources(self.loader, self.inventory._sources, [host], 'inventory'))
+            hostvars = combine_vars(hostvars, get_vars_from_inventory_sources(self.loader, self.inventory._sources, [host], 'all'))
         else:
             # get all vars flattened by host, but skip magic hostvars
             hostvars = self.vm.get_vars(host=host, include_hostvars=False, stage='inventory')
