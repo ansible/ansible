@@ -1255,6 +1255,74 @@ class RedfishUtils(object):
         else:
             return self._software_inventory(self.software_uri)
 
+    def simple_update(self, update_opts):
+        image_uri = update_opts.get('update_image_uri')
+        protocol = update_opts.get('update_protocol')
+        targets = update_opts.get('update_targets')
+        creds = update_opts.get('update_creds')
+
+        if not image_uri:
+            return {'ret': False, 'msg':
+                    'Must specify update_image_uri for the SimpleUpdate command'}
+
+        response = self.get_request(self.root_uri + self.update_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'Actions' not in data:
+            return {'ret': False, 'msg': 'Service does not support SimpleUpdate'}
+        if '#UpdateService.SimpleUpdate' not in data['Actions']:
+            return {'ret': False, 'msg': 'Service does not support SimpleUpdate'}
+        action = data['Actions']['#UpdateService.SimpleUpdate']
+        if 'target' not in action:
+            return {'ret': False, 'msg': 'Service does not support SimpleUpdate'}
+        update_uri = action['target']
+        if protocol:
+            allowable_protocols = None
+            # get AllowableValues from ActionInfo
+            if '@Redfish.ActionInfo' in action:
+                action_info_uri = action.get('@Redfish.ActionInfo')
+                response = self.get_request(self.root_uri + action_info_uri)
+                if response['ret'] is True:
+                    data = response['data']
+                    if 'Parameters' in data:
+                        params = data['Parameters']
+                        for param in params:
+                            if param.get('Name') == 'TransferProtocol':
+                                allowable_protocols = param.get('AllowableValues')
+                                break
+            # fallback to @Redfish.AllowableValues annotation
+            if allowable_protocols is None:
+                if 'TransferProtocol@Redfish.AllowableValues' in action:
+                    allowable_protocols = action['TransferProtocol@Redfish.AllowableValues']
+            # fallback to spec-defined values
+            if not allowable_protocols:
+                allowable_protocols = ['CIFS', 'FTP', 'SFTP', 'HTTP', 'HTTPS',
+                                       'NSF', 'SCP', 'TFTP', 'OEM', 'NFS']
+            if protocol not in allowable_protocols:
+                return {'ret': False,
+                        'msg': 'Specified update_protocol (%s) not supported '
+                               'by service. Supported protocols: %s' %
+                               (protocol, allowable_protocols)}
+
+        payload = {
+            'ImageURI': image_uri
+        }
+        if protocol:
+            payload["TransferProtocol"] = protocol
+        if targets:
+            payload["Targets"] = targets
+        if creds:
+            if creds.get('username'):
+                payload["Username"] = creds.get('username')
+            if creds.get('password'):
+                payload["Password"] = creds.get('password')
+        response = self.post_request(self.root_uri + update_uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True,
+                'msg': "SimpleUpdate requested"}
+
     def get_bios_attributes(self, systems_uri):
         result = {}
         bios_attributes = {}
