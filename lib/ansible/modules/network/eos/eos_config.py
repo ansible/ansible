@@ -421,7 +421,15 @@ def main():
         config_diff = response['config_diff']
 
         if config_diff:
-            commands = config_diff.split('\n')
+            if module.params['replace'] == 'block' and not module.params['parents']:
+                commands = candidate.split('\n')
+            if module.params['replace'] == 'block' and module.params['parents']:
+                commands = []
+                for parent in module.params['parents']:
+                    commands.append(parent)
+                commands.extend(candidate.split('\n'))
+            else:
+                commands = config_diff.split('\n')
 
             if module.params['before']:
                 commands[:0] = module.params['before']
