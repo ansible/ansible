@@ -177,9 +177,6 @@ class IBMSVCRestApi(object):
 
         rest = self._svc_rest(method='POST', headers=headers, cmd='auth',
                               cmdopts=None, cmdargs=None)
-        assert rest is not None
-        assert 'err' in rest
-        assert 'out' in rest
 
         if rest['err']:
             return None
