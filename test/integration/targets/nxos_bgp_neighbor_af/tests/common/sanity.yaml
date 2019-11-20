@@ -81,7 +81,7 @@
       max_prefix_threshold: default
       max_prefix_warning: False
       next_hop_self: False
-      next_hop_third_party: True
+      next_hop_third_party: False
       prefix_list_in: default
       prefix_list_out: default
       send_community: 'none'
@@ -204,6 +204,7 @@
       send_community: 'standard'
       soft_reconfiguration_in: "{{soft_reconfiguration_ina|default(omit)}}"
       soo: '3:3'
+      next_hop_third_party: True
       provider: "{{ connection }}"
       state: present
     register: result
