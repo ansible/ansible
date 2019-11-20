@@ -18,6 +18,7 @@
 - nxos_command:
     commands:
       - show hostname
+    provider: "{{ nxapi_ssl }}"
   register: result
 
 - name: Assert command over nxapi_ssl provider was successful

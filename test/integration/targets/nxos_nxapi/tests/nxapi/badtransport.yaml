@@ -6,6 +6,7 @@
     enable_http: no
     enable_sandbox: no
     https_port: 9443
+    provider: "{{ nxapi }}"
   register: result
   ignore_errors: yes
 
