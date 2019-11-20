@@ -17,7 +17,7 @@ Connections Available
     ====================  ==========================================  =========================
     ..                    CLI                                         NETCONF
 
-                                                                                               
+
     ====================  ==========================================  =========================
     Protocol              SSH                                         XML over SSH
 
@@ -88,7 +88,7 @@ To enable NETCONF on a new switch via Ansible, use the ``ce_config`` module via 
      connection: network_cli
      ce_config:
        lines:
-         - snetconf server enable 
+         - snetconf server enable
      when: ansible_network_os == 'ce'
 
 Once NETCONF is enabled, change your variables to use the NETCONF connection.
@@ -205,3 +205,7 @@ Modules work with connection C(netconf)
    ce_vxlan_vap
 
 .. include:: shared_snippets/SSH_warning.txt
+
+.. seealso::
+
+       :ref:`timeout_options`
