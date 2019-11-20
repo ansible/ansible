@@ -3,14 +3,14 @@
     msg: "Start nxos_l3_interfaces deleted integration tests connection={{ ansible_connection }}"
 
 - set_fact:
-    test_int1: "{{ nxos_int1 }}"
-    subint1: "{{ nxos_int1 }}.42"
+    test_int4: "{{ nxos_int4 }}"
+    subint4: "{{ nxos_int4 }}.42"
 
 - name: setup1
   cli_config: &cleanup
     config: |
-      default interface {{ test_int1 }}
-      interface {{ test_int1 }}
+      default interface {{ test_int4 }}
+      interface {{ test_int4 }}
         no switchport
   ignore_errors: yes
 
@@ -22,7 +22,7 @@
   - name: setup3
     cli_config:
       config: |
-        interface {{ subint1 }}
+        interface {{ subint4 }}
           encapsulation dot1q 42
           ip address 192.168.10.2/24
           no ip redirects
@@ -42,10 +42,10 @@
 
   - assert:
       that:
-        - "result.before|length == (ansible_facts.network_resources.l3_interfaces|length - 1)"
+        - "result.before|length == (ansible_facts.network_resources.l3_interfaces|length|int - rsvd_intf_len|int)"
         - "result.after|length == 0"
         - "result.changed == true"
-        - "'interface {{ subint1 }}' in result.commands"
+        - "'interface {{ subint4 }}' in result.commands"
         - "'no encapsulation dot1q' in result.commands"
         - "'ip redirects' in result.commands"
         - "'no ip unreachables' in result.commands"
@@ -63,9 +63,7 @@
 
   always:
   - name: teardown
-    cli_config: *cleanup
+    cli_config:
+      config: |
+        no interface {{ subint4 }}
     ignore_errors: yes
-
-  - name: teardown cleanup all L3 interfaces on device
-    nxos_l3_interfaces:
-      state: deleted

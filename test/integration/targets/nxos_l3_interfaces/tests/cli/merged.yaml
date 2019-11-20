@@ -3,14 +3,14 @@
     msg: "Start nxos_l3_interfaces merged integration tests connection={{ ansible_connection }}"
 
 - set_fact:
-    test_int1: "{{ nxos_int1 }}"
-    subint1: "{{ nxos_int1 }}.42"
+    test_int4: "{{ nxos_int4 }}"
+    subint4: "{{ nxos_int4 }}.42"
 
 - name: setup1
   cli_config: &cleanup
     config: |
-      default interface {{ test_int1 }}
-      interface {{ test_int1 }}
+      default interface {{ test_int4 }}
+      interface {{ test_int4 }}
         no switchport
   ignore_errors: yes
 
@@ -22,7 +22,7 @@
   - name: Merged
     nxos_l3_interfaces: &merged
       config:
-        - name: "{{ subint1 }}"
+        - name: "{{ subint4 }}"
           dot1q: 42
           redirects: false
           unreachables: true
@@ -35,7 +35,7 @@
       that:
         - "result.changed == true"
         - "result.before|length == 0"
-        - "'interface {{ subint1 }}' in result.commands"
+        - "'interface {{ subint4 }}' in result.commands"
         - "'encapsulation dot1q 42' in result.commands"
         - "'no ip redirects' in result.commands"
         - "'ip unreachables' in result.commands"
@@ -49,13 +49,9 @@
         - '!min'
       gather_network_resources: l3_interfaces
 
-  # The nxos_l3_interfaces module should never attempt to modify the mgmt interface ip.
-  # The module will still collect facts about the interface however so in this case
-  # the facts will contain all l3 enabled interfaces including mgmt) but the after state in
-  # result will only contain the modification
   - assert:
       that:
-        - "result.after|length == (ansible_facts.network_resources.l3_interfaces|length - 1)"
+        - "result.after|length == (ansible_facts.network_resources.l3_interfaces|length|int - rsvd_intf_len|int)"
 
   - name: Idempotence - Merged
     nxos_l3_interfaces: *merged
@@ -68,9 +64,7 @@
 
   always:
   - name: teardown
-    cli_config: *cleanup
+    cli_config:
+      config: |
+        no interface {{ subint4 }}
     ignore_errors: yes
-
-  - name: teardown2 cleanup all L3 states on all interfaces
-    nxos_l3_interfaces:
-      state: deleted
