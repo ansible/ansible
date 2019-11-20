@@ -9,6 +9,7 @@
 - name: setup1
   cli_config: &cleanup
     config: |
+      no system default switchport
       default interface {{ test_int1 }}
       default interface {{ test_int2 }}
       default interface {{ test_int3 }}
