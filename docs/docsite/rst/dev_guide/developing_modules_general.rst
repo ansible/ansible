@@ -258,8 +258,7 @@ You can run through the Ansible sanity checks in a container. By default the tes
 
   $ ansible-test sanity -v --docker default --python 2.7 MODULE_NAME
 
-Note that this example requires Docker to be installed and running. If you'd rather not use a
-container for this, you can choose to use ``--venv`` instead of ``--docker``.
+Note that this example requires Docker to be installed and running. If you prefer, you can use the Python testing wrapper by passing ``--venv`` instead of ``--docker <container_name>``.
 
 Unit tests
 ----------
@@ -273,9 +272,9 @@ Then run the unit tests in the container of your choice. These commands install 
   ansible-test units --docker default MODULE_NAME
   ansible-test units --venv MODULE_NAME
 
-Ansible uses pytest for unit testing. You can run pytest against a single test module (use the correct path for your test module)::
+Ansible uses pytest for unit testing. You can run unit tests against a single test module (use the correct path for your test module)::
 
-  $ pytest -r a --cov=. --cov-report=html --fulltrace --color yes test/units/modules/.../test/my_test.py
+  $ ansible-test units test/units/modules/.../test/my_test.py
 
 Contributing back to Ansible
 ============================
