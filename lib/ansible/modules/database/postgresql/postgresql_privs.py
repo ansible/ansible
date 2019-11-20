@@ -749,7 +749,9 @@ class Connection(object):
         executed_queries.append(query)
         self.cursor.execute(query)
         status_after = get_status(objs)
-        return status_before.sort() != status_after.sort()
+        status_before.sort()
+        status_after.sort()
+        return status_before != status_after
 
 
 class QueryBuilder(object):
