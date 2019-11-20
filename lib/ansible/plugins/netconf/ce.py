@@ -66,8 +66,8 @@ class Netconf(NetconfBase):
                           </system>
                         </filter>'''
         data = self.get(filter_xml)
-        data = re.sub(r'xmlns=.+', r'', data)
-        reply = to_ele(to_bytes(data, errors='surrogate_or_strict'))
+        data = re.sub(r'xmlns=".+?"', r'', data)
+        reply = fromstring(to_bytes(data, errors='surrogate_or_strict'))
         sw_info = reply.find('.//systemInfo')
 
         device_info['network_os_version'] = self.get_text(sw_info, 'productVer')
