@@ -1285,14 +1285,7 @@ class Request:
             else:
                 request.add_header(header, headers[header])
 
-        urlopen_args = [request, None]
-        if sys.version_info >= (2, 6, 0):
-            # urlopen in python prior to 2.6.0 did not
-            # have a timeout parameter
-            urlopen_args.append(timeout)
-
-        r = urllib_request.urlopen(*urlopen_args)
-        return r
+        return urllib_request.urlopen(request, None, timeout)
 
     def get(self, url, **kwargs):
         r"""Sends a GET request. Returns :class:`HTTPResponse` object.
