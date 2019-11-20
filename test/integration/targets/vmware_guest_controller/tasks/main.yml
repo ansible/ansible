@@ -17,7 +17,6 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      datacenter: "{{ dc1 }}"
       name: "{{ virtual_machines[0].name }}"
       gather_disk_controller_facts: true
     register: disk_controller_facts
@@ -38,9 +37,9 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      datacenter: "{{ dc1 }}"
       name: "{{ virtual_machines[0].name }}"
-      disk_controller:
+      sleep_time: 30
+      controllers:
         - type: sata
           state: present
         - type: paravirtual
@@ -62,9 +61,9 @@
       hostname: "{{ vcenter_hostname }}"
       username: "{{ vcenter_username }}"
       password: "{{ vcenter_password }}"
-      datacenter: "{{ dc1 }}"
       name: "{{ virtual_machines[0].name }}"
-      disk_controller:
+      sleep_time: 30
+      controllers:
         - state: absent
           type: sata
           controller_number: "{{ sata_num }}"
