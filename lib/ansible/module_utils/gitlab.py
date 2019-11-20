@@ -52,26 +52,36 @@ def request(module, api_url, project, path, access_token, private_token, rawdata
         return False, str(status) + ": " + content
 
 
-def findProject(gitlab_instance, identifier):
+def findProject(gitlab_instance, parent, identifier):
     try:
-        project = gitlab_instance.projects.get(identifier)
+        projects = parent.projects.list(search=identifier)
+        if len(projects) <= 0:
+            raise Exception("No project found in this parent : %s." % to_native(parent.name))
+
+        project = projects[0]
     except Exception as e:
-        current_user = gitlab_instance.user
         try:
-            project = gitlab_instance.projects.get(current_user.username + '/' + identifier)
+            project = gitlab_instance.projects.get(identifier)
         except Exception as e:
             return None
 
-    return project
+    return gitlab_instance.projects.get(project.id)
 
 
-def findGroup(gitlab_instance, identifier):
+def findGroup(gitlab_instance, parent, identifier):
     try:
-        project = gitlab_instance.groups.get(identifier)
-    except Exception as e:
-        return None
+        groups = parent.subgroups.list(search=identifier)
+        if len(groups) <= 0:
+            raise Exception("No project found in this parent : %s." % to_native(parent.name))
 
-    return project
+        group = groups[0]
+    except Exception as e:
+        try:
+            group = gitlab_instance.groups.get(identifier)
+        except Exception as e:
+            return None
+
+    return gitlab_instance.groups.get(group.id)
 
 
 def gitlabAuthentication(module):
