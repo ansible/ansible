@@ -43,7 +43,7 @@ options:
     default: present
   active:
     description:
-    - Whether the volume is activate and visible to the host.
+    - Whether the volume is active and visible to the host.
     type: bool
     default: 'yes'
     version_added: "2.2"
