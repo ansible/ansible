@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/sh
 
 FILENAME=../docsite/rst/dev_guide/testing/sanity/index.rst
 
@@ -20,7 +20,12 @@ $(for test in $(../../bin/ansible-test sanity --list-tests --allow-disabled); do
 
 EOF
 
+SHA_CMD="sha1sum"
+if ! /usr/bin/command -v which ${SHA_CMD} > /dev/null 2>&1; then
+    SHA_CMD="sha1"
+fi
+
 # Put file into place if it has changed
-if [ "$(sha1sum <$FILENAME)" != "$(sha1sum <$FILENAME.new)" ]; then
+if [ "$(${SHA_CMD} <$FILENAME)" != "$(${SHA_CMD} <$FILENAME.new)" ]; then
     mv -f $FILENAME.new $FILENAME
 fi
