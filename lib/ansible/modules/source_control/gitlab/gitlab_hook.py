@@ -257,7 +257,11 @@ class GitLabHook(object):
 
         for arg_key, arg_value in arguments.items():
             if arguments[arg_key] is not None:
-                if getattr(hook, arg_key) != arguments[arg_key]:
+                if arg_key != 'token':
+                    if getattr(hook, arg_key) != arguments[arg_key]:
+                        setattr(hook, arg_key, arguments[arg_key])
+                        changed = True
+                else:
                     setattr(hook, arg_key, arguments[arg_key])
                     changed = True
 
@@ -347,7 +351,7 @@ def main():
 
     gitlab_hook = GitLabHook(module, gitlab_instance)
 
-    project = findProject(gitlab_instance, project_identifier)
+    project = findProject(gitlab_instance, None, project_identifier)
 
     if project is None:
         module.fail_json(msg="Failed to create hook: project %s doesn't exists" % project_identifier)
