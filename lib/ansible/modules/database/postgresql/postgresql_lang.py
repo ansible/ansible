@@ -191,23 +191,23 @@ executed_queries = []
 
 def lang_exists(cursor, lang):
     """Checks if language exists for db"""
-    query = "SELECT lanname FROM pg_language WHERE lanname = '%s'" % lang
-    cursor.execute(query)
+    query = "SELECT lanname FROM pg_language WHERE lanname = %(lang)s"
+    cursor.execute(query, {'lang': lang})
     return cursor.rowcount > 0
 
 
 def lang_istrusted(cursor, lang):
     """Checks if language is trusted for db"""
-    query = "SELECT lanpltrusted FROM pg_language WHERE lanname = '%s'" % lang
-    cursor.execute(query)
+    query = "SELECT lanpltrusted FROM pg_language WHERE lanname = %(lang)s"
+    cursor.execute(query, {'lang': lang})
     return cursor.fetchone()[0]
 
 
 def lang_altertrust(cursor, lang, trust):
     """Changes if language is trusted for db"""
-    query = "UPDATE pg_language SET lanpltrusted = '%s' WHERE lanname = '%s'" % (trust, lang)
-    executed_queries.append(query)
-    cursor.execute(query)
+    query = "UPDATE pg_language SET lanpltrusted = %(trust)s WHERE lanname = %(lang)s"
+    cursor.execute(query, {'trust': trust, 'lang': lang})
+    executed_queries.append(cursor.mogrify(query, {'trust': trust, 'lang': lang}))
     return True
 
 
@@ -249,8 +249,8 @@ def get_lang_owner(cursor, lang):
     """
     query = ("SELECT r.rolname FROM pg_language l "
              "JOIN pg_roles r ON l.lanowner = r.oid "
-             "WHERE l.lanname = '%s'" % lang)
-    cursor.execute(query)
+             "WHERE l.lanname = %(lang)s")
+    cursor.execute(query, {'lang': lang})
     return cursor.fetchone()[0]
 
 
@@ -262,7 +262,7 @@ def set_lang_owner(cursor, lang, owner):
         lang (str): language name.
         owner (str): name of new owner.
     """
-    query = "ALTER LANGUAGE %s OWNER TO %s" % (lang, owner)
+    query = "ALTER LANGUAGE \"%s\" OWNER TO %s" % (lang, owner)
     executed_queries.append(query)
     cursor.execute(query)
     return True
