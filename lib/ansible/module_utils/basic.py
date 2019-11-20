@@ -2559,8 +2559,8 @@ class AnsibleModule(object):
             # the communication logic here is essentially taken from that
             # of the _communicate() function in ssh.py
 
-            stdout = b('')
-            stderr = b('')
+            stdout = b''
+            stderr = b''
             selector = selectors.DefaultSelector()
             selector.register(cmd.stdout, selectors.EVENT_READ)
             selector.register(cmd.stderr, selectors.EVENT_READ)
@@ -2579,7 +2579,7 @@ class AnsibleModule(object):
             while True:
                 events = selector.select(1)
                 for key, event in events:
-                    b_chunk = os.read(key.fileobj.fileno(), self.get_buffer_size(key.fileobj))
+                    b_chunk = key.fileobj.read()
                     if b_chunk == b(''):
                         selector.unregister(key.fileobj)
                     if key.fileobj == cmd.stdout:
@@ -2600,7 +2600,7 @@ class AnsibleModule(object):
                 # No pipes are left to read but process is not yet terminated
                 # Only then it is safe to wait for the process to be finished
                 # NOTE: Actually cmd.poll() is always None here if no selectors are left
-                elif len(selector.get_map()) == 0 and cmd.poll() is None:
+                elif not selector.get_map() and cmd.poll() is None:
                     cmd.wait()
                     # The process is terminated. Since no pipes to read from are
                     # left, there is no need to call select() again.
