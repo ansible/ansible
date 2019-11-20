@@ -54,14 +54,26 @@ class Netconf(NetconfBase):
     def get_device_info(self):
         device_info = dict()
         device_info['network_os'] = 'ce'
-        ele = new_ele('get-software-information')
-        data = self.execute_rpc(to_xml(ele))
-        reply = to_ele(to_bytes(data, errors='surrogate_or_strict'))
-        sw_info = reply.find('.//software-information')
+        filter_xml = '''<filter type="subtree">
+                          <system xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                            <systemInfo>
+                              <sysName></sysName>
+                              <sysContact></sysContact>
+                              <productVer></productVer>
+                              <platformVer></platformVer>
+                              <productName></productName>
+                            </systemInfo>
+                          </system>
+                        </filter>'''
+        data = self.get(filter_xml)
+        data = re.sub(r'xmlns=".+?"', r'', data)
+        reply = fromstring(to_bytes(data, errors='surrogate_or_strict'))
+        sw_info = reply.find('.//systemInfo')
 
-        device_info['network_os_version'] = self.get_text(sw_info, 'ce-version')
-        device_info['network_os_hostname'] = self.get_text(sw_info, 'host-name')
-        device_info['network_os_model'] = self.get_text(sw_info, 'product-model')
+        device_info['network_os_version'] = self.get_text(sw_info, 'productVer')
+        device_info['network_os_hostname'] = self.get_text(sw_info, 'sysName')
+        device_info['network_os_platform_version'] = self.get_text(sw_info, 'platformVer')
+        device_info['network_os_platform'] = self.get_text(sw_info, 'productName')
 
         return device_info
 
