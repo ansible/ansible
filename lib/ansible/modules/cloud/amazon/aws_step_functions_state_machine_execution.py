@@ -94,6 +94,7 @@ stop_date:
 
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError
@@ -119,8 +120,7 @@ def start_execution(module, sfn_client):
             module.exit_json(changed=False)
         module.fail_json_aws(e, msg="Failed to start execution.")
 
-    module.exit_json(changed=True, execution_arn=execution.get('executionArn'),
-                     start_date=execution.get('startDate'))
+    module.exit_json(changed=True, **camel_dict_to_snake_dict(execution))
 
 
 def stop_execution(module, sfn_client):
@@ -139,7 +139,7 @@ def stop_execution(module, sfn_client):
     except ClientError as e:
         module.fail_json_aws(e, msg="Failed to stop execution.")
 
-    module.exit_json(changed=True, stop_date=res.get('stopDate'))
+    module.exit_json(changed=True, **camel_dict_to_snake_dict(res))
 
 
 def check_mode(module, msg='', changed=False):
