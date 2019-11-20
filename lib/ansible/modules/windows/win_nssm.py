@@ -132,7 +132,7 @@ options:
     version_added: "2.10"
   AppStopMethodSkip:
     description:
-      - To disable service shutdown methods, set to the sum of one or more of the numbers below:
+      - To disable service shutdown methods, set to the sum of one or more of the numbers
       - 1 - Don't send Control-C to the console.
       - 2 - Don't send WM_CLOSE to windows.
       - 4 - Don't send WM_QUIT to threads.
