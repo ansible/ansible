@@ -263,7 +263,7 @@ class GitLabProject(object):
     '''
     def existsProject(self, namespace, path):
         # When project exists, object will be stored in self.projectObject.
-        project = findProject(self._gitlab, namespace.full_path + '/' + path)
+        project = findProject(self._gitlab, namespace, path)
         if project:
             self.projectObject = project
             return True
@@ -326,16 +326,16 @@ def main():
     gitlab_project = GitLabProject(module, gitlab_instance)
 
     if group_identifier:
-        group = findGroup(gitlab_instance, group_identifier)
+        group = findGroup(gitlab_instance, None, group_identifier)
         if group is None:
             module.fail_json(msg="Failed to create project: group %s doesn't exists" % group_identifier)
 
         namespace = gitlab_instance.namespaces.get(group.id)
-        project_exists = gitlab_project.existsProject(namespace, project_path)
+        project_exists = gitlab_project.existsProject(group, project_path)
     else:
         user = gitlab_instance.users.list(username=gitlab_instance.user.username)[0]
         namespace = gitlab_instance.namespaces.get(user.id)
-        project_exists = gitlab_project.existsProject(namespace, project_path)
+        project_exists = gitlab_project.existsProject(user, project_path)
 
     if state == 'absent':
         if project_exists:
