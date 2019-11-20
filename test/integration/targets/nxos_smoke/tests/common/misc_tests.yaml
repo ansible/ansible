@@ -24,3 +24,5 @@
   nxos_command:
     commands:
       - show hostname
+  vars:
+    ansible_command_timeout: 500
