@@ -30,21 +30,21 @@
       - iam_policy_info is succeeded
 
   # ============================================================
-  #- name: 'Create policy using document for {{ iam_type }} (check mode)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_a }}'
-  #    policy_document: '{{ tmpdir.path }}/no_access.json'
-  #    skip_duplicates: yes
-  #  register: result
+  - name: 'Create policy using document for {{ iam_type }} (check mode)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_a }}'
+      policy_document: '{{ tmpdir.path }}/no_access.json'
+      skip_duplicates: yes
+    register: result
 
-  #- name: 'Assert policy would be added for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result is changed
+  - name: 'Assert policy would be added for {{ iam_type }}'
+    assert:
+      that:
+      - result is changed
 
   - name: 'Create policy using document for {{ iam_type }}'
     iam_policy:
@@ -103,29 +103,29 @@
       - '"Id" not in iam_policy_info.policies[0].policy_document'
 
   # ============================================================
-  #- name: 'Create policy using document for {{ iam_type }} (check mode) (skip_duplicates)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_b }}'
-  #    policy_document: '{{ tmpdir.path }}/no_access.json'
-  #    skip_duplicates: yes
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_b }}'
-  #  register: iam_policy_info
+  - name: 'Create policy using document for {{ iam_type }} (check mode) (skip_duplicates)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_b }}'
+      policy_document: '{{ tmpdir.path }}/no_access.json'
+      skip_duplicates: yes
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_b }}'
+    register: iam_policy_info
 
-  #- name: 'Assert policy would be added for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result is not changed
-  #    - iam_policy_info.all_policy_names | length == 1
-  #    - '"policies" not in iam_policy_info'
-  #    - iam_policy_name_b not in iam_policy_info.all_policy_names
+  - name: 'Assert policy would be added for {{ iam_type }}'
+    assert:
+      that:
+      - result is not changed
+      - iam_policy_info.all_policy_names | length == 1
+      - '"policies" not in iam_policy_info'
+      - iam_policy_name_b not in iam_policy_info.all_policy_names
 
   - name: 'Create policy using document for {{ iam_type }} (skip_duplicates)'
     iam_policy:
@@ -154,30 +154,30 @@
       - iam_policy_info.all_policy_names | length == 1
       - iam_policy_name_b not in iam_policy_info.all_policy_names
 
-  #- name: 'Create policy using document for {{ iam_type }} (check mode) (skip_duplicates = no)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_b }}'
-  #    policy_document: '{{ tmpdir.path }}/no_access.json'
-  #    skip_duplicates: no
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_b }}'
-  #  register: iam_policy_info
+  - name: 'Create policy using document for {{ iam_type }} (check mode) (skip_duplicates = no)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_b }}'
+      policy_document: '{{ tmpdir.path }}/no_access.json'
+      skip_duplicates: no
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_b }}'
+    register: iam_policy_info
 
-  #- name: 'Assert policy would be added for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result.changed == True
-  #    - '"policies" not in iam_policy_info'
-  #    - iam_policy_info.all_policy_names | length == 1
-  #    - iam_policy_name_a in iam_policy_info.all_policy_names
-  #    - iam_policy_name_b not in iam_policy_info.all_policy_names
+  - name: 'Assert policy would be added for {{ iam_type }}'
+    assert:
+      that:
+      - result.changed == True
+      - '"policies" not in iam_policy_info'
+      - iam_policy_info.all_policy_names | length == 1
+      - iam_policy_name_a in iam_policy_info.all_policy_names
+      - iam_policy_name_b not in iam_policy_info.all_policy_names
 
   - name: 'Create policy using document for {{ iam_type }} (skip_duplicates = no)'
     iam_policy:
@@ -238,31 +238,31 @@
       - '"Id" not in iam_policy_info.policies[0].policy_document'
 
   # ============================================================
-  #- name: 'Create policy using json for {{ iam_type }} (check mode)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_c }}'
-  #    policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access_with_id.json") }}'
-  #    skip_duplicates: yes
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_c }}'
-  #  register: iam_policy_info
+  - name: 'Create policy using json for {{ iam_type }} (check mode)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_c }}'
+      policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access_with_id.json") }}'
+      skip_duplicates: yes
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_c }}'
+    register: iam_policy_info
 
-  #- name: 'Assert policy would be added for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result is changed
-  #    - '"policies" not in iam_policy_info'
-  #    - iam_policy_info.all_policy_names | length == 2
-  #    - iam_policy_name_c not in iam_policy_info.all_policy_names
-  #    - iam_policy_name_a in iam_policy_info.all_policy_names
-  #    - iam_policy_name_b in iam_policy_info.all_policy_names
+  - name: 'Assert policy would be added for {{ iam_type }}'
+    assert:
+      that:
+      - result is changed
+      - '"policies" not in iam_policy_info'
+      - iam_policy_info.all_policy_names | length == 2
+      - iam_policy_name_c not in iam_policy_info.all_policy_names
+      - iam_policy_name_a in iam_policy_info.all_policy_names
+      - iam_policy_name_b in iam_policy_info.all_policy_names
 
   - name: 'Create policy using json for {{ iam_type }}'
     iam_policy:
@@ -324,32 +324,32 @@
       - iam_policy_info.policies[0].policy_document.Id == 'MyId'
 
   # ============================================================
-  #- name: 'Create policy using json for {{ iam_type }} (check mode) (skip_duplicates)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_d }}'
-  #    policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access_with_id.json") }}'
-  #    skip_duplicates: yes
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_d }}'
-  #  register: iam_policy_info
+  - name: 'Create policy using json for {{ iam_type }} (check mode) (skip_duplicates)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_d }}'
+      policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access_with_id.json") }}'
+      skip_duplicates: yes
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_d }}'
+    register: iam_policy_info
 
-  #- name: 'Assert policy would be added for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result is not changed
-  #    - iam_policy_name_a in iam_policy_info.all_policy_names
-  #    - iam_policy_name_b in iam_policy_info.all_policy_names
-  #    - iam_policy_name_c in iam_policy_info.all_policy_names
-  #    - iam_policy_name_d not in iam_policy_info.all_policy_names
-  #    - iam_policy_info.all_policy_names | length == 3
-  #    - '"policies" not in iam_policy_info'
+  - name: 'Assert policy would be added for {{ iam_type }}'
+    assert:
+      that:
+      - result is not changed
+      - iam_policy_name_a in iam_policy_info.all_policy_names
+      - iam_policy_name_b in iam_policy_info.all_policy_names
+      - iam_policy_name_c in iam_policy_info.all_policy_names
+      - iam_policy_name_d not in iam_policy_info.all_policy_names
+      - iam_policy_info.all_policy_names | length == 3
+      - '"policies" not in iam_policy_info'
 
   - name: 'Create policy using json for {{ iam_type }} (skip_duplicates)'
     iam_policy:
@@ -380,26 +380,26 @@
       - iam_policy_info.all_policy_names | length == 3
       - '"policies" not in iam_policy_info'
 
-  #- name: 'Create policy using json for {{ iam_type }} (check mode) (skip_duplicates = no)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_d }}'
-  #    policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access_with_id.json") }}'
-  #    skip_duplicates: no
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_d }}'
-  #  register: iam_policy_info
+  - name: 'Create policy using json for {{ iam_type }} (check mode) (skip_duplicates = no)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_d }}'
+      policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access_with_id.json") }}'
+      skip_duplicates: no
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_d }}'
+    register: iam_policy_info
 
-  #- name: 'Assert policy would be added for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result.changed == True
+  - name: 'Assert policy would be added for {{ iam_type }}'
+    assert:
+      that:
+      - result.changed == True
 
   - name: 'Create policy using json for {{ iam_type }} (skip_duplicates = no)'
     iam_policy:
@@ -490,28 +490,28 @@
       - iam_policy_name_d in (iam_policy_info.policies | json_query('[?policy_document.Id == `MyId`].policy_name') | list)
 
   # ============================================================
-  #- name: 'Update policy using document for {{ iam_type }} (check mode) (skip_duplicates)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_a }}'
-  #    policy_document: '{{ tmpdir.path }}/no_access_with_id.json'
-  #    skip_duplicates: yes
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_a }}'
-  #  register: iam_policy_info
+  - name: 'Update policy using document for {{ iam_type }} (check mode) (skip_duplicates)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_a }}'
+      policy_document: '{{ tmpdir.path }}/no_access_with_id.json'
+      skip_duplicates: yes
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_a }}'
+    register: iam_policy_info
 
-  #- name: 'Assert policy would be added for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result is not changed
-  #    - iam_policy_info.policies[0].policy_name == iam_policy_name_a
-  #    - '"Id" not in iam_policy_info.policies[0].policy_document'
+  - name: 'Assert policy would be added for {{ iam_type }}'
+    assert:
+      that:
+      - result is not changed
+      - iam_policy_info.policies[0].policy_name == iam_policy_name_a
+      - '"Id" not in iam_policy_info.policies[0].policy_document'
 
   - name: 'Update policy using document for {{ iam_type }} (skip_duplicates)'
     iam_policy:
@@ -539,29 +539,29 @@
       - iam_policy_info.policies[0].policy_name == iam_policy_name_a
       - '"Id" not in iam_policy_info.policies[0].policy_document'
 
-  #- name: 'Update policy using document for {{ iam_type }} (check mode) (skip_duplicates = no)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_a }}'
-  #    policy_document: '{{ tmpdir.path }}/no_access_with_id.json'
-  #    skip_duplicates: no
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_a }}'
-  #  register: iam_policy_info
+  - name: 'Update policy using document for {{ iam_type }} (check mode) (skip_duplicates = no)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_a }}'
+      policy_document: '{{ tmpdir.path }}/no_access_with_id.json'
+      skip_duplicates: no
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_a }}'
+    register: iam_policy_info
 
-  #- name: 'Assert policy would be updated for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result.changed == True
-  #    - iam_policy_info.all_policy_names | length == 4
-  #    - iam_policy_info.policies[0].policy_name == iam_policy_name_a
-  #    - '"Id" not in iam_policy_info.policies[0].policy_document'
+  - name: 'Assert policy would be updated for {{ iam_type }}'
+    assert:
+      that:
+      - result.changed == True
+      - iam_policy_info.all_policy_names | length == 4
+      - iam_policy_info.policies[0].policy_name == iam_policy_name_a
+      - '"Id" not in iam_policy_info.policies[0].policy_document'
 
   - name: 'Update policy using document for {{ iam_type }} (skip_duplicates = no)'
     iam_policy:
@@ -638,28 +638,28 @@
   # ============================================================
   # Update C with no_access.json
   # Delete C
-  #
-  #- name: 'Update policy using json for {{ iam_type }} (check mode) (skip_duplicates)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_c }}'
-  #    policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access.json") }}'
-  #    skip_duplicates: yes
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_c }}'
-  #  register: iam_policy_info
 
-  #- name: 'Assert policy would be added for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result is not changed
-  #    - iam_policy_info.policies[0].policy_document.Id == 'MyId'
+  - name: 'Update policy using json for {{ iam_type }} (check mode) (skip_duplicates)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_c }}'
+      policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access.json") }}'
+      skip_duplicates: yes
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_c }}'
+    register: iam_policy_info
+
+  - name: 'Assert policy would be added for {{ iam_type }}'
+    assert:
+      that:
+      - result is not changed
+      - iam_policy_info.policies[0].policy_document.Id == 'MyId'
 
   - name: 'Update policy using json for {{ iam_type }} (skip_duplicates)'
     iam_policy:
@@ -685,27 +685,27 @@
       - result[iam_object_key] == iam_name
       - iam_policy_info.policies[0].policy_document.Id == 'MyId'
 
-  #- name: 'Update policy using json for {{ iam_type }} (check mode) (skip_duplicates = no)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_c }}'
-  #    policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access.json") }}'
-  #    skip_duplicates: no
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_c }}'
-  #  register: iam_policy_info
+  - name: 'Update policy using json for {{ iam_type }} (check mode) (skip_duplicates = no)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_c }}'
+      policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access.json") }}'
+      skip_duplicates: no
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_c }}'
+    register: iam_policy_info
 
-  #- name: 'Assert policy would be updated for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result.changed == True
-  #    - iam_policy_info.policies[0].policy_document.Id == 'MyId'
+  - name: 'Assert policy would be updated for {{ iam_type }}'
+    assert:
+      that:
+      - result.changed == True
+      - iam_policy_info.policies[0].policy_document.Id == 'MyId'
 
   - name: 'Update policy using json for {{ iam_type }} (skip_duplicates = no)'
     iam_policy:
@@ -780,26 +780,26 @@
       - iam_policy_name_c not in iam_policy_info.all_policy_names
 
   # ============================================================
-  #- name: 'Update policy using document for {{ iam_type }} (check mode)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_b }}'
-  #    policy_document: '{{ tmpdir.path }}/no_access_with_second_id.json'
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_b }}'
-  #  register: iam_policy_info
+  - name: 'Update policy using document for {{ iam_type }} (check mode)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_b }}'
+      policy_document: '{{ tmpdir.path }}/no_access_with_second_id.json'
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_b }}'
+    register: iam_policy_info
 
-  #- name: 'Assert policy would be updated for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result.changed == True
-  #    - '"Id" not in iam_policy_info.policies[0].policy_document'
+  - name: 'Assert policy would be updated for {{ iam_type }}'
+    assert:
+      that:
+      - result.changed == True
+      - '"Id" not in iam_policy_info.policies[0].policy_document'
 
   - name: 'Update policy using document for {{ iam_type }}'
     iam_policy:
@@ -872,26 +872,26 @@
       - iam_policy_name_b not in iam_policy_info.all_policy_names
 
   # ============================================================
-  #- name: 'Update policy using json for {{ iam_type }} (check mode)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: present
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_d }}'
-  #    policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access_with_second_id.json") }}'
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_d }}'
-  #  register: iam_policy_info
+  - name: 'Update policy using json for {{ iam_type }} (check mode)'
+    check_mode: yes
+    iam_policy:
+      state: present
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_d }}'
+      policy_json: '{{ lookup("file", "{{ tmpdir.path }}/no_access_with_second_id.json") }}'
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_d }}'
+    register: iam_policy_info
 
-  #- name: 'Assert policy would be updated for {{ iam_type }}'
-  #  assert:
-  #    that:
-  #    - result.changed == True
-  #    - iam_policy_info.policies[0].policy_document.Id == 'MyId'
+  - name: 'Assert policy would be updated for {{ iam_type }}'
+    assert:
+      that:
+      - result.changed == True
+      - iam_policy_info.policies[0].policy_document.Id == 'MyId'
 
   - name: 'Update policy using json for {{ iam_type }}'
     iam_policy:
@@ -941,30 +941,30 @@
       - iam_policy_info.policies[0].policy_document.Id == 'MyOtherId'
 
   # ============================================================
-  #- name: 'Delete policy D (check_mode)'
-  #  check_mode: yes
-  #  iam_policy:
-  #    state: absent
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_d }}'
-  #  register: result
-  #- iam_policy_info:
-  #    iam_type: '{{ iam_type }}'
-  #    iam_name: '{{ iam_name }}'
-  #    policy_name: '{{ iam_policy_name_d }}'
-  #  register: iam_policy_info
+  - name: 'Delete policy D (check_mode)'
+    check_mode: yes
+    iam_policy:
+      state: absent
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_d }}'
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_d }}'
+    register: iam_policy_info
 
-  #- name: 'Assert not deleted'
-  #  assert:
-  #    that:
-  #    - result is changed
-  #    - result.policies | length == 1
-  #    - iam_policy_name_d in result.policies
-  #    - result[iam_object_key] == iam_name
-  #    - iam_policy_info.all_policy_names | length == 1
-  #    - iam_policy_name_d in iam_policy_info.all_policy_names
-  #    - iam_policy_info.policies[0].policy_document.Id == 'MyOtherId'
+  - name: 'Assert not deleted'
+    assert:
+      that:
+      - result is changed
+      - result.policies | length == 1
+      - iam_policy_name_d in result.policies
+      - result[iam_object_key] == iam_name
+      - iam_policy_info.all_policy_names | length == 1
+      - iam_policy_name_d in iam_policy_info.all_policy_names
+      - iam_policy_info.policies[0].policy_document.Id == 'MyOtherId'
 
   - name: 'Delete policy D'
     iam_policy:
@@ -990,6 +990,27 @@
       - iam_policy_info.all_policy_names | length == 0
 
   - name: 'Delete policy D (test idempotency)'
+    iam_policy:
+      state: absent
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_d }}'
+    register: result
+  - iam_policy_info:
+      iam_type: '{{ iam_type }}'
+      iam_name: '{{ iam_name }}'
+      policy_name: '{{ iam_policy_name_d }}'
+    register: iam_policy_info
+
+  - name: 'Assert deleted'
+    assert:
+      that:
+      - result is not changed
+      - '"policies" not in iam_policy_info'
+      - iam_policy_info.all_policy_names | length == 0
+
+  - name: 'Delete policy D (check_mode) (test idempotency)'
+    check_mode: yes
     iam_policy:
       state: absent
       iam_type: '{{ iam_type }}'
