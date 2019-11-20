@@ -30,4 +30,5 @@ This guide introduces basic Ansible concepts and guides you through your first A
    first_inventory
    network_roles
    intermediate_concepts
+   network_connection_options
    network_resources
