@@ -54,7 +54,7 @@ class Netconf(NetconfBase):
     def get_device_info(self):
         device_info = dict()
         device_info['network_os'] = 'ce'
-        filter_xml = r'''<filter type="subtree">
+        filter_xml = '''<filter type="subtree">
                           <system xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
                             <systemInfo>
                               <sysName></sysName>
