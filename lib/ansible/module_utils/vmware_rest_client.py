@@ -162,12 +162,11 @@ class VmwareRestClient(object):
 
         return tags
 
-    def get_tags_for_dynamic_obj(self, mid=None, type=None):
+    def get_tags_for_dynamic_obj(self, mid=None):
         """
         Return list of tag object details associated with object
         Args:
             mid: Dynamic object for specified object
-            type: Type of DynamicID to lookup
 
         Returns: List of tag object details associated with the given object
 
@@ -175,9 +174,8 @@ class VmwareRestClient(object):
         tags = []
         if mid is None:
             return tags
-        dynamic_managed_object = DynamicID(type=type, id=mid)
 
-        temp_tags_model = self.get_tags_for_object(dynamic_managed_object)
+        temp_tags_model = self.get_tags_for_object(dobj=mid)
 
         category_service = self.api_client.tagging.Category
 
@@ -201,7 +199,7 @@ class VmwareRestClient(object):
         Returns: List of tag object associated with the given cluster
 
         """
-        return self.get_tags_for_dynamic_obj(mid=cluster_mid, type='ClusterComputeResource')
+        return self.get_tags_for_dynamic_obj(mid=cluster_mid)
 
     def get_tags_for_hostsystem(self, hostsystem_mid=None):
         """
@@ -212,7 +210,7 @@ class VmwareRestClient(object):
         Returns: List of tag object associated with the given host system
 
         """
-        return self.get_tags_for_dynamic_obj(mid=hostsystem_mid, type='HostSystem')
+        return self.get_tags_for_dynamic_obj(mid=hostsystem_mid)
 
     def get_tags_for_vm(self, vm_mid=None):
         """
@@ -223,7 +221,7 @@ class VmwareRestClient(object):
         Returns: List of tag object associated with the given virtual machine
 
         """
-        return self.get_tags_for_dynamic_obj(mid=vm_mid, type='VirtualMachine')
+        return self.get_tags_for_dynamic_obj(mid=vm_mid)
 
     def get_vm_tags(self, tag_service=None, tag_association_svc=None, vm_mid=None):
         """
@@ -241,9 +239,12 @@ class VmwareRestClient(object):
         tags = []
         if vm_mid is None:
             return tags
-        dynamic_managed_object = DynamicID(type='VirtualMachine', id=vm_mid)
 
-        temp_tags_model = self.get_tags_for_object(tag_service, tag_association_svc, dynamic_managed_object)
+        temp_tags_model = self.get_tags_for_object(
+            tag_service=tag_service,
+            tag_assoc_svc=tag_association_svc,
+            dobj=vm_mid
+        )
 
         for tag_obj in temp_tags_model:
             tags.append(tag_obj.name)
@@ -369,3 +370,56 @@ class VmwareRestClient(object):
             if svc_obj.name == svc_obj_name:
                 return svc_obj
         return None
+
+    def get_tag_by_name(self, tag_name=None):
+        """
+        Return tag object by name
+        Args:
+            tag_name: Name of tag
+
+        Returns: Tag object if found else None
+        """
+        if not tag_name:
+            return None
+
+        return self.search_svc_object_by_name(service=self.api_client.tagging.Tag, svc_obj_name=tag_name)
+
+    def get_category_by_name(self, category_name=None):
+        """
+        Return category object by name
+        Args:
+            category_name: Name of category
+
+        Returns: Category object if found else None
+        """
+        if not category_name:
+            return None
+
+        return self.search_svc_object_by_name(service=self.api_client.tagging.Category, svc_obj_name=category_name)
+
+    def get_tag_by_category(self, tag_name=None, category_name=None):
+        """
+        Return tag object by name and category name specified
+        Args:
+            tag_name: Name of tag
+            category_name: Name of category
+
+        Returns: Tag object if found else None
+        """
+
+        if not tag_name:
+            return None
+
+        if category_name:
+            category_obj = self.get_category_by_name(category_name=category_name)
+
+            if not category_obj:
+                return None
+
+            for tag_object in self.api_client.tagging.Tag.list():
+                tag_obj = self.api_client.tagging.Tag.get(tag_object)
+
+                if tag_obj.name == tag_name and tag_obj.category_id == category_obj.id:
+                    return tag_obj
+        else:
+            return self.search_svc_object_by_name(service=self.api_client.tagging.Tag, svc_obj_name=tag_name)
