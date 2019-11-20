@@ -185,7 +185,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['CREATE TRUSTED LANGUAGE "plpythonu"', "UPDATE pg_language SET lanpltrusted = 'True' WHERE lanname = 'plpythonu'"]
+    - result.queries == ['CREATE TRUSTED LANGUAGE "plpythonu"', "UPDATE pg_language SET lanpltrusted = true WHERE lanname = 'plpythonu'"]
 
 - name: postgresql_lang - check that lang exists and it's trusted after previous step
   become_user: "{{ pg_user }}"
