@@ -1,0 +1,3 @@
+bugfixes:
+  - Fix research of sub ressources like subGroups and project in groups
+  - Fix idempotency on modules gitlab_group, gitlab_project, gitlab_user, gitlab_hook and gitlab_deploy_key
