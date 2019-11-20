@@ -5111,10 +5111,6 @@ lib/ansible/plugins/doc_fragments/backup.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/backup.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/ce.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/ce.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/checkpoint_commands.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/checkpoint_commands.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/checkpoint_objects.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/checkpoint_objects.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/cnos.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/cnos.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/constructed.py future-import-boilerplate
@@ -5886,8 +5882,6 @@ test/units/playbook/test_conditional.py future-import-boilerplate
 test/units/playbook/test_conditional.py metaclass-boilerplate
 test/units/plugins/action/test_synchronize.py future-import-boilerplate
 test/units/plugins/action/test_synchronize.py metaclass-boilerplate
-test/units/plugins/httpapi/test_checkpoint.py future-import-boilerplate
-test/units/plugins/httpapi/test_checkpoint.py metaclass-boilerplate
 test/units/plugins/httpapi/test_ftd.py future-import-boilerplate
 test/units/plugins/httpapi/test_ftd.py metaclass-boilerplate
 test/units/plugins/inventory/test_constructed.py future-import-boilerplate
