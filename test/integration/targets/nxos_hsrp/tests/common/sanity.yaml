@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_hsrp sanity test"
-  when: ansible_connection == "local"
 
 # Select interface for test
 - set_fact: intname1="{{ nxos_int1 }}"

@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos common/net_user.yaml"
-  when: ansible_connection == "local"
 
 # Add minimal testcase to check args are passed correctly to
 # implementation module and module run is successful.

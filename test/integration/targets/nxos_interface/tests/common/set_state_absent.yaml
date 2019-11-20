@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/set_state_absent.yaml"
-  when: ansible_connection == "local"
 
 - name: setup
   nxos_config:

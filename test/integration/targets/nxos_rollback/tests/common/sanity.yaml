@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_rollback sanity test"
-  when: ansible_connection == "local"
 
 - name: delete existing checkpoint file
   nxos_config: &delete

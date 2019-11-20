@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_static_route sanity test"
-  when: ansible_connection == "local"
 
 # Flag used to test the track feature.  Some platforms
 # don't support it so this flag will be toggled accordingly.

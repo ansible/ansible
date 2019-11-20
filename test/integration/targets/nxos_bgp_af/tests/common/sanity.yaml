@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bgp_af sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: advertise_l2vpn_evpn="true"
   when: platform is search('N9K')

@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_pim sanity test"
-  when: ansible_connection == "local"
 
 - name: "Setup: Disable features"
   nxos_feature: &disable_feature

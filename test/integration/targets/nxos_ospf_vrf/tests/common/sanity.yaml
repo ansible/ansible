@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_ospf_vrf sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: def_met_default="default"
   # CSCvi74876 Cannot remove default-metric

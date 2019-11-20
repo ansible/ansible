@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_igmp sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: restart="true"
   when: platform is not match("N35")

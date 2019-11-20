@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_ntp_auth sanity test"
-  when: ansible_connection == "local"
 
 - name: Configure text ntp authentication
   nxos_ntp_auth: &setup

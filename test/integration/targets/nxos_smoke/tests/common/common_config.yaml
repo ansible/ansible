@@ -5,7 +5,6 @@
 # hit NetworkConfig
 # Select interface for test
 - debug: msg="START connection={{ ansible_connection }} common/common_config.yaml"
-  when: ansible_connection == "local"
 
 - set_fact: intname="{{ nxos_int1 }}"
 

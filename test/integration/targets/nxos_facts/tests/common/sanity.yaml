@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_facts sanity test"
-  when: ansible_connection == "local"
 
 - name: "nxos_facts gather hardware facts"
   nxos_facts:

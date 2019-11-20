@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_snmp_user sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: delete_last_user_allowed='true'
 - set_fact: delete_last_user_allowed='false'

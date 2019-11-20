@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_user basic test"
-  when: ansible_connection == "local"
 
 - name: Remove old entries of user
   nxos_user:

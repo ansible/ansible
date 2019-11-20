@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_gir_profile_management sanity test"
-  when: ansible_connection == "local"
 
 - name: "Setup - Remove maintenace mode profiles"
   nxos_gir_profile_management: &remove_maintenance

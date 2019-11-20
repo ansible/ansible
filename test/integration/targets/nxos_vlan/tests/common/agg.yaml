@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/agg.yaml"
-  when: ansible_connection == "local"
 
 - name: setup - remove vlan used in test
   nxos_config: &rm

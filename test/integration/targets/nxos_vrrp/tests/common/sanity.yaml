@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vrrp sanity test"
-  when: ansible_connection == "local"
 
 - block:
   - name: "Enable interface-vlan"

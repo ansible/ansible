@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_igmp_snooping sanity test"
-  when: ansible_connection == "local"
 
 - meta: end_host
   # show ip igmp snooping | json does not work on some platforms

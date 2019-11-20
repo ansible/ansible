@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} common/misc_tests.yaml"
-  when: ansible_connection == "local"
 
 - name: hit conditional for lists of 10 or more commands
   nxos_command:

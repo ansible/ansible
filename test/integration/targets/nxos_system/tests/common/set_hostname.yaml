@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/set_hostname.yaml"
-  when: ansible_connection == "local"
 
 - block:
   - name: setup

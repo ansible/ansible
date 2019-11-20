@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bgp_neighbor sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: intname="{{ nxos_int1 }}"
 

@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_rpm sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: smu_run="false"
 - set_fact: smu_run="true"

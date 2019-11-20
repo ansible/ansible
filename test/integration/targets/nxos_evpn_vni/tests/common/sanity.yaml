@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_evpn_vni sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: nvoe_supported="{{ platform is not search('N3K|N3L|N35')}}"
 

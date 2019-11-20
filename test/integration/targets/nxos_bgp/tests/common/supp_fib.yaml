@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bgp parameter test"
-  when: ansible_connection == "local"
 
 - set_fact: bgp_best_path_limit="false"
 - set_fact: bgp_best_path_limit="true"

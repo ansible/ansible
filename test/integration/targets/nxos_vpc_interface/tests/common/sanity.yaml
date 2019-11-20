@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vpc_interface sanity test"
-  when: ansible_connection == "local"
 
 - block:
   - name: enable feature vpc

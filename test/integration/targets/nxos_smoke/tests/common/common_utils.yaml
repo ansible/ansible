@@ -4,7 +4,6 @@
 # nxos_interface -> conditional, remove_default_spec
 
 - debug: msg="START connection={{ ansible_connection }} common/common_utils.yaml"
-  when: ansible_connection == "local"
 
 # hit ComplexList
 - name: test contains operator

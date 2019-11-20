@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_udld sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: udld_run="true"
 - set_fact: udld_run="false"

@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_snmp_traps sanity test"
-  when: ansible_connection == "local"
 
 - name: Setup - Remove snmp_traps if configured
   nxos_snmp_traps: &remove

@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_ntp_options sanity test"
-  when: ansible_connection == "local"
 
 - name: "Apply default ntp config" 
   nxos_ntp_options: &default

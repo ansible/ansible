@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vrf_af sanity test"
-  when: ansible_connection == "local"
 
 - name: Configure feature bgp
   nxos_feature:

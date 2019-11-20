@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vxlan_vtep sanity test"
-  when: ansible_connection == "local"
 
 - block:
   # N9K(v9.2+) specific attrs

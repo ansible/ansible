@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/not_hardware_facts.yaml"
-  when: ansible_connection == "local"
 
 - name: test not hardware
   nxos_facts:

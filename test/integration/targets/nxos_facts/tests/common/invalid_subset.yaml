@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/invalid_subset.yaml"
-  when: ansible_connection == "local"
 
 - name: test invalid subset (foobar)
   nxos_facts:

@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_reboot sanity test"
-  when: ansible_connection == "local"
 
 - debug: msg="***WARNING*** Remove meta end_play to verify this module ***WARNING***"
 

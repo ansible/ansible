@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vpc sanity test"
-  when: ansible_connection == "local"
 
 - block:
   - set_fact: delay_restore_orphan_port=25

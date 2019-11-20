@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_logging basic test"
-  when: ansible_connection == "local"
 
 # This task is needed to clear out any previous logfile
 # size settings.

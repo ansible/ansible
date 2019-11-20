@@ -3,7 +3,6 @@
 - set_fact: snmp_version="v2c"
 
 - debug: msg="START connection={{ ansible_connection }} nxos_snmp_host {{ snmp_type }} {{ snmp_version }} sanity test"
-  when: ansible_connection == "local"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"

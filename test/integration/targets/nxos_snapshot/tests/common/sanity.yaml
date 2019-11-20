@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_snapshot sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: snapshot_run="true"
 

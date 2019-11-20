@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_pim_rp_address sanity"
-  when: ansible_connection == "local"
 
 - block:
   # platforms do not support bidir

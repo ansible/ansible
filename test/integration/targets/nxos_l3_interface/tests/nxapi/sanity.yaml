@@ -1,6 +1,5 @@
 ---
 - debug: msg="START TRANSPORT:NXAPI nxos_l3_interface sanity test"
-  when: ansible_connection == "local"
 
 # Select interface for test
 - set_fact: testint2="{{ nxos_int2 }}"

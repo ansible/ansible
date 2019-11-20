@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_user parameter test"
-  when: ansible_connection == "local"
 
 - set_fact: idem="true"
 - set_fact: idem="false"

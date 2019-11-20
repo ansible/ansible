@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vxlan_vtep_vni sanity test"
-  when: ansible_connection == "local"
 
 - block:
   - name: "Apply N7K specific setup config"

@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_aaa_server tacacs.yaml sanity test"
-  when: ansible_connection == "local"
 
 - name: "Enable feature tacacs+"
   nxos_feature:

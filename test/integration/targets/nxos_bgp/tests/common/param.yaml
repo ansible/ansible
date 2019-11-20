@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bgp parameter test"
-  when: ansible_connection == "local"
 
 - name: "Disable feature BGP"
   nxos_feature:

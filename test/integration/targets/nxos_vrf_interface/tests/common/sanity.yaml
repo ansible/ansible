@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vrf_interface sanity test"
-  when: ansible_connection == "local"
 
 # Select interface for test
 - set_fact: intname="{{ nxos_int1 }}"

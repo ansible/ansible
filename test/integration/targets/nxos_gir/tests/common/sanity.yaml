@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_gir sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: gir_run="true"
 - set_fact: gir_run="false"

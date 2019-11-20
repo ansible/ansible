@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bgp parameter test"
-  when: ansible_connection == "local"
 
 
 - debug: msg="This bgp_isolate is not supported on {{ image_version }}"

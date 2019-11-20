@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_ntp sanity test"
-  when: ansible_connection == "local"
 
 - name: Setup - Remove ntp if configured
   nxos_ntp: &remove

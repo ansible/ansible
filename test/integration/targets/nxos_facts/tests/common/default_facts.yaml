@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/default_facts.yaml"
-  when: ansible_connection == "local"
 
 - name: test getting default facts
   nxos_facts:

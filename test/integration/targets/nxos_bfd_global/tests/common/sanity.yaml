@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bfd_global sanity test"
-  when: ansible_connection == "local"
 
 - name: set facts common
   # nd_* vars are "non-default" values

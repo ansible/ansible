@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_aaa_server_host radius.yaml sanity test"
-  when: ansible_connection == "local"
 
 - name: "Setup"
   nxos_aaa_server_host: &remove

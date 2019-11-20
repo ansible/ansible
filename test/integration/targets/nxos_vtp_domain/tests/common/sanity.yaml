@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vtp_domain sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: vtp_run="true"
 - set_fact: vtp_run="false"

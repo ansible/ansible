@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_acl sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: time_range="ans-range"
   when: platform is not search('N35|N5K|N6K')
