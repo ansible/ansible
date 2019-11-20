@@ -87,8 +87,6 @@ def ensure_type(value, value_type, origin=None):
         value_type = value_type.lower()
 
     if value is not None:
-        ansible_string_types = (string_types, AnsibleVaultEncryptedUnicode)
-
         if value_type in ('boolean', 'bool'):
             value = boolean(value, strict=False)
 
@@ -99,8 +97,8 @@ def ensure_type(value, value_type, origin=None):
             value = float(value)
 
         elif value_type == 'list':
-            if isinstance(value, ansible_string_types):
-                value = [x.strip() for x in to_text(value, errors='surrogate_or_strict').split(',')]
+            if isinstance(value, string_types):
+                value = [x.strip() for x in value.split(',')]
             elif not isinstance(value, Sequence):
                 errmsg = 'list'
 
@@ -112,14 +110,14 @@ def ensure_type(value, value_type, origin=None):
                 errmsg = 'None'
 
         elif value_type == 'path':
-            if isinstance(value, ansible_string_types):
-                value = resolve_path(to_text(value, errors='surrogate_or_strict'), basedir=basedir)
+            if isinstance(value, string_types):
+                value = resolve_path(value, basedir=basedir)
             else:
                 errmsg = 'path'
 
         elif value_type in ('tmp', 'temppath', 'tmppath'):
-            if isinstance(value, ansible_string_types):
-                value = resolve_path(to_text(value, errors='surrogate_or_strict'), basedir=basedir)
+            if isinstance(value, string_types):
+                value = resolve_path(value, basedir=basedir)
                 if not os.path.exists(value):
                     makedirs_safe(value, 0o700)
                 prefix = 'ansible-local-%s' % os.getpid()
@@ -129,8 +127,8 @@ def ensure_type(value, value_type, origin=None):
                 errmsg = 'temppath'
 
         elif value_type == 'pathspec':
-            if isinstance(value, ansible_string_types):
-                value = to_text(value, errors='surrogate_or_strict').split(os.pathsep)
+            if isinstance(value, string_types):
+                value = value.split(os.pathsep)
 
             if isinstance(value, Sequence):
                 value = [resolve_path(x, basedir=basedir) for x in value]
@@ -138,8 +136,8 @@ def ensure_type(value, value_type, origin=None):
                 errmsg = 'pathspec'
 
         elif value_type == 'pathlist':
-            if isinstance(value, ansible_string_types):
-                value = to_text(value, errors='surrogate_or_strict').split(',')
+            if isinstance(value, string_types):
+                value = value.split(',')
 
             if isinstance(value, Sequence):
                 value = [resolve_path(x, basedir=basedir) for x in value]
@@ -147,13 +145,13 @@ def ensure_type(value, value_type, origin=None):
                 errmsg = 'pathlist'
 
         elif value_type in ('str', 'string'):
-            if isinstance(value, ansible_string_types):
+            if isinstance(value, string_types):
                 value = unquote(to_text(value, errors='surrogate_or_strict'))
             else:
                 errmsg = 'string'
 
         # defaults to string type
-        elif isinstance(value, ansible_string_types):
+        elif isinstance(value, string_types):
             value = unquote(to_text(value, errors='surrogate_or_strict'))
 
         if errmsg:
@@ -398,7 +396,11 @@ class ConfigManager(object):
             except UnicodeEncodeError:
                 self.WARNINGS.add(u'value for config entry {0} contains invalid characters, ignoring...'.format(to_text(name)))
                 continue
-            if temp_value is not None:  # only set if env var is defined
+            if temp_value is not None:  # only set if entry is defined in container
+                # inline vault variables should be converted to a text string
+                if isinstance(temp_value, AnsibleVaultEncryptedUnicode):
+                    temp_value = to_text(temp_value, errors='surrogate_or_strict')
+
                 value = temp_value
                 origin = name
 
