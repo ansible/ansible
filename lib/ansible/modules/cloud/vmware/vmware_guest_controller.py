@@ -22,13 +22,13 @@ short_description: Manage disk or USB controllers related to virtual machine in 
 description:
     - This module can be used to add, remove disk controllers or USB controllers belonging to given virtual machine.
     - All parameters and VMware object names are case sensitive.
-version_added: 2.9
+version_added: '2.10'
 author:
     - Diane Wang (@Tomorrow9) <dianew@vmware.com>
 notes:
     - Tested on vSphere 6.0, 6.5 and 6.7
 requirements:
-    - "python >= 2.6"
+    - "python >= 2.7"
     - PyVmomi
 options:
    name:
