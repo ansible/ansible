@@ -242,9 +242,9 @@ class GitLabGroup(object):
     @param name Name of the groupe
     @param full_path Complete path of the Group including parent group path. <parent_path>/<group_path>
     '''
-    def existsGroup(self, project_identifier):
+    def existsGroup(self, namespace, project_identifier):
         # When group/user exists, object will be stored in self.groupObject.
-        group = findGroup(self._gitlab, project_identifier)
+        group = findGroup(self._gitlab, namespace, project_identifier)
         if group:
             self.groupObject = group
             return True
@@ -298,13 +298,13 @@ def main():
 
     parent_group = None
     if parent_identifier:
-        parent_group = findGroup(gitlab_instance, parent_identifier)
+        parent_group = findGroup(gitlab_instance, None, parent_identifier)
         if not parent_group:
             module.fail_json(msg="Failed create GitLab group: Parent group doesn't exists")
 
-        group_exists = gitlab_group.existsGroup(parent_group.full_path + '/' + group_path)
+        group_exists = gitlab_group.existsGroup(parent_group, group_path)
     else:
-        group_exists = gitlab_group.existsGroup(group_path)
+        group_exists = gitlab_group.existsGroup(None, group_path)
 
     if state == 'absent':
         if group_exists:
