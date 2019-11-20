@@ -272,8 +272,7 @@ class Keypair(object):
             else:
                 return False
 
-        def _parse_pubkey():
-            pubkey_content = _get_pubkey_content()
+        def _parse_pubkey(pubkey_content):
             if pubkey_content:
                 parts = pubkey_content.split(' ', 2)
                 return parts[0], parts[1], '' if len(parts) <= 2 else parts[2]
@@ -281,8 +280,7 @@ class Keypair(object):
 
         def _pubkey_valid(pubkey):
             if pubkey_parts:
-                current_pubkey = ' '.join([pubkey_parts[0], pubkey_parts[1]])
-                return current_pubkey == pubkey
+                return pubkey_parts[:2] == _parse_pubkey(pubkey)[:2]
             return False
 
         def _comment_valid():
@@ -292,7 +290,7 @@ class Keypair(object):
 
         pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
         pubkey = pubkey[1].strip('\n')
-        pubkey_parts = _parse_pubkey()
+        pubkey_parts = _parse_pubkey(_get_pubkey_content())
         if _pubkey_valid(pubkey):
             self.public_key = pubkey
 
