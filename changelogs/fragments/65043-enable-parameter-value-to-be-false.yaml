@@ -1,0 +1,3 @@
+bugfixes:
+  - fix all modules to be able to get parameter with value false.
+  - PR(https://github.com/ansible/ansible/pull/65040)
