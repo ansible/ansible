@@ -30,6 +30,10 @@ Variable names should be letters, numbers, and underscores.  Variables should al
 
 ``foo-port``, ``foo port``, ``foo.port`` and ``12`` are not valid variable names.
 
+`Python keywords <https://docs.python.org/3/reference/lexical_analysis.html#keywords>`_ are not valid variable names and thus should be avoided:
+
+``and``, ``as``, ``assert``, ``async``, ``await``, ``break``, ``class``, ``continue``, ``def``, ``del``, ``elif``, ``else``, ``except``, ``False``, ``finally``, ``for``, ``from``, ``global``, ``if``, ``import``, ``in``, ``is``, ``lambda``, ``None``, ``nonlocal``, ``not``, ``or``, ``pass``, ``raise``, ``return``, ``True``, ``try``, ``while``, ``with``, ``yield``.
+
 YAML also supports dictionaries which map keys to values.  For instance::
 
   foo:
