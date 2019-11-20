@@ -1,0 +1,2 @@
+minor_changes:
+  - rabbitmq_publish - Support for connecting with SSL certificates.
