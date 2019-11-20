@@ -12,7 +12,7 @@ DOCUMENTATION = r'''
 ---
 module: win_domain_object_info
 version_added: '2.10'
-short_description: Retrive info regarding domain objects of all kinds
+short_description: retrieve  info regarding domain objects of all kinds
 description:
    - With the module you can retrieve and output detailed information about all kinds of AD objects.
 options:
@@ -57,7 +57,7 @@ options:
     default: 3
   properties:
     description:
-      - A list of properties to retrive.
+      - A list of properties to retrieve.
     type: list
     elements: str
     default: "*"
@@ -115,7 +115,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 objects:
-    description: List of retrived objects, each formatted to JSON according to the I(jsonDepth) option.
+    description: List of retrieve d objects, each formatted to JSON according to the I(jsonDepth) option.
     returned: always
     type: list
     contains: JSON varies according to object type.
