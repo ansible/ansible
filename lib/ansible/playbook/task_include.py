@@ -42,9 +42,12 @@ class TaskInclude(Task):
     BASE = frozenset(('file', '_raw_params'))  # directly assigned
     OTHER_ARGS = frozenset(('apply',))  # assigned to matching property
     VALID_ARGS = BASE.union(OTHER_ARGS)  # all valid args
-    VALID_INCLUDE_KEYWORDS = frozenset(('action', 'args', 'collections', 'debugger', 'ignore_errors', 'loop', 'loop_control',
-                                        'loop_with', 'name', 'no_log', 'register', 'run_once', 'tags', 'vars',
-                                        'when'))
+    VALID_KEYWORDS = frozenset(('action', 'args', 'collections', 'debugger', 'ignore_errors', 'name', 'no_log',
+                                'run_once', 'tags', 'vars', 'when'))
+    VALID_INCLUDE_KEYWORDS = VALID_KEYWORDS.union(frozenset(('loop', 'loop_control', 'loop_with', 'register',)))
+    VALID_IMPORT_KEYWORDS = VALID_KEYWORDS.union(frozenset(('become', 'check_mode', 'delegate_to', 'delegate_facts',
+                                                            'diff', 'environment', 'ignore_unreachable', 'module_defaults',
+                                                            'remote_user')))
 
     # =================================================================================
     # ATTRIBUTES
@@ -104,6 +107,14 @@ class TaskInclude(Task):
                 else:
                     display.warning("Ignoring invalid attribute: %s" % k)
 
+        if ds['action'] in ('import_tasks'):
+            diff = set(ds.keys()).difference(self.VALID_IMPORT_KEYWORDS)
+            for key in diff:
+                if key in ds and ds[key] is not Sentinel:
+                    if C.INVALID_TASK_ATTRIBUTE_FAILED:
+                        raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, ds['action']), obj=ds)
+                    else:
+                        display.warning("Ignoring invalid attribute: '%s' for %s" % (key, ds['action']))
         return ds
 
     def copy(self, exclude_parent=False, exclude_tasks=False):

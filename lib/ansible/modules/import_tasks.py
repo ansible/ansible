@@ -24,6 +24,10 @@ options:
       - If you need any of those to apply, use M(include_tasks) instead.
 notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
+  - Following are valid Task-level keywords - 'action', 'args', 'become', 'check_mode', 'collections', 'debugger',  'delegate_to',
+    'delegate_facts', 'diff', 'environment', 'ignore_errors', 'ignore_unreachable', 'module_defaults', 'name', 'no_log',
+    'remote_user', 'run_once', 'tags', 'vars', and 'when'.
+
 seealso:
 - module: import_playbook
 - module: import_role

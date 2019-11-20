@@ -1,0 +1,2 @@
+bugfixes:
+- import_tasks - raise an error when invalid params are specified (https://github.com/ansible/ansible/issues/64935).
