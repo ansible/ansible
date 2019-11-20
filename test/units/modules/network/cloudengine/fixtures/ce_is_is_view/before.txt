@@ -1,0 +1,10 @@
+<data>
+    <isiscomm>
+      <isSites>
+        <isSite>
+          <instanceId>100</instanceId>
+          <vpnName>_public_</vpnName>
+        </isSite>
+      </isSites>
+    </isiscomm>
+</data>

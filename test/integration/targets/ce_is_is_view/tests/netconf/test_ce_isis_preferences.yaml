@@ -1,0 +1,87 @@
+---
+- debug:
+    msg: "START ce_is_is_view preferences presented integration tests on connection={{ ansible_connection }}"
+- include_tasks: setup.yaml
+
+- name: present the provided configuration with the exisiting running configuration
+  ce_is_is_view: &present
+    instance_id: 100
+    preference_value: 100
+    route_policy_name: route
+  register: result
+
+- name: Assert the configuration is reflected on host
+  assert:
+    that:
+      - "result['changed'] == true"
+
+- name: Get basic config by ce_netconf.
+  ce_netconf: &get_config
+    rpc: get
+    cfg_xml: "<filter type=\"subtree\">
+               <isiscomm xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                <isSites>
+                  <isSite>
+                    <instanceId>100</instanceId>
+                    <isSiteMTs>
+                      <isSiteMT>
+                        <isPreferences>
+                          <isPreference>
+                            <preferenceValue></preferenceValue>
+                            <routePolicyName></routePolicyName>
+                          </isPreference>
+                        </isPreferences>
+                      </isSiteMT>
+                    </isSiteMTs>
+                  </isSite>
+                </isSites>
+              </isiscomm>
+            </filter>"
+  register: result_xml
+
+
+- name: present the provided configuration with the existing running configuration (IDEMPOTENT)
+  ce_is_is_view: *present
+  register: repeat
+
+- name: Assert that the previous task was idempotent
+  assert:
+    that:
+      - "repeat.changed == false"
+      - "'<instanceId>100</instanceId>' in result_xml.end_state.result"
+      - "'<preferenceValue>100</preferenceValue>' in result_xml.end_state.result"
+      - "'<routePolicyName>route</routePolicyName>' in result_xml.end_state.result"
+
+- name: present the provided configuration with the exisiting running configuration
+  ce_is_is_view: &absent
+    instance_id: 100
+    preference_value: 100
+    route_policy_name: route
+    state: absent
+  register: result
+
+
+- name: Assert the configuration is reflected on host
+  assert:
+    that:
+      - "result['changed'] == true"
+
+- name: present the provided configuration with the existing running configuration (IDEMPOTENT)
+  ce_is_is_view: *absent
+  register: repeat
+
+- name: Get basic config by ce_netconf.
+  ce_netconf: *get_config
+  register: result_xml
+
+- name: Assert that the previous task was idempotent
+  assert:
+    that:
+      - "repeat.changed == false"
+      - "'<instanceId>100</instanceId>' not in result_xml.end_state.result"
+      - "''<preferenceValue>100</preferenceValue>' not in result_xml.end_state.result"
+      - "''<routePolicyName>route</routePolicyName>' not in result_xml.end_state.result"
+     # after present, isis 100 should be deleted
+- include_tasks: cleanup.yaml
+- debug:
+    msg: "END ce_is_is_view Preference resentd integration tests on connection={{ ansible_connection }}"
