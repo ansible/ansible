@@ -313,7 +313,7 @@ class GitLabUser(object):
     @param access_level GitLab access_level to assign
     '''
     def assignUserToGroup(self, user, group_identifier, access_level):
-        group = findGroup(self._gitlab, group_identifier)
+        group = findGroup(self._gitlab, None, group_identifier)
 
         if self._module.check_mode:
             return True
