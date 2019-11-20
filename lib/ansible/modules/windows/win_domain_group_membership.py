@@ -98,7 +98,7 @@ EXAMPLES = r'''
     domain_server: DomainAAA.cloud
     name: GroupinDomainAAA
     members:
-      - "DomainBBB.cloud\\UserInDomainBBB"
+      - DomainBBB.cloud\UserInDomainBBB
     state: Present
 
 '''

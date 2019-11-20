@@ -54,15 +54,12 @@ $members_before = Get-AdGroupMember -Identity $name @extra_args
 $pure_members = [System.Collections.Generic.List`1[String]]@()
 
 foreach ($member in $members) {
-    $extra_member_args = @{}
+    $extra_member_args = $extra_args.Clone()
     if ($member -match "\\"){
-      $extra_member_args.Server = $member.Split("\")[0]
-      if ($null -ne $extra_args.Credential) {
-        $extra_member_args.Credential = $extra_args.Credential
-      }
-      $member = $member.Split("\")[1]
+        $extra_member_args.Server = $member.Split("\")[0]
+        $member = $member.Split("\")[1]
     } else {
-      $extra_member_args = $extra_args
+        $extra_member_args = $extra_args
     }
     $group_member = Get-ADObject -Filter "SamAccountName -eq '$member' -and $ad_object_class_filter" -Properties objectSid, sAMAccountName @extra_member_args
     if (!$group_member) {
@@ -82,11 +79,11 @@ foreach ($member in $members) {
     }
 
     if ($state -in @("present", "pure") -and !$user_in_group) {
-        Add-ADPrincipalGroupMembership -Identity $group_member -MemberOf $name -WhatIf:$check_mode
+        Add-ADPrincipalGroupMembership -Identity $group_member -MemberOf $name -WhatIf:$check_mode @extra_member_args
         $result.added.Add($group_member.SamAccountName)
         $result.changed = $true
     } elseif ($state -eq "absent" -and $user_in_group) {
-        Remove-ADPrincipalGroupMembership -Identity $group_member -MemberOf $name -WhatIf:$check_mode -Confirm:$False
+        Remove-ADPrincipalGroupMembership -Identity $group_member -MemberOf $name -WhatIf:$check_mode -Confirm:$False @extra_member_args
         $result.removed.Add($group_member.SamAccountName)
         $result.changed = $true
     }
