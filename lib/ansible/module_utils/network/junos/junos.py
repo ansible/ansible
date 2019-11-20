@@ -113,6 +113,12 @@ def get_device(module):
     if 'ssh_keyfile' in provider:
         kwargs['ssh_private_key_file'] = provider.get('ssh_keyfile')
 
+    if module.params.get('ssh_config'):
+        kwargs['ssh_config'] = module.params['ssh_config']
+
+    if module.params.get('ssh_private_key_file'):
+        kwargs['ssh_private_key_file'] = module.params['ssh_private_key_file']
+
     kwargs['gather_facts'] = False
 
     try:
