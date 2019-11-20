@@ -158,6 +158,7 @@
       that:
         - alb.changed
         - alb.listeners[0].rules|length == 4
+        - '{{ alb|json_query("listeners[].rules[].conditions[].host_header_config.values[]")|length  == 1 }}'
 
   - name: test replacing the rule that uses the host header condition with multiple host header conditions
     elb_application_lb:
