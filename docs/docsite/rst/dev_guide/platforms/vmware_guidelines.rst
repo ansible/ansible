@@ -59,11 +59,13 @@ Your NFS server must expose the following directory structure:
     $ tree /srv/share/
     /srv/share/
     ├── isos
-    │   ├── base.iso
     │   ├── centos.iso
     │   └── fedora.iso
     └── vms
     2 directories, 3 files
+
+- `fedora.iso`: the latest Fedora Desktop ISO
+- `centos.iso`: the latest CentOS ISO
 
 On a Linux system, you can expose the directory over NFS with the following export file:
 
