@@ -81,7 +81,7 @@ class ActionModule(ActionNetworkModule):
             if any(provider.values()):
                 # for legacy reasons provider value is required for junos_facts(optional) and junos_package
                 # modules as it uses junos_eznc library to connect to remote host
-                if not (module_name == 'junos_facts' or module_name == 'junos_package'):
+                if not (module_name == 'junos_facts' or module_name == 'junos_package' or module_name == 'junos_scp'):
                     display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
                     del self._task.args['provider']
 
