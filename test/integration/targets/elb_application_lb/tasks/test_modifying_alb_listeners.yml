@@ -117,9 +117,6 @@
       that:
         - alb.changed
         - alb.listeners[0].rules|length == 3
-  - name:
-    debug:
-      msg: "{{ alb }}"
 
   - name: add a rule that uses the host header condition to the listener
     elb_application_lb:
@@ -145,14 +142,6 @@
                   Type: forward
       <<: *aws_connection_info
     register: alb
-
-  - name:
-    debug:
-      msg: "{{ alb }}"
-
-  - name:
-    debug:
-      msg: Number of alb rules "{{ alb.listeners[0].rules|length }}"
 
   - assert:
       that:
@@ -191,9 +180,6 @@
         - alb.changed
         - alb.listeners[0].rules|length == 4
         - '{{ alb|json_query("listeners[].rules[].conditions[].host_header_config.values[]")|length  == 2 }}'
-  - name:
-    debug:
-      msg: "{{ alb }}"
 
   - name: remove the rule
     elb_application_lb:
