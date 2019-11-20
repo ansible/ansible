@@ -839,7 +839,7 @@ data_disk_spec = dict(
     managed_disk_type=dict(type='str', choices=['Standard_LRS', 'StandardSSD_LRS', 'UltraSSD_LRS', 'Premium_LRS']),
     managed_disk_id=dict(type='str'),
     storage_account_name=dict(type='str'),
-    storage_container_name=dict(type='str'),
+    storage_container_name=dict(type='str', default='vhds'),
     storage_blob_name=dict(type='str'),
     caching=dict(type='str', choices=['empty', 'Empty', 'read_only', 'ReadOnly', 'read_write', 'ReadWrite']),
     create_option=dict(type='str', choices=['empty', 'attach', 'from_image'], default='empty'),
