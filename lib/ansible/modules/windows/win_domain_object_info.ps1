@@ -17,7 +17,7 @@ $spec = @{
         server = @{ type = "str"; required = $false; aliases = @("domain_server") }
         ldapFilter = @{ type = "str"; required = $false; }
         searchScope = @{ type = "str"; choices = @("Base","OneLevel","Subtree"); required = $false; default = "Subtree" }
-        SearchBase = @{ type = "str"; required = $false; }
+        searchBase = @{ type = "str"; required = $false; }
         username = @{ type = "str"; required = $false; aliases = @("domain_username") }
         password = @{ type = "str"; required = $false; aliases = @("domain_password") }
     }

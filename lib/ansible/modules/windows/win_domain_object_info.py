@@ -67,13 +67,13 @@ options:
       - If this is not set then the user Ansible used to log in with will be
         used instead when using CredSSP or Kerberos with credential delegation.
     type: str
-    aliases: 
+    aliases:
       - domain_username
   password:
     description:
       - The password for I(username).
     type: str
-    aliases: 
+    aliases:
       - domain_password
   server:
     description:
@@ -82,7 +82,7 @@ options:
       - If not specified then the value is based on the domain of the computer
         running PowerShell.
     type: str
-    aliases: 
+    aliases:
       - domain_server
 author:
   - Shachaf Goldstein (@Shachaf92)
@@ -118,5 +118,4 @@ objects:
     description: List of retrieve d objects, each formatted to JSON according to the I(jsonDepth) option.
     returned: always
     type: list
-    contains: JSON varies according to object type.
 '''
