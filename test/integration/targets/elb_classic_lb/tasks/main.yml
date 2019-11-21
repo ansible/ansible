@@ -31,7 +31,7 @@
 
     - name: Create ELB
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
         ec2_access_key: "{{ ec2_access_key }}"
         ec2_secret_key: "{{ ec2_secret_key }}"
@@ -96,7 +96,7 @@
 
     - name: Change AZ's
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
         ec2_access_key: "{{ ec2_access_key }}"
         ec2_secret_key: "{{ ec2_secret_key }}"
@@ -133,7 +133,7 @@
 
     - name: Update AZ's
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
         ec2_access_key: "{{ ec2_access_key }}"
         ec2_secret_key: "{{ ec2_secret_key }}"
@@ -165,7 +165,7 @@
 
     - name: Purge Listeners
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
         ec2_access_key: "{{ ec2_access_key }}"
         ec2_secret_key: "{{ ec2_secret_key }}"
@@ -197,7 +197,7 @@
 
     - name: Add Listeners
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
         ec2_access_key: "{{ ec2_access_key }}"
         ec2_secret_key: "{{ ec2_secret_key }}"
@@ -241,7 +241,7 @@
     # ============================================================
     - name: test with only name
       elb_classic_lb:
-        name="{{ tag_prefix }}"
+        name: "{{ elb_name }}"
       register: result
       ignore_errors: true
 
@@ -255,7 +255,7 @@
     # ============================================================
     - name: test invalid region parameter
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: 'asdf querty 1234'
         state: present
         listeners:
@@ -279,7 +279,7 @@
     # ============================================================
     - name: test valid region parameter
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
         state: present
         zones:
@@ -305,7 +305,7 @@
 
     - name: test invalid ec2_url parameter
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
         state: present
         zones:
@@ -331,7 +331,7 @@
     # ============================================================
     - name: test valid ec2_url parameter
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
         state: present
         zones:
@@ -357,7 +357,7 @@
     # ============================================================
     - name: test credentials from environment
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
         state: present
         zones:
@@ -384,7 +384,7 @@
     # ============================================================
     - name: test credential parameters
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
         state: present
         zones:
@@ -409,7 +409,7 @@
     # ============================================================
     - name: remove the test load balancer completely
       elb_classic_lb:
-        name: "{{ tag_prefix }}"
+        name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
         state: absent
         ec2_access_key: "{{ ec2_access_key }}"
@@ -421,5 +421,5 @@
       assert:
         that:
            - 'result.changed'
-           - 'result.elb.name == "{{tag_prefix}}"'
+           - 'result.elb.name == "{{elb_name}}"'
            - 'result.elb.status == "deleted"'
