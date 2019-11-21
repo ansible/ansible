@@ -5,7 +5,6 @@
   nxos_facts:
     gather_subset:
       - "!hardware"
-    timeout: 30
   register: result
 
 - assert:
