@@ -781,7 +781,10 @@ def main():
             if 'main' not in interface:
                 interface['main'] = 0
             if 'port' in interface and not isinstance(interface['port'], str):
-                module.fail_json(msg="port should be an string on interface '%s'." % interface)
+                try:
+                    interface['port'] = str(interface['port'])
+                except ValueError:
+                    module.fail_json(msg="port should be convertable to string on interface '%s'." % interface)
             if 'port' not in interface:
                 if interface['type'] == 1:
                     interface['port'] = "10050"
