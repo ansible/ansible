@@ -119,7 +119,7 @@ class HttpApi(HttpApiBase):
                     self.get_locked_adom_list()
                 self._connected_faz = status[1]
                 self._host = self._connected_faz["Hostname"]
-            except BaseException:
+            except Exception:
                 pass
         return
 
@@ -152,12 +152,7 @@ class HttpApi(HttpApiBase):
             if self.sid is None and params[0]["url"] != "sys/login/user":
                 # If not connected, send connection request.
                 if not self.connection._connected:
-                    try:
-                        self.connection._connect()
-                    except BaseException as err:
-                        raise FAZBaseException(
-                            msg="An problem happened with the httpapi plugin self-init connection process. "
-                                "Error: " + str(err))
+                    self.connection._connect()
         except IndexError:
             raise FAZBaseException("An attempt was made at communicating with a FAZ with "
                                    "no valid session and an incorrectly formatted request.")
@@ -221,7 +216,7 @@ class HttpApi(HttpApiBase):
         try:
             if self._connected_faz:
                 return self._connected_faz
-        except BaseException:
+        except Exception:
             raise FAZBaseException("Couldn't Retrieve Connected FAZ Stats")
 
     def get_system_status(self):
@@ -261,7 +256,7 @@ class HttpApi(HttpApiBase):
 
     def __str__(self):
         if self.sid is not None and self.connection._url is not None:
-            return "FortiAnalyzer object connected to FortiAnalyzer: " + str(self.connection._url)
+            return "FortiAnalyzer object connected to FortiAnalyzer: " + to_text(self.connection._url)
         return "FortiAnalyzer object with no valid connection to a FortiAnalyzer appliance."
 
     ##################################
@@ -308,7 +303,7 @@ class HttpApi(HttpApiBase):
                 self.uses_workspace = False
         except KeyError:
             self.uses_workspace = False
-        except BaseException:
+        except Exception:
             raise FAZBaseException(msg="Couldn't determine workspace-mode in the plugin")
         try:
             if resp_obj["adom-status"] in [1, "enable"]:
@@ -317,7 +312,7 @@ class HttpApi(HttpApiBase):
                 self.uses_adoms = False
         except KeyError:
             self.uses_adoms = False
-        except BaseException:
+        except Exception:
             raise FAZBaseException(msg="Couldn't determine adom-status in the plugin")
 
     def run_unlock(self):
@@ -393,12 +388,12 @@ class HttpApi(HttpApiBase):
         resp_obj = self.send_request(FAZMethods.GET, data)
         code = resp_obj[0]
         if code != 0:
-            self._module.fail_json(msg=("An error occurred trying to get the ADOM Lock Info. Error: " + str(resp_obj)))
+            self._module.fail_json(msg=("An error occurred trying to get the ADOM Lock Info. Error: " + to_text(resp_obj)))
         elif code == 0:
             try:
                 if resp_obj[1]["status"]["message"] == "OK":
                     self._lock_info = None
-            except BaseException:
+            except Exception:
                 self._lock_info = resp_obj[1]
         return resp_obj
 
@@ -413,13 +408,13 @@ class HttpApi(HttpApiBase):
             resp_obj = self.send_request(FAZMethods.GET, data)
             code = resp_obj[0]
             if code != 0:
-                self._module.fail_json(msg=("An error occurred trying to get the ADOM Info. Error: " + str(resp_obj)))
+                self._module.fail_json(msg=("An error occurred trying to get the ADOM Info. Error: " + to_text(resp_obj)))
             elif code == 0:
                 num_of_adoms = len(resp_obj[1])
                 append_list = ['root', ]
                 for adom in resp_obj[1]:
                     if adom["tab_status"] != "":
-                        append_list.append(str(adom["name"]))
+                        append_list.append(to_text(adom["name"]))
                 self._adom_list = append_list
             return resp_obj
 
@@ -435,21 +430,21 @@ class HttpApi(HttpApiBase):
                 try:
                     if adom_lock_info[1]["status"]["message"] == "OK":
                         continue
-                except BaseException:
+                except Exception:
                     pass
                 try:
                     if adom_lock_info[1][0]["lock_user"]:
-                        locked_list.append(str(adom))
+                        locked_list.append(to_text(adom))
                     if adom_lock_info[1][0]["lock_user"] == self._logged_in_user:
-                        locked_by_user_list.append({"adom": str(adom), "user": str(adom_lock_info[1][0]["lock_user"])})
-                except BaseException as err:
+                        locked_by_user_list.append({"adom": to_text(adom), "user": to_text(adom_lock_info[1][0]["lock_user"])})
+                except Exception as err:
                     raise FAZBaseException(err)
             self._locked_adom_list = locked_list
             self._locked_adoms_by_user = locked_by_user_list
 
-        except BaseException as err:
+        except Exception as err:
             raise FAZBaseException(msg=("An error occurred while trying to get the locked adom list. Error: "
-                                        + str(err)))
+                                        + to_text(err)))
 
     ################################
     # END DATABASE LOCK CONTEXT CODE
