@@ -446,6 +446,6 @@ class HttpApi(HttpApiBase):
             raise FAZBaseException(msg=("An error occurred while trying to get the locked adom list. Error: "
                                         + to_text(err)))
 
-    ################################
+    #################################
     # END DATABASE LOCK CONTEXT CODE
-    ################################
+    #################################
