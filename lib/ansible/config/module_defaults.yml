@@ -489,6 +489,8 @@ groupings:
   - aws
   lightsail:
   - aws
+  lightsail_keypair:
+  - aws
   rds:
   - aws
   rds_instance:
