@@ -1497,8 +1497,7 @@ class PyVmomiHelper(PyVmomi):
                 self.module.exit_json(msg="customvalues items required both 'key' and 'value fields.")
 
             # If kv is not kv fetched from facts, change it
-            valuetype = type(kv['value'])
-            if valuetype is bool or valuetype is int:
+            if isinstance(kv['value'], (bool, int)):
                 specifiedvalue = str(kv['value']).upper()
                 comparisonvalue = facts['customvalues'].get(kv['key'], '').upper()
             else:
