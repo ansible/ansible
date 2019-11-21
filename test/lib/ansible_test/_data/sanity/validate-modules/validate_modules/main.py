@@ -1176,6 +1176,7 @@ class ModuleValidator(Validator):
         provider_args = set()
         args_from_argspec = set()
         deprecated_args_from_argspec = set()
+        doc_options = docs.get('options', {})
         for arg, data in spec.items():
             if not isinstance(data, dict):
                 msg = "Argument '%s' in argument_spec" % arg
@@ -1188,12 +1189,33 @@ class ModuleValidator(Validator):
                     msg=msg,
                 )
                 continue
+            aliases = data.get('aliases', [])
+            if arg in aliases:
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " is specified as its own alias"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='parameter-alias-self',
+                    msg=msg
+                )
+            if len(aliases) > len(set(aliases)):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " has at least one alias specified multiple times in aliases"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='parameter-alias-repeated',
+                    msg=msg
+                )
             if not data.get('removed_in_version', None):
                 args_from_argspec.add(arg)
-                args_from_argspec.update(data.get('aliases', []))
+                args_from_argspec.update(aliases)
             else:
                 deprecated_args_from_argspec.add(arg)
-                deprecated_args_from_argspec.update(data.get('aliases', []))
+                deprecated_args_from_argspec.update(aliases)
             if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
                 if data.get('options') is not None and not isinstance(data.get('options'), Mapping):
                     self.reporter.error(
@@ -1264,9 +1286,31 @@ class ModuleValidator(Validator):
             elif data.get('default') is None and _type == 'bool' and 'options' not in data:
                 arg_default = False
 
+            doc_options_args = []
+            for alias in sorted(set([arg] + list(aliases))):
+                if alias in doc_options:
+                    doc_options_args.append(alias)
+            if len(doc_options_args) == 0:
+                # Undocumented arguments will be handled later (search for undocumented-parameter)
+                doc_options_arg = {}
+            else:
+                doc_options_arg = doc_options[doc_options_args[0]]
+                if len(doc_options_args) > 1:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " with aliases %s is documented multiple times, namely as %s" % (
+                        ", ".join([("'%s'" % alias) for alias in aliases]),
+                        ", ".join([("'%s'" % alias) for alias in doc_options_args])
+                    )
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='parameter-documented-multiple-times',
+                        msg=msg
+                    )
+
             try:
                 doc_default = None
-                doc_options_arg = (docs.get('options', {}) or {}).get(arg, {})
                 if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
                     with CaptureStd():
                         doc_default = _type_checker(doc_options_arg['default'])
@@ -1295,7 +1339,7 @@ class ModuleValidator(Validator):
                     msg=msg
                 )
 
-            doc_type = docs.get('options', {}).get(arg, {}).get('type')
+            doc_type = doc_options_arg.get('type')
             if 'type' in data and data['type'] is not None:
                 if doc_type is None:
                     if not arg.startswith('_'):  # hidden parameter, for example _raw_params
@@ -1342,7 +1386,7 @@ class ModuleValidator(Validator):
 
             doc_choices = []
             try:
-                for choice in docs.get('options', {}).get(arg, {}).get('choices', []):
+                for choice in doc_options_arg.get('choices', []):
                     try:
                         with CaptureStd():
                             doc_choices.append(_type_checker(choice))
@@ -1392,7 +1436,7 @@ class ModuleValidator(Validator):
                 )
 
             spec_suboptions = data.get('options')
-            doc_suboptions = docs.get('options', {}).get(arg, {}).get('suboptions', {})
+            doc_suboptions = doc_options_arg.get('suboptions', {})
             if spec_suboptions:
                 if not doc_suboptions:
                     msg = "Argument '%s' in argument_spec" % arg
@@ -1425,15 +1469,18 @@ class ModuleValidator(Validator):
                 file_common_arguments.update(data.get('aliases', []))
 
             args_from_docs = set()
-            for arg, data in docs.get('options', {}).items():
+            for arg, data in doc_options.items():
                 args_from_docs.add(arg)
                 args_from_docs.update(data.get('aliases', []))
+
+            # add_file_common_args is only of interest on top-level
+            add_file_common_args = kwargs.get('add_file_common_args', False) and not context
 
             args_missing_from_docs = args_from_argspec.difference(args_from_docs)
             docs_missing_from_args = args_from_docs.difference(args_from_argspec | deprecated_args_from_argspec)
             for arg in args_missing_from_docs:
                 # args_from_argspec contains undocumented argument
-                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                if add_file_common_args and arg in file_common_arguments:
                     # add_file_common_args is handled in AnsibleModule, and not exposed earlier
                     continue
                 if arg in provider_args:
@@ -1451,7 +1498,7 @@ class ModuleValidator(Validator):
                 )
             for arg in docs_missing_from_args:
                 # args_from_docs contains argument not in the argument_spec
-                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                if add_file_common_args and arg in file_common_arguments:
                     # add_file_common_args is handled in AnsibleModule, and not exposed earlier
                     continue
                 msg = "Argument '%s'" % arg
