@@ -30,6 +30,12 @@ options:
     description:
       - Specify if the QEMU Guest Agent should be enabled/disabled.
     type: bool
+  agent_info:
+    description:
+      - Specify which VM related data should be fetched from guest.
+      - Can be used only with state C(current) and returns data only when QEMU Guest Agent is enabled and installed on guest.
+    type: list
+    choices: [ "fsinfo", "hostname", "memory_block_info", "memory_blocks", "osinfo", "time", "timezone", "users", "vcpus", "info", "network_interfaces" ]
   args:
     description:
       - Pass arbitrary arguments to kvm.
@@ -533,6 +539,27 @@ EXAMPLES = '''
     name        : spynal
     node        : sabrewulf
     revert      : 'template,cpulimit'
+
+# Get VM agent info
+- proxmox_kvm:
+    api_user    : root@pam
+    api_password: secret
+    api_host    : helldorado
+    name        : spynal
+    node        : sabrewulf
+    state       : current
+    agent_info:
+      - fsinfo
+      - hostname
+      - memory_block_info
+      - memory_blocks
+      - osinfo
+      - time
+      - timezone
+      - users
+      - vcpus
+      - info
+      - network_interfaces
 '''
 
 RETURN = '''
@@ -573,6 +600,53 @@ status:
       "msg": "VM kropta with vmid = 110 is running",
       "status": "running"
     }'
+agent_info:
+    description:
+      - Dictionary with agent info data from specified choices.
+      - Returned only when C(state=current) and C(agent_info) choices are specified.
+    returned: success
+    type: dict
+    sample: '{
+      "osinfo": {
+        "id": "ubuntu",
+        "kernel-release": "4.15.0-65-generic",
+        "kernel-version": "#74-Ubuntu SMP Tue Sep 17 17:06:04 UTC 2019",
+        "machine": "x86_64",
+        "name": "Ubuntu",
+        "pretty-name": "Ubuntu 18.04.3 LTS",
+        "version": "18.04.3 LTS (Bionic Beaver)",
+        "version-id": "18.04"
+      },
+      "time": 1574248929276368000,
+      "timezone": {
+        "offset": 3600,
+        "zone": "CET"
+      },
+      "vcpus": [
+        {
+          "can-offline": false,
+          "logical-id": 0,
+          "online": true
+        },
+        {
+          "can-offline": true,
+          "logical-id": 1,
+          "online": true
+        }
+      ]
+    }'
+agent_info_warnings:
+    description:
+      - List of errors which occurred during the execution of getting individual agent info data.
+      - Returned only when C(state=current) and C(agent_info) choices are specified.
+    returned: success
+    type: list
+    sample: '[
+      "Agent info not available for 'osinfo': Server returned no data.",
+      "Agent info not available for 'time': Server returned no data.",
+      "Agent info not available for 'timezone': Server returned no data.",
+      "Agent info not available for 'vcpus': Server returned no data."
+    ]'
 '''
 
 import os
@@ -592,6 +666,18 @@ from ansible.module_utils._text import to_native
 
 
 VZ_TYPE = 'qemu'
+AGENT_INFO_API_MAP = {
+  'fsinfo': 'get-fsinfo',
+  'hostname': 'get-host-name',
+  'memory_block_info': 'get-memory-block-info',
+  'memory_blocks': 'get-memory-blocks',
+  'osinfo': 'get-osinfo',
+  'time': 'get-time',
+  'timezone': 'get-timezone',
+  'users': 'get-users',
+  'vcpus': 'get-vcpus',
+  'network_interfaces': 'network-get-interfaces'
+}
 
 
 def get_nextvmid(module, proxmox):
@@ -653,6 +739,32 @@ def get_vminfo(module, proxmox, node, vmid, **kwargs):
     results['mac'] = mac
     results['devices'] = devices
     results['vmid'] = int(vmid)
+
+  
+def get_vm_agent_info(proxmox, node, vmid, agent_info):
+  info = {}
+  warn = []
+  proxmox_vm_agent = getattr(proxmox.nodes(node), VZ_TYPE)(vmid).agent
+  for info_key in agent_info:
+    try:
+      info[info_key] = proxmox_vm_agent.get(get_agent_info_api_endpoint(info_key))['result']
+    except Exception as e:
+      if isinstance(e.args, tuple) and len(e.args) > 0:
+        warn.append('Agent info not available for \'%s\': %s' % (info_key, get_agent_info_api_error_message(e.args)))
+      else:
+        warn.append('Not able to get agent info for \'%s\', unkown error.' % info_key)
+  return info, warn
+
+
+def get_agent_info_api_endpoint(info_key):
+  return AGENT_INFO_API_MAP[info_key] if info_key in AGENT_INFO_API_MAP else info_key
+
+
+def get_agent_info_api_error_message(error_tuple):
+  error, = error_tuple
+  if '500' in error:
+    return 'Server returned no data.'
+  return 'Unkown error - is instance running?'
 
 
 def settings(module, proxmox, vmid, node, name, timeout, **kwargs):
@@ -783,9 +895,22 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
     return False
 
 
+<<<<<<< HEAD
 def proxmox_version(proxmox):
     apireturn = proxmox.version.get()
     return LooseVersion(apireturn['version'])
+=======
+def parse_pve_version(pve_str_version):
+  version_dict = {
+    'major': 0,
+    'minor': 0,
+    'revision': 0
+  }
+  if '-' in pve_str_version:
+    pve_str_version, version_dict['revision'] = pve_str_version.split('-')
+  version_dict['major'], version_dict['minor'] = pve_str_version.split('.')
+  return { key: int(version_dict[key]) for key in version_dict }
+>>>>>>> Fix for getting PVE major version and agent info implementation
 
 
 def main():
@@ -793,6 +918,7 @@ def main():
         argument_spec=dict(
             acpi=dict(type='bool', default='yes'),
             agent=dict(type='bool'),
+            agent_info=dict(type='list', choices=['fsinfo', 'hostname', 'memory_block_info', 'memory_blocks', 'osinfo', 'time', 'timezone', 'users', 'vcpus', 'info', 'network_interfaces'], default=None),
             args=dict(type='str', default=None),
             api_host=dict(required=True),
             api_user=dict(required=True),
@@ -903,7 +1029,11 @@ def main():
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
         global VZ_TYPE
         global PVE_MAJOR_VERSION
+<<<<<<< HEAD
         PVE_MAJOR_VERSION = 3 if proxmox_version(proxmox) < LooseVersion('4.0') else 4
+=======
+        PVE_MAJOR_VERSION = parse_pve_version(proxmox.version.get()['version'])['major']
+>>>>>>> Fix for getting PVE major version and agent info implementation
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
@@ -1107,12 +1237,15 @@ def main():
 
     elif state == 'current':
         status = {}
+        agent_info = module.params['agent_info']
         try:
             vm = get_vm(proxmox, vmid)
             if not vm:
                 module.fail_json(msg='VM with vmid = %s does not exist in cluster' % vmid)
             current = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status']
             status['status'] = current
+            if agent_info is not None:
+              status['agent_info'], status['agent_info_warnings'] = get_vm_agent_info(proxmox, node, vmid, agent_info)
             if status:
                 module.exit_json(changed=False, msg="VM %s with vmid = %s is %s" % (name, vmid, current), **status)
         except Exception as e:
