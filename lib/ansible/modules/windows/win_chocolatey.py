@@ -98,7 +98,7 @@ options:
     - Should install arguments be used exclusively without appending
       to current package passed arguments.
     type: bool
-    version_added: '2.8'
+    version_added: '2.10'
   package_params:
     description:
     - Parameters to pass to the package.
