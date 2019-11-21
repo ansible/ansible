@@ -38,7 +38,7 @@ description:
         C(zbx_trigger_draw_style) contains indicator draw style. Possible values are the same as for C(zbx_draw_style)."
 requirements:
     - "python >= 2.6"
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
     - pydotplus
     - webcolors
     - Pillow

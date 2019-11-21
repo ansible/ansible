@@ -23,7 +23,7 @@ version_added: '2.10'
 author:
     - "Ruben Tsirunyan (@rubentsirunyan)"
 requirements:
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
 options:
     name:
         type: 'str'
