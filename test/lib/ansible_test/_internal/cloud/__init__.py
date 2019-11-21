@@ -423,7 +423,11 @@ class CloudProvider(CloudBase):
         :rtype: str
         """
         if is_shippable():
-            prefix = 'shippable-%s-%s' % (
+            prefix = 'ansible-test-shippable-%s-%s' % (
+                os.environ['SHIPPABLE_BUILD_NUMBER'],
+                os.environ['SHIPPABLE_JOB_NUMBER'],
+            )
+            short_prefix = 'ansible-test-%s-%s' % (
                 os.environ['SHIPPABLE_BUILD_NUMBER'],
                 os.environ['SHIPPABLE_JOB_NUMBER'],
             )
@@ -431,15 +435,14 @@ class CloudProvider(CloudBase):
                 os.environ['SHIPPABLE_BUILD_NUMBER'],
                 os.environ['SHIPPABLE_JOB_NUMBER'],
             )
-            return prefix, prefix, unique
+        else:
+            unique = random.randint(10000000, 99999999)
+            node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0]).lower()
 
-        resource_random = random.randint(10000000, 99999999)
-        node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0]).lower()
+            prefix = 'ansible-test-%s-%d' % (node, unique)
+            short_prefix = 'ansible-test-%d' % (unique)
 
-        prefix = 'ansible-test-%s-%d' % (node, resource_random)
-        short_prefix = 'ansible-test-%d' % (resource_random)
-
-        return prefix, short_prefix, resource_random
+        return prefix, short_prefix, unique
 
 
 class CloudEnvironment(CloudBase):
