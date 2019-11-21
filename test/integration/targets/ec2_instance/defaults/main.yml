@@ -12,3 +12,6 @@ subnet_a_cidr: '10.{{ 256 | random(seed=vpc_seed) }}.32.0/24'
 subnet_a_startswith: '10.{{ 256 | random(seed=vpc_seed) }}.32.'
 subnet_b_cidr: '10.{{ 256 | random(seed=vpc_seed) }}.33.0/24'
 subnet_b_startswith: '10.{{ 256 | random(seed=vpc_seed) }}.33.'
+
+role_1_name: '{{ resource_shortprefix }}-ec2-instance-1'
+role_2_name: '{{ resource_shortprefix }}-ec2-instance-2'

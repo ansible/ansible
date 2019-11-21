@@ -1,7 +1,7 @@
 - block:
     - name: Create IAM role for test
       iam_role:
-        name: "ansible-test-sts-{{ resource_prefix }}-test-policy"
+        name: "{{ role_1_name }}"
         assume_role_policy_document: "{{ lookup('file','assume-role-policy.json') }}"
         state: present
         create_instance_profile: yes
@@ -11,7 +11,7 @@
 
     - name: Create second IAM role for test
       iam_role:
-        name: "ansible-test-sts-{{ resource_prefix }}-test-policy-2"
+        name: "{{ role_2_name }}"
         assume_role_policy_document: "{{ lookup('file','assume-role-policy.json') }}"
         state: present
         create_instance_profile: yes
@@ -29,7 +29,7 @@
         image_id: "{{ ec2_ami_image }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: "{{ ec2_instance_type }}"
-        instance_role: "ansible-test-sts-{{ resource_prefix }}-test-policy"
+        instance_role: "{{ role_1_name }}"
       register: instance_with_role
 
     - assert:
@@ -108,8 +108,8 @@
         managed_policy:
         - AmazonEC2ContainerServiceRole
       loop:
-        - "ansible-test-sts-{{ resource_prefix }}-test-policy"
-        - "ansible-test-sts-{{ resource_prefix }}-test-policy-2"
+        - "{{ role_1_name }}"
+        - "{{ role_2_name }}"
       register: removed
       until: removed is not failed
       ignore_errors: yes
