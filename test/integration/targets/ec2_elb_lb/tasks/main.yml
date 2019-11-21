@@ -24,7 +24,13 @@
 # test credentials from environment
 # test credential parameters
 
-- block:
+- module_defaults:
+    group/aws:
+      region: "{{ ec2_region }}"
+      ec2_access_key: "{{ ec2_access_key }}"
+      ec2_secret_key: "{{ ec2_secret_key }}"
+      security_token: "{{ security_token | default }}"
+  block:
 
     # ============================================================
     # create test elb with listeners, certificate, and health check
@@ -32,10 +38,6 @@
     - name: Create ELB
       ec2_elb_lb:
         name: "{{ elb_name }}"
-        region: "{{ ec2_region }}"
-        ec2_access_key: "{{ ec2_access_key }}"
-        ec2_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
         state: present
         zones:
           - "{{ ec2_region }}a"
@@ -97,10 +99,6 @@
     - name: Change AZ's
       ec2_elb_lb:
         name: "{{ elb_name }}"
-        region: "{{ ec2_region }}"
-        ec2_access_key: "{{ ec2_access_key }}"
-        ec2_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
         state: present
         zones:
           - "{{ ec2_region }}c"
@@ -134,10 +132,6 @@
     - name: Update AZ's
       ec2_elb_lb:
         name: "{{ elb_name }}"
-        region: "{{ ec2_region }}"
-        ec2_access_key: "{{ ec2_access_key }}"
-        ec2_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
         state: present
         zones:
           - "{{ ec2_region }}a"
@@ -166,10 +160,6 @@
     - name: Purge Listeners
       ec2_elb_lb:
         name: "{{ elb_name }}"
-        region: "{{ ec2_region }}"
-        ec2_access_key: "{{ ec2_access_key }}"
-        ec2_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
         state: present
         zones:
           - "{{ ec2_region }}a"
@@ -198,10 +188,6 @@
     - name: Add Listeners
       ec2_elb_lb:
         name: "{{ elb_name }}"
-        region: "{{ ec2_region }}"
-        ec2_access_key: "{{ ec2_access_key }}"
-        ec2_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
         state: present
         zones:
           - "{{ ec2_region }}a"
@@ -226,6 +212,7 @@
     # ============================================================
 
     - name: test with no parameters
+      module_defaults: { group/aws: {} }
       ec2_elb_lb:
       register: result
       ignore_errors: true
@@ -240,6 +227,7 @@
 
     # ============================================================
     - name: test with only name
+      module_defaults: { group/aws: {} }
       ec2_elb_lb:
         name: "{{ elb_name }}"
       register: result
@@ -254,6 +242,7 @@
 
     # ============================================================
     - name: test invalid region parameter
+      module_defaults: { group/aws: {} }
       ec2_elb_lb:
         name: "{{ elb_name }}"
         region: 'asdf querty 1234'
@@ -278,6 +267,7 @@
 
     # ============================================================
     - name: test valid region parameter
+      module_defaults: { group/aws: {} }
       ec2_elb_lb:
         name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
@@ -304,6 +294,7 @@
     # ============================================================
 
     - name: test invalid ec2_url parameter
+      module_defaults: { group/aws: {} }
       ec2_elb_lb:
         name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
@@ -330,6 +321,7 @@
 
     # ============================================================
     - name: test valid ec2_url parameter
+      module_defaults: { group/aws: {} }
       ec2_elb_lb:
         name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
@@ -356,6 +348,7 @@
 
     # ============================================================
     - name: test credentials from environment
+      module_defaults: { group/aws: {} }
       ec2_elb_lb:
         name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
@@ -383,6 +376,7 @@
 
     # ============================================================
     - name: test credential parameters
+      module_defaults: { group/aws: {} }
       ec2_elb_lb:
         name: "{{ elb_name }}"
         region: "{{ ec2_region }}"
@@ -410,11 +404,7 @@
     - name: remove the test load balancer completely
       ec2_elb_lb:
         name: "{{ elb_name }}"
-        region: "{{ ec2_region }}"
         state: absent
-        ec2_access_key: "{{ ec2_access_key }}"
-        ec2_secret_key: "{{ ec2_secret_key }}"
-        security_token: "{{ security_token }}"
       register: result
 
     - name: assert the load balancer was removed
