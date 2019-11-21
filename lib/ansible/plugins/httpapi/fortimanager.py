@@ -30,7 +30,7 @@ httpapi : fortimanager
 short_description: HttpApi Plugin for Fortinet FortiManager Appliance or VM.
 description:
   - This HttpApi plugin provides methods to connect to Fortinet FortiManager Appliance or VM via JSON RPC API.
-version_added: "2.9"
+version_added: "2.8"
 """
 
 import json
@@ -151,18 +151,13 @@ class HttpApi(HttpApiBase):
             if self.sid is None and params[0]["url"] != "sys/login/user":
                 # If not connected, send connection request.
                 if not self.connection._connected:
-                    try:
-                        self.connection._connect()
-                    except BaseException as err:
-                        raise FMGBaseException(
-                            msg="An problem happened with the httpapi plugin self-init connection process. "
-                                "Error: " + str(err))
+                    self.connection._connect()
         except IndexError:
             raise FMGBaseException("An attempt was made at communicating with a FMG with "
                                    "no valid session and an incorrectly formatted request.")
         except Exception as err:
             raise FMGBaseException("An attempt was made at communicating with a FMG with "
-                                   "no valid session and an unexpected error was discovered. \n Error: " + str(err))
+                                   "no valid session and an unexpected error was discovered. \n Error: " + to_text(err))
 
         self._update_request_id()
         json_request = {
@@ -220,7 +215,7 @@ class HttpApi(HttpApiBase):
         try:
             if self._connected_fmgr:
                 return self._connected_fmgr
-        except BaseException:
+        except Exception:
             raise FMGBaseException("Couldn't Retrieve Connected FMGR Stats")
 
     def get_system_status(self):
@@ -260,7 +255,7 @@ class HttpApi(HttpApiBase):
 
     def __str__(self):
         if self.sid is not None and self.connection._url is not None:
-            return "FortiManager object connected to FortiManager: " + str(self.connection._url)
+            return "FortiManager object connected to FortiManager: " + to_text(self.connection._url)
         return "FortiManager object with no valid connection to a FortiManager appliance."
 
     ##################################
@@ -388,12 +383,13 @@ class HttpApi(HttpApiBase):
         resp_obj = self.send_request(FMGRMethods.GET, data)
         code = resp_obj[0]
         if code != 0:
-            self._module.fail_json(msg=("An error occurred trying to get the ADOM Lock Info. Error: " + str(resp_obj)))
+            self._module.fail_json(msg=("An error occurred trying to get the ADOM Lock Info. "
+                                        "Error: " + to_text(resp_obj)))
         elif code == 0:
             try:
                 if resp_obj[1]["status"]["message"] == "OK":
                     self._lock_info = None
-            except BaseException:
+            except Exception:
                 self._lock_info = resp_obj[1]
         return resp_obj
 
@@ -408,13 +404,14 @@ class HttpApi(HttpApiBase):
             resp_obj = self.send_request(FMGRMethods.GET, data)
             code = resp_obj[0]
             if code != 0:
-                self._module.fail_json(msg=("An error occurred trying to get the ADOM Info. Error: " + str(resp_obj)))
+                self._module.fail_json(msg=("An error occurred trying to get the ADOM Info. "
+                                            "Error: " + to_text(resp_obj)))
             elif code == 0:
                 num_of_adoms = len(resp_obj[1])
                 append_list = ['root', ]
                 for adom in resp_obj[1]:
                     if adom["tab_status"] != "":
-                        append_list.append(str(adom["name"]))
+                        append_list.append(to_text(adom["name"]))
                 self._adom_list = append_list
             return resp_obj
 
@@ -430,21 +427,22 @@ class HttpApi(HttpApiBase):
                 try:
                     if adom_lock_info[1]["status"]["message"] == "OK":
                         continue
-                except BaseException:
+                except IndexError as err:
                     pass
                 try:
                     if adom_lock_info[1][0]["lock_user"]:
-                        locked_list.append(str(adom))
+                        locked_list.append(to_text(adom))
                     if adom_lock_info[1][0]["lock_user"] == self._logged_in_user:
-                        locked_by_user_list.append({"adom": str(adom), "user": str(adom_lock_info[1][0]["lock_user"])})
-                except BaseException as err:
+                        locked_by_user_list.append({"adom": to_text(adom),
+                                                    "user": to_text(adom_lock_info[1][0]["lock_user"])})
+                except Exception as err:
                     raise FMGBaseException(err)
             self._locked_adom_list = locked_list
             self._locked_adoms_by_user = locked_by_user_list
 
-        except BaseException as err:
+        except Exception as err:
             raise FMGBaseException(msg=("An error occurred while trying to get the locked adom list. Error: "
-                                        + str(err)))
+                                        + to_text(err)))
 
     ################################
     # END DATABASE LOCK CONTEXT CODE
