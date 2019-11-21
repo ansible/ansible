@@ -74,7 +74,7 @@ class IBMSVCRestApi(object):
 
         # Make sure we can connect via the RestApi
         self.token = self._svc_authorize()
-        self.debug("_connect token=%s", self.token)
+        self.debug("_connect by using token")
         if not self.token:
             self.module.fail_json(msg='Failed to obtain access token')
 
