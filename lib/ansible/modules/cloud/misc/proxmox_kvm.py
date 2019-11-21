@@ -36,7 +36,7 @@ options:
       - Can be used only with state C(current) and returns data only when QEMU Guest Agent is enabled and installed on guest.
     type: list
     choices: [ "fsinfo", "hostname", "memory_block_info", "memory_blocks", "osinfo", "time", "timezone", "users", "vcpus", "info", "network_interfaces" ]
-    version_added: 2.10
+    version_added: "2.10"
   args:
     description:
       - Pass arbitrary arguments to kvm.
