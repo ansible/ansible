@@ -196,6 +196,7 @@ class TestInventoryPlugins(unittest.TestCase):
 
     def _test_default_groups(self, inventory_content):
         inventory = self._get_inventory(inventory_content)
+        inventory.reconcile_inventory()
 
         self.assertIn('all', inventory.groups)
         self.assertIn('ungrouped', inventory.groups)

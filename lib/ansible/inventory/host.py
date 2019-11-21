@@ -90,16 +90,16 @@ class Host:
         self.vars = {}
         self.groups = []
         self._uuid = None
+        self.implicit = False
 
         self.name = name
         self.address = name
 
         if port:
-            self.set_variable('ansible_port', int(port))
+            self.set_variable('ansible_port', int(port), cache_view=False)
 
         if gen_uuid:
             self._uuid = get_unique_id()
-        self.implicit = False
 
         self._serialized_view = self.serialize()
 
@@ -144,12 +144,13 @@ class Host:
                         self.remove_group(oldg)
             self._serialized_view = self.serialize()
 
-    def set_variable(self, key, value):
+    def set_variable(self, key, value, cache_view=True):
         if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
             self.vars[key] = combine_vars(self.vars[key], value)
         else:
             self.vars[key] = value
-        self._serialized_view = self.serialize()
+        if cache_view:
+            self._serialized_view = self.serialize()
 
     def get_groups(self):
         return self.groups

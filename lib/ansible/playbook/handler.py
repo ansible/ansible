@@ -46,12 +46,13 @@ class Handler(Task):
 
     def notify_host(self, host):
         if not self.is_host_notified(host):
-            self.notified_hosts.append(host)
+            self.notified_hosts.append(host.name)
             return True
         return False
 
     def is_host_notified(self, host):
-        return host in self.notified_hosts
+        print(self.notified_hosts)
+        return host.name in self.notified_hosts
 
     def serialize(self):
         result = super(Handler, self).serialize()

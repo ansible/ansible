@@ -554,18 +554,15 @@ class StrategyBase:
                 if iterator.is_failed(original_host) and state and state.run_state == iterator.ITERATING_COMPLETE:
                     self._tqm._failed_hosts[original_host.name] = True
 
-                # FIXME: we don't have the original task here anymore,
-                #        so we'll have to find it based on the current
-                #        state in the iterator or the queue/debug cache
                 if state and iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE:
                     self._tqm._stats.increment('rescued', original_host.name)
-                #    self._variable_manager.set_nonpersistent_facts(
-                #        original_host,
-                #        dict(
-                #            ansible_failed_task=original_task.serialize(),
-                #            ansible_failed_result=task_result._result,
-                #        ),
-                #    )
+                    self._variable_manager.set_nonpersistent_facts(
+                        original_host,
+                        dict(
+                            ansible_failed_task=original_task.serialize(),
+                            ansible_failed_result=host_stats['original_result'],
+                        ),
+                    )
 
             elif host_status['status_type'] == 'skipped':
                 self._tqm._stats.increment("skipped", host_status["host_name"])
@@ -574,6 +571,7 @@ class StrategyBase:
                 if host_status['status_type'] == 'unreachable':
                     iterator.mark_host_failed(self._inventory.get_host(host_status['host_name']))
                     iterator._play._removed_hosts.append(original_host.name)
+                    self._tqm._unreachable_hosts[host_status["host_name"]] = True
                 else:
                     # This used to increment 'skipped', but being inline with
                     # what ignore errors does seems to be more consistent?

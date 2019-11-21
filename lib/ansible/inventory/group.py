@@ -94,7 +94,6 @@ class Group:
         for parent in self.parent_groups:
             parent_groups.append(parent.serialize())
 
-        self._hosts = None
         if exclude_hosts:
             hosts = []
         else:
