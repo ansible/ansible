@@ -133,7 +133,7 @@ class ActionModule(ActionBase):
 
         display.vvv('using connection plugin %s (was local)' % play_context.connection, play_context.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent',
-                                                                   play_context, sys.stdin)
+                                                                   play_context, sys.stdin, task_uuid=self._task._uuid)
 
         connection.set_options(direct={'persistent_command_timeout': play_context.timeout})
 
