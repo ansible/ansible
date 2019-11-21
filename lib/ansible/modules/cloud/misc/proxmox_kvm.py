@@ -36,6 +36,7 @@ options:
       - Can be used only with state C(current) and returns data only when QEMU Guest Agent is enabled and installed on guest.
     type: list
     choices: [ "fsinfo", "hostname", "memory_block_info", "memory_blocks", "osinfo", "time", "timezone", "users", "vcpus", "info", "network_interfaces" ]
+    version_added: 2.10
   args:
     description:
       - Pass arbitrary arguments to kvm.
@@ -895,22 +896,9 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
     return False
 
 
-<<<<<<< HEAD
 def proxmox_version(proxmox):
     apireturn = proxmox.version.get()
     return LooseVersion(apireturn['version'])
-=======
-def parse_pve_version(pve_str_version):
-  version_dict = {
-    'major': 0,
-    'minor': 0,
-    'revision': 0
-  }
-  if '-' in pve_str_version:
-    pve_str_version, version_dict['revision'] = pve_str_version.split('-')
-  version_dict['major'], version_dict['minor'] = pve_str_version.split('.')
-  return { key: int(version_dict[key]) for key in version_dict }
->>>>>>> Fix for getting PVE major version and agent info implementation
 
 
 def main():
@@ -1029,11 +1017,7 @@ def main():
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
         global VZ_TYPE
         global PVE_MAJOR_VERSION
-<<<<<<< HEAD
-        PVE_MAJOR_VERSION = 3 if proxmox_version(proxmox) < LooseVersion('4.0') else 4
-=======
-        PVE_MAJOR_VERSION = parse_pve_version(proxmox.version.get()['version'])['major']
->>>>>>> Fix for getting PVE major version and agent info implementation
+	      PVE_MAJOR_VERSION = 3 if proxmox_version(proxmox) < LooseVersion('4.0') else 4
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
@@ -1245,7 +1229,7 @@ def main():
             current = getattr(proxmox.nodes(vm[0]['node']), VZ_TYPE)(vmid).status.current.get()['status']
             status['status'] = current
             if agent_info is not None:
-              status['agent_info'], status['agent_info_warnings'] = get_vm_agent_info(proxmox, node, vmid, agent_info)
+                status['agent_info'], status['agent_info_warnings'] = get_vm_agent_info(proxmox, node, vmid, agent_info)
             if status:
                 module.exit_json(changed=False, msg="VM %s with vmid = %s is %s" % (name, vmid, current), **status)
         except Exception as e:
