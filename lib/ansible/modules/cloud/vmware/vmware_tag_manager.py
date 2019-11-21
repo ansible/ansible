@@ -210,7 +210,7 @@ class VmwareTagManager(VmwareRestClient):
                                                      tag_assoc_svc=self.tag_association_svc,
                                                      dobj=self.dynamic_managed_object)
 
-        _temp_prev_tags = ["%s:%s" % (tag['category_name'], tag['name']) for tag in self.get_tags_for_dynamic_obj(mid=self.dynamic_managed_object)]
+        _temp_prev_tags = ["%s:%s" % (tag['category_name'], tag['name']) for tag in self.get_tags_for_dynamic_obj(self.dynamic_managed_object)]
         results['tag_status']['previous_tags'] = _temp_prev_tags
         results['tag_status']['desired_tags'] = self.tag_names
 
@@ -265,7 +265,7 @@ class VmwareTagManager(VmwareRestClient):
                     except Error as error:
                         self.module.fail_json(msg="%s" % self.get_error_message(error))
 
-        _temp_curr_tags = ["%s:%s" % (tag['category_name'], tag['name']) for tag in self.get_tags_for_dynamic_obj(mid=self.dynamic_managed_object)]
+        _temp_curr_tags = ["%s:%s" % (tag['category_name'], tag['name']) for tag in self.get_tags_for_dynamic_obj(self.dynamic_managed_object)]
         results['tag_status']['current_tags'] = _temp_curr_tags
         results['changed'] = changed
         self.module.exit_json(**results)
