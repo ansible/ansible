@@ -56,6 +56,7 @@ class TestGitlabProject(GitlabModuleTestCase):
 
     @with_httmock(resp_get_group)
     @with_httmock(resp_get_project_in_group_by_name)
+    @with_httmock(resp_get_project)
     def test_project_exist(self):
         group = self.gitlab_instance.groups.get(1)
 
@@ -93,6 +94,7 @@ class TestGitlabProject(GitlabModuleTestCase):
 
     @with_httmock(resp_get_group)
     @with_httmock(resp_get_project_in_group_by_name)
+    @with_httmock(resp_get_project)
     @with_httmock(resp_delete_project)
     def test_delete_project(self):
         group = self.gitlab_instance.groups.get(1)
