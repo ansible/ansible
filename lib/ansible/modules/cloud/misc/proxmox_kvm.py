@@ -643,10 +643,10 @@ agent_info_warnings:
     returned: success
     type: list
     sample: '[
-      "Agent info not available for 'osinfo': Server returned no data.",
-      "Agent info not available for 'time': Server returned no data.",
-      "Agent info not available for 'timezone': Server returned no data.",
-      "Agent info not available for 'vcpus': Server returned no data."
+      "Agent info not available for ''osinfo'': Server returned no data.",
+      "Agent info not available for ''time'': Server returned no data.",
+      "Agent info not available for ''timezone'': Server returned no data.",
+      "Agent info not available for ''vcpus'': Server returned no data."
     ]'
 '''
 
