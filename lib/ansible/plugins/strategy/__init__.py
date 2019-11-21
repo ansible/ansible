@@ -359,9 +359,9 @@ class StrategyBase:
         host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
         return [host_name or task.delegate_to]
 
-    def search_handler_blocks_by_name(self, handler_name, handler_blocks, handler_templar):
+    def search_handler_blocks_by_name(self, handler_name, iterator, handler_templar):
         # iterate in reversed order since last handler loaded with the same name wins
-        for handler_block in reversed(handler_blocks):
+        for handler_block in reversed(iterator._play.handlers):
             for handler_task in handler_block.block:
                 if handler_task.name:
                     if not handler_task.cached_name:
@@ -439,7 +439,7 @@ class StrategyBase:
                             # dependency chain of the current task (if it's from a role), otherwise
                             # we just look through the list of handlers in the current play/all
                             # roles and use the first one that matches the notify name
-                            target_handler = self.search_handler_blocks_by_name(handler_name, iterator._play.handlers, handler_templar)
+                            target_handler = self.search_handler_blocks_by_name(handler_name, iterator, handler_templar)
                             if target_handler is not None:
                                 found = True
                                 if target_handler.notify_host(original_host):
@@ -560,7 +560,7 @@ class StrategyBase:
                         original_host,
                         dict(
                             ansible_failed_task=original_task.serialize(),
-                            ansible_failed_result=host_stats['original_result'],
+                            ansible_failed_result=host_status['original_result'],
                         ),
                     )
 
@@ -610,7 +610,7 @@ class StrategyBase:
             ret_results.extend(results)
             handler_results += len([
                 r['host_name'] for r in results if r['host_name'] in notified_hosts and
-                r['task_uuid']  == handler._uuid])
+                r['task_uuid'] == handler._uuid])
             if self._pending_results > 0:
                 time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
@@ -776,8 +776,9 @@ class StrategyBase:
 
         host_results = []
         for host in notified_hosts:
-            if not iterator.is_failed(host) or iterator._play.force_handlers:
-                task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler,
+            original_host = self._inventory.get_host(host)
+            if not iterator.is_failed(original_host) or iterator._play.force_handlers:
+                task_vars = self._variable_manager.get_vars(play=iterator._play, host=original_host, task=handler,
                                                             _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 templar = Templar(loader=self._loader, variables=task_vars)
@@ -785,7 +786,7 @@ class StrategyBase:
                     handler.name = templar.template(handler.name)
                     handler.cached_name = True
 
-                self._queue_task(host, handler, task_vars, play_context)
+                self._queue_task(original_host, handler, task_vars, play_context)
 
                 if templar.template(handler.run_once) or bypass_host_loop:
                     break

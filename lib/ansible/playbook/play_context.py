@@ -264,7 +264,7 @@ def set_attributes_from_plugin(play_context, plugin):
         if option:
             flag = options[option].get('name')
             if flag:
-                play_context[flag] = self.connection.get_option(flag)
+                play_context[flag] = plugin.get_option(flag)
 
 
 def set_playcontext_connection(play_context):

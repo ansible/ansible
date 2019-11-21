@@ -130,7 +130,10 @@ class TestPlaybookExecutor(unittest.TestCase):
             play = playbook.get_plays()[0]
             play.deserialize(post_validate(play.serialize(), templar))
             mock_inventory.get_hosts.return_value = ['host0', 'host1', 'host2', 'host3', 'host4', 'host5', 'host6', 'host7', 'host8', 'host9']
-            self.assertEqual(pbe._get_serialized_batches(play), [['host0'], ['host1', 'host2'], ['host3', 'host4', 'host5', 'host6', 'host7', 'host8', 'host9']])
+            self.assertEqual(
+                pbe._get_serialized_batches(play),
+                [['host0'], ['host1', 'host2'], ['host3', 'host4', 'host5', 'host6', 'host7', 'host8', 'host9']]
+            )
 
             # Test when serial percent is under 1.0
             playbook = Playbook.load(pbe._playbooks[2], variable_manager=mock_var_manager, loader=fake_loader)

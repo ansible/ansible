@@ -21,6 +21,9 @@ from ansible.errors import AnsibleError
 from ansible.utils.vars import combine_vars
 
 
+__metaclass__ = type
+
+
 def add_host(host_info, inventory):
     '''
     Helper function to add a new host to inventory based on a task result.
@@ -50,6 +53,7 @@ def add_host(host_info, inventory):
         inventory.reconcile_inventory()
 
         return new_host
+
 
 def add_group(host_name, result_item, inventory):
     '''

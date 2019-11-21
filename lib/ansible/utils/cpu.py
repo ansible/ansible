@@ -21,6 +21,9 @@ import ctypes
 import struct
 
 
+__metaclass__ = type
+
+
 _libc = ctypes.CDLL(None, use_errno=True)
 
 
@@ -29,7 +32,9 @@ try:
 except AttributeError:
     # this system doesn't support sched_setaffinity, so
     # we just make it a dummy that does nothing for now
-    sched_setaffinity = lambda x: -1
+    def dummy():
+        pass
+    sched_setaffinity = dummy
 
 
 def mask_to_bytes(mask):

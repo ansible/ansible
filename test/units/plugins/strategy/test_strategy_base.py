@@ -285,7 +285,6 @@ class TestStrategyBase(unittest.TestCase):
         mock_group.add_host.return_value = None
 
         def _get_host(host_name):
-            print(host_name)
             if host_name == 'test01':
                 return mock_host
             elif host_name == 'newhost01':
@@ -332,7 +331,16 @@ class TestStrategyBase(unittest.TestCase):
             }
         }
 
-        task_result = dict(host_name=mock_host.name, task_uuid=mock_task._uuid, status_type="ok", status_msg="", original_result=dict(changed=True), changed=True, role_ran=False, needs_debug=False)
+        task_result = dict(
+            host_name=mock_host.name,
+            task_uuid=mock_task._uuid,
+            status_type="ok",
+            status_msg="",
+            original_result=dict(changed=True),
+            changed=True,
+            role_ran=False,
+            needs_debug=False
+        )
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -343,7 +351,16 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(strategy_base._pending_results, 0)
         self.assertNotIn('test01', strategy_base._blocked_hosts)
 
-        task_result = dict(host_name=mock_host.name, task_uuid=mock_task._uuid, status_type="failed", status_msg="", original_result=dict(failed=True), changed=False, role_ran=False, needs_debug=False)
+        task_result = dict(
+            host_name=mock_host.name,
+            task_uuid=mock_task._uuid,
+            status_type="failed",
+            status_msg="",
+            original_result=dict(failed=True),
+            changed=False,
+            role_ran=False,
+            needs_debug=False
+        )
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -358,7 +375,16 @@ class TestStrategyBase(unittest.TestCase):
         # del mock_tqm._failed_hosts['test01']
         mock_iterator.is_failed.return_value = False
 
-        task_result = dict(host_name=mock_host.name, task_uuid=mock_task._uuid, status_type="unreachable", status_msg="", original_result=dict(unreachable=True), changed=False, role_ran=False, needs_debug=False)
+        task_result = dict(
+            host_name=mock_host.name,
+            task_uuid=mock_task._uuid,
+            status_type="unreachable",
+            status_msg="",
+            original_result=dict(unreachable=True),
+            changed=False,
+            role_ran=False,
+            needs_debug=False
+        )
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -371,7 +397,16 @@ class TestStrategyBase(unittest.TestCase):
         self.assertIn('test01', mock_tqm._unreachable_hosts)
         del mock_tqm._unreachable_hosts['test01']
 
-        task_result = dict(host_name=mock_host.name, task_uuid=mock_task._uuid, status_type="skipped", status_msg="", original_result=dict(skipped=True), changed=False, role_ran=False, needs_debug=False)
+        task_result = dict(
+            host_name=mock_host.name,
+            task_uuid=mock_task._uuid,
+            status_type="skipped",
+            status_msg="",
+            original_result=dict(skipped=True),
+            changed=False,
+            role_ran=False,
+            needs_debug=False
+        )
         queue_items.append(task_result)
         strategy_base._blocked_hosts['test01'] = True
         strategy_base._pending_results = 1
@@ -402,13 +437,13 @@ class TestStrategyBase(unittest.TestCase):
         self.assertNotIn('test01', strategy_base._blocked_hosts)
 
         task_result = dict(
-            host_name=mock_host.name, 
-            task_uuid=mock_task._uuid, 
-            status_type="ok", 
-            status_msg="", 
+            host_name=mock_host.name,
+            task_uuid=mock_task._uuid,
+            status_type="ok",
+            status_msg="",
             original_result=dict(add_group=dict(group_name='foo')),
-            changed=False, 
-            role_ran=False, 
+            changed=False,
+            role_ran=False,
             needs_debug=False
         )
         queue_items.append(task_result)
@@ -423,11 +458,11 @@ class TestStrategyBase(unittest.TestCase):
         task_result = dict(
             host_name=mock_host.name,
             task_uuid=mock_task._uuid,
-            status_type="ok", 
+            status_type="ok",
             status_msg="",
             original_result=dict(changed=True, _ansible_notify=['test handler']),
-            changed=True, 
-            role_ran=False, 
+            changed=True,
+            role_ran=False,
             needs_debug=False
         )
         queue_items.append(task_result)

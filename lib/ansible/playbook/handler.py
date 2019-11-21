@@ -51,7 +51,6 @@ class Handler(Task):
         return False
 
     def is_host_notified(self, host):
-        print(self.notified_hosts)
         return host.name in self.notified_hosts
 
     def serialize(self):

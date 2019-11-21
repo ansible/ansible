@@ -483,35 +483,35 @@ class TestBaseSubClass(TestBase):
     #        because right now we drop everything to a dict on the worker
     #        side so the circumstances are completely different for doing
     #        post-validation of class attributes.
-    #def test_attr_class(self):
-    #    esc = ExampleSubClass()
-    #    ds = {'test_attr_class': esc}
-    #    bsc = self._base_validate(ds)
-    #    self.assertIs(bsc.test_attr_class, esc)
+    # def test_attr_class(self):
+    #     esc = ExampleSubClass()
+    #     ds = {'test_attr_class': esc}
+    #     bsc = self._base_validate(ds)
+    #     self.assertIs(bsc.test_attr_class, esc)
 
-    #def test_attr_class_wrong_type(self):
-    #    not_a_esc = ExampleSubClass
-    #    ds = {'test_attr_class': not_a_esc}
-    #    bsc = self._base_validate(ds)
-    #    self.assertIs(bsc.test_attr_class, not_a_esc)
+    # def test_attr_class_wrong_type(self):
+    #     not_a_esc = ExampleSubClass
+    #     ds = {'test_attr_class': not_a_esc}
+    #     bsc = self._base_validate(ds)
+    #     self.assertIs(bsc.test_attr_class, not_a_esc)
 
-    #def test_attr_class_post_validate(self):
-    #    esc = ExampleSubClass()
-    #    ds = {'test_attr_class_post_validate': esc}
-    #    bsc = self._base_validate(ds)
-    #    self.assertIs(bsc.test_attr_class_post_validate, esc)
+    # def test_attr_class_post_validate(self):
+    #     esc = ExampleSubClass()
+    #     ds = {'test_attr_class_post_validate': esc}
+    #     bsc = self._base_validate(ds)
+    #     self.assertIs(bsc.test_attr_class_post_validate, esc)
 
-    #def test_attr_class_post_validate_class_not_instance(self):
-    #    not_a_esc = ExampleSubClass
-    #    ds = {'test_attr_class_post_validate': not_a_esc}
-    #    self.assertRaisesRegexp(AnsibleParserError, 'is not a valid.*got a.*Meta.*instead',
-    #                            self._base_validate, ds)
+    # def test_attr_class_post_validate_class_not_instance(self):
+    #     not_a_esc = ExampleSubClass
+    #     ds = {'test_attr_class_post_validate': not_a_esc}
+    #     self.assertRaisesRegexp(AnsibleParserError, 'is not a valid.*got a.*Meta.*instead',
+    #                             self._base_validate, ds)
 
-    #def test_attr_class_post_validate_wrong_class(self):
-    #    not_a_esc = 37
-    #    ds = {'test_attr_class_post_validate': not_a_esc}
-    #    self.assertRaisesRegexp(AnsibleParserError, 'is not a valid.*got a.*int.*instead',
-    #                            self._base_validate, ds)
+    # def test_attr_class_post_validate_wrong_class(self):
+    #     not_a_esc = 37
+    #     ds = {'test_attr_class_post_validate': not_a_esc}
+    #     self.assertRaisesRegexp(AnsibleParserError, 'is not a valid.*got a.*int.*instead',
+    #                             self._base_validate, ds)
 
     def test_attr_remote_user(self):
         ds = {'remote_user': 'testuser'}

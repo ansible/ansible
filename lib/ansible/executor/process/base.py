@@ -20,12 +20,18 @@ from __future__ import (absolute_import, division, print_function)
 import os
 
 from abc import abstractmethod
+from ansible.module_utils._text import to_text
+from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
 
-class AnsibleProcessBase(multiprocessing_context.Process):
+__metaclass__ = type
 
-    __metaclass__ = type
+
+display = Display()
+
+
+class AnsibleProcessBase(multiprocessing_context.Process):
 
     def _hard_exit(self, e):
         try:

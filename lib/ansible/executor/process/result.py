@@ -24,6 +24,7 @@ from sys import exc_info
 from traceback import format_tb
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.executor.process.base import AnsibleProcessBase
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
@@ -39,12 +40,13 @@ from ansible.utils.path import unfrackpath
 from ansible.utils.sentinel import Sentinel
 
 
+__metaclass__ = type
+
+
 display = Display()
 
 
 class ResultProcess(AnsibleProcessBase):
-
-    __metaclass__ = type
 
     def __init__(self, final_q, results_q, run_additional_callbacks=True, run_tree=True):
 
@@ -60,8 +62,8 @@ class ResultProcess(AnsibleProcessBase):
         self.load_callbacks()
 
     def _run(self):
-        #s = mask_to_bytes(0x02)
-        #sched_setaffinity(os.getpid(), len(s), s)
+        # s = mask_to_bytes(0x02)
+        # sched_setaffinity(os.getpid(), len(s), s)
 
         while True:
             try:
@@ -178,7 +180,7 @@ class ResultProcess(AnsibleProcessBase):
         for callback_plugin in callback_loader.all(class_only=True):
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
             callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
-            (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+            (callback_name, _dummy) = os.path.splitext(os.path.basename(callback_plugin._original_path))
             if callback_type == 'stdout':
                 # we only allow one callback of type 'stdout' to be loaded,
                 if callback_name != self._stdout_callback or stdout_callback_loaded:

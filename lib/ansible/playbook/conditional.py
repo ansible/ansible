@@ -268,7 +268,7 @@ def _check_conditional(conditional, templar, all_vars):
                 # first we extract the variable name from the error message
                 var_name = re.compile(r"'(hostvars\[.+\]|[\w_]+)' is undefined").search(str(e)).groups()[0]
                 # next we extract all defined/undefined tests from the conditional string
-                def_undef = self.extract_defined_undefined(conditional)
+                def_undef = extract_defined_undefined(conditional)
                 # then we loop through these, comparing the error variable name against
                 # each def/undef test we found above. If there is a match, we determine
                 # whether the logic/state mean the variable should exist or not and return

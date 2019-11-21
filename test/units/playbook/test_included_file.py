@@ -35,13 +35,14 @@ from ansible.playbook.included_file import IncludedFile
 
 @pytest.fixture
 def mock_inventory():
-   mock_inventory = MagicMock(name='MockInventory')
-   mock_host1 = MagicMock()
-   mock_host1.name = "testhost1"
-   mock_host2 = MagicMock()
-   mock_host2.name = "testhost2"
-   mock_inventory.get_host.side_effect = lambda x: {"testhost1": mock_host1, "testhost2": mock_host2}.get(x, None)
-   return mock_inventory
+    mock_inventory = MagicMock(name='MockInventory')
+    mock_host1 = MagicMock()
+    mock_host1.name = "testhost1"
+    mock_host2 = MagicMock()
+    mock_host2.name = "testhost2"
+    mock_inventory.get_host.side_effect = lambda x: {"testhost1": mock_host1, "testhost2": mock_host2}.get(x, None)
+    return mock_inventory
+
 
 @pytest.fixture
 def mock_iterator():

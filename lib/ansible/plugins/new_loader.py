@@ -41,7 +41,7 @@ display = Display()
 
 
 def get_all_plugin_loaders():
-    return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginLoader)]
+    return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginFinder)]
 
 
 def add_all_plugin_dirs(path):
@@ -248,6 +248,13 @@ class PluginFinder:
                 msg = '%s (searched paths: %s)' % (msg, ", ".join(searched_paths))
             display.debug(msg)
 
+
+fragment_loader = PluginFinder(
+    'ModuleDocFragment',
+    'ansible.plugins.doc_fragments',
+    C.DOC_FRAGMENT_PLUGIN_PATH,
+    'doc_fragments',
+)
 
 connection_loader = PluginFinder(
     'Connection',
