@@ -191,7 +191,7 @@ def resp_get_group(url, request):
                '"web_url": "http://example.com/diaspora/diaspora-client",'
                '"readme_url": "http://example.com/diaspora/diaspora-client/blob/master/README.md",'
                '"tag_list": ["example","disapora client"],"name": "Diaspora Client",'
-               '"name_with_namespace": "Diaspora / Diaspora Client","path": "diaspora-client",'
+               '"name_with_namespace": "Diaspora / Diaspora Client",'
                '"path_with_namespace": "diaspora/diaspora-client","created_at": "2013-09-30T13:46:02Z",'
                '"last_activity_at": "2013-09-30T13:46:02Z","forks_count": 0,'
                '"avatar_url": "http://example.com/uploads/project/avatar/4/uploads/avatar.png",'
@@ -385,10 +385,10 @@ def resp_get_project(url, request):
     return response(200, content, headers, None, 5, request)
 
 
-@urlmatch(scheme="http", netloc="localhost", path="/api/v4/projects/foo-bar%2Fdiaspora-client", method="get")
-def resp_get_project_by_name(url, request):
+@urlmatch(scheme="http", netloc="localhost", path="/api/v4/groups/1/projects", method="get", query="search=diaspora-client")
+def resp_get_project_in_group_by_name(url, request):
     headers = {'content-type': 'application/json'}
-    content = ('{"id": 1,"description": null, "default_branch": "master",'
+    content = ('[{"id": 1,"description": null, "default_branch": "master",'
                '"ssh_url_to_repo": "git@example.com:diaspora/diaspora-client.git",'
                '"http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",'
                '"web_url": "http://example.com/diaspora/diaspora-client",'
@@ -398,7 +398,7 @@ def resp_get_project_by_name(url, request):
                '"path_with_namespace": "diaspora/diaspora-client","created_at": "2013-09-30T13:46:02Z",'
                '"last_activity_at": "2013-09-30T13:46:02Z","forks_count": 0,'
                '"avatar_url": "http://example.com/uploads/project/avatar/4/uploads/avatar.png",'
-               '"star_count": 0}')
+               '"star_count": 0}]')
     content = content.encode("utf-8")
     return response(200, content, headers, None, 5, request)
 

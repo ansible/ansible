@@ -53,13 +53,13 @@ class TestGitlabGroup(GitlabModuleTestCase):
 
     @with_httmock(resp_get_group)
     def test_exist_group(self):
-        rvalue = self.moduleUtil.existsGroup(1)
+        rvalue = self.moduleUtil.existsGroup(None, 1)
 
         self.assertEqual(rvalue, True)
 
     @with_httmock(resp_get_missing_group)
     def test_exist_group(self):
-        rvalue = self.moduleUtil.existsGroup(1)
+        rvalue = self.moduleUtil.existsGroup(None, 1)
 
         self.assertEqual(rvalue, False)
 
@@ -99,7 +99,7 @@ class TestGitlabGroup(GitlabModuleTestCase):
     @with_httmock(resp_find_group_project)
     @with_httmock(resp_delete_group)
     def test_delete_group(self):
-        self.moduleUtil.existsGroup(1)
+        self.moduleUtil.existsGroup(None, 1)
 
         print(self.moduleUtil.groupObject.projects)
 

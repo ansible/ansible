@@ -20,8 +20,9 @@ pytestmark = []
 try:
     from .gitlab import (GitlabModuleTestCase,
                          python_version_match_requirement,
-                         resp_get_group, resp_get_project_by_name, resp_create_project,
-                         resp_get_project, resp_delete_project, resp_get_user)
+                         resp_get_group, resp_get_project_in_group_by_name,
+                         resp_create_project, resp_get_project, resp_delete_project,
+                         resp_get_user)
 
     # GitLab module requirements
     if python_version_match_requirement():
@@ -31,7 +32,7 @@ except ImportError:
     # Need to set these to something so that we don't fail when parsing
     GitlabModuleTestCase = object
     resp_get_group = _dummy
-    resp_get_project_by_name = _dummy
+    resp_get_project_in_group_by_name = _dummy
     resp_create_project = _dummy
     resp_get_project = _dummy
     resp_delete_project = _dummy
@@ -54,7 +55,7 @@ class TestGitlabProject(GitlabModuleTestCase):
         self.moduleUtil = GitLabProject(module=self.mock_module, gitlab_instance=self.gitlab_instance)
 
     @with_httmock(resp_get_group)
-    @with_httmock(resp_get_project_by_name)
+    @with_httmock(resp_get_project_in_group_by_name)
     def test_project_exist(self):
         group = self.gitlab_instance.groups.get(1)
 
@@ -91,12 +92,14 @@ class TestGitlabProject(GitlabModuleTestCase):
         self.assertEqual(newProject.name, "New Name")
 
     @with_httmock(resp_get_group)
-    @with_httmock(resp_get_project_by_name)
+    @with_httmock(resp_get_project_in_group_by_name)
     @with_httmock(resp_delete_project)
     def test_delete_project(self):
         group = self.gitlab_instance.groups.get(1)
 
-        self.moduleUtil.existsProject(group, "diaspora-client")
+        rvalue = self.moduleUtil.existsProject(group, "diaspora-client")
+
+        self.assertEqual(rvalue, True)
 
         rvalue = self.moduleUtil.deleteProject()
 
