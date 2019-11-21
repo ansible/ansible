@@ -34,10 +34,15 @@ options:
   dynamicupdate:
     description: Apply dynamic update to zone
     required: false
-    default: "false"
-    choices: ["false", "true"]
+    default: false
+    type: bool
     version_added: "2.9"
-    type: str
+  ptrsync:
+    description: Allow ptr sync on zone
+    required: false
+    default: false
+    type: bool
+    version_added: "2.10"
 extends_documentation_fragment: ipa.documentation
 version_added: "2.5"
 '''
@@ -57,6 +62,14 @@ EXAMPLES = r'''
     state: present
     zone_name: example.com
     dynamicupdate: true
+
+- name: Ensure dns zone is present and allows ptr sync
+  ipa_dnszone:
+    ipa_host: spider.example.com
+    ipa_pass: Passw0rd!
+    state: present
+    zone_name: example.com
+    ptrsync: true
 
 - name: Ensure that dns zone is removed
   ipa_dnszone:
@@ -84,7 +97,7 @@ class DNSZoneIPAClient(IPAClient):
         super(DNSZoneIPAClient, self).__init__(module, host, port, protocol)
 
     def dnszone_find(self, zone_name, details=None):
-        itens = {'idnsname': zone_name}
+        itens = {'all': True, 'idnsname': zone_name}
         if details is not None:
             itens.update(details)
 
@@ -105,15 +118,48 @@ class DNSZoneIPAClient(IPAClient):
             item=itens
         )
 
+    def dnszone_mod(self, zone_name=None, details=None):
+        itens = {}
+        if details is not None:
+            itens.update(details)
+
+        return self._post_json(
+            method='dnszone_mod',
+            name=zone_name,
+            item=itens
+        )
+
     def dnszone_del(self, zone_name=None, record_name=None, details=None):
         return self._post_json(
             method='dnszone_del', name=zone_name, item={})
 
 
+def get_dnszone_dict(idnsallowdynupdate=None, idnsallowsyncptr=None):
+    dnszone = {}
+    if idnsallowdynupdate is not None:
+        dnszone['idnsallowdynupdate'] = idnsallowdynupdate
+    if idnsallowsyncptr is not None:
+        dnszone['idnsallowsyncptr'] = idnsallowsyncptr
+
+    return dnszone
+
+
+def get_dnszone_diff(client, ipa_dnszone, module_dnszone):
+    if 'idnsallowdynupdate' in ipa_dnszone:
+        ipa_dnszone['idnsallowdynupdate'] = (ipa_dnszone['idnsallowdynupdate'][0].lower() == 'true')
+    if 'idnsallowsyncptr' in ipa_dnszone:
+        ipa_dnszone['idnsallowsyncptr'] = (ipa_dnszone['idnsallowsyncptr'][0].lower() == 'true')
+
+    result = client.get_diff(ipa_data=ipa_dnszone, module_data=module_dnszone)
+    return result
+
+
 def ensure(module, client):
     zone_name = module.params['zone_name']
     state = module.params['state']
-    dynamicupdate = module.params['dynamicupdate']
+
+    module_dnszone = get_dnszone_dict(idnsallowdynupdate=module.params['dynamicupdate'],
+                                      idnsallowsyncptr=module.params['ptrsync'])
 
     ipa_dnszone = client.dnszone_find(zone_name)
 
@@ -122,23 +168,28 @@ def ensure(module, client):
         if not ipa_dnszone:
             changed = True
             if not module.check_mode:
-                client.dnszone_add(zone_name=zone_name, details={'idnsallowdynupdate': dynamicupdate})
+                ipa_dnszone = client.dnszone_add(zone_name=zone_name, details=module_dnszone)
         else:
-            changed = False
+            diff = get_dnszone_diff(client, ipa_dnszone, module_dnszone)
+            if len(diff) > 0:
+                changed = True
+                if not module.check_mode:
+                    ipa_dnszone = client.dnszone_mod(zone_name=zone_name, details=module_dnszone)
     else:
         if ipa_dnszone:
             changed = True
             if not module.check_mode:
-                client.dnszone_del(zone_name=zone_name)
+                ipa_dnszone = client.dnszone_del(zone_name=zone_name)
 
-    return changed, client.dnszone_find(zone_name)
+    return changed, ipa_dnszone
 
 
 def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(zone_name=dict(type='str', required=True),
                          state=dict(type='str', default='present', choices=['present', 'absent']),
-                         dynamicupdate=dict(type='str', required=False, default='false', choices=['true', 'false']),
+                         dynamicupdate=dict(type='bool', required=False, default=False),
+                         ptrsync=dict(type='bool', required=False, default=False),
                          )
 
     module = AnsibleModule(argument_spec=argument_spec,
