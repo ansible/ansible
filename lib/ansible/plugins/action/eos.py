@@ -30,6 +30,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
+
 class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
