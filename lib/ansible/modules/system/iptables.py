@@ -460,6 +460,19 @@ EXAMPLES = r'''
     limit_burst: 20
     log_prefix: "IPTABLES:INFO: "
     log_level: info
+    
+- name: Block container to visit 169.254.169.254
+  iptables:
+    action: insert
+    comment: prevent container to visit aws meta server
+    chain: FORWARD
+    protocol: tcp
+    destination_port: 80:443
+    destination: 169.254.169.254
+    in_interface: br-+
+    jump: DROP
+  become: yes    
+    
 '''
 
 import re
