@@ -460,7 +460,7 @@ EXAMPLES = r'''
     limit_burst: 20
     log_prefix: "IPTABLES:INFO: "
     log_level: info
-    
+
 - name: Block container to visit 169.254.169.254
   iptables:
     action: insert
@@ -471,8 +471,8 @@ EXAMPLES = r'''
     destination: 169.254.169.254
     in_interface: br-+
     jump: DROP
-  become: yes    
-    
+  become: yes
+
 '''
 
 import re
