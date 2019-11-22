@@ -163,11 +163,11 @@ class IBMSVChost(object):
         self.state = self.module.params['state']
 
         # Optional
-        self.fcwwpn = self.module.params['fcwwpn']
-        self.iscsiname = self.module.params['iscsiname']
-        self.iogrp = self.module.params['iogrp']
-        self.protocol = self.module.params['protocol']
-        self.type = self.module.params['type']
+        self.fcwwpn = self.module.params.get('fcwwpn', '')
+        self.iscsiname = self.module.params.get('iscsiname', '')
+        self.iogrp = self.module.params.get('iogrp', '')
+        self.protocol = self.module.params.get('protocol', '')
+        self.type = self.module.params.get('type', '')
 
         self.restapi = IBMSVCRestApi(
             module=self.module,
