@@ -1,3 +1,2 @@
----
 dependencies:
-- setup_mariadb
+  - setup_mariadb

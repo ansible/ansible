@@ -4,10 +4,12 @@
 - name: Install Repo
   yum:
     name: '{{ repo_link }}'
+  notify: cleanup mysql
 
 - name: Install MySQL community server
   yum:
-    name: '{{ mysql_package_name }}'
+    name: '{{ mysql_packages }}'
+  notify: cleanup mysql
 
 - name: Create directories
   file:
@@ -20,6 +22,7 @@
   - "{{ standby_datadir }}"
   - "{{ standby_logdir }}"
   - "{{ default_logdir }}"
+  notify: cleanup mysql
 
 - name: Copy cnf templates
   template:

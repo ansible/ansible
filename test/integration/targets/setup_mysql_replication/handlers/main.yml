@@ -1,0 +1,22 @@
+- name: stop mysql service
+  command: pkill -TERM mysqld
+  listen: cleanup mysql
+
+- name: remove mysql packages
+  action: '{{ ansible_pkg_mgr }}'
+  args:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ mysql_packages | union(mysql_cleanup_packages) }}"
+  listen: cleanup mysql
+
+- name: remove mysql data
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ master_datadir }}"
+    - "{{ standby_datadir }}"
+    - "{{ standby_logdir }}"
+    - "{{ default_logdir }}"
+  listen: cleanup mysql
