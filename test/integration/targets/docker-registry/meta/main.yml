@@ -1,5 +1,3 @@
 ---
 dependencies:
-  - setup_docker
-  - setup_openssl
   - setup_docker_registry
