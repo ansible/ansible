@@ -181,6 +181,7 @@
     force_trust: yes
   register: result
   ignore_errors: yes
+  when: postgres_version_resp.stdout is version('9.4', '>=')
 
 - assert:
     that:
