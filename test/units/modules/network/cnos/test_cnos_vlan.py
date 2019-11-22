@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.cnos import cnos_vlan
 from ansible.modules.network.cnos.cnos_vlan import parse_vlan_brief

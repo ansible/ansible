@@ -3,16 +3,12 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
-
 - name: test getting all facts
   nxos_facts:
     gather_subset:
       - all
-    timeout: 60
     provider: "{{ connection }}"
   register: result
-
-
 
 - assert:
     that:

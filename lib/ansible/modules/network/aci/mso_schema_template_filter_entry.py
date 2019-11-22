@@ -201,24 +201,24 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    template = module.params['template']
-    filter_name = module.params['filter']
-    filter_display_name = module.params['filter_display_name']
-    entry = module.params['entry']
-    display_name = module.params['display_name']
-    description = module.params['description']
-    ethertype = module.params['ethertype']
-    ip_protocol = module.params['ip_protocol']
-    tcp_session_rules = module.params['tcp_session_rules']
-    source_from = module.params['source_from']
-    source_to = module.params['source_to']
-    destination_from = module.params['destination_from']
-    destination_to = module.params['destination_to']
-    arp_flag = module.params['arp_flag']
-    stateful = module.params['stateful']
-    fragments_only = module.params['fragments_only']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    filter_name = module.params.get('filter')
+    filter_display_name = module.params.get('filter_display_name')
+    entry = module.params.get('entry')
+    display_name = module.params.get('display_name')
+    description = module.params.get('description')
+    ethertype = module.params.get('ethertype')
+    ip_protocol = module.params.get('ip_protocol')
+    tcp_session_rules = module.params.get('tcp_session_rules')
+    source_from = module.params.get('source_from')
+    source_to = module.params.get('source_to')
+    destination_from = module.params.get('destination_from')
+    destination_to = module.params.get('destination_to')
+    arp_flag = module.params.get('arp_flag')
+    stateful = module.params.get('stateful')
+    fragments_only = module.params.get('fragments_only')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
@@ -230,7 +230,7 @@ def main():
     schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
-    templates = [t['name'] for t in schema_obj['templates']]
+    templates = [t.get('name') for t in schema_obj.get('templates')]
     if template not in templates:
         mso.fail_json(msg="Provided template '{template}' does not exist. Existing templates: {templates}".format(template=template,
                                                                                                                   templates=', '.join(templates)))
@@ -240,20 +240,20 @@ def main():
     mso.existing = {}
     filter_idx = None
     entry_idx = None
-    filters = [f['name'] for f in schema_obj['templates'][template_idx]['filters']]
+    filters = [f.get('name') for f in schema_obj.get('templates')[template_idx]['filters']]
     if filter_name in filters:
         filter_idx = filters.index(filter_name)
 
-        entries = [f['name'] for f in schema_obj['templates'][template_idx]['filters'][filter_idx]['entries']]
+        entries = [f.get('name') for f in schema_obj.get('templates')[template_idx]['filters'][filter_idx]['entries']]
         if entry in entries:
             entry_idx = entries.index(entry)
-            mso.existing = schema_obj['templates'][template_idx]['filters'][filter_idx]['entries'][entry_idx]
+            mso.existing = schema_obj.get('templates')[template_idx]['filters'][filter_idx]['entries'][entry_idx]
 
     if state == 'query':
         if entry is None:
             if filter_idx is None:
                 mso.fail_json(msg="Filter '{filter}' not found".format(filter=filter_name))
-            mso.existing = schema_obj['templates'][template_idx]['filters'][filter_idx]['entries']
+            mso.existing = schema_obj.get('templates')[template_idx]['filters'][filter_idx]['entries']
         elif not mso.existing:
             mso.fail_json(msg="Entry '{entry}' not found".format(entry=entry))
         mso.exit_json()

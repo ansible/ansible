@@ -13,6 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
@@ -38,15 +41,18 @@ options:
     description:
       - Name of the s3 bucket
     required: true
+    type: str
   policy:
     description:
       - The JSON policy as a string.
+    type: json
   s3_url:
     description:
       - S3 URL endpoint for usage with DigitalOcean, Ceph, Eucalyptus and fakes3 etc.
       - Assumes AWS if not specified.
       - For Walrus, use FQDN of the endpoint without scheme nor path.
     aliases: [ S3_URL ]
+    type: str
   ceph:
     description:
       - Enable API compatibility with Ceph. It takes into account the S3 API subset working
@@ -65,9 +71,17 @@ options:
     required: false
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   tags:
     description:
       - tags dict to apply to bucket
+    type: dict
+  purge_tags:
+    description:
+      - whether to remove tags that aren't present in the C(tags) parameter
+    type: bool
+    default: True
+    version_added: "2.9"
   versioning:
     description:
       - Whether versioning is enabled or disabled (note that once versioning is enabled, it can only be suspended)
@@ -78,10 +92,12 @@ options:
         In order to remove the server-side encryption, the encryption needs to be set to 'none' explicitly.
     choices: [ 'none', 'AES256', 'aws:kms' ]
     version_added: "2.9"
+    type: str
   encryption_key_id:
     description: KMS master key ID to use for the default encryption. This parameter is allowed if encryption is aws:kms. If
                  not specified then it will default to the AWS provided KMS key.
     version_added: "2.9"
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -127,6 +143,24 @@ EXAMPLES = '''
     name: mydobucket
     s3_url: 'https://nyc3.digitaloceanspaces.com'
 
+# Create a bucket with AES256 encryption
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "AES256"
+
+# Create a bucket with aws:kms encryption, KMS key
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "aws:kms"
+    encryption_key_id: "arn:aws:kms:us-east-1:1234/5678example"
+
+# Create a bucket with aws:kms encryption, default key
+- s3_bucket:
+    name: mys3bucket
+    state: present
+    encryption: "aws:kms"
 '''
 
 import json
@@ -152,6 +186,7 @@ def create_or_update_bucket(s3_client, module, location):
     name = module.params.get("name")
     requester_pays = module.params.get("requester_pays")
     tags = module.params.get("tags")
+    purge_tags = module.params.get("purge_tags")
     versioning = module.params.get("versioning")
     encryption = module.params.get("encryption")
     encryption_key_id = module.params.get("encryption_key_id")
@@ -276,6 +311,11 @@ def create_or_update_bucket(s3_client, module, location):
         if tags is not None:
             # Tags are always returned as text
             tags = dict((to_text(k), to_text(v)) for k, v in tags.items())
+            if not purge_tags:
+                # Ensure existing tags that aren't updated by desired tags remain
+                current_copy = current_tags_dict.copy()
+                current_copy.update(tags)
+                tags = current_copy
             if current_tags_dict != tags:
                 if tags:
                     try:
@@ -283,10 +323,11 @@ def create_or_update_bucket(s3_client, module, location):
                     except (BotoCoreError, ClientError) as e:
                         module.fail_json_aws(e, msg="Failed to update bucket tags")
                 else:
-                    try:
-                        delete_bucket_tagging(s3_client, name)
-                    except (BotoCoreError, ClientError) as e:
-                        module.fail_json_aws(e, msg="Failed to delete bucket tags")
+                    if purge_tags:
+                        try:
+                            delete_bucket_tagging(s3_client, name)
+                        except (BotoCoreError, ClientError) as e:
+                            module.fail_json_aws(e, msg="Failed to delete bucket tags")
                 current_tags_dict = wait_tags_are_applied(module, s3_client, name, tags)
                 changed = True
 
@@ -313,7 +354,7 @@ def create_or_update_bucket(s3_client, module, location):
             changed = True
         elif encryption != 'none' and (encryption != current_encryption_algorithm) or (encryption == 'aws:kms' and current_encryption_key != encryption_key_id):
             expected_encryption = {'SSEAlgorithm': encryption}
-            if encryption == 'aws:kms':
+            if encryption == 'aws:kms' and encryption_key_id is not None:
                 expected_encryption.update({'KMSMasterKeyID': encryption_key_id})
             try:
                 put_bucket_encryption(s3_client, name, expected_encryption)
@@ -406,12 +447,14 @@ def put_bucket_versioning(s3_client, bucket_name, required_versioning):
 def get_bucket_encryption(s3_client, bucket_name):
     try:
         result = s3_client.get_bucket_encryption(Bucket=bucket_name)
-        return result.get('ServerSideEncryptionConfiguration').get('Rules')[0].get('ApplyServerSideEncryptionByDefault')
+        return result.get('ServerSideEncryptionConfiguration', {}).get('Rules', [])[0].get('ApplyServerSideEncryptionByDefault')
     except ClientError as e:
         if e.response['Error']['Code'] == 'ServerSideEncryptionConfigurationNotFoundError':
             return None
         else:
             raise e
+    except (IndexError, KeyError):
+        return None
 
 
 @AWSRetry.exponential_backoff(max_delay=120, catch_extra_error_codes=['NoSuchBucket'])
@@ -583,7 +626,7 @@ def destroy_bucket(s3_client, module):
 
     try:
         delete_bucket(s3_client, name)
-        s3_client.get_waiter('bucket_not_exists').wait(Bucket=name)
+        s3_client.get_waiter('bucket_not_exists').wait(Bucket=name, WaiterConfig=dict(Delay=5, MaxAttempts=60))
     except WaiterError as e:
         module.fail_json_aws(e, msg='An error occurred waiting for the bucket to be deleted.')
     except (BotoCoreError, ClientError) as e:
@@ -628,15 +671,16 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            force=dict(required=False, default='no', type='bool'),
-            policy=dict(required=False, default=None, type='json'),
-            name=dict(required=True, type='str'),
+            force=dict(default=False, type='bool'),
+            policy=dict(type='json'),
+            name=dict(required=True),
             requester_pays=dict(default=False, type='bool'),
-            s3_url=dict(aliases=['S3_URL'], type='str'),
-            state=dict(default='present', type='str', choices=['present', 'absent']),
-            tags=dict(required=False, default=None, type='dict'),
-            versioning=dict(default=None, type='bool'),
-            ceph=dict(default='no', type='bool'),
+            s3_url=dict(aliases=['S3_URL']),
+            state=dict(default='present', choices=['present', 'absent']),
+            tags=dict(type='dict'),
+            purge_tags=dict(type='bool', default=True),
+            versioning=dict(type='bool'),
+            ceph=dict(default=False, type='bool'),
             encryption=dict(choices=['none', 'AES256', 'aws:kms']),
             encryption_key_id=dict()
         )
@@ -644,7 +688,6 @@ def main():
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
-        required_if=[['encryption', 'aws:kms', ['encryption_key_id']]]
     )
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)

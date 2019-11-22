@@ -26,7 +26,7 @@ Enabling or disabling check mode for tasks
 .. versionadded:: 2.2
 
 Sometimes you may want to modify the check mode behavior of individual tasks. This is done via the ``check_mode`` option, which can
-be added to tasks. 
+be added to tasks.
 
 There are two options:
 
@@ -54,8 +54,8 @@ Example::
 
 Running single tasks with ``check_mode: yes`` can be useful to write tests for
 ansible modules, either to test the module itself or to the conditions under
-which a module would make changes. 
-With ``register`` (see :doc:`playbooks_conditionals`) you can check the
+which a module would make changes.
+With ``register`` (see :ref:`playbooks_conditionals`) you can check the
 potential changes.
 
 Information about check mode in variables
@@ -100,7 +100,7 @@ Since the diff feature produces a large amount of output, it is best used when c
 
 .. versionadded:: 2.4
 
-The ``--diff`` option can reveal sensitive information. This option can disabled for tasks by specifying ``diff: no``. 
+The ``--diff`` option can reveal sensitive information. This option can be disabled for tasks by specifying ``diff: no``.
 
 Example::
 

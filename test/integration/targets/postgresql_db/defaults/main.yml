@@ -1,0 +1,6 @@
+db_name: 'ansible_db'
+db_user1: 'ansible.db.user1'
+db_user2: 'ansible.db.user2'
+tmp_dir: '/tmp'
+db_session_role1: 'session_role1'
+db_session_role2: 'session_role2'

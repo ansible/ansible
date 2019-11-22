@@ -1,4 +1,4 @@
 etc/ansible
 etc/ansible/roles
-usr/lib/python2.7/site-packages
+usr/lib/python2.7/dist-packages/ansible
 usr/share/ansible

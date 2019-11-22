@@ -1,0 +1,14 @@
+# There is no MySQL 5.7 for RHEL 8. This will need to be retooled to use 8.0 for RHEL 8 or use the setup_mysql8 role for everything
+repo_link: https://repo.mysql.com/mysql57-community-release-el{{ ansible_facts.distribution_major_version }}.rpm
+repo_name: mysql-community
+mysql_package_name: mysql-community-server
+
+master_port: 3306
+standby_port: 3307
+master_datadir: /var/lib/mysql_master
+master_cnf: /etc/my-1.cnf
+standby_cnf: /etc/my-2.cnf
+standby_datadir: /var/lib/mysql_standby
+standby_logdir: /var/log/mysql_standby
+default_logdir: /var/log/mysql
+mysqld_err_log: '{{ default_logdir }}/mysql-err.log'

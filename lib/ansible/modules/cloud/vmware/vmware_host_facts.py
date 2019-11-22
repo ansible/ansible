@@ -38,6 +38,40 @@ options:
     - Host facts about the specified ESXi server will be returned.
     - By specifying this option, you can select which ESXi hostsystem is returned if connecting to a vCenter.
     version_added: 2.8
+    type: str
+  show_tag:
+    description:
+    - Tags related to Host are shown if set to C(True).
+    default: False
+    type: bool
+    required: False
+    version_added: 2.9
+  schema:
+    description:
+    - Specify the output schema desired.
+    - The 'summary' output schema is the legacy output from the module
+    - The 'vsphere' output schema is the vSphere API class definition
+      which requires pyvmomi>6.7.1
+    choices: ['summary', 'vsphere']
+    default: 'summary'
+    type: str
+    version_added: '2.10'
+  properties:
+    description:
+      - Specify the properties to retrieve.
+      - If not specified, all properties are retrieved (deeply).
+      - Results are returned in a structure identical to the vsphere API.
+      - 'Example:'
+      - '   properties: ['
+      - '      "hardware.memorySize",'
+      - '      "hardware.cpuInfo.numCpuCores",'
+      - '      "config.product.apiVersion",'
+      - '      "overallStatus"'
+      - '   ]'
+      - Only valid when C(schema) is C(vsphere).
+    type: list
+    required: False
+    version_added: '2.10'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -59,6 +93,16 @@ EXAMPLES = r'''
   register: host_facts
   delegate_to: localhost
 
+- name: Gather vmware host facts from vCenter with tag information
+  vmware_host_facts:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    esxi_hostname: "{{ esxi_hostname }}"
+    show_tag: True
+  register: host_facts_tag
+  delegate_to: localhost
+
 - name: Get VSAN Cluster UUID from host facts
   vmware_host_facts:
     hostname: "{{ esxi_server }}"
@@ -67,6 +111,20 @@ EXAMPLES = r'''
   register: host_facts
 - set_fact:
     cluster_uuid: "{{ host_facts['ansible_facts']['vsan_cluster_uuid'] }}"
+
+- name: Gather some info from a host using the vSphere API output schema
+  vmware_host_facts:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    esxi_hostname: "{{ esxi_hostname }}"
+    schema: vsphere
+    properties:
+      - hardware.memorySize
+      - hardware.cpuInfo.numCpuCores
+      - config.product.apiVersion
+      - overallStatus
+  register: host_facts
 '''
 
 RETURN = r'''
@@ -92,6 +150,7 @@ ansible_facts:
         "ansible_distribution_build": "4887370",
         "ansible_distribution_version": "6.5.0",
         "ansible_hostname": "10.76.33.100",
+        "ansible_in_maintenance_mode": true,
         "ansible_interfaces": [
             "vmk0"
         ],
@@ -105,6 +164,7 @@ ansible_facts:
         "ansible_product_name": "KVM",
         "ansible_product_serial": "NA",
         "ansible_system_vendor": "Red Hat",
+        "ansible_uptime": 1791680,
         "ansible_vmk0": {
             "device": "vmk0",
             "ipv4": {
@@ -117,6 +177,15 @@ ansible_facts:
         "vsan_cluster_uuid": null,
         "vsan_node_uuid": null,
         "vsan_health": "unknown",
+        "tags": [
+            {
+                "category_id": "urn:vmomi:InventoryServiceCategory:8eb81431-b20d-49f5-af7b-126853aa1189:GLOBAL",
+                "category_name": "host_category_0001",
+                "description": "",
+                "id": "urn:vmomi:InventoryServiceTag:e9398232-46fd-461a-bf84-06128e182a4a:GLOBAL",
+                "name": "host_tag_0001"
+            }
+        ],
     }
 '''
 
@@ -128,6 +197,8 @@ try:
     from pyVmomi import vim
 except ImportError:
     pass
+
+from ansible.module_utils.vmware_rest_client import VmwareRestClient
 
 
 class VMwareHostFactManager(PyVmomi):
@@ -156,6 +227,13 @@ class VMwareHostFactManager(PyVmomi):
         ansible_facts.update(self.get_system_facts())
         ansible_facts.update(self.get_vsan_facts())
         ansible_facts.update(self.get_cluster_facts())
+        if self.params.get('show_tag'):
+            vmware_client = VmwareRestClient(self.module)
+            tag_info = {
+                'tags': vmware_client.get_tags_for_hostsystem(hostsystem_mid=self.host._moId)
+            }
+            ansible_facts.update(tag_info)
+
         self.module.exit_json(changed=False, ansible_facts=ansible_facts)
 
     def get_cluster_facts(self):
@@ -242,20 +320,40 @@ class VMwareHostFactManager(PyVmomi):
             'ansible_product_serial': sn,
             'ansible_bios_date': self.host.hardware.biosInfo.releaseDate,
             'ansible_bios_version': self.host.hardware.biosInfo.biosVersion,
+            'ansible_uptime': self.host.summary.quickStats.uptime,
+            'ansible_in_maintenance_mode': self.host.runtime.inMaintenanceMode,
         }
         return facts
+
+    def properties_facts(self):
+        ansible_facts = self.to_json(self.host, self.params.get('properties'))
+        if self.params.get('show_tag'):
+            vmware_client = VmwareRestClient(self.module)
+            tag_info = {
+                'tags': vmware_client.get_tags_for_hostsystem(hostsystem_mid=self.host._moId)
+            }
+            ansible_facts.update(tag_info)
+
+        self.module.exit_json(changed=False, ansible_facts=ansible_facts)
 
 
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         esxi_hostname=dict(type='str', required=False),
+        show_tag=dict(type='bool', default=False),
+        schema=dict(type='str', choices=['summary', 'vsphere'], default='summary'),
+        properties=dict(type='list')
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
     vm_host_manager = VMwareHostFactManager(module)
-    vm_host_manager.all_facts()
+
+    if module.params['schema'] == 'summary':
+        vm_host_manager.all_facts()
+    else:
+        vm_host_manager.properties_facts()
 
 
 if __name__ == '__main__':

@@ -13,6 +13,7 @@
         that:
           - "notify_listen_ran_1_1 is defined"
           - "notify_listen_ran_1_2 is defined"
+          - "notify_listen_ran_1_3 is undefined"
   handlers:
     - name: notify_handler_ran_1_1
       set_fact:
@@ -22,6 +23,10 @@
       set_fact:
         notify_listen_ran_1_2: True
       listen: notify_listen
+    - name: notify_handler_ran_1_3
+      set_fact:
+        notify_handler_ran_1_3: True
+      listen: notify_listen2
 
 - name: test listen unnamed handlers
   hosts: localhost
@@ -38,6 +43,7 @@
         that:
           - "notify_listen_ran_1 is defined"
           - "notify_listen_ran_2 is defined"
+          - "notify_listen_ran_3 is undefined"
   handlers:
     - set_fact:
         notify_listen_ran_1: True
@@ -45,6 +51,9 @@
     - set_fact:
         notify_listen_ran_2: True
       listen: notify_listen
+    - set_fact:
+        notify_handler_ran_3: True
+      listen: notify_listen2
 
 - name: test with mixed notify by name and listen
   hosts: localhost

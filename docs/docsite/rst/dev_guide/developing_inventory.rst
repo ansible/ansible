@@ -74,6 +74,8 @@ The first thing you want to do is use the base class:
 
         NAME = 'myplugin'  # used internally by Ansible, it should match the file name but not required
 
+If the inventory plugin is in a collection the NAME should be in the format of 'namespace.collection_name.myplugin'.
+
 This class has a couple of methods each plugin should implement and a few helpers for parsing the inventory source and updating the inventory.
 
 After you have the basic plugin working you might want to to incorporate other features by adding more base classes:
@@ -151,7 +153,7 @@ The base class does some minimal assignment for reuse in other methods.
         self.templar = Templar(loader=loader)
 
 It is up to the plugin now to deal with the inventory source provided and translate that into the Ansible inventory.
-To facilitate this the example below uses a few helper functions:
+To facilitate this, the example below uses a few helper functions:
 
 .. code-block:: python
 
@@ -258,7 +260,7 @@ Now that you've enabled caching, loaded the correct plugin, and retrieved a uniq
                 # This occurs if the cache_key is not in the cache or if the cache_key expired, so the cache needs to be updated
                 cache_needs_update = True
 
-        if cache_needs_updates:
+        if cache_needs_update:
             results = self.get_inventory()
 
             # set the cache
@@ -422,11 +424,11 @@ An easy way to see how this should look is using :ref:`ansible-inventory`, which
 
 .. seealso::
 
-   :doc:`developing_api`
+   :ref:`developing_api`
        Python API to Playbooks and Ad Hoc Task Execution
-   :doc:`developing_modules`
-       How to develop modules
-   :doc:`developing_plugins`
+   :ref:`developing_modules_general`
+       Get started with developing a module
+   :ref:`developing_plugins`
        How to develop plugins
    `Ansible Tower <https://www.ansible.com/products/tower>`_
        REST API endpoint and GUI for Ansible, syncs with dynamic inventory

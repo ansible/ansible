@@ -907,7 +907,7 @@ class TestWorkflowModule(unittest.TestCase):
             ]
         }
         result = iap_start_workflow.start_workflow(module)
-        self.assertEquals(result, return_response)
+        self.assertEqual(result, return_response)
 
 
 if __name__ == '__main__':

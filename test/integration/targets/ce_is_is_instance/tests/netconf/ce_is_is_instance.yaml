@@ -1,0 +1,85 @@
+---
+- debug:
+    msg: "START ce_is_is_instance merged integration tests on connection={{ ansible_connection }}"
+
+- block:
+  - name: berfore merged, there should be no isis 100.
+    ce_is_is_instance: &delete
+      instance_id: 100
+      state: absent
+
+  - name: Merge the provided configuration with the exisiting running configuration
+    ce_is_is_instance: &merged
+      instance_id: 100
+      vpn_name: '__public__'
+    register: result
+
+  - name: change ansible_connection to network_cli
+    ce_netconf:
+      rpc: get
+      cfg_xml: "<filter type=\"subtree\">
+                  <isiscomm xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                    <isSites>
+                      <isSite>
+                        <instanceId></instanceId>
+                        <vpnName></vpnName>
+                      </isSite>
+                    </isSites>
+                  </isiscomm>
+                </filter>"
+    register: result_xml
+ 
+  - name: Assert the configuration is reflected on host
+    assert:
+      that:
+        - "result['changed'] == true"
+        - "'<instanceId>100</instanceId>' in result_xml.end_state.result"
+        - "'<vpnName>__public__</vpnName>' in result_xml.end_state.result"
+
+  - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+    ce_is_is_instance: *merged
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+      that:
+        - "result['changed'] == false"
+
+  - name: delete the provided configuration with the exisiting running configuration
+    ce_is_is_instance: *delete
+    register: result
+
+  - name: change ansible_connection to network_cli
+    ce_netconf:
+      rpc: get
+      cfg_xml: "<filter type=\"subtree\">
+                  <isiscomm xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                    <isSites>
+                      <isSite>
+                        <instanceId></instanceId>
+                        <vpnName></vpnName>
+                      </isSite>
+                    </isSites>
+                  </isiscomm>
+                </filter>"
+    register: result_xml
+ 
+  - name: Assert the configuration is reflected on host
+    assert:
+      that:
+        - "result['changed'] == true"
+        - "'<instanceId>100</instanceId>' not in result_xml.end_state.result"
+        - "'<vpnName>__public__</vpnName>' not in result_xml.end_state.result"
+
+  - name: delete the provided configuration with the existing running configuration (IDEMPOTENT)
+    ce_is_is_instance: *delete
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+      that:
+        - "result['changed'] == false"
+
+
+- debug:
+    msg: "END ce_is_is_instance merged integration tests on connection={{ ansible_connection }}"

@@ -19,12 +19,11 @@ module: postgresql_set
 short_description: Change a PostgreSQL server configuration parameter
 description:
    - Allows to change a PostgreSQL server configuration parameter.
-   - The module uses ALTER SYSTEM command U(https://www.postgresql.org/docs/current/sql-altersystem.html)
-     and applies changes by reload server configuration.
+   - The module uses ALTER SYSTEM command and applies changes by reload server configuration.
    - ALTER SYSTEM is used for changing server configuration parameters across the entire database cluster.
    - It can be more convenient and safe than the traditional method of manually editing the postgresql.conf file.
    - ALTER SYSTEM writes the given parameter setting to the $PGDATA/postgresql.auto.conf file,
-     which is read in addition to postgresql.conf U(https://www.postgresql.org/docs/current/sql-altersystem.html).
+     which is read in addition to postgresql.conf.
    - The module allows to reset parameter to boot_val (cluster initial value) by I(reset=yes) or remove parameter
      string from postgresql.auto.conf and reload I(value=default) (for settings with postmaster context restart is required).
    - After change you can see in the ansible output the previous and
@@ -72,15 +71,17 @@ notes:
   not restarted and the value in pg_settings is not updated yet.
 - For some parameters restart of PostgreSQL server is required.
   See official documentation U(https://www.postgresql.org/docs/current/view-pg-settings.html).
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module. If
-  the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host. For Ubuntu-based
-  systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-requirements: [ psycopg2 ]
+seealso:
+- module: postgresql_info
+- name: PostgreSQL server configuration
+  description: General information about PostgreSQL server configuration.
+  link: https://www.postgresql.org/docs/current/runtime-config.html
+- name: PostgreSQL view pg_settings reference
+  description: Complete reference of the pg_settings view documentation.
+  link: https://www.postgresql.org/docs/current/view-pg-settings.html
+- name: PostgreSQL ALTER SYSTEM command reference
+  description: Complete reference of the ALTER SYSTEM command documentation.
+  link: https://www.postgresql.org/docs/current/sql-altersystem.html
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
@@ -103,7 +104,7 @@ EXAMPLES = r'''
 - debug:
     msg: "{{ set.name }} {{ set.prev_val_pretty }} >> {{ set.value_pretty }} restart_req: {{ set.restart_required }}"
   when: set.changed
-# Ensure that the restart of PostgreSQL serever must be required for some parameters.
+# Ensure that the restart of PostgreSQL server must be required for some parameters.
 # In this situation you see the same parameter in prev_val and value_prettyue, but 'changed=True'
 # (If you passed the value that was different from the current server setting).
 
@@ -165,8 +166,11 @@ except Exception:
 from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils._text import to_native
 
 PG_REQ_VER = 90400
@@ -305,7 +309,8 @@ def main():
     if not value and not reset:
         module.fail_json(msg="%s: at least one of value or reset param must be specified" % name)
 
-    db_connection = connect_to_db(module, autocommit=True, warn_db_default=False)
+    conn_params = get_conn_params(module, module.params, warn_db_default=False)
+    db_connection = connect_to_db(module, conn_params, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     kw = {}
@@ -398,7 +403,7 @@ def main():
 
     # Reconnect and recheck current value:
     if context in ('sighup', 'superuser-backend', 'backend', 'superuser', 'user'):
-        db_connection = connect_to_db(module, autocommit=True)
+        db_connection = connect_to_db(module, conn_params, autocommit=True)
         cursor = db_connection.cursor(cursor_factory=DictCursor)
 
         res = param_get(cursor, module, name)

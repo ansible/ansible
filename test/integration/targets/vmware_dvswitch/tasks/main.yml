@@ -86,10 +86,15 @@
       password: "{{ vcenter_password }}"
       datacenter_name: "{{ dc1 }}"
       state: absent
-      switch_name: dvswitch_0001
-    register: dvs_result_0003
+      switch_name: '{{ item }}'
+    loop:
+      - dvswitch_0001
+      - dvswitch_0002
+    register: dvswitch_delete
+  - debug: var=dvswitch_delete
 
-  - name: ensure distributed vswitch is present
+  - name: Ensure the state has changed
     assert:
       that:
-        - dvs_result_0003.changed
+        - dvswitch_delete.results[0] is changed
+        - dvswitch_delete.results[1] is changed

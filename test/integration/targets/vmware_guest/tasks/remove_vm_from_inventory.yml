@@ -1,0 +1,61 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2019, Pavan Bidkar <pbidkar@vmware.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Create VM to unregister
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    folder: F0
+    hardware:
+      num_cpus: 1
+      num_cpu_cores_per_socket: 1
+      memory_mb: 128
+    disk:
+      - size: 1gb
+        type: thin
+        datastore: "{{ rw_datastore }}"
+    state: present
+  register: create_vm_for_test
+
+- name: assert that changes were made
+  assert:
+    that:
+        - create_vm_for_test is changed
+   
+- name: Remove VM from Inventory
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    delete_from_inventory: True
+    state: absent
+  register: remove_vm_from_inventory
+
+- name: assert that changes were made
+  assert:
+    that:
+        - remove_vm_from_inventory is changed
+
+- name: Remove VM again from Inventory
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    delete_from_inventory: True
+    state: absent
+  register: remove_again_vm_from_inventory
+
+- name: assert that changes were made
+  assert:
+    that:
+        - not (remove_again_vm_from_inventory is changed)

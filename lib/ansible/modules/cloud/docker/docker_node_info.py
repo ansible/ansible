@@ -33,6 +33,7 @@ options:
       - When identifying the node use either the hostname of the node (as registered in Swarm) or node ID.
       - If I(self) is C(true) then this parameter is ignored.
     type: list
+    elements: str
   self:
     description:
       - If C(true), queries the node (i.e. the docker daemon) the module communicates with.
@@ -85,12 +86,18 @@ nodes:
         managers and nodes that are unreachable.
     returned: always
     type: list
+    elements: dict
 '''
 
+import traceback
+
+from ansible.module_utils.docker.common import (
+    RequestException,
+)
 from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
 
 try:
-    from docker.errors import APIError, NotFound
+    from docker.errors import DockerException
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -136,12 +143,17 @@ def main():
 
     client.fail_task_if_not_swarm_manager()
 
-    nodes = get_node_facts(client)
+    try:
+        nodes = get_node_facts(client)
 
-    client.module.exit_json(
-        changed=False,
-        nodes=nodes,
-    )
+        client.module.exit_json(
+            changed=False,
+            nodes=nodes,
+        )
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

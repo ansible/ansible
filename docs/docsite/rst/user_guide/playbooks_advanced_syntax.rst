@@ -104,7 +104,7 @@ You've anchored the value of ``version`` with the ``&my_version`` anchor, and re
 
 .. seealso::
 
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

@@ -111,6 +111,12 @@ class HostVars(Mapping):
             out[host] = self.get(host)
         return repr(out)
 
+    def __deepcopy__(self, memo):
+        # We do not need to deepcopy because HostVars is immutable,
+        # however we have to implement the method so we can deepcopy
+        # variables' dicts that contain HostVars.
+        return self
+
 
 class HostVarsVars(Mapping):
 
@@ -134,4 +140,5 @@ class HostVarsVars(Mapping):
         return len(self._vars.keys())
 
     def __repr__(self):
-        return repr(self._vars)
+        templar = Templar(variables=self._vars, loader=self._loader)
+        return repr(templar.template(self._vars, fail_on_undefined=False, static_vars=STATIC_VARS))

@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 from units.compat import unittest
-from units.compat.mock import Mock
+from units.compat.mock import Mock, patch
 
 
 class BaseFactsTest(unittest.TestCase):
@@ -45,14 +45,18 @@ class BaseFactsTest(unittest.TestCase):
         mock_module.get_bin_path = Mock(return_value=None)
         return mock_module
 
-    def test_collect(self):
+    @patch('platform.system', return_value='Linux')
+    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='systemd')
+    def test_collect(self, mock_gfc, mock_ps):
         module = self._mock_module()
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect(module=module, collected_facts=self.collected_facts)
         self.assertIsInstance(facts_dict, dict)
         return facts_dict
 
-    def test_collect_with_namespace(self):
+    @patch('platform.system', return_value='Linux')
+    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='systemd')
+    def test_collect_with_namespace(self, mock_gfc, mock_ps):
         module = self._mock_module()
         fact_collector = self.collector_class()
         facts_dict = fact_collector.collect_with_namespace(module=module,

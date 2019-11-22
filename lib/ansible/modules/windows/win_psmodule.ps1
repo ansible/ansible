@@ -69,7 +69,17 @@ Function Install-PrereqModule {
             }
             else {
                 try {
-                    Install-Module -Name $Name -MinimumVersion $PrereqModules[$Name] -Force -WhatIf:$CheckMode | Out-Null
+                    $install_params = @{
+                        Name = $Name
+                        MinimumVersion = $PrereqModules[$Name]
+                        Force = $true
+                        WhatIf = $CheckMode
+                    }
+                    if ((Get-Command -Name Install-Module).Parameters.ContainsKey('SkipPublisherCheck')) {
+                        $install_params.SkipPublisherCheck = $true
+                    }
+
+                    Install-Module @install_params > $null
 
                     if ( $Name -eq 'PowerShellGet' ) {
                         # An order has to be reverted due to dependency

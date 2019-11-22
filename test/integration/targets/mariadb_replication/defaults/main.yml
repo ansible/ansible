@@ -1,0 +1,7 @@
+master_port: 3306
+standby_port: 3307
+test_db: test_db
+replication_user: replication_user
+replication_pass: replication_pass
+dump_path: /tmp/dump.sql
+conn_name: master-1

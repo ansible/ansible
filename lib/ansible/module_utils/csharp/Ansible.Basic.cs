@@ -304,7 +304,8 @@ namespace Ansible.Basic
                 }
                 catch (System.Security.SecurityException)
                 {
-                    Warn(String.Format("Access error when creating EventLog source {0}, logging to the Application source instead", logSource));
+                    // Cannot call Warn as that calls LogEvent and we get stuck in a loop
+                    warnings.Add(String.Format("Access error when creating EventLog source {0}, logging to the Application source instead", logSource));
                     logSource = "Application";
                 }
             }
@@ -699,8 +700,9 @@ namespace Ansible.Basic
                 if ((bool)v["no_log"])
                 {
                     object noLogObject = parameters.Contains(k) ? parameters[k] : null;
-                    if (noLogObject != null)
-                        noLogValues.Add(noLogObject.ToString());
+                    string noLogString = noLogObject == null ? "" : noLogObject.ToString();
+                    if (!String.IsNullOrEmpty(noLogString))
+                        noLogValues.Add(noLogString);
                 }
 
                 object removedInVersion = v["removed_in_version"];

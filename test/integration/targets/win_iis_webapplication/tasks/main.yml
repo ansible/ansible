@@ -1,0 +1,70 @@
+---
+# Cannot use win_feature to install IIS on Server 2008.
+# Run a brief check and skip hosts that don't support
+# that operation
+
+# Run on Server 2012 and higher
+- block:
+  - name: ensure IIS features are installed
+    win_feature:
+      name: Web-Server
+      state: present
+      include_management_tools: True
+    register: feature_install
+
+  - name: reboot after feature install
+    win_reboot:
+    when: feature_install.reboot_required
+
+    # may be possible that copy corrupts the file
+  - name: Get iis configuration checksum
+    win_stat:
+      path: '{{ ansible_env.SystemRoot }}\System32\inetsrv\config\applicationHost.config'
+      checksum_algorithm: sha1
+    register: stat_result
+
+  - name: take a copy of the original iis configuration
+    win_copy:
+      src: '{{ ansible_env.SystemRoot }}\System32\inetsrv\config\applicationHost.config'
+      dest: '{{ ansible_env.TEMP }}\applicationHost.config'
+      remote_src: yes
+    register: copy_result
+
+  - assert:
+      that:
+        - "stat_result.stat.checksum == copy_result.checksum"
+
+  # Tests
+  - name: run tests on hosts that support it
+    include_tasks: tests.yml
+
+  always:
+  # Cleanup
+  - name: remove test application
+    win_iis_webapplication:
+      state: absent
+      site: "{{ test_site_name }}"
+      name: "{{ test_app_name }}"
+
+  - name: remove test application pool
+    win_iis_webapppool:
+      name: "{{ test_apppool }}"
+      state: absent
+
+  - name: remove test site
+    win_iis_website:
+      name: "{{ test_site_name }}"
+      state: absent
+
+  - name: restore iis configuration
+    win_copy:
+      src: '{{ ansible_env.TEMP }}\applicationHost.config'
+      dest: '{{ ansible_env.SystemRoot }}\System32\inetsrv\config\applicationHost.config'
+      remote_src: yes
+    register: copy_result
+
+  - assert:
+      that:
+        - "stat_result.stat.checksum == copy_result.checksum"
+
+  when: ansible_distribution_version is version('6.2','ge')

@@ -241,6 +241,11 @@ options:
         aliases:
           - username
         type: str
+    max_allocated_storage:
+        description:
+          - The upper limit to which Amazon RDS can automatically scale the storage of the DB instance.
+        type: int
+        version_added: "2.9"
     monitoring_interval:
         description:
           - The interval, in seconds, when Enhanced Monitoring metrics are collected for the DB instance. To disable collecting
@@ -320,7 +325,7 @@ options:
     restore_time:
         description:
           - If using I(creation_source=instance) this indicates the UTC date and time to restore from the source instance.
-            For example, "2009-09-07T23:45:00Z". May alternatively set c(use_latest_restore_time) to True.
+            For example, "2009-09-07T23:45:00Z". May alternatively set C(use_latest_restore_time) to True.
         type: str
     s3_bucket_name:
         description:
@@ -643,6 +648,11 @@ master_username:
   returned: always
   type: str
   sample: test
+max_allocated_storage:
+  description: The upper limit to which Amazon RDS can automatically scale the storage of the DB instance.
+  returned: When max allocated storage is present.
+  type: int
+  sample: 100
 monitoring_interval:
   description:
     - The interval, in seconds, between points when Enhanced Monitoring metrics are collected for the DB instance.
@@ -847,7 +857,7 @@ def get_options_with_changing_values(client, module, parameters):
     if cloudwatch_logs_enabled:
         parameters['CloudwatchLogsExportConfiguration'] = cloudwatch_logs_enabled
     if not module.params['storage_type']:
-        parameters.pop('Iops')
+        parameters.pop('Iops', None)
 
     instance = get_instance(client, module, instance_id)
     updated_parameters = get_changing_options_with_inconsistent_keys(parameters, instance, purge_cloudwatch_logs)
@@ -903,6 +913,9 @@ def get_current_attributes_with_inconsistent_keys(instance):
 def get_changing_options_with_inconsistent_keys(modify_params, instance, purge_cloudwatch_logs):
     changing_params = {}
     current_options = get_current_attributes_with_inconsistent_keys(instance)
+
+    if current_options.get("MaxAllocatedStorage") is None:
+        current_options["MaxAllocatedStorage"] = None
 
     for option in current_options:
         current_option = current_options[option]
@@ -1094,6 +1107,7 @@ def main():
         license_model=dict(),
         master_user_password=dict(aliases=['password'], no_log=True),
         master_username=dict(aliases=['username']),
+        max_allocated_storage=dict(type='int'),
         monitoring_interval=dict(type='int'),
         monitoring_role_arn=dict(),
         multi_az=dict(type='bool'),

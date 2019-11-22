@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: sts_assume_role
 short_description: Assume a role using AWS Security Token Service and obtain temporary credentials
 description:
-    - Assume a role using AWS Security Token Service and obtain temporary credentials
+    - Assume a role using AWS Security Token Service and obtain temporary credentials.
 version_added: "2.0"
 author:
     - Boris Ekelchik (@bekelchik)
@@ -27,27 +27,34 @@ options:
       - The Amazon Resource Name (ARN) of the role that the caller is
         assuming U(https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html#Identifiers_ARNs).
     required: true
+    type: str
   role_session_name:
     description:
-      - Name of the role's session - will be used by CloudTrail
+      - Name of the role's session - will be used by CloudTrail.
     required: true
+    type: str
   policy:
     description:
       - Supplemental policy to use in addition to assumed role's policies.
+    type: str
   duration_seconds:
     description:
       - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 43200 seconds (12 hours).
-        The max depends on the IAM role's sessions duration setting.
-        By default, the value is set to 3600 seconds.
+      - The max depends on the IAM role's sessions duration setting.
+      - By default, the value is set to 3600 seconds.
+    type: int
   external_id:
     description:
       - A unique identifier that is used by third parties to assume a role in their customers' accounts.
+    type: str
   mfa_serial_number:
     description:
       - The identification number of the MFA device that is associated with the user who is making the AssumeRole call.
+    type: str
   mfa_token:
     description:
       - The value provided by the MFA device, if the trust policy of the role being assumed requires MFA.
+    type: str
 notes:
   - In order to use the assumed role in a following playbook task you must pass the access_key, access_secret and access_token.
 extends_documentation_fragment:
@@ -86,20 +93,20 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Assume an existing role (more details: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
-sts_assume_role:
-  role_arn: "arn:aws:iam::123456789012:role/someRole"
-  role_session_name: "someRoleSession"
-register: assumed_role
+- sts_assume_role:
+    role_arn: "arn:aws:iam::123456789012:role/someRole"
+    role_session_name: "someRoleSession"
+  register: assumed_role
 
 # Use the assumed role above to tag an instance in account 123456789012
-ec2_tag:
-  aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
-  aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
-  security_token: "{{ assumed_role.sts_creds.session_token }}"
-  resource: i-xyzxyz01
-  state: present
-  tags:
-    MyNewTag: value
+- ec2_tag:
+    aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
+    aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
+    security_token: "{{ assumed_role.sts_creds.session_token }}"
+    resource: i-xyzxyz01
+    state: present
+    tags:
+      MyNewTag: value
 
 '''
 
@@ -156,8 +163,8 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            role_arn=dict(required=True, default=None),
-            role_session_name=dict(required=True, default=None),
+            role_arn=dict(required=True),
+            role_session_name=dict(required=True),
             duration_seconds=dict(required=False, default=None, type='int'),
             external_id=dict(required=False, default=None),
             policy=dict(required=False, default=None),

@@ -103,10 +103,11 @@ options:
                 description:
                     - The protocol of the end point to be probed.
                     - If C(Tcp) is specified, a received ACK is required for the probe to be successful.
-                    - If C(Http) is specified, a 200 OK response from the specified URL is required for the probe to be successful.
+                    - If C(Http) or C(Https) is specified, a 200 OK response from the specified URL is required for the probe to be successful.
                 choices:
                     - Tcp
                     - Http
+                    - Https
             interval:
                 description:
                     - The interval, in seconds, for how frequently to probe the endpoint for health status.
@@ -123,7 +124,7 @@ options:
             request_path:
                 description:
                     - The URI used for requesting health status from the VM.
-                    - Path is required if I(protocol=Http). Otherwise, it is not allowed.
+                    - Path is required if I(protocol=Http) or I(protocol=Https). Otherwise, it is not allowed.
         version_added: '2.5'
     inbound_nat_pools:
         description:
@@ -289,6 +290,7 @@ options:
         choices:
             - Tcp
             - Http
+            - Https
     probe_interval:
         description:
             - (deprecated) Time (in seconds) between endpoint health probes.
@@ -301,7 +303,7 @@ options:
         default: 3
     probe_request_path:
         description:
-            - (deprecated) The URL that an HTTP probe will use (only relevant if I(probe_protocol=Http)).
+            - (deprecated) The URL that an HTTP probe or HTTPS probe will use (only relevant if I(probe_protocol=Http) or I(probe_protocol=Https)).
             - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
     protocol:
         description:
@@ -454,7 +456,7 @@ probes_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Http']
+        choices=['Tcp', 'Http', 'Https']
     ),
     interval=dict(
         type='int',
@@ -639,7 +641,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             ),
             probe_protocol=dict(
                 type='str',
-                choices=['Tcp', 'Http']
+                choices=['Tcp', 'Http', 'Https']
             ),
             probe_interval=dict(
                 type='int',

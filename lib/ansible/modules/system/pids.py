@@ -52,8 +52,23 @@ except ImportError:
     HAS_PSUTIL = False
 
 
+def compare_lower(a, b):
+    if a is None or b is None:
+        # this could just be "return False" but would lead to surprising behavior if both a and b are None
+        return a == b
+
+    return a.lower() == b.lower()
+
+
 def get_pid(name):
-    return [p.info['pid'] for p in psutil.process_iter(attrs=['pid', 'name']) if p.info and p.info.get('name', None) and p.info['name'].lower() == name.lower()]
+    pids = []
+
+    for proc in psutil.process_iter(attrs=['name', 'cmdline']):
+        if compare_lower(proc.info['name'], name) or \
+                proc.info['cmdline'] and compare_lower(proc.info['cmdline'][0], name):
+            pids.append(proc.pid)
+
+    return pids
 
 
 def main():

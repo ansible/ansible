@@ -25,34 +25,46 @@ options:
       - Indicate desired state of the target.
     default: present
     choices: ['present', 'absent', 'running', 'restarted', 'stopped']
+    type: str
   name:
     description:
-      - Name of the instance
+      - Name of the instance.
     required: true
+    type: str
   zone:
     description:
-      - AWS availability zone in which to launch the instance. Required when state='present'
+      - AWS availability zone in which to launch the instance.
+      - Required when I(state=present)
+    type: str
   blueprint_id:
     description:
-      - ID of the instance blueprint image. Required when state='present'
+      - ID of the instance blueprint image.
+      - Required when I(state=present)
+    type: str
   bundle_id:
     description:
-      - Bundle of specification info for the instance. Required when state='present'
+      - Bundle of specification info for the instance.
+      - Required when I(state=present).
+    type: str
   user_data:
     description:
-      - Launch script that can configure the instance with additional data
+      - Launch script that can configure the instance with additional data.
+    type: str
   key_pair_name:
     description:
-      - Name of the key pair to use with the instance
+      - Name of the key pair to use with the instance.
+    type: str
   wait:
     description:
-      - Wait for the instance to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned
+      - Wait for the instance to be in state 'running' before returning.
+      - If I(wait=false) an ip_address may not be returned.
     type: bool
-    default: 'yes'
+    default: true
   wait_timeout:
     description:
-      - How long before wait gives up, in seconds.
+      - How long before I(wait) gives up, in seconds.
     default: 300
+    type: int
 
 requirements:
   - "python >= 2.6"
@@ -248,6 +260,10 @@ def delete_instance(module, client, instance_name):
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] != 'NotFoundException':
             module.fail_json(msg='Error finding instance {0}, error: {1}'.format(instance_name, e))
+
+    # If instance doesn't exist, then return with 'changed:false'
+    if not inst:
+        return changed, {}
 
     # Wait for instance to exit transition state before deleting
     if wait:

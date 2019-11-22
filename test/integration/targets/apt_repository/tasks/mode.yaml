@@ -1,0 +1,130 @@
+---
+
+# These tests are likely slower than they should be, since each
+# invocation of apt_repository seems to end up querying for
+# lots (all?) configured repos.
+
+- set_fact:
+    test_repo_spec: "deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main"
+    test_repo_path: /etc/apt/sources.list.d/apt_postgresql_org_pub_repos_apt.list
+
+- include: mode_cleanup.yaml
+
+- name: Add GPG key to verify signatures
+  apt_key:
+    id: 7FCC7D46ACCC4CF8
+    keyserver: keyserver.ubuntu.com
+
+- name: Mode specified as yaml literal 0600
+  apt_repository:
+    repo: "{{ test_repo_spec }}"
+    state: present
+    mode: 0600
+  register: mode_given_results
+
+- name: Gather mode_given_as_literal_yaml stat
+  stat:
+    path: "{{ test_repo_path }}"
+  register: mode_given_yaml_literal_0600
+
+- name: Show mode_given_yaml_literal_0600
+  debug:
+    var: mode_given_yaml_literal_0600
+
+- include: mode_cleanup.yaml
+
+- name: Assert mode_given_yaml_literal_0600 is correct
+  assert:
+    that: "mode_given_yaml_literal_0600.stat.mode == '0600'"
+
+- name: No mode specified
+  apt_repository:
+    repo: "{{ test_repo_spec }}"
+    state: present
+  register: no_mode_results
+
+- name: Gather no mode stat
+  stat:
+    path: "{{ test_repo_path }}"
+  register: no_mode_stat
+
+- name: Show no mode stat
+  debug:
+    var: no_mode_stat
+
+- include: mode_cleanup.yaml
+
+- name: Assert no_mode_stat is correct
+  assert:
+    that: "no_mode_stat.stat.mode == '0644'"
+
+- name: Mode specified as string 0600
+  apt_repository:
+    repo: "{{ test_repo_spec }}"
+    state: present
+    mode: "0600"
+  register: mode_given_string_results
+
+- name: Gather mode_given_string stat
+  stat:
+    path: "{{ test_repo_path }}"
+  register: mode_given_string_stat
+
+- name: Show mode_given_string_stat
+  debug:
+    var: mode_given_string_stat
+
+- include: mode_cleanup.yaml
+
+- name: Mode specified as string 600
+  apt_repository:
+    repo: "{{ test_repo_spec }}"
+    state: present
+    mode: "600"
+  register: mode_given_string_600_results
+
+- name: Gather mode_given_600_string stat
+  stat:
+    path: "{{ test_repo_path }}"
+  register: mode_given_string_600_stat
+
+- name: Show mode_given_string_stat
+  debug:
+    var: mode_given_string_600_stat
+
+- include: mode_cleanup.yaml
+
+- name: Assert mode is correct
+  assert:
+    that: "mode_given_string_600_stat.stat.mode == '0600'"
+
+- name: Mode specified as yaml literal 600
+  apt_repository:
+    repo: "{{ test_repo_spec }}"
+    state: present
+    mode: 600
+  register: mode_given_short_results
+
+- name: Gather mode_given_yaml_literal_600 stat
+  stat:
+    path: "{{ test_repo_path }}"
+  register: mode_given_yaml_literal_600
+
+- name: Show mode_given_yaml_literal_600
+  debug:
+    var: mode_given_yaml_literal_600
+
+- include: mode_cleanup.yaml
+
+# a literal 600 as the mode will fail currently, in the sense that it
+# doesn't guess and consider 600 and 0600 to be the same, and will instead
+# intepret literal 600 as the decimal 600 (and thereby octal 1130).
+# The literal 0600 can be interpreted as octal correctly. Note that
+# a decimal 644 is octal 420. The default perm is 0644 so a mis intrpretation
+# of 644 was previously resulting in a default file mode of 0420.
+# 'mode: 600' is likely not what a user meant but there isnt enough info
+# to determine that. Note that a string arg of '600' will be intrepeted as 0600.
+# See https://github.com/ansible/ansible/issues/16370
+- name: Assert mode_given_yaml_literal_600 is correct
+  assert:
+    that: "mode_given_yaml_literal_600.stat.mode == '1130'"

@@ -1,0 +1,7 @@
+---
+x: 100
+y: "{{ x }}"
+nested_x:
+  value:
+    x: 100
+nested_y: "{{ nested_x }}"

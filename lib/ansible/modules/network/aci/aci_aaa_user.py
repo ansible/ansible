@@ -294,26 +294,26 @@ def main():
     if not HAS_DATEUTIL:
         module.fail_json(msg='dateutil required for this module')
 
-    aaa_password = module.params['aaa_password']
-    aaa_password_lifetime = module.params['aaa_password_lifetime']
-    aaa_password_update_required = aci.boolean(module.params['aaa_password_update_required'])
-    aaa_user = module.params['aaa_user']
-    clear_password_history = aci.boolean(module.params['clear_password_history'], 'yes', 'no')
-    description = module.params['description']
-    email = module.params['email']
-    enabled = aci.boolean(module.params['enabled'], 'active', 'inactive')
-    expires = aci.boolean(module.params['expires'])
-    first_name = module.params['first_name']
-    last_name = module.params['last_name']
-    phone = module.params['phone']
-    state = module.params['state']
+    aaa_password = module.params.get('aaa_password')
+    aaa_password_lifetime = module.params.get('aaa_password_lifetime')
+    aaa_password_update_required = aci.boolean(module.params.get('aaa_password_update_required'))
+    aaa_user = module.params.get('aaa_user')
+    clear_password_history = aci.boolean(module.params.get('clear_password_history'), 'yes', 'no')
+    description = module.params.get('description')
+    email = module.params.get('email')
+    enabled = aci.boolean(module.params.get('enabled'), 'active', 'inactive')
+    expires = aci.boolean(module.params.get('expires'))
+    first_name = module.params.get('first_name')
+    last_name = module.params.get('last_name')
+    phone = module.params.get('phone')
+    state = module.params.get('state')
 
-    expiration = module.params['expiration']
+    expiration = module.params.get('expiration')
     if expiration is not None and expiration != 'never':
         try:
             expiration = aci.iso8601_format(dateutil.parser.parse(expiration).replace(tzinfo=tzutc()))
         except Exception as e:
-            module.fail_json(msg="Failed to parse date format '%s', %s" % (module.params['expiration'], e))
+            module.fail_json(msg="Failed to parse date format '%s', %s" % (module.params.get('expiration'), e))
 
     aci.construct_url(
         root_class=dict(

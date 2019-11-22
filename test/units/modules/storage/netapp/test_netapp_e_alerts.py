@@ -1,6 +1,5 @@
 # (c) 2018, NetApp Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-import json
 
 from ansible.modules.storage.netapp.netapp_e_alerts import Alerts
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
@@ -72,8 +71,8 @@ class AlertsTest(ModuleTestCase):
         # Expecting an update
         with mock.patch(self.REQ_FUNC, return_value=(200, expected)) as req:
             actual = alerts.get_configuration()
-            self.assertEquals(expected, actual)
-            self.assertEquals(req.call_count, 1)
+            self.assertEqual(expected, actual)
+            self.assertEqual(req.call_count, 1)
 
     def test_update_configuration(self):
         """Validate updating the configuration"""

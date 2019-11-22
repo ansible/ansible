@@ -24,6 +24,7 @@ options:
       - The full path of the file/object to get the facts of.
     type: path
     required: true
+    aliases: [ dest, name ]
   follow:
     description:
       - Whether to follow symlinks.
@@ -142,9 +143,9 @@ stat:
             type: str
             sample: '/path/to/file'
         mode:
-            description: Unix permissions of the file in octal
+            description: Unix permissions of the file in octal representation as a string
             returned: success, path exists and user can read stats
-            type: octal
+            type: str
             sample: 1755
         isdir:
             description: Tells you if the path is a directory
@@ -342,7 +343,7 @@ stat:
             sample: False
             version_added: 2.2
         executable:
-            description: Tells you if the invoking user has the execute the path
+            description: Tells you if the invoking user has execute permission on the path
             returned: success, path exists and user can execute the path
             type: bool
             sample: False
@@ -431,7 +432,7 @@ def format_output(module, path, st):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(type='path', required=True),
+            path=dict(type='path', required=True, aliases=['dest', 'name']),
             follow=dict(type='bool', default=False),
             get_md5=dict(type='bool', default=False),
             get_checksum=dict(type='bool', default=True),

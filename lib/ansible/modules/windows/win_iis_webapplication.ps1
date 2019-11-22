@@ -13,6 +13,9 @@ $site = Get-AnsibleParam -obj $params -name "site" -type "str" -failifempty $tru
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
 $physical_path = Get-AnsibleParam -obj $params -name "physical_path" -type "str" -aliases "path"
 $application_pool = Get-AnsibleParam -obj $params -name "application_pool" -type "str"
+$connect_as = Get-AnsibleParam -obj $params -name 'connect_as' -type 'str' -validateset 'specific_user', 'pass_through'
+$username = Get-AnsibleParam -obj $params -name "username" -type "str" -failifempty ($connect_as -eq 'specific_user')
+$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($connect_as -eq 'specific_user')
 
 $result = @{
   application_pool = $application_pool
@@ -27,6 +30,12 @@ if ($null -eq (Get-Module "WebAdministration" -ErrorAction SilentlyContinue)) {
 
 # Application info
 $application = Get-WebApplication -Site $site -Name $name
+$website = Get-Website -Name $site
+
+# Set ApplicationPool to current if not specified
+if (!$application_pool) {
+  $application_pool = $website.applicationPool
+}
 
 try {
   # Add application
@@ -84,6 +93,29 @@ try {
         $result.changed = $true
       }
     }
+
+    # Change username and password if needed
+    $app_user = Get-ItemProperty -Path "IIS:\Sites\$($site)\$($name)" -Name 'userName'
+    $app_pass = Get-ItemProperty -Path "IIS:\Sites\$($site)\$($name)" -Name 'password'
+    if ($connect_as -eq 'pass_through') {
+      if ($app_user -ne '') {
+        Clear-ItemProperty -Path "IIS:\Sites\$($site)\$($name)" -Name 'userName' -WhatIf:$check_mode
+        $result.changed = $true
+      }
+      if ($app_pass -ne '') {
+        Clear-ItemProperty -Path "IIS:\Sites\$($site)\$($name)" -Name 'password' -WhatIf:$check_mode
+        $result.changed = $true
+      }
+    } elseif ($connect_as -eq 'specific_user') {
+      if ($app_user -ne $username) {
+        Set-ItemProperty -Path "IIS:\Sites\$($site)\$($name)" -Name 'userName' -Value $username -WhatIf:$check_mode
+        $result.changed = $true
+      }
+      if ($app_pass -ne $password) {
+        Set-ItemProperty -Path "IIS:\Sites\$($site)\$($name)" -Name 'password' -Value $password -WhatIf:$check_mode
+        $result.changed = $true
+      }
+    }
   }
 } catch {
   Fail-Json $result $_.Exception.Message
@@ -92,6 +124,13 @@ try {
 # When in check-mode or on removal, this may fail
 $application = Get-WebApplication -Site $site -Name $name
 if ($application) {
+  $app_user = Get-ItemProperty -Path "IIS:\Sites\$($site)\$($name)" -Name 'userName'
+  if ($app_user -eq '') {
+    $result.connect_as = 'pass_through'
+  } else {
+    $result.connect_as = 'specific_user'
+  }
+
   $result.physical_path = $application.PhysicalPath
   $result.application_pool = $application.ApplicationPool
 }

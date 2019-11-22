@@ -5,6 +5,7 @@
   netconf_config:
     backup: yes
   register: result
+  connection: netconf
 
 - assert:
     that:

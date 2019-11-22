@@ -33,7 +33,8 @@ options:
   state:
     description:
     - If C(absent), directories will be recursively deleted, and files or symlinks will
-      be unlinked. Note that C(absent) will not cause C(file) to fail if the C(path) does
+      be unlinked. In the case of a directory, if C(diff) is declared, you will see the files and folders deleted listed
+      under C(path_contents). Note that C(absent) will not cause C(file) to fail if the C(path) does
       not exist as the state did not change.
     - If C(directory), all intermediate subdirectories will be created if they
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
@@ -125,7 +126,7 @@ EXAMPLES = r'''
     group: foo
     mode: '0644'
 
-- name: Create an insecure file
+- name: Give insecure permissions to an existing file
   file:
     path: /work
     owner: root
@@ -144,8 +145,8 @@ EXAMPLES = r'''
   file:
     src: '/tmp/{{ item.src }}'
     dest: '{{ item.dest }}'
-    state: link
-  with_items:
+    state: hard
+  loop:
     - { src: x, dest: y }
     - { src: z, dest: k }
 
@@ -195,6 +196,16 @@ EXAMPLES = r'''
     recurse: yes
     owner: foo
     group: foo
+
+- name: Remove file (delete file)
+  file:
+    path: /etc/foo.txt
+    state: absent
+
+- name: Recursively remove directory
+  file:
+    path: /etc/foo
+    state: absent
 
 '''
 RETURN = r'''
@@ -367,7 +378,7 @@ def initial_diff(path, state, prev_state):
     if prev_state != state:
         diff['before']['state'] = prev_state
         diff['after']['state'] = state
-        if state == 'absent':
+        if state == 'absent' and prev_state == 'directory':
             walklist = {
                 'directories': [],
                 'files': [],
@@ -759,7 +770,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     # Now that we might have created the symlink, get the arguments.
     # We need to do it now so we can properly follow the symlink if needed
     # because load_file_common_arguments sets 'path' according
-    # the value of follow and the symlink existance.
+    # the value of follow and the symlink existence.
     file_args = module.load_file_common_arguments(module.params)
 
     # Whenever we create a link to a nonexistent target we know that the nonexistent target

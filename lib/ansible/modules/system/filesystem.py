@@ -78,10 +78,11 @@ EXAMPLES = '''
 
 from distutils.version import LooseVersion
 import os
+import platform
 import re
 import stat
 
-from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.basic import AnsibleModule
 
 
 class Device(object):
@@ -281,7 +282,7 @@ class F2fs(Filesystem):
 
 
 class VFAT(Filesystem):
-    if get_platform() == 'FreeBSD':
+    if platform.system() == 'FreeBSD':
         MKFS = "newfs_msdos"
     else:
         MKFS = 'mkfs.vfat'
@@ -390,9 +391,7 @@ def main():
             module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % fstype)
 
         out = filesystem.grow(dev)
-        # Sadly there is no easy way to determine if this has changed. For now, just say "true" and move on.
-        #  in the future, you would have to parse the output to determine this.
-        #  thankfully, these are safe operations if no change is made.
+
         module.exit_json(changed=True, msg=out)
     elif fs and not force:
         module.fail_json(msg="'%s' is already used as %s, use force=yes to overwrite" % (dev, fs), rc=rc, err=err)

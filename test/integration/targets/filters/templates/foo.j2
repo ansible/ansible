@@ -38,7 +38,7 @@ quoted = {{ 'quoted' | quote }}
 
 The fileglob module returns the list of things matching a pattern.
 
-fileglob = {{ (output_dir + '/*') | fileglob }}
+fileglob = {{ (playbook_dir + '/files/fileglob/*') | fileglob | map('basename') | sort | join(', ') }}
 
 There are also various string operations that work on paths.  These do not require
 files to exist and are passthrus to the python os.path functions

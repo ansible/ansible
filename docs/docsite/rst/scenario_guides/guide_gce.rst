@@ -8,7 +8,7 @@ Introduction
 
 Ansible + Google have been working together on a set of auto-generated
 Ansible modules designed to consistently and comprehensively cover the entirety
-of the Google Cloud Platform.
+of the Google Cloud Platform (GCP).
 
 Ansible contains modules for managing Google Cloud Platform resources,
 including creating instances, controlling network access, working with
@@ -18,7 +18,8 @@ These new modules can be found under a new consistent name scheme "gcp_*"
 (Note: gcp_target_proxy and gcp_url_map are legacy modules, despite the "gcp_*"
 name. Please use gcp_compute_target_proxy and gcp_compute_url_map instead).
 
-Additionally, the gcp_compute inventory plugin can discover all GCE instances
+Additionally, the gcp_compute inventory plugin can discover all
+Google Compute Engine (GCE) instances
 and make them automatically available in your Ansible inventory.
 
 You may see a collection of other GCP modules that do not conform to this
@@ -35,7 +36,7 @@ these new modules if possible.
 
 Requisites
 ---------------
-The Google Cloud Platform (GCP) modules require both the ``requests`` and the
+The GCP modules require both the ``requests`` and the
 ``google-auth`` libraries to be installed.
 
 .. code-block:: bash
@@ -233,17 +234,17 @@ rest.
               - https://www.googleapis.com/auth/compute
         register: instance
 
-       - name: Wait for SSH to come up
-         wait_for: host={{ address.address }} port=22 delay=10 timeout=60
+      - name: Wait for SSH to come up
+        wait_for: host={{ address.address }} port=22 delay=10 timeout=60
 
-       - name: Add host to groupname
-         add_host: hostname={{ address.address }} groupname=new_instances
+      - name: Add host to groupname
+        add_host: hostname={{ address.address }} groupname=new_instances
 
 
    - name: Manage new instances
      hosts: new_instances
      connection: ssh
-     sudo: True
+     become: True
      roles:
        - base_configuration
        - production_server
@@ -306,6 +307,6 @@ An example playbook is below:
       auth_kind: "service_account_file"
       service_account_file: "~/my_account.json"
       state: present
-  with_items:
+  loop:
     - instance-1
     - instance-2

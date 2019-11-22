@@ -1,0 +1,53 @@
+---
+- debug:
+    msg: "START junos_lacp RTT integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- set_fact:
+    expected_revert_output:
+      - system_priority: 63
+        link_protection: non-revertive
+
+- block:
+    - name: Apply the provided configuration (base config)
+      junos_lacp:
+        config:
+          system_priority: 63
+          link_protection: non-revertive
+        state: merged
+
+    - name: Gather interfaces facts
+      junos_facts:
+        gather_subset:
+          - default
+        gather_network_resources:
+          - lacp
+
+    - name: Apply the provided configuration (config to be reverted)
+      junos_lacp: &replaced
+        config:
+          system_priority: 73
+          link_protection: revertive
+        state: replaced
+      register: result
+
+    - name: Assert that changes were applied
+      assert:
+        that: "result['changed'] == true"
+
+    - name: Revert back to base config using facts round trip
+      junos_lacp:
+        config: "{{ ansible_facts['network_resources']['lacp'] }}"
+        state: replaced
+      register: revert
+
+    - name: Assert that config was reverted
+      assert:
+        that: "{{ expected_revert_output | symmetric_difference([revert['after']]) |length == 0 }}"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_lacp RTT integration tests on connection={{ ansible_connection }}"

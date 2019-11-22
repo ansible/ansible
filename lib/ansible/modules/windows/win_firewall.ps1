@@ -20,8 +20,12 @@ $result = @{
     state = $state
 }
 
-if ($PSVersionTable.PSVersion -lt [Version]"5.0") {
-    Fail-Json $result "win_firewall requires Windows Management Framework 5 or higher."
+try {
+    get-command Get-NetFirewallProfile > $null
+    get-command Set-NetFirewallProfile > $null
+}
+catch {
+    Fail-Json $result "win_firewall requires Get-NetFirewallProfile and Set-NetFirewallProfile Cmdlets."
 }
 
 Try {

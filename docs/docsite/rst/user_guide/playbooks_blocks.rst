@@ -13,22 +13,22 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
   tasks:
     - name: Install, configure, and start Apache
       block:
-      - name: install httpd and memcached
-        yum:
-          name: "{{ item }}"
-          state: present
-        loop:
-          - httpd
-          - memcached
-      - name: apply the foo config template
-        template:
-          src: templates/src.j2
-          dest: /etc/foo.conf
-      - name: start service bar and enable it
-        service:
-          name: bar
-          state: started
-          enabled: True
+        - name: install httpd and memcached
+          yum:
+            name:
+            - httpd
+            - memcached
+            state: present
+
+        - name: apply the foo config template
+          template:
+            src: templates/src.j2
+            dest: /etc/foo.conf
+        - name: start service bar and enable it
+          service:
+            name: bar
+            state: started
+            enabled: True
       when: ansible_facts['distribution'] == 'CentOS'
       become: true
       become_user: root
@@ -155,9 +155,9 @@ ansible_failed_result
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

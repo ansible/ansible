@@ -1,0 +1,11 @@
+[mysqld]
+server_id           = 2
+port                = {{ replica_db.port }}
+datadir             = {{ replica_db.datadir }}
+socket              = {{ replica_db.datadir }}/mysqld_replica.sock
+pid-file            = {{ replica_db.datadir }}/mysqld_replica.pid
+log_bin             = {{ replica_db.logdir }}/mysql-bin.log
+relay-log           = {{ replica_db.logdir }}/relay-bin
+relay-log-index     = {{ replica_db.logdir }}/relay-bin.index
+master-info-file    = {{ replica_db.logdir }}/master.info
+relay-log-info-file = {{ replica_db.logdir }}/relay-log.info

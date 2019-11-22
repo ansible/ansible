@@ -65,13 +65,6 @@ options:
       made.
     type: bool
     default: no
-  install_args:
-    description:
-    - Arguments to pass to the native installer.
-    - These are arguments that are passed directly to the installer the
-      Chocolatey package runs, this is generally an advanced option.
-    type: str
-    version_added: '2.1'
   ignore_checksums:
     description:
     - Ignore the checksums provided by the package.
@@ -86,12 +79,26 @@ options:
     type: bool
     default: no
     version_added: '2.1'
+  install_args:
+    description:
+    - Arguments to pass to the native installer.
+    - These are arguments that are passed directly to the installer the
+      Chocolatey package runs, this is generally an advanced option.
+    type: str
+    version_added: '2.1'
   name:
     description:
     - Name of the package(s) to be installed.
     - Set to C(all) to run the action on all the installed packages.
     type: list
     required: yes
+  override_args:
+    description:
+    - Override arguments of native installer with arguments provided by user.
+    - Should install arguments be used exclusively without appending
+      to current package passed arguments.
+    type: bool
+    version_added: '2.10'
   package_params:
     description:
     - Parameters to pass to the package.

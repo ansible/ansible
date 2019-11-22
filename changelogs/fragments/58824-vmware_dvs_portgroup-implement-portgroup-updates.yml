@@ -1,0 +1,2 @@
+bugfixes:
+- vmware_dvs_portgroup - Implemented configuration changes on an existing Distributed vSwitch portgroup.

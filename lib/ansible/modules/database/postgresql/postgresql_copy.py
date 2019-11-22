@@ -18,7 +18,7 @@ DOCUMENTATION = r'''
 module: postgresql_copy
 short_description: Copy data between a file/program and a PostgreSQL table
 description:
-- Copy data between a file/program and a PostgreSQL table U(https://www.postgresql.org/docs/current/sql-copy.html).
+- Copy data between a file/program and a PostgreSQL table.
 version_added: '2.9'
 
 options:
@@ -51,12 +51,14 @@ options:
     description:
     - List of column names for the src/dst table to COPY FROM/TO.
     type: list
+    elements: str
     aliases: [ column ]
   program:
     description:
     - Mark I(src)/I(dst) as a program. Data will be copied to/from a program.
     - See block Examples and PROGRAM arg description U(https://www.postgresql.org/docs/current/sql-copy.html).
     type: bool
+    default: no
   options:
     description:
     - Options of COPY command.
@@ -79,10 +81,15 @@ notes:
 - Supports PostgreSQL version 9.4+.
 - COPY command is only allowed to database superusers.
 - if I(check_mode=yes), we just check the src/dst table availability
-  and return the COPY query that aclually has not been executed.
+  and return the COPY query that actually has not been executed.
 - If i(check_mode=yes) and the source has been passed as SQL, the module
   will execute it and rolled the transaction back but pay attention
   it can affect database performance (e.g., if SQL collects a lot of data).
+
+seealso:
+- name: COPY command reference
+  description: Complete reference of the COPY command documentation.
+  link: https://www.postgresql.org/docs/current/sql-copy.html
 
 author:
 - Andrew Klychkov (@Andersson007)
@@ -175,41 +182,13 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
-from ansible.module_utils._text import to_native
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 from ansible.module_utils.six import iteritems
-
-
-def exec_sql(obj, query, ddl=False, add_to_executed=True):
-    """Execute SQL.
-
-    Auxiliary function for PostgreSQL user classes.
-
-    Returns a query result if possible or True/False if ddl=True arg was passed.
-    It necessary for statements that don't return any result (like DDL queries).
-
-    Arguments:
-        obj (obj) -- must be an object of a user class.
-            The object must have module (AnsibleModule class object) and
-            cursor (psycopg cursor object) attributes
-        query (str) -- SQL query to execute
-        ddl (bool) -- must return True or False instead of rows (typical for DDL queries)
-            (default False)
-        add_to_executed (bool) -- append the query to obj.executed_queries attribute
-    """
-    try:
-        obj.cursor.execute(query)
-
-        if add_to_executed:
-            obj.executed_queries.append(query)
-
-        if not ddl:
-            res = obj.cursor.fetchall()
-            return res
-        return True
-    except Exception as e:
-        obj.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
-    return False
 
 
 class PgCopyData(object):
@@ -218,11 +197,11 @@ class PgCopyData(object):
 
     Arguments:
         module (AnsibleModule) -- object of AnsibleModule class
-        cursor (cursor) -- cursor objec of psycopg2 library
+        cursor (cursor) -- cursor object of psycopg2 library
 
     Attributes:
         module (AnsibleModule) -- object of AnsibleModule class
-        cursor (cursor) -- cursor objec of psycopg2 library
+        cursor (cursor) -- cursor object of psycopg2 library
         changed (bool) --  something was changed after execution or not
         executed_queries (list) -- executed queries
         dst (str) -- data destination table (when copy_from)
@@ -248,7 +227,6 @@ class PgCopyData(object):
 
     def copy_from(self):
         """Implements COPY FROM command behavior."""
-
         self.src = self.module.params['copy_from']
         self.dst = self.module.params['dst']
 
@@ -279,7 +257,6 @@ class PgCopyData(object):
 
     def copy_to(self):
         """Implements COPY TO command behavior."""
-
         self.src = self.module.params['src']
         self.dst = self.module.params['copy_to']
 
@@ -315,7 +292,6 @@ class PgCopyData(object):
 
     def __transform_options(self):
         """Transform options dict into a suitable string."""
-
         for (key, val) in iteritems(self.module.params['options']):
             if key.upper() in self.opt_need_quotes:
                 self.module.params['options'][key] = "'%s'" % val
@@ -333,7 +309,6 @@ class PgCopyData(object):
                 It can be SQL SELECT statement that was passed
                 instead of the table name.
         """
-
         if 'SELECT ' in table.upper():
             # In this case table is actually SQL SELECT statement.
             # If SQL fails, it's handled by exec_sql():
@@ -361,7 +336,7 @@ def main():
         dst=dict(type='str', aliases=['destination']),
         columns=dict(type='list', aliases=['column']),
         options=dict(type='dict'),
-        program=dict(type='bool'),
+        program=dict(type='bool', default=False),
         db=dict(type='str', aliases=['login_db']),
         session_role=dict(type='str'),
     )
@@ -384,7 +359,8 @@ def main():
         module.fail_json(msg='src param is necessary with copy_to')
 
     # Connect to DB and make cursor object:
-    db_connection = connect_to_db(module, autocommit=False)
+    conn_params = get_conn_params(module, module.params)
+    db_connection = connect_to_db(module, conn_params, autocommit=False)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     ##############

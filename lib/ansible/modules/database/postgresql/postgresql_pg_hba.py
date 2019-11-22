@@ -112,6 +112,11 @@ notes:
    - With the 'order' parameter you can control which field is used to sort first, next and last.
    - The module supports a check mode and a diff mode.
 
+seealso:
+- name: PostgreSQL pg_hba.conf file reference
+  description: Complete reference of the PostgreSQL pg_hba.conf file documentation.
+  link: https://www.postgresql.org/docs/current/auth-pg-hba-conf.html
+
 requirements:
     - ipaddress
 
@@ -259,8 +264,8 @@ class PgHba(object):
         self.databases = set(['postgres', 'template0', 'template1'])
 
         # self.databases will be update by add_rule and gives some idea of the number of users
-        # (at least that are handled by this pg_hba) since this migth also be groups with multiple
-        # users, this migth be totally off, but at least it is some info...
+        # (at least that are handled by this pg_hba) since this might also be groups with multiple
+        # users, this might be totally off, but at least it is some info...
         self.users = set(['postgres'])
 
         self.read()
@@ -416,7 +421,7 @@ class PgHbaRule(dict):
         super(PgHbaRule, self).__init__()
 
         if line:
-            # Read valies from line if parsed
+            # Read values from line if parsed
             self.fromline(line)
 
         # read rule cols from parsed items
@@ -481,20 +486,19 @@ class PgHbaRule(dict):
             msg = "Rule {0} has unknown type: {1}."
             raise PgHbaValueError(msg.format(line, cols[0]))
         if cols[0] == 'local':
-            if cols[3] not in PG_HBA_METHODS:
-                raise PgHbaValueError("Rule {0} of 'local' type has invalid auth-method {1}"
-                                      "on 4th column ".format(line, cols[3]))
-            cols.insert(3, None)
-            cols.insert(3, None)
+            cols.insert(3, None)  # No address
+            cols.insert(3, None)  # No IP-mask
+        if len(cols) < 6:
+            cols.insert(4, None)  # No IP-mask
+        elif cols[5] not in PG_HBA_METHODS:
+            cols.insert(4, None)  # No IP-mask
+        if cols[5] not in PG_HBA_METHODS:
+            raise PgHbaValueError("Rule {0} of '{1}' type has invalid auth-method '{2}'".format(line, cols[0], cols[5]))
+
+        if len(cols) < 7:
+            cols.insert(6, None)  # No auth-options
         else:
-            if len(cols) < 6:
-                cols.insert(4, None)
-            elif cols[5] not in PG_HBA_METHODS:
-                cols.insert(4, None)
-            if len(cols) < 7:
-                cols.insert(7, None)
-            if cols[5] not in PG_HBA_METHODS:
-                raise PgHbaValueError("Rule {0} has no valid method.".format(line))
+            cols[6] = " ".join(cols[6:])  # combine all auth-options
         rule = dict(zip(PG_HBA_HDR, cols[:7]))
         for key, value in rule.items():
             if value:
@@ -521,7 +525,7 @@ class PgHbaRule(dict):
                 raise PgHbaValueError('Mask was specified, but source "{0}" '
                                       'is no valid ip'.format(self['src']))
             # ipaddress module cannot work with ipv6 netmask, so lets convert it to prefixlen
-            # furthermore ipv4 with bad netmask throws 'Rule {} doesnt seem to be an ip, but has a
+            # furthermore ipv4 with bad netmask throws 'Rule {} doesn't seem to be an ip, but has a
             # mask error that doesn't seem to describe what is going on.
             try:
                 mask_as_ip = ipaddress.ip_address(u'{0}'.format(self['mask']))
@@ -576,9 +580,9 @@ class PgHbaRule(dict):
             return self['src'] < other['src']
         except TypeError:
             return self.source_type_weight() < other.source_type_weight()
-        errormessage = 'We have two rules ({1}, {2})'.format(self, other)
-        errormessage += ' with exact same weight. Please file a bug.'
-        raise PgHbaValueError(errormessage)
+        except Exception:
+            # When all else fails, just compare the exact line.
+            return self.line() < other.line()
 
     def source_weight(self):
         """Report the weight of this source net.
@@ -610,10 +614,10 @@ class PgHbaRule(dict):
                 # For now, let's assume IPv4/24 or IPv6/96 (both have weight 96).
                 return 96
             if sourceobj[0] == '.':
-                # suffix matching (domain name), let's asume a very large scale
+                # suffix matching (domain name), let's assume a very large scale
                 # and therefore a very low weight IPv4/16 or IPv6/64 (both have weight 64).
                 return 64
-            # hostname, let's asume only one host matches, which is
+            # hostname, let's assume only one host matches, which is
             # IPv4/32 or IPv6/128 (both have weight 128)
             return 128
         raise PgHbaValueError('Cannot deduct the source weight of this source {1}'.format(sourceobj))
@@ -624,6 +628,9 @@ class PgHbaRule(dict):
         Basically make sure that IPv6Networks are sorted higher than IPv4Networks.
         This is a 'when all else fails' solution in __lt__.
         """
+        if self['type'] == 'local':
+            return 3
+
         sourceobj = self.source()
         if isinstance(sourceobj, ipaddress.IPv4Network):
             return 2
@@ -631,7 +638,7 @@ class PgHbaRule(dict):
             return 1
         if isinstance(sourceobj, str):
             return 0
-        raise PgHbaValueError('This source {1} is of an unknown type...'.format(sourceobj))
+        raise PgHbaValueError('This source {0} is of an unknown type...'.format(sourceobj))
 
     def db_weight(self):
         """Report the weight of the database.

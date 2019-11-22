@@ -18,6 +18,7 @@ Function Ensure-Prereqs {
         $awf = Add-WindowsFeature AD-Domain-Services -WhatIf:$check_mode
         $result.reboot_required = $awf.RestartNeeded
         # FUTURE: Check if reboot necessary
+
         return $true
     }
     return $false
@@ -33,6 +34,7 @@ $sysvol_path = Get-AnsibleParam -obj $params -name "sysvol_path" -type "path"
 $create_dns_delegation = Get-AnsibleParam -obj $params -name "create_dns_delegation" -type "bool"
 $domain_mode = Get-AnsibleParam -obj $params -name "domain_mode" -type "str"
 $forest_mode = Get-AnsibleParam -obj $params -name "forest_mode" -type "str"
+$install_dns = Get-AnsibleParam -obj $params -name "install_dns" -type "bool" -default $true
 
 # FUTURE: Support down to Server 2012?
 if ([System.Environment]::OSVersion.Version -lt [Version]"6.3.9600.0") {
@@ -88,7 +90,7 @@ if (-not $forest) {
         SafeModeAdministratorPassword=$sm_cred;
         Confirm=$false;
         SkipPreChecks=$true;
-        InstallDns=$true;
+        InstallDns=$install_dns;
         NoRebootOnCompletion=$true;
         WhatIf=$check_mode;
     }
@@ -123,10 +125,10 @@ if (-not $forest) {
     } catch [Microsoft.DirectoryServices.Deployment.DCPromoExecutionException] {
         # ExitCode 15 == 'Role change is in progress or this computer needs to be restarted.'
         # DCPromo exit codes details can be found at https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/troubleshooting-domain-controller-deployment
-        if ($_.Exception.ExitCode -eq 15) {
+        if ($_.Exception.ExitCode -in @(15, 19)) {
             $result.reboot_required = $true
         } else {
-            Fail-Json -obj $result -message "Failed to install ADDSForest with DCPromo: $($_.Exception.Message)"
+            Fail-Json -obj $result -message "Failed to install ADDSForest, DCPromo exited with $($_.Exception.ExitCode): $($_.Exception.Message)"
         }
     }
 

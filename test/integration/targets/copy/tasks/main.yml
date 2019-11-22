@@ -7,7 +7,6 @@
 
     - set_fact:
         local_temp_dir: '{{ tempfile_result.stdout }}'
-        # output_dir is hardcoded in test/runner/lib/executor.py and created there
         remote_dir: '{{ output_dir }}'
         symlinks:
           ansible-test-abs-link: /tmp/ansible-test-abs-link
@@ -33,6 +32,20 @@
       user:
         name: '{{ remote_unprivileged_user }}'
       register: user
+
+    - name: Check sudoers dir
+      stat:
+        path: /etc/sudoers.d
+      register: etc_sudoers
+
+    - name: Set sudoers.d path fact
+      set_fact:
+        sudoers_d_file: "{{ '/etc/sudoers.d' if etc_sudoers.stat.exists else '/usr/local/etc/sudoers.d' }}/{{ remote_unprivileged_user }}"
+
+    - name: Create sudoers file
+      copy:
+        dest: "{{ sudoers_d_file }}"
+        content: "{{ remote_unprivileged_user }} ALL=(ALL) NOPASSWD: ALL"
 
     - file:
         path: "{{ user.home }}/.ssh"
@@ -61,6 +74,19 @@
     - import_tasks: acls.yml
       when: ansible_system == 'Linux'
 
+    # https://github.com/ansible/ansible/issues/57618
+    - name: Test diff contents
+      copy:
+        content: 'Ansible managed\n'
+        dest: "{{ local_temp_dir }}/file.txt"
+      diff: yes
+      register: diff_output
+
+    - assert:
+        that:
+          - 'diff_output.diff[0].before == ""'
+          - '"Ansible managed" in diff_output.diff[0].after'
+
   always:
     - name: Cleaning
       file:
@@ -80,3 +106,8 @@
         name: '{{ remote_unprivileged_user }}'
         state: absent
         remove: yes
+
+    - name: Remove sudoers.d file
+      file:
+        path: "{{ sudoers_d_file }}"
+        state: absent

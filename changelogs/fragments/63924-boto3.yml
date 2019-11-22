@@ -1,0 +1,5 @@
+minor_changes:
+- "iam_policy - The iam_policy module has been migrated from boto to boto3."
+deprecated_features:
+- "iam_policy - The ``policy_document`` will be removed in Ansible 2.14.  To maintain the existing behavior use the ``policy_json`` option and read the file with the ``lookup`` plugin."
+- "iam_policy - The default value of ``skip_duplicates`` will change in Ansible 2.14 from ``true`` to ``false``."

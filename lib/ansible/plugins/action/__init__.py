@@ -169,24 +169,22 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if module_path:
                 break
         else:  # This is a for-else: http://bit.ly/1ElPkyg
-            # Use Windows version of ping module to check module paths when
-            # using a connection that supports .ps1 suffixes. We check specifically
-            # for win_ping here, otherwise the code would look for ping.ps1
-            if '.ps1' in self._connection.module_implementation_preferences:
-                ping_module = 'win_ping'
-            else:
-                ping_module = 'ping'
-            module_path2 = self._shared_loader_obj.module_loader.find_plugin(ping_module, self._connection.module_implementation_preferences)
-            if module_path2 is not None:
-                raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
-            else:
-                raise AnsibleError("The module %s was not found in configured module paths. "
-                                   "Additionally, core modules are missing. If this is a checkout, "
-                                   "run 'git pull --rebase' to correct this problem." % (module_name))
+            raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
 
         # insert shared code and arguments into the module
         final_environment = dict()
         self._compute_environment_string(final_environment)
+
+        become_kwargs = {}
+        if self._connection.become:
+            become_kwargs['become'] = True
+            become_kwargs['become_method'] = self._connection.become.name
+            become_kwargs['become_user'] = self._connection.become.get_option('become_user',
+                                                                              playcontext=self._play_context)
+            become_kwargs['become_password'] = self._connection.become.get_option('become_pass',
+                                                                                  playcontext=self._play_context)
+            become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
+                                                                               playcontext=self._play_context)
 
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
@@ -195,12 +193,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                                                                             task_vars=task_vars,
                                                                             module_compression=self._play_context.module_compression,
                                                                             async_timeout=self._task.async_val,
-                                                                            become=self._play_context.become,
-                                                                            become_method=self._play_context.become_method,
-                                                                            become_user=self._play_context.become_user,
-                                                                            become_password=self._play_context.become_pass,
-                                                                            become_flags=self._play_context.become_flags,
-                                                                            environment=final_environment)
+                                                                            environment=final_environment,
+                                                                            **become_kwargs)
                 break
             except InterpreterDiscoveryRequiredError as idre:
                 self._discovered_interpreter = AnsibleUnsafeText(discover_interpreter(
@@ -273,7 +267,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_style == "new",                     # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
             not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
-            self._play_context.become_method != 'su',  # su does not work with pipelining,
+            (self._connection.become.name if self._connection.become else '') != 'su',  # su does not work with pipelining,
             # FIXME: we might need to make become_method exclusion a configurable list
         ]:
             if not condition:
@@ -311,7 +305,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         # if we don't use become then we know we aren't switching to a
         # different unprivileged user
-        if not self._play_context.become:
+        if not self._connection.become:
             return False
 
         # if we use become and the user is not an admin (or same user) then
@@ -647,7 +641,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             become_user = self.get_become_option('become_user')
             if getattr(self._connection, '_remote_is_local', False):
                 pass
-            elif sudoable and self._play_context.become and become_user:
+            elif sudoable and self._connection.become and become_user:
                 expand_path = '~%s' % become_user
             else:
                 # use remote user instead, if none set default to current user
@@ -992,6 +986,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 if res['stderr'].startswith(u'Traceback'):
                     data['exception'] = res['stderr']
 
+            # in some cases a traceback will arrive on stdout instead of stderr, such as when using ssh with -tt
+            if 'exception' not in data and data['module_stdout'].startswith(u'Traceback'):
+                data['exception'] = data['module_stdout']
+
             # The default
             data['msg'] = "MODULE FAILURE"
 
@@ -1035,9 +1033,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
-        if (sudoable and self._connection.transport != 'network_cli' and self._connection.become and
-                (C.BECOME_ALLOW_SAME_USER or
-                 self.get_become_option('become_user') != self._get_remote_user())):
+        ruser = self._get_remote_user()
+        buser = self.get_become_option('become_user')
+        if (sudoable and self._connection.become and  # if sudoable and have become
+                self._connection.transport != 'network_cli' and  # if not using network_cli
+                (C.BECOME_ALLOW_SAME_USER or (buser != ruser or not any((ruser, buser))))):  # if we allow same user PE or users are different and either is set
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
 
@@ -1054,13 +1054,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # Change directory to basedir of task for command execution when connection is local
         if self._connection.transport == 'local':
-            cwd = os.getcwd()
-            os.chdir(to_bytes(self._loader.get_basedir()))
-        try:
-            rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        finally:
-            if self._connection.transport == 'local':
-                os.chdir(cwd)
+            self._connection.cwd = to_bytes(self._loader.get_basedir(), errors='surrogate_or_strict')
+
+        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
@@ -1104,7 +1100,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if not peek_result.get('failed', False) or peek_result.get('rc', 0) == 0:
 
-            if peek_result.get('state') == 'absent':
+            if peek_result.get('state') in (None, 'absent'):
                 diff['before'] = u''
             elif peek_result.get('appears_binary'):
                 diff['dst_binary'] = 1

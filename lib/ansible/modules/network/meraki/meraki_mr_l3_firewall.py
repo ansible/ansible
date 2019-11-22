@@ -28,14 +28,6 @@ options:
         type: str
         choices: [ present, query ]
         default: present
-    org_name:
-        description:
-        - Name of organization.
-        type: str
-    org_id:
-        description:
-        - ID of organization.
-        type: int
     net_name:
         description:
         - Name of network containing access points.

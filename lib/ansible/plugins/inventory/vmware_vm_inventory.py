@@ -16,7 +16,7 @@ DOCUMENTATION = '''
       - Abhijeet Kasurde (@Akasurde)
     description:
         - Get virtual machines as inventory hosts from VMware environment.
-        - Uses any file which ends with vmware.yml or vmware.yaml as a YAML configuration file.
+        - Uses any file which ends with vmware.yml, vmware.yaml, vmware_vm_inventory.yml, or vmware_vm_inventory.yaml as a YAML configuration file.
         - The inventory_hostname is always the 'Name' and UUID of the virtual machine. UUID is added as VMware allows virtual machines with the same name.
     extends_documentation_fragment:
       - inventory_cache
@@ -31,11 +31,13 @@ DOCUMENTATION = '''
             description: Name of vCenter or ESXi server.
             required: True
             env:
+              - name: VMWARE_HOST
               - name: VMWARE_SERVER
         username:
             description: Name of vSphere admin user.
             required: True
             env:
+              - name: VMWARE_USER
               - name: VMWARE_USERNAME
         password:
             description: Password of vSphere admin user.
@@ -52,6 +54,8 @@ DOCUMENTATION = '''
             - Allows connection when SSL certificates are not valid. Set to C(false) when certificates are not trusted.
             default: True
             type: boolean
+            env:
+              - name: VMWARE_VALIDATE_CERTS
         with_tags:
             description:
             - Include tags and associated virtual machines.
@@ -60,6 +64,19 @@ DOCUMENTATION = '''
             - 'https://code.vmware.com/web/sdk/65/vsphere-automation-python'
             default: False
             type: boolean
+        properties:
+            description:
+            - Specify the list of VMware schema properties associated with the VM.
+            - These properties will be populated in hostvars of the given VM.
+            - Each value in the list specifies the path to a specific property in VM object.
+            type: list
+            default: [ 'name', 'config.cpuHotAddEnabled', 'config.cpuHotRemoveEnabled',
+                       'config.instanceUuid', 'config.hardware.numCPU', 'config.template',
+                       'config.name', 'guest.hostName', 'guest.ipAddress',
+                       'guest.guestId', 'guest.guestState', 'runtime.maxMemoryUsage',
+                       'customValue'
+                       ]
+            version_added: "2.9"
 '''
 
 EXAMPLES = '''
@@ -71,6 +88,18 @@ EXAMPLES = '''
     password: Esxi@123$%
     validate_certs: False
     with_tags: True
+
+# Gather minimum set of properties for VMware guest
+    plugin: vmware_vm_inventory
+    strict: False
+    hostname: 10.65.223.31
+    username: administrator@vsphere.local
+    password: Esxi@123$%
+    validate_certs: False
+    with_tags: False
+    properties:
+    - 'name'
+    - 'guest.ipAddress'
 '''
 
 import ssl
@@ -282,13 +311,11 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         Verify plugin configuration file and mark this plugin active
         Args:
             path: Path of configuration YAML file
-
         Returns: True if everything is correct, else False
-
         """
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith(('vmware.yaml', 'vmware.yml')):
+            if path.endswith(('vmware.yaml', 'vmware.yml', 'vmware_vm_inventory.yaml', 'vmware_vm_inventory.yml')):
                 valid = True
 
         return valid
@@ -432,24 +459,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
     def _populate_host_properties(self, vm_obj, current_host):
         # Load VM properties in host_vars
-        vm_properties = [
-            'name',
-            'config.cpuHotAddEnabled',
-            'config.cpuHotRemoveEnabled',
-            'config.instanceUuid',
-            'config.hardware.numCPU',
-            'config.template',
-            'config.name',
-            'guest.hostName',
-            'guest.ipAddress',
-            'guest.guestId',
-            'guest.guestState',
-            'runtime.maxMemoryUsage',
-            'customValue',
-        ]
-        field_mgr = []
-        if self.pyv.content.customFieldsManager:
-            field_mgr = self.pyv.content.customFieldsManager.field
+        vm_properties = self.get_option('properties') or []
+
+        field_mgr = self.pyv.content.customFieldsManager.field
 
         for vm_prop in vm_properties:
             if vm_prop == 'customValue':

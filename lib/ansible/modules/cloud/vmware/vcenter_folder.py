@@ -19,6 +19,7 @@ module: vcenter_folder
 short_description: Manage folders on given datacenter
 description:
 - This module can be used to create, delete, move and rename folder on then given datacenter.
+- This module is only supported for vCenter.
 version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
@@ -34,19 +35,23 @@ options:
     - Name of the datacenter.
     required: True
     aliases: ['datacenter_name']
+    type: str
   folder_name:
     description:
     - Name of folder to be managed.
     - This is case sensitive parameter.
     - Folder name should be under 80 characters. This is a VMware restriction.
     required: True
+    type: str
   parent_folder:
     description:
     - Name of the parent folder under which new folder needs to be created.
     - This is case sensitive parameter.
     - Please specify unique folder name as there is no way to detect duplicate names.
     - "If user wants to create a folder under '/DC0/vm/vm_folder', this value will be 'vm_folder'."
+    - "If user wants to create a folder under '/DC0/vm/folder1/folder2', this value will be 'folder1/folder2'."
     required: False
+    type: str
   folder_type:
     description:
     - This is type of folder.
@@ -57,6 +62,7 @@ options:
     - This parameter is required, if C(state) is set to C(present) and parent_folder is absent.
     - This option is ignored, if C(parent_folder) is set.
     default: vm
+    type: str
     required: False
     choices: [ datastore, host, network, vm ]
   state:
@@ -67,6 +73,7 @@ options:
     - If set to C(absent), then folder is unregistered and destroyed.
     default: present
     choices: [ present, absent ]
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -126,8 +133,12 @@ result:
     returned: On success
     type: complex
     contains:
-        path: the full path of the new folder
-        msg: string stating about result
+        path:
+            description: the full path of the new folder
+            type: str
+        msg:
+            description: string stating about result
+            type: str
 '''
 
 try:
@@ -169,23 +180,36 @@ class VmwareFolderManager(PyVmomi):
             # Check if the folder already exists
             p_folder_obj = None
             if parent_folder:
-                p_folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                               folder_name=parent_folder,
-                                               folder_type=folder_type)
+                if "/" in parent_folder:
+                    parent_folder_parts = parent_folder.strip('/').split('/')
+                    p_folder_obj = None
+                    for part in parent_folder_parts:
+                        part_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                                          folder_name=part,
+                                                          folder_type=folder_type,
+                                                          parent_folder=p_folder_obj)
+                        if not part_folder_obj:
+                            self.module.fail_json(msg="Could not find folder %s" % part)
+                        p_folder_obj = part_folder_obj
 
-                if not p_folder_obj:
-                    self.module.fail_json(msg="Parent folder %s does not exist" % parent_folder)
+                else:
+                    p_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                                   folder_name=parent_folder,
+                                                   folder_type=folder_type)
 
-                # Check if folder exists under parent folder
-                child_folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                                   folder_name=folder_name,
-                                                   folder_type=folder_type,
-                                                   parent_folder=p_folder_obj)
-                if child_folder_obj:
-                    results['result']['path'] = self.get_folder_path(child_folder_obj)
-                    results['result']['msg'] = "Folder %s already exists under" \
-                        " parent folder %s" % (folder_name, parent_folder)
-                    self.module.exit_json(**results)
+                    if not p_folder_obj:
+                        self.module.fail_json(msg="Parent folder %s does not exist" % parent_folder)
+
+                    # Check if folder exists under parent folder
+                    child_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                                       folder_name=folder_name,
+                                                       folder_type=folder_type,
+                                                       parent_folder=p_folder_obj)
+                    if child_folder_obj:
+                        results['result']['path'] = self.get_folder_path(child_folder_obj)
+                        results['result'] = "Folder %s already exists under" \
+                                            " parent folder %s" % (folder_name, parent_folder)
+                        self.module.exit_json(**results)
             else:
                 folder_obj = self.get_folder(datacenter_name=datacenter_name,
                                              folder_name=folder_name,
@@ -330,6 +354,9 @@ def main():
         module.fail_json(msg="Failed to manage folder as folder_name can only contain 80 characters.")
 
     vcenter_folder_mgr = VmwareFolderManager(module)
+    if not vcenter_folder_mgr.is_vcenter():
+        module.fail_json(msg="Module vcenter_folder is meant for vCenter, hostname %s "
+                             "is not vCenter server." % module.params.get('hostname'))
     vcenter_folder_mgr.ensure()
 
 

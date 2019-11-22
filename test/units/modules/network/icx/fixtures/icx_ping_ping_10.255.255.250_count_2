@@ -1,0 +1,4 @@
+Sending 1, 16-byte ICMP Echo to 10.255.255.250, timeout 100 msec, TTL 64
+Type Control-c to abort
+Request timed out.
+No reply from remote host.

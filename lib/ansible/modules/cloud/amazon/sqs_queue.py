@@ -28,37 +28,46 @@ requirements:
 options:
   state:
     description:
-      - Create or delete the queue
+      - Create or delete the queue.
     required: false
     choices: ['present', 'absent']
     default: 'present'
+    type: str
   name:
     description:
       - Name of the queue.
     required: true
+    type: str
   default_visibility_timeout:
     description:
       - The default visibility timeout in seconds.
+    type: int
   message_retention_period:
     description:
       - The message retention period in seconds.
+    type: int
   maximum_message_size:
     description:
       - The maximum message size in bytes.
+    type: int
   delivery_delay:
     description:
       - The delivery delay in seconds.
+    type: int
   receive_message_wait_time:
     description:
       - The receive message wait time in seconds.
+    type: int
   policy:
     description:
-      - The json dict policy to attach to queue
+      - The JSON dict policy to attach to queue.
     version_added: "2.1"
+    type: dict
   redrive_policy:
     description:
-      - json dict with the redrive_policy (see example)
+      - JSON dict with the redrive_policy (see example).
     version_added: "2.2"
+    type: dict
 extends_documentation_fragment:
     - aws
     - ec2

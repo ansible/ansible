@@ -80,10 +80,6 @@ options:
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
         aliases: ['organization']
         type: str
-    org_id:
-        description:
-        - ID of organization.
-        type: str
 author:
     - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -193,22 +189,22 @@ data:
             returned: success
             type: str
             sample: John Doe
-        accountStatus:
+        account_status:
             description: Status of account.
             returned: success
             type: str
             sample: ok
-        twoFactorAuthEnabled:
+        two_factor_auth_enabled:
             description: Enabled state of two-factor authentication for administrator.
             returned: success
             type: bool
             sample: false
-        hasApiKey:
+        has_api_key:
             description: Defines whether administrator has an API assigned to their account.
             returned: success
             type: bool
             sample: false
-        lastActive:
+        last_active:
             description: Date and time of time the administrator was active within Dashboard.
             returned: success
             type: str
@@ -229,7 +225,7 @@ data:
                      type: str
                      sample: read-only
         tags:
-            description: Tags the adminsitrator has access on.
+            description: Tags the administrator has access on.
             returned: success
             type: complex
             contains:
@@ -243,7 +239,7 @@ data:
                     returned: when tag permissions are set
                     type: str
                     sample: full
-        orgAccess:
+        org_access:
             description: The privilege of the dashboard administrator on the organization. Options are 'full', 'read-only', or 'none'.
             returned: success
             type: str

@@ -26,12 +26,6 @@ from ansible.playbook.task import Task
 
 class TestBlock(unittest.TestCase):
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_construct_empty_block(self):
         b = Block()
 

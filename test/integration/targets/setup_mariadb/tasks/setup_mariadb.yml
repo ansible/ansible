@@ -1,0 +1,107 @@
+# We run two servers listening different ports
+# to be able to check replication (one server for primary, another for replica).
+
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_version }}.yml"
+        - "{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}.yml"
+        - "{{ ansible_facts.distribution }}.yml"
+        - "{{ ansible_facts.os_family }}.yml"
+        - default.yml
+      paths:
+        - vars
+
+- name: Install MariaDB repo
+  yum_repository:
+    name: MariaDB
+    description: MariaDB official repo
+    baseurl: "{{ repo_link }}"
+    gpgkey: "{{ repo_gpgkey }}"
+    gpgcheck: yes
+  notify: cleanup mariadb
+
+- name: Install MariaDB packages
+  yum:
+    name: "{{ mariadb_packages }}"
+    enablerepo: "{{ mariadb_enable_repo | default(omit) }}"
+  notify: cleanup mariadb
+
+- name: Create directories for instances
+  file:
+    state: directory
+    path: "{{ item }}"
+    owner: mysql
+    group: mysql
+  loop:
+    - "{{ primary_db.datadir }}"
+    - "{{ primary_db.logdir }}"
+    - "{{ replica_db.datadir }}"
+    - "{{ replica_db.logdir }}"
+  notify: cleanup mariadb
+
+- name: Copy configuration templates
+  template:
+    src: "{{ 'my' ~ item ~ '.j2' }}"
+    dest: /etc/my.cnf.d/my{{ item }}.cnf
+    owner: mysql
+    group: mysql
+    force: yes
+  when: ansible_facts.distribution_major_version is version('7', '==')
+  loop:
+    - '{{ primary_db.name }}'
+    - '{{ replica_db.name }}'
+
+- name: Copy configuration template
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf
+    owner: mysql
+    group: mysql
+    force: yes
+  when: ansible_facts.distribution_major_version is version('8', '==')
+
+- name: Initialize DBs
+  shell: 'mysql_install_db --user=mysql --datadir={{ item }}'
+  loop:
+  - '{{ primary_db.datadir }}'
+  - '{{ replica_db.datadir }}'
+
+- name: Start services
+  service:
+    name: mariadb@{{ item }}
+    state: started
+  loop:
+    - "{{ primary_db.name }}"
+    - "{{ replica_db.name }}"
+
+- pause:
+    seconds: 3
+
+########### For painful debug uncomment the lines below ##
+#- name: DEBUG Check stratup log
+#  shell: cat /var/log/mariadb/mariadb.log
+
+#- name: DEBUG Check mysql_safe err log
+#  shell: cat '{{  mysql_safe_err_log }}'
+
+#- name: DEBUG Check processes
+#  shell: 'ps aux | grep mysqld | grep -v "grep\|root"'
+
+#- name: DEBUG
+#  yum: name=net-tools
+
+#- name: DEBUG
+#  shell: "netstat -ntpl"
+
+#- name: DEBUG
+#  shell: cat /etc/my.cnf
+##########################################################
+
+- name: Check connection to the primary
+  shell: 'echo "SHOW DATABASES;" | mysql -P {{ primary_db.port }} -h 127.0.0.1'
+
+- name: Check connection to the replica
+  shell: "echo \"SHOW VARIABLES LIKE 'datadir';\" | mysql -P {{ replica_db.port }} -h 127.0.0.1"

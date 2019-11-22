@@ -85,7 +85,10 @@ class MockONTAPConnection(object):
                     'address': data['address'],
                     'netmask': data['netmask'],
                     'role': data['role'],
-                    'protocols': data['protocols'] if data.get('protocols') else None
+                    'protocols': data['protocols'] if data.get('protocols') else None,
+                    'dns-domain-name': data['dns_domain_name'],
+                    'listen-for-dns_query': data['listen_for_dns_query'],
+                    'is-dns-update-enabled': data['is_dns_update_enabled']
                 }
             }
         }
@@ -113,6 +116,9 @@ class TestMyModule(unittest.TestCase):
             'home_port': 'e0c',
             'address': '2.2.2.2',
             'netmask': '1.1.1.1',
+            'dns_domain_name': 'test.com',
+            'listen_for_dns_query': True,
+            'is_dns_update_enabled': True
         }
 
     def mock_args(self):
@@ -248,6 +254,9 @@ class TestMyModule(unittest.TestCase):
         ''' Test successful modify interface_minutes '''
         data = self.mock_args()
         data['home_port'] = 'new_port'
+        data['dns_domain_name'] = 'test2.com'
+        data['listen_for_dns_query'] = False
+        data['is_dns_update_enabled'] = False
         set_module_args(data)
         with pytest.raises(AnsibleExitJson) as exc:
             interface_obj = self.get_interface_mock_object('interface')

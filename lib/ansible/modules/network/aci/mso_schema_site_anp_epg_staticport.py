@@ -48,7 +48,7 @@ options:
     description:
     - The path type of the static port
     type: str
-    choices: [ port ]
+    choices: [ port, vpc ]
     default: port
   pod:
     description:
@@ -90,7 +90,7 @@ options:
     default: present
 notes:
 - The ACI MultiSite PATCH API has a deficiency requiring some objects to be referenced by index.
-  This can cause silent corruption on concurrent access when changing/removing on object as
+  This can cause silent corruption on concurrent access when changing/removing an object as
   the wrong object may be referenced. This module is affected by this deficiency.
 seealso:
 - module: mso_schema_site_anp_epg
@@ -100,7 +100,7 @@ extends_documentation_fragment: mso
 
 EXAMPLES = r'''
 - name: Add a new static port to a site EPG
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -119,7 +119,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a static port from a site EPG
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -136,7 +136,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a specific site EPG static port
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -154,7 +154,7 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all site EPG static ports
-  mso_schema_template_anp_epg_staticport:
+  mso_schema_site_anp_epg_staticport:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -182,7 +182,7 @@ def main():
         template=dict(type='str', required=True),
         anp=dict(type='str', required=True),
         epg=dict(type='str', required=True),
-        type=dict(type='str', default='port', choices=['port']),
+        type=dict(type='str', default='port', choices=['port', 'vpc']),
         pod=dict(type='str'),  # This parameter is not required for querying all objects
         leaf=dict(type='str'),  # This parameter is not required for querying all objects
         path=dict(type='str'),  # This parameter is not required for querying all objects
@@ -201,22 +201,24 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    site = module.params['site']
-    template = module.params['template']
-    anp = module.params['anp']
-    epg = module.params['epg']
-    path_type = module.params['type']
-    pod = module.params['pod']
-    leaf = module.params['leaf']
-    path = module.params['path']
-    vlan = module.params['vlan']
-    deployment_immediacy = module.params['deployment_immediacy']
-    mode = module.params['mode']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    site = module.params.get('site')
+    template = module.params.get('template')
+    anp = module.params.get('anp')
+    epg = module.params.get('epg')
+    path_type = module.params.get('type')
+    pod = module.params.get('pod')
+    leaf = module.params.get('leaf')
+    path = module.params.get('path')
+    vlan = module.params.get('vlan')
+    deployment_immediacy = module.params.get('deployment_immediacy')
+    mode = module.params.get('mode')
+    state = module.params.get('state')
 
     if path_type == 'port':
         portpath = 'topology/{0}/paths-{1}/pathep-[{2}]'.format(pod, leaf, path)
+    elif path_type == 'vpc':
+        portpath = 'topology/{0}/protpaths-{1}/pathep-[{2}]'.format(pod, leaf, path)
 
     mso = MSOModule(module)
 
@@ -226,13 +228,13 @@ def main():
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     schema_path = 'schemas/{id}'.format(**schema_obj)
-    schema_id = schema_obj['id']
+    schema_id = schema_obj.get('id')
 
     # Get site
     site_id = mso.lookup_site(site)
 
     # Get site_idx
-    sites = [(s['siteId'], s['templateName']) for s in schema_obj['sites']]
+    sites = [(s.get('siteId'), s.get('templateName')) for s in schema_obj.get('sites')]
     if (site_id, template) not in sites:
         mso.fail_json(msg="Provided site/template '{0}-{1}' does not exist. Existing sites/templates: {2}".format(site, template, ', '.join(sites)))
 
@@ -243,29 +245,29 @@ def main():
 
     # Get ANP
     anp_ref = mso.anp_ref(schema_id=schema_id, template=template, anp=anp)
-    anps = [a['anpRef'] for a in schema_obj['sites'][site_idx]['anps']]
+    anps = [a.get('anpRef') for a in schema_obj.get('sites')[site_idx]['anps']]
     if anp_ref not in anps:
         mso.fail_json(msg="Provided anp '{0}' does not exist. Existing anps: {1}".format(anp, ', '.join(anps)))
     anp_idx = anps.index(anp_ref)
 
     # Get EPG
     epg_ref = mso.epg_ref(schema_id=schema_id, template=template, anp=anp, epg=epg)
-    epgs = [e['epgRef'] for e in schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs']]
+    epgs = [e.get('epgRef') for e in schema_obj.get('sites')[site_idx]['anps'][anp_idx]['epgs']]
     if epg_ref not in epgs:
         mso.fail_json(msg="Provided epg '{0}' does not exist. Existing epgs: {1}".format(epg, ', '.join(epgs)))
     epg_idx = epgs.index(epg_ref)
 
     # Get Leaf
-    portpaths = [p['path'] for p in schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs'][epg_idx]['staticPorts']]
+    portpaths = [p.get('path') for p in schema_obj.get('sites')[site_idx]['anps'][anp_idx]['epgs'][epg_idx]['staticPorts']]
     if portpath in portpaths:
         portpath_idx = portpaths.index(portpath)
         # FIXME: Changes based on index are DANGEROUS
         port_path = '/sites/{0}/anps/{1}/epgs/{2}/staticPorts/{3}'.format(site_template, anp, epg, portpath_idx)
-        mso.existing = schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs'][epg_idx]['staticPorts'][portpath_idx]
+        mso.existing = schema_obj.get('sites')[site_idx]['anps'][anp_idx]['epgs'][epg_idx]['staticPorts'][portpath_idx]
 
     if state == 'query':
         if leaf is None or vlan is None:
-            mso.existing = schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs'][epg_idx]['staticPorts']
+            mso.existing = schema_obj.get('sites')[site_idx]['anps'][anp_idx]['epgs'][epg_idx]['staticPorts']
         elif not mso.existing:
             mso.fail_json(msg="Static port '{portpath}' not found".format(portpath=portpath))
         mso.exit_json()

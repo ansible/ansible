@@ -1,0 +1,4 @@
+mariadb_enable_repo: epel
+mariadb_packages:
+  - MariaDB-server
+  - MySQL-python

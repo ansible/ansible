@@ -152,12 +152,18 @@ Aborting the play
 
 Sometimes it's desirable to abort the entire play on failure, not just skip remaining tasks for a host.
 
-The ``any_errors_fatal`` play option will mark all hosts as failed if any fails, causing an immediate abort::
+The ``any_errors_fatal`` option will end the play and prevent any subsequent plays from running. When an error is encountered, all hosts in the current batch are given the opportunity to finish the fatal task and then the execution of the play stops. ``any_errors_fatal`` can be set at the play or block level::
 
      - hosts: somehosts
        any_errors_fatal: true
        roles:
          - myrole
+
+     - hosts: somehosts
+       tasks:
+         - block:
+             - include_tasks: mytasks.yml
+           any_errors_fatal: true
 
 for finer-grained control ``max_fail_percentage`` can be used to abort the run after a given percentage of hosts has failed.
 
@@ -186,13 +192,13 @@ See :ref:`block_error_handling` for more examples.
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

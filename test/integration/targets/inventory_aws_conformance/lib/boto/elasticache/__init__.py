@@ -1,3 +1,7 @@
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 class Connection(object):
     def __init__(self):
         pass

@@ -29,6 +29,36 @@
   - assert:
       that:
         - "result.changed == false"
+
+  - cli_command:
+      command: "{{item}}"
+      prompt:
+        - "New password"
+        - "Retype new password"
+      answer:
+        - "Test1234"
+        - "Test1234"
+      check_all: True
+    loop:
+      - "configure"
+      - "rollback"
+      - "set system login user ansible_test class operator authentication plain-text-password"
+      - "commit"
+    register: result
+    ignore_errors: True
+
+  - assert:
+      that:
+        - "'failed' not in result"
+
+  - junos_netconf:
+    register: result
+    ignore_errors: True
+
+  - assert:
+      that:
+        - "result.failed == false"
+
   when: ansible_connection == 'network_cli'
 
 - debug: msg="END cli/cli_command.yaml on connection={{ ansible_connection }}"

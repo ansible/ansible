@@ -1,2 +1,3 @@
 ---
-testcase: " {{ testcase }}"
+testcase: ""
+test_items: []

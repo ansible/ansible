@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'
@@ -11,29 +14,32 @@ DOCUMENTATION = '''
 ---
 module: aws_elasticbeanstalk_app
 
-short_description: create, update, and delete an elastic beanstalk application
+short_description: Create, update, and delete an elastic beanstalk application
 
 version_added: "2.5"
 
 description:
-    - "creates, updates, deletes beanstalk applications if app_name is provided"
+    - Creates, updates, deletes beanstalk applications if app_name is provided.
 
 options:
   app_name:
     description:
-      - name of the beanstalk application you wish to manage
+      - Name of the beanstalk application you wish to manage.
     aliases: [ 'name' ]
+    type: str
   description:
     description:
-      - the description of the application
+      - The description of the application.
+    type: str
   state:
     description:
-      - whether to ensure the application is present or absent
+      - Whether to ensure the application is present or absent.
     default: present
     choices: ['absent','present']
+    type: str
   terminate_by_force:
     description:
-      - when set to true, running environments will be terminated before deleting the application
+      - When I(terminate_by_force=true), running environments will be terminated before deleting the application.
     default: false
     type: bool
 author:
@@ -60,7 +66,7 @@ EXAMPLES = '''
 
 RETURN = '''
 app:
-    description: beanstalk application
+    description: Beanstalk application.
     returned: always
     type: dict
     sample: {
@@ -75,7 +81,7 @@ app:
         ]
     }
 output:
-    description: message indicating what change will occur
+    description: Message indicating what change will occur.
     returned: in check mode
     type: str
     sample: App is up-to-date
