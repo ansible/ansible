@@ -168,8 +168,8 @@ def get_parent_datacenter(obj):
     return datacenter
 
 
-def find_datastore_by_name(content, datastore_name):
-    return find_object_by_name(content, datastore_name, [vim.Datastore])
+def find_datastore_by_name(content, datastore_name, datacenter_name=None):
+    return find_object_by_name(content, datastore_name, [vim.Datastore], datacenter_name)
 
 
 def find_dvs_by_name(content, switch_name, folder=None):
@@ -1272,16 +1272,18 @@ class PyVmomi(object):
             return False
         return True
 
-    def find_datastore_by_name(self, datastore_name):
+    def find_datastore_by_name(self, datastore_name, datacenter_name=None):
         """
         Get datastore managed object by name
         Args:
             datastore_name: Name of datastore
+            datacenter_name: Name of datacenter where the datastore resides.  This is needed because Datastores can be
+            shared across Datacenters, so we need to specify the datacenter to assure we get the correct Managed Object Reference
 
         Returns: datastore managed object if found else None
 
         """
-        return find_datastore_by_name(self.content, datastore_name=datastore_name)
+        return find_datastore_by_name(self.content, datastore_name=datastore_name, datacenter_name=datacenter_name)
 
     # Datastore cluster
     def find_datastore_cluster_by_name(self, datastore_cluster_name):

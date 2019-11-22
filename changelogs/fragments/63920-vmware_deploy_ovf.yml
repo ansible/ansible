@@ -1,0 +1,2 @@
+bugfixes:
+- Use correct datastore in multi-datacenter environment while using vmware_deploy_ovf (https://github.com/ansible/ansible/issues/63920).
