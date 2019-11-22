@@ -13,19 +13,19 @@ Unit Testing Ansible Modules
 Introduction
 ============
 
-This document explains why, how and when you should use unit tests for Ansible modules.
-The document doesn't apply to other parts of Ansible for which the recommendations are
+This document explains why, how and when you should use unit tests for Ansible network
+modules. The document doesn't apply to other parts of Ansible for which the recommendations are
 normally closer to the Python standard.  There is basic documentation for Ansible unit
-tests in the developer guide :ref:`testing_units`.  This document should
-be readable for a new Ansible module author. If you find it incomplete or confusing,
-please open a bug or ask for help on Ansible IRC.
+tests in the developer guide :ref:`testing_units` and :ref:`testing_units_modules`. 
+This document should be readable for a new Ansible network module author. If you find it
+incomplete or confusing, please open a bug or ask for help on Ansible-network IRC.
 
 What Are Unit Tests?
 ====================
 
 Ansible includes a set of unit tests in the :file:`test/units` directory. These tests primarily cover the
 internals but can also can cover Ansible modules.  The structure of the unit tests matches
-the structure of the code base, so the tests that reside in the :file:`test/units/modules/` directory
+the structure of the code base, so the tests that reside in the :file:`test/units/modules/network` directory
 are organized by module groups.
 
 Integration tests can be used for most modules, but there are situations where
@@ -160,7 +160,52 @@ Mock objects (from https://docs.python.org/3/library/unittest.mock.html) can be 
 useful in building unit tests for special / difficult cases, but they can also
 lead to complex and confusing coding situations.  One good use for mocks would be in
 simulating an API. As for 'six', the 'mock' python package is bundled with Ansible (use
-``import ansible.compat.tests.mock``). See for example
+``import ansible.compat.tests.mock``). The device connection and output from the device 
+are mocked as follows
+
+	self.mock_get_config = patch('ansible.module_utils.network.common.network.Config.get_config')
+        self.get_config = self.mock_get_config.start()
+
+        self.mock_load_config = patch('ansible.module_utils.network.common.network.Config.load_config')
+        self.load_config = self.mock_load_config.start()
+
+        self.mock_get_resource_connection_config = patch('ansible.module_utils.network.common.cfg.base.get_resource_connection')
+        self.get_resource_connection_config = self.mock_get_resource_connection_config.start()
+
+        self.mock_get_resource_connection_facts = patch('ansible.module_utils.network.common.facts.facts.get_resource_connection')
+        self.get_resource_connection_facts = self.mock_get_resource_connection_facts.start()
+
+        self.mock_edit_config = patch('ansible.module_utils.network.eos.providers.providers.CliProvider.edit_config')
+        self.edit_config = self.mock_edit_config.start()
+
+        self.mock_execute_show_command = patch('ansible.module_utils.network.eos.facts.l2_interfaces.l2_interfaces.L2_interfacesFacts.get_device_data')
+        self.execute_show_command = self.mock_execute_show_command.start()
+
+A new proc get_device_data is added into the facts file of the module, which is called here to emulate the device output.
+
+
+Fixtures files
+``````````````
+
+To mock out fetching results from devices, or provide other complex datastructures that
+come from external libraries, you can use ``fixtures`` to read in pre-generated data.
+
+Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
+
+Data is loaded using the ``load_fixture`` method and is set as the return value of the 
+get_device_data proc in the facts file
+
+    def load_fixtures(self, commands=None, transport='cli'):
+        def load_from_file(*args, **kwargs):
+            return load_fixture('eos_l2_interfaces_config.cfg')
+        self.execute_show_command.side_effect = load_from_file
+
+See `test_eos_l2_interfaces test
+<https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_l2_interfaces.py>`_
+for a practical example.
+
+If you are simulating APIs you may find that python placebo is useful.  See
+:ref:`testing_units_modules` for more information.
 
 Ensuring failure cases are visible with mock objects
 ----------------------------------------------------
@@ -178,27 +223,6 @@ This applies not only to calling the main module but almost any other
 function in a module which gets the module object.
 
 
-Mocking of the actual module
-----------------------------
-
-The setup of an actual module is quite complex (see `Passing Arguments`_ below) and often
-isn't needed for most functions which use a module. Instead you can use a mock object as
-the module and create any module attributes needed by the function you are testing. If
-you do this, beware that the module exit functions need special handling as mentioned
-above, either by throwing an exception or ensuring that they haven't been called. For example::
-
-    class AnsibleExitJson(Exception):
-        """Exception class to be raised by module.exit_json and caught by the test case"""
-        pass
-
-    # you may also do the same to fail json
-    module = MagicMock()
-    module.exit_json.side_effect = AnsibleExitJson(Exception)
-    with self.assertRaises(AnsibleExitJson) as result:
-        return = my_module.test_this_function(module, argument)
-    module.fail_json.assert_not_called()
-    assert return["changed"] == True
-
 API definition with unit test cases
 -----------------------------------
 
@@ -206,71 +230,6 @@ API interaction is usually best tested with the function tests defined in Ansibl
 integration testing section, which run against the actual API.  There are several cases
 where the unit tests are likely to work better.
 
-Defining a module against an API specification
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This case is especially important for modules interacting with web services, which provide
-an API that Ansible uses but which are beyond the control of the user.
-
-By writing a custom emulation of the calls that return data from the API, we can ensure
-that only the features which are clearly defined in the specification of the API are
-present in the message.  This means that we can check that we use the correct
-parameters and nothing else.
-
-
-*Example:  in rds_instance unit tests a simple instance state is defined*::
-
-    def simple_instance_list(status, pending):
-        return {u'DBInstances': [{u'DBInstanceArn': 'arn:aws:rds:us-east-1:1234567890:db:fakedb',
-                                  u'DBInstanceStatus': status,
-                                  u'PendingModifiedValues': pending,
-                                  u'DBInstanceIdentifier': 'fakedb'}]}
-
-This is then used to create a list of states::
-
-    rds_client_double = MagicMock()
-    rds_client_double.describe_db_instances.side_effect = [
-        simple_instance_list('rebooting', {"a": "b", "c": "d"}),
-        simple_instance_list('available', {"c": "d", "e": "f"}),
-        simple_instance_list('rebooting', {"a": "b"}),
-        simple_instance_list('rebooting', {"e": "f", "g": "h"}),
-        simple_instance_list('rebooting', {}),
-        simple_instance_list('available', {"g": "h", "i": "j"}),
-        simple_instance_list('rebooting', {"i": "j", "k": "l"}),
-        simple_instance_list('available', {}),
-        simple_instance_list('available', {}),
-    ]
-
-These states are then used as returns from a mock object to ensure that the ``await`` function
-waits through all of the states that would mean the RDS instance has not yet completed
-configuration::
-
-   rds_i.await_resource(rds_client_double, "some-instance", "available", mod_mock,
-                        await_pending=1)
-   assert(len(sleeper_double.mock_calls) > 5), "await_pending didn't wait enough"
-
-By doing this we check that the ``await`` function will keep waiting through
-potentially unusual that it would be impossible to reliably trigger through the
-integration tests but which happen unpredictably in reality.
-
-Defining a module to work against multiple API versions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This case is especially important for modules interacting with many different versions of
-software; for example, package installation modules that might be expected to work with
-many different operating system versions.
-
-By using previously stored data from various versions of an API we can ensure that the
-code is tested against the actual data which will be sent from that version of the system
-even when the version is very obscure and unlikely to be available during testing.
-
-Ansible special cases for unit testing
-======================================
-
-There are a number of special cases for unit testing the environment of an Ansible module.
-The most common are documented below, and suggestions for others can be found by looking
-at the source code of the existing unit tests or asking on the Ansible IRC channel or mailing
-lists.
 
 Module argument processing
 --------------------------
@@ -305,83 +264,15 @@ variable is set it will be treated as if the input came on ``STDIN`` to the modu
             'password': 'pass',
         })
 
-Handling exit correctly
------------------------
-
-.. This section should be updated once https://github.com/ansible/ansible/pull/31456 is
-   closed since the exit and failure functions below will be provided in a library file.
-
-The :meth:`module.exit_json` function won't work properly in a testing environment since it
-writes error information to ``STDOUT`` upon exit, where it
-is difficult to examine. This can be mitigated by replacing it (and :meth:`module.fail_json`) with
-a function that raises an exception::
-
-    def exit_json(*args, **kwargs):
-        if 'changed' not in kwargs:
-            kwargs['changed'] = False
-        raise AnsibleExitJson(kwargs)
-
-Now you can ensure that the first function called is the one you expected simply by
-testing for the correct exception::
-
-    def test_returned_value(self):
-        set_module_args({
-            'activationkey': 'key',
-            'username': 'user',
-            'password': 'pass',
-        })
-
-        with self.assertRaises(AnsibleExitJson) as result:
-            my_module.main()
-
-The same technique can be used to replace :meth:`module.fail_json` (which is used for failure
-returns from modules) and for the ``aws_module.fail_json_aws()`` (used in modules for Amazon
-Web Services).
-
-Running the main function
--------------------------
-
-If you do want to run the actual main function of a module you must import the module, set
-the arguments as above, set up the appropriate exit exception and then run the module::
-
-    # This test is based around pytest's features for individual test functions
-    import pytest
-    import ansible.modules.module.group.my_module as my_module
-
-    def test_main_function(monkeypatch):
-        monkeypatch.setattr(my_module.AnsibleModule, "exit_json", fake_exit_json)
-        set_module_args({
-            'activationkey': 'key',
-            'username': 'user',
-            'password': 'pass',
-        })
-        my_module.main()
 
 
-Handling calls to external executables
---------------------------------------
-
-Module must use :meth:`AnsibleModule.run_command` in order to execute an external command. This
-method needs to be mocked:
-
-Here is a simple mock of :meth:`AnsibleModule.run_command` (taken from :file:`test/units/modules/packaging/os/test_rhn_register.py`)::
-
-        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
-            run_command.return_value = 0, '', ''  # successful execution, no output
-                with self.assertRaises(AnsibleExitJson) as result:
-                    self.module.main()
-                self.assertFalse(result.exception.args[0]['changed'])
-        # Check that run_command has been called
-        run_command.assert_called_once_with('/usr/bin/command args')
-        self.assertEqual(run_command.call_count, 1)
-        self.assertFalse(run_command.called)
 
 
 A Complete Example
 ------------------
 
-The following example is a complete skeleton that reuses the mocks explained above and adds a new
-mock for :meth:`Ansible.get_bin_path`::
+The following example is a complete skeleton that reuses the mocks explained above . This is
+an example for ansible network.
 
     import json
 

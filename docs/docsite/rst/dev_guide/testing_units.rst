@@ -168,8 +168,8 @@ Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
 
 Data is loaded using the ``load_fixture`` method
 
-See `eos_banner test
-<https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_
+See `test_eos_l2_interfaces test
+<https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_l2_interfaces.py>`_
 for a practical example.
 
 If you are simulating APIs you may find that python placebo is useful.  See
