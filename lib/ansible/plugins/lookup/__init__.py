@@ -18,6 +18,7 @@
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+import os
 
 from abc import abstractmethod
 
@@ -108,7 +109,11 @@ class LookupBase(AnsiblePlugin):
     def find_file_in_search_path(self, myvars, subdir, needle, ignore_missing=False):
         '''
         Return a file (needle) in the task's expected search path.
+        If the file (needle) is an absolute path and exists, return it.
         '''
+
+        if os.path.isabs(needle) and os.path.exists(needle):
+            return needle
 
         if 'ansible_search_path' in myvars:
             paths = myvars['ansible_search_path']
