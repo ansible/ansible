@@ -774,13 +774,9 @@ class ELBListenerRules(object):
 
                 if current_actions_sorted != new_actions_sorted_no_secret:
                     modified_rule['Actions'] = new_rule['Actions']
-                    print("modified_rule:")
-                    print(new_rule['Actions'])
         # If the action lengths are different, then replace with the new actions
         else:
             modified_rule['Actions'] = new_rule['Actions']
-            print("modified_rule:")
-            print(new_rule['Actions'])
 
         # Conditions
         modified_conditions = []
