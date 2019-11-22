@@ -23,6 +23,7 @@
       image: registry:2.6.1
       ports: 5000
     register: registry_container
+    notify: Remove test registry
 
   - name: Get registry URL
     set_fact:
