@@ -29,6 +29,10 @@ description:
     - Manages AAA server global configuration on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@QijunPan)
+notes:
+  - This module requires the netconf system service be enabled on the remote device being managed.
+  - Recommended connection is C(netconf).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
     state:
         description:
@@ -1116,7 +1120,7 @@ class AaaServer(object):
         xml = self.netconf_set_config(module=module, conf_str=conf_str)
 
         if "<ok/>" not in xml:
-            module.fail_json(msg='Error: Delete authorization domian failed.')
+            module.fail_json(msg='Error: Delete authorization domain failed.')
 
         cmds = []
         cmd = "undo authorization-scheme"

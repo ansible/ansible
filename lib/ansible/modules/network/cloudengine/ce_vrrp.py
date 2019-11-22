@@ -29,6 +29,10 @@ description:
     - Manages VRRP interface attributes on HUAWEI CloudEngine devices.
 author:
     - Li Yanfeng (@numone213)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     interface:
         description:
@@ -816,7 +820,7 @@ class Vrrp(object):
             recv_xml = set_nc_config(self.module, conf_str)
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
-                    msg='Error: set vrrp global atrribute info failed.')
+                    msg='Error: set vrrp global attribute info failed.')
 
             if self.gratuitous_arp_interval:
                 self.updates_cmd.append(
@@ -860,7 +864,7 @@ class Vrrp(object):
             recv_xml = set_nc_config(self.module, conf_str)
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
-                    msg='Error: set vrrp global atrribute info failed.')
+                    msg='Error: set vrrp global attribute info failed.')
             if self.gratuitous_arp_interval:
                 self.updates_cmd.append("undo vrrp gratuitous-arp interval")
 
@@ -912,7 +916,7 @@ class Vrrp(object):
             recv_xml = set_nc_config(self.module, conf_str)
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
-                    msg='Error: set vrrp group atrribute info failed.')
+                    msg='Error: set vrrp group attribute info failed.')
             if self.interface and self.vrid:
                 self.updates_cmd.append("interface %s" % self.interface)
                 if self.vrrp_type == "admin":
@@ -1021,7 +1025,7 @@ class Vrrp(object):
             recv_xml = set_nc_config(self.module, conf_str)
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
-                    msg='Error: set vrrp global atrribute info failed.')
+                    msg='Error: set vrrp global attribute info failed.')
             if self.interface and self.vrid:
                 self.updates_cmd.append("interface %s" % self.interface)
                 if self.vrrp_type == "admin":

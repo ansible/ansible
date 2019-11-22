@@ -111,7 +111,7 @@ EXAMPLES = '''
         gateway: 1.2.3.4
         version: v4
 
-# Create bond on eth1 and eth2 interface, specifiyng both mode and miimon:
+# Create bond on eth1 and eth2 interface, specifying both mode and miimon:
 - name: Bonds
   ovirt_host_network:
     name: myhost
@@ -214,7 +214,7 @@ def get_bond_options(mode, usr_opts):
             None,
             'Dynamic link aggregation (802.3ad)',
         ]
-        if (not 0 < mode_number <= len(modes) - 1):
+        if (not 0 < mode_number <= len(modes)):
             return None
         return modes[mode_number - 1]
 
@@ -245,7 +245,9 @@ def get_bond_options(mode, usr_opts):
 class HostNetworksModule(BaseModule):
 
     def __compare_options(self, new_options, old_options):
-        return sorted(get_dict_of_struct(opt) for opt in new_options) != sorted(get_dict_of_struct(opt) for opt in old_options)
+        return sorted((get_dict_of_struct(opt) for opt in new_options),
+                      key=lambda x: x["name"]) != sorted((get_dict_of_struct(opt) for opt in old_options),
+                                                         key=lambda x: x["name"])
 
     def build_entity(self):
         return otypes.Host()
@@ -296,7 +298,7 @@ class HostNetworksModule(BaseModule):
         # Check if labels need to be updated on interface/bond:
         if labels:
             net_labels = nic_service.network_labels_service().list()
-            # If any lables which user passed aren't assigned, relabel the interface:
+            # If any labels which user passed aren't assigned, relabel the interface:
             if sorted(labels) != sorted([lbl.id for lbl in net_labels]):
                 return True
 

@@ -73,7 +73,7 @@ Function New-CertFile($module, $cert, $path, $type, $password) {
             $missing_key = $true
         }
         if ($missing_key) {
-            $module.FailJson("Cannot export cert with key as PKCS12 when the key is not marked as exportable or not accesible by the current user")
+            $module.FailJson("Cannot export cert with key as PKCS12 when the key is not marked as exportable or not accessible by the current user")
         }
     }
 

@@ -50,7 +50,7 @@ options:
     type: raw
   src:
     description:
-    - Name of the absolute path of the filname that includes the body
+    - Name of the absolute path of the filename that includes the body
       of the HTTP request being sent to the ACI fabric.
     - If you require a templated payload, use the C(content) parameter
       together with the C(template) lookup plugin, or use M(template).
@@ -107,7 +107,7 @@ EXAMPLES = r'''
       fvTenant:
         attributes:
           name: Sales
-          descr: Sales departement
+          descr: Sales department
   delegate_to: localhost
 
 - name: Add a tenant using a JSON string
@@ -123,7 +123,7 @@ EXAMPLES = r'''
         "fvTenant": {
           "attributes": {
             "name": "Sales",
-            "descr": "Sales departement"
+            "descr": "Sales department"
           }
         }
       }
@@ -335,9 +335,9 @@ def main():
         mutually_exclusive=[['content', 'src']],
     )
 
-    content = module.params['content']
-    path = module.params['path']
-    src = module.params['src']
+    content = module.params.get('content')
+    path = module.params.get('path')
+    src = module.params.get('src')
 
     # Report missing file
     file_exists = False
@@ -394,36 +394,36 @@ def main():
                 module.fail_json(msg='Failed to parse provided XML payload: %s' % to_text(e), payload=payload)
 
     # Perform actual request using auth cookie (Same as aci.request(), but also supports XML)
-    if 'port' in aci.params and aci.params['port'] is not None:
+    if 'port' in aci.params and aci.params.get('port') is not None:
         aci.url = '%(protocol)s://%(host)s:%(port)s/' % aci.params + path.lstrip('/')
     else:
         aci.url = '%(protocol)s://%(host)s/' % aci.params + path.lstrip('/')
-    if aci.params['method'] != 'get':
+    if aci.params.get('method') != 'get':
         path += '?rsp-subtree=modified'
         aci.url = update_qsl(aci.url, {'rsp-subtree': 'modified'})
 
     # Sign and encode request as to APIC's wishes
-    if aci.params['private_key'] is not None:
+    if aci.params.get('private_key') is not None:
         aci.cert_auth(path=path, payload=payload)
 
-    aci.method = aci.params['method'].upper()
+    aci.method = aci.params.get('method').upper()
 
     # Perform request
     resp, info = fetch_url(module, aci.url,
                            data=payload,
                            headers=aci.headers,
                            method=aci.method,
-                           timeout=aci.params['timeout'],
-                           use_proxy=aci.params['use_proxy'])
+                           timeout=aci.params.get('timeout'),
+                           use_proxy=aci.params.get('use_proxy'))
 
-    aci.response = info['msg']
-    aci.status = info['status']
+    aci.response = info.get('msg')
+    aci.status = info.get('status')
 
     # Report failure
-    if info['status'] != 200:
+    if info.get('status') != 200:
         try:
             # APIC error
-            aci.response_type(info['body'], rest_type)
+            aci.response_type(info.get('body'), rest_type)
             aci.fail_json(msg='APIC Error %(code)s: %(text)s' % aci.error)
         except KeyError:
             # Connection error

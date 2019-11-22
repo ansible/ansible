@@ -1,0 +1,2 @@
+- include: setup.yml
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_release != 'trusty'

@@ -21,7 +21,7 @@ description:
     Purity//FA operating system. By default, the module will collect basic
     information including hosts, host groups, protection
     groups and volume counts. Additional information can be collected
-    based on the configured set of arguements.
+    based on the configured set of arguments.
 author:
   - Pure Storage ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
@@ -76,21 +76,21 @@ purefa_info:
   description: Returns the information collected from the FlashArray
   returned: always
   type: complex
-  contains:
+  sample: {
         "admins": {
             "pureuser": {
                 "role": "array_admin",
                 "type": "local"
             }
-        }
+        },
         "apps": {
             "offload": {
                 "description": "Snapshot offload to NFS or Amazon S3",
                 "status": "healthy",
                 "version": "5.2.1"
             }
-        }
-        "arrays": {}
+        },
+        "arrays": {},
         "capacity": {
             "data_reduction": 11.664774599686346,
             "free_space": 6995782867042,
@@ -102,7 +102,7 @@ purefa_info:
             "total_capacity": 7002920315199,
             "total_reduction": 64.86821472825108,
             "volume_space": 3781932919
-        }
+        },
         "config": {
             "directory_service": {
                 "base_dn": null,
@@ -176,7 +176,7 @@ purefa_info:
             "syslog": [
                 "udp://prod-ntp2.puretec.purestorage.com:333"
             ]
-        }
+        },
         "default": {
             "admins": 1,
             "array_model": "FA-405",
@@ -190,8 +190,8 @@ purefa_info:
             "purity_version": "5.2.1",
             "snapshots": 2,
             "volume_groups": 1
-        }
-        "hgroups": {}
+        },
+        "hgroups": {},
         "hosts": {
             "@offload": {
                 "hgroup": null,
@@ -216,11 +216,11 @@ purefa_info:
                 ],
                 "wwn": []
             }
-        }
+        },
         "interfaces": {
             "CT0.ETH4": "iqn.2010-06.com.purestorage:flasharray.2111b767484e4682",
             "CT1.ETH4": "iqn.2010-06.com.purestorage:flasharray.2111b767484e4682",
-        }
+        },
         "network": {
             "@offload.data0": {
                 "address": "10.21.200.222",
@@ -310,8 +310,8 @@ purefa_info:
                 ],
                 "speed": 1000000000
             }
-        }
-        "nfs_offload": {}
+        },
+        "nfs_offload": {},
         "performance": {
             "input_per_sec": 0,
             "local_queue_usec_per_op": 0,
@@ -328,7 +328,7 @@ purefa_info:
             "usec_per_read_op": 0,
             "usec_per_write_op": 0,
             "writes_per_sec": 0
-        }
+        },
         "pgroups": {
             "test_pg": {
                 "hgroups": null,
@@ -337,7 +337,7 @@ purefa_info:
                 "targets": null,
                 "volumes": null
             }
-        }
+        },
         "pods": {
             "test": {
                 "arrays": [
@@ -350,7 +350,7 @@ purefa_info:
                 ],
                 "source": null
             }
-        }
+        },
         "s3_offload": {
             "s3-offload": {
                 "access_key_id": "AKIAILNVEPWZTV4FGWZQ",
@@ -358,15 +358,15 @@ purefa_info:
                 "protocol": "s3",
                 "status": "connected"
             }
-        }
+        },
         "snapshots": {
             "@offload_boot.1": {
                 "created": "2019-03-14T15:29:20Z",
                 "size": 68719476736,
                 "source": "@offload_boot"
             }
-        }
-        "subnet": {}
+        },
+        "subnet": {},
         "vgroups": {
             "test": {
                 "volumes": [
@@ -374,7 +374,7 @@ purefa_info:
                     "test/test1"
                 ]
             }
-        }
+        },
         "volumes": {
             "@offload_boot": {
                 "bandwidth": null,
@@ -401,6 +401,7 @@ purefa_info:
                 "source": null
             }
         }
+    }
 '''
 
 
@@ -489,7 +490,7 @@ def generate_config_dict(array):
     config_info['dns'] = array.get_dns()
     # SMTP
     config_info['smtp'] = array.list_alert_recipients()
-    # SMNP
+    # SNMP
     config_info['snmp'] = array.list_snmp_managers()
     config_info['snmp_v3_engine_id'] = array.get_snmp_engine_id()['engine_id']
     # DS
@@ -965,7 +966,7 @@ def main():
 
     info = {}
 
-    if 'minimum' in subset or 'all' in subset:
+    if 'minimum' in subset or 'all' in subset or 'apps' in subset:
         info['default'] = generate_default_dict(array)
     if 'performance' in subset or 'all' in subset:
         info['performance'] = generate_perf_dict(array)
@@ -1000,7 +1001,10 @@ def main():
         info['nfs_offload'] = generate_nfs_offload_dict(array)
         info['s3_offload'] = generate_s3_offload_dict(array)
     if 'apps' in subset or 'all' in subset:
-        info['apps'] = generate_apps_dict(array)
+        if 'CBS' not in info['default']['array_model']:
+            info['apps'] = generate_apps_dict(array)
+        else:
+            info['apps'] = {}
     if 'arrays' in subset or 'all' in subset:
         info['arrays'] = generate_conn_array_dict(array)
     if 'certs' in subset or 'all' in subset:

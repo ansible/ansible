@@ -334,15 +334,28 @@ class DnfModule(YumDnf):
         # https://github.com/ansible/ansible/issues/57189
         return True
 
-    def _sanitize_dnf_error_msg(self, spec, error):
+    def _sanitize_dnf_error_msg_install(self, spec, error):
         """
         For unhandled dnf.exceptions.Error scenarios, there are certain error
-        messages we want to filter. Do that here.
+        messages we want to filter in an install scenario. Do that here.
         """
         if to_text("no package matched") in to_text(error):
             return "No package {0} available.".format(spec)
 
         return error
+
+    def _sanitize_dnf_error_msg_remove(self, spec, error):
+        """
+        For unhandled dnf.exceptions.Error scenarios, there are certain error
+        messages we want to ignore in a removal scenario as known benign
+        failures. Do that here.
+        """
+        if 'no package matched' in to_native(error):
+            return (False, "{0} is not installed".format(spec))
+
+        # Return value is tuple of:
+        #   ("Is this actually a failure?", "Error Message")
+        return (True, error)
 
     def _package_dict(self, package):
         """Return a dictionary of information for the package."""
@@ -873,9 +886,16 @@ class DnfModule(YumDnf):
         if self.with_modules:
             module_spec = module_spec.strip()
             module_list, nsv = self.module_base._get_modules(module_spec)
+            enabled_streams = self.base._moduleContainer.getEnabledStream(nsv.name)
 
-            if nsv.stream in self.base._moduleContainer.getEnabledStream(nsv.name):
-                return True
+            if enabled_streams:
+                if nsv.stream:
+                    if nsv.stream in enabled_streams:
+                        return True     # The provided stream was found
+                    else:
+                        return False    # The provided stream was not found
+                else:
+                    return True         # No stream provided, but module found
 
         return False  # seems like a sane default
 
@@ -991,7 +1011,7 @@ class DnfModule(YumDnf):
                         install_result = self._mark_package_install(pkg_spec)
                         if install_result['failed']:
                             failure_response['msg'] += install_result['msg']
-                            failure_response['failures'].append(self._sanitize_dnf_error_msg(pkg_spec, install_result['failure']))
+                            failure_response['failures'].append(self._sanitize_dnf_error_msg_install(pkg_spec, install_result['failure']))
                         else:
                             response['results'].append(install_result['msg'])
 
@@ -1051,7 +1071,7 @@ class DnfModule(YumDnf):
                         install_result = self._mark_package_install(pkg_spec, upgrade=True)
                         if install_result['failed']:
                             failure_response['msg'] += install_result['msg']
-                            failure_response['failures'].append(self._sanitize_dnf_error_msg(pkg_spec, install_result['failure']))
+                            failure_response['failures'].append(self._sanitize_dnf_error_msg_install(pkg_spec, install_result['failure']))
                         else:
                             response['results'].append(install_result['msg'])
 
@@ -1104,7 +1124,11 @@ class DnfModule(YumDnf):
                         try:
                             self.base.remove(pkg_spec)
                         except dnf.exceptions.MarkingError as e:
-                            failure_response['failures'].append('{0} - {1}'.format(pkg_spec, to_native(e)))
+                            is_failure, handled_remove_error = self._sanitize_dnf_error_msg_remove(pkg_spec, to_native(e))
+                            if is_failure:
+                                failure_response['failures'].append('{0} - {1}'.format(pkg_spec, to_native(e)))
+                            else:
+                                response['results'].append(handled_remove_error)
                         continue
 
                     installed_pkg = list(map(str, installed.filter(name=pkg_spec).run()))
@@ -1222,7 +1246,7 @@ class DnfModule(YumDnf):
             )
 
         # Set state as installed by default
-        # This is not set in AnsibleModule() because the following shouldn't happend
+        # This is not set in AnsibleModule() because the following shouldn't happen
         # - dnf: autoremove=yes state=installed
         if self.state is None:
             self.state = 'installed'

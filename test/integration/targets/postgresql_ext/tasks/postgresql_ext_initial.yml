@@ -1,0 +1,227 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Create test schema:
+- name: postgresql_ext - install postgis
+  package: name=postgis state=present
+  when: ansible_os_family != "Windows"
+
+- name: postgresql_ext - install postgis RedHat
+  win_package: name=postgis state=present
+  when: ansible_os_family == "Windows"
+
+- name: postgresql_ext - create schema schema1
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    database: postgres
+    name: schema1
+    state: present
+
+- name: postgresql_ext - drop extension if exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    query: "DROP EXTENSION IF EXISTS postgis"
+  ignore_errors: yes
+
+##############
+# Start tests:
+
+# Create extension in check_mode, also check aliases for db and port params:
+- name: postgresql_ext - create extension postgis in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_ext:
+    login_db: postgres
+    login_port: 5432
+    name: postgis
+  check_mode: yes
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == []
+
+# Check that extension doesn't exist after the previous step, rowcount must be 0
+- name: postgresql_ext - check that extension doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    query: "SELECT extname FROM pg_extension WHERE extname='postgis'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that: 
+    - result.rowcount == 0
+
+# Create extension postgis, also check aliases for db and port params
+- name: postgresql_ext - create extension postgis
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_ext:
+    login_db: postgres
+    login_port: 5432
+    name: postgis
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['CREATE EXTENSION "postgis"']
+
+# Check that extension exists after the previous step, rowcount must be 1
+- name: postgresql_ext - check that extension exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    query: "SELECT extname FROM pg_extension WHERE extname='postgis'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that: 
+    - result.rowcount == 1
+
+# Drop extension postgis:
+- name: postgresql_ext - drop extension postgis
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_ext:
+    db: postgres
+    name: postgis
+    state: absent
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['DROP EXTENSION "postgis"']
+
+# Check that extension doesn't exist after the previous step, rowcount must be 0
+- name: postgresql_ext - check that extension doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    query: "SELECT extname FROM pg_extension WHERE extname='postgis'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that: 
+    - result.rowcount == 0
+
+# Create extension postgis in particular schema
+- name: postgresql_ext - create extension postgis
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_ext:
+    db: postgres
+    name: postgis
+    schema: schema1
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['CREATE EXTENSION "postgis" WITH SCHEMA "schema1"']
+
+# Check that extension exists after the previous step, rowcount must be 1
+- name: postgresql_ext - check that extension exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    query: |
+      SELECT extname FROM pg_extension AS e LEFT JOIN pg_catalog.pg_namespace AS n 
+      ON n.oid = e.extnamespace WHERE e.extname='postgis' AND n.nspname='schema1'
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that: 
+    - result.rowcount == 1
+
+#
+# Check cascade option. For creation it's available from PG 9.6.
+# I couldn't check it for two or more extension in one time
+# because most of the common extensions are available in postgresql-contrib package
+# that tries to change the default python interpreter and fails during tests respectively.
+# Anyway, that's enough to be sure that the proper SQL was executed.
+#
+
+# Drop extension cascade
+- name: postgresql_ext - drop extension postgis cascade
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_ext:
+    db: postgres
+    name: postgis
+    state: absent
+    cascade: yes
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['DROP EXTENSION "postgis" CASCADE']
+
+# Check that extension doesn't exist after the previous step, rowcount must be 0
+- name: postgresql_ext - check that extension doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    query: "SELECT extname FROM pg_extension WHERE extname='postgis'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that: 
+    - result.rowcount == 0
+
+# Create extension postgis cascade.
+# CASCADE for CREATE command is available from PG 9.6
+- name: postgresql_ext - create extension postgis cascade
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_ext:
+    db: postgres
+    name: postgis
+    cascade: yes
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.6', '<=')
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['CREATE EXTENSION "postgis" CASCADE"']
+  when: postgres_version_resp.stdout is version('9.6', '<=')
+
+# Check that extension exists after the previous step, rowcount must be 1
+- name: postgresql_ext - check that extension exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    query: "SELECT extname FROM pg_extension WHERE extname='postgis'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.6', '<=')
+
+- assert:
+    that: 
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.6', '<=')

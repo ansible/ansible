@@ -17,7 +17,7 @@ module: purefa_ra
 version_added: '2.8'
 short_description: Enable or Disable Pure Storage FlashArray Remote Assist
 description:
-- Enablke or Disable Remote Assist for a Pure Storage FlashArray.
+- Enable or Disable Remote Assist for a Pure Storage FlashArray.
 author:
 - Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:

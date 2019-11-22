@@ -98,7 +98,7 @@ class CollectionLayout(LayoutProvider):
             messages.info.append('Falling back to tests in "%s" because "%s" was not found.' % (legacy_integration_path, modern_integration_path))
             integration_targets_path = legacy_integration_path
         elif modern_integration_path_found:
-            messages.info.append('Loading tests from "%s".')
+            messages.info.append('Loading tests from "%s".' % modern_integration_path)
             integration_targets_path = modern_integration_path
         else:
             messages.error.append('Cannot run integration tests without "%s" or "%s".' % (modern_integration_path, legacy_integration_path))

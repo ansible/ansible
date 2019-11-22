@@ -173,12 +173,12 @@ data:
                 policy:
                     description: Action to apply when rule is hit.
                     returned: success
-                    type: string
+                    type: str
                     sample: deny
                 type:
                     description: Type of rule category.
                     returned: success
-                    type: string
+                    type: str
                     sample: applications
                 applications:
                     description: List of applications within a category.
@@ -187,12 +187,12 @@ data:
                         id:
                             description: URI of application.
                             returned: success
-                            type: string
+                            type: str
                             sample: Gmail
                         name:
                             description: Descriptive name of application.
                             returned: success
-                            type: string
+                            type: str
                             sample: meraki:layer7/application/4
                 applicationCategory:
                     description: List of application categories within a category.
@@ -201,32 +201,32 @@ data:
                         id:
                             description: URI of application.
                             returned: success
-                            type: string
+                            type: str
                             sample: Gmail
                         name:
                             description: Descriptive name of application.
                             returned: success
-                            type: string
+                            type: str
                             sample: meraki:layer7/application/4
                 port:
                     description: Port number in rule.
                     returned: success
-                    type: string
+                    type: str
                     sample: 23
                 ipRange:
                     description: Range of IP addresses in rule.
                     returned: success
-                    type: string
+                    type: str
                     sample: 1.1.1.0/23
                 whitelistedCountries:
                     description: Countries to be whitelisted.
                     returned: success
-                    type: string
+                    type: str
                     sample: CA
                 blacklistedCountries:
                     description: Countries to be blacklisted.
                     returned: success
-                    type: string
+                    type: str
                     sample: RU
         application_categories:
             description: List of application categories and applications.
@@ -240,23 +240,23 @@ data:
                         id:
                             description: URI of application.
                             returned: success
-                            type: string
+                            type: str
                             sample: Gmail
                         name:
                             description: Descriptive name of application.
                             returned: success
-                            type: string
+                            type: str
                             sample: meraki:layer7/application/4
-                    id:
-                        description: URI of application category.
-                        returned: success
-                        type: string
-                        sample: Email
-                    name:
-                        description: Descriptive name of application category.
-                        returned: success
-                        type: string
-                        sample: layer7/category/1
+                id:
+                    description: URI of application category.
+                    returned: success
+                    type: str
+                    sample: Email
+                name:
+                    description: Descriptive name of application category.
+                    returned: success
+                    type: str
+                    sample: layer7/category/1
 '''
 
 import copy

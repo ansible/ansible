@@ -36,7 +36,7 @@ class Lldp_globalArgs(object):
 
     argument_spec = {'config': {'options': {'holdtime': {'type': 'int'},
                                             'reinit': {'type': 'int'},
-                                            'enable': {'type': 'bool'},
+                                            'enabled': {'type': 'bool'},
                                             'timer': {'type': 'int'},
                                             'tlv_select': {
                                                 'options': {

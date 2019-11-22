@@ -5,10 +5,11 @@
     cname_h1: "{{ cname_prefix ~ '-network-h1' }}"
     nname_1: "{{ cname_prefix ~ '-network-1' }}"
     nname_2: "{{ cname_prefix ~ '-network-2' }}"
+    nname_3: "{{ cname_prefix ~ '-network-3' }}"
 - name: Registering container name
   set_fact:
     cnames: "{{ cnames + [cname, cname_h1] }}"
-    dnetworks: "{{ dnetworks + [nname_1, nname_2] }}"
+    dnetworks: "{{ dnetworks + [nname_1, nname_2, nname_3] }}"
 
 - name: Create networks
   docker_network:
@@ -19,6 +20,32 @@
   - "{{ nname_2 }}"
   loop_control:
     loop_var: network_name
+  when: docker_py_version is version('1.10.0', '>=')
+
+- set_fact:
+    subnet_ipv4: "192.168.{{ 64 + (192 | random) }}.0/24"
+    subnet_ipv6: "fdb6:feea:{{ '%0.4x:%0.4x' | format(65536 | random, 65536 | random) }}::/64"
+
+- set_fact:
+    # If netaddr would be installed on the controller, one could do:
+    nname_3_ipv4_2: "{{ subnet_ipv4 | next_nth_usable(2) }}"
+    nname_3_ipv4_3: "{{ subnet_ipv4 | next_nth_usable(3) }}"
+    nname_3_ipv4_4: "{{ subnet_ipv4 | next_nth_usable(4) }}"
+    nname_3_ipv6_2: "{{ subnet_ipv6 | next_nth_usable(2) }}"
+    nname_3_ipv6_3: "{{ subnet_ipv6 | next_nth_usable(3) }}"
+    nname_3_ipv6_4: "{{ subnet_ipv6 | next_nth_usable(4) }}"
+
+- debug:
+    msg: "Chose random IPv4 subnet {{ subnet_ipv4 }} and random IPv6 subnet {{ subnet_ipv6 }}"
+
+- name: Create network with fixed IPv4 and IPv6 subnets
+  docker_network:
+    name: "{{ nname_3 }}"
+    enable_ipv6: yes
+    ipam_config:
+      - subnet: "{{ subnet_ipv4 }}"
+      - subnet: "{{ subnet_ipv6 }}"
+    state: present
   when: docker_py_version is version('1.10.0', '>=')
 
 ####################################################################
@@ -536,6 +563,162 @@
   when: docker_py_version is version('1.10.0', '>=')
 
 ####################################################################
+## networks with IP address ########################################
+####################################################################
+
+- block:
+  - name: create container (stopped) with one network and fixed IP
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: stopped
+      networks:
+      - name: "{{ nname_3 }}"
+        ipv4_address: "{{ nname_3_ipv4_2 }}"
+        ipv6_address: "{{ nname_3_ipv6_2 }}"
+      networks_cli_compatible: yes
+    register: networks_1
+
+  - name: create container (stopped) with one network and fixed IP (idempotent)
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: stopped
+      networks:
+      - name: "{{ nname_3 }}"
+        ipv4_address: "{{ nname_3_ipv4_2 }}"
+        ipv6_address: "{{ nname_3_ipv6_2 }}"
+      networks_cli_compatible: yes
+    register: networks_2
+
+  - name: create container (stopped) with one network and fixed IP (different IPv4)
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: stopped
+      networks:
+      - name: "{{ nname_3 }}"
+        ipv4_address: "{{ nname_3_ipv4_3 }}"
+        ipv6_address: "{{ nname_3_ipv6_2 }}"
+      networks_cli_compatible: yes
+    register: networks_3
+
+  - name: create container (stopped) with one network and fixed IP (different IPv6)
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: stopped
+      networks:
+      - name: "{{ nname_3 }}"
+        ipv4_address: "{{ nname_3_ipv4_3 }}"
+        ipv6_address: "{{ nname_3_ipv6_3 }}"
+      networks_cli_compatible: yes
+    register: networks_4
+
+  - name: create container (started) with one network and fixed IP
+    docker_container:
+      name: "{{ cname }}"
+      state: started
+    register: networks_5
+
+  - name: create container (started) with one network and fixed IP (different IPv4)
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: started
+      networks:
+      - name: "{{ nname_3 }}"
+        ipv4_address: "{{ nname_3_ipv4_4 }}"
+        ipv6_address: "{{ nname_3_ipv6_3 }}"
+      networks_cli_compatible: yes
+      force_kill: yes
+    register: networks_6
+
+  - name: create container (started) with one network and fixed IP (different IPv6)
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: started
+      networks:
+      - name: "{{ nname_3 }}"
+        ipv4_address: "{{ nname_3_ipv4_4 }}"
+        ipv6_address: "{{ nname_3_ipv6_4 }}"
+      networks_cli_compatible: yes
+      force_kill: yes
+    register: networks_7
+
+  - name: create container (started) with one network and fixed IP (idempotent)
+    docker_container:
+      image: alpine:3.8
+      command: '/bin/sh -c "sleep 10m"'
+      name: "{{ cname }}"
+      state: started
+      networks:
+      - name: "{{ nname_3 }}"
+        ipv4_address: "{{ nname_3_ipv4_4 }}"
+        ipv6_address: "{{ nname_3_ipv6_4 }}"
+      networks_cli_compatible: yes
+    register: networks_8
+
+  - name: cleanup
+    docker_container:
+      name: "{{ cname }}"
+      state: absent
+      force_kill: yes
+    diff: no
+
+  - assert:
+      that:
+      - networks_1 is changed
+      - networks_1.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_2
+      - networks_1.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_2 | ipaddr
+      - networks_1.container.NetworkSettings.Networks[nname_3].IPAddress == ""
+      - networks_1.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == ""
+      - networks_2 is not changed
+      - networks_2.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_2
+      - networks_2.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_2 | ipaddr
+      - networks_2.container.NetworkSettings.Networks[nname_3].IPAddress == ""
+      - networks_2.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == ""
+      - networks_3 is changed
+      - networks_3.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_3
+      - networks_3.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_2 | ipaddr
+      - networks_3.container.NetworkSettings.Networks[nname_3].IPAddress == ""
+      - networks_3.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == ""
+      - networks_4 is changed
+      - networks_4.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_3
+      - networks_4.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_3 | ipaddr
+      - networks_4.container.NetworkSettings.Networks[nname_3].IPAddress == ""
+      - networks_4.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address == ""
+      - networks_5 is changed
+      - networks_5.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_3
+      - networks_5.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_3 | ipaddr
+      - networks_5.container.NetworkSettings.Networks[nname_3].IPAddress == nname_3_ipv4_3
+      - networks_5.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address | ipaddr == nname_3_ipv6_3 | ipaddr
+      - networks_6 is changed
+      - networks_6.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_4
+      - networks_6.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_3 | ipaddr
+      - networks_6.container.NetworkSettings.Networks[nname_3].IPAddress == nname_3_ipv4_4
+      - networks_6.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address | ipaddr == nname_3_ipv6_3 | ipaddr
+      - networks_7 is changed
+      - networks_7.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_4
+      - networks_7.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_4 | ipaddr
+      - networks_7.container.NetworkSettings.Networks[nname_3].IPAddress == nname_3_ipv4_4
+      - networks_7.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address | ipaddr == nname_3_ipv6_4 | ipaddr
+      - networks_8 is not changed
+      - networks_8.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv4Address == nname_3_ipv4_4
+      - networks_8.container.NetworkSettings.Networks[nname_3].IPAMConfig.IPv6Address | ipaddr == nname_3_ipv6_4 | ipaddr
+      - networks_8.container.NetworkSettings.Networks[nname_3].IPAddress == nname_3_ipv4_4
+      - networks_8.container.NetworkSettings.Networks[nname_3].GlobalIPv6Address | ipaddr == nname_3_ipv6_4 | ipaddr
+
+  when: docker_py_version is version('1.10.0', '>=')
+
+####################################################################
 ####################################################################
 ####################################################################
 
@@ -547,6 +730,7 @@
   loop:
   - "{{ nname_1 }}"
   - "{{ nname_2 }}"
+  - "{{ nname_3 }}"
   loop_control:
     loop_var: network_name
   when: docker_py_version is version('1.10.0', '>=')

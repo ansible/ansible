@@ -1,0 +1,5 @@
+test_group1: group1
+test_group2: group2
+test_group3: group.with.dots
+test_user1: user1
+test_user2: user.with.dots

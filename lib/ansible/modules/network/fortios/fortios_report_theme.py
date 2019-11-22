@@ -24,7 +24,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fortios_report_theme
-short_description: Report themes configuratio in Fortinet's FortiOS and FortiGate.
+short_description: Report themes configuration in Fortinet's FortiOS and FortiGate.
 description:
     - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify report feature and theme category.

@@ -29,6 +29,10 @@ description:
     - Manages BFD session configuration, creates a BFD session or deletes a specified BFD session
       on HUAWEI CloudEngine devices.
 author: QijunPan (@QijunPan)
+notes:
+  - This module requires the netconf system service be enabled on the remote device being managed.
+  - Recommended connection is C(netconf).
+  - This module also works with C(local) connections for legacy playbooks.
 options:
     session_name:
         description:

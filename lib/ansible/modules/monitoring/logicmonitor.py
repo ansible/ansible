@@ -52,7 +52,7 @@ options:
         NOTE Host and Hostgroup tasks should always be performed via delegate_to: localhost. There are no benefits to running these tasks on the
         remote host and doing so will typically cause problems.
     required: true
-    choices: ['collector', 'host', 'datsource', 'hostgroup']
+    choices: ['collector', 'host', 'datasource', 'hostgroup']
   action:
     description:
       - The action you wish to perform on target.
@@ -1185,7 +1185,7 @@ class Host(LogicMonitor):
             self.groups = None
 
     def create(self):
-        """Idemopotent function to create if missing,
+        """Idempotent function to create if missing,
         update if changed, or skip"""
         self.module.debug("Running Host.create...")
 

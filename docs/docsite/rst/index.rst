@@ -61,12 +61,19 @@ Ansible releases a new major release of Ansible approximately three to four time
    network/index
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Ansible Galaxy
+
+   galaxy/user_guide.rst
+   galaxy/dev_guide.rst
+
+
+.. toctree::
    :maxdepth: 1
    :caption: Reference & Appendices
 
    ../modules/modules_by_category
    reference_appendices/playbooks_keywords
-   reference_appendices/galaxy
    reference_appendices/common_return_values
    reference_appendices/config
    reference_appendices/general_precedence
@@ -81,6 +88,7 @@ Ansible releases a new major release of Ansible approximately three to four time
    reference_appendices/module_utils
    reference_appendices/special_variables
    reference_appendices/tower
+   reference_appendices/logging
 
 
 .. toctree::

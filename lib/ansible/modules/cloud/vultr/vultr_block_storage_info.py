@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: vultr_block_storage_info
-short_description: Get infos about the Vultr block storage volumes available.
+short_description: Get information about the Vultr block storage volumes available.
 description:
   - Get infos about block storage volumes available in Vultr.
 version_added: "2.9"
@@ -102,7 +102,7 @@ vultr_block_storage_info:
       description: Date created of the block storage.
       returned: success
       type: str
-      sample: 2018-07-24 12:59:59
+      sample: "2018-07-24 12:59:59"
     status:
       description: Status of the block storage.
       returned: success

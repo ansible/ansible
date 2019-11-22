@@ -28,16 +28,21 @@ options:
       description:
       - Creation Token of Amazon EFS file system.
       aliases: [ creation_token ]
+      type: str
     id:
       description:
       - ID of Amazon EFS.
+      type: str
     tags:
       description:
       - List of tags of Amazon EFS. Should be defined as dictionary.
+      type: dict
     targets:
       description:
       - List of targets on which to filter the returned results.
       - Result must match all of the specified targets, each of which can be a security group ID, a subnet ID or an IP address.
+      type: list
+      elements: str
 extends_documentation_fragment:
   - aws
   - ec2
@@ -370,7 +375,7 @@ def main():
         module.deprecate("The 'efs_facts' module has been renamed to 'efs_info', "
                          "and the renamed one no longer returns ansible_facts", version='2.13')
 
-    region, _, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = EFSConnection(module, region, **aws_connect_params)
 
     name = module.params.get('name')

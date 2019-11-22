@@ -74,6 +74,8 @@ The first thing you want to do is use the base class:
 
         NAME = 'myplugin'  # used internally by Ansible, it should match the file name but not required
 
+If the inventory plugin is in a collection the NAME should be in the format of 'namespace.collection_name.myplugin'.
+
 This class has a couple of methods each plugin should implement and a few helpers for parsing the inventory source and updating the inventory.
 
 After you have the basic plugin working you might want to to incorporate other features by adding more base classes:
@@ -258,7 +260,7 @@ Now that you've enabled caching, loaded the correct plugin, and retrieved a uniq
                 # This occurs if the cache_key is not in the cache or if the cache_key expired, so the cache needs to be updated
                 cache_needs_update = True
 
-        if cache_needs_updates:
+        if cache_needs_update:
             results = self.get_inventory()
 
             # set the cache

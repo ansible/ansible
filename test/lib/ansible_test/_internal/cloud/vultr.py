@@ -10,7 +10,10 @@ from . import (
     CloudEnvironmentConfig,
 )
 
-from ..util import ConfigParser
+from ..util import (
+    ConfigParser,
+    display,
+)
 
 
 class VultrCloudProvider(CloudProvider):
@@ -55,6 +58,8 @@ class VultrCloudEnvironment(CloudEnvironment):
         env_vars = dict(
             VULTR_API_KEY=parser.get('default', 'key'),
         )
+
+        display.sensitive.add(env_vars['VULTR_API_KEY'])
 
         ansible_vars = dict(
             vultr_resource_prefix=self.resource_prefix,

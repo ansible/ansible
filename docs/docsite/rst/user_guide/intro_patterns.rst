@@ -1,85 +1,132 @@
 .. _intro_patterns:
 
-Working with Patterns
-=====================
+Patterns: targeting hosts and groups
+====================================
 
-.. contents:: Topics
+When you execute Ansible through an ad-hoc command or by running a playbook, you must choose which managed nodes or groups you want to execute against. Patterns let you run commands and playbooks against specific hosts and/or groups in your inventory. An Ansible pattern can refer to a single host, an IP address, an inventory group, a set of groups, or all hosts in your inventory. Patterns are highly flexible - you can exclude or require subsets of hosts, use wildcards or regular expressions, and more. Ansible executes on all inventory hosts included in the pattern.
 
-Patterns in Ansible are how we decide which hosts to manage.  This can mean what hosts to communicate with, but in terms
-of :ref:`playbooks<playbooks_intro>` it actually means what hosts to apply a particular configuration or IT process to.
+.. contents::
+   :local:
 
-We'll go over how to use the command line in :ref:`intro_adhoc` section, however, basically it looks like this::
+Using patterns
+--------------
 
-    ansible <pattern_goes_here> -m <module_name> -a <arguments>
+You use a pattern almost any time you execute an ad-hoc command or a playbook. The pattern is the only element of an :ref:`ad-hoc command<intro_adhoc>` that has no flag. It is usually the second element::
 
-Such as::
+    ansible <pattern> -m <module_name> -a "<module options>""
+
+For example::
 
     ansible webservers -m service -a "name=httpd state=restarted"
 
-A pattern usually refers to a set of groups (which are sets of hosts) -- in the above case, machines in the "webservers" group.
+In a playbook the pattern is the content of the ``hosts:`` line for each play:
 
-Anyway, to use Ansible, you'll first need to know how to tell Ansible which hosts in your inventory to talk to.
-This is done by designating particular host names or groups of hosts.
+.. code-block:: yaml
 
-The following patterns are equivalent and target all hosts in the inventory::
+   - name: <play_name>
+     hosts: <pattern>
 
-    all
-    *
+For example::
 
-It is also possible to address a specific host or set of hosts by name::
+    - name: restart webservers
+      hosts: webservers
 
-    one.example.com
-    one.example.com:two.example.com
-    192.0.2.50
-    192.0.2.*
+Since you often want to run a command or playbook against multiple hosts at once, patterns often refer to inventory groups. Both the ad-hoc command and the playbook above will execute against all machines in the ``webservers`` group.
 
-The following patterns address one or more groups.  Groups separated by a colon indicate an "OR" configuration.
-This means the host may be in either one group or the other::
+.. _common_patterns:
 
-    webservers
-    webservers:dbservers
+Common patterns
+---------------
 
-You can exclude groups as well, for instance, all machines must be in the group webservers but not in the group phoenix::
+This table lists common patterns for targeting inventory hosts and groups.
 
-    webservers:!phoenix
+.. table::
+   :class: documentation-table
 
-You can also specify the intersection of two groups.  This would mean the hosts must be in the group webservers and
-the host must also be in the group staging::
+   ====================== ================================ ===================================================
+   Description            Pattern(s)                       Targets
+   ====================== ================================ ===================================================
+   All hosts              all (or \*)
 
-    webservers:&staging
+   One host               host1
 
-You can do combinations::
+   Multiple hosts         host1:host2 (or host1,host2)
+
+   One group              webservers
+
+   Multiple groups        webservers:dbservers             all hosts in webservers plus all hosts in dbservers
+
+   Excluding groups       webservers:!atlanta              all hosts in webservers except those in atlanta
+
+   Intersection of groups webservers:&staging              any hosts in webservers that are also in staging
+   ====================== ================================ ===================================================
+
+.. note:: You can use either a comma (``,``) or a colon (``:``) to separate a list of hosts. The comma is preferred when dealing with ranges and IPv6 addresses.
+
+Once you know the basic patterns, you can combine them. This example::
 
     webservers:dbservers:&staging:!phoenix
 
-The above configuration means "all machines in the groups 'webservers' and 'dbservers' are to be managed if they are also in
-the group 'staging', but the machines are not to be managed if they are in the group 'phoenix'." Whew!
+targets all machines in the groups 'webservers' and 'dbservers' that are also in
+the group 'staging', except any machines in the group 'phoenix'.
 
-You can also use variables if you want to pass some group specifiers via the ``-e`` argument to ansible-playbook, but this
-is uncommonly used::
+You can use wildcard patterns with FQDNs or IP addresses, as long as the hosts are named in your inventory by FQDN or IP address::
 
-    webservers:!{{excluded}}:&{{required}}
+   192.0.\*
+   \*.example.com
+   \*.com
 
-You also don't have to manage by strictly defined groups.  Individual host names, IPs, and groups can also be referenced using
-wildcards:
-
-.. code-block:: none
-
-    *.example.com
-    *.com
-
-It's also ok to mix wildcard patterns and groups at the same time::
+You can mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
 
-You can select a host or subset of hosts from a group by their position. For example, given the following group::
+Limitations of patterns
+-----------------------
+
+Patterns depend on inventory. If a host or group is not listed in your inventory, you cannot use a pattern to target it. If your pattern includes an IP address or hostname that does not appear in your inventory, you will see an error like this:
+
+.. code-block:: text
+
+   [WARNING]: No inventory was parsed, only implicit localhost is available
+   [WARNING]: Could not match supplied host pattern, ignoring: *.not_in_inventory.com
+
+Your pattern must match your inventory syntax. If you define a host as an :ref:`alias<inventory_aliases>`:
+
+.. code-block:: yaml
+
+    atlanta:
+      host1:
+        http_port: 80
+        maxRequestsPerChild: 808
+        host: 127.0.0.2
+
+you must use the alias in your pattern. In the example above, you must use ``host1`` in your pattern. If you use the IP address, you will once again get the error::
+
+   [WARNING]: Could not match supplied host pattern, ignoring: 127.0.0.2
+
+Advanced pattern options
+------------------------
+
+The common patterns described above will meet most of your needs, but Ansible offers several other ways to define the hosts and groups you want to target.
+
+Using variables in patterns
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can use variables to enable passing group specifiers via the ``-e`` argument to ansible-playbook::
+
+    webservers:!{{ excluded }}:&{{ required }}
+
+Using group position in patterns
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can define a host or subset of hosts by its position in a group. For example, given the following group::
 
     [webservers]
     cobweb
     webbing
     weber
 
-You can refer to hosts within the group by adding a subscript to the group name::
+you can use subscripts to select individual hosts or ranges within the webservers group::
 
     webservers[0]       # == cobweb
     webservers[-1]      # == weber
@@ -88,28 +135,32 @@ You can refer to hosts within the group by adding a subscript to the group name:
     webservers[1:]      # == webbing,weber
     webservers[:3]      # == cobweb,webbing,weber
 
-Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a ``~``::
+Using regexes in patterns
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can specify a pattern as a regular expression by starting the pattern with ``~``::
 
     ~(web|db).*\.example\.com
 
-While we're jumping a bit ahead, additionally, you can add an exclusion criteria just by supplying the ``--limit`` flag to /usr/bin/ansible or /usr/bin/ansible-playbook::
+Patterns and ansible-playbook flags
+-----------------------------------
+
+You can change the behavior of the patterns defined in playbooks using command-line options. For example, you can run a playbook that defines ``hosts: all`` on a single host by specifying ``-i 127.0.0.2,``. This works even if the host you target is not defined in your inventory. You can also limit the hosts you target on a particular run with the ``--limit`` flag::
 
     ansible-playbook site.yml --limit datacenter2
 
-And if you want to read the list of hosts from a file, prefix the file name with ``@``::
+Finally, you can use ``--limit`` to read the list of hosts from a file by prefixing the file name with ``@``::
 
     ansible-playbook site.yml --limit @retry_hosts.txt
 
-Easy enough.  See :ref:`intro_adhoc` and then :ref:`playbooks_intro` for how to apply this knowledge.
-
-.. note:: You can use a comma (``,``) as a host list separator instead of a colon (``:``). The comma is preferred when dealing with ranges and IPv6 addresses.
+To apply your knowledge of patterns with Ansible commands and playbooks, read :ref:`intro_adhoc` and :ref:`playbooks_intro`.
 
 .. seealso::
 
    :ref:`intro_adhoc`
        Examples of basic commands
    :ref:`working_with_playbooks`
-       Learning ansible's configuration management language
+       Learning the Ansible configuration management language
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

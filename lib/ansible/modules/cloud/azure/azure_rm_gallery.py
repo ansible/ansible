@@ -17,48 +17,43 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_gallery
 version_added: '2.9'
-short_description: Manage Azure Shared Image Gallery instance.
+short_description: Manage Azure Shared Image Gallery instance
 description:
-  - 'Create, update and delete instance of Azure Shared Image Gallery (SIG).'
+    - Create, update and delete instance of Azure Shared Image Gallery (SIG).
 options:
-  resource_group:
+    resource_group:
+        description:
+            - The name of the resource group.
+        required: true
+        type: str
+    name:
+        description:
+            - The name of the Shared Image Gallery.
+            - Valid names consist of less than 80 alphanumeric characters, underscores and periods.
+        required: true
+        type: str
+    location:
+        description:
+            - Resource location.
+        type: str
     description:
-      - The name of the resource group.
-    required: true
-    type: str
-  name:
-    description:
-      - >-
-        The name of the Shared Image Gallery.
-        Valid names consist of less than 80 alphanumeric characters, underscores and periods.
-    required: true
-    type: str
-  location:
-    description:
-      - Resource location
-    type: str
-  description:
-    description:
-      - >-
-        The description of this Shared Image Gallery resource. This property is
-        updatable.
-    type: str
-  state:
-    description:
-      - Assert the state of the Gallery.
-      - >-
-        Use C(present) to create or update an Gallery and C(absent) to delete
-        it.
-    default: present
-    type: str
-    choices:
-      - absent
-      - present
+        description:
+            - The description of this Shared Image Gallery resource. This property is updatable.
+        type: str
+    state:
+        description:
+            - Assert the state of the Gallery.
+            - Use C(present) to create or update an Gallery and C(absent) to delete it.
+        default: present
+        type: str
+        choices:
+            - absent
+            - present
 extends_documentation_fragment:
-  - azure
-  - azure_tags
+    - azure
+    - azure_tags
 author:
-  - Zim Kalinowski (@zikalino)
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -73,11 +68,11 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-  description:
-    - Resource Id
-  returned: always
-  type: str
-  sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGallery1283"
+    description:
+        - Resource ID.
+    returned: always
+    type: str
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGallery1283"
 '''
 
 import time
@@ -141,7 +136,7 @@ class AzureRMGalleries(AzureRMModuleBaseExt):
 
         self.body = {}
         self.query_parameters = {}
-        self.query_parameters['api-version'] = '2019-03-01'
+        self.query_parameters['api-version'] = '2019-07-01'
         self.header_parameters = {}
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 

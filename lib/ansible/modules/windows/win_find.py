@@ -76,7 +76,7 @@ options:
         description:
             - One or more (powershell or regex) patterns to compare filenames with.
             - The type of pattern matching is controlled by C(use_regex) option.
-            - The patterns retrict the list of files or folders to be returned based on the filenames.
+            - The patterns restrict the list of files or folders to be returned based on the filenames.
             - For a file to be matched it only has to match with one pattern in a list provided.
         type: list
         aliases: [ "regex", "regexp" ]
@@ -262,7 +262,7 @@ files:
             sample: true
         islnk:
             description: If the path is a symbolic link or junction or not.
-            returned: success, path exists
+            returned: success, path exists or deduped files
             type: bool
             sample: true
         isreadonly:
@@ -287,7 +287,7 @@ files:
             sample: 1477984205.15
         lnk_source:
             description: The target of the symbolic link, will return null if not a link or the link is broken.
-            return: success, path exists, path is a symbolic link
+            returned: success, path exists, path is a symbolic link
             type: str
             sample: C:\temp
         owner:

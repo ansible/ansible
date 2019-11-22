@@ -8,7 +8,7 @@ from distutils.version import LooseVersion
 
 FW_VERSION = None
 fw = None
-fw_offline = None
+fw_offline = False
 import_failure = True
 try:
     import firewall.config
@@ -17,12 +17,12 @@ try:
     from firewall.client import FirewallClient
     from firewall.client import FirewallClientZoneSettings
     from firewall.errors import FirewallError
-    fw_offline = False
     import_failure = False
 
     try:
         fw = FirewallClient()
         fw.getDefaultZone()
+
     except (AttributeError, FirewallError):
         # Firewalld is not currently running, permanent-only operations
         fw_offline = True
@@ -31,10 +31,15 @@ try:
         #
         # NOTE:
         #  online and offline operations do not share a common firewalld API
-        from firewall.core.fw_test import Firewall_test
-        fw = Firewall_test()
-        fw.start()
+        try:
+            from firewall.core.fw_test import Firewall_test
+            fw = Firewall_test()
+        except (ModuleNotFoundError):
+            # In firewalld version 0.7.0 this behavior changed
+            from firewall.core.fw import Firewall
+            fw = Firewall(offline=True)
 
+        fw.start()
 except ImportError:
     pass
 

@@ -277,3 +277,132 @@
   stat:
     path: '{{ output_dir }}/privatekey_mode.pem'
   register: privatekey_mode_3_stat
+
+- block:
+  - name: Generate privatekey_fmt_1 - auto format
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: auto
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_1
+
+  - name: Generate privatekey_fmt_1 - auto format (idempotent)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: auto
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_2
+
+  - name: Generate privatekey_fmt_1 - PKCS1 format
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: pkcs1
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_3
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: pkcs8
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_4
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format (idempotent)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: pkcs8
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_5
+
+  - name: Generate privatekey_fmt_1 - auto format (ignore)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: auto_ignore
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_6
+
+  - name: Generate privatekey_fmt_1 - auto format (no ignore)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: auto
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_7
+
+  - name: Generate privatekey_fmt_1 - raw format (fail)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: raw
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    ignore_errors: yes
+    register: privatekey_fmt_1_step_8
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format (convert)
+    openssl_privatekey_info:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_9_before
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format (convert)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      format: pkcs8
+      format_mismatch: convert
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_9
+
+  - name: Generate privatekey_fmt_1 - PKCS8 format (convert)
+    openssl_privatekey_info:
+      path: '{{ output_dir }}/privatekey_fmt_1.pem'
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_9_after
+
+  when: 'select_crypto_backend == "cryptography"'
+
+- block:
+  - name: Generate privatekey_fmt_2 - PKCS8 format
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
+      format: pkcs8
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_2_step_1
+
+  - name: Generate privatekey_fmt_2 - PKCS8 format (idempotent)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
+      format: pkcs8
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_2_step_2
+
+  - name: Generate privatekey_fmt_2 - raw format
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
+      format: raw
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_2_step_3
+
+  - name: Generate privatekey_fmt_2 - raw format (idempotent)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
+      format: raw
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_2_step_4
+
+  - name: Generate privatekey_fmt_2 - auto format (ignore)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      format: auto_ignore
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_5
+
+  - name: Generate privatekey_fmt_2 - auto format (no ignore)
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      format: auto
+      select_crypto_backend: '{{ select_crypto_backend }}'
+    register: privatekey_fmt_1_step_6
+
+  when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")'

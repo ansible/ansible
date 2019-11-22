@@ -22,7 +22,7 @@ description:
     Purity//FB operating system. By default, the module will collect basic
     information including hosts, host groups, protection
     groups and volume counts. Additional information can be collected
-    based on the configured set of arguements.
+    based on the configured set of arguments.
 author:
   - Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
@@ -76,7 +76,7 @@ purefb_info:
   description: Returns the information collected from the FlashBlade
   returned: always
   type: complex
-  contains:
+  sample: {
         "capacity": {
             "aggregate": {
                 "data_reduction": 1.1179228,
@@ -100,7 +100,7 @@ purefb_info:
                 "virtual": 6477716992
             },
             "total": 83359896948925
-        }
+        },
         "config": {
             "alert_watchers": {
                 "enabled": true,
@@ -195,7 +195,7 @@ purefb_info:
                 "valid_from": "1508433967000",
                 "valid_to": "2458833967000"
             }
-        }
+        },
         "default": {
             "blades": 15,
             "buckets": 7,
@@ -206,7 +206,7 @@ purefb_info:
             "purity_version": "2.2.0",
             "snapshots": 1,
             "total_capacity": 83359896948925
-        }
+        },
         "filesystems": {
             "k8s-pvc-d24b1357-579e-11e8-811f-ecf4bbc88f54": {
                 "destroyed": false,
@@ -223,7 +223,7 @@ purefb_info:
                 "provisioned": 1073741824,
                 "snapshot_enabled": false
             }
-        }
+        },
         "lag": {
             "uplink": {
                 "lag_speed": 0,
@@ -238,7 +238,7 @@ purefb_info:
                 ],
                 "status": "healthy"
             }
-        }
+        },
         "network": {
             "fm1.admin0": {
                 "address": "10.10.100.6",
@@ -284,7 +284,7 @@ purefb_info:
                 "type": "vip",
                 "vlan": 2200
             }
-        }
+        },
         "performance": {
             "aggregate": {
                 "bytes_per_op": 0,
@@ -334,7 +334,7 @@ purefb_info:
                 "write_bytes_per_sec": 0,
                 "writes_per_sec": 0
             }
-        }
+        },
         "snapshots": {
             "z.188": {
                 "destroyed": false,
@@ -342,7 +342,7 @@ purefb_info:
                 "source_destroyed": false,
                 "suffix": "188"
             }
-        }
+        },
         "subnet": {
             "new-mgmt": {
                 "gateway": "10.10.100.1",
@@ -371,6 +371,7 @@ purefb_info:
                 "vlan": 2200
             }
         }
+    }
 '''
 
 

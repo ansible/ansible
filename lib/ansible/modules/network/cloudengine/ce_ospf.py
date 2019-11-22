@@ -28,6 +28,10 @@ short_description: Manages configuration of an OSPF instance on HUAWEI CloudEngi
 description:
     - Manages configuration of an OSPF instance on HUAWEI CloudEngine switches.
 author: QijunPan (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     process_id:
         description:
@@ -514,9 +518,6 @@ class OSPF(object):
                 for network in area.get("networks"):
                     if network["ipAddress"] == self.addr and network["wildcardMask"] == self.get_wildcard_mask():
                         return True
-            else:
-                break
-
         return False
 
     def is_nexthop_exist(self):
@@ -890,7 +891,8 @@ class OSPF(object):
         self.end_state["max_load_balance"] = ospf_info.get("maxLoadBalancing")
 
         if self.end_state == self.existing:
-            self.changed = False
+            if not self.auth_text_simple and not self.auth_text_md5:
+                self.changed = False
 
     def work(self):
         """worker"""

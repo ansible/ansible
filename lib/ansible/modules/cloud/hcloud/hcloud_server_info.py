@@ -41,7 +41,7 @@ options:
         type: str
     label_selector:
         description:
-            - The label selector for the servery you want to get.
+            - The label selector for the server you want to get.
         type: str
 extends_documentation_fragment: hcloud
 """
@@ -116,6 +116,18 @@ hcloud_server_info:
             description: User-defined labels (key-value pairs)
             returned: always
             type: dict
+        delete_protection:
+            description: True if server is protected for deletion
+            type: bool
+            returned: always
+            sample: false
+            version_added: "2.10"
+        rebuild_protection:
+            description: True if server is protected for rebuild
+            type: bool
+            returned: always
+            sample: false
+            version_added: "2.10"
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -151,6 +163,8 @@ class AnsibleHcloudServerInfo(Hcloud):
                     "backup_window": to_native(server.backup_window),
                     "labels": server.labels,
                     "status": to_native(server.status),
+                    "delete_protection": server.protection["delete"],
+                    "rebuild_protection": server.protection["rebuild"],
                 })
         return tmp
 

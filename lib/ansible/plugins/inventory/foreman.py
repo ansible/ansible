@@ -17,6 +17,7 @@ DOCUMENTATION = '''
         - "Uses a configuration file as an inventory source, it must end in ``.foreman.yml`` or ``.foreman.yaml`` and has a ``plugin: foreman`` entry."
     extends_documentation_fragment:
         - inventory_cache
+        - constructed
     options:
       plugin:
         description: the name of this plugin, it should always be set to 'foreman' for this plugin to recognize it as it's own.
@@ -74,7 +75,7 @@ from distutils.version import LooseVersion
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
-from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
+from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name, Constructable
 
 # 3rd party imports
 try:
@@ -87,7 +88,7 @@ except ImportError:
 from requests.auth import HTTPBasicAuth
 
 
-class InventoryModule(BaseInventoryPlugin, Cacheable):
+class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
     ''' Host inventory parser for ansible using foreman as source. '''
 
     NAME = 'foreman'
@@ -197,38 +198,45 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         for host in self._get_hosts():
 
             if host.get('name'):
-                self.inventory.add_host(host['name'])
+                host_name = self.inventory.add_host(host['name'])
 
                 # create directly mapped groups
                 group_name = host.get('hostgroup_title', host.get('hostgroup_name'))
                 if group_name:
                     group_name = to_safe_group_name('%s%s' % (self.get_option('group_prefix'), group_name.lower().replace(" ", "")))
                     group_name = self.inventory.add_group(group_name)
-                    self.inventory.add_child(group_name, host['name'])
+                    self.inventory.add_child(group_name, host_name)
 
                 # set host vars from host info
                 try:
                     for k, v in host.items():
                         if k not in ('name', 'hostgroup_title', 'hostgroup_name'):
                             try:
-                                self.inventory.set_variable(host['name'], self.get_option('vars_prefix') + k, v)
+                                self.inventory.set_variable(host_name, self.get_option('vars_prefix') + k, v)
                             except ValueError as e:
                                 self.display.warning("Could not set host info hostvar for %s, skipping %s: %s" % (host, k, to_text(e)))
                 except ValueError as e:
-                    self.display.warning("Could not get host info for %s, skipping: %s" % (host['name'], to_text(e)))
+                    self.display.warning("Could not get host info for %s, skipping: %s" % (host_name, to_text(e)))
 
                 # set host vars from params
                 if self.get_option('want_params'):
                     for p in self._get_all_params_by_id(host['id']):
                         try:
-                            self.inventory.set_variable(host['name'], p['name'], p['value'])
+                            self.inventory.set_variable(host_name, p['name'], p['value'])
                         except ValueError as e:
                             self.display.warning("Could not set hostvar %s to '%s' for the '%s' host, skipping:  %s" %
                                                  (p['name'], to_native(p['value']), host, to_native(e)))
 
                 # set host vars from facts
                 if self.get_option('want_facts'):
-                    self.inventory.set_variable(host['name'], 'ansible_facts', self._get_facts(host))
+                    self.inventory.set_variable(host_name, 'ansible_facts', self._get_facts(host))
+
+                strict = self.get_option('strict')
+
+                hostvars = self.inventory.get_host(host_name).get_vars()
+                self._set_composite_vars(self.get_option('compose'), hostvars, host_name, strict)
+                self._add_host_to_composed_groups(self.get_option('groups'), hostvars, host_name, strict)
+                self._add_host_to_keyed_groups(self.get_option('keyed_groups'), hostvars, host_name, strict)
 
     def parse(self, inventory, loader, path, cache=True):
 

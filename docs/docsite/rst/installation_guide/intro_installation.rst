@@ -41,9 +41,11 @@ information about running from source. It's not necessary to install the program
 Control Node Requirements
 ````````````````````````````
 
-Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Windows isn't supported for the control node.
+Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Windows is not supported for the control node.
 
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
+
+When choosing a control node, bear in mind that any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud. In most cases this will work better than on the open Internet.
 
 .. note::
 
@@ -82,8 +84,8 @@ later).
      modules to use. You will still need to set :ref:`ansible_python_interpreter<ansible_python_interpreter>` if the Python
      2 interpreter is not installed to :command:`/usr/bin/python`.
 
-   * Ansible's "raw" module (for executing commands in a quick and dirty way) and the script module
-     don't even need Python installed.  So technically, you can use Ansible to install a compatible
+   * Ansible's :ref:`raw module<raw_module>`, and the :ref:`script module<script_module>`, do not depend
+     on a client side install of Python to run.  Technically, you can use Ansible to install a compatible
      version of Python using the :ref:`raw module<raw_module>`, which then allows you to use everything else.
      For example, if you need to bootstrap Python 2 onto a RHEL-based system, you can install it
      via
@@ -119,13 +121,13 @@ To enable the Ansible Engine repository for RHEL 8, run the following command:
 
 .. code-block:: bash
 
-    $ sudo subscription-manager repos --enable ansible-2.8-for-rhel-8-x86_64-rpms
+    $ sudo subscription-manager repos --enable ansible-2.9-for-rhel-8-x86_64-rpms
 
 To enable the Ansible Engine repository for RHEL 7, run the following command:
 
 .. code-block:: bash
 
-    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.8-rpms
+    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.9-rpms
 
 RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_ as well as `releases.ansible.com <https://releases.ansible.com/ansible/rpm>`_.
 

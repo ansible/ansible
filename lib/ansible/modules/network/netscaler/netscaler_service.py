@@ -444,6 +444,8 @@ def service_identical(client, module, service_proxy):
     # of the retrieved object
     if 'ip' in diff_dict:
         del diff_dict['ip']
+    if 'graceful' in diff_dict:
+        del diff_dict['graceful']
     if len(diff_dict) == 0:
         return True
     else:
@@ -828,7 +830,6 @@ def main():
         'td',
         'monitor_name_svc',
         'riseapbrstatsmsgcode',
-        'graceful',
         'all',
         'Internal',
         'newname',
@@ -863,7 +864,7 @@ def main():
         'weight',
     ]
 
-    # Translate module arguments to correspondign config oject attributes
+    # Translate module arguments to correspondign config object attributes
     if module.params['ip'] is None:
         module.params['ip'] = module.params['ipaddress']
 

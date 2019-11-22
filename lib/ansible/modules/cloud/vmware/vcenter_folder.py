@@ -132,8 +132,12 @@ result:
     returned: On success
     type: complex
     contains:
-        path: the full path of the new folder
-        msg: string stating about result
+        path:
+            description: the full path of the new folder
+            type: str
+        msg:
+            description: string stating about result
+            type: str
 '''
 
 try:

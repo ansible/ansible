@@ -27,6 +27,7 @@ import pwd
 import re
 import time
 
+from contextlib import contextmanager
 from numbers import Number
 
 try:
@@ -272,7 +273,7 @@ class AnsibleContext(Context):
             for item in val:
                 if self._is_unsafe(item):
                     return True
-        elif isinstance(val, string_types) and hasattr(val, '__UNSAFE__'):
+        elif hasattr(val, '__UNSAFE__'):
             return True
         return False
 
@@ -350,12 +351,10 @@ class JinjaPluginIntercept(MutableMapping):
 
             for f in iteritems(method_map()):
                 fq_name = '.'.join((parent_prefix, f[0]))
+                # FIXME: detect/warn on intra-collection function name collisions
                 self._collection_jinja_func_cache[fq_name] = f[1]
 
-            function_impl = self._collection_jinja_func_cache[key]
-
-        # FIXME: detect/warn on intra-collection function name collisions
-
+        function_impl = self._collection_jinja_func_cache[key]
         return function_impl
 
     def __setitem__(self, key, value):
@@ -513,6 +512,36 @@ class Templar:
             version='2.13'
         )
         self.available_variables = variables
+
+    @contextmanager
+    def set_temporary_context(self, **kwargs):
+        """Context manager used to set temporary templating context, without having to worry about resetting
+        original values afterward
+
+        Use a keyword that maps to the attr you are setting. Applies to ``self.environment`` by default, to
+        set context on another object, it must be in ``mapping``.
+        """
+        mapping = {
+            'available_variables': self,
+            'searchpath': self.environment.loader,
+        }
+        original = {}
+
+        for key, value in kwargs.items():
+            obj = mapping.get(key, self.environment)
+            try:
+                original[key] = getattr(obj, key)
+                if value is not None:
+                    setattr(obj, key, value)
+            except AttributeError:
+                # Ignore invalid attrs, lstrip_blocks was added in jinja2==2.7
+                pass
+
+        yield
+
+        for key in original:
+            obj = mapping.get(key, self.environment)
+            setattr(obj, key, original[key])
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
                  convert_data=True, static_vars=None, cache=True, disable_lookups=False):

@@ -46,6 +46,32 @@ options:
     type: bool
     required: False
     version_added: 2.9
+  schema:
+    description:
+    - Specify the output schema desired.
+    - The 'summary' output schema is the legacy output from the module
+    - The 'vsphere' output schema is the vSphere API class definition
+      which requires pyvmomi>6.7.1
+    choices: ['summary', 'vsphere']
+    default: 'summary'
+    type: str
+    version_added: '2.10'
+  properties:
+    description:
+      - Specify the properties to retrieve.
+      - If not specified, all properties are retrieved (deeply).
+      - Results are returned in a structure identical to the vsphere API.
+      - 'Example:'
+      - '   properties: ['
+      - '      "hardware.memorySize",'
+      - '      "hardware.cpuInfo.numCpuCores",'
+      - '      "config.product.apiVersion",'
+      - '      "overallStatus"'
+      - '   ]'
+      - Only valid when C(schema) is C(vsphere).
+    type: list
+    required: False
+    version_added: '2.10'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -85,6 +111,20 @@ EXAMPLES = r'''
   register: host_facts
 - set_fact:
     cluster_uuid: "{{ host_facts['ansible_facts']['vsan_cluster_uuid'] }}"
+
+- name: Gather some info from a host using the vSphere API output schema
+  vmware_host_facts:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    esxi_hostname: "{{ esxi_hostname }}"
+    schema: vsphere
+    properties:
+      - hardware.memorySize
+      - hardware.cpuInfo.numCpuCores
+      - config.product.apiVersion
+      - overallStatus
+  register: host_facts
 '''
 
 RETURN = r'''
@@ -285,18 +325,35 @@ class VMwareHostFactManager(PyVmomi):
         }
         return facts
 
+    def properties_facts(self):
+        ansible_facts = self.to_json(self.host, self.params.get('properties'))
+        if self.params.get('show_tag'):
+            vmware_client = VmwareRestClient(self.module)
+            tag_info = {
+                'tags': vmware_client.get_tags_for_hostsystem(hostsystem_mid=self.host._moId)
+            }
+            ansible_facts.update(tag_info)
+
+        self.module.exit_json(changed=False, ansible_facts=ansible_facts)
+
 
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         esxi_hostname=dict(type='str', required=False),
         show_tag=dict(type='bool', default=False),
+        schema=dict(type='str', choices=['summary', 'vsphere'], default='summary'),
+        properties=dict(type='list')
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
     vm_host_manager = VMwareHostFactManager(module)
-    vm_host_manager.all_facts()
+
+    if module.params['schema'] == 'summary':
+        vm_host_manager.all_facts()
+    else:
+        vm_host_manager.properties_facts()
 
 
 if __name__ == '__main__':

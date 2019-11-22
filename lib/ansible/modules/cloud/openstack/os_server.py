@@ -120,7 +120,7 @@ options:
    boot_from_volume:
      description:
         - Should the instance boot from a persistent volume created based on
-          the image given. Mututally exclusive with boot_volume.
+          the image given. Mutually exclusive with boot_volume.
      type: bool
      default: 'no'
    volume_size:

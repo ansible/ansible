@@ -85,10 +85,15 @@
     state: disabled
   ignore_errors: yes
 
+- name: Setup supporting loopback interface
+  nxos_config:
+    lines: interface loopback1
+    match: none
+
 - name: feature bfd init
   # 'feature bfd' init is slow on some platforms, retry on fail
   nxos_bfd_global:
-    echo_interface:        "{{ nd_echo }}"
+    slow_timer:            "{{ nd_slow }}"
   delay: 3
   retries: 1
   register: result
@@ -157,6 +162,12 @@
   always:
   - name: Teardown
     nxos_feature: *setup_teardown
+    ignore_errors: yes
+
+  - name: Teardown supporting loopback interface
+    nxos_config:
+      lines: no interface loopback1
+      match: none
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_bfd_global sanity test"

@@ -67,7 +67,7 @@ EXAMPLES = '''
 
 - name: Another way to call known_hosts
   known_hosts:
-    hostname: host1.example.com   # or 10.9.8.77
+    name: host1.example.com   # or 10.9.8.77
     key: host1.example.com,10.9.8.77 ssh-rsa ASDeararAIUHI324324  # some key gibberish
     path: /etc/ssh/ssh_known_hosts
     state: present

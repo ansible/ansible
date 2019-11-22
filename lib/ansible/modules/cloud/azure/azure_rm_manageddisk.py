@@ -158,7 +158,7 @@ EXAMPLES = '''
         disk_size_gb: 4
 
     - name: Delete managed disk
-      azure_rm_manage_disk:
+      azure_rm_manageddisk:
         name: mymanageddisk
         location: eastus
         resource_group: myResourceGroup

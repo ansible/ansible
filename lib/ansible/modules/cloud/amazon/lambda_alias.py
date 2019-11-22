@@ -28,27 +28,32 @@ options:
     description:
       - The name of the function alias.
     required: true
+    type: str
   state:
     description:
       - Describes the desired state.
     required: true
     default: "present"
     choices: ["present", "absent"]
+    type: str
   name:
     description:
       - Name of the function alias.
     required: true
     aliases: ['alias_name']
+    type: str
   description:
     description:
       - A short, user-defined function alias description.
     required: false
-  version:
+    type: str
+  function_version:
     description:
       -  Version associated with the Lambda function alias.
          A value of 0 (or omitted parameter) sets the alias to the $LATEST version.
     required: false
-    aliases: ['function_version']
+    aliases: ['version']
+    type: int
 requirements:
     - boto3
 extends_documentation_fragment:
@@ -356,8 +361,8 @@ def main():
     argument_spec.update(
         dict(
             state=dict(required=False, default='present', choices=['present', 'absent']),
-            function_name=dict(required=True, default=None),
-            name=dict(required=True, default=None, aliases=['alias_name']),
+            function_name=dict(required=True),
+            name=dict(required=True, aliases=['alias_name']),
             function_version=dict(type='int', required=False, default=0, aliases=['version']),
             description=dict(required=False, default=None),
         )

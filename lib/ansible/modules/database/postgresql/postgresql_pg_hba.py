@@ -264,8 +264,8 @@ class PgHba(object):
         self.databases = set(['postgres', 'template0', 'template1'])
 
         # self.databases will be update by add_rule and gives some idea of the number of users
-        # (at least that are handled by this pg_hba) since this migth also be groups with multiple
-        # users, this migth be totally off, but at least it is some info...
+        # (at least that are handled by this pg_hba) since this might also be groups with multiple
+        # users, this might be totally off, but at least it is some info...
         self.users = set(['postgres'])
 
         self.read()
@@ -421,7 +421,7 @@ class PgHbaRule(dict):
         super(PgHbaRule, self).__init__()
 
         if line:
-            # Read valies from line if parsed
+            # Read values from line if parsed
             self.fromline(line)
 
         # read rule cols from parsed items
@@ -525,7 +525,7 @@ class PgHbaRule(dict):
                 raise PgHbaValueError('Mask was specified, but source "{0}" '
                                       'is no valid ip'.format(self['src']))
             # ipaddress module cannot work with ipv6 netmask, so lets convert it to prefixlen
-            # furthermore ipv4 with bad netmask throws 'Rule {} doesnt seem to be an ip, but has a
+            # furthermore ipv4 with bad netmask throws 'Rule {} doesn't seem to be an ip, but has a
             # mask error that doesn't seem to describe what is going on.
             try:
                 mask_as_ip = ipaddress.ip_address(u'{0}'.format(self['mask']))
@@ -614,10 +614,10 @@ class PgHbaRule(dict):
                 # For now, let's assume IPv4/24 or IPv6/96 (both have weight 96).
                 return 96
             if sourceobj[0] == '.':
-                # suffix matching (domain name), let's asume a very large scale
+                # suffix matching (domain name), let's assume a very large scale
                 # and therefore a very low weight IPv4/16 or IPv6/64 (both have weight 64).
                 return 64
-            # hostname, let's asume only one host matches, which is
+            # hostname, let's assume only one host matches, which is
             # IPv4/32 or IPv6/128 (both have weight 128)
             return 128
         raise PgHbaValueError('Cannot deduct the source weight of this source {1}'.format(sourceobj))

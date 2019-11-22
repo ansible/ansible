@@ -37,16 +37,19 @@ class LacpFacts(object):
 
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
+    def get_device_data(self, connection):
+        return connection.get('show running-config | section ^lacp')
+
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for lacp
         :param connection: the device connection
         :param ansible_facts: Facts dictionary
-        :param data: previously collected conf
+        :param data: previously collected configuration
         :rtype: dictionary
         :returns: facts
         """
         if not data:
-            data = connection.get('show running-config | section ^lacp')
+            data = self.get_device_data(connection)
 
         # split the config into instances of the resource
         resource_delim = 'lacp'

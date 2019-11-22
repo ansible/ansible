@@ -10,7 +10,8 @@ calls the appropriate facts gathering function
 """
 
 from ansible.module_utils.network.common.facts.facts import FactsBase
-from ansible.module_utils.network.junos.facts.legacy.base import Default, Hardware, Config, Interfaces, OFacts, HAS_PYEZ
+from ansible.module_utils.network.junos.junos import HAS_PYEZ
+from ansible.module_utils.network.junos.facts.legacy.base import Default, Hardware, Config, Interfaces, OFacts
 from ansible.module_utils.network.junos.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.junos.facts.lacp.lacp import LacpFacts
 from ansible.module_utils.network.junos.facts.lacp_interfaces.lacp_interfaces import Lacp_interfacesFacts

@@ -368,4 +368,56 @@
   when: select_crypto_backend != 'pyopenssl'
   register: selfsigned_subject_key_identifier_5
 
+- name: (Selfsigned, {{select_crypto_backend}}) Ed25519 and Ed448 tests (for cryptography >= 2.6)
+  block:
+    - name: (Selfsigned, {{select_crypto_backend}}) Generate privatekeys
+      openssl_privatekey:
+        path: '{{ output_dir }}/privatekey_{{ item }}.pem'
+        type: '{{ item }}'
+      loop:
+        - Ed25519
+        - Ed448
+
+    - name: (Selfsigned, {{select_crypto_backend}}) Generate CSR
+      openssl_csr:
+        path: '{{ output_dir }}/csr_{{ item }}.csr'
+        privatekey_path: '{{ output_dir }}/privatekey_{{ item }}.pem'
+        subject:
+          commonName: www.ansible.com
+        select_crypto_backend: '{{ select_crypto_backend }}'
+      loop:
+        - Ed25519
+        - Ed448
+      ignore_errors: yes
+
+    - name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate
+      openssl_certificate:
+        path: '{{ output_dir }}/cert_{{ item }}.pem'
+        csr_path: '{{ output_dir }}/csr_{{ item }}.csr'
+        privatekey_path: '{{ output_dir }}/privatekey_{{ item }}.pem'
+        provider: selfsigned
+        selfsigned_digest: sha256
+        select_crypto_backend: '{{ select_crypto_backend }}'
+      loop:
+        - Ed25519
+        - Ed448
+      register: selfsigned_certificate_ed25519_ed448
+      ignore_errors: yes
+
+    - name: (Selfsigned, {{select_crypto_backend}}) Generate selfsigned certificate - idempotency
+      openssl_certificate:
+        path: '{{ output_dir }}/cert_{{ item }}.pem'
+        csr_path: '{{ output_dir }}/csr_{{ item }}.csr'
+        privatekey_path: '{{ output_dir }}/privatekey_{{ item }}.pem'
+        provider: selfsigned
+        selfsigned_digest: sha256
+        select_crypto_backend: '{{ select_crypto_backend }}'
+      loop:
+        - Ed25519
+        - Ed448
+      register: selfsigned_certificate_ed25519_ed448_idempotence
+      ignore_errors: yes
+
+  when: select_crypto_backend == 'cryptography' and cryptography_version.stdout is version('2.6', '>=')
+
 - import_tasks: ../tests/validate_selfsigned.yml

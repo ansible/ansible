@@ -4,6 +4,9 @@
 # Copyright (c) 2016, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
                     'supported_by': 'community'}
@@ -15,7 +18,7 @@ module: cs_zone_facts
 short_description: Gathering facts of zones from Apache CloudStack based clouds.
 description:
   - Gathering facts from the API of a zone.
-  - Sets Ansible facts accessable by the key C(cloudstack_zone) and since version 2.6 also returns results.
+  - Sets Ansible facts accessible by the key C(cloudstack_zone) and since version 2.6 also returns results.
 deprecated:
   removed_in: "2.13"
   why: Transformed into an info module.
@@ -23,12 +26,12 @@ deprecated:
 version_added: '2.1'
 author: René Moser (@resmo)
 options:
-  name:
+  zone:
     description:
       - Name of the zone.
     type: str
     required: true
-    aliases: [ zone ]
+    aliases: [ name ]
 extends_documentation_fragment: cloudstack
 '''
 

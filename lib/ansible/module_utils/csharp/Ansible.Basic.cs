@@ -700,8 +700,9 @@ namespace Ansible.Basic
                 if ((bool)v["no_log"])
                 {
                     object noLogObject = parameters.Contains(k) ? parameters[k] : null;
-                    if (noLogObject != null)
-                        noLogValues.Add(noLogObject.ToString());
+                    string noLogString = noLogObject == null ? "" : noLogObject.ToString();
+                    if (!String.IsNullOrEmpty(noLogString))
+                        noLogValues.Add(noLogString);
                 }
 
                 object removedInVersion = v["removed_in_version"];

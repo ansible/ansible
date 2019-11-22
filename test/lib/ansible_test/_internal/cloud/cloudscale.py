@@ -66,6 +66,8 @@ class CloudscaleCloudEnvironment(CloudEnvironment):
             CLOUDSCALE_API_TOKEN=parser.get('default', 'cloudscale_api_token'),
         )
 
+        display.sensitive.add(env_vars['CLOUDSCALE_API_TOKEN'])
+
         ansible_vars = dict(
             cloudscale_resource_prefix=self.resource_prefix,
         )

@@ -1,0 +1,15 @@
+---
+# vars file for test_ecs_certificate
+
+# Path on various hosts that cacerts need to be put as a prerequisite to API server cert validation.
+# May need to be customized for some environments based on SSL implementations
+# that ansible "urls" module utility is using as a backing.
+cacerts_bundle_path: /etc/pki/tls/certs
+
+common_name: '{{ ansible_date_time.epoch }}.testcertificates.com'
+existing_domain_common_name: 'testcertificates.com'
+
+tmpdir_path: /tmp/ecs_cert_test/{{ ansible_date_time.epoch }}
+
+entrust_api_cert: '{{ tmpdir_path }}/authcert.cer'
+entrust_api_cert_key: '{{ tmpdir_path }}/authkey.cer'

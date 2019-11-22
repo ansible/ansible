@@ -128,8 +128,22 @@ try {
 } catch {
     # uncaught exception while executing module, present a prettier error for
     # Ansible to parse
-    Write-AnsibleError -Message "Unhandled exception while executing module" `
-        -ErrorRecord $_.Exception.InnerException.ErrorRecord
+    $error_params = @{
+        Message = "Unhandled exception while executing module"
+        ErrorRecord = $_
+    }
+
+    # Be more defensive when trying to find the InnerException in case it isn't
+    # set. This shouldn't ever be the case but if it is then it makes it more
+    # difficult to track down the problem.
+    if ($_.Exception.PSObject.Properties.Name -contains "InnerException") {
+        $inner_exception = $_.Exception.InnerException
+        if ($inner_exception.PSObject.Properties.Name -contains "ErrorRecord") {
+            $error_params.ErrorRecord = $inner_exception.ErrorRecord
+        }
+    }
+
+    Write-AnsibleError @error_params
     $host.SetShouldExit(1)
     return
 } finally {
@@ -140,8 +154,24 @@ try {
 # other types of errors may not throw an exception in Invoke but rather just
 # set the pipeline state to failed
 if ($ps.InvocationStateInfo.State -eq "Failed" -and $ModuleName -ne "script") {
-    Write-AnsibleError -Message "Unhandled exception while executing module" `
-        -ErrorRecord $ps.InvocationStateInfo.Reason.ErrorRecord
+    $reason = $ps.InvocationStateInfo.Reason
+    $error_params = @{
+        Message = "Unhandled exception while executing module"
+    }
+
+    # The error record should always be set on the reason but this does not
+    # always happen on Server 2008 R2 for some reason (probably memory hotfix).
+    # Be defensive when trying to get the error record and fall back to other
+    # options.
+    if ($null -eq $reason) {
+        $error_params.Message += ": Unknown error"
+    } elseif ($reason.PSObject.Properties.Name -contains "ErrorRecord") {
+        $error_params.ErrorRecord = $reason.ErrorRecord
+    } else {
+        $error_params.Message += ": $($reason.ToString())"
+    }
+
+    Write-AnsibleError @error_params
     $host.SetShouldExit(1)
     return
 }

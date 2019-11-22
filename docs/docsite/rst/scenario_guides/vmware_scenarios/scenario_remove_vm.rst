@@ -41,7 +41,7 @@ Caveats
 
 - All variable names and VMware object names are case sensitive.
 - You need to use Python 2.7.9 version in order to use ``validate_certs`` option, as this version is capable of changing the SSL verification behaviours.
-- ``vmware_guest`` module tries to mimick VMware Web UI and workflow, so the virtual machine must be in powered off state in order to remove it from the VMware inventory.
+- ``vmware_guest`` module tries to mimic VMware Web UI and workflow, so the virtual machine must be in powered off state in order to remove it from the VMware inventory.
 
 .. warning::
 

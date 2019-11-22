@@ -61,6 +61,7 @@ Codes
 ============================================================   ==================   ====================   =========================================================================================
   **Error Code**                                                 **Type**             **Level**            **Sample Message**
 ------------------------------------------------------------   ------------------   --------------------   -----------------------------------------------------------------------------------------
+  ansible-module-not-initialized                               Syntax               Error                  Execution of the module did not result in initialization of AnsibleModule
   deprecation-mismatch                                         Documentation        Error                  Module marked as deprecated or removed in at least one of the filename, its metadata, or in DOCUMENTATION (setting DOCUMENTATION.deprecated for deprecation or removing all Documentation for removed) but not in all three places.
   doc-choices-do-not-match-spec                                Documentation        Error                  Value for "choices" from the argument_spec does not match the documentation
   doc-choices-incompatible-type                                Documentation        Error                  Choices value from the documentation is not compatible with type defined in the argument_spec
@@ -98,19 +99,18 @@ Codes
   missing-main-call                                            Syntax               Error                  Did not find a call to ``main()`` (or ``removed_module()`` in the case of deprecated & docs only modules)
   missing-metadata                                             Documentation        Error                  No ``ANSIBLE_METADATA`` provided
   missing-module-utils-basic-import                            Imports              Warning                Did not find ``ansible.module_utils.basic`` import
-  missing-module-utils-import                                  Imports              Error                  Did not find a ``module_utils`` import
-  missing-module-utils-import-c#                               Imports              Error                  No ``Ansible.ModuleUtils`` or C# Ansible util requirements/imports found
+  missing-module-utils-import-csharp-requirements              Imports              Error                  No ``Ansible.ModuleUtils`` or C# Ansible util requirements/imports found
   missing-powershell-interpreter                               Syntax               Error                  Interpreter line is not ``#!powershell``
   missing-python-doc                                           Naming               Error                  Missing python documentation file
   missing-python-interpreter                                   Syntax               Error                  Interpreter line is not ``#!/usr/bin/python``
   missing-return                                               Documentation        Error                  No ``RETURN`` documentation provided
   missing-return-legacy                                        Documentation        Warning                No ``RETURN`` documentation provided for legacy module
-  missing-subption-docs                                        Documentation        Error                  Argument in argument_spec has sub-options but documentation does not define sub-options
+  missing-suboption-docs                                       Documentation        Error                  Argument in argument_spec has sub-options but documentation does not define sub-options
   module-incorrect-version-added                               Documentation        Error                  Module level ``version_added`` is incorrect
   module-invalid-version-added                                 Documentation        Error                  Module level ``version_added`` is not a valid version number
   module-utils-specific-import                                 Imports              Error                  ``module_utils`` imports should import specific components, not ``*``
   multiple-utils-per-requires                                  Imports              Error                  ``Ansible.ModuleUtils`` requirements do not support multiple modules per statement
-  multiple-c#-utils-per-requires                               Imports              Error                  Ansible C# util requirements do not support multiple utils per statement
+  multiple-csharp-utils-per-requires                           Imports              Error                  Ansible C# util requirements do not support multiple utils per statement
   no-default-for-required-parameter                            Documentation        Error                  Option is marked as required but specifies a default. Arguments with a default should not be marked as required
   nonexistent-parameter-documented                             Documentation        Error                  Argument is listed in DOCUMENTATION.options, but not accepted by the module
   option-incorrect-version-added                               Documentation        Error                  ``version_added`` for new option is incorrect
@@ -119,6 +119,9 @@ Codes
   parameter-invalid-elements                                   Documentation        Error                  Value for "elements" is valid only when value of "type" is ``list``
   implied-parameter-type-mismatch                              Documentation        Error                  Argument_spec implies ``type="str"`` but documentation defines it as different data type
   parameter-type-not-in-doc                                    Documentation        Error                  Type value is defined in ``argument_spec`` but documentation doesn't specify a type
+  parameter-alias-repeated                                     Parameters           Error                  argument in argument_spec has at least one alias specified multiple times in aliases
+  parameter-alias-self                                         Parameters           Error                  argument in argument_spec is specified as its own alias
+  parameter-documented-multiple-times                          Documentation        Error                  argument in argument_spec with aliases is documented multiple times
   python-syntax-error                                          Syntax               Error                  Python ``SyntaxError`` while parsing module
   return-syntax-error                                          Documentation        Error                  ``RETURN`` is not valid YAML, ``RETURN`` fragments missing  or invalid
   subdirectory-missing-init                                    Naming               Error                  Ansible module subdirectories must contain an ``__init__.py``

@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*
-
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -27,12 +29,14 @@ options:
     required: false
     aliases:
       - key_alias
+    type: str
   key_id:
     description:
     - Key ID or ARN of the key. One of C(alias) or C(key_id) are required.
     required: false
     aliases:
       - key_arn
+    type: str
   policy_mode:
     description:
     - (deprecated) Grant or deny access.
@@ -43,6 +47,7 @@ options:
     choices: [ grant, deny ]
     aliases:
     - mode
+    type: str
   policy_role_name:
     description:
     - (deprecated) Role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
@@ -52,12 +57,14 @@ options:
     required: false
     aliases:
     - role_name
+    type: str
   policy_role_arn:
     description:
     - (deprecated) ARN of role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
     - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
+    type: str
     required: false
     aliases:
     - role_arn
@@ -70,6 +77,8 @@ options:
     required: false
     aliases:
     - grant_types
+    type: list
+    elements: str
   policy_clean_invalid_entries:
     description:
     - (deprecated) If adding/removing a role and invalid grantees are found, remove them. These entries will cause an update to fail in all known cases.
@@ -91,6 +100,7 @@ options:
       - absent
     default: present
     version_added: 2.8
+    type: str
   enabled:
     description: Whether or not a key is enabled
     default: True
@@ -101,9 +111,11 @@ options:
       A description of the CMK. Use a description that helps you decide
       whether the CMK is appropriate for a task.
     version_added: 2.8
+    type: str
   tags:
     description: A dictionary of tags to apply to a key.
     version_added: 2.8
+    type: dict
   purge_tags:
     description: Whether the I(tags) argument should cause tags not in the list to
       be removed
@@ -121,18 +133,39 @@ options:
       - A list of grants to apply to the key. Each item must contain I(grantee_principal).
         Each item can optionally contain I(retiring_principal), I(operations), I(constraints),
         I(name).
-      - Valid operations are C(Decrypt), C(Encrypt), C(GenerateDataKey), C(GenerateDataKeyWithoutPlaintext),
-        C(ReEncryptFrom), C(ReEncryptTo), C(CreateGrant), C(RetireGrant), C(DescribeKey), C(Verify) and
-        C(Sign)
-      - Constraints is a dict containing C(encryption_context_subset) or C(encryption_context_equals),
-        either or both being a dict specifying an encryption context match.
-        See U(https://docs.aws.amazon.com/kms/latest/APIReference/API_GrantConstraints.html)
       - I(grantee_principal) and I(retiring_principal) must be ARNs
+      - 'For full documentation of suboptions see the boto3 documentation:'
+      - 'U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kms.html#KMS.Client.create_grant)'
     version_added: 2.8
+    type: list
+    elements: dict
+    suboptions:
+        grantee_principal:
+            description: The full ARN of the principal being granted permissions.
+            required: true
+            type: str
+        retiring_principal:
+            description: The full ARN of the principal permitted to revoke/retire the grant.
+            type: str
+        operations:
+            type: list
+            elements: str
+            description:
+              - A list of operations that the grantee may perform using the CMK.
+            choices: ['Decrypt', 'Encrypt', 'GenerateDataKey', 'GenerateDataKeyWithoutPlaintext', 'ReEncryptFrom', 'ReEncryptTo',
+                      'CreateGrant', 'RetireGrant', 'DescribeKey', 'Verify', 'Sign']
+        constraints:
+            description:
+              - Constraints is a dict containing C(encryption_context_subset) or C(encryption_context_equals),
+                either or both being a dict specifying an encryption context match.
+                See U(https://docs.aws.amazon.com/kms/latest/APIReference/API_GrantConstraints.html) or
+                U(https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kms.html#KMS.Client.create_grant)
+            type: dict
   policy:
     description:
       - policy to apply to the KMS key
       - See U(https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html)
+    type: str
     version_added: 2.8
 author:
   - Ted Timmons (@tedder)
@@ -305,7 +338,7 @@ grants:
       description: Date of creation of the grant
       type: str
       returned: always
-      sample: 2017-04-18T15:12:08+10:00
+      sample: "2017-04-18T15:12:08+10:00"
     grant_id:
       description: The unique ID for the grant
       type: str

@@ -74,6 +74,39 @@ class TestNxosBfdGlobalModule(TestNxosModule):
         ))
         self.execute_module(changed=False)
 
+    def test_bfd_non_defaults_n9k(self):
+        # feature bfd is enabled, apply all non-default values.
+        # This testcase also tests reordering of echo_interface to make sure
+        # it gets applied last.
+        self.execute_show_command.return_value = "feature bfd"
+        self.get_platform_shortname.return_value = 'N9K'
+        set_module_args(dict(
+            echo_interface='loopback1',
+            echo_rx_interval=51,
+            interval={'tx': 51, 'min_rx': 51, 'multiplier': 4},
+            slow_timer=2001,
+            startup_timer=6,
+            ipv4_echo_rx_interval=51,
+            ipv4_interval={'tx': 51, 'min_rx': 51, 'multiplier': 4},
+            ipv4_slow_timer=2001,
+            ipv6_echo_rx_interval=51,
+            ipv6_interval={'tx': 51, 'min_rx': 51, 'multiplier': 4},
+            ipv6_slow_timer=2001
+        ))
+        self.execute_module(changed=True, commands=[
+            'bfd interval 51 min_rx 51 multiplier 4',
+            'bfd ipv4 echo-rx-interval 51',
+            'bfd ipv4 interval 51 min_rx 51 multiplier 4',
+            'bfd ipv4 slow-timer 2001',
+            'bfd ipv6 echo-rx-interval 51',
+            'bfd ipv6 interval 51 min_rx 51 multiplier 4',
+            'bfd ipv6 slow-timer 2001',
+            'bfd slow-timer 2001',
+            'bfd startup-timer 6',
+            'bfd echo-interface loopback1',
+            'bfd echo-rx-interval 51'
+        ])
+
     def test_bfd_defaults_n3k(self):
         # feature bfd is enabled, no non-defaults are set.
         self.execute_show_command.return_value = "feature bfd"

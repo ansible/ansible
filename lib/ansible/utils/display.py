@@ -248,7 +248,7 @@ class Display(with_metaclass(Singleton, object)):
     def warning(self, msg, formatted=False):
 
         if not formatted:
-            new_msg = "\n[WARNING]: %s" % msg
+            new_msg = "[WARNING]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
             new_msg = "\n".join(wrapped) + "\n"
         else:

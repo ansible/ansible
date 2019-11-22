@@ -539,6 +539,18 @@
   register: mounts_tmpfs_source_2
   ignore_errors: yes
 
+- name: mounts.source (not specified for tmpfs idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts:
+      - target: "/tmp/{{ volume_name_1 }}"
+        type: "tmpfs"
+  register: mounts_tmpfs_source_3
+  ignore_errors: yes
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -549,6 +561,7 @@
     that:
       - mounts_tmpfs_source_1 is changed
       - mounts_tmpfs_source_2 is not changed
+      - mounts_tmpfs_source_3 is not changed
   when: docker_py_version is version('2.6.0', '>=')
 - assert:
     that:

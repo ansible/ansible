@@ -138,6 +138,10 @@ class ConnectionProcess(object):
                     if log_messages:
                         display.display("jsonrpc request: %s" % data, log_only=True)
 
+                    request = json.loads(to_text(data, errors='surrogate_or_strict'))
+                    if request.get('method') == "exec_command" and not self.connection.connected:
+                        self.connection._connect()
+
                     signal.alarm(self.connection.get_option('persistent_command_timeout'))
 
                     resp = self.srv.handle_request(data)
@@ -192,6 +196,9 @@ class ConnectionProcess(object):
                     self.sock.close()
                 if self.connection:
                     self.connection.close()
+                    if self.connection.get_option("persistent_log_messages"):
+                        for _level, message in self.connection.pop_messages():
+                            display.display(message, log_only=True)
             except Exception:
                 pass
             finally:
@@ -298,8 +305,9 @@ def main():
                 pc_data = to_text(init_data)
                 try:
                     conn.update_play_context(pc_data)
+                    conn.set_cli_prompt_context()
                 except Exception as exc:
-                    # Only network_cli has update_play context, so missing this is
+                    # Only network_cli has update_play context and set_cli_prompt_context, so missing this is
                     # not fatal e.g. netconf
                     if isinstance(exc, ConnectionError) and getattr(exc, 'code', None) == -32601:
                         pass

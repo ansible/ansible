@@ -329,7 +329,7 @@ state:
             sample: "westus"
         name:
             description:
-                - Name of the secrurity group.
+                - Name of the security group.
             returned: always
             type: str
             sample: "mysecgroup"

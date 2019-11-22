@@ -1,0 +1,5 @@
+---
+- name: Populate config
+  exos_config:
+    lines:
+      - disable lldp ports 2-5

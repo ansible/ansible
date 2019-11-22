@@ -32,6 +32,7 @@ options:
     description:
       - List of container names or container IDs to connect to a network.
     type: list
+    elements: str
     aliases:
       - containers
 
@@ -48,19 +49,19 @@ options:
 
   force:
     description:
-      - With state I(absent) forces disconnecting all containers from the
-        network prior to deleting the network. With state I(present) will
+      - With state C(absent) forces disconnecting all containers from the
+        network prior to deleting the network. With state C(present) will
         disconnect all containers, delete the network and re-create the
-        network.  This option is required if you have changed the IPAM or
-        driver options and want an existing network to be updated to use the
-        new options.
+        network.
+      - This option is required if you have changed the IPAM or driver options
+        and want an existing network to be updated to use the new options.
     type: bool
     default: no
 
   appends:
     description:
       - By default the connected list is canonical, meaning containers not on the list are removed from the network.
-        Use C(appends) to leave existing containers connected.
+      - Use I(appends) to leave existing containers connected.
     type: bool
     default: no
     aliases:
@@ -86,7 +87,7 @@ options:
   ipam_options:
     description:
       - Dictionary of IPAM options.
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(ipam_config) instead. In Docker 1.10.0, IPAM
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter I(ipam_config) instead. In Docker 1.10.0, IPAM
         options were introduced (see L(here,https://github.com/moby/moby/pull/17316)). This module parameter addresses
         the IPAM config not the newly introduced IPAM options. For the IPAM options, see the I(ipam_driver_options)
         parameter.
@@ -115,6 +116,7 @@ options:
         L(Docker docs,https://docs.docker.com/compose/compose-file/compose-file-v2/#ipam) for valid options and values.
         Note that I(iprange) is spelled differently here (we use the notation from the Docker SDK for Python).
     type: list
+    elements: dict
     suboptions:
       subnet:
         description:
@@ -136,14 +138,14 @@ options:
 
   state:
     description:
-      - I(absent) deletes the network. If a network has connected containers, it
-        cannot be deleted. Use the C(force) option to disconnect all containers
+      - C(absent) deletes the network. If a network has connected containers, it
+        cannot be deleted. Use the I(force) option to disconnect all containers
         and delete the network.
-      - I(present) creates the network, if it does not already exist with the
+      - C(present) creates the network, if it does not already exist with the
         specified parameters, and connects the list of containers provided via
         the connected parameter. Containers not on the list will be disconnected.
         An empty list will leave no containers connected to the network. Use the
-        C(appends) option to leave existing containers connected. Use the C(force)
+        I(appends) option to leave existing containers connected. Use the I(force)
         options to force re-creation of the network.
     type: str
     default: present

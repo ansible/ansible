@@ -54,7 +54,7 @@ from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
 def update_name(module, array):
-    """Change aray name"""
+    """Change array name"""
     changed = False
 
     try:

@@ -19,6 +19,7 @@ from .util import (
     display,
     find_python,
     is_shippable,
+    remove_tree,
     MODE_DIRECTORY,
     MODE_FILE_EXECUTE,
     PYTHON_PATHS,
@@ -94,9 +95,6 @@ class CommonConfig:
         self.debug = args.debug  # type: bool
         self.truncate = args.truncate  # type: int
         self.redact = args.redact  # type: bool
-
-        if is_shippable():
-            self.redact = True
 
         self.cache = {}
 
@@ -217,6 +215,13 @@ def get_python_path(args, interpreter):
     return python_path
 
 
+def create_temp_dir(prefix=None, suffix=None, base_dir=None):  # type: (t.Optional[str], t.Optional[str], t.Optional[str]) -> str
+    """Create a temporary directory that persists until the current process exits."""
+    temp_path = tempfile.mkdtemp(prefix=prefix or 'tmp', suffix=suffix or '', dir=base_dir)
+    atexit.register(remove_tree, temp_path)
+    return temp_path
+
+
 def create_interpreter_wrapper(interpreter, injected_interpreter):  # type: (str, str) -> None
     """Create a wrapper for the given Python interpreter at the specified path."""
     # sys.executable is used for the shebang to guarantee it is a binary instead of a script
@@ -330,6 +335,8 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     """
     if not env:
         env = common_environment()
+    else:
+        env = env.copy()
 
     cmd = list(cmd)
     version = python_version or args.python_version

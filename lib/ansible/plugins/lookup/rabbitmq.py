@@ -180,7 +180,7 @@ class LookupModule(LookupBase):
             else:
                 break
 
-        if connection.is_closing or connection.is_closed:
+        if connection.is_closed:
             return [ret]
         else:
             try:

@@ -271,8 +271,6 @@ def main():
         consumer_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        directive=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
-        filter=dict(type='str', aliases=['filter_name'], removed_in_version='2.4'),  # Deprecated starting from v2.4
     )
 
     module = AnsibleModule(
@@ -286,25 +284,20 @@ def main():
 
     aci = ACIModule(module)
 
-    subject = module.params['subject']
-    priority = module.params['priority']
-    reverse_filter = aci.boolean(module.params['reverse_filter'])
-    contract = module.params['contract']
-    dscp = module.params['dscp']
-    description = module.params['description']
-    filter_name = module.params['filter']
-    directive = module.params['directive']
-    consumer_match = module.params['consumer_match']
+    subject = module.params.get('subject')
+    priority = module.params.get('priority')
+    reverse_filter = aci.boolean(module.params.get('reverse_filter'))
+    contract = module.params.get('contract')
+    dscp = module.params.get('dscp')
+    description = module.params.get('description')
+    consumer_match = module.params.get('consumer_match')
     if consumer_match is not None:
-        consumer_match = MATCH_MAPPING[consumer_match]
-    provider_match = module.params['provider_match']
+        consumer_match = MATCH_MAPPING.get(consumer_match)
+    provider_match = module.params.get('provider_match')
     if provider_match is not None:
-        provider_match = MATCH_MAPPING[provider_match]
-    state = module.params['state']
-    tenant = module.params['tenant']
-
-    if directive is not None or filter_name is not None:
-        module.fail_json(msg="Managing Contract Subjects to Filter bindings has been moved to module 'aci_subject_bind_filter'")
+        provider_match = MATCH_MAPPING.get(provider_match)
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci.construct_url(
         root_class=dict(

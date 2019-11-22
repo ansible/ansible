@@ -51,6 +51,7 @@ options:
     description:
     - List of column names for the src/dst table to COPY FROM/TO.
     type: list
+    elements: str
     aliases: [ column ]
   program:
     description:
@@ -80,7 +81,7 @@ notes:
 - Supports PostgreSQL version 9.4+.
 - COPY command is only allowed to database superusers.
 - if I(check_mode=yes), we just check the src/dst table availability
-  and return the COPY query that aclually has not been executed.
+  and return the COPY query that actually has not been executed.
 - If i(check_mode=yes) and the source has been passed as SQL, the module
   will execute it and rolled the transaction back but pay attention
   it can affect database performance (e.g., if SQL collects a lot of data).

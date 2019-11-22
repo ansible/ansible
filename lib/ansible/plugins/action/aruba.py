@@ -23,8 +23,6 @@ import sys
 import copy
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.aruba.aruba import aruba_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
@@ -69,14 +67,6 @@ class ActionModule(ActionNetworkModule):
             return {'failed': True,
                     'msg': 'unable to open shell. Please see: ' +
                            'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
-
-        # make sure we are in the right cli context which should be
-        # enable mode and not config module
-        conn = Connection(socket_path)
-        out = conn.get_prompt()
-        if to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
-            display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            conn.send_command('exit')
 
         task_vars['ansible_socket'] = socket_path
 

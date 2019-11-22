@@ -40,11 +40,11 @@ class L3_interfacesFacts(object):
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for l3_interfaces
         :param connection: the device connection
+        :param ansible_facts: Facts dictionary
         :param data: previously collected configuration
         :rtype: dictionary
         :returns: facts
         """
-
         if not data:
             data = connection.get('show running-config | section ^interface')
 

@@ -47,7 +47,7 @@ author:
 
 EXAMPLES = '''
   - name: List VM instances in Virtual Machine ScaleSet
-    azure_rm_computevirtualmachinescalesetinstance_info:
+    azure_rm_virtualmachinescalesetinstance_info:
       resource_group: myResourceGroup
       vmss_name: myVMSS
 '''
@@ -221,7 +221,8 @@ class AzureRMVirtualMachineScaleSetVMInfo(AzureRMModuleBase):
             'name': d.get('name', None),
             'provisioning_state': d.get('provisioning_state', None),
             'power_state': power_state,
-            'vm_id': d.get('vm_id', None)
+            'vm_id': d.get('vm_id', None),
+            'computer_name': d.get('os_profile').get('computer_name', None)
         }
         return d
 

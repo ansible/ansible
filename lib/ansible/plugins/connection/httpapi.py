@@ -201,8 +201,9 @@ class Connection(NetworkConnectionBase):
 
             self.httpapi = httpapi_loader.get(self._network_os, self)
             if self.httpapi:
-                self._sub_plugin = {'type': 'httpapi', 'name': self._network_os, 'obj': self.httpapi}
-                self.queue_message('vvvv', 'loaded API plugin for network_os %s' % self._network_os)
+                self._sub_plugin = {'type': 'httpapi', 'name': self.httpapi._load_name, 'obj': self.httpapi}
+                self.queue_message('vvvv', 'loaded API plugin %s from path %s for network_os %s' %
+                                   (self.httpapi._load_name, self.httpapi._original_path, self._network_os))
             else:
                 raise AnsibleConnectionFailure('unable to load API plugin for network_os %s' % self._network_os)
 

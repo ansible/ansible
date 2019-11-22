@@ -82,6 +82,7 @@ basic_constraints:
     description: Entries in the C(basic_constraints) extension, or C(none) if extension is not present.
     returned: success
     type: list
+    elements: str
     sample: "[CA:TRUE, pathlen:1]"
 basic_constraints_critical:
     description: Whether the C(basic_constraints) extension is critical.
@@ -91,6 +92,7 @@ extended_key_usage:
     description: Entries in the C(extended_key_usage) extension, or C(none) if extension is not present.
     returned: success
     type: list
+    elements: str
     sample: "[Biometric Info, DVCS, Time Stamping]"
 extended_key_usage_critical:
     description: Whether the C(extended_key_usage) extension is critical.
@@ -99,7 +101,7 @@ extended_key_usage_critical:
 extensions_by_oid:
     description: Returns a dictionary for every extension OID
     returned: success
-    type: complex
+    type: dict
     contains:
         critical:
             description: Whether the extension is critical.
@@ -124,6 +126,7 @@ subject_alt_name:
     description: Entries in the C(subject_alt_name) extension, or C(none) if extension is not present.
     returned: success
     type: list
+    elements: str
     sample: "[DNS:www.ansible.com, IP:1.2.3.4]"
 subject_alt_name_critical:
     description: Whether the C(subject_alt_name) extension is critical.
@@ -148,6 +151,7 @@ subject_ordered:
     description: The CSR's subject as an ordered list of tuples.
     returned: success
     type: list
+    elements: list
     sample: '[["commonName", "www.example.com"], ["emailAddress": "test@example.com"]]'
     version_added: "2.9"
 public_key:
@@ -187,6 +191,7 @@ authority_cert_issuer:
         - Is C(none) if the C(AuthorityKeyIdentifier) extension is not present.
     returned: success and if the pyOpenSSL backend is I(not) used
     type: list
+    elements: str
     sample: "[DNS:www.ansible.com, IP:1.2.3.4]"
     version_added: "2.9"
 authority_cert_serial_number:
@@ -527,7 +532,7 @@ class CertificateSigningRequestInfoPyOpenSSL(CertificateSigningRequestInfo):
             return None, False
 
     def _normalize_san(self, san):
-        # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
+        # apparently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
         # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
         if san.startswith('IP Address:'):
             san = 'IP:' + san[len('IP Address:'):]

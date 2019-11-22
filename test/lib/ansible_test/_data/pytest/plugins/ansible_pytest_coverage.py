@@ -1,10 +1,16 @@
-"""Monkey patch os._exit when running under coverage so we don't lose coverage data in forks, such as with `pytest --boxed`."""
+"""Monkey patch os._exit when running under coverage so we don't lose coverage data in forks, such as with `pytest --boxed`. PYTEST_DONT_REWRITE"""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
 def pytest_configure():
     """Configure this pytest plugin."""
+    try:
+        if pytest_configure.executed:
+            return
+    except AttributeError:
+        pytest_configure.executed = True
+
     try:
         import coverage
     except ImportError:
@@ -57,3 +63,6 @@ def pytest_configure():
 
     if cov:
         cov.start()
+
+
+pytest_configure()

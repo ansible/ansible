@@ -72,7 +72,7 @@ options:
       - Enable booting from specified disk. C((ide|sata|scsi|virtio)\d+)
   clone:
     description:
-      - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
+      - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for initiating the clone.
   cores:
     description:
       - Specify number of cores per socket.
@@ -223,7 +223,7 @@ options:
     description:
       - Specifies guest operating system. This is used to enable special optimization/features for specific operating systems.
       - The l26 is Linux 2.6/3.X Kernel.
-    choices: ['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']
+    choices: ['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'win10', 'l24', 'l26', 'solaris']
     default: l26
   parallel:
     description:
@@ -302,7 +302,7 @@ options:
   state:
     description:
       - Indicates desired state of the instance.
-      - If C(current), the current state of the VM will be fecthed. You can access it with C(results.status)
+      - If C(current), the current state of the VM will be fetched. You can access it with C(results.status)
     choices: ['present', 'started', 'absent', 'stopped', 'restarted','current']
     default: present
   storage:
@@ -828,7 +828,7 @@ def main():
             numa=dict(type='dict'),
             numa_enabled=dict(type='bool'),
             onboot=dict(type='bool', default='yes'),
-            ostype=dict(default='l26', choices=['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']),
+            ostype=dict(default='l26', choices=['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'win10', 'l24', 'l26', 'solaris']),
             parallel=dict(type='dict'),
             pool=dict(type='str'),
             protection=dict(type='bool'),

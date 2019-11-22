@@ -11,7 +11,7 @@
     group/aws:
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
+      security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
     route53:
       region: null
@@ -21,8 +21,23 @@
       comment: Created in Ansible test {{ resource_prefix }}
     register: z1
 
-  - debug: msg='TODO write tests'
-  - debug: var=z1
+  - assert:
+      that:
+        - z1 is success
+        - z1 is changed
+        - "z1.comment == 'Created in Ansible test {{ resource_prefix }}'"
+
+  - name: Get zone details
+    route53_info:
+      query: hosted_zone
+      hosted_zone_id: '{{ z1.zone_id }}'
+      hosted_zone_method: details
+    register: hosted_zones
+
+  - name: Assert newly created hosted zone only has NS and SOA records
+    assert:
+      that:
+        - hosted_zones.HostedZone.ResourceRecordSetCount == 2
 
   - name: Create A record using zone fqdn
     route53:
@@ -93,6 +108,21 @@
         - mv_a_record is not failed
         - mv_a_record is not changed
 
+  - name: get Route53 A record information
+    route53_info:
+      type: A
+      query: record_sets
+      hosted_zone_id: '{{ z1.zone_id }}'
+      start_record_name: 'order_test.{{ zone_one }}'
+      max_items: 50
+    register: records
+  - assert:
+      that:
+        - records.ResourceRecordSets|length == 3
+        - records.ResourceRecordSets[0].ResourceRecords|length == 2
+        - records.ResourceRecordSets[0].ResourceRecords[0].Value == "4.5.6.7"
+        - records.ResourceRecordSets[0].ResourceRecords[1].Value == "1.2.3.4"
+
   - name: Remove a member from multi-value A record with values in different order
     route53:
       state: present
@@ -119,11 +149,25 @@
         - 4.5.6.7
     register: del_a_record
     ignore_errors: true
-  - name: This should fail, because `overwrite` is false
+  - name: This should not fail, because `overwrite` is true
     assert:
       that:
         - del_a_record is not failed
         - del_a_record is changed
+
+  - name: get Route53 zone A record information
+    route53_info:
+      type: A
+      query: record_sets
+      hosted_zone_id: '{{ z1.zone_id }}'
+      start_record_name: 'order_test.{{ zone_one }}'
+      max_items: 50
+    register: records
+  - assert:
+      that:
+        - records.ResourceRecordSets|length == 3
+        - records.ResourceRecordSets[0].ResourceRecords|length == 1
+        - records.ResourceRecordSets[0].ResourceRecords[0].Value == "4.5.6.7"
 
   - name: Create a LetsEncrypt CAA record
     route53:
@@ -173,6 +217,8 @@
       that:
         - caa is not failed
         - caa is not changed
+
+
   always:
   - route53_info:
       query: record_sets

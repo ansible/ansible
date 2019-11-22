@@ -52,9 +52,8 @@
 - name: verify test gather hcloud network info in check mode
   assert:
     that:
-      - hcloud_network.hcloud_network_info | selectattr('name','equalto','{{ hcloud_network_name }}') | list | count == 1
-      - hcloud_network.hcloud_network_info[0].subnetworks | list | count == 1
-      - hcloud_network.hcloud_network_info[0].routes | list | count == 1
+      - hcloud_network.hcloud_network_info | selectattr('name','equalto','{{ hcloud_network_name }}') | list | count >= 1
+
 
 - name: test gather hcloud network info with correct label selector
   hcloud_network_info:
@@ -63,7 +62,7 @@
 - name: verify test gather hcloud network with correct label selector
   assert:
     that:
-      - hcloud_network.hcloud_network_info | selectattr('name','equalto','{{ hcloud_network_name }}') | list | count == 1
+      - hcloud_network.hcloud_network_info | selectattr('name','equalto','{{ hcloud_network_name }}') | list | count >= 1
 
 - name: test gather hcloud network info with wrong label selector
   hcloud_network_info:
@@ -82,6 +81,8 @@
   assert:
     that:
       - hcloud_network.hcloud_network_info | selectattr('name','equalto','{{ hcloud_network_name }}') | list | count == 1
+      - hcloud_network.hcloud_network_info[0].subnetworks | list | count >= 1
+      - hcloud_network.hcloud_network_info[0].routes | list | count >= 1
 
 - name: test gather hcloud network info with wrong name
   hcloud_network_info:

@@ -151,7 +151,7 @@ class NetAppOntapVscanScannerPool(object):
         try:
             self.server.invoke_successfully(apply_policy_obj, True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error appling policy %s to pool %s: %s' %
+            self.module.fail_json(msg='Error applying policy %s to pool %s: %s' %
                                       (self.scanner_policy, self.scanner_pool, to_native(error)),
                                   exception=traceback.format_exc())
 

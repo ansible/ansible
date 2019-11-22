@@ -4,6 +4,15 @@
 # ansible-test munges the shebangs itself.
 %global __brp_mangle_shebangs_exclude_from /usr/lib/python[0-9]+\.[0-9]+/site-packages/ansible_test/_data/.*
 
+# RHEL and Fedora add -s to the shebang line.  We do *not* use -s -E -S or -I
+# with ansible because it has many optional features which users need to
+# install libraries on their own to use.  For instance, paramiko for the
+# network connection plugins or winrm to talk to windows hosts.
+# Set this to nil to remove -s
+%define py_shbang_opts %{nil}
+%define py2_shbang_opts %{nil}
+%define py3_shbang_opts %{nil}
+
 
 %if 0%{?fedora} || 0%{?rhel} >= 8
 %global with_python2 0
@@ -38,13 +47,6 @@ Provides: bundled(python-six) = 1.12.0
 
 %if 0%{?rhel} >= 8
 
-# Bundled provides
-Provides: bundled(python-backports-ssl_match_hostname) = 3.7.0.1
-Provides: bundled(python-distro) = 1.4.0
-Provides: bundled(python-ipaddress) = 1.0.22
-Provides: bundled(python-selectors2) = 1.1.1
-Provides: bundled(python-six) = 1.12.0
-
 BuildRequires: python3-devel
 BuildRequires: python3-setuptools
 
@@ -61,10 +63,11 @@ BuildRequires: python3-pytest
 BuildRequires: python3-pytest-xdist
 BuildRequires: python3-pytest-mock
 BuildRequires: python3-requests
-BuildRequires: python3-coverage
+BUildRequires: %{py3_dist coverage}
 BuildRequires: python3-mock
-BuildRequires: python3-boto3
-BuildRequires: python3-botocore
+# Not available in RHEL8, we'll just skip the tests where they apply
+#BuildRequires: python3-boto3
+#BuildRequires: python3-botocore
 BuildRequires: python3-systemd
 
 BuildRequires: git-core
@@ -77,11 +80,11 @@ Requires: python3-six
 Requires: sshpass
 
 %else
-
 %if 0%{?rhel} >= 7
 # RHEL 7
 BuildRequires: python2-devel
 BuildRequires: python-setuptools
+
 # For building docs
 BuildRequires: python-sphinx
 
@@ -113,9 +116,9 @@ Requires: python2-cryptography
 Requires: python-six
 Requires: sshpass
 
-Requires: python-passlib
+# As of Ansible-2.9.0, we no longer depend on the optional dependencies jmespath or passlib
+# Users have to install those on their own
 Requires: python-paramiko
-Requires: python2-jmespath
 
 # The ansible-doc package is no longer provided as of Ansible Engine 2.6.0
 Obsoletes: ansible-doc < 2.6.0
@@ -148,7 +151,6 @@ Requires: python-setuptools
 Requires: python-six
 Requires: sshpass
 %endif
-
 
 
 %description
@@ -184,6 +186,7 @@ multi-node deployment, and remote task execution system. Ansible works
 over SSH and does not require any software or daemons to be installed
 on remote nodes. Extension modules can be written in any language and
 are transferred to managed machines automatically.
+
 This package installs the ansible-test command for testing modules and plugins
 developed for ansible.
 
@@ -192,7 +195,7 @@ developed for ansible.
 
 %build
 %if %{with_python2}
-%{__python2} setup.py build
+%py2_build
 %endif
 
 %if %{with_python3}
@@ -260,6 +263,7 @@ for location in $DATADIR_LOCATIONS ; do
 done
 mkdir -p %{buildroot}%{_sysconfdir}/ansible/
 mkdir -p %{buildroot}%{_sysconfdir}/ansible/roles/
+
 cp examples/hosts %{buildroot}%{_sysconfdir}/ansible/
 cp examples/ansible.cfg %{buildroot}%{_sysconfdir}/ansible/
 mkdir -p %{buildroot}/%{_mandir}/man1/
@@ -280,6 +284,7 @@ ln -s /usr/bin/pytest-3 bin/pytest
 %files
 %defattr(-,root,root)
 %{_bindir}/ansible*
+%exclude %{_bindir}/ansible-test
 %config(noreplace) %{_sysconfdir}/ansible/
 %doc README.rst PKG-INFO COPYING changelogs/CHANGELOG*.rst
 %doc %{_mandir}/man1/ansible*

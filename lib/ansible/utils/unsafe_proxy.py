@@ -53,7 +53,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common._collections_compat import Mapping, MutableSequence, Set
 from ansible.module_utils.six import string_types, binary_type, text_type
 
@@ -66,11 +66,15 @@ class AnsibleUnsafe(object):
 
 
 class AnsibleUnsafeBytes(binary_type, AnsibleUnsafe):
-    pass
+    def decode(self, *args, **kwargs):
+        """Wrapper method to ensure type conversions maintain unsafe context"""
+        return AnsibleUnsafeText(super(AnsibleUnsafeBytes, self).decode(*args, **kwargs))
 
 
 class AnsibleUnsafeText(text_type, AnsibleUnsafe):
-    pass
+    def encode(self, *args, **kwargs):
+        """Wrapper method to ensure type conversions maintain unsafe context"""
+        return AnsibleUnsafeBytes(super(AnsibleUnsafeText, self).encode(*args, **kwargs))
 
 
 class UnsafeProxy(object):
@@ -111,7 +115,7 @@ def _wrap_set(v):
 
 
 def wrap_var(v):
-    if isinstance(v, AnsibleUnsafe):
+    if v is None or isinstance(v, AnsibleUnsafe):
         return v
 
     if isinstance(v, Mapping):
@@ -126,3 +130,11 @@ def wrap_var(v):
         v = AnsibleUnsafeText(v)
 
     return v
+
+
+def to_unsafe_bytes(*args, **kwargs):
+    return wrap_var(to_bytes(*args, **kwargs))
+
+
+def to_unsafe_text(*args, **kwargs):
+    return wrap_var(to_text(*args, **kwargs))

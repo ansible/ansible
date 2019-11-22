@@ -1,0 +1,7 @@
+---
+test_group: '{{ resource_prefix }}-group'
+test_path: '/'
+test_user:  '{{ test_users[0] }}'
+test_users:
+  - '{{ resource_prefix }}-user-a'
+  - '{{ resource_prefix }}-user-b'

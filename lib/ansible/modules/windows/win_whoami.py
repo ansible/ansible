@@ -178,7 +178,7 @@ rights:
       "SeRemoteInteractiveLogonRight"
   ]
 logon_server:
-  description: The name of the server used to authentcate the owner of the
+  description: The name of the server used to authenticate the owner of the
     logon session.
   returned: success
   type: str
