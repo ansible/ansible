@@ -95,19 +95,26 @@
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
 
-- name: Destroy DB
+- name: Destroy DBs
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_db:
     state: absent
-    name: "{{ db_name }}"
+    name: "{{ item }}"
     login_user: "{{ pg_user }}"
+  loop:
+    - "{{ db_name }}"
+    - "{{ db_session_role1 }}"
 
-- name: Remove test user
+- name: Remove test users
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_user:
-    name: "{{ db_user1 }}"
+    name: "{{ item }}"
     state: absent
     db: postgres
     login_user: "{{ pg_user }}"
+  loop:
+    - "{{ db_user1 }}"
+    - "{{ db_session_role1 }}"
+    - "{{ db_session_role2 }}"

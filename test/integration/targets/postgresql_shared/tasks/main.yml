@@ -1,6 +1,0 @@
-# This test role is for testing general (non-specific) functionality
-# that's presented in all modules (or in a part of them).
-# If you want to add tests make a new test file and include here.
-
-# Verify different session_role scenarios:
-- import_tasks: session_role.yml

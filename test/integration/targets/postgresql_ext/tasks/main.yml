@@ -1,3 +1,5 @@
+- import_tasks: postgresql_ext_session_role.yml
+
 # Initial CI tests of postgresql_ext module.
 # pg_extension system view is available from PG 9.1.
 # The tests are restricted by Fedora because there will be errors related with
