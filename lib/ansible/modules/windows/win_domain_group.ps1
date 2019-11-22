@@ -21,7 +21,7 @@ $scope = Get-AnsibleParam -obj $params -name "scope" -type "str" -validateset "d
 $managed_by = Get-AnsibleParam -obj $params -name "managed_by" -type "str"
 $attributes = Get-AnsibleParam -obj $params -name "attributes"
 $organizational_unit = Get-AnsibleParam -obj $params -name "organizational_unit" -type "str" -aliases "ou","path"
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","query"
 $protect = Get-AnsibleParam -obj $params -name "protect" -type "bool"
 $ignore_protection = Get-AnsibleParam -obj $params -name "ignore_protection" -type "bool" -default $false
 $domain_server = Get-AnsibleParam -obj $params -name "domain_server" -type "str"
@@ -316,9 +316,16 @@ if ($state -eq "absent") {
     if ($diff_mode -and $null -ne $diff_text) {
         $result.diff.prepared = $diff_text
     }
+}
 
-    if (-not $check_mode) {
-        $group = Get-ADGroup -Identity $name -Properties * @extra_args
+if (-not $check_mode) {
+    $group = Get-ADGroup -Filter {Name -eq $name} -Properties * @extra_args
+    if (!$group) {
+        $result.name = $name
+        $result.msg = "Group '$name' is absent"
+        $result.state = "absent"
+    }
+    else {
         $result.sid = $group.SID.Value
         $result.description = $group.Description
         $result.distinguished_name = $group.DistinguishedName
@@ -330,6 +337,8 @@ if ($state -eq "absent") {
         $result.managed_by = $group.ManagedBy
         $result.group_scope = ($group.GroupScope).ToString()
         $result.category = ($group.GroupCategory).ToString()
+        $result.msg = "Group '$name' is present"
+        $result.state = "present"
 
         if ($null -ne $attributes) {
             $result.attributes = @{}
