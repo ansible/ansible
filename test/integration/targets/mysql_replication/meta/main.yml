@@ -1,2 +1,2 @@
 dependencies:
-  - setup_mysql_replication
+  - setup_mariadb

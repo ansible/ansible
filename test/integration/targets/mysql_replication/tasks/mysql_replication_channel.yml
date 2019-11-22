@@ -5,20 +5,20 @@
 - name: Stop slave
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: stopslave
 
 - name: Reset slave all
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: resetslaveall
 
 # Get master log file and log pos:
 - name: Get master status
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ master_port }}"
+    login_port: "{{ primary_db.port }}"
     mode: getmaster
   register: master_status
 
@@ -26,10 +26,10 @@
 - name: Run replication with channel
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: changemaster
     master_host: 127.0.0.1
-    master_port: "{{ master_port }}"
+    master_port: "{{ primary_db.port }}"
     master_user: "{{ replication_user }}"
     master_password: "{{ replication_pass }}"
     master_log_file: "{{ master_status.File }}"
@@ -46,7 +46,7 @@
 - name: Start slave with channel
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: startslave
     channel: '{{ test_channel }}'
   register: result
@@ -60,7 +60,7 @@
 - name: Get standby status with channel
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: getslave
     channel: '{{ test_channel }}'
   register: slave_status
@@ -70,7 +70,7 @@
     - slave_status.Is_Slave == true
     - slave_status.Master_Host == '127.0.0.1'
     - slave_status.Exec_Master_Log_Pos == master_status.Position
-    - slave_status.Master_Port == {{ master_port }}
+    - slave_status.Master_Port == {{ primary_db.port }}
     - slave_status.Last_IO_Errno == 0
     - slave_status.Last_IO_Error == ''
     - slave_status.Channel_Name == '{{ test_channel }}'
@@ -80,7 +80,7 @@
 - name: Stop slave with channel
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: stopslave
     channel: '{{ test_channel }}'
   register: result
@@ -94,7 +94,7 @@
 - name: Reset slave with channel
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: resetslave
     channel: '{{ test_channel }}'
   register: result
@@ -108,7 +108,7 @@
 - name: Reset slave all with channel
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: resetslaveall
     channel: '{{ test_channel }}'
   register: result

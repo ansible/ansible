@@ -5,7 +5,7 @@
 - name: Run replication
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: changemaster
     master_delay: '{{ test_master_delay }}'
   register: result
@@ -19,7 +19,7 @@
 - name: Start slave
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: startslave
   register: result
 
@@ -27,7 +27,7 @@
 - name: Get standby status
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: getslave
   register: slave_status
 
@@ -40,5 +40,5 @@
 - name: Stop slave
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: stopslave

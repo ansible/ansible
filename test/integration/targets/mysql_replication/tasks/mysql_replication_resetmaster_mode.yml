@@ -5,20 +5,20 @@
 - name: Stop slave
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: stopslave
 
 - name: Reset slave all
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ standby_port }}"
+    login_port: "{{ replica_db.port }}"
     mode: resetslaveall
 
 # Get master initial status:
 - name: Get master status
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ master_port }}"
+    login_port: "{{ primary_db.port }}"
     mode: getmaster
   register: master_initial_status
 
@@ -26,7 +26,7 @@
 - name: Reset master
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ master_port }}"
+    login_port: "{{ primary_db.port }}"
     mode: resetmaster
   register: result
 
@@ -39,7 +39,7 @@
 - name: Get master status
   mysql_replication:
     login_host: 127.0.0.1
-    login_port: "{{ master_port }}"
+    login_port: "{{ primary_db.port }}"
     mode: getmaster
   register: master_final_status
 
