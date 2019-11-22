@@ -323,7 +323,7 @@ class StrategyBase:
                 if queued:
                     break
                 elif self._cur_worker == starting_worker:
-                    time.sleep(0.0001)
+                    time.sleep(C.DEFAULT_WORKERPROC_CHECK_INTERVAL)
 
             self._pending_results += 1
         except (EOFError, IOError, AssertionError) as e:

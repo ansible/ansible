@@ -700,6 +700,21 @@ DEFAULT_INTERNAL_POLL_INTERVAL:
       Higher values are more suitable for Ansible usage in automation scenarios,
       when UI responsiveness is not required but CPU usage might be a concern.
     - "The default corresponds to the value hardcoded in Ansible <= 2.1"
+DEFAULT_WORKERPROC_CHECK_INTERVAL:
+  name: Internal poll interval
+  default: 0.0001
+  env: []
+  ini:
+  - {key: internal_poll_interval, section: defaults}
+  type: float
+  version_added: "2.9"
+  description:
+    - Same as the reason of making DEFAULT_INTERNAL_POLL_INTERVAL as an option. This sets the 
+      interval (in seconds) of Ansible check if there is free slot for new worker process. 
+      Lower values improve performance with large playbooks at the expense of extra CPU load.
+      Higher values are more suitable for Ansible usage in automation scenarios,
+      when UI responsiveness is not required but CPU usage might be a concern.
+    - "The default corresponds to the value hardcoded in Ansible <= 2.8"
 DEFAULT_INVENTORY_PLUGIN_PATH:
   name: Inventory Plugins Path
   default: ~/.ansible/plugins/inventory:/usr/share/ansible/plugins/inventory
