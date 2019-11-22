@@ -40,6 +40,7 @@ notes:
     - "Module may require additional privileges as well, which may be required for gathering facts - e.g. ESXi configurations."
     - Tested on vSphere 5.5, 6.0, 6.5 and 6.7
     - Use SCSI disks instead of IDE when you want to expand online disks by specifying a SCSI controller
+    - Uses SysPrep for Windows VM (depends on 'guest_id' parameter match 'win') with PyVmomi
     - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
