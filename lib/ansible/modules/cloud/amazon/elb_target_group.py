@@ -829,10 +829,13 @@ def main():
         wait=dict(type='bool', default=False)
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec, required_if=[
-        ['target_type', 'instance', ['protocol', 'port', 'vpc_id']],
-        ['target_type', 'ip', ['protocol', 'port', 'vpc_id']],
-    ])
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              required_if=[
+                                  ['target_type', 'instance', ['protocol', 'port', 'vpc_id']],
+                                  ['target_type', 'ip', ['protocol', 'port', 'vpc_id']],
+                                  ['state', 'absent', ['name']],
+                              ]
+                              )
 
     connection = module.client('elbv2')
 
