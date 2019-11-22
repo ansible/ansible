@@ -147,6 +147,7 @@ def _build_cmd_line(
     installdeps,
     cpanm,
     use_sudo,
+    version,
 ):
     # this code should use "%s" like everything else and just return early but not fixing all of it now.
     # don't copy stuff like this
@@ -231,6 +232,7 @@ def main():
             installdeps,
             cpanm,
             use_sudo,
+            version,
         )
 
         rc_cpanm, out_cpanm, err_cpanm = module.run_command(cmd, check_rc=False)
