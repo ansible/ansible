@@ -263,7 +263,7 @@ def main():
                                                                                          vm.name,
                                                                                          to_native(e.msg)))
             except vim.fault.DuplicateName as e:
-                module.exit_json(chanaged=False, details=to_native(e.msg))
+                module.exit_json(changed=False, details=to_native(e.msg))
             except vmodl.fault.InvalidArgument as e:
                 module.fail_json(msg="Failed to create scheduled task %s as specifications "
                                      "given are invalid: %s" % (module.params.get('state'),
