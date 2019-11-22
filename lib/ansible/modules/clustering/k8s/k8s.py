@@ -209,6 +209,12 @@ EXAMPLES = '''
     state: present
     definition: "{{ lookup('file', '/testing/deployment.yml') }}"
 
+- name: Use multi-document yaml file.
+  k8s:
+    state: present
+    definition: "{{ item }}"
+  loop: "{{ lookup('file', '/testing/deployment.yml') | from_yaml_all | list }}"
+
 - name: Read definition file from the Ansible controller file system after Jinja templating
   k8s:
     state: present
