@@ -21,8 +21,11 @@
     state: absent
     force_kill: yes
   with_items: "{{ cnames }}"
+  register: result
+  retries: 3
+  delay: 3
+  until: result is success
 - name: "Make sure all volumes are removed"
-  docker_volume:
-    name: "{{ item }}"
-    state: absent
+  command: "docker rm -f {{ item }}"
   with_items: "{{ vnames }}"
+  ignore_errors: yes
