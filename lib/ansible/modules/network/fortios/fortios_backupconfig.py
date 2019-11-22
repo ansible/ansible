@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 # Ansible module to manage configuration on fortios devices
-# (c) 2016, Benjamin Jolivot <bjolivot@gmail.com>
+# (c) 2016, Patrick Pellissier 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -18,15 +18,12 @@ DOCUMENTATION = """
 module: fortios_backupconfig
 version_added: "2.3"
 author: "Patrick Pellissier (ppellissier)"
-short_description: Manage config on Fortinet FortiOS firewall devices
+short_description: Backup config on Fortinet FortiOS firewall devices
 description:
-  - This module provides management of FortiOS Devices configuration.
+  - This module provides backup of FortiOS Devices configuration.
+  - Remove pager and empty lines
 extends_documentation_fragment: fortios
 options:
-  src:
-    description:
-      - The I(src) argument provides a path to the configuration template
-        to load into the remote device.
   filter:
     description:
       - Only for partial backup, you can restrict by giving expected configuration path (ex. firewall address).
@@ -52,13 +49,6 @@ EXAMPLES = """
     backup_path: /tmp/forti_backup/
     filter: "firewall address"
 
-- name: Update configuration from file
-  fortios_config:
-    host: 192.168.0.254
-    username: admin
-    password: password
-    src: new_configuration.conf.j2
-
 """
 
 RETURN = """
@@ -66,12 +56,9 @@ running_config:
   description: full config string
   returned: always
   type: str
-change_string:
-  description: The commands really executed by the module
-  returned: only if config changed
-  type: str
 """
 
+import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.fortios.fortios import fortios_argument_spec, fortios_required_if
 from ansible.module_utils.network.fortios.fortios import backup
@@ -89,6 +76,11 @@ except Exception:
 NOT_UPDATABLE_CONFIG_OBJECTS = [
     "vpn certificate local",
 ]
+
+def _sanitize(output):
+    for (regex,replace) in [ (re.compile(r'^--More--\s*(?:\r|)$',re.M),''), (re.compile(r'\n\s*\n',re.M),'\n') ]:
+        output = regex.sub(replace,output)
+    return output
 
 def load_config(conn, path='',vdom=None):
     """
@@ -108,8 +100,8 @@ def load_config(conn, path='',vdom=None):
             command = 'conf vdom\nedit %s\nshow %s\nend' % (vdom, path)
     else:
         command = 'show %s' % path
-
-    return conn.execute_command(command)
+        
+    return _sanitize("\n".join(conn.execute_command(command)))
 
 def main():
     argument_spec = dict(
@@ -142,20 +134,20 @@ def main():
     # connect
     try:
         conn.open()
-    except Exception:
-        module.fail_json(msg='Error connecting device')
+    except Exception as e:
+        module.fail_json(msg='Error connecting device : {0}'.format(repr(e)))
 
     # get  config
     running_config = ""
     try:
         running_config = load_config(conn,path=module.params['filter'],vdom=module.params['vdom'])
         result['running_config'] = running_config
-    except Exception:
-        module.fail_json(msg='Error reading running config')
+    except Exception as e:
+        module.fail_json(msg='Error reading config : {0}'.format(repr(e)))
 
     # backup config
     if module.params['backup']:
-        backup(module, running_config.to_text())
+        backup(module, running_config)
 
     module.exit_json(**result)
 
