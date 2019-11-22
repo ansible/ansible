@@ -160,7 +160,8 @@ class AdHocCLI(CLI):
                 forks=context.CLIARGS['forks'],
             )
 
-            self._tqm.send_callback('v2_playbook_on_start', playbook)
+            # FIXME: there are serialization issues here
+            # self._tqm.send_callback('v2_playbook_on_start', playbook)
 
             self._tqm.initialize_processes(min(self._tqm._forks, len(hosts)))
             result = self._tqm.run(play)

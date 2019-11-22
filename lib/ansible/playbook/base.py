@@ -31,11 +31,10 @@ display = Display()
 def _generic_g(prop_name, self):
     try:
         value = self._attributes[prop_name]
+        if value is Sentinel:
+            value = self._attr_defaults[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
-
-    if value is Sentinel:
-        value = self._attr_defaults[prop_name]
 
     return value
 
@@ -59,11 +58,10 @@ def _generic_g_parent(prop_name, self):
                 value = self._get_parent_attribute(prop_name)
             except AttributeError:
                 value = self._attributes[prop_name]
+        if value is Sentinel:
+            value = self._attr_defaults[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
-
-    if value is Sentinel:
-        value = self._attr_defaults[prop_name]
 
     return value
 
@@ -77,7 +75,7 @@ def _generic_d(prop_name, self):
     del self._attributes[prop_name]
 
 
-def get_validated_value(name, attribute, value, templar):
+def get_validated_value(name, attribute, value, templar, ds=None):
     isa = attribute['isa']
     if isa == 'string':
         value = to_text(value)
@@ -103,10 +101,10 @@ def get_validated_value(name, attribute, value, templar):
                 # FIXME: how can we get the ds structure back to these errors?
                 if not isinstance(item, attribute['listof']):
                     raise AnsibleParserError("the field '%s' should be a list of %s, "
-                                             "but the item '%s' is a %s" % (name, attribute['listof'], item, type(item)))
+                                             "but the item '%s' is a %s" % (name, attribute['listof'], item, type(item)), obj=ds)
                 elif attribute['required'] and attribute['listof'] == string_types:
                     if item is None or item.strip() == "":
-                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,))
+                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=ds)
     elif isa == 'set':
         if value is None:
             value = set()
@@ -124,11 +122,10 @@ def get_validated_value(name, attribute, value, templar):
             value = dict()
         elif not isinstance(value, dict):
             raise TypeError("%s is not a dictionary" % value)
-    # FIXME: ...
     elif isa == 'class':
-        if not isinstance(value, attribute.class_type):
-            raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
-        value.post_validate(templar=templar)
+        # if not isinstance(value, attribute['class_type']):
+        #     raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute['class_type'], type(value)))
+        value = post_validate(value, templar=templar)
     return value
 
 
@@ -186,7 +183,7 @@ def post_validate(data, templar):
 
             # and make sure the attribute is of the type it should be
             if value is not None:
-                value = get_validated_value(name, attribute, value, templar)
+                value = get_validated_value(name, attribute, value, templar, ds=data.get('ds', None))
 
             # and assign the massaged value back to the attribute field
             data[name] = value

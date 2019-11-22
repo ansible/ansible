@@ -455,7 +455,8 @@ class StrategyBase:
                                         'listen',
                                         listening_handler._valid_attrs['listen'].serialize(),
                                         listeners,
-                                        handler_templar
+                                        handler_templar,
+                                        ds=listening_handler._ds,
                                     )
                                     if handler_name not in listeners:
                                         continue
@@ -724,7 +725,8 @@ class StrategyBase:
             return []
 
         # finally, send the callback and return the list of blocks loaded
-        self._tqm.send_callback('v2_playbook_on_include', included_file)
+        # FIXME: this needs to send some serialized data
+        # self._tqm.send_callback('v2_playbook_on_include', included_file)
         display.debug("done processing included file")
         return block_list
 

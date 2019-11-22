@@ -36,6 +36,7 @@ from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.urls import ParseResultDottedDict as DottedDict
 from ansible.playbook.base import post_validate
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
@@ -161,17 +162,8 @@ class TaskQueueManager:
 
         play_context = PlayContext(new_play, self.passwords, self._connection_lockfile.fileno())
 
-        # FIXME: since the callbacks happen from the results side now, does it even
-        #        make sense to have the callbacks depend on info from the PlayContext?
-        # if (self._stdout_callback and
-        #         hasattr(self._stdout_callback, 'set_play_context')):
-        #     self._stdout_callback.set_play_context(play_context)
-
-        # for callback_plugin in self._callback_plugins:
-        #     if hasattr(callback_plugin, 'set_play_context'):
-        #         callback_plugin.set_play_context(play_context)
-
-        self.send_callback('v2_playbook_on_play_start', new_play)
+        # FIXME: sending callbacks directly seems to have a problem
+        # self.send_callback('v2_playbook_on_play_start', DottedDict(new_play.serialize()))
 
         # build the iterator
         iterator = PlayIterator(

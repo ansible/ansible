@@ -103,7 +103,9 @@ class PlaybookExecutor:
                     entry['plays'] = []
                 else:
                     # send a direct callback to the result proc
-                    self._tqm.send_callback("v2_playbook_on_start", pb)
+                    # FIXME: sending direct callbacks seems to be a problem
+                    # self._tqm.send_callback("v2_playbook_on_start", pb)
+                    pass
 
                 i = 1
                 plays = pb.get_plays()

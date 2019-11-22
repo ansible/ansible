@@ -324,8 +324,6 @@ class TaskExecutor:
             index_var = self._task.loop_control['index_var']
             loop_pause = self._task.loop_control['pause']
             extended = self._task.loop_control['extended']
-
-            # This may be 'None',so it is templated below after we ensure a value and an item is assigned
             label = self._task.loop_control['label']
 
         # ensure we always have a label

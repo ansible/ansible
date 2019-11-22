@@ -1,9 +1,12 @@
+- set_fact:
+    loop_index_equals_one: "{{ ansible_loop.index == 1 }}"
+    loop_index_equals_len: "{{ ansible_loop.index == ansible_loop.length }}"
 - name: assert ansible_loop variables in include_tasks
   assert:
     that:
       - ansible_loop.index == ansible_loop.index0 + 1
       - ansible_loop.revindex == ansible_loop.revindex0 + 1
-      - ansible_loop.first == {{ ansible_loop.index == 1 }}
-      - ansible_loop.last == {{ ansible_loop.index == ansible_loop.length }}
+      - ansible_loop.first == loop_index_equals_one
+      - ansible_loop.last == loop_index_equals_len
       - ansible_loop.length == 3
       - ansible_loop.allitems|join(',') == 'first,second,third'
