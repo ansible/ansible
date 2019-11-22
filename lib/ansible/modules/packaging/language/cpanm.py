@@ -5,15 +5,18 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: cpanm
 short_description: Manages Perl library dependencies.
@@ -54,7 +57,7 @@ options:
     version_added: "2.0"
   version:
     description:
-      - minimum version of perl module to consider acceptable
+      - use cpanm version specifying operators such as @, ~, ==. Please consult cpanm documentation.
     type: str
     version_added: "2.1"
   system_lib:
@@ -73,9 +76,9 @@ options:
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
 author: "Franck Cuny (@fcuny)"
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 # install Dancer perl package
 - cpanm:
     name: Dancer
@@ -113,8 +116,8 @@ EXAMPLES = '''
 # OR the installed version is older than version 1.0
 - cpanm:
     name: Dancer
-    version: '1.0'
-'''
+    version: '@1.0'
+"""
 
 import os
 
@@ -134,13 +137,26 @@ def _is_package_installed(module, name, locallib, cpanm, version):
     return res == 0
 
 
-def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo):
+def _build_cmd_line(
+    name,
+    from_path,
+    notest,
+    locallib,
+    mirror,
+    mirror_only,
+    installdeps,
+    cpanm,
+    use_sudo,
+):
     # this code should use "%s" like everything else and just return early but not fixing all of it now.
     # don't copy stuff like this
     if from_path:
         cmd = cpanm + " " + from_path
     else:
-        cmd = cpanm + " " + name
+        if version is not None:
+            cmd = cpanm + " " + name + version
+        else:
+            cmd = cpanm + " " + name
 
     if notest is True:
         cmd = cmd + " -n"
@@ -164,60 +180,72 @@ def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, inst
 
 
 def _get_cpanm_path(module):
-    if module.params['executable']:
-        result = module.params['executable']
+    if module.params["executable"]:
+        result = module.params["executable"]
     else:
-        result = module.get_bin_path('cpanm', True)
+        result = module.get_bin_path("cpanm", True)
     return result
 
 
 def main():
     arg_spec = dict(
-        name=dict(default=None, required=False, aliases=['pkg']),
-        from_path=dict(default=None, required=False, type='path'),
-        notest=dict(default=False, type='bool'),
-        locallib=dict(default=None, required=False, type='path'),
+        name=dict(default=None, required=False, aliases=["pkg"]),
+        from_path=dict(default=None, required=False, type="path"),
+        notest=dict(default=False, type="bool"),
+        locallib=dict(default=None, required=False, type="path"),
         mirror=dict(default=None, required=False),
-        mirror_only=dict(default=False, type='bool'),
-        installdeps=dict(default=False, type='bool'),
-        system_lib=dict(default=False, type='bool', aliases=['use_sudo']),
+        mirror_only=dict(default=False, type="bool"),
+        installdeps=dict(default=False, type="bool"),
+        system_lib=dict(default=False, type="bool", aliases=["use_sudo"]),
         version=dict(default=None, required=False),
-        executable=dict(required=False, type='path'),
+        executable=dict(required=False, type="path"),
     )
 
     module = AnsibleModule(
-        argument_spec=arg_spec,
-        required_one_of=[['name', 'from_path']],
+        argument_spec=arg_spec, required_one_of=[["name", "from_path"]],
     )
 
     cpanm = _get_cpanm_path(module)
-    name = module.params['name']
-    from_path = module.params['from_path']
-    notest = module.boolean(module.params.get('notest', False))
-    locallib = module.params['locallib']
-    mirror = module.params['mirror']
-    mirror_only = module.params['mirror_only']
-    installdeps = module.params['installdeps']
-    use_sudo = module.params['system_lib']
-    version = module.params['version']
+    name = module.params["name"]
+    from_path = module.params["from_path"]
+    notest = module.boolean(module.params.get("notest", False))
+    locallib = module.params["locallib"]
+    mirror = module.params["mirror"]
+    mirror_only = module.params["mirror_only"]
+    installdeps = module.params["installdeps"]
+    use_sudo = module.params["system_lib"]
+    version = module.params["version"]
 
     changed = False
 
     installed = _is_package_installed(module, name, locallib, cpanm, version)
 
     if not installed:
-        cmd = _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo)
+        cmd = _build_cmd_line(
+            name,
+            from_path,
+            notest,
+            locallib,
+            mirror,
+            mirror_only,
+            installdeps,
+            cpanm,
+            use_sudo,
+        )
 
         rc_cpanm, out_cpanm, err_cpanm = module.run_command(cmd, check_rc=False)
 
         if rc_cpanm != 0:
             module.fail_json(msg=err_cpanm, cmd=cmd)
 
-        if (err_cpanm.find('is up to date') == -1 and out_cpanm.find('is up to date') == -1):
+        if (
+            err_cpanm.find("is up to date") == -1
+            and out_cpanm.find("is up to date") == -1
+        ):
             changed = True
 
     module.exit_json(changed=changed, binary=cpanm, name=name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
