@@ -1,17 +1,9 @@
 #!/usr/bin/python
 #
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -23,7 +15,7 @@ DOCUMENTATION = '''
 module: ec2_eni_info
 short_description: Gather information about ec2 ENI interfaces in AWS
 description:
-    - Gather information about ec2 ENI interfaces in AWS
+    - Gather information about ec2 ENI interfaces in AWS.
     - This module was called C(ec2_eni_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.0"
 author: "Rob White (@wimnat)"
@@ -33,6 +25,7 @@ options:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInterfaces.html) for possible filters.
+    type: dict
 extends_documentation_fragment:
     - aws
     - ec2
@@ -69,7 +62,7 @@ network_interfaces:
           public_ip: "52.1.0.63"
         }
     attachment:
-      description: Infor about attached ec2 instance
+      description: Info about attached ec2 instance
       returned: always, empty dict if ENI is not attached
       type: dict
       sample: {

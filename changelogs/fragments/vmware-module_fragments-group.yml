@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - A `vmware` module_defaults group has been added to simplify parameters for
+    multiple VMware tasks. This group includes all VMware modules.

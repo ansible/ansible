@@ -118,7 +118,6 @@ subnets:
                         - The type of the endpoint service.
                     returned: always
                     type: str
-                    required: True
                     sample: Microsoft.Sql
                 locations:
                     description:

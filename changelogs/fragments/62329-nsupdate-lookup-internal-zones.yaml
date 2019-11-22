@@ -1,0 +1,2 @@
+bugfixes:
+  - nsupdate - Fix zone name lookup of internal/private zones (https://github.com/ansible/ansible/issues/62052)

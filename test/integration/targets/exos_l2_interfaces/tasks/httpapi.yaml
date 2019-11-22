@@ -1,0 +1,19 @@
+---
+- name: Collect all httpapi test cases
+  find:
+    paths: "{{ role_path }}/tests/httpapi"
+    patterns: "{{ testcase }}.yaml"
+    use_regex: true
+  register: test_cases
+  delegate_to: localhost
+
+- name: Set test_items
+  set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
+
+- name: Run test case (connection=httpapi)
+  include: "{{ test_case_to_run }}"
+  vars:
+    ansible_connection: httpapi
+  with_items: "{{ test_items }}"
+  loop_control:
+    loop_var: test_case_to_run

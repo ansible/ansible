@@ -33,7 +33,7 @@ module: gcp_bigquery_dataset
 description:
 - Datasets allow you to organize and control access to your tables.
 short_description: Creates a GCP Dataset
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -167,7 +167,7 @@ options:
       the default partition expiration time indicated by this property.'
     required: false
     type: int
-    version_added: 2.9
+    version_added: '2.9'
   description:
     description:
     - A user-friendly description of the dataset.
@@ -200,7 +200,60 @@ options:
     required: false
     default: US
     type: str
-extends_documentation_fragment: gcp
+  default_encryption_configuration:
+    description:
+    - The default encryption key for all tables in the dataset. Once this property
+      is set, all newly-created partitioned tables in the dataset will have encryption
+      key set to this value, unless table creation request (or query) overrides the
+      key.
+    required: false
+    type: dict
+    version_added: '2.10'
+    suboptions:
+      kms_key_name:
+        description:
+        - Describes the Cloud KMS encryption key that will be used to protect destination
+          BigQuery table. The BigQuery Service Account associated with your project
+          requires access to this encryption key.
+        required: true
+        type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -386,6 +439,22 @@ location:
   - Changing this forces a new resource to be created.
   returned: success
   type: str
+defaultEncryptionConfiguration:
+  description:
+  - The default encryption key for all tables in the dataset. Once this property is
+    set, all newly-created partitioned tables in the dataset will have encryption
+    key set to this value, unless table creation request (or query) overrides the
+    key.
+  returned: success
+  type: complex
+  contains:
+    kmsKeyName:
+      description:
+      - Describes the Cloud KMS encryption key that will be used to protect destination
+        BigQuery table. The BigQuery Service Account associated with your project
+        requires access to this encryption key.
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -431,6 +500,7 @@ def main():
             friendly_name=dict(type='str'),
             labels=dict(type='dict'),
             location=dict(default='US', type='str'),
+            default_encryption_configuration=dict(type='dict', options=dict(kms_key_name=dict(required=True, type='str'))),
         )
     )
 
@@ -492,6 +562,9 @@ def resource_to_request(module):
         u'friendlyName': module.params.get('friendly_name'),
         u'labels': module.params.get('labels'),
         u'location': module.params.get('location'),
+        u'defaultEncryptionConfiguration': DatasetDefaultencryptionconfiguration(
+            module.params.get('default_encryption_configuration', {}), module
+        ).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
@@ -570,6 +643,7 @@ def response_to_hash(module, response):
         u'labels': response.get(u'labels'),
         u'lastModifiedTime': response.get(u'lastModifiedTime'),
         u'location': response.get(u'location'),
+        u'defaultEncryptionConfiguration': DatasetDefaultencryptionconfiguration(response.get(u'defaultEncryptionConfiguration', {}), module).from_response(),
     }
 
 
@@ -650,6 +724,21 @@ class DatasetDatasetreference(object):
 
     def from_response(self):
         return remove_nones_from_dict({u'datasetId': self.request.get(u'datasetId'), u'projectId': self.request.get(u'projectId')})
+
+
+class DatasetDefaultencryptionconfiguration(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'kmsKeyName': self.request.get('kms_key_name')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'kmsKeyName': self.request.get(u'kmsKeyName')})
 
 
 if __name__ == '__main__':

@@ -19,6 +19,8 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
             # first check if option was passed
             param = body.get(name)
             if not param:
+                if spec[name].get('purgeIfNone', False):
+                    body.pop(name, None)
                 continue
             # check if pattern needs to be used
             pattern = spec[name].get('pattern', None)

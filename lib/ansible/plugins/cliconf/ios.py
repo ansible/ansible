@@ -34,8 +34,6 @@ import re
 import time
 import json
 
-from itertools import chain
-
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping
@@ -332,6 +330,22 @@ class Cliconf(CliconfBase):
             return 'all'
         else:
             return 'full'
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            out = self._connection.get_prompt()
+
+            if out is None:
+                raise AnsibleConnectionFailure(message=u'cli prompt is not identified from the last received'
+                                                       u' response window: %s' % self._connection._last_recv_window)
+
+            if re.search(r'config.*\)#', to_text(out, errors='surrogate_then_replace').strip()):
+                self._connection.queue_message('vvvv', 'wrong context, sending end to device')
+                self._connection.send_command('end')
 
     def _extract_banners(self, config):
         banners = {}

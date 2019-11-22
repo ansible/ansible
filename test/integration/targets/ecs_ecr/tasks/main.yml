@@ -55,6 +55,11 @@
           - result is changed
           - result.created
 
+    - name: it should have been configured as mutable by default
+      assert:
+        that:
+          - result.repository.imageTagMutability == "MUTABLE"
+
 
     - name: When creating a repository that already exists in check mode
       ecs_ecr:
@@ -322,6 +327,77 @@
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - result is not changed
+
+    - name: When creating an immutable repository
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        image_tag_mutability: immutable
+      register: result
+
+    - name: it should change and create
+      assert:
+        that:
+          - result is changed
+          - result.created
+
+    - name: it should have been configured as immutable
+      assert:
+        that:
+          - result.repository.imageTagMutability == "IMMUTABLE"
+
+
+    - name: When configuring an existing immutable repository to be mutable in check mode
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        image_tag_mutability: mutable
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change and configured mutable
+      assert:
+        that:
+          - result is skipped
+          - result is changed
+          - result.repository.imageTagMutability == "MUTABLE"
+
+    - name: When configuring an existing immutable repository to be mutable
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        image_tag_mutability: mutable
+      register: result
+
+    - name: it should change and configured mutable
+      assert:
+        that:
+          - result is changed
+          - result.repository.imageTagMutability == "MUTABLE"
+
+    - name: When configuring an already mutable repository to be mutable
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        image_tag_mutability: mutable
       register: result
 
     - name: it should not change

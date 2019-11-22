@@ -77,7 +77,7 @@ options:
         choices: ['Inactive', 'Ask', 'Prevent', 'Detect']
       indicator:
         description:
-          - The indicator whose action is to be overriden.
+          - The indicator whose action is to be overridden.
         type: str
   ips_settings:
     description:

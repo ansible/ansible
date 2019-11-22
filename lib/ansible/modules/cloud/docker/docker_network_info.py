@@ -70,7 +70,7 @@ exists:
 network:
     description:
       - Facts representing the current state of the network. Matches the docker inspection output.
-      - Will be C(None) if network does not exist.
+      - Will be C(none) if network does not exist.
     returned: always
     type: dict
     sample: '{

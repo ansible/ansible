@@ -20,10 +20,8 @@ version_added: '2.3'
 short_description: Creates a compressed archive of one or more files or trees
 extends_documentation_fragment: files
 description:
-    - Packs an archive.
-    - It is the opposite of M(unarchive).
-    - By default, it assumes the compression source exists on the target.
-    - It will not copy the source file from the local system to the target before archiving.
+    - Creates or extends an archive.
+    - The source and archive are on the remote host, and the archive I(is not) copied to the local host.
     - Source files can be deleted after archival by specifying I(remove=True).
 options:
   path:
@@ -40,7 +38,7 @@ options:
     default: gz
   dest:
     description:
-      - The file name of the destination archive.
+      - The file name of the destination archive.  The parent directory must exists on the remote host.
       - This is required when C(path) refers to multiple files by either specifying a glob, a directory or multiple paths in a list.
     type: path
   exclude_path:

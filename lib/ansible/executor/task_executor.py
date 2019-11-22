@@ -28,7 +28,7 @@ from ansible.plugins.loader import become_loader, cliconf_loader, connection_loa
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
+from ansible.utils.unsafe_proxy import AnsibleUnsafe, to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
@@ -152,7 +152,7 @@ class TaskExecutor:
 
             def _clean_res(res, errors='surrogate_or_strict'):
                 if isinstance(res, binary_type):
-                    return to_text(res, errors=errors)
+                    return to_unsafe_text(res, errors=errors)
                 elif isinstance(res, dict):
                     for k in res:
                         try:
@@ -242,7 +242,7 @@ class TaskExecutor:
                 setattr(mylookup, '_subdir', subdir + 's')
 
                 # run lookup
-                items = mylookup.run(terms=loop_terms, variables=self._job_vars, wantlist=True)
+                items = wrap_var(mylookup.run(terms=loop_terms, variables=self._job_vars, wantlist=True))
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop_with)
 
@@ -263,11 +263,6 @@ class TaskExecutor:
                 self._job_vars[k] = old_vars[k]
             else:
                 del self._job_vars[k]
-
-        if items:
-            for idx, item in enumerate(items):
-                if item is not None and not isinstance(item, AnsibleUnsafe):
-                    items[idx] = wrap_var(item)
 
         return items
 

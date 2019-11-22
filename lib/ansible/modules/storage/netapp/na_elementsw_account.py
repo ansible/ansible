@@ -269,7 +269,7 @@ class ElementSWAccount(object):
             if self.state == 'absent':
                 changed = True
             else:
-                # If state - present, check for any parameter of exising account needs modification.
+                # If state - present, check for any parameter of existing account needs modification.
                 if account_detail.username is not None and self.element_username is not None and \
                         account_detail.username != self.element_username:
                     update_account = True

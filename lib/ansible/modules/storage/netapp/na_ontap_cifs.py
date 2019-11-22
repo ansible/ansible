@@ -247,7 +247,7 @@ class NetAppONTAPCifsShare(object):
 
     def modify_cifs_share(self):
         """
-        modilfy path for the given CIFS share
+        modify path for the given CIFS share
         """
         options = {'share-name': self.parameters.get('share_name')}
         cifs_modify = netapp_utils.zapi.NaElement.create_node_with_children(

@@ -146,7 +146,7 @@ class AffinityGroupsModule(BaseModule):
 
     def update_vms(self, affinity_group):
         """
-        This method iterate via the affinity VM assignnments and datech the VMs
+        This method iterate via the affinity VM assignments and datech the VMs
         which should not be attached to affinity and attach VMs which should be
         attached to affinity.
         """

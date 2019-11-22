@@ -1,0 +1,9 @@
+master_port: 3306
+standby_port: 3307
+test_db: test_db
+test_table: test_table
+test_master_delay: 60
+replication_user: replication_user
+replication_pass: replication_pass
+dump_path: /tmp/dump.sql
+test_channel: test_channel-1

@@ -25,14 +25,14 @@
         expected_revert_output:
           - name: ge-0/0/1
           - name: ge-0/0/2
-            enable: False
+            enabled: False
 
     - name: Apply the provided configuration (base config)
       junos_lldp_interfaces:
         config:
           - name: ge-0/0/1
           - name: ge-0/0/2
-            enable: False
+            enabled: False
         state: merged
       register: base_config
 

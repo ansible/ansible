@@ -718,7 +718,7 @@ class ManageIQProvider(object):
         # NOTE: we do not check for diff's between requested and current
         #       provider, we always submit endpoints with password or auth_keys,
         #       since we can not compare with current password or auth_key,
-        #       every edit request is sent to ManageIQ API without compareing
+        #       every edit request is sent to ManageIQ API without comparing
         #       it to current state.
 
         # clean nulls, we do not send nulls to the api
@@ -869,7 +869,7 @@ def main():
             manageiq_provider.module.fail_json(
                 msg="provider_type %s is not supported" % (provider_type))
 
-        # build "connection_configurations" objects from user requsted endpoints
+        # build "connection_configurations" objects from user requested endpoints
         # "provider" is a required endpoint, if we have it, we have endpoints
         if raw_endpoints.get("provider"):
             endpoints = manageiq_provider.build_connection_configurations(provider_type, raw_endpoints)

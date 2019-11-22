@@ -121,6 +121,7 @@ guest_disk_info:
         "0": {
             "backing_datastore": "datastore2",
             "backing_disk_mode": "persistent",
+            "backing_diskmode": "persistent",
             "backing_eagerlyscrub": false,
             "backing_filename": "[datastore2] VM_225/VM_225.vmdk",
             "backing_thinprovisioned": false,
@@ -141,6 +142,7 @@ guest_disk_info:
             "backing_datastore": "datastore3",
             "backing_devicename": "vml.012345678901234567890123456789012345678901234567890123",
             "backing_disk_mode": "independent_persistent",
+            "backing_diskmode": "independent_persistent",
             "backing_filename": "[datastore3] VM_226/VM_226.vmdk",
             "backing_lunuuid": "012345678901234567890123456789012345678901234567890123",
             "backing_type": "RawDiskMappingVer1",
@@ -244,6 +246,7 @@ class PyVmomiHelper(PyVmomi):
                     disks_info[disk_index]['backing_type'] = 'RawDiskMappingVer1'
                     disks_info[disk_index]['backing_devicename'] = disk.backing.deviceName
                     disks_info[disk_index]['backing_diskmode'] = disk.backing.diskMode
+                    disks_info[disk_index]['backing_disk_mode'] = disk.backing.diskMode
                     disks_info[disk_index]['backing_lunuuid'] = disk.backing.lunUuid
                     disks_info[disk_index]['backing_uuid'] = disk.backing.uuid
 
@@ -255,12 +258,14 @@ class PyVmomiHelper(PyVmomi):
                 elif isinstance(disk.backing, vim.vm.device.VirtualDisk.SeSparseBackingInfo):
                     disks_info[disk_index]['backing_type'] = 'SeSparse'
                     disks_info[disk_index]['backing_diskmode'] = disk.backing.diskMode
+                    disks_info[disk_index]['backing_disk_mode'] = disk.backing.diskMode
                     disks_info[disk_index]['backing_writethrough'] = bool(disk.backing.writeThrough)
                     disks_info[disk_index]['backing_uuid'] = disk.backing.uuid
 
                 elif isinstance(disk.backing, vim.vm.device.VirtualDisk.SparseVer1BackingInfo):
                     disks_info[disk_index]['backing_type'] = 'SparseVer1'
                     disks_info[disk_index]['backing_diskmode'] = disk.backing.diskMode
+                    disks_info[disk_index]['backing_disk_mode'] = disk.backing.diskMode
                     disks_info[disk_index]['backing_spaceusedinkb'] = disk.backing.spaceUsedInKB
                     disks_info[disk_index]['backing_split'] = bool(disk.backing.split)
                     disks_info[disk_index]['backing_writethrough'] = bool(disk.backing.writeThrough)
@@ -268,6 +273,7 @@ class PyVmomiHelper(PyVmomi):
                 elif isinstance(disk.backing, vim.vm.device.VirtualDisk.SparseVer2BackingInfo):
                     disks_info[disk_index]['backing_type'] = 'SparseVer2'
                     disks_info[disk_index]['backing_diskmode'] = disk.backing.diskMode
+                    disks_info[disk_index]['backing_disk_mode'] = disk.backing.diskMode
                     disks_info[disk_index]['backing_spaceusedinkb'] = disk.backing.spaceUsedInKB
                     disks_info[disk_index]['backing_split'] = bool(disk.backing.split)
                     disks_info[disk_index]['backing_writethrough'] = bool(disk.backing.writeThrough)

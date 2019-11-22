@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-test now updates SSH keys it generates with newer versions of ssh-keygen to function with Paramiko

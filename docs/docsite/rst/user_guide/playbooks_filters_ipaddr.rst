@@ -434,6 +434,13 @@ To find the next nth usable IP address within a range, use ``next_nth_usable``::
 
 In this example, ``next_nth_usable`` returns the second usable IP address for the given IP range.
 
+To find the peer IP address for a point to point link, use ``peer``::
+
+    # {{ '192.168.122.1/31' | ipaddr('peer') }}
+    192.168.122.0
+    # {{ '192.168.122.1/30' | ipaddr('peer') }}
+    192.168.122.2
+
 
 IP Math
 ^^^^^^^

@@ -74,7 +74,7 @@ options:
       - Configures the groups for the username in the device running
         configuration. The argument accepts a list of group names.
         This argument does not check if the group has been configured
-        on the device. It is similar to the aggregrate command for
+        on the device. It is similar to the aggregate command for
         usernames, but lets you configure multiple groups for the user(s).
   purge:
     description:
@@ -251,11 +251,17 @@ class PublicKeyManager(object):
     def copy_key_to_node(self, base64keyfile):
         """ Copy key to IOS-XR node. We use SFTP because older IOS-XR versions don't handle SCP very well.
         """
-        if (self._module.params['host'] is None or self._module.params['provider']['host'] is None):
+        provider = self._module.params.get("provider") or {}
+        node = provider.get('host')
+        if node is None:
             return False
 
-        if (self._module.params['username'] is None or self._module.params['provider']['username'] is None):
+        user = provider.get('username')
+        if user is None:
             return False
+
+        password = provider.get('password')
+        ssh_keyfile = provider.get('ssh_keyfile')
 
         if self._module.params['aggregate']:
             name = 'aggregate'
@@ -264,11 +270,6 @@ class PublicKeyManager(object):
 
         src = base64keyfile
         dst = '/harddisk:/publickey_%s.b64' % (name)
-
-        user = self._module.params['username'] or self._module.params['provider']['username']
-        node = self._module.params['host'] or self._module.params['provider']['host']
-        password = self._module.params['password'] or self._module.params['provider']['password']
-        ssh_keyfile = self._module.params['ssh_keyfile'] or self._module.params['provider']['ssh_keyfile']
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -284,16 +285,17 @@ class PublicKeyManager(object):
     def addremovekey(self, command):
         """ Add or remove key based on command
         """
-        if (self._module.params['host'] is None or self._module.params['provider']['host'] is None):
+        provider = self._module.params.get("provider") or {}
+        node = provider.get('host')
+        if node is None:
             return False
 
-        if (self._module.params['username'] is None or self._module.params['provider']['username'] is None):
+        user = provider.get('username')
+        if user is None:
             return False
 
-        user = self._module.params['username'] or self._module.params['provider']['username']
-        node = self._module.params['host'] or self._module.params['provider']['host']
-        password = self._module.params['password'] or self._module.params['provider']['password']
-        ssh_keyfile = self._module.params['ssh_keyfile'] or self._module.params['provider']['ssh_keyfile']
+        password = provider.get('password')
+        ssh_keyfile = provider.get('ssh_keyfile')
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -695,11 +697,6 @@ def main():
             )
 
     result = {'changed': False, 'warnings': []}
-    if module.params['password'] and not module.params['configured_password']:
-        result['warnings'].append(
-            'The "password" argument is used to authenticate the current connection. ' +
-            'To set a user password use "configured_password" instead.'
-        )
 
     config_object = None
     if is_cliconf(module):

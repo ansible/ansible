@@ -65,7 +65,7 @@ Example CLI Task
 
 .. code-block:: yaml
 
-   - name: Retreive CNOS OS version
+   - name: Retrieve CNOS OS version
      cnos_command:
        commands: show version
      when: ansible_network_os == 'cnos'

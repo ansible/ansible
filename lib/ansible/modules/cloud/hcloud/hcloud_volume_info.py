@@ -18,11 +18,11 @@ DOCUMENTATION = """
 ---
 module: hcloud_volume_info
 
-short_description: Gather infos about your Hetzner Cloud volumes.
+short_description: Gather infos about your Hetzner Cloud Volumes.
 
 version_added: "2.8"
 description:
-    - Gather infos about your Hetzner Cloud volumes.
+    - Gather infos about your Hetzner Cloud Volumes.
 
 author:
     - Lukas Kaemmerling (@LKaemmerling)
@@ -30,21 +30,21 @@ author:
 options:
     id:
         description:
-            - The ID of the volume you want to get.
+            - The ID of the Volume you want to get.
         type: int
     name:
         description:
-            - The name of the volume you want to get.
+            - The name of the Volume you want to get.
         type: str
     label_selector:
         description:
-            - The label selector for the volume you want to get.
+            - The label selector for the Volume you want to get.
         type: str
 extends_documentation_fragment: hcloud
 """
 
 EXAMPLES = """
-- name: Gather hcloud volume infos
+- name: Gather hcloud Volume infos
   hcloud_volume_info:
   register: output
 - name: Print the gathered infos
@@ -54,35 +54,46 @@ EXAMPLES = """
 
 RETURN = """
 hcloud_volume_info:
-    description: The volume infos as list
+    description: The Volume infos as list
     returned: always
     type: complex
     contains:
         id:
-            description: Numeric identifier of the volume
+            description: Numeric identifier of the Volume
             returned: always
             type: int
             sample: 1937415
         name:
-            description: Name of the volume
+            description: Name of the Volume
             returned: always
             type: str
             sample: my-volume
         size:
-            description: Size of the volume
+            description: Size of the Volume
             returned: always
             type: str
             sample: 10
+        linux_device:
+            description: Path to the device that contains the Volume.
+            returned: always
+            type: str
+            sample: /dev/disk/by-id/scsi-0HC_Volume_12345
+            version_added: "2.10"
         location:
-            description: Name of the location where the volume resides in
+            description: Name of the location where the Volume resides in
             returned: always
             type: str
             sample: fsn1
         server:
-            description: Name of the server where the volume is attached to
+            description: Name of the server where the Volume is attached to
             returned: always
             type: str
             sample: my-server
+        delete_protection:
+            description: True if the Volume is protected for deletion
+            returned: always
+            type: bool
+            version_added: "2.10"
         labels:
             description: User-defined labels (key-value pairs)
             returned: always
@@ -119,6 +130,8 @@ class AnsibleHcloudVolumeInfo(Hcloud):
                     "location": to_native(volume.location.name),
                     "labels": volume.labels,
                     "server": to_native(server_name),
+                    "linux_device": to_native(volume.linux_device),
+                    "delete_protection": volume.protection["delete"],
                 })
 
         return tmp

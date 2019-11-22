@@ -39,7 +39,14 @@ options:
     version:
         description:
             - The maven version coordinate
-        default: latest
+            - Mutually exclusive with I(version_by_spec).
+    version_by_spec:
+        description:
+            - The maven dependency version ranges.
+            - See supported version ranges on U(https://cwiki.apache.org/confluence/display/MAVENOLD/Dependency+Mediation+and+Conflict+Resolution)
+            - The range type "(,1.0],[1.2,)" and "(,1.1),(1.1,)" is not supported.
+            - Mutually exclusive with I(version).
+        version_added: "2.10"
     classifier:
         description:
             - The maven classifier coordinate
@@ -90,7 +97,8 @@ options:
     keep_name:
         description:
             - If C(yes), the downloaded artifact's name is preserved, i.e the version number remains part of it.
-            - This option only has effect when C(dest) is a directory and C(version) is set to C(latest).
+            - This option only has effect when C(dest) is a directory and C(version) is set to C(latest) or C(version_by_spec)
+              is defined.
         type: bool
         default: 'no'
         version_added: "2.4"
@@ -158,6 +166,13 @@ EXAMPLES = '''
     artifact_id: junit
     dest: /tmp/junit-latest.jar
     repository_url: "file://{{ lookup('env','HOME') }}/.m2/repository"
+
+# Download the latest version between 3.8 and 4.0 (exclusive) of the JUnit framework artifact from Maven Central
+- maven_artifact:
+    group_id: junit
+    artifact_id: junit
+    version_by_spec: "[3.8,4.0)"
+    dest: /tmp/
 '''
 
 import hashlib
@@ -167,6 +182,9 @@ import shutil
 import io
 import tempfile
 import traceback
+
+from ansible.module_utils.ansible_release import __version__ as ansible_version
+from re import match
 
 LXML_ETREE_IMP_ERR = None
 try:
@@ -183,6 +201,15 @@ try:
 except ImportError:
     BOTO_IMP_ERR = traceback.format_exc()
     HAS_BOTO = False
+
+SEMANTIC_VERSION_IMP_ERR = None
+try:
+    from semantic_version import Version, Spec
+    HAS_SEMANTIC_VERSION = True
+except ImportError:
+    SEMANTIC_VERSION_IMP_ERR = traceback.format_exc()
+    HAS_SEMANTIC_VERSION = False
+
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six.moves.urllib.parse import urlparse
@@ -224,7 +251,7 @@ def adjust_recursive_directory_permissions(pre_existing_dir, new_directory_list,
 
 
 class Artifact(object):
-    def __init__(self, group_id, artifact_id, version, classifier='', extension='jar'):
+    def __init__(self, group_id, artifact_id, version, version_by_spec, classifier='', extension='jar'):
         if not group_id:
             raise ValueError("group_id must be set")
         if not artifact_id:
@@ -233,6 +260,7 @@ class Artifact(object):
         self.group_id = group_id
         self.artifact_id = artifact_id
         self.version = version
+        self.version_by_spec = version_by_spec
         self.classifier = classifier
 
         if not extension:
@@ -290,16 +318,61 @@ class Artifact(object):
 
 
 class MavenDownloader:
-    def __init__(self, module, base="http://repo1.maven.org/maven2", local=False, headers=None):
+    def __init__(self, module, base, local=False, headers=None):
         self.module = module
         if base.endswith("/"):
             base = base.rstrip("/")
         self.base = base
         self.local = local
         self.headers = headers
-        self.user_agent = "Ansible {0} maven_artifact".format(self.module.ansible_version)
+        self.user_agent = "Ansible {0} maven_artifact".format(ansible_version)
         self.latest_version_found = None
         self.metadata_file_name = "maven-metadata-local.xml" if local else "maven-metadata.xml"
+
+    def find_version_by_spec(self, artifact):
+        path = "/%s/%s" % (artifact.path(False), self.metadata_file_name)
+        content = self._getContent(self.base + path, "Failed to retrieve the maven metadata file: " + path)
+        xml = etree.fromstring(content)
+        original_versions = xml.xpath("/metadata/versioning/versions/version/text()")
+        versions = []
+        for version in original_versions:
+            try:
+                versions.append(Version.coerce(version))
+            except ValueError:
+                # This means that version string is not a valid semantic versioning
+                pass
+
+        parse_versions_syntax = {
+            # example -> (,1.0]
+            r"^\(,(?P<upper_bound>[0-9.]*)]$": "<={upper_bound}",
+            # example -> 1.0
+            r"^(?P<version>[0-9.]*)$": "~={version}",
+            # example -> [1.0]
+            r"^\[(?P<version>[0-9.]*)\]$": "=={version}",
+            # example -> [1.2, 1.3]
+            r"^\[(?P<lower_bound>[0-9.]*),\s*(?P<upper_bound>[0-9.]*)\]$": ">={lower_bound},<={upper_bound}",
+            # example -> [1.2, 1.3)
+            r"^\[(?P<lower_bound>[0-9.]*),\s*(?P<upper_bound>[0-9.]+)\)$": ">={lower_bound},<{upper_bound}",
+            # example -> [1.5,)
+            r"^\[(?P<lower_bound>[0-9.]*),\)$": ">={lower_bound}",
+        }
+
+        for regex, spec_format in parse_versions_syntax.items():
+            regex_result = match(regex, artifact.version_by_spec)
+            if regex_result:
+                spec = Spec(spec_format.format(**regex_result.groupdict()))
+                selected_version = spec.select(versions)
+
+                if not selected_version:
+                    raise ValueError("No version found with this spec version: {0}".format(artifact.version_by_spec))
+
+                # To deal when repos on maven don't have patch number on first build (e.g. 3.8 instead of 3.8.0)
+                if str(selected_version) not in original_versions:
+                    selected_version.patch = None
+
+                return str(selected_version)
+
+        raise ValueError("The spec version {0} is not supported! ".format(artifact.version_by_spec))
 
     def find_latest_version_available(self, artifact):
         if self.latest_version_found:
@@ -313,6 +386,9 @@ class MavenDownloader:
             return v[0]
 
     def find_uri_for_artifact(self, artifact):
+        if artifact.version_by_spec:
+            artifact.version = self.find_version_by_spec(artifact)
+
         if artifact.version == "latest":
             artifact.version = self.find_latest_version_available(artifact)
 
@@ -390,8 +466,8 @@ class MavenDownloader:
         return None
 
     def download(self, tmpdir, artifact, verify_download, filename=None):
-        if not artifact.version or artifact.version == "latest":
-            artifact = Artifact(artifact.group_id, artifact.artifact_id, self.find_latest_version_available(artifact),
+        if (not artifact.version and not artifact.version_by_spec) or artifact.version == "latest":
+            artifact = Artifact(artifact.group_id, artifact.artifact_id, self.find_latest_version_available(artifact), None,
                                 artifact.classifier, artifact.extension)
         url = self.find_uri_for_artifact(artifact)
         tempfd, tempname = tempfile.mkstemp(dir=tmpdir)
@@ -464,10 +540,11 @@ def main():
         argument_spec=dict(
             group_id=dict(required=True),
             artifact_id=dict(required=True),
-            version=dict(default="latest"),
+            version=dict(default=None),
+            version_by_spec=dict(default=None),
             classifier=dict(default=''),
             extension=dict(default='jar'),
-            repository_url=dict(default=None),
+            repository_url=dict(default='http://repo1.maven.org/maven2'),
             username=dict(default=None, aliases=['aws_secret_key']),
             password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
             headers=dict(type='dict'),
@@ -478,11 +555,15 @@ def main():
             keep_name=dict(required=False, default=False, type='bool'),
             verify_checksum=dict(required=False, default='download', choices=['never', 'download', 'change', 'always'])
         ),
-        add_file_common_args=True
+        add_file_common_args=True,
+        mutually_exclusive=([('version', 'version_by_spec')])
     )
 
     if not HAS_LXML_ETREE:
         module.fail_json(msg=missing_required_lib('lxml'), exception=LXML_ETREE_IMP_ERR)
+
+    if module.params['version_by_spec'] and not HAS_SEMANTIC_VERSION:
+        module.fail_json(msg=missing_required_lib('semantic_version'), exception=SEMANTIC_VERSION_IMP_ERR)
 
     repository_url = module.params["repository_url"]
     if not repository_url:
@@ -501,6 +582,7 @@ def main():
     group_id = module.params["group_id"]
     artifact_id = module.params["artifact_id"]
     version = module.params["version"]
+    version_by_spec = module.params["version_by_spec"]
     classifier = module.params["classifier"]
     extension = module.params["extension"]
     headers = module.params['headers']
@@ -514,8 +596,11 @@ def main():
 
     downloader = MavenDownloader(module, repository_url, local, headers)
 
+    if not version_by_spec and not version:
+        version = "latest"
+
     try:
-        artifact = Artifact(group_id, artifact_id, version, classifier, extension)
+        artifact = Artifact(group_id, artifact_id, version, version_by_spec, classifier, extension)
     except ValueError as e:
         module.fail_json(msg=e.args[0])
 
@@ -537,13 +622,19 @@ def main():
 
     if os.path.isdir(b_dest):
         version_part = version
-        if keep_name and version == 'latest':
+        if version == 'latest':
             version_part = downloader.find_latest_version_available(artifact)
+        elif version_by_spec:
+            version_part = downloader.find_version_by_spec(artifact)
 
-        if classifier:
-            dest = posixpath.join(dest, "%s-%s-%s.%s" % (artifact_id, version_part, classifier, extension))
-        else:
-            dest = posixpath.join(dest, "%s-%s.%s" % (artifact_id, version_part, extension))
+        filename = "{artifact_id}{version_part}{classifier}.{extension}".format(
+            artifact_id=artifact_id,
+            version_part="-{0}".format(version_part) if keep_name else "",
+            classifier="-{0}".format(classifier) if classifier else "",
+            extension=extension
+        )
+        dest = posixpath.join(dest, filename)
+
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
 
     if os.path.lexists(b_dest) and ((not verify_change) or not downloader.is_invalid_md5(dest, downloader.find_uri_for_artifact(artifact))):

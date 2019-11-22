@@ -20,6 +20,7 @@ import copy
 import datetime
 import hashlib
 import json
+import locale
 import os
 import re
 import shutil
@@ -27,6 +28,7 @@ import sys
 import tempfile
 import traceback
 
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.compat import ipaddress as compat_ipaddress
@@ -426,6 +428,16 @@ def _sign_request_cryptography(module, payload64, protected64, key_data):
     }
 
 
+def _assert_fetch_url_success(response, info, allow_redirect=False, allow_client_error=True, allow_server_error=True):
+    if info['status'] < 0:
+        raise ModuleFailException(msg="Failure downloading %s, %s" % (info['url'], info['msg']))
+
+    if (300 <= info['status'] < 400 and not allow_redirect) or \
+       (400 <= info['status'] < 500 and not allow_client_error) or \
+       (info['status'] >= 500 and not allow_server_error):
+        raise ModuleFailException("ACME request failed: CODE: {0} MGS: {1} RESULT: {2}".format(info['status'], info['msg'], response))
+
+
 class ACMEDirectory(object):
     '''
     The ACME server directory. Gives access to the available resources,
@@ -473,6 +485,9 @@ class ACMEAccount(object):
     '''
 
     def __init__(self, module):
+        # Set to true to enable logging of all signed requests
+        self._debug = False
+
         self.module = module
         self.version = module.params['acme_version']
         # account_key path and content are mutually exclusive
@@ -540,6 +555,16 @@ class ACMEAccount(object):
         else:
             return _sign_request_openssl(self._openssl_bin, self.module, payload64, protected64, key_data)
 
+    def _log(self, msg, data=None):
+        '''
+        Write arguments to acme.log when logging is enabled.
+        '''
+        if self._debug:
+            with open('acme.log', 'ab') as f:
+                f.write('[{0}] {1}\n'.format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%s'), msg).encode('utf-8'))
+                if data is not None:
+                    f.write('{0}\n\n'.format(json.dumps(data, indent=2, sort_keys=True)).encode('utf-8'))
+
     def send_signed_request(self, url, payload, key_data=None, jws_header=None, parse_json_result=True, encode_payload=True):
         '''
         Sends a JWS signed HTTP POST request to the ACME server and returns
@@ -558,15 +583,22 @@ class ACMEAccount(object):
             if self.version != 1:
                 protected["url"] = url
 
+            self._log('URL', url)
+            self._log('protected', protected)
+            self._log('payload', payload)
             data = self.sign_request(protected, payload, key_data, encode_payload=encode_payload)
             if self.version == 1:
-                data["header"] = jws_header
+                data["header"] = jws_header.copy()
+                for k, v in protected.items():
+                    hv = data["header"].pop(k, None)
+            self._log('signed request', data)
             data = self.module.jsonify(data)
 
             headers = {
                 'Content-Type': 'application/jose+json',
             }
             resp, info = fetch_url(self.module, url, data=data, headers=headers, method='POST')
+            _assert_fetch_url_success(resp, info)
             result = {}
             try:
                 content = resp.read()
@@ -577,6 +609,7 @@ class ACMEAccount(object):
                 if (parse_json_result and info['content-type'].startswith('application/json')) or 400 <= info['status'] < 600:
                     try:
                         decoded_result = self.module.from_json(content.decode('utf8'))
+                        self._log('parsed result', decoded_result)
                         # In case of badNonce error, try again (up to 5 times)
                         # (https://tools.ietf.org/html/rfc8555#section-6.7)
                         if (400 <= info['status'] < 600 and
@@ -614,6 +647,8 @@ class ACMEAccount(object):
             # Perform unauthenticated GET
             resp, info = fetch_url(self.module, uri, method='GET', headers=headers)
 
+            _assert_fetch_url_success(resp, info)
+
             try:
                 content = resp.read()
             except AttributeError:
@@ -633,7 +668,7 @@ class ACMEAccount(object):
         else:
             result = content
 
-        if fail_on_error and info['status'] >= 400:
+        if fail_on_error and (info['status'] < 200 or info['status'] >= 400):
             raise ModuleFailException("ACME request failed: CODE: {0} RESULT: {1}".format(info['status'], result))
         return result, info
 
@@ -821,6 +856,8 @@ class ACMEAccount(object):
             account_data = dict(account_data)
             account_data.update(update_request)
         else:
+            if self.version == 1:
+                update_request['resource'] = 'reg'
             account_data, dummy = self.send_signed_request(self.uri, update_request)
         return True, account_data
 
@@ -922,15 +959,17 @@ def set_crypto_backend(module):
         try:
             cryptography.__version__
         except Exception as dummy:
-            module.fail_json(msg='Cannot find cryptography module!')
+            module.fail_json(msg=missing_required_lib('cryptography'))
         HAS_CURRENT_CRYPTOGRAPHY = True
     else:
         module.fail_json(msg='Unknown crypto backend "{0}"!'.format(backend))
     # Inform about choices
     if HAS_CURRENT_CRYPTOGRAPHY:
         module.debug('Using cryptography backend (library version {0})'.format(CRYPTOGRAPHY_VERSION))
+        return 'cryptography'
     else:
         module.debug('Using OpenSSL binary backend')
+        return 'openssl'
 
 
 def process_links(info, callback):
@@ -939,5 +978,51 @@ def process_links(info, callback):
     '''
     if 'link' in info:
         link = info['link']
-        for url, relation in re.findall(r'<([^>]+)>;rel="(\w+)"', link):
+        for url, relation in re.findall(r'<([^>]+)>;\s*rel="(\w+)"', link):
             callback(unquote(url), relation)
+
+
+def get_default_argspec():
+    '''
+    Provides default argument spec for the options documented in the acme doc fragment.
+    '''
+    return dict(
+        account_key_src=dict(type='path', aliases=['account_key']),
+        account_key_content=dict(type='str', no_log=True),
+        account_uri=dict(type='str'),
+        acme_directory=dict(type='str'),
+        acme_version=dict(type='int', choices=[1, 2]),
+        validate_certs=dict(type='bool', default=True),
+        select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
+    )
+
+
+def handle_standard_module_arguments(module, needs_acme_v2=False):
+    '''
+    Do standard module setup, argument handling and warning emitting.
+    '''
+    backend = set_crypto_backend(module)
+
+    if not module.params['validate_certs']:
+        module.warn(
+            'Disabling certificate validation for communications with ACME endpoint. '
+            'This should only be done for testing against a local ACME server for '
+            'development purposes, but *never* for production purposes.'
+        )
+
+    if module.params['acme_version'] is None:
+        module.params['acme_version'] = 1
+        module.deprecate("The option 'acme_version' will be required from Ansible 2.14 on", version='2.14')
+
+    if module.params['acme_directory'] is None:
+        module.params['acme_directory'] = 'https://acme-staging.api.letsencrypt.org/directory'
+        module.deprecate("The option 'acme_directory' will be required from Ansible 2.14 on", version='2.14')
+
+    if needs_acme_v2 and module.params['acme_version'] < 2:
+        module.fail_json(msg='The {0} module requires the ACME v2 protocol!'.format(module._name))
+
+    # AnsibleModule() changes the locale, so change it back to C because we rely on time.strptime() when parsing certificate dates.
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    locale.setlocale(locale.LC_ALL, 'C')
+
+    return backend

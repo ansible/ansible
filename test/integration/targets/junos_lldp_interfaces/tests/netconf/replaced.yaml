@@ -24,23 +24,23 @@
     - set_fact:
         expected_replaced_output:
           - name: ge-0/0/1
-            enable: False
+            enabled: False
           - name: ge-0/0/2
-            enable: False
+            enabled: False
 
     - name: Configure initial state for interface
       junos_lldp_interfaces:
         config:
           - name: ge-0/0/1
           - name: ge-0/0/2
-            enable: False
+            enabled: False
       register: result
 
     - name: Replace the provided configuration with the exisiting running configuration
       junos_lldp_interfaces: &replaced
         config:
           - name: ge-0/0/1
-            enable: False
+            enabled: False
         state: replaced
       register: result
 

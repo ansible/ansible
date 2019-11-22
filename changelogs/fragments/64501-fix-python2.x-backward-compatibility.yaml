@@ -1,0 +1,2 @@
+bugfixes:
+- "acme_certificate - fix crash when module is used with Python 2.x."

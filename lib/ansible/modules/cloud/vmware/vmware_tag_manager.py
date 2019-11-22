@@ -195,12 +195,6 @@ class VmwareTagManager(VmwareRestClient):
 
         self.tag_names = self.params.get('tag_names')
 
-    def is_tag_category(self, cat_obj, tag_obj):
-        for tag in self.tag_service.list_tags_for_category(cat_obj.id):
-            if tag_obj.name == self.tag_service.get(tag).name:
-                return True
-        return False
-
     def ensure_state(self):
         """
         Manage the internal state of tags
@@ -215,9 +209,9 @@ class VmwareTagManager(VmwareRestClient):
         available_tag_obj = self.get_tags_for_object(tag_service=self.tag_service,
                                                      tag_assoc_svc=self.tag_association_svc,
                                                      dobj=self.dynamic_managed_object)
-        # Already existing tags from the given object
-        avail_tag_obj_name_list = [tag.name for tag in available_tag_obj]
-        results['tag_status']['previous_tags'] = avail_tag_obj_name_list
+
+        _temp_prev_tags = ["%s:%s" % (tag['category_name'], tag['name']) for tag in self.get_tags_for_dynamic_obj(mid=self.dynamic_managed_object)]
+        results['tag_status']['previous_tags'] = _temp_prev_tags
         results['tag_status']['desired_tags'] = self.tag_names
 
         # Check if category and tag combination exists as per user request
@@ -234,12 +228,13 @@ class VmwareTagManager(VmwareRestClient):
                 # User specified only tag
                 tag_name = tag
 
-            tag_obj = self.search_svc_object_by_name(self.tag_service, tag_name)
+            if category_name:
+                tag_obj = self.get_tag_by_category(tag_name=tag_name, category_name=category_name)
+            else:
+                tag_obj = self.get_tag_by_name(tag_name=tag_name)
+
             if not tag_obj:
                 self.module.fail_json(msg="Unable to find the tag %s" % tag_name)
-
-            if category_name and category_obj and not self.is_tag_category(category_obj, tag_obj):
-                self.module.fail_json(msg="Category %s does not contain tag %s" % (category_name, tag_name))
 
             if action in ('add', 'present'):
                 if tag_obj not in available_tag_obj:
@@ -270,9 +265,8 @@ class VmwareTagManager(VmwareRestClient):
                     except Error as error:
                         self.module.fail_json(msg="%s" % self.get_error_message(error))
 
-        results['tag_status']['current_tags'] = [tag.name for tag in self.get_tags_for_object(self.tag_service,
-                                                                                              self.tag_association_svc,
-                                                                                              self.dynamic_managed_object)]
+        _temp_curr_tags = ["%s:%s" % (tag['category_name'], tag['name']) for tag in self.get_tags_for_dynamic_obj(mid=self.dynamic_managed_object)]
+        results['tag_status']['current_tags'] = _temp_curr_tags
         results['changed'] = changed
         self.module.exit_json(**results)
 

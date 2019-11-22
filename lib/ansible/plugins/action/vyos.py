@@ -22,10 +22,7 @@ __metaclass__ = type
 import sys
 import copy
 
-from ansible import constants as C
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.vyos.vyos import vyos_provider_spec
 from ansible.utils.display import Display
@@ -40,7 +37,6 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'vyos_config' else False
-        socket_path = None
 
         if self._play_context.connection == 'network_cli':
             provider = self._task.args.get('provider', {})
@@ -74,17 +70,6 @@ class ActionModule(ActionNetworkModule):
             task_vars['ansible_socket'] = socket_path
         else:
             return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
-
-        # make sure we are in the right cli context which should be
-        # enable mode and not config module
-        if socket_path is None:
-            socket_path = self._connection.socket_path
-
-        conn = Connection(socket_path)
-        out = conn.get_prompt()
-        if to_text(out, errors='surrogate_then_replace').strip().endswith('#'):
-            display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            conn.send_command('exit discard')
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result

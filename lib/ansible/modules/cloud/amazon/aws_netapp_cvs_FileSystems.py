@@ -177,7 +177,7 @@ class AwsCvsNetappFileSystem(object):
     def __init__(self):
         """
         Parse arguments, setup state variables,
-        check paramenters and ensure request module is installed
+        check parameters and ensure request module is installed
         """
         self.argument_spec = netapp_utils.aws_cvs_host_argument_spec()
         self.argument_spec.update(dict(

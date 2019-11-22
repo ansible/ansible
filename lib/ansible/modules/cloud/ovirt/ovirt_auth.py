@@ -144,7 +144,7 @@ EXAMPLES = '''
 # User can login the oVirt using environment variable instead of variables
 # in yaml file.
 # This is mainly useful when using Ansible Tower or AWX, as it will work
-# for Red Hat Virtualization creadentials type.
+# for Red Hat Virtualization credentials type.
   - name: Obtain SSO token
     ovirt_auth:
       state: present
@@ -169,7 +169,7 @@ ovirt_auth:
         ca_file:
             description: CA file, which is used to verify SSL/TLS connection.
             returned: success
-            type: path
+            type: str
             sample: "ca.pem"
         insecure:
             description: Flag indicating if insecure connection is used.

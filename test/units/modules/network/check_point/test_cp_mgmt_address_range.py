@@ -1,6 +1,4 @@
-# Copyright (c) 2019 Red Hat
-#
-# This file is part of Ansible
+# Ansible module to manage CheckPoint Firewall (c) 2019
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,14 +18,10 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import pytest
-from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
+from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleExitJson
 
 from ansible.module_utils import basic
-from ansible.module_utils.network.checkpoint.checkpoint import api_call
 from ansible.modules.network.check_point import cp_mgmt_address_range
-
-function_path = 'ansible.modules.network.check_point.cp_mgmt_address_range.api_call'
-api_call_object = 'address_range'
 
 OBJECT = {
     "name": "New Address Range 1",
@@ -43,19 +37,23 @@ CREATE_PAYLOAD = {
 
 UPDATE_PAYLOAD = {
     "name": "New Address Range 1",
-    "color": "orange",
+    "color": "blue",
     "ip_address_first": "192.0.2.1",
-    "ip_address_last": "192.0.2.1",
-    "groups": "New Group 1"
+    "ip_address_last": "192.0.2.1"
 }
+
+OBJECT_AFTER_UPDATE = UPDATE_PAYLOAD
 
 DELETE_PAYLOAD = {
     "name": "New Address Range 1",
-    'state': 'absent'
+    "state": "absent"
 }
 
+function_path = 'ansible.modules.network.check_point.cp_mgmt_address_range.api_call'
+api_call_object = 'address-range'
 
-class TestCheckpointNetwork(object):
+
+class TestCheckpointAddressRange(object):
     module = cp_mgmt_address_range
 
     @pytest.fixture(autouse=True)
@@ -70,32 +68,36 @@ class TestCheckpointNetwork(object):
     def test_create(self, mocker, connection_mock):
         mock_function = mocker.patch(function_path)
         mock_function.return_value = {'changed': True, api_call_object: OBJECT}
-        connection_mock.api_call.return_value = {'changed': True, api_call_object: OBJECT}
         result = self._run_module(CREATE_PAYLOAD)
 
         assert result['changed']
-        assert api_call_object in result
+        assert OBJECT.items() == result[api_call_object].items()
 
     def test_create_idempotent(self, mocker, connection_mock):
         mock_function = mocker.patch(function_path)
         mock_function.return_value = {'changed': False, api_call_object: OBJECT}
-        connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(CREATE_PAYLOAD)
 
         assert not result['changed']
 
     def test_update(self, mocker, connection_mock):
         mock_function = mocker.patch(function_path)
-        mock_function.return_value = {'changed': True, api_call_object: OBJECT}
-        connection_mock.send_request.return_value = (200, OBJECT)
+        mock_function.return_value = {'changed': True, api_call_object: OBJECT_AFTER_UPDATE}
         result = self._run_module(UPDATE_PAYLOAD)
 
         assert result['changed']
+        assert OBJECT_AFTER_UPDATE.items() == result[api_call_object].items()
+
+    def test_update_idempotent(self, mocker, connection_mock):
+        mock_function = mocker.patch(function_path)
+        mock_function.return_value = {'changed': False, api_call_object: OBJECT_AFTER_UPDATE}
+        result = self._run_module(UPDATE_PAYLOAD)
+
+        assert not result['changed']
 
     def test_delete(self, mocker, connection_mock):
         mock_function = mocker.patch(function_path)
         mock_function.return_value = {'changed': True}
-        connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(DELETE_PAYLOAD)
 
         assert result['changed']
@@ -103,7 +105,6 @@ class TestCheckpointNetwork(object):
     def test_delete_idempotent(self, mocker, connection_mock):
         mock_function = mocker.patch(function_path)
         mock_function.return_value = {'changed': False}
-        connection_mock.send_request.return_value = (200, OBJECT)
         result = self._run_module(DELETE_PAYLOAD)
 
         assert not result['changed']

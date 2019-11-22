@@ -49,6 +49,7 @@ options:
                certificates in PEM format."
             - "Symbolic links will be followed."
         type: list
+        elements: path
         required: yes
     intermediate_certificates:
         description:
@@ -61,6 +62,7 @@ options:
                certificates in PEM format."
             - "Symbolic links will be followed."
         type: list
+        elements: path
         default: []
 '''
 
@@ -112,12 +114,14 @@ chain:
         - "Returned as a list of PEM certificates."
     returned: success
     type: list
+    elements: str
 complete_chain:
     description:
         - "The completed chain, including leaf, all intermediates, and root."
         - "Returned as a list of PEM certificates."
     returned: success
     type: list
+    elements: str
 '''
 
 import os

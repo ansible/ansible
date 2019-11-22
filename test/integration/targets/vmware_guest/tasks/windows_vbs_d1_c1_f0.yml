@@ -20,7 +20,7 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: '{{ ds2 }}'
+      datastore: '{{ rw_datastore }}'
     cdrom:
       type: client
   register: vbs_vm
@@ -54,7 +54,7 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: '{{ ds2 }}'
+      datastore: '{{ rw_datastore }}'
     cdrom:
       type: client
   register: vbs_vm
@@ -79,7 +79,7 @@
     disk:
     - size_mb: 256
       type: thin
-      datastore: '{{ ds2 }}'
+      datastore: '{{ rw_datastore }}'
     hardware:
       virt_based_security: True
     state: present

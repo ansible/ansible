@@ -286,7 +286,7 @@ To always exhaust all list use ``zip_longest``::
         msg: "{{ [1,2,3] | zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X') | list }}"
 
 
-Similarly to the output of the ``items2dict`` filter mentioned above, these filters can be used to contruct a ``dict``::
+Similarly to the output of the ``items2dict`` filter mentioned above, these filters can be used to construct a ``dict``::
 
     {{ dict(keys_list | zip(values_list)) }}
 
@@ -565,7 +565,7 @@ Or, alternatively print out the ports in a comma separated string::
 
 .. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
 
-Or, using YAML `single quote escaping <http://yaml.org/spec/current.html#id2534365>`_::
+Or, using YAML `single quote escaping <https://yaml.org/spec/current.html#id2534365>`_::
 
     - name: "Display all ports from cluster1"
       debug:
@@ -824,7 +824,7 @@ To sort a VLAN list::
 
     {{ [3003, 3004, 3005, 100, 1688, 3002, 3999] | vlan_parser }}
 
-This example renders the folllowing sorted list::
+This example renders the following sorted list::
 
     ['100,1688,3002-3005,3999']
 
@@ -1195,24 +1195,8 @@ This can then be used to reference hashes in Pod specifications::
 
 .. versionadded:: 2.8
 
-Other Useful Filters
-````````````````````
-
-To add quotes for shell usage::
-
-    - shell: echo {{ string_value | quote }}
-
-To use one value on true and another on false (new in version 1.9)::
-
-    {{ (name == "John") | ternary('Mr','Ms') }}
-
-To use one value on true, one value on false and a third value on null (new in version 2.8)::
-
-   {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
-
-To concatenate a list into a string::
-
-    {{ list | join(" ") }}
+File and Path manipulations
+```````````````````````````
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
@@ -1267,6 +1251,25 @@ To get the root and extension of a path or filename (new in version 2.0)::
     # with path == 'nginx.conf' the return would be ('nginx', '.conf')
     {{ path | splitext }}
 
+Other Useful Filters
+````````````````````
+
+To add quotes for shell usage::
+
+    - shell: echo {{ string_value | quote }}
+
+To use one value on true and another on false (new in version 1.9)::
+
+    {{ (name == "John") | ternary('Mr','Ms') }}
+
+To use one value on true, one value on false and a third value on null (new in version 2.8)::
+
+   {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
+
+To concatenate a list into a string::
+
+    {{ list | join(" ") }}
+
 To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
@@ -1279,9 +1282,17 @@ As of version 2.6, you can define the type of encoding to use, the default is ``
 
 .. versionadded:: 2.6
 
-To create a UUID from a string (new in version 1.9)::
+To create a namespaced UUIDv5::
 
-    {{ hostname | to_uuid }}
+    {{ string | to_uuid(namespace='11111111-2222-3333-4444-555555555555') }}
+
+.. versionadded:: 2.10
+
+To create a namespaced UUIDv5 using the default Ansible namespace '361E6D51-FAEC-444A-9079-341386DA8E2E'::
+
+    {{ string | to_uuid }}
+
+.. versionadded:: 1.9
 
 To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
 doesn't know it is a boolean value::

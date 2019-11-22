@@ -6,7 +6,7 @@ Ansible 2.5 and above work with Python 3. Previous to 2.5, using Python 3 was
 considered a tech preview.  This topic discusses how to set up your controller and managed machines
 to use Python 3.
 
-.. note:: Ansible works with Python version 3.5 and above only.
+.. note:: On the controller we support Python 3.5 or greater and Python 2.7 or greater. Module-side, we support Python 3.5 or greater and Python 2.6 or greater.
 
 On the controller side
 ----------------------

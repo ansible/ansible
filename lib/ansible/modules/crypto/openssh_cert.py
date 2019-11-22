@@ -84,6 +84,7 @@ options:
             - "Certificates may be limited to be valid for a set of principal (user/host) names.
               By default, generated certificates are valid for all users or hosts."
         type: list
+        elements: str
     options:
         description:
             - "Specify certificate options when signing a key. The option that are valid for user certificates are:"
@@ -104,6 +105,7 @@ options:
                The C(address_list) is a comma-separated list of one or more address/netmask pairs in CIDR format."
             - "At present, no options are valid for host keys."
         type: list
+        elements: str
     identifier:
         description:
             - Specify the key identity when signing a public key. The identifier that is logged by the server when the certificate is used for authentication.
@@ -191,6 +193,7 @@ info:
     description: Information about the certificate. Output of C(ssh-keygen -L -f).
     returned: change or success
     type: list
+    elements: str
 
 '''
 
@@ -363,7 +366,7 @@ class Certificate(object):
 
     def is_same_datetime(self, datetime_one, datetime_two):
 
-        # This function is for backwards compatability only because .total_seconds() is new in python2.7
+        # This function is for backwards compatibility only because .total_seconds() is new in python2.7
         def timedelta_total_seconds(time_delta):
             return (time_delta.microseconds + 0.0 + (time_delta.seconds + time_delta.days * 24 * 3600) * 10 ** 6) / 10 ** 6
         # try to use .total_ seconds() from python2.7
@@ -534,8 +537,8 @@ def main():
             valid_from=dict(type='str'),
             valid_to=dict(type='str'),
             valid_at=dict(type='str'),
-            principals=dict(type='list'),
-            options=dict(type='list'),
+            principals=dict(type='list', elements='str'),
+            options=dict(type='list', elements='str'),
         ),
         supports_check_mode=True,
         add_file_common_args=True,

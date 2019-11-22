@@ -175,7 +175,7 @@ def _command_coverage_combine_python(args):
             updated.add_arcs({filename: list(arc_data[filename])})
 
         if args.all:
-            updated.add_arcs(dict((source, []) for source in sources))
+            updated.add_arcs(dict((source[0], []) for source in sources))
 
         if not args.explain:
             output_file = coverage_file + group
@@ -256,6 +256,7 @@ def _sanitise_filename(filename, modules=None, collection_search_re=None, collec
     """
     ansible_path = os.path.abspath('lib/ansible/') + '/'
     root_path = data_context().content.root + '/'
+    integration_temp_path = os.path.sep + os.path.join(ResultType.TMP.relative_path, 'integration') + os.path.sep
 
     if modules is None:
         modules = {}
@@ -300,9 +301,9 @@ def _sanitise_filename(filename, modules=None, collection_search_re=None, collec
         new_name = re.sub('^(/.*?)?/root/ansible/', root_path, filename)
         display.info('%s -> %s' % (filename, new_name), verbosity=3)
         filename = new_name
-    elif '/.ansible/test/tmp/' in filename:
+    elif integration_temp_path in filename:
         # Rewrite the path of code running from an integration test temporary directory.
-        new_name = re.sub(r'^.*/\.ansible/test/tmp/[^/]+/', root_path, filename)
+        new_name = re.sub(r'^.*' + re.escape(integration_temp_path) + '[^/]+/', root_path, filename)
         display.info('%s -> %s' % (filename, new_name), verbosity=3)
         filename = new_name
 

@@ -28,10 +28,12 @@ options:
         description:
             - Name of the CodeBuild project
         required: true
+        type: str
     description:
         description:
             - Descriptive text of the CodeBuild project
         required: false
+        type: str
     source:
         description:
             - Configure service and location for the build input source.
@@ -41,22 +43,28 @@ options:
                 description:
                     - "The type of the source. Allows one of these: CODECOMMIT, CODEPIPELINE, GITHUB, S3, BITBUCKET, GITHUB_ENTERPRISE"
                 required: true
+                type: str
             location:
                 description:
                     - Information about the location of the source code to be built. For type CODEPIPELINE location should not be specified.
                 required: false
+                type: str
             git_clone_depth:
                 description:
                     - When using git you can specify the clone depth as an integer here.
                 required: false
+                type: int
             buildspec:
                 description:
                     - The build spec declaration to use for the builds in this build project. Leave empty if part of the code project.
                 required: false
+                type: str
             insecure_ssl:
                 description:
                     - Enable this flag to ignore SSL warnings while connecting to the project source code.
                 required: false
+                type: bool
+        type: dict
     artifacts:
         description:
             - Information about the build output artifacts for the build project.
@@ -79,7 +87,7 @@ options:
                 description:
                     - Along with path and name, the pattern that AWS CodeBuild will use to determine the name and location to store the output artifacts
                     - Accepts BUILD_ID and NONE
-                    - "See docs here: http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project"
+                    - "See docs here: U(http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project)"
                 required: false
             name:
                 description:
@@ -89,6 +97,7 @@ options:
                 description:
                     - The type of build output artifact to create on S3, can be NONE for creating a folder or ZIP for a ZIP file
                 required: false
+        type: dict
     cache:
         description:
             - Caching params to speed up following builds.
@@ -102,6 +111,7 @@ options:
                 description:
                     - Caching location on S3.
                 required: true
+        type: dict
     environment:
         description:
             - Information about the build environment for the build project.
@@ -129,32 +139,47 @@ options:
                 description:
                     - Enables running the Docker daemon inside a Docker container. Set to true only if the build project is be used to build Docker images.
                 required: false
+        type: dict
     service_role:
         description:
             - The ARN of the AWS IAM role that enables AWS CodeBuild to interact with dependent AWS services on behalf of the AWS account.
         required: false
+        type: str
     timeout_in_minutes:
         description:
             - How long CodeBuild should wait until timing out any build that has not been marked as completed.
         default: 60
         required: false
+        type: int
     encryption_key:
         description:
             - The AWS Key Management Service (AWS KMS) customer master key (CMK) to be used for encrypting the build output artifacts.
         required: false
+        type: str
     tags:
         description:
             - A set of tags for the build project.
         required: false
+        type: list
+        elements: dict
+        suboptions:
+            key:
+                description: The name of the Tag.
+                type: str
+            value:
+                description: The value of the Tag.
+                type: str
     vpc_config:
         description:
             - The VPC config enables AWS CodeBuild to access resources in an Amazon VPC.
         required: false
+        type: dict
     state:
         description:
             - Create or remove code build project.
         default: 'present'
         choices: ['present', 'absent']
+        type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -190,25 +215,25 @@ EXAMPLES = '''
 
 RETURN = '''
 project:
-  description: Returns the dictionary desribing the code project configuration.
+  description: Returns the dictionary describing the code project configuration.
   returned: success
   type: complex
   contains:
     name:
-      descriptoin: Name of the CodeBuild project
+      description: Name of the CodeBuild project
       returned: always
-      type: string
+      type: str
       sample: my_project
     arn:
       description: ARN of the CodeBuild project
       returned: always
-      type: string
+      type: str
       sample: arn:aws:codebuild:us-east-1:123123123:project/vod-api-app-builder
     description:
       description: A description of the build project
       returned: always
-      type: string
-      sample: My nice little proejct
+      type: str
+      sample: My nice little project
     source:
       description: Information about the build input source code.
       returned: always
@@ -217,12 +242,12 @@ project:
         type:
           description: The type of the repository
           returned: always
-          type: string
+          type: str
           sample: CODEPIPELINE
         location:
           description: Location identifier, depending on the source type.
           returned: when configured
-          type: string
+          type: str
         git_clone_depth:
           description: The git clone depth
           returned: when configured
@@ -230,9 +255,9 @@ project:
         build_spec:
           description: The build spec declaration to use for the builds in this build project.
           returned: always
-          type: string
+          type: str
         auth:
-          desription: Information about the authorization settings for AWS CodeBuild to access the source code to be built.
+          description: Information about the authorization settings for AWS CodeBuild to access the source code to be built.
           returned: when configured
           type: complex
         insecure_ssl:
@@ -247,25 +272,25 @@ project:
         type:
           description: The type of build artifact.
           returned: always
-          type: string
+          type: str
           sample: CODEPIPELINE
         location:
           description: Output location for build artifacts
           returned: when configured
-          type: string
+          type: str
         # and more... see http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project
     cache:
       description: Cache settings for the build project.
       returned: when configured
-      type: complex
+      type: dict
     environment:
       description: Environment settings for the build
       returned: always
-      type: complex
+      type: dict
     service_role:
       description: IAM role to be used during build to access other AWS services.
       returned: always
-      type: string
+      type: str
       sample: arn:aws:iam::123123123:role/codebuild-service-role
     timeout_in_minutes:
       description: The timeout of a build in minutes
@@ -279,8 +304,8 @@ project:
     created:
       description: Timestamp of the create time of the project
       returned: always
-      type: string
-      sample: 2018-04-17T16:56:03.245000+02:00
+      type: str
+      sample: "2018-04-17T16:56:03.245000+02:00"
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule, get_boto3_client_method_parameters
@@ -304,7 +329,7 @@ def create_or_update_project(client, params, module):
     formatted_create_params = dict((k, v) for k, v in formatted_params.items() if k in permitted_create_params)
     formatted_update_params = dict((k, v) for k, v in formatted_params.items() if k in permitted_update_params)
 
-    # Check if project with that name aleady exists and if so update existing:
+    # Check if project with that name already exists and if so update existing:
     found = describe_project(client=client, name=name, module=module)
     changed = False
 

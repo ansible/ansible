@@ -28,6 +28,7 @@ options:
       - if name=all Works like --all-databases option for mysqldump (Added in 2.0).
     required: true
     type: list
+    elements: str
     aliases: [ db ]
   state:
     description:
@@ -62,6 +63,13 @@ options:
     required: false
     default: []
     version_added: "2.7"
+  hex_blob:
+    description:
+      - Dump binary columns using hexadecimal notation
+    required: false
+    default: false
+    type: bool
+    version_added: "2.10"
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
@@ -183,7 +191,7 @@ def db_delete(cursor, db):
 
 
 def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
-            single_transaction=None, quick=None, ignore_tables=None):
+            single_transaction=None, quick=None, ignore_tables=None, hex_blob=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -213,6 +221,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
     if ignore_tables:
         for an_ignored_table in ignore_tables:
             cmd += " --ignore-table={0}".format(an_ignored_table)
+    if hex_blob:
+        cmd += " --hex-blob"
 
     path = None
     if os.path.splitext(target)[-1] == '.gz':
@@ -255,7 +265,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         cmd.append("--host=%s" % shlex_quote(host))
         cmd.append("--port=%i" % port)
     if not all_databases:
-        cmd.append("-D")
+        cmd.append("--one-database")
         cmd.append(shlex_quote(''.join(db_name)))
 
     comp_prog_path = None
@@ -325,6 +335,7 @@ def main():
             single_transaction=dict(type='bool', default=False),
             quick=dict(type='bool', default=True),
             ignore_tables=dict(type='list', default=[]),
+            hex_blob=dict(default=False, type='bool'),
         ),
         supports_check_mode=True,
     )
@@ -359,6 +370,7 @@ def main():
             module.fail_json(msg="Name of ignored table cannot be empty")
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
+    hex_blob = module.params["hex_blob"]
 
     if len(db) > 1 and state == 'import':
         module.fail_json(msg="Multiple databases are not supported with state=import")
@@ -424,7 +436,7 @@ def main():
         rc, stdout, stderr = db_dump(module, login_host, login_user,
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
-                                     ssl_ca, single_transaction, quick, ignore_tables)
+                                     ssl_ca, single_transaction, quick, ignore_tables, hex_blob)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)

@@ -31,7 +31,7 @@ requirements:
 options:
     backup:
         description:
-            - Path to store a backup of the initial certificate, if I(path) pointed to an existing file certificate.
+            - Whether a backup should be made for the certificate in I(path).
         type: bool
         default: false
     force:
@@ -44,16 +44,17 @@ options:
         default: false
     path:
         description:
-            - Path to put the certificate file as a PEM encoded cert.
-            - If the certificate at this location is not an Entrust issued certificate, a new certificate will always be requested regardless of validity.
-            - If there is already an Entrust certificate at this location, whether it is replaced is dependent upon the I(remaining_days) calculation.
-            - If an existing certificate is being replaced (see I(remaining_days), I(force), I(tracking_id)), the operation taken to replace it is dependent
-              on I(request_type)
+            - The destination path for the generated certificate as a PEM encoded cert.
+            - If the certificate at this location is not an Entrust issued certificate, a new certificate will always be requested even if the current
+              certificate is technically valid.
+            - If there is already an Entrust certificate at this location, whether it is replaced is depends on the I(remaining_days) calculation.
+            - If an existing certificate is being replaced (see I(remaining_days), I(force), and I(tracking_id)), whether a new certificate is requested
+              or the existing certificate is renewed or reissued is based on I(request_type).
         type: path
         required: true
     full_chain_path:
         description:
-            - Path to put the full certificate chain of the certificate, intermediates, and roots.
+            - The destination path for the full certificate chain of the certificate, intermediates, and roots.
         type: path
     csr:
         description:
@@ -68,23 +69,23 @@ options:
         type: str
     tracking_id:
         description:
-            - Tracking ID of certificate to reissue or renew.
+            - The tracking ID of the certificate to reissue or renew.
             - I(tracking_id) is invalid if C(request_type=new) or C(request_type=validate_only).
             - If there is a certificate present in I(path) and it is an ECS certificate, I(tracking_id) will be ignored.
-            - If there is not a certificate present in I(path) or there is but it is from another provider, the certificate represented by I(tracking_id) will
+            - If there is no certificate present in I(path) or there is but it is from another provider, the certificate represented by I(tracking_id) will
               be renewed or reissued and saved to I(path).
-            - If there is not a certificate present in I(path) and the I(force) and I(remaining_days) parameters do not indicate a new certificate is needed,
+            - If there is no certificate present in I(path) and the I(force) and I(remaining_days) parameters do not indicate a new certificate is needed,
               the certificate referenced by I(tracking_id) certificate will be saved to I(path).
             - This can be used when a known certificate is not currently present on a server, but you want to renew or reissue it to be managed by an ansible
               playbook. For example, if you specify C(request_type=renew), I(tracking_id) of an issued certificate, and I(path) to a file that does not exist,
-              the first run of a task will download the certificate specified by I(tracking_id) (assuming it is still valid), and future runs of the task will
+              the first run of a task will download the certificate specified by I(tracking_id) (assuming it is still valid). Future runs of the task will
               (if applicable - see I(force) and I(remaining_days)) renew the certificate now present in I(path).
         type: int
     remaining_days:
         description:
             - The number of days the certificate must have left being valid. If C(cert_days < remaining_days) then a new certificate will be
               obtained using I(request_type).
-            - If C(request_type=renew), a renew will fail if the certificate being renewed has been issued within the past 30 days, so do not set a
+            - If C(request_type=renew), a renewal will fail if the certificate being renewed has been issued within the past 30 days, so do not set a
               I(remaining_days) value that is within 30 days of the full lifetime of the certificate being acted upon. (e.g. if you are requesting Certificates
               with a 90 day lifetime, do not set remaining_days to a value C(60) or higher).
             - The I(force) option may be used to ensure that a new certificate is always obtained.
@@ -92,8 +93,8 @@ options:
         default: 30
     request_type:
         description:
-            - Operation performed if I(tracking_id) references a valid certificate to reissue, or there is already a certificate present in I(path) but either
-              I(force) is specified or C(cert_days < remaining_days).
+            - The operation performed if I(tracking_id) references a valid certificate to reissue, or there is already a certificate present in I(path) but
+              either I(force) is specified or C(cert_days < remaining_days).
             - Specifying C(request_type=validate_only) means the request will be validated against the ECS API, but no certificate will be issued.
             - Specifying C(request_type=new) means a certificate request will always be submitted and a new certificate issued.
             - Specifying C(request_type=renew) means that an existing certificate (specified by I(tracking_id) if present, otherwise I(path)) will be renewed.
@@ -112,7 +113,7 @@ options:
         default: new
     cert_type:
         description:
-            - The type of certificate product to request.
+            - Specify the type of certificate requested.
             - If a certificate is being reissued or renewed, this parameter is ignored, and the C(cert_type) of the initial certificate is used.
         type: str
         choices: [ 'STANDARD_SSL', 'ADVANTAGE_SSL', 'UC_SSL', 'EV_SSL', 'WILDCARD_SSL', 'PRIVATE_SSL', 'PD_SSL', 'CODE_SIGNING', 'EV_CODE_SIGNING',
@@ -127,6 +128,7 @@ options:
             - In the case of certificates of type C(STANDARD_SSL) certificates, if the CN of the certificate is <domain>.<tld> only the www.<domain>.<tld> value
               is accepted. If the CN of the certificate is www.<domain>.<tld> only the <domain>.<tld> value is accepted.
         type: list
+        elements: str
     eku:
         description:
             - If specified, overrides the key usage in the I(csr).
@@ -152,7 +154,7 @@ options:
         description:
             - Organization "O=" to include in the certificate.
             - If I(org) is not specified, the organization from the client represented by I(client_id) is used.
-            - Unless the I(cert_type) is C(PD_SSL), this field may not be specified if the value of I(client_id) is not the primary client of "1". For all
+            - Unless the I(cert_type) is C(PD_SSL), this field may not be specified if the value of I(client_id) is not "1" (the primary client).
               non-primary clients, certificates may only be issued with the organization of that client.
         type: str
     ou:
@@ -166,6 +168,7 @@ options:
               parameter can be used to force failure if an unapproved organizational unit is provided.
             - A maximum of one OU may be specified for current products. Multiple OUs are reserved for future products.
         type: list
+        elements: str
     end_user_key_storage_agreement:
         description:
             - The end user of the Code Signing certificate must generate and store the private key for this request on cryptographically secure
@@ -178,20 +181,21 @@ options:
         description: Free form tracking information to attach to the record for the certificate.
         type: str
     requester_name:
-        description: Requester name to associate with certificate tracking information.
+        description: The requester name to associate with certificate tracking information.
         type: str
         required: true
     requester_email:
-        description: Requester email to associate with certificate tracking information and receive delivery and expiry notices for the certificate.
+        description: The requester email to associate with certificate tracking information and receive delivery and expiry notices for the certificate.
         type: str
         required: true
     requester_phone:
-        description: Requester phone number to associate with certificate tracking information.
+        description: The requester phone number to associate with certificate tracking information.
         type: str
         required: true
     additional_emails:
         description: A list of additional email addresses to receive the delivery notice and expiry notification for the certificate.
         type: list
+        elements: str
     custom_fields:
         description:
             - Mapping of custom fields to associate with the certificate request and certificate.
@@ -200,49 +204,49 @@ options:
         type: dict
         suboptions:
             text1:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text2:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text3:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text4:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text5:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text6:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text7:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text8:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text9:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text10:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text11:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text12:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text13:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text14:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             text15:
-                description: Custom text field of maximum size 500.
+                description: Custom text field (maximum 500 characters)
                 type: str
             number1:
                 description: Custom number field.
@@ -306,14 +310,15 @@ options:
                 type: str
     cert_expiry:
         description:
-            - The date the certificate should be set to expire, as an RFC3339 compliant date or date-time. For example,
+            - The date the certificate should be set to expire, in RFC3339 compliant date or date-time format. For example,
               C(2020-02-23), C(2020-02-23T15:00:00.05Z).
             - I(cert_expiry) is only supported for requests of C(request_type=new) or C(request_type=renew). If C(request_type=reissue),
               I(cert_expiry) will be used for the first certificate issuance, but subsequent issuances will have the same expiry as the initial
               certificate.
             - A reissued certificate will always have the same expiry as the original certificate.
-            - Note that only the date (day, month, year) is supported for specifying expiry date. If you choose to specify an expiry time with the expiry date,
-              the time will be adjusted to Eastern Standard Time (EST). This could have the unintended effect of moving your expiry date to the previous day.
+            - Note that only the date (day, month, year) is supported for specifying the expiry date. If you choose to specify an expiry time with the expiry
+              date, the time will be adjusted to Eastern Standard Time (EST). This could have the unintended effect of moving your expiry date to the previous
+              day.
             - Applies only to accounts with a pooling inventory model.
             - Only one of I(cert_expiry) or I(cert_lifetime) may be specified.
         type: str
@@ -458,7 +463,7 @@ EXAMPLES = r'''
 
 RETURN = '''
 filename:
-    description: Path to the generated Certificate.
+    description: The destination path for the generated certificate.
     returned: changed or success
     type: str
     sample: /etc/ssl/crt/www.ansible.com.crt

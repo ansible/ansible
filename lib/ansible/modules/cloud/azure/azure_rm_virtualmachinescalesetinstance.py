@@ -64,7 +64,7 @@ author:
 
 EXAMPLES = '''
   - name: Upgrade instance to the latest image
-    azure_rm_computevirtualmachinescalesetinstance:
+    azure_rm_virtualmachinescalesetinstance:
       resource_group: myResourceGroup
       vmss_name: myVMSS
       instance_id: "2"

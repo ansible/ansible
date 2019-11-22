@@ -40,9 +40,7 @@ except ImportError:
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
-from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import env_fallback, missing_required_lib
-from ansible.module_utils.urls import generic_urlparse
 
 
 class TaskError(Exception):
@@ -117,7 +115,7 @@ def find_obj(content, vimtype, name, first=True, folder=None):
 
 
 def find_dvspg_by_name(dv_switch, portgroup_name):
-
+    portgroup_name = quote_obj_name(portgroup_name)
     portgroups = dv_switch.portgroup
 
     for pg in portgroups:
@@ -168,8 +166,8 @@ def get_parent_datacenter(obj):
     return datacenter
 
 
-def find_datastore_by_name(content, datastore_name):
-    return find_object_by_name(content, datastore_name, [vim.Datastore])
+def find_datastore_by_name(content, datastore_name, datacenter_name=None):
+    return find_object_by_name(content, datastore_name, [vim.Datastore], datacenter_name)
 
 
 def find_dvs_by_name(content, switch_name, folder=None):
@@ -185,7 +183,7 @@ def find_resource_pool_by_name(content, resource_pool_name):
 
 
 def find_network_by_name(content, network_name):
-    return find_object_by_name(content, network_name, [vim.Network])
+    return find_object_by_name(content, quote_obj_name(network_name), [vim.Network])
 
 
 def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None,
@@ -365,7 +363,8 @@ def gather_vm_facts(content, vm):
     vmnet = _get_vm_prop(vm, ('guest', 'net'))
     if vmnet:
         for device in vmnet:
-            net_dict[device.macAddress] = list(device.ipAddress)
+            if device.deviceConfigId > 0:
+                net_dict[device.macAddress] = list(device.ipAddress)
 
     if vm.guest.ipAddress:
         if ':' in vm.guest.ipAddress:
@@ -821,6 +820,48 @@ def wait_for_poweroff(vm, timeout=300):
     return result
 
 
+def is_integer(value, type_of='int'):
+    try:
+        VmomiSupport.vmodlTypes[type_of](value)
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def is_boolean(value):
+    if str(value).lower() in ['true', 'on', 'yes', 'false', 'off', 'no']:
+        return True
+    return False
+
+
+def is_truthy(value):
+    if str(value).lower() in ['true', 'on', 'yes']:
+        return True
+    return False
+
+
+def quote_obj_name(object_name=None):
+    """
+    Replace special characters in object name
+    with urllib quote equivalent
+
+    """
+    if not object_name:
+        return None
+
+    from collections import OrderedDict
+    SPECIAL_CHARS = OrderedDict({
+        '%': '%25',
+        '/': '%2f',
+        '\\': '%5c'
+    })
+    for key in SPECIAL_CHARS.keys():
+        if key in object_name:
+            object_name = object_name.replace(key, SPECIAL_CHARS[key])
+
+    return object_name
+
+
 class PyVmomi(object):
     def __init__(self, module):
         """
@@ -929,12 +970,10 @@ class PyVmomi(object):
             vms = []
 
             for temp_vm_object in objects:
-                if len(temp_vm_object.propSet) != 1:
-                    continue
-                for temp_vm_object_property in temp_vm_object.propSet:
-                    if temp_vm_object_property.val == self.params['name']:
-                        vms.append(temp_vm_object.obj)
-                        break
+                if (
+                        len(temp_vm_object.propSet) == 1 and
+                        temp_vm_object.propSet[0].val == self.params['name']):
+                    vms.append(temp_vm_object.obj)
 
             # get_managed_objects_properties may return multiple virtual machine,
             # following code tries to find user desired one depending upon the folder specified.
@@ -1272,16 +1311,18 @@ class PyVmomi(object):
             return False
         return True
 
-    def find_datastore_by_name(self, datastore_name):
+    def find_datastore_by_name(self, datastore_name, datacenter_name=None):
         """
         Get datastore managed object by name
         Args:
             datastore_name: Name of datastore
+            datacenter_name: Name of datacenter where the datastore resides.  This is needed because Datastores can be
+            shared across Datacenters, so we need to specify the datacenter to assure we get the correct Managed Object Reference
 
         Returns: datastore managed object if found else None
 
         """
-        return find_datastore_by_name(self.content, datastore_name=datastore_name)
+        return find_datastore_by_name(self.content, datastore_name=datastore_name, datacenter_name=datacenter_name)
 
     # Datastore cluster
     def find_datastore_cluster_by_name(self, datastore_cluster_name):

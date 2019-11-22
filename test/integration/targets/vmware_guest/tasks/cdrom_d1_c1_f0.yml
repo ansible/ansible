@@ -17,10 +17,10 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: "{{ ds2 }}"
+      datastore: "{{ rw_datastore }}"
     cdrom:
       type: iso
-      iso_path: "[{{ ds1 }}] centos.iso"
+      iso_path: "[{{ ro_datastore }}] centos.iso"
   register: cdrom_vm
 
 - debug: var=cdrom_vm
@@ -38,11 +38,11 @@
     password: "{{ vcenter_password }}"
     folder: "vm"
     name: test_vm1
-    datastore: "{{ ds2 }}"
+    datastore: "{{ rw_datastore }}"
     datacenter: "{{ dc1 }}"
     cdrom:
       type: iso
-      iso_path: "[{{ ds1 }}] fedora.iso"
+      iso_path: "[{{ ro_datastore }}] fedora.iso"
     state: present
   register: cdrom_vm
 
@@ -127,16 +127,16 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: "{{ ds2 }}"
+      datastore: "{{ rw_datastore }}"
     - size_mb: 128
       type: thin
-      datastore: "{{ ds2 }}"
+      datastore: "{{ rw_datastore }}"
     - size_mb: 128
       type: thin
-      datastore: "{{ ds2 }}"
+      datastore: "{{ rw_datastore }}"
     cdrom:
       type: iso
-      iso_path: "[{{ ds1 }}] fedora.iso"
+      iso_path: "[{{ ro_datastore }}] fedora.iso"
   register: cdrom_vm
 
 - debug: var=cdrom_vm
@@ -165,13 +165,13 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: "{{ ds2 }}"
+      datastore: "{{ rw_datastore }}"
     cdrom:
     - controller_type: ide
       controller_number: 0
       unit_number: 0
       type: iso
-      iso_path: "[{{ ds1 }}] centos.iso"
+      iso_path: "[{{ ro_datastore }}] centos.iso"
     - controller_type: ide
       controller_number: 0
       unit_number: 1
@@ -209,7 +209,7 @@
       controller_number: 0
       unit_number: 1
       type: iso
-      iso_path: "[{{ ds1 }}] fedora.iso"
+      iso_path: "[{{ ro_datastore }}] fedora.iso"
     - controller_type: ide
       controller_number: 1
       unit_number: 0
@@ -251,16 +251,16 @@
         disk:
         - size_mb: 128
           type: thin
-          datastore: "{{ ds2 }}"
+          datastore: "{{ rw_datastore }}"
         - size_mb: 128
           type: thin
-          datastore: "{{ ds2 }}"
+          datastore: "{{ rw_datastore }}"
         - size_mb: 128
           type: thin
-          datastore: "{{ ds2 }}"
+          datastore: "{{ rw_datastore }}"
         cdrom:
           type: iso
-          iso_path: "[{{ ds1 }}] base.iso"
+          iso_path: "[{{ ro_datastore }}] base.iso"
       register: cdrom_vm
     - debug: var=cdrom_vm
     - name: assert the VM was created

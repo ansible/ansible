@@ -223,7 +223,7 @@ def add_async_options(parser):
 
 def add_basedir_options(parser):
     """Add options for commands which can set a playbook basedir"""
-    parser.add_argument('--playbook-dir', default=None, dest='basedir', action='store',
+    parser.add_argument('--playbook-dir', default=C.config.get_config_value('PLAYBOOK_DIR'), dest='basedir', action='store',
                         help="Since this tool does not use playbooks, use this as a substitute playbook directory."
                              "This sets the relative path for many features including roles/ group_vars/ etc.")
 

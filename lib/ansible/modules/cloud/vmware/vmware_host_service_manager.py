@@ -182,7 +182,7 @@ class VmwareServiceManager(PyVmomi):
 
         if any(host_service_state):
             changed = True
-        self.module.exit_json(changed=changed, results=self.results)
+        self.module.exit_json(changed=changed, host_service_status=self.results)
 
     def check_service_state(self, host, service_name):
         host_service_system = host.configManager.serviceSystem

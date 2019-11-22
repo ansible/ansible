@@ -17,8 +17,10 @@
     cli_config:
       config: |
         interface {{ test_int1 }}
+          switchport
           switchport trunk native vlan 10
         interface {{ test_int2 }}
+          switchport
           switchport trunk allowed vlan 20
 
   - name: Gather l2_interfaces facts

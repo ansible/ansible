@@ -109,6 +109,8 @@ class Lldp_global(ConfigBase):
         """
         commands = []
         state = self._module.params['state']
+        if state in ('merged', 'replaced') and not want:
+            self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(state))
 
         if state == 'overridden':
             commands = self._state_overridden(want, have)
@@ -190,7 +192,7 @@ class Lldp_global(ConfigBase):
         if diff:
             diff = dict(diff)
             holdtime = diff.get('holdtime')
-            enable = diff.get('enable')
+            enabled = diff.get('enabled')
             timer = diff.get('timer')
             reinit = diff.get('reinit')
             tlv_select = diff.get('tlv_select')
@@ -198,7 +200,7 @@ class Lldp_global(ConfigBase):
             if holdtime:
                 cmd = 'lldp holdtime {0}'.format(holdtime)
                 self.add_command_to_config_list(cmd, commands)
-            if enable:
+            if enabled:
                 cmd = 'lldp run'
                 self.add_command_to_config_list(cmd, commands)
             if timer:
@@ -223,7 +225,7 @@ class Lldp_global(ConfigBase):
         if have.get('holdtime'):
             cmd = 'lldp holdtime'
             self._remove_command_from_config_list(cmd, commands)
-        if have.get('enable'):
+        if have.get('enabled'):
             cmd = 'lldp run'
             self._remove_command_from_config_list(cmd, commands)
         if have.get('timer'):

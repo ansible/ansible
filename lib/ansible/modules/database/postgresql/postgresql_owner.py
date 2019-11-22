@@ -46,11 +46,12 @@ options:
     description:
     - The list of role names. The ownership of all the objects within the current database,
       and of all shared objects (databases, tablespaces), owned by this role(s) will be reassigned to I(owner).
-    - Pay attention - it reassignes all objects owned by this role(s) in the I(db)!
+    - Pay attention - it reassigns all objects owned by this role(s) in the I(db)!
     - If role(s) exists, always returns changed True.
     - Cannot reassign ownership of objects that are required by the database system.
     - Mutually exclusive with C(obj_type).
     type: list
+    elements: str
   fail_on_role:
     description:
     - If C(yes), fail when I(reassign_owned_by) role does not exist.
@@ -161,7 +162,7 @@ class PgOwnership(object):
 
     Arguments:
         module (AnsibleModule): Object of Ansible module class.
-        cursor (psycopg2.connect.cursor): Cursor object for interraction with the database.
+        cursor (psycopg2.connect.cursor): Cursor object for interaction with the database.
         role (str): Role name to set as a new owner of objects.
 
     Important:
@@ -367,7 +368,7 @@ class PgOwnership(object):
         self.changed = exec_sql(self, query, ddl=True)
 
     def __role_exists(self, role):
-        """Return True if role exists, otherwise return Fasle."""
+        """Return True if role exists, otherwise return False."""
         return exec_sql(self, "SELECT 1 FROM pg_roles WHERE rolname = '%s'" % role, add_to_executed=False)
 
 

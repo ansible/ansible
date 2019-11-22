@@ -18,7 +18,7 @@ short_description: Create or delete an AWS CloudFormation stack
 description:
      - Launches or updates an AWS CloudFormation stack and waits for it complete.
 notes:
-     - Cloudformation features change often, and this module tries to keep up. That means your botocore version should be fresh.
+     - CloudFormation features change often, and this module tries to keep up. That means your botocore version should be fresh.
        The version listed in the requirements is the oldest version that works with the module as a whole.
        Some features may require recent versions, and we do not pinpoint a minimum version for each feature.
        Instead of relying on the minimum version, keep botocore up to date. AWS is always releasing features and fixing bugs.
@@ -26,109 +26,129 @@ version_added: "1.1"
 options:
   stack_name:
     description:
-      - name of the cloudformation stack
+      - Name of the CloudFormation stack.
     required: true
+    type: str
   disable_rollback:
     description:
-      - If a stacks fails to form, rollback will remove the stack
+      - If a stacks fails to form, rollback will remove the stack.
+    default: false
     type: bool
-    default: 'no'
   on_create_failure:
     description:
-      - Action to take upon failure of stack creation. Incompatible with the disable_rollback option.
+      - Action to take upon failure of stack creation. Incompatible with the I(disable_rollback) option.
     choices:
       - DO_NOTHING
       - ROLLBACK
       - DELETE
     version_added: "2.8"
+    type: str
   create_timeout:
     description:
       - The amount of time (in minutes) that can pass before the stack status becomes CREATE_FAILED
     version_added: "2.6"
+    type: int
   template_parameters:
     description:
       - A list of hashes of all the template variables for the stack. The value can be a string or a dict.
       - Dict can be used to set additional template parameter attributes like UsePreviousValue (see example).
     default: {}
+    type: dict
   state:
     description:
-      - If state is "present", stack will be created.  If state is "present" and if stack exists and template has changed, it will be updated.
-        If state is "absent", stack will be removed.
+      - If I(state=present), stack will be created.
+      - If I(state=present) and if stack exists and template has changed, it will be updated.
+      - If I(state=absent), stack will be removed.
     default: present
     choices: [ present, absent ]
+    type: str
   template:
     description:
-      - The local path of the cloudformation template.
+      - The local path of the CloudFormation template.
       - This must be the full path to the file, relative to the working directory. If using roles this may look
-        like "roles/cloudformation/files/cloudformation-example.json".
-      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' is 'present', the stack does exist, and neither 'template',
-        'template_body' nor 'template_url' are specified, the previous template will be reused.
+        like C(roles/cloudformation/files/cloudformation-example.json).
+      - If I(state=present) and the stack does not exist yet, either I(template), I(template_body) or I(template_url)
+        must be specified (but only one of them).
+      - If I(state=present), the stack does exist, and neither I(template),
+        I(template_body) nor I(template_url) are specified, the previous template will be reused.
+    type: path
   notification_arns:
     description:
-      - The Simple Notification Service (SNS) topic ARNs to publish stack related events.
+      - A comma separated list of Simple Notification Service (SNS) topic ARNs to publish stack related events.
     version_added: "2.0"
+    type: str
   stack_policy:
     description:
-      - the path of the cloudformation stack policy. A policy cannot be removed once placed, but it can be modified.
+      - The path of the CloudFormation stack policy. A policy cannot be removed once placed, but it can be modified.
         for instance, allow all updates U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/protect-stack-resources.html#d0e9051)
     version_added: "1.9"
+    type: str
   tags:
     description:
-      - Dictionary of tags to associate with stack and its resources during stack creation. Can be updated later, updating tags removes previous entries.
+      - Dictionary of tags to associate with stack and its resources during stack creation.
+      - Can be updated later, updating tags removes previous entries.
     version_added: "1.4"
+    type: dict
   template_url:
     description:
-      - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region
-        as the stack.
-      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' is present, the stack does exist, and neither 'template',
-        'template_body' nor 'template_url' are specified, the previous template will be reused.
+      - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an
+        S3 bucket in the same region as the stack.
+      - If I(state=present) and the stack does not exist yet, either I(template), I(template_body) or I(template_url)
+        must be specified (but only one of them).
+      - If I(state=present), the stack does exist, and neither I(template), I(template_body) nor I(template_url) are specified,
+        the previous template will be reused.
     version_added: "2.0"
+    type: str
   create_changeset:
     description:
-      - "If stack already exists create a changeset instead of directly applying changes.
-        See the AWS Change Sets docs U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html).
-        WARNING: if the stack does not exist, it will be created without changeset. If the state is absent, the stack will be deleted immediately with no
-        changeset."
+      - "If stack already exists create a changeset instead of directly applying changes.  See the AWS Change Sets docs
+        U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)."
+      - "WARNING: if the stack does not exist, it will be created without changeset. If I(state=absent), the stack will be
+        deleted immediately with no changeset."
     type: bool
-    default: 'no'
+    default: false
     version_added: "2.4"
   changeset_name:
     description:
-      - Name given to the changeset when creating a changeset, only used when create_changeset is true. By default a name prefixed with Ansible-STACKNAME
-        is generated based on input parameters.
-        See the AWS Change Sets docs U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
+      - Name given to the changeset when creating a changeset.
+      - Only used when I(create_changeset=true).
+      - By default a name prefixed with Ansible-STACKNAME is generated based on input parameters.
+        See the AWS Change Sets docs for more information
+        U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-changesets.html)
     version_added: "2.4"
+    type: str
   template_format:
     description:
-    - (deprecated) For local templates, allows specification of json or yaml format. Templates are now passed raw to CloudFormation regardless of format.
-      This parameter is ignored since Ansible 2.3.
-    default: json
-    choices: [ json, yaml ]
+    - This parameter is ignored since Ansible 2.3 and will be removed in Ansible 2.14.
+    - Templates are now passed raw to CloudFormation regardless of format.
     version_added: "2.0"
+    type: str
   role_arn:
     description:
     - The role that AWS CloudFormation assumes to create the stack. See the AWS CloudFormation Service Role
       docs U(https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-iam-servicerole.html)
     version_added: "2.3"
+    type: str
   termination_protection:
     description:
-    - enable or disable termination protection on the stack. Only works with botocore >= 1.7.18.
+    - Enable or disable termination protection on the stack. Only works with botocore >= 1.7.18.
     type: bool
     version_added: "2.5"
   template_body:
     description:
-      - Template body. Use this to pass in the actual body of the Cloudformation template.
-      - If 'state' is 'present' and the stack does not exist yet, either 'template', 'template_body' or 'template_url'
-        must be specified (but only one of them). If 'state' is present, the stack does exist, and neither 'template',
-        'template_body' nor 'template_url' are specified, the previous template will be reused.
+      - Template body. Use this to pass in the actual body of the CloudFormation template.
+      - If I(state=present) and the stack does not exist yet, either I(template), I(template_body) or I(template_url)
+        must be specified (but only one of them).
+      - If I(state=present), the stack does exist, and neither I(template), I(template_body) nor I(template_url)
+        are specified, the previous template will be reused.
     version_added: "2.5"
+    type: str
   events_limit:
     description:
     - Maximum number of CloudFormation events to fetch from a stack when creating or updating it.
     default: 200
     version_added: "2.7"
+    type: int
   backoff_delay:
     description:
     - Number of seconds to wait for the next retry.
@@ -146,16 +166,17 @@ options:
   backoff_retries:
     description:
     - Number of times to retry operation.
-    - AWS API throttling mechanism fails Cloudformation module so we have to retry a couple of times.
+    - AWS API throttling mechanism fails CloudFormation module so we have to retry a couple of times.
     default: 10
     version_added: "2.8"
     type: int
     required: False
   capabilities:
     description:
-    - Specify capabilites that stack template contains.
-    - Valid values are CAPABILITY_IAM, CAPABILITY_NAMED_IAM and CAPABILITY_AUTO_EXPAND.
+    - Specify capabilities that stack template contains.
+    - Valid values are C(CAPABILITY_IAM), C(CAPABILITY_NAMED_IAM) and C(CAPABILITY_AUTO_EXPAND).
     type: list
+    elements: str
     version_added: "2.8"
     default: [ CAPABILITY_IAM, CAPABILITY_NAMED_IAM ]
 
@@ -231,9 +252,9 @@ EXAMPLES = '''
     tags:
       Stack: ansible-cloudformation
 
-# Pass a template parameter which uses Cloudformation's UsePreviousValue attribute
+# Pass a template parameter which uses CloudFormation's UsePreviousValue attribute
 # When use_previous_value is set to True, the given value will be ignored and
-# Cloudformation will use the value from a previously submitted template.
+# CloudFormation will use the value from a previously submitted template.
 # If use_previous_value is set to False (default) the given value is used.
 - cloudformation:
     stack_name: "ansible-cloudformation"
@@ -283,7 +304,7 @@ EXAMPLES = '''
 RETURN = '''
 events:
   type: list
-  description: Most recent events in Cloudformation's event log. This may be from a previous run in some cases.
+  description: Most recent events in CloudFormation's event log. This may be from a previous run in some cases.
   returned: always
   sample: ["StackEvent AWS::CloudFormation::Stack stackname UPDATE_COMPLETE", "StackEvent AWS::CloudFormation::Stack stackname UPDATE_COMPLETE_CLEANUP_IN_PROGRESS"]
 log:
@@ -291,6 +312,11 @@ log:
   returned: always
   type: list
   sample: ["updating stack"]
+change_set_id:
+  description: The ID of the stack change set if one was created
+  returned:  I(state=present) and I(create_changeset=true)
+  type: str
+  sample: "arn:aws:cloudformation:us-east-1:012345678901:changeSet/Ansible-StackName-f4496805bd1b2be824d1e315c6884247ede41eb0"
 stack_resources:
   description: AWS stack resources and their status. List of dictionaries, one dict per resource.
   returned: state == present
@@ -325,9 +351,7 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-import ansible.module_utils.ec2
-# import a class, otherwise we'll use a fully qualified path
-from ansible.module_utils.ec2 import AWSRetry, boto_exception
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, AWSRetry, boto3_conn, boto_exception, ec2_argument_spec, get_aws_connection_info
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
 
@@ -451,6 +475,7 @@ def create_changeset(module, stack_params, cfn, events_limit):
                 # Lets not hog the cpu/spam the AWS API
                 time.sleep(1)
             result = stack_operation(cfn, stack_params['StackName'], 'CREATE_CHANGESET', events_limit)
+            result['change_set_id'] = cs['Id']
             result['warnings'] = ['Created changeset named %s for stack %s' % (changeset_name, stack_params['StackName']),
                                   'You can execute it using: aws cloudformation execute-change-set --change-set-name %s' % cs['Id'],
                                   'NOTE that dependencies on this stack might fail due to pending changes!']
@@ -621,7 +646,7 @@ def get_stack_facts(cfn, stack_name):
 
 
 def main():
-    argument_spec = ansible.module_utils.ec2.ec2_argument_spec()
+    argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         stack_name=dict(required=True),
         template_parameters=dict(required=False, type='dict', default={}),
@@ -634,7 +659,7 @@ def main():
         create_timeout=dict(default=None, type='int'),
         template_url=dict(default=None, required=False),
         template_body=dict(default=None, require=False),
-        template_format=dict(default=None, choices=['json', 'yaml'], required=False),
+        template_format=dict(removed_in_version='2.14'),
         create_changeset=dict(default=False, type='bool'),
         changeset_name=dict(default=None, required=False),
         role_arn=dict(default=None, required=False),
@@ -713,7 +738,7 @@ def main():
             stack_params['Parameters'].append({'ParameterKey': k, 'ParameterValue': str(v)})
 
     if isinstance(module.params.get('tags'), dict):
-        stack_params['Tags'] = ansible.module_utils.ec2.ansible_dict_to_boto3_tag_list(module.params['tags'])
+        stack_params['Tags'] = ansible_dict_to_boto3_tag_list(module.params['tags'])
 
     if module.params.get('role_arn'):
         stack_params['RoleARN'] = module.params['role_arn']
@@ -721,8 +746,8 @@ def main():
     result = {}
 
     try:
-        region, ec2_url, aws_connect_kwargs = ansible.module_utils.ec2.get_aws_connection_info(module, boto3=True)
-        cfn = ansible.module_utils.ec2.boto3_conn(module, conn_type='client', resource='cloudformation', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+        cfn = boto3_conn(module, conn_type='client', resource='cloudformation', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError as e:
         module.fail_json(msg=boto_exception(e))
 
@@ -808,10 +833,6 @@ def main():
         except Exception as err:
             module.fail_json(msg=boto_exception(err), exception=traceback.format_exc())
 
-    if module.params['template_format'] is not None:
-        result['warnings'] = [('Argument `template_format` is deprecated '
-                               'since Ansible 2.3, JSON and YAML templates are now passed '
-                               'directly to the CloudFormation API.')]
     module.exit_json(**result)
 
 

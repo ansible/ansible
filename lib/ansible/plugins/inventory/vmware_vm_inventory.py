@@ -16,7 +16,7 @@ DOCUMENTATION = '''
       - Abhijeet Kasurde (@Akasurde)
     description:
         - Get virtual machines as inventory hosts from VMware environment.
-        - Uses any file which ends with vmware.yml or vmware.yaml as a YAML configuration file.
+        - Uses any file which ends with vmware.yml, vmware.yaml, vmware_vm_inventory.yml, or vmware_vm_inventory.yaml as a YAML configuration file.
         - The inventory_hostname is always the 'Name' and UUID of the virtual machine. UUID is added as VMware allows virtual machines with the same name.
     extends_documentation_fragment:
       - inventory_cache
@@ -31,11 +31,13 @@ DOCUMENTATION = '''
             description: Name of vCenter or ESXi server.
             required: True
             env:
+              - name: VMWARE_HOST
               - name: VMWARE_SERVER
         username:
             description: Name of vSphere admin user.
             required: True
             env:
+              - name: VMWARE_USER
               - name: VMWARE_USERNAME
         password:
             description: Password of vSphere admin user.
@@ -52,6 +54,8 @@ DOCUMENTATION = '''
             - Allows connection when SSL certificates are not valid. Set to C(false) when certificates are not trusted.
             default: True
             type: boolean
+            env:
+              - name: VMWARE_VALIDATE_CERTS
         with_tags:
             description:
             - Include tags and associated virtual machines.
@@ -307,13 +311,11 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         Verify plugin configuration file and mark this plugin active
         Args:
             path: Path of configuration YAML file
-
         Returns: True if everything is correct, else False
-
         """
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith(('vmware.yaml', 'vmware.yml')):
+            if path.endswith(('vmware.yaml', 'vmware.yml', 'vmware_vm_inventory.yaml', 'vmware_vm_inventory.yml')):
                 valid = True
 
         return valid

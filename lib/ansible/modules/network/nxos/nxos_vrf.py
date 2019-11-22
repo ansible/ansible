@@ -136,7 +136,7 @@ EXAMPLES = '''
       - Ethernet2/3
       - Ethernet2/5
 
-- name: Check interfaces assigend to VRF
+- name: Check interfaces assigned to VRF
   nxos_vrf:
     name: test1
     associated_interfaces:
@@ -457,6 +457,19 @@ def check_declarative_intent_params(want, module, element_spec, result):
                     module.fail_json(msg="Interface %s not configured on vrf %s" % (i, w['name']))
 
 
+def vrf_error_check(module, commands, responses):
+    """Checks for VRF config errors and executes a retry in some circumstances.
+    """
+    pattern = 'ERROR: Deletion of VRF .* in progress'
+    if re.search(pattern, str(responses)):
+        # Allow delay/retry for VRF changes
+        time.sleep(15)
+        responses = load_config(module, commands, opts={'catch_clierror': True})
+        if re.search(pattern, str(responses)):
+            module.fail_json(msg='VRF config (and retry) failure: %s ' % responses)
+        module.warn('VRF config delayed by VRF deletion - passed on retry')
+
+
 def main():
     """ main entry point for module execution
     """
@@ -504,7 +517,8 @@ def main():
     result['commands'] = commands
 
     if commands and not module.check_mode:
-        load_config(module, commands)
+        responses = load_config(module, commands, opts={'catch_clierror': True})
+        vrf_error_check(module, commands, responses)
         result['changed'] = True
 
     check_declarative_intent_params(want, module, element_spec, result)

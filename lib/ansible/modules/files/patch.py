@@ -104,8 +104,9 @@ EXAMPLES = r'''
 '''
 
 import os
+import platform
 from traceback import format_exc
-from ansible.module_utils.basic import AnsibleModule, get_platform
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 
@@ -115,7 +116,7 @@ class PatchError(Exception):
 
 def add_dry_run_option(opts):
     # Older versions of FreeBSD, OpenBSD and NetBSD support the --check option only.
-    if get_platform().lower() in ['openbsd', 'netbsd', 'freebsd']:
+    if platform.system().lower() in ['openbsd', 'netbsd', 'freebsd']:
         opts.append('--check')
     else:
         opts.append('--dry-run')

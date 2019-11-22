@@ -127,27 +127,16 @@ class ActionModule(ActionBase):
                     newsearchpath.append(p)
                 searchpath = newsearchpath
 
-                self._templar.environment.loader.searchpath = searchpath
-                self._templar.environment.newline_sequence = newline_sequence
-                if block_start_string is not None:
-                    self._templar.environment.block_start_string = block_start_string
-                if block_end_string is not None:
-                    self._templar.environment.block_end_string = block_end_string
-                if variable_start_string is not None:
-                    self._templar.environment.variable_start_string = variable_start_string
-                if variable_end_string is not None:
-                    self._templar.environment.variable_end_string = variable_end_string
-                self._templar.environment.trim_blocks = trim_blocks
-                self._templar.environment.lstrip_blocks = lstrip_blocks
-
                 # add ansible 'template' vars
                 temp_vars = task_vars.copy()
                 temp_vars.update(generate_ansible_template_vars(source, dest))
 
-                old_vars = self._templar.available_variables
-                self._templar.available_variables = temp_vars
-                resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
-                self._templar.available_variables = old_vars
+                with self._templar.set_temporary_context(searchpath=searchpath, newline_sequence=newline_sequence,
+                                                         block_start_string=block_start_string, block_end_string=block_end_string,
+                                                         variable_start_string=variable_start_string, variable_end_string=variable_end_string,
+                                                         trim_blocks=trim_blocks, lstrip_blocks=lstrip_blocks,
+                                                         available_variables=temp_vars):
+                    resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
             except AnsibleAction:
                 raise
             except Exception as e:

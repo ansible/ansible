@@ -48,18 +48,6 @@ ios_argument_spec = {
     'provider': dict(type='dict', options=ios_provider_spec),
 }
 
-ios_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-    'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
-    'auth_pass': dict(removed_in_version=2.9, no_log=True),
-    'timeout': dict(removed_in_version=2.9, type='int')
-}
-ios_argument_spec.update(ios_top_spec)
-
 
 def get_provider_argspec():
     return ios_provider_spec
@@ -88,10 +76,6 @@ def get_capabilities(module):
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
     module._ios_capabilities = json.loads(capabilities)
     return module._ios_capabilities
-
-
-def check_args(module, warnings):
-    pass
 
 
 def get_defaults_flag(module):

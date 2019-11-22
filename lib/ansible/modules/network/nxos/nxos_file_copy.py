@@ -184,7 +184,7 @@ remote_scp_server:
     type: str
     sample: 'fileserver.example.com'
 changed:
-    description: Indicates wheather or not the file was copied.
+    description: Indicates whether or not the file was copied.
     returned: success
     type: bool
     sample: true

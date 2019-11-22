@@ -31,7 +31,6 @@
 - name: "Collect interface list"
   nxos_command:
     commands: ['show interface brief | json']
-    timeout: 60
   connection: network_cli
   register: intout
 

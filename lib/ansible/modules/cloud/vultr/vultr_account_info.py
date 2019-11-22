@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: vultr_account_info
-short_description: Get infos about the Vultr account.
+short_description: Get information about the Vultr account.
 description:
   - Get infos about account balance, charges and payments.
 version_added: "2.9"

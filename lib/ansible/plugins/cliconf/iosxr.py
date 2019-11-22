@@ -191,6 +191,11 @@ class Cliconf(CliconfBase):
                 cmd_obj['command'] = 'commit label {0}'.format(label)
             else:
                 cmd_obj['command'] = 'commit show-error'
+            # In some cases even a normal commit, i.e., !replace,
+            # throws a prompt and we need to handle it before
+            # proceeding further
+            cmd_obj['prompt'] = '(C|c)onfirm'
+            cmd_obj['answer'] = 'y'
 
         self.send_command(**cmd_obj)
 
@@ -261,3 +266,11 @@ class Cliconf(CliconfBase):
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            self._update_cli_prompt_context(config_context=')#', exit_command='abort')

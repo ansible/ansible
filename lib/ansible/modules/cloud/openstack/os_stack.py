@@ -127,11 +127,13 @@ stack:
             sample: "test-stack/97a3f543-8136-4570-920e-fd7605c989d6"
         links:
             description: Links to the current Stack.
-            type: list of dict
+            type: list
+            elements: dict
             sample: "[{'href': 'http://foo:8004/v1/7f6a/stacks/test-stack/97a3f543-8136-4570-920e-fd7605c989d6']"
         outputs:
             description: Output returned by the Stack.
-            type: list of dict
+            type: list
+            elements: dict
             sample: "{'description': 'IP address of server1 in private network',
                         'output_key': 'server1_private_ip',
                         'output_value': '10.1.10.103'}"

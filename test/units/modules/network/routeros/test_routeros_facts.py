@@ -91,12 +91,8 @@ class TestRouterosFactsModule(TestRouterosModule):
     def test_routeros_facts_interfaces(self):
         set_module_args(dict(gather_subset='interfaces'))
         result = self.execute_module()
-        self.assertEqual(
-            result['ansible_facts']['ansible_net_all_ipv4_addresses'][0], '10.37.129.3'
-        )
-        self.assertEqual(
-            result['ansible_facts']['ansible_net_all_ipv4_addresses'][0],
-            result['ansible_facts']['ansible_net_interfaces']['ether1']['ipv4'][0]['address']
+        self.assertIn(
+            result['ansible_facts']['ansible_net_all_ipv4_addresses'][0], ['10.37.129.3', '10.37.0.0']
         )
         self.assertEqual(
             result['ansible_facts']['ansible_net_all_ipv6_addresses'], ['fe80::21c:42ff:fe36:5290']
@@ -106,7 +102,7 @@ class TestRouterosFactsModule(TestRouterosModule):
             result['ansible_facts']['ansible_net_interfaces']['ether1']['ipv6'][0]['address']
         )
         self.assertEqual(
-            len(result['ansible_facts']['ansible_net_interfaces'].keys()), 2
+            len(result['ansible_facts']['ansible_net_interfaces'].keys()), 11
         )
         self.assertEqual(
             len(result['ansible_facts']['ansible_net_neighbors'].keys()), 4

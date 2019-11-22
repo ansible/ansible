@@ -636,7 +636,7 @@ class Display:
         self.rows = 0
         self.columns = 0
         self.truncate = 0
-        self.redact = False
+        self.redact = True
         self.sensitive = set()
 
         if os.isatty(0):
@@ -703,6 +703,9 @@ class Display:
         """
         if self.redact and self.sensitive:
             for item in self.sensitive:
+                if not item:
+                    continue
+
                 message = message.replace(item, '*' * len(item))
 
         if truncate:

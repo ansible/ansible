@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_find - Fix deduped files mistaken for directories (https://github.com/ansible/ansible/issues/58511)"

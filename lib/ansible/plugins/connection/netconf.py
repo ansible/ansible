@@ -186,9 +186,10 @@ import json
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.plugins.loader import netconf_loader
-from ansible.plugins.connection import NetworkConnectionBase
+from ansible.plugins.connection import NetworkConnectionBase, ensure_connect
 
 try:
     from ncclient import manager
@@ -227,8 +228,9 @@ class Connection(NetworkConnectionBase):
 
         netconf = netconf_loader.get(self._network_os, self)
         if netconf:
-            self._sub_plugin = {'type': 'netconf', 'name': self._network_os, 'obj': netconf}
-            self.queue_message('log', 'loaded netconf plugin for network_os %s' % self._network_os)
+            self._sub_plugin = {'type': 'netconf', 'name': netconf._load_name, 'obj': netconf}
+            self.queue_message('vvvv', 'loaded netconf plugin %s from path %s for network_os %s' %
+                               (netconf._load_name, netconf._original_path, self._network_os))
         else:
             netconf = netconf_loader.get("default", self)
             self._sub_plugin = {'type': 'netconf', 'name': 'default', 'obj': netconf}
@@ -262,12 +264,14 @@ class Connection(NetworkConnectionBase):
         else:
             return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
+    @property
+    @ensure_connect
+    def manager(self):
+        return self._manager
+
     def _connect(self):
         if not HAS_NCCLIENT:
-            raise AnsibleError(
-                'The required "ncclient" python library is required to use the netconf connection type: %s.\n'
-                'Please run pip install ncclient' % to_native(NCCLIENT_IMP_ERR)
-            )
+            raise AnsibleError("%s: %s" % (missing_required_lib("ncclient"), to_native(NCCLIENT_IMP_ERR)))
 
         self.queue_message('log', 'ssh connection done, starting ncclient')
 

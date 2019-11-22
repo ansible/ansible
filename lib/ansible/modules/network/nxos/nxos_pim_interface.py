@@ -146,7 +146,7 @@ commands:
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.network.nxos.nxos import get_interface_type
 
 
@@ -289,7 +289,6 @@ def get_pim_interface(module, interface):
             elif 'sparse-mode' in each:
                 pim_interface['sparse'] = True
             elif 'bfd-instance' in each:
-                value = 'default'
                 m = re.search(r'ip pim bfd-instance(?P<disable> disable)?', each)
                 if m:
                     pim_interface['bfd'] = 'disable' if m.group('disable') else 'enable'
@@ -498,7 +497,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     state = module.params['state']
@@ -509,7 +507,6 @@ def main():
     jp_policy_out = module.params['jp_policy_out']
     neighbor_policy = module.params['neighbor_policy']
     neighbor_type = module.params['neighbor_type']
-    hello_interval = module.params['hello_interval']
 
     intf_type = get_interface_type(interface)
     if get_interface_mode(interface, intf_type, module) == 'layer2':

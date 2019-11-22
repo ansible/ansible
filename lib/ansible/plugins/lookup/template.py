@@ -68,8 +68,6 @@ class LookupModule(LookupBase):
         variable_start_string = kwargs.get('variable_start_string', None)
         variable_end_string = kwargs.get('variable_end_string', None)
 
-        old_vars = self._templar.available_variables
-
         for term in terms:
             display.debug("File lookup term: %s" % term)
 
@@ -92,12 +90,6 @@ class LookupModule(LookupBase):
                     searchpath = newsearchpath
                 searchpath.insert(0, os.path.dirname(lookupfile))
 
-                self._templar.environment.loader.searchpath = searchpath
-                if variable_start_string is not None:
-                    self._templar.environment.variable_start_string = variable_start_string
-                if variable_end_string is not None:
-                    self._templar.environment.variable_end_string = variable_end_string
-
                 # The template will have access to all existing variables,
                 # plus some added by ansible (e.g., template_{path,mtime}),
                 # plus anything passed to the lookup with the template_vars=
@@ -105,17 +97,16 @@ class LookupModule(LookupBase):
                 vars = deepcopy(variables)
                 vars.update(generate_ansible_template_vars(lookupfile))
                 vars.update(lookup_template_vars)
-                self._templar.available_variables = vars
 
                 # do the templating
-                res = self._templar.template(template_data, preserve_trailing_newlines=True,
-                                             convert_data=convert_data_p, escape_backslashes=False)
+                with self._templar.set_temporary_context(variable_start_string=variable_start_string,
+                                                         variable_end_string=variable_end_string,
+                                                         available_variables=vars, searchpath=searchpath):
+                    res = self._templar.template(template_data, preserve_trailing_newlines=True,
+                                                 convert_data=convert_data_p, escape_backslashes=False)
 
                 ret.append(res)
             else:
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)
-
-        # restore old variables
-        self._templar.available_variables = old_vars
 
         return ret

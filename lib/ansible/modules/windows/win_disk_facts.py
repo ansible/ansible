@@ -50,7 +50,7 @@ EXAMPLES = r'''
 
 - name: Output second disk serial number
   debug:
-    var: ansible_facts.disks[0].serial_number
+    var: ansible_facts.disks[1].serial_number
 '''
 
 RETURN = r'''
@@ -588,4 +588,304 @@ ansible_facts:
                             returned: always
                             type: str
                             sample: "Vendor Specific"
+                win32_disk_drive:
+                    description: Representation of the Win32_DiskDrive class.
+                    returned: if existent
+                    type: complex
+                    contains:
+                        availability:
+                            description: Availability and status of the device.
+                            returned: always
+                            type: int
+                        bytes_per_sector:
+                            description: Number of bytes in each sector for the physical disk drive.
+                            returned: always
+                            type: int
+                            sample: 512
+                        capabilities:
+                            description:
+                            - Array of capabilities of the media access device.
+                            - For example, the device may support random access (3), removable media (7), and automatic cleaning (9).
+                            returned: always
+                            type: list
+                            sample:
+                                - 3
+                                - 4
+                        capability_descriptions:
+                            description:
+                            - List of more detailed explanations for any of the access device features indicated in the Capabilities array.
+                            - Note, each entry of this array is related to the entry in the Capabilities array that is located at the same index.
+                            returned: always
+                            type: list
+                            sample:
+                                - Random Access
+                                - Supports Writing
+                        caption:
+                            description: Short description of the object.
+                            returned: always
+                            type: str
+                            sample: VMware Virtual disk SCSI Disk Device
+                        compression_method:
+                            description: Algorithm or tool used by the device to support compression.
+                            returned: always
+                            type: str
+                            sample: Compressed
+                        config_manager_error_code:
+                            description: Windows Configuration Manager error code.
+                            returned: always
+                            type: int
+                            sample: 0
+                        config_manager_user_config:
+                            description: If True, the device is using a user-defined configuration.
+                            returned: always
+                            type: bool
+                            sample: true
+                        creation_class_name:
+                            description:
+                            - Name of the first concrete class to appear in the inheritance chain used in the creation of an instance.
+                            - When used with the other key properties of the class, the property allows all instances of this class
+                            - and its subclasses to be uniquely identified.
+                            returned: always
+                            type: str
+                            sample: Win32_DiskDrive
+                        default_block_size:
+                            description: Default block size, in bytes, for this device.
+                            returned: always
+                            type: int
+                            sample: 512
+                        description:
+                            description: Description of the object.
+                            returned: always
+                            type: str
+                            sample: Disk drive
+                        device_id:
+                            description: Unique identifier of the disk drive with other devices on the system.
+                            returned: always
+                            type: str
+                            sample: "\\\\.\\PHYSICALDRIVE0"
+                        error_cleared:
+                            description: If True, the error reported in LastErrorCode is now cleared.
+                            returned: always
+                            type: bool
+                            sample: true
+                        error_description:
+                            description:
+                            - More information about the error recorded in LastErrorCode,
+                            - and information on any corrective actions that may be taken.
+                            returned: always
+                            type: str
+                        error_methodology:
+                            description: Type of error detection and correction supported by this device.
+                            returned: always
+                            type: str
+                        firmware_revision:
+                            description: Revision for the disk drive firmware that is assigned by the manufacturer.
+                            returned: always
+                            type: str
+                            sample: 1.0
+                        index:
+                            description:
+                            - Physical drive number of the given drive.
+                            - This property is filled by the STORAGE_DEVICE_NUMBER structure returned from the IOCTL_STORAGE_GET_DEVICE_NUMBER control code
+                            - A value of 0xffffffff indicates that the given drive does not map to a physical drive.
+                            returned: always
+                            type: int
+                            sample: 0
+                        install_date:
+                            description: Date and time the object was installed. This property does not need a value to indicate that the object is installed.
+                            returned: always
+                            type: str
+                        interface_type:
+                            description: Interface type of physical disk drive.
+                            returned: always
+                            type: str
+                            sample: SCSI
+                        last_error_code:
+                            description: Last error code reported by the logical device.
+                            returned: always
+                            type: int
+                        manufacturer:
+                            description: Name of the disk drive manufacturer.
+                            returned: always
+                            type: str
+                            sample: Seagate
+                        max_block_size:
+                            description: Maximum block size, in bytes, for media accessed by this device.
+                            returned: always
+                            type: int
+                        max_media_size:
+                            description: Maximum media size, in kilobytes, of media supported by this device.
+                            returned: always
+                            type: int
+                        media_loaded:
+                            description:
+                            - If True, the media for a disk drive is loaded, which means that the device has a readable file system and is accessible.
+                            - For fixed disk drives, this property will always be TRUE.
+                            returned: always
+                            type: bool
+                            sample: true
+                        media_type:
+                            description: Type of media used or accessed by this device.
+                            returned: always
+                            type: str
+                            sample: Fixed hard disk media
+                        min_block_size:
+                            description: Minimum block size, in bytes, for media accessed by this device.
+                            returned: always
+                            type: int
+                        model:
+                            description: Manufacturer's model number of the disk drive.
+                            returned: always
+                            type: str
+                            sample: ST32171W
+                        name:
+                            description: Label by which the object is known. When subclassed, the property can be overridden to be a key property.
+                            returned: always
+                            type: str
+                            sample: \\\\.\\PHYSICALDRIVE0
+                        needs_cleaning:
+                            description:
+                            - If True, the media access device needs cleaning.
+                            - Whether manual or automatic cleaning is possible is indicated in the Capabilities property.
+                            returned: always
+                            type: bool
+                        number_of_media_supported:
+                            description:
+                            - Maximum number of media which can be supported or inserted
+                            - (when the media access device supports multiple individual media).
+                            returned: always
+                            type: int
+                        partitions:
+                            description: Number of partitions on this physical disk drive that are recognized by the operating system.
+                            returned: always
+                            type: int
+                            sample: 3
+                        pnp_device_id:
+                            description: Windows Plug and Play device identifier of the logical device.
+                            returned: always
+                            type: str
+                            sample: "SCSI\\DISK&VEN_VMWARE&PROD_VIRTUAL_DISK\\5&1982005&0&000000"
+                        power_management_capabilities:
+                            description: Array of the specific power-related capabilities of a logical device.
+                            returned: always
+                            type: list
+                        power_management_supported:
+                            description:
+                            - If True, the device can be power-managed (can be put into suspend mode, and so on).
+                            - The property does not indicate that power management features are currently enabled,
+                            - only that the logical device is capable of power management.
+                            returned: always
+                            type: bool
+                        scsi_bus:
+                            description: SCSI bus number of the disk drive.
+                            returned: always
+                            type: int
+                            sample: 0
+                        scsi_logical_unit:
+                            description: SCSI logical unit number (LUN) of the disk drive.
+                            returned: always
+                            type: int
+                            sample: 0
+                        scsi_port:
+                            description: SCSI port number of the disk drive.
+                            returned: always
+                            type: int
+                            sample: 0
+                        scsi_target_id:
+                            description: SCSI identifier number of the disk drive.
+                            returned: always
+                            type: int
+                            sample: 0
+                        sectors_per_track:
+                            description: Number of sectors in each track for this physical disk drive.
+                            returned: always
+                            type: int
+                            sample: 63
+                        serial_number:
+                            description: Number allocated by the manufacturer to identify the physical media.
+                            returned: always
+                            type: str
+                            sample: 6000c298f34101b38cb2b2508926b9de
+                        signature:
+                            description: Disk identification. This property can be used to identify a shared resource.
+                            returned: always
+                            type: int
+                        size:
+                            description:
+                            - Size of the disk drive. It is calculated by multiplying the total number of cylinders, tracks in each cylinder,
+                            - sectors in each track, and bytes in each sector.
+                            returned: always
+                            type: int
+                            sample: 53686402560
+                        status:
+                            description:
+                            - Current status of the object. Various operational and nonoperational statuses can be defined.
+                            - 'Operational statuses include: "OK", "Degraded", and "Pred Fail"'
+                            - (an element, such as a SMART-enabled hard disk drive, may be functioning properly but predicting a failure in the near future).
+                            - 'Nonoperational statuses include: "Error", "Starting", "Stopping", and "Service".'
+                            - '"Service", could apply during mirror-resilvering of a disk, reload of a user permissions list, or other administrative work.'
+                            - Not all such work is online, yet the managed element is neither "OK" nor in one of the other states.
+                            returned: always
+                            type: str
+                            sample: OK
+                        status_info:
+                            description:
+                            - State of the logical device. If this property does not apply to the logical device, the value 5 (Not Applicable) should be used.
+                            returned: always
+                            type: int
+                        system_creation_class_name:
+                            description: Value of the scoping computer's CreationClassName property.
+                            returned: always
+                            type: str
+                            sample: Win32_ComputerSystem
+                        system_name:
+                            description: Name of the scoping system.
+                            returned: always
+                            type: str
+                            sample: WILMAR-TEST-123
+                        total_cylinders:
+                            description:
+                            - Total number of cylinders on the physical disk drive.
+                            - 'Note: the value for this property is obtained through extended functions of BIOS interrupt 13h.'
+                            - The value may be inaccurate if the drive uses a translation scheme to support high-capacity disk sizes.
+                            - Consult the manufacturer for accurate drive specifications.
+                            returned: always
+                            type: int
+                            sample: 6527
+                        total_heads:
+                            description:
+                            - Total number of heads on the disk drive.
+                            - 'Note: the value for this property is obtained through extended functions of BIOS interrupt 13h.'
+                            - The value may be inaccurate if the drive uses a translation scheme to support high-capacity disk sizes.
+                            - Consult the manufacturer for accurate drive specifications.
+                            returned: always
+                            type: int
+                            sample: 255
+                        total_sectors:
+                            description:
+                            - Total number of sectors on the physical disk drive.
+                            - 'Note: the value for this property is obtained through extended functions of BIOS interrupt 13h.'
+                            - The value may be inaccurate if the drive uses a translation scheme to support high-capacity disk sizes.
+                            - Consult the manufacturer for accurate drive specifications.
+                            returned: always
+                            type: int
+                            sample: 104856255
+                        total_tracks:
+                            description:
+                            - Total number of tracks on the physical disk drive.
+                            - 'Note: the value for this property is obtained through extended functions of BIOS interrupt 13h.'
+                            - The value may be inaccurate if the drive uses a translation scheme to support high-capacity disk sizes.
+                            - Consult the manufacturer for accurate drive specifications.
+                            returned: always
+                            type: int
+                            sample: 1664385
+                        tracks_per_cylinder:
+                            description:
+                            - Number of tracks in each cylinder on the physical disk drive.
+                            - 'Note: the value for this property is obtained through extended functions of BIOS interrupt 13h.'
+                            - The value may be inaccurate if the drive uses a translation scheme to support high-capacity disk sizes.
+                            - Consult the manufacturer for accurate drive specifications.
+                            returned: always
+                            type: int
+                            sample: 255
 '''

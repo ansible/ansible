@@ -798,4 +798,4 @@
     file_type: pkcs12
   vars: *become_vars
   register: fail_export_non_exportable
-  failed_when: fail_export_non_exportable.msg != 'Cannot export cert with key as PKCS12 when the key is not marked as exportable or not accesible by the current user'
+  failed_when: fail_export_non_exportable.msg != 'Cannot export cert with key as PKCS12 when the key is not marked as exportable or not accessible by the current user'

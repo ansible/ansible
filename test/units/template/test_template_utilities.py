@@ -74,44 +74,35 @@ class TestBackslashEscape(unittest.TestCase):
     def setUp(self):
         self.env = jinja2.Environment()
 
-    def tearDown(self):
-        pass
-
     def test_backslash_escaping(self):
 
         for test in self.test_data:
             intermediate = _escape_backslashes(test['template'], self.env)
-            self.assertEquals(intermediate, test['intermediate'])
+            self.assertEqual(intermediate, test['intermediate'])
             template = jinja2.Template(intermediate)
             args = test['args']
-            self.assertEquals(template.render(**args), test['expectation'])
+            self.assertEqual(template.render(**args), test['expectation'])
 
 
 class TestCountNewlines(unittest.TestCase):
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_zero_length_string(self):
-        self.assertEquals(_count_newlines_from_end(u''), 0)
+        self.assertEqual(_count_newlines_from_end(u''), 0)
 
     def test_short_string(self):
-        self.assertEquals(_count_newlines_from_end(u'The quick\n'), 1)
+        self.assertEqual(_count_newlines_from_end(u'The quick\n'), 1)
 
     def test_one_newline(self):
-        self.assertEquals(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000 + u'\n'), 1)
+        self.assertEqual(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000 + u'\n'), 1)
 
     def test_multiple_newlines(self):
-        self.assertEquals(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000 + u'\n\n\n'), 3)
+        self.assertEqual(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000 + u'\n\n\n'), 3)
 
     def test_zero_newlines(self):
-        self.assertEquals(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000), 0)
+        self.assertEqual(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000), 0)
 
     def test_all_newlines(self):
-        self.assertEquals(_count_newlines_from_end(u'\n' * 10), 10)
+        self.assertEqual(_count_newlines_from_end(u'\n' * 10), 10)
 
     def test_mostly_newlines(self):
-        self.assertEquals(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' + u'\n' * 1000), 1000)
+        self.assertEqual(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' + u'\n' * 1000), 1000)

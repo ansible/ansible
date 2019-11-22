@@ -113,7 +113,7 @@ and run Ansible from there.
 
 .. _python_interpreters:
 
-How do I handle python not having a Python interpreter at /usr/bin/python on a remote machine?
+How do I handle not having a Python interpreter at /usr/bin/python on a remote machine?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 While you can write Ansible modules in any language, most Ansible modules are written in Python,
@@ -150,12 +150,12 @@ How do I handle the package dependencies required by Ansible package dependencie
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 While installing Ansible, sometimes you may encounter errors such as `No package 'libffi' found` or `fatal error: Python.h: No such file or directory`
-These errors are generally caused by the missing packages which are dependencies of the packages required by Ansible.
+These errors are generally caused by the missing packages, which are dependencies of the packages required by Ansible.
 For example, `libffi` package is dependency of `pynacl` and `paramiko` (Ansible -> paramiko -> pynacl -> libffi).
 
-In order to solve these kinds of dependency issue, you may need to install required packages using the OS native package managers (e.g., `yum`, `dnf` or `apt`) or as mentioned in the package installation guide.
+In order to solve these kinds of dependency issues, you might need to install required packages using the OS native package managers, such as `yum`, `dnf`, or `apt`, or as mentioned in the package installation guide.
 
-Please refer the documentation of the respective package for such dependencies and their installation methods.
+Refer to the documentation of the respective package for such dependencies and their installation methods.
 
 Common Platform Issues
 ++++++++++++++++++++++
@@ -185,8 +185,8 @@ If you want to run under Python 3 instead of Python 2 you may want to change tha
     $ pip install ansible
 
 If you need to use any libraries which are not available via pip (for instance, SELinux Python
-bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled) then you
-need to install them into the virtualenv.  There are two methods:
+bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled), then you
+need to install them into the virtualenv. There are two methods:
 
 * When you create the virtualenv, specify ``--system-site-packages`` to make use of any libraries
   installed in the system's Python:
@@ -226,7 +226,7 @@ is likely the problem. There are several workarounds:
 
     solaris1 ansible_remote_tmp=$HOME/.ansible/tmp
 
-* You can set :ref:`ansible_shell_executable<ansible_shell_executable>` to the path to a POSIX compatible shell.  For
+* You can set :ref:`ansible_shell_executable<ansible_shell_executable>` to the path to a POSIX compatible shell. For
   instance, many Solaris hosts have a POSIX shell located at :file:`/usr/xpg4/bin/sh` so you can set
   this in inventory like so::
 
@@ -246,7 +246,7 @@ There are a few common errors that one might run into when trying to execute Ans
 * When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with
 
   .. error::
-      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
+      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see https://python.org/dev/peps/pep-0263/ for details
 
   To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
 
@@ -379,8 +379,14 @@ via a role parameter or other input.  Variable names can be built by adding stri
 
     {{ hostvars[inventory_hostname]['ansible_' + which_interface]['ipv4']['address'] }}
 
-The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
+The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables.  ``inventory_hostname``
 is a magic variable that indicates the current host you are looping over in the host loop.
+
+In the example above, if your interface names have dashes, you must replace them with underscores:
+
+.. code-block:: jinja
+
+    {{ hostvars[inventory_hostname]['ansible_' + which_interface | replace('_', '-') ]['ipv4']['address'] }}
 
 Also see dynamic_variables_.
 
@@ -651,7 +657,7 @@ but you can still access the original via ``hostvars``::
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
-This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+This works for all overridden connection variables, like ``ansible_user``, ``ansible_port``, etc.
 
 
 .. _scp_protocol_error_filename:

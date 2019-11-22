@@ -733,10 +733,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     self.log("Create virtual machine scale set {0}".format(self.name))
                     self.results['actions'].append('Created VMSS {0}'.format(self.name))
 
-                    # Validate parameters
-                    if not self.admin_username:
-                        self.fail("Parameter error: admin_username required when creating a virtual machine scale set.")
-
                     if self.os_type == 'Linux':
                         if disable_ssh_password and not self.ssh_public_keys:
                             self.fail("Parameter error: ssh_public_keys required when disabling SSH password.")
@@ -762,6 +758,14 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         if nsg:
                             self.security_group = self.network_models.NetworkSecurityGroup(id=nsg.get('id'))
 
+                    os_profile = None
+                    if self.admin_username or self.custom_data or self.ssh_public_keys:
+                        os_profile = self.compute_models.VirtualMachineScaleSetOSProfile(
+                            admin_username=self.admin_username,
+                            computer_name_prefix=self.short_hostname,
+                            custom_data=self.custom_data
+                        )
+
                     vmss_resource = self.compute_models.VirtualMachineScaleSet(
                         location=self.location,
                         overprovision=self.overprovision,
@@ -776,11 +780,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             tier=self.tier,
                         ),
                         virtual_machine_profile=self.compute_models.VirtualMachineScaleSetVMProfile(
-                            os_profile=self.compute_models.VirtualMachineScaleSetOSProfile(
-                                admin_username=self.admin_username,
-                                computer_name_prefix=self.short_hostname,
-                                custom_data=self.custom_data
-                            ),
+                            os_profile=os_profile,
                             storage_profile=self.compute_models.VirtualMachineScaleSetStorageProfile(
                                 os_disk=self.compute_models.VirtualMachineScaleSetOSDisk(
                                     managed_disk=managed_disk,
@@ -818,7 +818,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     if self.admin_password:
                         vmss_resource.virtual_machine_profile.os_profile.admin_password = self.admin_password
 
-                    if self.os_type == 'Linux':
+                    if self.os_type == 'Linux' and os_profile:
                         vmss_resource.virtual_machine_profile.os_profile.linux_configuration = self.compute_models.LinuxConfiguration(
                             disable_password_authentication=disable_ssh_password
                         )

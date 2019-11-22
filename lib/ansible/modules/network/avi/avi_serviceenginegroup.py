@@ -417,7 +417,7 @@ options:
             - Instance/flavor name for se instance.
     iptables:
         description:
-            - Iptable rules.
+            - Iptables rules.
     least_load_core_selection:
         description:
             - Select core with least load for new flow.
@@ -925,7 +925,7 @@ options:
     waf_learning_memory:
         description:
             - Amount of memory reserved on se for waf learning.
-            - This can be atmost 5% of se memory.
+            - Cannot exceed 5% of se memory.
             - Field deprecated in 18.2.3.
             - Field introduced in 18.1.2.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.

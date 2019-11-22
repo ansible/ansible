@@ -65,7 +65,7 @@ options:
     type: list
   tags:
     description:
-      - Tags assosiated with the volume. Set this to C({}) to clear any tags.
+      - Tags associated with the volume. Set this to C({}) to clear any tags.
     type: dict
     version_added: '2.9'
 extends_documentation_fragment: cloudscale
@@ -149,7 +149,7 @@ state:
   type: str
   sample: present
 tags:
-  description: Tags assosiated with the volume.
+  description: Tags associated with the volume.
   returned: state == present
   type: dict
   sample: { 'project': 'my project' }
@@ -183,7 +183,7 @@ class AnsibleCloudscaleVolume(AnsibleCloudscaleBase):
         if self._module.params.get('uuid'):
             self._module.fail_json(msg="The volume with UUID '%s' was not found "
                                    "and we would create a new one with different UUID, "
-                                   "this is probaly not want you have asked for." % self._module.params.get('uuid'))
+                                   "this is probably not want you have asked for." % self._module.params.get('uuid'))
 
         self._result['changed'] = True
         data = {

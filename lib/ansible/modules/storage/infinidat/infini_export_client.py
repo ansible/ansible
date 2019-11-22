@@ -103,7 +103,7 @@ def transform(d):
 
 @api_wrapper
 def get_export(module, system):
-    """Retrun export if found. Fail module if not found"""
+    """Return export if found. Fail module if not found"""
 
     try:
         export = system.exports.get(export_path=module.params['export'])

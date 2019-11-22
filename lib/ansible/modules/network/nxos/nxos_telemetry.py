@@ -263,7 +263,7 @@ EXAMPLES = """
 
 # Using replaced
 # This action will replace telemetry configuration on the device with the
-# telmetry configuration defined in the playbook.
+# telemetry configuration defined in the playbook.
 
 - name: Override Telemetry Configuration
   nxos_telemetry:

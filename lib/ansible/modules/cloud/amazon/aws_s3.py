@@ -1,18 +1,9 @@
 #!/usr/bin/python
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -31,57 +22,58 @@ notes:
    - In 2.4, this module has been renamed from C(s3) into M(aws_s3).
 version_added: "1.1"
 options:
-  aws_access_key:
-    description:
-      - AWS access key id. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    aliases: [ 'ec2_access_key', 'access_key' ]
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    aliases: ['ec2_secret_key', 'secret_key']
   bucket:
     description:
       - Bucket name.
     required: true
+    type: str
   dest:
     description:
       - The destination file path when downloading an object/key with a GET operation.
     version_added: "1.3"
+    type: path
   encrypt:
     description:
       - When set for PUT mode, asks for server-side encryption.
-    default: True
+    default: true
     version_added: "2.0"
     type: bool
   encryption_mode:
     description:
-      - What encryption mode to use if C(encrypt) is set
+      - What encryption mode to use if I(encrypt=true).
     default: AES256
     choices:
       - AES256
       - aws:kms
     version_added: "2.7"
-  expiration:
+    type: str
+  expiry:
     description:
-      - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
+      - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a I(mode=put) or I(mode=geturl) operation.
     default: 600
+    aliases: ['expiration']
+    type: int
   headers:
     description:
       - Custom headers for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
     version_added: "2.0"
+    type: dict
   marker:
     description:
       - Specifies the key to start with when using list mode. Object keys are returned in alphabetical order, starting with key after the marker in order.
     version_added: "2.0"
+    type: str
   max_keys:
     description:
       - Max number of results to return in list mode, set this if you want to retrieve fewer than the default 1000 keys.
     default: 1000
     version_added: "2.0"
+    type: int
   metadata:
     description:
       - Metadata for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
     version_added: "1.6"
+    type: dict
   mode:
     description:
       - Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+),
@@ -89,26 +81,32 @@ options:
         and delobj (delete object, Ansible 2.0+).
     required: true
     choices: ['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list']
+    type: str
   object:
     description:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
+    type: str
   permission:
     description:
       - This option lets the user set the canned permissions on the object/bucket that are created.
-        The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read' for a bucket or
-        'private', 'public-read', 'public-read-write', 'aws-exec-read', 'authenticated-read', 'bucket-owner-read',
-        'bucket-owner-full-control' for an object. Multiple permissions can be specified as a list.
-    default: private
+        The permissions that can be set are C(private), C(public-read), C(public-read-write), C(authenticated-read) for a bucket or
+        C(private), C(public-read), C(public-read-write), C(aws-exec-read), C(authenticated-read), C(bucket-owner-read),
+        C(bucket-owner-full-control) for an object. Multiple permissions can be specified as a list.
+    default: ['private']
     version_added: "2.0"
+    type: list
+    elements: str
   prefix:
     description:
-      - Limits the response to keys that begin with the specified prefix for list mode
+      - Limits the response to keys that begin with the specified prefix for list mode.
     default: ""
     version_added: "2.0"
+    type: str
   version:
     description:
       - Version ID of the object inside the bucket. Can be used to get a specific version of a file if versioning is enabled in the target bucket.
     version_added: "2.0"
+    type: str
   overwrite:
     description:
       - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
@@ -119,31 +117,29 @@ options:
     default: 'always'
     aliases: ['force']
     version_added: "1.2"
-  region:
-    description:
-     - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables
-       are checked, followed by the aws_region and ec2_region settings in the Boto config file. If none of those are set the
-       region defaults to the S3 Location: US Standard. Prior to ansible 1.8 this parameter could be specified but had no effect."
-    version_added: "1.8"
+    type: str
   retries:
     description:
      - On recoverable failure, how many times to retry before actually failing.
     default: 0
     version_added: "2.0"
+    type: int
+    aliases: ['retry']
   s3_url:
     description:
       - S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc. Otherwise assumes AWS.
     aliases: [ S3_URL ]
+    type: str
   dualstack:
     description:
       - Enables Amazon S3 Dual-Stack Endpoints, allowing S3 communications using both IPv4 and IPv6.
       - Requires at least botocore version 1.4.45.
     type: bool
-    default: "no"
+    default: false
     version_added: "2.7"
   rgw:
     description:
-      - Enable Ceph RGW S3 support. This option requires an explicit url via s3_url.
+      - Enable Ceph RGW S3 support. This option requires an explicit url via I(s3_url).
     default: false
     version_added: "2.2"
     type: bool
@@ -151,18 +147,19 @@ options:
     description:
       - The source file path when performing a PUT operation.
     version_added: "1.3"
+    type: str
   ignore_nonexistent_bucket:
     description:
       - "Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the
         GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying
-        ignore_nonexistent_bucket: True."
+        I(ignore_nonexistent_bucket=true)."
     version_added: "2.3"
     type: bool
   encryption_kms_key_id:
     description:
-      - KMS key id to use when encrypting objects using C(aws:kms) encryption. Ignored if encryption is not C(aws:kms)
+      - KMS key id to use when encrypting objects using I(encrypting=aws:kms). Ignored if I(encryption) is not C(aws:kms)
     version_added: "2.7"
-
+    type: str
 requirements: [ "boto3", "botocore" ]
 author:
     - "Lester Wade (@lwade)"
@@ -268,29 +265,30 @@ EXAMPLES = '''
 
 RETURN = '''
 msg:
-  description: msg indicating the status of the operation
+  description: Message indicating the status of the operation.
   returned: always
   type: str
   sample: PUT operation complete
 url:
-  description: url of the object
+  description: URL of the object.
   returned: (for put and geturl operations)
   type: str
   sample: https://my-bucket.s3.amazonaws.com/my-key.txt?AWSAccessKeyId=<access-key>&Expires=1506888865&Signature=<signature>
 expiry:
-  description: number of seconds the presigned url is valid for
+  description: Number of seconds the presigned url is valid for.
   returned: (for geturl operation)
   type: int
   sample: 600
 contents:
-  description: contents of the object as string
+  description: Contents of the object as string.
   returned: (for getstr operation)
   type: str
   sample: "Hello, world!"
 s3_keys:
-  description: list of object keys
+  description: List of object keys.
   returned: (for list operation)
   type: list
+  elements: str
   sample:
   - prefix1/
   - prefix1/key1

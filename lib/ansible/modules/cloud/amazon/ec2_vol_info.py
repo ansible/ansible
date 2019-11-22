@@ -16,16 +16,17 @@ DOCUMENTATION = '''
 module: ec2_vol_info
 short_description: Gather information about ec2 volumes in AWS
 description:
-    - Gather information about ec2 volumes in AWS
+    - Gather information about ec2 volumes in AWS.
     - This module was called C(ec2_vol_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.1"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
   filters:
+    type: dict
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVolumes.html) for possible filters.
+      - See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVolumes.html) for possible filters.
 extends_documentation_fragment:
     - aws
     - ec2

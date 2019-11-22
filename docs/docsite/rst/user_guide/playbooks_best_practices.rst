@@ -45,6 +45,8 @@ The top level of the directory would contain files and directories like so::
     site.yml                  # master playbook
     webservers.yml            # playbook for webserver tier
     dbservers.yml             # playbook for dbserver tier
+    tasks/                    # task files included from playbooks
+        webservers-extra.yml  # <-- avoids confusing playbook with task files
 
     roles/
         common/               # this hierarchy represents a "role"
@@ -427,7 +429,7 @@ Alternatively, if only variables are needed::
 
     - hosts: all
       tasks:
-        - name: Set OS distribution dependant variables
+        - name: Set OS distribution dependent variables
           include_vars: "os_{{ ansible_facts['distribution'] }}.yml"
         - debug:
             var: asdf

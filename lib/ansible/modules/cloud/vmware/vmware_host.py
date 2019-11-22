@@ -564,7 +564,7 @@ class VMwareHost(PyVmomi):
 
         if self.esxi_username and self.esxi_password:
             # Build the connection spec as well and fetch thumbprint if enabled
-            # Usefull if you reinstalled a host and it uses a new self-signed certificate
+            # Useful if you reinstalled a host and it uses a new self-signed certificate
             reconnecthost_args['cnxSpec'] = self.get_host_connect_spec()
         try:
             task = host_object.ReconnectHost_Task(**reconnecthost_args)

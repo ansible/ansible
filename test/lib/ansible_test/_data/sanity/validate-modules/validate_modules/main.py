@@ -38,10 +38,12 @@ from fnmatch import fnmatch
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import fragment_loader
+from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 
-from .module_args import AnsibleModuleImportError, get_argument_spec
+from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
 
 from .schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schema, return_schema
 
@@ -171,12 +173,12 @@ class Reporter:
                 print('\n    '.join(('    %s' % trace).splitlines()))
             for error in report['errors']:
                 error['path'] = path
-                print('%(path)s:%(line)d:%(column)d: E%(code)d %(msg)s' % error)
+                print('%(path)s:%(line)d:%(column)d: E%(code)s %(msg)s' % error)
                 ret.append(1)
             if warnings:
                 for warning in report['warnings']:
                     warning['path'] = path
-                    print('%(path)s:%(line)d:%(column)d: W%(code)d %(msg)s' % warning)
+                    print('%(path)s:%(line)d:%(column)d: W%(code)s %(msg)s' % warning)
 
         return 3 if ret else 0
 
@@ -517,13 +519,7 @@ class ModuleValidator(Validator):
                                 name.name == 'basic'):
                             found_basic = True
 
-        if not linenos:
-            self.reporter.error(
-                path=self.object_path,
-                code='missing-module-utils-import',
-                msg='Did not find a module_utils import'
-            )
-        elif not found_basic:
+        if not found_basic:
             self.reporter.warning(
                 path=self.object_path,
                 code='missing-module-utils-basic-import',
@@ -751,7 +747,7 @@ class ModuleValidator(Validator):
             if len(module_list) > 1:
                 self.reporter.error(
                     path=self.object_path,
-                    code='multiple-c#-utils-per-requires',
+                    code='multiple-csharp-utils-per-requires',
                     msg='Ansible C# util requirements do not support multiple utils per statement: "%s"' % req_stmt.group(0)
                 )
                 continue
@@ -769,7 +765,7 @@ class ModuleValidator(Validator):
         if not found_requires and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
-                code='missing-module-utils-import-c#-requirements',
+                code='missing-module-utils-import-csharp-requirements',
                 msg='No Ansible.ModuleUtils or C# Ansible util requirements/imports found'
             )
 
@@ -1133,7 +1129,14 @@ class ModuleValidator(Validator):
 
     def _validate_ansible_module_call(self, docs):
         try:
-            spec, args, kwargs = get_argument_spec(self.path)
+            spec, args, kwargs = get_argument_spec(self.path, self.collection)
+        except AnsibleModuleNotInitialized:
+            self.reporter.error(
+                path=self.object_path,
+                code='ansible-module-not-initialized',
+                msg="Execution of the module did not result in initialization of AnsibleModule",
+            )
+            return
         except AnsibleModuleImportError as e:
             self.reporter.error(
                 path=self.object_path,
@@ -1173,6 +1176,7 @@ class ModuleValidator(Validator):
         provider_args = set()
         args_from_argspec = set()
         deprecated_args_from_argspec = set()
+        doc_options = docs.get('options', {})
         for arg, data in spec.items():
             if not isinstance(data, dict):
                 msg = "Argument '%s' in argument_spec" % arg
@@ -1185,12 +1189,33 @@ class ModuleValidator(Validator):
                     msg=msg,
                 )
                 continue
+            aliases = data.get('aliases', [])
+            if arg in aliases:
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " is specified as its own alias"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='parameter-alias-self',
+                    msg=msg
+                )
+            if len(aliases) > len(set(aliases)):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " has at least one alias specified multiple times in aliases"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='parameter-alias-repeated',
+                    msg=msg
+                )
             if not data.get('removed_in_version', None):
                 args_from_argspec.add(arg)
-                args_from_argspec.update(data.get('aliases', []))
+                args_from_argspec.update(aliases)
             else:
                 deprecated_args_from_argspec.add(arg)
-                deprecated_args_from_argspec.update(data.get('aliases', []))
+                deprecated_args_from_argspec.update(aliases)
             if arg == 'provider' and self.object_path.startswith('lib/ansible/modules/network/'):
                 if data.get('options') is not None and not isinstance(data.get('options'), Mapping):
                     self.reporter.error(
@@ -1261,9 +1286,31 @@ class ModuleValidator(Validator):
             elif data.get('default') is None and _type == 'bool' and 'options' not in data:
                 arg_default = False
 
+            doc_options_args = []
+            for alias in sorted(set([arg] + list(aliases))):
+                if alias in doc_options:
+                    doc_options_args.append(alias)
+            if len(doc_options_args) == 0:
+                # Undocumented arguments will be handled later (search for undocumented-parameter)
+                doc_options_arg = {}
+            else:
+                doc_options_arg = doc_options[doc_options_args[0]]
+                if len(doc_options_args) > 1:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " with aliases %s is documented multiple times, namely as %s" % (
+                        ", ".join([("'%s'" % alias) for alias in aliases]),
+                        ", ".join([("'%s'" % alias) for alias in doc_options_args])
+                    )
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='parameter-documented-multiple-times',
+                        msg=msg
+                    )
+
             try:
                 doc_default = None
-                doc_options_arg = (docs.get('options', {}) or {}).get(arg, {})
                 if 'default' in doc_options_arg and not is_empty(doc_options_arg['default']):
                     with CaptureStd():
                         doc_default = _type_checker(doc_options_arg['default'])
@@ -1292,7 +1339,7 @@ class ModuleValidator(Validator):
                     msg=msg
                 )
 
-            doc_type = docs.get('options', {}).get(arg, {}).get('type')
+            doc_type = doc_options_arg.get('type')
             if 'type' in data and data['type'] is not None:
                 if doc_type is None:
                     if not arg.startswith('_'):  # hidden parameter, for example _raw_params
@@ -1339,7 +1386,7 @@ class ModuleValidator(Validator):
 
             doc_choices = []
             try:
-                for choice in docs.get('options', {}).get(arg, {}).get('choices', []):
+                for choice in doc_options_arg.get('choices', []):
                     try:
                         with CaptureStd():
                             doc_choices.append(_type_checker(choice))
@@ -1389,7 +1436,7 @@ class ModuleValidator(Validator):
                 )
 
             spec_suboptions = data.get('options')
-            doc_suboptions = docs.get('options', {}).get(arg, {}).get('suboptions', {})
+            doc_suboptions = doc_options_arg.get('suboptions', {})
             if spec_suboptions:
                 if not doc_suboptions:
                     msg = "Argument '%s' in argument_spec" % arg
@@ -1398,7 +1445,7 @@ class ModuleValidator(Validator):
                     msg += " has sub-options but documentation does not define it"
                     self.reporter.error(
                         path=self.object_path,
-                        code='missing-subption-docs',
+                        code='missing-suboption-docs',
                         msg=msg
                     )
                 self._validate_argument_spec({'options': doc_suboptions}, spec_suboptions, kwargs, context=context + [arg])
@@ -1422,15 +1469,18 @@ class ModuleValidator(Validator):
                 file_common_arguments.update(data.get('aliases', []))
 
             args_from_docs = set()
-            for arg, data in docs.get('options', {}).items():
+            for arg, data in doc_options.items():
                 args_from_docs.add(arg)
                 args_from_docs.update(data.get('aliases', []))
+
+            # add_file_common_args is only of interest on top-level
+            add_file_common_args = kwargs.get('add_file_common_args', False) and not context
 
             args_missing_from_docs = args_from_argspec.difference(args_from_docs)
             docs_missing_from_args = args_from_docs.difference(args_from_argspec | deprecated_args_from_argspec)
             for arg in args_missing_from_docs:
                 # args_from_argspec contains undocumented argument
-                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                if add_file_common_args and arg in file_common_arguments:
                     # add_file_common_args is handled in AnsibleModule, and not exposed earlier
                     continue
                 if arg in provider_args:
@@ -1448,7 +1498,7 @@ class ModuleValidator(Validator):
                 )
             for arg in docs_missing_from_args:
                 # args_from_docs contains argument not in the argument_spec
-                if kwargs.get('add_file_common_args', False) and arg in file_common_arguments:
+                if add_file_common_args and arg in file_common_arguments:
                     # add_file_common_args is handled in AnsibleModule, and not exposed earlier
                     continue
                 msg = "Argument '%s'" % arg
@@ -1698,6 +1748,42 @@ class PythonPackageValidator(Validator):
             )
 
 
+def setup_collection_loader():
+    def get_source(self, fullname):
+        mod = sys.modules.get(fullname)
+        if not mod:
+            mod = self.load_module(fullname)
+
+        with open(to_bytes(mod.__file__), 'rb') as mod_file:
+            source = mod_file.read()
+
+        return source
+
+    def get_code(self, fullname):
+        return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
+
+    def is_package(self, fullname):
+        return self.get_filename(fullname).endswith('__init__.py')
+
+    def get_filename(self, fullname):
+        mod = sys.modules.get(fullname) or self.load_module(fullname)
+
+        return mod.__file__
+
+    # monkeypatch collection loader to work with runpy
+    # remove this (and the associated code above) once implemented natively in the collection loader
+    AnsibleCollectionLoader.get_source = get_source
+    AnsibleCollectionLoader.get_code = get_code
+    AnsibleCollectionLoader.is_package = is_package
+    AnsibleCollectionLoader.get_filename = get_filename
+
+    collection_loader = AnsibleCollectionLoader()
+
+    # allow importing code from collections when testing a collection
+    # noinspection PyCallingNonCallable
+    sys.meta_path.insert(0, collection_loader)
+
+
 def re_compile(value):
     """
     Argparse expects things to raise TypeError, re.compile raises an re.error
@@ -1744,6 +1830,9 @@ def run():
     git_cache = GitCache(args.base_branch)
 
     check_dirs = set()
+
+    if args.collection:
+        setup_collection_loader()
 
     for module in args.modules:
         if os.path.isfile(module):

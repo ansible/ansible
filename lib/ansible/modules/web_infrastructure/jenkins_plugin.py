@@ -95,7 +95,7 @@ notes:
     only the Web UI credentials.
   - It's necessary to notify the handler or call the I(service) module to
     restart the Jenkins service after a new plugin was installed.
-  - Pinning works only if the plugin is installed and Jenkis service was
+  - Pinning works only if the plugin is installed and Jenkins service was
     successfully restarted after the plugin installation.
   - It is not possible to run the module remotely by changing the I(url)
     parameter to point to the Jenkins server. The module must be used on the
@@ -264,6 +264,7 @@ state:
 '''
 
 from ansible.module_utils.basic import AnsibleModule, to_bytes
+from ansible.module_utils.six.moves import http_cookiejar as cookiejar
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 from ansible.module_utils._text import to_native, text_type, binary_type
@@ -287,8 +288,11 @@ class JenkinsPlugin(object):
 
         # Crumb
         self.crumb = {}
+        # Cookie jar for crumb session
+        self.cookies = None
 
         if self._csrf_enabled():
+            self.cookies = cookiejar.LWPCookieJar()
             self.crumb = self._get_crumb()
 
         # Get list of installed plugins
@@ -332,7 +336,8 @@ class JenkinsPlugin(object):
         # Get the URL data
         try:
             response, info = fetch_url(
-                self.module, url, timeout=self.timeout, **kwargs)
+                self.module, url, timeout=self.timeout, cookies=self.cookies,
+                headers=self.crumb, **kwargs)
 
             if info['status'] != 200:
                 self.module.fail_json(msg=msg_status, details=info['msg'])
@@ -405,7 +410,6 @@ class JenkinsPlugin(object):
                 script_data = {
                     'script': install_script
                 }
-                script_data.update(self.crumb)
                 data = urlencode(script_data)
 
                 # Send the installation request
@@ -691,14 +695,12 @@ class JenkinsPlugin(object):
     def _pm_query(self, action, msg):
         url = "%s/pluginManager/plugin/%s/%s" % (
             self.params['url'], self.params['name'], action)
-        data = urlencode(self.crumb)
 
         # Send the request
         self._get_url_data(
             url,
             msg_status="Plugin not found. %s" % url,
-            msg_exception="%s has failed." % msg,
-            data=data)
+            msg_exception="%s has failed." % msg)
 
 
 def main():

@@ -266,7 +266,7 @@ class Migrations:
         return aerospike.client(config)
 
     def _info_cmd_helper(self, cmd, node=None, delimiter=';'):
-        """delimiter is for seperate stats that come back, NOT for kv
+        """delimiter is for separate stats that come back, NOT for kv
         separation which is ="""
         if node is None:  # If no node passed, use the first one (local)
             node = self._nodes[0]
@@ -316,7 +316,7 @@ class Migrations:
     def _update_cluster_namespace_list(self):
         """ make a unique list of namespaces
         TODO: does this work on a rolling namespace add/deletion?
-        thankfully if it doesnt, we dont need this on builds >=4.3"""
+        thankfully if it doesn't, we dont need this on builds >=4.3"""
         self._namespaces = set()
         for node in self._nodes:
             namespaces = self._info_cmd_helper('namespaces', node)
@@ -418,7 +418,7 @@ class Migrations:
 
     def _is_min_cluster_size(self):
         """checks that all nodes in the cluster are returning the
-        mininimum cluster size specified in their statistics output"""
+        minimum cluster size specified in their statistics output"""
         sizes = set()
         for node in self._cluster_statistics:
             sizes.add(int(self._cluster_statistics[node]['cluster_size']))
