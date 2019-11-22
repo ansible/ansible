@@ -9,10 +9,14 @@ You can configure this to use other servers (such as Red Hat Automation Hub or a
 
 To configure a Galaxy server list in ``ansible.cfg``:
 
+
 #. Add the ``server_list``  option under the ``[galaxy]`` section to one or more server names.
 #. Create a new section for each server name.
 #. Set the ``url`` option for each server name.
 
+.. note::
+    The ``url`` option for each server name must end with a forward slash ``/``.
+    
 For Automation Hub, you additionally need to:
 
 #. Set the ``auth_url`` option for each server name.
