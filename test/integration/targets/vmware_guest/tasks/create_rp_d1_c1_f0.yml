@@ -11,7 +11,7 @@
     datacenter: "{{ dc1 }}"
     hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: thin
@@ -62,7 +62,7 @@
     cluster: "{{ ccr1 }}"
     hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: thin
@@ -115,7 +115,7 @@
     resource_pool: DC0_C0_RP1
     hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: thin
@@ -167,7 +167,7 @@
     esxi_hostname: '{{ esxi1 }}'
     hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: thin

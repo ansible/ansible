@@ -12,8 +12,8 @@
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     hardware:
-        num_cpus: 4
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     disk:
         - size: 1gb
           type: thin

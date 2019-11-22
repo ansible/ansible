@@ -3,7 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - when: vcsim is not defined
-  block: 
+  block:
     - name: create new virtual machine with invalid guest id
       vmware_guest:
         validate_certs: False
@@ -15,9 +15,9 @@
         datacenter: "{{ dc1 }}"
         hardware:
             num_cpus: 1
-            memory_mb: 512
+            memory_mb: 128
         disk:
-            - size: 10gb
+            - size: 1gb
               type: thin
               datastore: "{{ rw_datastore }}"
         state: present

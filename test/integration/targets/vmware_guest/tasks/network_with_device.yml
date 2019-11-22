@@ -3,9 +3,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Testcase to check #38605
-- set_fact:
-    vm_name: "VM_{{ 10000 | random }}"
-
 - name: Deploy VM first VM
   vmware_guest:
     hostname: "{{ vcenter_hostname }}"
@@ -21,7 +18,7 @@
         datastore: "{{ rw_datastore }}"
     guest_id: rhel7_64guest
     hardware:
-      memory_mb: 512
+      memory_mb: 128
       num_cpus: 1
     networks:
       - name: 'VM Network'
@@ -49,7 +46,7 @@
         datastore: "{{ rw_datastore }}"
     guest_id: rhel7_64guest
     hardware:
-      memory_mb: 512
+      memory_mb: 128
       num_cpus: 1
     networks:
       - name: 'VM Network'

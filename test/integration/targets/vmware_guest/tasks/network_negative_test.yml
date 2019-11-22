@@ -20,8 +20,8 @@
     networks:
       - name: "Non existent VM"
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: non_existent_network
@@ -53,8 +53,8 @@
         type: static
         ip: 10.10.10.10
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: no_netmask
@@ -86,8 +86,8 @@
         type: static
         netmask: 255.255.255.0
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: no_ip
@@ -119,8 +119,8 @@
         netmask: 255.255.255
         type: static
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: no_network_name
@@ -152,8 +152,8 @@
         ip: 10.10.10.10
         netmask: 255.255.255
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: no_network
@@ -186,8 +186,8 @@
         netmask: 255.255.255
         device_type: abc
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: invalid_device_type
@@ -221,8 +221,8 @@
         device_type: e1000
         mac: abcdef
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: invalid_mac
@@ -257,8 +257,8 @@
         mac: 01:23:45:67:89:ab
         type: aaaaa
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: invalid_network_type
@@ -293,8 +293,8 @@
         mac: 01:23:45:67:89:ab
         type: dhcp
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: invalid_dhcp_network_type
@@ -324,8 +324,8 @@
     networks:
       - name: "VM Network"
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: no_network_type
