@@ -155,7 +155,7 @@ def main():
 
     # backup config
     if module.params['backup']:
-        backup(module, running_config)
+        backup(module, running_config.to_text())
 
     module.exit_json(**result)
 
