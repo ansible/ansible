@@ -133,6 +133,11 @@ options:
     default: False
     type: bool
     version_added: "2.10"
+  kube_context:
+    description:
+      - Helm option to specify which kubeconfig context to use
+    type: str
+    version_added: "2.10"
   purge:
     description:
       - Remove the release from the store and make its name free for later use
@@ -254,13 +259,13 @@ is_helm_2 = True
 # get Helm Version
 def get_helm_client_version(command):
     is_helm_2_local = True
-    version_command = command + " version --client --template '{{ .Client.SemVer }}'"
+    version_command = command + " version --client --short"
     rc, out, err = module.run_command(version_command)
 
-    if rc == 1 and "unknown flag: --client" in err:
+    if not out.startswith('Client: v2'):
         is_helm_2_local = False
         # Fallback on Helm 3
-        version_command = command + " version --template '{{ .Version }}'"
+        version_command = command + " version --short"
         rc, out, err = module.run_command(version_command)
 
         if rc != 0:
@@ -304,15 +309,14 @@ def get_values(command, release_name, release_namespace):
 def get_release(state, release_name, release_namespace):
     if state is not None:
         if is_helm_2:
-            releases = getattr(state, 'Releases', [])
+            for release in state['Releases']:
+              if release['Name'] == release_name and release['Namespace'] == release_namespace:
+                return release
         else:
-            releases = state
-
-        for release in releases:
-            if release['Name'] == release_name and (is_helm_2 or release['Namespace'] == release_namespace):
+          for release in state:
+              if release['name'] == release_name and release['namespace'] == release_namespace:
                 return release
     return None
-
 
 # Get Release state from deployed release
 def get_release_status(command, release_name, release_namespace):
@@ -457,6 +461,7 @@ def main():
             # Helm options
             disable_hook=dict(type='bool', default=False),
             force=dict(type='bool', default=False),
+            kube_context=dict(type='str'),
             purge=dict(type='bool', default=True),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(type='str'),
@@ -493,6 +498,7 @@ def main():
     # Helm options
     disable_hook = module.params.get('disable_hook')
     force = module.params.get('force')
+    kube_context = module.params.get('kube_context')
     purge = module.params.get('purge')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
@@ -510,6 +516,9 @@ def main():
             helm_cmd_common += " --host=" + tiller_namespace
         else:
             helm_cmd_common += " --tiller-namespace=" + tiller_namespace
+
+    if kube_context is not None:
+      helm_cmd_common += " --kube-context " + kube_context
 
     if update_repo_cache:
         run_repo_update(helm_cmd_common)
@@ -544,7 +553,7 @@ def main():
                               disable_hook, False)
             changed = True
 
-        elif release_namespace != release_status['Namespace'] and is_helm_2:
+        elif is_helm_2 and release_namespace != release_status['Namespace']:
             module.fail_json(
                 msg="With helm2, Target Namespace can't be changed on deployed chart ! Need to destroy the release "
                     "and recreate it "
