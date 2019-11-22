@@ -193,7 +193,6 @@ class Lag_interfaces(ConfigBase):
             # Clearing all args, send empty dictionary
             interface = dict(name=interface_name)
             commands.extend(remove_config(interface, extant))
-
         return commands
 
 
@@ -212,8 +211,6 @@ def set_config(want, have):
 
 def remove_config(want, have):
     commands = []
-    if not want.get("members"):
-        return ["no interface {0}".format(want["name"])]
 
     to_remove = dict_diff(want, have)
     for member in to_remove.get("members", []):
@@ -221,5 +218,4 @@ def remove_config(want, have):
             "interface {0}".format(member["member"]),
             "no channel-group",
         ])
-
     return commands
