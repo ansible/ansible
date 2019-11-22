@@ -396,6 +396,9 @@ class CallbackModule_dense(CallbackModule_default):
         sys.stdout.write('cleanup.')
         sys.stdout.flush()
 
+    def v2_runner_on_start(self, host, task):
+        pass
+
     def v2_runner_on_failed(self, result, ignore_errors=False):
         self._add_host(result, 'failed')
 
