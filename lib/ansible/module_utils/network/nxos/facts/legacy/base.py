@@ -558,44 +558,44 @@ class Legacy(FactsBase):
             if isinstance(data, dict):
                 self.facts.update(self.transform_dict(data, self.VERSION_MAP))
             else:
-                self.facts['_hostname'] = self.parse_hostname(data)
-                self.facts['_os'] = self.parse_os(data)
-                self.facts['_platform'] = self.parse_platform(data)
+                self.facts['hostname'] = self.parse_hostname(data)
+                self.facts['os'] = self.parse_os(data)
+                self.facts['platform'] = self.parse_platform(data)
 
         data = self.run('show interface', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['_interfaces_list'] = self.parse_structured_interfaces(data)
+                self.facts['interfaces_list'] = self.parse_structured_interfaces(data)
             else:
-                self.facts['_interfaces_list'] = self.parse_interfaces(data)
+                self.facts['interfaces_list'] = self.parse_interfaces(data)
 
         data = self.run('show vlan brief', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['_vlan_list'] = self.parse_structured_vlans(data)
+                self.facts['vlan_list'] = self.parse_structured_vlans(data)
             else:
-                self.facts['_vlan_list'] = self.parse_vlans(data)
+                self.facts['vlan_list'] = self.parse_vlans(data)
 
         data = self.run('show module', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['_module'] = self.parse_structured_module(data)
+                self.facts['module'] = self.parse_structured_module(data)
             else:
-                self.facts['_module'] = self.parse_module(data)
+                self.facts['module'] = self.parse_module(data)
 
         data = self.run('show environment fan', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['_fan_info'] = self.parse_structured_fan_info(data)
+                self.facts['fan_info'] = self.parse_structured_fan_info(data)
             else:
-                self.facts['_fan_info'] = self.parse_fan_info(data)
+                self.facts['fan_info'] = self.parse_fan_info(data)
 
         data = self.run('show environment power', output='json')
         if data:
             if isinstance(data, dict):
-                self.facts['_power_supply_info'] = self.parse_structured_power_supply_info(data)
+                self.facts['power_supply_info'] = self.parse_structured_power_supply_info(data)
             else:
-                self.facts['_power_supply_info'] = self.parse_power_supply_info(data)
+                self.facts['power_supply_info'] = self.parse_power_supply_info(data)
 
     def parse_structured_interfaces(self, data):
         objects = list()
