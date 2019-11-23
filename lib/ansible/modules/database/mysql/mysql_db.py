@@ -193,7 +193,7 @@ def db_delete(cursor, db):
 
 
 def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
-            single_transaction=None, quick=None, ignore_tables=None, hex_blob=None):
+            single_transaction=None, quick=None, ignore_tables=None, hex_blob=None, encoding=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -216,6 +216,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --all-databases"
     else:
         cmd += " --databases {0} --skip-lock-tables".format(' '.join(db_name))
+    if (encoding is not None) and (encoding != ""):
+        cmd.append("--default-character-set=%s" % shlex_quote(encoding))
     if single_transaction:
         cmd += " --single-transaction=true"
     if quick:
@@ -441,7 +443,7 @@ def main():
         rc, stdout, stderr = db_dump(module, login_host, login_user,
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
-                                     ssl_ca, single_transaction, quick, ignore_tables, hex_blob)
+                                     ssl_ca, single_transaction, quick, ignore_tables, hex_blob,encoding)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)

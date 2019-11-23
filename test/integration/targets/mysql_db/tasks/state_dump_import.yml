@@ -21,6 +21,7 @@
     db_file_name="{{tmp_dir}}/{{file}}"
     dump_file1="{{tmp_dir}}/{{file2}}"
     dump_file2="{{tmp_dir}}/{{file3}}"
+    latin1_file1="{{tmp_dir}}/{{file4}}"
 
 - name: state dump/import - create database
   mysql_db:
@@ -289,6 +290,14 @@
     state: absent
     login_unix_socket: '{{ mysql_socket }}'
 
+
+- name: remove database name
+  mysql_db:
+    name: '{{ db_latin1_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+
+ 
 - name: remove file name
   file: name={{ db_file_name }}  state=absent
 

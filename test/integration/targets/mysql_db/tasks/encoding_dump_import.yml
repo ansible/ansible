@@ -1,0 +1,49 @@
+---
+
+
+- set_fact: 
+    latin1_file1="{{tmp_dir}}/{{file}}"
+
+- name: create Latin1 encoded database
+  mysql_db:
+    name: '{{ db_latin1_name }}'
+    state: present
+    encoding: latin1
+    login_unix_socket: '{{ mysql_socket }}'
+
+- name: create a table in Latin1 database
+  command: mysql {{ db_latin1_name }} '-e create table testlatin1(id int, name varchar(100));'
+
+- name: inserting data into Latin1 database
+  command: mysql {{ db_latin1_name }} "-e insert into testlatin1 value(47,'Amédée Bôlüt');"
+
+- name: Dumping a table in Latin1 database
+  mysql_db:
+    name: "{{ db_latin1_name }}"
+    encoding: latin1
+    target: "{{ latin1_file1 }}"
+    login_unix_socket: '{{ mysql_socket }}'
+  register: dump_result
+
+- name: check /tmp
+  command: ls /tmp/
+
+- name: state dump - file name should exist
+  file: name={{ latin1_file1 }} state=file
+
+- name: Check if encoded string is in dump file
+  lineinfile:
+    path: "{{ latin1_file1 }}"
+    line: "Amédée Bôlüt"
+    state: present
+  check_mode: yes
+  register: presence
+  failed_when: presence is change
+
+
+- name: remove database name
+  mysql_db:
+    name: '{{ db_latin1_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+
