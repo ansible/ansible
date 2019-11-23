@@ -114,6 +114,9 @@ def syspatch_run(module):
     elif module.params['apply']:
         check_flag = ['-c']
         run_flag = []
+    else:
+        run_flag = []
+        check_flag = []
 
     # Run check command
     rc, out, err = module.run_command(cmd + check_flag)
