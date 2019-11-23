@@ -1,0 +1,2 @@
+bugfixes:
+- "elb_application_lb, elb_network_lb - fixed various Python errors in the shared module utils affecting some features of these modules."
