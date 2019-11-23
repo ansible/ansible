@@ -101,7 +101,7 @@ def load_config(conn, path='', vdom=None):
             command = 'conf vdom\nedit {0}\nshow {1}\nend'.format(vdom, path)
     else:
         command = 'show {0}'.format(path)
-        
+
     return _sanitize("\n".join(conn.execute_command(command)))
 
 
@@ -127,11 +127,13 @@ def main():
         module.fail_json(msg='Could not import the python library pyFG required by this module')
 
     # define device
-    conn = FortiOS(module.params['host'],
-                username=module.params['username'],
-                password=module.params['password'],
-                timeout=module.params['timeout'],
-                vdom=module.params['vdom'])
+    conn = FortiOS(
+        module.params['host'],
+        username=module.params['username'],
+        password=module.params['password'],
+        timeout=module.params['timeout'],
+        vdom=module.params['vdom']
+    )
 
     # connect
     try:
@@ -142,7 +144,7 @@ def main():
     # get  config
     running_config = ""
     try:
-        running_config = load_config(conn,path=module.params['filter'], vdom=module.params['vdom'])
+        running_config = load_config(conn, path=module.params['filter'], vdom=module.params['vdom'])
         result['running_config'] = running_config
     except Exception as e:
         module.fail_json(msg='Error reading config : {0}'.format(repr(e)))
