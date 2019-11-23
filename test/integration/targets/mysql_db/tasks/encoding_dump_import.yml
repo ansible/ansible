@@ -25,8 +25,13 @@
     login_unix_socket: '{{ mysql_socket }}'
   register: dump_result
 
+- debug: 
+    var: dump_result  
+
 - name: check /tmp
-  command: ls /tmp/
+  stat: 
+    path: "/tmp/{{ latin1_file1 }}" 
+  register: stat_result
 
 - name: state dump - file name should exist
   file: name={{ latin1_file1 }} state=file
