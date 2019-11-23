@@ -68,7 +68,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     # inheritance is only triggered if the 'current value' is None,
     # default can be set at play/top level object and inheritance will take it's course.
 
-    _args = FieldAttribute(isa='dict', default=dict)
+    _args = FieldAttribute(isa='dict', default=dict, always_post_validate=True)
     _action = FieldAttribute(isa='string')
 
     _async_val = FieldAttribute(isa='int', default=0, alias='async')
