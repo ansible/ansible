@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
-# Ansible module to manage configuration on fortios devices
-# (c) 2016, Patrick Pellissier 
+# Ansible module to backup configuration on fortios devices
+# (c) 2019, Patrick Pellissier <polaris197@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: fortios_backupconfig
-version_added: "2.3"
-author: "Patrick Pellissier (ppellissier)"
+version_added: "2.1"
+author: "Patrick Pellissier (@polaris197)"
 short_description: Backup config on Fortinet FortiOS firewall devices
 description:
   - This module provides backup of FortiOS Devices configuration.
@@ -77,15 +77,16 @@ NOT_UPDATABLE_CONFIG_OBJECTS = [
     "vpn certificate local",
 ]
 
+
 def _sanitize(output):
-    for (regex,replace) in [ (re.compile(r'^--More--\s*(?:\r|)$',re.M),''), (re.compile(r'\n\s*\n',re.M),'\n') ]:
-        output = regex.sub(replace,output)
+    for (regex, replace) in [(re.compile(r'^--More--\s*(?:\r|)$', re.M), ''), (re.compile(r'\n\s*\n', re.M), '\n')]:
+        output = regex.sub(replace, output)
     return output
 
-def load_config(conn, path='',vdom=None):
+
+def load_config(conn, path='', vdom=None):
     """
-    This method will load a block of config represented as a :py:class:`FortiConfig` object in the running
-    config, in the candidate config or in both.
+    This method will load config represented as str, sanitize and return the config as a str.
 
     Args:
         * **path** (str) -- This is the block of config you want to load. For example *system interface*\
@@ -95,13 +96,14 @@ def load_config(conn, path='',vdom=None):
 
     if vdom is not None:
         if vdom == 'global':
-            command = 'conf global\nshow %s\nend' % path
+            command = 'conf global\nshow {0}\nend'.format(path)
         else:
-            command = 'conf vdom\nedit %s\nshow %s\nend' % (vdom, path)
+            command = 'conf vdom\nedit {0}\nshow {1}\nend'.format(vdom, path)
     else:
-        command = 'show %s' % path
+        command = 'show {0}'.format(path)
         
     return _sanitize("\n".join(conn.execute_command(command)))
+
 
 def main():
     argument_spec = dict(
@@ -140,7 +142,7 @@ def main():
     # get  config
     running_config = ""
     try:
-        running_config = load_config(conn,path=module.params['filter'],vdom=module.params['vdom'])
+        running_config = load_config(conn,path=module.params['filter'], vdom=module.params['vdom'])
         result['running_config'] = running_config
     except Exception as e:
         module.fail_json(msg='Error reading config : {0}'.format(repr(e)))
@@ -150,6 +152,7 @@ def main():
         backup(module, running_config)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
