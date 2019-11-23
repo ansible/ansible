@@ -162,7 +162,7 @@ class VmwareRestClient(object):
 
         return tags
 
-    def get_tags_for_dynamic_obj(self, mid=None):
+    def get_tags_for_dynamic_obj(self, dobj=None):
         """
         Return list of tag object details associated with object
         Args:
@@ -172,10 +172,10 @@ class VmwareRestClient(object):
 
         """
         tags = []
-        if mid is None:
+        if dobj is None:
             return tags
 
-        temp_tags_model = self.get_tags_for_object(dobj=mid)
+        temp_tags_model = self.get_tags_for_object(dobj)
 
         category_service = self.api_client.tagging.Category
 
@@ -199,7 +199,8 @@ class VmwareRestClient(object):
         Returns: List of tag object associated with the given cluster
 
         """
-        return self.get_tags_for_dynamic_obj(mid=cluster_mid)
+        dobj = DynamicID(type='cluster', id=cluster_mid)
+        return self.get_tags_for_dynamic_obj(dobj)
 
     def get_tags_for_hostsystem(self, hostsystem_mid=None):
         """
@@ -210,7 +211,8 @@ class VmwareRestClient(object):
         Returns: List of tag object associated with the given host system
 
         """
-        return self.get_tags_for_dynamic_obj(mid=hostsystem_mid)
+        dobj = DynamicID(type='HostSystem', id=hostsystem_mid)
+        return self.get_tags_for_dynamic_obj(dobj)
 
     def get_tags_for_vm(self, vm_mid=None):
         """
@@ -221,7 +223,8 @@ class VmwareRestClient(object):
         Returns: List of tag object associated with the given virtual machine
 
         """
-        return self.get_tags_for_dynamic_obj(mid=vm_mid)
+        dobj = DynamicID(type='VirtualMachine', id=vm_mid)
+        return self.get_tags_for_dynamic_obj(dobj)
 
     def get_vm_tags(self, tag_service=None, tag_association_svc=None, vm_mid=None):
         """
