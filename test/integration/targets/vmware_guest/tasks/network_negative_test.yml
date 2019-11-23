@@ -16,7 +16,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "Non existent VM"
     hardware:
@@ -47,7 +47,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         type: static
@@ -80,7 +80,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         type: static
@@ -113,7 +113,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - ip: 10.10.10.10
         netmask: 255.255.255
@@ -146,7 +146,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - vlan: non_existing_vlan
         ip: 10.10.10.10
@@ -179,7 +179,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         ip: 10.10.10.10
@@ -213,7 +213,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         ip: 10.10.10.10
@@ -248,7 +248,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         ip: 10.10.10.10
@@ -284,7 +284,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         ip: 10.10.10.10
@@ -320,7 +320,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
     hardware:

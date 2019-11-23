@@ -18,7 +18,7 @@
     name: test_vm1
     disk:
       - size: 10mb
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     guest_id: rhel7_64guest
     hardware:
       memory_mb: 512
@@ -46,7 +46,7 @@
     name: test_vm1
     disk:
       - size: 10mb
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     guest_id: rhel7_64guest
     hardware:
       memory_mb: 512
