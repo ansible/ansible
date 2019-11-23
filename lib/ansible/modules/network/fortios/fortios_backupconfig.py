@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: fortios_backupconfig
-version_added: "2.1"
+version_added: "2.10"
 author: "Patrick Pellissier (@polaris197)"
 short_description: Backup config on Fortinet FortiOS firewall devices
 description:
@@ -27,6 +27,7 @@ options:
   filter:
     description:
       - Only for partial backup, you can restrict by giving expected configuration path (ex. firewall address).
+    type: str
     default: ""
 requirements:
   - pyFG
