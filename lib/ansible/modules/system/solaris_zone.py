@@ -237,26 +237,25 @@ class Zone(object):
         if os.path.isfile('%s/root/etc/.UNCONFIGURED' % self.path):
             os.unlink('%s/root/etc/.UNCONFIGURED' % self.path)
 
-        open('%s/root/noautoshutdown' % self.path, 'w').close()
+        with open('%s/root/noautoshutdown' % self.path, 'w'):
+            pass
 
-        node = open('%s/root/etc/nodename' % self.path, 'w')
-        node.write(self.name)
-        node.close()
+        with open('%s/root/etc/nodename' % self.path, 'w') as node:
+            node.write(self.name)
 
-        id = open('%s/root/etc/.sysIDtool.state' % self.path, 'w')
-        id.write('1       # System previously configured?\n')
-        id.write('1       # Bootparams succeeded?\n')
-        id.write('1       # System is on a network?\n')
-        id.write('1       # Extended network information gathered?\n')
-        id.write('0       # Autobinder succeeded?\n')
-        id.write('1       # Network has subnets?\n')
-        id.write('1       # root password prompted for?\n')
-        id.write('1       # locale and term prompted for?\n')
-        id.write('1       # security policy in place\n')
-        id.write('1       # NFSv4 domain configured\n')
-        id.write('0       # Auto Registration Configured\n')
-        id.write('vt100')
-        id.close()
+        with open('%s/root/etc/.sysIDtool.state' % self.path, 'w') as id:
+            id.write('1       # System previously configured?\n')
+            id.write('1       # Bootparams succeeded?\n')
+            id.write('1       # System is on a network?\n')
+            id.write('1       # Extended network information gathered?\n')
+            id.write('0       # Autobinder succeeded?\n')
+            id.write('1       # Network has subnets?\n')
+            id.write('1       # root password prompted for?\n')
+            id.write('1       # locale and term prompted for?\n')
+            id.write('1       # security policy in place\n')
+            id.write('1       # NFSv4 domain configured\n')
+            id.write('0       # Auto Registration Configured\n')
+            id.write('vt100')
 
     def configure_ssh_keys(self):
         rsa_key_file = '%s/root/etc/ssh/ssh_host_rsa_key' % self.path
@@ -277,9 +276,8 @@ class Zone(object):
     def configure_password(self):
         shadow = '%s/root/etc/shadow' % self.path
         if self.root_password:
-            f = open(shadow, 'r')
-            lines = f.readlines()
-            f.close()
+            with open(shadow, 'r') as f:
+                lines = f.readlines()
 
             for i in range(0, len(lines)):
                 fields = lines[i].split(':')
@@ -287,10 +285,9 @@ class Zone(object):
                     fields[1] = self.root_password
                     lines[i] = ':'.join(fields)
 
-            f = open(shadow, 'w')
-            for line in lines:
-                f.write(line)
-            f.close()
+            with open(shadow, 'w') as f:
+                for line in lines:
+                    f.write(line)
 
     def boot(self):
         if not self.module.check_mode:
