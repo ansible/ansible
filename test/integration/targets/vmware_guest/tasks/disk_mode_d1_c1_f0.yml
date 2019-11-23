@@ -17,7 +17,7 @@
     disk:
         - size: 1gb
           type: eagerzeroedthick
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
           disk_mode: 'invalid_disk_mode'
     state: poweredoff
     folder: "{{ f0 }}"
@@ -46,7 +46,7 @@
     disk:
         - size: 1gb
           type: eagerzeroedthick
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
           disk_mode: 'independent_persistent'
     state: poweredoff
     folder: "{{ f0 }}"
@@ -77,7 +77,7 @@
       disk:
         - size: 1gb
           type: eagerzeroedthick
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
           disk_mode: 'independent_persistent'
       state: poweredoff
       folder: "{{ f0 }}"

@@ -19,7 +19,7 @@
     disk:
       - size_gb: 1
         type: thin
-        autoselect_datastore: True
+        datastore: "{{ rw_datastore }}"
     state: poweredoff
 
 - name: convert to VM template
@@ -47,10 +47,10 @@
     disk:
       - size_gb: 2
         type: thin
-        autoselect_datastore: True
+        datastore: "{{ rw_datastore }}"
       - size_gb: 3
         type: thin
-        autoselect_datastore: True
+        datastore: "{{ rw_datastore }}"
     template: clone_resize_disks_original
     state: poweredoff
   register: l_clone_template_modify_disks

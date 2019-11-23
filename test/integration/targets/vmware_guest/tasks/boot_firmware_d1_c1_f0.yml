@@ -18,7 +18,7 @@
     disk:
         - size: 1gb
           type: thin
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
     state: poweredoff
     folder: "{{ f0 }}"
   register: clone_d1_c1_f0
@@ -49,7 +49,7 @@
         disk:
           - size: 1gb
             type: thin
-            autoselect_datastore: True
+            datastore: "{{ rw_datastore }}"
         state: poweredoff
         folder: "{{ f0 }}"
       register: clone_d1_c1_f0
@@ -75,7 +75,7 @@
     disk:
         - size: 1gb
           type: thin
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
     state: poweredoff
     folder: "{{ f0 }}"
   register: clone_d1_c1_f0
@@ -106,7 +106,7 @@
         disk:
           - size: 1gb
             type: thin
-            autoselect_datastore: True
+            datastore: "{{ rw_datastore }}"
         state: poweredoff
         folder: "{{ f0 }}"
       register: clone_d1_c1_f0

@@ -28,7 +28,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: portgroup_network
         switch_name: "{{ dvswitch1 }}"

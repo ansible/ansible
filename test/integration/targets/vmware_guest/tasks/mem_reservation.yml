@@ -21,7 +21,7 @@
         disk:
           - size: 1gb
             type: thin
-            autoselect_datastore: True
+            datastore: "{{ rw_datastore }}"
         state: present
         folder: "{{ virtual_machines[0].folder }}"
       register: mem_reserve_result_0001
@@ -61,7 +61,7 @@
         disk:
           - size: 1gb
             type: thin
-            autoselect_datastore: True
+            datastore: "{{ rw_datastore }}"
         state: present
         folder: "{{ virtual_machines[0].folder }}"
       register: memory_reserve_result_0003
@@ -101,7 +101,7 @@
         disk:
           - size: 1gb
             type: thin
-            autoselect_datastore: True
+            datastore: "{{ rw_datastore }}"
         state: present
         folder: "{{ virtual_machines[0].folder }}"
       register: no_memory_reserve_result_0005

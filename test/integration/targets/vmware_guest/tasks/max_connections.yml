@@ -21,7 +21,7 @@
         disk:
           - size: 1gb
             type: thin
-            autoselect_datastore: True
+            datastore: "{{ rw_datastore }}"
         state: present
         folder: "{{ f0 }}"
       register: mk_conn_result_0001
