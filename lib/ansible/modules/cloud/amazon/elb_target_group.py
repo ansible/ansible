@@ -132,7 +132,6 @@ options:
         group, the RFC 1918 range (10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16), and the RFC 6598 range (100.64.0.0/10).
         You can't specify publicly routable IP addresses.
     required: false
-    default: instance
     choices: ['instance', 'ip', 'lambda']
     version_added: 2.5
     type: str
@@ -833,9 +832,11 @@ def main():
                               required_if=[
                                   ['target_type', 'instance', ['protocol', 'port', 'vpc_id']],
                                   ['target_type', 'ip', ['protocol', 'port', 'vpc_id']],
-                                  ['state', 'absent', ['name']],
                               ]
                               )
+
+    if module.params.get('target_type') is None:
+        module.params['target_type'] = 'instance'
 
     connection = module.client('elbv2')
 
