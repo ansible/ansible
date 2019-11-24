@@ -88,7 +88,7 @@ options:
         type: int
     route_distance:
         description:
-            - Assign route administrative distance e.g. 1
+            - Assign route administrative distance (1-255)
         type: int
     route_trace:
         description:
@@ -213,6 +213,18 @@ class OnyxStaticRouteModule(BaseOnyxModule):
             match = self.NETMASK.match(netmask)
             if not match and not is_netmask(netmask):
                 self._module.fail_json(msg="Invalid network mask")
+
+    def validate_route_distance(self, distance):
+        if distance is not None:
+            int_distance = int(distance)
+            if not (1 <= int_distance <= 255):
+                self._module.fail_json(msg="Route distance must be between 1 and 255")
+
+    def validate_mroute_preference(self, mroute_preference):
+        if mroute_preference is not None:
+            int_mroute_preference = int(mroute_preference)
+            if not (1 <= int_mroute_preference <= 255):
+                self._module.fail_json(msg="Multicast route preference must be between 1 and 255")
 
     def get_required_config(self):
         self._required_config = dict()
@@ -385,15 +397,15 @@ class OnyxStaticRouteModule(BaseOnyxModule):
                 'netmask': netmask,
                 'nexthop': nexthop
             }
-            required_str = network_prefix + ' ' + netmask + ' ' + nexthop
+            required_str = ' '.join((network_prefix, netmask, nexthop))
 
             ''' [route_distance, mroute_preference] one of them will be setted or None '''
             if route_distance is not None:
                 required_route['route_distance'] = route_distance
-                required_str = required_str + ' ' + str(route_distance)
+                required_str = '{0} {1}'.format(required_str, route_distance)
             elif mroute_preference is not None:
                 required_route['mroute_preference'] = mroute_preference
-                required_str = required_str + ' ' + str(mroute_preference)
+                required_str = '{0} {1}'.format(required_str, mroute_preference)
 
             if current_route is not None:
                 is_no_change = self._dict_match(current_route, required_route)
