@@ -3,6 +3,12 @@
 - set_fact: 
     latin1_file1="{{tmp_dir}}/{{file}}"
 
+- name: Deleting Latin1 encoded Database
+  mysql_db:
+    name: '{{ db_latin1_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+
 - name: create Latin1 encoded database
   mysql_db:
     name: '{{ db_latin1_name }}'
