@@ -39,15 +39,15 @@
   file: name={{ latin1_file1 }} state=file
 
 - name:  od the file and check of latin1 encoded string is present
-  shell: grep -a 47 {{ latin1_file1 }} | od -c |grep "(   4   7   ,   '   A   m 351   d 351   e       B 364   l 374"
+  shell: grep -a 47 {{ latin1_file1 }} | od -c |grep "A   m 351   d 351   e       B 364\|A   m 303 251   d 303 251   e       B 303"
 
 - name: Dropping {{ db_latin1_name }} database
-  mysql_db: 
+  mysql_db:
     name: '{{ db_latin1_name }}'
     state: absent
     login_unix_socket: '{{ mysql_socket }}'
 
-- name: Importing the latin1 mysql script 
+- name: Importing the latin1 mysql script
   mysql_db:
     state: import
     encoding: latin1
@@ -57,7 +57,7 @@
 
 - name: check encoding of table
   shell: mysql {{ db_latin1_name }} "-e SHOW FULL COLUMNS FROM testlatin1;"
-  register: output 
+  register: output
   failed_when: '"latin1_swedish_ci" not in output.stdout'
 
 - name: remove database name
