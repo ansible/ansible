@@ -61,7 +61,7 @@ EXAMPLES = '''
 
 - name: Reboot if patch requires it
   reboot:
-  when: syspatch.reboot_required
+  when: syspatch.reboot_needed
 '''
 
 RETURN = r'''
@@ -79,7 +79,7 @@ stderr:
   returned: always
   type: str
   sample: "syspatch: need root privileges"
-reboot_required:
+reboot_needed:
   description: Whether or not a reboot is required after an update
   returned: always
   type: bool
@@ -92,7 +92,7 @@ from ansible.module_utils.basic import AnsibleModule
 def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
-        apply=dict(type='bool', default=False),
+        apply=dict(type='bool'),
         revert=dict(type='str', choices=['all', 'one'])
     )
 
@@ -108,9 +108,9 @@ def run_module():
 
 
 def syspatch_run(module):
-    cmd = ['/usr/sbin/syspatch']
+    cmd = module.get_bin_path('syspatch', True)
     changed = False
-    reboot_required = False
+    reboot_needed = False
     warnings = []
 
     # Setup command flags
@@ -126,7 +126,7 @@ def syspatch_run(module):
         run_flag = []
 
     # Run check command
-    rc, out, err = module.run_command(cmd + check_flag)
+    rc, out, err = module.run_command([cmd] + check_flag)
 
     if rc != 0:
         module.fail_json(msg="Command %s failed rc=%d, out=%s, err=%s" % (cmd, rc, out, err))
@@ -141,7 +141,7 @@ def syspatch_run(module):
     if module.check_mode:
         changed = change_pending
     elif change_pending:
-        rc, out, err = module.run_command(cmd + run_flag)
+        rc, out, err = module.run_command([cmd] + run_flag)
 
         # Workaround syspatch ln bug:
         # http://openbsd-archive.7691.n7.nabble.com/Warning-applying-latest-syspatch-td354250.html
@@ -149,7 +149,7 @@ def syspatch_run(module):
             module.fail_json(msg="Command %s failed rc=%d, out=%s, err=%s" % (cmd, rc, out, err))
         elif out.lower().find('create unique kernel') > 0:
             # Kernel update applied
-            reboot_required = True
+            reboot_needed = True
         elif out.lower().find('syspatch updated itself') > 0:
             warnings.append('Syspatch was updated. Please run syspatch again.')
 
@@ -163,7 +163,7 @@ def syspatch_run(module):
 
     return dict(
         changed=changed,
-        reboot_required=reboot_required,
+        reboot_needed=reboot_needed,
         rc=rc,
         stderr=err,
         stdout=out,
