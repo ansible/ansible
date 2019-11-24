@@ -1,0 +1,2 @@
+bugfixes:
+  - system_service - use a context manager for file handling.
