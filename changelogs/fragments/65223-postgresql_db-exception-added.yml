@@ -1,0 +1,2 @@
+bugfixes:
+  - postgresql_db - Added exception for 'LibraryError' (https://github.com/ansible/ansible/issues/65223).
