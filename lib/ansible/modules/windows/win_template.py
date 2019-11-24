@@ -13,6 +13,7 @@ DOCUMENTATION = r'''
 ---
 module: win_template
 version_added: "1.9.2"
+short_description: Create file from template or Backup given file.
 options:
   backup:
     description:

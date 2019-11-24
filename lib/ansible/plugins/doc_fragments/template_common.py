@@ -11,8 +11,8 @@ class ModuleDocFragment(object):
 
     # Standard template documentation fragment, use by template and win_template.
     DOCUMENTATION = r'''
-short_description: Template a file out to a remote server
 description:
+- Template a file out to a remote server.
 - Templates are processed by the L(Jinja2 templating language,http://jinja.pocoo.org/docs/).
 - Documentation on the template formatting can be found in the
   L(Template Designer Documentation,http://jinja.pocoo.org/docs/templates/).

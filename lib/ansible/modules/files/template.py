@@ -17,6 +17,7 @@ DOCUMENTATION = r'''
 ---
 module: template
 version_added: historical
+short_description: Create a files and directories by using templates.
 options:
   follow:
     description:
