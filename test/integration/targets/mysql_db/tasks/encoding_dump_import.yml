@@ -1,6 +1,5 @@
 ---
 
-
 - set_fact: 
     latin1_file1="{{tmp_dir}}/{{file}}"
 
@@ -21,7 +20,6 @@
   command: mysql {{ db_latin1_name }} "-e select * from testlatin1;"
   register: output
 
-
 - name: Dumping a table in Latin1 database
   mysql_db:
     name: "{{ db_latin1_name }}"
@@ -31,20 +29,30 @@
     login_unix_socket: '{{ mysql_socket }}'
   register: dump_result
 
-- debug: 
-    var: dump_result  
-
-- name: check /tmp
-  stat: 
-    path: "/tmp/{{ latin1_file1 }}" 
-  register: stat_result
-
 - name: state dump - file name should exist
   file: name={{ latin1_file1 }} state=file
 
 - name:  od the file and check of latin1 encoded string is present
   shell: grep -a 47 {{ latin1_file1 }} | od -c |grep "(   4   7   ,   '   A   m 351   d 351   e       B 364   l 374"
 
+- name: Dropping {{ db_latin1_name }} database
+  mysql_db: 
+    name: '{{ db_latin1_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
+
+- name: Importing the latin1 mysql script 
+  mysql_db:
+    state: import
+    encoding: latin1
+    name: '{{ db_latin1_name }}'
+    target: "{{ latin1_file1 }}"
+    login_unix_socket: '{{ mysql_socket }}'
+
+- name: check encoding of table
+  shell: mysql {{ db_latin1_name }} "-e SHOW FULL COLUMNS FROM testlatin1;"
+  register: output 
+  failed_when: '"latin1_swedish_ci" not in output.stdout'
 
 - name: remove database name
   mysql_db:

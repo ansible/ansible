@@ -40,7 +40,7 @@ options:
       - Collation mode (sorting). This only applies to new table/databases and does not update existing ones, this is a limitation of MySQL.
   encoding:
     description:
-      - Encoding mode to use, examples include C(utf8) or C(latin1_swedish_ci), at creation of database or importation of sql script
+      - Encoding mode to use, examples include C(utf8) or C(latin1_swedish_ci), at creation of database, dump or importation of sql script
   target:
     description:
       - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
@@ -130,6 +130,14 @@ EXAMPLES = r'''
   mysql_db:
     state: import
     name: all
+    encoding: latin1
+    target: /tmp/dump.sql
+
+# Dump of database with encoding option
+- name: Dump of Databse with specific latin1 encoding, similar to mysqldump -u <username> --default-character-set=latin1 -p <password> <database> 
+  mysql_db:
+    state: dump
+    name: db_1
     encoding: latin1
     target: /tmp/dump.sql
 
