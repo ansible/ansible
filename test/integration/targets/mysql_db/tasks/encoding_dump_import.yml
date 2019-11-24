@@ -59,4 +59,3 @@
     name: '{{ db_latin1_name }}'
     state: absent
     login_unix_socket: '{{ mysql_socket }}'
-
