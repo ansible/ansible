@@ -451,7 +451,7 @@ def main():
         rc, stdout, stderr = db_dump(module, login_host, login_user,
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
-                                     ssl_ca, single_transaction, quick, ignore_tables, hex_blob,encoding)
+                                     ssl_ca, single_transaction, quick, ignore_tables, hex_blob, encoding)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
