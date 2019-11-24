@@ -1,0 +1,2 @@
+deprecated_features:
+- "docker_container - the default value for ``network_mode`` will change in Ansible 2.14, provided at least one network is specified and ``networks_cli_compatible`` is ``true``. See porting guide, module documentation or deprecation warning for more details."
