@@ -57,7 +57,8 @@ COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
                   ('display_ok_hosts', True),
                   ('show_custom_stats', C.SHOW_CUSTOM_STATS),
                   ('display_failed_stderr', False),
-                  ('check_mode_markers', False),)
+                  ('check_mode_markers', False),
+                  ('always_display_failed_task_path', False),)
 
 
 class CallbackModule(CallbackBase):
@@ -106,6 +107,8 @@ class CallbackModule(CallbackBase):
             self._process_items(result)
 
         else:
+            if self._display.verbosity < 2 and self.always_display_failed_task_path:
+                self._print_task_path(result._task.get_path())
             if delegated_vars:
                 self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'],
                                                                             self._dump_results(result._result)),
@@ -240,11 +243,12 @@ class CallbackModule(CallbackBase):
             checkmsg = ""
         self._display.banner(u"%s [%s%s]%s" % (prefix, task_name, args, checkmsg))
         if self._display.verbosity >= 2:
-            path = task.get_path()
-            if path:
-                self._display.display(u"task path: %s" % path, color=C.COLOR_DEBUG)
-
+            self._print_task_path(task.get_path())
         self._last_task_banner = task._uuid
+    
+    def _print_task_path(self, path):
+        if path:
+            self._display.display(u"task path: %s" % path, color=C.COLOR_DEBUG)
 
     def v2_playbook_on_cleanup_task_start(self, task):
         self._task_start(task, prefix='CLEANUP TASK')

@@ -66,4 +66,15 @@ class ModuleDocFragment(object):
           - key: show_per_host_start
             section: defaults
         version_added: '2.9'
+      always_display_failed_task_path:
+        name: Always display failed tasks paths
+        description: 'Display failed tasks path even in non verbose mode'
+        type: bool
+        default: no
+        env:
+          - name: ANSIBLE_ALWAYS_DISPLAY_FAILED_TASK_PATH
+        ini:
+          - key: always_display_failed_task_path
+            section: defaults
+        version_added: 'x.y'
 '''
