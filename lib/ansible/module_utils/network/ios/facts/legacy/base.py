@@ -67,7 +67,7 @@ class Default(FactsBase):
             return match.group(1)
 
     def parse_uptime(self, data):
-        match = re.search(r'uptime is (\S+)', data)
+        match = re.search(r'uptime is (.+)', data)
         if match:
             return match.group(1)
 
