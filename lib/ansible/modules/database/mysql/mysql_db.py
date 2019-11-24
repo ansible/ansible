@@ -134,7 +134,7 @@ EXAMPLES = r'''
     target: /tmp/dump.sql
 
 # Dump of database with encoding option
-- name: Dump of Databse with specific latin1 encoding, similar to mysqldump -u <username> --default-character-set=latin1 -p <password> <database> 
+- name: Dump of Databse with specific latin1 encoding, similar to mysqldump -u <username> --default-character-set=latin1 -p <password> <database>
   mysql_db:
     state: dump
     name: db_1
