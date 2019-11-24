@@ -19,11 +19,12 @@ $spec = @{
         allow_multiple = @{ type = "bool"; default = $false }
         allow_prerelease = @{ type = "bool"; default = $false }
         architecture = @{ type = "str"; default = "default"; choices = "default", "x86" }
-        install_args = @{ type = "str" }
+        force = @{ type = "bool"; default = $false }
         ignore_checksums = @{ type = "bool"; default = $false }
         ignore_dependencies = @{ type = "bool"; default = $false }
-        force = @{ type = "bool"; default = $false }
+        install_args = @{ type = "str" }
         name = @{ type = "list"; elements = "str"; required = $true }
+        override_args = @{ type = "bool"; default = $false }
         package_params = @{ type = "str"; aliases = @("params") }
         pinned = @{ type = "bool" }
         proxy_url = @{ type = "str" }
@@ -46,11 +47,12 @@ $allow_empty_checksums = $module.Params.allow_empty_checksums
 $allow_multiple = $module.Params.allow_multiple
 $allow_prerelease = $module.Params.allow_prerelease
 $architecture = $module.Params.architecture
-$install_args = $module.Params.install_args
+$force = $module.Params.force
 $ignore_checksums = $module.Params.ignore_checksums
 $ignore_dependencies = $module.Params.ignore_dependencies
-$force = $module.Params.force
+$install_args = $module.Params.install_args
 $name = $module.Params.name
+$override_args = $module.Params.override_args
 $package_params = $module.Params.package_params
 $pinned = $module.Params.pinned
 $proxy_url = $module.Params.proxy_url
@@ -101,6 +103,7 @@ Function Get-InstallChocolateyArguments {
         [bool]$force,
         [bool]$ignore_dependencies,
         [String]$install_args,
+        [bool]$override_args,
         [String]$package_params,
         [String]$proxy_url,
         [String]$proxy_username,
@@ -145,6 +148,9 @@ Function Get-InstallChocolateyArguments {
     if ($install_args) {
         $arguments.Add("--install-arguments") > $null
         $arguments.add($install_args) > $null
+    }
+    if ($override_args) {
+        $arguments.Add("--override-arguments") > $null
     }
     if ($package_params) {
         $arguments.Add("--package-parameters") > $null
@@ -469,6 +475,7 @@ Function Update-ChocolateyPackage {
         [bool]$ignore_checksums,
         [bool]$ignore_dependencies,
         [String]$install_args,
+        [bool]$override_args,
         [String]$package_params,
         [String]$proxy_url,
         [String]$proxy_username,
@@ -494,6 +501,7 @@ Function Update-ChocolateyPackage {
         ignore_checksums = $ignore_checksums
         ignore_dependencies = $ignore_dependencies
         install_args = $install_args
+        override_args = $override_args
         package_params = $package_params
         proxy_url = $proxy_url
         proxy_username = $proxy_username
@@ -544,6 +552,7 @@ Function Install-ChocolateyPackage {
         [bool]$ignore_checksums,
         [bool]$ignore_dependencies,
         [String]$install_args,
+        [bool]$override_args,
         [String]$package_params,
         [String]$proxy_url,
         [String]$proxy_username,
@@ -568,6 +577,7 @@ Function Install-ChocolateyPackage {
         ignore_checksums = $ignore_checksums
         ignore_dependencies = $ignore_dependencies
         install_args = $install_args
+        override_args = $override_args
         package_params = $package_params
         proxy_url = $proxy_url
         proxy_username = $proxy_username
@@ -736,6 +746,7 @@ if ($state -in @("downgrade", "latest", "present", "reinstalled")) {
         ignore_checksums = $ignore_checksums
         ignore_dependencies = $ignore_dependencies
         install_args = $install_args
+        override_args = $override_args
         package_params = $package_params
         proxy_url = $proxy_url
         proxy_username = $proxy_username
