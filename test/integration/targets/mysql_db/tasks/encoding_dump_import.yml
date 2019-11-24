@@ -17,11 +17,17 @@
 - name: inserting data into Latin1 database
   command: mysql {{ db_latin1_name }} "-e insert into testlatin1 value(47,'Amédée Bôlüt');"
 
+- name: selecting table
+  command: mysql {{ db_latin1_name }} "-e select * from testlatin1;"
+  register: output
+
+
 - name: Dumping a table in Latin1 database
   mysql_db:
     name: "{{ db_latin1_name }}"
     encoding: latin1
     target: "{{ latin1_file1 }}"
+    state: dump
     login_unix_socket: '{{ mysql_socket }}'
   register: dump_result
 
@@ -36,14 +42,8 @@
 - name: state dump - file name should exist
   file: name={{ latin1_file1 }} state=file
 
-- name: Check if encoded string is in dump file
-  lineinfile:
-    path: "{{ latin1_file1 }}"
-    line: "Amédée Bôlüt"
-    state: present
-  check_mode: yes
-  register: presence
-  failed_when: presence is change
+- name:  od the file and check of latin1 encoded string is present
+  shell: grep -a 47 {{ latin1_file1 }} | od -c |grep "(   4   7   ,   '   A   m 351   d 351   e       B 364   l 374"
 
 
 - name: remove database name

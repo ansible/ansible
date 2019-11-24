@@ -217,7 +217,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
     else:
         cmd += " --databases {0} --skip-lock-tables".format(' '.join(db_name))
     if (encoding is not None) and (encoding != ""):
-        cmd.append("--default-character-set=%s" % shlex_quote(encoding))
+        cmd += " --default-character-set=%s" % shlex_quote(encoding)
     if single_transaction:
         cmd += " --single-transaction=true"
     if quick:
