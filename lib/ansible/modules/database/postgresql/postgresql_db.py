@@ -201,6 +201,11 @@ from ansible.module_utils._text import to_native
 class NotSupportedError(Exception):
     pass
 
+
+class LibraryError(Exception):
+    pass
+
+
 # ===========================================
 # PostgreSQL module specific support methods.
 #
@@ -553,7 +558,7 @@ def main():
                 db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
             cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        except pgutils.LibraryError as e:
+        except LibraryError as e:
             module.fail_json(msg="unable to connect to database: {0}".format(to_native(e)), exception=traceback.format_exc())
 
         except TypeError as e:
