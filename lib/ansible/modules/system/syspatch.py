@@ -56,7 +56,7 @@ EXAMPLES = '''
 # NOTE: You can reboot automatically if a patch requires it:
 - name: Apply all patches and store result
   syspatch:
-    revert: all
+    apply: true
   register: syspatch
 
 - name: Reboot if patch requires it
