@@ -562,6 +562,8 @@ class DockerNetworkManager(object):
             self.results['changed'] = True
 
     def is_container_connected(self, container_name):
+        if not self.existing_network:
+            return False
         return container_name in container_names_in_network(self.existing_network)
 
     def connect_containers(self):
