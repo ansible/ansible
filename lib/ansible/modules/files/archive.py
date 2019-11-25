@@ -38,7 +38,7 @@ options:
     default: gz
   dest:
     description:
-      - The file name of the destination archive.  The parent directory must exists on the remote host.
+      - The file name of the destination archive. The parent directory must exists on the remote host.
       - This is required when C(path) refers to multiple files by either specifying a glob, a directory or multiple paths in a list.
     type: path
   exclude_path:
@@ -412,16 +412,15 @@ def main():
                                     n_fullpath = to_native(b_fullpath, errors='surrogate_or_strict', encoding='ascii')
                                     n_arcname = to_native(b_match_root.sub(b'', b_fullpath), errors='surrogate_or_strict')
 
-                                    if not filecmp.cmp(b_fullpath, b_dest):
-                                        try:
-                                            if fmt == 'zip':
-                                                arcfile.write(n_fullpath, n_arcname)
-                                            else:
-                                                arcfile.add(n_fullpath, n_arcname, recursive=False)
+                                    try:
+                                        if fmt == 'zip':
+                                            arcfile.write(n_fullpath, n_arcname)
+                                        else:
+                                            arcfile.add(n_fullpath, n_arcname, recursive=False)
 
-                                            b_successes.append(b_fullpath)
-                                        except Exception as e:
-                                            errors.append('Adding %s: %s' % (to_native(b_path), to_native(e)))
+                                        b_successes.append(b_fullpath)
+                                    except Exception as e:
+                                        errors.append('Adding %s: %s' % (to_native(b_path), to_native(e)))
                         else:
                             path = to_native(b_path, errors='surrogate_or_strict', encoding='ascii')
                             arcname = to_native(b_match_root.sub(b'', b_path), errors='surrogate_or_strict')
