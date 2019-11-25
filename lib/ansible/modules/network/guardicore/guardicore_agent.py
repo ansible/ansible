@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Ansible module to manage Check Point Firewall (c) 2019
+# Ansible module to manage Guardicore Agents (c) 2019
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 
 from __future__ import absolute_import, division, print_function
@@ -19,8 +21,8 @@ short_description: Manages Guardicore Agents
 description:
   - Manage Guardicore Agents over different linux operation system.
   - Please check the Agent Installation Instructions screen in the Guardicore Centra UI to make sure the OSs and versions are supported.
-version_added: "2.8"
-author: "Ansible by Guardicore"
+version_added: "2.10"
+author: "Lior Bar-Oz (@liorBaroz)"
 options:
   installation_password:
     description:
@@ -29,27 +31,29 @@ options:
     type: str
   ssl_address:
     description:
-      - the ssl address to install the agent in front of. 
+      - the ssl address to install the agent in front of.
       - C(ssl_address) or C(ssl_address_cluster) are required if state set as C(present).
     required: False
     type: str
-    default: present
   ssl_port:
     description:
       - the ssl port to install the agent in front of. default is C(443).
     required: False
     type: str
+    default: 443
   ssl_addresses_cluster:
     description:
-      - List of cluster ssl address must be in form of "C(<ssl_address>):C(<ssl_port>)". see example. 
+      - List of cluster ssl address must be in form of "C(<ssl_address>):C(<ssl_port>)". see example.
       - In case this parameter is given, ssl_address and ssl_port will not be in use
-      - C(ssl_address) or C(ssl_address_cluster) are required if state set as C(present).   
+      - C(ssl_address) or C(ssl_address_cluster) are required if state set as C(present).
     required: False
     type: str
   state:
     description:
-      - present, absent or service. Defaults to present. 
-      - if C('service') is selected, all the agent modules will be enabled unless the values of the C('disable_reveal')/C('disable_deception')/C('disable_detection')/C('disable_enforcement') parameters will be set to disable. see example.
+      - present, absent or service. Defaults to present.
+      - if C('service') is selected, all the agent modules will be enabled unless the values of the
+        C('disable_reveal')/C('disable_deception')/C('disable_detection')/C('disable_enforcement') 
+        parameters will be set to disable. see example.
     type: str
     default: present
   labels:
@@ -69,7 +73,7 @@ options:
     type: str
   disable_reveal:
     description:
-      - Disable the Reveal module by default. 
+      - Disable the Reveal module by default.
       - Can be used with both C('present')/C('service') for C('state') parameter
       - It can be enabled manually through Agent configuration or by using C('service') for C('state') parameter afterwards.
     type: bool
@@ -84,14 +88,14 @@ options:
   disable_detection:
     description:
       - Disable the Detection module by default.
-      - Can be used with both C('present')/C('service') for C('state') parameter 
+      - Can be used with both C('present')/C('service') for C('state') parameter.
       - It can be enabled manually through Agent configuration or by using C('service') for C('state') parameter afterwards.
     type: bool
     default: False
   disable_enforcement:
     description:
       - Disable the Enforcement module by default.
-      - Can be used with both C('present')/C('service') for C('state') parameter 
+      - Can be used with both C('present')/C('service') for C('state') parameter
       - It can be enabled manually through Agent configuration or by using C('service') for C('state') parameter afterwards.
     type: bool
     default: False
@@ -109,25 +113,23 @@ options:
     description:
       - Install the agent and logs in a custom path instead of C(/var/lib/guardicore). For RPM based OS only.
     type: str
+    default: /var/lib/guardicore
   debug:
     description:
       - Log extra debugging information.
-    type: str
-    default: no    
+    type: bool
+    default: no
 '''
 
 EXAMPLES = r'''
-- name: Install Guardicore Agent 
+- name: Install Guardicore Agent
   guardicore_agent:
     installation_password: "AgentInstallationPassword"
     state: present
     ssl_address: 192.168.1.100
     labels: "environment:production,app:web"
-    labels:
-      environment: production
-      app: web
 
-- name: Install Guardicore Agent without deception service using specific port 
+- name: Install Guardicore Agent without deception service using specific port
   guardicore_agent:
     installation_password: "AgentInstallationPassword"
     state: present
@@ -135,7 +137,7 @@ EXAMPLES = r'''
     ssl_port: 1443
     disable_deception: "no"
 
-- name: Enable all Guardicore Agent modules except for deception, after it was installed 
+- name: Enable all Guardicore Agent modules except for deception, after it was installed
   guardicore_agent:
     state: service
     disable_deception: "yes"
@@ -287,27 +289,32 @@ def install_guardicore_agent(module, params, os_environ):
 
         rc, stdout, stderr = module.run_command("/tmp/agent_installation.sh", environ_update=os_environ)
 
-        if rc is 0:
+        if rc == 0:
             output = stdout
 
         else:
             output += stderr
 
-    finally:
         if not output:
             output = " failed to get installation response "
         return output
+
+    except Exception as e:
+        return e
 
 
 def uninstall_guardicore_agent(module):
     """remove gc-agent package form the destination machine"""
     try:
         rc, stdout, stderr = module.run_command("gc-agent uninstall")
-    finally:
+
         if stdout:
             return "Guardicore agent was removed successfully: {stdout}".format(stdout=stdout)
         elif stderr:
             return "Something went wrong with uninstalling Guardicore agent: {stderr}".format(stderr=stderr)
+
+    except Exception as e:
+        return e
 
 
 def enable_guardicore_agent_services(params, module):
@@ -338,16 +345,20 @@ def enable_guardicore_agent_services(params, module):
             for guardicore_agents_module in guardicore_agents_modules:
                 rc, stdout, stderr = module.run_command("gc-agent {action} {guardicore_agents_module}".format(
                     action=action, guardicore_agents_module=guardicore_agents_module))
-                if rc is 0:
+                if rc == 0:
                     output += stdout
                 else:
                     output += stderr
 
-    finally:
         if guardicore_agent_modules_to_disable is []:
-            return "All Guardicore Agent services set to be enabled"
+            output += "All Guardicore Agent services set to be enabled"
+
+        return output
+
+    except Exception as e:
+
         if not output:
-            return "Failed to change the Guardicore Agent services"
+            output = "Failed to change the Guardicore Agent services:\n{e}".format(e=e)
         return output
 
 
