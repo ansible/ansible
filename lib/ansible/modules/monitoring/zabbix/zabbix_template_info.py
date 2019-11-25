@@ -20,8 +20,8 @@ version_added: '2.10'
 description:
     - This module allows you to search for Zabbix template.
 requirements:
-    - python >= 2.6
-    - zabbix-api
+    - "python >= 2.6"
+    - "zabbix-api >= 0.5.4"
 options:
     template_name:
         description:
