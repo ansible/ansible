@@ -46,6 +46,15 @@ DOCUMENTATION = '''
         ini:
           - section: callback_splunk
             key: authtoken
+      validate_certs:
+        description: Validate the SSL certificate of the Splunk server. (For HTTPS URLs)
+        env:
+          - name: SPLUNK_VALIDATE_CERTS
+        ini:
+          - section: callback_splunk
+            key: validate_certs
+        default: True
+        type: bool
 '''
 
 EXAMPLES = '''
@@ -85,7 +94,7 @@ class SplunkHTTPCollectorSource(object):
         self.ip_address = socket.gethostbyname(socket.gethostname())
         self.user = getpass.getuser()
 
-    def send_event(self, url, authtoken, state, result, runtime):
+    def send_event(self, url, authtoken, validate_certs, state, result, runtime):
         if result._task_fields['args'].get('_ansible_check_mode') is True:
             self.ansible_check_mode = True
 
@@ -126,6 +135,7 @@ class SplunkHTTPCollectorSource(object):
         open_url(
             url,
             jsondata,
+            validate_certs=validate_certs,
             headers={
                 'Content-type': 'application/json',
                 'Authorization': 'Splunk ' + authtoken
@@ -145,6 +155,7 @@ class CallbackModule(CallbackBase):
         self.start_datetimes = {}  # Collect task start times
         self.url = None
         self.authtoken = None
+        self.validate_certs = None
         self.splunk = SplunkHTTPCollectorSource()
 
     def _runtime(self, result):
@@ -175,6 +186,8 @@ class CallbackModule(CallbackBase):
                                   'authentication token can be provided using the '
                                   '`SPLUNK_AUTHTOKEN` environment variable or '
                                   'in the ansible.cfg file.')
+                                  
+        self.validate_certs = self.get_option('validate_certs')
 
     def v2_playbook_on_start(self, playbook):
         self.splunk.ansible_playbook = basename(playbook._file_name)
@@ -189,6 +202,7 @@ class CallbackModule(CallbackBase):
         self.splunk.send_event(
             self.url,
             self.authtoken,
+            self.validate_certs,
             'OK',
             result,
             self._runtime(result)
@@ -198,6 +212,7 @@ class CallbackModule(CallbackBase):
         self.splunk.send_event(
             self.url,
             self.authtoken,
+            self.validate_certs,
             'SKIPPED',
             result,
             self._runtime(result)
@@ -207,6 +222,7 @@ class CallbackModule(CallbackBase):
         self.splunk.send_event(
             self.url,
             self.authtoken,
+            self.validate_certs,
             'FAILED',
             result,
             self._runtime(result)
@@ -216,6 +232,7 @@ class CallbackModule(CallbackBase):
         self.splunk.send_event(
             self.url,
             self.authtoken,
+            self.validate_certs,
             'FAILED',
             result,
             self._runtime(result)
@@ -225,6 +242,7 @@ class CallbackModule(CallbackBase):
         self.splunk.send_event(
             self.url,
             self.authtoken,
+            self.validate_certs,
             'UNREACHABLE',
             result,
             self._runtime(result)
