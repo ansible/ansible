@@ -52,7 +52,7 @@ options:
     description:
       - present, absent or service. Defaults to present.
       - if C('service') is selected, all the agent modules will be enabled unless the values of the
-        C('disable_reveal')/C('disable_deception')/C('disable_detection')/C('disable_enforcement') 
+        C('disable_reveal')/C('disable_deception')/C('disable_detection')/C('disable_enforcement')
         parameters will be set to disable. see example.
     type: str
     default: present
@@ -80,7 +80,7 @@ options:
     default: False
   disable_deception:
     description:
-      - Disable the Deception module by default. 
+      - Disable the Deception module by default.
       - Can be used with both C('present')/C('service') for C('state') parameter
       - It can be enabled manually through Agent configuration or by using C('service') for C('state') parameter afterwards.
     type: bool
