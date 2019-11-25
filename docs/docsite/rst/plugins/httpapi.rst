@@ -32,6 +32,27 @@ Most httpapi plugins can operate without configuration. Additional options may b
 Plugins are self-documenting. Each plugin should document its configuration options.
 
 
+The following sample playbook shows the httpapi plugin for an Arista network device, assuming an inventory variable set as ``ansible_network_os=eos`` for the httpapi plugin to trigger off:
+
+.. code-block:: yaml
+
+  - hosts: leaf01
+    connection: httpapi
+    gather_facts: false
+    tasks:
+
+      - name: type a simple arista command
+        eos_command:
+          commands:
+            - show version | json
+        register: command_output
+
+      - name: print command output to terminal window
+        debug:
+          var: command_output.stdout[0]["version"]
+
+See the full working example at https://github.com/network-automation/httpapi.
+
 .. _httpapi_plugin_list:
 
 Plugin List
