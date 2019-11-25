@@ -45,7 +45,7 @@ options:
         description:
             - The VLAN ID that should be configured with the portgroup, use 0 for no VLAN.
             - 'If C(vlan_trunk) is configured to be I(true), this can be a combination of multiple ranges and numbers, example: 1-200, 205, 400-4094.'
-            - 'If C(vlan_pvlan) is configured to be I(true) then C(vlan_id) identifies a private vlan.
+            - 'If C(vlan_pvlan) is configured to be I(true) then C(vlan_id) identifies a private vlan.'
             - The valid C(vlan_id) range is from 0 to 4094. Overlapping ranges are allowed.
         required: True
         type: str
@@ -307,7 +307,7 @@ class VMwareDvsPortgroup(PyVmomi):
                 config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec()
             else:
                 config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec()
-            
+
             # Set VLAN
             config.defaultPortConfig.vlan.vlanId = int(self.module.params['vlan_id'])
 
