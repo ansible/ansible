@@ -17,7 +17,7 @@
         template: "{{ virtual_machines[0].name }}"
         name: test_vm1
         disk:
-          - size: 10gb
+          - size: 1gb
             datastore: "{{ rw_datastore }}"
         guest_id: rhel7_64guest
         hardware:
@@ -44,7 +44,7 @@
         folder: "{{ f0 }}"
         name: test_vm2
         disk:
-          - size: 10gb
+          - size: 1gb
             datastore: "{{ rw_datastore }}"
         guest_id: rhel7_64guest
         hardware:
@@ -70,7 +70,7 @@
         folder: "{{ f0 }}"
         name: test_vm2
         disk:
-          - size: 10gb
+          - size: 1gb
             datastore: "{{ rw_datastore }}"
         guest_id: rhel7_64guest
         hardware:
@@ -96,7 +96,7 @@
         folder: "{{ f0 }}"
         name: test_vm3
         disk:
-          - size: 10gb
+          - size: 1gb
             datastore: "{{ rw_datastore }}"
         guest_id: rhel7_64guest
         hardware:
@@ -122,7 +122,7 @@
         folder: "{{ f0 }}"
         name: test_vm3
         disk:
-          - size: 10gb
+          - size: 1gb
             datastore: "{{ rw_datastore }}"
         guest_id: rhel7_64guest
         hardware:

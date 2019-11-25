@@ -15,8 +15,8 @@
         guest_id: centos64Guest
         datacenter: "{{ dc1 }}"
         hardware:
-          num_cpus: 4
-          memory_mb: 512
+          num_cpus: 1
+          memory_mb: 128
           mem_reservation: 0
         disk:
           - size: 1gb
@@ -55,8 +55,8 @@
         guest_id: centos64Guest
         datacenter: "{{ dc1 }}"
         hardware:
-          num_cpus: 4
-          memory_mb: 512
+          num_cpus: 1
+          memory_mb: 128
           memory_reservation: 0
         disk:
           - size: 1gb
@@ -95,8 +95,8 @@
         guest_id: centos64Guest
         datacenter: "{{ dc1 }}"
         hardware:
-          num_cpus: 4
-          memory_mb: 512
+          num_cpus: 1
+          memory_mb: 128
           memory_reservation: 0
         disk:
           - size: 1gb
