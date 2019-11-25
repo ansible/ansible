@@ -45,6 +45,7 @@ options:
         description:
             - The VLAN ID that should be configured with the portgroup, use 0 for no VLAN.
             - 'If C(vlan_trunk) is configured to be I(true), this can be a combination of multiple ranges and numbers, example: 1-200, 205, 400-4094.'
+            - 'If C(vlan_pvlan) is configured to be I(true) then C(vlan_id) identifies a private vlan.
             - The valid C(vlan_id) range is from 0 to 4094. Overlapping ranges are allowed.
         required: True
         type: str
@@ -74,6 +75,13 @@ options:
     vlan_trunk:
         description:
             - Indicates whether this is a VLAN trunk or not.
+        required: False
+        default: False
+        type: bool
+        version_added: '2.5'
+    vlan_pvlan:
+        description:
+            - Indicates whether the C(vlan_id) is a PVLAN or not.
         required: False
         default: False
         type: bool
@@ -155,6 +163,20 @@ EXAMPLES = '''
     password: '{{ vcenter_password }}'
     portgroup_name: vlan-123-portrgoup
     switch_name: dvSwitch
+    vlan_id: 123
+    num_ports: 120
+    portgroup_type: earlyBinding
+    state: present
+  delegate_to: localhost
+
+- name: Create pvlan portgroup
+  vmware_dvs_portgroup:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    portgroup_name: vlan-123-portrgoup
+    switch_name: dvSwitch
+    vlan_pvlan: True
     vlan_id: 123
     num_ports: 120
     portgroup_type: earlyBinding
@@ -276,8 +298,19 @@ class VMwareDvsPortgroup(PyVmomi):
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec()
             config.defaultPortConfig.vlan.vlanId = list(map(lambda x: vim.NumericRange(start=x[0], end=x[1]), self.create_vlan_list()))
         else:
-            config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec()
+            if int(self.module.params['vlan_id']) not in range(0, 4095):
+                # Check if valid VLAN provided
+                self.module.fail_json(msg="vlan_id %s specified is incorrect. The valid vlan_id range is from 0 to 4094." % self.module.params['vlan_id'])
+
+            # Check if private vlan
+            if self.module.params['vlan_pvlan']:
+                config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec()
+            else:
+                config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec()
+            
+            # Set VLAN
             config.defaultPortConfig.vlan.vlanId = int(self.module.params['vlan_id'])
+
         config.defaultPortConfig.vlan.inherited = False
         config.defaultPortConfig.securityPolicy = vim.dvs.VmwareDistributedVirtualSwitch.SecurityPolicy()
         config.defaultPortConfig.securityPolicy.allowPromiscuous = vim.BoolPolicy(value=self.module.params['network_policy']['promiscuous'])
@@ -447,6 +480,7 @@ def main():
             portgroup_type=dict(required=True, choices=['earlyBinding', 'lateBinding', 'ephemeral'], type='str'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             vlan_trunk=dict(type='bool', default=False),
+            vlan_pvlan=dict(type='bool', default=False),
             network_policy=dict(
                 type='dict',
                 options=dict(
