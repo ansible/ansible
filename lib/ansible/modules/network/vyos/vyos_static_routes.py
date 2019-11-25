@@ -124,9 +124,9 @@ options:
     type: str
   state:
     description:
-      - The state of the configuration after module completion. 
+      - The state of the configuration after module completion.
       - The states I(rendered), I(gathered) and I(parsed) does not perform any
-        change on the device. 
+        change on the device.
       - The state I(rendered) will transform the configuration in C(config) option to platform
         specific CLI commands which will be returned in the I(rendered) key within the result.
         For state I(rendered) active connection to remote host is not required.
@@ -645,24 +645,24 @@ commands:
   sample:
     - "set protocols static route 192.0.0.0/24 next-hop '192.11.11.11'"
     - "set protocols static route 192.0.0.0/24 'blackhole'"
-    
 rendered:
   description: The set of CLI commands generated from the value in C(config) option
   returned: When C(state) is I(rendered)
   type: list
-  sample:  "address_families": [
+  sample: >
+    "address_families": [
                 {
-                    "afi": "ipv4", 
+                    "afi": "ipv4",
                     "routes": [
                         {
                             "blackhole_config": {
                                 "type": "blackhole"
-                            }, 
-                            "dest": "192.0.0.0/24", 
+                            },
+                            "dest": "192.0.0.0/24",
                             "next_hops": [
                                 {
                                     "forward_router_address": "192.11.11.11"
-                                }, 
+                                },
                                 {
                                     "forward_router_address": "192.11.11.12"
                                 }

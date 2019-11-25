@@ -11,8 +11,6 @@ from ansible.module_utils.network.common.network import get_resource_connection
 from ansible.module_utils.six import iteritems
 
 
-
-
 class FactsBase(object):
     """
     The facts base class

@@ -36,7 +36,6 @@ class Static_routes(ConfigBase):
         'static_routes',
     ]
 
-
     def __init__(self, module):
         super(Static_routes, self).__init__(module)
 
@@ -68,7 +67,7 @@ class Static_routes(ConfigBase):
             existing_static_routes_facts = []
 
         if self.state in self.ACTION_STATES or self.state == 'rendered':
-            commands.extend(self.set_config(existing_static_routes_facts ))
+            commands.extend(self.set_config(existing_static_routes_facts))
 
         if commands and self.state in self.ACTION_STATES:
             if not self._module.check_mode:
@@ -77,7 +76,6 @@ class Static_routes(ConfigBase):
 
         if self.state in self.ACTION_STATES:
             result['commands'] = commands
-
 
         if self.state in self.ACTION_STATES or self.state == 'gathered':
             changed_static_routes_facts = self.get_static_routes_facts()
