@@ -212,7 +212,7 @@ class InventoryCLI(CLI):
                 hostvars = combine_vars(hostvars, get_vars_from_path(self.loader, context.CLIARGS['basedir'], [host], 'all'))
         else:
             # get all vars flattened by host, but skip magic hostvars
-            hostvars = self.vm.get_vars(host=host, include_hostvars=False)
+            hostvars = self.vm.get_vars(host=host, include_hostvars=False, stage='all')
 
         return self._remove_internal(hostvars)
 
