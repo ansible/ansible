@@ -16,6 +16,7 @@ DOCUMENTATION = """
     - retrieve secrets from HashiCorp's vault
   notes:
     - Due to a current limitation in the HVAC library there won't necessarily be an error if a bad endpoint is specified.
+    - As of Ansible 2.10, only the latest secret is returned when specifying a KV v2 path.
   options:
     secret:
       description: query you are making.
@@ -98,8 +99,9 @@ EXAMPLES = """
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200 namespace=teama/admins')}}"
 
-# to work with kv v2 (vault api - for kv v2 -  GET method requires that PATH should be "secret/data/:path")
-- name: Return all kv v2 secrets from a path
+# When using KV v2 the PATH should include "data" between the secret engine mount and path (e.g. "secret/data/:path")
+# see: https://www.vaultproject.io/api/secret/kv/kv-v2.html#read-secret-version
+- name: Return latest KV v2 secret from path
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/data/hello token=my_vault_token url=http://myvault_url:8200') }}"
 
@@ -196,6 +198,18 @@ class HashiVault:
 
     def get(self):
         data = self.client.read(self.secret)
+
+        # Check response for KV v2 fields and flatten nested secret data.
+        #
+        # https://vaultproject.io/api/secret/kv/kv-v2.html#sample-response-1
+        try:
+            # sentinel field checks
+            check_dd = data['data']['data']
+            check_md = data['data']['metadata']
+            # unwrap nested data
+            data = data['data']
+        except KeyError:
+            pass
 
         if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
