@@ -17,7 +17,9 @@ DOCUMENTATION = '''
 ---
 module: os_security_group_rule
 short_description: Add/Delete rule from an existing security group
-author: "Benno Joy (@bennojoy)"
+author:
+   - "Benno Joy (@bennojoy)"
+   - "Jeffrey van Pelt (@Thulium-Drake)"
 extends_documentation_fragment: openstack
 version_added: "2.0"
 description:
@@ -29,8 +31,8 @@ options:
      required: true
    protocol:
       description:
-        - IP protocols TCP UDP ICMP 112 (VRRP) 132 (SCTP)
-      choices: ['tcp', 'udp', 'icmp', '112', '132', None]
+        - IP protocols ANY TCP UDP ICMP 112 (VRRP) 132 (SCTP)
+      choices: ['any', 'tcp', 'udp', 'icmp', '112', '132', None]
    port_range_min:
       description:
         - Starting port
@@ -127,6 +129,13 @@ EXAMPLES = '''
     protocol: icmp
     remote_ip_prefix: 0.0.0.0/0
     project: myproj
+
+# Remove the default created egress rule for IPv4
+- os_security_group_rule:
+   cloud: mordred
+   security_group: foo
+   protocol: any
+   remote_ip_prefix: 0.0.0.0/0
 '''
 
 RETURN = '''
@@ -202,6 +211,10 @@ def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
         if module_max and int(module_max) == -1:
             module_max = None
 
+    # Rules with 'any' protocol do not match ports
+    if protocol == 'any':
+        return True
+
     # Check if the user is supplying -1 or None values for full TPC/UDP port range.
     if protocol in ['tcp', 'udp'] or protocol is None:
         if module_min and module_max and int(module_min) == int(module_max) == -1:
@@ -273,7 +286,7 @@ def main():
         # NOTE(Shrews): None is an acceptable protocol value for
         # Neutron, but Nova will balk at this.
         protocol=dict(default=None,
-                      choices=[None, 'tcp', 'udp', 'icmp', '112', '132']),
+                      choices=[None, 'any', 'tcp', 'udp', 'icmp', '112', '132']),
         port_range_min=dict(required=False, type='int'),
         port_range_max=dict(required=False, type='int'),
         remote_ip_prefix=dict(required=False, default=None),
@@ -330,6 +343,9 @@ def main():
             module.exit_json(changed=_system_state_change(module, secgroup, remotegroup))
 
         if state == 'present':
+            if module.params['protocol'] == 'any':
+                module.params['protocol'] = None
+
             if not secgroup:
                 module.fail_json(msg='Could not find security group %s' %
                                  security_group)
