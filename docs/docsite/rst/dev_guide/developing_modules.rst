@@ -39,6 +39,15 @@ The functionality you want may be too large for a single module. If you want to 
 
 * Modules should typically encompass much of the logic for interacting with a resource. A lightweight wrapper around an API that does not contain much logic would likely cause users to offload too much logic into a playbook, and for this reason the module would be rejected. Instead try creating multiple modules for interacting with smaller individual pieces of the API.
 
+6. Should you write a collection?
+
+Ansible recommends :ref:`collections <developing_collections>` as a flexible approach to providing playbooks, roles, modules, and plugins as a combined content package that you can develop and release on your own schedule.
+
+.. note::
+  Ansible will no longer accept pull requests that create new module directories. You must use collections instead.
+
+
+
 If your use case isn't covered by an existing module, an open PR, an action plugin, or a role, and you don't need to create multiple modules, then you're ready to start developing a new module. Choose from the topics below for next steps:
 
 * I want to :ref:`get started on a new module <developing_modules_general>`.
