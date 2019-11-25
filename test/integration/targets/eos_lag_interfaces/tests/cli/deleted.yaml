@@ -24,6 +24,11 @@
     gather_network_resources: lag_interfaces
   become: yes
 
+- set_fact:
+    expected_config:
+      - name: "Port-Channel10"
+      - name: "Port-Channel5"
+
 - assert:
     that:
-      - "ansible_facts.network_resources.lag_interfaces == []"
+      - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(expected_config)|length == 0"

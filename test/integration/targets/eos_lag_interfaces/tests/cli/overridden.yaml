@@ -3,6 +3,7 @@
 
 - set_fact:
     config:
+      - name: "Port-Channel5"
       - name: "Port-Channel10"
         members:
           - member: Ethernet2

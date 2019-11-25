@@ -6,7 +6,6 @@
          channel-group 5 mode on
       interface Ethernet2
          no channel-group
-      no interface Port-Channel10
   become: yes
 
 - eos_facts:
@@ -15,6 +14,7 @@
 
 - set_fact:
     expected_config:
+      - name: "Port-Channel10"
       - name: "Port-Channel5"
         members:
           - member: Ethernet1
