@@ -102,19 +102,7 @@ being raised.
 
 
 Beginning in version 2.8, attempting to access an attribute of an Undefined value in Jinja will return another Undefined value, rather than throwing an error immediately. This means that you can now simply use
-a default with a value in a nested data structure when you don't know if the intermediate values are defined.
-
-In Ansible 2.8::
-
-    {{ foo.bar.baz | default('DEFAULT') }}
-
-In Ansible 2.7 and older::
-
-    {{ ((foo | default({})).bar | default({})).baz | default('DEFAULT') }}
-
-    or
-
-    {{ foo.bar.baz if (foo is defined and foo.bar is defined and foo.bar.baz is defined) else 'DEFAULT' }}
+a default with a value in a nested data structure (i.e :code:`{{ foo.bar.baz | default('DEFAULT') }}`) when you don't know if the intermediate values are defined.
 
 If you want to use the default value when variables evaluate to false or an empty string you have to set the second parameter to
 ``true``::
