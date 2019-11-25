@@ -235,6 +235,10 @@ class AnsibleUndefined(StrictUndefined):
     rather than throwing an exception.
     '''
     def __getattr__(self, name):
+        if name == '__UNSAFE__':
+            # AnsibleUndefined should never be assumed to be unsafe
+            # This prevents ``hasattr(val, '__UNSAFE__')`` from evaluating to ``True``
+            raise AttributeError(name)
         # Return original Undefined object to preserve the first failure context
         return self
 
@@ -272,7 +276,7 @@ class AnsibleContext(Context):
             for item in val:
                 if self._is_unsafe(item):
                     return True
-        elif hasattr(val, '__UNSAFE__'):
+        elif getattr(val, '__UNSAFE__', False) is True:
             return True
         return False
 
