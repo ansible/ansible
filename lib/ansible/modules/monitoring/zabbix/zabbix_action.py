@@ -30,7 +30,7 @@ author:
     - Ruben Harutyunov (@K-DOT)
 
 requirements:
-    - zabbix-api
+    - "zabbix-api >= 0.5.4"
 
 options:
     name:

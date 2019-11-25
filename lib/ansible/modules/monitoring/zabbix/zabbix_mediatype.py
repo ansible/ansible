@@ -22,7 +22,7 @@ version_added: "2.9"
 author:
     - Ruben Tsirunyan (@rubentsirunyan)
 requirements:
-    - zabbix-api
+    - "zabbix-api >= 0.5.4"
 
 options:
     name:
