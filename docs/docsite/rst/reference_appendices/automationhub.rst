@@ -3,7 +3,7 @@
 Ansible Automation Hub
 ======================
 
-`Ansible Automation Hub <https://www.ansible.com/products/automation-hub>`_ is the official location to discover and download supported :ref:`collections <collections>`, included as part of an Ansible Automation Platform subscription. These content collections contain modules, plugins, roles, and playbooks in a downloadable package. They also how-to guides to implement these collections in your infrastructure.
+`Ansible Automation Hub <https://www.ansible.com/products/automation-hub>`_ is the official location to discover and download supported :ref:`collections <collections>`, included as part of an Ansible Automation Platform subscription. These content collections contain modules, plugins, roles, and playbooks in a downloadable package.
 
 Ansible Automation Hub gives you direct access to trusted content collections from Red Hat and Certified Partners. You can find content by topic or Ansible Partner organizations.
 
