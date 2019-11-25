@@ -500,7 +500,7 @@ data:
                             type: str
                             sample: my_vlan
                         vlanId:
-                            description: the UUID of the VLAN the server resides in
+                            description: The UUID of the VLAN the server resides in
                             type: str
                             sample: b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae
                         state:
@@ -607,7 +607,7 @@ data:
                     type: complex
                     contains:
                         id:
-                            description: The disk id
+                            description: The disk UUID
                             type: str
                             sample: "112b7faa-ffff-ffff-ffff-dc273085cbe4"
                         scsiId:
@@ -1401,7 +1401,10 @@ def main():
     if credentials is False:
         module.fail_json(msg='Could not load the user credentials')
 
-    client = NTTMCPClient(credentials, module.params.get('region'))
+    try:
+        client = NTTMCPClient(credentials, module.params.get('region'))
+    except NTTMCPAPIException as e:
+        module.fail_json(msg=e.msg)
 
     # Get the CND object based on the supplied name
     # This is more complicated in other modules because the network_domain can be supplied in multiple locations on this module

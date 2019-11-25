@@ -110,13 +110,14 @@ def get_credentials(module):
             return_data['password'] = config.get("nttmcp", "NTTMCP_PASSWORD")
         except AttributeError:
             module.fail_json(msg='Could not read the format of the .nttmcp file. Check the syntax of the file.')
-        except (configparser.NoSectionError, configparser.ParsingError) as e:
+        except (configparser.NoSectionError, configparser.ParsingError, configparser.NoOptionError) as e:
             module.fail_json(msg='Error in the .nttmcp credential file syntax: {0}'.format(e))
 
     # Check if a custom API endpoint or version has been supplied
     try:
-        if 'NTTMCP_API' in environ and 'NTTMCP_API_VERSION' in environ:
+        if 'NTTMCP_API' in environ:
             return_data['api_endpoint'] = environ.get('NTTMCP_API')
+        if 'NTTMCP_API_VERSION' in environ:
             return_data['api_version'] = environ.get('NTTMCP_API_VERSION')
         else:
             home = expanduser('~')
@@ -124,7 +125,7 @@ def get_credentials(module):
             config.read("%s/.nttmcp" % home)
             return_data['api_endpoint'] = config.get('nttmcp', 'NTTMCP_API')
             return_data['api_version'] = config.get('nttmcp', 'NTTMCP_API_VERSION')
-    except (configparser.NoSectionError, configparser.NoOptionError, configparser.ParsingError):
+    except (configparser.NoSectionError, configparser.ParsingError, configparser.NoOptionError):
         pass
 
     # Return False if either are not found

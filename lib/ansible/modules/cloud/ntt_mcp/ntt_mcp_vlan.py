@@ -297,12 +297,22 @@ data:
 '''
 
 import traceback
+try:
+    from ipaddress import (ip_network as ip_net, AddressValueError)
+    HAS_IPADDRESS = True
+except ImportError:
+    HAS_IPADDRESS = False
 from time import sleep
 from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ntt_mcp.ntt_mcp_utils import get_credentials, get_ntt_mcp_regions, return_object, compare_json
 from ansible.module_utils.ntt_mcp.ntt_mcp_provider import NTTMCPClient, NTTMCPAPIException
 
+# Python3 workaround for unicode function so the same code can be used with ipaddress later
+try:
+    unicode('')
+except NameError:
+    unicode = str
 
 def create_vlan(module, client, network_domain_id):
     """
@@ -318,6 +328,12 @@ def create_vlan(module, client, network_domain_id):
         module.fail_json(msg='An IPv4 network address is required for a new VLAN.')
     if not module.params.get('ipv4_prefix_size'):
         module.fail_json(msg='An IPv4 Prefix Size is required for a new VLAN.')
+
+    # Determine the IPv4 network and mask
+    try:
+        ipv4_cidr = ip_net(unicode(module.params.get('ipv4_cidr')))
+    except (AddressValueError, ValueError) as e:
+        module.fail_json(msg='Invalid IPv4 CIDR format {0}: {1}'.format(module.params.get('ipv4_cidr'), e))
 
     datacenter = module.params['datacenter']
     name = module.params['name']
@@ -542,6 +558,10 @@ def main():
     datacenter = module.params.get('datacenter')
     state = module.params.get('state')
     network_domain_name = module.params.get('network_domain')
+
+    # Check Imports
+    if not HAS_IPADDRESS:
+        module.fail_json(msg='Missing Python module: ipaddress')
 
     # Check the region supplied is valid
     ntt_mcp_regions = get_ntt_mcp_regions()

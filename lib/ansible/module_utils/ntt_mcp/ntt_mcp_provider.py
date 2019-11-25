@@ -69,7 +69,7 @@ class NTTMCPClient():
         self.credentials = credentials
         self.region = region
         self.API_URL = credentials.get('api_endpoint') or API_ENDPOINTS[region]['host']
-        self.API_VER = credentials.get('API_VERSION') or API_VERSION
+        self.API_VER = credentials.get('api_version') or API_VERSION
         try:
             self.home_geo = self.get_user_home_geo()
         except NTTMCPAPIException as e:
@@ -126,6 +126,55 @@ class NTTMCPClient():
             return response.json()['organization']['id']
         else:
             raise NTTMCPAPIException('Could not determine the Org Id for user: %s') % (self.credentials[0])
+
+    '''
+    USER FUNCTIONS
+    '''
+    def get_my_user(self):
+        """
+        Return the user
+
+        :arg self: self
+        :returns: The user
+        """
+        API_URL = self.credentials.get('api_endpoint') or API_ENDPOINTS[DEFAULT_REGION]['host']
+        url = ('https://%s/caas/%s/user/myUser' % (API_URL, self.API_VER))
+        try:
+            response = self.api_get_call(url, None)
+            if response is not None:
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not find the user: %s') % (self.credentials[0])
+        except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
+            raise NTTMCPAPIException(e.msg)
+
+    def update_user(self, username=None, country_code=None, phone_number=None):
+        """
+        Update the user
+
+        :arg self: self
+        :returns: The result
+        """
+        params = {}
+        params['phone'] = {}
+        if not username:
+            raise NTTMCPAPIException('A valid username is required')
+        if country_code:
+            params['phone']['countryCode'] = country_code
+        if phone_number:
+            params['phone']['number'] = phone_number
+        params['username'] = username
+
+        url = self.base_url + 'user/editUser'
+
+        try:
+            response = self.api_post_call(url, params)
+            if response is not None:
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not update the user')
+        except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
+            raise NTTMCPAPIException(e.msg)
 
     '''
     NETWORK FUNCTIONS
@@ -339,7 +388,7 @@ class NTTMCPClient():
         vlan_exists = [x for x in vlans if x['name'] == name]
         try:
             return vlan_exists[0]
-        except IndexError as e:
+        except IndexError:
             return None
 
     def create_vlan(self,
@@ -502,7 +551,7 @@ class NTTMCPClient():
         response = self.api_get_call(url, None)
         try:
             return response.json()
-        except (KeyError, IndexError) as e:
+        except (KeyError, IndexError):
             raise NTTMCPAPIException('Could not find the server with id - {0}'.format(server_id))
 
     def create_server(self, ngoc, params):
@@ -2135,7 +2184,7 @@ class NTTMCPClient():
         except KeyError:
             return []
 
-    def list_fw_rule_stats(self, network_domain_id,):
+    def list_fw_rule_stats(self, network_domain_id=None, name=None):
         """
         Return an array of firewall rules with statistics for the specified Cloud Network Domain
 
@@ -2143,8 +2192,12 @@ class NTTMCPClient():
         :returns: Array of firewall rules
         """
         url = self.base_url + 'network/firewallRuleStatistics'
+        if network_domain_id is None:
+            raise NTTMCPAPIException('A valid network domain ID is required')
 
         params = {'networkDomainId': network_domain_id}
+        if name:
+            params['name'] = name
 
         response = self.api_get_call(url, params)
         try:
@@ -3203,9 +3256,9 @@ class NTTMCPClient():
         except KeyError:
             raise NTTMCPAPIException('Could not confirm that the remove VIP Virtual Listener request was accepted')
 
-    #
-    # Snapshot Section
-    #
+    '''
+    Snapshot Section
+    '''
     def list_snapshot_windows(self, datacenter=None, service_plan=None, start_hour=None, slots_available=None):
         """
         List Snapshot Windows
@@ -3238,7 +3291,6 @@ class NTTMCPClient():
         except Exception:
             return []
 
-
     def list_snapshot_service_plans(self, service_plan=None, available=True):
         """
         List Snapshot Service Plans
@@ -3263,18 +3315,12 @@ class NTTMCPClient():
         except Exception:
             return []
 
-    def list_snapshot(self, server_id=None, datacenter=None, snapshot_id=None, start_hour=None, state=None,
-                      snapshot_type=None, expiry_time=None, index_state='INDEX_VALID', description=None,
-                      ):
+    def list_snapshot(self, server_id=None):
         """
-        List Snapshot Windows
+        List server Snapshots
 
-        :kw datacenter: The datacenter ID (e.g. NA9)
-        :kw service_plan: The Service Plan name (e.g. ONE_MONTH)
-        :kw day: Filter results by specific day(s) of the week (e.g. SUNDAY)
-        :kw start_hour: Filter results by a specific start hour (e.g. 06)
-        :kw slots_available: Boolean to filter results based on if slots are available or not
-        :returns: A list of Snapshot Windows
+        :kw server_id: The UUID of the server
+        :returns: A list of Snapshots for a server
         """
 
         params = {}
@@ -3282,16 +3328,214 @@ class NTTMCPClient():
             raise NTTMCPAPIException('A valid server is required')
 
         params['serverId'] = server_id
-        if start_hour:
-            params['startHour'] = start_hour
 
-        url = self.base_url + 'infrastructure/snapshotWindow'
+        url = self.base_url + 'snapshot/snapshot'
 
         response = self.api_get_call(url, params)
         try:
-            return response.json().get('snapshotWindow')
+            return response.json().get('snapshot')
         except Exception:
             return []
+
+    def get_snapshot_by_id(self, snapshot_id=None):
+        """
+        Get a server snapshot
+
+        :kw snapshot_id: The UUID of the snapshot
+        :returns: A snapshot
+        """
+
+        if snapshot_id is None:
+            raise NTTMCPAPIException('A valid snapshot ID is required')
+
+        url = self.base_url + 'snapshot/snapshot/{0}'.format(snapshot_id)
+
+        response = self.api_get_call(url, None)
+        try:
+            return response.json()
+        except Exception:
+            return {}
+
+    def snapshot_restore(self, snapshot_id=None, src_path=None, dst_path=None, username=None, password=None):
+        """
+        Get a server snapshot
+
+        :kw snapshot_id: The UUID of the snapshot
+        :kw src_path: The path to the source file/directory
+        :kw dst_path: The path to the destination file/directory
+        :kw username: The OS username
+        :kw password: The OS password
+        :returns: The server ID
+        """
+        params = {}
+        if None in [snapshot_id, src_path, dst_path, username, password]:
+            raise NTTMCPAPIException('A valid snapshot ID, source path, destination path, username and password are required')
+
+        params['snapshotId'] = snapshot_id
+        params['pathOnSourceSnapshot'] = src_path
+        params['pathOnTargetServer'] = dst_path
+        params['targetServerUsername'] = username
+        params['targetServerPassword'] = password
+
+        url = self.base_url + 'snapshot/restoreFromSnapshot'
+
+        response = self.api_post_call(url, params)
+        try:
+            return response.json()
+        except Exception:
+            return {}
+
+    def manual_snapshot(self, server_id=None, description=None):
+        """
+        Initiate a manual snapshot on a server
+
+        :kw server_id: The UUID of the server
+        :returns: UUID of the new snapshot
+        """
+
+        params = {}
+        if server_id is None:
+            raise NTTMCPAPIException('A valid server is required')
+
+        params['serverId'] = server_id
+        if description:
+            params['description'] = description
+
+        url = self.base_url + 'snapshot/initiateManualSnapshot'
+
+        response = self.api_post_call(url, params)
+        try:
+            return response.json().get('info')[0].get('value')
+        except Exception:
+            return None
+
+    def update_snapshot(self, snapshot_id=None, description=None):
+        """
+        Initiate a manual snapshot on a server
+
+        :kw snapshot_id: The UUID of the snapshot
+        :returns: UUID of the new snapshot
+        """
+
+        params = {}
+        if snapshot_id is None or description is None:
+            raise NTTMCPAPIException('A valid snapshot ID and description is required')
+
+        params['id'] = snapshot_id
+        params['description'] = description
+
+        url = self.base_url + 'snapshot/editSnapshotMetadata'
+
+        response = self.api_post_call(url, params)
+        try:
+            return response.json().get('responseCode') == 'OK'
+        except Exception:
+            return None
+
+    def delete_snapshot(self, snapshot_id=None):
+        """
+        Initiate a manual snapshot on a server
+
+        :kw snapshot_id: The UUID of the snapshot
+        :returns: True/False
+        """
+
+        params = {}
+        if snapshot_id is None:
+            raise NTTMCPAPIException('A valid snapshot ID is required')
+
+        params['id'] = snapshot_id
+
+        url = self.base_url + 'snapshot/deleteManualSnapshot'
+
+        response = self.api_post_call(url, params)
+        try:
+            return response.json().get('responseCode') == 'OK'
+        except Exception:
+            return None
+
+    def update_snapshot_scripts(self, server_id=None, pre_path=None, pre_description=None, pre_timeout=None,
+                                on_failure=None, post_path=None, post_description=None, username=None, password=None):
+        """
+        Initiate a manual snapshot on a server
+
+        :kw snapshot_id: The UUID of the snapshot
+        :returns: UUID of the new snapshot
+        """
+
+        params = {}
+        if not server_id:
+            raise NTTMCPAPIException('A valid server ID is required')
+        if not pre_path:
+            raise NTTMCPAPIException('A Pre script path must be present')
+        if not post_path:
+            raise NTTMCPAPIException('A Post script path must be present')
+        if None in [username, password] and (pre_path or post_path):
+            raise NTTMCPAPIException('A valid username and password for the server are required')
+
+        params['serverId'] = server_id
+        if pre_path or post_path:
+            params['serverCredentials'] = {}
+            params['serverCredentials']['username'] = username
+            params['serverCredentials']['password'] = password
+
+        if pre_path:
+            params['preSnapshot'] = {}
+            if not pre_timeout:
+                raise NTTMCPAPIException('The pre script timeout cannot be None/Null')
+            if not on_failure:
+                raise NTTMCPAPIException('The pre script on failure option cannot be None/Null')
+            params['preSnapshot']['script'] = {}
+            params['preSnapshot']['script']['path'] = pre_path
+            params['preSnapshot']['script']['timeoutSeconds'] = pre_timeout
+            params['preSnapshot']['script']['onFailure'] = on_failure
+            if pre_description:
+                params['preSnapshot']['script']['description'] = pre_description
+
+        if post_path:
+            params['postSnapshot'] = {}
+            params['postSnapshot']['script'] = {}
+            params['postSnapshot']['script']['path'] = post_path
+            if post_description:
+                params['postSnapshot']['script']['description'] = post_description
+
+        url = self.base_url + 'snapshot/editSnapshotServiceScripts'
+
+        response = self.api_post_call(url, params)
+        try:
+            return response.json().get('responseCode') == 'OK'
+        except Exception:
+            return None
+
+    def delete_snapshot_script(self, server_id=None, delete_pre=False, delete_post=False):
+        """
+        Initiate a manual snapshot on a server
+
+        :kw snapshot_id: The UUID of the snapshot
+        :returns: True/False
+        """
+
+        params = {}
+        if server_id is None:
+            raise NTTMCPAPIException('A valid server ID is required')
+        if not delete_pre and not delete_post:
+            return True
+
+        params['serverId'] = server_id
+        if delete_pre:
+            params['preSnapshot'] = {}
+            params['preSnapshot']['noScript'] = {}
+        if delete_post:
+            params['postSnapshot'] = {}
+            params['postSnapshot']['noScript'] = {}
+
+        url = self.base_url + 'snapshot/editSnapshotServiceScripts'
+
+        response = self.api_post_call(url, params)
+        try:
+            return response.json().get('responseCode') == 'OK'
+        except Exception:
+            return None
 
     def enable_snapshot_service(self, update=False, server_id=None, service_plan=None, window_id=None):
         """
@@ -3332,10 +3576,10 @@ class NTTMCPClient():
 
     def disable_snapshot_service(self, server_id=None):
         """
-        List Snapshot Windows
+        Disable the snapshot service on a server
 
-        :kw server_id: The UUID of the server being enabled for Snapshots
-        :returns: API Respose
+        :kw server_id: The UUID of the server being disabled for Snapshots
+        :returns: API Response
         """
 
         params = {}
@@ -3355,6 +3599,186 @@ class NTTMCPClient():
         else:
             raise NTTMCPAPIException('No response from the API')
 
+    def enable_snapshot_replication(self, server_id=None, replication_target=None):
+        """
+        Enable snapshot replication on a server
+
+        :kw server_id: The UUID of the server being enabled for Snapshot replication
+        :kw replication_target: The datacenter ID for the replication target
+        :returns: API Response
+        """
+
+        params = {}
+        if server_id is None:
+            raise NTTMCPAPIException('A Server is required, server_id cannot be None')
+        if replication_target is None:
+            raise NTTMCPAPIException('A replication datacenter is required, replication_target cannot be None')
+
+        params['serverId'] = server_id
+        params['targetDatacenterId'] = replication_target
+
+        url = self.base_url + 'snapshot/enableReplication'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            if response.json()['requestId']:
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Snapshot replication was successfully enabled')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def disable_snapshot_replication(self, server_id=None):
+        """
+        Disable snapshot replication on a server
+
+        :kw server_id: The UUID of the server being enabled for Snapshot replication
+        :returns: API Response
+        """
+
+        params = {}
+        if server_id is None:
+            raise NTTMCPAPIException('A Server is required, server_id cannot be None')
+
+        params['serverId'] = server_id
+
+        url = self.base_url + 'snapshot/disableReplication'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            if response.json()['requestId']:
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Snapshot replication was successfully disabled')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def create_snapshot_preview(self, snapshot_id=None, server_name=None, server_description=None, cluster_id=None,
+                                start_server=False, connect_nics=False, preserve_mac=False):
+        """
+        Create a local Snapshot Preview Server
+
+        :kw snapshot_id: The UUID of the snapshot to be used as the base for the preview server
+        :kw server_name: The name of the new preview server
+        :kw server_description: The description of the new preview server
+        :kw cluster_id: The vCenter cluster ID for the new preview server
+        :kw start_server: Should the preview server be started
+        :kw connect_nics: Should the preview server be created with NICs connected
+        :kw preserve_mac: Should the preview server's MAC address be preserved from the original base server's
+
+        :returns: API Response
+        """
+
+        params = {}
+        if snapshot_id is None:
+            raise NTTMCPAPIException('A Snapshot ID is required, snapshot_id cannot be None')
+        if server_name is None:
+            raise NTTMCPAPIException('A Server Name is required, server_name cannot be None')
+
+        params['snapshotId'] = snapshot_id
+        params['serverName'] = server_name
+        params['serverStarted'] = start_server
+        params['nicsConnected'] = connect_nics
+        params['preserveMacAddresses'] = preserve_mac
+        if server_description:
+            params['serverDescription'] = server_description
+        if cluster_id:
+            params['targetClusterId'] = cluster_id
+
+        url = self.base_url + 'snapshot/createSnapshotPreviewServer'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            if response.json()['requestId']:
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Snapshot Preview Server was successfully created')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def create_replicated_snapshot_preview(self, snapshot_id=None, server_name=None, server_description=None,
+                                           cluster_id=None, start_server=False, connect_nics=False, networks=None,
+                                           preserve_mac=False):
+        """
+        Create a local Snapshot Preview Server
+
+        :kw snapshot_id: The UUID of the snapshot to be used as the base for the preview server
+        :kw server_name: The name of the new preview server
+        :kw server_description: The description of the new preview server
+        :kw cluster_id: The vCenter cluster ID for the new preview server
+        :kw start_server: Should the preview server be started
+        :kw connect_nics: Should the preview server be created with NICs connected
+        :kw networks: List of network dicts containing the source NIC ID, destination VLAN ID and any IPv4 address
+        :kw preserve_mac: Should the preview server's MAC address be preserved from the original base server's
+
+        :returns: API Response
+        """
+
+        params = {}
+        if snapshot_id is None:
+            raise NTTMCPAPIException('A Snapshot ID is required, snapshot_id cannot be None')
+        if server_name is None:
+            raise NTTMCPAPIException('A Server Name is required, server_name cannot be None')
+        if networks is None or type(networks) != list:
+            raise NTTMCPAPIException('A valid list of NICs and associated networks is required')
+
+        params['replicatedSnapshotId'] = snapshot_id
+        params['serverName'] = server_name
+        params['serverStarted'] = start_server
+        params['nicsConnected'] = connect_nics
+        params['nic'] = list()
+        for nic in networks:
+            tmp_nic = dict()
+            tmp_nic['sourceNicId'] = nic.get('nic_id')
+            tmp_nic['vlanId'] = nic.get('vlan_id')
+            if nic.get('ipv4_address'):
+                tmp_nic['privateIpv4'] = nic.get('ipv4_address')
+            params['nic'].append(tmp_nic)
+        params['preserveMacAddresses'] = preserve_mac
+        if server_description:
+            params['serverDescription'] = server_description
+        if cluster_id:
+            params['targetClusterId'] = cluster_id
+
+        url = self.base_url + 'snapshot/createReplicatedSnapshotPreviewServer'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            if response.json()['requestId']:
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Snapshot Preview Server was successfully created')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def migrate_snapshot_preview(self, server_id=None):
+        """
+        Migrate Snapshot Preview Server
+
+        :kw servert_id: The UUID of the preview server
+        :returns: API Response
+        """
+
+        params = {}
+        if server_id is None:
+            raise NTTMCPAPIException('A server ID is required, server_id cannot be None')
+
+        params['serverId'] = server_id
+
+        url = self.base_url + 'snapshot/migrateSnapshotPreviewServer'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            if response.json()['requestId']:
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Snapshot Preview Server was successfully migrated')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    '''
+    Server Monitoring
+    '''
     def enable_server_monitoring(self, update=False, server_id=None, service_plan=None):
         """
         Enable/Update server monitoring configuration
@@ -3442,8 +3866,10 @@ class NTTMCPClient():
                 raise Exception('No response from the API for url: {0}'.format(url))
         except REQ.exceptions.ConnectionError:
             raise NTTMCPAPIException('Could not connect to the API')
+        except NTTMCPAPIException as e:
+            raise NTTMCPAPIException(e.msg)
         except Exception as e:
-            raise NTTMCPAPIException('{0} {1}'.format(e, response.text))
+            raise NTTMCPAPIException(e)
 
     def api_post_call(self, url, params):
         """
@@ -3470,4 +3896,4 @@ class NTTMCPClient():
         except REQ.exceptions.ConnectionError as e:
             raise NTTMCPAPIException('Could not connect to the API: {0}'.format(e))
         except Exception as e:
-            raise NTTMCPAPIException('{0} {1}'.format(e, response.text))
+            raise NTTMCPAPIException('{0}'.format(e))

@@ -56,6 +56,11 @@ options:
             - The name of a Cloud Network Domain
         required: true
         type: str
+    stats:
+        description:
+            - Return the firewall rule(s) statistics (works with or without a supplied rule name)
+        required: false
+        type: bool
 notes:
     - Requires NTT Ltd. MCP account/credentials
 requirements:
@@ -73,12 +78,20 @@ EXAMPLES = '''
       datacenter: NA12
       network_domain: myCND
 
-  - name: Get a specific firewall rule
+  - name: Get a specific firewall rule with statistics
     ntt_mcp_firewall_info:
       region: na
       datacenter: NA12
       network_domain: myCND
       name: CCDEFAULT.BlockOutboundMailIPv6
+
+  - name: Get a specific firewall rule statistics
+    ntt_mcp_firewall_info:
+      region: na
+      datacenter: NA12
+      network_domain: myCND
+      name: CCDEFAULT.BlockOutboundMailIPv6
+      stats: True
 '''
 
 RETURN = '''
@@ -220,9 +233,20 @@ data:
                     description: The UUID of the firewall rule
                     type: str
                     sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
+                statistics:
+                    description: The firewall rule hit counter statistics
+                    type: complex
+                    contains:
+                        hitCounter:
+                            description: The number of times the rule has been hit
+                            type: int
+                            sample: 100
+                        lastHitTimestamp:
+                            description: The timestamp of the last time a rule was hit in ZULU time
+                            type: str
+                            sample: "2019-11-21T17:07:04.000Z"
 '''
 
-import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ntt_mcp.ntt_mcp_utils import get_credentials, get_ntt_mcp_regions, return_object
 from ansible.module_utils.ntt_mcp.ntt_mcp_provider import NTTMCPClient, NTTMCPAPIException
@@ -245,7 +269,7 @@ def list_fw_rule(module, client, network_domain_id):
         else:
             return_data['acl'] = client.list_fw_rules(network_domain_id)
     except NTTMCPAPIException as e:
-        module.fail_json(msg='Could not retrieve a list of firewall rules - {0}'.format(e), exception=traceback.format_exc())
+        module.fail_json(msg='Could not retrieve a list of firewall rules - {0}'.format(e))
     except KeyError:
         module.fail_json(msg='Network Domain is invalid')
 
@@ -267,12 +291,14 @@ def get_fw_rule(module, client, network_domain_id, name):
     """
     return_data = return_object('acl')
     try:
-        result = client.get_fw_rule_by_name(network_domain_id, name)
-        if result is None:
+        if module.params.get('stats'):
+            return_data['acl'] = client.list_fw_rule_stats(network_domain_id, name)
+        else:
+            return_data['acl'].append(client.get_fw_rule_by_name(network_domain_id, name))
+        if return_data['acl'] is None:
             module.exit_json(changed=False, msg='Could not find the ACL {0}'.format(name))
-        return_data['acl'].append(result)
     except NTTMCPAPIException as e:
-        module.exit_json(msg='Could not get the firewall rule - {0}'.format(e), exception=traceback.format_exc())
+        module.exit_json(msg='Could not get the firewall rule - {0}'.format(e))
     except KeyError:
         module.fail_json(msg='Network Domain is invalid')
 

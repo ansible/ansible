@@ -193,7 +193,6 @@ EXAMPLES = '''
       dst_cidr: "10.1.77.0/24"
       dst_port_start: "80"
       dst_port_end: "81"
-      state: present
 
   - name: Create an IPv6 firewall rule
     ntt_mcp_firewall:
@@ -208,7 +207,6 @@ EXAMPLES = '''
       dst_cidr: "fc01::10/128"
       dst_port_start: "80"
       dst_port_end: "81"
-      state: present
 
   - name: Create a firewall rule using IP and port lists
     ntt_mcp_firewall:
@@ -222,7 +220,6 @@ EXAMPLES = '''
       src_port_end: "81"
       dst_ip_list:  myIpAddressList
       dst_port_list: myPortList
-      state: present
 
   - name: Update a firewall rule - changes the src to a singel host IP and the dst ports to a list myPortList
     ntt_mcp_firewall:
@@ -235,7 +232,6 @@ EXAMPLES = '''
       src_port_start: ANY
       dst_ip_list:  myIpAddressList
       dst_port_list: myPortList
-      state: present
 
   - name: Delete a firewall rule
     ntt_mcp_firewall:
@@ -643,14 +639,17 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient(credentials, module.params.get('region'))
+    try:
+        client = NTTMCPClient(credentials, module.params.get('region'))
+    except NTTMCPAPIException as e:
+        module.fail_json(msg=e.msg)
 
     # Check to see the CIDR provided is valid
     if module.params.get('src_cidr'):
         try:
             src_cidr = ip_net(unicode(module.params.get('src_cidr')))
         except (AddressValueError, ValueError) as e:
-            module.fail_json(msg='Invalid source CIDR format {0}: {1}'.format(module.params.get('cidr'), e))
+            module.fail_json(msg='Invalid source CIDR format {0}: {1}'.format(module.params.get('src_cidr'), e))
     if module.params.get('dst_cidr'):
         try:
             dst_cidr = ip_net(unicode(module.params.get('dst_cidr')))
