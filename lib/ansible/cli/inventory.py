@@ -18,7 +18,7 @@ from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.loader import vars_loader
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
-from ansible.vars.plugins import get_vars_from_inventory_sources
+from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
 
 display = Display()
 
@@ -190,7 +190,10 @@ class InventoryCLI(CLI):
         # get info from inventory source
         res = group.get_vars()
 
-        res = combine_vars(res, get_vars_from_inventory_sources(self.loader, self.inventory._sources, [group], 'inventory'))
+        # Always load vars plugins
+        res = combine_vars(res, get_vars_from_inventory_sources(self.loader, self.inventory._sources, [group], 'all'))
+        if context.CLIARGS['basedir']:
+            res = combine_vars(res, get_vars_from_path(self.loader, context.CLIARGS['basedir'], [group], 'all'))
 
         if group.priority != 1:
             res['ansible_group_priority'] = group.priority
@@ -203,10 +206,13 @@ class InventoryCLI(CLI):
             # only get vars defined directly host
             hostvars = host.get_vars()
 
-            hostvars = combine_vars(hostvars, get_vars_from_inventory_sources(self.loader, self.inventory._sources, [host], 'inventory'))
+            # Always load vars plugins
+            hostvars = combine_vars(hostvars, get_vars_from_inventory_sources(self.loader, self.inventory._sources, [host], 'all'))
+            if context.CLIARGS['basedir']:
+                hostvars = combine_vars(hostvars, get_vars_from_path(self.loader, context.CLIARGS['basedir'], [host], 'all'))
         else:
             # get all vars flattened by host, but skip magic hostvars
-            hostvars = self.vm.get_vars(host=host, include_hostvars=False, stage='inventory')
+            hostvars = self.vm.get_vars(host=host, include_hostvars=False, stage='all')
 
         return self._remove_internal(hostvars)
 

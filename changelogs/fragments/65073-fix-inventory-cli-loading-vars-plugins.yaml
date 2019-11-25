@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-inventory - Fix regression loading vars plugins. (https://github.com/ansible/ansible/issues/65064)
+  - ansible-inventory - Fix long standing bug not loading vars plugins for group vars relative to the playbook
+    dir when the '--playbook-dir' and '--export' flags are used together.
