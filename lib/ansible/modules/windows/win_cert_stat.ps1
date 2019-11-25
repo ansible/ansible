@@ -11,7 +11,12 @@ function ConvertTo-Timestamp($start_date, $end_date) {
     }
 }
 
-$store_location_values = ([System.Security.Cryptography.X509Certificates.StoreLocation]).GetEnumValues() | ForEach-Object { $_.ToString() }
+function Format-Date([DateTime]$date)
+{
+    return $date.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssK')
+}
+
+$store_location_values = ([System.Security.Cryptography.X509Certificates.StoreLocation]).GetEnumValues() -as [string[]]
 
 $spec = @{
     options = @{
@@ -42,7 +47,9 @@ if (Test-Path -LiteralPath $cert_path)
     $module.Result.subject = $cert.Subject
     $module.Result.issuer = $cert.Issuer
     $module.Result.valid_from = (ConvertTo-Timestamp -start_date $epoch_date -end_date $cert.NotBefore.ToUniversalTime())
+    $module.Result.valid_from_iso8601 = Format-Date -date $cert.NotBefore
     $module.Result.valid_to = (ConvertTo-Timestamp -start_date $epoch_date -end_date $cert.NotAfter.ToUniversalTime())
+    $module.Result.valid_to_iso8601 = Format-Date -date $cert.NotAfter
     $module.Result.serial_number = $cert.SerialNumber
     $module.Result.archived = $cert.Archived
     $module.Result.version = $cert.Version

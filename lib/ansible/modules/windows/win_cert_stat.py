@@ -212,11 +212,21 @@ valid_from:
   returned: cert exists
   type: float
   sample: 1360255727
+valid_from_iso8601:
+  description: The start date of the certificate represented as an iso8601 formatted date.
+  returned: cert exists
+  type: str
+  sample: '2017-12-15T08:39:32Z'
 valid_to:
   description: The expiry date of the certificate represented in seconds since epoch.
   returned: cert exists
   type: float
   sample: 1675788527
+valid_to_iso8601:
+  description: The expiry date of the certificate represented as an iso8601 formatted date.
+  returned: cert exists
+  type: str
+  sample: '2086-01-02T08:39:32Z'
 version:
   description: The x509 format version of the certificate
   returned: cert exists
