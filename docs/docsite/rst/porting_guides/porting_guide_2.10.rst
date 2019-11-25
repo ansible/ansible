@@ -102,8 +102,11 @@ Noteworthy module changes
 Plugins
 =======
 
-No notable changes
 
+Noteworthy plugin changes
+-------------------------
+
+* The ``hashi_vault`` lookup plugin now returns the latest version when using the KV v2 secrets engine. Previously, it returned all versions of the secret which required additional steps to extract and filter the desired version.
 
 Porting custom scripts
 ======================
