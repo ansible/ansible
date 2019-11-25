@@ -4,7 +4,7 @@
 Working with network connection options
 ***************************************
 
-Network modules can support multiple connection protocols, such as ``network_cli`` and ``httpapi``. These connections include some common options you can set to control how the connection to your network device behaves.
+Network modules can support multiple connection protocols, such as ``network_cli``, ``netconf``, and ``httpapi``. These connections include some common options you can set to control how the connection to your network device behaves.
 
 Common options are:
 
