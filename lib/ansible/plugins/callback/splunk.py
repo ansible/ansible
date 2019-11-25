@@ -186,7 +186,7 @@ class CallbackModule(CallbackBase):
                                   'authentication token can be provided using the '
                                   '`SPLUNK_AUTHTOKEN` environment variable or '
                                   'in the ansible.cfg file.')
-                                  
+
         self.validate_certs = self.get_option('validate_certs')
 
     def v2_playbook_on_start(self, playbook):
