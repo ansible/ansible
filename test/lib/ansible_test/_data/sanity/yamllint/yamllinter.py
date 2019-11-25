@@ -8,6 +8,12 @@ import json
 import os
 import sys
 
+import yaml
+from yaml.resolver import Resolver
+from yaml.constructor import SafeConstructor
+from yaml.error import MarkedYAMLError
+from _yaml import CParser  # pylint: disable=no-name-in-module
+
 from yamllint import linter
 from yamllint.config import YamlLintConfig
 
@@ -19,6 +25,32 @@ def main():
     checker = YamlChecker()
     checker.check(paths)
     checker.report()
+
+
+class TestConstructor(SafeConstructor):
+    """Yaml Safe Constructor that knows about Ansible tags"""
+
+
+TestConstructor.add_constructor(
+    u'!unsafe',
+    TestConstructor.construct_yaml_str)
+
+
+TestConstructor.add_constructor(
+    u'!vault',
+    TestConstructor.construct_yaml_str)
+
+
+TestConstructor.add_constructor(
+    u'!vault-encrypted',
+    TestConstructor.construct_yaml_str)
+
+
+class TestLoader(CParser, TestConstructor, Resolver):
+    def __init__(self, stream):
+        CParser.__init__(self, stream)
+        TestConstructor.__init__(self)
+        Resolver.__init__(self)
 
 
 class YamlChecker:
@@ -68,6 +100,7 @@ class YamlChecker:
         :type path: str
         :type contents: str
         """
+        self.check_parsable(path, contents)
         self.messages += [self.result_to_message(r, path) for r in linter.run(contents, conf, path)]
 
     def check_module(self, conf, path, contents):
@@ -79,16 +112,34 @@ class YamlChecker:
         docs = self.get_module_docs(path, contents)
 
         for key, value in docs.items():
-            yaml = value['yaml']
+            yaml_data = value['yaml']
             lineno = value['lineno']
 
-            if yaml.startswith('\n'):
-                yaml = yaml[1:]
+            if yaml_data.startswith('\n'):
+                yaml_data = yaml_data[1:]
                 lineno += 1
 
-            messages = list(linter.run(yaml, conf, path))
+            self.check_parsable(path, yaml_data)
+
+            messages = list(linter.run(yaml_data, conf, path))
 
             self.messages += [self.result_to_message(r, path, lineno - 1, key) for r in messages]
+
+    def check_parsable(self, path, contents):
+        """
+        :type path: str
+        :type contents: str
+        """
+        try:
+            yaml.load(contents, Loader=TestLoader)
+        except MarkedYAMLError as e:
+            self.messages += [{'code': 'unparsable-with-libyaml',
+                               'message': '%s - %s' % (e.args[0], e.args[2]),
+                               'path': path,
+                               'line': e.problem_mark.line + 1,
+                               'column': e.problem_mark.column + 1,
+                               'level': 'error',
+                               }]
 
     @staticmethod
     def result_to_message(result, path, line_offset=0, prefix=''):
