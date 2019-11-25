@@ -16,7 +16,7 @@ function Format-Date([DateTime]$date)
     return $date.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssK')
 }
 
-$store_location_values = ([System.Security.Cryptography.X509Certificates.StoreLocation]).GetEnumValues() -as [string[]]
+$store_location_values = ([System.Security.Cryptography.X509Certificates.StoreLocation]).GetEnumValues() | ForEach-Object { $_.ToString() }
 
 $spec = @{
     options = @{
