@@ -4,7 +4,7 @@
 
 - block:
   - name: Merge the provided configuration with the exisiting running configuration - basic-tlv
-    ce_lldp_interface: &merged
+    ce_lldp_interface: &merged1
       config:
         msg_interval: 8
         ifname: 10GE 1/0/1
@@ -17,7 +17,7 @@
           system_name: true
     register: result1
   - name: Merge the provided configuration with the existing running configuration (REPEAT)
-    ce_lldp_interface: *merged
+    ce_lldp_interface: *merged1
     register: result2
   - name: "Netconf get operation"
     ce_netconf:
@@ -53,7 +53,7 @@
         - "'<sysCapTxEnable>true</sysCapTxEnable>' in result3.endstate.result"
 
   - name: Merge the provided configuration with the exisiting running configuration - dot1-tlv
-    ce_lldp_interface: &merged
+    ce_lldp_interface: &merged2
       config:
         msg_interval: 8
         ifname: 10GE 1/0/1
@@ -66,7 +66,7 @@
           vlan_name_enable: true
     register: result1
   - name: Merge the provided configuration with the existing running configuration (REPEAT)
-    ce_lldp_interface: *merged
+    ce_lldp_interface: *merged2
     register: result2
   - name: "Netconf get operation"
     ce_netconf:
