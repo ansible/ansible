@@ -55,6 +55,7 @@ DOCUMENTATION = '''
             key: validate_certs
         default: True
         type: bool
+        version_added: "2.10"
 '''
 
 EXAMPLES = '''
