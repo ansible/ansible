@@ -1,8 +1,8 @@
 .. _network_developer_guide:
 
-**************************************
-Developer Guide for Network Automation
-**************************************
+**********************************
+Network Automation Developer Guide
+**********************************
 
 Welcome to the Developer Guide for Ansible Network Automation!
 
