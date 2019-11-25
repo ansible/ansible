@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: asa_ogcontent
-version_added: "2.9"
+version_added: "2.10"
 author:
     - "Federico Olivieri (@Federico87)"
 short_description: Find object-group' s contet.
@@ -25,6 +25,7 @@ options:
         description:
             - Name of the object-group.
         required: true
+        type: str
 """
 
 EXAMPLES = """
@@ -40,6 +41,7 @@ commands:
   returned: always
   type: list
   sample: [
+  "Parent object-group: aws_all_critical_vpcs"
    "group-object aws_critical_west",
       "group-object aws_critical_west_ngnix",
         "network-object 10.0.160.0 255.255.248.0",
