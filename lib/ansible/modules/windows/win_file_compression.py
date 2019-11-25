@@ -14,23 +14,27 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_file_compression
-version_added: '2.9'
+version_added: '2.10'
 short_description: Alters the compression of files and directories on NTFS partitions.
 description:
-  - This module sets the compressed attribute for files and directories on an NTFS file system.
+  - This module sets the compressed attribute for files and directories on a filesystem that supports it like NTFS.
   - NTFS compression can be used to save disk space.
 options:
   path:
     description:
       - The full path of the file or directory to modify.
-      - The path must exist on an NTFS FileSystem.
+      - The path must exist on file system that supports compression like NTFS.
     required: yes
     type: path
-  compressed:
+  state:
     description:
-      - The compressed state of the item.
-    type: bool
-    default: true
+      - Set to C(present) to ensure the I(path) is compressed.
+      - Set to C(absent) to ensure the I(path) is not compressed.
+    type: str
+    choices:
+      - absent
+      - present
+    default: present
   recurse:
     description:
       - Whether to recursively apply changes to all subdirectories and files.
@@ -52,7 +56,7 @@ options:
 author:
   - Micah Hunsberger (@mhunsber)
 notes:
-  - C(win_file_compression) sets the NTFS compression state, it does not create a zip archive file.
+  - C(win_file_compression) sets the file system's compression state, it does not create a zip archive file.
   - For more about NTFS Compression, see U(http://www.ntfs.com/ntfs-compressed.htm)
 '''
 
@@ -60,19 +64,17 @@ EXAMPLES = r'''
 - name: Compress log files directory
   win_file_compression:
     path: C:\Logs
-    compressed: yes
-    recurse: no
+    state: present
 
 - name: Decompress log files directory
   win_file_compression:
     path: C:\Logs
-    compressed: no
-    recurse: no
+    state: absent
 
 - name: Compress reports directory and all subdirectories
   win_file_compression:
     path: C:\business\reports
-    compressed: yes
+    state: present
     recurse: yes
 
 # This will only check C:\business\reports for the compressed state
