@@ -12,9 +12,9 @@
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     hardware:
-        num_cpus: 4
+        num_cpus: 1
         boot_firmware: "bios"
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: thin
@@ -43,9 +43,9 @@
         guest_id: centos64Guest
         datacenter: "{{ dc1 }}"
         hardware:
-          num_cpus: 4
+          num_cpus: 1
           boot_firmware: "bios"
-          memory_mb: 512
+          memory_mb: 128
         disk:
           - size: 1gb
             type: thin
@@ -69,9 +69,9 @@
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     hardware:
-        num_cpus: 4
+        num_cpus: 1
         boot_firmware: "efi"
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: thin
@@ -100,9 +100,9 @@
         guest_id: centos64Guest
         datacenter: "{{ dc1 }}"
         hardware:
-          num_cpus: 4
+          num_cpus: 1
           boot_firmware: "efi"
-          memory_mb: 512
+          memory_mb: 128
         disk:
           - size: 1gb
             type: thin

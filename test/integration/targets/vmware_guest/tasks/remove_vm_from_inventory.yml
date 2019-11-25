@@ -13,9 +13,9 @@
     datacenter: "{{ dc1 }}"
     folder: F0
     hardware:
-      num_cpus: 4
-      num_cpu_cores_per_socket: 2
-      memory_mb: 512
+      num_cpus: 1
+      num_cpu_cores_per_socket: 1
+      memory_mb: 128
     disk:
       - size: 1gb
         type: thin

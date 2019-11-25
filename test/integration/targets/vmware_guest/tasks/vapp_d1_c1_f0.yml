@@ -17,7 +17,7 @@
     resource_pool: Resources
     guest_id: centos64Guest
     hardware:
-      memory_mb: 512
+      memory_mb: 128
       num_cpus: 1
       scsi: paravirtual
     disk:
