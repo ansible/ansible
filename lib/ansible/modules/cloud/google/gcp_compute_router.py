@@ -116,7 +116,7 @@ options:
           range:
             description:
             - The IP range to advertise. The value must be a CIDR-formatted string.
-            required: false
+            required: true
             type: str
           description:
             description:
@@ -322,7 +322,7 @@ def main():
                     asn=dict(required=True, type='int'),
                     advertise_mode=dict(default='DEFAULT', type='str'),
                     advertised_groups=dict(type='list', elements='str'),
-                    advertised_ip_ranges=dict(type='list', elements='dict', options=dict(range=dict(type='str'), description=dict(type='str'))),
+                    advertised_ip_ranges=dict(type='list', elements='dict', options=dict(range=dict(required=True, type='str'), description=dict(type='str'))),
                 ),
             ),
             region=dict(required=True, type='str'),
