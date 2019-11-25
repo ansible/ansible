@@ -168,7 +168,6 @@ class IdracRedfishUtils(RedfishUtils):
 
 CATEGORY_COMMANDS_ALL = {
     "Manager": ["GetManagerAttributes"]
-                "GetSystemAttributes"]
 }
 
 
