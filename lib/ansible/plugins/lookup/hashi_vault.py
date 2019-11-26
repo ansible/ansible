@@ -105,6 +105,11 @@ EXAMPLES = """
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/data/hello token=my_vault_token url=http://myvault_url:8200') }}"
 
+- name: Return a specific  version from a KV v2 engine secret 
+  debug:
+    msg: "{{ lookup('hashi_vault', 'secret=secret/data/hello version=1 token=my_vault_token url=http://myvault_url:8200') }}"
+
+
 
 """
 
@@ -215,7 +220,11 @@ class HashiVault:
             raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
 
         if self.secret_field == '':
-            return data['data']
+            # Return all secret engine v2 information (eg. metadata and data)
+            if 'metadata' in data:
+                return data
+            else: 
+                return data['data']
 
         if self.secret_field not in data['data']:
             raise AnsibleError("The secret %s does not contain the field '%s'. for hashi_vault lookup" % (self.secret, self.secret_field))
