@@ -54,17 +54,6 @@ options:
       modify this field.
     required: false
     type: str
-  ipv4_range:
-    description:
-    - If this field is specified, a deprecated legacy network is created.
-    - You will no longer be able to create a legacy network on Feb 1, 2020.
-    - See the [legacy network docs](U(https://cloud.google.com/vpc/docs/legacy)) for
-      more details.
-    - The range of internal addresses that are legal on this legacy network.
-    - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
-    - The resource must be recreated to modify this field.
-    required: false
-    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -183,17 +172,6 @@ id:
   - The unique identifier for the resource.
   returned: success
   type: int
-ipv4_range:
-  description:
-  - If this field is specified, a deprecated legacy network is created.
-  - You will no longer be able to create a legacy network on Feb 1, 2020.
-  - See the [legacy network docs](U(https://cloud.google.com/vpc/docs/legacy)) for
-    more details.
-  - The range of internal addresses that are legal on this legacy network.
-  - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
-  - The resource must be recreated to modify this field.
-  returned: success
-  type: str
 name:
   description:
   - Name of the resource. Provided by the client when the resource is created. The
@@ -260,12 +238,10 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
-            ipv4_range=dict(type='str'),
             name=dict(required=True, type='str'),
             auto_create_subnetworks=dict(type='bool'),
             routing_config=dict(type='dict', options=dict(routing_mode=dict(required=True, type='str'))),
-        ),
-        mutually_exclusive=[['auto_create_subnetworks', 'ipv4_range']],
+        )
     )
 
     if not module.params['scopes']:
@@ -331,7 +307,6 @@ def resource_to_request(module):
     request = {
         u'kind': 'compute#network',
         u'description': module.params.get('description'),
-        u'IPv4Range': module.params.get('ipv4_range'),
         u'name': module.params.get('name'),
         u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),
         u'routingConfig': NetworkRoutingconfig(module.params.get('routing_config', {}), module).to_request(),
@@ -403,7 +378,6 @@ def response_to_hash(module, response):
         u'description': module.params.get('description'),
         u'gatewayIPv4': response.get(u'gatewayIPv4'),
         u'id': response.get(u'id'),
-        u'IPv4Range': module.params.get('ipv4_range'),
         u'name': module.params.get('name'),
         u'subnetworks': response.get(u'subnetworks'),
         u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),
