@@ -25,16 +25,16 @@ options:
       - Identity parameter used to find the Object in Active Directory.
       - This value can be in the forms C(Distinguished Name), C(objectGUID).
     type: str
-  includeDeletedObjects:
+  include_deleted_objects:
     description:
       - Should deleted objects be included.
     type: bool
     default: false
-  ldapFilter:
+  ldap_filter:
     description:
       - LDAP style filter.
     type: str
-  searchScope:
+  search_scope:
     description:
       - The scope of the search.
       - A Base query searches only the current path or object.
@@ -46,11 +46,11 @@ options:
       - Base
       - OneLevel
       - Subtree
-  searchBase:
+  search_base:
     description:
       - Where in the Active Directory should the search begin.
     type: str
-  jsonDepth:
+  json_depth:
     description:
       - The number of levels into the object properties that should be parsed to JSON.
     type: int
