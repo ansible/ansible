@@ -80,7 +80,7 @@ options:
     type: str
     choices: [ set, add ]
     default: set
-    version_added: "2.9"
+    version_added: "2.10"
 author:
   - Hans-Joachim Kliemeck (@h0nIg)
   - David Baumann (@daBONDi)
