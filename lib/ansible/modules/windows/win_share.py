@@ -76,14 +76,15 @@ options:
     default: no
     version_added: "2.4"
   rule_action:
-    description: Whether to append or replace access control entries.
+    description: Whether to add or set (replace) access control entries.
     type: str
-    choices: [ replace, append ]
-    default: replace
+    choices: [ set, add ]
+    default: set
     version_added: "2.9"
 author:
   - Hans-Joachim Kliemeck (@h0nIg)
   - David Baumann (@daBONDi)
+  - Shachaf Goldstein (@Shachaf92)
 '''
 
 EXAMPLES = r'''
