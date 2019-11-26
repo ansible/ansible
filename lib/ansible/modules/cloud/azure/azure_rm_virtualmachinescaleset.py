@@ -207,6 +207,35 @@ options:
         type: bool
         default: True
         version_added: "2.9"
+    plan:
+        description:
+            - Third-party billing plan for the VM.
+        version_added: "2.5"
+        type: dict
+        suboptions:
+            name:
+                description:
+                    - Billing plan name.
+                required: true
+            product:
+                description:
+                    - Product name.
+                required: true
+            publisher:
+                description:
+                    - Publisher offering the plan.
+                required: true
+            promotion_code:
+                description:
+                    - Optional promotion code.
+    accept_terms:
+        description:
+            - Accept terms for Marketplace images that require it.
+            - Only Azure service admin/account admin users can purchase images from the Marketplace.
+            - Only valid when a I(plan) is specified.
+        type: bool
+        default: false
+        version_added: "2.7"
     zones:
         description:
             - A list of Availability Zones for your virtual machine scale set.
@@ -251,6 +280,37 @@ EXAMPLES = '''
       publisher: CoreOS
       sku: Stable
       version: latest
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+
+- name: Create VMSS with an image that requires plan information
+  azure_rm_virtualmachinescaleset:
+    resource_group: myResourceGroup
+    name: testvmss
+    vm_size: Standard_DS1_v2
+    capacity: 2
+    virtual_network_name: testvnet
+    upgrade_policy: Manual
+    subnet_name: testsubnet
+    admin_username: adminUser
+    ssh_password_enabled: false
+    ssh_public_keys:
+      - path: /home/adminUser/.ssh/authorized_keys
+        key_data: < insert yor ssh public key here... >
+    managed_disk_type: Standard_LRS
+    image:
+      offer: cis-ubuntu-linux-1804-l1
+      publisher: center-for-internet-security-inc
+      sku: Stable
+      version: latest
+    plan:
+      name: cis-ubuntu-linux-1804-l1
+      product: cis-ubuntu-linux-1804-l1
+      publisher: center-for-internet-security-inc
+    accept_terms: True
     data_disks:
       - lun: 0
         disk_size_gb: 64
@@ -453,7 +513,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             overprovision=dict(type='bool', default=True),
             single_placement_group=dict(type='bool', default=True),
             zones=dict(type='list'),
-            custom_data=dict(type='str')
+            custom_data=dict(type='str'),
+            plan=dict(type='dict'),
+            accept_terms=dict(type='bool', default=False)
         )
 
         self.resource_group = None
@@ -487,6 +549,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.single_placement_group = None
         self.zones = None
         self.custom_data = None
+        self.plan = None
+        self.accept_terms = None
 
         required_if = [
             ('state', 'present', [
@@ -600,6 +664,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 image_reference = self.get_custom_image_reference(self.image)
             elif self.image:
                 self.fail("parameter error: expecting image to be a string or dict not {0}".format(type(self.image).__name__))
+
+            if self.plan:
+                if not self.plan.get('name') or not self.plan.get('product') or not self.plan.get('publisher'):
+                    self.fail("parameter error: plan must include name, product, and publisher")
 
             disable_ssh_password = not self.ssh_password_enabled
 
@@ -758,6 +826,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         if nsg:
                             self.security_group = self.network_models.NetworkSecurityGroup(id=nsg.get('id'))
 
+                    plan = None
+                    if self.plan:
+                        plan = self.compute_models.Plan(name=self.plan.get('name'), product=self.plan.get('product'),
+                                                        publisher=self.plan.get('publisher'),
+                                                        promotion_code=self.plan.get('promotion_code'))
+
                     os_profile = None
                     if self.admin_username or self.custom_data or self.ssh_public_keys:
                         os_profile = self.compute_models.VirtualMachineScaleSetOSProfile(
@@ -781,6 +855,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         ),
                         virtual_machine_profile=self.compute_models.VirtualMachineScaleSetVMProfile(
                             os_profile=os_profile,
+                            plan=plan,
                             storage_profile=self.compute_models.VirtualMachineScaleSetStorageProfile(
                                 os_disk=self.compute_models.VirtualMachineScaleSetOSDisk(
                                     managed_disk=managed_disk,
@@ -851,6 +926,24 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             ))
 
                         vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
+
+                    # Before creating VM accept terms of plan if `accept_terms` is True
+                    if self.accept_terms is True:
+                        if not self.plan or not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
+                            self.fail("parameter error: plan must be specified and include name, product, and publisher")
+                        try:
+                            plan_name = self.plan.get('name')
+                            plan_product = self.plan.get('product')
+                            plan_publisher = self.plan.get('publisher')
+                            term = self.marketplace_client.marketplace_agreements.get(
+                                publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name)
+                            term.accepted = True
+                            self.marketplace_client.marketplace_agreements.create(
+                                publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name, parameters=term)
+                        except Exception as exc:
+                            self.fail(("Error accepting terms for virtual machine {0} with plan {1}. " +
+                                       "Only service admin/account admin users can purchase images " +
+                                       "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
 
                     self.log("Create virtual machine with parameters:")
                     self.create_or_update_vmss(vmss_resource)
