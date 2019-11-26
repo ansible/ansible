@@ -60,7 +60,7 @@ class ActionModule(ActionNetworkModule):
                 if module_name in ['ce_netconf'] or module_name not in CLI_SUPPORTED_MODULES:
                     pc.connection = 'netconf'
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
                 connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
                 socket_path = connection.run()

@@ -929,7 +929,7 @@ class TaskExecutor:
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
 
             options = self._get_persistent_connection_options(connection, variables, templar)
-            socket_path = start_connection(self._play_context, options)
+            socket_path = start_connection(self._play_context, options, self._task._uuid)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
