@@ -110,13 +110,13 @@ options:
     type: str
     choices: [ auto, delayed, disabled, manual ]
     default: auto
-  AppRotateBytes:
+  app_rotate_bytes:
     description:
       - nssm will not rotate any file which is smaller than the configured number of bytes.
     type: int
     default:
     version_added: "2.10"
-  AppRotateOnline:
+  app_rotate_online:
     description:
       - If set to 1, nssm can rotate files which grow to the configured file size limit while the service is running.
     type: int
@@ -125,12 +125,12 @@ options:
       - 1
     default:
     version_added: "2.10"
-  AppStopMethodConsole:
+  app_stop_method_console:
     description:
       - Time to wait after sending Control-C.
     type: int
     version_added: "2.10"
-  AppStopMethodSkip:
+  app_stop_method_skip:
     description:
       - To disable service shutdown methods, set to the sum of one or more of the numbers
       - 1 - Don't send Control-C to the console.
