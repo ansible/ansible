@@ -75,6 +75,7 @@ options:
     vlan_trunk:
         description:
             - Indicates whether this is a VLAN trunk or not.
+            - Cannot be used if C(vlan_pvlan) is used.
         required: False
         default: False
         type: bool
@@ -82,6 +83,7 @@ options:
     vlan_pvlan:
         description:
             - Indicates whether the C(vlan_id) is a PVLAN or not.
+            - Cannot be used if C(vlan_trunk) is used.
         required: False
         default: False
         type: bool
@@ -429,8 +431,16 @@ class VMwareDvsPortgroup(PyVmomi):
             if map(lambda x: (x.start, x.end), defaultPortConfig.vlan.vlanId) != self.create_vlan_list():
                 return 'update'
         else:
-            if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec):
-                return 'update'
+            if self.module.params['vlan_pvlan']:
+                # Check pvlan
+                if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec):
+                    return 'update'
+            else:
+                # Check vlan
+                if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec):
+                    return 'update'
+
+            # check if config vlanid matches param vlanid
             if defaultPortConfig.vlan.vlanId != int(self.module.params['vlan_id']):
                 return 'update'
 
@@ -550,8 +560,13 @@ def main():
         )
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        mutually_exclusive=[
+            ['vlan_trunk', 'vlan_pvlan'],
+        ]   
+    )
 
     vmware_dvs_portgroup = VMwareDvsPortgroup(module)
     vmware_dvs_portgroup.process_state()
