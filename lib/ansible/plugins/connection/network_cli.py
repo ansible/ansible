@@ -319,6 +319,7 @@ class Connection(NetworkConnectionBase):
         self._terminal = None
         self.cliconf = None
         self._paramiko_conn = None
+        self._task_uuid = to_text(kwargs.get('task_uuid', ''))
 
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
@@ -407,6 +408,12 @@ class Connection(NetworkConnectionBase):
             self.reset_history()
         if hasattr(self, 'disable_response_logging'):
             self.disable_response_logging()
+
+    def update_cli_prompt_context(self, task_uuid):
+        # set cli prompt context at the start of new task run only
+        if self._task_uuid != task_uuid:
+            self.set_cli_prompt_context()
+            self._task_uuid = task_uuid
 
     def _connect(self):
         '''

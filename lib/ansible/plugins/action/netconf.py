@@ -54,7 +54,7 @@ class ActionModule(ActionNetworkModule):
             pc.private_key_file = args.get('ssh_keyfile') or self._play_context.private_key_file
 
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
 
             timeout = args.get('timeout')
             command_timeout = int(timeout) if timeout else connection.get_option('persistent_command_timeout')

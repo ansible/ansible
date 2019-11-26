@@ -58,7 +58,7 @@ class ActionModule(ActionNetworkModule):
         command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
         display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-        connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+        connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
         connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
         socket_path = connection.run()
