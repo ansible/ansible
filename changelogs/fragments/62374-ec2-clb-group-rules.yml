@@ -1,0 +1,2 @@
+bugfixes:
+  - ec2_group - Fix regression with revoking security groups in EC2 Classic Load Balancers.
