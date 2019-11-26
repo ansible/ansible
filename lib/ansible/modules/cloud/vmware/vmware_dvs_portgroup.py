@@ -306,12 +306,13 @@ class VMwareDvsPortgroup(PyVmomi):
 
             # Check if private vlan
             if self.module.params['vlan_pvlan']:
+                # Set pvlan
                 config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec()
+                config.defaultPortConfig.vlan.pvlanId = int(self.module.params['vlan_id'])
             else:
+                # Set VLAN
                 config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec()
-
-            # Set VLAN
-            config.defaultPortConfig.vlan.vlanId = int(self.module.params['vlan_id'])
+                config.defaultPortConfig.vlan.vlanId = int(self.module.params['vlan_id'])
 
         config.defaultPortConfig.vlan.inherited = False
         config.defaultPortConfig.securityPolicy = vim.dvs.VmwareDistributedVirtualSwitch.SecurityPolicy()
@@ -430,16 +431,17 @@ class VMwareDvsPortgroup(PyVmomi):
                 return 'update'
             if map(lambda x: (x.start, x.end), defaultPortConfig.vlan.vlanId) != self.create_vlan_list():
                 return 'update'
+        elif self.module.params['vlan_pvlan']:
+            # Check pvlan
+            if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec):
+                return 'update'
+            # check if config vlanid matches param pvlanid
+            if defaultPortConfig.vlan.pvlanId != int(self.module.params['vlan_id']):
+                return 'update'
         else:
-            if self.module.params['vlan_pvlan']:
-                # Check pvlan
-                if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.PvlanSpec):
-                    return 'update'
-            else:
-                # Check vlan
-                if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec):
-                    return 'update'
-
+            # Check vlan
+            if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec):
+                return 'update'
             # check if config vlanid matches param vlanid
             if defaultPortConfig.vlan.vlanId != int(self.module.params['vlan_id']):
                 return 'update'
