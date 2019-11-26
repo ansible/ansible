@@ -315,7 +315,10 @@ if($gather_subset.Contains('memory')) {
     $ansible_facts += @{
         # Win32_PhysicalMemory is empty on some virtual platforms
         ansible_memtotal_mb = ([math]::ceiling($win32_cs.TotalPhysicalMemory / 1024 / 1024))
+        ansible_memfree_mb = ([math]::ceiling($win32_os.FreePhysicalMemory / 1024))
         ansible_swaptotal_mb = ([math]::round($win32_os.TotalSwapSpaceSize / 1024))
+        ansible_pagefiletotal_mb = ([math]::round($win32_os.SizeStoredInPagingFiles / 1024))
+        ansible_pagefilefree_mb = ([math]::round($win32_os.FreeSpaceInPagingFiles / 1024))
     }
 }
 
