@@ -96,8 +96,7 @@ options:
       preemptible:
         description:
         - Defines whether the TPU instance is preemptible.
-        required: false
-        default: 'false'
+        required: true
         type: bool
   labels:
     description:
@@ -287,7 +286,7 @@ def main():
             tensorflow_version=dict(required=True, type='str'),
             network=dict(type='str'),
             cidr_block=dict(required=True, type='str'),
-            scheduling_config=dict(type='dict', options=dict(preemptible=dict(type='bool'))),
+            scheduling_config=dict(type='dict', options=dict(preemptible=dict(required=True, type='bool'))),
             labels=dict(type='dict'),
             zone=dict(required=True, type='str'),
         )
