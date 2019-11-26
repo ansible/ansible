@@ -20,7 +20,7 @@
   command: mysql {{ db_latin1_name }} -e 'create table testlatin1(id int, name varchar(100));'
 
 - name: inserting data into Latin1 database
-  command: mysql {{ db_latin1_name }} "-e insert into testlatin1 value(47,'Amédée Bôlüt');"
+  command: mysql {{ db_latin1_name }} -e "insert into testlatin1 value(47,'Amédée Bôlüt');"
 
 - name: selecting table
   command: mysql {{ db_latin1_name }} "-e select * from testlatin1;"
