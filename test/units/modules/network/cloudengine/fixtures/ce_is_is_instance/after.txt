@@ -1,0 +1,11 @@
+<data>
+    <isiscomm xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+      <isSites>
+        <isSite>
+          <instanceId>100</instanceId>
+          <vpnName>_public_</vpnName>
+          <description>ISIS</description>
+        </isSite>
+      </isSites>
+    </isiscomm>
+  </data>
