@@ -1,0 +1,14 @@
+ <data>
+    <lldp>
+    <lldpSys>
+          <lldpEnable>enabled</lldpEnable>
+          <mdnStatus>enabled</mdnStatus>
+        </lldpSys>
+    <mdnInterfaces>
+      <mdnInterface>
+        <ifName>10GE1/0/1</ifName>
+        <mdnStatus>rxOnly</mdnStatus>
+      </mdnInterface>
+    </mdnInterfaces>
+  </lldp>
+</data>
