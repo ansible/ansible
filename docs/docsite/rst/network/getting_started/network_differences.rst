@@ -84,7 +84,7 @@ If you are running Ansible 2.5 or older, some network platforms support privileg
 And you use the ``eapi`` variable in your task(s):
 
 .. code-block:: yaml
-You also need to set the ``network_os`` variable for the specific network platform you are communicating with.
+
    tasks:
    - name: provider demo with eos
      eos_banner:
