@@ -145,6 +145,14 @@ EXAMPLES = r'''
     opts: bind
     state: mounted
     fstype: none
+
+- name: Mount an NFS volume
+  mount:
+    src: 192.168.1.100:/nfs/ssd/shared_data
+    path: /mnt/shared_data
+    opts: rw,sync,hard,intr
+    state: mounted
+    fstype: nfs
 '''
 
 
