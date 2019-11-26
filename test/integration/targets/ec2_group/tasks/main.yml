@@ -9,35 +9,60 @@
 # - include: ../../setup_ec2/tasks/common.yml module_name: ec2_group
 
 - include: ./credential_tests.yml
-- module_defaults:
-    group/aws:
+# ============================================================
+# EC2 Classic tests can only be run on a pre-2013 AWS account with supported-platforms=EC2
+# Ansible CI does NOT have classic EC2 support; these tests are provided as-is for the
+# community and can be run if you have access to a classic account.  To check if your account
+# has support for EC2 Classic you can use the `aws_account_attribute` plugin.
+
+- name: determine if this is an EC2 Classic account
+  set_fact:
+    has_ec2_classic: "{{ lookup('aws_account_attribute',
+                                attribute='has-ec2-classic',
+                                region=aws_region,
+                                aws_access_key=aws_access_key,
+                                aws_secret_key=aws_secret_key,
+                                aws_security_token=security_token,
+                                wantlist=True) }}"
+# ============================================================
+-
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
       security_token: "{{ security_token }}"
       region: "{{ aws_region }}"
-  block:
-    # ============================================================
-    - name: set up aws connection info
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: yes
+  no_log: yes
 
-    # ============================================================
+# ============================================================
+- name: Run EC2 Classic accounts if account type is EC2
+  include: ./ec2_classic.yml
+  when: has_ec2_classic
+
+# ============================================================
+# Other tests depend on attribute='default-vpc', ie no vpc_id is set. This is
+# incompatible with EC2 classic accounts, so these tests can only be run in a
+# VPC-type account. See "Q. I really want a default VPC for my existing EC2
+# account. Is that possible?" in https://aws.amazon.com/vpc/faqs/#Default_VPCs
+- name: Run all other tests if account type is VPC
+  module_defaults:
+      group/aws:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+  block:
     - name: determine if there is a default VPC
       set_fact:
         defaultvpc: "{{ lookup('aws_account_attribute',
-                               attribute='default-vpc',
-                               region=aws_region,
-                               aws_access_key=aws_access_key,
-                               aws_secret_key=aws_secret_key,
-                               aws_security_token=security_token) }}"
+                              attribute='default-vpc',
+                              region=aws_region,
+                              aws_access_key=aws_access_key,
+                              aws_secret_key=aws_secret_key,
+                              aws_security_token=security_token) }}"
       register: default_vpc
 
-    # ============================================================
     - name: create a VPC
       ec2_vpc_net:
         name: "{{ resource_prefix }}-vpc"
@@ -1470,6 +1495,7 @@
         that:
            - 'result.changed'
            - 'not result.group_id'
+  when: not has_ec2_classic
 
   always:
     # ============================================================
