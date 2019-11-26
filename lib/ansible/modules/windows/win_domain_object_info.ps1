@@ -11,13 +11,13 @@ $spec = @{
     options = @{
         filter = @{ type = "str"; required = $false; }
         identity = @{ type = "str"; required = $false}
-        includeDeletedObjects = @{ type = "bool"; required = $false; default = $false }
-        jsonDepth = @{ type = "int"; required = $false; default = 3 }
+        include_deleted_objects = @{ type = "bool"; required = $false; default = $false }
+        json_depth = @{ type = "int"; required = $false; default = 3 }
         properties = @{ type = "list"; required = $false; default = @("*"); elements = "str" }
         server = @{ type = "str"; required = $false; aliases = @("domain_server") }
-        ldapFilter = @{ type = "str"; required = $false; }
-        searchScope = @{ type = "str"; choices = @("Base","OneLevel","Subtree"); required = $false; default = "Subtree" }
-        searchBase = @{ type = "str"; required = $false; }
+        ldap_filter = @{ type = "str"; required = $false; }
+        search_scope = @{ type = "str"; choices = @("Base","OneLevel","Subtree"); required = $false; default = "Subtree" }
+        search_base = @{ type = "str"; required = $false; }
         username = @{ type = "str"; required = $false; aliases = @("domain_username") }
         password = @{ type = "str"; required = $false; aliases = @("domain_password") }
     }
@@ -30,70 +30,67 @@ $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 $filter = $module.Params.filter
 $identity = $module.Params.identity
-$includeDeletedObjects = $module.Params.includeDeletedObjects
+$include_deleted_objects = $module.Params.include_deleted_objects
 $properties = $module.Params.properties
-$server = $module.Params.searchScope
-$ldapFilter = $module.Params.ldapFilter
-$searchScope = $module.Params.searchScope
-$searchBase = $module.Params.searchBase
+$server = $module.Params.server
+$ldap_filter = $module.Params.ldap_filter
+$search_scope = $module.Params.search_scope
+$search_base = $module.Params.search_base
 $username = $module.Params.username
-$password = $module.Params.password
-$jsonDepth = $module.Params.jsonDepth
+$password = ConvertTo-SecureString -AsPlainText -Force -String $module.Params.password
+$json_depth = $module.Params.json_depth
 
-$result = @{
-    changed = $false
+$module.result = @{
     objects = @()
 }
 
-$args_array = @{}
+$args_hashtable = @{}
 
 if ($null -ne $filter)
 {
-    $args_array.filter = $filter
+    $args_hashtable.Filter = $filter
 }
 
 if ($null -ne $identity)
 {
-    $args_array.identity = $identity
+    $args_hashtable.Identity = $identity
 }
 
 if ($null -ne $includeDeletedObjects)
 {
-    $args_array.includeDeletedObjects = $includeDeletedObjects
+    $args_hashtable.IncludeDeletedObjects = $include_deleted_objects
 }
 
 if ($null -ne $properties)
 {
-    $args_array.properties = $properties
+    $args_hashtable.Properties = $properties
 }
 
 if ($null -ne $server)
 {
-    $args_array.server = $server
+    $args_hashtable.Server = $server
 }
 
 if ($null -ne $ldapFilter)
 {
-    $args_array.ldapFilter = $ldapFilter
+    $args_hashtable.LDAPFilter = $ldap_filter
 }
 
 if ($null -ne $searchScope)
 {
-    $args_array.searchScope = $searchScope
+    $args_hashtable.SearchScope = $search_scope
 }
 
 if ($null -ne $searchBase)
 {
-    $args_array.searchBase = $searchBase
+    $args_hashtable.SearchBase = $search_base
 }
 
 if ($null -ne $username -and $null -ne $password)
 {
-    $args_array.Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
+    $args_hashtable.Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
 }
 
-Get-ADObject @args_array | ForEach-Object {
-    $result.objects += ,($_ | ConvertTo-Json -Depth $jsonDepth -Compress)
-}
+$result.objects = Get-ADObject @args_hashtable | ForEach-Object {$_ | ConvertTo-Json -Depth $jsonDepth -Compress)}
 
 $module.ExitJson()
