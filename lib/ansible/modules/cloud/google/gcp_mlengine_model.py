@@ -70,7 +70,7 @@ options:
       name:
         description:
         - The name specified for the version when it was created.
-        required: false
+        required: true
         type: str
   regions:
     description:
@@ -214,7 +214,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             description=dict(type='str'),
-            default_version=dict(type='dict', options=dict(name=dict(type='str'))),
+            default_version=dict(type='dict', options=dict(name=dict(required=True, type='str'))),
             regions=dict(type='list', elements='str'),
             online_prediction_logging=dict(type='bool'),
             online_prediction_console_logging=dict(type='bool'),

@@ -175,7 +175,7 @@ options:
     - A subscription is considered active as long as any connected subscriber is successfully
       consuming messages from the subscription or is issuing operations on the subscription.
       If expirationPolicy is not set, a default policy with ttl of 31 days will be
-      used. If it is set but left empty, the resource never expires. The minimum allowed
+      used. If it is set but ttl is "", the resource never expires. The minimum allowed
       value for expirationPolicy.ttl is 1 day.
     required: false
     type: dict
@@ -188,7 +188,7 @@ options:
         - If ttl is not set, the associated resource never expires.
         - A duration in seconds with up to nine fractional digits, terminated by 's'.
         - Example - "3.5s".
-        required: false
+        required: true
         type: str
   project:
     description:
@@ -379,7 +379,7 @@ expirationPolicy:
   - A subscription is considered active as long as any connected subscriber is successfully
     consuming messages from the subscription or is issuing operations on the subscription.
     If expirationPolicy is not set, a default policy with ttl of 31 days will be used.
-    If it is set but left empty, the resource never expires. The minimum allowed value
+    If it is set but ttl is "", the resource never expires. The minimum allowed value
     for expirationPolicy.ttl is 1 day.
   returned: success
   type: complex
@@ -428,7 +428,7 @@ def main():
             ack_deadline_seconds=dict(type='int'),
             message_retention_duration=dict(default='604800s', type='str'),
             retain_acked_messages=dict(type='bool'),
-            expiration_policy=dict(type='dict', options=dict(ttl=dict(type='str'))),
+            expiration_policy=dict(type='dict', options=dict(ttl=dict(required=True, type='str'))),
         )
     )
 
