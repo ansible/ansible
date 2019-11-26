@@ -1,0 +1,103 @@
+# Test code for the vmware_dvswitch_nioc module.
+# Copyright: (c) 2018, VMware, Inc.
+# Copyright: (c) 2019, Abhijeet Kasurde <akasurde@redhat.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+
+    - name: Add distributed vSwitch
+      vmware_dvswitch:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter_name: "{{ dc1 }}"
+        state: present
+        switch_name: dvswitch_0001
+        mtu: 9000
+        uplink_quantity: 2
+        discovery_proto: lldp
+        discovery_operation: both
+      register: dvs_result_0001
+
+    - debug:
+        var: dvs_result_0001
+
+    - name: ensure distributed vswitch is present
+      assert:
+        that:
+        - dvs_result_0001 is changed
+
+    - &enable_nioc
+      name: Enable NIOC
+      vmware_dvswitch_nioc:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        switch: dvswitch_0001
+        version: version3
+        validate_certs: no
+        resources:
+          - name: vmotion
+            limit: -1
+            reservation: 128
+            shares_level: normal
+          - name: vsan
+            limit: -1
+            shares_level: custom
+            shares: 99
+            reservation: 256
+        state: present
+      register: enable_nioc_result
+
+    - debug:
+        var: enable_nioc_result
+
+    - name: Check if nioc is enabled
+      assert:
+        that:
+          - enable_nioc_result.changed
+
+    - <<: *enable_nioc
+      name: Change nioc settings again and make sure it does not change
+      register: enable_nioc_result_2
+
+    - name: Check if nioc changes are not made
+      assert:
+        that:
+          - not enable_nioc_result_2.changed
+
+    - &disable_nioc
+      name: Disable NIOC
+      vmware_dvswitch_nioc:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        switch: dvswitch_0001
+        validate_certs: no
+        state: absent
+      register: disable_nioc_result
+
+    - debug:
+        var: disable_nioc_result
+
+    - name: Check if nioc is disabled
+      assert:
+        that:
+          - disable_nioc_result.changed
+
+    - <<: *disable_nioc
+      name: Disable NIOC again
+      register: disable_nioc_result_2
+
+    - debug:
+        var: disable_nioc_result_2
+
+    - name: Check if nioc is not disabled since it is already disabled
+      assert:
+        that:
+          - not disable_nioc_result_2.changed

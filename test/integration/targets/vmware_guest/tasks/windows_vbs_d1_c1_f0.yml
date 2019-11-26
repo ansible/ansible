@@ -4,14 +4,14 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
+    folder: "{{ f0 }}"
     name: vbs-Test
-    datacenter: "{{ (clusters['json'][0]|basename).split('_')[0] }}"
-    cluster: "{{ clusters['json'][0] }}"
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
     resource_pool: Resources
     guest_id: windows9_64Guest
     hardware:
-      memory_mb: 1024
+      memory_mb: 128
       num_cpus: 1
       virt_based_security: True
       version: 14
@@ -20,7 +20,7 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: LocalDS_0
+      datastore: '{{ rw_datastore }}'
     cdrom:
       type: client
   register: vbs_vm
@@ -39,14 +39,14 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
+    folder: "{{ f0 }}"
     name: vbs-Test2
-    datacenter: "{{ (clusters['json'][0]|basename).split('_')[0] }}"
-    cluster: "{{ clusters['json'][0] }}"
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
     resource_pool: Resources
     guest_id: windows9Server64Guest
     hardware:
-      memory_mb: 1024
+      memory_mb: 128
       num_cpus: 1
       version: 14
       boot_firmware: efi
@@ -54,7 +54,7 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: LocalDS_0
+      datastore: '{{ rw_datastore }}'
     cdrom:
       type: client
   register: vbs_vm
@@ -73,13 +73,13 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    folder: "/{{ (clusters['json'][0]|basename).split('_')[0] }}/vm"
+    folder: "{{ f0 }}"
     name: vbs-Test2
-    datacenter: "{{ (clusters['json'][0]|basename).split('_')[0] }}"
+    datacenter: "{{ f0 }}"
     disk:
     - size_mb: 256
       type: thin
-      datastore: LocalDS_0
+      datastore: '{{ rw_datastore }}'
     hardware:
       virt_based_security: True
     state: present
@@ -90,5 +90,4 @@
 - name: assert the VM was changed
   assert:
     that:
-      - "vbs_vm.failed == false"
-      - "vbs_vm.changed == true"
+      - vbs_vm is changed

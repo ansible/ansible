@@ -85,12 +85,25 @@ def parsecolor(color):
         return u'38;5;%d' % (232 + int(matches.group('gray')))
 
 
-def stringc(text, color):
+def stringc(text, color, wrap_nonvisible_chars=False):
     """String in color."""
 
     if ANSIBLE_COLOR:
         color_code = parsecolor(color)
-        return u"\n".join([u"\033[%sm%s\033[0m" % (color_code, t) for t in text.split(u'\n')])
+        fmt = u"\033[%sm%s\033[0m"
+        if wrap_nonvisible_chars:
+            # This option is provided for use in cases when the
+            # formatting of a command line prompt is needed, such as
+            # `ansible-console`. As said in `readline` sources:
+            # readline/display.c:321
+            # /* Current implementation:
+            #         \001 (^A) start non-visible characters
+            #         \002 (^B) end non-visible characters
+            #    all characters except \001 and \002 (following a \001) are copied to
+            #    the returned string; all characters except those between \001 and
+            #    \002 are assumed to be `visible'. */
+            fmt = u"\001\033[%sm\002%s\001\033[0m\002"
+        return u"\n".join([fmt % (color_code, t) for t in text.split(u'\n')])
     else:
         return text
 

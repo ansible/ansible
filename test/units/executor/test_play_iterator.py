@@ -22,10 +22,8 @@ __metaclass__ = type
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 
-from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.play_iterator import HostState, PlayIterator
 from ansible.playbook import Playbook
-from ansible.playbook.task import Task
 from ansible.playbook.play_context import PlayContext
 
 from units.mock.loader import DictDataLoader
@@ -33,12 +31,6 @@ from units.mock.path import mock_unfrackpath_noop
 
 
 class TestPlayIterator(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     def test_host_state(self):
         hs = HostState(blocks=[x for x in range(0, 10)])

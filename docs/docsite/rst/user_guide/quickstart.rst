@@ -16,3 +16,5 @@ Enjoy, and be sure to visit the rest of the documentation to learn more.
        A step by step introduction to Ansible
    `Ansible Automation for SysAdmins <https://opensource.com/downloads/ansible-quickstart>`_
        A downloadable guide for getting started with Ansible
+   :ref:`network_getting_started`
+       A guide for network engineers using Ansible for the first time

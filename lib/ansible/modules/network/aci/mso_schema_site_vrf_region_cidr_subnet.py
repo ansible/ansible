@@ -92,8 +92,8 @@ EXAMPLES = r'''
     state: present
   delegate_to: localhost
 
-- name: Remove a site VRF region CIDR
-  mso_schema_template_vrf_region_cidr:
+- name: Remove a site VRF region CIDR subnet
+  mso_schema_site_vrf_region_cidr_subnet:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -107,8 +107,8 @@ EXAMPLES = r'''
     state: absent
   delegate_to: localhost
 
-- name: Query a specific site VRF region CIDR
-  mso_schema_template_vrf_region_cidr:
+- name: Query a specific site VRF region CIDR subnet
+  mso_schema_site_vrf_region_cidr_subnet:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -123,8 +123,8 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: query_result
 
-- name: Query all site VRF region CIDR
-  mso_schema_template_vrf_region_cidr:
+- name: Query all site VRF region CIDR subnet
+  mso_schema_site_vrf_region_cidr_subnet:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -169,15 +169,15 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    site = module.params['site']
-    template = module.params['template']
-    vrf = module.params['vrf']
-    region = module.params['region']
-    cidr = module.params['cidr']
-    subnet = module.params['subnet']
-    zone = module.params['zone']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    site = module.params.get('site')
+    template = module.params.get('template')
+    vrf = module.params.get('vrf')
+    region = module.params.get('region')
+    cidr = module.params.get('cidr')
+    subnet = module.params.get('subnet')
+    zone = module.params.get('zone')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
@@ -187,13 +187,13 @@ def main():
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     schema_path = 'schemas/{id}'.format(**schema_obj)
-    schema_id = schema_obj['id']
+    schema_id = schema_obj.get('id')
 
     # Get site
     site_id = mso.lookup_site(site)
 
     # Get site_idx
-    sites = [(s['siteId'], s['templateName']) for s in schema_obj['sites']]
+    sites = [(s.get('siteId'), s.get('templateName')) for s in schema_obj.get('sites')]
     if (site_id, template) not in sites:
         mso.fail_json(msg="Provided site/template '{0}-{1}' does not exist. Existing sites/templates: {2}".format(site, template, ', '.join(sites)))
 
@@ -204,34 +204,34 @@ def main():
 
     # Get VRF
     vrf_ref = mso.vrf_ref(schema_id=schema_id, template=template, vrf=vrf)
-    vrfs = [v['vrfRef'] for v in schema_obj['sites'][site_idx]['vrfs']]
+    vrfs = [v.get('vrfRef') for v in schema_obj.get('sites')[site_idx]['vrfs']]
     if vrf_ref not in vrfs:
         mso.fail_json(msg="Provided vrf '{0}' does not exist. Existing vrfs: {1}".format(vrf, ', '.join(vrfs)))
     vrf_idx = vrfs.index(vrf_ref)
 
     # Get Region
-    regions = [r['name'] for r in schema_obj['sites'][site_idx]['vrfs'][vrf_idx]['regions']]
+    regions = [r.get('name') for r in schema_obj.get('sites')[site_idx]['vrfs'][vrf_idx]['regions']]
     if region not in regions:
         mso.fail_json(msg="Provided region '{0}' does not exist. Existing regions: {1}".format(region, ', '.join(regions)))
     region_idx = regions.index(region)
 
     # Get CIDR
-    cidrs = [c['ip'] for c in schema_obj['sites'][site_idx]['vrfs'][vrf_idx]['regions'][region_idx]['cidrs']]
+    cidrs = [c.get('ip') for c in schema_obj.get('sites')[site_idx]['vrfs'][vrf_idx]['regions'][region_idx]['cidrs']]
     if cidr not in cidrs:
         mso.fail_json(msg="Provided CIDR IP '{0}' does not exist. Existing CIDR IPs: {1}".format(cidr, ', '.join(cidrs)))
     cidr_idx = cidrs.index(cidr)
 
     # Get Subnet
-    subnets = [s['ip'] for s in schema_obj['sites'][site_idx]['vrfs'][vrf_idx]['regions'][region_idx]['cidrs'][cidr_idx]['subnets']]
+    subnets = [s.get('ip') for s in schema_obj.get('sites')[site_idx]['vrfs'][vrf_idx]['regions'][region_idx]['cidrs'][cidr_idx]['subnets']]
     if subnet is not None and subnet in subnets:
         subnet_idx = subnets.index(subnet)
         # FIXME: Changes based on index are DANGEROUS
         subnet_path = '/sites/{0}/vrfs/{1}/regions/{2}/cidrs/{3}/subnets/{4}'.format(site_template, vrf, region, cidr_idx, subnet_idx)
-        mso.existing = schema_obj['sites'][site_idx]['vrfs'][vrf_idx]['regions'][region_idx]['cidrs'][cidr_idx]['subnets'][subnet_idx]
+        mso.existing = schema_obj.get('sites')[site_idx]['vrfs'][vrf_idx]['regions'][region_idx]['cidrs'][cidr_idx]['subnets'][subnet_idx]
 
     if state == 'query':
         if subnet is None:
-            mso.existing = schema_obj['sites'][site_idx]['vrfs'][vrf_idx]['regions'][region_idx]['cidrs'][cidr_idx]['subnets']
+            mso.existing = schema_obj.get('sites')[site_idx]['vrfs'][vrf_idx]['regions'][region_idx]['cidrs'][cidr_idx]['subnets']
         elif not mso.existing:
             mso.fail_json(msg="Subnet IP '{subnet}' not found".format(subnet=subnet))
         mso.exit_json()

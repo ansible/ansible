@@ -164,6 +164,21 @@
     that:
     - c_pagefile_override.changed == true
 
+ # Test 7: Test idempotent
+- name: Set c pagefile 1024-1024, idempotent
+  win_pagefile:
+    drive: C
+    initial_size: 1024
+    maximum_size: 1024
+    override: no
+    state: present
+  register: c_pagefile_idempotent
+
+- name: Test set c pagefile idempotent
+  assert:
+    that:
+    - c_pagefile_idempotent.changed == false
+
 - name: Query all pagefiles
   win_pagefile:
     state: query

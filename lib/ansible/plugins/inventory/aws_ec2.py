@@ -21,11 +21,17 @@ DOCUMENTATION = '''
     notes:
         - If no credentials are provided and the control node has an associated IAM instance profile then the
           role will be used for authentication.
+    author:
+        - Sloane Hertel (@s-hertel)
     options:
         plugin:
             description: Token that ensures this is a source file for the plugin.
             required: True
             choices: ['aws_ec2']
+        iam_role_arn:
+          description: The ARN of the IAM role to assume to perform the inventory lookup. You should still provide AWS
+              credentials with enough privilege to perform the AssumeRole action.
+          version_added: '2.9'
         regions:
           description:
               - A list of regions in which to describe EC2 instances.
@@ -132,6 +138,10 @@ keyed_groups:
   # Create a group per region e.g. aws_region_us_east_2
   - key: placement.region
     prefix: aws_region
+  # Create a group (or groups) based on the value of a custom tag "Role" and add them to a metagroup called "project"
+  - key: tags['Role']
+    prefix: foo
+    parent_group: "project"
 # Set individual variables with compose
 compose:
   # Use the private IP address to connect to the host
@@ -263,6 +273,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.aws_secret_access_key = None
         self.aws_access_key_id = None
         self.aws_security_token = None
+        self.iam_role_arn = None
 
     def _compile_values(self, obj, attr):
         '''
@@ -334,6 +345,26 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
         return connection
 
+    def _boto3_assume_role(self, credentials, region):
+        """
+        Assume an IAM role passed by iam_role_arn parameter
+
+        :return: a dict containing the credentials of the assumed role
+        """
+
+        iam_role_arn = self.iam_role_arn
+
+        try:
+            sts_connection = boto3.session.Session(profile_name=self.boto_profile).client('sts', region, **credentials)
+            sts_session = sts_connection.assume_role(RoleArn=iam_role_arn, RoleSessionName='ansible_aws_ec2_dynamic_inventory')
+            return dict(
+                aws_access_key_id=sts_session['Credentials']['AccessKeyId'],
+                aws_secret_access_key=sts_session['Credentials']['SecretAccessKey'],
+                aws_session_token=sts_session['Credentials']['SessionToken']
+            )
+        except botocore.exceptions.ClientError as e:
+            raise AnsibleError("Unable to assume IAM role: %s" % to_native(e))
+
     def _boto3_conn(self, regions):
         '''
             :param regions: A list of regions to create a boto3 client
@@ -342,6 +373,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
 
         credentials = self._get_credentials()
+        iam_role_arn = self.iam_role_arn
 
         if not regions:
             try:
@@ -364,6 +396,20 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         for region in regions:
             connection = self._get_connection(credentials, region)
+            try:
+                if iam_role_arn is not None:
+                    assumed_credentials = self._boto3_assume_role(credentials, region)
+                else:
+                    assumed_credentials = credentials
+                connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region, **assumed_credentials)
+            except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+                if self.boto_profile:
+                    try:
+                        connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region)
+                    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+                        raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
+                else:
+                    raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
             yield connection, region
 
     def _get_instances_by_region(self, regions, filters, strict_permissions):
@@ -533,13 +579,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.aws_access_key_id = self.get_option('aws_access_key')
         self.aws_secret_access_key = self.get_option('aws_secret_key')
         self.aws_security_token = self.get_option('aws_security_token')
+        self.iam_role_arn = self.get_option('iam_role_arn')
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             session = botocore.session.get_session()
-            if session.get_credentials() is not None:
-                self.aws_access_key_id = session.get_credentials().access_key
-                self.aws_secret_access_key = session.get_credentials().secret_key
-                self.aws_security_token = session.get_credentials().token
+            try:
+                credentials = session.get_credentials().get_frozen_credentials()
+            except AttributeError:
+                pass
+            else:
+                self.aws_access_key_id = credentials.access_key
+                self.aws_secret_access_key = credentials.secret_key
+                self.aws_security_token = credentials.token
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
             raise AnsibleError("Insufficient boto credentials found. Please provide them in your "

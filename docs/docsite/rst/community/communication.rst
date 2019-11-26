@@ -22,7 +22,7 @@ Ansible has several mailing lists.  Your first post to the mailing list will be 
 * `Ansible Container List <https://groups.google.com/forum/#!forum/ansible-container>`_ is for users and developers of the Ansible Container project.
 * `Ansible Development List <https://groups.google.com/forum/#!forum/ansible-devel>`_ is for learning how to develop on Ansible, asking about prospective feature design, or discussions about extending ansible or features in progress.
 * `Ansible Lockdown List <https://groups.google.com/forum/#!forum/ansible-lockdown>`_ is for all things related to Ansible Lockdown projects, including DISA STIG automation and CIS Benchmarks.
-* `Ansible Outreach List <https://groups.google.com/forum/#!forum/ansible-outreach>`_ help with promoting Ansible and `Ansible Meetups <http://ansible.meetup.com/>`_
+* `Ansible Outreach List <https://groups.google.com/forum/#!forum/ansible-outreach>`_ help with promoting Ansible and `Ansible Meetups <https://ansible.meetup.com/>`_
 * `Ansible Project List <https://groups.google.com/forum/#!forum/ansible-project>`_ is for sharing Ansible tips, answering questions, and general user discussion.
 * `Molecule List <https://groups.google.com/forum/#!forum/molecule-users>`_ is designed to aid with the development and testing of Ansible roles with Molecule.
 

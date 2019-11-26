@@ -7,11 +7,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import pytest
-
-from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
-
-
 def test_xapi_to_module_vm_power_state_bad_power_state(xenserver):
     """Tests that None is returned on bad power state."""
     assert xenserver.xapi_to_module_vm_power_state("bad") is None

@@ -18,7 +18,6 @@
     role: network-operator
     state: present
     configured_password: test1
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -37,7 +36,6 @@
     privilege: 15
     state: present
     configured_password: test1
-    authorize: yes
     update_password: on_create
     provider: "{{ cli }}"
   become: yes
@@ -55,7 +53,6 @@
     aggregate:
       - { name: ansibletest2, configured_password: test2 }
       - { name: ansibletest3, configured_password: test3 }
-    authorize: yes
     state: present
     role: network-operator
     provider: "{{ cli }}"
@@ -77,7 +74,6 @@
     name: faileduser1
     privilege: 15
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   ignore_errors: yes
@@ -97,5 +93,4 @@
       - no username ansibletest3
       - no username ansibletest4
     provider: "{{ cli }}"
-    authorize: yes
   become: yes

@@ -441,7 +441,7 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
             response = self.mgmt_client.database_accounts.delete(resource_group_name=self.resource_group,
                                                                  account_name=self.name)
 
-            # This currently doesnt' work as there is a bug in SDK / Service
+            # This currently doesn't work as there is a bug in SDK / Service
             # if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
             #     response = self.get_poller_result(response)
         except CloudError as e:

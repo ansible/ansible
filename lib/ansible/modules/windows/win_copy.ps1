@@ -34,7 +34,6 @@ $force = Get-AnsibleParam -obj $params -name "force" -type "bool" -default $true
 # used in query mode, contains the local files/directories/symlinks that are to be copied
 $files = Get-AnsibleParam -obj $params -name "files" -type "list"
 $directories = Get-AnsibleParam -obj $params -name "directories" -type "list"
-$symlinks = Get-AnsibleParam -obj $params -name "symlinks" -type "list"
 
 $result = @{
     changed = $false

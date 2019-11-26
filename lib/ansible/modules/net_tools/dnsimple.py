@@ -29,44 +29,56 @@ options:
     description:
       - Account email. If omitted, the environment variables C(DNSIMPLE_EMAIL) and C(DNSIMPLE_API_TOKEN) will be looked for.
       - "If those aren't found, a C(.dnsimple) file will be looked for, see: U(https://github.com/mikemaccana/dnsimple-python#getting-started)."
+    type: str
   account_api_token:
     description:
       - Account API token. See I(account_email) for more information.
+    type: str
   domain:
     description:
       - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNSimple.
       - If omitted, a list of domains will be returned.
       - If domain is present but the domain doesn't exist, it will be created.
+    type: str
   record:
     description:
       - Record to add, if blank a record for the domain will be created, supports the wildcard (*).
+    type: str
   record_ids:
     description:
       - List of records to ensure they either exist or do not exist.
+    type: list
   type:
     description:
       - The type of DNS record to create.
     choices: [ 'A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO', 'POOL' ]
+    type: str
   ttl:
     description:
       - The TTL to give the new record in seconds.
     default: 3600
+    type: int
   value:
     description:
       - Record value.
       - Must be specified when trying to ensure a record exists.
+    type: str
   priority:
     description:
       - Record priority.
+    type: int
   state:
     description:
       - whether the record should exist or not.
     choices: [ 'present', 'absent' ]
+    default: present
+    type: str
   solo:
     description:
       - Whether the record should be the only one for that record type and record name.
       - Only use with C(state) is set to C(present) on a record.
     type: 'bool'
+    default: no
 requirements:
   - "dnsimple >= 1.0.0"
 author: "Alex Coomans (@drcapulet)"
@@ -159,18 +171,18 @@ from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            account_email=dict(required=False),
-            account_api_token=dict(required=False, no_log=True),
-            domain=dict(required=False),
-            record=dict(required=False),
-            record_ids=dict(required=False, type='list'),
-            type=dict(required=False, choices=['A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO',
-                                               'POOL']),
-            ttl=dict(required=False, default=3600, type='int'),
-            value=dict(required=False),
-            priority=dict(required=False, type='int'),
-            state=dict(required=False, choices=['present', 'absent']),
-            solo=dict(required=False, type='bool'),
+            account_email=dict(type='str'),
+            account_api_token=dict(type='str', no_log=True),
+            domain=dict(type='str'),
+            record=dict(type='str'),
+            record_ids=dict(type='list'),
+            type=dict(type='str', choices=['A', 'ALIAS', 'CNAME', 'MX', 'SPF', 'URL', 'TXT', 'NS', 'SRV', 'NAPTR', 'PTR', 'AAAA', 'SSHFP', 'HINFO',
+                                           'POOL']),
+            ttl=dict(type='int', default=3600),
+            value=dict(type='str'),
+            priority=dict(type='int'),
+            state=dict(type='str', choices=['present', 'absent'], default='present'),
+            solo=dict(type='bool', default=False),
         ),
         required_together=[
             ['record', 'value']
@@ -227,15 +239,15 @@ def main():
                         module.exit_json(changed=True)
                     else:
                         module.exit_json(changed=True, result=client.add_domain(domain)['domain'])
-            elif state == 'absent':
+
+            # state is absent
+            else:
                 if dr:
                     if not module.check_mode:
                         client.delete(domain)
                     module.exit_json(changed=True)
                 else:
                     module.exit_json(changed=False)
-            else:
-                module.fail_json(msg="'%s' is an unknown value for the state argument" % state)
 
         # need the not none check since record could be an empty string
         if domain and record is not None:
@@ -290,15 +302,15 @@ def main():
                         module.exit_json(changed=True)
                     else:
                         module.exit_json(changed=True, result=client.add_record(str(domain), data)['record'])
-            elif state == 'absent':
+
+            # state is absent
+            else:
                 if rr:
                     if not module.check_mode:
                         client.delete_record(str(domain), rr['id'])
                     module.exit_json(changed=True)
                 else:
                     module.exit_json(changed=False)
-            else:
-                module.fail_json(msg="'%s' is an unknown value for the state argument" % state)
 
         # Make sure these record_ids either all exist or none
         if domain and record_ids:
@@ -310,7 +322,9 @@ def main():
                     module.fail_json(msg="Missing the following records: %s" % difference)
                 else:
                     module.exit_json(changed=False)
-            elif state == 'absent':
+
+            # state is absent
+            else:
                 difference = list(set(wanted_records) & set(current_records))
                 if difference:
                     if not module.check_mode:
@@ -319,8 +333,6 @@ def main():
                     module.exit_json(changed=True)
                 else:
                     module.exit_json(changed=False)
-            else:
-                module.fail_json(msg="'%s' is an unknown value for the state argument" % state)
 
     except DNSimpleException as e:
         module.fail_json(msg="Unable to contact DNSimple: %s" % e.message)

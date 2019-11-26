@@ -1,0 +1,2 @@
+bugfixes:
+- postgres - use query params with cursor.execute in module_utils.postgres.PgMembership class (https://github.com/ansible/ansible/pull/65164).

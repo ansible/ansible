@@ -1,12 +1,18 @@
 - block:
     - name: Enable extras repo
-      command: "{{ repo_command[ansible_facts.distribution ~ ansible_facts.distribution_major_version] | default('echo') }}"
+      command: "{{ repo_command[ansible_facts.distribution ~ ansible_facts.distribution_major_version]['enable'] | default('echo') }}"
+      notify: cleanup podman
 
     - name: Install podman
       yum:
-        name: podman
+        name: "{{ podman_package }}"
         state: present
       when: ansible_facts.pkg_mgr in ['yum', 'dnf']
+      notify: cleanup podman
+
+    - name: Get podman version
+      command: podman --version
+
   when:
     - ansible_facts.distribution == 'RedHat'
     - ansible_facts.virtualization_type != 'docker'

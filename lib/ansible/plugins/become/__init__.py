@@ -9,6 +9,7 @@ from random import choice
 from string import ascii_lowercase
 from gettext import dgettext
 
+from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.plugins import AnsiblePlugin
@@ -39,6 +40,19 @@ class BecomeBase(AnsiblePlugin):
         self._id = ''
         self.success = ''
 
+    def get_option(self, option, hostvars=None, playcontext=None):
+        """ Overrides the base get_option to provide a fallback to playcontext vars in case a 3rd party plugin did not
+        implement the base become options required in Ansible. """
+        # TODO: add deprecation warning for ValueError in devel that removes the playcontext fallback
+        try:
+            return super(BecomeBase, self).get_option(option, hostvars=hostvars)
+        except KeyError:
+            pc_fallback = ['become_user', 'become_pass', 'become_flags', 'become_exe']
+            if option not in pc_fallback:
+                raise
+
+            return getattr(playcontext, option, None)
+
     def expect_prompt(self):
         """This function assists connection plugins in determining if they need to wait for
         a prompt. Both a prompt and a password are required.
@@ -49,7 +63,11 @@ class BecomeBase(AnsiblePlugin):
         if not all((cmd, shell, self.success)):
             return cmd
 
-        cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
+        try:
+            cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
+        except AttributeError:
+            # TODO: This should probably become some more robust functionlity used to detect incompat
+            raise AnsibleError('The %s shell family is incompatible with the %s become plugin' % (shell.SHELL_FAMILY, self.name))
         exe = getattr(shell, 'executable', None)
         if exe and not noexe:
             cmd = '%s -c %s' % (exe, cmd)

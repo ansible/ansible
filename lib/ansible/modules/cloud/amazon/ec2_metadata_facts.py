@@ -23,7 +23,7 @@ author:
 description:
     - This module fetches data from the instance metadata endpoint in ec2 as per
       U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html).
-      The module must be called from within the EC2 instance itself.
+    - The module must be called from within the EC2 instance itself.
 notes:
     - Parameters to filter on ec2_metadata_facts may be added later.
 '''
@@ -50,19 +50,19 @@ ansible_facts:
         ansible_ec2_ami_launch_index:
             description:
                 - If you started more than one instance at the same time, this value indicates the order in which the instance was launched.
-                  The value of the first instance launched is 0.
+                - The value of the first instance launched is 0.
             type: str
             sample: "0"
         ansible_ec2_ami_manifest_path:
             description:
                 - The path to the AMI manifest file in Amazon S3.
-                  If you used an Amazon EBS-backed AMI to launch the instance, the returned result is unknown.
+                - If you used an Amazon EBS-backed AMI to launch the instance, the returned result is unknown.
             type: str
             sample: "(unknown)"
         ansible_ec2_ancestor_ami_ids:
             description:
                 - The AMI IDs of any instances that were rebundled to create this AMI.
-                  This value will only exist if the AMI manifest file contained an ancestor-amis key.
+                - This value will only exist if the AMI manifest file contained an ancestor-amis key.
             type: str
             sample: "(unknown)"
         ansible_ec2_block_device_mapping_ami:
@@ -72,8 +72,8 @@ ansible_facts:
         ansible_ec2_block_device_mapping_ebsN:
             description:
                 - The virtual devices associated with Amazon EBS volumes, if any are present.
-                  Amazon EBS volumes are only available in metadata if they were present at launch time or when the instance was last started.
-                  The N indicates the index of the Amazon EBS volume (such as ebs1 or ebs2).
+                - Amazon EBS volumes are only available in metadata if they were present at launch time or when the instance was last started.
+                - The N indicates the index of the Amazon EBS volume (such as ebs1 or ebs2).
             type: str
             sample: "/dev/xvdb"
         ansible_ec2_block_device_mapping_ephemeralN:
@@ -97,7 +97,7 @@ ansible_facts:
         ansible_ec2_hostname:
             description:
                 - The private IPv4 DNS hostname of the instance.
-                  In cases where multiple network interfaces are present, this refers to the eth0 device (the device for which the device number is 0).
+                - In cases where multiple network interfaces are present, this refers to the eth0 device (the device for which the device number is 0).
             type: str
             sample: "ip-10-0-0-1.ec2.internal"
         ansible_ec2_iam_info:
@@ -106,6 +106,16 @@ ansible_facts:
                   including the instance's LastUpdated date, InstanceProfileArn, and InstanceProfileId. Otherwise, not present.
             type: complex
             sample: ""
+            contains:
+                LastUpdated:
+                    description: The last time which InstanceProfile is associated with the Instance changed.
+                    type: str
+                InstanceProfileArn:
+                    description: The ARN of the InstanceProfile associated with the Instance.
+                    type: str
+                InstanceProfileId:
+                    description: The Id of the InstanceProfile associated with the Instance.
+                    type: str
         ansible_ec2_iam_info_instanceprofilearn:
             description: The IAM instance profile ARN.
             type: str
@@ -211,7 +221,7 @@ ansible_facts:
         ansible_ec2_instance_identity_document_privateip:
             description:
                 - The private IPv4 address of the instance.
-                  In cases where multiple network interfaces are present, this refers to the eth0 device (the device for which the device number is 0).
+                - In cases where multiple network interfaces are present, this refers to the eth0 device (the device for which the device number is 0).
             type: str
             sample: "10.0.0.1"
         ansible_ec2_instance_identity_document_ramdiskid:
@@ -245,19 +255,19 @@ ansible_facts:
         ansible_ec2_local_hostname:
             description:
                 - The private IPv4 DNS hostname of the instance.
-                  In cases where multiple network interfaces are present, this refers to the eth0 device (the device for which the device number is 0).
+                - In cases where multiple network interfaces are present, this refers to the eth0 device (the device for which the device number is 0).
             type: str
             sample: "ip-10-0-0-1.ec2.internal"
         ansible_ec2_local_ipv4:
             description:
                 - The private IPv4 address of the instance.
-                  In cases where multiple network interfaces are present, this refers to the eth0 device (the device for which the device number is 0).
+                - In cases where multiple network interfaces are present, this refers to the eth0 device (the device for which the device number is 0).
             type: str
             sample: "10.0.0.1"
         ansible_ec2_mac:
             description:
                 - The instance's media access control (MAC) address.
-                  In cases where multiple network interfaces are present, this refers to the eth0 device (the device for which the device number is 0).
+                - In cases where multiple network interfaces are present, this refers to the eth0 device (the device for which the device number is 0).
             type: str
             sample: "00:11:22:33:44:55"
         ansible_ec2_metrics_vhostmd:
@@ -268,7 +278,7 @@ ansible_facts:
             description:
                 - The unique device number associated with that interface. The device number corresponds to the device name;
                   for example, a device-number of 2 is for the eth2 device.
-                  This category corresponds to the DeviceIndex and device-index fields that are used by the Amazon EC2 API and the EC2 commands for the AWS CLI.
+                - This category corresponds to the DeviceIndex and device-index fields that are used by the Amazon EC2 API and the EC2 commands for the AWS CLI.
             type: str
             sample: "0"
         ansible_ec2_network_interfaces_macs_<mac address>_interface_id:
@@ -298,8 +308,8 @@ ansible_facts:
         ansible_ec2_network_interfaces_macs_<mac address>_owner_id:
             description:
                 - The ID of the owner of the network interface.
-                  In multiple-interface environments, an interface can be attached by a third party, such as Elastic Load Balancing.
-                  Traffic on an interface is always billed to the interface owner.
+                - In multiple-interface environments, an interface can be attached by a third party, such as Elastic Load Balancing.
+                - Traffic on an interface is always billed to the interface owner.
             type: str
             sample: "01234567890"
         ansible_ec2_network_interfaces_macs_<mac address>_public_hostname:
@@ -388,7 +398,7 @@ ansible_facts:
         ansible_ec2_security_groups:
             description:
                 - The names of the security groups applied to the instance. After launch, you can only change the security groups of instances running in a VPC.
-                  Such changes are reflected here and in network/interfaces/macs/mac/security-groups.
+                - Such changes are reflected here and in network/interfaces/macs/mac/security-groups.
             type: str
             sample: "securitygroup1,securitygroup2"
         ansible_ec2_services_domain:
@@ -398,15 +408,15 @@ ansible_facts:
         ansible_ec2_services_partition:
             description:
                 - The partition that the resource is in. For standard AWS regions, the partition is aws.
-                  If you have resources in other partitions, the partition is aws-partitionname.
-                  For example, the partition for resources in the China (Beijing) region is aws-cn.
+                - If you have resources in other partitions, the partition is aws-partitionname.
+                - For example, the partition for resources in the China (Beijing) region is aws-cn.
             type: str
             sample: "aws"
         ansible_ec2_spot_termination_time:
             description:
                 - The approximate time, in UTC, that the operating system for your Spot instance will receive the shutdown signal.
-                  This item is present and contains a time value only if the Spot instance has been marked for termination by Amazon EC2.
-                  The termination-time item is not set to a time if you terminated the Spot instance yourself.
+                - This item is present and contains a time value only if the Spot instance has been marked for termination by Amazon EC2.
+                - The termination-time item is not set to a time if you terminated the Spot instance yourself.
             type: str
             sample: "2015-01-05T18:02:00Z"
         ansible_ec2_user_data:
@@ -507,7 +517,7 @@ class Ec2Metadata(object):
                         for (key, value) in dict.items():
                             self._data['%s:%s' % (new_uri, key.lower())] = value
                     except Exception:
-                        self._data['%s' % (new_uri)] = content  # not a stringifed JSON string
+                        self._data['%s' % (new_uri)] = content  # not a stringified JSON string
 
     def fix_invalid_varnames(self, data):
         """Change ':'' and '-' to '_' to ensure valid template variable names"""

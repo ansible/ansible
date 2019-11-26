@@ -40,7 +40,7 @@ To avoid such behaviour and generate long lines it is possible to use ``width`` 
     {{ some_variable | to_yaml(indent=8, width=1337) }}
     {{ some_variable | to_nice_yaml(indent=8, width=1337) }}
 
-While it would be nicer to use a construction like ``float("inf")`` instead of hardcoded number, unfortunately the filter doesn't support proxying python functions.
+While it would be nicer to use a construction like ``float("inf")`` instead of a hardcoded number, unfortunately the filter doesn't support proxying Python functions.
 Note that it also supports passing through other YAML parameters. Full list can be found in `PyYAML documentation`_.
 
 
@@ -114,7 +114,10 @@ Omitting Parameters
 As of Ansible 1.8, it is possible to use the default filter to omit module parameters using the special `omit` variable::
 
     - name: touch files with an optional mode
-      file: dest={{ item.path }} state=touch mode={{ item.mode | default(omit) }}
+      file:
+        dest: "{{ item.path }}"
+        state: touch
+        mode: "{{ item.mode | default(omit) }}"
       loop:
         - path: /tmp/foo
         - path: /tmp/bar
@@ -124,9 +127,9 @@ As of Ansible 1.8, it is possible to use the default filter to omit module param
 For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
 parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
 
-.. note:: If you are "chaining" additional filters after the `default(omit)` filter, you should instead do something like this:
-      `"{{ foo | default(None) | some_filter or omit }}"`. In this example, the default `None` (python null) value will cause the
-      later filters to fail, which will trigger the `or omit` portion of the logic. Using omit in this manner is very specific to
+.. note:: If you are "chaining" additional filters after the ``default(omit)`` filter, you should instead do something like this:
+      ``"{{ foo | default(None) | some_filter or omit }}"``. In this example, the default ``None`` (Python null) value will cause the
+      later filters to fail, which will trigger the ``or omit`` portion of the logic. Using ``omit`` in this manner is very specific to
       the later filters you're chaining though, so be prepared for some trial and error if you do this.
 
 .. _list_filters:
@@ -283,16 +286,16 @@ To always exhaust all list use ``zip_longest``::
         msg: "{{ [1,2,3] | zip_longest(['a','b','c','d','e','f'], [21, 22, 23], fillvalue='X') | list }}"
 
 
-Similarly to the output of the ``items2dict`` filter mentioned above, these filters can be used to contruct a ``dict``::
+Similarly to the output of the ``items2dict`` filter mentioned above, these filters can be used to construct a ``dict``::
 
     {{ dict(keys_list | zip(values_list)) }}
 
 Which turns::
 
-    list_one:
+    keys_list:
       - one
       - two
-    list_two:
+    values_list:
       - apple
       - orange
 
@@ -562,7 +565,7 @@ Or, alternatively print out the ports in a comma separated string::
 
 .. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
 
-Or, using YAML `single quote escaping <http://yaml.org/spec/current.html#id2534365>`_::
+Or, using YAML `single quote escaping <https://yaml.org/spec/current.html#id2534365>`_::
 
     - name: "Display all ports from cluster1"
       debug:
@@ -602,7 +605,7 @@ address. For example, to get the IP address itself from a CIDR, you can use::
   {{ '192.0.2.1/24' | ipaddr('address') }}
 
 More information about ``ipaddr`` filter and complete usage guide can be found
-in :doc:`playbooks_filters_ipaddr`.
+in :ref:`playbooks_filters_ipaddr`.
 
 .. _network_filters:
 
@@ -803,6 +806,38 @@ is an XPath expression used to get the attributes of the ``vlan`` tag in output 
     </rpc-reply>
 
 .. note:: For more information on supported XPath expressions, see `<https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
+
+Network VLAN filters
+````````````````````
+
+.. versionadded:: 2.8
+
+Use the ``vlan_parser`` filter to manipulate an unsorted list of VLAN integers into a
+sorted string list of integers according to IOS-like VLAN list rules. This list has the following properties:
+
+* Vlans are listed in ascending order.
+* Three or more consecutive VLANs are listed with a dash.
+* The first line of the list can be first_line_len characters long.
+* Subsequent list lines can be other_line_len characters.
+
+To sort a VLAN list::
+
+    {{ [3003, 3004, 3005, 100, 1688, 3002, 3999] | vlan_parser }}
+
+This example renders the following sorted list::
+
+    ['100,1688,3002-3005,3999']
+
+
+Another example Jinja template::
+
+    {% set parsed_vlans = vlans | vlan_parser %}
+    switchport trunk allowed vlan {{ parsed_vlans[0] }}
+    {% for i in range (1, parsed_vlans | count) %}
+    switchport trunk allowed vlan add {{ parsed_vlans[i] }}
+
+This allows for dynamic generation of VLAN lists on a Cisco IOS tagged interface. You can store an exhaustive raw list of the exact VLANs required for an interface and then compare that to the parsed IOS output that would actually be generated for the configuration.
+
 
 .. _hash_filters:
 
@@ -1094,15 +1129,34 @@ To replace text in a string with regex, use the "regex_replace" filter::
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
 
+.. note:: If you want to match the whole string and you are using ``*`` make sure to always wraparound your regular expression with the start/end anchors.
+   For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some Python versions will match the whole string and an empty string at the
+   end, which means it will make two replacements.
+
     # add "https://" prefix to each item in a list
+    GOOD:
     {{ hosts | map('regex_replace', '^(.*)$', 'https://\\1') | list }}
+    {{ hosts | map('regex_replace', '(.+)', 'https://\\1') | list }}
+    {{ hosts | map('regex_replace', '^', 'https://') | list }}
+
+    BAD:
+    {{ hosts | map('regex_replace', '(.*)', 'https://\\1') | list }}
+
+    # append ':80' to each item in a list
+    GOOD:
+    {{ hosts | map('regex_replace', '^(.*)$', '\\1:80') | list }}
+    {{ hosts | map('regex_replace', '(.+)', '\\1:80') | list }}
+    {{ hosts | map('regex_replace', '$', ':80') | list }}
+
+    BAD:
+    {{ hosts | map('regex_replace', '(.*)', '\\1:80') | list }}
 
 .. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
 
 .. versionadded:: 2.0
 
-To escape special characters within a standard python regex, use the "regex_escape" filter (using the default re_type='python' option)::
+To escape special characters within a standard Python regex, use the "regex_escape" filter (using the default re_type='python' option)::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
@@ -1141,24 +1195,8 @@ This can then be used to reference hashes in Pod specifications::
 
 .. versionadded:: 2.8
 
-Other Useful Filters
-````````````````````
-
-To add quotes for shell usage::
-
-    - shell: echo {{ string_value | quote }}
-
-To use one value on true and another on false (new in version 1.9)::
-
-    {{ (name == "John") | ternary('Mr','Ms') }}
-
-To use one value on true, one value on false and a third value on null (new in version 2.8)::
-
-   {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
-
-To concatenate a list into a string::
-
-    {{ list | join(" ") }}
+File and Path manipulations
+```````````````````````````
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
@@ -1213,6 +1251,25 @@ To get the root and extension of a path or filename (new in version 2.0)::
     # with path == 'nginx.conf' the return would be ('nginx', '.conf')
     {{ path | splitext }}
 
+Other Useful Filters
+````````````````````
+
+To add quotes for shell usage::
+
+    - shell: echo {{ string_value | quote }}
+
+To use one value on true and another on false (new in version 1.9)::
+
+    {{ (name == "John") | ternary('Mr','Ms') }}
+
+To use one value on true, one value on false and a third value on null (new in version 2.8)::
+
+   {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
+
+To concatenate a list into a string::
+
+    {{ list | join(" ") }}
+
 To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
@@ -1225,9 +1282,17 @@ As of version 2.6, you can define the type of encoding to use, the default is ``
 
 .. versionadded:: 2.6
 
-To create a UUID from a string (new in version 1.9)::
+To create a namespaced UUIDv5::
 
-    {{ hostname | to_uuid }}
+    {{ string | to_uuid(namespace='11111111-2222-3333-4444-555555555555') }}
+
+.. versionadded:: 2.10
+
+To create a namespaced UUIDv5 using the default Ansible namespace '361E6D51-FAEC-444A-9079-341386DA8E2E'::
+
+    {{ string | to_uuid }}
+
+.. versionadded:: 1.9
 
 To cast values as certain types, such as when you input a string as "True" from a vars_prompt and the system
 doesn't know it is a boolean value::
@@ -1332,8 +1397,8 @@ type of a variable::
 Computer Theory Assertions
 ```````````````````````````
 
-The ``human_readable`` and ``human_to_bytes`` functions let you test your 
-playbooks to make sure you are using the right size format in your tasks - that 
+The ``human_readable`` and ``human_to_bytes`` functions let you test your
+playbooks to make sure you are using the right size format in your tasks - that
 you're providing Byte format to computers and human-readable format to people.
 
 Human Readable
@@ -1396,17 +1461,17 @@ to be added to core so everyone can make use of them.
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

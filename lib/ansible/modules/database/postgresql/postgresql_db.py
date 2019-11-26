@@ -71,7 +71,7 @@ options:
       pg_dump returns rc 1 in this case.
     - C(restore) also requires a target definition from which the database will be restored. (Added in Ansible 2.4)
     - The format of the backup will be detected based on the target name.
-    - Supported compression formats for dump and restore include C(.bz2), C(.gz) and C(.xz)
+    - Supported compression formats for dump and restore include C(.pgc), C(.bz2), C(.gz) and C(.xz)
     - Supported formats for dump and restore include C(.sql) and C(.tar)
     type: str
     choices: [ absent, dump, present, restore ]
@@ -107,6 +107,22 @@ options:
         explicitly set this to pg_default.
     type: path
     version_added: '2.9'
+seealso:
+- name: CREATE DATABASE reference
+  description: Complete reference of the CREATE DATABASE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createdatabase.html
+- name: DROP DATABASE reference
+  description: Complete reference of the DROP DATABASE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-dropdatabase.html
+- name: pg_dump reference
+  description: Complete reference of pg_dump documentation.
+  link: https://www.postgresql.org/docs/current/app-pgdump.html
+- name: pg_restore reference
+  description: Complete reference of pg_restore documentation.
+  link: https://www.postgresql.org/docs/current/app-pgrestore.html
+- module: postgresql_tablespace
+- module: postgresql_info
+- module: postgresql_ping
 notes:
 - State C(dump) and C(restore) don't require I(psycopg2) since version 2.8.
 author: "Ansible Core Team"
@@ -191,9 +207,9 @@ class NotSupportedError(Exception):
 
 
 def set_owner(cursor, db, owner):
-    query = "ALTER DATABASE %s OWNER TO %s" % (
+    query = 'ALTER DATABASE %s OWNER TO "%s"' % (
             pg_quote_identifier(db, 'database'),
-            pg_quote_identifier(owner, 'role'))
+            owner)
     cursor.execute(query)
     return True
 
@@ -247,7 +263,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_
     if not db_exists(cursor, db):
         query_fragments = ['CREATE DATABASE %s' % pg_quote_identifier(db, 'database')]
         if owner:
-            query_fragments.append('OWNER %s' % pg_quote_identifier(owner, 'role'))
+            query_fragments.append('OWNER "%s"' % owner)
         if template:
             query_fragments.append('TEMPLATE %s' % pg_quote_identifier(template, 'database'))
         if encoding:
@@ -265,8 +281,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_
         return True
     else:
         db_info = get_db_info(cursor, db)
-        if (encoding and
-                get_encoding_id(cursor, encoding) != db_info['encoding_id']):
+        if (encoding and get_encoding_id(cursor, encoding) != db_info['encoding_id']):
             raise NotSupportedError(
                 'Changing database encoding is not supported. '
                 'Current encoding: %s' % db_info['encoding']
@@ -301,8 +316,7 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn
         return False
     else:
         db_info = get_db_info(cursor, db)
-        if (encoding and
-                get_encoding_id(cursor, encoding) != db_info['encoding_id']):
+        if (encoding and get_encoding_id(cursor, encoding) != db_info['encoding_id']):
             return False
         elif lc_collate and lc_collate != db_info['lc_collate']:
             return False
@@ -332,6 +346,8 @@ def db_dump(module, target, target_opts="",
 
     if os.path.splitext(target)[-1] == '.tar':
         flags.append(' --format=t')
+    elif os.path.splitext(target)[-1] == '.pgc':
+        flags.append(' --format=c')
     if os.path.splitext(target)[-1] == '.gz':
         if module.get_bin_path('pigz'):
             comp_prog_path = module.get_bin_path('pigz', True)
@@ -376,6 +392,10 @@ def db_restore(module, target, target_opts="",
 
     elif os.path.splitext(target)[-1] == '.tar':
         flags.append(' --format=Tar')
+        cmd = module.get_bin_path('pg_restore', True)
+
+    elif os.path.splitext(target)[-1] == '.pgc':
+        flags.append(' --format=Custom')
         cmd = module.get_bin_path('pg_restore', True)
 
     elif os.path.splitext(target)[-1] == '.gz':
@@ -533,9 +553,6 @@ def main():
                 db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
             cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        except pgutils.LibraryError as e:
-            module.fail_json(msg="unable to connect to database: {0}".format(to_native(e)), exception=traceback.format_exc())
-
         except TypeError as e:
             if 'sslrootcert' in e.args[0]:
                 module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(to_native(e)),
@@ -547,7 +564,7 @@ def main():
 
         if session_role:
             try:
-                cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
+                cursor.execute('SET ROLE "%s"' % session_role)
             except Exception as e:
                 module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 

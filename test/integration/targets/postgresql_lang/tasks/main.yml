@@ -1,0 +1,20 @@
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
+        - default.yml
+      paths:
+        - vars
+
+# Only run on CentOS 7 because there is a stack trace on CentOS 8 because the module
+# is looking for the incorrect version of plpython.
+# https://gist.github.com/samdoran/8fc1b4ae834d3e66d1895d087419b8d8
+- name: Initial CI tests of postgresql_lang module
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - ansible_facts.distribution_major_version is version ('7', '==')
+  block:
+    - include_tasks: postgresql_lang_initial.yml
+    - include_tasks: postgresql_lang_add_owner_param.yml

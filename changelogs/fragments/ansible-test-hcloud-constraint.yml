@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-test now limits installation of ``hcloud`` to Python 2.7 and 3.5 - 3.8 since other versions are unsupported

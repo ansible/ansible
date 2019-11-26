@@ -43,6 +43,9 @@ options:
   client_match:
     description:
     - List of Client Match host names, IP Addresses, Netgroups, or Domains
+    - If rule_index is not provided, client_match is used as a key to fetch current rule to determine create,delete,modify actions.
+      If a rule with provided client_match exists, a new rule will not be created, but the existing rule will be modified or deleted.
+      If a rule with provided client_match doesn't exist, a new rule will be created if state is present.
 
   ro_rule:
     description:
@@ -73,8 +76,6 @@ options:
   rule_index:
     description:
     - rule index of the export policy
-    - Required for delete and modify
-    - If rule_index is not set for a modify, the module will create another rule with desired parameters
 
   vserver:
     description:
@@ -214,15 +215,12 @@ class NetAppontapExportRule(object):
 
         if self.parameters.get('rule_index'):
             query['rule-index'] = self.parameters['rule_index']
+        elif self.parameters.get('client_match'):
+            query['client-match'] = self.parameters['client_match']
         else:
-            if self.parameters.get('ro_rule'):
-                query['ro-rule'] = {'security-flavor': self.parameters['ro_rule']}
-            if self.parameters.get('rw_rule'):
-                query['rw-rule'] = {'security-flavor': self.parameters['rw_rule']}
-            if self.parameters.get('protocol'):
-                query['protocol'] = {'security-flavor': self.parameters['protocol']}
-            if self.parameters.get('client_match'):
-                query['client-match'] = self.parameters['client_match']
+            self.module.fail_json(
+                msg="Need to specify at least one of the rule_index and client_match option.")
+
         attributes = {
             'query': {
                 'export-rule-info': query
@@ -247,7 +245,6 @@ class NetAppontapExportRule(object):
             self.module.fail_json(msg='Error getting export policy rule %s: %s'
                                   % (self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
-
         if result is not None and \
                 result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) >= 1:
             current = dict()
@@ -265,6 +262,8 @@ class NetAppontapExportRule(object):
                 current[item_key] = self.na_helper.get_value_for_list(from_zapi=True,
                                                                       zapi_parent=rule_info.get_child_by_name(parent))
             current['num_records'] = int(result.get_child_content('num-records'))
+            if not self.parameters.get('rule_index'):
+                self.parameters['rule_index'] = current['rule_index']
         return current
 
     def get_export_policy(self):
@@ -358,8 +357,6 @@ class NetAppontapExportRule(object):
         """
         delete rule for the export policy.
         """
-        if self.parameters.get('rule_index') is None:
-            self.parameters['rule_index'] = rule_index
         export_rule_delete = netapp_utils.zapi.NaElement.create_node_with_children(
             'export-rule-destroy', **{'policy-name': self.parameters['name'],
                                       'rule-index': str(rule_index)})
@@ -398,6 +395,7 @@ class NetAppontapExportRule(object):
         # convert client_match list to comma-separated string
         if self.parameters.get('client_match') is not None:
             self.parameters['client_match'] = ','.join(self.parameters['client_match'])
+            self.parameters['client_match'] = self.parameters['client_match'].replace(' ', '')
 
         current, modify = self.get_export_policy_rule(), None
         action = self.na_helper.get_cd_action(current, self.parameters)

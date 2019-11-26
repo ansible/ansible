@@ -2,6 +2,8 @@
 - hosts: testhost
   gather_facts: False
   tasks:
+  - set_fact:
+      output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
   - file:
       path: '{{ output_dir }}/café.txt'
       state: 'absent'

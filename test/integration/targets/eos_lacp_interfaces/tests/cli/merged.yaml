@@ -1,0 +1,43 @@
+---
+- include_tasks: reset_config.yml
+
+- set_fact:
+    config:
+      - name: Ethernet1
+        rate: fast
+      - name: Ethernet2
+        rate: normal
+
+- eos_facts:
+    gather_network_resources: lacp_interfaces
+  become: yes
+
+- name: Merge provided configuration with device configuration
+  eos_lacp_interfaces:
+    config: "{{ config }}"
+    state: merged
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lacp_interfaces|symmetric_difference(result.before) == []"
+
+- eos_facts:
+    gather_network_resources: lacp_interfaces
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lacp_interfaces|symmetric_difference(result.after) == []"
+
+- set_fact:
+    expected_config:
+      - name: Ethernet1
+        port_priority: 30
+        rate: fast
+
+
+- assert:
+    that:
+      - "expected_config|symmetric_difference(ansible_facts.network_resources.lacp_interfaces) == []"

@@ -31,6 +31,8 @@
 import collections
 import json
 import re
+import sys
+from copy import deepcopy
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
@@ -38,7 +40,8 @@ from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.six import iteritems, string_types, PY2, PY3
+from ansible.module_utils.network.common.config import CustomNetworkConfig
+from ansible.module_utils.six import iteritems, PY2, PY3
 from ansible.module_utils.urls import fetch_url
 
 try:
@@ -48,10 +51,10 @@ except ImportError:
     HAS_YAML = False
 
 try:
-    if PY3:
-        from collections import OrderedDict
-    else:
+    if sys.version_info[:2] < (2, 7):
         from ordereddict import OrderedDict
+    else:
+        from collections import OrderedDict
     HAS_ORDEREDDICT = True
 except ImportError:
     HAS_ORDEREDDICT = False
@@ -80,46 +83,15 @@ nxos_provider_spec = {
 nxos_argument_spec = {
     'provider': dict(type='dict', options=nxos_provider_spec),
 }
-nxos_top_spec = {
-    'host': dict(type='str', removed_in_version=2.9),
-    'port': dict(type='int', removed_in_version=2.9),
-
-    'username': dict(type='str', removed_in_version=2.9),
-    'password': dict(type='str', no_log=True, removed_in_version=2.9),
-    'ssh_keyfile': dict(type='str', removed_in_version=2.9),
-
-    'authorize': dict(type='bool', fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE'])),
-    'auth_pass': dict(type='str', no_log=True, removed_in_version=2.9),
-
-    'use_ssl': dict(type='bool', removed_in_version=2.9),
-    'validate_certs': dict(type='bool', removed_in_version=2.9),
-    'timeout': dict(type='int', removed_in_version=2.9),
-
-    'transport': dict(type='str', choices=['cli', 'nxapi'], removed_in_version=2.9)
-}
-nxos_argument_spec.update(nxos_top_spec)
 
 
 def get_provider_argspec():
     return nxos_provider_spec
 
 
-def check_args(module, warnings):
-    pass
-
-
-def load_params(module):
-    provider = module.params.get('provider') or dict()
-    for key, value in iteritems(provider):
-        if key in nxos_provider_spec:
-            if module.params.get(key) is None and value is not None:
-                module.params[key] = value
-
-
 def get_connection(module):
     global _DEVICE_CONNECTION
     if not _DEVICE_CONNECTION:
-        load_params(module)
         if is_local_nxapi(module):
             conn = LocalNxapi(module)
         else:
@@ -279,13 +251,14 @@ class LocalNxapi:
         self._device_configs = {}
         self._module_context = {}
 
-        self._module.params['url_username'] = self._module.params['username']
-        self._module.params['url_password'] = self._module.params['password']
+        provider = self._module.params.get("provider") or {}
+        self._module.params['url_username'] = provider.get('username')
+        self._module.params['url_password'] = provider.get('password')
 
-        host = self._module.params['host']
-        port = self._module.params['port']
+        host = provider.get('host')
+        port = provider.get('port')
 
-        if self._module.params['use_ssl']:
+        if provider.get('use_ssl'):
             proto = 'https'
             port = port or 443
         else:
@@ -356,7 +329,7 @@ class LocalNxapi:
 
         headers = {'Content-Type': 'application/json'}
         result = list()
-        timeout = self._module.params['timeout']
+        timeout = self._module.params['provider']['timeout']
         use_proxy = self._module.params['provider']['use_proxy']
 
         for req in requests:
@@ -630,6 +603,8 @@ class HttpApi:
             if opts.get('ignore_timeout') and code:
                 responses.append(code)
                 return responses
+            elif opts.get('catch_clierror') and '400' in code:
+                return [code, err]
             elif code and 'no graceful-restart' in err:
                 if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
                     msg = ['']
@@ -736,20 +711,28 @@ class NxosCmdRef:
           multiplier: 3
     """
 
-    def __init__(self, module, cmd_ref_str):
+    def __init__(self, module, cmd_ref_str, ref_only=False):
         """Initialize cmd_ref from yaml data."""
+
         self._module = module
         self._check_imports()
         self._yaml_load(cmd_ref_str)
+        self.cache_existing = None
+        self.present_states = ['present', 'merged', 'replaced']
+        self.absent_states = ['absent', 'deleted']
         ref = self._ref
 
         # Create a list of supported commands based on ref keys
         ref['commands'] = sorted([k for k in ref if not k.startswith('_')])
         ref['_proposed'] = []
-        ref['_state'] = module.params.get('state', 'present')
-        self.feature_enable()
-        self.get_platform_defaults()
-        self.normalize_defaults()
+        ref['_context'] = []
+        ref['_resource_key'] = None
+
+        if not ref_only:
+            ref['_state'] = module.params.get('state', 'present')
+            self.feature_enable()
+            self.get_platform_defaults()
+            self.normalize_defaults()
 
     def __getitem__(self, key=None):
         if key is None:
@@ -882,47 +865,90 @@ class NxosCmdRef:
         """
         ref = self._ref
         pattern = re.compile(ref[k]['getval'])
+        multiple = 'multiple' in ref[k].keys()
         match_lines = [re.search(pattern, line) for line in output]
         if 'dict' == ref[k]['kind']:
             match = [m for m in match_lines if m]
             if not match:
                 return None
-            match = match[0]
-
+            if len(match) > 1 and not multiple:
+                raise ValueError("get_existing: multiple matches found for property {0}".format(k))
         else:
             match = [m.groups() for m in match_lines if m]
             if not match:
                 return None
-            if len(match) > 1:
-                # TBD: Add support for multiple instances
-                raise ValueError("get_existing: multiple match instances are not currently supported")
-            match = list(match[0])  # tuple to list
+            if len(match) > 1 and not multiple:
+                raise ValueError("get_existing: multiple matches found for property {0}".format(k))
+            for item in match:
+                index = match.index(item)
+                match[index] = list(item)  # tuple to list
 
-            # Handle config strings that nvgen with the 'no' prefix.
-            # Example match behavior:
-            # When pattern is: '(no )*foo *(\S+)*$' AND
-            #  When output is: 'no foo'  -> match: ['no ', None]
-            #  When output is: 'foo 50'  -> match: [None, '50']
-            if None is match[0]:
-                match.pop(0)
-            elif 'no' in match[0]:
-                match.pop(0)
-                if not match:
-                    return None
+                # Handle config strings that nvgen with the 'no' prefix.
+                # Example match behavior:
+                # When pattern is: '(no )*foo *(\S+)*$' AND
+                #  When output is: 'no foo'  -> match: ['no ', None]
+                #  When output is: 'foo 50'  -> match: [None, '50']
+                if None is match[index][0]:
+                    match[index].pop(0)
+                elif 'no' in match[index][0]:
+                    match[index].pop(0)
+                    if not match:
+                        return None
 
         return match
 
-    def get_existing(self):
+    def set_context(self, context=None):
+        """Update ref with command context.
+        """
+        if context is None:
+            context = []
+        ref = self._ref
+        # Process any additional context that this propoerty might require.
+        # 1) Global context from NxosCmdRef _template.
+        # 2) Context passed in using context arg.
+        ref['_context'] = ref['_template'].get('context', [])
+        for cmd in context:
+            ref['_context'].append(cmd)
+        # Last key in context is the resource key
+        ref['_resource_key'] = context[-1] if context else ref['_resource_key']
+
+    def get_existing(self, cache_output=None):
         """Update ref with existing command states from the device.
         Store these states in each command's 'existing' key.
         """
         ref = self._ref
         if ref.get('_cli_is_feature_disabled'):
+            # Add context to proposed if state is present
+            if ref['_state'] in self.present_states:
+                [ref['_proposed'].append(ctx) for ctx in ref['_context']]
             return
+
         show_cmd = ref['_template']['get_command']
-        output = self.execute_show_command(show_cmd, 'text') or []
+        if cache_output:
+            output = cache_output
+        else:
+            output = self.execute_show_command(show_cmd, 'text') or []
+            self.cache_existing = output
+
+        # Add additional command context if needed.
+        if ref['_context']:
+            output = CustomNetworkConfig(indent=2, contents=output)
+            output = output.get_section(ref['_context'])
+
         if not output:
+            # Add context to proposed if state is present
+            if ref['_state'] in self.present_states:
+                [ref['_proposed'].append(ctx) for ctx in ref['_context']]
             return
+
+        # We need to remove the last item in context for state absent case.
+        if ref['_state'] in self.absent_states and ref['_context']:
+            if ref['_resource_key'] and ref['_resource_key'] == ref['_context'][-1]:
+                if ref['_context'][-1] in output:
+                    ref['_context'][-1] = 'no ' + ref['_context'][-1]
+                else:
+                    del ref['_context'][-1]
+                return
 
         # Walk each cmd in ref, use cmd pattern to discover existing cmds
         output = output.split('\n')
@@ -930,23 +956,26 @@ class NxosCmdRef:
             match = self.pattern_match_existing(output, k)
             if not match:
                 continue
-            kind = ref[k]['kind']
-            if 'int' == kind:
-                ref[k]['existing'] = int(match[0])
-            elif 'list' == kind:
-                ref[k]['existing'] = [str(i) for i in match]
-            elif 'dict' == kind:
-                # The getval pattern should contain regex named group keys that
-                # match up with the setval named placeholder keys; e.g.
-                #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
-                #   setval: my-cmd {foo} bar {baz}
-                ref[k]['existing'] = {}
-                for key in match.groupdict().keys():
-                    ref[k]['existing'][key] = str(match.group(key))
-            elif 'str' == kind:
-                ref[k]['existing'] = match[0]
-            else:
-                raise ValueError("get_existing: unknown 'kind' value specified for key '{0}'".format(k))
+            ref[k]['existing'] = {}
+            for item in match:
+                index = match.index(item)
+                kind = ref[k]['kind']
+                if 'int' == kind:
+                    ref[k]['existing'][index] = int(item[0])
+                elif 'list' == kind:
+                    ref[k]['existing'][index] = [str(i) for i in item[0]]
+                elif 'dict' == kind:
+                    # The getval pattern should contain regex named group keys that
+                    # match up with the setval named placeholder keys; e.g.
+                    #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
+                    #   setval: my-cmd {foo} bar {baz}
+                    ref[k]['existing'][index] = {}
+                    for key in item.groupdict().keys():
+                        ref[k]['existing'][index][key] = str(item.group(key))
+                elif 'str' == kind:
+                    ref[k]['existing'][index] = item[0]
+                else:
+                    raise ValueError("get_existing: unknown 'kind' value specified for key '{0}'".format(k))
 
     def get_playvals(self):
         """Update ref with values from the playbook.
@@ -954,18 +983,70 @@ class NxosCmdRef:
         """
         ref = self._ref
         module = self._module
+        params = {}
+        if module.params.get('config'):
+            # Resource module builder packs playvals under 'config' key
+            param_data = module.params.get('config')
+            params['global'] = param_data
+            for key in param_data.keys():
+                if isinstance(param_data[key], list):
+                    params[key] = param_data[key]
+        else:
+            params['global'] = module.params
         for k in ref.keys():
-            if k in module.params and module.params[k] is not None:
-                playval = module.params[k]
-                # Normalize each value
-                if 'int' == ref[k]['kind']:
-                    playval = int(playval)
-                elif 'list' == ref[k]['kind']:
-                    playval = [str(i) for i in playval]
-                elif 'dict' == ref[k]['kind']:
-                    for key, v in playval.items():
-                        playval[key] = str(v)
-                ref[k]['playval'] = playval
+            for level in params.keys():
+                if isinstance(params[level], dict):
+                    params[level] = [params[level]]
+                for item in params[level]:
+                    if k in item and item[k] is not None:
+                        if not ref[k].get('playval'):
+                            ref[k]['playval'] = {}
+                        playval = item[k]
+                        index = params[level].index(item)
+                        # Normalize each value
+                        if 'int' == ref[k]['kind']:
+                            playval = int(playval)
+                        elif 'list' == ref[k]['kind']:
+                            playval = [str(i) for i in playval]
+                        elif 'dict' == ref[k]['kind']:
+                            for key, v in playval.items():
+                                playval[key] = str(v)
+                        ref[k]['playval'][index] = playval
+
+    def build_cmd_set(self, playval, existing, k):
+        """Helper function to create list of commands to configure device
+        Return a list of commands
+        """
+        ref = self._ref
+        proposed = ref['_proposed']
+        cmd = None
+        kind = ref[k]['kind']
+        if 'int' == kind:
+            cmd = ref[k]['setval'].format(playval)
+        elif 'list' == kind:
+            cmd = ref[k]['setval'].format(*(playval))
+        elif 'dict' == kind:
+            # The setval pattern should contain placeholder keys that
+            # match up with the getval regex named group keys; e.g.
+            #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
+            #   setval: my-cmd {foo} bar {baz}
+            cmd = ref[k]['setval'].format(**playval)
+        elif 'str' == kind:
+            if 'deleted' in playval:
+                if existing:
+                    cmd = 'no ' + ref[k]['setval'].format(existing)
+            else:
+                cmd = ref[k]['setval'].format(playval)
+        else:
+            raise ValueError("get_proposed: unknown 'kind' value specified for key '{0}'".format(k))
+        if cmd:
+            if ref['_state'] in self.absent_states and not re.search(r'^no', cmd):
+                cmd = 'no ' + cmd
+            # Commands may require parent commands for proper context.
+            # Global _template context is replaced by parameter context
+            [proposed.append(ctx) for ctx in ref['_context']]
+            [proposed.append(ctx) for ctx in ref[k].get('context', [])]
+            proposed.append(cmd)
 
     def get_proposed(self):
         """Compare playbook values against existing states and create a list
@@ -975,77 +1056,82 @@ class NxosCmdRef:
         ref = self._ref
         # '_proposed' may be empty list or contain initializations; e.g. ['feature foo']
         proposed = ref['_proposed']
+
+        if ref['_context'] and ref['_context'][-1].startswith('no'):
+            [proposed.append(ctx) for ctx in ref['_context']]
+            return proposed
+
         # Create a list of commands that have playbook values
         play_keys = [k for k in ref['commands'] if 'playval' in ref[k]]
+
+        def compare(playval, existing):
+            if ref['_state'] in self.present_states:
+                if existing is None:
+                    return False
+                elif playval == existing:
+                    return True
+                elif isinstance(existing, dict) and playval in existing.values():
+                    return True
+
+            if ref['_state'] in self.absent_states:
+                if isinstance(existing, dict) and all(x is None for x in existing.values()):
+                    existing = None
+                if existing is None or playval not in existing.values():
+                    return True
+            return False
 
         # Compare against current state
         for k in play_keys:
             playval = ref[k]['playval']
+            # Create playval copy to avoid RuntimeError
+            #   dictionary changed size during iteration error
+            playval_copy = deepcopy(playval)
             existing = ref[k].get('existing', ref[k]['default'])
-            if playval == existing and ref['_state'] == 'present':
-                continue
-            if isinstance(existing, dict) and all(x is None for x in existing.values()):
-                existing = None
-            if existing is None and ref['_state'] == 'absent':
-                continue
-            cmd = None
-            kind = ref[k]['kind']
-            if 'int' == kind:
-                cmd = ref[k]['setval'].format(playval)
-            elif 'list' == kind:
-                cmd = ref[k]['setval'].format(*(playval))
-            elif 'dict' == kind:
-                # The setval pattern should contain placeholder keys that
-                # match up with the getval regex named group keys; e.g.
-                #   getval: my-cmd (?P<foo>\d+) bar (?P<baz>\d+)
-                #   setval: my-cmd {foo} bar {baz}
-                cmd = ref[k]['setval'].format(**playval)
-            elif 'str' == kind:
-                if 'deleted' in playval:
-                    if existing:
-                        cmd = 'no ' + ref[k]['setval'].format(existing)
-                else:
-                    cmd = ref[k]['setval'].format(playval)
+            multiple = 'multiple' in ref[k].keys()
+
+            # Multiple Instances:
+            if isinstance(existing, dict) and multiple:
+                for ekey, evalue in existing.items():
+                    if isinstance(evalue, dict):
+                        # Remove values set to string 'None' from dvalue
+                        evalue = dict((k, v) for k, v in evalue.items() if v != 'None')
+                    for pkey, pvalue in playval.items():
+                        if compare(pvalue, evalue):
+                            if playval_copy.get(pkey):
+                                del playval_copy[pkey]
+                if not playval_copy:
+                    continue
+            # Single Instance:
             else:
-                raise ValueError("get_proposed: unknown 'kind' value specified for key '{0}'".format(k))
-            if cmd:
-                if 'absent' == ref['_state'] and not re.search(r'^no', cmd):
-                    cmd = 'no ' + cmd
-                # Add processed command to cmd_ref object
-                ref[k]['setcmd'] = cmd
+                for pkey, pval in playval.items():
+                    if compare(pval, existing):
+                        if playval_copy.get(pkey):
+                            del playval_copy[pkey]
+                if not playval_copy:
+                    continue
 
-        # Commands may require parent commands for proper context.
-        # Global _template context is replaced by parameter context
-        for k in play_keys:
-            if ref[k].get('setcmd') is None:
-                continue
-            parent_context = ref['_template'].get('context', [])
-            parent_context = ref[k].get('context', parent_context)
-            if isinstance(parent_context, list):
-                for ctx_cmd in parent_context:
-                    if re.search(r'setval::', ctx_cmd):
-                        ctx_cmd = ref[ctx_cmd.split('::')[1]].get('setcmd')
-                        if ctx_cmd is None:
-                            continue
-                    proposed.append(ctx_cmd)
-            elif isinstance(parent_context, str):
-                if re.search(r'setval::', parent_context):
-                    parent_context = ref[parent_context.split('::')[1]].get('setcmd')
-                    if parent_context is None:
-                        continue
-                proposed.append(parent_context)
+            playval = playval_copy
+            # Multiple Instances:
+            if isinstance(existing, dict):
+                for dkey, dvalue in existing.items():
+                    for pval in playval.values():
+                        self.build_cmd_set(pval, dvalue, k)
+            # Single Instance:
+            else:
+                for pval in playval.values():
+                    self.build_cmd_set(pval, existing, k)
 
-            proposed.append(ref[k]['setcmd'])
-
-        # Remove duplicate commands from proposed before returning
-        return OrderedDict.fromkeys(proposed).keys()
+        # Remove any duplicate commands before returning.
+        # pylint: disable=unnecessary-lambda
+        cmds = sorted(set(proposed), key=lambda x: proposed.index(x))
+        return cmds
 
 
 def nxosCmdRef_import_check():
     """Return import error messages or empty string"""
     msg = ''
     if PY2:
-        if not HAS_ORDEREDDICT:
+        if not HAS_ORDEREDDICT and sys.version_info[:2] < (2, 7):
             msg += "Mandatory python library 'ordereddict' is not present, try 'pip install ordereddict'\n"
         if not HAS_YAML:
             msg += "Mandatory python library 'yaml' is not present, try 'pip install yaml'\n"
@@ -1064,9 +1150,10 @@ def is_text(cmd):
 
 
 def is_local_nxapi(module):
-    transport = module.params['transport']
-    provider_transport = (module.params['provider'] or {}).get('transport')
-    return 'nxapi' in (transport, provider_transport)
+    provider = module.params.get('provider')
+    if provider:
+        return provider.get("transport") == 'nxapi'
+    return False
 
 
 def to_command(module, commands):

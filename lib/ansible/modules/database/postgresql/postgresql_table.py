@@ -18,8 +18,7 @@ DOCUMENTATION = r'''
 module: postgresql_table
 short_description: Create, drop, or modify a PostgreSQL table
 description:
-- Allows to create, drop, rename, truncate a table, or change some table attributes
-  U(https://www.postgresql.org/docs/current/sql-createtable.html).
+- Allows to create, drop, rename, truncate a table, or change some table attributes.
 version_added: '2.8'
 options:
   table:
@@ -64,6 +63,7 @@ options:
     description:
     - Columns that are needed.
     type: list
+    elements: str
   rename:
     description:
     - New table name. Mutually exclusive with I(tablespace), I(owner),
@@ -80,6 +80,7 @@ options:
     - Storage parameters like fillfactor, autovacuum_vacuum_treshold, etc.
       Mutually exclusive with I(rename) and I(truncate).
     type: list
+    elements: str
   db:
     description:
     - Name of database to connect and where the table will be created.
@@ -95,8 +96,7 @@ options:
     type: str
   cascade:
     description:
-    - Automatically drop objects that depend on the table (such as views)
-      U(https://www.postgresql.org/docs/current/sql-droptable.html).
+    - Automatically drop objects that depend on the table (such as views).
       Used with I(state=absent) only.
     type: bool
     default: no
@@ -105,21 +105,29 @@ notes:
 - If you do not pass db parameter, tables will be created in the database
   named postgres.
 - PostgreSQL allows to create columnless table, so columns param is optional.
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- Unlogged tables are available from PostgreSQL server version 9.1
-  U(https://www.postgresql.org/docs/9.1/sql-createtable.html).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module.
-- If the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host. For Ubuntu-based
-  systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-requirements: [ psycopg2 ]
+- Unlogged tables are available from PostgreSQL server version 9.1.
+seealso:
+- module: postgresql_sequence
+- module: postgresql_idx
+- module: postgresql_info
+- module: postgresql_tablespace
+- module: postgresql_owner
+- module: postgresql_privs
+- module: postgresql_copy
+- name: CREATE TABLE reference
+  description: Complete reference of the CREATE TABLE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-createtable.html
+- name: ALTER TABLE reference
+  description: Complete reference of the ALTER TABLE  command documentation.
+  link: https://www.postgresql.org/docs/current/sql-altertable.html
+- name: DROP TABLE reference
+  description: Complete reference of the DROP TABLE command documentation.
+  link: https://www.postgresql.org/docs/current/sql-droptable.html
+- name: PostgreSQL data types
+  description: Complete reference of the PostgreSQL data types documentation.
+  link: postgresql.org/docs/current/datatype.html
 author:
-- Andrew Klychkov (@Andersson007)
+- Andrei Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
 '''
 
@@ -236,9 +244,13 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
-from ansible.module_utils._text import to_native
+from ansible.module_utils.database import pg_quote_identifier
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 
 
 # ===========================================
@@ -278,7 +290,7 @@ class Table(object):
                  "INNER JOIN pg_namespace AS n ON c.relnamespace = n.oid "
                  "WHERE t.tablename = '%s' "
                  "AND n.nspname = '%s'" % (tblname, schema))
-        res = self.__exec_sql(query)
+        res = exec_sql(self, query, add_to_executed=False)
         if res:
             self.exists = True
             self.info = dict(
@@ -354,8 +366,7 @@ class Table(object):
         if tblspace:
             query += " TABLESPACE %s" % pg_quote_identifier(tblspace, 'database')
 
-        if self.__exec_sql(query, ddl=True):
-            self.executed_queries.append(query)
+        if exec_sql(self, query, ddl=True):
             changed = True
 
         if owner:
@@ -402,8 +413,7 @@ class Table(object):
         if tblspace:
             query += " TABLESPACE %s" % pg_quote_identifier(tblspace, 'database')
 
-        if self.__exec_sql(query, ddl=True):
-            self.executed_queries.append(query)
+        if exec_sql(self, query, ddl=True):
             changed = True
 
         if owner:
@@ -413,20 +423,17 @@ class Table(object):
 
     def truncate(self):
         query = "TRUNCATE TABLE %s" % pg_quote_identifier(self.name, 'table')
-        self.executed_queries.append(query)
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def rename(self, newname):
         query = "ALTER TABLE %s RENAME TO %s" % (pg_quote_identifier(self.name, 'table'),
                                                  pg_quote_identifier(newname, 'table'))
-        self.executed_queries.append(query)
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def set_owner(self, username):
         query = "ALTER TABLE %s OWNER TO %s" % (pg_quote_identifier(self.name, 'table'),
                                                 pg_quote_identifier(username, 'role'))
-        self.executed_queries.append(query)
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def drop(self, cascade=False):
         if not self.exists:
@@ -435,30 +442,16 @@ class Table(object):
         query = "DROP TABLE %s" % pg_quote_identifier(self.name, 'table')
         if cascade:
             query += " CASCADE"
-        self.executed_queries.append(query)
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def set_tblspace(self, tblspace):
         query = "ALTER TABLE %s SET TABLESPACE %s" % (pg_quote_identifier(self.name, 'table'),
                                                       pg_quote_identifier(tblspace, 'database'))
-        self.executed_queries.append(query)
-        return self.__exec_sql(query, ddl=True)
+        return exec_sql(self, query, ddl=True)
 
     def set_stor_params(self, params):
         query = "ALTER TABLE %s SET (%s)" % (pg_quote_identifier(self.name, 'table'), params)
-        self.executed_queries.append(query)
-        return self.__exec_sql(query, ddl=True)
-
-    def __exec_sql(self, query, ddl=False):
-        try:
-            self.cursor.execute(query)
-            if not ddl:
-                res = self.cursor.fetchall()
-                return res
-            return True
-        except Exception as e:
-            self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
-        return False
+        return exec_sql(self, query, ddl=True)
 
 
 # ===========================================
@@ -474,15 +467,15 @@ def main():
         db=dict(type='str', default='', aliases=['login_db']),
         tablespace=dict(type='str'),
         owner=dict(type='str'),
-        unlogged=dict(type='bool'),
+        unlogged=dict(type='bool', default=False),
         like=dict(type='str'),
         including=dict(type='str'),
         rename=dict(type='str'),
-        truncate=dict(type='bool'),
+        truncate=dict(type='bool', default=False),
         columns=dict(type='list'),
         storage_params=dict(type='list'),
         session_role=dict(type='str'),
-        cascade=dict(type='bool'),
+        cascade=dict(type='bool', default=False),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -506,21 +499,17 @@ def main():
         module.warn("cascade=true is ignored when state=present")
 
     # Check mutual exclusive parameters:
-    if state == 'absent' and (truncate or newname or columns or tablespace or
-                              like or storage_params or unlogged or
-                              owner or including):
+    if state == 'absent' and (truncate or newname or columns or tablespace or like or storage_params or unlogged or owner or including):
         module.fail_json(msg="%s: state=absent is mutually exclusive with: "
                              "truncate, rename, columns, tablespace, "
                              "including, like, storage_params, unlogged, owner" % table)
 
-    if truncate and (newname or columns or like or unlogged or
-                     storage_params or owner or tablespace or including):
+    if truncate and (newname or columns or like or unlogged or storage_params or owner or tablespace or including):
         module.fail_json(msg="%s: truncate is mutually exclusive with: "
                              "rename, columns, like, unlogged, including, "
                              "storage_params, owner, tablespace" % table)
 
-    if newname and (columns or like or unlogged or
-                    storage_params or owner or tablespace or including):
+    if newname and (columns or like or unlogged or storage_params or owner or tablespace or including):
         module.fail_json(msg="%s: rename is mutually exclusive with: "
                              "columns, like, unlogged, including, "
                              "storage_params, owner, tablespace" % table)
@@ -530,7 +519,8 @@ def main():
     if including and not like:
         module.fail_json(msg="%s: including param needs like param specified" % table)
 
-    db_connection = connect_to_db(module, autocommit=False)
+    conn_params = get_conn_params(module, module.params)
+    db_connection = connect_to_db(module, conn_params, autocommit=False)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     if storage_params:

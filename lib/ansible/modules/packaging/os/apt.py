@@ -27,6 +27,8 @@ options:
       - A list of package names, like C(foo), or package specifier with version, like C(foo=1.0).
         Name wildcards (fnmatch) like C(apt*) and version wildcards like C(foo=1.0*) are also supported.
     aliases: [ package, pkg ]
+    type: list
+    elements: str
   state:
     description:
       - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
@@ -38,6 +40,18 @@ options:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
     type: bool
     default: 'no'
+  update_cache_retries:
+    description:
+      - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
+    type: int
+    default: 5
+    version_added: '2.10'
+  update_cache_retry_max_delay:
+    description:
+      - Use an exponential backoff delay for each retry (see I(update_cache_retries)) up to this max delay in seconds.
+    type: int
+    default: 12
+    version_added: '2.10'
   cache_valid_time:
     description:
       - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
@@ -137,8 +151,9 @@ requirements:
 author: "Matthew Williams (@mgwilliams)"
 notes:
    - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
-   - apt starts newly installed services by default, this is what the underlying tooling does,
-     to avoid this you can set the ``RUNLEVEL`` environment variable to 1.
+   - In most cases, packages installed with apt will start newly installed services by default. Most distributions have mechanisms to avoid this.
+     For example when installing Postgresql-9.5 in Debian 9, creating an excutable shell script (/usr/sbin/policy-rc.d) that throws
+     a return code of 101 will stop Postgresql 9.5 starting up after install. Remove the file or remove its execute permission afterwards.
    - The apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier
      (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.
      Since we don't have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
@@ -146,17 +161,15 @@ notes:
 '''
 
 EXAMPLES = '''
+- name: Install apache httpd  (state=present is optional)
+  apt:
+    name: apache2
+    state: present
+
 - name: Update repositories cache and install "foo" package
   apt:
     name: foo
     update_cache: yes
-
-- name: Install apache httpd but avoid starting it immediately (state=present is optional)
-  apt:
-    name: apache2
-    state: present
-  environment:
-    RUNLEVEL: 1
 
 - name: Remove "foo" package
   apt:
@@ -169,9 +182,7 @@ EXAMPLES = '''
 
 - name: Install a list of packages
   apt:
-    name: "{{ packages }}"
-  vars:
-    packages:
+    pkg:
     - foo
     - foo-tools
 
@@ -274,6 +285,8 @@ import shutil
 import re
 import sys
 import tempfile
+import time
+import random
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -751,6 +764,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
     if deps_to_install:
         (success, retvals) = install(m=m, pkgspec=deps_to_install, cache=cache,
                                      install_recommends=install_recommends,
+                                     allow_unauthenticated=allow_unauthenticated,
                                      dpkg_options=expand_dpkg_options(dpkg_options))
         if not success:
             m.fail_json(**retvals)
@@ -1005,9 +1019,11 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'build-dep', 'fixed', 'latest', 'present']),
             update_cache=dict(type='bool', aliases=['update-cache']),
+            update_cache_retries=dict(type='int', default=5),
+            update_cache_retry_max_delay=dict(type='int', default=12),
             cache_valid_time=dict(type='int', default=0),
             purge=dict(type='bool', default=False),
-            package=dict(type='list', aliases=['pkg', 'name']),
+            package=dict(type='list', elements='str', aliases=['pkg', 'name']),
             deb=dict(type='path'),
             default_release=dict(type='str', aliases=['default-release']),
             install_recommends=dict(type='bool', aliases=['install-recommends']),
@@ -1033,8 +1049,14 @@ def main():
             module.fail_json(msg="%s must be installed to use check mode. "
                                  "If run normally this module can auto-install it." % PYTHON_APT)
         try:
-            module.warn("Updating cache and auto-installing missing dependency: %s" % PYTHON_APT)
-            module.run_command(['apt-get', 'update'], check_rc=True)
+            # We skip cache update in auto install the dependency if the
+            # user explicitly declared it with update_cache=no.
+            if module.params.get('update_cache') is False:
+                module.warn("Auto-installing missing dependency without updating cache: %s" % PYTHON_APT)
+            else:
+                module.warn("Updating cache and auto-installing missing dependency: %s" % PYTHON_APT)
+                module.run_command(['apt-get', 'update'], check_rc=True)
+
             module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
             global apt, apt_pkg
             import apt
@@ -1057,7 +1079,6 @@ def main():
     use_apt_get = p['force_apt_get']
 
     if not use_apt_get and not APTITUDE_CMD:
-        module.warn("Could not find aptitude. Using apt-get instead")
         use_apt_get = True
 
     updated_cache = False
@@ -1088,16 +1109,27 @@ def main():
             now = datetime.datetime.now()
             tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
             if not mtimestamp + tdelta >= now:
-                # Retry to update the cache up to 3 times
+                # Retry to update the cache with exponential backoff
                 err = ''
-                for retry in range(3):
+                update_cache_retries = module.params.get('update_cache_retries')
+                update_cache_retry_max_delay = module.params.get('update_cache_retry_max_delay')
+                randomize = random.randint(0, 1000) / 1000.0
+
+                for retry in range(update_cache_retries):
                     try:
                         cache.update()
                         break
                     except apt.cache.FetchFailedException as e:
                         err = to_native(e)
+
+                    # Use exponential backoff plus a little bit of randomness
+                    delay = 2 ** retry + randomize
+                    if delay > update_cache_retry_max_delay:
+                        delay = update_cache_retry_max_delay + randomize
+                    time.sleep(delay)
                 else:
-                    module.fail_json(msg='Failed to update apt cache: %s' % err)
+                    module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
+
                 cache.open(progress=None)
                 mtimestamp, post_cache_update_time = get_updated_cache_time()
                 if updated_cache_time != post_cache_update_time:

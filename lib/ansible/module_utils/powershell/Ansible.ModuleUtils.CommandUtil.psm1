@@ -76,6 +76,9 @@ Function Run-Command {
     .PARAMETER environment
     A hashtable of key/value pairs to run with the command. If set, it will replace all other env vars.
 
+    .PARAMETER output_encoding_override
+    The character encoding name for decoding stdout/stderr output of the process.
+
     .OUTPUT
     [Hashtable]
         [String]executable - The full path to the executable that was run
@@ -87,7 +90,8 @@ Function Run-Command {
         [string]$command,
         [string]$working_directory = $null,
         [string]$stdin = "",
-        [hashtable]$environment = @{}
+        [hashtable]$environment = @{},
+        [string]$output_encoding_override = $null
     )
 
     # need to validate the working directory if it is set
@@ -104,7 +108,7 @@ Function Run-Command {
     $executable = Get-ExecutablePath -executable $arguments[0] -directory $working_directory
 
     # run the command and get the results
-    $command_result = [Ansible.Process.ProcessUtil]::CreateProcess($executable, $command, $working_directory, $environment, $stdin)
+    $command_result = [Ansible.Process.ProcessUtil]::CreateProcess($executable, $command, $working_directory, $environment, $stdin, $output_encoding_override)
 
     return ,@{
         executable = $executable

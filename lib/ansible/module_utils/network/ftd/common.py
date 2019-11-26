@@ -24,7 +24,7 @@ from ansible.module_utils.six import iteritems
 INVALID_IDENTIFIER_SYMBOLS = r'[^a-zA-Z0-9_]'
 
 IDENTITY_PROPERTIES = ['id', 'version', 'ruleId']
-NON_COMPARABLE_PROPERTIES = IDENTITY_PROPERTIES + ['isSystemDefined', 'links']
+NON_COMPARABLE_PROPERTIES = IDENTITY_PROPERTIES + ['isSystemDefined', 'links', 'token', 'rulePosition']
 
 
 class HTTPMethod:
@@ -65,7 +65,7 @@ def construct_ansible_facts(response, params):
         response_body = response['items'] if 'items' in response else response
         if params.get('register_as'):
             facts[params['register_as']] = response_body
-        elif response_body.get('name') and response_body.get('type'):
+        elif type(response_body) is dict and response_body.get('name') and response_body.get('type'):
             object_name = re.sub(INVALID_IDENTIFIER_SYMBOLS, '_', response_body['name'].lower())
             fact_name = '%s_%s' % (response_body['type'], object_name)
             facts[fact_name] = response_body

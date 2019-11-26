@@ -36,7 +36,9 @@ import json
 
 from itertools import chain
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
@@ -87,3 +89,35 @@ class Cliconf(CliconfBase):
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)
+
+    def run_commands(self, commands=None, check_rc=True):
+        if commands is None:
+            raise ValueError("'commands' value is required")
+
+        responses = list()
+        for cmd in to_list(commands):
+            if not isinstance(cmd, Mapping):
+                cmd = {'command': cmd}
+
+            output = cmd.pop('output', None)
+            if output:
+                raise ValueError("'output' value %s is not supported for run_commands" % output)
+
+            try:
+                out = self.send_command(**cmd)
+            except AnsibleConnectionFailure as e:
+                if check_rc:
+                    raise
+                out = getattr(e, 'err', to_text(e))
+
+            responses.append(out)
+
+        return responses
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            self._update_cli_prompt_context(config_context=')#')

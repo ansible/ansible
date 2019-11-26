@@ -4,6 +4,9 @@ Find and delete AWS resources matching the provided --match string.  Unless
 Please use caution, you can easily delete you're *ENTIRE* EC2 infrastructure.
 '''
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import boto
 import boto.ec2.elb
 import optparse

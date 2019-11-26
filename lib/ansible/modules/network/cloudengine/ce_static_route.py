@@ -16,8 +16,10 @@ description:
 author: Yang yang (@QijunPan)
 notes:
     - If no vrf is supplied, vrf is set to default.
-      If I(state=absent), the route will be removed, regardless of the
-      non-required parameters.
+    - If I(state=absent), the route will be removed, regardless of the non-required parameters.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     prefix:
         description:
@@ -274,10 +276,24 @@ def is_valid_v6addr(addr):
     """check if ipv6 addr is valid"""
     if addr.find(':') != -1:
         addr_list = addr.split(':')
-        if len(addr_list) > 6:
+        # The IPv6 binary system has a length of 128 bits and is grouped by 16 bits.
+        # Each group is separated by a colon ":" and can be divided into 8 groups, each group being represented by 4 hexadecimal
+        if len(addr_list) > 8:
             return False
-        if addr_list[1] != "":
+        # You can use a double colon "::" to represent a group of 0 or more consecutive 0s, but only once.
+        if addr.count('::') > 1:
             return False
+        # if do not use '::', the length of address should not be less than 8.
+        if addr.count('::') == 0 and len(addr_list) < 8:
+            return False
+        for group in addr_list:
+            if group.strip() == '':
+                continue
+            try:
+                # Each group is represented in 4-digit hexadecimal
+                int(group, base=16)
+            except ValueError:
+                return False
         return True
     return False
 
@@ -407,7 +423,7 @@ class StaticRoute(object):
                 if int(each_num) > 255:
                     return False
             byte_len = 8
-            ip_len = int(self.mask) / byte_len
+            ip_len = int(self.mask) // byte_len
             ip_bit = int(self.mask) % byte_len
         else:
             if self.prefix.find(':') == -1:
@@ -422,7 +438,7 @@ class StaticRoute(object):
             if length > 6:
                 return False
             byte_len = 16
-            ip_len = int(self.mask) / byte_len
+            ip_len = int(self.mask) // byte_len
             ip_bit = int(self.mask) % byte_len
 
         if self.aftype == "v4":
@@ -457,8 +473,10 @@ class StaticRoute(object):
         if not self.changed:
             return
         if self.aftype == "v4":
+            aftype = "ip"
             maskstr = self.convert_len_to_mask(self.mask)
         else:
+            aftype = "ipv6"
             maskstr = self.mask
         if self.next_hop is None:
             next_hop = ''
@@ -479,38 +497,38 @@ class StaticRoute(object):
         if self.state == "present":
             if self.vrf != "_public_":
                 if self.destvrf != "_public_":
-                    self.updates_cmd.append('ip route-static vpn-instance %s %s %s vpn-instance %s %s'
-                                            % (vrf, self.prefix, maskstr, destvrf, next_hop))
+                    self.updates_cmd.append('%s route-static vpn-instance %s %s %s vpn-instance %s %s'
+                                            % (aftype, vrf, self.prefix, maskstr, destvrf, next_hop))
                 else:
-                    self.updates_cmd.append('ip route-static vpn-instance %s %s %s %s %s'
-                                            % (vrf, self.prefix, maskstr, nhp_interface, next_hop))
+                    self.updates_cmd.append('%s route-static vpn-instance %s %s %s %s %s'
+                                            % (aftype, vrf, self.prefix, maskstr, nhp_interface, next_hop))
             elif self.destvrf != "_public_":
-                self.updates_cmd.append('ip route-static %s %s vpn-instance %s %s'
-                                        % (self.prefix, maskstr, self.destvrf, next_hop))
+                self.updates_cmd.append('%s route-static %s %s vpn-instance %s %s'
+                                        % (aftype, self.prefix, maskstr, self.destvrf, next_hop))
             else:
-                self.updates_cmd.append('ip route-static %s %s %s %s'
-                                        % (self.prefix, maskstr, nhp_interface, next_hop))
+                self.updates_cmd.append('%s route-static %s %s %s %s'
+                                        % (aftype, self.prefix, maskstr, nhp_interface, next_hop))
             if self.pref:
-                self.updates_cmd.append(' preference %s' % (self.pref))
+                self.updates_cmd[0] += ' preference %s' % (self.pref)
             if self.tag:
-                self.updates_cmd.append(' tag %s' % (self.tag))
+                self.updates_cmd[0] += ' tag %s' % (self.tag)
             if self.description:
-                self.updates_cmd.append(' description %s' % (self.description))
+                self.updates_cmd[0] += ' description %s' % (self.description)
 
         if self.state == "absent":
             if self.vrf != "_public_":
                 if self.destvrf != "_public_":
-                    self.updates_cmd.append('undo ip route-static vpn-instance %s %s %s vpn-instance %s %s'
-                                            % (vrf, self.prefix, maskstr, destvrf, next_hop))
+                    self.updates_cmd.append('undo %s route-static vpn-instance %s %s %s vpn-instance %s %s'
+                                            % (aftype, vrf, self.prefix, maskstr, destvrf, next_hop))
                 else:
-                    self.updates_cmd.append('undo ip route-static vpn-instance %s %s %s %s %s'
-                                            % (vrf, self.prefix, maskstr, nhp_interface, next_hop))
+                    self.updates_cmd.append('undo %s route-static vpn-instance %s %s %s %s %s'
+                                            % (aftype, vrf, self.prefix, maskstr, nhp_interface, next_hop))
             elif self.destvrf != "_public_":
-                self.updates_cmd.append('undo ip route-static %s %s vpn-instance %s %s'
-                                        % (self.prefix, maskstr, self.destvrf, self.next_hop))
+                self.updates_cmd.append('undo %s route-static %s %s vpn-instance %s %s'
+                                        % (aftype, self.prefix, maskstr, self.destvrf, self.next_hop))
             else:
-                self.updates_cmd.append('undo ip route-static %s %s %s %s'
-                                        % (self.prefix, maskstr, nhp_interface, next_hop))
+                self.updates_cmd.append('undo %s route-static %s %s %s %s'
+                                        % (aftype, self.prefix, maskstr, nhp_interface, next_hop))
 
     def operate_static_route(self, version, prefix, mask, nhp_interface, next_hop, vrf, destvrf, state):
         """operate ipv4 static route"""
@@ -571,7 +589,7 @@ class StaticRoute(object):
             replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
         root = ElementTree.fromstring(xml_str)
         static_routes = root.findall(
-            "data/staticrt/staticrtbase/srRoutes/srRoute")
+            "staticrt/staticrtbase/srRoutes/srRoute")
 
         if static_routes:
             for static_route in static_routes:
@@ -763,6 +781,8 @@ class StaticRoute(object):
 
         self.get_static_route(self.state)
         self.end_state['sroute'] = self.static_routes_info["sroute"]
+        if self.end_state == self.existing:
+            self.changed = False
 
     def work(self):
         """worker"""

@@ -23,20 +23,12 @@ version_added: '2.8'
 options:
   db:
     description:
-    - Name of database to connect.
+    - Name of a database to connect to.
     type: str
     aliases:
     - login_db
-notes:
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module. If
-  the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host. For Ubuntu-based
-  systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-requirements: [ psycopg2 ]
+seealso:
+- module: postgresql_info
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
@@ -78,11 +70,13 @@ except ImportError:
     # from ansible.module_utils.postgres
     pass
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
-from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 
 
 # ===========================================
@@ -103,7 +97,7 @@ class PgPing(object):
 
     def get_pg_version(self):
         query = "SELECT version()"
-        raw = self.__exec_sql(query)[0][0]
+        raw = exec_sql(self, query, add_to_executed=False)[0][0]
         if raw:
             self.is_available = True
             raw = raw.split()[1].split('.')
@@ -112,16 +106,6 @@ class PgPing(object):
                 minor=int(raw[1]),
             )
 
-    def __exec_sql(self, query):
-        try:
-            self.cursor.execute(query)
-            res = self.cursor.fetchall()
-            if res:
-                return res
-        except Exception as e:
-            self.module.fail_json("Unable to execute '%s': %s" % (query, to_native(e)))
-
-        return False
 
 # ===========================================
 # Module execution.
@@ -147,7 +131,8 @@ def main():
         server_version=dict(),
     )
 
-    db_connection = connect_to_db(module, fail_on_conn=False)
+    conn_params = get_conn_params(module, module.params, warn_db_default=False)
+    db_connection = connect_to_db(module, conn_params, fail_on_conn=False)
 
     if db_connection is not None:
         cursor = db_connection.cursor(cursor_factory=DictCursor)

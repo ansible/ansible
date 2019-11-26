@@ -33,7 +33,7 @@ Comparing ``loop`` and ``with_*``
 
 you would need::
 
-  loop: [1, [2,3] ,4] | flatten(1)
+  loop: "{{ [1, [2,3] ,4] | flatten(1) }}"
 
 * Any ``with_*`` statement that requires using ``lookup`` within a loop should not be converted to use the ``loop`` keyword. For example, instead of doing:
 
@@ -316,6 +316,8 @@ When looping over complex data structures, the console output of your task can b
         label: "{{ item.name }}"
 
 The output of this task will display just the ``name`` field for each ``item`` instead of the entire contents of the multi-line ``{{ item }}`` variable.
+
+.. note:: This is for making console output more readable, not protecting sensitive data. If there is sensitive data in ``loop``, set ``no_log: yes`` on the task to prevent disclosure.
 
 Pausing within a loop
 ---------------------

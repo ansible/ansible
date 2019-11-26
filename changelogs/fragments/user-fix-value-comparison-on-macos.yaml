@@ -1,0 +1,2 @@
+bugfixes:
+  - user - fix comprasion on macOS so module does not improperly report a change (https://github.com/ansible/ansible/issues/62969)

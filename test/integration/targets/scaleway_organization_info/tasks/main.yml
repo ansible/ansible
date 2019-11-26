@@ -1,0 +1,12 @@
+- name: Get organization informations and register it in a variable
+  scaleway_organization_info:
+  register: organizations
+
+- name: Display organizations variable
+  debug:
+    var: organizations
+
+- name: Ensure retrieval of organizations info is success
+  assert:
+    that:
+      - organizations is success

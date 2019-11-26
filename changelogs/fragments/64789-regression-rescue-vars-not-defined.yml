@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix regression when ``ansible_failed_task`` and ``ansible_failed_result`` are not defined in the rescue block (https://github.com/ansible/ansible/issues/64789)

@@ -3,6 +3,7 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+#AnsibleRequires -CSharpUtil Ansible.AccessToken
 #AnsibleRequires -CSharpUtil Ansible.Basic
 #Requires -Module Ansible.ModuleUtils.AddType
 
@@ -40,11 +41,8 @@ Add-CSharpType -AnsibleModule $module -References @'
 using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
-using System.Text;
 
 namespace Ansible.MappedDrive
 {
@@ -90,40 +88,6 @@ namespace Ansible.MappedDrive
             CredReset = 0x00002000,
         }
 
-        public enum TokenElevationType
-        {
-            TokenElevationTypeDefault = 1,
-            TokenElevationTypeFull,
-            TokenElevationTypeLimited
-        }
-
-        public enum TokenInformationClass
-        {
-            TokenUser = 1,
-            TokenPrivileges = 3,
-            TokenElevationType = 18,
-            TokenLinkedToken = 19,
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct LUID
-        {
-            public UInt32 LowPart;
-            public Int32 HighPart;
-
-            public static explicit operator UInt64(LUID l)
-            {
-                return (UInt64)((UInt64)l.HighPart << 32) | (UInt64)l.LowPart;
-            }
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct LUID_AND_ATTRIBUTES
-        {
-            public LUID Luid;
-            public UInt32 Attributes;
-        }
-
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct NETRESOURCEW
         {
@@ -136,27 +100,6 @@ namespace Ansible.MappedDrive
             [MarshalAs(UnmanagedType.LPWStr)] public string lpComment;
             [MarshalAs(UnmanagedType.LPWStr)] public string lpProvider;
         }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct SID_AND_ATTRIBUTES
-        {
-            public IntPtr Sid;
-            public UInt32 Attributes;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct TOKEN_PRIVILEGES
-        {
-            public UInt32 PrivilegeCount;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-            public LUID_AND_ATTRIBUTES[] Privileges;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct TOKEN_USER
-        {
-            public SID_AND_ATTRIBUTES User;
-        }
     }
 
     internal class NativeMethods
@@ -166,38 +109,8 @@ namespace Ansible.MappedDrive
             IntPtr hObject);
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool GetTokenInformation(
-            SafeNativeHandle TokenHandle,
-            NativeHelpers.TokenInformationClass TokenInformationClass,
-            SafeMemoryBuffer TokenInformation,
-            UInt32 TokenInformationLength,
-            out UInt32 ReturnLength);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool ImpersonateLoggedOnUser(
-            SafeNativeHandle hToken);
-
-        [DllImport("kernel32.dll")]
-        public static extern SafeNativeHandle GetCurrentProcess();
-
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool LookupPrivilegeNameW(
-            string lpSystemName,
-            ref NativeHelpers.LUID lpLuid,
-            StringBuilder lpName,
-            ref UInt32 cchName);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern SafeNativeHandle OpenProcess(
-            UInt32 dwDesiredAccess,
-            bool bInheritHandle,
-            UInt32 dwProcessId);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool OpenProcessToken(
-            SafeNativeHandle ProcessHandle,
-            TokenAccessLevels DesiredAccess,
-            out SafeNativeHandle TokenHandle);
+            IntPtr hToken);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool RevertToSelf();
@@ -257,12 +170,12 @@ namespace Ansible.MappedDrive
 
     internal class Impersonation : IDisposable
     {
-        private SafeNativeHandle hToken = null;
+        private IntPtr hToken = IntPtr.Zero;
 
-        public Impersonation(SafeNativeHandle token)
+        public Impersonation(IntPtr token)
         {
             hToken = token;
-            if (token != null)
+            if (token != IntPtr.Zero)
                 if (!NativeMethods.ImpersonateLoggedOnUser(hToken))
                     throw new Win32Exception("Failed to impersonate token with ImpersonateLoggedOnUser()");
         }
@@ -282,18 +195,6 @@ namespace Ansible.MappedDrive
         public string Path;
     }
 
-    public class SafeNativeHandle : SafeHandleZeroOrMinusOneIsInvalid
-    {
-        public SafeNativeHandle() : base(true) { }
-        public SafeNativeHandle(IntPtr handle) : base(true) { this.handle = handle; }
-
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
-        protected override bool ReleaseHandle()
-        {
-            return NativeMethods.CloseHandle(handle);
-        }
-    }
-
     public class Win32Exception : System.ComponentModel.Win32Exception
     {
         private string _msg;
@@ -308,11 +209,10 @@ namespace Ansible.MappedDrive
 
     public class Utils
     {
-        private const TokenAccessLevels IMPERSONATE_ACCESS = TokenAccessLevels.Query | TokenAccessLevels.Duplicate;
         private const UInt32 ERROR_SUCCESS = 0x00000000;
         private const UInt32 ERROR_NO_MORE_ITEMS = 0x0000103;
 
-        public static void AddMappedDrive(string drive, string path, SafeNativeHandle iToken, string username = null, string password = null)
+        public static void AddMappedDrive(string drive, string path, IntPtr iToken, string username = null, string password = null)
         {
             NativeHelpers.NETRESOURCEW resource = new NativeHelpers.NETRESOURCEW
             {
@@ -332,7 +232,7 @@ namespace Ansible.MappedDrive
             }
         }
 
-        public static List<DriveInfo> GetMappedDrives(SafeNativeHandle iToken)
+        public static List<DriveInfo> GetMappedDrives(IntPtr iToken)
         {
             using (Impersonation imp = new Impersonation(iToken))
             {
@@ -385,7 +285,7 @@ namespace Ansible.MappedDrive
             }
         }
 
-        public static void RemoveMappedDrive(string drive, SafeNativeHandle iToken)
+        public static void RemoveMappedDrive(string drive, IntPtr iToken)
         {
             using (Impersonation imp = new Impersonation(iToken))
             {
@@ -393,117 +293,6 @@ namespace Ansible.MappedDrive
                 if (res != ERROR_SUCCESS)
                     throw new Win32Exception((int)res, String.Format("Failed to remove mapped drive {0} with WNetCancelConnection2W()", drive));
             }
-        }
-
-        public static SafeNativeHandle GetLimitedToken()
-        {
-            SafeNativeHandle hToken = null;
-            if (!NativeMethods.OpenProcessToken(NativeMethods.GetCurrentProcess(), IMPERSONATE_ACCESS, out hToken))
-                throw new Win32Exception("Failed to open current process token with OpenProcessToken()");
-
-            using (hToken)
-            {
-                // Check the elevation type of the current token, only need to impersonate if it's a Full token
-                using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenElevationType))
-                {
-                    NativeHelpers.TokenElevationType tet = (NativeHelpers.TokenElevationType)Marshal.ReadInt32(tokenInfo.DangerousGetHandle());
-
-                    // If we don't have a Full token, we don't need to get the limited one to set a mapped drive
-                    if (tet != NativeHelpers.TokenElevationType.TokenElevationTypeFull)
-                        return null;
-                }
-
-                // We have a full token, need to get the TokenLinkedToken, this requires the SeTcbPrivilege privilege
-                // and we can get that from impersonating a SYSTEM account token. Without this privilege we only get
-                // an SecurityIdentification token which won't work for what we need
-                using (SafeNativeHandle systemToken = GetSystemToken())
-                using (Impersonation systemImpersonation = new Impersonation(systemToken))
-                using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenLinkedToken))
-                    return new SafeNativeHandle(Marshal.ReadIntPtr(tokenInfo.DangerousGetHandle()));
-            }
-        }
-
-        private static SafeNativeHandle GetSystemToken()
-        {
-            foreach (System.Diagnostics.Process process in System.Diagnostics.Process.GetProcesses())
-            {
-                using (process)
-                {
-                    // 0x00000400 == PROCESS_QUERY_INFORMATION
-                    using (SafeNativeHandle hProcess = NativeMethods.OpenProcess(0x00000400, false, (UInt32)process.Id))
-                    {
-                        if (hProcess.IsInvalid)
-                            continue;
-
-                        SafeNativeHandle hToken;
-                        NativeMethods.OpenProcessToken(hProcess, IMPERSONATE_ACCESS, out hToken);
-                        if (hToken.IsInvalid)
-                            continue;
-
-                        if ("S-1-5-18" == GetTokenUserSID(hToken))
-                        {
-                            // To get the TokenLinkedToken we need the SeTcbPrivilege, not all SYSTEM tokens have this
-                            // assigned so we check before trying again
-                            List<string> actualPrivileges = GetTokenPrivileges(hToken);
-                            if (actualPrivileges.Contains("SeTcbPrivilege"))
-                                return hToken;
-                        }
-
-                        hToken.Dispose();
-                    }
-                }
-            }
-            throw new InvalidOperationException("Failed to get a copy of the SYSTEM token required to de-elevate the current user's token");
-        }
-
-        private static List<string> GetTokenPrivileges(SafeNativeHandle hToken)
-        {
-            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenPrivileges))
-            {
-                NativeHelpers.TOKEN_PRIVILEGES tokenPrivileges = (NativeHelpers.TOKEN_PRIVILEGES)Marshal.PtrToStructure(
-                    tokenInfo.DangerousGetHandle(), typeof(NativeHelpers.TOKEN_PRIVILEGES));
-
-                NativeHelpers.LUID_AND_ATTRIBUTES[] luidAndAttributes = new NativeHelpers.LUID_AND_ATTRIBUTES[tokenPrivileges.PrivilegeCount];
-                PtrToStructureArray(luidAndAttributes, IntPtr.Add(tokenInfo.DangerousGetHandle(), Marshal.SizeOf(tokenPrivileges.PrivilegeCount)));
-
-                return luidAndAttributes.Select(x => GetPrivilegeName(x.Luid)).ToList();
-            }
-        }
-
-        private static string GetTokenUserSID(SafeNativeHandle hToken)
-        {
-            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, NativeHelpers.TokenInformationClass.TokenUser))
-            {
-                NativeHelpers.TOKEN_USER tokenUser = (NativeHelpers.TOKEN_USER)Marshal.PtrToStructure(tokenInfo.DangerousGetHandle(),
-                    typeof(NativeHelpers.TOKEN_USER));
-                return new SecurityIdentifier(tokenUser.User.Sid).Value;
-            }
-        }
-
-        private static SafeMemoryBuffer GetTokenInformation(SafeNativeHandle hToken, NativeHelpers.TokenInformationClass tokenClass)
-        {
-            UInt32 tokenLength;
-            bool res = NativeMethods.GetTokenInformation(hToken, tokenClass, new SafeMemoryBuffer(IntPtr.Zero), 0, out tokenLength);
-            if (!res && tokenLength == 0)  // res will be false due to insufficient buffer size, we ignore if we got the buffer length
-                throw new Win32Exception(String.Format("GetTokenInformation({0}) failed to get buffer length", tokenClass.ToString()));
-
-            SafeMemoryBuffer tokenInfo = new SafeMemoryBuffer((int)tokenLength);
-            if (!NativeMethods.GetTokenInformation(hToken, tokenClass, tokenInfo, tokenLength, out tokenLength))
-                throw new Win32Exception(String.Format("GetTokenInformation({0}) failed", tokenClass.ToString()));
-
-            return tokenInfo;
-        }
-
-        private static string GetPrivilegeName(NativeHelpers.LUID luid)
-        {
-            UInt32 nameLen = 0;
-            NativeMethods.LookupPrivilegeNameW(null, ref luid, null, ref nameLen);
-
-            StringBuilder name = new StringBuilder((int)(nameLen + 1));
-            if (!NativeMethods.LookupPrivilegeNameW(null, ref luid, name, ref nameLen))
-                throw new Win32Exception("LookupPrivilegeNameW() failed");
-
-            return name.ToString();
         }
 
         private static void PtrToStructureArray<T>(T[] array, IntPtr ptr)
@@ -515,6 +304,37 @@ namespace Ansible.MappedDrive
     }
 }
 '@
+
+Function Get-LimitedToken {
+    $h_process = [Ansible.AccessToken.TokenUtil]::OpenProcess()
+    $h_token = [Ansible.AccessToken.TokenUtil]::OpenProcessToken($h_process, "Duplicate, Query")
+
+    try {
+        # If we don't have a Full token, we don't need to get the limited one to set a mapped drive
+        $tet = [Ansible.AccessToken.TokenUtil]::GetTokenElevationType($h_token)
+        if ($tet -ne [Ansible.AccessToken.TokenElevationType]::Full) {
+            return
+        }
+
+        foreach ($system_token in [Ansible.AccessToken.TokenUtil]::EnumerateUserTokens("S-1-5-18", "Duplicate")) {
+            # To get the TokenLinkedToken we need the SeTcbPrivilege, not all SYSTEM tokens have this assigned so
+            # we need to check before impersonating that token
+            $token_privileges = [Ansible.AccessToken.TokenUtil]::GetTokenPrivileges($system_token)
+            if ($null -eq ($token_privileges | Where-Object { $_.Name -eq "SeTcbPrivilege" })) {
+                continue
+            }
+
+            [Ansible.AccessToken.TokenUtil]::ImpersonateToken($system_token)
+            try {
+                return [Ansible.AccessToken.TokenUtil]::GetTokenLinkedToken($h_token)
+            } finally {
+                [Ansible.AccessToken.TokenUtil]::RevertToSelf()
+            }
+        }
+    } finally {
+        $h_token.Dispose()
+    }
+}
 
 <#
 When we run with become and UAC is enabled, the become process will most likely be the Admin/Full token. This is
@@ -539,10 +359,15 @@ These are the following scenarios we have to handle;
     4. Run with become on standard user
         There's no split token, GetLimitedToken() will return $null and no impersonation is needed
 #>
-$impersonation_token = [Ansible.MappedDrive.Utils]::GetLimitedToken()
+$impersonation_token = Get-LimitedToken
 
 try {
-    $existing_targets = [Ansible.MappedDrive.Utils]::GetMappedDrives($impersonation_token)
+    $i_token_ptr = [System.IntPtr]::Zero
+    if ($null -ne $impersonation_token) {
+        $i_token_ptr = $impersonation_token.DangerousGetHandle()
+    }
+
+    $existing_targets = [Ansible.MappedDrive.Utils]::GetMappedDrives($i_token_ptr)
     $existing_target = $existing_targets | Where-Object { $_.Drive -eq $letter_root }
 
     if ($existing_target) {
@@ -558,7 +383,7 @@ try {
                 $module.FailJson("did not delete mapped drive $letter, the target path is pointing to a different location at $( $existing_target.Path )")
             }
             if (-not $module.CheckMode) {
-                [Ansible.MappedDrive.Utils]::RemoveMappedDrive($letter_root, $impersonation_token)
+                [Ansible.MappedDrive.Utils]::RemoveMappedDrive($letter_root, $i_token_ptr)
             }
 
             $module.Result.changed = $true
@@ -585,14 +410,14 @@ try {
         if ($null -ne $existing_target) {
             if ($existing_target.Path -ne $path) {
                 if (-not $module.CheckMode) {
-                    [Ansible.MappedDrive.Utils]::RemoveMappedDrive($letter_root, $impersonation_token)
-                    $add_method.Invoke($null, [Object[]]@($letter_root, $path, $impersonation_token, $input_username, $input_password))
+                    [Ansible.MappedDrive.Utils]::RemoveMappedDrive($letter_root, $i_token_ptr)
+                    $add_method.Invoke($null, [Object[]]@($letter_root, $path, $i_token_ptr, $input_username, $input_password))
                 }
                 $module.Result.changed = $true
             }
         } else  {
             if (-not $module.CheckMode)  {
-                $add_method.Invoke($null, [Object[]]@($letter_root, $path, $impersonation_token, $input_username, $input_password))
+                $add_method.Invoke($null, [Object[]]@($letter_root, $path, $i_token_ptr, $input_username, $input_password))
             }
 
             $module.Result.changed = $true

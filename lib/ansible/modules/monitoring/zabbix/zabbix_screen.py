@@ -26,7 +26,7 @@ author:
     - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.4"
 options:
     screens:
         description:
@@ -64,12 +64,10 @@ options:
                 description:
                     - Graph width will be set in graph settings.
                 type: int
-                default: None
             graph_height:
                 description:
                     - Graph height will be set in graph settings.
                 type: int
-                default: None
             graphs_in_row:
                 description:
                     - Limit columns of a screen and make multiple rows.
@@ -153,26 +151,21 @@ EXAMPLES = '''
   when: inventory_hostname==groups['group_name'][0]
 '''
 
+
+import atexit
+import traceback
+
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPI
     from zabbix_api import ZabbixAPIException
     from zabbix_api import Already_Exists
 
-    # Extend the ZabbixAPI
-    # Since the zabbix-api python module too old (version 1.0, and there's no higher version so far), it doesn't support the 'screenitem' api call,
-    # we have to inherit the ZabbixAPI class to add 'screenitem' support.
-    class ZabbixAPIExtends(ZabbixAPI):
-        screenitem = None
-
-        def __init__(self, server, timeout, user, passwd, validate_certs, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd, validate_certs=validate_certs)
-            self.screenitem = ZabbixAPISubClass(self, dict({"prefix": "screenitem"}, **kwargs))
-
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class Screen(object):
@@ -372,7 +365,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -386,9 +379,10 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                               validate_certs=validate_certs)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

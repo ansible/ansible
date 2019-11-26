@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ecs_task
-short_description: run, start or stop a task in ecs
+short_description: Run, start or stop a task in ecs
 description:
     - Creates or deletes instances of task definitions.
 version_added: "2.0"
@@ -23,49 +23,67 @@ requirements: [ json, botocore, boto3 ]
 options:
     operation:
         description:
-            - Which task operation to execute
+            - Which task operation to execute.
         required: True
         choices: ['run', 'start', 'stop']
+        type: str
     cluster:
         description:
-            - The name of the cluster to run the task on
+            - The name of the cluster to run the task on.
         required: False
+        type: str
     task_definition:
         description:
-            - The task definition to start or run
+            - The task definition to start or run.
         required: False
+        type: str
     overrides:
         description:
-            - A dictionary of values to pass to the new instances
+            - A dictionary of values to pass to the new instances.
         required: False
+        type: dict
     count:
         description:
-            - How many new instances to start
+            - How many new instances to start.
         required: False
+        type: int
     task:
         description:
-            - The task to stop
+            - The task to stop.
         required: False
+        type: str
     container_instances:
         description:
-            - The list of container instances on which to deploy the task
+            - The list of container instances on which to deploy the task.
         required: False
+        type: list
+        elements: str
     started_by:
         description:
-            - A value showing who or what started the task (for informational purposes)
+            - A value showing who or what started the task (for informational purposes).
         required: False
+        type: str
     network_configuration:
         description:
-          - network configuration of the service. Only applicable for task definitions created with C(awsvpc) I(network_mode).
-          - I(network_configuration) has two keys, I(subnets), a list of subnet IDs to which the task is attached and I(security_groups),
-            a list of group names or group IDs for the task
+          - Network configuration of the service. Only applicable for task definitions created with I(network_mode=awsvpc).
+        type: dict
+        suboptions:
+            subnets:
+                description: A list of subnet IDs to which the task is attached.
+                type: list
+                elements: str
+            security_groups:
+                description: A list of group names or group IDs for the task.
+                type: list
+                elements: str
         version_added: 2.6
     launch_type:
         description:
-          - The launch type on which to run your service
+          - The launch type on which to run your service.
         required: false
         version_added: 2.8
         choices: ["EC2", "FARGATE"]
+        type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -126,7 +144,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 task:
-    description: details about the tast that was started
+    description: details about the task that was started
     returned: success
     type: complex
     contains:
@@ -149,7 +167,8 @@ task:
         overrides:
             description: The container overrides set for this task.
             returned: only when details is true
-            type: list of complex
+            type: list
+            elements: dict
         lastStatus:
             description: The last recorded status of the task.
             returned: only when details is true
@@ -161,7 +180,8 @@ task:
         containers:
             description: The container details.
             returned: only when details is true
-            type: list of complex
+            type: list
+            elements: dict
         startedBy:
             description: The used who started the task.
             returned: only when details is true

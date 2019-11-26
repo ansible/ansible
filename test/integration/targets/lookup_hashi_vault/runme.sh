@@ -17,9 +17,7 @@ set -eux
 #   fatal: [testhost]: FAILED! => { "msg": "An unhandled exception occurred while running the lookup plugin 'hashi_vault'. Error was a <class 'requests.exceptions.SSLError'>, original message: HTTPSConnectionPool(host='localhost', port=8201): Max retries exceeded with url: /v1/auth/token/lookup-self (Caused by SSLError(SSLError(\"bad handshake: Error([('SSL routines', 'ssl3_get_server_certificate', 'certificate verify failed')],)\",),))"}
 
 ANSIBLE_ROLES_PATH=../ \
-ANSIBLE_CONFIG=../../integration.cfg \
-    ansible-playbook -e@../../integration_config.yml playbooks/install_dependencies.yml -v "$@"
+    ansible-playbook playbooks/install_dependencies.yml -v "$@"
 
 ANSIBLE_ROLES_PATH=../ \
-ANSIBLE_CONFIG=../../integration.cfg \
-    ansible-playbook -e@../../integration_config.yml playbooks/test_lookup_hashi_vault.yml -v "$@"
+    ansible-playbook playbooks/test_lookup_hashi_vault.yml -v "$@"

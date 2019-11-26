@@ -26,11 +26,38 @@ options:
       - If the path is a folder, the module will consider all ps1 files as Pester tests.
     type: str
     required: true
+  tags:
+    description:
+      - Runs only tests in Describe blocks with specified Tags values.
+      - Accepts multiple comma separated tags.
+    type: list
+    version_added: '2.9'
+  output_file:
+    description:
+      - Generates an output test report.
+    type: str
+    version_added: '2.10'
+  output_format:
+    description:
+      - Format of the test report to be generated.
+      - This parameter is to be used with output_file option.
+    type: str
+    default: NunitXML
+    version_added: '2.10'
+  test_parameters:
+    description:
+      - Allows to specify parameters to the test script.
+    type: dict
+    version_added: '2.9'
   version:
     description:
       - Minimum version of the pester module that has to be available on the remote host.
+    type: str
+    aliases:
+    - minimum_version
 author:
     - Erwan Quelin (@equelin)
+    - Prasoon Karunan V (@prasoonkarunan)
 '''
 
 EXAMPLES = r'''
@@ -47,12 +74,29 @@ EXAMPLES = r'''
   win_pester:
     path: C:\Pester
 
+- name: Run the pester tests only for the tags specified.
+  win_pester:
+    path: C:\Pester\TestScript.tests
+    tags: CI,UnitTests
+
 # Run pesters tests files that are present in the specified folder
 # ensure that the pester module version available is greater or equal to the version parameter.
 - name: Run the pester test present in a folder and check the Pester module version.
   win_pester:
     path: C:\Pester\test01.test.ps1
     version: 4.1.0
+
+- name: Run the pester test present in a folder with given script parameters.
+  win_pester:
+    path: C:\Pester\test04.test.ps1
+    test_parameters:
+      Process: lsass
+      Service: bits
+
+- name: Run the pester test present in a folder and generate NunitXML test result..
+  win_pester:
+    path: C:\Pester\test04.test.ps1
+    output_file: c:\Pester\resullt\testresult.xml
 '''
 
 RETURN = r'''

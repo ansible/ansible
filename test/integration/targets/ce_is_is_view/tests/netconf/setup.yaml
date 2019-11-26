@@ -1,0 +1,22 @@
+---
+- debug:
+    msg: "SETUP ce_is_is_view integration tests on connection={{ ansible_connection }}"
+# create ISIS 100 
+
+- name: Get lacp config by ce_netconf.
+  ce_netconf:
+    rpc: get
+    cfg_xml: "<config>
+              <isiscomm xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                <isSites>
+                  <isSite operation=\"merg\">
+                    <instanceId>100</instanceId>
+                    <vpnName>_public_</vpnName>
+                    <description>ISIS</description>
+                  </isSite>
+                </isSites>
+              </isiscomm>
+            </config>"
+
+- debug:
+    msg: "END SETUP ce_is_is_view integration tests on connection={{ ansible_connection }}"

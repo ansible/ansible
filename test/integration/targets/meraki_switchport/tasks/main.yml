@@ -7,34 +7,6 @@
   fail:
     msg: Please define an API key
   when: auth_key is not defined
-  
-- name: Use an invalid domain
-  meraki_switchport:
-    auth_key: '{{ auth_key }}'
-    host: marrrraki.com
-    state: query
-    serial: Q2HP-2C6E-GTLD
-    org_name: IntTestOrg
-  delegate_to: localhost
-  register: invaliddomain
-  ignore_errors: yes
-  
-- name: Disable HTTP
-  meraki_switchport:
-    auth_key: '{{ auth_key }}'
-    use_https: false
-    state: query
-    serial: Q2HP-2C6E-GTLD
-    output_level: debug
-  delegate_to: localhost
-  register: http
-  ignore_errors: yes
-
-- name: Connection assertions
-  assert:
-    that:
-      - '"Failed to connect to" in invaliddomain.msg'
-      - '"http" in http.url'
 
 - name: Query all switchports
   meraki_switchport:
@@ -194,7 +166,7 @@
 
 - assert:
     that:
-      - update_port_vvlan.data.voiceVlan == 11
+      - update_port_vvlan.data.voice_vlan == 11
       - update_port_vvlan.changed == True
 
 - name: Check access port for idempotenty
@@ -242,7 +214,7 @@
     that:
       - update_trunk.data.tags == 'server'
       - update_trunk.data.type == 'trunk'
-      - update_trunk.data.allowedVlans == 'all'
+      - update_trunk.data.allowed_vlans == 'all'
 
 - name: Configure trunk port with specific VLANs
   meraki_switchport:
@@ -269,7 +241,7 @@
     that:
       - update_trunk.data.tags == 'server'
       - update_trunk.data.type == 'trunk'
-      - update_trunk.data.allowedVlans == '8,10,15,20'
+      - update_trunk.data.allowed_vlans == '8,10,15,20'
 
 - name: Configure trunk port with specific VLANs and native VLAN
   meraki_switchport:
@@ -296,7 +268,7 @@
     that:
       - update_trunk.data.tags == 'server'
       - update_trunk.data.type == 'trunk'
-      - update_trunk.data.allowedVlans == '2,10,15,20'
+      - update_trunk.data.allowed_vlans == '2,10,15,20'
 
 - name: Check for idempotency on trunk port
   meraki_switchport:

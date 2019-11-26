@@ -38,15 +38,18 @@ options:
       - Mutually exclusive with C(folder) parameter.
       required: False
       aliases: [ datacenter ]
+      type: str
     datastore_cluster_name:
       description:
       - The name of the datastore cluster.
       required: True
+      type: str
     state:
       description:
       - If the datastore cluster should be present or absent.
       choices: [ present, absent ]
       default: present
+      type: str
     folder:
       description:
       - Destination folder, absolute path to place datastore cluster in.
@@ -63,6 +66,7 @@ options:
       - '   folder: /folder1/datacenter1/datastore/folder2'
       required: False
       version_added: '2.9'
+      type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -160,7 +164,7 @@ class VMwareDatastoreClusterManager(PyVmomi):
                     try:
                         self.folder_obj.CreateStoragePod(name=self.datastore_cluster_name)
                     except Exception as generic_exc:
-                        self.module.fail_json(msg="Failed to create datstore cluster"
+                        self.module.fail_json(msg="Failed to create datastore cluster"
                                                   " '%s' due to %s" % (self.datastore_cluster_name,
                                                                        to_native(generic_exc)))
                 results['changed'] = True

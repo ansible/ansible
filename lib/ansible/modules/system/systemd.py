@@ -22,7 +22,8 @@ description:
 options:
     name:
         description:
-            - Name of the service. When using in a chroot environment you always need to specify the full name i.e. (crond.service).
+            - Name of the service. This parameter takes the name of exactly one service to work with.
+            - When using in a chroot environment you always need to specify the full name i.e. (crond.service).
         aliases: [ service, unit ]
     state:
         description:
@@ -136,7 +137,7 @@ status:
     description: A dictionary with the key=value pairs returned from `systemctl show`
     returned: success
     type: complex
-    contains: {
+    sample: {
             "ActiveEnterTimestamp": "Sun 2016-05-15 18:28:49 EDT",
             "ActiveEnterTimestampMonotonic": "8135942",
             "ActiveExitTimestampMonotonic": "0",
@@ -273,6 +274,10 @@ def is_running_service(service_status):
     return service_status['ActiveState'] in set(['active', 'activating'])
 
 
+def is_deactivating_service(service_status):
+    return service_status['ActiveState'] in set(['deactivating'])
+
+
 def request_was_ignored(out):
     return '=' not in out and 'ignoring request' in out
 
@@ -341,9 +346,10 @@ def main():
     )
 
     unit = module.params['name']
-    for globpattern in (r"*", r"?", r"["):
-        if globpattern in unit:
-            module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
+    if unit is not None:
+        for globpattern in (r"*", r"?", r"["):
+            if globpattern in unit:
+                module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
 
     systemctl = module.get_bin_path('systemctl', True)
 
@@ -497,7 +503,7 @@ def main():
                     if not is_running_service(result['status']):
                         action = 'start'
                 elif module.params['state'] == 'stopped':
-                    if is_running_service(result['status']):
+                    if is_running_service(result['status']) or is_deactivating_service(result['status']):
                         action = 'stop'
                 else:
                     if not is_running_service(result['status']):

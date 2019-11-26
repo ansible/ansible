@@ -1,0 +1,85 @@
+---
+- debug:
+    msg: "START exos_l2_interfaces merged integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _reset_config.yaml
+  ignore_errors: yes
+
+- include_tasks: _populate_config.yaml
+
+- set_fact:
+    config:
+      - access:
+          vlan: 20
+        name: '1'
+        trunk: null
+      - access: null
+        name: '2'
+        trunk:
+          native_vlan: 10
+          trunk_allowed_vlans: 
+            - 20
+            - 30
+    invalid_config:
+      - access: null
+        name: '3'
+        trunk:
+          trunk_allowed_vlans:
+            - 50
+
+- exos_facts:
+    gather_network_resources: l2_interfaces
+
+- block:
+  - name: Merge the provided configuration with the existing running configuration
+    exos_l2_interfaces: &merged
+      config: "{{ config }}"
+      state: merged
+    register: result
+
+  - name: Assert that correct set of results were generated
+    assert:
+      that:
+        - "merged['requests']|symmetric_difference(result['requests']) == []"
+        - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.before) == []"
+
+  - exos_facts:
+      gather_network_resources: l2_interfaces
+
+  - name: Assert that after dicts were correctly generated
+    assert:
+      that:
+        - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.after) == []"
+        - "config|difference(ansible_facts.network_resources.l2_interfaces) == []"
+
+  - name: Merge the provided configuration with the existing running configuration (IDEMPOTENT)
+    exos_l2_interfaces: *merged
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+      that:
+        - "result['changed'] == false"
+
+  - exos_facts:
+      gather_network_resources: l2_interfaces
+
+  - name: Assert that the before dicts were correctly generated
+    assert:
+      that:
+        - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.before) == []"
+        - "config|difference(ansible_facts.network_resources.l2_interfaces) == []"
+
+  - name: Merge provided configuration with existing configuration
+    exos_l2_interfaces:
+      config: "{{ invalid_config }}"
+      state: merged
+    register: result
+    ignore_errors: yes
+
+  - name: Assert that the previous task failed
+    assert:
+      that:
+        - "result.changed == false"
+        - "result.failed == true"
+        - "result.msg == 'VLAN 50 does not exist'"

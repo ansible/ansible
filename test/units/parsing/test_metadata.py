@@ -214,12 +214,12 @@ def test_string_metadata(code, expected):
 
 
 def test_required_params():
-    with pytest.raises(TypeError, message='One of module_ast or module_data must be given'):
+    with pytest.raises(TypeError, match='One of module_ast or module_data must be given'):
         assert md.extract_metadata()
 
 
 def test_module_data_param_given_with_offset():
-    with pytest.raises(TypeError, message='If offsets is True then module_data must also be given'):
+    with pytest.raises(TypeError, match='If offsets is True then module_data must also be given'):
         assert md.extract_metadata(module_ast='something', offsets=True)
 
 
@@ -227,13 +227,13 @@ def test_invalid_dict_metadata():
     with pytest.raises(SyntaxError):
         assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.1",\n' + REGULAR_IMPORTS)
 
-    with pytest.raises(md.ParseError, message='Unable to find the end of dictionary'):
+    with pytest.raises(md.ParseError, match='Unable to find the end of dictionary'):
         assert md.extract_metadata(module_ast=ast.parse(LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.1"}\n' + REGULAR_IMPORTS),
                                    module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.1",\n' + REGULAR_IMPORTS,
                                    offsets=True)
 
 
 def test_multiple_statements_limitation():
-    with pytest.raises(md.ParseError, message='Multiple statements per line confuses the module metadata parser.'):
+    with pytest.raises(md.ParseError, match='Multiple statements per line confuses the module metadata parser.'):
         assert md.extract_metadata(module_data=LICENSE + FUTURE_IMPORTS + b'ANSIBLE_METADATA={"metadata_version": "1.1"}; a=b\n' + REGULAR_IMPORTS,
                                    offsets=True)

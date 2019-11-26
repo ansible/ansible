@@ -12,12 +12,11 @@ import os
 
 import pytest
 
-from units.compat.mock import MagicMock, patch
+from units.compat.mock import MagicMock
 from ansible.module_utils import basic
-from ansible.module_utils.six import string_types, integer_types
+from ansible.module_utils.six import integer_types
 from ansible.module_utils.six.moves import builtins
 
-from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
 MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
 # Data is argspec, argument, expected
@@ -103,6 +102,7 @@ def complex_argspec():
         bar3=dict(type='list', elements='path'),
         zardoz=dict(choices=['one', 'two']),
         zardoz2=dict(type='list', choices=['one', 'two', 'three']),
+        zardoz3=dict(type='str', aliases=['zodraz'], deprecated_aliases=[dict(name='zodraz', version='9.99')]),
     )
     mut_ex = (('bar', 'bam'), ('bing', 'bang', 'bong'))
     req_to = (('bam', 'baz'),)
@@ -233,6 +233,14 @@ class TestComplexArgSpecs:
         assert isinstance(am.params['foo'], str)
         assert am.params['foo'] == 'hello'
 
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello1', 'dup': 'hello2'}], indirect=['stdin'])
+    def test_complex_duplicate_warning(self, stdin, complex_argspec):
+        """Test that the complex argspec issues a warning if we specify an option both with its canonical name and its alias"""
+        am = basic.AnsibleModule(**complex_argspec)
+        assert isinstance(am.params['foo'], str)
+        assert 'Both option foo and its alias dup are set.' in am._warnings
+        assert am.params['foo'] == 'hello2'
+
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bam': 'test'}], indirect=['stdin'])
     def test_complex_type_fallback(self, mocker, stdin, complex_argspec):
         """Test that the complex argspec works if we get a required parameter via fallback"""
@@ -324,6 +332,14 @@ class TestComplexArgSpecs:
         assert isinstance(am.params['bar3'], list)
         assert am.params['bar3'][0].startswith('/')
         assert am.params['bar3'][1] == 'test/'
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zodraz': 'one'}], indirect=['stdin'])
+    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec):
+        """Test a deprecated alias"""
+        am = basic.AnsibleModule(**complex_argspec)
+
+        assert "Alias 'zodraz' is deprecated." in am._deprecations[0]['msg']
+        assert am._deprecations[0]['version'] == '9.99'
 
 
 class TestComplexOptions:

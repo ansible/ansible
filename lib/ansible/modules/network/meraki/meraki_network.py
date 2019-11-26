@@ -22,9 +22,6 @@ description:
 - Allows for creation, management, and visibility into networks within Meraki.
 
 options:
-    auth_key:
-        description:
-        - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
     state:
         description:
         - Create or modify an organization.
@@ -37,12 +34,6 @@ options:
     net_id:
         description:
         - ID number of a network.
-    org_name:
-        description:
-        - Name of organization associated to a network.
-    org_id:
-        description:
-        - ID of organization associated to a network.
     type:
         description:
         - Type of network device network manages.
@@ -154,7 +145,7 @@ data:
         returned: success
         type: str
         sample: YourNet
-      organizationId:
+      organization_id:
         description: Organization ID which owns the network.
         returned: success
         type: str
@@ -164,7 +155,7 @@ data:
         returned: success
         type: str
         sample: " production wireless "
-      timeZone:
+      time_zone:
         description: Timezone where network resides.
         returned: success
         type: str
@@ -174,7 +165,7 @@ data:
         returned: success
         type: str
         sample: switch
-      disableMyMerakiCom:
+      disable_my_meraki_com:
         description: States whether U(my.meraki.com) and other device portals should be disabled.
         returned: success
         type: bool

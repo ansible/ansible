@@ -184,6 +184,8 @@ class CallbackBase(AnsiblePlugin):
                 for x in ['before', 'after']:
                     if isinstance(diff[x], MutableMapping):
                         diff[x] = self._serialize_diff(diff[x])
+                    elif diff[x] is None:
+                        diff[x] = ''
                 if 'before_header' in diff:
                     before_header = u"before: %s" % diff['before_header']
                 else:

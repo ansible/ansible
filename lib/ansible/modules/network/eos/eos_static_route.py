@@ -94,7 +94,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import is_masklen, validate_ip_address
 from ansible.module_utils.network.common.utils import remove_default_spec, validate_prefix
 from ansible.module_utils.network.eos.eos import get_config, load_config
-from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 
 def is_address(value):

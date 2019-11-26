@@ -19,9 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from os import path
-import json
-
 from mock import MagicMock
 
 from units.compat import unittest
@@ -35,9 +32,6 @@ class TestPluginTerminalSLXOS(unittest.TestCase):
     def setUp(self):
         self._mock_connection = MagicMock()
         self._terminal = slxos.TerminalModule(self._mock_connection)
-
-    def tearDown(self):
-        pass
 
     def test_on_open_shell(self):
         """ Test on_open_shell

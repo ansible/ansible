@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_spamfilter_profile
 short_description: Configure AntiSpam profiles in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify spamfilter feature and profile category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,87 +41,123 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     spamfilter_profile:
         description:
             - Configure AntiSpam profiles.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             comment:
                 description:
                     - Comment.
+                type: str
             external:
                 description:
                     - Enable/disable external Email inspection.
+                type: str
                 choices:
                     - enable
                     - disable
-            flow-based:
+            flow_based:
                 description:
                     - Enable/disable flow-based spam filtering.
+                type: str
                 choices:
                     - enable
                     - disable
             gmail:
                 description:
                     - Gmail.
+                type: dict
                 suboptions:
                     log:
                         description:
                             - Enable/disable logging.
+                        type: str
                         choices:
                             - enable
                             - disable
             imap:
                 description:
                     - IMAP.
+                type: dict
                 suboptions:
                     action:
                         description:
                             - Action for spam email.
+                        type: str
                         choices:
                             - pass
                             - tag
                     log:
                         description:
                             - Enable/disable logging.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    tag-msg:
+                    tag_msg:
                         description:
                             - Subject text or header added to spam email.
-                    tag-type:
+                        type: str
+                    tag_type:
                         description:
                             - Tag subject or header for spam email.
+                        type: list
                         choices:
                             - subject
                             - header
@@ -132,26 +165,31 @@ options:
             mapi:
                 description:
                     - MAPI.
+                type: dict
                 suboptions:
                     action:
                         description:
                             - Action for spam email.
+                        type: str
                         choices:
                             - pass
                             - discard
                     log:
                         description:
                             - Enable/disable logging.
+                        type: str
                         choices:
                             - enable
                             - disable
-            msn-hotmail:
+            msn_hotmail:
                 description:
                     - MSN Hotmail.
+                type: dict
                 suboptions:
                     log:
                         description:
                             - Enable/disable logging.
+                        type: str
                         choices:
                             - enable
                             - disable
@@ -159,9 +197,11 @@ options:
                 description:
                     - Profile name.
                 required: true
+                type: str
             options:
                 description:
                     - Options.
+                type: list
                 choices:
                     - bannedword
                     - spambwl
@@ -177,39 +217,47 @@ options:
             pop3:
                 description:
                     - POP3.
+                type: dict
                 suboptions:
                     action:
                         description:
                             - Action for spam email.
+                        type: str
                         choices:
                             - pass
                             - tag
                     log:
                         description:
                             - Enable/disable logging.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    tag-msg:
+                    tag_msg:
                         description:
                             - Subject text or header added to spam email.
-                    tag-type:
+                        type: str
+                    tag_type:
                         description:
                             - Tag subject or header for spam email.
+                        type: list
                         choices:
                             - subject
                             - header
                             - spaminfo
-            replacemsg-group:
+            replacemsg_group:
                 description:
                     - Replacement message group. Source system.replacemsg-group.name.
+                type: str
             smtp:
                 description:
                     - SMTP.
+                type: dict
                 suboptions:
                     action:
                         description:
                             - Action for spam email.
+                        type: str
                         choices:
                             - pass
                             - tag
@@ -217,74 +265,90 @@ options:
                     hdrip:
                         description:
                             - Enable/disable SMTP email header IP checks for spamfsip, spamrbl and spambwl filters.
+                        type: str
                         choices:
                             - disable
                             - enable
-                    local-override:
+                    local_override:
                         description:
                             - Enable/disable local filter to override SMTP remote check result.
+                        type: str
                         choices:
                             - disable
                             - enable
                     log:
                         description:
                             - Enable/disable logging.
+                        type: str
                         choices:
                             - enable
                             - disable
-                    tag-msg:
+                    tag_msg:
                         description:
                             - Subject text or header added to spam email.
-                    tag-type:
+                        type: str
+                    tag_type:
                         description:
                             - Tag subject or header for spam email.
+                        type: list
                         choices:
                             - subject
                             - header
                             - spaminfo
-            spam-bwl-table:
+            spam_bwl_table:
                 description:
                     - Anti-spam black/white list table ID. Source spamfilter.bwl.id.
-            spam-bword-table:
+                type: int
+            spam_bword_table:
                 description:
                     - Anti-spam banned word table ID. Source spamfilter.bword.id.
-            spam-bword-threshold:
+                type: int
+            spam_bword_threshold:
                 description:
                     - Spam banned word threshold.
-            spam-filtering:
+                type: int
+            spam_filtering:
                 description:
                     - Enable/disable spam filtering.
+                type: str
                 choices:
                     - enable
                     - disable
-            spam-iptrust-table:
+            spam_iptrust_table:
                 description:
                     - Anti-spam IP trust table ID. Source spamfilter.iptrust.id.
-            spam-log:
+                type: int
+            spam_log:
                 description:
                     - Enable/disable spam logging for email filtering.
+                type: str
                 choices:
                     - disable
                     - enable
-            spam-log-fortiguard-response:
+            spam_log_fortiguard_response:
                 description:
                     - Enable/disable logging FortiGuard spam response.
+                type: str
                 choices:
                     - disable
                     - enable
-            spam-mheader-table:
+            spam_mheader_table:
                 description:
                     - Anti-spam MIME header table ID. Source spamfilter.mheader.id.
-            spam-rbl-table:
+                type: int
+            spam_rbl_table:
                 description:
                     - Anti-spam DNSBL table ID. Source spamfilter.dnsbl.id.
-            yahoo-mail:
+                type: int
+            yahoo_mail:
                 description:
                     - Yahoo! Mail.
+                type: dict
                 suboptions:
                     log:
                         description:
                             - Enable/disable logging.
+                        type: str
                         choices:
                             - enable
                             - disable
@@ -297,6 +361,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure AntiSpam profiles.
     fortios_spamfilter_profile:
@@ -305,48 +370,48 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       spamfilter_profile:
-        state: "present"
         comment: "Comment."
         external: "enable"
-        flow-based: "enable"
+        flow_based: "enable"
         gmail:
             log: "enable"
         imap:
             action: "pass"
             log: "enable"
-            tag-msg: "<your_own_value>"
-            tag-type: "subject"
+            tag_msg: "<your_own_value>"
+            tag_type: "subject"
         mapi:
             action: "pass"
             log: "enable"
-        msn-hotmail:
+        msn_hotmail:
             log: "enable"
         name: "default_name_18"
         options: "bannedword"
         pop3:
             action: "pass"
             log: "enable"
-            tag-msg: "<your_own_value>"
-            tag-type: "subject"
-        replacemsg-group: "<your_own_value> (source system.replacemsg-group.name)"
+            tag_msg: "<your_own_value>"
+            tag_type: "subject"
+        replacemsg_group: "<your_own_value> (source system.replacemsg-group.name)"
         smtp:
             action: "pass"
             hdrip: "disable"
-            local-override: "disable"
+            local_override: "disable"
             log: "enable"
-            tag-msg: "<your_own_value>"
-            tag-type: "subject"
-        spam-bwl-table: "33 (source spamfilter.bwl.id)"
-        spam-bword-table: "34 (source spamfilter.bword.id)"
-        spam-bword-threshold: "35"
-        spam-filtering: "enable"
-        spam-iptrust-table: "37 (source spamfilter.iptrust.id)"
-        spam-log: "disable"
-        spam-log-fortiguard-response: "disable"
-        spam-mheader-table: "40 (source spamfilter.mheader.id)"
-        spam-rbl-table: "41 (source spamfilter.dnsbl.id)"
-        yahoo-mail:
+            tag_msg: "<your_own_value>"
+            tag_type: "subject"
+        spam_bwl_table: "33 (source spamfilter.bwl.id)"
+        spam_bword_table: "34 (source spamfilter.bword.id)"
+        spam_bword_threshold: "35"
+        spam_filtering: "enable"
+        spam_iptrust_table: "37 (source spamfilter.iptrust.id)"
+        spam_log: "disable"
+        spam_log_fortiguard_response: "disable"
+        spam_mheader_table: "40 (source spamfilter.mheader.id)"
+        spam_rbl_table: "41 (source spamfilter.dnsbl.id)"
+        yahoo_mail:
             log: "enable"
 '''
 
@@ -410,14 +475,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -425,18 +492,18 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_spamfilter_profile_data(json):
-    option_list = ['comment', 'external', 'flow-based',
+    option_list = ['comment', 'external', 'flow_based',
                    'gmail', 'imap', 'mapi',
-                   'msn-hotmail', 'name', 'options',
-                   'pop3', 'replacemsg-group', 'smtp',
-                   'spam-bwl-table', 'spam-bword-table', 'spam-bword-threshold',
-                   'spam-filtering', 'spam-iptrust-table', 'spam-log',
-                   'spam-log-fortiguard-response', 'spam-mheader-table', 'spam-rbl-table',
-                   'yahoo-mail']
+                   'msn_hotmail', 'name', 'options',
+                   'pop3', 'replacemsg_group', 'smtp',
+                   'spam_bwl_table', 'spam_bword_table', 'spam_bword_threshold',
+                   'spam_filtering', 'spam_iptrust_table', 'spam_log',
+                   'spam_log_fortiguard_response', 'spam_mheader_table', 'spam_rbl_table',
+                   'yahoo_mail']
     dictionary = {}
 
     for attribute in option_list:
@@ -447,7 +514,7 @@ def filter_spamfilter_profile_data(json):
 
 
 def flatten_multilists_attributes(data):
-    multilist_attrs = [[u'options'], [u'imap', u'tag-type'], [u'pop3', u'tag-type'], [u'smtp', u'tag-type']]
+    multilist_attrs = [[u'options'], [u'imap', u'tag_type'], [u'pop3', u'tag_type'], [u'smtp', u'tag_type']]
 
     for attr in multilist_attrs:
         try:
@@ -461,50 +528,78 @@ def flatten_multilists_attributes(data):
     return data
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def spamfilter_profile(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['spamfilter_profile'] and data['spamfilter_profile']:
+        state = data['spamfilter_profile']['state']
+    else:
+        state = True
     spamfilter_profile_data = data['spamfilter_profile']
-    flattened_data = flatten_multilists_attributes(spamfilter_profile_data)
-    filtered_data = filter_spamfilter_profile_data(flattened_data)
-    if spamfilter_profile_data['state'] == "present":
+    spamfilter_profile_data = flatten_multilists_attributes(spamfilter_profile_data)
+    filtered_data = underscore_to_hyphen(filter_spamfilter_profile_data(spamfilter_profile_data))
+
+    if state == "present":
         return fos.set('spamfilter',
                        'profile',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif spamfilter_profile_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('spamfilter',
                           'profile',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_spamfilter(data, fos):
-    login(data)
 
     if data['spamfilter_profile']:
         resp = spamfilter_profile(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "spamfilter_profile": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "comment": {"required": False, "type": "str"},
                 "external": {"required": False, "type": "str",
                              "choices": ["enable", "disable"]},
-                "flow-based": {"required": False, "type": "str",
+                "flow_based": {"required": False, "type": "str",
                                "choices": ["enable", "disable"]},
                 "gmail": {"required": False, "type": "dict",
                           "options": {
@@ -517,8 +612,8 @@ def main():
                                         "choices": ["pass", "tag"]},
                              "log": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                             "tag-msg": {"required": False, "type": "str"},
-                             "tag-type": {"required": False, "type": "list",
+                             "tag_msg": {"required": False, "type": "str"},
+                             "tag_type": {"required": False, "type": "list",
                                           "choices": ["subject", "header", "spaminfo"]}
                          }},
                 "mapi": {"required": False, "type": "dict",
@@ -528,7 +623,7 @@ def main():
                              "log": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]}
                          }},
-                "msn-hotmail": {"required": False, "type": "dict",
+                "msn_hotmail": {"required": False, "type": "dict",
                                 "options": {
                                     "log": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]}
@@ -545,38 +640,38 @@ def main():
                                         "choices": ["pass", "tag"]},
                              "log": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                             "tag-msg": {"required": False, "type": "str"},
-                             "tag-type": {"required": False, "type": "list",
+                             "tag_msg": {"required": False, "type": "str"},
+                             "tag_type": {"required": False, "type": "list",
                                           "choices": ["subject", "header", "spaminfo"]}
                          }},
-                "replacemsg-group": {"required": False, "type": "str"},
+                "replacemsg_group": {"required": False, "type": "str"},
                 "smtp": {"required": False, "type": "dict",
                          "options": {
                              "action": {"required": False, "type": "str",
                                         "choices": ["pass", "tag", "discard"]},
                              "hdrip": {"required": False, "type": "str",
                                        "choices": ["disable", "enable"]},
-                             "local-override": {"required": False, "type": "str",
+                             "local_override": {"required": False, "type": "str",
                                                 "choices": ["disable", "enable"]},
                              "log": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                             "tag-msg": {"required": False, "type": "str"},
-                             "tag-type": {"required": False, "type": "list",
+                             "tag_msg": {"required": False, "type": "str"},
+                             "tag_type": {"required": False, "type": "list",
                                           "choices": ["subject", "header", "spaminfo"]}
                          }},
-                "spam-bwl-table": {"required": False, "type": "int"},
-                "spam-bword-table": {"required": False, "type": "int"},
-                "spam-bword-threshold": {"required": False, "type": "int"},
-                "spam-filtering": {"required": False, "type": "str",
+                "spam_bwl_table": {"required": False, "type": "int"},
+                "spam_bword_table": {"required": False, "type": "int"},
+                "spam_bword_threshold": {"required": False, "type": "int"},
+                "spam_filtering": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
-                "spam-iptrust-table": {"required": False, "type": "int"},
-                "spam-log": {"required": False, "type": "str",
+                "spam_iptrust_table": {"required": False, "type": "int"},
+                "spam_log": {"required": False, "type": "str",
                              "choices": ["disable", "enable"]},
-                "spam-log-fortiguard-response": {"required": False, "type": "str",
+                "spam_log_fortiguard_response": {"required": False, "type": "str",
                                                  "choices": ["disable", "enable"]},
-                "spam-mheader-table": {"required": False, "type": "int"},
-                "spam-rbl-table": {"required": False, "type": "int"},
-                "yahoo-mail": {"required": False, "type": "dict",
+                "spam_mheader_table": {"required": False, "type": "int"},
+                "spam_rbl_table": {"required": False, "type": "int"},
+                "yahoo_mail": {"required": False, "type": "dict",
                                "options": {
                                    "log": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]}
@@ -588,15 +683,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_spamfilter(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_spamfilter(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_spamfilter(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

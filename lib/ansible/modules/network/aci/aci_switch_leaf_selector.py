@@ -261,15 +261,15 @@ def main():
         ]
     )
 
-    description = module.params['description']
-    leaf_profile = module.params['leaf_profile']
-    leaf = module.params['leaf']
-    leaf_node_blk = module.params['leaf_node_blk']
-    leaf_node_blk_description = module.params['leaf_node_blk_description']
-    from_ = module.params['from']
-    to_ = module.params['to']
-    policy_group = module.params['policy_group']
-    state = module.params['state']
+    description = module.params.get('description')
+    leaf_profile = module.params.get('leaf_profile')
+    leaf = module.params.get('leaf')
+    leaf_node_blk = module.params.get('leaf_node_blk')
+    leaf_node_blk_description = module.params.get('leaf_node_blk_description')
+    from_ = module.params.get('from')
+    to_ = module.params.get('to')
+    policy_group = module.params.get('policy_group')
+    state = module.params.get('state')
 
     # Build child_configs dynamically
     child_configs = [

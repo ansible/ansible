@@ -1,0 +1,11 @@
+---
+
+test_app_name: TestApp
+
+test_site_name: 'Test Site'
+
+test_user: testuser
+test_password: testpass
+
+test_physical_path: "{{ remote_tmp_dir }}"
+test_apppool: 'testapppool'

@@ -22,11 +22,6 @@ description:
 - Allows for creation, management, and visibility into static routes within Meraki.
 
 options:
-    auth_key:
-        description:
-        - Authentication key provided by the dashboard.
-        - Required if environmental variable MERAKI_KEY is not set.
-        type: str
     state:
         description:
         - Create or modify an organization.
@@ -40,14 +35,6 @@ options:
     net_id:
         description:
         - ID number of a network.
-        type: str
-    org_name:
-        description:
-        - Name of organization associated to a network.
-        type: str
-    org_id:
-        description:
-        - ID of organization associated to a network.
         type: str
     name:
         description:
@@ -162,27 +149,27 @@ data:
     id:
       description: Unique identification string assigned to each static route.
       returned: success
-      type: string
+      type: str
       sample: d6fa4821-1234-4dfa-af6b-ae8b16c20c39
     net_id:
       description: Identification string of network.
       returned: query or update
-      type: string
+      type: str
       sample: N_12345
     name:
       description: Name of static route.
       returned: success
-      type: string
+      type: str
       sample: Data Center static route
     subnet:
       description: CIDR notation subnet for static route.
       returned: success
-      type: string
+      type: str
       sample: 192.0.1.0/24
     gatewayIp:
       description: Next hop IP address.
       returned: success
-      type: string
+      type: str
       sample: 192.1.1.1
     enabled:
       description: Enabled state of static route.
@@ -197,17 +184,17 @@ data:
         start:
           description: First address in reservation range, inclusive.
           returned: query or update
-          type: string
+          type: str
           sample: 192.0.1.2
         end:
           description: Last address in reservation range, inclusive.
           returned: query or update
-          type: string
+          type: str
           sample: 192.0.1.10
         comment:
           description: Human readable description of range.
           returned: query or update
-          type: string
+          type: str
           sample: Server range
     fixedIpAssignments:
       description: List of static MAC to IP address bindings.
@@ -222,12 +209,12 @@ data:
             ip:
               description: IP address to be bound to the endpoint.
               returned: query or update
-              type: string
+              type: str
               sample: 192.0.1.11
             name:
               description: Hostname given to the endpoint.
               returned: query or update
-              type: string
+              type: str
               sample: JimLaptop
 '''
 

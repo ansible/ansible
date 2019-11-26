@@ -1,0 +1,66 @@
+---
+- debug:
+    msg: "Start nxos_lacp merged integration tests connection={{ ansible_connection }}"
+
+- name: Enable lacp
+  nxos_feature:
+    feature: lacp
+
+- set_fact:
+    mac:
+      address: 00c1.4c00.bd15
+      role: primary
+  when: platform is search('N9K') and imagetag is not search('I[2-6]')
+
+- block:
+  - name: Merged
+    nxos_lacp: &merged
+      config:
+        system:
+          priority: 11
+          mac: "{{ mac|default(omit) }}"
+      state: merged
+    register: result
+
+  - assert:
+      that:
+        - "result.before|length == 0"
+        - "result.changed == true"
+        - "'lacp system-priority 11' in result.commands"
+        - "'lacp system-mac 00c1.4c00.bd15 role primary' in result.commands"
+        - "result.commands|length == 2"
+    when: platform is search('N9K') and imagetag is not search('I[2-6]')
+
+  - assert:
+      that:
+        - "result.before|length == 0"
+        - "result.changed == true"
+        - "'lacp system-priority 11' in result.commands"
+        - "result.commands|length == 1"
+    when: platform is not search('N9K')
+
+  - name: Gather lacp facts
+    nxos_facts:
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: lacp
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lacp == result.after"
+
+  - name: Idempotence - Merged
+    nxos_lacp: *merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    nxos_feature:
+      feature: lacp
+      state: disabled
