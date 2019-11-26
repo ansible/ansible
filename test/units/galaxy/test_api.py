@@ -214,8 +214,8 @@ def test_initialise_unknown(monkeypatch):
 
     api = GalaxyAPI(None, "test", "https://galaxy.ansible.com/api/", token=GalaxyToken(token='my_token'))
 
-    expected = "Error when finding available api versions from test (%s) (HTTP Code: 500, Message: Unknown " \
-               "error returned by Galaxy server.)" % api.api_server
+    expected = "Error when finding available api versions from test (%s) (HTTP Code: 500, Message: msg)" \
+        % api.api_server
     with pytest.raises(AnsibleError, match=re.escape(expected)):
         api.authenticate("github_token")
 
@@ -292,15 +292,13 @@ def test_publish_collection(api_version, collection_url, collection_artifact, mo
 
 @pytest.mark.parametrize('api_version, collection_url, response, expected', [
     ('v2', 'collections', {},
-     'Error when publishing collection to test (%s) (HTTP Code: 500, Message: Unknown error returned by Galaxy '
-     'server. Code: Unknown)'),
+     'Error when publishing collection to test (%s) (HTTP Code: 500, Message: msg Code: Unknown)'),
     ('v2', 'collections', {
         'message': u'Galaxy error messäge',
         'code': 'GWE002',
     }, u'Error when publishing collection to test (%s) (HTTP Code: 500, Message: Galaxy error messäge Code: GWE002)'),
     ('v3', 'artifact/collections', {},
-     'Error when publishing collection to test (%s) (HTTP Code: 500, Message: Unknown error returned by Galaxy '
-     'server. Code: Unknown)'),
+     'Error when publishing collection to test (%s) (HTTP Code: 500, Message: msg Code: Unknown)'),
     ('v3', 'artifact/collections', {
         'errors': [
             {
