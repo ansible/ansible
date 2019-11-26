@@ -1,0 +1,2 @@
+bugfixes:
+  - decouple k8s_scale from the k8s module utils so that it doesn't complain about missing arguments
