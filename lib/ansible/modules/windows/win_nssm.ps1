@@ -42,7 +42,7 @@ $executable = Get-AnsibleParam -obj $params -name "executable" -type "path" -def
 $app_rotate_bytes = Get-AnsibleParam -obj $params -name "app_rotate_bytes" -type "int" -default 104858
 $app_rotate_online = Get-AnsibleParam -obj $params -name "app_rotate_online" -type "int" -default 0 -validateset 0,1
 $app_stop_method_console = Get-AnsibleParam -obj $params -name "app_stop_method_console" -type "int"
-$App_stop_method_skip = Get-AnsibleParam -obj $params -name "App_stop_method_skip" -type "int" -validateset 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+$app_stop_method_skip = Get-AnsibleParam -obj $params -name "app_stop_method_skip" -type "int" -validateset 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
 
 # Deprecated options since 2.8. Remove in 2.12
 $startMode = Get-AnsibleParam -obj $params -name "start_mode" -type "str" -default "auto" -validateset $start_modes_map.Keys -resultobj $result
@@ -478,8 +478,15 @@ if ($state -eq 'absent') {
         ########################################################################
 
         # Added per users` requests
-        Update-NssmServiceParameter -parameter "app_stop_method_console" -value $AppStopMethodConsole @common_params
-        Update-NssmServiceParameter -parameter "app_stop_method_skip" -value $AppStopMethodSkip @common_params
+        if ($null -ne $app_stop_method_console)
+        {
+            Update-NssmServiceParameter -parameter "AppStopMethodConsole" -value $app_stop_method_console @common_params
+        }
+
+        if ($null -ne $app_stop_method_skip)
+        {
+            Update-NssmServiceParameter -parameter "AppStopMethodSkip" -value $app_stop_method_skip @common_params
+        }
     }
 }
 
