@@ -100,6 +100,10 @@ Jinja2 provides a useful 'default' filter that is often a better approach to fai
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
 
+
+Beginning in version 2.8, attempting to access an attribute of an Undefined value in Jinja will return another Undefined value, rather than throwing an error immediately. This means that you can now simply use
+a default with a value in a nested data structure (i.e :code:`{{ foo.bar.baz | default('DEFAULT') }}`) when you don't know if the intermediate values are defined.
+
 If you want to use the default value when variables evaluate to false or an empty string you have to set the second parameter to
 ``true``::
 
