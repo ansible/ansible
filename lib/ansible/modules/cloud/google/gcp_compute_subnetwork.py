@@ -99,12 +99,6 @@ options:
       }}"'
     required: true
     type: dict
-  enable_flow_logs:
-    description:
-    - Whether to enable flow logging for this subnetwork.
-    required: false
-    type: bool
-    version_added: '2.8'
   secondary_ip_ranges:
     description:
     - An array of configurations for secondary IP ranges for VM instances contained
@@ -263,11 +257,6 @@ network:
   - Only networks that are in the distributed mode can have subnetworks.
   returned: success
   type: dict
-enableFlowLogs:
-  description:
-  - Whether to enable flow logging for this subnetwork.
-  returned: success
-  type: bool
 fingerprint:
   description:
   - Fingerprint of this resource. This field is used internally during updates of
@@ -333,7 +322,6 @@ def main():
             ip_cidr_range=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             network=dict(required=True, type='dict'),
-            enable_flow_logs=dict(type='bool'),
             secondary_ip_ranges=dict(
                 type='list', elements='dict', options=dict(range_name=dict(required=True, type='str'), ip_cidr_range=dict(required=True, type='str'))
             ),
@@ -386,8 +374,8 @@ def update(module, link, kind, fetch):
 def update_fields(module, request, response):
     if response.get('ipCidrRange') != request.get('ipCidrRange'):
         ip_cidr_range_update(module, request, response)
-    if response.get('enableFlowLogs') != request.get('enableFlowLogs') or response.get('secondaryIpRanges') != request.get('secondaryIpRanges'):
-        enable_flow_logs_update(module, request, response)
+    if response.get('secondaryIpRanges') != request.get('secondaryIpRanges'):
+        fingerprint_update(module, request, response)
     if response.get('privateIpGoogleAccess') != request.get('privateIpGoogleAccess'):
         private_ip_google_access_update(module, request, response)
 
@@ -400,12 +388,11 @@ def ip_cidr_range_update(module, request, response):
     )
 
 
-def enable_flow_logs_update(module, request, response):
+def fingerprint_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.patch(
         ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/regions/{region}/subnetworks/{name}"]).format(**module.params),
         {
-            u'enableFlowLogs': module.params.get('enable_flow_logs'),
             u'fingerprint': response.get('fingerprint'),
             u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(module.params.get('secondary_ip_ranges', []), module).to_request(),
         },
@@ -434,7 +421,6 @@ def resource_to_request(module):
         u'ipCidrRange': module.params.get('ip_cidr_range'),
         u'name': module.params.get('name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
-        u'enableFlowLogs': module.params.get('enable_flow_logs'),
         u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(module.params.get('secondary_ip_ranges', []), module).to_request(),
         u'privateIpGoogleAccess': module.params.get('private_ip_google_access'),
         u'region': module.params.get('region'),
@@ -510,7 +496,6 @@ def response_to_hash(module, response):
         u'ipCidrRange': response.get(u'ipCidrRange'),
         u'name': response.get(u'name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
-        u'enableFlowLogs': response.get(u'enableFlowLogs'),
         u'fingerprint': response.get(u'fingerprint'),
         u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(response.get(u'secondaryIpRanges', []), module).from_response(),
         u'privateIpGoogleAccess': response.get(u'privateIpGoogleAccess'),

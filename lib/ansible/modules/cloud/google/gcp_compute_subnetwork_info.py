@@ -164,11 +164,6 @@ resources:
       - Only networks that are in the distributed mode can have subnetworks.
       returned: success
       type: dict
-    enableFlowLogs:
-      description:
-      - Whether to enable flow logging for this subnetwork.
-      returned: success
-      type: bool
     fingerprint:
       description:
       - Fingerprint of this resource. This field is used internally during updates
