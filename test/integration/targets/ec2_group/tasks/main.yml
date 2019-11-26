@@ -82,7 +82,6 @@
     - include: ./data_validation.yml
     - include: ./multi_nested_target.yml
 
-
     # ============================================================
     - name: test state=absent (CHECK MODE)
       ec2_group:
