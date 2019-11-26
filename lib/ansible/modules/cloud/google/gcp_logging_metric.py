@@ -223,7 +223,7 @@ options:
           bounds:
             description:
             - The values must be monotonically increasing.
-            required: false
+            required: true
             type: list
   project:
     description:
@@ -520,7 +520,7 @@ def main():
                     exponential_buckets=dict(
                         type='dict', options=dict(num_finite_buckets=dict(type='int'), growth_factor=dict(type='int'), scale=dict(type='str'))
                     ),
-                    explicit_buckets=dict(type='dict', options=dict(bounds=dict(type='list', elements='str'))),
+                    explicit_buckets=dict(type='dict', options=dict(bounds=dict(required=True, type='list', elements='str'))),
                 ),
             ),
         )
