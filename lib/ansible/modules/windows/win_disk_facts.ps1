@@ -245,7 +245,7 @@ foreach ($disk in $disks) {
 }
 
 # Sort by disk number property
-$result.ansible_facts.ansible_disks = @() + ($result.ansible_facts.ansible_disks | Sort-Object -Property Number)
+$result.ansible_facts.ansible_disks = @() + ($result.ansible_facts.ansible_disks | Sort-Object -Property {$_.Number})
 
 # Return result
 Exit-Json -obj $result
