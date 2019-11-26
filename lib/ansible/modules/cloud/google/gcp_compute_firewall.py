@@ -505,7 +505,6 @@ def main():
             target_tags=dict(type='list', elements='str'),
         ),
         mutually_exclusive=[
-            ['allowed', 'denied'],
             ['destination_ranges', 'source_ranges', 'source_tags'],
             ['destination_ranges', 'source_ranges'],
             ['source_service_accounts', 'source_tags', 'target_tags'],

@@ -888,8 +888,7 @@ def main():
                     port_specification=dict(type='str'),
                 ),
             ),
-        ),
-        mutually_exclusive=[['http2_health_check', 'http_health_check', 'https_health_check', 'ssl_health_check', 'tcp_health_check']],
+        )
     )
 
     if not module.params['scopes']:
