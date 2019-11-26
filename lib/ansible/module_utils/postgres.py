@@ -276,9 +276,9 @@ class PgMembership(object):
                  "JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid) "
                  "WHERE m.member = r.oid) "
                  "FROM pg_catalog.pg_roles r "
-                 "WHERE r.rolname = '%s'" % dst_role)
+                 "WHERE r.rolname = %(dst_role)s")
 
-        res = exec_sql(self, query, add_to_executed=False)
+        res = exec_sql(self, query, query_params={'dst_role': dst_role}, add_to_executed=False)
         membership = []
         if res:
             membership = res[0][0]
