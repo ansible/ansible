@@ -1,5 +1,5 @@
 ---
-- include_tasks: reset_config.yml
+- include_tasks: reset_config1.yml
 
 - set_fact:
     config:

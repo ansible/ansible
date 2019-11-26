@@ -1,9 +1,10 @@
 ---
-- include_tasks: reset_config.yml
+- include_tasks: reset_config1.yml
 
 - set_fact:
     config:
       - name: "Port-Channel5"
+      - name: "Port-Channel10"
 
 - eos_facts:
     gather_network_resources: lag_interfaces
