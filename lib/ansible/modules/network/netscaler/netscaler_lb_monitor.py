@@ -116,11 +116,11 @@ options:
 
     httprequest:
         description:
-            - "HTTP request to send to the server (for example, C(\\"HEAD /file.html\\"))."
+          - 'HTTP request to send to the server (for example, C("HEAD /file.html")).'
 
     rtsprequest:
         description:
-            - "RTSP request to send to the server (for example, C(\\"OPTIONS *\\"))."
+          - 'RTSP request to send to the server (for example, C("OPTIONS *")).'
 
     customheaders:
         description:
