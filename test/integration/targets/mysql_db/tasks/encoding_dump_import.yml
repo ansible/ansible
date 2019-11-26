@@ -59,7 +59,7 @@
     login_unix_socket: '{{ mysql_socket }}'
 
 - name: check encoding of table
-  shell: mysql {{ db_latin1_name }} "-e SHOW FULL COLUMNS FROM testlatin1;"
+  shell: mysql {{ db_latin1_name }} -e "SHOW FULL COLUMNS FROM testlatin1;"
   register: output
   failed_when: '"latin1_swedish_ci" not in output.stdout'
 
