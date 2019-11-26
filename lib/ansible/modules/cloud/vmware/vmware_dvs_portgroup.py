@@ -565,7 +565,7 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=[
             ['vlan_trunk', 'vlan_pvlan'],
-        ]   
+        ]
     )
 
     vmware_dvs_portgroup = VMwareDvsPortgroup(module)
