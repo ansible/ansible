@@ -22,13 +22,14 @@
         blueprint_id: amazon_linux
         bundle_id: nano_2_0
         key_pair_name: "{{ keypair_name }}"
+        wait: yes
       register: result
 
     - assert:
         that:
           - result.changed == True
           - "'instance' in result and result.instance.name == instance_name"
-          - "result.instance.state.name in ['pending', 'running']"
+          - "result.instance.state.name == 'running'"
 
     - name: Make sure create is idempotent
       lightsail:
@@ -57,12 +58,13 @@
       lightsail:
         name: "{{ instance_name }}"
         state: stopped
+        wait: yes
       register: result
 
     - assert:
         that:
           - result.changed == True
-          - "result.instance.state.name in ['stopping', 'stopped']"
+          - "result.instance.state.name == 'stopped'"
 
     - name: Stop the stopped instance
       lightsail:
@@ -83,7 +85,7 @@
     - assert:
         that:
           - result.changed == True
-          - "result.instance.state.name in ['running', 'pending']"
+          - "result.instance.state.name == 'running'"
 
     - name: Restart the instance
       lightsail:
