@@ -115,7 +115,7 @@ class Lldp_interfaces(ConfigBase):
         elif state == 'deleted':
             commands = self._state_deleted(want, have)
         elif state == 'gathered':
-            commands=self._state_gathered(have)
+            commands = self._state_gathered(have)
         else:
             for w in want:
                 if state == 'merged':
@@ -125,27 +125,27 @@ class Lldp_interfaces(ConfigBase):
                         flatten_dict(w), have))
         return commands
 
-    def _state_gathered(self,have):
+    def _state_gathered(self, have):
         """ The command generator when state is gathered
 
         :rtype: A list
         :returns: the commands necessary to reproduce the current configuration
         """
-        commands=[]
-        want={}
-        commands.append(self.set_commands(want,have))
-        return commands    
+        commands = []
+        want = {}
+        commands.append(self.set_commands(want, have))
+        return commands
 
-    def _state_rendered(self,want,have):
+    def _state_rendered(self, want, have):
         """ The command generator when state is replaced
 
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
-        """        
-        commands=[]
-        have={}
-        commands.append(self.set_commands(want,have))
+        """
+        commands = []
+        have = {}
+        commands.append(self.set_commands(want, have))
         return commands
 
     def _state_replaced(self, want, have):
