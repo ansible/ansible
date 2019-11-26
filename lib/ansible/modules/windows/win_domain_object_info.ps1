@@ -91,6 +91,6 @@ if ($null -ne $username -and $null -ne $password)
     $args_hashtable.Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $username, $password
 }
 
-$result.objects = Get-ADObject @args_hashtable | ForEach-Object {$_ | ConvertTo-Json -Depth $jsonDepth -Compress)}
+$result.objects = Get-ADObject @args_hashtable | ForEach-Object {$_ | ConvertTo-Json -Depth $json_depth -Compress)}
 
 $module.ExitJson()
