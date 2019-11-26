@@ -17,7 +17,7 @@
     login_unix_socket: '{{ mysql_socket }}'
 
 - name: create a table in Latin1 database
-  command: mysql {{ db_latin1_name }} '-e create table testlatin1(id int, name varchar(100));'
+  command: mysql {{ db_latin1_name }} -e 'create table testlatin1(id int, name varchar(100));'
 
 - name: inserting data into Latin1 database
   command: mysql {{ db_latin1_name }} "-e insert into testlatin1 value(47,'Amédée Bôlüt');"
