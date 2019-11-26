@@ -202,7 +202,7 @@ class AzureRMManagedDiskInfo(AzureRMModuleBase):
         except CloudError:
             pass
 
-        if item and self.has_tags(item.tags, eval(self.tags)):
+        if item and self.has_tags(item.tags, self.tags):
             result = [managed_disk_to_dict(item)]
 
         return result
@@ -216,7 +216,7 @@ class AzureRMManagedDiskInfo(AzureRMModuleBase):
 
         results = []
         for item in response:
-            if self.has_tags(item.tags, eval(self.tags)):
+            if self.has_tags(item.tags, self.tags):
                 results.append(managed_disk_to_dict(item))
         return results
 
