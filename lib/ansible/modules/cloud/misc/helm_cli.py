@@ -310,7 +310,8 @@ def get_release(state, release_name, release_namespace):
     if state is not None:
         if is_helm_2:
             for release in state['Releases']:
-              if release['Name'] == release_name and release['Namespace'] == release_namespace:
+              release =  {k.lower(): v for k, v in release.items()}
+              if release['name'] == release_name and release['namespace'] == release_namespace:
                 return release
         else:
           for release in state:
@@ -341,7 +342,7 @@ def get_release_status(command, release_name, release_namespace):
     if release is None:  # not install
         return None
 
-    release['Values'] = get_values(command, release_name, release_namespace)
+    release['values'] = get_values(command, release_name, release_namespace)
 
     return release
 
@@ -559,8 +560,8 @@ def main():
                     "and recreate it "
             )
 
-        elif force or release_values != release_status['Values'] \
-                or (chart_info['name'] + '-' + chart_info['version']) != release_status["Chart"]:
+        elif force or release_values != release_status['values'] \
+                or (chart_info['name'] + '-' + chart_info['version']) != release_status["chart"]:
             helm_cmd = deploy(helm_cmd, release_name, release_namespace, release_values, chart_ref, wait, wait_timeout,
                               disable_hook, force)
             changed = True
