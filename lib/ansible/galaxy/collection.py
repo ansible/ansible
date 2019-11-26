@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import fnmatch
 import json
 import operator
@@ -827,9 +828,13 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
     if os.path.isfile(to_bytes(collection, errors='surrogate_or_strict')):
         display.vvvv("Collection requirement '%s' is a tar artifact" % to_text(collection))
         b_tar_path = to_bytes(collection, errors='surrogate_or_strict')
-    elif urlparse(collection).scheme:
+    elif urlparse(collection).scheme.lower() in ['http', 'https']:
         display.vvvv("Collection requirement '%s' is a URL to a tar artifact" % collection)
-        b_tar_path = _download_file(collection, b_temp_path, None, validate_certs)
+        try:
+            b_tar_path = _download_file(collection, b_temp_path, None, validate_certs)
+        except urllib_error.URLError as err:
+            raise AnsibleError("Failed to download collection tar from '%s': %s"
+                               % (to_native(collection), to_native(err)))
 
     if b_tar_path:
         req = CollectionRequirement.from_tar(b_tar_path, force, parent=parent)
