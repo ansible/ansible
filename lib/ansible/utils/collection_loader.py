@@ -474,7 +474,7 @@ class AnsibleCollectionRef:
     @staticmethod
     def is_valid_collection_name(collection_name):
         """
-        Validates if is string is a well-formed collection name (does not look up the collection itself)
+        Validates if the given string is a well-formed collection name (does not look up the collection itself)
         :param collection_name: candidate collection name to validate (a valid name is of the form 'ns.collname')
         :return: True if the collection name passed is well-formed, False otherwise
         """

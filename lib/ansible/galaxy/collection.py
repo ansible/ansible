@@ -454,7 +454,10 @@ def validate_collection_name(name):
     if AnsibleCollectionRef.is_valid_collection_name(collection):
         return name
 
-    raise AnsibleError("Invalid collection name '%s', name must be in the format <namespace>.<collection>." % name)
+    raise AnsibleError("Invalid collection name '%s', "
+                       "name must be in the format <namespace>.<collection>. "
+                       "Please make sure namespace and collection name contains "
+                       "characters from [a-zA-Z0-9_] only." % name)
 
 
 @contextmanager
