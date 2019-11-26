@@ -14,15 +14,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: postgresql_slot
-short_description: Add or remove slots from a PostgreSQL database
+short_description: Add or remove replication slots from a PostgreSQL database
 description:
-- Add or remove physical or logical slots from a PostgreSQL database.
+- Add or remove physical or logical replication slots from a PostgreSQL database.
 version_added: '2.8'
 
 options:
   name:
     description:
-    - Name of the slot to add or remove.
+    - Name of the replication slot to add or remove.
     type: str
     required: yes
     aliases:
@@ -43,7 +43,7 @@ options:
     choices: [ absent, present ]
   immediately_reserve:
     description:
-    - Optional parameter the when C(yes) specifies that the LSN for this replication slot be reserved
+    - Optional parameter that when C(yes) specifies that the LSN for this replication slot be reserved
       immediately, otherwise the default, C(no), specifies that the LSN is reserved on the first connection
       from a streaming replication client.
     - Is available from PostgreSQL version 9.6.
@@ -113,6 +113,7 @@ EXAMPLES = r'''
     slot_type: logical
     state: present
     output_plugin: custom_decoder_one
+    db: "acme"
 
 - name: Remove logical_one slot if exists from the cluster running on another host and non-standard port
   postgresql_slot:
