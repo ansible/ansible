@@ -50,7 +50,9 @@ class ActionModule(ActionBase):
         self.source_dir = self._task.args.get('dir', None)
         self.source_file = self._task.args.get('file', None)
         if not self.source_dir and not self.source_file:
-            self.source_file = self._task.args.get('_raw_params').rstrip('\n')
+            self.source_file = self._task.args.get('_raw_params')
+            if self.source_file:
+                self.source_file = self.source_file.rstrip('\n')
 
         self.depth = self._task.args.get('depth', None)
         self.files_matching = self._task.args.get('files_matching', None)

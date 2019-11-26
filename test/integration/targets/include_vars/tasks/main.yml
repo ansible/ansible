@@ -138,3 +138,17 @@
   assert:
     that:
       - "service_name ==  'my_custom_service'"
+
+- name: Check NoneType for raw params and file
+  include_vars:
+    file: "{{ lookup('first_found', possible_files, errors='ignore') }}"
+  vars:
+    possible_files:
+    - "does_not_exist.yml"
+  ignore_errors: True
+  register: include_with_non_existent_file
+
+- name: Verify that file and raw_params provide correct error message to user
+  assert:
+    that:
+      - "'Could not find file' in include_with_non_existent_file.message"

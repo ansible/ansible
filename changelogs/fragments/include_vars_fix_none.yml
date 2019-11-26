@@ -1,0 +1,2 @@
+bugfixes:
+- Check NoneType for raw_params before proceeding in include_vars (https://github.com/ansible/ansible/issues/64939).
