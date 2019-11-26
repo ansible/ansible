@@ -46,6 +46,8 @@ options:
         be locked by your Slack admin and you must request access.  It is there
         that the incoming webhooks can be added.  The key is on the end of the
         URL given to you in that section.
+      - Beginning with 2.10, you can also use user or bot tokens, (U(https://api.slack.com/docs/token-types)),
+        this should be detected automatically and sent to the chat.postMessage API.
     required: true
   msg:
     description:
@@ -170,6 +172,7 @@ from ansible.module_utils.urls import fetch_url
 
 OLD_SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
 SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
+SLACK_POST_MESSAGE = 'https://slack.com/api/chat.postMessage'
 
 # Escaping quotes and apostrophes to avoid ending string prematurely in ansible call.
 # We do not escape other characters used as Slack metacharacters (e.g. &, <, >).
@@ -246,16 +249,25 @@ def do_notify_slack(module, domain, token, payload):
     if token.count('/') >= 2:
         # New style token
         slack_incoming_webhook = SLACK_INCOMING_WEBHOOK % (token)
+    elif token.startswith('xoxp') or token.startswith('xoxb'):
+        slack_incoming_webhook = SLACK_POST_MESSAGE
     else:
         if not domain:
             module.fail_json(msg="Slack has updated its webhook API.  You need to specify a token of the form "
                                  "XXXX/YYYY/ZZZZ in your playbook")
         slack_incoming_webhook = OLD_SLACK_INCOMING_WEBHOOK % (domain, token)
 
-    headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-    }
+    if token.startswith('xoxp') or token.startswith('xoxb'):
+        headers = {
+            'Authorization': "Bearer " + token,
+            'Content-type': 'application/json',
+            'Accept': 'application/json',
+        }
+    else:
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        }
     response, info = fetch_url(module=module, url=slack_incoming_webhook, headers=headers, method='POST', data=payload)
 
     if info['status'] != 200:
