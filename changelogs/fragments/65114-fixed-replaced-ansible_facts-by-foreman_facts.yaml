@@ -1,0 +1,2 @@
+bugfixes:
+- foreman.py - replaced ansible_facts by foreman_facts. Inventory modules was trying to populate foreman's facts in ansible_facts var.
