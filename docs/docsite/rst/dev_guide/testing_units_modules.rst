@@ -390,6 +390,7 @@ mock for :meth:`Ansible.get_bin_path`::
     from ansible.module_utils import basic
     from ansible.module_utils._text import to_bytes
     from ansible.modules.namespace import my_module
+    self.module = my_module
 
 
     def set_module_args(args):
@@ -459,7 +460,7 @@ mock for :meth:`Ansible.get_bin_path`::
                 mock_run_command.return_value = rc, stdout, stderr  # successful execution
 
                 with self.assertRaises(AnsibleExitJson) as result:
-                    my_module.main()
+                    self.module.main()
                 self.assertFalse(result.exception.args[0]['changed']) # ensure result is changed
 
             mock_run_command.assert_called_once_with('/usr/bin/my_command --value 10 --name test')
