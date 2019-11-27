@@ -121,7 +121,7 @@ options:
                         type: str
                     server:
                         description:
-                            - name_str or ip_str Server CN domain name or IP.
+                            - {<name_str|ip_str>} Server CN domain name or IP.
                         type: str
                     source_ip:
                         description:
@@ -136,7 +136,7 @@ options:
                             - disable
             acct_all_servers:
                 description:
-                    - Enable/disable sending of accounting messages to all configured servers.
+                    - Enable/disable sending of accounting messages to all configured servers .
                 type: str
                 choices:
                     - enable
@@ -227,7 +227,7 @@ options:
                 type: int
             rsso_endpoint_attribute:
                 description:
-                    - RADIUS attributes used to extract the user end point identifier from the RADIUS Start record.
+                    - RADIUS attributes used to extract the user end point identifer from the RADIUS Start record.
                 type: str
                 choices:
                     - User-Name
@@ -337,7 +337,7 @@ options:
                 type: str
             secondary_server:
                 description:
-                    - name_str or ip_str secondary RADIUS CN domain name or IP.
+                    - {<name_str|ip_str>} secondary RADIUS CN domain name or IP.
                 type: str
             secret:
                 description:
@@ -395,7 +395,7 @@ options:
                 type: str
             tertiary_server:
                 description:
-                    - name_str or ip_str tertiary RADIUS CN domain name or IP.
+                    - {<name_str|ip_str>} tertiary RADIUS CN domain name or IP.
                 type: str
             timeout:
                 description:
@@ -635,7 +635,8 @@ def fortios_user(data, fos):
         resp = user_radius(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

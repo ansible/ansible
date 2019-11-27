@@ -97,6 +97,13 @@ options:
                 description:
                     - Self test period.
                 type: int
+            status:
+                description:
+                    - Enable/disable FIPS-CC mode.
+                type: str
+                choices:
+                    - enable
+                    - disable
 '''
 
 EXAMPLES = '''
@@ -119,6 +126,7 @@ EXAMPLES = '''
         entropy_token: "enable"
         key_generation_self_test: "enable"
         self_test_period: "5"
+        status: "enable"
 '''
 
 RETURN = '''
@@ -202,7 +210,8 @@ def login(data, fos):
 
 
 def filter_system_fips_cc_data(json):
-    option_list = ['entropy_token', 'key_generation_self_test', 'self_test_period']
+    option_list = ['entropy_token', 'key_generation_self_test', 'self_test_period',
+                   'status']
     dictionary = {}
 
     for attribute in option_list:
@@ -247,7 +256,8 @@ def fortios_system(data, fos):
         resp = system_fips_cc(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -266,7 +276,9 @@ def main():
                                   "choices": ["enable", "disable", "dynamic"]},
                 "key_generation_self_test": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
-                "self_test_period": {"required": False, "type": "int"}
+                "self_test_period": {"required": False, "type": "int"},
+                "status": {"required": False, "type": "str",
+                           "choices": ["enable", "disable"]}
 
             }
         }

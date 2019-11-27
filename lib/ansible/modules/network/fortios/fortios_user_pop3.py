@@ -105,11 +105,11 @@ options:
                     - pop3s
             server:
                 description:
-                    - <name_str|ip_str> server domain name or IP.
+                    - {<name_str|ip_str>} server domain name or IP.
                 type: str
             ssl_min_proto_version:
                 description:
-                    - Minimum supported protocol version for SSL/TLS connections.
+                    - Minimum supported protocol version for SSL/TLS connections .
                 type: str
                 choices:
                     - default
@@ -279,7 +279,8 @@ def fortios_user(data, fos):
         resp = user_pop3(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

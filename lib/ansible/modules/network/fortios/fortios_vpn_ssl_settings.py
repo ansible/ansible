@@ -79,6 +79,15 @@ options:
         default: null
         type: dict
         suboptions:
+            algorithm:
+                description:
+                    - Force the SSL-VPN security level. High allows only high. Medium allows medium and high. Low allows any.
+                type: str
+                choices:
+                    - high
+                    - medium
+                    - default
+                    - low
             auth_timeout:
                 description:
                     - SSL-VPN authentication timeout (1 - 259200 sec (3 days), 0 for no timeout).
@@ -511,7 +520,8 @@ EXAMPLES = '''
       vdom:  "{{ vdom }}"
       https: "False"
       vpn_ssl_settings:
-        auth_timeout: "3"
+        algorithm: "high"
+        auth_timeout: "4"
         authentication_rule:
          -
             auth: "any"
@@ -519,66 +529,66 @@ EXAMPLES = '''
             client_cert: "enable"
             groups:
              -
-                name: "default_name_9 (source user.group.name)"
-            id:  "10"
+                name: "default_name_10 (source user.group.name)"
+            id:  "11"
             portal: "<your_own_value> (source vpn.ssl.web.portal.name)"
             realm: "<your_own_value> (source vpn.ssl.web.realm.url-path)"
             source_address:
              -
-                name: "default_name_14 (source firewall.address.name firewall.addrgrp.name)"
+                name: "default_name_15 (source firewall.address.name firewall.addrgrp.name)"
             source_address_negate: "enable"
             source_address6:
              -
-                name: "default_name_17 (source firewall.address6.name firewall.addrgrp6.name)"
+                name: "default_name_18 (source firewall.address6.name firewall.addrgrp6.name)"
             source_address6_negate: "enable"
             source_interface:
              -
-                name: "default_name_20 (source system.interface.name system.zone.name)"
+                name: "default_name_21 (source system.interface.name system.zone.name)"
             users:
              -
-                name: "default_name_22 (source user.local.name)"
+                name: "default_name_23 (source user.local.name)"
         auto_tunnel_static_route: "enable"
         banned_cipher: "RSA"
         check_referer: "enable"
         default_portal: "<your_own_value> (source vpn.ssl.web.portal.name)"
-        deflate_compression_level: "27"
-        deflate_min_data_size: "28"
+        deflate_compression_level: "28"
+        deflate_min_data_size: "29"
         dns_server1: "<your_own_value>"
         dns_server2: "<your_own_value>"
         dns_suffix: "<your_own_value>"
-        dtls_hello_timeout: "32"
+        dtls_hello_timeout: "33"
         dtls_tunnel: "enable"
         force_two_factor_auth: "enable"
         header_x_forwarded_for: "pass"
         http_compression: "enable"
         http_only_cookie: "enable"
-        http_request_body_timeout: "38"
-        http_request_header_timeout: "39"
+        http_request_body_timeout: "39"
+        http_request_header_timeout: "40"
         https_redirect: "enable"
-        idle_timeout: "41"
+        idle_timeout: "42"
         ipv6_dns_server1: "<your_own_value>"
         ipv6_dns_server2: "<your_own_value>"
         ipv6_wins_server1: "<your_own_value>"
         ipv6_wins_server2: "<your_own_value>"
-        login_attempt_limit: "46"
-        login_block_time: "47"
-        login_timeout: "48"
-        port: "49"
+        login_attempt_limit: "47"
+        login_block_time: "48"
+        login_timeout: "49"
+        port: "50"
         port_precedence: "enable"
         reqclientcert: "enable"
         route_source_interface: "enable"
         servercert: "<your_own_value> (source vpn.certificate.local.name)"
         source_address:
          -
-            name: "default_name_55 (source firewall.address.name firewall.addrgrp.name)"
+            name: "default_name_56 (source firewall.address.name firewall.addrgrp.name)"
         source_address_negate: "enable"
         source_address6:
          -
-            name: "default_name_58 (source firewall.address6.name firewall.addrgrp6.name)"
+            name: "default_name_59 (source firewall.address6.name firewall.addrgrp6.name)"
         source_address6_negate: "enable"
         source_interface:
          -
-            name: "default_name_61 (source system.interface.name system.zone.name)"
+            name: "default_name_62 (source system.interface.name system.zone.name)"
         ssl_client_renegotiation: "disable"
         ssl_insert_empty_fragment: "enable"
         tlsv1_0: "enable"
@@ -586,10 +596,10 @@ EXAMPLES = '''
         tlsv1_2: "enable"
         tunnel_ip_pools:
          -
-            name: "default_name_68 (source firewall.address.name firewall.addrgrp.name)"
+            name: "default_name_69 (source firewall.address.name firewall.addrgrp.name)"
         tunnel_ipv6_pools:
          -
-            name: "default_name_70 (source firewall.address6.name firewall.addrgrp6.name)"
+            name: "default_name_71 (source firewall.address6.name firewall.addrgrp6.name)"
         unsafe_legacy_renegotiation: "enable"
         url_obscuration: "enable"
         wins_server1: "<your_own_value>"
@@ -678,23 +688,23 @@ def login(data, fos):
 
 
 def filter_vpn_ssl_settings_data(json):
-    option_list = ['auth_timeout', 'authentication_rule', 'auto_tunnel_static_route',
-                   'banned_cipher', 'check_referer', 'default_portal',
-                   'deflate_compression_level', 'deflate_min_data_size', 'dns_server1',
-                   'dns_server2', 'dns_suffix', 'dtls_hello_timeout',
-                   'dtls_tunnel', 'force_two_factor_auth', 'header_x_forwarded_for',
-                   'http_compression', 'http_only_cookie', 'http_request_body_timeout',
-                   'http_request_header_timeout', 'https_redirect', 'idle_timeout',
-                   'ipv6_dns_server1', 'ipv6_dns_server2', 'ipv6_wins_server1',
-                   'ipv6_wins_server2', 'login_attempt_limit', 'login_block_time',
-                   'login_timeout', 'port', 'port_precedence',
-                   'reqclientcert', 'route_source_interface', 'servercert',
-                   'source_address', 'source_address_negate', 'source_address6',
-                   'source_address6_negate', 'source_interface', 'ssl_client_renegotiation',
-                   'ssl_insert_empty_fragment', 'tlsv1_0', 'tlsv1_1',
-                   'tlsv1_2', 'tunnel_ip_pools', 'tunnel_ipv6_pools',
-                   'unsafe_legacy_renegotiation', 'url_obscuration', 'wins_server1',
-                   'wins_server2', 'x_content_type_options']
+    option_list = ['algorithm', 'auth_timeout', 'authentication_rule',
+                   'auto_tunnel_static_route', 'banned_cipher', 'check_referer',
+                   'default_portal', 'deflate_compression_level', 'deflate_min_data_size',
+                   'dns_server1', 'dns_server2', 'dns_suffix',
+                   'dtls_hello_timeout', 'dtls_tunnel', 'force_two_factor_auth',
+                   'header_x_forwarded_for', 'http_compression', 'http_only_cookie',
+                   'http_request_body_timeout', 'http_request_header_timeout', 'https_redirect',
+                   'idle_timeout', 'ipv6_dns_server1', 'ipv6_dns_server2',
+                   'ipv6_wins_server1', 'ipv6_wins_server2', 'login_attempt_limit',
+                   'login_block_time', 'login_timeout', 'port',
+                   'port_precedence', 'reqclientcert', 'route_source_interface',
+                   'servercert', 'source_address', 'source_address_negate',
+                   'source_address6', 'source_address6_negate', 'source_interface',
+                   'ssl_client_renegotiation', 'ssl_insert_empty_fragment', 'tlsv1_0',
+                   'tlsv1_1', 'tlsv1_2', 'tunnel_ip_pools',
+                   'tunnel_ipv6_pools', 'unsafe_legacy_renegotiation', 'url_obscuration',
+                   'wins_server1', 'wins_server2', 'x_content_type_options']
     dictionary = {}
 
     for attribute in option_list:
@@ -739,7 +749,8 @@ def fortios_vpn_ssl(data, fos):
         resp = vpn_ssl_settings(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -754,6 +765,9 @@ def main():
         "vpn_ssl_settings": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "algorithm": {"required": False, "type": "str",
+                              "choices": ["high", "medium", "default",
+                                          "low"]},
                 "auth_timeout": {"required": False, "type": "int"},
                 "authentication_rule": {"required": False, "type": "list",
                                         "options": {

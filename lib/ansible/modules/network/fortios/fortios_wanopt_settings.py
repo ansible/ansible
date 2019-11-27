@@ -95,6 +95,8 @@ options:
                     - Relative strength of encryption algorithms accepted during tunnel negotiation.
                 type: str
                 choices:
+                    - high
+                    - medium
                     - low
 '''
 
@@ -117,7 +119,7 @@ EXAMPLES = '''
       wanopt_settings:
         auto_detect_algorithm: "simple"
         host_id: "myhostname"
-        tunnel_ssl_algorithm: "low"
+        tunnel_ssl_algorithm: "high"
 '''
 
 RETURN = '''
@@ -246,7 +248,8 @@ def fortios_wanopt(data, fos):
         resp = wanopt_settings(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -265,7 +268,7 @@ def main():
                                           "choices": ["simple", "diff-req-resp"]},
                 "host_id": {"required": False, "type": "str"},
                 "tunnel_ssl_algorithm": {"required": False, "type": "str",
-                                         "choices": ["low"]}
+                                         "choices": ["high", "medium", "low"]}
 
             }
         }

@@ -360,9 +360,73 @@ options:
                             - Cipher suite name.
                         type: str
                         choices:
+                            - TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256
+                            - TLS-ECDHE-ECDSA-WITH-CHACHA20-POLY1305-SHA256
+                            - TLS-DHE-RSA-WITH-CHACHA20-POLY1305-SHA256
+                            - TLS-DHE-RSA-WITH-AES-128-CBC-SHA
+                            - TLS-DHE-RSA-WITH-AES-256-CBC-SHA
+                            - TLS-DHE-RSA-WITH-AES-128-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
+                            - TLS-DHE-RSA-WITH-AES-256-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-AES-256-GCM-SHA384
+                            - TLS-DHE-DSS-WITH-AES-128-CBC-SHA
+                            - TLS-DHE-DSS-WITH-AES-256-CBC-SHA
+                            - TLS-DHE-DSS-WITH-AES-128-CBC-SHA256
+                            - TLS-DHE-DSS-WITH-AES-128-GCM-SHA256
+                            - TLS-DHE-DSS-WITH-AES-256-CBC-SHA256
+                            - TLS-DHE-DSS-WITH-AES-256-GCM-SHA384
+                            - TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA
+                            - TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA256
+                            - TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256
+                            - TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA
+                            - TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384
+                            - TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384
+                            - TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA
+                            - TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA256
+                            - TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256
+                            - TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384
+                            - TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384
+                            - TLS-RSA-WITH-AES-128-CBC-SHA
+                            - TLS-RSA-WITH-AES-256-CBC-SHA
+                            - TLS-RSA-WITH-AES-128-CBC-SHA256
+                            - TLS-RSA-WITH-AES-128-GCM-SHA256
+                            - TLS-RSA-WITH-AES-256-CBC-SHA256
+                            - TLS-RSA-WITH-AES-256-GCM-SHA384
+                            - TLS-RSA-WITH-CAMELLIA-128-CBC-SHA
+                            - TLS-RSA-WITH-CAMELLIA-256-CBC-SHA
+                            - TLS-RSA-WITH-CAMELLIA-128-CBC-SHA256
+                            - TLS-RSA-WITH-CAMELLIA-256-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-3DES-EDE-CBC-SHA
+                            - TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA
+                            - TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA
+                            - TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA
+                            - TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA
+                            - TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA256
+                            - TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA256
+                            - TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-SEED-CBC-SHA
+                            - TLS-DHE-DSS-WITH-SEED-CBC-SHA
+                            - TLS-DHE-RSA-WITH-ARIA-128-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-ARIA-256-CBC-SHA384
+                            - TLS-DHE-DSS-WITH-ARIA-128-CBC-SHA256
+                            - TLS-DHE-DSS-WITH-ARIA-256-CBC-SHA384
+                            - TLS-RSA-WITH-SEED-CBC-SHA
+                            - TLS-RSA-WITH-ARIA-128-CBC-SHA256
+                            - TLS-RSA-WITH-ARIA-256-CBC-SHA384
+                            - TLS-ECDHE-RSA-WITH-ARIA-128-CBC-SHA256
+                            - TLS-ECDHE-RSA-WITH-ARIA-256-CBC-SHA384
+                            - TLS-ECDHE-ECDSA-WITH-ARIA-128-CBC-SHA256
+                            - TLS-ECDHE-ECDSA-WITH-ARIA-256-CBC-SHA384
+                            - TLS-ECDHE-RSA-WITH-RC4-128-SHA
+                            - TLS-ECDHE-RSA-WITH-3DES-EDE-CBC-SHA
+                            - TLS-DHE-DSS-WITH-3DES-EDE-CBC-SHA
                             - TLS-RSA-WITH-3DES-EDE-CBC-SHA
+                            - TLS-RSA-WITH-RC4-128-MD5
+                            - TLS-RSA-WITH-RC4-128-SHA
                             - TLS-DHE-RSA-WITH-DES-CBC-SHA
                             - TLS-DHE-DSS-WITH-DES-CBC-SHA
+                            - TLS-RSA-WITH-DES-CBC-SHA
                     priority:
                         description:
                             - SSL/TLS cipher suites priority.
@@ -545,9 +609,73 @@ options:
                             - Cipher suite name.
                         type: str
                         choices:
+                            - TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256
+                            - TLS-ECDHE-ECDSA-WITH-CHACHA20-POLY1305-SHA256
+                            - TLS-DHE-RSA-WITH-CHACHA20-POLY1305-SHA256
+                            - TLS-DHE-RSA-WITH-AES-128-CBC-SHA
+                            - TLS-DHE-RSA-WITH-AES-256-CBC-SHA
+                            - TLS-DHE-RSA-WITH-AES-128-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-AES-128-GCM-SHA256
+                            - TLS-DHE-RSA-WITH-AES-256-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-AES-256-GCM-SHA384
+                            - TLS-DHE-DSS-WITH-AES-128-CBC-SHA
+                            - TLS-DHE-DSS-WITH-AES-256-CBC-SHA
+                            - TLS-DHE-DSS-WITH-AES-128-CBC-SHA256
+                            - TLS-DHE-DSS-WITH-AES-128-GCM-SHA256
+                            - TLS-DHE-DSS-WITH-AES-256-CBC-SHA256
+                            - TLS-DHE-DSS-WITH-AES-256-GCM-SHA384
+                            - TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA
+                            - TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA256
+                            - TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256
+                            - TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA
+                            - TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384
+                            - TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384
+                            - TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA
+                            - TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA256
+                            - TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256
+                            - TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384
+                            - TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384
+                            - TLS-RSA-WITH-AES-128-CBC-SHA
+                            - TLS-RSA-WITH-AES-256-CBC-SHA
+                            - TLS-RSA-WITH-AES-128-CBC-SHA256
+                            - TLS-RSA-WITH-AES-128-GCM-SHA256
+                            - TLS-RSA-WITH-AES-256-CBC-SHA256
+                            - TLS-RSA-WITH-AES-256-GCM-SHA384
+                            - TLS-RSA-WITH-CAMELLIA-128-CBC-SHA
+                            - TLS-RSA-WITH-CAMELLIA-256-CBC-SHA
+                            - TLS-RSA-WITH-CAMELLIA-128-CBC-SHA256
+                            - TLS-RSA-WITH-CAMELLIA-256-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-3DES-EDE-CBC-SHA
+                            - TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA
+                            - TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA
+                            - TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA
+                            - TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA
+                            - TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA256
+                            - TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA256
+                            - TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-SEED-CBC-SHA
+                            - TLS-DHE-DSS-WITH-SEED-CBC-SHA
+                            - TLS-DHE-RSA-WITH-ARIA-128-CBC-SHA256
+                            - TLS-DHE-RSA-WITH-ARIA-256-CBC-SHA384
+                            - TLS-DHE-DSS-WITH-ARIA-128-CBC-SHA256
+                            - TLS-DHE-DSS-WITH-ARIA-256-CBC-SHA384
+                            - TLS-RSA-WITH-SEED-CBC-SHA
+                            - TLS-RSA-WITH-ARIA-128-CBC-SHA256
+                            - TLS-RSA-WITH-ARIA-256-CBC-SHA384
+                            - TLS-ECDHE-RSA-WITH-ARIA-128-CBC-SHA256
+                            - TLS-ECDHE-RSA-WITH-ARIA-256-CBC-SHA384
+                            - TLS-ECDHE-ECDSA-WITH-ARIA-128-CBC-SHA256
+                            - TLS-ECDHE-ECDSA-WITH-ARIA-256-CBC-SHA384
+                            - TLS-ECDHE-RSA-WITH-RC4-128-SHA
+                            - TLS-ECDHE-RSA-WITH-3DES-EDE-CBC-SHA
+                            - TLS-DHE-DSS-WITH-3DES-EDE-CBC-SHA
                             - TLS-RSA-WITH-3DES-EDE-CBC-SHA
+                            - TLS-RSA-WITH-RC4-128-MD5
+                            - TLS-RSA-WITH-RC4-128-SHA
                             - TLS-DHE-RSA-WITH-DES-CBC-SHA
                             - TLS-DHE-DSS-WITH-DES-CBC-SHA
+                            - TLS-RSA-WITH-DES-CBC-SHA
                     priority:
                         description:
                             - SSL/TLS cipher suites priority.
@@ -693,7 +821,7 @@ EXAMPLES = '''
         ssl_certificate: "<your_own_value> (source vpn.certificate.local.name)"
         ssl_cipher_suites:
          -
-            cipher: "TLS-RSA-WITH-3DES-EDE-CBC-SHA"
+            cipher: "TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256"
             priority: "49"
             versions: "ssl-3.0"
         ssl_client_fallback: "disable"
@@ -721,7 +849,7 @@ EXAMPLES = '''
         ssl_server_algorithm: "high"
         ssl_server_cipher_suites:
          -
-            cipher: "TLS-RSA-WITH-3DES-EDE-CBC-SHA"
+            cipher: "TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256"
             priority: "76"
             versions: "ssl-3.0"
         ssl_server_max_version: "ssl-3.0"
@@ -895,7 +1023,8 @@ def fortios_firewall(data, fos):
         resp = firewall_vip6(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -987,8 +1116,31 @@ def main():
                 "ssl_cipher_suites": {"required": False, "type": "list",
                                       "options": {
                                           "cipher": {"required": False, "type": "str",
-                                                     "choices": ["TLS-RSA-WITH-3DES-EDE-CBC-SHA", "TLS-DHE-RSA-WITH-DES-CBC-SHA",
-                                                                 "TLS-DHE-DSS-WITH-DES-CBC-SHA"]},
+                                                     "choices": ["TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256", "TLS-ECDHE-ECDSA-WITH-CHACHA20-POLY1305-SHA256",
+                                                                 "TLS-DHE-RSA-WITH-CHACHA20-POLY1305-SHA256",
+                                                                 "TLS-DHE-RSA-WITH-AES-128-CBC-SHA", "TLS-DHE-RSA-WITH-AES-256-CBC-SHA", "TLS-DHE-RSA-WITH-AES-128-CBC-SHA256",
+                                                                 "TLS-DHE-RSA-WITH-AES-128-GCM-SHA256", "TLS-DHE-RSA-WITH-AES-256-CBC-SHA256", "TLS-DHE-RSA-WITH-AES-256-GCM-SHA384",
+                                                                 "TLS-DHE-DSS-WITH-AES-128-CBC-SHA", "TLS-DHE-DSS-WITH-AES-256-CBC-SHA", "TLS-DHE-DSS-WITH-AES-128-CBC-SHA256",
+                                                                 "TLS-DHE-DSS-WITH-AES-128-GCM-SHA256", "TLS-DHE-DSS-WITH-AES-256-CBC-SHA256", "TLS-DHE-DSS-WITH-AES-256-GCM-SHA384",
+                                                                 "TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA", "TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA256", "TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256",
+                                                                 "TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA", "TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384", "TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384",
+                                                                 "TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA", "TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA256", "TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256",
+                                                                 "TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384", "TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384", "TLS-RSA-WITH-AES-128-CBC-SHA",
+                                                                 "TLS-RSA-WITH-AES-256-CBC-SHA", "TLS-RSA-WITH-AES-128-CBC-SHA256", "TLS-RSA-WITH-AES-128-GCM-SHA256",
+                                                                 "TLS-RSA-WITH-AES-256-CBC-SHA256", "TLS-RSA-WITH-AES-256-GCM-SHA384", "TLS-RSA-WITH-CAMELLIA-128-CBC-SHA",
+                                                                 "TLS-RSA-WITH-CAMELLIA-256-CBC-SHA", "TLS-RSA-WITH-CAMELLIA-128-CBC-SHA256", "TLS-RSA-WITH-CAMELLIA-256-CBC-SHA256",
+                                                                 "TLS-DHE-RSA-WITH-3DES-EDE-CBC-SHA", "TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA", "TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA",
+                                                                 "TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA", "TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA", "TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA256",
+                                                                 "TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA256", "TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA256",
+                                                                 "TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA256",
+                                                                 "TLS-DHE-RSA-WITH-SEED-CBC-SHA", "TLS-DHE-DSS-WITH-SEED-CBC-SHA", "TLS-DHE-RSA-WITH-ARIA-128-CBC-SHA256",
+                                                                 "TLS-DHE-RSA-WITH-ARIA-256-CBC-SHA384", "TLS-DHE-DSS-WITH-ARIA-128-CBC-SHA256", "TLS-DHE-DSS-WITH-ARIA-256-CBC-SHA384",
+                                                                 "TLS-RSA-WITH-SEED-CBC-SHA", "TLS-RSA-WITH-ARIA-128-CBC-SHA256", "TLS-RSA-WITH-ARIA-256-CBC-SHA384",
+                                                                 "TLS-ECDHE-RSA-WITH-ARIA-128-CBC-SHA256", "TLS-ECDHE-RSA-WITH-ARIA-256-CBC-SHA384", "TLS-ECDHE-ECDSA-WITH-ARIA-128-CBC-SHA256",
+                                                                 "TLS-ECDHE-ECDSA-WITH-ARIA-256-CBC-SHA384", "TLS-ECDHE-RSA-WITH-RC4-128-SHA", "TLS-ECDHE-RSA-WITH-3DES-EDE-CBC-SHA",
+                                                                 "TLS-DHE-DSS-WITH-3DES-EDE-CBC-SHA", "TLS-RSA-WITH-3DES-EDE-CBC-SHA", "TLS-RSA-WITH-RC4-128-MD5",
+                                                                 "TLS-RSA-WITH-RC4-128-SHA", "TLS-DHE-RSA-WITH-DES-CBC-SHA", "TLS-DHE-DSS-WITH-DES-CBC-SHA",
+                                                                 "TLS-RSA-WITH-DES-CBC-SHA"]},
                                           "priority": {"required": True, "type": "int"},
                                           "versions": {"required": False, "type": "str",
                                                        "choices": ["ssl-3.0", "tls-1.0", "tls-1.1",
@@ -1041,8 +1193,31 @@ def main():
                 "ssl_server_cipher_suites": {"required": False, "type": "list",
                                              "options": {
                                                  "cipher": {"required": False, "type": "str",
-                                                            "choices": ["TLS-RSA-WITH-3DES-EDE-CBC-SHA", "TLS-DHE-RSA-WITH-DES-CBC-SHA",
-                                                                        "TLS-DHE-DSS-WITH-DES-CBC-SHA"]},
+                                                            "choices": ["TLS-ECDHE-RSA-WITH-CHACHA20-POLY1305-SHA256", "TLS-ECDHE-ECDSA-WITH-CHACHA20-POLY1305-SHA256",
+                                                                        "TLS-DHE-RSA-WITH-CHACHA20-POLY1305-SHA256",
+                                                                        "TLS-DHE-RSA-WITH-AES-128-CBC-SHA", "TLS-DHE-RSA-WITH-AES-256-CBC-SHA", "TLS-DHE-RSA-WITH-AES-128-CBC-SHA256",
+                                                                        "TLS-DHE-RSA-WITH-AES-128-GCM-SHA256", "TLS-DHE-RSA-WITH-AES-256-CBC-SHA256", "TLS-DHE-RSA-WITH-AES-256-GCM-SHA384",
+                                                                        "TLS-DHE-DSS-WITH-AES-128-CBC-SHA", "TLS-DHE-DSS-WITH-AES-256-CBC-SHA", "TLS-DHE-DSS-WITH-AES-128-CBC-SHA256",
+                                                                        "TLS-DHE-DSS-WITH-AES-128-GCM-SHA256", "TLS-DHE-DSS-WITH-AES-256-CBC-SHA256", "TLS-DHE-DSS-WITH-AES-256-GCM-SHA384",
+                                                                        "TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA", "TLS-ECDHE-RSA-WITH-AES-128-CBC-SHA256", "TLS-ECDHE-RSA-WITH-AES-128-GCM-SHA256",
+                                                                        "TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA", "TLS-ECDHE-RSA-WITH-AES-256-CBC-SHA384", "TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384",
+                                                                        "TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA", "TLS-ECDHE-ECDSA-WITH-AES-128-CBC-SHA256", "TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256",
+                                                                        "TLS-ECDHE-ECDSA-WITH-AES-256-CBC-SHA384", "TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384", "TLS-RSA-WITH-AES-128-CBC-SHA",
+                                                                        "TLS-RSA-WITH-AES-256-CBC-SHA", "TLS-RSA-WITH-AES-128-CBC-SHA256", "TLS-RSA-WITH-AES-128-GCM-SHA256",
+                                                                        "TLS-RSA-WITH-AES-256-CBC-SHA256", "TLS-RSA-WITH-AES-256-GCM-SHA384", "TLS-RSA-WITH-CAMELLIA-128-CBC-SHA",
+                                                                        "TLS-RSA-WITH-CAMELLIA-256-CBC-SHA", "TLS-RSA-WITH-CAMELLIA-128-CBC-SHA256", "TLS-RSA-WITH-CAMELLIA-256-CBC-SHA256",
+                                                                        "TLS-DHE-RSA-WITH-3DES-EDE-CBC-SHA", "TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA", "TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA",
+                                                                        "TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA", "TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA", "TLS-DHE-RSA-WITH-CAMELLIA-128-CBC-SHA256",
+                                                                        "TLS-DHE-DSS-WITH-CAMELLIA-128-CBC-SHA256", "TLS-DHE-RSA-WITH-CAMELLIA-256-CBC-SHA256",
+                                                                        "TLS-DHE-DSS-WITH-CAMELLIA-256-CBC-SHA256",
+                                                                        "TLS-DHE-RSA-WITH-SEED-CBC-SHA", "TLS-DHE-DSS-WITH-SEED-CBC-SHA", "TLS-DHE-RSA-WITH-ARIA-128-CBC-SHA256",
+                                                                        "TLS-DHE-RSA-WITH-ARIA-256-CBC-SHA384", "TLS-DHE-DSS-WITH-ARIA-128-CBC-SHA256", "TLS-DHE-DSS-WITH-ARIA-256-CBC-SHA384",
+                                                                        "TLS-RSA-WITH-SEED-CBC-SHA", "TLS-RSA-WITH-ARIA-128-CBC-SHA256", "TLS-RSA-WITH-ARIA-256-CBC-SHA384",
+                                                                        "TLS-ECDHE-RSA-WITH-ARIA-128-CBC-SHA256", "TLS-ECDHE-RSA-WITH-ARIA-256-CBC-SHA384", "TLS-ECDHE-ECDSA-WITH-ARIA-128-CBC-SHA256",
+                                                                        "TLS-ECDHE-ECDSA-WITH-ARIA-256-CBC-SHA384", "TLS-ECDHE-RSA-WITH-RC4-128-SHA", "TLS-ECDHE-RSA-WITH-3DES-EDE-CBC-SHA",
+                                                                        "TLS-DHE-DSS-WITH-3DES-EDE-CBC-SHA", "TLS-RSA-WITH-3DES-EDE-CBC-SHA", "TLS-RSA-WITH-RC4-128-MD5",
+                                                                        "TLS-RSA-WITH-RC4-128-SHA", "TLS-DHE-RSA-WITH-DES-CBC-SHA", "TLS-DHE-DSS-WITH-DES-CBC-SHA",
+                                                                        "TLS-RSA-WITH-DES-CBC-SHA"]},
                                                  "priority": {"required": True, "type": "int"},
                                                  "versions": {"required": False, "type": "str",
                                                               "choices": ["ssl-3.0", "tls-1.0", "tls-1.1",

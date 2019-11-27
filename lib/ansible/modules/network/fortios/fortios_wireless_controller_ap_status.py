@@ -101,7 +101,7 @@ options:
                 type: str
             status:
                 description:
-                    - "Access Point's (AP's) status: rogue, accepted, or suppressed."
+                    - "Access Point's (AP's) status: rogue, accepted, or supressed."
                 type: str
                 choices:
                     - rogue
@@ -268,7 +268,8 @@ def fortios_wireless_controller(data, fos):
         resp = wireless_controller_ap_status(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

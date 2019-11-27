@@ -101,11 +101,11 @@ options:
                     - disable
             default_metric:
                 description:
-                    - Metric that the FortiGate unit advertises to adjacent routers.
+                    - Default metric.
                 type: int
             distance:
                 description:
-                    - Administrative distance
+                    - distance
                 type: list
                 suboptions:
                     access_list6:
@@ -127,7 +127,7 @@ options:
                         type: str
             distribute_list:
                 description:
-                    - Use this to filter incoming or outgoing updates using an access list or a prefix list.
+                    - Distribute list.
                 type: list
                 suboptions:
                     direction:
@@ -152,14 +152,14 @@ options:
                         type: str
                     status:
                         description:
-                            - Use this to activate or deactivate
+                            - status
                         type: str
                         choices:
                             - enable
                             - disable
             garbage_timer:
                 description:
-                    - Time in seconds that must elapse after the timeout interval for a route expires,.
+                    - Garbage timer.
                 type: int
             interface:
                 description:
@@ -168,7 +168,7 @@ options:
                 suboptions:
                     flags:
                         description:
-                            - Configuration flags of the interface.
+                            - Flags.
                         type: int
                     name:
                         description:
@@ -177,7 +177,7 @@ options:
                         type: str
                     split_horizon:
                         description:
-                            - Configure RIP to use either regular or poisoned split horizon on this interface.
+                            - Enable/disable split horizon.
                         type: str
                         choices:
                             - poisoned
@@ -195,7 +195,7 @@ options:
                 type: int
             neighbor:
                 description:
-                    - List of neighbors.
+                    - neighbor
                 type: list
                 suboptions:
                     id:
@@ -213,7 +213,7 @@ options:
                         type: str
             network:
                 description:
-                    - list of networks connected.
+                    - Network.
                 type: list
                 suboptions:
                     id:
@@ -227,7 +227,7 @@ options:
                         type: str
             offset_list:
                 description:
-                    - Adds the specified offset to the metric (hop count) of a route.
+                    - Offset list.
                 type: list
                 suboptions:
                     access_list6:
@@ -252,11 +252,11 @@ options:
                         type: str
                     offset:
                         description:
-                            - Offset range
+                            - offset
                         type: int
                     status:
                         description:
-                            - Indicates if the offset is active or not
+                            - status
                         type: str
                         choices:
                             - enable
@@ -291,18 +291,18 @@ options:
                         type: str
                     status:
                         description:
-                            - Indicates if the redistribute is active or not
+                            - status
                         type: str
                         choices:
                             - enable
                             - disable
             timeout_timer:
                 description:
-                    - Time interval in seconds after which a route is declared unreachable.
+                    - Timeout timer.
                 type: int
             update_timer:
                 description:
-                    - The time interval in seconds between RIP updates.
+                    - Update timer.
                 type: int
 '''
 
@@ -510,7 +510,8 @@ def fortios_router(data, fos):
         resp = router_ripng(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

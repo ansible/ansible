@@ -251,6 +251,8 @@ options:
                     - "Relative strength of encryption algorithms accepted in HTTPS deep scan: high, medium, or low."
                 type: str
                 choices:
+                    - high
+                    - medium
                     - low
             status:
                 description:
@@ -336,7 +338,7 @@ EXAMPLES = '''
         sec_default_action: "accept"
         socks: "enable"
         socks_incoming_port: "<your_own_value>"
-        ssl_algorithm: "low"
+        ssl_algorithm: "high"
         status: "enable"
         strict_guest: "enable"
         trace_auth_no_rsp: "enable"
@@ -477,7 +479,8 @@ def fortios_web_proxy(data, fos):
         resp = web_proxy_explicit(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -543,7 +546,7 @@ def main():
                           "choices": ["enable", "disable"]},
                 "socks_incoming_port": {"required": False, "type": "str"},
                 "ssl_algorithm": {"required": False, "type": "str",
-                                  "choices": ["low"]},
+                                  "choices": ["high", "medium", "low"]},
                 "status": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]},
                 "strict_guest": {"required": False, "type": "str",

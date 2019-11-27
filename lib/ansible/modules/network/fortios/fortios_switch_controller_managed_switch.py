@@ -101,7 +101,7 @@ options:
                 choices:
                     - present
                     - absent
-            802_1X_settings:
+            settings_802_1X:
                 description:
                     - Configuration method to edit FortiSwitch 802.1X global settings.
                 type: dict
@@ -845,7 +845,7 @@ EXAMPLES = '''
       https: "False"
       state: "present"
       switch_controller_managed_switch:
-        802_1X_settings:
+        settings_802_1X:
             link_down_auth: "set-unauth"
             local_override: "enable"
             max_reauth_attempt: "6"
@@ -1070,7 +1070,7 @@ def login(data, fos):
 
 
 def filter_switch_controller_managed_switch_data(json):
-    option_list = ['802_1X_settings', 'custom_command', 'delayed_restart_trigger',
+    option_list = ['settings_802_1X', 'custom_command', 'delayed_restart_trigger',
                    'description', 'directly_connected', 'dynamic_capability',
                    'dynamically_discovered', 'fsw_wan1_admin', 'fsw_wan1_peer',
                    'fsw_wan2_admin', 'fsw_wan2_peer', 'igmp_snooping',
@@ -1102,6 +1102,29 @@ def underscore_to_hyphen(data):
     return data
 
 
+def valid_attr_to_invalid_attr(data):
+    specillist = {"802_1X_settings": "settings_802_1X"}
+
+    for k, v in specillist.items():
+        if v == data:
+            return k
+
+    return data
+
+
+def valid_attr_to_invalid_attrs(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = valid_attr_to_invalid_attrs(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[valid_attr_to_invalid_attr(k)] = valid_attr_to_invalid_attrs(v)
+        data = new_data
+
+    return data
+
+
 def switch_controller_managed_switch(data, fos):
     vdom = data['vdom']
     if 'state' in data and data['state']:
@@ -1112,11 +1135,12 @@ def switch_controller_managed_switch(data, fos):
         state = True
     switch_controller_managed_switch_data = data['switch_controller_managed_switch']
     filtered_data = underscore_to_hyphen(filter_switch_controller_managed_switch_data(switch_controller_managed_switch_data))
+    converted_data = valid_attr_to_invalid_attrs(filtered_data)
 
     if state == "present":
         return fos.set('switch-controller',
                        'managed-switch',
-                       data=filtered_data,
+                       data=converted_data,
                        vdom=vdom)
 
     elif state == "absent":
@@ -1137,7 +1161,8 @@ def fortios_switch_controller(data, fos):
         resp = switch_controller_managed_switch(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -1156,7 +1181,7 @@ def main():
             "options": {
                 "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "802_1X_settings": {"required": False, "type": "dict",
+                "settings_802_1X": {"required": False, "type": "dict",
                                     "options": {
                                         "link_down_auth": {"required": False, "type": "str",
                                                            "choices": ["set-unauth", "no-action"]},

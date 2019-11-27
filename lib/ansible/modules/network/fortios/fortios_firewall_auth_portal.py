@@ -255,7 +255,8 @@ def fortios_firewall(data, fos):
         resp = firewall_auth_portal(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

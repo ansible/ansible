@@ -349,7 +349,8 @@ def fortios_log_syslogd4(data, fos):
         resp = log_syslogd4_setting(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

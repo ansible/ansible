@@ -262,6 +262,57 @@ options:
                     - des-sha256
                     - des-sha384
                     - des-sha512
+                    - 3des-null
+                    - 3des-md5
+                    - 3des-sha1
+                    - 3des-sha256
+                    - 3des-sha384
+                    - 3des-sha512
+                    - aes128-null
+                    - aes128-md5
+                    - aes128-sha1
+                    - aes128-sha256
+                    - aes128-sha384
+                    - aes128-sha512
+                    - aes128gcm
+                    - aes192-null
+                    - aes192-md5
+                    - aes192-sha1
+                    - aes192-sha256
+                    - aes192-sha384
+                    - aes192-sha512
+                    - aes256-null
+                    - aes256-md5
+                    - aes256-sha1
+                    - aes256-sha256
+                    - aes256-sha384
+                    - aes256-sha512
+                    - aes256gcm
+                    - chacha20poly1305
+                    - aria128-null
+                    - aria128-md5
+                    - aria128-sha1
+                    - aria128-sha256
+                    - aria128-sha384
+                    - aria128-sha512
+                    - aria192-null
+                    - aria192-md5
+                    - aria192-sha1
+                    - aria192-sha256
+                    - aria192-sha384
+                    - aria192-sha512
+                    - aria256-null
+                    - aria256-md5
+                    - aria256-sha1
+                    - aria256-sha256
+                    - aria256-sha384
+                    - aria256-sha512
+                    - seed-null
+                    - seed-md5
+                    - seed-sha1
+                    - seed-sha256
+                    - seed-sha384
+                    - seed-sha512
             protocol:
                 description:
                     - Quick mode protocol selector (1 - 255 or 0 for all).
@@ -563,7 +614,8 @@ def fortios_vpn_ipsec(data, fos):
         resp = vpn_ipsec_phase2(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -626,7 +678,24 @@ def main():
                              "choices": ["null-md5", "null-sha1", "null-sha256",
                                          "null-sha384", "null-sha512", "des-null",
                                          "des-md5", "des-sha1", "des-sha256",
-                                         "des-sha384", "des-sha512"]},
+                                         "des-sha384", "des-sha512", "3des-null",
+                                         "3des-md5", "3des-sha1", "3des-sha256",
+                                         "3des-sha384", "3des-sha512", "aes128-null",
+                                         "aes128-md5", "aes128-sha1", "aes128-sha256",
+                                         "aes128-sha384", "aes128-sha512", "aes128gcm",
+                                         "aes192-null", "aes192-md5", "aes192-sha1",
+                                         "aes192-sha256", "aes192-sha384", "aes192-sha512",
+                                         "aes256-null", "aes256-md5", "aes256-sha1",
+                                         "aes256-sha256", "aes256-sha384", "aes256-sha512",
+                                         "aes256gcm", "chacha20poly1305", "aria128-null",
+                                         "aria128-md5", "aria128-sha1", "aria128-sha256",
+                                         "aria128-sha384", "aria128-sha512", "aria192-null",
+                                         "aria192-md5", "aria192-sha1", "aria192-sha256",
+                                         "aria192-sha384", "aria192-sha512", "aria256-null",
+                                         "aria256-md5", "aria256-sha1", "aria256-sha256",
+                                         "aria256-sha384", "aria256-sha512", "seed-null",
+                                         "seed-md5", "seed-sha1", "seed-sha256",
+                                         "seed-sha384", "seed-sha512"]},
                 "protocol": {"required": False, "type": "int"},
                 "replay": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]},

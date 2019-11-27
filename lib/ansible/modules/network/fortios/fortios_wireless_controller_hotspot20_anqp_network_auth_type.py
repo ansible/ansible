@@ -238,7 +238,7 @@ def wireless_controller_hotspot20_anqp_network_auth_type(data, fos):
     state = data['state']
     wireless_controller_hotspot20_anqp_network_auth_type_data = data['wireless_controller_hotspot20_anqp_network_auth_type']
     filtered_data = \
-        underscore_to_hyphen(filter_wireless_controller_hotspot20_anqp_network_auth_type_data(wireless_controller_hotspot20_anqp_network_auth_type_data))
+    underscore_to_hyphen(filter_wireless_controller_hotspot20_anqp_network_auth_type_data(wireless_controller_hotspot20_anqp_network_auth_type_data))
 
     if state == "present":
         return fos.set('wireless-controller.hotspot20',
@@ -264,7 +264,8 @@ def fortios_wireless_controller_hotspot20(data, fos):
         resp = wireless_controller_hotspot20_anqp_network_auth_type(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

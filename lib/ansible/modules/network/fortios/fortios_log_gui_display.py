@@ -250,7 +250,8 @@ def fortios_log(data, fos):
         resp = log_gui_display(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

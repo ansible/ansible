@@ -50,7 +50,8 @@ def test_system_fips_cc_creation(mocker):
         'system_fips_cc': {
             'entropy_token': 'enable',
             'key_generation_self_test': 'enable',
-            'self_test_period': '5'
+            'self_test_period': '5',
+            'status': 'enable'
         },
         'vdom': 'root'}
 
@@ -59,7 +60,8 @@ def test_system_fips_cc_creation(mocker):
     expected_data = {
         'entropy-token': 'enable',
         'key-generation-self-test': 'enable',
-        'self-test-period': '5'
+        'self-test-period': '5',
+        'status': 'enable'
     }
 
     set_method_mock.assert_called_with('system', 'fips-cc', data=expected_data, vdom='root')
@@ -82,7 +84,8 @@ def test_system_fips_cc_creation_fails(mocker):
         'system_fips_cc': {
             'entropy_token': 'enable',
             'key_generation_self_test': 'enable',
-            'self_test_period': '5'
+            'self_test_period': '5',
+            'status': 'enable'
         },
         'vdom': 'root'}
 
@@ -91,7 +94,8 @@ def test_system_fips_cc_creation_fails(mocker):
     expected_data = {
         'entropy-token': 'enable',
         'key-generation-self-test': 'enable',
-        'self-test-period': '5'
+        'self-test-period': '5',
+        'status': 'enable'
     }
 
     set_method_mock.assert_called_with('system', 'fips-cc', data=expected_data, vdom='root')
@@ -114,7 +118,8 @@ def test_system_fips_cc_idempotent(mocker):
         'system_fips_cc': {
             'entropy_token': 'enable',
             'key_generation_self_test': 'enable',
-            'self_test_period': '5'
+            'self_test_period': '5',
+            'status': 'enable'
         },
         'vdom': 'root'}
 
@@ -123,7 +128,8 @@ def test_system_fips_cc_idempotent(mocker):
     expected_data = {
         'entropy-token': 'enable',
         'key-generation-self-test': 'enable',
-        'self-test-period': '5'
+        'self-test-period': '5',
+        'status': 'enable'
     }
 
     set_method_mock.assert_called_with('system', 'fips-cc', data=expected_data, vdom='root')
@@ -147,7 +153,8 @@ def test_system_fips_cc_filter_foreign_attributes(mocker):
             'random_attribute_not_valid': 'tag',
             'entropy_token': 'enable',
             'key_generation_self_test': 'enable',
-            'self_test_period': '5'
+            'self_test_period': '5',
+            'status': 'enable'
         },
         'vdom': 'root'}
 
@@ -156,7 +163,8 @@ def test_system_fips_cc_filter_foreign_attributes(mocker):
     expected_data = {
         'entropy-token': 'enable',
         'key-generation-self-test': 'enable',
-        'self-test-period': '5'
+        'self-test-period': '5',
+        'status': 'enable'
     }
 
     set_method_mock.assert_called_with('system', 'fips-cc', data=expected_data, vdom='root')

@@ -120,8 +120,8 @@ options:
                 suboptions:
                     custom_service:
                         description:
-                            - Only sessions using these custom services are synchronized. Use source and destination port ranges to define these custom
-                              services.
+                            - Only sessions using these custom services are synchronized. Use source and destination port ranges to define these custome
+                               services.
                         type: list
                         suboptions:
                             dst_port_range:
@@ -370,7 +370,8 @@ def fortios_system(data, fos):
         resp = system_cluster_sync(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

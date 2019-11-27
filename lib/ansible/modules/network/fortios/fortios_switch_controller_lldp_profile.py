@@ -101,13 +101,13 @@ options:
                 choices:
                     - present
                     - absent
-            802.1_tlvs:
+            tlvs_802dot1:
                 description:
                     - Transmitted IEEE 802.1 TLVs.
                 type: str
                 choices:
                     - port-vlan-id
-            802.3_tlvs:
+            tlvs_802dot3:
                 description:
                     - Transmitted IEEE 802.3 TLVs.
                 type: str
@@ -216,8 +216,8 @@ EXAMPLES = '''
       https: "False"
       state: "present"
       switch_controller_lldp_profile:
-        802.1_tlvs: "port-vlan-id"
-        802.3_tlvs: "max-frame-size"
+        tlvs_802dot1: "port-vlan-id"
+        tlvs_802dot3: "max-frame-size"
         auto_isl: "disable"
         auto_isl_hello_timer: "6"
         auto_isl_port_group: "7"
@@ -320,7 +320,7 @@ def login(data, fos):
 
 
 def filter_switch_controller_lldp_profile_data(json):
-    option_list = ['802.1_tlvs', '802.3_tlvs', 'auto_isl',
+    option_list = ['tlvs_802dot1', 'tlvs_802dot3', 'auto_isl',
                    'auto_isl_hello_timer', 'auto_isl_port_group', 'auto_isl_receive_timeout',
                    'custom_tlvs', 'med_network_policy', 'med_tlvs',
                    'name']
@@ -346,6 +346,29 @@ def underscore_to_hyphen(data):
     return data
 
 
+def valid_attr_to_invalid_attr(data):
+    specillist = {"802.1_tlvs": "tlvs_802dot1", "802.3_tlvs": "tlvs_802dot3"}
+
+    for k, v in specillist.items():
+        if v == data:
+            return k
+
+    return data
+
+
+def valid_attr_to_invalid_attrs(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = valid_attr_to_invalid_attrs(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[valid_attr_to_invalid_attr(k)] = valid_attr_to_invalid_attrs(v)
+        data = new_data
+
+    return data
+
+
 def switch_controller_lldp_profile(data, fos):
     vdom = data['vdom']
     if 'state' in data and data['state']:
@@ -356,11 +379,12 @@ def switch_controller_lldp_profile(data, fos):
         state = True
     switch_controller_lldp_profile_data = data['switch_controller_lldp_profile']
     filtered_data = underscore_to_hyphen(filter_switch_controller_lldp_profile_data(switch_controller_lldp_profile_data))
+    converted_data = valid_attr_to_invalid_attrs(filtered_data)
 
     if state == "present":
         return fos.set('switch-controller',
                        'lldp-profile',
-                       data=filtered_data,
+                       data=converted_data,
                        vdom=vdom)
 
     elif state == "absent":
@@ -381,7 +405,8 @@ def fortios_switch_controller(data, fos):
         resp = switch_controller_lldp_profile(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -400,10 +425,10 @@ def main():
             "options": {
                 "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "802.1_tlvs": {"required": False, "type": "str",
-                               "choices": ["port-vlan-id"]},
-                "802.3_tlvs": {"required": False, "type": "str",
-                               "choices": ["max-frame-size"]},
+                "tlvs_802dot1": {"required": False, "type": "str",
+                                 "choices": ["port-vlan-id"]},
+                "tlvs_802dot3": {"required": False, "type": "str",
+                                 "choices": ["max-frame-size"]},
                 "auto_isl": {"required": False, "type": "str",
                              "choices": ["disable", "enable"]},
                 "auto_isl_hello_timer": {"required": False, "type": "int"},

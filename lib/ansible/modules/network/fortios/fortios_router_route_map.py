@@ -191,7 +191,8 @@ options:
                         suboptions:
                             as:
                                 description:
-                                    - AS number (0 - 42949672).
+                                    - "AS number (0 - 42949672). NOTE: Use quotes for repeating numbers, e.g.: "1 1 2"
+                    "
                                 required: true
                                 type: str
                     set_aspath_action:
@@ -256,7 +257,7 @@ options:
                         suboptions:
                             community:
                                 description:
-                                    - Set the target extended community (in decimal notation) of a BGP route.
+                                    - "AA:NN."
                                 required: true
                                 type: str
                     set_extcommunity_soo:
@@ -536,7 +537,8 @@ def fortios_router(data, fos):
         resp = router_route_map(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

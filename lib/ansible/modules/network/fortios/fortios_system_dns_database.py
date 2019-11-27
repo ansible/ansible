@@ -100,8 +100,8 @@ options:
             contact:
                 description:
                     - Email address of the administrator for this zone.
-                      You can specify only the username (e.g. admin) or full email address (e.g. admin@test.com)
-                      When using a simple username, the domain of the email will be this zone.
+    		You can specify only the username (e.g. admin) or full email address (e.g. admin@test.com)
+    		When using a simple username, the domain of the email will be this zone.
                 type: str
             dns_entry:
                 description:
@@ -390,7 +390,8 @@ def fortios_system(data, fos):
         resp = system_dns_database(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

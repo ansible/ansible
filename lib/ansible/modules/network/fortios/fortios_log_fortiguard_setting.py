@@ -290,7 +290,8 @@ def fortios_log_fortiguard(data, fos):
         resp = log_fortiguard_setting(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

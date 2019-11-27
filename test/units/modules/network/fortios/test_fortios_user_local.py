@@ -66,6 +66,7 @@ def test_user_local_creation(mocker):
             'sms_phone': 'test_value_18',
             'sms_server': 'fortiguard',
             'status': 'enable',
+            'tacacs+_server': 'test_value_21',
             'two_factor': 'disable',
             'type': 'password',
             'workstation': 'test_value_24'
@@ -93,6 +94,7 @@ def test_user_local_creation(mocker):
                 'sms-phone': 'test_value_18',
                 'sms-server': 'fortiguard',
                 'status': 'enable',
+                'tacacs+-server': 'test_value_21',
                 'two-factor': 'disable',
                 'type': 'password',
                 'workstation': 'test_value_24'
@@ -134,6 +136,7 @@ def test_user_local_creation_fails(mocker):
             'sms_phone': 'test_value_18',
             'sms_server': 'fortiguard',
             'status': 'enable',
+            'tacacs+_server': 'test_value_21',
             'two_factor': 'disable',
             'type': 'password',
             'workstation': 'test_value_24'
@@ -161,6 +164,7 @@ def test_user_local_creation_fails(mocker):
                 'sms-phone': 'test_value_18',
                 'sms-server': 'fortiguard',
                 'status': 'enable',
+                'tacacs+-server': 'test_value_21',
                 'two-factor': 'disable',
                 'type': 'password',
                 'workstation': 'test_value_24'
@@ -202,6 +206,7 @@ def test_user_local_removal(mocker):
             'sms_phone': 'test_value_18',
             'sms_server': 'fortiguard',
             'status': 'enable',
+            'tacacs+_server': 'test_value_21',
             'two_factor': 'disable',
             'type': 'password',
             'workstation': 'test_value_24'
@@ -246,6 +251,7 @@ def test_user_local_deletion_fails(mocker):
             'sms_phone': 'test_value_18',
             'sms_server': 'fortiguard',
             'status': 'enable',
+            'tacacs+_server': 'test_value_21',
             'two_factor': 'disable',
             'type': 'password',
             'workstation': 'test_value_24'
@@ -290,6 +296,7 @@ def test_user_local_idempotent(mocker):
             'sms_phone': 'test_value_18',
             'sms_server': 'fortiguard',
             'status': 'enable',
+            'tacacs+_server': 'test_value_21',
             'two_factor': 'disable',
             'type': 'password',
             'workstation': 'test_value_24'
@@ -317,6 +324,7 @@ def test_user_local_idempotent(mocker):
                 'sms-phone': 'test_value_18',
                 'sms-server': 'fortiguard',
                 'status': 'enable',
+                'tacacs+-server': 'test_value_21',
                 'two-factor': 'disable',
                 'type': 'password',
                 'workstation': 'test_value_24'
@@ -359,6 +367,7 @@ def test_user_local_filter_foreign_attributes(mocker):
             'sms_phone': 'test_value_18',
             'sms_server': 'fortiguard',
             'status': 'enable',
+            'tacacs+_server': 'test_value_21',
             'two_factor': 'disable',
             'type': 'password',
             'workstation': 'test_value_24'
@@ -386,6 +395,7 @@ def test_user_local_filter_foreign_attributes(mocker):
                 'sms-phone': 'test_value_18',
                 'sms-server': 'fortiguard',
                 'status': 'enable',
+                'tacacs+-server': 'test_value_21',
                 'two-factor': 'disable',
                 'type': 'password',
                 'workstation': 'test_value_24'

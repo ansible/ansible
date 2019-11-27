@@ -430,7 +430,8 @@ def fortios_vpn_ssl_web(data, fos):
         resp = vpn_ssl_web_user_group_bookmark(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

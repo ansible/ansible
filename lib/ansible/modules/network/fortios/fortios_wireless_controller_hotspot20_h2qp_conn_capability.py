@@ -325,7 +325,7 @@ def wireless_controller_hotspot20_h2qp_conn_capability(data, fos):
     state = data['state']
     wireless_controller_hotspot20_h2qp_conn_capability_data = data['wireless_controller_hotspot20_h2qp_conn_capability']
     filtered_data = \
-        underscore_to_hyphen(filter_wireless_controller_hotspot20_h2qp_conn_capability_data(wireless_controller_hotspot20_h2qp_conn_capability_data))
+    underscore_to_hyphen(filter_wireless_controller_hotspot20_h2qp_conn_capability_data(wireless_controller_hotspot20_h2qp_conn_capability_data))
 
     if state == "present":
         return fos.set('wireless-controller.hotspot20',
@@ -351,7 +351,8 @@ def fortios_wireless_controller_hotspot20(data, fos):
         resp = wireless_controller_hotspot20_h2qp_conn_capability(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

@@ -282,7 +282,8 @@ def fortios_user(data, fos):
         resp = user_device_access_list(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

@@ -48,6 +48,7 @@ def test_wireless_controller_hotspot20_hs_profile_creation(mocker):
         'username': 'admin',
         'state': 'present',
         'wireless_controller_hotspot20_hs_profile': {
+            'plmn_3gpp': 'test_value_3',
             'access_network_asra': 'enable',
             'access_network_esr': 'enable',
             'access_network_internet': 'enable',
@@ -84,6 +85,7 @@ def test_wireless_controller_hotspot20_hs_profile_creation(mocker):
     is_error, changed, response = fortios_wireless_controller_hotspot20_hs_profile.fortios_wireless_controller_hotspot20(input_data, fos_instance)
 
     expected_data = {
+        'plmn-3gpp': 'test_value_3',
         'access-network-asra': 'enable',
         'access-network-esr': 'enable',
         'access-network-internet': 'enable',
@@ -134,6 +136,7 @@ def test_wireless_controller_hotspot20_hs_profile_creation_fails(mocker):
         'username': 'admin',
         'state': 'present',
         'wireless_controller_hotspot20_hs_profile': {
+            'plmn_3gpp': 'test_value_3',
             'access_network_asra': 'enable',
             'access_network_esr': 'enable',
             'access_network_internet': 'enable',
@@ -170,6 +173,7 @@ def test_wireless_controller_hotspot20_hs_profile_creation_fails(mocker):
     is_error, changed, response = fortios_wireless_controller_hotspot20_hs_profile.fortios_wireless_controller_hotspot20(input_data, fos_instance)
 
     expected_data = {
+        'plmn-3gpp': 'test_value_3',
         'access-network-asra': 'enable',
         'access-network-esr': 'enable',
         'access-network-internet': 'enable',
@@ -220,6 +224,7 @@ def test_wireless_controller_hotspot20_hs_profile_removal(mocker):
         'username': 'admin',
         'state': 'absent',
         'wireless_controller_hotspot20_hs_profile': {
+            'plmn_3gpp': 'test_value_3',
             'access_network_asra': 'enable',
             'access_network_esr': 'enable',
             'access_network_internet': 'enable',
@@ -273,6 +278,7 @@ def test_wireless_controller_hotspot20_hs_profile_deletion_fails(mocker):
         'username': 'admin',
         'state': 'absent',
         'wireless_controller_hotspot20_hs_profile': {
+            'plmn_3gpp': 'test_value_3',
             'access_network_asra': 'enable',
             'access_network_esr': 'enable',
             'access_network_internet': 'enable',
@@ -326,6 +332,7 @@ def test_wireless_controller_hotspot20_hs_profile_idempotent(mocker):
         'username': 'admin',
         'state': 'present',
         'wireless_controller_hotspot20_hs_profile': {
+            'plmn_3gpp': 'test_value_3',
             'access_network_asra': 'enable',
             'access_network_esr': 'enable',
             'access_network_internet': 'enable',
@@ -362,6 +369,7 @@ def test_wireless_controller_hotspot20_hs_profile_idempotent(mocker):
     is_error, changed, response = fortios_wireless_controller_hotspot20_hs_profile.fortios_wireless_controller_hotspot20(input_data, fos_instance)
 
     expected_data = {
+        'plmn-3gpp': 'test_value_3',
         'access-network-asra': 'enable',
         'access-network-esr': 'enable',
         'access-network-internet': 'enable',
@@ -413,6 +421,7 @@ def test_wireless_controller_hotspot20_hs_profile_filter_foreign_attributes(mock
         'state': 'present',
         'wireless_controller_hotspot20_hs_profile': {
             'random_attribute_not_valid': 'tag',
+            'plmn_3gpp': 'test_value_3',
             'access_network_asra': 'enable',
             'access_network_esr': 'enable',
             'access_network_internet': 'enable',
@@ -449,6 +458,7 @@ def test_wireless_controller_hotspot20_hs_profile_filter_foreign_attributes(mock
     is_error, changed, response = fortios_wireless_controller_hotspot20_hs_profile.fortios_wireless_controller_hotspot20(input_data, fos_instance)
 
     expected_data = {
+        'plmn-3gpp': 'test_value_3',
         'access-network-asra': 'enable',
         'access-network-esr': 'enable',
         'access-network-internet': 'enable',

@@ -127,6 +127,14 @@ options:
                 choices:
                     - null
                     - des
+                    - 3des
+                    - aes128
+                    - aes192
+                    - aes256
+                    - aria128
+                    - aria192
+                    - aria256
+                    - seed
             interface:
                 description:
                     - Name of the physical, aggregate, or VLAN interface. Source system.interface.name.
@@ -326,7 +334,8 @@ def fortios_vpn_ipsec(data, fos):
         resp = vpn_ipsec_manualkey(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -351,7 +360,10 @@ def main():
                 "authkey": {"required": False, "type": "str"},
                 "enckey": {"required": False, "type": "str"},
                 "encryption": {"required": False, "type": "str",
-                               "choices": ["null", "des"]},
+                               "choices": ["null", "des", "3des",
+                                           "aes128", "aes192", "aes256",
+                                           "aria128", "aria192", "aria256",
+                                           "seed"]},
                 "interface": {"required": False, "type": "str"},
                 "local_gw": {"required": False, "type": "str"},
                 "localspi": {"required": False, "type": "str"},

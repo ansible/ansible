@@ -29,7 +29,7 @@ description:
     - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify wireless_controller_hotspot20 feature and hs_profile category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.4
+      Tested with FOS v6.0.5
 version_added: "2.9"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -86,6 +86,10 @@ options:
         default: null
         type: dict
         suboptions:
+            plmn_3gpp:
+                description:
+                    - 3GPP PLMN name. Source wireless-controller.hotspot20.anqp-3gpp-cellular.name.
+                type: str
             access_network_asra:
                 description:
                     - Enable/disable additional step required for access (ASRA).
@@ -345,6 +349,7 @@ EXAMPLES = '''
       https: "False"
       state: "present"
       wireless_controller_hotspot20_hs_profile:
+        plmn_3gpp: "<your_own_value> (source wireless-controller.hotspot20.anqp-3gpp-cellular.name)"
         access_network_asra: "enable"
         access_network_esr: "enable"
         access_network_internet: "enable"
@@ -461,7 +466,7 @@ def login(data, fos):
 
 
 def filter_wireless_controller_hotspot20_hs_profile_data(json):
-    option_list = ['access_network_asra', 'access_network_esr',
+    option_list = ['plmn_3gpp', 'access_network_asra', 'access_network_esr',
                    'access_network_internet', 'access_network_type', 'access_network_uesa',
                    'anqp_domain_id', 'bss_transition', 'conn_cap',
                    'deauth_request_timeout', 'dgaf', 'domain_name',
@@ -494,16 +499,40 @@ def underscore_to_hyphen(data):
     return data
 
 
+def valid_attr_to_invalid_attr(data):
+    specillist = {"3gpp_plmn": "plmn_3gpp"}
+
+    for k, v in specillist.items():
+        if v == data:
+            return k
+
+    return data
+
+
+def valid_attr_to_invalid_attrs(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = valid_attr_to_invalid_attrs(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[valid_attr_to_invalid_attr(k)] = valid_attr_to_invalid_attrs(v)
+        data = new_data
+
+    return data
+
+
 def wireless_controller_hotspot20_hs_profile(data, fos):
     vdom = data['vdom']
     state = data['state']
     wireless_controller_hotspot20_hs_profile_data = data['wireless_controller_hotspot20_hs_profile']
     filtered_data = underscore_to_hyphen(filter_wireless_controller_hotspot20_hs_profile_data(wireless_controller_hotspot20_hs_profile_data))
+    converted_data = valid_attr_to_invalid_attrs(filtered_data)
 
     if state == "present":
         return fos.set('wireless-controller.hotspot20',
                        'hs-profile',
-                       data=filtered_data,
+                       data=converted_data,
                        vdom=vdom)
 
     elif state == "absent":
@@ -524,7 +553,8 @@ def fortios_wireless_controller_hotspot20(data, fos):
         resp = wireless_controller_hotspot20_hs_profile(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -541,6 +571,7 @@ def main():
         "wireless_controller_hotspot20_hs_profile": {
             "required": False, "type": "dict", "default": None,
             "options": {
+                "plmn_3gpp": {"required": False, "type": "str"},
                 "access_network_asra": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
                 "access_network_esr": {"required": False, "type": "str",

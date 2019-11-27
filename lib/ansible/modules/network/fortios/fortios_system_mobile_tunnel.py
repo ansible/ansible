@@ -153,7 +153,7 @@ options:
                 type: int
             renew_interval:
                 description:
-                    - Time before lifetime expiration to send NMMO HA re-registration (5 - 60).
+                    - Time before lifetime expiraton to send NMMO HA re-registration (5 - 60).
                 type: int
             roaming_interface:
                 description:
@@ -168,7 +168,7 @@ options:
                     - enable
             tunnel_mode:
                 description:
-                    - NEMO tunnel mode (GRE tunnel).
+                    - NEMO tunnnel mode (GRE tunnel).
                 type: str
                 choices:
                     - gre
@@ -351,7 +351,8 @@ def fortios_system(data, fos):
         resp = system_mobile_tunnel(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

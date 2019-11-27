@@ -119,7 +119,7 @@ options:
                 type: int
             ssl_dh_bits:
                 description:
-                    - Bit-size of Diffie-Hellman (DH) prime used in DHE-RSA negotiation.
+                    - Bit-size of Diffie-Hellman (DH) prime used in DHE-RSA negotiation .
                 type: str
                 choices:
                     - 768
@@ -298,7 +298,8 @@ def fortios_firewall_ssl(data, fos):
         resp = firewall_ssl_setting(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

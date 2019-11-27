@@ -29,7 +29,7 @@ description:
     - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify wireless_controller_hotspot20 feature and anqp_nai_realm category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.4
+      Tested with FOS v6.0.5
 version_added: "2.9"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -360,7 +360,8 @@ def fortios_wireless_controller_hotspot20(data, fos):
         resp = wireless_controller_hotspot20_anqp_nai_realm(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -396,9 +397,8 @@ def main():
                                                                                            "cred-hardware-token", "cred-softoken", "cred-certificate",
                                                                                            "cred-user-pwd", "cred-none", "cred-vendor-specific",
                                                                                            "tun-cred-sim", "tun-cred-usim", "tun-cred-nfc",
-                                                                                           "tun-cred-hardware-token", "tun-cred-softoken",
-                                                                                           "tun-cred-certificate", "tun-cred-user-pwd",
-                                                                                           "tun-cred-anonymous", "tun-cred-vendor-specific"]}
+                                                                                           "tun-cred-hardware-token", "tun-cred-softoken", "tun-cred-certificate",
+                                                                                           "tun-cred-user-pwd", "tun-cred-anonymous", "tun-cred-vendor-specific"]}
                                                                    }},
                                                     "index": {"required": True, "type": "int"},
                                                     "method": {"required": False, "type": "str",

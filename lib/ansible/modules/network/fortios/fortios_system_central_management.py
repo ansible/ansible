@@ -161,8 +161,8 @@ options:
                 type: str
             server_list:
                 description:
-                    - Additional servers that the FortiGate can use for updates (for AV, IPS, updates) and ratings (for web filter and antispam ratings)
-                      servers.
+                    - Additional severs that the FortiGate can use for updates (for AV, IPS, updates) and ratings (for web filter and antispam ratings)
+                       servers.
                 type: list
                 suboptions:
                     addr_type:
@@ -384,7 +384,8 @@ def fortios_system(data, fos):
         resp = system_central_management(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

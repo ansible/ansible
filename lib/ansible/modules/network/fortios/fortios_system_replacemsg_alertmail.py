@@ -272,7 +272,8 @@ def fortios_system_replacemsg(data, fos):
         resp = system_replacemsg_alertmail(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

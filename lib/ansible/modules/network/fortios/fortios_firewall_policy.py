@@ -659,7 +659,7 @@ options:
                     - disable
             session_ttl:
                 description:
-                    - TTL in seconds for sessions accepted by this policy (0 means use the system default session TTL).
+                    - TTL in seconds for sessions accepted by this policy (0 means use the system ).
                 type: int
             spamfilter_profile:
                 description:
@@ -1234,7 +1234,8 @@ def fortios_firewall(data, fos):
         resp = firewall_policy(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

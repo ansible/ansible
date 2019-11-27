@@ -939,7 +939,8 @@ def fortios_endpoint_control(data, fos):
         resp = endpoint_control_profile(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -1054,9 +1055,8 @@ def main():
                                                                                                      "choices": ["custom", "mac-os", "win-7",
                                                                                                                  "win-80", "win-81", "win-10",
                                                                                                                  "win-2000", "win-home-svr", "win-svr-10",
-                                                                                                                 "win-svr-2003", "win-svr-2003-r2",
-                                                                                                                 "win-svr-2008", "win-svr-2008-r2",
-                                                                                                                 "win-svr-2012", "win-svr-2012-r2",
+                                                                                                                 "win-svr-2003", "win-svr-2003-r2", "win-svr-2008",
+                                                                                                                 "win-svr-2008-r2", "win-svr-2012", "win-svr-2012-r2",
                                                                                                                  "win-sto-svr-2003", "win-vista", "win-xp",
                                                                                                                  "ubuntu-linux", "centos-linux", "redhat-linux",
                                                                                                                  "fedora-linux"]}

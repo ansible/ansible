@@ -209,7 +209,7 @@ options:
                 type: int
             member:
                 description:
-                    - Names of users, peers, LDAP servers, or RADIUS servers to add to the user group.
+                    - Names of users, peers, LDAP severs, or RADIUS servers to add to the user group.
                 type: list
                 suboptions:
                     name:
@@ -486,7 +486,8 @@ def fortios_user(data, fos):
         resp = user_group(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

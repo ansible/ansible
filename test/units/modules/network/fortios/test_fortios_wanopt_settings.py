@@ -50,7 +50,7 @@ def test_wanopt_settings_creation(mocker):
         'wanopt_settings': {
             'auto_detect_algorithm': 'simple',
             'host_id': 'myhostname4',
-            'tunnel_ssl_algorithm': 'low'
+            'tunnel_ssl_algorithm': 'high'
         },
         'vdom': 'root'}
 
@@ -59,7 +59,7 @@ def test_wanopt_settings_creation(mocker):
     expected_data = {
         'auto-detect-algorithm': 'simple',
         'host-id': 'myhostname4',
-        'tunnel-ssl-algorithm': 'low'
+        'tunnel-ssl-algorithm': 'high'
     }
 
     set_method_mock.assert_called_with('wanopt', 'settings', data=expected_data, vdom='root')
@@ -82,7 +82,7 @@ def test_wanopt_settings_creation_fails(mocker):
         'wanopt_settings': {
             'auto_detect_algorithm': 'simple',
             'host_id': 'myhostname4',
-            'tunnel_ssl_algorithm': 'low'
+            'tunnel_ssl_algorithm': 'high'
         },
         'vdom': 'root'}
 
@@ -91,7 +91,7 @@ def test_wanopt_settings_creation_fails(mocker):
     expected_data = {
         'auto-detect-algorithm': 'simple',
         'host-id': 'myhostname4',
-        'tunnel-ssl-algorithm': 'low'
+        'tunnel-ssl-algorithm': 'high'
     }
 
     set_method_mock.assert_called_with('wanopt', 'settings', data=expected_data, vdom='root')
@@ -114,7 +114,7 @@ def test_wanopt_settings_idempotent(mocker):
         'wanopt_settings': {
             'auto_detect_algorithm': 'simple',
             'host_id': 'myhostname4',
-            'tunnel_ssl_algorithm': 'low'
+            'tunnel_ssl_algorithm': 'high'
         },
         'vdom': 'root'}
 
@@ -123,7 +123,7 @@ def test_wanopt_settings_idempotent(mocker):
     expected_data = {
         'auto-detect-algorithm': 'simple',
         'host-id': 'myhostname4',
-        'tunnel-ssl-algorithm': 'low'
+        'tunnel-ssl-algorithm': 'high'
     }
 
     set_method_mock.assert_called_with('wanopt', 'settings', data=expected_data, vdom='root')
@@ -147,7 +147,7 @@ def test_wanopt_settings_filter_foreign_attributes(mocker):
             'random_attribute_not_valid': 'tag',
             'auto_detect_algorithm': 'simple',
             'host_id': 'myhostname4',
-            'tunnel_ssl_algorithm': 'low'
+            'tunnel_ssl_algorithm': 'high'
         },
         'vdom': 'root'}
 
@@ -156,7 +156,7 @@ def test_wanopt_settings_filter_foreign_attributes(mocker):
     expected_data = {
         'auto-detect-algorithm': 'simple',
         'host-id': 'myhostname4',
-        'tunnel-ssl-algorithm': 'low'
+        'tunnel-ssl-algorithm': 'high'
     }
 
     set_method_mock.assert_called_with('wanopt', 'settings', data=expected_data, vdom='root')

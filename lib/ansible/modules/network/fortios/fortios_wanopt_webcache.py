@@ -124,7 +124,7 @@ options:
                 type: int
             host_validate:
                 description:
-                    - "Enable/disable validating Host: with original server IP."
+                    - "Enable/disable validating "Host:" with original server IP."
                 type: str
                 choices:
                     - enable
@@ -350,7 +350,8 @@ def fortios_wanopt(data, fos):
         resp = wanopt_webcache(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 

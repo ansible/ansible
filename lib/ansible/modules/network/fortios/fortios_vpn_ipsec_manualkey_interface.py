@@ -130,6 +130,14 @@ options:
                 choices:
                     - null
                     - des
+                    - 3des
+                    - aes128
+                    - aes192
+                    - aes256
+                    - aria128
+                    - aria192
+                    - aria256
+                    - seed
             enc_key:
                 description:
                     - Hexadecimal encryption key in 16-digit (8-byte) segments separated by hyphens.
@@ -353,7 +361,8 @@ def fortios_vpn_ipsec(data, fos):
         resp = vpn_ipsec_manualkey_interface(data, fos)
 
     return not is_successful_status(resp), \
-        resp['status'] == "success", \
+        resp['status'] == "success" and \
+        (resp['revision_changed'] if 'revision_changed' in resp else True), \
         resp
 
 
@@ -379,7 +388,10 @@ def main():
                                          "sha256", "sha384", "sha512"]},
                 "auth_key": {"required": False, "type": "str"},
                 "enc_alg": {"required": False, "type": "str",
-                            "choices": ["null", "des"]},
+                            "choices": ["null", "des", "3des",
+                                        "aes128", "aes192", "aes256",
+                                        "aria128", "aria192", "aria256",
+                                        "seed"]},
                 "enc_key": {"required": False, "type": "str"},
                 "interface": {"required": False, "type": "str"},
                 "ip_version": {"required": False, "type": "str",
