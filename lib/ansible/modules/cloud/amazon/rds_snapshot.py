@@ -98,7 +98,7 @@ EXAMPLES = '''
 - rds_snapshot:
     db_snapshot_identifier: new-database-snapshot
     state: absent
-    
+
 # Create Aurora cluster snapshot
 - name: Create Aurora cluster snapshot
   rds_snapshot:
@@ -278,24 +278,26 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, compare_aws_tags
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 
+
 def get_snapshot(client, module):
-  snapshot_id = module.params.get('db_snapshot_identifier')
-  try:
-    if module.params.get('snapshot_type') == 'aurora':
-      db_cluster_identifier = module.params.get('db_cluster_identifier')
-      response = client.describe_db_cluster_snapshots(DBClusterIdentifier=db_cluster_identifier,
+    snapshot_id = module.params.get('db_snapshot_identifier')
+    try:
+      if module.params.get('snapshot_type') == 'aurora':
+        db_cluster_identifier = module.params.get('db_cluster_identifier')
+        response = client.describe_db_cluster_snapshots(DBClusterIdentifier=db_cluster_identifier,
                                                         DBClusterSnapshotIdentifier=snapshot_id)
       return response['DBClusterSnapshots']
-    else:
-      response = client.describe_db_snapshots(DBSnapshotIdentifier=snapshot_id)
-      return response['DBSnapshots']
-  except client.exceptions.DBSnapshotNotFoundFault:
-    return None
-  except client.exceptions.DBClusterSnapshotNotFoundFault:
-    return None
-  except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-    module.fail_json_aws(e, msg="Couldn't get snapshot {0}".format(snapshot_id))
-  return response
+      else:
+        response = client.describe_db_snapshots(DBSnapshotIdentifier=snapshot_id)
+        return response['DBSnapshots']
+    except client.exceptions.DBSnapshotNotFoundFault:
+      return None
+    except client.exceptions.DBClusterSnapshotNotFoundFault:
+      return None
+    except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
+      module.fail_json_aws(e, msg="Couldn't get snapshot {0}".format(snapshot_id))
+    return response
+
 
 def snapshot_to_facts(client, module, snapshot):
     try:
@@ -312,145 +314,148 @@ def snapshot_to_facts(client, module, snapshot):
 
     return camel_dict_to_snake_dict(snapshot, ignore_list=['Tags'])
 
+
 def wait_for_snapshot_status(client, module, db_snapshot_id, waiter_name):
     if not module.params['wait']:
         return
     timeout = module.params['wait_timeout']
     try:
-      if module.params['snapshot_type'] == 'aurora':
-        db_cluster_identifier = module.params['db_cluster_identifier']
-        client.get_waiter(waiter_name).wait(DBClusterIdentifier=db_cluster_identifier, DBClusterSnapshotIdentifier=db_snapshot_id,
-                                            WaiterConfig=dict(
-                                                Delay=5,
-                                                MaxAttempts=int((timeout + 2.5) / 5)
-                                            ))
-      else:
-        client.get_waiter(waiter_name).wait(DBSnapshotIdentifier=db_snapshot_id,
-                                            WaiterConfig=dict(
-                                                Delay=5,
-                                                MaxAttempts=int((timeout + 2.5) / 5)
-                                            ))
+        if module.params['snapshot_type'] == 'aurora':
+          db_cluster_identifier = module.params['db_cluster_identifier']
+          client.get_waiter(waiter_name).wait(DBClusterIdentifier=db_cluster_identifier, DBClusterSnapshotIdentifier=db_snapshot_id,
+                                              WaiterConfig=dict(
+                                                  Delay=5,
+                                                  MaxAttempts=int((timeout + 2.5) / 5)
+                                              ))
+        else:
+            client.get_waiter(waiter_name).wait(DBSnapshotIdentifier=db_snapshot_id,
+                                                WaiterConfig=dict(
+                                                    Delay=5,
+                                                    MaxAttempts=int((timeout + 2.5) / 5)
+                                                ))
     except botocore.exceptions.WaiterError as e:
-      if waiter_name == 'db_snapshot_deleted' or waiter_name == 'db_cluster_snapshot_deleted':
-        msg = "Failed to wait for DB snapshot {0} to be deleted".format(db_snapshot_id)
-      else:
-        msg = "Failed to wait for DB snapshot {0} to be available".format(db_snapshot_id)
-      module.fail_json_aws(e, msg=msg)
+        if waiter_name == 'db_snapshot_deleted' or waiter_name == 'db_cluster_snapshot_deleted':
+            msg = "Failed to wait for DB snapshot {0} to be deleted".format(db_snapshot_id)
+        else:
+            msg = "Failed to wait for DB snapshot {0} to be available".format(db_snapshot_id)
+            module.fail_json_aws(e, msg=msg)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Failed with an unexpected error while waiting for the DB cluster {0}".format(db_snapshot_id))
 
+
 def ensure_snapshot_absent(client, module):
-  fn_args = dict()
-  if module.params.get('snapshot_type') == 'aurora':
-    fn_args['DBClusterSnapshotIdentifier'] = module.params.get('db_snapshot_identifier')
-  else:
-    fn_args['DBSnapshotIdentifier'] = module.params.get('db_snapshot_identifier')
-  changed = False
-
-  snapshot = get_snapshot(client, module)
-  
-  if snapshot:
+    fn_args = dict()
     if module.params.get('snapshot_type') == 'aurora':
-      if snapshot[0].get('Status') != 'deleting':
-        try:
-          client.delete_db_cluster_snapshot(**fn_args)
-          changed = True
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-          module.fail_json_aws(e, msg="trying to delete cluster snapshot")
+        fn_args['DBClusterSnapshotIdentifier'] = module.params.get('db_snapshot_identifier')
     else:
-      try:
-        client.delete_db_snapshot(**fn_args)
-        changed = True
-      except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-          module.fail_json_aws(e, msg="trying to delete snapshot")
+        fn_args['DBSnapshotIdentifier'] = module.params.get('db_snapshot_identifier')
+    changed = False
 
-  elif not snapshot and module.params.get('fail_on_not_exists'):
-    module.fail_json_aws(snapshot, msg="cannot delete nonexistent snapshot")
+    snapshot = get_snapshot(client, module)
+
+    if snapshot:
+        if module.params.get('snapshot_type') == 'aurora':
+            if snapshot[0].get('Status') != 'deleting':
+                try:
+                    client.delete_db_cluster_snapshot(**fn_args)
+                    changed = True
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    module.fail_json_aws(e, msg="trying to delete cluster snapshot")
+          else:
+              try:
+                  client.delete_db_snapshot(**fn_args)
+                  changed = True
+              except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                  module.fail_json_aws(e, msg="trying to delete snapshot")
+
+    elif not snapshot and module.params.get('fail_on_not_exists'):
+        module.fail_json_aws(snapshot, msg="cannot delete nonexistent snapshot")
 
   # If we're not waiting for a delete to complete then we're all done
   # so just return
-  elif not snapshot or not module.params.get('wait'):
-    return dict(changed=changed)
+    elif not snapshot or not module.params.get('wait'):
+        return dict(changed=changed)
 
-  try:
-    if module.params.get('snapshot_type') == 'aurora':
-      wait_for_snapshot_status(client, module, module.params.get('db_snapshot_identifier'), 'db_cluster_snapshot_deleted')
-      return dict(changed=changed)
-    else:
-      wait_for_snapshot_status(client, module, module.params.get('db_snapshot_identifier'), 'db_snapshot_deleted')
-      return dict(changed=changed)
-  except client.exceptions.DBSnapshotNotFoundFault:
-    return dict(changed=changed)
-  except client.exceptions.DBClusterSnapshotNotFoundFault:
-    return dict(changed=changed)
-  except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-    module.fail_json_aws(e, "awaiting snapshot deletion")
-        
+    try:
+        if module.params.get('snapshot_type') == 'aurora':
+            wait_for_snapshot_status(client, module, module.params.get('db_snapshot_identifier'), 'db_cluster_snapshot_deleted')
+            return dict(changed=changed)
+        else:
+            wait_for_snapshot_status(client, module, module.params.get('db_snapshot_identifier'), 'db_snapshot_deleted')
+            return dict(changed=changed)
+    except client.exceptions.DBSnapshotNotFoundFault:
+        return dict(changed=changed)
+    except client.exceptions.DBClusterSnapshotNotFoundFault:
+        return dict(changed=changed)
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, "awaiting snapshot deletion")
+
+
 def ensure_tags(client, module, snapshot, existing_tags, tags, purge_tags):
-  if tags is None:
-    return False
+    if tags is None:
+        return False
 
-  if module.params.get('snapshot_type') == 'aurora':
-    resource_arn = snapshot[0].get('DBClusterSnapshotArn')
-  else:
-    resource_arn = snapshot[0].get('DBSnapshotArn')
+    if module.params.get('snapshot_type') == 'aurora':
+        resource_arn = snapshot[0].get('DBClusterSnapshotArn')
+    else:
+        resource_arn = snapshot[0].get('DBSnapshotArn')
 
-  tags_to_add, tags_to_remove = compare_aws_tags(existing_tags, tags, purge_tags)
-  changed = bool(tags_to_add or tags_to_remove)
-  if tags_to_add:
-    try:
-      client.add_tags_to_resource(ResourceName=resource_arn, Tags=ansible_dict_to_boto3_tag_list(tags_to_add))
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-      module.fail_json_aws(e, "Couldn't add tags to snapshot {0}".format(resource_arn))
-  if tags_to_remove:
-    try:
-      client.remove_tags_from_resource(ResourceName=resource_arn, TagKeys=tags_to_remove)
-    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-      module.fail_json_aws(e, "Couldn't remove tags from snapshot {0}".format(resource_arn))
-  return changed
+    tags_to_add, tags_to_remove = compare_aws_tags(existing_tags, tags, purge_tags)
+    changed = bool(tags_to_add or tags_to_remove)
+    if tags_to_add:
+        try:
+            client.add_tags_to_resource(ResourceName=resource_arn, Tags=ansible_dict_to_boto3_tag_list(tags_to_add))
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, "Couldn't add tags to snapshot {0}".format(resource_arn))
+    if tags_to_remove:
+        try:
+            client.remove_tags_from_resource(ResourceName=resource_arn, TagKeys=tags_to_remove)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, "Couldn't remove tags from snapshot {0}".format(resource_arn))
+    return changed
+
 
 def ensure_snapshot_present(client, module):
-  fn_args= dict()
-  if module.params.get('snapshot_type') == 'aurora':
-    fn_args['DBClusterSnapshotIdentifier'] = module.params.get('db_snapshot_identifier')
-    fn_args['DBClusterIdentifier'] = module.params.get('db_cluster_identifier')
-  else:
-    fn_args['DBSnapshotIdentifier'] = module.params.get('db_snapshot_identifier')
-    fn_args['DBInstanceIdentifier'] = module.params.get('db_instance_identifier')
-
-
-  if module.params['tags'] and module.params['tags'] is not None:
-    fn_args['Tags'] = ansible_dict_to_boto3_tag_list(module.params['tags'])
-  changed = False
-
-  try:
+    fn_args= dict()
     if module.params.get('snapshot_type') == 'aurora':
-      response = client.create_db_cluster_snapshot(**fn_args)
+        fn_args['DBClusterSnapshotIdentifier'] = module.params.get('db_snapshot_identifier')
+        fn_args['DBClusterIdentifier'] = module.params.get('db_cluster_identifier')
     else:
-      response = client.create_db_snapshot(**fn_args)
-  except client.exceptions.DBClusterSnapshotAlreadyExistsFault as e:
-    module.fail_json_aws(e, msg="Failed to create cluster snapshot. A cluster snapshot with this snapshot_identifier already exists")
-  except client.exceptions.DBSnapshotAlreadyExistsFault as e:
-    module.fail_json_aws(e, msg="Failed to create cluster snapshot. A cluster snapshot with this snapshot_identifier already exists")
-  except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-    module.fail_json_aws(e, msg="Failed to create cluster or instance snapshot")
+        fn_args['DBSnapshotIdentifier'] = module.params.get('db_snapshot_identifier')
+        fn_args['DBInstanceIdentifier'] = module.params.get('db_instance_identifier')
 
-  snapshot = get_snapshot(client, module)
-  if module.params.get('snapshot_type') == 'aurora':
-    existing_tags = boto3_tag_list_to_ansible_dict(client.list_tags_for_resource(ResourceName=snapshot[0].get('DBClusterSnapshotArn'),
+    if module.params['tags'] and module.params['tags'] is not None:
+        fn_args['Tags'] = ansible_dict_to_boto3_tag_list(module.params['tags'])
+        changed = False
+
+    try:
+        if module.params.get('snapshot_type') == 'aurora':
+            response = client.create_db_cluster_snapshot(**fn_args)
+        else:
+            response = client.create_db_snapshot(**fn_args)
+    except client.exceptions.DBClusterSnapshotAlreadyExistsFault as e:
+        module.fail_json_aws(e, msg="Failed to create cluster snapshot. A cluster snapshot with this snapshot_identifier already exists")
+    except client.exceptions.DBSnapshotAlreadyExistsFault as e:
+        module.fail_json_aws(e, msg="Failed to create cluster snapshot. A cluster snapshot with this snapshot_identifier already exists")
+    except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+        module.fail_json_aws(e, msg="Failed to create cluster or instance snapshot")
+
+    snapshot = get_snapshot(client, module)
+    if module.params.get('snapshot_type') == 'aurora':
+        existing_tags = boto3_tag_list_to_ansible_dict(client.list_tags_for_resource(ResourceName=snapshot[0].get('DBClusterSnapshotArn'),
                                                                                  aws_retry=True)['TagList'])
-  else:
-    existing_tags = boto3_tag_list_to_ansible_dict(client.list_tags_for_resource(ResourceName=snapshot[0].get('DBSnapshotArn'),
+    else:
+        existing_tags = boto3_tag_list_to_ansible_dict(client.list_tags_for_resource(ResourceName=snapshot[0].get('DBSnapshotArn'),
                                                                                  aws_retry=True)['TagList'])                                                                                 
-  desired_tags = module.params.get('tags')
-  purge_tags = module.params.get('purge_tags')
-  changed |= ensure_tags(client, module, snapshot, existing_tags, desired_tags, purge_tags)
+    desired_tags = module.params.get('tags')
+    purge_tags = module.params.get('purge_tags')
+    changed |= ensure_tags(client, module, snapshot, existing_tags, desired_tags, purge_tags)
+    snapshot = get_snapshot(client, module)  
 
-  snapshot = get_snapshot(client, module)  
+    relevant_response = dict(rds=snapshot)
 
-  relevant_response = dict(rds=snapshot)
+    return relevant_response
 
-  return relevant_response
 
 def main():
     module = AnsibleAWSModule(
@@ -483,5 +488,6 @@ def main():
 
     module.exit_json(**ret_dict)
 
+
 if __name__ == '__main__':
-  main()
+    main()
