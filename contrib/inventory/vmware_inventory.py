@@ -216,7 +216,6 @@ class VMWareInventory(object):
             'cache_path': '~/.ansible/tmp',
             'cache_max_age': 3600,
             'max_object_level': 1,
-            # minimum of 4 required for 'use_hw_if_as_host' to work. It will default to 4 in that case if set lower.
             'skip_keys': 'declaredalarmstate,'
                          'disabledmethod,'
                          'dynamicproperty,'
@@ -228,10 +227,10 @@ class VMWareInventory(object):
                          'resourceconfig',
             'alias_pattern': '{{ config.name + "_" + config.uuid }}',
             'host_pattern': '{{ guest.ipaddress }}',
-            'use_hw_if_as_host': 'False',
             # requires 'max_object_level': 4 (minimum) will check and set automatically if this is enabled.
-            'hw_if_ip_filter': '',
+            'use_hw_if_as_host': 'False',
             # filter string to filter (start of) ip addresses for 'use_hw_if_as_host'
+            'hw_if_ip_filter': '',
             'host_filters': '{{ runtime.powerstate == "poweredOn" }}',
             'groupby_patterns': '{{ guest.guestid }},{{ "templates" if config.template else "guests"}}',
             'lower_var_keys': True,
@@ -284,9 +283,8 @@ class VMWareInventory(object):
 
         # behavior control
         self.maxlevel = int(config.get('vmware', 'max_object_level'))
-        # maxlevel >= 4 required for 'use_hw_if_as_host' to work
         if config.get('vmware', 'use_hw_if_as_host').lower() == 'true' and self.maxlevel < 4:
-            self.maxlevel = 4
+            raise ValueError('use_hw_if_as_host requires maxlevel >= 4')
         self.debugl('max object level is %s' % self.maxlevel)
         self.lowerkeys = config.get('vmware', 'lower_var_keys')
         if type(self.lowerkeys) != bool:
