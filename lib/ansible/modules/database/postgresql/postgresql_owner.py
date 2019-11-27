@@ -275,49 +275,51 @@ class PgOwnership(object):
     def __is_owner(self):
         """Return True if self.role is the current object owner."""
         if self.obj_type == 'table':
-            query = ("SELECT 1 FROM pg_tables WHERE tablename = '%s' "
-                     "AND tableowner = '%s'" % (self.obj_name, self.role))
+            query = ("SELECT 1 FROM pg_tables "
+                     "WHERE tablename = %(obj_name)s "
+                     "AND tableowner = %(role)s")
 
         elif self.obj_type == 'database':
             query = ("SELECT 1 FROM pg_database AS d "
                      "JOIN pg_roles AS r ON d.datdba = r.oid "
-                     "WHERE d.datname = '%s' "
-                     "AND r.rolname = '%s'" % (self.obj_name, self.role))
+                     "WHERE d.datname = %(obj_name)s "
+                     "AND r.rolname = %(role)s")
 
         elif self.obj_type == 'function':
             query = ("SELECT 1 FROM pg_proc AS f "
                      "JOIN pg_roles AS r ON f.proowner = r.oid "
-                     "WHERE f.proname = '%s' "
-                     "AND r.rolname = '%s'" % (self.obj_name, self.role))
+                     "WHERE f.proname = %(obj_name)s "
+                     "AND r.rolname = %(role)s")
 
         elif self.obj_type == 'sequence':
             query = ("SELECT 1 FROM pg_class AS c "
                      "JOIN pg_roles AS r ON c.relowner = r.oid "
-                     "WHERE c.relkind = 'S' AND c.relname = '%s' "
-                     "AND r.rolname = '%s'" % (self.obj_name, self.role))
+                     "WHERE c.relkind = 'S' AND c.relname = %(obj_name)s "
+                     "AND r.rolname = %(role)s")
 
         elif self.obj_type == 'schema':
             query = ("SELECT 1 FROM information_schema.schemata "
-                     "WHERE schema_name = '%s' "
-                     "AND schema_owner = '%s'" % (self.obj_name, self.role))
+                     "WHERE schema_name = %(obj_name)s "
+                     "AND schema_owner = %(role)s")
 
         elif self.obj_type == 'tablespace':
             query = ("SELECT 1 FROM pg_tablespace AS t "
                      "JOIN pg_roles AS r ON t.spcowner = r.oid "
-                     "WHERE t.spcname = '%s' "
-                     "AND r.rolname = '%s'" % (self.obj_name, self.role))
+                     "WHERE t.spcname = %(obj_name)s "
+                     "AND r.rolname = %(role)s")
 
         elif self.obj_type == 'view':
             query = ("SELECT 1 FROM pg_views "
-                     "WHERE viewname = '%s' "
-                     "AND viewowner = '%s'" % (self.obj_name, self.role))
+                     "WHERE viewname = %(obj_name)s "
+                     "AND viewowner = %(role)s")
 
         elif self.obj_type == 'matview':
             query = ("SELECT 1 FROM pg_matviews "
-                     "WHERE matviewname = '%s' "
-                     "AND matviewowner = '%s'" % (self.obj_name, self.role))
+                     "WHERE matviewname = %(obj_name)s "
+                     "AND matviewowner = %(role)s")
 
-        return exec_sql(self, query, add_to_executed=False)
+        query_params = {'obj_name': self.obj_name, 'role': self.role}
+        return exec_sql(self, query, query_params, add_to_executed=False)
 
     def __set_db_owner(self):
         """Set the database owner."""
@@ -369,7 +371,9 @@ class PgOwnership(object):
 
     def __role_exists(self, role):
         """Return True if role exists, otherwise return False."""
-        return exec_sql(self, "SELECT 1 FROM pg_roles WHERE rolname = '%s'" % role, add_to_executed=False)
+        query_params = {'role': role}
+        query = "SELECT 1 FROM pg_roles WHERE rolname = %(role)s"
+        return exec_sql(self, query, query_params, add_to_executed=False)
 
 
 # ===========================================
