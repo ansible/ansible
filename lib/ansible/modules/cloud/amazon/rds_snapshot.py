@@ -12,7 +12,6 @@ __metaclass__ = type
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
-
 DOCUMENTATION = '''
 ---
 module: rds_snapshot
@@ -25,7 +24,7 @@ options:
     description:
       - Specify cluster or instance snapshot.
     default: instance
-    choices [ 'aurora', 'instance' ]
+    choices: [ 'aurora', 'instance' ]
     type: str
   state:
     description:
@@ -88,7 +87,6 @@ extends_documentation_fragment:
     - aws
     - ec2
 '''
-
 EXAMPLES = '''
 # Create snapshot
 - name: Create RDS snapshot
@@ -116,7 +114,6 @@ EXAMPLES = '''
     state: absent
     db_snapshot_identifier: new-cluster-snapshot
 '''
-
 RETURN = '''
 allocated_storage:
   description: How much storage is allocated in GB.
@@ -322,7 +319,7 @@ def wait_for_snapshot_status(client, module, db_snapshot_id, waiter_name):
     try:
       if module.params['snapshot_type'] == 'aurora':
         db_cluster_identifier = module.params['db_cluster_identifier']
-        client.get_waiter(waiter_name).wait(DBClusterIdentifier=db_cluster_identifier,DBClusterSnapshotIdentifier=db_snapshot_id,
+        client.get_waiter(waiter_name).wait(DBClusterIdentifier=db_cluster_identifier, DBClusterSnapshotIdentifier=db_snapshot_id,
                                             WaiterConfig=dict(
                                                 Delay=5,
                                                 MaxAttempts=int((timeout + 2.5) / 5)
@@ -368,7 +365,7 @@ def ensure_snapshot_absent(client, module):
           module.fail_json_aws(e, msg="trying to delete snapshot")
 
   elif not snapshot and module.params.get('fail_on_not_exists'):
-    module.fail_json_aws(snapshot,msg="cannot delete nonexistent snapshot")
+    module.fail_json_aws(snapshot, msg="cannot delete nonexistent snapshot")
 
   # If we're not waiting for a delete to complete then we're all done
   # so just return
@@ -470,22 +467,21 @@ def main():
             fail_on_not_exists=dict(type='bool', default=False)
         ),
         required_if=[
-          ['snapshot_type', 'aurora', [ "db_cluster_identifier" ]],
-          ['snapshot_type', 'instance', [ "db_instance_identifier" ]]
+          ['snapshot_type', 'aurora', ["db_cluster_identifier"]],
+          ['snapshot_type', 'instance', ["db_instance_identifier"]]
         ],
         mutually_exclusive=[
-         [ 'db_cluster_identifier', 'db_instance_identifier' ] 
-        ]
+         ['db_cluster_identifier', 'db_instance_identifier']
+         ]
     )
-
     client = module.client('rds', retry_decorator=AWSRetry.jittered_backoff(retries=10))
 
     if module.params['state'] == 'absent':
       ret_dict = ensure_snapshot_absent(client, module)
     else:
       ret_dict = ensure_snapshot_present(client, module)
-    t1 = False 
-    module.exit_json(test=t1,d=ret_dict)
+
+    module.exit_json(**ret_dict)
 
 if __name__ == '__main__':
   main()
