@@ -23,7 +23,7 @@
     - name: 'Check secret kv2 values'
       fail:
         msg: 'unexpected secret values'
-      when: kv2_secret1['value'] != 'foo1' or kv2_secret2['value'] != 'foo2'
+      when: kv2_secret1['data']['value'] != 'foo1' or kv2_secret2['data']['value'] != 'foo2'
 
     - name: 'Failure expected when erroneous credentials are used'
       vars:
