@@ -181,7 +181,7 @@ from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import httpapi_loader
+from ansible.plugins.new_loader import httpapi_loader
 from ansible.plugins.connection import NetworkConnectionBase, ensure_connect
 
 
@@ -199,7 +199,7 @@ class Connection(NetworkConnectionBase):
 
         if self._network_os:
 
-            self.httpapi = httpapi_loader.get(self._network_os, self)
+            self.httpapi = httpapi_loader.get(self._network_os)(self)
             if self.httpapi:
                 self._sub_plugin = {'type': 'httpapi', 'name': self.httpapi._load_name, 'obj': self.httpapi}
                 self.queue_message('vvvv', 'loaded API plugin %s from path %s for network_os %s' %

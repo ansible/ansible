@@ -359,9 +359,23 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     task_list.append(ir)
             else:
                 if use_handlers:
-                    t = Handler.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+                    t = Handler.load(
+                        task_ds,
+                        block=block,
+                        role=role,
+                        task_include=task_include,
+                        variable_manager=variable_manager,
+                        loader=loader,
+                    )
                 else:
-                    t = Task.load(task_ds, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+                    t = Task.load(
+                        task_ds,
+                        block=block,
+                        role=role,
+                        task_include=task_include,
+                        variable_manager=variable_manager,
+                        loader=loader,
+                    )
 
                 task_list.append(t)
 
@@ -387,8 +401,14 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
 
     roles = []
     for role_def in ds:
-        i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager,
-                             loader=loader, collection_list=collection_search_list)
+        i = RoleInclude.load(
+            role_def,
+            play=play,
+            current_role_path=current_role_path,
+            variable_manager=variable_manager,
+            loader=loader,
+            collection_list=collection_search_list,
+        )
         roles.append(i)
 
     return roles

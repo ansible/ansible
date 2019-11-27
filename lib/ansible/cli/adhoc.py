@@ -125,6 +125,9 @@ class AdHocCLI(CLI):
         play_ds = self._play_ds(pattern, context.CLIARGS['seconds'], context.CLIARGS['poll_interval'])
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
+        # build vars for use in the tqm run call
+        play_vars = variable_manager.get_vars(play=play)
+
         # used in start callback
         playbook = Playbook(loader)
         playbook._entries.append(play)
@@ -164,7 +167,7 @@ class AdHocCLI(CLI):
             # self._tqm.send_callback('v2_playbook_on_start', playbook)
 
             self._tqm.initialize_processes(min(self._tqm._forks, len(hosts)))
-            result = self._tqm.run(play)
+            result = self._tqm.run(play, play_vars=play_vars)
 
             self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
         finally:

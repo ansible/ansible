@@ -39,7 +39,7 @@ from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
-from ansible.plugins.loader import action_loader
+from ansible.plugins.new_loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.utils.display import Display
@@ -245,7 +245,7 @@ class StrategyModule(StrategyBase):
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
                     try:
-                        action = action_loader.get(target_task.action, class_only=True)
+                        action = action_loader.get(target_task.action)
                     except KeyError:
                         # we don't care here, because the action may simply not have a
                         # corresponding action plugin
@@ -346,6 +346,9 @@ class StrategyModule(StrategyBase):
                                     variable_manager=self._variable_manager,
                                     loader=self._loader,
                                 )
+
+                                with self._worker_update_lock:
+                                    self._worker_update_list.append({"plugin_path": new_ir._role_path})
                             else:
                                 new_blocks = self._load_included_file(included_file, iterator=iterator)
 

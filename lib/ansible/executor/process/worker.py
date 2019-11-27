@@ -42,7 +42,8 @@ from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
 from ansible.module_utils.urls import ParseResultDottedDict as DottedDict
-from ansible.plugins import loader as plugin_loader
+from ansible.plugins import new_loader as plugin_loader
+from ansible.plugins.new_loader import add_all_plugin_dirs
 from ansible.utils.cpu import mask_to_bytes, sched_setaffinity
 from ansible.utils.display import Display
 from ansible.utils.inventory import add_host, add_group
@@ -134,6 +135,8 @@ class WorkerProcess(AnsibleProcessBase):
                         add_host(update['add_host'], self._hostvars._inventory)
                     elif 'add_group' in update:
                         add_group(update['host'], update['add_group'], self._hostvars._inventory)
+                    elif 'plugin_path' in update:
+                        add_all_plugin_dirs(update['plugin_path'])
 
                 # read in task vars from the temp file and clean it up
                 display.debug("reading task vars file")

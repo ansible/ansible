@@ -168,13 +168,14 @@ class ActionModule(ActionBase):
                         follow=follow,
                     ),
                 )
-                copy_action = self._shared_loader_obj.action_loader.get('copy',
-                                                                        task=new_task,
-                                                                        connection=self._connection,
-                                                                        play_context=self._play_context,
-                                                                        loader=self._loader,
-                                                                        templar=self._templar,
-                                                                        shared_loader_obj=self._shared_loader_obj)
+                copy_action = self._shared_loader_obj.action_loader.get('copy')(
+                    task=new_task,
+                    connection=self._connection,
+                    play_context=self._play_context,
+                    loader=self._loader,
+                    templar=self._templar,
+                    shared_loader_obj=self._shared_loader_obj,
+                )
                 result.update(copy_action.run(task_vars=task_vars))
             finally:
                 shutil.rmtree(to_bytes(local_tempdir, errors='surrogate_or_strict'))

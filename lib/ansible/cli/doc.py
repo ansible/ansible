@@ -12,7 +12,7 @@ import textwrap
 import traceback
 import yaml
 
-import ansible.plugins.loader as plugin_loader
+import ansible.plugins.new_loader as plugin_loader
 
 from ansible import constants as C
 from ansible import context
@@ -25,7 +25,7 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.plugins.loader import action_loader, fragment_loader
+from ansible.plugins.new_loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
@@ -109,11 +109,11 @@ class DocCLI(CLI):
         basedir = context.CLIARGS['basedir']
         if basedir:
             set_collection_playbook_paths(basedir)
-            loader.add_directory(basedir, with_subdir=True)
+            loader.add_directories(basedir, recursive=True)
         if context.CLIARGS['module_path']:
             for path in context.CLIARGS['module_path']:
                 if path:
-                    loader.add_directory(path)
+                    loader.add_directories(path)
 
         # save only top level paths for errors
         search_paths = DocCLI.print_paths(loader)
@@ -121,7 +121,7 @@ class DocCLI(CLI):
 
         # list plugins names and filepath for type
         if context.CLIARGS['list_files']:
-            paths = loader._get_paths()
+            paths = loader._path_cache.keys()
             for path in paths:
                 self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
@@ -142,7 +142,7 @@ class DocCLI(CLI):
 
         # list file plugins for type (does not read docs, very fast)
         elif context.CLIARGS['list_dir']:
-            paths = loader._get_paths()
+            paths = loader._path_cache.keys()
             for path in paths:
                 self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
@@ -241,7 +241,7 @@ class DocCLI(CLI):
     def get_all_plugins_of_type(plugin_type):
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         plugin_list = set()
-        paths = loader._get_paths()
+        paths = loader._path_cache.keys()
         for path in paths:
             plugins_to_add = DocCLI.find_plugins(path, plugin_type)
             plugin_list.update(plugins_to_add)
@@ -251,30 +251,30 @@ class DocCLI(CLI):
     def get_plugin_metadata(plugin_type, plugin_name):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
-        filename = loader.find_plugin(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
-        if filename is None:
+        _drop, path = loader.find_plugin(plugin_name)
+        if path is None:
             raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
 
         try:
-            doc, __, __, metadata = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
+            doc, __, __, metadata = get_docstring(path, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
         except Exception:
             display.vvv(traceback.format_exc())
             raise AnsibleError(
                 "%s %s at %s has a documentation error formatting or is missing documentation." %
-                (plugin_type, plugin_name, filename))
+                (plugin_type, plugin_name, path))
 
         if doc is None:
             if 'removed' not in metadata.get('status', []):
                 raise AnsibleError(
                     "%s %s at %s has a documentation error formatting or is missing documentation." %
-                    (plugin_type, plugin_name, filename))
+                    (plugin_type, plugin_name, path))
 
             # Removed plugins don't have any documentation
             return None
 
         return dict(
             name=plugin_name,
-            namespace=DocCLI.namespace_from_plugin_filepath(filename, plugin_name, loader.package_path),
+            namespace=DocCLI.namespace_from_plugin_filepath(path, plugin_name, loader.package_path),
             description=doc.get('short_description', "UNKNOWN"),
             version_added=doc.get('version_added', "UNKNOWN")
         )
@@ -295,11 +295,11 @@ class DocCLI(CLI):
     @staticmethod
     def _get_plugin_doc(plugin, loader, search_paths):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-        filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
-        if filename is None:
+        _drop, path = loader.find_plugin(plugin)
+        if not path:
             raise PluginNotFound('%s was not found in %s' % (plugin, search_paths))
 
-        doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
+        doc, plainexamples, returndocs, metadata = get_docstring(path, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
 
         # If the plugin existed but did not have a DOCUMENTATION element and was not removed, it's
         # an error
@@ -319,7 +319,7 @@ class DocCLI(CLI):
 
             raise ValueError('%s did not contain a DOCUMENTATION attribute' % plugin)
 
-        doc['filename'] = filename
+        doc['filename'] = path
         return doc, plainexamples, returndocs, metadata
 
     @staticmethod
@@ -428,16 +428,14 @@ class DocCLI(CLI):
 
             try:
                 # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-                filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
+                _drop, path = loader.find_plugin(plugin)
 
-                if filename is None:
+                if path is None:
                     continue
-                if filename.endswith(".ps1"):
-                    continue
-                if os.path.isdir(filename):
+                if path.endswith(".ps1"):
                     continue
 
-                pfiles[plugin] = filename
+                pfiles[plugin] = path
 
             except Exception as e:
                 raise AnsibleError("Failed reading docs at %s: %s" % (plugin, to_native(e)), orig_exc=e)
@@ -450,7 +448,7 @@ class DocCLI(CLI):
 
         # Uses a list to get the order right
         ret = []
-        for i in finder._get_paths(subdirs=False):
+        for i in finder._path_cache.keys():
             if i not in ret:
                 ret.append(i)
         return os.pathsep.join(ret)

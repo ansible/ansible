@@ -27,16 +27,16 @@ from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.urls import ParseResultDottedDict as DottedDict
-from ansible.plugins.loader import become_loader, connection_loader, shell_loader
+from ansible.plugins.new_loader import become_loader, connection_loader, shell_loader
 from ansible.playbook import Playbook
 from ansible.playbook.base import post_validate
 from ansible.template import Templar
 from ansible.utils.cpu import mask_to_bytes, sched_setaffinity
-
 from ansible.utils.helpers import pct_to_int
 from ansible.utils.path import makedirs_safe
 from ansible.utils.ssh_functions import check_for_controlpersist
 from ansible.utils.display import Display
+from ansible.vars.reserved import warn_if_reserved
 
 display = Display()
 
@@ -87,9 +87,9 @@ class PlaybookExecutor:
         entry = {}
         try:
             # preload become/connection/shell to set config defs cached
-            list(connection_loader.all(class_only=True))
-            list(shell_loader.all(class_only=True))
-            list(become_loader.all(class_only=True))
+            list(connection_loader.all())
+            list(shell_loader.all())
+            list(become_loader.all())
 
             # s = mask_to_bytes(0x01)
             # sched_setaffinity(os.getpid(), len(s), s)
@@ -159,8 +159,15 @@ class PlaybookExecutor:
 
                     # Post validate so any play level variables are templated
                     all_vars = self._variable_manager.get_vars(play=play)
-                    templar = Templar(loader=self._loader, variables=all_vars)
-                    play.deserialize(post_validate(play.serialize(), templar))
+                    templar.available_variables = all_vars
+                    # since post_validate now expects a dict of attributes, we first dump
+                    # them then reconstitute the play from post-validated dict of attrs
+                    play_attrs = play.dump_attrs()
+                    play_attrs['valid_attrs'] = play._valid_attrs_repr
+                    play_attrs['class_name'] = play.__class__.__name__
+                    play_attrs['ds'] = play.get_ds()
+                    post_validate(play_attrs, templar)
+                    play.from_attrs(play_attrs)
 
                     if context.CLIARGS['syntax']:
                         continue
@@ -190,7 +197,7 @@ class PlaybookExecutor:
                             # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)
                             # and run it...
-                            result = self._tqm.run(play=play)
+                            result = self._tqm.run(play=play, play_vars=all_vars)
 
                             # break the play if the result equals the special return code
                             if result & self._tqm.RUN_FAILED_BREAK_PLAY != 0:

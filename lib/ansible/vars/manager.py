@@ -38,8 +38,7 @@ from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
 from ansible.module_utils.six import iteritems, text_type, string_types
-from ansible.plugins.loader import lookup_loader
-from ansible.plugins.new_loader import vars_loader
+from ansible.plugins.new_loader import lookup_loader, vars_loader
 from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
 from ansible.utils.display import Display
@@ -538,7 +537,7 @@ class VariableManager:
                         fail_on_undefined=True,
                         convert_bare=False,
                     )
-                    items = wrap_var(lookup_loader.get(task.loop_with, loader=self._loader, templar=self._templar).run(terms=loop_terms, variables=vars_copy))
+                    items = wrap_var(lookup_loader.get(task.loop_with)(loader=self._loader, templar=self._templar).run(terms=loop_terms, variables=vars_copy))
                 except AnsibleTemplateError:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail
@@ -616,6 +615,8 @@ class VariableManager:
             else:
                 delegated_host = Host(name=delegated_host_name)
                 delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars, validate=False, inplace=True)
+
+            print("delegated_host %s (%s)" % (delegated_host, delegated_host.vars))
 
             # now we go fetch the vars for the delegated-to host and save them in our
             # master dictionary of variables to be used later in the TaskExecutor/PlayContext

@@ -11,7 +11,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.module_utils._text import to_bytes
-from ansible.plugins.loader import vars_loader
+from ansible.plugins.new_loader import vars_loader
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
@@ -53,7 +53,8 @@ def get_vars_from_path(loader, path, entities, stage):
             if vars_plugin not in vars_plugin_list:
                 vars_plugin_list.append(vars_plugin)
 
-    for plugin in vars_plugin_list:
+    for p in vars_plugin_list:
+        plugin = p()
         if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and getattr(plugin, 'REQUIRES_WHITELIST', False):
             # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
             continue

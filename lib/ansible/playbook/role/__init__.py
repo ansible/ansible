@@ -31,7 +31,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
-from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.plugins.new_loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.vars import combine_vars
 

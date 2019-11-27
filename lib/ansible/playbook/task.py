@@ -27,7 +27,7 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
-from ansible.plugins.loader import lookup_loader
+from ansible.plugins.new_loader import lookup_loader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
@@ -74,7 +74,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     _async_val = FieldAttribute(isa='int', default=0, alias='async')
     _changed_when = FieldAttribute(isa='list', default=list)
     _delay = FieldAttribute(isa='int', default=5)
-    _delegate_to = FieldAttribute(isa='string')
+    _delegate_to = FieldAttribute(isa='string', always_post_validate=True)
     _delegate_facts = FieldAttribute(isa='bool')
     _failed_when = FieldAttribute(isa='list', default=list)
     _loop = FieldAttribute()

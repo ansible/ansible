@@ -35,7 +35,7 @@ from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins.loader import inventory_loader
+from ansible.plugins.new_loader import inventory_loader
 from ansible.utils.helpers import deduplicate_list
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
@@ -199,7 +199,7 @@ class InventoryManager(object):
 
         plugins = []
         for name in C.INVENTORY_ENABLED:
-            plugin = inventory_loader.get(name)
+            plugin = inventory_loader.get(name)()
             if plugin:
                 plugins.append(plugin)
             else:

@@ -30,7 +30,7 @@ from ansible.module_utils.six import with_metaclass
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins import AnsiblePlugin
-from ansible.plugins.loader import cache_loader
+from ansible.plugins.new_loader import cache_loader
 from ansible.utils.display import Display
 from ansible.vars.fact_cache import FactCache as RealFactCache
 
@@ -275,7 +275,7 @@ class CachePluginAdjudicator(MutableMapping):
         self._cache = {}
         self._retrieved = {}
 
-        self._plugin = cache_loader.get(plugin_name, **kwargs)
+        self._plugin = cache_loader.get(plugin_name)(**kwargs)
         if not self._plugin:
             raise AnsibleError('Unable to load the cache plugin (%s).' % plugin_name)
 

@@ -188,7 +188,7 @@ from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
-from ansible.plugins.loader import netconf_loader
+from ansible.plugins.new_loader import netconf_loader
 from ansible.plugins.connection import NetworkConnectionBase, ensure_connect
 
 try:
@@ -226,13 +226,13 @@ class Connection(NetworkConnectionBase):
         # This will be used to trigger the the use of guess_network_os when connecting.
         self._network_os = self._network_os or 'auto'
 
-        netconf = netconf_loader.get(self._network_os, self)
+        netconf = netconf_loader.get(self._network_os)(self)
         if netconf:
             self._sub_plugin = {'type': 'netconf', 'name': netconf._load_name, 'obj': netconf}
             self.queue_message('vvvv', 'loaded netconf plugin %s from path %s for network_os %s' %
                                (netconf._load_name, netconf._original_path, self._network_os))
         else:
-            netconf = netconf_loader.get("default", self)
+            netconf = netconf_loader.get("default")(self)
             self._sub_plugin = {'type': 'netconf', 'name': 'default', 'obj': netconf}
             self.queue_message('display', 'unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
         self.queue_message('log', 'network_os is set to %s' % self._network_os)
@@ -292,7 +292,7 @@ class Connection(NetworkConnectionBase):
 
         # Try to guess the network_os if the network_os is set to auto
         if self._network_os == 'auto':
-            for cls in netconf_loader.all(class_only=True):
+            for cls in netconf_loader.all():
                 network_os = cls.guess_network_os(self)
                 if network_os:
                     self.queue_message('vvv', 'discovered network_os %s' % network_os)

@@ -36,7 +36,7 @@ import time
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.included_file import IncludedFile
-from ansible.plugins.loader import action_loader
+from ansible.plugins.new_loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.module_utils._text import to_text
@@ -152,7 +152,7 @@ class StrategyModule(StrategyBase):
                         iterator._host_states[host_name] = state
 
                         try:
-                            action = action_loader.get(task.action, class_only=True)
+                            action = action_loader.get(task.action)
                         except KeyError:
                             # we don't care here, because the action may simply not have a
                             # corresponding action plugin

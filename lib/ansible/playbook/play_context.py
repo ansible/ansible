@@ -34,7 +34,7 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.plugins import get_plugin_class
 from ansible.utils.display import Display
-from ansible.plugins.loader import get_shell_plugin
+from ansible.plugins.new_loader import get_shell_plugin
 from ansible.utils.ssh_functions import check_for_controlpersist
 
 

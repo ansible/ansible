@@ -443,8 +443,8 @@ class Templar:
         Returns filter plugins, after loading and caching them if need be
         '''
 
-        if self._filters is not None:
-            return self._filters.copy()
+        #if self._filters is not None:
+        #    return self._filters.copy()
 
         self._filters = dict()
 

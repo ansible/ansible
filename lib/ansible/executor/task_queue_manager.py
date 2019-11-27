@@ -40,8 +40,8 @@ from ansible.module_utils.urls import ParseResultDottedDict as DottedDict
 from ansible.playbook.base import post_validate
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins import loader as plugin_loader
-from ansible.plugins.loader import strategy_loader, module_loader
+from ansible.plugins import new_loader as plugin_loader
+from ansible.plugins.new_loader import strategy_loader, module_loader
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.utils.sentinel import Sentinel
@@ -101,7 +101,7 @@ class TaskQueueManager:
         if context.CLIARGS.get('module_path', False):
             for path in context.CLIARGS['module_path']:
                 if path:
-                    module_loader.add_directory(path)
+                    module_loader.add_directores(path)
 
         # a special flag to help us exit cleanly
         self._terminated = False
@@ -141,7 +141,7 @@ class TaskQueueManager:
     # for compatibility, in case someone was using this directly
     _initialize_processes = initialize_processes
 
-    def run(self, play):
+    def run(self, play, play_vars):
         '''
         Iterates over the roles/tasks in a play, using the given (or default)
         strategy for queueing tasks. The default is the linear strategy, which
@@ -150,14 +150,7 @@ class TaskQueueManager:
         are done with the current task).
         '''
 
-        all_vars = self._variable_manager.get_vars(play=play)
-        warn_if_reserved(all_vars)
-        templar = Templar(loader=self._loader, variables=all_vars)
-
         new_play = play.copy()
-        new_play.deserialize(
-            post_validate(new_play.serialize(), templar)
-        )
         new_play.handlers = new_play.compile_roles_handlers() + new_play.handlers
 
         play_context = PlayContext(new_play, self.passwords, self._connection_lockfile.fileno())
@@ -171,12 +164,12 @@ class TaskQueueManager:
             play=new_play,
             play_context=play_context,
             variable_manager=self._variable_manager,
-            all_vars=all_vars,
+            all_vars=play_vars,
             start_at_done=self._start_at_done,
         )
 
         # load the specified strategy (or the default linear one)
-        strategy = strategy_loader.get(new_play.strategy, self)
+        strategy = strategy_loader.get(new_play.strategy)(self)
         if strategy is None:
             raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 

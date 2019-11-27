@@ -229,13 +229,12 @@ class Play(Base, Taggable, CollectionSearch):
 
         block_list = []
 
-        if len(self.roles) > 0:
-            for r in self.roles:
-                # Don't insert tasks from ``import/include_role``, preventing
-                # duplicate execution at the wrong time
-                if r.from_include:
-                    continue
-                block_list.extend(r.compile(play=self))
+        for r in self.roles:
+            # Don't insert tasks from ``import/include_role``, preventing
+            # duplicate execution at the wrong time
+            if r.from_include:
+                continue
+            block_list.extend(r.compile(play=self))
 
         return block_list
 
@@ -247,11 +246,10 @@ class Play(Base, Taggable, CollectionSearch):
 
         block_list = []
 
-        if len(self.roles) > 0:
-            for r in self.roles:
-                if r.from_include:
-                    continue
-                block_list.extend(r.get_handler_blocks(play=self))
+        for r in self.roles:
+            if r.from_include:
+                continue
+            block_list.extend(r.get_handler_blocks(play=self))
 
         return block_list
 
@@ -328,6 +326,8 @@ class Play(Base, Taggable, CollectionSearch):
 
     def deserialize(self, data):
 
+        super(Play, self).deserialize(data)
+
         self._included_path = data.get('included_path', None)
         if 'roles' in data:
             role_data = data.get('roles', [])
@@ -338,9 +338,8 @@ class Play(Base, Taggable, CollectionSearch):
                 roles.append(r)
 
             setattr(self, 'roles', roles)
-            del data['roles']
 
-        return super(Play, self).deserialize(data)
+        return self
 
     def copy(self):
         new_me = super(Play, self).copy()

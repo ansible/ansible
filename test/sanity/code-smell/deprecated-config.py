@@ -31,7 +31,7 @@ import yaml
 
 import ansible.config
 
-from ansible.plugins.loader import fragment_loader
+from ansible.plugins.new_loader import fragment_loader
 from ansible.release import __version__ as ansible_version
 from ansible.utils.plugin_docs import get_docstring
 

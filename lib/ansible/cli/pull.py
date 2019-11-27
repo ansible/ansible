@@ -21,7 +21,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six.moves import shlex_quote
-from ansible.plugins.loader import module_loader
+from ansible.plugins.new_loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
 from ansible.utils.display import Display
 

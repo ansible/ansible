@@ -26,8 +26,7 @@ from ansible.playbook.base import post_validate
 from ansible.playbook.conditional import evaluate_conditional
 from ansible.playbook.play_context import set_task_and_variable_override, set_become_plugin, set_attributes_from_plugin, set_playcontext_connection
 from ansible.playbook.task import Task
-from ansible.plugins.loader import become_loader, cliconf_loader, httpapi_loader, netconf_loader, terminal_loader
-from ansible.plugins.new_loader import connection_loader, lookup_loader
+from ansible.plugins.new_loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, lookup_loader, netconf_loader, terminal_loader
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.listify import listify_lookup_plugin_terms
@@ -845,8 +844,7 @@ class TaskExecutor:
         # Because this is an async task, the action handler is async. However,
         # we need the 'normal' action handler for the status check, so get it
         # now via the action_loader
-        async_handler = self._shared_loader_obj.action_loader.get(
-            'async_status',
+        async_handler = self._shared_loader_obj.action_loader.get('async_status')(
             task=async_task,
             connection=self._connection,
             play_context=self._play_context,
@@ -902,7 +900,7 @@ class TaskExecutor:
         if not become:
             raise AnsibleError("Invalid become method specified, could not find matching plugin: '%s'. "
                                "Use `ansible-doc -t become -l` to list available plugins." % name)
-        return become
+        return become()
 
     def _get_connection(self, variables, templar):
         '''
@@ -926,8 +924,7 @@ class TaskExecutor:
 
         # load connection
         conn_type = self._play_context.connection
-        connection = self._shared_loader_obj.connection_loader.get(
-            conn_type,
+        connection = self._shared_loader_obj.connection_loader.get(conn_type)(
             self._play_context,
             self._new_stdin,
             task_uuid=self._task.uuid,
@@ -1036,7 +1033,7 @@ class TaskExecutor:
 
         # set options with 'templated vars' specific to this plugin and dependant ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
-        self._set_plugin_options('shell', final_vars, templar, task_keys)
+        #self._set_plugin_options('shell', final_vars, templar, task_keys)
 
         if self._connection.become is not None:
             # FIXME: find alternate route to provide passwords,
@@ -1072,15 +1069,13 @@ class TaskExecutor:
             handler_name = 'normal'
             collections = None  # until then, we don't want the task's collection list to be consulted; use the builtin
 
-        handler = self._shared_loader_obj.action_loader.get(
-            handler_name,
+        handler = self._shared_loader_obj.action_loader.get(handler_name, collection_list=collections) (
             task=self._task,
             connection=connection,
             play_context=self._play_context,
             loader=self._loader,
             templar=templar,
             shared_loader_obj=self._shared_loader_obj,
-            collection_list=collections
         )
 
         if not handler:

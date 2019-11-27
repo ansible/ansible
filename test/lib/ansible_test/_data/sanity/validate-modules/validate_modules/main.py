@@ -39,7 +39,7 @@ from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils._text import to_bytes
-from ansible.plugins.loader import fragment_loader
+from ansible.plugins.new_loader import fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 

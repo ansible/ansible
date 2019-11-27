@@ -135,6 +135,8 @@ def clean_facts(facts):
     remove_keys.update(fact_keys.intersection(C.COMMON_CONNECTION_VARS))
 
     # next we remove any connection plugin specific vars
+    # FIXME: this won't clean connection vars for connection
+    #        plugins that came from collections
     for conn_name in connection_loader._plugin_cache.keys():
         for fact_key in fact_keys:
             # most lightweight VM or container tech creates devices with this pattern, this avoids filtering them out

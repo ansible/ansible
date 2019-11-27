@@ -49,7 +49,7 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.play_context import set_task_and_variable_override
 from ansible.playbook.task_include import TaskInclude
-from ansible.plugins import loader as plugin_loader
+from ansible.plugins import new_loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.inventory import add_host, add_group
@@ -768,7 +768,7 @@ class StrategyBase:
 
         bypass_host_loop = False
         try:
-            action = plugin_loader.action_loader.get(handler.action, class_only=True)
+            action = plugin_loader.action_loader.get(handler.action)
             if getattr(action, 'BYPASS_HOST_LOOP', False):
                 bypass_host_loop = True
         except KeyError:
@@ -980,7 +980,7 @@ class StrategyBase:
                 connection = Connection(self._active_connections[target_host])
                 del self._active_connections[target_host]
             else:
-                connection = plugin_loader.connection_loader.get(play_context.connection, play_context, os.devnull)
+                connection = plugin_loader.connection_loader.get(play_context.connection)(play_context, os.devnull)
                 play_context.set_attributes_from_plugin(connection)
 
             if connection:

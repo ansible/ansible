@@ -38,7 +38,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
     _always = FieldAttribute(isa='list', default=list, inherit=False)
 
     # other fields
-    _delegate_to = FieldAttribute(isa='string')
+    _delegate_to = FieldAttribute(isa='string', always_post_validate=True)
     _delegate_facts = FieldAttribute(isa='bool')
 
     # for future consideration? this would be functionally
@@ -223,7 +223,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         new_me.validate()
         return new_me
 
-    def serialize(self):
+    def serialize(self, include_parent=True):
         '''
         Override of the default serialize method, since when we're serializing
         a task we don't want to include the attribute list of tasks.
@@ -239,7 +239,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
         if self._role is not None:
             data['role'] = self._role.serialize()
-        if self._parent is not None:
+        if self._parent is not None and include_parent:
             data['parent'] = self._parent.copy(exclude_tasks=True).serialize()
             data['parent_type'] = self._parent.__class__.__name__
 
