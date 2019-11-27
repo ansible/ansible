@@ -14,10 +14,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import re
 from copy import deepcopy
 from ansible.module_utils.network.common import utils
-from ansible.module_utils.network.ios.utils.utils import get_interface_type, normalize_interface
+from ansible.module_utils.network.ios.utils.utils import netmask_to_cidr
 from ansible.module_utils.network.ios.argspec.static_routes.static_routes import Static_RoutesArgs
 
 
@@ -57,9 +56,10 @@ class Static_RoutesFacts(object):
         # operate on a collection of resource x
         config = data.split('\n')
 
-        for conf in config:
-            if conf:
-                obj = self.render_config(self.generated_spec, conf)
+        same_dest = self.populate_destination(config)
+        for key in same_dest.keys():
+            if key:
+                obj = self.render_config(self.generated_spec, key, same_dest[key])
                 if obj:
                     objs.append(obj)
         facts = {}
@@ -73,60 +73,57 @@ class Static_RoutesFacts(object):
 
         return ansible_facts
 
-    def check_params(self, route, afi, final_route, vrf=False):
-        route_dict = dict()
-        if 'ipv4' in afi.values():
-            if vrf:
-                route_dict['dest'] = route[1] + ' ' + route[2]
-            else:
-                route_dict['dest'] = route[0] + ' ' + route[1]
-        if 'ipv6' in afi.values():
-            if vrf:
-                route_dict['dest'] = route[1]
-            else:
-                route_dict['dest'] = route[0]
-        if vrf:
-            next_hops = []
-            hops = {}
-            if '.' in route[3]:
-                hops['forward_router_address'] = route[3]
-            elif '::' in route[3]:
-                hops['forward_router_address'] = route[3]
-            else:
-                hops['interface'] = route[3]
-            next_hops.append(hops)
-            route_dict['next_hops'] = next_hops
-        else:
-            next_hops = []
-            hops = {}
-            if '.' in route[2]:
-                hops['forward_router_address'] = route[2]
-            elif '::' in route[1]:
-                hops['forward_router_address'] = route[1]
-            else:
-                hops['interface'] = route[2]
-            next_hops.append(hops)
-            route_dict['next_hops'] = next_hops
-        if 'name' in route:
-            route_dict['name'] = route[route.index('name') + 1]
-        if 'multicast' in route:
-            route_dict['multicast'] = True
-        if 'dhcp' in route:
-            route_dict['dhcp'] = True
-        if 'global' in route:
-            route_dict['global'] = True
-        if 'permanent' in route:
-            route_dict['permanent'] = True
-        if 'tag' in route:
-            route_dict['tag'] = route[route.index('tag') + 1]
-        if 'track' in route:
-            route_dict['track'] = route[route.index('track') + 1]
-        if route_dict:
-            final_route['routes'].append(route_dict)
+    def update_netmask_to_cidr(self, filter, pos, del_pos):
+        netmask = filter.split(' ')
+        dest = netmask[pos] + '/' + netmask_to_cidr(netmask[del_pos])
+        netmask[pos] = dest
+        del netmask[del_pos]
+        filter_vrf = ' '
+        return filter_vrf.join(netmask), dest
 
-        return final_route
+    def populate_destination(self, config):
+        same_dest = {}
+        for i in sorted(config):
+            if '::' in i and 'vrf' in i:
+                ip_str = 'ipv6 route vrf'
+            elif '::' in i and 'vrf' not in i:
+                ip_str = 'ipv6 route'
+            elif '.' in i and 'vrf' in i:
+                ip_str = 'ip route vrf'
+            elif '.' in i and 'vrf' not in i:
+                ip_str = 'ip route'
 
-    def render_config(self, spec, conf):
+            if 'vrf' in i:
+                filter_vrf = utils.parse_conf_arg(i, ip_str)
+                if '/' not in filter_vrf and '::' not in filter_vrf:
+                    filter_vrf, dest_vrf = self.update_netmask_to_cidr(filter_vrf, 1, 2)
+                else:
+                    dest_vrf = filter_vrf.split(' ')[1]
+                if dest_vrf not in same_dest.keys():
+                    same_dest[dest_vrf + '_vrf'] = []
+                    same_dest[dest_vrf + '_vrf'].append('vrf ' + filter_vrf)
+                elif 'vrf' not in same_dest[dest_vrf][0]:
+                    same_dest[dest_vrf + '_vrf'] = []
+                    same_dest[dest_vrf + '_vrf'].append('vrf ' + filter_vrf)
+                else:
+                    same_dest[dest_vrf + '_vrf'] = same_dest[dest_vrf + '_vrf'].append(('vrf ' + filter_vrf))
+            else:
+                filter = utils.parse_conf_arg(i, ip_str)
+                if '/' not in filter and '::' not in filter:
+                    filter, dest = self.update_netmask_to_cidr(filter, 0, 1)
+                else:
+                    dest = filter.split(' ')[0]
+                if dest not in same_dest.keys():
+                    same_dest[dest] = []
+                    same_dest[dest].append(filter)
+                elif 'vrf' in same_dest[dest][0]:
+                    same_dest[dest] = []
+                    same_dest[dest].append(filter)
+                else:
+                    same_dest[dest].append(filter)
+        return same_dest
+
+    def render_config(self, spec, conf, conf_val):
         """
         Render config as dictionary structure and delete keys
           from spec for null values
@@ -137,50 +134,79 @@ class Static_RoutesFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
-
-        if 'vrf' in conf:
-            if 'ipv6' in conf:
-                route_ipv6 = utils.parse_conf_arg(conf, 'ipv6 route vrf')
-                vrf_ipv6 = route_ipv6.split(' ')[0]
-                config['vrf'] = vrf_ipv6
-                route_ipv4 = ''
-            else:
-                route_ipv4 = utils.parse_conf_arg(conf, 'ip route vrf')
-                vrf_ipv4 = route_ipv4.split(' ')[0]
-                config['vrf'] = vrf_ipv4
-        else:
-            if 'ipv6' in conf:
-                route_ipv6 = utils.parse_conf_arg(conf, 'ipv6 route')
-                route_ipv4 = vrf_ipv6 = None
-            else:
-                route_ipv4 = utils.parse_conf_arg(conf, 'ip route')
-                vrf_ipv4 = None
-
         config['address_families'] = []
-        address_family = dict()
+        route_dict = dict()
+        final_route = dict()
         afi = dict()
-        routes = dict()
-        if route_ipv4:
-            routes['routes'] = []
-            afi['afi'] = 'ipv4'
-            route_ipv4 = route_ipv4.split(' ')
-            if vrf_ipv4:
-                routes = self.check_params(route_ipv4, afi, routes, True)
+        final_route['routes'] = []
+        next_hops = []
+        hops = {}
+        vrf = ''
+        address_family = dict()
+        for each in conf_val:
+            route = each.split(' ')
+            if 'vrf' in conf_val[0]:
+                vrf = route[route.index('vrf') + 1]
+                route_dict['dest'] = conf.split('_')[0]
             else:
-                routes = self.check_params(route_ipv4, afi, routes)
-            address_family.update(afi)
-            address_family.update(routes)
-        elif route_ipv6:
-            routes['routes'] = []
-            afi['afi'] = 'ipv6'
-            route_ipv6 = route_ipv6.split(' ')
-            if vrf_ipv6:
-                routes = self.check_params(route_ipv6, afi, routes, True)
+                route_dict['dest'] = conf
+            if 'vrf' in conf_val[0]:
+                next_hops = []
+                hops = {}
+                if '::' in conf:
+                    hops['forward_router_address'] = route[3]
+                    afi['afi'] = 'ipv6'
+                elif '.' in conf:
+                    hops['forward_router_address'] = route[3]
+                    afi['afi'] = "ipv4"
+                else:
+                    hops['interface'] = conf
             else:
-                routes = self.check_params(route_ipv6, afi, routes)
-            address_family.update(afi)
-            address_family.update(routes)
 
+                if '::' in conf:
+                    hops['forward_router_address'] = route[1]
+                    afi['afi'] = 'ipv6'
+                elif '.' in conf:
+                    hops['forward_router_address'] = route[1]
+                    afi['afi'] = "ipv4"
+                else:
+                    hops['interface'] = route[1]
+            try:
+                temp_list = each.split(' ')
+                if 'tag' in temp_list:
+                    del temp_list[temp_list.index('tag') + 1]
+                if 'track' in temp_list:
+                    del temp_list[temp_list.index('track') + 1]
+                dist_metrics = int(
+                    [i for i in temp_list if '.' not in i and ':' not in i and ord(i[0]) > 48 and ord(i[0]) < 57][0]
+                )
+            except ValueError:
+                dist_metrics = None
+            if dist_metrics:
+                hops['distance_metric'] = dist_metrics
+            if 'name' in route:
+                hops['name'] = route[route.index('name') + 1]
+            if 'multicast' in route:
+                hops['multicast'] = True
+            if 'dhcp' in route:
+                hops['dhcp'] = True
+            if 'global' in route:
+                hops['global'] = True
+            if 'permanent' in route:
+                hops['permanent'] = True
+            if 'tag' in route:
+                hops['tag'] = route[route.index('tag') + 1]
+            if 'track' in route:
+                hops['track'] = route[route.index('track') + 1]
+            next_hops.append(hops)
+            hops = {}
+        route_dict['next_hops'] = next_hops
+        if route_dict:
+            final_route['routes'].append(route_dict)
+        address_family.update(afi)
+        address_family.update(final_route)
         config['address_families'].append(address_family)
+        if vrf:
+            config['vrf'] = vrf
 
         return utils.remove_empties(config)

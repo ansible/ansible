@@ -14,12 +14,13 @@ created
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
+import copy
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.ios.facts.facts import Facts
-from ansible.module_utils.network.ios.utils.utils import dict_to_set
-import q
+from ansible.module_utils.network.ios.utils.utils import new_dict_to_set, validate_n_expand_ipv4
+
 
 class Static_Routes(ConfigBase):
     """
@@ -104,9 +105,9 @@ class Static_Routes(ConfigBase):
             self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(state))
 
         if state == 'overridden':
-            commands = self._state_overridden(want, have, state)
+            commands = self._state_overridden(want, have)
         elif state == 'deleted':
-            commands = self._state_deleted(want, have, state)
+            commands = self._state_deleted(want, have)
         elif state == 'merged':
             commands = self._state_merged(want, have)
         elif state == 'replaced':
@@ -120,54 +121,102 @@ class Static_Routes(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
+
         commands = []
 
-        check = False
-        for each in want:
-            for every in have:
-                if every['vlan_id'] == each['vlan_id']:
-                    check = True
-                    break
-            else:
-                continue
-            if check:
-                commands.extend(self._set_config(each, every))
-            else:
-                commands.extend(self._set_config(each, dict()))
+        # Drill each iteration of want n have and then based on dest and afi tyoe comparison take config call
+        for w in want:
+            for addr_want in w.get('address_families'):
+                for route_want in addr_want.get('routes'):
+                    check = False
+                    for h in have:
+                        for addr_have in h.get('address_families'):
+                            for route_have in addr_have.get('routes'):
+                                if route_want.get('dest') == route_have.get('dest')\
+                                        and addr_want['afi'] == addr_have['afi']:
+                                    check = True
+                                    have_set = set()
+                                    new_hops = []
+                                    for each in route_want.get('next_hops'):
+                                        want_set = set()
+                                        new_dict_to_set(each, [], want_set, 0)
+                                        new_hops.append(want_set)
+                                    new_dict_to_set(addr_have, [], have_set, 0)
+                                    commands.extend(self._set_config(w, h, addr_want,
+                                                                     route_want, route_have, new_hops, have_set))
+                            if check:
+                                break
+                        if check:
+                            break
+                    if not check:
+                        # For configuring any non-existing want config
+                        new_hops = []
+                        for each in route_want.get('next_hops'):
+                            want_set = set()
+                            new_dict_to_set(each, [], want_set, 0)
+                            new_hops.append(want_set)
+                        commands.extend(self._set_config(w, {}, addr_want, route_want, {}, new_hops, set()))
 
         return commands
 
-    def _state_overridden(self, want, have, state):
+    def _state_overridden(self, want, have):
         """ The command generator when state is overridden
 
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
+
         commands = []
+        # Creating a copy of want, so that want dict is intact even after delete operation
+        # performed during override want n have comparison
+        temp_want = copy.deepcopy(want)
 
-        want_local = want
-        for each in have:
-            count = 0
-            for every in want_local:
-                if each['vlan_id'] == every['vlan_id']:
-                    break
-                count += 1
-            else:
-                # We didn't find a matching desired state, which means we can
-                # pretend we recieved an empty desired state.
-                commands.extend(self._clear_config(every, each, state))
-                continue
-            commands.extend(self._set_config(every, each))
-            # as the pre-existing VLAN are now configured by
-            # above set_config call, deleting the respective
-            # VLAN entry from the want_local list
-            del want_local[count]
-
-        # Iterating through want_local list which now only have new VLANs to be
-        # configured
-        for each in want_local:
-            commands.extend(self._set_config(each, dict()))
+        # Drill each iteration of want n have and then based on dest and afi tyoe comparison take config call
+        for h in have:
+            for addr_have in h.get('address_families'):
+                for route_have in addr_have.get('routes'):
+                    check = False
+                    for w in temp_want:
+                        for addr_want in w.get('address_families'):
+                            count = 0
+                            for route_want in addr_want.get('routes'):
+                                if route_want.get('dest') == route_have.get('dest') \
+                                        and addr_want['afi'] == addr_have['afi']:
+                                    check = True
+                                    have_set = set()
+                                    new_hops = []
+                                    for each in route_want.get('next_hops'):
+                                        want_set = set()
+                                        new_dict_to_set(each, [], want_set, 0)
+                                        new_hops.append(want_set)
+                                    new_dict_to_set(addr_have, [], have_set, 0)
+                                    commands.extend(self._clear_config(w, h, addr_want, addr_have,
+                                                                       route_want, route_have))
+                                    commands.extend(self._set_config(w, h, addr_want,
+                                                                     route_want, route_have, new_hops, have_set))
+                                    del addr_want.get('routes')[count]
+                                count += 1
+                            if check:
+                                break
+                        if check:
+                            break
+                    if not check:
+                        have_set = set()
+                        commands.extend(self._clear_config({}, h, {}, addr_have, {}, route_have))
+        # For configuring any non-existing want config
+        for w in temp_want:
+            for addr_want in w.get('address_families'):
+                for route_want in addr_want.get('routes'):
+                    have_set = set()
+                    new_hops = []
+                    for each in route_want.get('next_hops'):
+                        want_set = set()
+                        new_dict_to_set(each, [], want_set, 0)
+                        new_hops.append(want_set)
+                    commands.extend(self._set_config(w, h, addr_want, route_want, route_have, new_hops, have_set))
+        # Arranging the cmds suct that all delete cmds are fired before all set cmds
+        commands = [each for each in commands if 'no' in each] + [each for each in commands if 'no' not in each]
 
         return commands
 
@@ -178,36 +227,45 @@ class Static_Routes(ConfigBase):
         :returns: the commands necessary to merge the provided into
                   the current configuration
         """
+
         commands = []
-        check = False
-        q(want, have)
-        for each in want:
-            for every in have:
-                if '/' in each['address_families'][0]['routes'][0]['dest']:
-                    each_ip = each['address_families'][0]['routes'][0]['dest'].split('/')[0]
-                else:
-                    each_ip = each['address_families'][0]['routes'][0]['dest'][0]
-                if each_ip:
-                    if each_ip == every['address_families'][0]['routes'][0]['dest'].split(' ')[0]:
-                        check = True
-                        break
-                    else:
-                        continue
-                else:
-                    if each_ip == every.get('dest').split(' ')[0]:
-                        check = True
-                        break
-                    else:
-                        continue
-            if check:
-                commands.extend(self._set_config(each, every))
-            else:
-                commands.extend(self._set_config(each, dict()))
-        q(commands)
-        commands=[]
+
+        # Drill each iteration of want n have and then based on dest and afi tyoe comparison take config call
+        for w in want:
+            for addr_want in w.get('address_families'):
+                for route_want in addr_want.get('routes'):
+                    check = False
+                    for h in have:
+                        for addr_have in h.get('address_families'):
+                            for route_have in addr_have.get('routes'):
+                                if route_want.get('dest') == route_have.get('dest')\
+                                        and addr_want['afi'] == addr_have['afi']:
+                                    check = True
+                                    have_set = set()
+                                    new_hops = []
+                                    for each in route_want.get('next_hops'):
+                                        want_set = set()
+                                        new_dict_to_set(each, [], want_set, 0)
+                                        new_hops.append(want_set)
+                                    new_dict_to_set(addr_have, [], have_set, 0)
+                                    commands.extend(self._set_config(w, h, addr_want,
+                                                                     route_want, route_have, new_hops, have_set))
+                            if check:
+                                break
+                        if check:
+                            break
+                    if not check:
+                        # For configuring any non-existing want config
+                        new_hops = []
+                        for each in route_want.get('next_hops'):
+                            want_set = set()
+                            new_dict_to_set(each, [], want_set, 0)
+                            new_hops.append(want_set)
+                        commands.extend(self._set_config(w, {}, addr_want, route_want, {}, new_hops, set()))
+
         return commands
 
-    def _state_deleted(self, want, have, state):
+    def _state_deleted(self, want, have):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -217,55 +275,196 @@ class Static_Routes(ConfigBase):
         commands = []
 
         if want:
-            check = False
-            for each in want:
-                for every in have:
-                    if each.get('vlan_id') == every.get('vlan_id'):
-                        check = True
-                        break
-                    else:
+            # Drill each iteration of want n have and then based on dest and afi type comparison fire delete config call
+            for w in want:
+                for addr_want in w.get('address_families'):
+                    for route_want in addr_want.get('routes'):
                         check = False
-                        continue
-                if check:
-                    commands.extend(self._clear_config(each, every, state))
+                        for h in have:
+                            for addr_have in h.get('address_families'):
+                                for route_have in addr_have.get('routes'):
+                                    if route_want.get('dest') == route_have.get('dest') \
+                                            and addr_want['afi'] == addr_have['afi']:
+                                        check = True
+                                        commands.extend(self._clear_config({}, h, {}, addr_have, {}, route_have))
+                                if check:
+                                    break
+                            if check:
+                                break
         else:
-            for each in have:
-                commands.extend(self._clear_config(dict(), each, state))
+            # Drill each iteration of have and then based on dest and afi tyoe comparison fire delete config call
+            for h in have:
+                for addr_have in h.get('address_families'):
+                    for route_have in addr_have.get('routes'):
+                        commands.extend(self._clear_config({}, h, {}, addr_have, {}, route_have))
 
         return commands
 
-    def remove_command_from_config_list(self, vlan, cmd, commands):
-        if vlan not in commands and cmd != 'vlan':
-            commands.insert(0, vlan)
-        elif cmd == 'vlan':
-            commands.append('no %s' % vlan)
-            return commands
-        commands.append('no %s' % cmd)
-        return commands
+    def prepare_config_commands(self, config_dict, cmd):
+        """
+            function to parse the input dict and form the prepare the config commands
+            :rtype: A str
+            :returns: The command necessary to configure the static routes
+        """
 
-    def add_command_to_config_list(self, vlan_id, cmd, commands):
-        if vlan_id not in commands:
-            commands.insert(0, vlan_id)
-        if cmd not in commands:
-            commands.append(cmd)
+        dhcp = config_dict.get('dhcp')
+        distance_metric = config_dict.get('distance_metric')
+        forward_router_address = config_dict.get('forward_router_address')
+        global_route_config = config_dict.get('global')
+        interface = config_dict.get('interface')
+        multicast = config_dict.get('multicast')
+        name = config_dict.get('name')
+        permanent = config_dict.get('permanent')
+        tag = config_dict.get('tag')
+        track = config_dict.get('track')
+        dest = config_dict.get('dest')
+        temp_dest = dest.split('/')
+        if temp_dest and ':' not in dest:
+            dest = validate_n_expand_ipv4(self._module, {'address': dest})
 
-    def _set_config(self, want, have):
-        # Set the interface config based on the want and have config
+        cmd = cmd + dest
+        if interface:
+            cmd = cmd + ' {0}'.format(interface)
+        if forward_router_address:
+            cmd = cmd + ' {0}'.format(forward_router_address)
+        if dhcp:
+            cmd = cmd + ' DHCP'
+        if distance_metric:
+            cmd = cmd + ' {0}'.format(distance_metric)
+        if global_route_config:
+            cmd = cmd + ' global'
+        if multicast:
+            cmd = cmd + ' multicast'
+        if name:
+            cmd = cmd + ' name {0}'.format(name)
+        if permanent:
+            cmd = cmd + ' permanent'
+        elif track:
+            cmd = cmd + ' track {0}'.format(track)
+        if tag:
+            cmd = cmd + ' tag {0}'.format(tag)
+
+        return cmd
+
+    def _set_config(self, want, have, addr_want, route_want, route_have, hops, have_set):
+        """
+            Set the interface config based on the want and have config
+            :rtype: A list
+            :returns: The commands necessary to configure the static routes
+        """
+
         commands = []
+        cmd = None
 
-        q(want, have)
-        # Get the diff b/w want n have
-        # want_dict = dict_to_set(want)
-        # have_dict = dict_to_set(have)
-        # diff = want_dict - have_dict
+        vrf_diff = False
+        topology_diff = False
+        want_vrf = want.get('vrf')
+        have_vrf = have.get('vrf')
+        if want_vrf != have_vrf:
+            vrf_diff = True
+        want_topology = want.get('topology')
+        have_topology = have.get('topology')
+        if want_topology != have_topology:
+            topology_diff = True
 
+        have_dest = route_have.get('dest')
+        if have_dest:
+            have_set.add(tuple(iteritems({'dest': have_dest})))
 
+        # configure set cmd for each hops under the same destination
+        for each in hops:
+            diff = each - have_set
+            if vrf_diff:
+                each.add(tuple(iteritems({'vrf': want_vrf})))
+            if topology_diff:
+                each.add(tuple(iteritems({'topology': want_topology})))
+            if diff or vrf_diff or topology_diff:
+                if want_vrf and not vrf_diff:
+                    each.add(tuple(iteritems({'vrf': want_vrf})))
+                if want_topology and not vrf_diff:
+                    each.add(tuple(iteritems({'topology': want_topology})))
+                each.add(tuple(iteritems({'afi': addr_want.get('afi')})))
+                each.add(tuple(iteritems({'dest': route_want.get('dest')})))
+                temp_want = {}
+                for each_want in each:
+                    temp_want.update(dict(each_want))
+
+                if temp_want.get('afi') == 'ipv4':
+                    cmd = 'ip route '
+                    vrf = temp_want.get('vrf')
+                    if vrf:
+                        cmd = cmd + 'vrf {0} '.format(vrf)
+                    cmd = self.prepare_config_commands(temp_want, cmd)
+                elif temp_want.get('afi') == 'ipv6':
+                    cmd = 'ipv6 route '
+                    cmd = self.prepare_config_commands(temp_want, cmd)
+                commands.append(cmd)
 
         return commands
 
-    def _clear_config(self, want, have, state):
-        # Delete the interface config based on the want and have config
-        commands = []
+    def _clear_config(self, want, have, addr_want, addr_have, route_want, route_have):
+        """
+            Delete the interface config based on the want and have config
+            :rtype: A list
+            :returns: The commands necessary to configure the static routes
+        """
 
+        commands = []
+        cmd = None
+
+        vrf_diff = False
+        topology_diff = False
+        want_vrf = want.get('vrf')
+        have_vrf = have.get('vrf')
+        if want_vrf != have_vrf:
+            vrf_diff = True
+        want_topology = want.get('topology')
+        have_topology = have.get('topology')
+        if want_topology != have_topology:
+            topology_diff = True
+
+        want_set = set()
+        new_dict_to_set(addr_want, [], want_set, 0)
+
+        have_hops = []
+        for each in route_have.get('next_hops'):
+            temp_have_set = set()
+            new_dict_to_set(each, [], temp_have_set, 0)
+            have_hops.append(temp_have_set)
+
+        # configure delete cmd for each hops under the same destination
+        for each in have_hops:
+            diff = each - want_set
+            if vrf_diff:
+                each.add(tuple(iteritems({'vrf': have_vrf})))
+            if topology_diff:
+                each.add(tuple(iteritems({'topology': want_topology})))
+            if diff or vrf_diff or topology_diff:
+                if want_vrf and not vrf_diff:
+                    each.add(tuple(iteritems({'vrf': want_vrf})))
+                if want_topology and not vrf_diff:
+                    each.add(tuple(iteritems({'topology': want_topology})))
+                if addr_want:
+                    each.add(tuple(iteritems({'afi': addr_want.get('afi')})))
+                else:
+                    each.add(tuple(iteritems({'afi': addr_have.get('afi')})))
+                if route_want:
+                    each.add(tuple(iteritems({'dest': route_want.get('dest')})))
+                else:
+                    each.add(tuple(iteritems({'dest': route_have.get('dest')})))
+                temp_want = {}
+                for each_want in each:
+                    temp_want.update(dict(each_want))
+
+                if temp_want.get('afi') == 'ipv4':
+                    cmd = 'no ip route '
+                    vrf = temp_want.get('vrf')
+                    if vrf:
+                        cmd = cmd + 'vrf {0} '.format(vrf)
+                    cmd = self.prepare_config_commands(temp_want, cmd)
+                elif temp_want.get('afi') == 'ipv6':
+                    cmd = 'no ipv6 route '
+                    cmd = self.prepare_config_commands(temp_want, cmd)
+                commands.append(cmd)
 
         return commands

@@ -54,12 +54,12 @@ options:
     suboptions:
       vrf:
         description:
-        - IP VPN Routing/Forwarding instance name. Note, if the vrf information
-          is not provided in that case the routes shall be configured under
-          global vrf.
+        - IP VPN Routing/Forwarding instance name.
+        - NOTE, In case of IPV4/IPV6 VRF routing table should pre-exist before
+          configuring.
+        - NOTE, if the vrf information is not provided then the routes shall be
+          configured under global vrf.
         type: str
-        required: true
-        default: __global__
       address_families:
         elements: dict
         type: list
@@ -84,7 +84,7 @@ options:
               topology:
                 description:
                 - Configure static route for a Topology Routing/Forwarding instance
-                - Note, VRF and Topology can be used together only with Multicast and
+                - NOTE, VRF and Topology can be used together only with Multicast and
                   Topology should pre-exist before it can be used
                 type: str
               next_hops:
@@ -99,35 +99,35 @@ options:
                   interface:
                     description: Interface for directly connected static routes
                     type: str
-              dhcp:
-                description: Default gateway obtained from DHCP
-                type: bool
-              distance_metric:
-                description: Distance metric for this route
-                type: int
-              global:
-                description: Next hop address is global
-                type: bool
-              name:
-                description: Specify name of the next hop
-                type: str
-              multicast:
-                description: multicast route
-                type: bool
-              permanent:
-                description: permanent route
-                type: bool
-              tag:
-                description:
-                - Set tag for this route
-                - Refer to vendor documentation for valid values.
-                type: int
-              track:
-                description:
-                - Install route depending on tracked item with tracked object number.
-                - Tracking does not support multicast
-                - Refer to vendor documentation for valid values.
-                type: int
+                  dhcp:
+                    description: Default gateway obtained from DHCP
+                    type: bool
+                  distance_metric:
+                    description: Distance metric for this route
+                    type: int
+                  global:
+                    description: Next hop address is global
+                    type: bool
+                  name:
+                    description: Specify name of the next hop
+                    type: str
+                  multicast:
+                    description: multicast route
+                    type: bool
+                  permanent:
+                    description: permanent route
+                    type: bool
+                  tag:
+                    description:
+                    - Set tag for this route
+                    - Refer to vendor documentation for valid values.
+                    type: int
+                  track:
+                    description:
+                    - Install route depending on tracked item with tracked object number.
+                    - Tracking does not support multicast
+                    - Refer to vendor documentation for valid values.
+                    type: int
   state:
     description:
     - The state the configuration should be left in
@@ -139,6 +139,9 @@ options:
     - deleted
     - gathered
     - rendered
+    - gathered
+    - rendered
+    - parsed
     default: merged
 """
 
@@ -150,7 +153,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3
 
@@ -177,7 +180,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name new_test multicast
@@ -188,7 +191,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3
 
@@ -207,7 +210,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3
 # ip route vrf red 192.168.2.0 255.255.255.0 10.0.0.2 name new_red
@@ -218,7 +221,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
@@ -240,7 +243,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
 
 # Using Deleted
@@ -248,7 +251,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
@@ -275,7 +278,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3 name test_route track 20
 
@@ -285,7 +288,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
@@ -298,7 +301,7 @@ EXAMPLES = """
 # After state:
 # -------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 #
 
 # Using gathered
@@ -306,7 +309,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
@@ -321,6 +324,7 @@ EXAMPLES = """
 # ------------
 #
 # Ansible will just display the routing facts
+# viosl2#show running-config | section ^ip route|ipv6 route
 
 
 # Using rendered
@@ -328,6 +332,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
+# viosl2#show running-config | section ^ip route|ipv6 route
 
 
 - name: Merge provided configuration with device configuration
@@ -351,7 +356,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
-# viosl2#show running-config | include ip route
+# viosl2#show running-config | section ^ip route|ipv6 route
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3 name test_route track 20
 

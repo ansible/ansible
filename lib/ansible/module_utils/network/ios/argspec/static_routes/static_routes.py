@@ -41,12 +41,12 @@ class Static_RoutesArgs(object):
         'config': {
             'elements': 'dict',
             'options': {
-                'vrf': {'type': 'str', 'default': '__global__'},
+                'vrf': {'type': 'str'},
                 'address_families': {
                     'elements': 'dict',
                     'type': 'list',
                     'options': {
-                        'afi': {'choices': ['ipv4','ipv6'], 'type': 'str'},
+                        'afi': {'choices': ['ipv4', 'ipv6'], 'type': 'str'},
                         'routes': {
                             'elements': 'dict',
                             'type': 'list',
@@ -58,17 +58,17 @@ class Static_RoutesArgs(object):
                                     'type': 'list',
                                     'options': {
                                         'forward_router_address': {'type': 'str'},
-                                        'interface': {'type': 'str'}
+                                        'interface': {'type': 'str'},
+                                        'dhcp': {'type': 'bool'},
+                                        'distance_metric': {'type': 'int'},
+                                        'global': {'type': 'bool'},
+                                        'name': {'type': 'str'},
+                                        'multicast': {'type': 'bool'},
+                                        'permanent': {'type': 'bool'},
+                                        'tag': {'type': 'int'},
+                                        'track': {'type': 'int'}
                                     }
-                                },
-                                'dhcp': {'type': 'bool'},
-                                'distance_metric':{'type': 'int'},
-                                'global': {'type': 'bool'},
-                                'name': {'type': 'str'},
-                                'multicast': {'type': 'bool'},
-                                'permanent': {'type': 'bool'},
-                                'tag': {'type': 'int'},
-                                'track': {'type': 'int'}
+                                }
                             }
                         }
                     }
