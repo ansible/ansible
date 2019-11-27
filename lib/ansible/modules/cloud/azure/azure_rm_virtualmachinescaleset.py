@@ -210,7 +210,7 @@ options:
     plan:
         description:
             - Third-party billing plan for the VM.
-        version_added: "2.5"
+        version_added: "2.10"
         type: dict
         suboptions:
             name:
@@ -235,7 +235,7 @@ options:
             - Only valid when a I(plan) is specified.
         type: bool
         default: false
-        version_added: "2.7"
+        version_added: "2.10"
     zones:
         description:
             - A list of Availability Zones for your virtual machine scale set.
@@ -853,9 +853,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             capacity=self.capacity,
                             tier=self.tier,
                         ),
+                        plan=plan,
                         virtual_machine_profile=self.compute_models.VirtualMachineScaleSetVMProfile(
                             os_profile=os_profile,
-                            plan=plan,
                             storage_profile=self.compute_models.VirtualMachineScaleSetStorageProfile(
                                 os_disk=self.compute_models.VirtualMachineScaleSetOSDisk(
                                     managed_disk=managed_disk,
