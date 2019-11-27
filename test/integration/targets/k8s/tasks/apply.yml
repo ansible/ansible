@@ -269,6 +269,77 @@
           - k8s_service_5.result.spec.ports | length == 1
           - k8s_service_5.result.spec.ports[0].port == 8081
 
+    - name: add a deployment
+      k8s:
+        definition:
+          apiVersion: extensions/v1beta1
+          kind: Deployment
+          metadata:
+            name: scale-deploy
+            namespace: "{{ apply_namespace }}"
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: "{{ k8s_pod_name }}"
+            template: "{{ k8s_pod_template }}"
+        wait: yes
+        apply: yes
+      vars:
+        k8s_pod_name: scale-deploy
+        k8s_pod_image: gcr.io/kuar-demo/kuard-amd64:v0.10.0-green
+        k8s_pod_ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+
+    - name: scale the deployment
+      k8s_scale:
+        api_version: extensions/v1beta1
+        kind: Deployment
+        name: scale-deploy
+        namespace: "{{ apply_namespace }}"
+        replicas: 0
+
+    - name: wait for pods to scale down
+      pause:
+        seconds: 30
+
+    - name: get pods in scale-deploy
+      k8s_info:
+        kind: Pod
+        label_selectors:
+          - app=scale-deploy
+        namespace: "{{ apply_namespace }}"
+      register: scale_down_deploy_pods
+
+    - name: ensure that scale down took effect
+      assert:
+        that:
+          - scale_down_deploy_pods.resources | length == 0
+
+    - name: scale the deployment
+      k8s_scale:
+        api_version: extensions/v1beta1
+        kind: Deployment
+        name: scale-deploy
+        namespace: "{{ apply_namespace }}"
+        replicas: 1
+
+    - name: get pods in scale-deploy
+      k8s_info:
+        kind: Pod
+        label_selectors:
+          - app=scale-deploy
+        namespace: "{{ apply_namespace }}"
+      register: scale_up_deploy_pods
+
+    - name: ensure that reapply after scale worked
+      assert:
+        that:
+          - reapply_after_scale is changed
+          - scale_up_deploy_pods.resources | length == 1
+
   always:
     - name: remove namespace
       k8s:
