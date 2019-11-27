@@ -332,7 +332,7 @@ testing for the correct exception::
         })
 
         with self.assertRaises(AnsibleExitJson) as result:
-            my_module.main()
+            self.module.main()
 
 The same technique can be used to replace :meth:`module.fail_json` (which is used for failure
 returns from modules) and for the ``aws_module.fail_json_aws()`` (used in modules for Amazon
@@ -390,7 +390,6 @@ mock for :meth:`Ansible.get_bin_path`::
     from ansible.module_utils import basic
     from ansible.module_utils._text import to_bytes
     from ansible.modules.namespace import my_module
-    self.module = my_module
 
 
     def set_module_args(args):
@@ -440,6 +439,7 @@ mock for :meth:`Ansible.get_bin_path`::
                                                      get_bin_path=get_bin_path)
             self.mock_module_helper.start()
             self.addCleanup(self.mock_module_helper.stop)
+            self.module = my_module
 
         def test_module_fail_when_required_args_missing(self):
             with self.assertRaises(AnsibleFailJson):
