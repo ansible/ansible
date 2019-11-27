@@ -327,6 +327,7 @@ class StrategyBase:
         try:
             queued = False
             starting_worker = self._cur_worker
+            
             while not self._tqm._terminated:
                 worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
