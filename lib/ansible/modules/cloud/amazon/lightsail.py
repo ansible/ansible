@@ -318,7 +318,9 @@ def main():
         wait_timeout=dict(default=300, type='int'),
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              required_if=[['state', 'present', ('zone', 'blueprint_id', 'bundle_id')]])
+
     client = module.client('lightsail')
 
     name = module.params.get('name')
