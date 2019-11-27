@@ -282,20 +282,21 @@ from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dic
 def get_snapshot(client, module):
     snapshot_id = module.params.get('db_snapshot_identifier')
     try:
-      if module.params.get('snapshot_type') == 'aurora':
-        db_cluster_identifier = module.params.get('db_cluster_identifier')
-        response = client.describe_db_cluster_snapshots(DBClusterIdentifier=db_cluster_identifier,
+        if module.params.get('snapshot_type') == 'aurora':
+            db_cluster_identifier = module.params.get('db_cluster_identifier')
+            response = client.describe_db_cluster_snapshots(DBClusterIdentifier=db_cluster_identifier,
                                                         DBClusterSnapshotIdentifier=snapshot_id)
-      return response['DBClusterSnapshots']
-      else:
-        response = client.describe_db_snapshots(DBSnapshotIdentifier=snapshot_id)
-        return response['DBSnapshots']
+            return response['DBClusterSnapshots']
+        else:
+            response = client.describe_db_snapshots(DBSnapshotIdentifier=snapshot_id)
+            return response['DBSnapshots']
     except client.exceptions.DBSnapshotNotFoundFault:
-      return None
+        return None
     except client.exceptions.DBClusterSnapshotNotFoundFault:
-      return None
+        return None
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
-      module.fail_json_aws(e, msg="Couldn't get snapshot {0}".format(snapshot_id))
+        module.fail_json_aws(e, msg="Couldn't get snapshot {0}".format(snapshot_id))
+
     return response
 
 
@@ -306,7 +307,7 @@ def snapshot_to_facts(client, module, snapshot):
                                                                                             aws_retry=True)['TagList'])
         else:
             snapshot['Tags'] = boto3_tag_list_to_ansible_dict(client.list_tags_for_resource(ResourceName=snapshot['DBSnapshotArn'],
-                                                                                        aws_retry=True)['TagList'])
+                                                                                            aws_retry=True)['TagList'])
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, "Couldn't get tags for snapshot %s" % snapshot['DBSnapshotIdentifier'])
     except KeyError:
@@ -321,8 +322,8 @@ def wait_for_snapshot_status(client, module, db_snapshot_id, waiter_name):
     timeout = module.params['wait_timeout']
     try:
         if module.params['snapshot_type'] == 'aurora':
-          db_cluster_identifier = module.params['db_cluster_identifier']
-          client.get_waiter(waiter_name).wait(DBClusterIdentifier=db_cluster_identifier, DBClusterSnapshotIdentifier=db_snapshot_id,
+            db_cluster_identifier = module.params['db_cluster_identifier']
+            client.get_waiter(waiter_name).wait(DBClusterIdentifier=db_cluster_identifier, DBClusterSnapshotIdentifier=db_snapshot_id,
                                               WaiterConfig=dict(
                                                   Delay=5,
                                                   MaxAttempts=int((timeout + 2.5) / 5)
@@ -361,12 +362,12 @@ def ensure_snapshot_absent(client, module):
                     changed = True
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     module.fail_json_aws(e, msg="trying to delete cluster snapshot")
-          else:
-              try:
-                  client.delete_db_snapshot(**fn_args)
-                  changed = True
-              except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-                  module.fail_json_aws(e, msg="trying to delete snapshot")
+        else:
+            try:
+                client.delete_db_snapshot(**fn_args)
+                changed = True
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                module.fail_json_aws(e, msg="trying to delete snapshot")
 
     elif not snapshot and module.params.get('fail_on_not_exists'):
         module.fail_json_aws(snapshot, msg="cannot delete nonexistent snapshot")
