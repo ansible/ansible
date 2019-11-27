@@ -146,6 +146,30 @@
           - "'execution_arn' in start_execution_output"
           - "'start_date' in start_execution_output"
 
+    - name: Start execution of state machine (check for idempotency) (check mode)
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output_idem_check
+      check_mode: yes
+
+    - assert:
+        that:
+          - not start_execution_output_idem_check.changed
+          - "start_execution_output_idem_check.output == 'State machine execution already exists.'"
+
+    - name: Start execution of state machine (check for idempotency)
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output_idem
+
+    - assert:
+        that:
+          - not start_execution_output_idem.changed
+
     - name: Stop execution of state machine -- check_mode
       aws_step_functions_state_machine_execution:
         action: stop
@@ -172,6 +196,45 @@
         that:
           - stop_execution_output.changed
           - "'stop_date' in stop_execution_output"
+
+    - name: Stop execution of state machine (check for idempotency)
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+
+    - assert:
+        that:
+          - not stop_execution_output.changed
+
+    - name: Try stopping a non-running execution -- check_mode
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - not stop_execution_output.changed
+          - "stop_execution_output.output == 'State machine execution is not running.'"
+
+    - name: Try stopping a non-running execution
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - not stop_execution_output.changed
 
     - name: Start execution of state machine with the same execution name
       aws_step_functions_state_machine_execution:

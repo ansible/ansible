@@ -103,40 +103,60 @@ except ImportError:
 
 
 def start_execution(module, sfn_client):
-    check_mode(module, msg='State machine execution would be started.', changed=True)
+    '''
+    start_execution uses execution name to determine if a previous execution already exists.
+    If an execution by the provided name exists, call client.start_execution will not be called.
+    '''
 
     state_machine_arn = module.params.get('state_machine_arn')
     name = module.params.get('name')
     execution_input = module.params.get('execution_input')
 
     try:
-        execution = sfn_client.start_execution(
+        # list_executions is eventually consistent
+        resp_iterators = sfn_client.get_paginator('list_executions').paginate(stateMachineArn=state_machine_arn)
+
+        for resp in resp_iterators:
+            for execution in resp['executions']:
+                if name == execution['name']:
+                    check_mode(module, msg='State machine execution already exists.', changed=False)
+                    module.exit_json(changed=False, something="something")
+
+        check_mode(module, msg='State machine execution would be started.', changed=True)
+        res_execution = sfn_client.start_execution(
             stateMachineArn=state_machine_arn,
             name=name,
             input=execution_input
         )
-    except ClientError as e:
+    except (ClientError, BotoCoreError) as e:
         if e.response['Error']['Code'] == 'ExecutionAlreadyExists':
+            # this will never be executed anymore
             module.exit_json(changed=False)
         module.fail_json_aws(e, msg="Failed to start execution.")
 
-    module.exit_json(changed=True, **camel_dict_to_snake_dict(execution))
+    module.exit_json(changed=True, **camel_dict_to_snake_dict(res_execution))
 
 
 def stop_execution(module, sfn_client):
-    check_mode(module, msg='State machine execution would be stopped.', changed=True)
 
     cause = module.params.get('cause')
     error = module.params.get('error')
     execution_arn = module.params.get('execution_arn')
 
     try:
+        # describe_execution is eventually consistent
+        execution_status = sfn_client.describe_execution(executionArn=execution_arn)['status']
+        if execution_status != 'RUNNING':
+            check_mode(module, msg='State machine execution is not running.', changed=False)
+            module.exit_json(changed=False)
+
+        check_mode(module, msg='State machine execution would be stopped.', changed=True)
         res = sfn_client.stop_execution(
             executionArn=execution_arn,
             cause=cause,
             error=error
         )
-    except ClientError as e:
+    except (ClientError, BotoCoreError) as e:
         module.fail_json_aws(e, msg="Failed to stop execution.")
 
     module.exit_json(changed=True, **camel_dict_to_snake_dict(res))
