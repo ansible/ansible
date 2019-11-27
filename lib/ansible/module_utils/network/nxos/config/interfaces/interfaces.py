@@ -256,14 +256,18 @@ class Interfaces(ConfigBase):
                 commands.extend(self.del_attribs(h))
         return commands
 
-    def default_enabled(self, want={}, have={}, action=''):
+    def default_enabled(self, want=None, have=None, action=''):
         # 'enabled' default state depends on the interface type and L2 state.
         # Note that the current default could change when changing L2/L3 modes.
+        if want is None:
+            want = {}
+        if have is None:
+            have = {}
         name = have.get('name')
         if name is None:
             return None
 
-        sysdefs=self.intf_defs['sysdefs']
+        sysdefs = self.intf_defs['sysdefs']
         sysdef_mode = sysdefs['mode']
 
         # Get the default enabled state for this interface. This was collected

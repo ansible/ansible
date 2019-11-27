@@ -1266,7 +1266,8 @@ def get_interface_type(interface):
     else:
         return 'unknown'
 
-def default_intf_enabled(name='', sysdefs=dict(), mode=None):
+
+def default_intf_enabled(name='', sysdefs=None, mode=None):
     """Get device/version/interface-specific default 'enabled' state.
     L3:
      - Most L3 intfs default to 'shutdown'. Loopbacks default to 'no shutdown'.
@@ -1279,6 +1280,8 @@ def default_intf_enabled(name='', sysdefs=dict(), mode=None):
     """
     if not name:
         return None
+    if sysdefs is None:
+        sysdefs = {}
     default = False
 
     if re.search('port-channel|loopback', name):
@@ -1293,6 +1296,7 @@ def default_intf_enabled(name='', sysdefs=dict(), mode=None):
         elif mode == 'layer2':
             default = sysdefs.get('L2_enabled')
     return default
+
 
 def read_module_context(module):
     conn = get_connection(module)

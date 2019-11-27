@@ -102,8 +102,8 @@ class TestNxosInterfacesModule(TestNxosModule):
             description test-loopback
         ''')
         self.get_resource_connection_facts.return_value = {
-          self.SHOW_RUN_SYSDEF: sysdefs,
-          self.SHOW_RUN_INTF: intf
+            self.SHOW_RUN_SYSDEF: sysdefs,
+            self.SHOW_RUN_INTF: intf
         }
         playbook = dict(config=[
             dict(name='Ethernet1/1', description='ansible', mode='layer3'),
@@ -208,8 +208,8 @@ class TestNxosInterfacesModule(TestNxosModule):
             shutdown
         ''')
         self.get_resource_connection_facts.return_value = {
-          self.SHOW_RUN_SYSDEF: sysdefs,
-          self.SHOW_RUN_INTF: intf
+            self.SHOW_RUN_SYSDEF: sysdefs,
+            self.SHOW_RUN_INTF: intf
         }
         playbook = dict(config=[
             # Set non-default states on existing objs
@@ -314,8 +314,8 @@ class TestNxosInterfacesModule(TestNxosModule):
             shutdown
         ''')
         self.get_resource_connection_facts.return_value = {
-          self.SHOW_RUN_SYSDEF: sysdefs,
-          self.SHOW_RUN_INTF: intf
+            self.SHOW_RUN_SYSDEF: sysdefs,
+            self.SHOW_RUN_INTF: intf
         }
         playbook = dict(config=[
             # Set non-default states on existing objs
@@ -419,8 +419,8 @@ class TestNxosInterfacesModule(TestNxosModule):
             shutdown
         ''')
         self.get_resource_connection_facts.return_value = {
-          self.SHOW_RUN_SYSDEF: sysdefs,
-          self.SHOW_RUN_INTF: intf
+            self.SHOW_RUN_SYSDEF: sysdefs,
+            self.SHOW_RUN_INTF: intf
         }
         playbook = dict(config=[
             dict(name='Ethernet1/1', mode='layer3'),
@@ -448,8 +448,8 @@ class TestNxosInterfacesModule(TestNxosModule):
             no shutdown
         ''')
         self.get_resource_connection_facts.return_value = {
-          self.SHOW_RUN_SYSDEF: sysdefs,
-          self.SHOW_RUN_INTF: intf
+            self.SHOW_RUN_SYSDEF: sysdefs,
+            self.SHOW_RUN_INTF: intf
         }
         playbook = dict()
         deleted = [

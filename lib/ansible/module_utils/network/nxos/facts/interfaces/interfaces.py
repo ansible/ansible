@@ -108,12 +108,12 @@ class InterfacesFacts(object):
         pat = '(no )*system default switchport$'
         m = re.search(pat, config, re.MULTILINE)
         if m:
-             sysdefs['mode'] = 'layer3' if 'no ' in m.groups() else 'layer2'
+            sysdefs['mode'] = 'layer3' if 'no ' in m.groups() else 'layer2'
 
         pat = '(no )*system default switchport shutdown$'
         m = re.search(pat, config, re.MULTILINE)
         if m:
-             sysdefs['L2_enabled'] = True if 'no ' in m.groups() else False
+            sysdefs['L2_enabled'] = True if 'no ' in m.groups() else False
 
         self.sysdefs = sysdefs
 
