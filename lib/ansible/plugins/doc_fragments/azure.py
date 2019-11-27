@@ -68,7 +68,9 @@ options:
             - If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to C(auto) if variable is not defined.
             - C(auto) will follow the default precedence of module parameters -> environment variables -> default profile in credential file
               C(~/.azure/credentials).
-            - When set to C(cli), the credentials will be sources from the default Azure CLI profile.
+            - When set to C(cli), the credentials will be sources from the default Azure CLI profile. C(subscription_id) or the
+              environment variable C(AZURE_SUBSCRIPTION_ID) can be used to identify the subscription ID if the user is granted
+              access to more than one subscription, otherwise the default subscription is chosen.
             - Can also be set via the C(ANSIBLE_AZURE_AUTH_SOURCE) environment variable.
             - When set to C(msi), the host machine must be an azure resource with an enabled MSI extension. C(subscription_id) or the
               environment variable C(AZURE_SUBSCRIPTION_ID) can be used to identify the subscription ID if the resource is granted
