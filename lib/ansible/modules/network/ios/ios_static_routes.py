@@ -155,36 +155,51 @@ EXAMPLES = """
 #
 # viosl2#show running-config | section ^ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3
 
 - name: Merge provided configuration with device configuration
-  ios_static_routes:
+  - ios_static_routes:
     config:
       - vrf: blue
         address_families:
         - afi: ipv4
           routes:
           - dest: 192.168.2.0/24
-            forward_router_address: 10.0.0.2
-            multicast: true
-            name: test_blue
+            next_hops:
+            - forward_router_address: 10.0.0.8
+              name: merged_blue
+              tag: 50
+              track: 150
       - address_families:
         - afi: ipv4
           routes:
           - dest: 192.168.3.0/24
-            forward_router_address: 10.0.0.3
-            track: 20
-            name: test_route
+            next_hops:
+            - forward_router_address: 10.0.0.1
+              name: merged_route_1
+              distance_metric: 110
+              tag: 40
+              multicast: True
+            - forward_router_address: 10.0.0.2
+              name: merged_route_2
+              distance_metric: 30
+        - afi: ipv6
+          routes:
+          - dest: FD5D:12C9:2201:1::/64
+            next_hops:
+            - forward_router_address: FD5D:12C9:2202::2
+              name: merged_v6
+              tag: 105
     state: merged
 
 # After state:
 # ------------
 #
 # viosl2#show running-config | section ^ip route|ipv6 route
+# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name merged_blue track 150
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3
-# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name new_test multicast
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3 name test_route track 20
+# ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
+# ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 tag 40 name merged_route_1 multicast
+# ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 105 name merged_v6
 
 # Using replaced
 
@@ -192,29 +207,53 @@ EXAMPLES = """
 # -------------
 #
 # viosl2#show running-config | section ^ip route|ipv6 route
+# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name merged_blue track 150
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3
+# ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
+# ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 tag 40 name merged_route_1 multicast
+# ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 105 name merged_v6
 
 - name: Replace provided configuration with device configuration
-  ios_static_routes:
+  - ios_static_routes:
     config:
-      - vrf: red
+      - vrf: blue
         address_families:
         - afi: ipv4
           routes:
           - dest: 192.168.2.0/24
-            forward_router_address: 10.0.0.2
-            name: test_red
+            next_hops:
+            - forward_router_address: 10.0.0.8
+              name: replaced_vrf_new
+              tag: 75
+              track: 155
+      - address_families:
+        - afi: ipv4
+          routes:
+          - dest: 192.168.3.0/24
+            next_hops:
+            - forward_router_address: 10.0.0.1
+              name: replaced_route
+              distance_metric: 175
+              tag: 70
+              multicast: True
+        - afi: ipv6
+          routes:
+          - dest: FD5D:12C9:2201:1::/64
+            next_hops:
+            - forward_router_address: FD5D:12C9:2202::2
+              name: replaced_v6
+              tag: 110
     state: replaced
 
 # After state:
 # ------------
 #
 # viosl2#show running-config | section ^ip route|ipv6 route
+# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 75 name replaced_vrf_new track 155
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3
-# ip route vrf red 192.168.2.0 255.255.255.0 10.0.0.2 name new_red
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3 name test_route track 20
+# ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
+# ip route 192.168.3.0 255.255.255.0 10.0.0.1 175 tag 70 name replaced_route multicast
+# ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 110 name replaced_v6
 
 # Using overridden
 
@@ -222,29 +261,49 @@ EXAMPLES = """
 # -------------
 #
 # viosl2#show running-config | section ^ip route|ipv6 route
+# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name merged_blue track 150
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3
-# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3 name test_route track 20
+# ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
+# ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 tag 40 name merged_route_1 multicast
+# ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 105 name merged_v6
 
 - name: Override provided configuration with device configuration
-  ios_static_routes:
+  - ios_static_routes:
     config:
       - vrf: blue
         address_families:
         - afi: ipv4
           routes:
           - dest: 192.168.2.0/24
-            forward_router_address: 10.0.0.2
-            multicast: true
-            name: test_blue
+            next_hops:
+            - forward_router_address: 10.0.0.4
+              name: override_vrf
+              tag: 50
+              track: 150
+      - address_families:
+        - afi: ipv4
+          routes:
+          - dest: 192.168.3.0/24
+            next_hops:
+            - forward_router_address: 10.0.0.3
+              multicast: True
+              name: override_route
+        - afi: ipv6
+          routes:
+          - dest: FD5D:12C9:2201:1::/64
+            next_hops:
+            - forward_router_address: FD5D:12C9:2202::2
+              name: override_v6
+              tag: 175
     state: overridden
 
 # After state:
 # ------------
 #
 # viosl2#show running-config | section ^ip route|ipv6 route
-# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
+# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name override_vrf track 150
+# ip route 192.168.3.0 255.255.255.0 10.0.0.3 name override_route multicast
+# ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 175 name override_v6
 
 # Using Deleted
 
@@ -252,35 +311,54 @@ EXAMPLES = """
 # -------------
 #
 # viosl2#show running-config | section ^ip route|ipv6 route
+# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name merged_blue track 150
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3
-# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3 name test_route track 20
+# ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
+# ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 tag 40 name merged_route_1 multicast
+# ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 105 name merged_v6
 
 - name: Delete provided configuration from the device configuration
-  ios_static_routes:
+  - ios_static_routes:
     config:
       - vrf: blue
         address_families:
         - afi: ipv4
           routes:
           - dest: 192.168.2.0/24
-            forward_router_address: 10.0.0.2
-            multicast: true
-            name: test_blue
+            next_hops:
+            - forward_router_address: 10.0.0.8
+              name: merged_blue
+              tag: 50
+              track: 150
       - address_families:
         - afi: ipv4
           routes:
           - dest: 192.168.3.0/24
-            forward_router_address: 10.0.0.3
-    state: merged
+            next_hops:
+            - forward_router_address: 10.0.0.1
+              name: merged_route_1
+              distance_metric: 110
+              tag: 40
+              multicast: True
+            - forward_router_address: 10.0.0.2
+              name: merged_route_2
+              distance_metric: 30
+            - forward_router_address: 10.0.0.3
+              name: merged_route_3
+        - afi: ipv6
+          routes:
+          - dest: FD5D:12C9:2201:1::/64
+            next_hops:
+            - forward_router_address: FD5D:12C9:2202::2
+              name: merged_v6
+              tag: 105
+    state: deleted
 
 # After state:
 # ------------
 #
 # viosl2#show running-config | section ^ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3 name test_route track 20
 
 # Using Deleted without any config passed
 #"(NOTE: This will delete all of configured resource module attributes from each configured interface)"
@@ -289,10 +367,11 @@ EXAMPLES = """
 # -------------
 #
 # viosl2#show running-config | section ^ip route|ipv6 route
+# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name merged_blue track 150
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3
-# ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
-# ip route 192.168.3.0 255.255.255.0 10.0.0.3 name test_route track 20
+# ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
+# ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 tag 40 name merged_route_1 multicast
+# ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 105 name merged_v6
 
 - name: Delete ALL configured IOS static routes
   ios_static_routes:
@@ -334,24 +413,6 @@ EXAMPLES = """
 #
 # viosl2#show running-config | section ^ip route|ipv6 route
 
-
-- name: Merge provided configuration with device configuration
-  ios_static_routes:
-    config:
-      - vrf: blue
-        address_families:
-        - afi: ipv4
-          routes:
-          - dest: 192.168.2.0/24
-            forward_router_address: 10.0.0.2
-            multicast: true
-            name: test_blue
-      - address_families:
-        - afi: ipv4
-          routes:
-          - dest: 192.168.3.0/24
-            forward_router_address: 10.0.0.3
-    state: rendered
 
 # After state:
 # ------------
