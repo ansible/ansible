@@ -540,7 +540,7 @@ def main():
                 checksum_mismatch = True
 
         # Not forcing redownload, unless checksum does not match
-        if not force or not (checksum and checksum_mismatch):
+        if not force or not (checksum != '' and checksum_mismatch):
             # Not forcing redownload, unless checksum does not match
             # allow file attribute changes
             module.params['path'] = dest
