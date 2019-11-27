@@ -56,7 +56,7 @@ options:
   key_pair_name:
     description:
       - Name of the key pair to use with the instance.
-      - Required when I(state=present)
+      - If I(state=present) and a key_pair_name is not provided, the default keypair from the region will be used.
     type: str
   wait:
     description:
@@ -204,27 +204,22 @@ def create_instance(module, client, instance_name):
     if inst:
         module.exit_json(changed=False, instance=camel_dict_to_snake_dict(inst))
     else:
-        zone = module.params.get('zone')
-        blueprint_id = module.params.get('blueprint_id')
-        bundle_id = module.params.get('bundle_id')
+        create_params = {'instanceNames': [instance_name],
+                         'availabilityZone': module.params.get('zone'),
+                         'blueprintId': module.params.get('blueprint_id'),
+                         'bundleId': module.params.get('bundle_id'),
+                         'userData': module.params.get('user_data')}
+
         key_pair_name = module.params.get('key_pair_name')
-        user_data = module.params.get('user_data')
-        wait = module.params.get('wait')
+        if key_pair_name:
+            create_params['keyPairName'] = key_pair_name
 
         try:
-            client.create_instances(
-                instanceNames=[
-                    instance_name
-                ],
-                availabilityZone=zone,
-                blueprintId=blueprint_id,
-                bundleId=bundle_id,
-                userData=user_data,
-                keyPairName=key_pair_name,
-            )
+            client.create_instances(**create_params)
         except botocore.exceptions.ClientError as e:
             module.fail_json_aws(e)
 
+        wait = module.params.get('wait')
         if wait:
             desired_states = ['running']
             wait_for_instance_state(module, client, instance_name, desired_states)
@@ -323,8 +318,7 @@ def main():
         wait_timeout=dict(default=300, type='int'),
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec,
-                              required_if=[['state', 'present', ('zone', 'blueprint_id', 'bundle_id', 'key_pair_name')]])
+    module = AnsibleAWSModule(argument_spec=argument_spec)
     client = module.client('lightsail')
 
     name = module.params.get('name')

@@ -11,17 +11,12 @@
 
     # ==== Tests ===================================================
 
-    - name: Create a new keypair in lightsail
-      lightsail_keypair:
-        name: "{{ keypair_name }}"
-
     - name: Create a new instance
       lightsail:
         name: "{{ instance_name }}"
         zone: "{{ zone }}"
         blueprint_id: amazon_linux
         bundle_id: nano_2_0
-        key_pair_name: "{{ keypair_name }}"
         wait: yes
       register: result
 
@@ -37,7 +32,6 @@
         zone: "{{ zone }}"
         blueprint_id: amazon_linux
         bundle_id: nano_2_0
-        key_pair_name: "{{ keypair_name }}"
       register: result
 
     - assert:
@@ -124,11 +118,5 @@
     - name: Cleanup - delete instance
       lightsail:
         name: "{{ instance_name }}"
-        state: absent
-      ignore_errors: yes
-
-    - name: Cleanup - delete keypair
-      lightsail_keypair:
-        name: "{{ keypair_name }}"
         state: absent
       ignore_errors: yes
