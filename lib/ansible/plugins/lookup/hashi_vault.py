@@ -16,7 +16,8 @@ DOCUMENTATION = """
     - retrieve secrets from HashiCorp's vault
   notes:
     - Due to a current limitation in the HVAC library there won't necessarily be an error if a bad endpoint is specified.
-    - As of Ansible 2.10, only the latest secret is returned when specifying a KV v2 path.
+    - As of Ansible 2.10, only the latest secret is returned when specifying a KV v2 path and key.
+    - When accessing a version 2 KV credential store a dictionary is returned with metadata and data.
   options:
     secret:
       description: query you are making.
@@ -100,17 +101,17 @@ EXAMPLES = """
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200 namespace=teama/admins')}}"
 
 # When using KV v2 the PATH should include "data" between the secret engine mount and path (e.g. "secret/data/:path")
+# This example returns the metadata and data for the credential
 # see: https://www.vaultproject.io/api/secret/kv/kv-v2.html#read-secret-version
 - name: Return latest KV v2 secret from path
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/data/hello token=my_vault_token url=http://myvault_url:8200') }}"
 
-- name: Return a specific  version from a KV v2 engine secret 
+# This example returns the specific credential with with meta data from a version 2 KV store
+# see: https://www.vaultproject.io/api/secret/kv/kv-v2.html#read-secret-version
+- name: Return latest KV v2 secret from path
   debug:
-    msg: "{{ lookup('hashi_vault', 'secret=secret/data/hello version=1 token=my_vault_token url=http://myvault_url:8200') }}"
-
-
-
+    msg: "{{ lookup('hashi_vault', 'secret=secret/data/hello:mykey token=my_vault_token url=http://myvault_url:8200') }}"
 """
 
 RETURN = """
@@ -223,13 +224,20 @@ class HashiVault:
             # Return all secret engine v2 information (eg. metadata and data)
             if 'metadata' in data:
                 return data
+            # Return the v1 lookup data
             else: 
                 return data['data']
 
         if self.secret_field not in data['data']:
             raise AnsibleError("The secret %s does not contain the field '%s'. for hashi_vault lookup" % (self.secret, self.secret_field))
 
-        return data['data'][self.secret_field]
+        # Return metadata along with the requested secret_field data for a v2 lookup
+        if 'metadata' in data:
+            return { 'metadata': data['metadata'],
+                     'data': data['data'][self.secret_field]}
+        else:
+            # Return the v1 lookup data
+            return data['data'][self.secret_field]
 
     def check_params(self, **kwargs):
         username = kwargs.get('username')
