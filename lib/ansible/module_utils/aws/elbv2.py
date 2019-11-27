@@ -720,7 +720,7 @@ class ELBListenerRules(object):
                         current_condition['SourceIpConfig']['Values'][0] == condition['SourceIpConfig']['Values'][0]):
                     condition_found = True
                     break
-            elif current_condition['Field'] == condition['Field'] and current_condition['Values'] == condition['Values']:
+            elif current_condition['Field'] == condition['Field'] and current_condition['Values'].sort() == condition['Values'].sort():
                 condition_found = True
                 break
 
