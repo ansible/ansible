@@ -61,6 +61,11 @@
     name: '{{ db_latin1_name }}'
     target: "{{ latin1_file1 }}"
     login_unix_socket: '{{ mysql_socket }}'
+    
+ - assert:
+    that:
+    - result is changed
+
 
 - name: check encoding of table
   shell: mysql {{ db_latin1_name }} -e "SHOW FULL COLUMNS FROM testlatin1;"
