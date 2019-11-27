@@ -1,0 +1,3 @@
+bugfixes:
+  - k8s_scale has been fixed to work with recent versions of openshift python module
+  - k8s now correctly fails if a new replicaset fails to even create new pods

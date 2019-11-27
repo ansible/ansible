@@ -468,7 +468,9 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             # Furthermore deployment.status.availableReplicas == deployment.status.replicas == None if status is empty
             return (deployment.status and deployment.status.replicas is not None and
                     deployment.status.availableReplicas == deployment.status.replicas and
-                    deployment.status.observedGeneration == deployment.metadata.generation)
+                    deployment.status.observedGeneration == deployment.metadata.generation and
+                    not deployment.status.unAvailableReplicas
+                    )
 
         def _pod_ready(pod):
             return (pod.status and pod.status.containerStatuses is not None and

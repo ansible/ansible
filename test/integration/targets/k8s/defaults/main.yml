@@ -5,6 +5,7 @@ k8s_pod_metadata:
     app: "{{ k8s_pod_name }}"
 
 k8s_pod_spec:
+  serviceAccount: "{{ k8s_pod_service_account }}"
   containers:
     - image: "{{ k8s_pod_image }}"
       imagePullPolicy: Always
@@ -29,4 +30,5 @@ k8s_pod_template:
   metadata: "{{ k8s_pod_metadata }}"
   spec: "{{ k8s_pod_spec }}"
 
+k8s_pod_service_account: default
 k8s_openshift: yes

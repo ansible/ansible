@@ -26,14 +26,13 @@ from ansible.module_utils.k8s.common import AUTH_ARG_SPEC, COMMON_ARG_SPEC
 from ansible.module_utils.k8s.common import KubernetesAnsibleModule
 from ansible.module_utils.six import string_types
 
+import yaml
+from openshift.dynamic.client import ResourceInstance
+from openshift.dynamic.exceptions import NotFoundError
 try:
-    import yaml
     from openshift import watch
-    from openshift.dynamic.client import ResourceInstance
-    from openshift.helper.exceptions import KubernetesException
-except ImportError as exc:
-    class KubernetesException(Exception):
-        pass
+except ImportError:
+    from openshift.dynamic.client import watch
 
 
 SCALE_ARG_SPEC = {
@@ -113,7 +112,7 @@ class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
         try:
             existing = resource.get(name=name, namespace=namespace)
             return_attributes['result'] = existing.to_dict()
-        except KubernetesException as exc:
+        except NotFoundError as exc:
             self.fail_json(msg='Failed to retrieve requested object: {0}'.format(exc),
                            error=exc.value.get('status'))
 
@@ -188,15 +187,12 @@ class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
         """ Create a stream of events for the object """
         w = None
         stream = None
-        try:
-            w = watch.Watch()
-            w._api_client = self.client.client
-            if namespace:
-                stream = w.stream(resource.get, serialize=False, namespace=namespace, timeout_seconds=wait_time)
-            else:
-                stream = w.stream(resource.get, serialize=False, namespace=namespace, timeout_seconds=wait_time)
-        except KubernetesException:
-            pass
+        w = watch.Watch()
+        w._api_client = self.client.client
+        if namespace:
+            stream = w.stream(resource.get, serialize=False, namespace=namespace, timeout_seconds=wait_time)
+        else:
+            stream = w.stream(resource.get, serialize=False, namespace=namespace, timeout_seconds=wait_time)
         return w, stream
 
     def _read_stream(self, resource, watcher, stream, name, replicas):

@@ -4,8 +4,8 @@
 
 # Kubernetes resources
 
-- include_tasks: delete.yml
 - include_tasks: apply.yml
+- include_tasks: delete.yml
 - include_tasks: waiter.yml
 
 - block:
