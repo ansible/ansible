@@ -3,7 +3,7 @@
     msg: "Start nxos_interfaces overridden integration tests connection={{ ansible_connection }}"
 
 - block:
-  # Skip tests when platform N5K/N6K. These have image issues with shutdown cli.
+  # Skip tests when platform N35, N5K/N6K. These platforms have different default settings for enabled.
 
   - set_fact: test_int1="{{ nxos_int1 }}"
   - set_fact: test_int2="{{ nxos_int2 }}"
@@ -66,4 +66,4 @@
     always:
     - name: teardown
       cli_config: *cleanup
-  when: platform is not search("N5K|N6K")
+  when: platform is not search('N35|N[356]K')

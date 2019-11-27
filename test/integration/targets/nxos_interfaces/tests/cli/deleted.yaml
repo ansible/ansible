@@ -37,11 +37,15 @@
   - assert:
       that:
         - "ansible_facts.network_resources.interfaces|symmetric_difference(result.before)|length == 0"
-        - "result.after|length == 0"
         - "result.changed == true"
         - "'interface {{ test_int1 }}' in result.commands"
         - "'no description' in result.commands"
+
+  - assert:
+      that:
+        - "result.after|length == 0"
         - "'shutdown' in result.commands"
+    when: platform is not search('N35|N[56]K')
 
   - name: Idempotence - deleted
     nxos_interfaces: *deleted
@@ -51,6 +55,7 @@
       that:
         - "result.changed == false"
         - "result.commands|length == 0"
+    when: platform is not search('N35|N[56]K')
 
   always:
   - name: teardown

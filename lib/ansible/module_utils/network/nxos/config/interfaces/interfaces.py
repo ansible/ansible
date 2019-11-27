@@ -22,6 +22,7 @@ from ansible.module_utils.network.common.utils import dict_diff, to_list, remove
 from ansible.module_utils.network.nxos.facts.facts import Facts
 from ansible.module_utils.network.nxos.utils.utils import normalize_interface, search_obj_in_list
 from ansible.module_utils.network.nxos.utils.utils import remove_rsvd_interfaces
+from ansible.module_utils.network.nxos.nxos import default_intf_enabled
 
 
 class Interfaces(ConfigBase):
@@ -62,6 +63,8 @@ class Interfaces(ConfigBase):
         if get_default_interfaces:
             default_interfaces = facts['ansible_network_resources'].get('default_interfaces', [])
             interfaces_facts.append(default_interfaces)
+
+        self.intf_defs = facts.get('intf_defs', {})
         return interfaces_facts
 
     def edit_config(self, commands):
@@ -155,8 +158,16 @@ class Interfaces(ConfigBase):
                   to the desired configuration
         """
         commands = []
-        obj_in_have = search_obj_in_list(w['name'], have, 'name')
+        name = w['name']
+        obj_in_have = search_obj_in_list(name, have, 'name')
         if obj_in_have:
+            # If 'w' does not specify mode then intf may need to change to its
+            # default mode, however default mode may depend on sysdef.
+            if not w.get('mode') and re.search('Ethernet|port-channel', name):
+                sysdefs = self.intf_defs['sysdefs']
+                sysdef_mode = sysdefs['mode']
+                if obj_in_have.get('mode') != sysdef_mode:
+                    w['mode'] = sysdef_mode
             diff = dict_diff(w, obj_in_have)
         else:
             diff = w
@@ -173,7 +184,7 @@ class Interfaces(ConfigBase):
             #     (interfaces that already exist)
             if obj_in_have:
                 if 'name' not in diff:
-                    diff['name'] = w['name']
+                    diff['name'] = name
                 wkeys = w.keys()
                 dkeys = diff.keys()
                 for k in wkeys:
@@ -245,23 +256,40 @@ class Interfaces(ConfigBase):
                 commands.extend(self.del_attribs(h))
         return commands
 
-    def default_enabled(self, intf):
-        # The 'enabled' default state depends on the interface type.
-        # Most interfaces default to 'shutdown'.
-        if 'name' not in intf:
+    def default_enabled(self, want={}, have={}, action=''):
+        # 'enabled' default state depends on the interface type and L2 state.
+        # Note that the current default could change when changing L2/L3 modes.
+        name = have.get('name')
+        if name is None:
             return None
-        default = False
-        if re.search('loopback', intf['name']):
-            default = True
-        return default
+
+        sysdefs=self.intf_defs['sysdefs']
+        sysdef_mode = sysdefs['mode']
+
+        # Get the default enabled state for this interface. This was collected
+        # during Facts gathering.
+        intf_def_enabled = self.intf_defs.get(name)
+
+        have_mode = have.get('mode', sysdef_mode)
+        if action == 'delete' and not want:
+            want_mode = sysdef_mode
+        else:
+            want_mode = want.get('mode', have_mode)
+        if (want_mode and have_mode) is None or (want_mode != have_mode) or intf_def_enabled is None:
+            # L2-L3 is changing or this is a new virtual intf. Get new default.
+            intf_def_enabled = default_intf_enabled(name=name, sysdefs=sysdefs, mode=want_mode)
+
+        return intf_def_enabled
 
     def del_attribs(self, obj):
         commands = []
         if not obj or len(obj.keys()) == 1:
             return commands
         # mode/switchport changes should occur before other changes
-        if 'mode' in obj and obj['mode'] != 'layer3':
-            commands.append('no switchport')
+        sysdef_mode = self.intf_defs['sysdefs']['mode']
+        if 'mode' in obj and obj['mode'] != sysdef_mode:
+            no_cmd = 'no ' if sysdef_mode == 'layer3' else ''
+            commands.append(no_cmd + 'switchport')
         if 'description' in obj:
             commands.append('no description')
         if 'speed' in obj:
@@ -269,10 +297,10 @@ class Interfaces(ConfigBase):
         if 'duplex' in obj:
             commands.append('no duplex')
         if 'enabled' in obj:
-            default = self.default_enabled(obj)
-            if obj['enabled'] is False and default is True:
+            sysdef_enabled = self.default_enabled(have=obj, action='delete')
+            if obj['enabled'] is False and sysdef_enabled is True:
                 commands.append('no shutdown')
-            elif obj['enabled'] is True and default is False:
+            elif obj['enabled'] is True and sysdef_enabled is False:
                 commands.append('shutdown')
         if 'mtu' in obj:
             commands.append('no mtu')
@@ -300,10 +328,14 @@ class Interfaces(ConfigBase):
             obj_in_have = {}
         # mode/switchport changes should occur before other changes
         if 'mode' in d:
-            if d['mode'] == 'layer2':
+            sysdef_mode = self.intf_defs['sysdefs']['mode']
+            have_mode = obj_in_have.get('mode', sysdef_mode)
+            want_mode = d['mode']
+            if have_mode == 'layer2':
+                if want_mode == 'layer3':
+                    commands.append('no switchport')
+            elif want_mode == 'layer2':
                 commands.append('switchport')
-            elif d['mode'] == 'layer3' and obj_in_have.get('mode') == 'layer2':
-                commands.append('no switchport')
         if 'description' in d:
             commands.append('description ' + d['description'])
         if 'speed' in d:
@@ -311,7 +343,7 @@ class Interfaces(ConfigBase):
         if 'duplex' in d:
             commands.append('duplex ' + d['duplex'])
         if 'enabled' in d:
-            have_enabled = obj_in_have.get('enabled', self.default_enabled(obj_in_have))
+            have_enabled = obj_in_have.get('enabled', self.default_enabled(d, obj_in_have))
             if d['enabled'] is False and have_enabled is True:
                 commands.append('shutdown')
             elif d['enabled'] is True and have_enabled is False:

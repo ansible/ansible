@@ -24,6 +24,7 @@ from units.compat.mock import patch
 from units.modules.utils import AnsibleFailJson
 from ansible.modules.network.nxos import nxos_interfaces
 from ansible.module_utils.network.nxos.config.interfaces.interfaces import Interfaces
+from ansible.module_utils.network.nxos.facts.interfaces.interfaces import InterfacesFacts
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
 ignore_provider_arg = True
@@ -47,6 +48,8 @@ class TestNxosInterfacesModule(TestNxosModule):
 
         self.mock_edit_config = patch('ansible.module_utils.network.nxos.config.interfaces.interfaces.Interfaces.edit_config')
         self.edit_config = self.mock_edit_config.start()
+        self.mock__device_info = patch('ansible.module_utils.network.nxos.facts.interfaces.interfaces.InterfacesFacts._device_info')
+        self._device_info = self.mock__device_info.start()
 
     def tearDown(self):
         super(TestNxosInterfacesModule, self).tearDown()
@@ -54,19 +57,31 @@ class TestNxosInterfacesModule(TestNxosModule):
         self.mock_get_resource_connection_config.stop()
         self.mock_get_resource_connection_facts.stop()
         self.mock_edit_config.stop()
+        self.mock__device_info.stop()
 
     def load_fixtures(self, commands=None, device=''):
         self.mock_FACT_LEGACY_SUBSETS.return_value = dict()
         self.get_resource_connection_config.return_value = None
         self.edit_config.return_value = None
-        # def load_from_file - this method is not needed because the show cmd
-        # output is defined by each test case.
+        if device == 'legacy':
+            # call execute_module() with device='legacy' to use this codepath
+            self._device_info.return_value = {'network_os_platform': 'N3K-Cxxx'}
+        else:
+            self._device_info.return_value = {'network_os_platform': 'N9K-Cxxx'}
 
-    SHOW_CMD = 'show running-config | section ^interface'
+    SHOW_RUN_SYSDEF = "show running-config all | incl 'system default switchport'"
+    SHOW_RUN_INTF = 'show running-config | section ^interface'
 
     def test_1(self):
         # Overall general test for each state: merged, deleted, overridden, replaced
-        existing = dedent('''\
+        sysdefs = dedent('''\
+          !
+          ! Interfaces default to L3 !!
+          !
+          no system default switchport
+          no system default switchport shutdown
+        ''')
+        intf = dedent('''\
           interface mgmt0
             description do not manage mgmt0!
           interface Ethernet1/1
@@ -82,11 +97,14 @@ class TestNxosInterfacesModule(TestNxosModule):
           interface Ethernet1/4
           interface Ethernet1/5
           interface Ethernet1/6
-            shutdown
+            no shutdown
           interface loopback0
             description test-loopback
         ''')
-        self.get_resource_connection_facts.return_value = {self.SHOW_CMD: existing}
+        self.get_resource_connection_facts.return_value = {
+          self.SHOW_RUN_SYSDEF: sysdefs,
+          self.SHOW_RUN_INTF: intf
+        }
         playbook = dict(config=[
             dict(name='Ethernet1/1', description='ansible', mode='layer3'),
             dict(name='Ethernet1/2', speed=10000, duplex='auto', mtu=1500,
@@ -122,24 +140,6 @@ class TestNxosInterfacesModule(TestNxosModule):
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=deleted)
 
-        overridden = [
-            # The play is the source of truth. Similar to replaced but the scope
-            # includes all objects on the device; i.e. it will also reset state
-            # on objects not found in the play.
-            'interface Ethernet1/1', 'description ansible',
-            'interface Ethernet1/2', 'no description',
-            'no ip forward', 'no fabric forwarding mode anycast-gateway',
-            'speed 10000', 'duplex auto', 'mtu 1500',
-            'interface loopback0', 'no description',
-            'interface Ethernet1/3', 'description ansible',
-            'interface Ethernet1/4', 'switchport',
-            'interface Ethernet1/3.101', 'description test-sub-intf',
-            'interface loopback1', 'description test-loopback'
-        ]
-        playbook['state'] = 'overridden'
-        set_module_args(playbook, ignore_provider_arg)
-        self.execute_module(changed=True, commands=overridden)
-
         replaced = [
             # Scope is limited to objects in the play. The play is the source of
             # truth for the objects that are explicitly listed.
@@ -156,27 +156,167 @@ class TestNxosInterfacesModule(TestNxosModule):
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=replaced)
 
+        overridden = [
+            # The play is the source of truth. Similar to replaced but the scope
+            # includes all objects on the device; i.e. it will also reset state
+            # on objects not found in the play.
+            'interface Ethernet1/1', 'description ansible',
+            'interface Ethernet1/2', 'no description',
+            'no ip forward', 'no fabric forwarding mode anycast-gateway',
+            'speed 10000', 'duplex auto', 'mtu 1500',
+            'interface Ethernet1/6', 'shutdown',
+            'interface loopback0', 'no description',
+            'interface Ethernet1/3', 'description ansible',
+            'interface Ethernet1/4', 'switchport',
+            'interface Ethernet1/3.101', 'description test-sub-intf',
+            'interface loopback1', 'description test-loopback'
+        ]
+        playbook['state'] = 'overridden'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=overridden)
+
     def test_2(self):
         # 'enabled'/shutdown behaviors are tricky:
-        # - different default states for different interface types:
-        #    ethernet = shutdown, loopback = no shutdown
+        # - different default states for different interface types for different
+        #   platforms, based on 'system default switchport' settings
         # - virtual interfaces may not exist yet
-        # - idempotence checks for interfaces with all default states
-        existing = dedent('''\
+        # - idempotence for interfaces with all default states
+        sysdefs = dedent('''\
+          !
+          ! Interfaces default to L3 !!
+          !
+          no system default switchport
+          no system default switchport shutdown
+        ''')
+        intf = dedent('''\
           interface mgmt0
           interface Ethernet1/1
-          interface loopback1
           interface Ethernet1/2
-            no shutdown
-          interface loopback2
+            switchport
             shutdown
           interface Ethernet1/3
+            switchport
+          interface loopback1
+          interface loopback2
+            shutdown
           interface loopback3
           interface loopback8
           interface loopback9
             shutdown
+          interface port-channel2
+          interface port-channel3
+            shutdown
         ''')
-        self.get_resource_connection_facts.return_value = {self.SHOW_CMD: existing}
+        self.get_resource_connection_facts.return_value = {
+          self.SHOW_RUN_SYSDEF: sysdefs,
+          self.SHOW_RUN_INTF: intf
+        }
+        playbook = dict(config=[
+            # Set non-default states on existing objs
+            dict(name='Ethernet1/1', mode='layer3', enabled=True),
+            dict(name='loopback1', enabled=False),
+            # Set default states on existing objs
+            dict(name='Ethernet1/2', enabled=True),
+            dict(name='loopback2', enabled=True),
+            # Set explicit default state on existing objs (no chg)
+            dict(name='Ethernet1/3', enabled=True),
+            dict(name='loopback3', enabled=True),
+            dict(name='port-channel3', enabled=True),
+            # Set default state on non-existent objs; no state changes but need to create intf
+            dict(name='loopback4', enabled=True),
+            dict(name='port-channel4', enabled=True),
+            dict(name='Ethernet1/4.101')
+        ])
+        # Testing with newer code version
+        merged = [
+            'interface Ethernet1/1', 'no shutdown',
+            'interface loopback1', 'shutdown',
+            'interface Ethernet1/2', 'no shutdown',
+            'interface loopback2', 'no shutdown',
+            'interface port-channel3', 'no shutdown',
+            'interface loopback4',
+            'interface port-channel4',
+            'interface Ethernet1/4.101'
+        ]
+        playbook['state'] = 'merged'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=merged)
+
+        deleted = [
+            # e1/2 becomes L3 so enable default changes to false
+            'interface Ethernet1/2', 'no switchport',
+            'interface loopback2', 'no shutdown',
+            'interface Ethernet1/3', 'no switchport',
+            'interface port-channel3', 'no shutdown'
+        ]
+        playbook['state'] = 'deleted'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=deleted)
+
+        replaced = [
+            'interface Ethernet1/1', 'no shutdown',
+            'interface loopback1', 'shutdown',
+            'interface Ethernet1/2', 'no switchport', 'no shutdown',
+            'interface loopback2', 'no shutdown',
+            'interface Ethernet1/3', 'no switchport', 'no shutdown',
+            'interface port-channel3', 'no shutdown',
+            'interface loopback4',
+            'interface port-channel4',
+            'interface Ethernet1/4.101'
+        ]
+        playbook['state'] = 'replaced'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=replaced)
+
+        overridden = [
+            'interface Ethernet1/2', 'no switchport', 'no shutdown',
+            'interface Ethernet1/3', 'no switchport', 'no shutdown',
+            'interface loopback2', 'no shutdown',
+            'interface loopback9', 'no shutdown',
+            'interface port-channel3', 'no shutdown',
+            'interface Ethernet1/1', 'no shutdown',
+            'interface loopback1', 'shutdown',
+            'interface loopback4',
+            'interface port-channel4',
+            'interface Ethernet1/4.101'
+        ]
+        playbook['state'] = 'overridden'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=overridden)
+
+    def test_3(self):
+        # Testing 'enabled' with different 'system default' settings.
+        # This is the same as test_2 with some minor changes.
+        sysdefs = dedent('''\
+          !
+          ! Interfaces default to L2 !!
+          !
+          system default switchport
+          system default switchport shutdown
+        ''')
+        intf = dedent('''\
+          interface mgmt0
+          interface Ethernet1/1
+          interface Ethernet1/2
+            no switchport
+            no shutdown
+          interface Ethernet1/3
+            no switchport
+          interface loopback1
+          interface loopback2
+            shutdown
+          interface loopback3
+          interface loopback8
+          interface loopback9
+            shutdown
+          interface port-channel2
+          interface port-channel3
+            shutdown
+        ''')
+        self.get_resource_connection_facts.return_value = {
+          self.SHOW_RUN_SYSDEF: sysdefs,
+          self.SHOW_RUN_INTF: intf
+        }
         playbook = dict(config=[
             # Set non-default states on existing objs
             dict(name='Ethernet1/1', mode='layer3', enabled=True),
@@ -187,65 +327,101 @@ class TestNxosInterfacesModule(TestNxosModule):
             # Set explicit default state on existing objs (no chg)
             dict(name='Ethernet1/3', enabled=False),
             dict(name='loopback3', enabled=True),
+            dict(name='port-channel3', enabled=True),
             # Set default state on non-existent objs; no state changes but need to create intf
             dict(name='loopback4', enabled=True),
+            dict(name='port-channel4', enabled=True),
             dict(name='Ethernet1/4.101')
         ])
         merged = [
-            'interface Ethernet1/1', 'no shutdown',
+            'interface Ethernet1/1', 'no switchport', 'no shutdown',
             'interface loopback1', 'shutdown',
             'interface Ethernet1/2', 'shutdown',
             'interface loopback2', 'no shutdown',
+            'interface port-channel3', 'no shutdown',
             'interface loopback4',
+            'interface port-channel4',
             'interface Ethernet1/4.101'
         ]
         playbook['state'] = 'merged'
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=merged)
 
-        deleted = [
+        # Test with an older image version which has different defaults
+        merged_legacy = [
+            'interface Ethernet1/1', 'no switchport',
+            'interface loopback1', 'shutdown',
             'interface Ethernet1/2', 'shutdown',
-            'interface loopback2', 'no shutdown'
+            'interface loopback2', 'no shutdown',
+            'interface Ethernet1/3', 'shutdown',
+            'interface port-channel3', 'no shutdown',
+            'interface loopback4',
+            'interface port-channel4',
+            'interface Ethernet1/4.101'
+        ]
+        self.execute_module(changed=True, commands=merged_legacy, device='legacy')
+
+        deleted = [
+            'interface Ethernet1/2', 'switchport', 'shutdown',
+            'interface loopback2', 'no shutdown',
+            'interface Ethernet1/3', 'switchport',
+            'interface port-channel3', 'no shutdown'
         ]
         playbook['state'] = 'deleted'
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=deleted)
 
-        overridden = [
-            'interface Ethernet1/2', 'shutdown',
-            'interface loopback2', 'no shutdown',
-            'interface loopback9', 'no shutdown',
-            'interface Ethernet1/1', 'no shutdown',
-            'interface loopback1', 'shutdown',
-            'interface loopback4',
-            'interface Ethernet1/4.101'
-        ]
-        playbook['state'] = 'overridden'
-        set_module_args(playbook, ignore_provider_arg)
-        self.execute_module(changed=True, commands=overridden)
-
         replaced = [
-            'interface Ethernet1/1', 'no shutdown',
+            'interface Ethernet1/1', 'no switchport', 'no shutdown',
             'interface loopback1', 'shutdown',
-            'interface Ethernet1/2', 'shutdown',
+            'interface Ethernet1/2', 'switchport', 'shutdown',
             'interface loopback2', 'no shutdown',
+            'interface Ethernet1/3', 'switchport',
+            'interface port-channel3', 'no shutdown',
             'interface loopback4',
+            'interface port-channel4',
             'interface Ethernet1/4.101'
         ]
         playbook['state'] = 'replaced'
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=replaced)
 
-    def test_3(self):
+        overridden = [
+            'interface Ethernet1/2', 'switchport', 'shutdown',
+            'interface Ethernet1/3', 'switchport',
+            'interface loopback2', 'no shutdown',
+            'interface loopback9', 'no shutdown',
+            'interface port-channel3', 'no shutdown',
+            'interface Ethernet1/1', 'no switchport', 'no shutdown',
+            'interface loopback1', 'shutdown',
+            'interface loopback4',
+            'interface port-channel4',
+            'interface Ethernet1/4.101'
+        ]
+        playbook['state'] = 'overridden'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=overridden)
+
+    def test_4(self):
         # Basic idempotence test
-        existing = dedent('''\
+        sysdefs = dedent('''\
+          !
+          ! Interfaces default to L3 !!
+          !
+          no system default switchport
+          no system default switchport shutdown
+        ''')
+        intf = dedent('''\
           interface Ethernet1/1
           interface Ethernet1/2
             switchport
             speed 1000
             shutdown
         ''')
-        self.get_resource_connection_facts.return_value = {self.SHOW_CMD: existing}
+        self.get_resource_connection_facts.return_value = {
+          self.SHOW_RUN_SYSDEF: sysdefs,
+          self.SHOW_RUN_INTF: intf
+        }
         playbook = dict(config=[
             dict(name='Ethernet1/1', mode='layer3'),
             dict(name='Ethernet1/2', mode='layer2', enabled=False)
@@ -255,16 +431,26 @@ class TestNxosInterfacesModule(TestNxosModule):
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=False, commands=merged)
 
-    def test_4(self):
+    def test_5(self):
         # 'state: deleted' without 'config'; clean all objects.
-        existing = dedent('''\
+        sysdefs = dedent('''\
+          !
+          ! Interfaces default to L3 !!
+          !
+          no system default switchport
+          no system default switchport shutdown
+        ''')
+        intf = dedent('''\
           interface Ethernet1/1
             switchport
           interface Ethernet1/2
             speed 1000
             no shutdown
         ''')
-        self.get_resource_connection_facts.return_value = {self.SHOW_CMD: existing}
+        self.get_resource_connection_facts.return_value = {
+          self.SHOW_RUN_SYSDEF: sysdefs,
+          self.SHOW_RUN_INTF: intf
+        }
         playbook = dict()
         deleted = [
             'interface Ethernet1/1', 'no switchport',

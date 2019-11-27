@@ -18,6 +18,7 @@ from copy import deepcopy
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.nxos.argspec.interfaces.interfaces import InterfacesArgs
 from ansible.module_utils.network.nxos.utils.utils import get_interface_type
+from ansible.module_utils.network.nxos.nxos import default_intf_enabled
 
 
 class InterfacesFacts(object):
@@ -47,7 +48,12 @@ class InterfacesFacts(object):
         """
         objs = []
         if not data:
-            data = connection.get('show running-config | section ^interface')
+            data = connection.get("show running-config all | incl 'system default switchport'")
+            data += connection.get('show running-config | section ^interface')
+
+        # Collect device defaults & per-intf defaults
+        self.render_system_defaults(data)
+        intf_defs = {'sysdefs': self.sysdefs}
 
         config = data.split('interface ')
         default_interfaces = []
@@ -55,14 +61,16 @@ class InterfacesFacts(object):
             conf = conf.strip()
             if conf:
                 obj = self.render_config(self.generated_spec, conf)
-                if obj and len(obj.keys()) > 1:
-                    objs.append(obj)
-                else:
-                    # Existing-but-default interfaces are not included in the
-                    # objs list; however a list of default interfaces is
-                    # necessary to prevent idempotence issues and to help
-                    # with virtual interfaces that haven't been created yet.
-                    default_interfaces.append(obj['name'])
+                if obj:
+                    intf_defs[obj['name']] = obj.pop('enabled_def', None)
+                    if len(obj.keys()) > 1:
+                        objs.append(obj)
+                    elif len(obj.keys()) == 1:
+                        # Existing-but-default interfaces are not included in the
+                        # objs list; however a list of default interfaces is
+                        # necessary to prevent idempotence issues and to help
+                        # with virtual interfaces that haven't been created yet.
+                        default_interfaces.append(obj['name'])
 
         ansible_facts['ansible_network_resources'].pop('interfaces', None)
         facts = {}
@@ -74,7 +82,40 @@ class InterfacesFacts(object):
 
         ansible_facts['ansible_network_resources'].update(facts)
         ansible_facts['ansible_network_resources']['default_interfaces'] = default_interfaces
+        ansible_facts['intf_defs'] = intf_defs
         return ansible_facts
+
+    def _device_info(self):
+        return self._module._capabilities.get('device_info', {})
+
+    def render_system_defaults(self, config):
+        """Collect user-defined-default states for 'system default switchport' configurations.
+        These configurations determine default L2/L3 modes and enabled/shutdown
+        states. The default values for user-defined-default configurations may
+        be different for legacy platforms.
+        Notes:
+        - L3 enabled default state is False on N9K,N7K but True for N3K,N6K
+        - Changing L2-L3 modes may change the default enabled value.
+        - '(no) system default switchport shutdown' only applies to L2 interfaces.
+        """
+        platform = self._device_info().get('network_os_platform', '')
+        L3_enabled = True if re.search('N[356]K', platform) else False
+        sysdefs = {
+            'mode': None,
+            'L2_enabled': None,
+            'L3_enabled': L3_enabled
+        }
+        pat = '(no )*system default switchport$'
+        m = re.search(pat, config, re.MULTILINE)
+        if m:
+             sysdefs['mode'] = 'layer3' if 'no ' in m.groups() else 'layer2'
+
+        pat = '(no )*system default switchport shutdown$'
+        m = re.search(pat, config, re.MULTILINE)
+        if m:
+             sysdefs['L2_enabled'] = True if 'no ' in m.groups() else False
+
+        self.sysdefs = sysdefs
 
     def render_config(self, spec, conf):
         """
@@ -98,13 +139,10 @@ class InterfacesFacts(object):
         config['duplex'] = utils.parse_conf_arg(conf, 'duplex')
         config['mode'] = utils.parse_conf_cmd_arg(conf, 'switchport', 'layer2', 'layer3')
 
-        # Default 'shutdown' state may be different for different interface types,
-        # therefore, check for both explicit states. The default is normally
-        # 'shutdown' for most interface types, but 'no shutdown' for loopbacks.
-        # Legacy images may be inconsistent.
-        config['enabled'] = utils.parse_conf_cmd_arg(conf, 'no shutdown', True)
-        if config['enabled'] is not True:
-            config['enabled'] = utils.parse_conf_cmd_arg(conf, 'shutdown', False)
+        config['enabled'] = utils.parse_conf_cmd_arg(conf, 'shutdown', False, True)
+
+        # Capture the default 'enabled' state, which may be interface-specific
+        config['enabled_def'] = default_intf_enabled(name=intf, sysdefs=self.sysdefs, mode=config['mode'])
 
         config['fabric_forwarding_anycast_gateway'] = utils.parse_conf_cmd_arg(conf, 'fabric forwarding mode anycast-gateway', True)
         config['ip_forward'] = utils.parse_conf_cmd_arg(conf, 'ip forward', True)

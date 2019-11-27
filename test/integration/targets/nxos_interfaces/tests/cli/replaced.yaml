@@ -3,7 +3,7 @@
     msg: "Start nxos_interfaces replaced integration tests connection={{ ansible_connection }}"
 
 - block:
-  # Skip tests when platform N5K/N6K. These have image issues with shutdown cli.
+  # Skip tests when platform N35,N5K/N6K. These have image issues with shutdown cli.
   - set_fact: test_int1="{{ nxos_int1 }}"
   - name: setup1
     cli_config: &cleanup
@@ -29,7 +29,7 @@
         config:
           - name: "{{ test_int1 }}"
             description: 'Configured by Ansible'
-            enabled: "{{enabled_state|default(omit)}}"
+            enabled: True
         state: replaced
       register: result
 
@@ -39,11 +39,7 @@
           - "result.changed == true"
           - "'interface {{ test_int1 }}' in result.commands"
           - "'description Configured by Ansible' in result.commands"
-
-    - assert:
-        that:
           - "'no shutdown' in result.commands"
-      when: enabled_state is defined
 
     - name: Gather interfaces post facts
       nxos_facts: *facts
@@ -65,4 +61,4 @@
     - name: teardown
       cli_config: *cleanup
 
-  when: platform is not search("N5K|N6K")
+  when: platform is not search('N35|N[356]K')
