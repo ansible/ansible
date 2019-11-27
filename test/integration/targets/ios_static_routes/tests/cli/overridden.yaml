@@ -1,0 +1,68 @@
+---
+- debug:
+      msg: "START Overridden ios_static_routes state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Override device configuration of all interfaces with provided configuration
+      ios_static_routes: &overridden
+        config:
+          - vrf: blue
+            address_families:
+            - afi: ipv4
+              routes:
+              - dest: 192.168.2.0/24
+                next_hops:
+                - forward_router_address: 10.0.0.4
+                  name: override_vrf
+                  tag: 50
+                  track: 150
+          - address_families:
+            - afi: ipv4
+              routes:
+              - dest: 192.168.3.0/24
+                next_hops:
+                - forward_router_address: 10.0.0.3
+                  multicast: True
+                  name: override_route
+            - afi: ipv6
+              routes:
+              - dest: FD5D:12C9:2201:1::/64
+                next_hops:
+                - forward_router_address: FD5D:12C9:2202::2
+                  name: override_v6
+                  tag: 175
+        state: overridden
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ overridden['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ overridden['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
+    - name: Override device configuration of all interfaces with provided configuration (IDEMPOTENT)
+      ios_static_routes: *overridden
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+
+    - include_tasks: _populate_config.yaml
+
+  always:
+    - include_tasks: _remove_config.yaml

@@ -1,0 +1,70 @@
+---
+- debug:
+      msg: "START Replaced ios_static_routes state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Replaces device configuration of listed interfaces with provided configuration
+      ios_static_routes: &replaced
+        config:
+          - vrf: blue
+            address_families:
+            - afi: ipv4
+              routes:
+              - dest: 192.168.2.0/24
+                next_hops:
+                - forward_router_address: 10.0.0.8
+                  name: replaced_vrf_new
+                  tag: 75
+                  track: 155
+          - address_families:
+            - afi: ipv4
+              routes:
+              - dest: 192.168.3.0/24
+                next_hops:
+                - forward_router_address: 10.0.0.1
+                  name: replaced_route
+                  distance_metric: 175
+                  tag: 70
+                  multicast: True
+            - afi: ipv6
+              routes:
+              - dest: FD5D:12C9:2201:1::/64
+                next_hops:
+                - forward_router_address: FD5D:12C9:2202::2
+                  name: replaced_v6
+                  tag: 110
+        state: replaced
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ replaced['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ replaced['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
+    - name: Replaces device configuration of listed interfaces with provided configuration (IDEMPOTENT)
+      ios_static_routes: *replaced
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+
+    - include_tasks: _populate_config.yaml
+
+  always:
+    - include_tasks: _remove_config.yaml

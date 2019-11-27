@@ -77,7 +77,7 @@ class Static_RoutesArgs(object):
             'type': 'list'
         },
         'state': {
-            'choices': ['merged', 'replaced', 'overridden', 'deleted', 'gathered', 'rendered'],
+            'choices': ['merged', 'replaced', 'overridden', 'deleted', 'gathered', 'rendered', 'parsed'],
             'default': 'merged',
             'type': 'str'
         }

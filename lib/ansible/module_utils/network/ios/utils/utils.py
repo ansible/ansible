@@ -199,11 +199,11 @@ def netmask_to_cidr(netmask):
     for each in bit_range:
         if cidr == int(netmask.split('.')[2]):
             if netmask_calc_index == 1:
-                return str(8+count)
+                return str(8 + count)
             elif netmask_calc_index == 2:
-                return str(8*2+count)
+                return str(8 * 2 + count)
             elif netmask_calc_index == 3:
-                return str(8*3+count)
+                return str(8 * 3 + count)
             break
         cidr += each
         count += 1

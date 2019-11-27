@@ -1,0 +1,71 @@
+---
+- debug:
+      msg: "START Merged ios_static_routes state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge provided configuration with device configuration
+      ios_static_routes: &merged
+        config:
+          - vrf: blue
+            address_families:
+            - afi: ipv4
+              routes:
+              - dest: 192.168.2.0/24
+                next_hops:
+                - forward_router_address: 10.0.0.8
+                  name: test_vrf_blue
+                  tag: 50
+                  track: 150
+          - address_families:
+            - afi: ipv4
+              routes:
+              - dest: 192.168.3.0/24
+                next_hops:
+                - forward_router_address: 10.0.0.1
+                  name: route_1
+                  distance_metric: 110
+                  tag: 40
+                  multicast: True
+                - forward_router_address: 10.0.0.2
+                  name: route_2
+                  distance_metric: 30
+                - forward_router_address: 10.0.0.3
+                  name: route_3
+            - afi: ipv6
+              routes:
+              - dest: FD5D:12C9:2201:1::/64
+                next_hops:
+                - forward_router_address: FD5D:12C9:2202::2
+                  name: test_v6
+                  tag: 105
+        state: merged
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ merged['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
+    - name: Merge provided configuration with device configuration (IDEMPOTENT)
+      ios_static_routes: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml

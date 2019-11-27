@@ -62,11 +62,13 @@ options:
         type: str
       address_families:
         elements: dict
+        description:
+        - Address family to use for the static routes
         type: list
         suboptions:
           afi:
             description:
-              - Address family to use for the static routes
+            - Top level address family indicator.
             type: str
             required: true
             choices:
@@ -157,7 +159,7 @@ EXAMPLES = """
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 
 - name: Merge provided configuration with device configuration
-  - ios_static_routes:
+  ios_static_routes:
     config:
       - vrf: blue
         address_families:
@@ -214,7 +216,7 @@ EXAMPLES = """
 # ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 105 name merged_v6
 
 - name: Replace provided configuration with device configuration
-  - ios_static_routes:
+  ios_static_routes:
     config:
       - vrf: blue
         address_families:
@@ -268,7 +270,7 @@ EXAMPLES = """
 # ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 105 name merged_v6
 
 - name: Override provided configuration with device configuration
-  - ios_static_routes:
+  ios_static_routes:
     config:
       - vrf: blue
         address_families:
@@ -318,7 +320,7 @@ EXAMPLES = """
 # ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 105 name merged_v6
 
 - name: Delete provided configuration from the device configuration
-  - ios_static_routes:
+  ios_static_routes:
     config:
       - vrf: blue
         address_families:

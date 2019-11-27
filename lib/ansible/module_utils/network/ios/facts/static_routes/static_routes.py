@@ -177,10 +177,11 @@ class Static_RoutesFacts(object):
                     del temp_list[temp_list.index('tag') + 1]
                 if 'track' in temp_list:
                     del temp_list[temp_list.index('track') + 1]
+                # find distance metric
                 dist_metrics = int(
                     [i for i in temp_list if '.' not in i and ':' not in i and ord(i[0]) > 48 and ord(i[0]) < 57][0]
                 )
-            except ValueError:
+            except IndexError:
                 dist_metrics = None
             if dist_metrics:
                 hops['distance_metric'] = dist_metrics
@@ -210,3 +211,4 @@ class Static_RoutesFacts(object):
             config['vrf'] = vrf
 
         return utils.remove_empties(config)
+
