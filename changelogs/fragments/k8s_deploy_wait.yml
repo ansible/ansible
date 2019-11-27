@@ -1,0 +1,2 @@
+bugfixes:
+  - k8s now correctly fails if a new replicaset fails to even create new pods

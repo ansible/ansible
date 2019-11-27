@@ -468,7 +468,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             # Furthermore deployment.status.availableReplicas == deployment.status.replicas == None if status is empty
             return (deployment.status and deployment.status.replicas is not None and
                     deployment.status.availableReplicas == deployment.status.replicas and
-                    deployment.status.observedGeneration == deployment.metadata.generation)
+                    deployment.status.observedGeneration == deployment.metadata.generation and
+                    not deployment.status.unAvailableReplicas)
 
         def _pod_ready(pod):
             return (pod.status and pod.status.containerStatuses is not None and
@@ -477,7 +478,8 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         def _daemonset_ready(daemonset):
             return (daemonset.status and daemonset.status.desiredNumberScheduled is not None and
                     daemonset.status.numberReady == daemonset.status.desiredNumberScheduled and
-                    daemonset.status.observedGeneration == daemonset.metadata.generation)
+                    daemonset.status.observedGeneration == daemonset.metadata.generation and
+                    not daemonset.status.unAvailableReplicas)
 
         def _custom_condition(resource):
             if not resource.status or not resource.status.conditions:

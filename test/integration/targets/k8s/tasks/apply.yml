@@ -269,6 +269,15 @@
           - k8s_service_5.result.spec.ports | length == 1
           - k8s_service_5.result.spec.ports[0].port == 8081
 
+    - name: add a serviceaccount
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: scale-deploy
+            namespace: "{{ apply_namespace }}"
+
     - name: add a deployment
       k8s:
         definition:
@@ -288,6 +297,7 @@
       vars:
         k8s_pod_name: scale-deploy
         k8s_pod_image: gcr.io/kuar-demo/kuard-amd64:v0.10.0-green
+        k8s_pod_service_account: scale-deploy
         k8s_pod_ports:
           - containerPort: 8080
             name: http
@@ -318,13 +328,31 @@
         that:
           - scale_down_deploy_pods.resources | length == 0
 
-    - name: scale the deployment
-      k8s_scale:
-        api_version: extensions/v1beta1
-        kind: Deployment
-        name: scale-deploy
-        namespace: "{{ apply_namespace }}"
-        replicas: 1
+    - name: reapply the earlier deployment
+      k8s:
+        definition:
+          apiVersion: extensions/v1beta1
+          kind: Deployment
+          metadata:
+            name: scale-deploy
+            namespace: "{{ apply_namespace }}"
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: "{{ k8s_pod_name }}"
+            template: "{{ k8s_pod_template }}"
+        wait: yes
+        apply: yes
+      vars:
+        k8s_pod_name: scale-deploy
+        k8s_pod_image: gcr.io/kuar-demo/kuard-amd64:v0.10.0-green
+        k8s_pod_service_account: scale-deploy
+        k8s_pod_ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+      register: reapply_after_scale
 
     - name: get pods in scale-deploy
       k8s_info:
@@ -339,6 +367,48 @@
         that:
           - reapply_after_scale is changed
           - scale_up_deploy_pods.resources | length == 1
+
+    - name: remove the serviceaccount
+      k8s:
+        state: absent
+        definition:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: scale-deploy
+            namespace: "{{ apply_namespace }}"
+
+    - name: update the earlier deployment
+      k8s:
+        definition:
+          apiVersion: extensions/v1beta1
+          kind: Deployment
+          metadata:
+            name: scale-deploy
+            namespace: "{{ apply_namespace }}"
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: "{{ k8s_pod_name }}"
+            template: "{{ k8s_pod_template }}"
+        wait: yes
+        apply: yes
+      vars:
+        k8s_pod_name: scale-deploy
+        k8s_pod_image: gcr.io/kuar-demo/kuard-amd64:v0.10.0-purple
+        k8s_pod_service_account: scale-deploy
+        k8s_pod_ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+      register: deploy_after_serviceaccount_removal
+      ignore_errors: yes
+
+    - name: ensure that updating deployment after service account removal failed
+      assert:
+        that:
+          - deploy_after_serviceaccount_removal is failed
 
   always:
     - name: remove namespace
