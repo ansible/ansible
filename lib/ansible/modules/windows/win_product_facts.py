@@ -22,6 +22,19 @@ author:
 EXAMPLES = r'''
 - name: Get product id and product key
   win_product_facts:
+  
+- name: Windows licensing status
+  tasks:
+    - name: Get Windows product facts
+      win_product_facts:
+
+    - name: Print Windows edition and license information
+      vars:
+        msg: |
+          Windows edition: {{ ansible_os_license_edition }}
+          Windows license status: {{ ansible_os_license_status }}
+      debug:
+        msg: "{{ msg.split('\n') }}"
 '''
 
 RETURN = r'''
