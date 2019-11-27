@@ -63,7 +63,7 @@
   register: output
   failed_when: '"latin1_swedish_ci" not in output.stdout'
 
-- name: remove database name
+- name: remove database
   mysql_db:
     name: '{{ db_latin1_name }}'
     state: absent
