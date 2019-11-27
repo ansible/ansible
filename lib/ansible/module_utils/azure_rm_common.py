@@ -266,7 +266,7 @@ except ImportError:
 
 try:
     from azure.cli.core.util import CLIError
-    from azure.common.credentials import get_azure_cli_credentials, get_cli_profile
+    from azure.common.credentials import get_cli_profile
     from azure.common.cloud import get_cli_active_cloud
 except ImportError:
     HAS_AZURE_CLI_CORE = False
@@ -1355,8 +1355,10 @@ class AzureRMAuth(object):
             'subscription_id': subscription_id
         }
 
-    def _get_azure_cli_credentials(self):
-        credentials, subscription_id = get_azure_cli_credentials()
+    def _get_azure_cli_credentials(self, subscription_id_param=None):
+        subscription_id = subscription_id_param or os.environ.get(AZURE_CREDENTIAL_ENV_MAPPING['subscription_id'], None)
+        profile = get_cli_profile()
+        credentials, subscription_id, tenant = profile.get_login_credentials(subscription_id=subscription_id)
         cloud_environment = get_cli_active_cloud()
 
         cli_credentials = {
@@ -1403,7 +1405,7 @@ class AzureRMAuth(object):
                           exception=HAS_AZURE_CLI_CORE_EXC)
             try:
                 self.log('Retrieving credentials from Azure CLI profile')
-                cli_credentials = self._get_azure_cli_credentials()
+                cli_credentials = self._get_azure_cli_credentials(arg_credentials['subscription_id'])
                 return cli_credentials
             except CLIError as err:
                 self.fail("Azure CLI profile cannot be loaded - {0}".format(err))
@@ -1419,14 +1421,14 @@ class AzureRMAuth(object):
             default_credentials = self._get_profile(profile)
             return default_credentials
 
-        # auto, precedence: module parameters -> environment variables -> default profile in ~/.azure/credentials
+        # auto, precedence: module parameters -> environment variables -> default profile in ~/.azure/credentials -> azure cli
         # try module params
         if arg_credentials['profile'] is not None:
             self.log('Retrieving credentials with profile parameter.')
             credentials = self._get_profile(arg_credentials['profile'])
             return credentials
 
-        if arg_credentials['subscription_id']:
+        if arg_credentials['client_id'] or arg_credentials['ad_user']:
             self.log('Received credentials from parameters.')
             return arg_credentials
 
@@ -1445,7 +1447,7 @@ class AzureRMAuth(object):
         try:
             if HAS_AZURE_CLI_CORE:
                 self.log('Retrieving credentials from AzureCLI profile')
-            cli_credentials = self._get_azure_cli_credentials()
+            cli_credentials = self._get_azure_cli_credentials(arg_credentials['subscription_id'])
             return cli_credentials
         except CLIError as ce:
             self.log('Error getting AzureCLI profile credentials - {0}'.format(ce))
