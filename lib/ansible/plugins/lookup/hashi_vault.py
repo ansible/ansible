@@ -225,7 +225,7 @@ class HashiVault:
             if 'metadata' in data:
                 return data
             # Return the v1 lookup data
-            else: 
+            else:
                 return data['data']
 
         if self.secret_field not in data['data']:
@@ -233,8 +233,8 @@ class HashiVault:
 
         # Return metadata along with the requested secret_field data for a v2 lookup
         if 'metadata' in data:
-            return { 'metadata': data['metadata'],
-                     'data': data['data'][self.secret_field]}
+            return {'metadata': data['metadata'],
+                    'data': data['data'][self.secret_field]}
         else:
             # Return the v1 lookup data
             return data['data'][self.secret_field]
