@@ -8,7 +8,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -24,13 +23,13 @@ options:
     description:
       - Specify cluster or instance snapshot.
     default: instance
-    choices: [ 'aurora', 'instance' ]
+    choices: ['instance', 'aurora']
     type: str
   state:
     description:
       - Specify the desired state of the snapshot.
     default: present
-    choices: [ 'present', 'absent' ]
+    choices: ['present', 'absent']
     type: str
   db_snapshot_identifier:
     description:
@@ -56,7 +55,7 @@ options:
     description:
       - Whether or not to wait for snapshot creation or deletion.
     type: bool
-    default: 'no'
+    default: False
   wait_timeout:
     description:
       - how long before wait gives up, in seconds.
@@ -74,8 +73,8 @@ options:
   fail_on_not_exists:
     description:
       - whether to fail if trying to delete a non-existent snapshot.
-      default: False
-      type: bool
+    default: False
+    type: bool
 requirements:
     - "python >= 2.6"
     - "boto3"
@@ -132,7 +131,8 @@ availability_zones:
   sample: [ 'us-east-2a', 'us-east-2b', 'us-east-2c' ]
 cluster_create_time:
   description: Specifies the time when the DB cluster was created, in Universal Coordinated Time (UTC).
-  type: datetime
+  returned: always
+  type: str
 db_cluster_identifier:
   description: Specifies the DB cluster identifier of the DB cluster that this DB cluster snapshot was created from.
   returned: always
@@ -457,9 +457,9 @@ def main():
         argument_spec=dict(
             snapshot_type=dict(choices=['instance', 'aurora'], default='instance'),
             state=dict(choices=['present', 'absent'], default='present'),
-            db_snapshot_identifier=dict(aliases=['id', 'snapshot_id'], required=True),
-            db_instance_identifier=dict(aliases=['instance_id']),
-            db_cluster_identifier=dict(aliases=['cluster_id']),
+            db_snapshot_identifier=dict(type='str', aliases=['id', 'snapshot_id'], required=True),
+            db_instance_identifier=dict(type='str', aliases=['instance_id']),
+            db_cluster_identifier=dict(type='str', aliases=['cluster_id']),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(type='int', default=300),
             tags=dict(type='dict'),
