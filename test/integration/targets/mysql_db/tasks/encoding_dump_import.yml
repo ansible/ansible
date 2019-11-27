@@ -37,6 +37,10 @@
     state: dump
     login_unix_socket: '{{ mysql_socket }}'
   register: dump_result
+  
+- assert:
+    that:
+    - result is changed
 
 - name: state dump - file name should exist
   file: name={{ latin1_file1 }} state=file
