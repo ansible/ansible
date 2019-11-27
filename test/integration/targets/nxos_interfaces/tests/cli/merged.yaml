@@ -4,7 +4,7 @@
 
 - set_fact: test_int1="{{ nxos_int1 }}"
 - set_fact: enabled=true
-  when: platform is not search('N35|N[356]K')
+  when: platform is not search('N3[5KL]|N[56]K')
 
 - name: setup
   cli_config: &cleanup
@@ -30,7 +30,7 @@
   - assert:
       that:
         - "'no shutdown' in result.commands"
-    when: platform is not search('N35|N[356]K')
+    when: platform is not search('N3[5KL]|N[56]K')
 
   - name: Gather interfaces facts
     nxos_facts:

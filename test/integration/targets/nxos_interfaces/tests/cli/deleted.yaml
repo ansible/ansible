@@ -45,7 +45,7 @@
       that:
         - "result.after|length == 0"
         - "'shutdown' in result.commands"
-    when: platform is not search('N35|N[56]K')
+    when: platform is not search('N3[5KL]|N[56]K')
 
   - name: Idempotence - deleted
     nxos_interfaces: *deleted
@@ -55,7 +55,7 @@
       that:
         - "result.changed == false"
         - "result.commands|length == 0"
-    when: platform is not search('N35|N[56]K')
+    when: platform is not search('N3[5KL]|N[56]K')
 
   always:
   - name: teardown

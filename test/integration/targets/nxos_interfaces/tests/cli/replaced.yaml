@@ -3,7 +3,6 @@
     msg: "Start nxos_interfaces replaced integration tests connection={{ ansible_connection }}"
 
 - block:
-  # Skip tests when platform N35,N5K/N6K. These have image issues with shutdown cli.
   - set_fact: test_int1="{{ nxos_int1 }}"
   - name: setup1
     cli_config: &cleanup
@@ -61,4 +60,4 @@
     - name: teardown
       cli_config: *cleanup
 
-  when: platform is not search('N35|N[356]K')
+  when: platform is not search('N3[5KL]|N[56]K')
