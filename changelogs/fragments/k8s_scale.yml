@@ -1,0 +1,2 @@
+bugfixes:
+  - k8s_scale has been fixed to work with recent versions of openshift python module
