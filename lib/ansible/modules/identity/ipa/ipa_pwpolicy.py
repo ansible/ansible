@@ -213,7 +213,7 @@ def ensure(module, client):
             diff = get_pwpolicy_diff(client, ipa_pwpolicy, module_pwpolicy)
             if len(diff) > 0:
                 changed = True
-                changed_pwpolicy = {k: module_pwpolicy.get(k, None) for k in diff}
+                changed_pwpolicy = dict((k, module_pwpolicy[k]) for k in diff)
                 if not module.check_mode:
                     ipa_pwpolicy = client.pwpolicy_mod(cn=cn, item=changed_pwpolicy)
     else:
