@@ -1468,7 +1468,7 @@ def deletion_protection_update(module, request, response):
         ''.join(
             [
                 "https://www.googleapis.com/compute/v1/",
-                "projects/{project}/zones/{zone}/instances/{name}/setDeletionProtection?deletionProtection={deletionProtection}",
+                "projects/{project}/zones/{zone}/instances/{name}/setDeletionProtection?deletionProtection={deletion_protection}",
             ]
         ).format(**module.params),
         {},
