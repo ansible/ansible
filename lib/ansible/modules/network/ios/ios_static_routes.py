@@ -133,14 +133,25 @@ options:
   state:
     description:
     - The state the configuration should be left in
+    - The states I(rendered), I(gathered) and I(parsed) does not perform any
+        change on the device. 
+    - The state I(rendered) will transform the configuration in C(config) option to platform
+      specific CLI commands which will be returned in the I(rendered) key within the result.
+      For state I(rendered) active connection to remote host is not required.
+    - The state I(gathered) will fetch the running configuration from device and transform
+      it into structured data in the format as per the resource module argspec and the
+      value is returned in the I(gathered) key within the result.
+    - The state I(parsed) reads the configuration from C(running_config) option and transforms
+      it into JSON format as per the resource module parameters and the value is returned in
+      the I(parsed) key within the result. The value of C(running_config) option should be the
+      same format as the output of command I(show running-config | include ip route|ipv6 route)
+      executed on device. For state I(parsed) active connection to remote host is not required.
     type: str
     choices:
     - merged
     - replaced
     - overridden
     - deleted
-    - gathered
-    - rendered
     - gathered
     - rendered
     - parsed
@@ -155,7 +166,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 
 - name: Merge provided configuration with device configuration
@@ -196,7 +207,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name merged_blue track 150
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
@@ -208,7 +219,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name merged_blue track 150
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
@@ -250,7 +261,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 75 name replaced_vrf_new track 155
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
@@ -262,7 +273,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name merged_blue track 150
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
@@ -302,7 +313,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name override_vrf track 150
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3 name override_route multicast
 # ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 175 name override_v6
@@ -312,7 +323,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name merged_blue track 150
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
@@ -359,7 +370,7 @@ EXAMPLES = """
 # After state:
 # ------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 
 # Using Deleted without any config passed
@@ -368,7 +379,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name merged_blue track 150
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name merged_route_2
@@ -382,7 +393,7 @@ EXAMPLES = """
 # After state:
 # -------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 #
 
 # Using gathered
@@ -390,7 +401,7 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 # ip route 0.0.0.0 0.0.0.0 10.8.38.1
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
@@ -405,7 +416,7 @@ EXAMPLES = """
 # ------------
 #
 # Ansible will just display the routing facts
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 
 
 # Using rendered
@@ -413,13 +424,13 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 
 
 # After state:
 # ------------
 #
-# viosl2#show running-config | section ^ip route|ipv6 route
+# viosl2#show running-config | include ip route|ipv6 route
 # ip route vrf blue 192.168.2.0 255.255.255.0 10.0.0.2 name test_blue multicast
 # ip route 192.168.3.0 255.255.255.0 10.0.0.3 name test_route track 20
 
@@ -441,6 +452,29 @@ commands:
   returned: always
   type: list
   sample: ['ip route vrf test 172.31.10.0 255.255.255.0 10.10.10.2 name new_test multicast']
+rendered:
+  description: The set of CLI commands generated from the value in C(config) option
+  returned: When C(state) is I(rendered)
+  type: list
+  sample: ['interface Ethernet1/1', 'mtu 1800']
+gathered:
+  description: 
+  - The configuration as structured data transformed for the running configuration
+    fetched from remote host
+  returned: When C(state) is I(gathered)
+  type: list
+  sample: >
+    The configuration returned will always be in the same format
+    of the parameters above.
+parsed:
+  description:
+  - The configuration as structured data transformed for the value of
+    C(running_config) option
+  returned: When C(state) is I(parsed)
+  type: list
+  sample: >
+    The configuration returned will always be in the same format
+    of the parameters above.
 """
 
 
@@ -457,11 +491,14 @@ def main():
     """
     required_if = [('state', 'merged', ('config',)),
                    ('state', 'replaced', ('config',)),
-                   ('state', 'overridden', ('config',))]
+                   ('state', 'overridden', ('config',)),
+                   ('state', 'parsed', ('config',))]
+    mutually_exclusive = [('config', 'running_config')]
 
     module = AnsibleModule(argument_spec=Static_RoutesArgs.argument_spec,
                            required_if=required_if,
-                           supports_check_mode=True)
+                           supports_check_mode=True,
+                           mutually_exclusive=mutually_exclusive)
 
     result = Static_Routes(module).execute_module()
     module.exit_json(**result)

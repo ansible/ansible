@@ -39,6 +39,9 @@ class Static_RoutesFacts(object):
 
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
+    def get_static_routes_data(self, connection):
+        return connection.get('sh running-config | include ip route|ipv6 route')
+
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for static_routes
         :param connection: the device connection
@@ -52,7 +55,7 @@ class Static_RoutesFacts(object):
 
         objs = []
         if not data:
-            data = connection.get('sh running-config | section ^ip route|ipv6 route')
+            data = self.get_static_routes_data(connection)
         # operate on a collection of resource x
         config = data.split('\n')
 
@@ -211,4 +214,3 @@ class Static_RoutesFacts(object):
             config['vrf'] = vrf
 
         return utils.remove_empties(config)
-

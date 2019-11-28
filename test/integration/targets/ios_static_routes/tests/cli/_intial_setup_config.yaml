@@ -1,9 +1,11 @@
 ---
-- name: Populate Config
+- name: Intitial Setup Config
   cli_config:
     config: "{{ lines }}"
   vars:
     lines: |
+      vrf definition ansible_vrf
+      address-family ipv4
       ip route vrf ansible_vrf 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name test_vrf track 150
       ip route 192.168.3.0 255.255.255.0 10.0.0.3 name route_3
       ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name route_2

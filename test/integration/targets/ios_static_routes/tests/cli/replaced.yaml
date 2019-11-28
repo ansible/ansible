@@ -4,20 +4,20 @@
 
 - include_tasks: _remove_config.yaml
 
-- include_tasks: _populate_config.yaml
+- include_tasks: _intial_setup_config.yaml
 
 - block:
     - name: Replaces device configuration of listed interfaces with provided configuration
       ios_static_routes: &replaced
         config:
-          - vrf: blue
+          - vrf: ansible_vrf
             address_families:
             - afi: ipv4
               routes:
               - dest: 192.168.2.0/24
                 next_hops:
                 - forward_router_address: 10.0.0.8
-                  name: replaced_vrf_new
+                  name: replaced_vrf
                   tag: 75
                   track: 155
           - address_families:
@@ -64,7 +64,6 @@
        that:
          - "result['changed'] == false"
 
-    - include_tasks: _populate_config.yaml
-
   always:
+    - include_tasks: _populate_config.yaml
     - include_tasks: _remove_config.yaml

@@ -4,13 +4,13 @@
 
 - include_tasks: _remove_config.yaml
 
-- include_tasks: _populate_config.yaml
+- include_tasks: _intial_setup_config.yaml
 
 - block:
     - name: Override device configuration of all interfaces with provided configuration
       ios_static_routes: &overridden
         config:
-          - vrf: blue
+          - vrf: ansible_vrf
             address_families:
             - afi: ipv4
               routes:
@@ -62,7 +62,6 @@
        that:
          - "result['changed'] == false"
 
-    - include_tasks: _populate_config.yaml
-
   always:
+    - include_tasks: _populate_config.yaml
     - include_tasks: _remove_config.yaml

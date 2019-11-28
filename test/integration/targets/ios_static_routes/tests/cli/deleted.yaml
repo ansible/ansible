@@ -4,20 +4,20 @@
 
 - include_tasks: _remove_config.yaml
 
-- include_tasks: _populate_config.yaml
+- include_tasks: _intial_setup_config.yaml
 
 - block:
     - name: Delete attributes of provided configured interfaces
       ios_static_routes: &deleted
         config:
-          - vrf: blue
+          - vrf: ansible_vrf
             address_families:
             - afi: ipv4
               routes:
               - dest: 192.168.2.0/24
                 next_hops:
                 - forward_router_address: 10.0.0.8
-                  name: test_vrf_blue
+                  name: test_vrf
                   tag: 50
                   track: 150
           - address_families:
@@ -70,4 +70,5 @@
           - "result.changed == false"
 
   always:
+    - include_tasks: _populate_config.yaml
     - include_tasks: _remove_config.yaml

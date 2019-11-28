@@ -4,18 +4,20 @@
 
 - include_tasks: _remove_config.yaml
 
+- include_tasks: _intial_setup_config.yaml
+
 - block:
     - name: Merge provided configuration with device configuration
       ios_static_routes: &merged
         config:
-          - vrf: blue
+          - vrf: ansible_vrf
             address_families:
             - afi: ipv4
               routes:
               - dest: 192.168.2.0/24
                 next_hops:
                 - forward_router_address: 10.0.0.8
-                  name: test_vrf_blue
+                  name: merged_vrf
                   tag: 50
                   track: 150
           - address_families:
@@ -24,21 +26,21 @@
               - dest: 192.168.3.0/24
                 next_hops:
                 - forward_router_address: 10.0.0.1
-                  name: route_1
+                  name: merged_route_1
                   distance_metric: 110
                   tag: 40
                   multicast: True
                 - forward_router_address: 10.0.0.2
-                  name: route_2
+                  name: merged_route_2
                   distance_metric: 30
                 - forward_router_address: 10.0.0.3
-                  name: route_3
+                  name: merged_route_3
             - afi: ipv6
               routes:
               - dest: FD5D:12C9:2201:1::/64
                 next_hops:
                 - forward_router_address: FD5D:12C9:2202::2
-                  name: test_v6
+                  name: merged_v6
                   tag: 105
         state: merged
       register: result
@@ -68,4 +70,5 @@
           - "result['changed'] == false"
 
   always:
+    - include_tasks: _populate_config.yaml
     - include_tasks: _remove_config.yaml
