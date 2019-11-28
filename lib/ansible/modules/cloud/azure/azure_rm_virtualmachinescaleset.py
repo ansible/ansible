@@ -514,8 +514,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             single_placement_group=dict(type='bool', default=True),
             zones=dict(type='list'),
             custom_data=dict(type='str'),
-            plan=dict(type='dict'),
-            accept_terms=dict(type='bool', default=False)
+            plan=dict(type='dict', options=dict(publisher=dict(type='str', required=true),product=dict(type='str', required=true),name=dict(type='str', required=true))),
+            accept_terms=dict(type='bool', default=False),
         )
 
         self.resource_group = None
@@ -665,9 +665,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             elif self.image:
                 self.fail("parameter error: expecting image to be a string or dict not {0}".format(type(self.image).__name__))
 
-            if self.plan:
-                if not self.plan.get('name') or not self.plan.get('product') or not self.plan.get('publisher'):
-                    self.fail("parameter error: plan must include name, product, and publisher")
 
             disable_ssh_password = not self.ssh_password_enabled
 
