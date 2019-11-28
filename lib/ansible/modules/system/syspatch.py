@@ -113,7 +113,9 @@ def syspatch_run(module):
     reboot_needed = False
     warnings = []
 
-    # Setup command flags
+    # Set safe defaults for run_flag and check_flag
+    run_flag = ['-c']
+    check_flag = ['-c']
     if module.params['revert']:
         check_flag = ['-l']
 
