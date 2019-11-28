@@ -312,10 +312,10 @@
     dest: '{{ remote_tmp_dir }}/test'
   register: result
 
-- name: Assert that we downloaded the file
+  - name: Assert that we didn't re-download the file
   assert:
     that:
-      - result is changed
+      - result is not changed
 
 # https://github.com/ansible/ansible/issues/27617
 
