@@ -1,0 +1,2 @@
+bugfixes:
+- Suppress warning when user directory used in --playbook-dir option with ansible-inventory command (https://github.com/ansible/ansible/issues/65262).
