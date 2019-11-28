@@ -305,12 +305,17 @@ class Static_routes(ConfigBase):
                     elif element == 'enabled' and not hop[element]:
                         commands.append(
                             self._compute_command(dest=want['dest'],
-                                                  key='next-hop', attrib=hop['forward_router'], value='disable')
+                                                  key='next-hop', attrib=hop['forward_router_address'], value='disable')
                         )
                     elif element == 'admin_distance':
                         commands.append(
                             self._compute_command(dest=want['dest'], key='next-hop',
-                                                  attrib=hop['forward_router_address'] + element, value=str(hop[element]))
+                                                  attrib=hop['forward_router_address'] + " " + element, value=str(hop[element]))
+                        )
+                    elif element == 'interface':
+                        commands.append(
+                            self._compute_command(dest=want['dest'], key='next-hop',
+                                                  attrib=hop['forward_router_address'] + " " + element, value=hop[element])
                         )
         return commands
 
@@ -342,6 +347,7 @@ class Static_routes(ConfigBase):
         want_copy = deepcopy(remove_empties(want))
         have_copy = deepcopy(remove_empties(have))
 
+
         diff_next_hops = get_lst_diff_for_dicts(have_copy, want_copy, 'next_hops')
         if diff_next_hops:
             for hop in diff_next_hops:
@@ -358,7 +364,12 @@ class Static_routes(ConfigBase):
                     elif element == 'admin_distance':
                         commands.append(
                             self._compute_command(dest=want['dest'], key='next-hop',
-                                                  attrib=hop['forward_router_address'] + element, value=str(hop[element]), remove=True)
+                                                  attrib=hop['forward_router_address'] + " " + element, value=str(hop[element]), remove=True)
+                        )
+                    elif element == 'interface':
+                        commands.append(
+                            self._compute_command(dest=want['dest'], key='next-hop',
+                                                  attrib=hop['forward_router_address'] + " " + element, value=hop[element], remove=True)
                         )
         return commands
 
@@ -382,10 +393,6 @@ class Static_routes(ConfigBase):
                     if key == 'blackhole_config':
                         commands.extend(
                             self._add_blackhole(key, want, have)
-                        )
-                    elif key == 'next_hops':
-                        commands.extend(
-                            self._add_next_hop(want, have)
                         )
         return commands
 

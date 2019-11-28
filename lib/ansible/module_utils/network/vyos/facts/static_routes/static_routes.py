@@ -48,9 +48,8 @@ class Static_routesFacts(object):
         :rtype: dictionary
         :returns: facts
         """
-        if data is None:
+        if not data:
             data = self.get_device_data(connection)
-
             # typically data is populated from the current device configuration
             # data = connection.get('show running-config | section ^interface')
             # using mock data instead
@@ -92,19 +91,16 @@ class Static_routesFacts(object):
         :rtype: dictionary
         :returns: The generated config
         """
-        config = {}
-        routes_dict = {}
         address_families = []
-        af_dict = {}
         routes = []
         next_hops_conf = '\n'.join(filter(lambda x: ('next-hop' in x), conf))
         blackhole_conf = '\n'.join(filter(lambda x: ('blackhole' in x), conf))
-        routes_dict['blackhole_config'] = self.parse_blackhole(blackhole_conf)
-        routes_dict['next_hops'] = self.parse_next_hop(next_hops_conf)
+        routes_dict = {'blackhole_config': self.parse_blackhole(blackhole_conf),
+                       'next_hops': self.parse_next_hop(next_hops_conf) }
         routes.append(routes_dict)
-        af_dict['routes'] = routes
+        af_dict = {'routes': routes}
         address_families.append(af_dict)
-        config['address_families'] = address_families
+        config = {'address_families': address_families}
 
         return utils.remove_empties(config)
 
@@ -132,22 +128,35 @@ class Static_routesFacts(object):
             return 'ipv6'
 
     def parse_next_hop(self, conf):
-        next_hop_list = None
+        nh_list = None
         if conf:
-            next_hop_list = []
+            nh_list = []
             hop_list = findall(r"^.*next-hop (.+)", conf, M)
 
             if hop_list:
                 for hop in hop_list:
                     distance = search(r'^.*distance (.\S+)', hop, M)
+                    interface = search(r'^.*interface (.\S+)', hop, M)
+
                     dis = hop.find('disable')
                     hop_info = hop.split(' ')
-                    next_hop_info = {}
-                    next_hop_info['forward_router_address'] = hop_info[0].strip("'")
+                    nh_info = {'forward_router_address': hop_info[0].strip("'")}
+                    if interface:
+                        nh_info['interface'] = interface.group(1).strip("'")
                     if distance:
                         value = distance.group(1).strip("'")
-                        next_hop_info['admin_distance'] = int(value)
+                        nh_info['admin_distance'] = int(value)
                     elif dis >= 1:
-                        next_hop_info['enabled'] = False
-                    next_hop_list.append(next_hop_info)
-        return next_hop_list
+                        nh_info['enabled'] = False
+                    for element in nh_list:
+                        if element['forward_router_address'] == nh_info['forward_router_address']:
+                            if 'interface' in nh_info.keys():
+                                element['interface'] = nh_info['interface']
+                            if 'admin_distance' in nh_info.keys():
+                                element['admin_distance'] = nh_info['admin_distance']
+                            if 'enabled' in nh_info.keys():
+                                element['enabled'] = nh_info['enabled']
+                            nh_info = None
+                    if nh_info is not None:
+                        nh_list.append(nh_info)
+        return nh_list
