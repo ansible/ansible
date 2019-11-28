@@ -531,7 +531,6 @@ def main():
     if not dest_is_dir and os.path.exists(dest):
         checksum_mismatch = False
 
-
         # Simply check for checksum mismatch
         if checksum != '':
             destination_checksum = module.digest_from_file(dest, algorithm)
