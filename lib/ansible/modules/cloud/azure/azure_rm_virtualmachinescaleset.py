@@ -514,7 +514,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             single_placement_group=dict(type='bool', default=True),
             zones=dict(type='list'),
             custom_data=dict(type='str'),
-            plan=dict(type='dict', options=dict(publisher=dict(type='str', required=true),product=dict(type='str', required=true),name=dict(type='str', required=true))),
+            plan=dict(type='dict', options=dict(publisher=dict(type='str', required=True),
+                                               product=dict(type='str', required=True), name=dict(type='str', required=True))),
             accept_terms=dict(type='bool', default=False),
         )
 
