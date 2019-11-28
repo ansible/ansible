@@ -34,6 +34,7 @@ import re
 import sys
 from copy import deepcopy
 
+from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
@@ -620,6 +621,19 @@ class HttpApi:
 
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = list()
+
+        if self._module._name == 'nxos_gir':
+            connection = self._connection
+            if connection.transport == 'local':
+                persistent_command_timeout = C.PERSISTENT_COMMAND_TIMEOUT
+            else:
+                persistent_command_timeout = connection.get_option('persistent_command_timeout')
+
+            if persistent_command_timeout < 200:
+                command_timeout = 200
+                self._connection.set_option('persistent_command_timeout', command_timeout)
+                msg = "PERSISTENT_COMMAND_TIMEOUT needs to be 200 or more seconds for this module."
+                self._module.warn(msg)
 
         self.check_edit_config_capability(candidate, commit, replace, comment)
 
