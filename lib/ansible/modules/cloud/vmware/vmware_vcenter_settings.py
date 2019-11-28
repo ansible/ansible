@@ -241,8 +241,9 @@ class VmwareVcenterSettings(PyVmomi):
         directory_query_limit_size = self.params['user_directory'].get('query_limit_size')
         directory_validation = self.params['user_directory'].get('validation')
         directory_validation_period = self.params['user_directory'].get('validation_period')
-        mail_server = self.params['mail'].get('server')
-        mail_sender = self.params['mail'].get('sender')
+        mail = self.params.get('mail') or {'mail': {'server': '', 'sender': ''}}
+        mail_server = mail.get('server', '')
+        mail_sender = mail.get('sender', '')
         snmp_receiver_1_url = self.params['snmp_receivers'].get('snmp_receiver_1_url')
         snmp_receiver_1_enabled = self.params['snmp_receivers'].get('snmp_receiver_1_enabled')
         snmp_receiver_1_port = self.params['snmp_receivers'].get('snmp_receiver_1_port')
