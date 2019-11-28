@@ -983,6 +983,8 @@ lib/ansible/modules/cloud/openstack/os_project_access.py validate-modules:doc-mi
 lib/ansible/modules/cloud/openstack/os_project_access.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/openstack/os_project_info.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/openstack/os_project_info.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/cloud/openstack/os_qos_policy_rule.py validate-modules:doc-missing-type
+lib/ansible/modules/cloud/openstack/os_qos_policy_rule.py validate-modules:undocumented-parameter
 lib/ansible/modules/cloud/openstack/os_quota.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/cloud/openstack/os_quota.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/openstack/os_quota.py validate-modules:nonexistent-parameter-documented
