@@ -29,6 +29,26 @@
     register: create_net_no_org
     ignore_errors: yes
 
+  - name: Create network with type switch in check mode
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkSwitch
+      type: switch
+      timezone: America/Chicago
+    delegate_to: localhost
+    check_mode: yes
+    register: create_net_switch_check
+
+  - debug:
+      var: create_net_switch_check
+
+  - assert:
+      that:
+        - create_net_switch_check is changed
+        - create_net_switch_check.data is defined
+
   - name: Create network with type switch
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -61,6 +81,25 @@
     delegate_to: localhost
     register: create_net_appliance_no_tz
 
+  - name: Enable VLAN support on appliance network with check mode
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{ test_org_name }}'
+      net_name: IntTestNetworkAppliance
+      enable_vlans: yes
+    delegate_to: localhost
+    check_mode: yes
+    register: enable_vlan_check
+
+  - debug:
+      var: enable_vlan_check
+
+  - assert:
+      that:
+        - enable_vlan_check is changed
+        - enable_vlan_check.data.enabled == True
+
   - name: Enable VLAN support on appliance network
     meraki_network:
       auth_key: '{{ auth_key }}'
@@ -70,6 +109,9 @@
       enable_vlans: yes
     delegate_to: localhost
     register: enable_vlan
+
+  - debug:
+      var: enable_vlan
 
   - assert:
       that:
@@ -163,6 +205,25 @@
       enable_my_meraki: no
     delegate_to: localhost
     register: create_net_combined
+
+  - name: Reenable my.meraki.com with check mode
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkCombined
+      enable_my_meraki: yes
+    delegate_to: localhost
+    check_mode: yes
+    register: enable_meraki_com_check
+
+  - debug:
+      var: enable_meraki_com_check
+
+  - assert:
+      that:
+        - enable_meraki_com_check is changed
+        - enable_meraki_com_check.data is defined
 
   - name: Reenable my.meraki.com
     meraki_network:
@@ -362,6 +423,21 @@
     delegate_to: localhost
     register: delete_all_no_org
     ignore_errors: yes
+      
+  - name: Delete network by org ID with check mode
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: absent
+      org_id: '{{test_org_id}}'
+      net_name: IntTestNetworkSwitchOrgID
+    delegate_to: localhost
+    check_mode: yes
+    register: delete_net_org_id_check
+
+  - assert:
+      that:
+        - delete_net_org_id_check is changed
+        - delete_net_org_id_check.data is defined
       
   - name: Delete network by org ID
     meraki_network:

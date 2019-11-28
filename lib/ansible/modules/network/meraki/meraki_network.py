@@ -236,7 +236,7 @@ def main():
     # args/params passed to the execution, as well as if the module
     # supports check mode
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
+                           supports_check_mode=True,
                            mutually_exclusive=[('disable_my_meraki', 'enable_my_meraki'),
                                                ]
                            )
@@ -272,8 +272,6 @@ def main():
     # if the user is working with this module in only check mode we do not
     # want to make any changes to the environment, just return the current
     # state with no modifications
-    if module.check_mode:
-        return meraki.result
 
     # Construct payload
     if meraki.params['state'] == 'present':
@@ -332,6 +330,10 @@ def main():
         if net_exists is False:  # Network needs to be created
             if 'type' not in meraki.params or meraki.params['type'] is None:
                 meraki.fail_json(msg="type parameter is required when creating a network.")
+            if meraki.check_mode is True:
+                meraki.result['data'] = payload
+                meraki.result['changed'] = True
+                meraki.exit_json(**meraki.result)
             path = meraki.construct_path('create',
                                          org_id=org_id
                                          )
@@ -343,14 +345,16 @@ def main():
                 meraki.result['data'] = r
                 meraki.result['changed'] = True
         else:  # Network exists, make changes
-            # meraki.fail_json(msg="nets", nets=nets, net_id=net_id)
-            # meraki.fail_json(msg="compare", original=net, payload=payload)
             if meraki.params['enable_vlans'] is not None:  # Modify VLANs configuration
                 status_path = meraki.construct_path('status_vlans', net_id=net_id)
                 status = meraki.request(status_path, method='GET')
                 payload = {'enabled': meraki.params['enable_vlans']}
-                # meraki.fail_json(msg="here", payload=payload)
                 if meraki.is_update_required(status, payload):
+                    if meraki.check_mode is True:
+                        status.update(payload)
+                        meraki.result['data'] = status
+                        meraki.result['changed'] = True
+                        meraki.exit_json(**meraki.result)
                     path = meraki.construct_path('enable_vlans', net_id=net_id)
                     r = meraki.request(path,
                                        method='PUT',
@@ -364,8 +368,12 @@ def main():
                     meraki.exit_json(**meraki.result)
             net = meraki.get_net(meraki.params['org_name'], net_id=net_id, data=nets)
             if meraki.is_update_required(net, payload):
+                if meraki.check_mode is True:
+                    net.update(payload)
+                    meraki.result['data'] = net
+                    meraki.result['changed'] = True
+                    meraki.exit_json(**meraki.result)
                 path = meraki.construct_path('update', net_id=net_id)
-                # meraki.fail_json(msg="Payload", path=path, payload=payload)
                 r = meraki.request(path,
                                    method='PUT',
                                    payload=json.dumps(payload))
@@ -376,6 +384,10 @@ def main():
                 meraki.result['data'] = net
     elif meraki.params['state'] == 'absent':
         if is_net_valid(nets, net_id=net_id) is True:
+            if meraki.check_mode is True:
+                meraki.result['data'] = {}
+                meraki.result['changed'] = True
+                meraki.exit_json(**meraki.result)
             path = meraki.construct_path('delete', net_id=net_id)
             r = meraki.request(path, method='DELETE')
             if meraki.status == 204:
