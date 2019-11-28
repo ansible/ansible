@@ -60,6 +60,28 @@ options:
         - The template that defines the referenced VRF.
         - If this parameter is unspecified, it defaults to the current template.
         type: str
+  dhcp_label:
+    name:
+      description:
+      - The name of the DHCP Relay Policy
+      type: str
+    version:
+      description:
+      - The version of DHCP
+      type: int
+    dhcp_option_label:
+      description:
+      - The DHCP Option Policy
+      type: dict
+      suboptions:
+        name:
+          description:
+          - The name of the DHCP Option Policy
+          type: str
+        version:
+          description:
+          - The version of the DHCP Option Policy
+          type: int
   subnets:
     description:
     - The subnets associated to this BD.
@@ -189,6 +211,7 @@ def main():
         layer3_multicast=dict(type='bool'),
         vrf=dict(type='dict', options=mso_reference_spec()),
         subnets=dict(type='list', options=mso_subnet_spec()),
+        dhcp_label=dict(type='dict', options=mso_dhcp_spec()),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -212,6 +235,7 @@ def main():
     layer3_multicast = module.params.get('layer3_multicast')
     vrf = module.params.get('vrf')
     subnets = module.params.get('subnets')
+    dhcp_label = module.params('dhcp_label')
     state = module.params.get('state')
 
     mso = MSOModule(module)
@@ -274,6 +298,7 @@ def main():
             l3MCast=layer3_multicast,
             subnets=subnets,
             vrfRef=vrf_ref,
+            dhcpLabel=dhcp_label,
         )
 
         mso.sanitize(payload, collate=True)

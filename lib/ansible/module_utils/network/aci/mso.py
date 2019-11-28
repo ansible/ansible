@@ -107,6 +107,18 @@ def mso_subnet_spec():
         no_default_gateway=dict(type='bool'),
     )
 
+def mso_dhcp_spec():
+    return dict(
+        dhcpOptionLabel=dict(type='dict', option=mso_dhcp_option_spec()),
+        name=dict(type='str'),
+        version=dict(type='int'),
+    )
+
+def mso_dhcp_option_spec():
+    return dict(
+        name=dict(type='str'),
+        version=dict(type='int'),
+    ) 
 
 def mso_contractref_spec():
     return dict(
