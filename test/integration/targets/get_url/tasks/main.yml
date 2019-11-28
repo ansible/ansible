@@ -305,7 +305,6 @@
   assert:
     that:
       - result is not changed
-      - "'304' in result.msg"
 
 - name: get a file that doesn't respond to If-Modified-Since without checksum
   get_url:

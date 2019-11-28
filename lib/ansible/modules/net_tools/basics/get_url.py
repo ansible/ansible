@@ -7,6 +7,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['stableinterface'],
+                    'supported_by': 'core'}
 
 DOCUMENTATION = r'''
 ---
@@ -75,8 +78,7 @@ options:
       - If a SHA-256 checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        This option is deprecated and will be removed in version 2.14. Use
-        option C(checksum) instead.
+        This option is deprecated. Use C(checksum) instead.
     default: ''
     version_added: "1.3"
   checksum:
@@ -120,8 +122,8 @@ options:
         - Add custom HTTP headers to a request in hash/dict format.
         - The hash/dict format was added in Ansible 2.6.
         - Previous versions used a C("key:value,key:value") string format.
-        - The C("key:value,key:value") string format is deprecated and has been removed in version 2.10.
-    type: dict
+        - The C("key:value,key:value") string format is deprecated and will be removed in version 2.10.
+    type: raw
     version_added: '2.0'
   url_username:
     description:
@@ -362,7 +364,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
-        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
+        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), elapsed=elapsed)
 
     # Exceptions in fetch_url may result in a status -1, the ensures a proper error to the user in all cases
     if info['status'] == -1:
@@ -433,7 +435,7 @@ def main():
         sha256sum=dict(type='str', default=''),
         checksum=dict(type='str', default=''),
         timeout=dict(type='int', default=10),
-        headers=dict(type='dict'),
+        headers=dict(type='raw'),
         tmp_dest=dict(type='path'),
     )
 
@@ -446,12 +448,7 @@ def main():
     )
 
     if module.params.get('thirsty'):
-        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead',
-                         version='2.13', collection_name='ansible.builtin')
-
-    if module.params.get('sha256sum'):
-        module.deprecate('The parameter "sha256sum" has been deprecated and will be removed, use "checksum" instead',
-                         version='2.14', collection_name='ansible.builtin')
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
 
     url = module.params['url']
     dest = module.params['dest']
@@ -461,7 +458,6 @@ def main():
     checksum = module.params['checksum']
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
-    headers = module.params['headers']
     tmp_dest = module.params['tmp_dest']
 
     result = dict(
@@ -472,6 +468,18 @@ def main():
         elapsed=0,
         url=url,
     )
+
+    # Parse headers to dict
+    if isinstance(module.params['headers'], dict):
+        headers = module.params['headers']
+    elif module.params['headers']:
+        try:
+            headers = dict(item.split(':', 1) for item in module.params['headers'].split(','))
+            module.deprecate('Supplying `headers` as a string is deprecated. Please use dict/hash format for `headers`', version='2.10')
+        except Exception:
+            module.fail_json(msg="The string representation for the `headers` parameter requires a key:value,key:value syntax to be properly parsed.", **result)
+    else:
+        headers = None
 
     dest_is_dir = os.path.isdir(dest)
     last_mod_time = None
@@ -523,18 +531,20 @@ def main():
     if not dest_is_dir and os.path.exists(dest):
         checksum_mismatch = False
 
+
         # Simply check for checksum mismatch
-        # not force is added for optimization
-        if not force and checksum != '':
+        if checksum != '':
             destination_checksum = module.digest_from_file(dest, algorithm)
 
             if checksum != destination_checksum:
                 checksum_mismatch = True
 
         # No redownload, when checksum match and not force
-        if not force and checksum and not checksum_mismatch:
+        if not force and not checksum_mismatch:
             # allow file attribute changes
-            file_args = module.load_file_common_arguments(module.params, path=dest)
+            module.params['path'] = dest
+            file_args = module.load_file_common_arguments(module.params)
+            file_args['path'] = dest
             result['changed'] = module.set_fs_attributes_if_different(file_args, False)
             if result['changed']:
                 module.exit_json(msg="file already exists but file attributes changed", **result)
@@ -629,7 +639,9 @@ def main():
             module.fail_json(msg="The checksum for %s did not match %s; it was %s." % (dest, checksum, destination_checksum), **result)
 
     # allow file attribute changes
-    file_args = module.load_file_common_arguments(module.params, path=dest)
+    module.params['path'] = dest
+    file_args = module.load_file_common_arguments(module.params)
+    file_args['path'] = dest
     result['changed'] = module.set_fs_attributes_if_different(file_args, result['changed'])
 
     # Backwards compat only.  We'll return None on FIPS enabled systems
