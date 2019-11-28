@@ -6,7 +6,6 @@
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-from distutils.version import LooseVersion
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -580,6 +579,7 @@ import os
 import re
 import time
 import traceback
+from distutils.version import LooseVersion
 
 try:
     from proxmoxer import ProxmoxAPI
