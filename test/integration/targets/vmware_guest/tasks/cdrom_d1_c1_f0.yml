@@ -20,7 +20,7 @@
       datastore: "{{ rw_datastore }}"
     cdrom:
       type: iso
-      iso_path: "[{{ ro_datastore }}] centos.iso"
+      iso_path: "[{{ ro_datastore }}] fedora.iso"
   register: cdrom_vm
 
 - debug: var=cdrom_vm
@@ -171,7 +171,7 @@
       controller_number: 0
       unit_number: 0
       type: iso
-      iso_path: "[{{ ro_datastore }}] centos.iso"
+      iso_path: "[{{ ro_datastore }}] fedora.iso"
     - controller_type: ide
       controller_number: 0
       unit_number: 1
@@ -260,7 +260,7 @@
           datastore: "{{ rw_datastore }}"
         cdrom:
           type: iso
-          iso_path: "[{{ ro_datastore }}] base.iso"
+          iso_path: "[{{ ro_datastore }}] fedora.iso"
       register: cdrom_vm
     - debug: var=cdrom_vm
     - name: assert the VM was created
