@@ -1,8 +1,6 @@
 ---
 dc1: DC0
 ccr1: DC0_C0
-rw_datastore: LocalDS_0
-ro_datastore: LocalDS_1
 f0: F0
 switch1: switch1
 esxi1: '{{ esxi_hosts[0] }}'
