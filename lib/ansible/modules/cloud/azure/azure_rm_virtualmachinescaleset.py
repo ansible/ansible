@@ -515,7 +515,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             zones=dict(type='list'),
             custom_data=dict(type='str'),
             plan=dict(type='dict', options=dict(publisher=dict(type='str', required=True),
-                                               product=dict(type='str', required=True), name=dict(type='str', required=True))),
+                                 product=dict(type='str', required=True), name=dict(type='str', required=True), 
+                                 promotion_code=dict(type='str'))),
             accept_terms=dict(type='bool', default=False),
         )
 
@@ -665,7 +666,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                 image_reference = self.get_custom_image_reference(self.image)
             elif self.image:
                 self.fail("parameter error: expecting image to be a string or dict not {0}".format(type(self.image).__name__))
-
 
             disable_ssh_password = not self.ssh_password_enabled
 
