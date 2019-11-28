@@ -785,7 +785,7 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
 
 def proxmox_version(proxmox):
     apireturn = proxmox.version.get()
-    return LooseVersion(apireturn['version'])  # < Proxmox 6
+    return LooseVersion(apireturn['version'])
 
 
 def main():
