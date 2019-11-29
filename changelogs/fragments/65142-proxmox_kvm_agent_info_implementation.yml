@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - proxmox_kvm - add feature agent_info for getting additional data from hosts with QEMU Guest Agent installed.
