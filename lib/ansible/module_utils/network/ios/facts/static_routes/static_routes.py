@@ -86,44 +86,46 @@ class Static_RoutesFacts(object):
 
     def populate_destination(self, config):
         same_dest = {}
+        ip_str = ''
         for i in sorted(config):
-            if '::' in i and 'vrf' in i:
-                ip_str = 'ipv6 route vrf'
-            elif '::' in i and 'vrf' not in i:
-                ip_str = 'ipv6 route'
-            elif '.' in i and 'vrf' in i:
-                ip_str = 'ip route vrf'
-            elif '.' in i and 'vrf' not in i:
-                ip_str = 'ip route'
+            if i:
+                if '::' in i and 'vrf' in i:
+                    ip_str = 'ipv6 route vrf'
+                elif '::' in i and 'vrf' not in i:
+                    ip_str = 'ipv6 route'
+                elif '.' in i and 'vrf' in i:
+                    ip_str = 'ip route vrf'
+                elif '.' in i and 'vrf' not in i:
+                    ip_str = 'ip route'
 
-            if 'vrf' in i:
-                filter_vrf = utils.parse_conf_arg(i, ip_str)
-                if '/' not in filter_vrf and '::' not in filter_vrf:
-                    filter_vrf, dest_vrf = self.update_netmask_to_cidr(filter_vrf, 1, 2)
+                if 'vrf' in i:
+                    filter_vrf = utils.parse_conf_arg(i, ip_str)
+                    if '/' not in filter_vrf and '::' not in filter_vrf:
+                        filter_vrf, dest_vrf = self.update_netmask_to_cidr(filter_vrf, 1, 2)
+                    else:
+                        dest_vrf = filter_vrf.split(' ')[1]
+                    if dest_vrf not in same_dest.keys():
+                        same_dest[dest_vrf + '_vrf'] = []
+                        same_dest[dest_vrf + '_vrf'].append('vrf ' + filter_vrf)
+                    elif 'vrf' not in same_dest[dest_vrf][0]:
+                        same_dest[dest_vrf + '_vrf'] = []
+                        same_dest[dest_vrf + '_vrf'].append('vrf ' + filter_vrf)
+                    else:
+                        same_dest[dest_vrf + '_vrf'] = same_dest[dest_vrf + '_vrf'].append(('vrf ' + filter_vrf))
                 else:
-                    dest_vrf = filter_vrf.split(' ')[1]
-                if dest_vrf not in same_dest.keys():
-                    same_dest[dest_vrf + '_vrf'] = []
-                    same_dest[dest_vrf + '_vrf'].append('vrf ' + filter_vrf)
-                elif 'vrf' not in same_dest[dest_vrf][0]:
-                    same_dest[dest_vrf + '_vrf'] = []
-                    same_dest[dest_vrf + '_vrf'].append('vrf ' + filter_vrf)
-                else:
-                    same_dest[dest_vrf + '_vrf'] = same_dest[dest_vrf + '_vrf'].append(('vrf ' + filter_vrf))
-            else:
-                filter = utils.parse_conf_arg(i, ip_str)
-                if '/' not in filter and '::' not in filter:
-                    filter, dest = self.update_netmask_to_cidr(filter, 0, 1)
-                else:
-                    dest = filter.split(' ')[0]
-                if dest not in same_dest.keys():
-                    same_dest[dest] = []
-                    same_dest[dest].append(filter)
-                elif 'vrf' in same_dest[dest][0]:
-                    same_dest[dest] = []
-                    same_dest[dest].append(filter)
-                else:
-                    same_dest[dest].append(filter)
+                    filter = utils.parse_conf_arg(i, ip_str)
+                    if '/' not in filter and '::' not in filter:
+                        filter, dest = self.update_netmask_to_cidr(filter, 0, 1)
+                    else:
+                        dest = filter.split(' ')[0]
+                    if dest not in same_dest.keys():
+                        same_dest[dest] = []
+                        same_dest[dest].append(filter)
+                    elif 'vrf' in same_dest[dest][0]:
+                        same_dest[dest] = []
+                        same_dest[dest].append(filter)
+                    else:
+                        same_dest[dest].append(filter)
         return same_dest
 
     def render_config(self, spec, conf, conf_val):
