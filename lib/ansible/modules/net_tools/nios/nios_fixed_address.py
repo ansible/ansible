@@ -167,7 +167,6 @@ from ansible.module_utils.net_tools.nios.api import WapiModule
 from ansible.module_utils.network.common.utils import validate_ip_address, validate_ip_v6_address
 from ansible.module_utils.net_tools.nios.api import NIOS_IPV4_FIXED_ADDRESS, NIOS_IPV6_FIXED_ADDRESS
 
-
 def options(module):
     ''' Transforms the module argument into a valid WAPI struct
     This function will transform the options argument into a structure that
@@ -180,15 +179,21 @@ def options(module):
             vendor_class: <value>
         }
     It will remove any options that are set to None since WAPI will error on
-    that condition.  It will also verify that either `name` or `num` is
+    that condition.  The use_option field only applies 
+    to special options that are displayed separately from other options and 
+    have a use flag. This function removes the use_option flag from all 
+    other options. It will also verify that either `name` or `num` is
     set in the structure but does not validate the values are equal.
     The remainder of the value validation is performed by WAPI
     '''
+    special_options = ['routers','router-templates','domain-name-servers','domain-name','broadcast-address','broadcast-address-offset','dhcp-lease-time','dhcp6.name-servers'];
     options = list()
     for item in module.params['options']:
         opt = dict([(k, v) for k, v in iteritems(item) if v is not None])
         if 'name' not in opt and 'num' not in opt:
             module.fail_json(msg='one of `name` or `num` is required for option value')
+        if opt['name'] not in special_options:
+            del opt['use_option']
         options.append(opt)
     return options
 
