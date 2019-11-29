@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: lightsail
-short_description: Manage instances in AWS Lightsail.
+short_description: Manage instances in AWS Lightsail
 description:
      - Manage instances in AWS Lightsail.
      - Instance tagging is not yet supported in this module.
