@@ -96,7 +96,7 @@ class Static_routesFacts(object):
         next_hops_conf = '\n'.join(filter(lambda x: ('next-hop' in x), conf))
         blackhole_conf = '\n'.join(filter(lambda x: ('blackhole' in x), conf))
         routes_dict = {'blackhole_config': self.parse_blackhole(blackhole_conf),
-                       'next_hops': self.parse_next_hop(next_hops_conf) }
+                       'next_hops': self.parse_next_hop(next_hops_conf)}
         routes.append(routes_dict)
         af_dict = {'routes': routes}
         address_families.append(af_dict)

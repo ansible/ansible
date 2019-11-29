@@ -55,7 +55,6 @@ populate:
 
 replaced:
   commands:
-    - "delete protocols static route 192.0.0.0/24 blackhole"
     - "delete protocols static route 192.0.0.0/24 next-hop '192.11.11.11'"
     - "set protocols static route 192.0.0.0/24 next-hop '192.1.1.11'"
     - "set protocols static route 192.0.0.0/24 next-hop '192.3.3.13'"

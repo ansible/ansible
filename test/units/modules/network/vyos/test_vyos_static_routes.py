@@ -46,7 +46,7 @@ class TestVyosStaticRoutesModule(TestVyosModule):
 
         self.mock_execute_show_command = patch('ansible.module_utils.network.vyos.facts.static_routes.static_routes.Static_routesFacts.get_device_data')
         self.execute_show_command = self.mock_execute_show_command.start()
-        
+
     def tearDown(self):
         super(TestVyosStaticRoutesModule, self).tearDown()
         self.mock_get_resource_connection_config.stop()
@@ -61,95 +61,79 @@ class TestVyosStaticRoutesModule(TestVyosModule):
         self.execute_show_command.side_effect = load_from_file
 
     def test_vyos_static_routes_merged(self):
-        set_module_args(dict(
-            config=[
-                dict(
-                    address_families=[dict(
-                     afi='ipv4',
-                     routes=[
-                         dict(
-                             dest='192.0.0.0/24', next_hops = [
-                                                  dict(
-                                                      forward_router_address='192.11.11.11'
-                                                  ),
-                                                  dict(
-                                                      forward_router_address='192.11.11.12'
-                                                      )
-                                                  ]
-                             )]
-                     )]
-                )
-            ], state="merged"
-        ))
+        set_module_args(
+            dict(config=[
+                dict(address_families=[
+                    dict(
+                        afi='ipv4',
+                        routes=[
+                            dict(
+                                dest='192.0.0.0/24',
+                                next_hops=[
+                                    dict(
+                                        forward_router_address='192.11.11.11'),
+                                    dict(forward_router_address='192.11.11.12')
+                                ])
+                        ])
+                ])
+            ],
+                state="merged"))
         commands = ['set protocols static route 192.0.0.0/24',
                     "set protocols static route 192.0.0.0/24 next-hop '192.11.11.11'",
                     "set protocols static route 192.0.0.0/24 next-hop '192.11.11.12'"]
         self.execute_module(changed=True, commands=commands)
 
     def test_vyos_static_routes_merged_idempotent(self):
-        set_module_args(dict(
-            config=[
-                dict(
-                    address_families=[dict(
-                     afi='ipv4',
-                     routes=[
-                         dict(
-                             dest='193.0.0.0/24', next_hops = [
-                                                  dict(
-                                                      forward_router_address='193.11.11.11'
-                                                  ),
-                                                  dict(
-                                                      forward_router_address='193.11.11.12'
-                                                      )
-                                                  ]
-                             )]
-                     )]
-                )
-            ], state="merged"
-        ))
+        set_module_args(
+            dict(config=[
+                dict(address_families=[
+                    dict(
+                        afi='ipv4',
+                        routes=[
+                            dict(
+                                dest='193.0.0.0/24',
+                                next_hops=[
+                                    dict(
+                                        forward_router_address='193.11.11.11'),
+                                    dict(forward_router_address='193.11.11.12')
+                                ])
+                        ])
+                ])
+            ],
+                state="merged"))
         self.execute_module(changed=False, commands=[])
 
     def test_vyos_static_routes_overridden(self):
-        set_module_args(dict(
-            config=[
-                dict(
-                    address_families=[dict(
-                     afi='ipv4',
-                     routes=[
-                         dict(
-                             dest='194.0.0.0/24', next_hops = [
-                                                  dict(
-                                                      forward_router_address='194.11.11.11'
-                                                  ),
-                                                  dict(
-                                                      forward_router_address='194.11.11.12'
-                                                      )
-                                                  ]
-                             )]
-                     )]
-                )
-            ], state="overridden"
-        ))
-        commands = ['delete protocols static route 193.0.0.0/24', 
+        set_module_args(
+            dict(config=[
+                dict(address_families=[
+                    dict(
+                        afi='ipv4',
+                        routes=[
+                            dict(
+                                dest='194.0.0.0/24',
+                                next_hops=[
+                                    dict(
+                                        forward_router_address='194.11.11.11'),
+                                    dict(forward_router_address='194.11.11.12')
+                                ])
+                        ])
+                ])
+            ],
+                state="overridden"))
+        commands = ['delete protocols static route 193.0.0.0/24',
                     'set protocols static route 194.0.0.0/24',
                     "set protocols static route 194.0.0.0/24 next-hop '194.11.11.11'",
                     "set protocols static route 194.0.0.0/24 next-hop '194.11.11.12'"]
         self.execute_module(changed=True, commands=commands)
 
     def test_vyos_static_routes_deleted(self):
-        set_module_args(dict(
-            config=[
-                dict(
-                    address_families=[dict(
-                     afi='ipv4',
-                     routes=[
-                         dict(
-                             dest='193.0.0.0/24'
-                             )]
-                     )]
-                )
-            ], state="deleted"
-        ))
-        commands = ['delete protocols static route 193.0.0.0/24'] 
+        set_module_args(
+            dict(config=[
+                dict(address_families=[
+                    dict(afi='ipv4', routes=[dict(dest='193.0.0.0/24')])
+                ])
+            ],
+                state="deleted"))
+        commands = ['delete protocols static route 193.0.0.0/24']
         self.execute_module(changed=True, commands=commands)
-

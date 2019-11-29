@@ -335,7 +335,7 @@ class Static_routes(ConfigBase):
                             self._compute_command(dest=want['dest'], key='blackhole',
                                                   attrib=attrib, remove=True, value=str(value))
                         )
-                    elif attrib == 'type':
+                    elif attrib == 'type' and 'distance' not in want_blackhole.keys():
                         commands.append(
                             self._compute_command(dest=want['dest'], key='blackhole', remove=True)
                         )
@@ -346,7 +346,6 @@ class Static_routes(ConfigBase):
 
         want_copy = deepcopy(remove_empties(want))
         have_copy = deepcopy(remove_empties(have))
-
 
         diff_next_hops = get_lst_diff_for_dicts(have_copy, want_copy, 'next_hops')
         if diff_next_hops:
