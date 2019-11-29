@@ -27,7 +27,6 @@
 #
 
 import os
-import q
 from functools import partial
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
@@ -371,10 +370,8 @@ class WapiModule(WapiBase):
                     result['changed'] = True
                 elif (ib_obj_type == NIOS_TXT_RECORD):
                     # resolves issue where multiple txt_records with same name and different text
-                    q(proposed_object)
                     try:
                         text_obj = self.module._check_type_dict(proposed_object['text'])
-                        q(text_obj)
                         txt = text_obj['new_text']
                     except TypeError:
                         txt = proposed_object['text']
@@ -554,7 +551,6 @@ class WapiModule(WapiBase):
             elif (ib_obj_type == NIOS_TXT_RECORD):
                 # resolves issue where multiple txt_records with same name and different text
                 test_obj_filter = obj_filter
-                q(test_obj_filter)
                 try:
                     text_obj = self.module._check_type_dict(obj_filter['text'])
                     txt = text_obj['old_text']
@@ -578,7 +574,6 @@ class WapiModule(WapiBase):
         elif (ib_obj_type == NIOS_TXT_RECORD):
             # resolves issue where multiple txt_records with same name and different text
             test_obj_filter = obj_filter
-            q(test_obj_filter)
             try:
                 text_obj = self.module._check_type_dict(obj_filter['text'])
                 txt = text_obj['old_text']
