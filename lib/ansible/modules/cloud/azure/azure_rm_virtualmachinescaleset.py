@@ -515,8 +515,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             zones=dict(type='list'),
             custom_data=dict(type='str'),
             plan=dict(type='dict', options=dict(publisher=dict(type='str', required=True),
-                                 product=dict(type='str', required=True), name=dict(type='str', required=True), 
-                                 promotion_code=dict(type='str'))),
+                product=dict(type='str', required=True), name=dict(type='str', required=True),
+                promotion_code=dict(type='str'))),
             accept_terms=dict(type='bool', default=False),
         )
 
