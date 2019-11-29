@@ -291,7 +291,7 @@ EXAMPLES = '''
     resource_group: myResourceGroup
     name: testvmss
     vm_size: Standard_DS1_v2
-    capacity: 2
+    capacity: 3
     virtual_network_name: testvnet
     upgrade_policy: Manual
     subnet_name: testsubnet
