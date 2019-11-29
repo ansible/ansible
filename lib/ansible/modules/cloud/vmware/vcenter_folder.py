@@ -176,49 +176,30 @@ class VmwareFolderManager(PyVmomi):
         folder_name = self.module.params.get('folder_name')
         parent_folder = self.module.params.get('parent_folder', None)
         results = {'changed': False, 'result': {}}
+
+        # None if parent_folder is None else parent folder object
+        p_folder_obj = self.get_parent_folder_obj(datacenter_name=datacenter_name,
+                                                  folder_name=folder_name,
+                                                  folder_type=folder_type,
+                                                  parent_folder=parent_folder)
         if state == 'present':
-            # Check if the folder already exists
-            p_folder_obj = None
-            if parent_folder:
-                if "/" in parent_folder:
-                    parent_folder_parts = parent_folder.strip('/').split('/')
-                    p_folder_obj = None
-                    for part in parent_folder_parts:
-                        part_folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                                          folder_name=part,
-                                                          folder_type=folder_type,
-                                                          parent_folder=p_folder_obj)
-                        if not part_folder_obj:
-                            self.module.fail_json(msg="Could not find folder %s" % part)
-                        p_folder_obj = part_folder_obj
+            # Check if folder exists
+            child_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                               folder_name=folder_name,
+                                               folder_type=folder_type,
+                                               parent_folder=p_folder_obj)
 
-                else:
-                    p_folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                                   folder_name=parent_folder,
-                                                   folder_type=folder_type)
-
-                    if not p_folder_obj:
-                        self.module.fail_json(msg="Parent folder %s does not exist" % parent_folder)
-
-                    # Check if folder exists under parent folder
-                    child_folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                                       folder_name=folder_name,
-                                                       folder_type=folder_type,
-                                                       parent_folder=p_folder_obj)
-                    if child_folder_obj:
-                        results['result']['path'] = self.get_folder_path(child_folder_obj)
-                        results['result'] = "Folder %s already exists under" \
-                                            " parent folder %s" % (folder_name, parent_folder)
-                        self.module.exit_json(**results)
-            else:
-                folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                             folder_name=folder_name,
-                                             folder_type=folder_type)
-
-                if folder_obj:
-                    results['result']['path'] = self.get_folder_path(folder_obj)
-                    results['result']['msg'] = "Folder %s already exists" % folder_name
-                    self.module.exit_json(**results)
+            # Parent exists and child ready exists
+            if p_folder_obj and child_folder_obj:
+                results['result']['path'] = self.get_folder_path(child_folder_obj)
+                results['result'] = "Folder %s already exists under" \
+                                    " parent folder %s" % (folder_name, parent_folder)
+                self.module.exit_json(**results)
+            # Child in root already exists
+            elif child_folder_obj:
+                results['result']['path'] = self.get_folder_path(child_folder_obj)
+                results['result']['msg'] = "Folder %s already exists" % folder_name
+                self.module.exit_json(**results)
 
             # Create a new folder
             try:
@@ -256,25 +237,10 @@ class VmwareFolderManager(PyVmomi):
                                           " exception : %s " % to_native(general_exc))
             self.module.exit_json(**results)
         elif state == 'absent':
-            # Check if the folder already exists
-            p_folder_obj = None
-            if parent_folder:
-                p_folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                               folder_name=parent_folder,
-                                               folder_type=folder_type)
-
-                if not p_folder_obj:
-                    self.module.fail_json(msg="Parent folder %s does not exist" % parent_folder)
-
-                # Check if folder exists under parent folder
-                folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                             folder_name=folder_name,
-                                             folder_type=folder_type,
-                                             parent_folder=p_folder_obj)
-            else:
-                folder_obj = self.get_folder(datacenter_name=datacenter_name,
-                                             folder_name=folder_name,
-                                             folder_type=folder_type)
+            folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                         folder_name=folder_name,
+                                         folder_type=folder_type,
+                                         parent_folder=p_folder_obj)
             if folder_obj:
                 try:
                     if parent_folder:
@@ -328,6 +294,35 @@ class VmwareFolderManager(PyVmomi):
                     return folder
 
         return None
+
+    def get_parent_folder_obj(self, datacenter_name, folder_name, folder_type, parent_folder=None):
+        """
+            Get deepest parent folder object.
+            Returns: Parent folder object by name
+        """
+        if parent_folder:
+            p_folder_obj = None
+
+            if "/" in parent_folder:
+                parent_folder_parts = parent_folder.strip('/').split('/')
+                for part in parent_folder_parts:
+                    part_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                                      folder_name=part,
+                                                      folder_type=folder_type,
+                                                      parent_folder=p_folder_obj)
+                    if not part_folder_obj:
+                        self.module.fail_json(msg="Could not find folder %s" % part)
+                    p_folder_obj = part_folder_obj
+            else:
+                p_folder_obj = self.get_folder(datacenter_name=datacenter_name,
+                                               folder_name=parent_folder,
+                                               folder_type=folder_type)
+                if not p_folder_obj:
+                    self.module.fail_json(msg="Parent folder %s does not exist" % parent_folder)
+
+            return p_folder_obj
+        else:
+            return None
 
 
 def main():

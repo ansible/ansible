@@ -1,0 +1,2 @@
+bugfixes:
+- vcenter_folder - remove folder with multiple levels of parents (https://github.com/ansible/ansible/pull/65363).
