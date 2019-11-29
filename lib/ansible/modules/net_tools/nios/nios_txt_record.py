@@ -43,7 +43,7 @@ options:
         per substring, up to a total of 512 bytes. To enter leading,
         trailing, or embedded spaces in the text, add quotes around the
         text to preserve the spaces.
-    required: true   
+    required: true
   ttl:
     description:
       - Configures the TTL to be associated with this tst record
