@@ -270,7 +270,7 @@ def main():
 
     if path_to_script:
         try:
-            query = open(path_to_script, 'r').read()
+            query = to_native(open(path_to_script, 'rb').read())
         except Exception as e:
             module.fail_json(msg="Cannot read file '%s' : %s" % (path_to_script, to_native(e)))
 
