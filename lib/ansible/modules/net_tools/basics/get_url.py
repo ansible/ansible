@@ -532,7 +532,8 @@ def main():
         checksum_mismatch = False
 
         # Simply check for checksum mismatch
-        if checksum != '':
+        # not force is added for optimization
+        if not force and checksum != '':
             destination_checksum = module.digest_from_file(dest, algorithm)
 
             if checksum != destination_checksum:
