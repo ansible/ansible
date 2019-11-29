@@ -166,14 +166,6 @@ Testing the Pull Request
 
 At this point, you should be ready to begin testing!
 
-
-
-
-
-
-
-
-
 Some ideas of what to test are:
 
 * Create a test Playbook with the examples in and check if they function correctly
