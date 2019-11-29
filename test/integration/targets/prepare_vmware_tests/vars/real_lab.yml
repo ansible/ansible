@@ -2,18 +2,20 @@
 esxi_hosts:
   - esxi1.test
   - esxi2.test
+rw_datastore: rw_datastore
+ro_datastore: ro_datastore
 esxi_password: '{{ esxi1_password }}'
 infra:
   datastores:
-    LocalDS_0:
-      type: nfs
-      server: datastore.test
-      path: /srv/share/isos
-      ro: false
-    LocalDS_1:
+    rw_datastore:
       type: nfs
       server: datastore.test
       path: /srv/share/vms
+      ro: false
+    ro_datastore:
+      type: nfs
+      server: datastore.test
+      path: /srv/share/isos
       ro: true
 virtual_machines:
   - name: DC0_H0_VM0
