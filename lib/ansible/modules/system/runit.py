@@ -18,6 +18,7 @@ DOCUMENTATION = r'''
 module: runit
 author:
 - James Sumners (@jsumners)
+- Thomas Heidrich (@gnuheidix)
 version_added: "2.3"
 short_description: Manage runit services
 description:
@@ -52,6 +53,11 @@ options:
             - directory where services are defined, the source of symlinks to service_dir.
         type: str
         default: /etc/sv
+    timeout:
+        description:
+            - overrides the timeout of how long the operation is allowed to take
+        type: int
+        default: 7
 '''
 
 EXAMPLES = r'''
@@ -131,6 +137,7 @@ class Sv(object):
         self.name = module.params['name']
         self.service_dir = module.params['service_dir']
         self.service_src = module.params['service_src']
+        self.timeout = str(module.params['timeout'])
         self.enabled = None
         self.full_state = None
         self.state = None
@@ -196,34 +203,34 @@ class Sv(object):
         return self.start()
 
     def start(self):
-        return self.execute_command([self.svc_cmd, 'start', self.svc_full])
+        return self.execute_command([self.svc_cmd, '-w ' + self.timeout, 'start', self.svc_full])
 
     def stopped(self):
         return self.stop()
 
     def stop(self):
-        return self.execute_command([self.svc_cmd, 'stop', self.svc_full])
+        return self.execute_command([self.svc_cmd, '-w ' + self.timeout, 'stop', self.svc_full])
 
     def once(self):
-        return self.execute_command([self.svc_cmd, 'once', self.svc_full])
+        return self.execute_command([self.svc_cmd, '-w ' + self.timeout, 'once', self.svc_full])
 
     def reloaded(self):
         return self.reload()
 
     def reload(self):
-        return self.execute_command([self.svc_cmd, 'reload', self.svc_full])
+        return self.execute_command([self.svc_cmd, '-w ' + self.timeout, 'reload', self.svc_full])
 
     def restarted(self):
         return self.restart()
 
     def restart(self):
-        return self.execute_command([self.svc_cmd, 'restart', self.svc_full])
+        return self.execute_command([self.svc_cmd, '-w ' + self.timeout, 'restart', self.svc_full])
 
     def killed(self):
         return self.kill()
 
     def kill(self):
-        return self.execute_command([self.svc_cmd, 'force-stop', self.svc_full])
+        return self.execute_command([self.svc_cmd, '-w ' + self.timeout, 'force-stop', self.svc_full])
 
     def execute_command(self, cmd):
         try:
@@ -249,6 +256,7 @@ def main():
             dist=dict(type='str', default='runit'),
             service_dir=dict(type='str', default='/var/service'),
             service_src=dict(type='str', default='/etc/sv'),
+            timeout=dict(type='int', default=7),
         ),
         supports_check_mode=True,
     )
