@@ -15,10 +15,10 @@ from .asa_module import TestAsaModule, load_fixture
 
 class TestAsaOgcontentModule(TestAsaModule):
 
-    module = asa_og
+    module = asa_ogcontent
 
     def setUp(self):
-        super(TestAsaOgModule, self).setUp()
+        super(TestAsaOgcontentModule, self).setUp()
 
         self.mock_get_config = patch('ansible.modules.network.asa.asa_ogcontent.get_config')
         self.get_config = self.mock_get_config.start()
