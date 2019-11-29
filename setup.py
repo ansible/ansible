@@ -50,22 +50,22 @@ def _find_symlinks(topdir, extension=''):
             filepath = os.path.join(base_path, filename)
             if os.path.islink(filepath) and filename.endswith(extension):
                 target = os.readlink(filepath)
-                if target.startswith('/'):
+                if target.startswith(os.path.sep):
                     # We do not support absolute symlinks at all
                     continue
 
                 if os.path.dirname(target) == '':
                     link = filepath[len(topdir):]
-                    if link.startswith('/'):
+                    if link.startswith(os.path.sep):
                         link = link[1:]
                     symlinks[os.path.basename(target)].append(link)
                 else:
                     # Count how many directory levels from the topdir we are
-                    levels_deep = os.path.dirname(filepath).count('/')
+                    levels_deep = os.path.dirname(filepath).count(os.path.sep)
 
                     # Count the number of directory levels higher we walk up the tree in target
                     target_depth = 0
-                    for path_component in target.split('/'):
+                    for path_component in target.split(os.path.sep):
                         if path_component == '..':
                             target_depth += 1
                             # If we walk past the topdir, then don't store
@@ -76,7 +76,7 @@ def _find_symlinks(topdir, extension=''):
                     else:
                         # If we managed to stay within the tree, store the symlink
                         link = filepath[len(topdir):]
-                        if link.startswith('/'):
+                        if link.startswith(os.path.sep):
                             link = link[1:]
                         symlinks[target].append(link)
 
