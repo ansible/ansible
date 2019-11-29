@@ -32,7 +32,6 @@ Variable names should be letters, numbers, and underscores.  Variables should al
 
 `Python keywords <https://docs.python.org/3/reference/lexical_analysis.html#keywords>`_  such as ``async`` and ``lambda`` are not valid variable names and thus must be avoided.
 
-
 YAML also supports dictionaries which map keys to values.  For instance::
 
   foo:
