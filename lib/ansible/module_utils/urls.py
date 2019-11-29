@@ -1574,8 +1574,15 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     '''
     # download file
     bufsize = 65536
-    file_name, file_ext = os.path.splitext(str(url.rsplit('/', 1)[1]))
-    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix=file_ext, delete=False)
+    # We try to preserve all filename extensions here to preserve things like
+    # .tar.gz so that code that makes assumptions about a file's contents based
+    # on whether a filename has multiple extensions doesn't get confused.
+    file_name = str(url.rsplit('/', 1)[1])
+    file_parts = file_name[1:].split('.', 1)  # [1:] avoids splitting ".hiddenfile"
+    file_exts = "." + file_parts[1] if len(file_parts) > 1 else ""
+    if file_exts:
+        file_name = file_name[:len(file_exts) - 1]
+    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix=file_exts, delete=False)
     module.add_cleanup_file(fetch_temp_file.name)
     try:
         rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout)
