@@ -216,7 +216,8 @@ class Static_Routes(ConfigBase):
                         new_hops.append(want_set)
                     commands.extend(self._set_config(w, h, addr_want, route_want, route_have, new_hops, have_set))
         # Arranging the cmds suct that all delete cmds are fired before all set cmds
-        commands = [each for each in commands if 'no' in each] + [each for each in commands if 'no' not in each]
+        commands = [each for each in sorted(commands) if 'no' in each] + \
+                   [each for each in sorted(commands) if 'no' not in each]
 
         return commands
 

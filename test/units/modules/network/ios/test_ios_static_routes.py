@@ -217,8 +217,8 @@ class TestIosStaticRoutesModule(TestIosModule):
         ))
         result = self.execute_module(changed=True)
         commands = [
-            'no ip route vrf ansible_vrf 192.168.2.0 255.255.255.0 10.0.0.8 name test_vrf track 175 tag 50',
             'no ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 multicast name route_1 tag 60',
+            'no ip route vrf ansible_vrf 192.168.2.0 255.255.255.0 10.0.0.8 name test_vrf track 175 tag 50',
             'ip route 192.168.3.0 255.255.255.0 10.0.0.1 150 multicast name override_route_1 tag 50'
         ]
 
