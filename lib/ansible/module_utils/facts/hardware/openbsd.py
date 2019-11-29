@@ -118,7 +118,7 @@ class OpenBSDHardware(Hardware):
     def get_processor_facts(self):
         cpu_facts = {}
         processor = []
-        for i in range(int(self.sysctl['hw.ncpu'])):
+        for i in range(int(self.sysctl['hw.ncpuonline'])):
             processor.append(self.sysctl['hw.model'])
 
         cpu_facts['processor'] = processor
@@ -129,8 +129,10 @@ class OpenBSDHardware(Hardware):
         # dmesg, however even those have proven to be unreliable.
         # So take a shortcut and report the logical number of processors in
         # 'processor_count' and 'processor_cores' and leave it at that.
-        cpu_facts['processor_count'] = self.sysctl['hw.ncpu']
-        cpu_facts['processor_cores'] = self.sysctl['hw.ncpu']
+        # Furthermore we use the actual number of online CPUs as multiple
+        # logical threads may be disabled with hw.smt=0 .
+        cpu_facts['processor_count'] = self.sysctl['hw.ncpuonline']
+        cpu_facts['processor_cores'] = self.sysctl['hw.ncpuonline']
 
         return cpu_facts
 
