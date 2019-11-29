@@ -145,7 +145,7 @@ colors = dict(
 states = ('skipped', 'ok', 'changed', 'failed', 'unreachable')
 
 
-class CallbackModule_dense(CallbackModule_default):
+class CallbackModule(CallbackModule_default):
 
     '''
     This is the dense callback interface, where screen estate is still valued.
@@ -498,5 +498,3 @@ class CallbackModule_dense(CallbackModule_default):
 # When using -vv or higher, simply do the default action
 if display.verbosity >= 2 or not HAS_OD:
     CallbackModule = CallbackModule_default
-else:
-    CallbackModule = CallbackModule_dense
