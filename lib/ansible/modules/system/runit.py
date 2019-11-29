@@ -58,6 +58,7 @@ options:
             - overrides the timeout of how long the operation is allowed to take
         type: int
         default: 7
+        version_added: "2.10"
 '''
 
 EXAMPLES = r'''
