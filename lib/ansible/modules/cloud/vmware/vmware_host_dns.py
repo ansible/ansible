@@ -34,7 +34,7 @@ requirements:
 options:
   type:
     description:
-    - Type of IP assignment. Either C(dhcp) or C(static).
+    - Type of DNS assignment. Either C(dhcp) or C(static).
     - A VMkernel adapter needs to be set to DHCP if C(type) is set to C(dhcp).
     type: str
     choices: [ 'dhcp', 'static' ]
@@ -91,6 +91,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
+    type: static
     host_name: esx01
     domain: example.local
     dns_servers:
@@ -107,6 +108,7 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: '{{ cluster_name }}'
+    type: static
     domain: example.local
     dns_servers:
       - 192.168.1.10
