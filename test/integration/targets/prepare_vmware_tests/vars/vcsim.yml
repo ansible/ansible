@@ -3,6 +3,8 @@ esxi_hosts:
   - DC0_C0_H0
   - DC0_C0_H1
   - DC0_C0_H2
+rw_datastore: LocalDS_0
+ro_datastore: LocalDS_1
 virtual_machines:
   - name: DC0_H0_VM0
     folder: /F0/DC0/vm/F0
