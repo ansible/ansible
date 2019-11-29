@@ -12,12 +12,6 @@ merged:
             track: 150
       vrf: ansible_vrf
     - address_families:
-      - afi: ipv4
-        routes:
-        - dest: 0.0.0.0/32
-          next_hops:
-          - forward_router_address: 10.8.38.1
-    - address_families:
       - afi: ipv6
         routes:
         - dest: FD5D:12C9:2201:1::/64
@@ -49,12 +43,6 @@ merged:
     - "ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 name merged_v6 tag 105"
 
   after:
-    - address_families:
-      - afi: ipv4
-        routes:
-        - dest: 0.0.0.0/32
-          next_hops:
-          - forward_router_address: 10.8.38.1
     - address_families:
       - afi: ipv4
         routes:
@@ -170,24 +158,6 @@ overridden:
     - address_families:
       - afi: ipv4
         routes:
-        - dest: 192.168.2.0/24
-          next_hops:
-          - forward_router_address: 10.0.0.8
-            name: test_vrf
-            tag: 50
-            track: 150
-      vrf: ansible_vrf
-    - address_families:
-      - afi: ipv6
-        routes:
-        - dest: FD5D:12C9:2201:1::/64
-          next_hops:
-          - forward_router_address: FD5D:12C9:2202::2
-            name: test_v6
-            tag: 105
-    - address_families:
-      - afi: ipv4
-        routes:
         - dest: 192.168.3.0/24
           next_hops:
           - distance_metric: 110
@@ -200,28 +170,44 @@ overridden:
             name: route_2
           - forward_router_address: 10.0.0.3
             name: route_3
-
-  commands:
-    - "no ip route vrf ansible_vrf 192.168.2.0 255.255.255.0 10.0.0.8 name test_vrf track 150 tag 50"
-    - "no ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 multicast name route_1 tag 40"
-    - "no ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name route_2"
-    - "no ip route 192.168.3.0 255.255.255.0 10.0.0.3 name route_3"
-    - "no ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 name test_v6 tag 105"
-    - "ip route vrf ansible_vrf 192.168.2.0 255.255.255.0 10.0.0.4 name override_vrf track 150 tag 50"
-    - "ip route 192.168.3.0 255.255.255.0 10.0.0.3 name override_route multicast"
-    - "ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 name override_v6 tag 175"
-
-  after:
+    - address_families:
+      - afi: ipv6
+        routes:
+        - dest: FD5D:12C9:2201:1::/64
+          next_hops:
+          - forward_router_address: FD5D:12C9:2202::2
+            name: test_v6
+            tag: 105
     - address_families:
       - afi: ipv4
         routes:
         - dest: 192.168.2.0/24
           next_hops:
-          - forward_router_address: 10.0.0.4
-            name: override_vrf
+          - forward_router_address: 10.0.0.8
+            name: test_vrf
             tag: 50
             track: 150
       vrf: ansible_vrf
+
+  commands:
+    - "no ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 multicast name route_1 tag 40"
+    - "no ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name route_2"
+    - "no ip route 192.168.3.0 255.255.255.0 10.0.0.3 name route_3"
+    - "no ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 name test_v6 tag 105"
+    - "no ip route vrf ansible_vrf 192.168.2.0 255.255.255.0 10.0.0.8 name test_vrf track 150 tag 50"
+    - "ip route 192.168.3.0 255.255.255.0 10.0.0.3 multicast name override_route"
+    - "ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 name override_v6 tag 175"
+    - "ip route vrf ansible_vrf 192.168.2.0 255.255.255.0 10.0.0.4 name override_vrf track 150 tag 50"
+
+  after:
+    - address_families:
+      - afi: ipv4
+        routes:
+        - dest: 192.168.3.0/24
+          next_hops:
+          - forward_router_address: 10.0.0.3
+            multicast: true
+            name: override_route
     - address_families:
       - afi: ipv6
         routes:
@@ -233,11 +219,13 @@ overridden:
     - address_families:
       - afi: ipv4
         routes:
-        - dest: 192.168.3.0/24
+        - dest: 192.168.2.0/24
           next_hops:
-          - forward_router_address: 10.0.0.3
-            multicast: True
-            name: override_route
+          - forward_router_address: 10.0.0.4
+            name: override_vrf
+            tag: 50
+            track: 150
+      vrf: ansible_vrf
 
 deleted:
   before:

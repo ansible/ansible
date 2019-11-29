@@ -39,17 +39,17 @@ class Static_Routes(ConfigBase):
     def __init__(self, module):
         super(Static_Routes, self).__init__(module)
 
-    def get_interfaces_facts(self):
+    def get_static_routes_facts(self):
         """ Get the 'facts' (the current configuration)
 
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
         """
         facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
-        interfaces_facts = facts['ansible_network_resources'].get('static_routes')
-        if not interfaces_facts:
+        static_routes_facts = facts['ansible_network_resources'].get('static_routes')
+        if not static_routes_facts:
             return []
-        return interfaces_facts
+        return static_routes_facts
 
     def execute_module(self):
         """ Execute the module
@@ -61,24 +61,24 @@ class Static_Routes(ConfigBase):
         commands = list()
         warnings = list()
 
-        existing_interfaces_facts = self.get_interfaces_facts()
-        commands.extend(self.set_config(existing_interfaces_facts))
+        existing_static_routes_facts = self.get_static_routes_facts()
+        commands.extend(self.set_config(existing_static_routes_facts))
         if commands:
             if not self._module.check_mode:
                 self._connection.edit_config(commands)
             result['changed'] = True
         result['commands'] = commands
 
-        changed_interfaces_facts = self.get_interfaces_facts()
+        changed_static_routes_facts = self.get_static_routes_facts()
 
-        result['before'] = existing_interfaces_facts
+        result['before'] = existing_static_routes_facts
         if result['changed']:
-            result['after'] = changed_interfaces_facts
+            result['after'] = changed_static_routes_facts
 
         result['warnings'] = warnings
         return result
 
-    def set_config(self, existing_interfaces_facts):
+    def set_config(self, existing_static_routes_facts):
         """ Collect the configuration from the args passed to the module,
             collect the current configuration (as a dict from facts)
 
@@ -87,7 +87,7 @@ class Static_Routes(ConfigBase):
                   to the desired configuration
         """
         want = self._module.params['config']
-        have = existing_interfaces_facts
+        have = existing_static_routes_facts
         resp = self.set_state(want, have)
         return to_list(resp)
 

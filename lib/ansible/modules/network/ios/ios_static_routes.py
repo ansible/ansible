@@ -133,8 +133,8 @@ options:
   state:
     description:
     - The state the configuration should be left in
-    - The states I(rendered), I(gathered) and I(parsed) does not perform any
-        change on the device. 
+    - The states I(rendered), I(gathered) and I(parsed) does not perform any change on the
+      device.
     - The state I(rendered) will transform the configuration in C(config) option to platform
       specific CLI commands which will be returned in the I(rendered) key within the result.
       For state I(rendered) active connection to remote host is not required.
@@ -458,7 +458,7 @@ rendered:
   type: list
   sample: ['interface Ethernet1/1', 'mtu 1800']
 gathered:
-  description: 
+  description:
   - The configuration as structured data transformed for the running configuration
     fetched from remote host
   returned: When C(state) is I(gathered)
