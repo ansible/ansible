@@ -27,6 +27,10 @@ options:
       description:
         - Name to use for the team.
       required: True
+    description:
+      description:
+        - Text to describe the team.
+      required: False
     organization:
       description:
         - Organization the team should be made a member of.
