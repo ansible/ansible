@@ -500,6 +500,11 @@ class Homebrew(object):
 
     # updated -------------------------------- {{{
     def _update_homebrew(self):
+        if self.module.check_mode:
+            self.changed = True
+            self.message = 'Homebrew would be updated.'
+            raise HomebrewException(self.message)
+
         rc, out, err = self.module.run_command([
             self.brew_path,
             'update',
@@ -526,6 +531,11 @@ class Homebrew(object):
 
     # _upgrade_all --------------------------- {{{
     def _upgrade_all(self):
+        if self.module.check_mode:
+            self.changed = True
+            self.message = 'Homebrew packages would be upgraded.'
+            raise HomebrewException(self.message)
+
         rc, out, err = self.module.run_command([
             self.brew_path,
             'upgrade',
