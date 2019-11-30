@@ -234,7 +234,7 @@ def main():
         name=dict(required=True),
         ipaddr=dict(required=True, aliases=['ipaddr'], ib_req=True),
         mac=dict(required=True, aliases=['mac'], ib_req=True),
-        network=dict(required=True, aliases=['network'], ib_req=True),
+        network=dict(required=True, aliases=['network']),
         network_view=dict(default='default', aliases=['network_view']),
 
         options=dict(type='list', elements='dict', options=option_spec, transform=options),
