@@ -41,7 +41,6 @@ options:
   network:
     description:
       - Specifies the network range in which ipaddr exists.
-    required: true
     aliases:
       - network
   network_view:
