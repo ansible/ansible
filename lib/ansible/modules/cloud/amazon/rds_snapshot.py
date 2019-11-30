@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: rds_snapshot
-version_added: 2.9
+version_added: '2.9'
 short_description: manage Amazon RDS/Aurora snapshots.
 description:
      - Creates or deletes RDS snapshots.
@@ -24,7 +24,7 @@ options:
       - Specify cluster or instance snapshot.
     default: instance
     choices: ['instance', 'aurora']
-    version_added: 2.10
+    version_added: '2.10'
     type: str
   state:
     description:
@@ -45,14 +45,13 @@ options:
       - Database instance identifier. Required when state is present.
     aliases:
       - instance_id
-    version_added: 2.10
     type: str
   db_cluster_identifier:
     description:
       - Database cluster identifier (Aurora). Required when snapshot_type is aurora.
     aliases:
       - cluster_id
-    version_added: 2.10
+    version_added: '2.10'
     type: str
   wait:
     description:
@@ -77,6 +76,7 @@ options:
     description:
       - whether to fail if trying to delete a non-existent snapshot.
     default: False
+    version_added: '2.10'
     type: bool
 requirements:
     - "python >= 2.6"
@@ -328,8 +328,8 @@ def wait_for_snapshot_status(client, module, db_snapshot_id, waiter_name):
             db_cluster_identifier = module.params['db_cluster_identifier']
             client.get_waiter(waiter_name).wait(DBClusterIdentifier=db_cluster_identifier, DBClusterSnapshotIdentifier=db_snapshot_id,
                                                 WaiterConfig=dict(
-                                                Delay=5,
-                                                MaxAttempts=int((timeout + 2.5) / 5)
+                                                    Delay=5,
+                                                    MaxAttempts=int((timeout + 2.5) / 5)
                                                 ))
         else:
             client.get_waiter(waiter_name).wait(DBSnapshotIdentifier=db_snapshot_id,
@@ -447,10 +447,10 @@ def ensure_snapshot_present(client, module):
     snapshot = get_snapshot(client, module)
     if module.params.get('snapshot_type') == 'aurora':
         existing_tags = boto3_tag_list_to_ansible_dict(client.list_tags_for_resource(ResourceName=snapshot[0].get('DBClusterSnapshotArn'),
-                                                                                        aws_retry=True)['TagList'])
+                                                                                     aws_retry=True)['TagList'])
     else:
         existing_tags = boto3_tag_list_to_ansible_dict(client.list_tags_for_resource(ResourceName=snapshot[0].get('DBSnapshotArn'),
-                                                                                        aws_retry=True)['TagList'])
+                                                                                     aws_retry=True)['TagList'])
     desired_tags = module.params.get('tags')
     purge_tags = module.params.get('purge_tags')
     changed |= ensure_tags(client, module, snapshot, existing_tags, desired_tags, purge_tags)
