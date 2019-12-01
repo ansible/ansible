@@ -298,6 +298,7 @@ class UnitsConfig(TestConfig):
 
         self.collect_only = args.collect_only  # type: bool
         self.num_workers = args.num_workers  # type: int
+        self.pdb = args.pdb == 'yes'
 
         self.requirements_mode = args.requirements_mode if 'requirements_mode' in args else ''
 

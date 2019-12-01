@@ -414,6 +414,13 @@ def parse_args():
                        choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                        help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
 
+    units.add_argument('--pdb',
+                       action='store_const',
+                       default='unknown',
+                       const= 'yes',
+                       dest='pdb',                       
+                       help='pdb on exit')
+
     units.add_argument('--collect-only',
                        action='store_true',
                        help='collect tests but do not execute them')
