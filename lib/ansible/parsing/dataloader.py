@@ -51,7 +51,7 @@ class DataLoader:
         ds = dl.load('...')
         ds = dl.load_from_file('/path/to/file')
 
-    
+
     '''
 
     def __init__(self):
@@ -75,9 +75,9 @@ class DataLoader:
             if module_name == 'ansible.parsing.dataloader':
                 return cls()
         module_object = importlib.import_module(module_name)
-        class_obj = getattr(module_object,class_name)
+        class_obj = getattr(module_object, class_name)
         return class_obj()
-    
+
     # TODO: since we can query vault_secrets late, we could provide this to DataLoader init
     def set_vault_secrets(self, vault_secrets):
         self._vault.secrets = vault_secrets
