@@ -34,15 +34,15 @@ options:
   plugin:
     description:
       - Set the user's plugin used to authenticate C(CREATE USER user IDENTIFIED WITH plugin).
-    version_added: "2.9"
+    version_added: '2.10'
   plugin_hash_string:
     description:
       - Set the user's plugin hash string C(CREATE USER user IDENTIFIED WITH plugin AS plugin_hash_string).
-    version_added: "2.9"
+    version_added: '2.10'
   plugin_auth_string:
     description:
       - Set the user's plugin auth_string C(CREATE USER user IDENTIFIED WITH plugin BY plugin_auth_string).
-    version_added: "2.9"
+    version_added: '2.10'
   encrypted:
     description:
       - Indicate that the 'password' field is a `mysql_native_password` hash.
@@ -140,12 +140,16 @@ EXAMPLES = r'''
     priv: '*.*:ALL'
     state: present
 # Create database user with name 'bob' authenticated with 'AWSAuthenticationPlugin' (with proper hash_string) with all database privileges
-- mysql_user:
+
+# Create database user with name 'bob' authenticated with 'AWSAuthenticationPlugin' (with proper hash_string) with all database privileges
+- name:Create database user
+  mysql_user:
     name: bob
     plugin: AWSAuthenticationPlugin
     plugin_hash_string: RDS
     priv: '*.*:ALL'
     state: present
+
 - name: Create database user using hashed password with all database privileges
   mysql_user:
     name: bob
