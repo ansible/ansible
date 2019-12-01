@@ -26,7 +26,6 @@
               - dest: 192.168.3.0/24
                 next_hops:
                 - forward_router_address: 10.0.0.3
-                  multicast: True
                   name: override_route
             - afi: ipv6
               routes:

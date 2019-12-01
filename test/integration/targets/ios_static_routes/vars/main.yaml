@@ -90,14 +90,6 @@ replaced:
             track: 150
       vrf: ansible_vrf
     - address_families:
-      - afi: ipv6
-        routes:
-        - dest: FD5D:12C9:2201:1::/64
-          next_hops:
-          - forward_router_address: FD5D:12C9:2202::2
-            name: test_v6
-            tag: 105
-    - address_families:
       - afi: ipv4
         routes:
         - dest: 192.168.3.0/24
@@ -112,6 +104,14 @@ replaced:
             name: route_2
           - forward_router_address: 10.0.0.3
             name: route_3
+    - address_families:
+      - afi: ipv6
+        routes:
+        - dest: FD5D:12C9:2201:1::/64
+          next_hops:
+          - forward_router_address: FD5D:12C9:2202::2
+            name: test_v6
+            tag: 105
 
   commands:
     - "ip route vrf ansible_vrf 192.168.2.0 255.255.255.0 10.0.0.8 name replaced_vrf track 155 tag 75"
@@ -270,4 +270,4 @@ deleted:
     - "no ip route 192.168.3.0 255.255.255.0 10.0.0.3 name route_3"
     - "no ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 name test_v6 tag 105"
 
-  after:
+  after: []
