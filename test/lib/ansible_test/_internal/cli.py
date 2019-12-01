@@ -417,8 +417,8 @@ def parse_args():
     units.add_argument('--pdb',
                        action='store_const',
                        default='unknown',
-                       const= 'yes',
-                       dest='pdb',                       
+                       const='yes',
+                       dest='pdb',
                        help='pdb on exit')
 
     units.add_argument('--collect-only',
