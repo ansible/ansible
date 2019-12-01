@@ -1181,17 +1181,24 @@ def create_params(parameter, *values):
     return result
 
 
-@pytest.mark.parametrize("parameter, before, after", [
-    *create_params('name', None, '', 'Test', 'Test', 'foo', '', None),
-    *create_params('ip_version', 'ipv4', 'ipv4', 'ipv6', 'ipv6'),
-    *create_params('dst_ip', None, '1.2.3.4/24', '1.2.3.4/32', '1.2.3.4/32', None),
-    *create_params('dst_port', None, '80', '80-443', '80-443', None),
-    *create_params('src_ip', None, '1.2.3.4/24', '1.2.3.4/32', '1.2.3.4/32', None),
-    *create_params('src_port', None, '80', '80-443', '80-443', None),
-    *create_params('protocol', None, 'tcp', 'tcp', 'udp', 'udp', None),
-    *create_params('tcp_flags', None, 'syn', 'syn|fin', 'syn|fin', 'syn&fin', '', None),
-    *create_params('action', 'accept', 'accept', 'discard', 'discard'),
-])
+def flatten(list_of_lists):
+    result = []
+    for l in list_of_lists:
+        result.extend(l)
+    return result
+
+
+@pytest.mark.parametrize("parameter, before, after", flatten([
+    create_params('name', None, '', 'Test', 'Test', 'foo', '', None),
+    create_params('ip_version', 'ipv4', 'ipv4', 'ipv6', 'ipv6'),
+    create_params('dst_ip', None, '1.2.3.4/24', '1.2.3.4/32', '1.2.3.4/32', None),
+    create_params('dst_port', None, '80', '80-443', '80-443', None),
+    create_params('src_ip', None, '1.2.3.4/24', '1.2.3.4/32', '1.2.3.4/32', None),
+    create_params('src_port', None, '80', '80-443', '80-443', None),
+    create_params('protocol', None, 'tcp', 'tcp', 'udp', 'udp', None),
+    create_params('tcp_flags', None, 'syn', 'syn|fin', 'syn|fin', 'syn&fin', '', None),
+    create_params('action', 'accept', 'accept', 'discard', 'discard'),
+]))
 def test_input_rule_value_change(mocker, parameter, before, after):
     input_call = {
         'ip_version': 'ipv4',
