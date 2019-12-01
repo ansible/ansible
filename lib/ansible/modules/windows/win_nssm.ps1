@@ -38,7 +38,6 @@ $stderrFile = Get-AnsibleParam -obj $params -name "stderr_file" -type "path"
 
 $executable = Get-AnsibleParam -obj $params -name "executable" -type "path" -default "nssm.exe"
 
-$executable = Get-AnsibleParam -obj $params -name "executable" -type "path" -default "nssm.exe"
 $app_rotate_bytes = Get-AnsibleParam -obj $params -name "app_rotate_bytes" -type "int" -default 104858
 $app_rotate_online = Get-AnsibleParam -obj $params -name "app_rotate_online" -type "int" -default 0 -validateset 0,1
 $app_stop_method_console = Get-AnsibleParam -obj $params -name "app_stop_method_console" -type "int"
