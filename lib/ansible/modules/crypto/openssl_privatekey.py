@@ -606,7 +606,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
                 format=export_format,
                 encryption_algorithm=encryption_algorithm
             )
-        except ValueError as e:
+        except ValueError as dummy:
             self.module.fail_json(
                 msg='Cryptography backend cannot serialize the private key in the required format "{0}"'.format(self.format)
             )
