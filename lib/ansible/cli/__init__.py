@@ -442,7 +442,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         options = context.CLIARGS
 
         # all needs loader
-        loader = DataLoader()
+        loader = DataLoader.factory()
 
         basedir = options.get('basedir', False)
         if basedir:

@@ -1893,4 +1893,28 @@ VERBOSE_TO_STDERR:
     - section: defaults
       key: verbose_to_stderr
   type: bool
+DATA_LOADER_CLASS_NAME:
+  version_added: '2.10'
+  description:
+    - Name of the DataLoader class to instanciate
+    - Since 2.10, this option defaults to 'DataLoader'
+  default: 'DataLoader'
+  env:
+    - name: ANSIBLE_DATA_LOADER_CLASS_NAME
+  ini:
+    - section: defaults
+      key: data_loader_class_name
+  type: string
+DATA_LOADER_MODULE_NAME:
+  version_added: '2.10'
+  description:
+    - Name of the DataLoader module to import
+    - Since 2.10, this option defaults to 'ansible.parsing.dataloader'
+  default: 'ansible.parsing.dataloader'
+  env:
+    - name: ANSIBLE_DATA_LOADER_MODULE_NAME
+  ini:
+    - section: defaults
+      key: data_loader_module_name
+  type: string
 ...

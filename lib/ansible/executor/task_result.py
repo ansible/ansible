@@ -36,7 +36,7 @@ class TaskResult:
         if isinstance(return_data, dict):
             self._result = return_data.copy()
         else:
-            self._result = DataLoader().load(return_data)
+            self._result = DataLoader.factory().load(return_data)
 
         if task_fields is None:
             self._task_fields = dict()

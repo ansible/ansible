@@ -11,6 +11,7 @@ import os
 import os.path
 import re
 import tempfile
+import importlib
 
 from ansible import constants as C
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
@@ -38,16 +39,19 @@ class DataLoader:
     either from a given file name or from a string that was previously
     read in through other means. A Vault password can be specified, and
     any vault-encrypted files will be decrypted.
+    Construct the proper subclass of the DataLoader via the factory method so that it will call the right classname.
 
     Data read from files will also be cached, so the file will never be
     read from disk more than once.
 
     Usage:
 
-        dl = DataLoader()
+        dl = DataLoader.factory()
         # optionally: dl.set_vault_password('foo')
         ds = dl.load('...')
         ds = dl.load_from_file('/path/to/file')
+
+    
     '''
 
     def __init__(self):
@@ -63,6 +67,17 @@ class DataLoader:
         self._vault = VaultLib()
         self.set_vault_secrets(None)
 
+    @classmethod
+    def factory(cls):
+        module_name = C.DATA_LOADER_MODULE_NAME
+        class_name = C.DATA_LOADER_CLASS_NAME
+        if class_name == 'DataLoader':
+            if module_name == 'ansible.parsing.dataloader':
+                return cls()
+        module_object = importlib.import_module(module_name)
+        class_obj = getattr(module_object,class_name)
+        return class_obj()
+    
     # TODO: since we can query vault_secrets late, we could provide this to DataLoader init
     def set_vault_secrets(self, vault_secrets):
         self._vault.secrets = vault_secrets

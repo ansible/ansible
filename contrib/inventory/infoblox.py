@@ -58,7 +58,7 @@ def main():
         sys.exit(-1)
 
     try:
-        loader = DataLoader()
+        loader = DataLoader.factory()
         config = loader.load_from_file(config_file)
         provider = config.get('provider') or {}
         wapi = WapiInventory(provider)

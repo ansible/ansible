@@ -42,7 +42,7 @@ def main():
         sources += ','
 
     # initialize needed objects
-    loader = DataLoader()
+    loader = DataLoader.factory()
     passwords = dict()
 
     # create inventory and pass to var manager

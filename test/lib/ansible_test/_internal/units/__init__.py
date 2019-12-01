@@ -59,6 +59,7 @@ def command_units(args):
 
     changes = get_changes_filter(args)
     require = args.require + changes
+    do_pdb = args.pdb
     include = walk_internal_targets(walk_units_targets(), args.include, args.exclude, require)
 
     paths = [target.path for target in include]
@@ -104,6 +105,9 @@ def command_units(args):
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
             '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-units.xml' % version),
         ]
+
+        if do_pdb:
+            cmd.append('--pdb')
 
         if not data_context().content.collection:
             cmd.append('--durations=25')

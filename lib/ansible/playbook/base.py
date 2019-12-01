@@ -214,7 +214,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         if loader is not None:
             self._loader = loader
         else:
-            self._loader = DataLoader()
+            self._loader = DataLoader.factory()
 
         # call the preprocess_data() function to massage the data into
         # something we can more easily parse, and then call the validation

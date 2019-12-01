@@ -140,7 +140,7 @@ class VaultCLI(CLI):
 
     def run(self):
         super(VaultCLI, self).run()
-        loader = DataLoader()
+        loader = DataLoader.factory()
 
         # set default restrictive umask
         old_umask = os.umask(0o077)
