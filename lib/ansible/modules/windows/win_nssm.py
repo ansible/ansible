@@ -112,9 +112,9 @@ options:
     default: auto
   app_rotate_bytes:
     description:
-      - nssm will not rotate any file which is smaller than the configured number of bytes.
+      - NSSM will not rotate any file which is smaller than the configured number of bytes.
     type: int
-    default:
+    default: 104858
     version_added: "2.10"
   app_rotate_online:
     description:
@@ -123,7 +123,7 @@ options:
     choices:
       - 0
       - 1
-    default:
+    default: 0
     version_added: "2.10"
   app_stop_method_console:
     description:
