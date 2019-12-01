@@ -373,7 +373,7 @@ def firewall_configured(result, error):
 def main():
     argument_spec = dict(
         server_ip=dict(type='str', required=True),
-        port=dict(type='str', default='main'),
+        port=dict(type='str', default='main', choices=['main', 'kvm']),
         state=dict(type='str', required=True, choices=['present', 'absent']),
         whitelist_hos=dict(type='bool'),
         rules=dict(type='dict', options=dict(

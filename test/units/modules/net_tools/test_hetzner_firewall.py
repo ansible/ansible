@@ -1,20 +1,23 @@
 # (c) 2019 Felix Fontein <felix@fontein.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 import pytest
 
 from ansible.module_utils.hetzner import BASE_URL
 from ansible.modules.net_tools import hetzner_firewall
 
 
-###########################################################
-## General test framework
+# ##########################################################
+# ## General test framework
 
 import json
 
 from mock import MagicMock
 from units.modules.utils import set_module_args
-from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves.urllib.parse import parse_qs
 
 
@@ -86,7 +89,7 @@ class FetchUrlCall:
 
     def expect_form_value_one_of(self, key, value):
         self.form_parse = True
-        if ket not in self.form_values_subset:
+        if key not in self.form_values_subset:
             self.form_values_subset[key] = set()
         self.form_values_subset[key].add(value)
         return self
@@ -199,8 +202,8 @@ def run_module_failed(mocker, arguments, fetch_url_calls):
     return e.value.kwargs
 
 
-###########################################################
-## Hetzner firewall tests
+# ##########################################################
+# ## Hetzner firewall tests
 
 
 # Tests for state (absent and present)
@@ -214,21 +217,21 @@ def test_absent_idempotency(mocker):
         'state': 'absent',
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'disabled',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'disabled',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == False
+    assert result['changed'] is False
     assert result['diff']['before']['status'] == 'disabled'
     assert result['diff']['after']['status'] == 'disabled'
     assert result['firewall']['status'] == 'disabled'
@@ -244,36 +247,36 @@ def test_absent_changed(mocker):
         'state': 'absent',
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': True,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': True,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('POST', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'disabled',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'disabled',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
-            .expect_form_value('status', 'disabled'),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
+        .expect_form_value('status', 'disabled'),
     ])
-    assert result['changed'] == True
+    assert result['changed'] is True
     assert result['diff']['before']['status'] == 'active'
     assert result['diff']['after']['status'] == 'disabled'
     assert result['firewall']['status'] == 'disabled'
@@ -289,21 +292,21 @@ def test_present_idempotency(mocker):
         'state': 'present',
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == False
+    assert result['changed'] is False
     assert result['diff']['before']['status'] == 'active'
     assert result['diff']['after']['status'] == 'active'
     assert result['firewall']['status'] == 'active'
@@ -319,36 +322,36 @@ def test_present_changed(mocker):
         'state': 'present',
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'disabled',
-                    'whitelist_hos': True,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'disabled',
+                'whitelist_hos': True,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('POST', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
-            .expect_form_value('status', 'active'),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
+        .expect_form_value('status', 'active'),
     ])
-    assert result['changed'] == True
+    assert result['changed'] is True
     assert result['diff']['before']['status'] == 'disabled'
     assert result['diff']['after']['status'] == 'active'
     assert result['firewall']['status'] == 'active'
@@ -368,21 +371,21 @@ def test_absent_idempotency_check(mocker):
         '_ansible_check_mode': True,
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'disabled',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'disabled',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == False
+    assert result['changed'] is False
     assert result['diff']['before']['status'] == 'disabled'
     assert result['diff']['after']['status'] == 'disabled'
     assert result['firewall']['status'] == 'disabled'
@@ -399,21 +402,21 @@ def test_absent_changed_check(mocker):
         '_ansible_check_mode': True,
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': True,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': True,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == True
+    assert result['changed'] is True
     assert result['diff']['before']['status'] == 'active'
     assert result['diff']['after']['status'] == 'disabled'
     assert result['firewall']['status'] == 'disabled'
@@ -430,21 +433,21 @@ def test_present_idempotency_check(mocker):
         '_ansible_check_mode': True,
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == False
+    assert result['changed'] is False
     assert result['diff']['before']['status'] == 'active'
     assert result['diff']['after']['status'] == 'active'
     assert result['firewall']['status'] == 'active'
@@ -461,21 +464,21 @@ def test_present_changed_check(mocker):
         '_ansible_check_mode': True,
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'disabled',
-                    'whitelist_hos': True,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'disabled',
+                'whitelist_hos': True,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == True
+    assert result['changed'] is True
     assert result['diff']['before']['status'] == 'disabled'
     assert result['diff']['after']['status'] == 'active'
     assert result['firewall']['status'] == 'active'
@@ -495,21 +498,21 @@ def test_port_idempotency(mocker):
         'port': 'main',
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == False
+    assert result['changed'] is False
     assert result['diff']['before']['port'] == 'main'
     assert result['diff']['after']['port'] == 'main'
     assert result['firewall']['status'] == 'active'
@@ -527,36 +530,36 @@ def test_port_changed(mocker):
         'port': 'main',
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'disabled',
-                    'whitelist_hos': True,
-                    'port': 'kvm',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'disabled',
+                'whitelist_hos': True,
+                'port': 'kvm',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('POST', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
-            .expect_form_value('port', 'main'),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
+        .expect_form_value('port', 'main'),
     ])
-    assert result['changed'] == True
+    assert result['changed'] is True
     assert result['diff']['before']['port'] == 'kvm'
     assert result['diff']['after']['port'] == 'main'
     assert result['firewall']['status'] == 'active'
@@ -577,27 +580,27 @@ def test_whitelist_hos_idempotency(mocker):
         'whitelist_hos': True,
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': True,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': True,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == False
-    assert result['diff']['before']['whitelist_hos'] == True
-    assert result['diff']['after']['whitelist_hos'] == True
+    assert result['changed'] is False
+    assert result['diff']['before']['whitelist_hos'] is True
+    assert result['diff']['after']['whitelist_hos'] is True
     assert result['firewall']['status'] == 'active'
     assert result['firewall']['server_ip'] == '1.2.3.4'
     assert result['firewall']['server_number'] == 1
-    assert result['firewall']['whitelist_hos'] == True
+    assert result['firewall']['whitelist_hos'] is True
 
 
 def test_whitelist_hos_changed(mocker):
@@ -609,43 +612,42 @@ def test_whitelist_hos_changed(mocker):
         'whitelist_hos': True,
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'disabled',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'disabled',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('POST', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': True,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': True,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
-            .expect_form_value('whitelist_hos', 'true'),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
+        .expect_form_value('whitelist_hos', 'true'),
     ])
-    assert result['changed'] == True
-    assert result['diff']['before']['whitelist_hos'] == False
-    assert result['diff']['after']['whitelist_hos'] == True
+    assert result['changed'] is True
+    assert result['diff']['before']['whitelist_hos'] is False
+    assert result['diff']['after']['whitelist_hos'] is True
     assert result['firewall']['status'] == 'active'
     assert result['firewall']['server_ip'] == '1.2.3.4'
     assert result['firewall']['server_number'] == 1
-    assert result['firewall']['whitelist_hos'] == True
-
+    assert result['firewall']['whitelist_hos'] is True
 
 
 # Tests for wait_for_configured in getting status
@@ -660,35 +662,35 @@ def test_wait_get(mocker):
         'wait_for_configured': True,
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'in process',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'in process',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == False
+    assert result['changed'] is False
     assert result['diff']['before']['status'] == 'active'
     assert result['diff']['after']['status'] == 'active'
     assert result['firewall']['status'] == 'active'
@@ -706,33 +708,33 @@ def test_wait_get_timeout(mocker):
         'timeout': 0,
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'in process',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'in process',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'in process',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'in process',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
     assert result['msg'] == 'Timeout while waiting for firewall to be configured.'
 
@@ -746,19 +748,19 @@ def test_nowait_get(mocker):
         'wait_for_configured': False,
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'in process',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'in process',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
     assert result['msg'] == 'Firewall configuration cannot be read as it is not configured.'
 
@@ -775,49 +777,49 @@ def test_wait_update(mocker):
         'state': 'present',
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'disabled',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'disabled',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('POST', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'in process',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'in process',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == True
+    assert result['changed'] is True
     assert result['diff']['before']['status'] == 'disabled'
     assert result['diff']['after']['status'] == 'active'
     assert result['firewall']['status'] == 'active'
@@ -835,49 +837,49 @@ def test_wait_update_timeout(mocker):
         'timeout': 0,
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'disabled',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'disabled',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('POST', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'in process',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'in process',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'in process',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'in process',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == True
+    assert result['changed'] is True
     assert result['diff']['before']['status'] == 'disabled'
     assert result['diff']['after']['status'] == 'active'
     assert result['firewall']['status'] == 'in process'
@@ -895,35 +897,35 @@ def test_nowait_update(mocker):
         'wait_for_configured': False,
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'disabled',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'disabled',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('POST', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'in process',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'in process',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ])
-    assert result['changed'] == True
+    assert result['changed'] is True
     assert result['diff']['before']['status'] == 'disabled'
     assert result['diff']['after']['status'] == 'active'
     assert result['firewall']['status'] == 'in process'
@@ -949,58 +951,58 @@ def test_input_rule_len_change_0_1(mocker):
         },
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': True,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': True,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('POST', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [
-                            {
-                                'name': None,
-                                'ip_version': 'ipv4',
-                                'dst_ip': None,
-                                'dst_port': None,
-                                'src_ip': None,
-                                'src_port': None,
-                                'protocol': None,
-                                'tcp_flags': None,
-                                'action': 'discard',
-                            },
-                        ],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [
+                        {
+                            'name': None,
+                            'ip_version': 'ipv4',
+                            'dst_ip': None,
+                            'dst_port': None,
+                            'src_ip': None,
+                            'src_port': None,
+                            'protocol': None,
+                            'tcp_flags': None,
+                            'action': 'discard',
+                        },
+                    ],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
-            .expect_form_value('status', 'active')
-            .expect_form_value_absent('rules[input][0][name]')
-            .expect_form_value('rules[input][0][ip_version]', 'ipv4')
-            .expect_form_value_absent('rules[input][0][dst_ip]')
-            .expect_form_value_absent('rules[input][0][dst_port]')
-            .expect_form_value_absent('rules[input][0][src_ip]')
-            .expect_form_value_absent('rules[input][0][src_port]')
-            .expect_form_value_absent('rules[input][0][protocol]')
-            .expect_form_value_absent('rules[input][0][tcp_flags]')
-            .expect_form_value('rules[input][0][action]', 'discard')
-            .expect_form_value_absent('rules[input][1][action]'),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
+        .expect_form_value('status', 'active')
+        .expect_form_value_absent('rules[input][0][name]')
+        .expect_form_value('rules[input][0][ip_version]', 'ipv4')
+        .expect_form_value_absent('rules[input][0][dst_ip]')
+        .expect_form_value_absent('rules[input][0][dst_port]')
+        .expect_form_value_absent('rules[input][0][src_ip]')
+        .expect_form_value_absent('rules[input][0][src_port]')
+        .expect_form_value_absent('rules[input][0][protocol]')
+        .expect_form_value_absent('rules[input][0][tcp_flags]')
+        .expect_form_value('rules[input][0][action]', 'discard')
+        .expect_form_value_absent('rules[input][1][action]'),
     ])
-    assert result['changed'] == True
+    assert result['changed'] is True
     assert result['diff']['before']['status'] == 'active'
     assert result['diff']['after']['status'] == 'active'
     assert len(result['diff']['before']['rules']['input']) == 0
@@ -1019,49 +1021,49 @@ def test_input_rule_len_change_1_0(mocker):
         },
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': True,
-                    'port': 'main',
-                    'rules': {
-                        'input': [
-                            {
-                                'name': None,
-                                'ip_version': 'ipv4',
-                                'dst_ip': None,
-                                'dst_port': None,
-                                'src_ip': None,
-                                'src_port': None,
-                                'protocol': None,
-                                'tcp_flags': None,
-                                'action': 'discard',
-                            },
-                        ],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': True,
+                'port': 'main',
+                'rules': {
+                    'input': [
+                        {
+                            'name': None,
+                            'ip_version': 'ipv4',
+                            'dst_ip': None,
+                            'dst_port': None,
+                            'src_ip': None,
+                            'src_port': None,
+                            'protocol': None,
+                            'tcp_flags': None,
+                            'action': 'discard',
+                        },
+                    ],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('POST', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
-            .expect_form_value('status', 'active')
-            .expect_form_value_absent('rules[input][0][action]'),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
+        .expect_form_value('status', 'active')
+        .expect_form_value_absent('rules[input][0][action]'),
     ])
-    assert result['changed'] == True
+    assert result['changed'] is True
     assert result['diff']['before']['status'] == 'active'
     assert result['diff']['after']['status'] == 'active'
     assert len(result['diff']['before']['rules']['input']) == 1
@@ -1092,74 +1094,74 @@ def test_input_rule_len_change_1_2(mocker):
         },
     }, [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': True,
-                    'port': 'main',
-                    'rules': {
-                        'input': [
-                            {
-                                'name': None,
-                                'ip_version': 'ipv4',
-                                'dst_ip': None,
-                                'dst_port': None,
-                                'src_ip': None,
-                                'src_port': None,
-                                'protocol': None,
-                                'tcp_flags': None,
-                                'action': 'discard',
-                            },
-                        ],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': True,
+                'port': 'main',
+                'rules': {
+                    'input': [
+                        {
+                            'name': None,
+                            'ip_version': 'ipv4',
+                            'dst_ip': None,
+                            'dst_port': None,
+                            'src_ip': None,
+                            'src_port': None,
+                            'protocol': None,
+                            'tcp_flags': None,
+                            'action': 'discard',
+                        },
+                    ],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
         FetchUrlCall('POST', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': False,
-                    'port': 'main',
-                    'rules': {
-                        'input': [
-                            {
-                                'name': None,
-                                'ip_version': 'ipv4',
-                                'dst_ip': None,
-                                'dst_port': '80',
-                                'src_ip': None,
-                                'src_port': None,
-                                'protocol': 'tcp',
-                                'tcp_flags': None,
-                                'action': 'accept',
-                            },
-                            {
-                                'name': None,
-                                'ip_version': 'ipv4',
-                                'dst_ip': None,
-                                'dst_port': None,
-                                'src_ip': None,
-                                'src_port': None,
-                                'protocol': None,
-                                'tcp_flags': None,
-                                'action': 'discard',
-                            },
-                        ],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': False,
+                'port': 'main',
+                'rules': {
+                    'input': [
+                        {
+                            'name': None,
+                            'ip_version': 'ipv4',
+                            'dst_ip': None,
+                            'dst_port': '80',
+                            'src_ip': None,
+                            'src_port': None,
+                            'protocol': 'tcp',
+                            'tcp_flags': None,
+                            'action': 'accept',
+                        },
+                        {
+                            'name': None,
+                            'ip_version': 'ipv4',
+                            'dst_ip': None,
+                            'dst_port': None,
+                            'src_ip': None,
+                            'src_port': None,
+                            'protocol': None,
+                            'tcp_flags': None,
+                            'action': 'discard',
+                        },
+                    ],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
-            .expect_form_value('status', 'active')
-            .expect_form_value('rules[input][0][action]', 'accept')
-            .expect_form_value('rules[input][1][action]', 'discard')
-            .expect_form_value_absent('rules[input][2][action]'),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
+        .expect_form_value('status', 'active')
+        .expect_form_value('rules[input][0][action]', 'accept')
+        .expect_form_value('rules[input][1][action]', 'discard')
+        .expect_form_value_absent('rules[input][2][action]'),
     ])
-    assert result['changed'] == True
+    assert result['changed'] is True
     assert result['diff']['before']['status'] == 'active'
     assert result['diff']['after']['status'] == 'active'
     assert len(result['diff']['before']['rules']['input']) == 1
@@ -1224,40 +1226,40 @@ def test_input_rule_value_change(mocker, parameter, before, after):
 
     calls = [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': True,
-                    'port': 'main',
-                    'rules': {
-                        'input': [input_before],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': True,
+                'port': 'main',
+                'rules': {
+                    'input': [input_before],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ]
 
     changed = (before != after)
     if changed:
         after_call = (
             FetchUrlCall('POST', 200)
-                .result_json({
-                    'firewall': {
-                        'server_ip': '1.2.3.4',
-                        'server_number': 1,
-                        'status': 'active',
-                        'whitelist_hos': False,
-                        'port': 'main',
-                        'rules': {
-                            'input': [input_after],
-                        },
+            .result_json({
+                'firewall': {
+                    'server_ip': '1.2.3.4',
+                    'server_number': 1,
+                    'status': 'active',
+                    'whitelist_hos': False,
+                    'port': 'main',
+                    'rules': {
+                        'input': [input_after],
                     },
-                })
-                .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
-                .expect_form_value('status', 'active')
-                .expect_form_value_absent('rules[input][1][action]')
+                },
+            })
+            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
+            .expect_form_value('status', 'active')
+            .expect_form_value_absent('rules[input][1][action]')
         )
         if parameter != 'ip_version':
             after_call.expect_form_value('rules[input][0][ip_version]', 'ipv4')
@@ -1335,40 +1337,40 @@ def test_input_rule_ip_normalization(mocker, ip_version, parameter, before_norma
 
     calls = [
         FetchUrlCall('GET', 200)
-            .result_json({
-                'firewall': {
-                    'server_ip': '1.2.3.4',
-                    'server_number': 1,
-                    'status': 'active',
-                    'whitelist_hos': True,
-                    'port': 'main',
-                    'rules': {
-                        'input': [input_before],
-                    },
+        .result_json({
+            'firewall': {
+                'server_ip': '1.2.3.4',
+                'server_number': 1,
+                'status': 'active',
+                'whitelist_hos': True,
+                'port': 'main',
+                'rules': {
+                    'input': [input_before],
                 },
-            })
-            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
+            },
+        })
+        .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL)),
     ]
 
     changed = (before_normalized != after_normalized)
     if changed:
         after_call = (
             FetchUrlCall('POST', 200)
-                .result_json({
-                    'firewall': {
-                        'server_ip': '1.2.3.4',
-                        'server_number': 1,
-                        'status': 'active',
-                        'whitelist_hos': False,
-                        'port': 'main',
-                        'rules': {
-                            'input': [input_after],
-                        },
+            .result_json({
+                'firewall': {
+                    'server_ip': '1.2.3.4',
+                    'server_number': 1,
+                    'status': 'active',
+                    'whitelist_hos': False,
+                    'port': 'main',
+                    'rules': {
+                        'input': [input_after],
                     },
-                })
-                .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
-                .expect_form_value('status', 'active')
-                .expect_form_value_absent('rules[input][1][action]')
+                },
+            })
+            .expect_url('{0}/firewall/1.2.3.4'.format(BASE_URL))
+            .expect_form_value('status', 'active')
+            .expect_form_value_absent('rules[input][1][action]')
         )
         after_call.expect_form_value('rules[input][0][ip_version]', ip_version)
         after_call.expect_form_value('rules[input][0][action]', 'discard')
