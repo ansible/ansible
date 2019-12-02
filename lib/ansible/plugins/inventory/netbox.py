@@ -262,7 +262,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     def extract_config_context(self, host):
         try:
             if self.config_context:
-                url = self.api_endpoint + "/api/dcim/devices/" + str(host["id"])
+                if "config_context" in host:
+                    # With netbox v2.6.0+, data is already present
+                    return [host["config_context"]]
+                if "device_type" in host:
+                    url = self.api_endpoint + "/api/dcim/devices/" + str(host["id"]) + "/"
+                else:
+                    url = self.api_endpoint + "/api/virtualization/virtual-machines/" + str(host["id"]) + "/"
                 device_lookup = self._fetch_information(url)
                 return [device_lookup["config_context"]]
         except Exception:
@@ -378,6 +384,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if self.query_filters:
             query_parameters.extend(filter(lambda x: x,
                                            map(self.validate_query_parameters, self.query_filters)))
+        if not self.config_context:
+            query_parameters.append(("exclude", "config_context"))
         self.device_url = self.api_endpoint + "/api/dcim/devices/?" + urlencode(query_parameters)
         self.virtual_machines_url = self.api_endpoint + "/api/virtualization/virtual-machines/?" + urlencode(query_parameters)
 
