@@ -82,16 +82,31 @@ options:
         description:
             - Path to the Certificate Signing Request (CSR) used to generate this certificate.
             - This is not required in C(assertonly) mode.
+            - This is mutually exclusive with I(csr_content).
         type: path
+    csr_content:
+        description:
+            - Content of the Certificate Signing Request (CSR) used to generate this certificate.
+            - This is not required in C(assertonly) mode.
+            - This is mutually exclusive with I(csr_path).
+        type: str
+        version_added: "2.10"
 
     privatekey_path:
         description:
             - Path to the private key to use when signing the certificate.
+            - This is mutually exclusive with I(privatekey_content).
         type: path
+    privatekey_content:
+        description:
+            - Path to the private key to use when signing the certificate.
+            - This is mutually exclusive with I(privatekey_path).
+        type: str
+        version_added: "2.10"
 
     privatekey_passphrase:
         description:
-            - The passphrase for the I(privatekey_path).
+            - The passphrase for the I(privatekey_path) resp. I(privatekey_content).
             - This is required if the private key is password protected.
         type: str
 
@@ -158,19 +173,35 @@ options:
         description:
             - Remote absolute path of the CA (Certificate Authority) certificate.
             - This is only used by the C(ownca) provider.
+            - This is mutually exclusive with I(ownca_content).
         type: path
         version_added: "2.7"
+    ownca_content:
+        description:
+            - Content of the CA (Certificate Authority) certificate.
+            - This is only used by the C(ownca) provider.
+            - This is mutually exclusive with I(ownca_path).
+        type: str
+        version_added: "2.10"
 
     ownca_privatekey_path:
         description:
             - Path to the CA (Certificate Authority) private key to use when signing the certificate.
             - This is only used by the C(ownca) provider.
+            - This is mutually exclusive with I(ownca_privatekey_content).
         type: path
         version_added: "2.7"
+    ownca_privatekey_content:
+        description:
+            - Path to the CA (Certificate Authority) private key to use when signing the certificate.
+            - This is only used by the C(ownca) provider.
+            - This is mutually exclusive with I(ownca_privatekey_path).
+        type: str
+        version_added: "2.10"
 
     ownca_privatekey_passphrase:
         description:
-            - The passphrase for the I(ownca_privatekey_path).
+            - The passphrase for the I(ownca_privatekey_path) resp. I(ownca_privatekey_content).
             - This is only used by the C(ownca) provider.
         type: str
         version_added: "2.7"
@@ -812,7 +843,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 filename:
-    description: Path to the generated Certificate
+    description: Path to the generated certificate.
     returned: changed or success
     type: str
     sample: /etc/ssl/crt/www.ansible.com.crt
@@ -829,6 +860,7 @@ import abc
 import datetime
 import time
 import os
+import tempfile
 import traceback
 from distutils.version import LooseVersion
 
@@ -884,8 +916,14 @@ class Certificate(crypto_utils.OpenSSLObject):
 
         self.provider = module.params['provider']
         self.privatekey_path = module.params['privatekey_path']
+        self.privatekey_content = module.params['privatekey_content']
+        if self.privatekey_content is not None:
+            self.privatekey_content = self.privatekey_content.encode('utf-8')
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.csr_path = module.params['csr_path']
+        self.csr_content = module.params['csr_content']
+        if self.csr_content is not None:
+            self.csr_content = self.csr_content.encode('utf-8')
         self.cert = None
         self.privatekey = None
         self.csr = None
@@ -1011,11 +1049,12 @@ class Certificate(crypto_utils.OpenSSLObject):
         except Exception as dummy:
             return False
 
-        if self.privatekey_path:
+        if self.privatekey_path or self.privatekey_content:
             try:
                 self.privatekey = crypto_utils.load_privatekey(
-                    self.privatekey_path,
-                    self.privatekey_passphrase,
+                    path=self.privatekey_path,
+                    content=self.privatekey_content,
+                    passphrase=self.privatekey_passphrase,
                     backend=self.backend
                 )
             except crypto_utils.OpenSSLBadPassphraseError as exc:
@@ -1023,8 +1062,12 @@ class Certificate(crypto_utils.OpenSSLObject):
             if not self._validate_privatekey():
                 return False
 
-        if self.csr_path:
-            self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
+        if self.csr_path or self.csr_content:
+            self.csr = crypto_utils.load_certificate_request(
+                path=self.csr_path,
+                content=self.csr_content,
+                backend=self.backend
+            )
             if not self._validate_csr():
                 return False
 
@@ -1087,21 +1130,28 @@ class SelfSignedCertificateCryptography(Certificate):
         self.version = module.params['selfsigned_version']
         self.serial_number = x509.random_serial_number()
 
-        if not os.path.exists(self.csr_path):
+        if self.csr_content is None and not os.path.exists(self.csr_path):
             raise CertificateError(
                 'The certificate signing request file {0} does not exist'.format(self.csr_path)
             )
-        if not os.path.exists(self.privatekey_path):
+        if self.privatekey_content is None and not os.path.exists(self.privatekey_path):
             raise CertificateError(
                 'The private key file {0} does not exist'.format(self.privatekey_path)
             )
 
-        self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
+        self.csr = crypto_utils.load_certificate_request(
+            path=self.csr_path,
+            content=self.csr_content,
+            backend=self.backend
+        )
         self._module = module
 
         try:
             self.privatekey = crypto_utils.load_privatekey(
-                self.privatekey_path, self.privatekey_passphrase, backend=self.backend
+                path=self.privatekey_path,
+                content=self.privatekey_content,
+                passphrase=self.privatekey_passphrase,
+                backend=self.backend
             )
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=to_native(exc))
@@ -1115,11 +1165,11 @@ class SelfSignedCertificateCryptography(Certificate):
             self.digest = None
 
     def generate(self, module):
-        if not os.path.exists(self.privatekey_path):
+        if self.privatekey_content is None and not os.path.exists(self.privatekey_path):
             raise CertificateError(
                 'The private key %s does not exist' % self.privatekey_path
             )
-        if not os.path.exists(self.csr_path):
+        if self.csr_content is None and not os.path.exists(self.csr_path):
             raise CertificateError(
                 'The certificate signing request file %s does not exist' % self.csr_path
             )
@@ -1210,31 +1260,36 @@ class SelfSignedCertificate(Certificate):
         self.version = module.params['selfsigned_version']
         self.serial_number = randint(1000, 99999)
 
-        if not os.path.exists(self.csr_path):
+        if self.csr_content is None and not os.path.exists(self.csr_path):
             raise CertificateError(
                 'The certificate signing request file {0} does not exist'.format(self.csr_path)
             )
-        if not os.path.exists(self.privatekey_path):
+        if self.privatekey_content is None and not os.path.exists(self.privatekey_path):
             raise CertificateError(
                 'The private key file {0} does not exist'.format(self.privatekey_path)
             )
 
-        self.csr = crypto_utils.load_certificate_request(self.csr_path)
+        self.csr = crypto_utils.load_certificate_request(
+            path=self.csr_path,
+            content=self.csr_content,
+        )
         try:
             self.privatekey = crypto_utils.load_privatekey(
-                self.privatekey_path, self.privatekey_passphrase
+                path=self.privatekey_path,
+                content=self.privatekey_content,
+                passphrase=self.privatekey_passphrase,
             )
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=str(exc))
 
     def generate(self, module):
 
-        if not os.path.exists(self.privatekey_path):
+        if self.privatekey_content is None and not os.path.exists(self.privatekey_path):
             raise CertificateError(
                 'The private key %s does not exist' % self.privatekey_path
             )
 
-        if not os.path.exists(self.csr_path):
+        if self.csr_content is None and not os.path.exists(self.csr_path):
             raise CertificateError(
                 'The certificate signing request file %s does not exist' % self.csr_path
             )
@@ -1301,27 +1356,44 @@ class OwnCACertificateCryptography(Certificate):
         self.version = module.params['ownca_version']
         self.serial_number = x509.random_serial_number()
         self.ca_cert_path = module.params['ownca_path']
+        self.ca_cert_content = module.params['ownca_content']
+        if self.ca_cert_content is not None:
+            self.ca_cert_content = self.ca_cert_content.encode('utf-8')
         self.ca_privatekey_path = module.params['ownca_privatekey_path']
+        self.ca_privatekey_content = module.params['ownca_privatekey_content']
+        if self.ca_privatekey_content is not None:
+            self.ca_privatekey_content = self.ca_privatekey_content.encode('utf-8')
         self.ca_privatekey_passphrase = module.params['ownca_privatekey_passphrase']
 
-        if not os.path.exists(self.csr_path):
+        if self.csr_content is None and not os.path.exists(self.csr_path):
             raise CertificateError(
                 'The certificate signing request file {0} does not exist'.format(self.csr_path)
             )
-        if not os.path.exists(self.ca_cert_path):
+        if self.ca_cert_content is None and not os.path.exists(self.ca_cert_path):
             raise CertificateError(
                 'The CA certificate file {0} does not exist'.format(self.ca_cert_path)
             )
-        if not os.path.exists(self.ca_privatekey_path):
+        if self.ca_privatekey_content is None and not os.path.exists(self.ca_privatekey_path):
             raise CertificateError(
                 'The CA private key file {0} does not exist'.format(self.ca_privatekey_path)
             )
 
-        self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
-        self.ca_cert = crypto_utils.load_certificate(self.ca_cert_path, backend=self.backend)
+        self.csr = crypto_utils.load_certificate_request(
+            path=self.csr_path,
+            content=self.csr_content,
+            backend=self.backend
+        )
+        self.ca_cert = crypto_utils.load_certificate(
+            path=self.ca_cert_path,
+            content=self.ca_cert_content,
+            backend=self.backend
+        )
         try:
             self.ca_private_key = crypto_utils.load_privatekey(
-                self.ca_privatekey_path, self.ca_privatekey_passphrase, backend=self.backend
+                path=self.ca_privatekey_path,
+                content=self.ca_privatekey_content,
+                passphrase=self.ca_privatekey_passphrase,
+                backend=self.backend
             )
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=str(exc))
@@ -1336,17 +1408,17 @@ class OwnCACertificateCryptography(Certificate):
 
     def generate(self, module):
 
-        if not os.path.exists(self.ca_cert_path):
+        if self.ca_cert_content is None and not os.path.exists(self.ca_cert_path):
             raise CertificateError(
                 'The CA certificate %s does not exist' % self.ca_cert_path
             )
 
-        if not os.path.exists(self.ca_privatekey_path):
+        if self.ca_privatekey_content is None and not os.path.exists(self.ca_privatekey_path):
             raise CertificateError(
                 'The CA private key %s does not exist' % self.ca_privatekey_path
             )
 
-        if not os.path.exists(self.csr_path):
+        if self.csr_content is None and not os.path.exists(self.csr_path):
             raise CertificateError(
                 'The certificate signing request file %s does not exist' % self.csr_path
             )
@@ -1481,44 +1553,58 @@ class OwnCACertificate(Certificate):
         if module.params['ownca_create_authority_key_identifier']:
             module.warn('ownca_create_authority_key_identifier is ignored by the pyOpenSSL backend!')
         self.ca_cert_path = module.params['ownca_path']
+        self.ca_cert_content = module.params['ownca_content']
+        if self.ca_cert_content is not None:
+            self.ca_cert_content = self.ca_cert_content.encode('utf-8')
         self.ca_privatekey_path = module.params['ownca_privatekey_path']
+        self.ca_privatekey_content = module.params['ownca_privatekey_content']
+        if self.ca_privatekey_content is not None:
+            self.ca_privatekey_content = self.ca_privatekey_content.encode('utf-8')
         self.ca_privatekey_passphrase = module.params['ownca_privatekey_passphrase']
 
-        if not os.path.exists(self.csr_path):
+        if self.csr_content is None and not os.path.exists(self.csr_path):
             raise CertificateError(
                 'The certificate signing request file {0} does not exist'.format(self.csr_path)
             )
-        if not os.path.exists(self.ca_cert_path):
+        if self.ca_cert_content is None and not os.path.exists(self.ca_cert_path):
             raise CertificateError(
                 'The CA certificate file {0} does not exist'.format(self.ca_cert_path)
             )
-        if not os.path.exists(self.ca_privatekey_path):
+        if self.ca_privatekey_content is None and not os.path.exists(self.ca_privatekey_path):
             raise CertificateError(
                 'The CA private key file {0} does not exist'.format(self.ca_privatekey_path)
             )
 
-        self.csr = crypto_utils.load_certificate_request(self.csr_path)
-        self.ca_cert = crypto_utils.load_certificate(self.ca_cert_path)
+        self.csr = crypto_utils.load_certificate_request(
+            path=self.csr_path,
+            content=self.csr_content,
+        )
+        self.ca_cert = crypto_utils.load_certificate(
+            path=self.ca_cert_path,
+            content=self.ca_cert_content,
+        )
         try:
             self.ca_privatekey = crypto_utils.load_privatekey(
-                self.ca_privatekey_path, self.ca_privatekey_passphrase
+                path=self.ca_privatekey_path,
+                content=self.ca_privatekey_content,
+                passphrase=self.ca_privatekey_passphrase
             )
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             module.fail_json(msg=str(exc))
 
     def generate(self, module):
 
-        if not os.path.exists(self.ca_cert_path):
+        if self.ca_cert_content is None and not os.path.exists(self.ca_cert_path):
             raise CertificateError(
                 'The CA certificate %s does not exist' % self.ca_cert_path
             )
 
-        if not os.path.exists(self.ca_privatekey_path):
+        if self.ca_privatekey_content is None and not os.path.exists(self.ca_privatekey_path):
             raise CertificateError(
                 'The CA private key %s does not exist' % self.ca_privatekey_path
             )
 
-        if not os.path.exists(self.csr_path):
+        if self.csr_content is None and not os.path.exists(self.csr_path):
             raise CertificateError(
                 'The certificate signing request file %s does not exist' % self.csr_path
             )
@@ -1630,17 +1716,22 @@ class AssertOnlyCertificateBase(Certificate):
 
         # Load objects
         self.cert = crypto_utils.load_certificate(self.path, backend=self.backend)
-        if self.privatekey_path is not None:
+        if self.privatekey_path is not None or self.privatekey_content is not None:
             try:
                 self.privatekey = crypto_utils.load_privatekey(
-                    self.privatekey_path,
-                    self.privatekey_passphrase,
+                    path=self.privatekey_path,
+                    content=self.privatekey_content,
+                    passphrase=self.privatekey_passphrase,
                     backend=self.backend
                 )
             except crypto_utils.OpenSSLBadPassphraseError as exc:
                 raise CertificateError(exc)
-        if self.csr_path is not None:
-            self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
+        if self.csr_path is not None or self.csr_content is not None:
+            self.csr = crypto_utils.load_certificate_request(
+                path=self.csr_path,
+                content=self.csr_content,
+                backend=self.backend
+            )
 
     @abc.abstractmethod
     def _validate_privatekey(self):
@@ -1712,28 +1803,28 @@ class AssertOnlyCertificateBase(Certificate):
 
     def assertonly(self, module):
         messages = []
-        if self.privatekey_path is not None:
+        if self.privatekey_path is not None or self.privatekey_content is not None:
             if not self._validate_privatekey():
                 messages.append(
                     'Certificate %s and private key %s do not match' %
-                    (self.path, self.privatekey_path)
+                    (self.path, self.privatekey_path or '(provided in module options)')
                 )
 
-        if self.csr_path is not None:
+        if self.csr_path is not None or self.csr_content is not None:
             if not self._validate_csr_signature():
                 messages.append(
                     'Certificate %s and CSR %s do not match: private key mismatch' %
-                    (self.path, self.csr_path)
+                    (self.path, self.csr_path or '(provided in module options)')
                 )
             if not self._validate_csr_subject():
                 messages.append(
                     'Certificate %s and CSR %s do not match: subject mismatch' %
-                    (self.path, self.csr_path)
+                    (self.path, self.csr_path or '(provided in module options)')
                 )
             if not self._validate_csr_extensions():
                 messages.append(
                     'Certificate %s and CSR %s do not match: extensions mismatch' %
-                    (self.path, self.csr_path)
+                    (self.path, self.csr_path or '(provided in module options)')
                 )
 
         if self.signature_algorithms is not None:
@@ -2179,12 +2270,16 @@ class EntrustCertificate(Certificate):
         self.trackingId = None
         self.notAfter = self.get_relative_time_option(module.params['entrust_not_after'], 'entrust_not_after')
 
-        if not os.path.exists(self.csr_path):
+        if self.csr_content is None or not os.path.exists(self.csr_path):
             raise CertificateError(
                 'The certificate signing request file {0} does not exist'.format(self.csr_path)
             )
 
-        self.csr = crypto_utils.load_certificate_request(self.csr_path, backend=self.backend)
+        self.csr = crypto_utils.load_certificate_request(
+            path=self.csr_path,
+            content=self.csr_content,
+            backend=self.backend,
+        )
 
         # ECS API defaults to using the validated organization tied to the account.
         # We want to always force behavior of trying to use the organization provided in the CSR.
@@ -2229,8 +2324,11 @@ class EntrustCertificate(Certificate):
         if not self.check(module, perms_required=False) or self.force:
             # Read the CSR that was generated for us
             body = {}
-            with open(self.csr_path, 'r') as csr_file:
-                body['csr'] = csr_file.read()
+            if self.csr_content is not None:
+                body['csr'] = self.csr_content
+            else:
+                with open(self.csr_path, 'r') as csr_file:
+                    body['csr'] = csr_file.read()
 
             body['certType'] = module.params['entrust_cert_type']
 
@@ -2346,12 +2444,7 @@ class AcmeCertificate(Certificate):
 
     def generate(self, module):
 
-        if not os.path.exists(self.privatekey_path):
-            raise CertificateError(
-                'The private key %s does not exist' % self.privatekey_path
-            )
-
-        if not os.path.exists(self.csr_path):
+        if self.csr_content is None and not os.path.exists(self.csr_path):
             raise CertificateError(
                 'The certificate signing request file %s does not exist' % self.csr_path
             )
@@ -2372,7 +2465,26 @@ class AcmeCertificate(Certificate):
             if self.use_chain:
                 command.append('--chain')
             command.extend(['--account-key', self.accountkey_path])
-            command.extend(['--csr', self.csr_path])
+            if self.csr_content is not None:
+                # We need to temporarily write the CSR to disk
+                fd, tmpsrc = tempfile.mkstemp()
+                module.add_cleanup_file(tmpsrc)  # Ansible will delete the file on exit
+                f = os.fdopen(fd, 'wb')
+                try:
+                    f.write(self.csr_content)
+                except Exception as err:
+                    try:
+                        f.close()
+                    except Exception as dummy:
+                        pass
+                    module.fail_json(
+                        msg="failed to create temporary CSR file: %s" % to_native(err),
+                        exception=traceback.format_exc()
+                    )
+                f.close()
+                command.extend(['--csr', tmpsrc])
+            else:
+                command.extend(['--csr', self.csr_path])
             command.extend(['--acme-dir', self.challenge_path])
 
             try:
@@ -2411,11 +2523,13 @@ def main():
             provider=dict(type='str', choices=['acme', 'assertonly', 'entrust', 'ownca', 'selfsigned']),
             force=dict(type='bool', default=False,),
             csr_path=dict(type='path'),
+            csr_content=dict(type='str'),
             backup=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
 
             # General properties of a certificate
             privatekey_path=dict(type='path'),
+            privatekey_content=dict(type='str'),
             privatekey_passphrase=dict(type='str', no_log=True),
 
             # provider: assertonly
@@ -2451,7 +2565,9 @@ def main():
 
             # provider: ownca
             ownca_path=dict(type='path'),
+            ownca_content=dict(type='str'),
             ownca_privatekey_path=dict(type='path'),
+            ownca_privatekey_content=dict(type='str'),
             ownca_privatekey_passphrase=dict(type='str', no_log=True),
             ownca_digest=dict(type='str', default='sha256'),
             ownca_version=dict(type='int', default=3),
@@ -2490,7 +2606,13 @@ def main():
             ['provider', 'entrust', ['entrust_requester_email', 'entrust_requester_name', 'entrust_requester_phone',
                                      'entrust_api_user', 'entrust_api_key', 'entrust_api_client_cert_path',
                                      'entrust_api_client_cert_key_path']],
-        ]
+        ],
+        mutually_exclusive=[
+            ['csr_path', 'csr_content'],
+            ['privatekey_path', 'privatekey_content'],
+            ['ownca_path', 'ownca_content'],
+            ['ownca_privatekey_path', 'ownca_privatekey_content'],
+        ],
     )
 
     try:
@@ -2498,8 +2620,8 @@ def main():
             certificate = CertificateAbsent(module)
 
         else:
-            if module.params['provider'] != 'assertonly' and module.params['csr_path'] is None:
-                module.fail_json(msg='csr_path is required when provider is not assertonly')
+            if module.params['provider'] != 'assertonly' and module.params['csr_path'] is None and module.params['csr_content'] is None:
+                module.fail_json(msg='csr_path or csr_content is required when provider is not assertonly')
 
             base_dir = os.path.dirname(module.params['path']) or '.'
             if not os.path.isdir(base_dir):
@@ -2513,6 +2635,19 @@ def main():
                 module.deprecate("The 'assertonly' provider is deprecated; please see the examples of "
                                  "the 'openssl_certificate' module on how to replace it with other modules",
                                  version='2.13')
+            elif provider == 'selfsigned':
+                if module.params['privatekey_path'] is None and module.params['privatekey_content'] is None:
+                    module.fail_json(msg='One of privatekey_path and privatekey_content must be specified for the selfsigned provider.')
+            elif provider == 'acme':
+                if module.params['acme_accountkey_path'] is None:
+                    module.fail_json(msg='The acme_accountkey_path option must be specified for the acme provider.')
+                if module.params['acme_challenge_path'] is None:
+                    module.fail_json(msg='The acme_challenge_path option must be specified for the acme provider.')
+            elif provider == 'ownca':
+                if module.params['ownca_path'] is None and module.params['ownca_content'] is None:
+                    module.fail_json(msg='One of ownca_path and ownca_content must be specified for the ownca provider.')
+                if module.params['ownca_privatekey_path'] is None and module.params['ownca_privatekey_content'] is None:
+                    module.fail_json(msg='One of ownca_privatekey_path and ownca_privatekey_content must be specified for the ownca provider.')
 
             backend = module.params['select_crypto_backend']
             if backend == 'auto':
