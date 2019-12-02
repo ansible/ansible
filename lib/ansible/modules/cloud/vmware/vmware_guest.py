@@ -41,8 +41,8 @@ notes:
     - Tested on vSphere 5.5, 6.0, 6.5 and 6.7.
     - Use SCSI disks instead of IDE when you want to expand online disks by specifying a SCSI controller.
     - Uses SysPrep for Windows VM (depends on 'guest_id' parameter match 'win') with PyVmomi.
-    - In order to change the VM's parameters (e.g. number of CPUs or amount of RAM), the VM must be powered off and the
-      C(state=present) must be used to apply the changes.
+    - In order to change the VM's parameters (e.g. number of CPUs), the VM must be powered off unless the hot-add
+      support is enabled and the C(state=present) must be used to apply the changes.
     - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
