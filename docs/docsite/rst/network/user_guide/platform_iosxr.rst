@@ -17,8 +17,8 @@ Connections Available
     ====================  ==========================================  =========================
     ..                    CLI                                         NETCONF
 
-                                                                      only for modules ``iosxr_banner``, 
-                                                                      ``iosxr_interface``, ``iosxr_logging``, 
+                                                                      only for modules ``iosxr_banner``,
+                                                                      ``iosxr_interface``, ``iosxr_logging``,
                                                                       ``iosxr_system``, ``iosxr_user``
     ====================  ==========================================  =========================
     Protocol              SSH                                         XML over SSH
@@ -122,3 +122,7 @@ Example NETCONF Task
          - cisco.com
 
 .. include:: shared_snippets/SSH_warning.txt
+
+.. seealso::
+
+       :ref:`timeout_options`

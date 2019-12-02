@@ -27,9 +27,9 @@ Connections Available
 
     Connection Settings   ``ansible_connection: network_cli``
 
-    |enable_mode|         not supported                               
+    |enable_mode|         not supported
 
-    Returned Data Format  Refer to individual module documentation 
+    Returned Data Format  Refer to individual module documentation
     ====================  ==========================================
 
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
@@ -67,3 +67,7 @@ Example CLI Task
      when: ansible_network_os == 'vyos'
 
 .. include:: shared_snippets/SSH_warning.txt
+
+.. seealso::
+
+       :ref:`timeout_options`

@@ -162,3 +162,7 @@ The following platforms and software versions have been certified by Cisco to wo
      N7k       Support includes all N7xxx models
      N9k       Support includes all N9xxx models
      ========  ==============================================
+
+.. seealso::
+
+    :ref:`timeout_options`
