@@ -122,7 +122,7 @@ data:
                     description: Whether or not the VLAN is a dettached VLAN
                     type: bool
                 createTime:
-                    description: The creation date of the image
+                    description: The creation date of the VLAN
                     type: str
                     sample: "2019-01-14T11:12:31.000Z"
                 gatewayAddressing:

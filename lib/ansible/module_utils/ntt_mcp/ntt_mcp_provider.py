@@ -473,6 +473,9 @@ class NTTMCPClient():
     def delete_vlan(self, vlan_id=None):
         """
         Delete a VLAN
+
+        :kw vlan_id: The UUID of the VLAN
+        :returns: API response
         """
         params = {}
         if vlan_id:
@@ -491,6 +494,207 @@ class NTTMCPClient():
         else:
             raise NTTMCPAPIException('No response from the API')
 
+    def list_security_groups(self, network_domain_id=None, name=None, group_type=None, server_id=None, vlan_id=None):
+        """
+        Return a list of security groups
+        """
+        params = dict()
+        if vlan_id:
+            params['vlanId'] = vlan_id
+            params['type'] = 'VLAN'
+        elif network_domain_id:
+            params['networkDomainId'] = network_domain_id
+            params['type'] = 'SERVER'
+        if group_type:
+            params['type'] = group_type
+        if server_id:
+            params['serverId'] = vlan_id
+        if name:
+            params['name'] = name
+
+        url = self.base_url + 'securityGroup/securityGroup'
+
+        response = self.api_get_call(url, params)
+
+        try:
+            return response.json().get('securityGroup')
+        except Exception:
+            return []
+
+    def get_security_group_by_id(self, group_id=None):
+        """
+        Return a security groups
+
+        :kw group_id: The UUID of the Security Group
+        :returns: The Security Group
+        """
+        if group_id is None:
+            raise NTTMCPAPIException('A valid ID for a Security Group is required')
+
+        url = self.base_url + 'securityGroup/securityGroup/{0}'.format(group_id)
+
+        response = self.api_get_call(url, None)
+
+        try:
+            return response.json()
+        except Exception:
+            return dict()
+
+    def create_security_group(self, network_domain_id=None, vlan_id=None, name=None, description=None):
+        """
+        Create a security group
+
+        :kw network_domain_id: The UUID of the Cloud Network Domain.
+        :kw vlan_id: The UUID of the VLAN
+        :kw name: The name of the Security Group
+        :kw description: The description for the Security Group
+        :returns: The new Security Group UUID
+        """
+        params = dict()
+        if network_domain_id is None and vlan_id is None:
+            raise NTTMCPAPIException('A valid Network Domain or VLAN is required')
+        if name is None:
+            raise NTTMCPAPIException('A valid value for name is required')
+
+        if vlan_id:
+            params['vlanId'] = vlan_id
+        elif network_domain_id:
+            params['networkDomainId'] = network_domain_id
+        params['name'] = name
+        if description:
+            params['description'] = description
+
+        url = self.base_url + 'securityGroup/createSecurityGroup'
+
+        response = self.api_post_call(url, params)
+
+        if response is not None:
+            if response.json().get('responseCode') == 'OK':
+                return next((item for item in response.json().get('info') if item["name"] == "securityGroupId"), dict()).get('value')
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Security Group was successfully created')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def update_security_group(self, group_id=None, name=None, description=None):
+        """
+        Update a security group
+
+        :kw group_id: The UUID of the Security Group
+        :kw name: The name of the Security Group
+        :kw description: The description for the Security Group
+        :returns: API response
+        """
+        params = dict()
+        if group_id is None:
+            raise NTTMCPAPIException('A valid Security Group ID is required')
+
+        params['id'] = group_id
+        if name:
+            params['name'] = name
+        if description:
+            params['description'] = description
+
+        url = self.base_url + 'securityGroup/editSecurityGroup'
+
+        response = self.api_post_call(url, params)
+
+        if response is not None:
+            if response.json().get('responseCode') == 'OK':
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Security Group was successfully updated')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def delete_security_group(self, group_id=None):
+        """
+        Delete a security group
+
+        :kw group_id: The UUID of the Security Group
+        :returns: API response
+        """
+        params = dict()
+        if group_id is None:
+            raise NTTMCPAPIException('A valid Security Group ID is required')
+
+        params['id'] = group_id
+
+        url = self.base_url + 'securityGroup/deleteSecurityGroup'
+
+        response = self.api_post_call(url, params)
+        try:
+            return response.json()
+        except Exception as e:
+            raise NTTMCPAPIException('{0}'.format(e))
+
+    def add_security_group_member(self, group_id=None, group_type=None, member_id=None):
+        """
+        Add a new member server or NIC to an existing Security Group
+
+        :kw group_id: The UUID of the Security Group
+        :kw group_type: The type of the Security Group (vlan or server)
+        :kw member_id: The UUID of the member entity (server or NIC)
+        :returns: API response
+        """
+        params = dict()
+        if group_id is None and member_id is None:
+            raise NTTMCPAPIException('A valid Security Group ID and Server/NIC ID is required')
+        if group_type not in ['vlan', 'server']:
+            raise NTTMCPAPIException('The group type must be either one of [server, vlan]')
+
+        params['securityGroupId'] = group_id
+        if group_type == 'vlan':
+            params['nicId'] = member_id
+            url = url = self.base_url + 'securityGroup/addNicToSecurityGroup'
+        elif group_type == 'server':
+            params['serverId'] = member_id
+            url = self.base_url + 'securityGroup/addServerToSecurityGroup'
+
+        response = self.api_post_call(url, params)
+
+        if response is not None:
+            if response.json().get('responseCode') == 'OK':
+                return response.json()
+            else:
+                raise NTTMCPAPIException('Could not confirm that the Security Group was successfully updated')
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def delete_security_group_member(self, group_id=None, member_id=None, group_type=None):
+        """
+        Delete a security group member
+
+        :kw group_id: The UUID of the Security Group
+        :kw member_id: The UUID of the member object
+        :kw group_type: The type of Security Group
+        :returns: API response
+        """
+        params = dict()
+        if group_type not in ['vlan', 'server']:
+            raise NTTMCPAPIException('The group type must be either one of [server, vlan]')
+        if group_id is None:
+            raise NTTMCPAPIException('A valid Security Group ID is required')
+        if member_id is None:
+            raise NTTMCPAPIException('A valid Security Group member ID is required')
+
+        params['securityGroupId'] = group_id
+        if group_type == 'server':
+            params['serverId'] = member_id
+            url = self.base_url + 'securityGroup/removeServerFromSecurityGroup'
+        else:
+            params['nicId'] = member_id
+            url = self.base_url + 'securityGroup/removeNicFromSecurityGroup'
+
+        response = self.api_post_call(url, params)
+        try:
+            return response.json()
+        except Exception as e:
+            raise NTTMCPAPIException('{0}'.format(e))
+
+    """
+    Server Functions
+    """
     def list_servers(self, datacenter=None, network_domain_id=None, vlan_id=None, name=None):
         """
         Return a list of servers/VMs
@@ -977,6 +1181,111 @@ class NTTMCPClient():
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
+
+    def change_nic_state(self, nic_id=None, nic_state=True):
+        """
+        Change the NIC connection state
+        """
+        params = dict()
+        if nic_id is None:
+            raise NTTMCPAPIException('The NIC ID cannot be None')
+
+        params['nic'] = list()
+        params['nic'].append({'id': nic_id, 'connected': nic_state})
+
+        url = self.base_url + 'server/setNicConnectivity'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            return response.json()
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def list_server_anti_affinity_groups(self, network_domain_id=None, server_id=None):
+        """
+        List all anti affinity groups for the supplied parameters
+        """
+        params = dict()
+        if network_domain_id is None and server_id is None:
+            raise NTTMCPAPIException('A Network Domain or Server ID is required')
+
+        if network_domain_id:
+            params['networkDomainId'] = network_domain_id
+        if server_id:
+            params['serverId'] = server_id
+
+        url = self.base_url + 'server/antiAffinityRule'
+
+        response = self.api_get_call(url, params)
+        if response is not None:
+            return response.json().get('antiAffinityRule', dict())
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def get_anti_affinity_group_by_servers(self, server_1_id=None, server_2_id=None):
+        """
+        Get an anti affinity groups with the supplied server IDs
+        Currently a server can belong to only a single aa group but this is future proofing into case this is changed
+        in the future
+        """
+        if server_1_id is None or server_2_id is None:
+            raise NTTMCPAPIException('Two valid server IDs are required')
+
+        # List all the anti affinity groups for one of the servers
+        try:
+            aa_groups = self.list_server_anti_affinity_groups(server_id=server_1_id)
+            if not aa_groups:
+                return None
+
+            for aa_group in aa_groups:
+                s1_id = aa_group.get('server', list())[0].get('id')
+                s2_id = aa_group.get('server', list())[1].get('id')
+                if server_2_id in [s1_id, s2_id]:
+                    return aa_group
+        except (AttributeError, IndexError, KeyError, NTTMCPAPIException) as e:
+            raise NTTMCPAPIException('Could not search the existing Anti-Affinity Groups - {0}'.format(e))
+        return None
+
+    def create_anti_affinity_group(self, server_1_id=None, server_2_id=None):
+        """
+        Create an anti affinity groups with the supplied server IDs
+        """
+        params = dict()
+        if server_1_id is None or server_2_id is None:
+            raise NTTMCPAPIException('Two valid server IDs are required')
+
+        params['serverId'] = list()
+        params['serverId'] += [server_1_id, server_2_id]
+
+        url = self.base_url + 'server/createAntiAffinityRule'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            return response.json()
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def delete_anti_affinity_group(self, anti_affinity_group_id=None):
+        """
+        Delete the anti affinity group
+        """
+        params = dict()
+        if anti_affinity_group_id is None:
+            raise NTTMCPAPIException('A valid Anti Affinity group ID is required')
+
+        params['id'] = anti_affinity_group_id
+
+        url = self.base_url + 'server/deleteAntiAffinityRule'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            return response.json()
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    '''
+    SNAT Functions
+    '''
 
     def list_snat_exclusion(self, network_domain_id=None, snat_id=None, network=None, prefix=None):
         """

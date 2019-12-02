@@ -249,13 +249,13 @@ def compare_json(a, b, parent):
                     modified['changes'] = True
                     if parent != "":
                         modified['updated'][str(tag)] = {
-                            'oldval': str(b[tag]),
-                            'newval': str(a[tag])
+                            'old_value': str(b[tag]),
+                            'new_value': str(a[tag])
                         }
                     else:
                         modified['updated'][str(tag)] = {
-                            'oldval': str(b[tag]),
-                            'newval': str(a[tag])
+                            'old_value': str(b[tag]),
+                            'new_value': str(a[tag])
                         }
         for tag in b:
             if tag not in a:

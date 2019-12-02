@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2019 NTT Communications Cloud Infrastructure Services
+# Copyright (c) 2019, Ken Sinfield <ken.sinfield@cis.ntt.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -164,6 +164,23 @@ EXAMPLES = '''
       type: VMXNET3
       vlan: my_vlan
       state: present
+
+  - name: Disconnect a NIC
+    ntt_mcp_server_nic:
+      region: na
+      datacenter: NA9
+      network_domain: my_network_domain
+      server: server01
+      vlan: my_vlan
+      connected: False
+
+  - name: Connect a NIC
+    ntt_mcp_server_nic:
+      region: na
+      datacenter: NA9
+      network_domain: my_network_domain
+      server: server01
+      vlan: my_vlan
 
   - name: Exchange VLANs between two NICs
     ntt_mcp_server_nic:
@@ -674,7 +691,7 @@ def exchange_nic(module, client, network_domain_id, server, nic_1, nic_2):
     :arg server: The dict containing the server to be updated
     :arg nic_1: The dict containing NIC 1
     :arg nic_2: The dict containing NIC 2
-    :returns: The updated server
+    :returns: N/A
     """
     name = server.get('name')
     datacenter = server.get('datacenterId')
@@ -686,6 +703,29 @@ def exchange_nic(module, client, network_domain_id, server, nic_1, nic_2):
             wait_for_server(module, client, name, datacenter, network_domain_id, 'NORMAL', False, False, wait_poll_interval)
     except NTTMCPAPIException as e:
         module.fail_json(msg='Could not remove the NICs {0} {1} - {2}'.format(nic_1.get('id'), nic_2.get('id'), e))
+
+
+def change_nic_state(module, client, network_domain_id, server, nic_id):
+    """
+    Change the NIC connection state
+
+    :arg module: The Ansible module instance
+    :arg client: The CC API client instance
+    :arg network_domain_id: The UUID of the network domain
+    :arg server: The dict containing the server to be updated
+    :arg nic_id: The UUID of the NIC
+    :returns: N/A
+    """
+    try:
+        result = client.change_nic_state(nic_id=nic_id,
+                                         nic_state=module.params.get('connected'))
+        if result.get('responseCode') != 'IN_PROGRESS':
+            module.fail_json('Changing the NIC state failed with - {0}', format(result.get('responseCode')))
+        if module.params.get('wait'):
+            wait_for_server(module, client, server.get('name'), module.params.get('datacenter'), network_domain_id,
+                            'NORMAL', False, False, module.params.get('wait_poll_interval'))
+    except (AttributeError, TypeError, NTTMCPAPIException) as e:
+        module.fail_json(msg='Could not change the NICs state for {0} - {1}'.format(nic_id, e))
 
 
 def check_and_stop_server(module, client, server, server_running):
@@ -798,8 +838,8 @@ def wait_for_server(module, client, name, datacenter, network_domain_id, state, 
         try:
             actual_state = server[0]['state']
             start_state = server[0]['started']
-        except (KeyError, IndexError) as e:
-            module.fail_json(msg='Failed to find the server - {0}'.format(name))
+        except (KeyError, IndexError):
+            module.fail_json(msg='Failed to find the server {0}'.format(name))
         if actual_state != state:
             wait_required = True
         elif check_for_start and not start_state:
@@ -951,7 +991,18 @@ def main():
                             nic.get('networkAdapter'),
                             module.params.get('type')))
                     server_running = check_and_stop_server(module, client, server, server_running)
-                    change_nic_type(module, client, network_domain_id, server, nic.get('id'), module.params.get('type'))
+                    change_nic_type(module, client, network_domain_id, server, nic.get('id'),
+                                    module.params.get('type'))
+                    changed = True
+                if (not module.params.get('connected') and nic.get('connected')) or (
+                   (module.params.get('connected') and not nic.get('connected'))):
+                    operation = 'connected' if module.params.get('connected') else 'disconnected'
+                    if module.check_mode:
+                        module.exit_json(msg='NIC with the IP {0} in VLAN {1} will be {2}'.format(
+                            nic.get('privateIpv4'),
+                            nic.get('vlanName'),
+                            operation))
+                    change_nic_state(module, client, network_domain_id, server, nic.get('id'))
                     changed = True
         except NTTMCPAPIException as e:
             module.fail_json(msg='Could not add the NIC - {0}'.format(e))

@@ -26,10 +26,11 @@ ANSIBLE_METADATA = {
 }
 DOCUMENTATION = '''
 ---
-module: ntt_mcp_snapshot_restore
-short_description: Initiate or delete a manual snapshot on a server
+module: ntt_mcp_snapshot_migrate
+short_description: Migrate a server currently in preview mode to a production server
 description:
-    - Initiate a manual snapshot on a server
+    - Migrate a server currently in preview mode to a production server
+    - Refer to the Snapshot service documentation at https://docs.mcp-services.net/x/DoBk
 version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
@@ -40,29 +41,19 @@ options:
         required: false
         type: str
         default: na
-    id:
+    datacenter:
         description:
-            - The UUID of the source snapshot to use
+            - The datacenter name
         required: true
         type: str
-    src_path:
+    network_domain:
         description:
-            - The full source path to the file/directory to restore
-        required: true
+            - The name of the Cloud Network Domain
+        required: false
         type: str
-    dst_path:
+    name:
         description:
-            - The full destination path to the file/directory to restore
-        required: true
-        type: str
-    username:
-        description:
-            - The OS username with permissions to access the destination file
-        required: true
-        type: str
-    password:
-        description:
-            - The OS user password
+            - The name of the server to migrate
         required: true
         type: str
     wait:
@@ -94,62 +85,66 @@ EXAMPLES = '''
   connection: local
   tasks:
 
-  - name: Initiate a manual snapshot
-    ntt_mcp_snapshot_info:
+  - name: Migrate (but don't wait for) a server in preview mode
+    ntt_mcp_snapshot_preview:
       region: na
       datacenter: NA9
-      server: myServer
-      description: A random snapshot
+      server: My_Preview_Server
 
-  - name: Delete a manual snapshot
-    ntt_mcp_snapshot_info:
+  - name: Migrate a server in preview mode and wait for the completion of the migration
+    ntt_mcp_snapshot_preview:
       region: na
-      id: 112b7faa-ffff-ffff-ffff-dc273085cbe4
-      state: A random snapshot
+      datacenter: NA9
+      server: My_Preview_Server
+      wait: True
+
 '''
 RETURN = '''
-data:
-    description: Manual snapshot UUID
-    returned: success
-    type: str
-    sample: 112b7faa-ffff-ffff-ffff-dc273085cbe4
 msg:
-    description: Message
-    returned: fail
+    description: Message on completion
+    returned: when wait is True
     type: str
-    sample: Could not ascertain the status of the snapshot deletion. Check manually
+    sample: "The Snapshot Preview server migration has successfully been deployed"
 '''
-
 from time import sleep
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ntt_mcp.ntt_mcp_utils import get_credentials, get_ntt_mcp_regions
 from ansible.module_utils.ntt_mcp.ntt_mcp_provider import NTTMCPClient, NTTMCPAPIException
 
+CORE = {
+    'region': None,
+    'datacenter': None,
+    'network_domain_id': None,
+    'name': None}
 
-def wait_for_snapshot(module, client, server_id):
+
+def wait_for_migration(module, client, server_id):
     """
-    Wait for an operation on a server. Polls based on wait_time and wait_poll_interval values.
+    Wait for the preview server.
 
     :arg module: The Ansible module instance
     :arg client: The CC API client instance
-    :arg name: The name of the server
     :arg server_id: The UUID of the server
-    :returns: True/False
+
+    :returns: The server dict
     """
     state = 'NORMAL'
-    set_state = False
-    actual_state = None
+    set_state = wait_required = False
+    actual_state = ''
     time = 0
     wait_time = module.params.get('wait_time')
-    wait_required = False
     wait_poll_interval = module.params.get('wait_poll_interval')
-    server = []
+    server = None
     while not set_state and time < wait_time:
         try:
             server = client.get_server_by_id(server_id=server_id)
         except NTTMCPAPIException as e:
-            module.fail_json(msg='Failed to check the server - {0}'.format(e))
-        actual_state = server.get('state')
+            module.fail_json(msg='Failed to get a list of servers - {0}'.format(e))
+        try:
+            actual_state = server.get('state')
+        except (KeyError, IndexError):
+            module.fail_json(msg='Failed to get the current state for the server with ID - {0}'.format(server_id))
+
         if actual_state != state:
             wait_required = True
         else:
@@ -162,9 +157,9 @@ def wait_for_snapshot(module, client, server_id):
             set_state = True
 
     if server and time >= wait_time:
-        return False
+        return None
 
-    return True
+    return server
 
 
 def main():
@@ -175,21 +170,17 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             region=dict(default='na', type='str'),
-            id=dict(required=True, type='str'),
-            src_path=dict(required=True, type='str'),
-            dst_path=dict(required=True, type='str'),
-            username=dict(required=True, type='str'),
-            password=dict(required=True, type='str'),
-            wait=dict(required=False, default=False, type='bool'),
-            wait_time=dict(required=False, default=3600, type='int'),
-            wait_poll_interval=dict(required=False, default=30, type='int')
+            datacenter=dict(required=True, type='str'),
+            network_domain=dict(required=False, default=None, type='str'),
+            name=dict(required=False, default=None, type='str'),
+            wait=dict(required=False, default=True, type='bool'),
+            wait_time=dict(required=False, default=1800, type='int'),
+            wait_poll_interval=dict(required=False, default=30, type='int'),
         ),
         supports_check_mode=True
     )
-
-    result = snapshot = None
-    snapshot_id = module.params.get('id')
-
+    result = None
+    CORE['name'] = module.params.get('name')
     try:
         credentials = get_credentials(module)
     except ImportError as e:
@@ -208,28 +199,35 @@ def main():
     except NTTMCPAPIException as e:
         module.fail_json(msg=e.msg)
 
+    # Get the CND
     try:
-        snapshot = client.get_snapshot_by_id(snapshot_id)
-        if not snapshot:
-            module.fail_json(msg='Snapshot with ID {0} does not exist'.format(snapshot_id))
-        if module.check_mode:
-            module.exit_json(msg='A snapshot restore will be performed')
-        result = client.snapshot_restore(snapshot_id,
-                                         module.params.get('src_path'),
-                                         module.params.get('dst_path'),
-                                         module.params.get('username'),
-                                         module.params.get('password'))
-        if module.params.get('wait'):
-            server_id = next((item for item in result.get('info') if item["name"] == "serverId"), dict()).get('value')
-            if not server_id:
-                module.fail_json('Snapshot restore was successful but could not find the server to wait for status updates')
-            wait_for_snapshot(module, client, server_id)
-            module.exit_json(changed=True, msg='The file/directory have been successfully restored')
-        module.exit_json(changed=True, msg='The restoration process is in progress. '
-                         'Check the status manually or use ntt_mcp_server_info')
+        network = client.get_network_domain_by_name(name=module.params.get('network_domain'),
+                                                    datacenter=module.params.get('datacenter'))
+        CORE['network_domain_id'] = network.get('id')
+    except (KeyError, IndexError, AttributeError, NTTMCPAPIException):
+        module.fail_json(msg='Could not find the Cloud Network Domain: {0}'.format(module.params.get('network_domain')))
 
+    try:
+        server = client.get_server_by_name(datacenter=module.params.get('datacenter'),
+                                           network_domain_id=network.get('id'),
+                                           name=CORE.get('name'))
+        if not server:
+            module.fail_json(msg='Could not find the server - {0} in {1}'.format(module.params.get('name'),
+                                                                                 module.params.get('datacenter')))
+    except (KeyError, IndexError, AttributeError):
+        module.fail_json(msg='Could not find the server - {0} in {1}'.format(module.params.get('name'),
+                                                                             module.params.get('datacenter')))
+
+    try:
+        if module.check_mode:
+            module.exit_json('Server with ID {0} will be migrated from preview mode'.format(server.get('id')))
+        result = client.migrate_snapshot_preview(server.get('id'))
+        if result.get('responseCode') != 'IN_PROGRESS':
+            module.fail_json(msg='The Snapshot server migration failed with reason - {0}'.format(result.get('responseCode')))
+        wait_for_migration(module, client, server.get('id'))
+        module.exit_json(msg='The Snapshot Preview server migration was successful')
     except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
-        module.fail_json(msg='Error restoring the file: {0}'.format(e))
+        module.fail_json(msg='Could not retrieve the Snapshot - {0}'.format(e))
 
 
 if __name__ == '__main__':

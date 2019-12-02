@@ -30,8 +30,8 @@ module: ntt_mcp_snapshot_preview
 short_description: Create and migrate local and remote Snapshot Preview servers
 description:
     - Create and migrate local and remote Snapshot Preview servers
-    - Refer to the Snapshot service documentation at: https://docs.mcp-services.net/x/DoBk
-    - Documentation for creating a Preview server via the Cloud Control UI: https://docs.mcp-services.net/x/GIBk
+    - Refer to the Snapshot service documentation at https://docs.mcp-services.net/x/DoBk
+    - Documentation for creating a Preview server via the Cloud Control UI https://docs.mcp-services.net/x/GIBk
 version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
@@ -63,7 +63,7 @@ options:
             - The UUID of the source snapshot to use
         required: true
         type: str
-    server:
+    name:
         description:
             - The name of the server
         required: true
@@ -167,7 +167,7 @@ EXAMPLES = '''
       region: na
       datacenter: NA9
       id: 112b7faa-ffff-ffff-ffff-dc273085cbe4
-      server: My_Preview_Server
+      name: My_Preview_Server
       description: A new server from a snapshot
       wait_for_vmtools: True
       migrate: True
@@ -178,7 +178,7 @@ EXAMPLES = '''
       datacenter: NA12
       network_domain: My_Remote_CND
       id: 222b7faa-ffff-ffff-ffff-dc273085cbe5
-      server: My_Replicated_Server
+      name: My_Replicated_Server
       description: A new server from a replicated snapshot
       connect_network: True
       preserve_mac: True
@@ -191,6 +191,7 @@ EXAMPLES = '''
           vlan: my_other_remote_vlan
 
 '''
+
 RETURN = '''
 data:
     description: Server objects
@@ -231,7 +232,7 @@ def create_preview_server(module, client, replica, networks):
     try:
         if not replica:
             result = client.create_snapshot_preview(CORE.get('snapshot').get('id'),
-                                                    module.params.get('server'),
+                                                    module.params.get('name'),
                                                     module.params.get('description'),
                                                     module.params.get('cluster'),
                                                     CORE.get('start'),
@@ -239,7 +240,7 @@ def create_preview_server(module, client, replica, networks):
                                                     module.params.get('preserve_mac'))
         else:
             result = client.create_replicated_snapshot_preview(CORE.get('snapshot').get('id'),
-                                                               module.params.get('server'),
+                                                               module.params.get('name'),
                                                                module.params.get('description'),
                                                                module.params.get('cluster'),
                                                                CORE.get('start'),
@@ -384,7 +385,7 @@ def wait_for_snapshot(module, client, server_id, check_for_start=False):
 def main():
     """
     Main function
-    :returns: IP Address List Information
+    :returns: A message or server ID
     """
     module = AnsibleModule(
         argument_spec=dict(
@@ -393,7 +394,7 @@ def main():
             network_domain=dict(required=False, default=None, type='str'),
             cluster=dict(required=False, default=None, type='str'),
             id=dict(required=False, default=None, type='str'),
-            server=dict(required=False, default=None, type='str'),
+            name=dict(required=False, default=None, type='str'),
             description=dict(required=False, default=None, type='str'),
             start=dict(required=False, default=False, type='bool'),
             connect_nics=dict(required=False, default=False, type='bool'),
@@ -430,6 +431,10 @@ def main():
         CORE['datacenter'] = snapshot.get('datacenterId')
         CORE['snapshot'] = snapshot
         CORE['start'] = module.params.get('start')
+        if module.check_mode:
+            module.exit_json(msg='Snapshot with ID {0} will be used to create the Preview server {1}'.format(
+                snapshot.get('id'),
+                module.params.get('name')))
         if module.params.get('wait_for_vmtools'):
             CORE['start'] = True
         if snapshot.get('replica'):
