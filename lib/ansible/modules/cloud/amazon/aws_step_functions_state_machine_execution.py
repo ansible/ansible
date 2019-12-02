@@ -114,13 +114,12 @@ def start_execution(module, sfn_client):
 
     try:
         # list_executions is eventually consistent
-        resp_iterators = sfn_client.get_paginator('list_executions').paginate(stateMachineArn=state_machine_arn)
+        page_iterators = sfn_client.get_paginator('list_executions').paginate(stateMachineArn=state_machine_arn)
 
-        for resp in resp_iterators:
-            for execution in resp['executions']:
-                if name == execution['name']:
-                    check_mode(module, msg='State machine execution already exists.', changed=False)
-                    module.exit_json(changed=False, something="something")
+        for execution in page_iterators.build_full_result()['executions']:
+            if name == execution['name']:
+                check_mode(module, msg='State machine execution already exists.', changed=False)
+                module.exit_json(changed=False, something="something")
 
         check_mode(module, msg='State machine execution would be started.', changed=True)
         res_execution = sfn_client.start_execution(
