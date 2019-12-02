@@ -322,7 +322,7 @@ class VMwareHostFactManager(PyVmomi):
             'ansible_bios_version': self.host.hardware.biosInfo.biosVersion,
             'ansible_uptime': self.host.summary.quickStats.uptime,
             'ansible_in_maintenance_mode': self.host.runtime.inMaintenanceMode,
-            'ansible_uuid': self.host.hardware.systemInfo.uuid, 
+            'ansible_uuid': self.host.hardware.systemInfo.uuid,
         }
         return facts
 
