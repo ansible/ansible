@@ -51,6 +51,7 @@ options:
         description:
             - Storage profile
         required: true
+        version_added: "2.10"
         type: dict
         suboptions:
             source_image:
@@ -69,7 +70,7 @@ options:
                     source:
                         description:
                             - Reference to os disk snapshot. Could be resource ID or dictionary containing I(resource_group) and I(name)
-                        type: string
+                        type: str
                     host_caching:
                         description:
                             - host disk caching
@@ -88,7 +89,7 @@ options:
                     source:
                         description:
                             - Reference to data disk snapshot. Could be resource ID or dictionary containing I(resource_group) and I(name)
-                        type: string
+                        type: str
                     lun:
                         description:
                             - lun of the data disk
@@ -128,6 +129,14 @@ options:
                         description:
                             - Storage account type.
                         type: str
+            managed_image:
+                description:
+                    - Managed image reference, could be resource ID, or dictionary containing I(resource_group) and I(name)
+                    - Obsolete since 2.10, use storage_profile instead
+            snapshot:
+                description:
+                    - Source snapshot to be used.
+                    - Obsolete since 2.10, use storage_profile instead
             replica_count:
                 description:
                     - The number of replicas of the Image Version to be created per region.
