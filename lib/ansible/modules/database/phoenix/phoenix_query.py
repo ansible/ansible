@@ -18,7 +18,7 @@ module: phoenix_query
 short_description: Run Phoenix queries
 description:
   - Runs arbitrary Phoenix queries via the Phoenix Query Server.
-version_added: "2.9"
+version_added: "2.10"
 author:
   - "Oleg Tarassov (@olegTarassov)"
 options:
