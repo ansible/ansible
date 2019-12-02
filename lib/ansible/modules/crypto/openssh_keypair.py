@@ -63,6 +63,8 @@ options:
             - Provides a new comment to the public key. When checking if the key is in the correct state this will be ignored.
         type: str
         version_added: "2.9"
+notes:
+    - In case the ssh key is broken or password protected, it will be regenerated.
 
 extends_documentation_fragment: files
 '''
@@ -171,7 +173,7 @@ class Keypair(object):
 
     def generate(self, module):
         # generate a keypair
-        if not self.isPrivateKeyValid(module, perms_required=False) or self.force:
+        if self.force or not self.isPrivateKeyValid(module, perms_required=False):
             args = [
                 module.get_bin_path('ssh-keygen', True),
                 '-q',
@@ -240,7 +242,17 @@ class Keypair(object):
         def _check_state():
             return os.path.exists(self.path)
 
+        def _check_pass_protected_or_broken_key():
+            key_state = module.run_command([module.get_bin_path('ssh-keygen', True),
+                                            '-P', '', '-yf', self.path], check_rc=False)
+            if 'incorrect passphrase' in key_state[2] or 'load failed' in key_state[2]:
+                return True
+            return False
+
         if _check_state():
+            if _check_pass_protected_or_broken_key():
+                return False
+
             proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path], check_rc=False)
             if not proc[0] == 0:
                 if os.path.isdir(self.path):
