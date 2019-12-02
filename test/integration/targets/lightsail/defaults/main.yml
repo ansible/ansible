@@ -1,3 +1,2 @@
 instance_name: "{{ resource_prefix }}_instance"
-keypair_name: "{{ resource_prefix }}_keypair"
 zone: "{{ aws_region }}a"
