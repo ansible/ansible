@@ -2158,10 +2158,24 @@ class PyVmomiHelper(PyVmomi):
         if len(self.params['disk']) != 0:
             # TODO: really use the datastore for newly created disks
             if 'autoselect_datastore' in self.params['disk'][0] and self.params['disk'][0]['autoselect_datastore']:
-                datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
-                datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
-                if datastores is None or len(datastores) == 0:
-                    self.module.fail_json(msg="Unable to find a datastore list when autoselecting")
+                datastores = []
+
+                if self.params['cluster']:
+                    cluster = self.find_cluster_by_name(self.params['cluster'], self.content)
+
+                    for host in cluster.host:
+                        for mi in host.configManager.storageSystem.fileSystemVolumeInfo.mountInfo:
+                            if mi.volume.type == "VMFS":
+                                datastores.append(self.cache.find_obj(self.content, [vim.Datastore], mi.volume.name))
+                elif self.params['esxi_hostname']:
+                    host = self.find_hostsystem_by_name(self.params['esxi_hostname'])
+
+                    for mi in host.configManager.storageSystem.fileSystemVolumeInfo.mountInfo:
+                        if mi.volume.type == "VMFS":
+                            datastores.append(self.cache.find_obj(self.content, [vim.Datastore], mi.volume.name))
+                else:
+                    datastores = self.cache.get_all_objs(self.content, [vim.Datastore])
+                    datastores = [x for x in datastores if self.cache.get_parent_datacenter(x).name == self.params['datacenter']]
 
                 datastore_freespace = 0
                 for ds in datastores:

@@ -139,7 +139,7 @@ def find_object_by_name(content, name, obj_type, folder=None, recurse=True):
 
 def find_cluster_by_name(content, cluster_name, datacenter=None):
 
-    if datacenter:
+    if datacenter and hasattr(datacenter, 'hostFolder'):
         folder = datacenter.hostFolder
     else:
         folder = content.rootFolder
