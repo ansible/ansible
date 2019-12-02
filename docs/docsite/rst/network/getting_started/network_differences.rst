@@ -30,7 +30,7 @@ Because network modules execute on the control node instead of on the managed no
 .. note::
   ``httpapi`` deprecates ``eos_eapi`` and ``nxos_nxapi``. See :ref:`httpapi_plugins` for details and an example.
 
-Beginning with Ansible 2.6, we recommend using one of the persistent connection types listed above instead of ``local``. With persistent connections, you can define the hosts and credentials only once, rather than in every task. For more details on using each connection type on various platforms, see the :ref:`platform-specific <platform_options>` pages.
+Beginning with Ansible 2.6, we recommend using one of the persistent connection types listed above instead of ``local``. With persistent connections, you can define the hosts and credentials only once, rather than in every task. You also need to set the ``network_os`` variable for the specific network platform you are communicating with. For more details on using each connection type on various platforms, see the :ref:`platform-specific <platform_options>` pages.
 
 
 Modules Organized by Network Platform
@@ -45,6 +45,7 @@ A network platform is a set of network devices with a common operating system th
 
 All modules within a network platform share certain requirements. Some network platforms have specific differences - see the :ref:`platform-specific <platform_options>` documentation for details.
 
+.. _privilege_escalation:
 
 Privilege Escalation: ``enable`` mode, ``become``, and ``authorize``
 ================================================================================

@@ -4,7 +4,7 @@
 CNOS Platform Options
 ***************************************
 
-CNOS supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on CNOS in Ansible. 
+CNOS supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on CNOS in Ansible.
 
 .. contents:: Topics
 
@@ -71,3 +71,7 @@ Example CLI Task
      when: ansible_network_os == 'cnos'
 
 .. include:: shared_snippets/SSH_warning.txt
+
+.. seealso::
+
+       :ref:`timeout_options`
