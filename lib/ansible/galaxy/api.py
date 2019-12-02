@@ -110,7 +110,7 @@ class GalaxyError(AnsibleError):
 
         url_split = self.url.split('/')
         if 'v2' in url_split:
-            galaxy_msg = err_info.get('message', 'Unknown error returned by Galaxy server.')
+            galaxy_msg = err_info.get('message', http_error.reason)
             code = err_info.get('code', 'Unknown')
             full_error_msg = u"%s (HTTP Code: %d, Message: %s Code: %s)" % (message, self.http_code, galaxy_msg, code)
         elif 'v3' in url_split:
@@ -120,7 +120,7 @@ class GalaxyError(AnsibleError):
 
             message_lines = []
             for error in errors:
-                error_msg = error.get('detail') or error.get('title') or 'Unknown error returned by Galaxy server.'
+                error_msg = error.get('detail') or error.get('title') or http_error.reason
                 error_code = error.get('code') or 'Unknown'
                 message_line = u"(HTTP Code: %d, Message: %s Code: %s)" % (self.http_code, error_msg, error_code)
                 message_lines.append(message_line)
@@ -128,7 +128,7 @@ class GalaxyError(AnsibleError):
             full_error_msg = "%s %s" % (message, ', '.join(message_lines))
         else:
             # v1 and unknown API endpoints
-            galaxy_msg = err_info.get('default', 'Unknown error returned by Galaxy server.')
+            galaxy_msg = err_info.get('default', http_error.reason)
             full_error_msg = u"%s (HTTP Code: %d, Message: %s)" % (message, self.http_code, galaxy_msg)
 
         self.message = to_native(full_error_msg)
