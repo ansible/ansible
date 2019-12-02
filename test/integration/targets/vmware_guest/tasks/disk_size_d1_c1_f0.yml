@@ -13,11 +13,11 @@
     datacenter: "{{ dc1 }}"
     hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 0gb
           type: eagerzeroedthick
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
     state: poweredoff
     folder: "{{ f0 }}"
   register: disk_size_d1_c1_f0

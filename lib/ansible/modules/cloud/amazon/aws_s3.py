@@ -35,12 +35,12 @@ options:
   encrypt:
     description:
       - When set for PUT mode, asks for server-side encryption.
-    default: True
+    default: true
     version_added: "2.0"
     type: bool
   encryption_mode:
     description:
-      - What encryption mode to use if C(encrypt) is set
+      - What encryption mode to use if I(encrypt=true).
     default: AES256
     choices:
       - AES256
@@ -49,7 +49,7 @@ options:
     type: str
   expiry:
     description:
-      - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
+      - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a I(mode=put) or I(mode=geturl) operation.
     default: 600
     aliases: ['expiration']
     type: int
@@ -89,16 +89,16 @@ options:
   permission:
     description:
       - This option lets the user set the canned permissions on the object/bucket that are created.
-        The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read' for a bucket or
-        'private', 'public-read', 'public-read-write', 'aws-exec-read', 'authenticated-read', 'bucket-owner-read',
-        'bucket-owner-full-control' for an object. Multiple permissions can be specified as a list.
+        The permissions that can be set are C(private), C(public-read), C(public-read-write), C(authenticated-read) for a bucket or
+        C(private), C(public-read), C(public-read-write), C(aws-exec-read), C(authenticated-read), C(bucket-owner-read),
+        C(bucket-owner-full-control) for an object. Multiple permissions can be specified as a list.
     default: ['private']
     version_added: "2.0"
     type: list
     elements: str
   prefix:
     description:
-      - Limits the response to keys that begin with the specified prefix for list mode
+      - Limits the response to keys that begin with the specified prefix for list mode.
     default: ""
     version_added: "2.0"
     type: str
@@ -135,11 +135,11 @@ options:
       - Enables Amazon S3 Dual-Stack Endpoints, allowing S3 communications using both IPv4 and IPv6.
       - Requires at least botocore version 1.4.45.
     type: bool
-    default: "no"
+    default: false
     version_added: "2.7"
   rgw:
     description:
-      - Enable Ceph RGW S3 support. This option requires an explicit url via s3_url.
+      - Enable Ceph RGW S3 support. This option requires an explicit url via I(s3_url).
     default: false
     version_added: "2.2"
     type: bool
@@ -152,12 +152,12 @@ options:
     description:
       - "Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the
         GetObject permission but no other permissions. In this case using the option mode: get will fail without specifying
-        ignore_nonexistent_bucket: True."
+        I(ignore_nonexistent_bucket=true)."
     version_added: "2.3"
     type: bool
   encryption_kms_key_id:
     description:
-      - KMS key id to use when encrypting objects using C(aws:kms) encryption. Ignored if encryption is not C(aws:kms)
+      - KMS key id to use when encrypting objects using I(encrypting=aws:kms). Ignored if I(encryption) is not C(aws:kms)
     version_added: "2.7"
     type: str
 requirements: [ "boto3", "botocore" ]
@@ -265,29 +265,30 @@ EXAMPLES = '''
 
 RETURN = '''
 msg:
-  description: msg indicating the status of the operation
+  description: Message indicating the status of the operation.
   returned: always
   type: str
   sample: PUT operation complete
 url:
-  description: url of the object
+  description: URL of the object.
   returned: (for put and geturl operations)
   type: str
   sample: https://my-bucket.s3.amazonaws.com/my-key.txt?AWSAccessKeyId=<access-key>&Expires=1506888865&Signature=<signature>
 expiry:
-  description: number of seconds the presigned url is valid for
+  description: Number of seconds the presigned url is valid for.
   returned: (for geturl operation)
   type: int
   sample: 600
 contents:
-  description: contents of the object as string
+  description: Contents of the object as string.
   returned: (for getstr operation)
   type: str
   sample: "Hello, world!"
 s3_keys:
-  description: list of object keys
+  description: List of object keys.
   returned: (for list operation)
   type: list
+  elements: str
   sample:
   - prefix1/
   - prefix1/key1

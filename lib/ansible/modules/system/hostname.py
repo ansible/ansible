@@ -628,6 +628,12 @@ class ArchARMHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class ManjaroHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Manjaro'
+    strategy_class = SystemdStrategy
+
+
 class RHELHostname(Hostname):
     platform = 'Linux'
     distribution = 'Redhat'

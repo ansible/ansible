@@ -58,7 +58,7 @@ class ActionModule(ActionNetworkModule):
             pc.become_pass = provider['auth_pass']
 
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
 
             command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
             connection.set_options(direct={'persistent_command_timeout': command_timeout})

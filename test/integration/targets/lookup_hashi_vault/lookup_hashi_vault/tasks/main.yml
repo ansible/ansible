@@ -74,22 +74,57 @@
             - name: 'Start vault server (dev mode enabled)'
               shell: 'nohup {{ vault_cmd }} server -dev -config {{ local_temp_dir }}/vault_config.hcl </dev/null >/dev/null 2>&1 &'
 
+            - name: 'Create generic secrets engine'
+              command: '{{ vault_cmd }} secrets enable -path=gen generic'
+
+            - name: 'Create KV v1 secrets engine'
+              command: '{{ vault_cmd }} secrets enable -path=kv1 -version=1 kv'
+
+            - name: 'Create KV v2 secrets engine'
+              command: '{{ vault_cmd }} secrets enable -path=kv2 -version=2 kv'
+
             - name: 'Create a test policy'
               shell: "echo '{{ policy }}' | {{ vault_cmd }} policy write test-policy -"
               vars:
                 policy: |
-                  path "{{ vault_base_path }}/secret1" {
+                  path "{{ vault_gen_path }}/secret1" {
                     capabilities = ["read"]
                   }
-                  path "{{ vault_base_path }}/secret2" {
+                  path "{{ vault_gen_path }}/secret2" {
                     capabilities = ["read", "update"]
                   }
-                  path "{{ vault_base_path }}/secret3" {
+                  path "{{ vault_gen_path }}/secret3" {
+                    capabilities = ["deny"]
+                  }
+                  path "{{ vault_kv1_path }}/secret1" {
+                    capabilities = ["read"]
+                  }
+                  path "{{ vault_kv1_path }}/secret2" {
+                    capabilities = ["read", "update"]
+                  }
+                  path "{{ vault_kv1_path }}/secret3" {
+                    capabilities = ["deny"]
+                  }
+                  path "{{ vault_kv2_path }}/secret1" {
+                    capabilities = ["read"]
+                  }
+                  path "{{ vault_kv2_path }}/secret2" {
+                    capabilities = ["read", "update"]
+                  }
+                  path "{{ vault_kv2_path }}/secret3" {
                     capabilities = ["deny"]
                   }
 
-            - name: 'Create secrets'
-              command: '{{ vault_cmd }} kv put {{ vault_base_path_kv }}/secret{{ item }} value=foo{{ item }}'
+            - name: 'Create generic secrets'
+              command: '{{ vault_cmd }} write {{ vault_gen_path }}/secret{{ item }} value=foo{{ item }}'
+              loop: [1, 2, 3]
+
+            - name: 'Create KV v1 secrets'
+              command: '{{ vault_cmd }} kv put {{ vault_kv1_path }}/secret{{ item }} value=foo{{ item }}'
+              loop: [1, 2, 3]
+
+            - name: 'Create KV v2 secrets'
+              command: '{{ vault_cmd }} kv put {{ vault_kv2_path | regex_replace("/data") }}/secret{{ item }} value=foo{{ item }}'
               loop: [1, 2, 3]
 
             - name: setup approle auth

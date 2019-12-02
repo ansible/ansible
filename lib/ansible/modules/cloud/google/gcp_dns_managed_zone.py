@@ -162,7 +162,7 @@ options:
       networks:
         description:
         - The list of VPC networks that can see this zone.
-        required: false
+        required: true
         type: list
         suboptions:
           network_url:
@@ -170,7 +170,7 @@ options:
             - The fully qualified URL of the VPC network to bind to.
             - This should be formatted like `U(https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`)
               .
-            required: false
+            required: true
             type: str
   project:
     description:
@@ -405,7 +405,9 @@ def main():
             name_server_set=dict(type='str'),
             labels=dict(type='dict'),
             visibility=dict(default='public', type='str'),
-            private_visibility_config=dict(type='dict', options=dict(networks=dict(type='list', elements='dict', options=dict(network_url=dict(type='str'))))),
+            private_visibility_config=dict(
+                type='dict', options=dict(networks=dict(required=True, type='list', elements='dict', options=dict(network_url=dict(required=True, type='str'))))
+            ),
         )
     )
 

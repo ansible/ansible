@@ -46,7 +46,7 @@ description:
   gateway. Packets that do not match any route in the sending virtual machine's routing
   table will be dropped.
 - A Route resource must have exactly one specification of either nextHopGateway, nextHopInstance,
-  nextHopIp, or nextHopVpnTunnel.
+  nextHopIp, nextHopVpnTunnel, or nextHopIlb.
 short_description: Creates a GCP Route
 version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)

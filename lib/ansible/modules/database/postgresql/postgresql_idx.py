@@ -334,10 +334,11 @@ class Index(object):
         Return index statistics dictionary if index exists, otherwise False.
         """
         query = ("SELECT * FROM pg_stat_user_indexes "
-                 "WHERE indexrelname = '%s' "
-                 "AND schemaname = '%s'" % (self.name, self.schema))
+                 "WHERE indexrelname = %(name)s "
+                 "AND schemaname = %(schema)s")
 
-        result = exec_sql(self, query, add_to_executed=False)
+        result = exec_sql(self, query, query_params={'name': self.name, 'schema': self.schema},
+                          add_to_executed=False)
         if result:
             return [dict(row) for row in result]
         else:
@@ -355,9 +356,9 @@ class Index(object):
                  "ON i.indexname = c.relname "
                  "JOIN pg_catalog.pg_index AS pi "
                  "ON c.oid = pi.indexrelid "
-                 "WHERE i.indexname = '%s'" % self.name)
+                 "WHERE i.indexname = %(name)s")
 
-        res = exec_sql(self, query, add_to_executed=False)
+        res = exec_sql(self, query, query_params={'name': self.name}, add_to_executed=False)
         if res:
             self.exists = True
             self.info = dict(

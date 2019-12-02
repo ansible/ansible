@@ -1300,15 +1300,16 @@ def get_connection_info(module):
     if not username:
         if not password:
             authfile = os.environ.get('ONE_AUTH')
-            if authfile is not None:
-                try:
-                    authstring = open(authfile, "r").read().rstrip()
-                    username = authstring.split(":")[0]
-                    password = authstring.split(":")[1]
-                except BaseException:
-                    module.fail_json(msg="Could not read ONE_AUTH file")
-            else:
-                module.fail_json(msg="No Credentials are set")
+            if authfile is None:
+                authfile = os.path.join(os.environ.get("HOME"), ".one", "one_auth")
+            try:
+                authstring = open(authfile, "r").read().rstrip()
+                username = authstring.split(":")[0]
+                password = authstring.split(":")[1]
+            except (OSError, IOError):
+                module.fail_json(msg=("Could not find or read ONE_AUTH file at '%s'" % authfile))
+            except Exception:
+                module.fail_json(msg=("Error occurs when read ONE_AUTH file at '%s'" % authfile))
     if not url:
         module.fail_json(msg="Opennebula API url (api_url) is not specified")
     from collections import namedtuple
@@ -1444,7 +1445,7 @@ def main():
         datastore_id = get_datastore_id(module, one_client, requested_datastore_id, requested_datastore_name)
         if datastore_id is None:
             if requested_datastore_id:
-                module.fail_json(msg='There is no datastore with template_id: ' + str(requested_datastore_id))
+                module.fail_json(msg='There is no datastore with datastore_id: ' + str(requested_datastore_id))
             elif requested_datastore_name:
                 module.fail_json(msg="There is no datastore with name: " + requested_datastore_name)
         else:

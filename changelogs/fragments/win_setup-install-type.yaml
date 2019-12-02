@@ -1,0 +1,2 @@
+minor_changes:
+- windows setup - Added ``ansible_os_installation_type`` to denote the type of Windows installation the remote host is.

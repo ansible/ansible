@@ -100,6 +100,10 @@ Jinja2 provides a useful 'default' filter that is often a better approach to fai
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
 
+
+Beginning in version 2.8, attempting to access an attribute of an Undefined value in Jinja will return another Undefined value, rather than throwing an error immediately. This means that you can now simply use
+a default with a value in a nested data structure (i.e :code:`{{ foo.bar.baz | default('DEFAULT') }}`) when you don't know if the intermediate values are defined.
+
 If you want to use the default value when variables evaluate to false or an empty string you have to set the second parameter to
 ``true``::
 
@@ -1195,24 +1199,8 @@ This can then be used to reference hashes in Pod specifications::
 
 .. versionadded:: 2.8
 
-Other Useful Filters
-````````````````````
-
-To add quotes for shell usage::
-
-    - shell: echo {{ string_value | quote }}
-
-To use one value on true and another on false (new in version 1.9)::
-
-    {{ (name == "John") | ternary('Mr','Ms') }}
-
-To use one value on true, one value on false and a third value on null (new in version 2.8)::
-
-   {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
-
-To concatenate a list into a string::
-
-    {{ list | join(" ") }}
+File and Path manipulations
+```````````````````````````
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
@@ -1266,6 +1254,25 @@ To get the root and extension of a path or filename (new in version 2.0)::
 
     # with path == 'nginx.conf' the return would be ('nginx', '.conf')
     {{ path | splitext }}
+
+Other Useful Filters
+````````````````````
+
+To add quotes for shell usage::
+
+    - shell: echo {{ string_value | quote }}
+
+To use one value on true and another on false (new in version 1.9)::
+
+    {{ (name == "John") | ternary('Mr','Ms') }}
+
+To use one value on true, one value on false and a third value on null (new in version 2.8)::
+
+   {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
+
+To concatenate a list into a string::
+
+    {{ list | join(" ") }}
 
 To work with Base64 encoded strings::
 

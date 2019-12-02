@@ -27,3 +27,5 @@
       when: setup_tag is defined
     - include_tasks: setup_content_library.yml
       when: setup_content_library is defined
+    - include_tasks: setup_dvs_portgroup.yml
+      when: setup_dvs_portgroup is defined

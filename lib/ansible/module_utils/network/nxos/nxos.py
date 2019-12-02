@@ -329,7 +329,7 @@ class LocalNxapi:
 
         headers = {'Content-Type': 'application/json'}
         result = list()
-        timeout = self._module.params['timeout']
+        timeout = self._module.params['provider']['timeout']
         use_proxy = self._module.params['provider']['use_proxy']
 
         for req in requests:

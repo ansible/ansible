@@ -27,7 +27,7 @@ description:
       to emulate C(assertonly) usage with M(openssl_certificate_info), M(openssl_csr_info),
       M(openssl_privatekey_info) and M(assert). This also allows more flexible checks than
       the ones offered by the C(assertonly) provider.
-    - The C(ownca) provider is intended for generate OpenSSL certificate signed with your own
+    - The C(ownca) provider is intended for generating OpenSSL certificate signed with your own
       CA (Certificate Authority) certificate (self-signed certificate).
     - Many properties that can be specified in this module are for validation of an
       existing or newly generated certificate. The proper place to specify them, if you

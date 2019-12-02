@@ -46,7 +46,7 @@ class TestUnhexlify(unittest.TestCase):
         b_plain_data = b'some text to hexlify'
         b_data = hexlify(b_plain_data)
         res = vault._unhexlify(b_data)
-        self.assertEquals(res, b_plain_data)
+        self.assertEqual(res, b_plain_data)
 
     def test_odd_length(self):
         b_data = b'123456789abcdefghijklmnopqrstuvwxyz'
@@ -631,12 +631,12 @@ class TestMatchSecrets(unittest.TestCase):
     def test_single_match(self):
         secret = TextVaultSecret('password')
         matches = vault.match_secrets([('default', secret)], ['default'])
-        self.assertEquals(matches, [('default', secret)])
+        self.assertEqual(matches, [('default', secret)])
 
     def test_no_matches(self):
         secret = TextVaultSecret('password')
         matches = vault.match_secrets([('default', secret)], ['not_default'])
-        self.assertEquals(matches, [])
+        self.assertEqual(matches, [])
 
     def test_multiple_matches(self):
         secrets = [('vault_id1', TextVaultSecret('password1')),
@@ -925,7 +925,7 @@ class TestVaultLib(unittest.TestCase):
     def test_cipher_not_set(self):
         plaintext = u"ansible"
         self.v.encrypt(plaintext)
-        self.assertEquals(self.v.cipher_name, "AES256")
+        self.assertEqual(self.v.cipher_name, "AES256")
 
 
 @pytest.mark.skipif(not vault.HAS_PYCRYPTO,

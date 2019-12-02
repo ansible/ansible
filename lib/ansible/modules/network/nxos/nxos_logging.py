@@ -204,7 +204,7 @@ DEFAULT_LOGGING_LEVEL = {0: [],
                          2: ['pktmgr'],
                          3: ['adjmgr', 'arp', 'icmpv6', 'l2rib', 'netstack'],
                          4: [],
-                         5: ['mrib'],
+                         5: ['mrib', 'm6rib'],
                          6: [],
                          7: []}
 

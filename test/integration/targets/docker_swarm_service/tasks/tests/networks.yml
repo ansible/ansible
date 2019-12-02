@@ -99,7 +99,7 @@
       - "{{ network_name_2 }}"
   register: networks_7
 
-- name: networks (change mixed order)
+- name: networks (order idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
@@ -110,17 +110,6 @@
       - name: "{{ network_name_1 }}"
   register: networks_8
 
-- name: networks (change mixed order idempotency)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    networks:
-      - "{{ network_name_2 }}"
-      - name: "{{ network_name_1 }}"
-  register: networks_9
-
 - name: networks (change less)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -129,7 +118,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     networks:
       - "{{ network_name_2 }}"
-  register: networks_10
+  register: networks_9
 
 - name: networks (change less idempotency)
   docker_swarm_service:
@@ -139,7 +128,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     networks:
       - "{{ network_name_2 }}"
-  register: networks_11
+  register: networks_10
 
 - name: networks (empty)
   docker_swarm_service:
@@ -148,7 +137,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     networks: []
-  register: networks_12
+  register: networks_11
 
 - name: networks (empty idempotency)
   docker_swarm_service:
@@ -157,7 +146,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     networks: []
-  register: networks_13
+  register: networks_12
 
 - name: networks (unknown network)
   docker_swarm_service:
@@ -167,7 +156,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     networks:
       - "idonotexist"
-  register: networks_14
+  register: networks_13
   ignore_errors: yes
 
 - name: networks (missing dict key name)
@@ -178,7 +167,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     networks:
       - foo: "bar"
-  register: networks_15
+  register: networks_14
   ignore_errors: yes
 
 - name: networks (invalid list type)
@@ -189,7 +178,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     networks:
       - [1, 2, 3]
-  register: networks_16
+  register: networks_15
   ignore_errors: yes
 
 - name: cleanup
@@ -207,18 +196,17 @@
       - networks_5 is not changed
       - networks_6 is not changed
       - networks_7 is not changed
-      - networks_8 is changed
-      - networks_9 is not changed
-      - networks_10 is changed
-      - networks_11 is not changed
-      - networks_12 is changed
-      - networks_13 is not changed
+      - networks_8 is not changed
+      - networks_9 is changed
+      - networks_10 is not changed
+      - networks_11 is changed
+      - networks_12 is not changed
+      - networks_13 is failed
+      - '"Could not find a network named: ''idonotexist''" in networks_13.msg'
       - networks_14 is failed
-      - '"Could not find a network named: ''idonotexist''" in networks_14.msg'
+      - "'\"name\" is required when networks are passed as dictionaries.' in networks_14.msg"
       - networks_15 is failed
-      - "'\"name\" is required when networks are passed as dictionaries.' in networks_15.msg"
-      - networks_16 is failed
-      - "'Only a list of strings or dictionaries are allowed to be passed as networks' in networks_16.msg"
+      - "'Only a list of strings or dictionaries are allowed to be passed as networks' in networks_15.msg"
 
 - assert:
     that:
@@ -262,6 +250,19 @@
           - "alias2"
   register: networks_aliases_2
 
+- name: networks.aliases (order idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - name: "{{ network_name_1 }}"
+        aliases:
+          - "alias2"
+          - "alias1"
+  register: networks_aliases_3
+
 - name: networks.aliases (change)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -272,7 +273,7 @@
       - name: "{{ network_name_1 }}"
         aliases:
           - "alias1"
-  register: networks_aliases_3
+  register: networks_aliases_4
 
 - name: networks.aliases (empty)
   docker_swarm_service:
@@ -283,7 +284,7 @@
     networks:
       - name: "{{ network_name_1 }}"
         aliases: []
-  register: networks_aliases_4
+  register: networks_aliases_5
 
 - name: networks.aliases (empty idempotency)
   docker_swarm_service:
@@ -294,7 +295,7 @@
     networks:
       - name: "{{ network_name_1 }}"
         aliases: []
-  register: networks_aliases_5
+  register: networks_aliases_6
 
 - name: networks.aliases (invalid type)
   docker_swarm_service:
@@ -306,7 +307,7 @@
       - name: "{{ network_name_1 }}"
         aliases:
           - [1, 2, 3]
-  register: networks_aliases_6
+  register: networks_aliases_7
   ignore_errors: yes
 
 - name: cleanup
@@ -319,11 +320,12 @@
     that:
       - networks_aliases_1 is changed
       - networks_aliases_2 is not changed
-      - networks_aliases_3 is changed
+      - networks_aliases_3 is not changed
       - networks_aliases_4 is changed
-      - networks_aliases_5 is not changed
-      - networks_aliases_6 is failed
-      - "'Only strings are allowed as network aliases' in networks_aliases_6.msg"
+      - networks_aliases_5 is changed
+      - networks_aliases_6 is not changed
+      - networks_aliases_7 is failed
+      - "'Only strings are allowed as network aliases' in networks_aliases_7.msg"
 
 ####################################################################
 ## networks.options ################################################

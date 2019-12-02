@@ -259,7 +259,7 @@ You can run through Ansible's sanity checks in a container:
 ``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
 
 Note that this example requires Docker to be installed and running. If you'd rather not use a
-container for this, you can choose to use ``--tox`` instead of ``--docker``.
+container for this, you can choose to use ``--venv`` instead of ``--docker``.
 
 Unit tests
 ----------

@@ -223,7 +223,7 @@ def main():
                 with monitor_sys_modules(path, messages):
                     with blacklist_imports(path, name, messages):
                         with capture_output(capture_main):
-                            runpy.run_module(name, run_name='__main__')
+                            runpy.run_module(name, run_name='__main__', alter_sys=True)
         except ImporterAnsibleModuleException:
             # module instantiated AnsibleModule without raising an exception
             pass

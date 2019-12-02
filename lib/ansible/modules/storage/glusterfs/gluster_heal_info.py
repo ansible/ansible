@@ -114,7 +114,7 @@ def get_self_heal_status(name):
             br_dict['status'] = line.split(":")[1].strip()
         elif 'Number' in line:
             br_dict['no_of_entries'] = line.split(":")[1].strip()
-        elif line.startswith('/') or '\n' in line:
+        elif line.startswith('/') or line.startswith('<') or '\n' in line:
             continue
         else:
             br_dict and heal_info.append(br_dict)

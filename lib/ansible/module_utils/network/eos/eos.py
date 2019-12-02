@@ -388,6 +388,15 @@ class LocalEapi:
         diff['config_diff'] = configdiff if configdiffobjs else {}
         return diff
 
+    def get_capabilities(self):
+        # Implement the bare minimum to support eos_facts
+        return dict(
+            device_info=dict(
+                network_os="eos",
+            ),
+            network_api="eapi",
+        )
+
 
 class HttpApi:
     def __init__(self, module):

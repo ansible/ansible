@@ -30,12 +30,12 @@ module: ce_lldp_interface
 version_added: "2.10"
 short_description: Manages INTERFACE LLDP configuration on HUAWEI CloudEngine switches.
 description:
-  - Manages INTERFACE LLDP configuration on HUAWEI CloudEngine switches.
+    - Manages INTERFACE LLDP configuration on HUAWEI CloudEngine switches.
 author: xuxiaowei0512 (@CloudEngine-Ansible)
 notes:
-  - This module requires the netconf system service be enabled on the remote device being managed.
-  - Recommended connection is C(netconf).
-  - This module also works with C(local) connections for legacy playbooks.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
   lldpenable:
     description:

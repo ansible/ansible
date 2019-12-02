@@ -40,6 +40,7 @@ notes:
     - "Module may require additional privileges as well, which may be required for gathering facts - e.g. ESXi configurations."
     - Tested on vSphere 5.5, 6.0, 6.5 and 6.7
     - Use SCSI disks instead of IDE when you want to expand online disks by specifying a SCSI controller
+    - Uses SysPrep for Windows VM (depends on 'guest_id' parameter match 'win') with PyVmomi
     - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
@@ -235,10 +236,19 @@ options:
     default: '300'
     type: int
     version_added: '2.10'
+  wait_for_customization_timeout:
+    description:
+    - Define a timeout (in seconds) for the wait_for_customization parameter.
+    - Be careful when setting this value since the time guest customization took may differ among guest OSes.
+    default: '3600'
+    type: int
+    version_added: '2.10'
   wait_for_customization:
     description:
     - Wait until vCenter detects all guest customizations as successfully completed.
     - When enabled, the VM will automatically be powered on.
+    - "If vCenter does not detect guest customization start or succeed, failed events after time
+      C(wait_for_customization_timeout) parameter specified, warning message will be printed and task result is fail."
     default: 'no'
     type: bool
     version_added: '2.8'
@@ -633,7 +643,7 @@ from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi,
                                          find_dvs_by_name, find_dvspg_by_name, wait_for_vm_ip,
-                                         wait_for_task, TaskError)
+                                         wait_for_task, TaskError, quote_obj_name)
 
 
 def list_or_dict(value):
@@ -862,6 +872,8 @@ class PyVmomiCache(object):
         return objects
 
     def get_network(self, network):
+        network = quote_obj_name(network)
+
         if network not in self.networks:
             self.networks[network] = self.find_obj(self.content, [vim.Network], network)
 
@@ -1714,27 +1726,29 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
 
-    def customize_customvalues(self, vm_obj):
+    def customize_customvalues(self, vm_obj, config_spec):
         if len(self.params['customvalues']) == 0:
             return
 
+        vm_custom_spec = config_spec
+        vm_custom_spec.extraConfig = []
+
+        changed = False
         facts = self.gather_facts(vm_obj)
         for kv in self.params['customvalues']:
             if 'key' not in kv or 'value' not in kv:
                 self.module.exit_json(msg="customvalues items required both 'key' and 'value' fields.")
 
-            key_id = None
-            for field in self.content.customFieldsManager.field:
-                if field.name == kv['key']:
-                    key_id = field.key
-                    break
-
-            if not key_id:
-                self.module.fail_json(msg="Unable to find custom value key %s" % kv['key'])
-
             # If kv is not kv fetched from facts, change it
             if kv['key'] not in facts['customvalues'] or facts['customvalues'][kv['key']] != kv['value']:
-                self.content.customFieldsManager.SetField(entity=vm_obj, key=key_id, value=kv['value'])
+                option = vim.option.OptionValue()
+                option.key = kv['key']
+                option.value = kv['value']
+
+                vm_custom_spec.extraConfig.append(option)
+                changed = True
+
+            if changed:
                 self.change_detected = True
 
     def customize_vm(self, vm_obj):
@@ -2396,6 +2410,9 @@ class PyVmomiHelper(PyVmomi):
         for nw in self.params['networks']:
             for key in nw:
                 # We don't need customizations for these keys
+                if key == 'type' and nw['type'] == 'dhcp':
+                    network_changes = True
+                    break
                 if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
                     network_changes = True
                     break
@@ -2516,7 +2533,12 @@ class PyVmomiHelper(PyVmomi):
                     return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'annotation'}
 
             if self.params['customvalues']:
-                self.customize_customvalues(vm_obj=vm)
+                vm_custom_spec = vim.vm.ConfigSpec()
+                self.customize_customvalues(vm_obj=vm, config_spec=vm_custom_spec)
+                task = vm.ReconfigVM_Task(vm_custom_spec)
+                self.wait_for_task(task)
+                if task.info.state == 'error':
+                    return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'customvalues'}
 
             if self.params['wait_for_ip_address'] or self.params['wait_for_customization'] or self.params['state'] in ['poweredon', 'restarted']:
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
@@ -2525,7 +2547,7 @@ class PyVmomiHelper(PyVmomi):
                     wait_for_vm_ip(self.content, vm, self.params['wait_for_ip_address_timeout'])
 
                 if self.params['wait_for_customization']:
-                    is_customization_ok = self.wait_for_customization(vm)
+                    is_customization_ok = self.wait_for_customization(vm=vm, timeout=self.params['wait_for_customization_timeout'])
                     if not is_customization_ok:
                         vm_facts = self.gather_facts(vm)
                         return {'changed': self.change_applied, 'failed': True, 'instance': vm_facts, 'op': 'customization'}
@@ -2554,7 +2576,7 @@ class PyVmomiHelper(PyVmomi):
         self.configure_disks(vm_obj=self.current_vm_obj)
         self.configure_network(vm_obj=self.current_vm_obj)
         self.configure_cdrom(vm_obj=self.current_vm_obj)
-        self.customize_customvalues(vm_obj=self.current_vm_obj)
+        self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
         self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
         self.configure_vapp_properties(vm_obj=self.current_vm_obj)
 
@@ -2679,9 +2701,10 @@ class PyVmomiHelper(PyVmomi):
 
         if self.params['wait_for_customization']:
             set_vm_power_state(self.content, self.current_vm_obj, 'poweredon', force=False)
-            is_customization_ok = self.wait_for_customization(self.current_vm_obj)
+            is_customization_ok = self.wait_for_customization(vm=self.current_vm_obj, timeout=self.params['wait_for_customization_timeout'])
             if not is_customization_ok:
-                return {'changed': self.change_applied, 'failed': True, 'op': 'wait_for_customize_exist'}
+                return {'changed': self.change_applied, 'failed': True,
+                        'msg': 'Wait for customization failed due to timeout', 'op': 'wait_for_customize_exist'}
 
         return {'changed': self.change_applied, 'failed': False}
 
@@ -2709,7 +2732,8 @@ class PyVmomiHelper(PyVmomi):
         eventManager = self.content.eventManager
         return eventManager.QueryEvent(filterSpec)
 
-    def wait_for_customization(self, vm, poll=10000, sleep=10):
+    def wait_for_customization(self, vm, timeout=3600, sleep=10):
+        poll = int(timeout // sleep)
         thispoll = 0
         while thispoll <= poll:
             eventStarted = self.get_vm_events(vm, ['CustomizationStartedEvent'])
@@ -2719,18 +2743,24 @@ class PyVmomiHelper(PyVmomi):
                     eventsFinishedResult = self.get_vm_events(vm, ['CustomizationSucceeded', 'CustomizationFailed'])
                     if len(eventsFinishedResult):
                         if not isinstance(eventsFinishedResult[0], vim.event.CustomizationSucceeded):
-                            self.module.fail_json(msg='Customization failed with error {0}:\n{1}'.format(
-                                eventsFinishedResult[0]._wsdlName, eventsFinishedResult[0].fullFormattedMessage))
+                            self.module.warn("Customization failed with error {%s}:{%s}"
+                                             % (eventsFinishedResult[0]._wsdlName, eventsFinishedResult[0].fullFormattedMessage))
                             return False
-                        break
+                        else:
+                            return True
                     else:
                         time.sleep(sleep)
                         thispoll += 1
-                return True
+                if len(eventsFinishedResult) == 0:
+                    self.module.warn('Waiting for customization result event timed out.')
+                    return False
             else:
                 time.sleep(sleep)
                 thispoll += 1
-        self.module.fail_json('waiting for customizations timed out.')
+        if len(eventStarted):
+            self.module.warn('Waiting for customization result event timed out.')
+        else:
+            self.module.warn('Waiting for customization start event timed out.')
         return False
 
 
@@ -2766,6 +2796,7 @@ def main():
         customization=dict(type='dict', default={}, no_log=True),
         customization_spec=dict(type='str', default=None),
         wait_for_customization=dict(type='bool', default=False),
+        wait_for_customization_timeout=dict(type='int', default=3600),
         vapp_properties=dict(type='list', default=[]),
         datastore=dict(type='str'),
         convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),

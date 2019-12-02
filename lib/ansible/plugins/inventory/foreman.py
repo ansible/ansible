@@ -229,7 +229,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
 
                 # set host vars from facts
                 if self.get_option('want_facts'):
-                    self.inventory.set_variable(host_name, 'ansible_facts', self._get_facts(host))
+                    self.inventory.set_variable(host_name, 'foreman_facts', self._get_facts(host))
 
                 strict = self.get_option('strict')
 

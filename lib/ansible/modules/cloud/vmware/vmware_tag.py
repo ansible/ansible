@@ -230,7 +230,13 @@ class VmwareTag(VmwareRestClient):
         Returns: 'present' if tag found, else 'absent'
 
         """
-        ret = 'present' if self.tag_name in self.global_tags else 'absent'
+        if 'category_id' in self.params:
+            if self.tag_name in self.global_tags and self.params['category_id'] == self.global_tags[self.tag_name]['tag_category_id']:
+                ret = 'present'
+            else:
+                ret = 'absent'
+        else:
+            ret = 'present' if self.tag_name in self.global_tags else 'absent'
         return ret
 
     def get_all_tags(self):
@@ -240,11 +246,12 @@ class VmwareTag(VmwareRestClient):
         """
         for tag in self.tag_service.list():
             tag_obj = self.tag_service.get(tag)
-            self.global_tags[tag_obj.name] = dict(tag_description=tag_obj.description,
-                                                  tag_used_by=tag_obj.used_by,
-                                                  tag_category_id=tag_obj.category_id,
-                                                  tag_id=tag_obj.id
-                                                  )
+            self.global_tags[tag_obj.name] = dict(
+                tag_description=tag_obj.description,
+                tag_used_by=tag_obj.used_by,
+                tag_category_id=tag_obj.category_id,
+                tag_id=tag_obj.id
+            )
 
 
 def main():

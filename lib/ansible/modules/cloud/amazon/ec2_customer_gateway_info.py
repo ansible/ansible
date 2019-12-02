@@ -14,7 +14,7 @@ DOCUMENTATION = '''
 module: ec2_customer_gateway_info
 short_description: Gather information about customer gateways in AWS
 description:
-    - Gather information about customer gateways in AWS
+    - Gather information about customer gateways in AWS.
     - This module was called C(ec2_customer_gateway_facts) before Ansible 2.9. The usage did not change.
 version_added: "2.5"
 requirements: [ boto3 ]

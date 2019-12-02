@@ -171,11 +171,6 @@ resources:
         load balancing.
       returned: success
       type: dict
-    ipVersion:
-      description:
-      - ipVersion is not a valid field for regional forwarding rules.
-      returned: success
-      type: str
     loadBalancingScheme:
       description:
       - This signifies what the ForwardingRule will be used for and can be EXTERNAL,

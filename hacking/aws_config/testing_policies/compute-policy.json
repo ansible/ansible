@@ -245,6 +245,23 @@
             "Resource": [
               "arn:aws:states:*"
             ]
+        },
+        {
+            "Sid": "AllowLightsail",
+            "Effect": "Allow",
+            "Action": [
+              "lightsail:CreateInstances",
+              "lightsail:CreateKeyPair",
+              "lightsail:DeleteInstance",
+              "lightsail:DeleteKeyPair",
+              "lightsail:GetInstance",
+              "lightsail:GetInstances",
+              "lightsail:GetKeyPairs",
+              "lightsail:RebootInstance",
+              "lightsail:StartInstance",
+              "lightsail:StopInstance"
+            ],
+            "Resource": "arn:aws:lightsail:*:*:*"
         }
     ]
 }
