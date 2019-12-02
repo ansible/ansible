@@ -646,9 +646,6 @@ class ACMEClient(object):
         Return the authorization object of the new authorization
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.4
         '''
-        if self.account.uri is None:
-            return
-
         new_authz = {
             "resource": "new-authz",
             "identifier": {"type": identifier_type, "value": identifier},
