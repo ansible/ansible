@@ -10,4 +10,4 @@ filters:
 hostnames:
   - tag:Name
   - dns-name
-  - [ "tag:Name", private_ip_address ]
+  - [ "tag:Name", private-ip-address ]
