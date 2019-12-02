@@ -339,7 +339,8 @@ class DnfModule(YumDnf):
         For unhandled dnf.exceptions.Error scenarios, there are certain error
         messages we want to filter in an install scenario. Do that here.
         """
-        if to_text("no package matched") in to_text(error):
+        error_txt = to_text(error)
+        if "no package matched" in error_txt or "No match for argument" in error_txt:
             return "No package {0} available.".format(spec)
 
         return error
