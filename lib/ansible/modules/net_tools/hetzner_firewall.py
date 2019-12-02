@@ -374,7 +374,7 @@ def main():
     argument_spec = dict(
         server_ip=dict(type='str', required=True),
         port=dict(type='str', default='main', choices=['main', 'kvm']),
-        state=dict(type='str', defalut='present', choices=['present', 'absent']),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
         whitelist_hos=dict(type='bool'),
         rules=dict(type='dict', options=dict(
             input=dict(type='list', elements='dict', options=dict(
