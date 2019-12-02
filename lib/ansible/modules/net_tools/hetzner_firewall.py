@@ -47,8 +47,8 @@ options:
     description:
       - Status of the firewall.
       - Firewall is active if state is C(present), and disabled if state is C(absent).
-    required: yes
     type: str
+    default: present
     choices: [ present, absent ]
   whitelist_hos:
     description:
@@ -146,7 +146,7 @@ options:
 
 EXAMPLES = r'''
 - name: Configure firewall for server with main IP 1.2.3.4
-  hetzner_failover_ip:
+  hetzner_firewall:
     hetzner_user: foo
     hetzner_password: bar
     server_ip: 1.2.3.4
@@ -374,7 +374,7 @@ def main():
     argument_spec = dict(
         server_ip=dict(type='str', required=True),
         port=dict(type='str', default='main', choices=['main', 'kvm']),
-        state=dict(type='str', required=True, choices=['present', 'absent']),
+        state=dict(type='str', defalut='present', choices=['present', 'absent']),
         whitelist_hos=dict(type='bool'),
         rules=dict(type='dict', options=dict(
             input=dict(type='list', elements='dict', options=dict(
