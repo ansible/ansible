@@ -4,7 +4,7 @@
 # Copyright: (c) 2018, Cédric Nisio <cedric.nisio@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -13,13 +13,13 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: cgroup
 
 short_description: Manage cgroup configurations
 
-version_added: "2.6"
+version_added: "2.10"
 
 description:
     - Manages cgroup configurations in the C(/etc/cgconfig.d) directory.
@@ -28,44 +28,52 @@ options:
     name:
         description:
             - The cgroup name.
+        type: str
         required: true
     state:
         description:
             - Whether the cgroup should be present or absent.
         default: present
+        type: str
         choices: ['absent', 'present']
     permtaskuser:
         description:
             - The system user id allowed to submit tasks to the cgroup.
         default: root
+        type: str
     permtaskgroup:
         description:
             - The system group id allowed to submit tasks to the cgroup.
         default: root
+        type: str
     permadminuser:
         description:
             - The system user id allowed to modify the cgroup subsystem parameters.
         default: root
+        type: str
     permadmingroup:
         description:
             - The system group id allowed to modify the cgroup subsystem parameters.
         default: root
+        type: str
     memlimit:
         description:
             - The maximum RSS memory for the cgroup.
               It allows the use of k, K, m, M, g and G as units.
         required: false
+        type: str
     memswaplimit:
         description:
             - The maximum RSS memory and swap for the cgroup. This can't be lower than the memlimit.
               It allows the use of k, K, m, M, g and G as units.
         required: false
+        type: str
 
 author:
     - Cedric Nisio (@Dayde)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Checks a cgroup is present with only a memory limit
 - cgroup:
     name: my_cgroup
@@ -78,7 +86,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 action:
     description: If something changed the corresponding action (Creating, Updating or Deleting cgroup)
     type: str
@@ -89,27 +97,26 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 
 
-def run_module():
-    module_args = dict(
-        name=dict(type='str', required=True),
-        state=dict(type='str', default='present', choices=['absent', 'present']),
-        permtaskuser=dict(type='str', default='root'),
-        permtaskgroup=dict(type='str', default='root'),
-        permadminuser=dict(type='str', default='root'),
-        permadmingroup=dict(type='str', default='root'),
-        memlimit=dict(type='str', required=False),
-        memswaplimit=dict(type='str', required=False)
+def main():
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            name=dict(type='str', required=True),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            permtaskuser=dict(type='str', default='root'),
+            permtaskgroup=dict(type='str', default='root'),
+            permadminuser=dict(type='str', default='root'),
+            permadmingroup=dict(type='str', default='root'),
+            memlimit=dict(type='str', required=False),
+            memswaplimit=dict(type='str', required=False)
+        ),
+        supports_check_mode=True
     )
 
     result = dict(
         changed=False,
         action=None,
         diff=[]
-    )
-
-    module = AnsibleModule(
-        argument_spec=module_args,
-        supports_check_mode=False
     )
 
     name = module.params['name']
@@ -284,9 +291,6 @@ def generate_config_file_content(name, config):
 
     return '\n'.join(lines)
 
-
-def main():
-    run_module()
 
 if __name__ == '__main__':
     main()
