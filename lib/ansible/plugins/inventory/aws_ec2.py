@@ -509,11 +509,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for preference in hostnames:
             if isinstance(preference, list):
                 for preference_element in preference:
-                    pereference_hostname = self._get_hostname(instance, [preference_element])
+                    preference_hostname = self._get_hostname(instance, [preference_element])
                     if hostname:
-                        hostname += '_' + pereference_hostname
+                        hostname += '_' + preference_hostname
                     else:
-                        hostname = pereference_hostname
+                        hostname = preference_hostname
             elif 'tag' in preference:
                 if not preference.startswith('tag:'):
                     raise AnsibleError("To name a host by tags name_value, use 'tag:name=value'.")
