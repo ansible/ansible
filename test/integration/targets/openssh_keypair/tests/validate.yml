@@ -97,3 +97,8 @@
   assert:
     that:
       - privatekey7_result.public_key == privatekey7_modified_result.public_key
+
+- name: Check that password protected key has been regenerated
+  assert:
+    that:
+      - privatekey8_result is changed
