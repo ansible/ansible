@@ -17,6 +17,9 @@ __metaclass__ = type
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 
+import time
+
+
 HETZNER_DEFAULT_ARGUMENT_SPEC = dict(
     hetzner_user=dict(type='str', required=True),
     hetzner_password=dict(type='str', required=True, no_log=True),
@@ -55,6 +58,40 @@ def fetch_url_json(module, url, method='GET', timeout=10, data=None, headers=Non
         return result, None
     except ValueError:
         module.fail_json(msg='Cannot decode content retrieved from {0}'.format(url))
+
+
+class CheckDoneTimeoutException(Exception):
+    def __init__(self, result, error):
+        super(CheckDoneTimeoutException, self).__init__()
+        self.result = result
+        self.error = error
+
+
+def fetch_url_json_with_retries(module, url, check_done_callback, check_done_delay=10, check_done_timeout=180, skip_first=False, **kwargs):
+    '''
+    Make general request to Hetzner's JSON robot API, with retries until a condition is satisfied.
+
+    The condition is tested by calling ``check_done_callback(result, error)``. If it is not satisfied,
+    it will be retried with delays ``check_done_delay`` (in seconds) until a total timeout of
+    ``check_done_timeout`` (in seconds) since the time the first request is started is reached.
+
+    If ``skip_first`` is specified, will assume that a first call has already been made and will
+    directly start with waiting.
+    '''
+    start_time = time.time()
+    if not skip_first:
+        result, error = fetch_url_json(module, url, **kwargs)
+        if check_done_callback(result, error):
+            return result, error
+    while True:
+        elapsed = (time.time() - start_time)
+        left_time = check_done_timeout - elapsed
+        time.sleep(max(min(check_done_delay, left_time), 0))
+        result, error = fetch_url_json(module, url, **kwargs)
+        if check_done_callback(result, error):
+            return result, error
+        if left_time < check_done_delay:
+            raise CheckDoneTimeoutException(result, error)
 
 
 # #####################################################################################
