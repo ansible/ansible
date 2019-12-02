@@ -208,7 +208,8 @@ def parse_config(config):
     END_PARAM = ';'
     COMMENT = '#'
     LINE_BREAK = '\n'
-    SPACES = [' ', '\t', '\n', '\r']
+    SPACES = [' ', '\t', LINE_BREAK, '\r']
+    WORD_BREAKER = SPACES + [NEW_BLOCK, END_BLOCK, NEW_PARAM, END_PARAM, COMMENT]
 
     char_iterator = iter(config)
 
@@ -218,23 +219,21 @@ def parse_config(config):
     word_stack = []
 
     for char in char_iterator:
-        if char in SPACES:
+        if char in WORD_BREAKER:
             if word != '':
                 word_stack.append(word)
                 word = ''
-            continue
+            if char in SPACES:
+                continue
 
         if char == COMMENT:
             while char != LINE_BREAK:
-                char = next(char_iterator)
+                char = next(char_iterator, LINE_BREAK)
             continue
 
         if char == NEW_BLOCK:
-            if word == '':
-                word = word_stack.pop()
-
             current_object = result_stack[len(result_stack) - 1]
-            object_name = word
+            object_name = word_stack.pop()
             current_object[object_name] = {}
             result_stack.append(current_object[object_name])
             continue
@@ -245,12 +244,10 @@ def parse_config(config):
 
         if char == NEW_PARAM:
             continue
-        if char == END_PARAM:
-            if word == '':
-                word = word_stack.pop()
 
+        if char == END_PARAM:
             current_object = result_stack[len(result_stack) - 1]
-            param_value = word
+            param_value = word_stack.pop()
             param_name = word_stack.pop()
             current_object[param_name] = param_value
             continue
