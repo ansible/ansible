@@ -6,7 +6,7 @@ Filters
 .. contents:: Topics
 
 
-Filters in Ansible are from Jinja2, and are used for transforming data inside a template expression.  Jinja2 ships with many filters. See `builtin filters`_ in the official Jinja2 template documentation.
+Filters in Ansible are from Jinja2, and are used for transforming data inside a template expression.  Jinja2 ships with many filters. See `builtin filters`_ in the official Jinja2 template documentation. It is also possible to use `Python methods`_ on a variable.
 
 Take into account that templating happens on the Ansible controller, **not** on the task's target host, so filters also execute on the controller as they manipulate local data.
 
@@ -1454,9 +1454,11 @@ A few useful filters are typically added with each new Ansible release.  The dev
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
 
-.. _Jinja2 map() docs: http://jinja.pocoo.org/docs/dev/templates/#map
+.. _Jinja2 map() docs: https://jinja.palletsprojects.com/templates/#map
 
-.. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
+.. _builtin filters: https://jinja.palletsprojects.com/templates/#builtin-filters
+
+.. _Python methods: https://jinja.palletsprojects.com/templates/#python-methods
 
 .. _PyYAML library: https://pyyaml.org/
 
