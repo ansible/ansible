@@ -11,24 +11,20 @@
 
     # ==== Tests ===================================================
 
-    - name: Create a new keypair in lightsail
-      lightsail_keypair:
-        name: "{{ keypair_name }}"
-
     - name: Create a new instance
       lightsail:
         name: "{{ instance_name }}"
         zone: "{{ zone }}"
         blueprint_id: amazon_linux
         bundle_id: nano_2_0
-        key_pair_name: "{{ keypair_name }}"
+        wait: yes
       register: result
 
     - assert:
         that:
           - result.changed == True
           - "'instance' in result and result.instance.name == instance_name"
-          - "result.instance.state.name in ['pending', 'running']"
+          - "result.instance.state.name == 'running'"
 
     - name: Make sure create is idempotent
       lightsail:
@@ -36,7 +32,6 @@
         zone: "{{ zone }}"
         blueprint_id: amazon_linux
         bundle_id: nano_2_0
-        key_pair_name: "{{ keypair_name }}"
       register: result
 
     - assert:
@@ -57,12 +52,13 @@
       lightsail:
         name: "{{ instance_name }}"
         state: stopped
+        wait: yes
       register: result
 
     - assert:
         that:
           - result.changed == True
-          - "result.instance.state.name in ['stopping', 'stopped']"
+          - "result.instance.state.name == 'stopped'"
 
     - name: Stop the stopped instance
       lightsail:
@@ -83,7 +79,7 @@
     - assert:
         that:
           - result.changed == True
-          - "result.instance.state.name in ['running', 'pending']"
+          - "result.instance.state.name == 'running'"
 
     - name: Restart the instance
       lightsail:
@@ -122,11 +118,5 @@
     - name: Cleanup - delete instance
       lightsail:
         name: "{{ instance_name }}"
-        state: absent
-      ignore_errors: yes
-
-    - name: Cleanup - delete keypair
-      lightsail_keypair:
-        name: "{{ keypair_name }}"
         state: absent
       ignore_errors: yes
