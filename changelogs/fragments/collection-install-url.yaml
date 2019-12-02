@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-galaxy - Fix ``collection install`` when installing from a URL or a file - https://github.com/ansible/ansible/issues/65109

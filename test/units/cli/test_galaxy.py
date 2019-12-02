@@ -890,6 +890,29 @@ def test_collection_install_in_collection_dir(collection_install, monkeypatch):
     assert mock_install.call_args[0][7] is False
 
 
+def test_collection_install_with_url(collection_install):
+    mock_install, dummy, output_dir = collection_install
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', 'https://foo/bar/foo-bar-v1.0.0.tar.gz',
+                   '--collections-path', output_dir]
+    GalaxyCLI(args=galaxy_args).run()
+
+    collection_path = os.path.join(output_dir, 'ansible_collections')
+    assert os.path.isdir(collection_path)
+
+    assert mock_install.call_count == 1
+    assert mock_install.call_args[0][0] == [('https://foo/bar/foo-bar-v1.0.0.tar.gz', '*', None)]
+    assert mock_install.call_args[0][1] == collection_path
+    assert len(mock_install.call_args[0][2]) == 1
+    assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
+    assert mock_install.call_args[0][2][0].validate_certs is True
+    assert mock_install.call_args[0][3] is True
+    assert mock_install.call_args[0][4] is False
+    assert mock_install.call_args[0][5] is False
+    assert mock_install.call_args[0][6] is False
+    assert mock_install.call_args[0][7] is False
+
+
 def test_collection_install_name_and_requirements_fail(collection_install):
     test_path = collection_install[2]
     expected = 'The positional collection_name arg and --requirements-file are mutually exclusive.'

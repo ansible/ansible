@@ -29,12 +29,14 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils import six
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 
 display = Display()
+urlparse = six.moves.urllib.parse.urlparse
 
 
 class GalaxyCLI(CLI):
@@ -805,7 +807,13 @@ class GalaxyCLI(CLI):
             else:
                 requirements = []
                 for collection_input in collections:
-                    name, dummy, requirement = collection_input.partition(':')
+                    requirement = None
+                    if os.path.isfile(to_bytes(collection_input, errors='surrogate_or_strict')) or \
+                            urlparse(collection_input).scheme.lower() in ['http', 'https']:
+                        # Arg is a file path or URL to a collection
+                        name = collection_input
+                    else:
+                        name, dummy, requirement = collection_input.partition(':')
                     requirements.append((name, requirement or '*', None))
 
             output_path = GalaxyCLI._resolve_path(output_path)
