@@ -112,3 +112,8 @@
   assert:
     that:
       - privatekey7_modified_result.comment == 'test_modified@privatekey7'
+
+- name: Check that password protected key has been regenerated
+  assert:
+    that:
+      - privatekey8_result is changed
