@@ -27,6 +27,7 @@ from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes, to_text
 
 
+
 class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
