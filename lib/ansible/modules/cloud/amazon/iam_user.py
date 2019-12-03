@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -19,15 +22,18 @@ options:
     description:
       - The name of the user to create.
     required: true
+    type: str
   managed_policy:
     description:
       - A list of managed policy ARNs or friendly names to attach to the user. To embed an inline policy, use M(iam_policy).
     required: false
+    type: list
   state:
     description:
       - Create or remove the IAM user
     required: true
     choices: [ 'present', 'absent' ]
+    type: str
   purge_policy:
     description:
       - Detach policies which are not included in managed_policy list

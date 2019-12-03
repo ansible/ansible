@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -33,19 +36,23 @@ options:
     description:
       - The name of the group to create.
     required: true
+    type: str
   managed_policy:
     description:
       - A list of managed policy ARNs or friendly names to attach to the role. To embed an inline policy, use M(iam_policy).
     required: false
+    type: list
   users:
     description:
       - A list of existing users to add as members of the group.
     required: false
+    type: list
   state:
     description:
       - Create or remove the IAM group
     required: true
     choices: [ 'present', 'absent' ]
+    type: str
   purge_policy:
     description:
       - Detach policy which not included in managed_policy list
