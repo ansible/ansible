@@ -4,6 +4,11 @@
     path: '{{ output_dir }}/privatekey1'
   register: privatekey1_result
 
+- name: Generate privatekey1 - standard (idempotent)
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekey1'
+  register: privatekey1_idem_result
+
 - name: Generate privatekey2 - size 2048
   openssh_keypair:
     path: '{{ output_dir }}/privatekey2'

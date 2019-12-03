@@ -38,6 +38,11 @@
     that:
       - privatekey1.stdout == '4096'
 
+- name: Validate privatekey1 idempotence
+  assert:
+    that:
+      - privatekey1_idem_result is not changed
+
 
 - name: Validate privatekey2 (test - RSA key with size 2048 bits)
   shell: "ssh-keygen -lf {{ output_dir }}/privatekey2 | grep -o -E '^[0-9]+'"
