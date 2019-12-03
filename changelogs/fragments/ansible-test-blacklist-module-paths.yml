@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-test - the pylint sanity test now correctly identifies ``modules`` and ``module_utils`` paths for collections."
