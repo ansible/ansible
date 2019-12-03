@@ -1014,9 +1014,11 @@ class Connection(ConnectionBase):
                 # Otherwise there may still be outstanding data to read.
         finally:
             selector.close()
-            # close stdin after process is terminated and stdout/stderr are read
-            # completely (see also issue #848)
+            # close stdin, stdout, and stderr after process is terminated and
+            # stdout/stderr are read completely (see also issues #848, #64768).
             stdin.close()
+            p.stdout.close()
+            p.stderr.close()
 
         if C.HOST_KEY_CHECKING:
             if cmd[0] == b"sshpass" and p.returncode == 6:
