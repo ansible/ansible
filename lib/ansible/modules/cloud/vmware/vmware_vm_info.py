@@ -205,7 +205,7 @@ class VmwareVmInfo(PyVmomi):
 
     def get_tag_info(self, vm_dynamic_obj):
         vmware_client = VmwareRestClient(self.module)
-        return vmware_client.get_tags_for_vm(vm_id=vm_dynamic_obj._moId)
+        return vmware_client.get_tags_for_vm(vm_mid=vm_dynamic_obj._moId)
 
     def get_vm_attributes(self, vm):
         return dict((x.name, v.value) for x in self.custom_field_mgr
