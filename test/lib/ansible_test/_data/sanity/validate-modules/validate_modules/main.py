@@ -1435,6 +1435,22 @@ class ModuleValidator(Validator):
                     msg=msg
                 )
 
+            doc_required = doc_options_arg.get('required', False)
+            data_required = data.get('required', False)
+            if (doc_required or data_required) and not (doc_required and data_required):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                if doc_required:
+                    msg += " is not required, but is documented as being required"
+                else:
+                    msg += " is required, but is not documented as being required"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='doc-required-mismatch',
+                    msg=msg
+                )
+
             spec_suboptions = data.get('options')
             doc_suboptions = doc_options_arg.get('suboptions', {})
             if spec_suboptions:
