@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test - module validation will report unknown keys argument_spec as errors."
