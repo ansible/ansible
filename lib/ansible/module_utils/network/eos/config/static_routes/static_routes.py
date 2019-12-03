@@ -10,10 +10,10 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
-from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list, dict_diff, remove_empties
-from ansible.module_utils.network.eos.facts.facts import Facts
 import re
+from ansible.module_utils.network.common.cfg.base import ConfigBase
+from ansible.module_utils.network.common.utils import remove_empties
+from ansible.module_utils.network.eos.facts.facts import Facts
 
 
 class Static_routes(ConfigBase):
@@ -61,7 +61,7 @@ class Static_routes(ConfigBase):
 
         if self.state in self.ACTION_STATES or self.state == 'rendered':
             commands.extend(self.set_config(existing_static_routes_facts))
-        
+
         if commands and self.state in self.ACTION_STATES:
             if not self._module.check_mode:
                 for command in commands:
@@ -120,7 +120,7 @@ class Static_routes(ConfigBase):
         resp = self.set_state(want, have)
         for want_config in resp:
             if want_config not in onbox_configs:
-                commands.append(want_config) 
+                commands.append(want_config)
         return commands
 
     def set_state(self, want, have):
@@ -137,9 +137,9 @@ class Static_routes(ConfigBase):
         if state == 'overridden':
             commands = self._state_overridden(want, have)
         elif state == 'deleted':
-            commands = self._state_deleted(want,have)
+            commands = self._state_deleted(want, have)
         elif state == 'merged' or self.state == 'rendered':
-            commands = self._state_merged(want,have)
+            commands = self._state_merged(want, have)
         elif state == 'replaced':
             commands = self._state_replaced(want, have)
         return commands
@@ -163,7 +163,7 @@ class Static_routes(ConfigBase):
                         haveconfigs.append(command)
                 else:
                     if vrf in command:
-                        haveconfigs.append(command)          
+                        haveconfigs.append(command)
         wantconfigs = set_commands(want, have)
 
         removeconfigs = list(set(haveconfigs) - set(wantconfigs))
@@ -187,9 +187,10 @@ class Static_routes(ConfigBase):
             return_command = add_commands(h)
             for command in return_command:
                 haveconfigs.append(command)
-
         wantconfigs = set_commands(want, have)
-
+        idempotentconfigs = list(set(wantconfigs) - set(haveconfigs))
+        if not idempotentconfigs:
+            return idempotentconfigs
         removeconfigs = list(set(haveconfigs) - set(wantconfigs))
         for command in removeconfigs:
             commands.append("no " + command)
@@ -208,7 +209,7 @@ class Static_routes(ConfigBase):
         return set_commands(want, have)
 
     @staticmethod
-    def _state_deleted(want,have):
+    def _state_deleted(want, have):
         """ The command generator when state is deleted
 
         :rtype: A list
@@ -222,13 +223,13 @@ class Static_routes(ConfigBase):
                 for command in return_command:
                     command = "no " + command
                     commands.append(command)
-        else :
+        else:
             for w in want:
-                return_command = del_commands(w,have)
+                return_command = del_commands(w, have)
                 for command in return_command:
                     commands.append(command)
         return commands
-    
+
 def set_commands(want, have):
     commands = []
     for w in want:
@@ -253,9 +254,9 @@ def add_commands(want):
                 if vrf:
                     commands.append(' vrf ' + vrf)
                 if not re.search(r'/', route["dest"]):
-                    mask = route["dest"].split( )[1]
+                    mask = route["dest"].split()[1]
                     cidr = get_net_size(mask)
-                    commands.append(' ' + route["dest"].split( )[0] + '/' + cidr)
+                    commands.append(' ' + route["dest"].split()[0] + '/' + cidr)
                 else:
                     commands.append(' ' + route["dest"])
                 if "interface" in next_hop.keys():
@@ -279,7 +280,7 @@ def add_commands(want):
                 commandset.append(config_commands)
     return commandset
 
-def del_commands(want,have):
+def del_commands(want, have):
     commandset = []
     haveconfigs = []
     for h in have:
@@ -293,7 +294,7 @@ def del_commands(want,have):
         commandset = []
         for command in haveconfigs:
             if want["vrf"] in command:
-                commandset.append(command) 
+                commandset.append(command)
     elif want is not None and "vrf" not in want.keys() and "address_families" not in want.keys():
         commandset = []
         for command in haveconfigs:
@@ -315,9 +316,9 @@ def del_commands(want,have):
             else:
                 for route in address_family["routes"]:
                     if not re.search(r'/', route["dest"]):
-                        mask = route["dest"].split( )[1]
+                        mask = route["dest"].split()[1]
                         cidr = get_net_size(mask)
-                        destination = route["dest"].split( )[0] + '/' + cidr
+                        destination = route["dest"].split()[0] + '/' + cidr
                     else:
                         destination = route["dest"]
                     if "next_hops" not in route.keys():

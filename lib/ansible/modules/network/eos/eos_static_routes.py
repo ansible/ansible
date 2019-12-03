@@ -30,9 +30,9 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
-  'metadata_version': '1.1',
-  'status': ['preview'],
-  'supported_by': 'network'
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'network'
 }
 
 DOCUMENTATION = """
@@ -101,6 +101,10 @@ options:
                       - Nexthop-Group  Specify nexthop group name
                       - Tunnel  Tunnel interface
                       - vtep  Configure VXLAN Tunnel End Points
+                    type: str
+                  nexthop_grp:
+                    description:
+                        - Nexthop group
                     type: str
                   admin_distance:
                     description: 

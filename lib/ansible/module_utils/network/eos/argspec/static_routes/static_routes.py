@@ -67,7 +67,7 @@ class Static_routesArgs(object):  # pylint: disable=R0903
                                             'type': 'str'
                                         },
                                         'nexthop_grp': {
-                                           'type': 'str'
+                                            'type': 'str'
                                         }, 
                                         'mpls_label': {
                                             'type': 'int'
