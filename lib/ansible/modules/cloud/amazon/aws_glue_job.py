@@ -35,7 +35,7 @@ options:
   command_script_location:
     description:
       - The S3 path to a script that executes a job.
-    required: true
+      - Required when I(state=present).
     type: str
   connections:
     description:
@@ -73,7 +73,7 @@ options:
   role:
     description:
       - The name or ARN of the IAM role associated with this job.
-    required: true
+      - Required when I(state=present).
     type: str
   state:
     description:

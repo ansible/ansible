@@ -31,6 +31,7 @@ options:
     description:
       - "The CIDR block for the subnet. E.g. 192.0.2.0/24."
     type: str
+    required: true
   ipv6_cidr:
     description:
       - "The IPv6 CIDR block for the subnet. The VPC must have a /56 block assigned and this value must be a valid IPv6 /64 that falls in the VPC range."

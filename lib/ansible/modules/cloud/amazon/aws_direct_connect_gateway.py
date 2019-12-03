@@ -30,29 +30,26 @@ options:
     description:
         - present to ensure resource is created.
         - absent to remove resource
-    required: false
     default: present
     choices: [ "present", "absent"]
     type: str
   name:
     description:
         - name of the dxgw to be created or deleted
-    required: false
     type: str
   amazon_asn:
     description:
         - amazon side asn
-    required: true
+        - Required when I(state=present).
     type: str
   direct_connect_gateway_id:
     description:
         - id of an existing direct connect gateway
-    required: false
+        - Required when I(state=absent).
     type: str
   virtual_gateway_id:
     description:
         - vpn gateway id of an existing virtual gateway
-    required: false
     type: str
   wait_timeout:
     description:

@@ -32,7 +32,7 @@ options:
   event_name:
     description:
       - unique name for event notification on bucket
-    required: True
+    required: true
     type: str
   lambda_function_arn:
     description:
@@ -42,23 +42,24 @@ options:
   bucket_name:
     description:
       - S3 bucket name
-    required: True
+    required: true
     type: str
   state:
     description:
       - Describes the desired state.
-    required: true
     default: "present"
     choices: ["present", "absent"]
     type: str
   lambda_alias:
     description:
-      - Name of the Lambda function alias. Mutually exclusive with C(lambda_version).
+      - Name of the Lambda function alias.
+      - Mutually exclusive with I(lambda_version).
     required: false
     type: str
   lambda_version:
     description:
-      -  Version of the Lambda function. Mutually exclusive with C(lambda_alias).
+      - Version of the Lambda function.
+      - Mutually exclusive with I(lambda_alias).
     required: false
     type: int
   events:
@@ -68,7 +69,7 @@ options:
         and you can set up a prefix or suffix for an event. However, for each bucket,
         individual events cannot have multiple configurations with overlapping prefixes or
         suffixes that could match the same object key.
-    required: True
+      - Required when I(state=present).
     choices: ['s3:ObjectCreated:*', 's3:ObjectCreated:Put', 's3:ObjectCreated:Post',
               's3:ObjectCreated:Copy', 's3:ObjectCreated:CompleteMultipartUpload',
               's3:ObjectRemoved:*', 's3:ObjectRemoved:Delete',

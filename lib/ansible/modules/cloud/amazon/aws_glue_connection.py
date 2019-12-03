@@ -28,7 +28,7 @@ options:
   connection_properties:
     description:
       - A dict of key-value pairs used as parameters for this connection.
-    required: true
+      - Required when I(state=present).
     type: dict
   connection_type:
     description:

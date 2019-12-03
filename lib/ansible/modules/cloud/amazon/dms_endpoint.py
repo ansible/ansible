@@ -30,11 +30,13 @@ options:
       description:
         - An identifier name for the endpoint.
       type: str
+      required: true
     endpointtype:
       description:
         - Type of endpoint we want to manage.
       choices: ['source', 'target']
       type: str
+      required: true
     enginename:
       description:
         - Database engine that we want to use, please refer to
@@ -44,6 +46,7 @@ options:
                          'redshift', 's3', 'db2', 'azuredb', 'sybase',
                          'dynamodb', 'mongodb', 'sqlserver']
       type: str
+      required: true
     username:
       description:
         - Username our endpoint will use to connect to the database.
@@ -131,14 +134,16 @@ options:
       description:
         - should wait for the object to be deleted when state = absent
       type: bool
-      default: 'false'
+      default: false
     timeout:
       description:
         - time in seconds we should wait for when deleting a resource
+        - Required when I(wait=true).
       type: int
     retries:
       description:
         - number of times we should retry when deleting a resource
+        - Required when I(wait=true).
       type: int
 author:
    - "Rui Moreira (@ruimoreira)"

@@ -33,6 +33,7 @@ options:
   state:
     description:
       - Actions that will create, destroy, or copy a snapshot.
+    required: true
     choices: ['present', 'absent', 'copy']
     type: str
   replication_id:

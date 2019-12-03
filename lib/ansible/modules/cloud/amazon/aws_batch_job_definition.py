@@ -55,18 +55,21 @@ options:
         Up to 255 letters (uppercase and lowercase), numbers, hyphens, underscores, colons, periods, forward slashes,
         and number signs are allowed. This parameter maps to Image in the Create a container section of the Docker
         Remote API and the IMAGE parameter of docker run.
+    required: true
     type: str
   vcpus:
     description:
       - The number of vCPUs reserved for the container. This parameter maps to CpuShares in the Create a container
         section of the Docker Remote API and the --cpu-shares option to docker run. Each vCPU is equivalent to
         1,024 CPU shares.
+    required: true
     type: int
   memory:
     description:
       - The hard limit (in MiB) of memory to present to the container. If your container attempts to exceed the memory
         specified here, the container is killed. This parameter maps to Memory in the Create a container section of the
         Docker Remote API and the --memory option to docker run.
+    required: true
     type: int
   command:
     description:

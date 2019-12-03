@@ -33,15 +33,17 @@ author: "Rob White (@wimnat)"
 options:
   access_logs_enabled:
     description:
-      - "Whether or not to enable access logs. When true, I(access_logs_s3_bucket) must be set."
+      - Whether or not to enable access logs.
+      - When set, I(access_logs_s3_bucket) must also be set.
     required: false
     type: bool
   access_logs_s3_bucket:
     description:
       - The name of the S3 bucket for the access logs.
-      - Required if access logs in Amazon S3 are enabled.
       - The bucket must exist in the same
         region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.
+      - Required if access logs in Amazon S3 are enabled.
+      - When set, I(access_logs_enabled) must also be set.
     required: false
     type: str
   access_logs_s3_prefix:
@@ -78,9 +80,11 @@ options:
     suboptions:
         Port:
             description: The port on which the load balancer is listening.
+            required: true
             type: int
         Protocol:
             description: The protocol for connections from clients to the load balancer.
+            required: true
             type: str
         Certificates:
             description: The SSL server certificate.
@@ -94,6 +98,7 @@ options:
             type: str
         DefaultActions:
             description: The default actions for the listener.
+            required: true
             type: list
             suboptions:
                 Type:
@@ -140,12 +145,14 @@ options:
   subnets:
     description:
       - A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from
-        at least two Availability Zones. Required if state=present.
+        at least two Availability Zones.
+      - Required if I(state=present).
     required: false
     type: list
   security_groups:
     description:
-      - A list of the names or IDs of the security groups to assign to the load balancer. Required if state=present.
+      - A list of the names or IDs of the security groups to assign to the load balancer.
+      - Required if I(state=present).
     required: false
     default: []
     type: list

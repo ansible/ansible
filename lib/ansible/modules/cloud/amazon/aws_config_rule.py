@@ -79,6 +79,7 @@ options:
         - Key `MessageType` The type of notification that triggers AWS Config to run an evaluation for a rule.
         - Key `MaximumExecutionFrequency` The frequency at which you want AWS Config to run evaluations for a custom rule with a periodic trigger.
     type: dict
+    required: true
   input_parameters:
     description:
     - A string, in JSON format, that is passed to the AWS Config rule Lambda function.

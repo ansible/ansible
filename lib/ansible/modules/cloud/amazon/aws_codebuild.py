@@ -115,7 +115,7 @@ options:
     environment:
         description:
             - Information about the build environment for the build project.
-        required: true
+        required: false
         suboptions:
             type:
                 description:

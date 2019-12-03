@@ -23,7 +23,7 @@ options:
   state:
     description:
       - Register or deregister the policy.
-    required: true
+    required: false
     default: present
     choices: ['present', 'absent']
     type: str

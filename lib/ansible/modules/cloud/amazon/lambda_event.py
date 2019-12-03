@@ -35,18 +35,18 @@ options:
   state:
     description:
       - Describes the desired state.
-    required: true
     default: "present"
     choices: ["present", "absent"]
     type: str
   alias:
     description:
-      - Name of the function alias. Mutually exclusive with I(version).
-    required: true
+      - Name of the function alias.
+      - Mutually exclusive with I(version).
     type: str
   version:
     description:
-      -  Version of the Lambda function. Mutually exclusive with I(alias).
+      - Version of the Lambda function.
+      - Mutually exclusive with I(alias).
     required: false
     type: int
   event_source:

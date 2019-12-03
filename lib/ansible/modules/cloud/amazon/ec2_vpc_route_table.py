@@ -49,7 +49,9 @@ options:
     type: bool
     default: 'no'
   route_table_id:
-    description: The ID of the route table to update or delete.
+    description:
+    - The ID of the route table to update or delete.
+    - Required when I(lookup=id).
     type: str
   routes:
     description: List of routes in the route table.
@@ -76,8 +78,9 @@ options:
     aliases: [ "resource_tags" ]
     type: dict
   vpc_id:
-    description: VPC ID of the VPC in which to create the route table.
-    required: true
+    description:
+    - VPC ID of the VPC in which to create the route table.
+    - Required when I(state=present) or I(lookup=tag).
     type: str
 extends_documentation_fragment:
     - aws

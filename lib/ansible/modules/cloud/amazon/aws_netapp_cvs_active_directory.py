@@ -43,14 +43,13 @@ options:
   domain:
     description:
     - Name of the Active Directory domain
-    required: true
+    - Required when I(state=present).
     type: str
 
   DNS:
     description:
     - DNS server address for the Active Directory domain
-    - Required when C(state=present)
-    - Required when C(state=present), to modify ActiveDirectory properties.
+    - Required when I(state=present), to modify ActiveDirectory properties.
     type: str
 
   netBIOS:

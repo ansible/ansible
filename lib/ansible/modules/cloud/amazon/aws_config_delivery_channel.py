@@ -38,6 +38,7 @@ options:
     description:
     - The name of the Amazon S3 bucket to which AWS Config delivers configuration snapshots and configuration history files.
     type: str
+    required: true
   s3_prefix:
     description:
     - The prefix for the specified Amazon S3 bucket.

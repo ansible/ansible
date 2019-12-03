@@ -32,6 +32,7 @@ options:
       - present
       - absent
     type: str
+    required: true
   name:
     description:
       - The name of the Direct Connect link aggregation group.

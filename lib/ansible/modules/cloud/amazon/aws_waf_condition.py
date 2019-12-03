@@ -40,6 +40,7 @@ options:
         - sql
         - xss
         type: str
+        required: true
     filters:
         description:
         - A list of the filters against which to match.
@@ -50,6 +51,7 @@ options:
         - For I(type=size), valid keys are I(field_to_match), I(transformation), I(comparison) and I(size).
         - For I(type=sql), valid keys are I(field_to_match) and I(transformation).
         - For I(type=xss), valid keys are I(field_to_match) and I(transformation).
+        - Required when I(state=present).
         type: list
         elements: dict
         suboptions:

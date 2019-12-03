@@ -30,7 +30,6 @@ options:
   state:
     description:
       - Create or remove the cross-region snapshot configuration.
-    required: true
     choices: [ "present", "absent" ]
     default: present
     type: str

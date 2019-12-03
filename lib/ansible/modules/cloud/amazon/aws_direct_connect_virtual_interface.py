@@ -27,11 +27,13 @@ options:
       - The desired state of the Direct Connect virtual interface.
     choices: [present, absent]
     type: str
+    required: true
   id_to_associate:
     description:
       - The ID of the link aggregation group or connection to associate with the virtual interface.
     aliases: [link_aggregation_group_id, connection_id]
     type: str
+    required: true
   public:
     description:
       - The type of virtual interface.
