@@ -5,7 +5,17 @@
     file: common.yml
 
 - when: vcsim is not defined
-  include_tasks: init_real_lab.yml
+  block:
+  - when: esxi1_hostname is not defined and esxi2_hostname is not defined
+    include_vars:
+      file: vcenter_only.yml
+
+  - when: esxi1_hostname is defined and esxi2_hostname is defined
+    include_vars:
+      file: vcenter_with_2_nodes.yml
+
+  - when: vcsim is not defined
+    include_tasks: init_real_lab.yml
 
 - when: vcsim is defined
   include_tasks: init_vcsim.yml
