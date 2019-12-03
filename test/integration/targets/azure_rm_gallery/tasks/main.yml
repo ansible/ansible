@@ -310,7 +310,7 @@
     that: 
       - output.changed
 
-- name: pasue 2 minutes, wait for deltetion complete
+- name: pasue 2 minutes, wait for deletion complete
   pause:
     minutes: 2
 
@@ -326,7 +326,7 @@
     that: 
       - output.changed
 
-- name: pasue 2 minutes, wait for deltetion complete
+- name: pasue 2 minutes, wait for deletion complete
   pause:
     minutes: 2
 
