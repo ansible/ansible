@@ -99,7 +99,7 @@ Ansible was created by `Michael DeHaan <https://github.com/mpdehaan>`_
 License
 =======
 
-GNU General Public License v3.0
+GNU General Public License v3.0 or later
 
 See `COPYING <COPYING>`_ to see the full text.
 
