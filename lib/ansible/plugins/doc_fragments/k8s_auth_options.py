@@ -72,6 +72,19 @@ options:
     - The URL of an HTTP proxy to use for the connection. Can also be specified via K8S_AUTH_PROXY environment variable.
     - Please note that this module does not pick up typical proxy settings from the environment (e.g. HTTP_PROXY).
     version_added: "2.9"
+  persist_config:
+    description:
+    - Whether or not to save the kube config refresh tokens.
+      Can also be specified via K8S_AUTH_PERSIST_CONFIG environment variable.
+    - When the k8s context is using a user credentials with refresh tokens (like oidc or gke/gcloud auth),
+      the token is refreshed by the k8s python client library but not saved by default. So the old refresh token can
+      expire and the next auth might fail. Setting this flag to true will tell the k8s python client to save the
+      new refresh token to the kube config file.
+    - Default to false.
+    - Please note that the current version of the k8s python client library does not support setting this flag to True yet.
+    - "The fix for this k8s python library is here: https://github.com/kubernetes-client/python-base/pull/169"
+    type: bool
+    version_added: "2.10"
 notes:
   - "The OpenShift Python client wraps the K8s Python client, providing full access to
     all of the APIS and models available on both platforms. For API version details and

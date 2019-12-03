@@ -123,6 +123,9 @@ AUTH_ARG_SPEC = {
         'aliases': ['key_file'],
     },
     'proxy': {},
+    'persist_config': {
+        'type': 'bool',
+    },
 }
 
 # Map kubernetes-client parameters to ansible parameters
@@ -138,6 +141,7 @@ AUTH_ARG_MAP = {
     'cert_file': 'client_cert',
     'key_file': 'client_key',
     'proxy': 'proxy',
+    'persist_config': 'persist_config',
 }
 
 
@@ -179,13 +183,13 @@ class K8sAnsibleMixin(object):
             # We have enough in the parameters to authenticate, no need to load incluster or kubeconfig
             pass
         elif auth_set('kubeconfig') or auth_set('context'):
-            kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'))
+            kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'), persist_config=auth.get('persist_config'))
         else:
             # First try to do incluster config, then kubeconfig
             try:
                 kubernetes.config.load_incluster_config()
             except kubernetes.config.ConfigException:
-                kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'))
+                kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'), persist_config=auth.get('persist_config'))
 
         # Override any values in the default configuration with Ansible parameters
         configuration = kubernetes.client.Configuration()
