@@ -1244,23 +1244,92 @@ def has_dict_changed(new_dict, old_dict):
     return False
 
 
-def has_list_changed(new_list, old_list):
+def has_list_changed(new_list, old_list, sort_lists=True, sort_key=None):
     """
-    Check two lists has differences.
+    Check two lists have differences. Sort lists by default.
     """
+
+    def sort_list(unsorted_list):
+        """
+        Sort a given list.
+        The list may contain dictionaries, so use the sort key to handle them.
+        """
+
+        if unsorted_list and isinstance(unsorted_list[0], dict):
+            if not sort_key:
+                raise Exception(
+                    'A sort key was not specified when sorting list'
+                )
+            else:
+                return sorted(unsorted_list, key=lambda k: k[sort_key])
+
+        # Either the list is empty or does not contain dictionaries
+        try:
+            return sorted(unsorted_list)
+        except TypeError:
+            return unsorted_list
+
     if new_list is None:
         return False
     old_list = old_list or []
     if len(new_list) != len(old_list):
         return True
-    for new_item, old_item in zip(new_list, old_list):
+
+    if sort_lists:
+        zip_data = zip(sort_list(new_list), sort_list(old_list))
+    else:
+        zip_data = zip(new_list, old_list)
+    for new_item, old_item in zip_data:
         is_same_type = type(new_item) == type(old_item)
         if not is_same_type:
-            return True
+            if isinstance(new_item, string_types) and isinstance(old_item, string_types):
+                # Even though the types are different between these items,
+                # they are both strings. Try matching on the same string type.
+                try:
+                    new_item_type = type(new_item)
+                    old_item_casted = new_item_type(old_item)
+                    if new_item != old_item_casted:
+                        return True
+                    else:
+                        continue
+                except UnicodeEncodeError:
+                    # Fallback to assuming the strings are different
+                    return True
+            else:
+                return True
         if isinstance(new_item, dict):
             if has_dict_changed(new_item, old_item):
                 return True
         elif new_item != old_item:
+            return True
+
+    return False
+
+
+def have_networks_changed(new_networks, old_networks):
+    """Special case list checking for networks to sort aliases"""
+
+    if new_networks is None:
+        return False
+    old_networks = old_networks or []
+    if len(new_networks) != len(old_networks):
+        return True
+
+    zip_data = zip(
+        sorted(new_networks, key=lambda k: k['id']),
+        sorted(old_networks, key=lambda k: k['id'])
+    )
+
+    for new_item, old_item in zip_data:
+        new_item = dict(new_item)
+        old_item = dict(old_item)
+        # Sort the aliases
+        if 'aliases' in new_item:
+            new_item['aliases'] = sorted(new_item['aliases'] or [])
+        if 'aliases' in old_item:
+            old_item['aliases'] = sorted(old_item['aliases'] or [])
+
+        if has_dict_changed(new_item, old_item):
             return True
 
     return False
@@ -1761,7 +1830,7 @@ class DockerService(DockerBaseClass):
         force_update = False
         if self.endpoint_mode is not None and self.endpoint_mode != os.endpoint_mode:
             differences.add('endpoint_mode', parameter=self.endpoint_mode, active=os.endpoint_mode)
-        if self.env is not None and self.env != (os.env or []):
+        if has_list_changed(self.env, os.env):
             differences.add('env', parameter=self.env, active=os.env)
         if self.log_driver is not None and self.log_driver != os.log_driver:
             differences.add('log_driver', parameter=self.log_driver, active=os.log_driver)
@@ -1770,26 +1839,26 @@ class DockerService(DockerBaseClass):
         if self.mode != os.mode:
             needs_rebuild = True
             differences.add('mode', parameter=self.mode, active=os.mode)
-        if has_list_changed(self.mounts, os.mounts):
+        if has_list_changed(self.mounts, os.mounts, sort_key='target'):
             differences.add('mounts', parameter=self.mounts, active=os.mounts)
-        if has_list_changed(self.configs, os.configs):
+        if has_list_changed(self.configs, os.configs, sort_key='config_name'):
             differences.add('configs', parameter=self.configs, active=os.configs)
-        if has_list_changed(self.secrets, os.secrets):
+        if has_list_changed(self.secrets, os.secrets, sort_key='secret_name'):
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
-        if has_list_changed(self.networks, os.networks):
+        if have_networks_changed(self.networks, os.networks):
             differences.add('networks', parameter=self.networks, active=os.networks)
             needs_rebuild = not self.can_update_networks
         if self.replicas != os.replicas:
             differences.add('replicas', parameter=self.replicas, active=os.replicas)
-        if self.command is not None and self.command != (os.command or []):
+        if has_list_changed(self.command, os.command, sort_lists=False):
             differences.add('command', parameter=self.command, active=os.command)
-        if self.args is not None and self.args != (os.args or []):
+        if has_list_changed(self.args, os.args, sort_lists=False):
             differences.add('args', parameter=self.args, active=os.args)
-        if self.constraints is not None and self.constraints != (os.constraints or []):
+        if has_list_changed(self.constraints, os.constraints):
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
-        if self.placement_preferences is not None and self.placement_preferences != (os.placement_preferences or []):
+        if has_list_changed(self.placement_preferences, os.placement_preferences, sort_lists=False):
             differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
-        if self.groups is not None and self.groups != (os.groups or []):
+        if has_list_changed(self.groups, os.groups):
             differences.add('groups', parameter=self.groups, active=os.groups)
         if self.labels is not None and self.labels != (os.labels or {}):
             differences.add('labels', parameter=self.labels, active=os.labels)
@@ -1838,11 +1907,11 @@ class DockerService(DockerBaseClass):
             differences.add('image', parameter=self.image, active=change)
         if self.user and self.user != os.user:
             differences.add('user', parameter=self.user, active=os.user)
-        if self.dns is not None and self.dns != (os.dns or []):
+        if has_list_changed(self.dns, os.dns, sort_lists=False):
             differences.add('dns', parameter=self.dns, active=os.dns)
-        if self.dns_search is not None and self.dns_search != (os.dns_search or []):
+        if has_list_changed(self.dns_search, os.dns_search, sort_lists=False):
             differences.add('dns_search', parameter=self.dns_search, active=os.dns_search)
-        if self.dns_options is not None and self.dns_options != (os.dns_options or []):
+        if has_list_changed(self.dns_options, os.dns_options):
             differences.add('dns_options', parameter=self.dns_options, active=os.dns_options)
         if self.has_healthcheck_changed(os):
             differences.add('healthcheck', parameter=self.healthcheck, active=os.healthcheck)
