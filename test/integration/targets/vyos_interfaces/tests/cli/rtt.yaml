@@ -73,6 +73,6 @@
     - name: Assert that config was reverted
       assert:
         that: "{{ base_config['after'] | symmetric_difference(revert['after']) |length == 0 }}"
-  
+
   always:
     - include_tasks: _remove_config.yaml
