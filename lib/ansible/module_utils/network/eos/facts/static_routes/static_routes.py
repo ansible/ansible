@@ -117,7 +117,7 @@ class Static_routesFacts(object):
         vrf_config_list = []
         config["address_families"] = []
         next_hops = {}
-        interface_list = ["Ethernet", "Loopback", "Management", "Nexthop-Group",
+        interface_list = ["Ethernet", "Loopback", "Management",
                             "Port-Channel", "Tunnel", "Vlan", "Vxlan", "vtep"]
         conf_list = conf.split('\n')
         for conf_elem in conf_list:
@@ -138,7 +138,7 @@ class Static_routesFacts(object):
                     vrf_list.append(vrf)
                     dest = remainder.pop(0)
                 else:
-                    config["vrf"] = "default"
+                    config["vrf"] = None
                     dest = matches[0][1] 
                 afi  = "ipv4" if matches[0][0] == "ip" else "ipv6"
                 if afi not in afi_list:
@@ -173,6 +173,9 @@ class Static_routesFacts(object):
                     if remainder and remainder[0] == "label":
                         nexthops.update({"mpls_label": remainder.pop(1)})
                         remainder.pop(0)
+                elif re.search(r'Nexthop-Group', remainder[0]):
+                    nexthops.update({"nexthop_grp": remainder.pop(1)})
+                    remainder.pop(0)
                 else:
                     interface = remainder.pop(0)
                     if interface in interface_list:
