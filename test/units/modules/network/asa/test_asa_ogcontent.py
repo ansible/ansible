@@ -32,7 +32,6 @@ class TestAsaOgcontentModule(TestAsaModule):
 
     def load_fixtures(self, commands=None):
         self.get_config.return_value = load_fixture('asa_ogcontent_config.cfg').strip()
-        self.load_config.return_value = dict(diff=None, session='session')
 
     def test_asa_og_idempotent(self):
         set_module_args(dict(
