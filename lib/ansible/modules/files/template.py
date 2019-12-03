@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 ---
 module: template
 version_added: historical
-short_description: Create a files and directories by using templates.
+short_description: Template a file out to a remote server
 options:
   follow:
     description:
