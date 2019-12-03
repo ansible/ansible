@@ -1,5 +1,4 @@
-pexpect # for _user test
-scp # for Cisco ios
-selectors2 # for ncclient
-ncclient # for Junos
-jxmlease # for Junos
+pexpect>=4.7.0 # ISC license
+scp>=0.13.2 # LGPL
+ncclient>=0.6.6 # Apache-2.0
+jxmlease>=1.0.1 # MIT

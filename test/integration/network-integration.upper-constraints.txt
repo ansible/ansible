@@ -1,0 +1,4 @@
+pexpect===4.7.0
+scp===0.13.2
+ncclient===0.6.6
+jxmlease===1.0.1
