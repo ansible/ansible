@@ -40,7 +40,7 @@ def main():
             'maintainers': Any(list_string_types, *string_types),
             'migrated_to': All(
                 Any(*string_types),
-                Match(r'^https://galaxy.ansible.com/'),
+                Match(r'^\w+\.\w+$'),
             ),
             'notified': Any(list_string_types, *string_types),
             'supershipit': Any(list_string_types, *string_types),
