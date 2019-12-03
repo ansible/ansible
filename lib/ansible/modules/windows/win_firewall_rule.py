@@ -144,6 +144,7 @@ EXAMPLES = r'''
     protocol: tcp
     state: present
     enabled: yes
+
 - name: Firewall rule to allow port range
   win_firewall_rule:
     name: Sample port range
@@ -153,4 +154,14 @@ EXAMPLES = r'''
     protocol: tcp
     state: present
     enabled: yes
+
+- name: Firewall rule to allow ICMP v4 (ping)
+  win_firewall_rule:
+    name: ICMP Allow incoming V4 echo request
+    enabled: yes
+    state: present
+    profiles: private
+    action: allow
+    direction: in
+    protocol: icmpv4
 '''

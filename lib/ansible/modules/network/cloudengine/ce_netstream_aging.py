@@ -27,6 +27,9 @@ short_description: Manages timeout mode of NetStream on HUAWEI CloudEngine switc
 description:
     - Manages timeout mode of NetStream on HUAWEI CloudEngine switches.
 author: YangYang (@QijunPan)
+notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     timeout_interval:
         description:

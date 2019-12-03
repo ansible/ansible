@@ -30,6 +30,8 @@ description:
 author: Zhijin Zhou (@QijunPan)
 notes:
     - Before configuring evpn_overlay_enable=disable, delete other EVPN configurations.
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     evpn_overlay_enable:
         description:

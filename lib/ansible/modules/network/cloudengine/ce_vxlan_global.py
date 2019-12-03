@@ -28,6 +28,9 @@ short_description: Manages global attributes of VXLAN and bridge domain on HUAWE
 description:
     - Manages global attributes of VXLAN and bridge domain on HUAWEI CloudEngine devices.
 author: QijunPan (@QijunPan)
+notes:
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     bridge_domain_id:
         description:

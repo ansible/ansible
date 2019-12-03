@@ -52,6 +52,9 @@ notes:
     - Outbound rate(byte/sec) shows the rate at which an interface sends bytes within an interval.
     - Outbound rate(pkts/sec) shows the rate at which an interface sends packets within an interval.
     - Speed shows the rate for an Ethernet interface.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     interface:
         description:

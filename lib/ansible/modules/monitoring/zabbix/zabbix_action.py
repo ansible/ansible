@@ -40,7 +40,8 @@ options:
     event_source:
         description:
             - Type of events that the action will handle.
-        required: true
+            - Required when C(state=present).
+        required: false
         choices: ['trigger', 'discovery', 'auto_registration', 'internal']
     state:
         description:
@@ -63,7 +64,8 @@ options:
     esc_period:
         description:
             - Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro.
-        required: true
+            - Required when C(state=present).
+        required: false
     conditions:
         type: list
         description:
@@ -1673,10 +1675,10 @@ def main():
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            esc_period=dict(type='int', required=True),
+            esc_period=dict(type='int', required=False),
             timeout=dict(type='int', default=10),
             name=dict(type='str', required=True),
-            event_source=dict(type='str', required=True, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
+            event_source=dict(type='str', required=False, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
             state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
             status=dict(type='str', required=False, default='enabled', choices=['enabled', 'disabled']),
             pause_in_maintenance=dict(type='bool', required=False, default=True),
@@ -1979,6 +1981,12 @@ def main():
                 ]
             )
         ),
+        required_if=[
+            ['state', 'present', [
+                'esc_period',
+                'event_source'
+            ]]
+        ],
         supports_check_mode=True
     )
 
