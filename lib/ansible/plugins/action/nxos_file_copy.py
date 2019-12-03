@@ -73,9 +73,8 @@ class ActionModule(ActionBase):
             playvals[key] = self._task.args.get(key, argument_spec[key].get('default'))
             if playvals[key] is None:
                 continue
-            if argument_spec[key].get('type') is None:
-                argument_spec[key]['type'] = 'str'
-            option_type = argument_spec[key]['type']
+
+            option_type = argument_spec[key].get('type', 'str')
             try:
                 if option_type == 'str':
                     playvals[key] = validation.check_type_str(playvals[key])
@@ -89,7 +88,7 @@ class ActionModule(ActionBase):
                     raise AnsibleError('Unrecognized type <{0}> for playbook parameter <{1}>'.format(type, key))
 
             except (TypeError, ValueError) as e:
-                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s"
+                raise AnsibleError("argument %s is of type %s and we were unable to convert to %s: %s"
                                    % (key, type(playvals[key]), option_type, to_native(e)))
 
         # Validate playbook dependencies
