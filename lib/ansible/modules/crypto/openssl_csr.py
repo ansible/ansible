@@ -48,8 +48,8 @@ options:
     privatekey_path:
         description:
             - The path to the private key to use when signing the certificate signing request.
+            - Required if I(state) is C(present).
         type: path
-        required: true
     privatekey_passphrase:
         description:
             - The passphrase for the private key.
@@ -1002,7 +1002,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
             digest=dict(type='str', default='sha256'),
-            privatekey_path=dict(type='path', require=True),
+            privatekey_path=dict(type='path'),
             privatekey_passphrase=dict(type='str', no_log=True),
             version=dict(type='int', default=1),
             force=dict(type='bool', default=False),
@@ -1035,6 +1035,7 @@ def main():
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
         ),
         required_together=[('authority_cert_issuer', 'authority_cert_serial_number')],
+        required_if=[('state', 'present', ['privatekey_path'])],
         add_file_common_args=True,
         supports_check_mode=True,
     )
