@@ -13,6 +13,7 @@ import time
 
 from ansible import context
 from ansible.errors import AnsibleError
+from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse
@@ -184,7 +185,7 @@ class GalaxyAPI:
         try:
             display.vvvv("Calling Galaxy at %s" % url)
             resp = open_url(to_native(url), data=args, validate_certs=self.validate_certs, headers=headers,
-                            method=method, timeout=20)
+                            method=method, timeout=20, http_agent='ansible-galaxy/%s' % ansible_version)
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
         except Exception as e:
