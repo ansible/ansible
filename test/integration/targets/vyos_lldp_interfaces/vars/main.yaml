@@ -20,36 +20,36 @@ merged:
   after:
     - name: 'eth1'
       location:
-        civic_based: 
-          country_code: 'US' 
+        civic_based:
+          country_code: 'US'
           ca_info:
-            - ca_type: 0 
-              ca_value: 'ENGLISH'  
+            - ca_type: 0
+              ca_value: 'ENGLISH'
 
     - name: 'eth2'
       location:
-        coordinate_based: 
-         altitude: 2200 
-         datum: 'WGS84'
-         longitude: '222.267255W'
-         latitude: '33.524449N'  
+        coordinate_based:
+          altitude: 2200
+          datum: 'WGS84'
+          longitude: '222.267255W'
+          latitude: '33.524449N'
 
 populate:
   - name: 'eth1'
     location:
-      civic_based: 
-        country_code: 'US' 
+      civic_based:
+        country_code: 'US'
         ca_info:
-          - ca_type: 0 
-            ca_value: 'ENGLISH'  
+          - ca_type: 0
+            ca_value: 'ENGLISH'
 
   - name: 'eth2'
     location:
-      coordinate_based: 
-       altitude: 2200 
-       datum: 'WGS84'
-       longitude: '222.267255W'
-       latitude: '33.524449N'  
+      coordinate_based:
+        altitude: 2200
+        datum: 'WGS84'
+        longitude: '222.267255W'
+        latitude: '33.524449N'
 
 replaced:
   commands:
@@ -68,35 +68,35 @@ replaced:
     - name: 'eth2'
       enable: false
       location:
-        civic_based: 
-          country_code: 'US' 
+        civic_based:
+          country_code: 'US'
           ca_info:
-            - ca_type: 0 
-              ca_value: 'ENGLISH'  
+            - ca_type: 0
+              ca_value: 'ENGLISH'
 
     - name: 'eth1'
       enable: false
       location:
-        coordinate_based: 
-         altitude: 2200 
-         datum: 'WGS84'
-         longitude: '222.267255W'
-         latitude: '33.524449N'  
+        coordinate_based:
+          altitude: 2200
+          datum: 'WGS84'
+          longitude: '222.267255W'
+          latitude: '33.524449N'
 
 populate_intf:
   - name: 'eth2'
     enable: false
     location:
-      civic_based: 
-        country_code: 'US' 
+      civic_based:
+        country_code: 'US'
         ca_info:
-          - ca_type: 0 
-            ca_value: 'ENGLISH'  
+          - ca_type: 0
+            ca_value: 'ENGLISH'
 
 overridden:
   commands:
-    - "delete service lldp interface eth2 location" 
-    - "delete service lldp interface eth2 'disable'" 
+    - "delete service lldp interface eth2 location"
+    - "delete service lldp interface eth2 'disable'"
     - "set service lldp interface eth2 location elin '0000000911'"
 
   after:
@@ -115,16 +115,16 @@ round_trip:
   after:
     - name: 'eth1'
       location:
-        civic_based: 
-          country_code: 'US' 
+        civic_based:
+          country_code: 'US'
           ca_info:
-            - ca_type: 0 
+            - ca_type: 0
               ca_value: 'ENGLISH'
 
     - name: 'eth2'
       location:
-        coordinate_based: 
-         altitude: 2200 
-         datum: 'WGS84'
-         longitude: '222.267255W'
-         latitude: '33.524449N'
+        coordinate_based:
+          altitude: 2200
+          datum: 'WGS84'
+          longitude: '222.267255W'
+          latitude: '33.524449N'

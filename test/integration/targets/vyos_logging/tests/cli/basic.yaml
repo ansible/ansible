@@ -83,8 +83,8 @@
 - name: Add logging collections
   vyos_logging:
     aggregate:
-      - { dest: file, name: test1, facility: all, level: info }
-      - { dest: file, name: test2, facility: news, level: debug }
+      - {dest: file, name: test1, facility: all, level: info}
+      - {dest: file, name: test2, facility: news, level: debug}
     state: present
   register: result
 
@@ -97,9 +97,9 @@
 - name: Add and remove logging collections with overrides
   vyos_logging:
     aggregate:
-      - { dest: console, facility: all, level: info }
-      - { dest: file, name: test1, facility: all, level: info, state: absent }
-      - { dest: console, facility: daemon, level: warning }
+      - {dest: console, facility: all, level: info}
+      - {dest: file, name: test1, facility: all, level: info, state: absent}
+      - {dest: console, facility: daemon, level: warning}
     state: present
   register: result
 
@@ -112,9 +112,9 @@
 - name: Remove logging collections
   vyos_logging:
     aggregate:
-      - { dest: console, facility: all, level: info }
-      - { dest: console, facility: daemon, level: warning }
-      - { dest: file, name: test2, facility: news, level: debug }
+      - {dest: console, facility: all, level: info}
+      - {dest: console, facility: daemon, level: warning}
+      - {dest: file, name: test2, facility: news, level: debug}
     state: absent
   register: result
 

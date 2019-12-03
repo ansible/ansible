@@ -4,7 +4,7 @@ merged:
     address: '192.0.2.17'
     enable: true
     legacy_protocols:
-        - 'cdp'
+      - 'cdp'
 
   commands:
     - "set service lldp management-address '192.0.2.11'"

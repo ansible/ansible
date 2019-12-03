@@ -10,4 +10,4 @@
       set interfaces ethernet eth1
       set interfaces ethernet eth2
       delete interfaces loopback lo
-  ignore_errors: yes
+  ignore_errors: true

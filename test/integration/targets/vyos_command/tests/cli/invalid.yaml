@@ -5,9 +5,9 @@
   vyos_command:
     commands: show foo
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
-- assert: { that: result.failed }
+- assert: {that: result.failed}
 
 - name: run commands that include invalid command
   vyos_command:
@@ -15,8 +15,8 @@
       - show version
       - show foo
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
-- assert: { that: result.failed }
+- assert: {that: result.failed}
 
 - debug: msg="END cli/invalid.yaml on connection={{ ansible_connection }}"

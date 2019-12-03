@@ -9,7 +9,7 @@
     wait_for:
       - result[0] is 'VyOS'
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:
