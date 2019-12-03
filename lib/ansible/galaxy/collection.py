@@ -33,6 +33,7 @@ from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.api import CollectionVersionMetadata, GalaxyError
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
@@ -876,7 +877,7 @@ def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
     display.vvv("Downloading %s to %s" % (url, to_text(b_path)))
     # Galaxy redirs downloads to S3 which reject the request if an Authorization header is attached so don't redir that
     resp = open_url(to_native(url, errors='surrogate_or_strict'), validate_certs=validate_certs, headers=headers,
-                    unredirected_headers=['Authorization'])
+                    unredirected_headers=['Authorization'], http_agent='ansible-galaxy/%s' % ansible_version)
 
     with open(b_file_path, 'wb') as download_file:
         data = resp.read(bufsize)
