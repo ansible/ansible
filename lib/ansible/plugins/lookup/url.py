@@ -39,11 +39,51 @@ options:
     type: dictionary
     default: {}
     version_added: "2.9"
+  force:
+    description: Whether or not to set `cache-control: no-cache` header
+    type: boolean
+    version_added: "2.10"
+    default: False
+  timeout:
+    description: How long to wait for the server to send data before giving up
+    type: float
+    version_added: "2.10"
+    default: 10
+  http_agent:
+    description: User-Agent to use in the request
+    type: string
+    version_added: "2.10"
+    default: None
   force_basic_auth:
     description: Force basic authentication
     type: boolean
     version_added: "2.10"
     default: False
+  follow_redirects:
+    description: String of urllib2, all/yes, safe, none to determine how redirects are followed, see RedirectHandlerFactory for more information
+    type: string
+    version_added: "2.10"
+    default: 'urllib2'
+  use_gssapi:
+    description: Use GSSAPI handler of requests
+    type: boolean
+    version_added: "2.10"
+    default: False
+  unix_socket:
+    description: String of file system path to unix socket file to use when establishing connection to the provided url
+    type: string
+    version_added: "2.10"
+    default: None
+  ca_path:
+    description: String of file system path to CA cert bundle to use
+    type: string
+    version_added: "2.10"
+    default: None
+  unredirected_headers:
+    description: A list of headers to not attach on a redirected request
+    type: list
+    version_added: "2.10"
+    default: None
 """
 
 EXAMPLES = """
@@ -94,7 +134,15 @@ class LookupModule(LookupBase):
                                     url_username=self.get_option('username'),
                                     url_password=self.get_option('password'),
                                     headers=self.get_option('headers'),
-                                    force_basic_auth=self.get_option('force_basic_auth'))
+                                    force=self.get_option('force'),
+                                    timeout=self.get_option('timeout'),
+                                    http_agent=self.get_option('http_agent'),
+                                    force_basic_auth=self.get_option('force_basic_auth'),
+                                    follow_redirects=self.get_option('follow_redirects'),
+                                    use_gssapi=self.get_option('use_gssapi'),
+                                    unix_socket=self.get_option('unix_socket'),
+                                    ca_path=self.get_option('ca_path'),
+                                    unredirected_headers=self.get_option('unredirected_headers'))
             except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, to_native(e)))
             except URLError as e:
