@@ -1739,7 +1739,6 @@ lib/ansible/modules/crypto/acme/acme_account_info.py validate-modules:return-syn
 lib/ansible/modules/crypto/entrust/ecs_domain.py validate-modules:doc-required-mismatch
 lib/ansible/modules/crypto/openssh_cert.py validate-modules:doc-required-mismatch
 lib/ansible/modules/crypto/openssl_certificate.py validate-modules:doc-required-mismatch
-lib/ansible/modules/crypto/openssl_csr.py validate-modules:doc-required-mismatch
 lib/ansible/modules/crypto/openssl_publickey.py validate-modules:doc-required-mismatch
 lib/ansible/modules/database/influxdb/influxdb_database.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/database/influxdb/influxdb_database.py validate-modules:parameter-type-not-in-doc
