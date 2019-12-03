@@ -1,0 +1,6 @@
+---
+esxi_hosts: []
+infra:
+virtual_machines: []
+virtual_machines_in_cluster: []
+#esxi_password: ''
