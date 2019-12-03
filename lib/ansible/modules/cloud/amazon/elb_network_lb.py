@@ -110,6 +110,9 @@ options:
   state:
     description:
       - Create or destroy the load balancer.
+      - The current default is C(absent).  However, this behavior is inconsistent with other modules
+        and as such the default will change to C(present) in 2.14.
+        To maintain the existing behavior explicitly set I(state=absent).
     choices: [ 'present', 'absent' ]
     type: str
   tags:
@@ -435,6 +438,12 @@ def main():
     if state == 'present':
         if module.params.get("subnets") is None and module.params.get("subnet_mappings") is None:
             module.fail_json(msg="'subnets' or 'subnet_mappings' is required when state=present")
+
+    if state is None:
+        # See below, unless state==present we delete.  Ouch.
+        module.deprecate('State currently defaults to absent.  This is inconsistent with other modules'
+                         ' and the default will be changed to `present` in Ansible 2.14',
+                         version='2.14')
 
     # Quick check of listeners parameters
     listeners = module.params.get("listeners")
