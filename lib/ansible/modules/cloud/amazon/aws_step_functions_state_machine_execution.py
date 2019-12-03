@@ -119,7 +119,7 @@ def start_execution(module, sfn_client):
         for execution in page_iterators.build_full_result()['executions']:
             if name == execution['name']:
                 check_mode(module, msg='State machine execution already exists.', changed=False)
-                module.exit_json(changed=False, something="something")
+                module.exit_json(changed=False)
 
         check_mode(module, msg='State machine execution would be started.', changed=True)
         res_execution = sfn_client.start_execution(
