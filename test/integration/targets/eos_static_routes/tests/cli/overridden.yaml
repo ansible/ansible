@@ -1,0 +1,50 @@
+---
+- debug:
+    msg: "Start eos_static_routes merged integration tests ansible_connection={{ ansible_connection }}"
+
+- include_tasks: _populate.yaml
+
+- set_fact:
+    config:
+      - address_families:
+        - afi: ipv6
+          routes:
+          - dest: 1120:10::/64
+            next_hops:
+            - admin_distance: 55
+              interface: Ethernet1
+        vrf: testvrf
+
+- name: Override attributes of given static routes.
+  eos_static_routes: &overridden
+    config:
+      - vrf: "testvrf"
+        address_families:
+        - afi: 'ipv6'
+          routes:
+          - dest: '1120:10::/64'      
+            next_hops:
+            - interface:  Ethernet1
+              admin_distance: 55
+    state: overridden
+  register: result
+
+- eos_facts:
+    gather_network_resources: static_routes
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.static_routes|symmetric_difference(config) == []"
+  become: yes
+
+- name: Idempotency check
+  eos_static_routes: *overridden
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands|length == 0"
+
+- include_tasks: _remove_config.yaml
