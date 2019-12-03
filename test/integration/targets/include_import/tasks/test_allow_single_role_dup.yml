@@ -1,0 +1,8 @@
+---
+- name: test for allow_duplicates with single role
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - dup_allowed_role
+    - dup_allowed_role
+    - dup_allowed_role

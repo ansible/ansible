@@ -201,11 +201,9 @@ class Play(Base, Taggable, CollectionSearch):
         for ri in role_includes:
             roles.append(Role.load(ri, play=self))
 
-        return self._extend_value(
-            self.roles,
-            roles,
-            prepend=True
-        )
+        self.roles[:0] = roles
+
+        return self.roles
 
     def _load_vars_prompt(self, attr, ds):
         new_ds = preprocess_vars(ds)
