@@ -67,7 +67,7 @@ options:
       type: int
     databasename:
       description:
-        - Name for the database on the origin or target side
+        - Name for the database on the origin or target side.
       type: str
     extraconnectionattributes:
       description:
@@ -90,7 +90,7 @@ options:
       type: str
     sslmode:
       description:
-        - Mode used for the ssl connection
+        - Mode used for the SSL connection.
       default: none
       choices: ['none', 'require', 'verify-ca', 'verify-full']
       type: str
@@ -101,12 +101,12 @@ options:
       type: str
     externaltabledefinition:
       description:
-        - The external table definition
+        - The external table definition.
       type: str
     dynamodbsettings:
       description:
         - Settings in JSON format for the target Amazon DynamoDB endpoint
-          if source or target is dynamodb
+          if source or target is dynamodb.
       type: dict
     s3settings:
       description:
@@ -115,29 +115,29 @@ options:
     dmstransfersettings:
       description:
         - The settings in JSON format for the DMS transfer type of
-          source endpoint
+          source endpoint.
       type: dict
     mongodbsettings:
       description:
-        - Settings in JSON format for the source MongoDB endpoint
+        - Settings in JSON format for the source MongoDB endpoint.
       type: dict
     kinesissettings:
       description:
         - Settings in JSON format for the target Amazon Kinesis
-          Data Streams endpoint
+          Data Streams endpoint.
       type: dict
     elasticsearchsettings:
       description:
-        - Settings in JSON format for the target Elasticsearch endpoint
+        - Settings in JSON format for the target Elasticsearch endpoint.
       type: dict
     wait:
       description:
-        - should wait for the object to be deleted when state = absent
+        - Whether Ansible should wait for the object to be deleted when I(state=absent).
       type: bool
       default: false
     timeout:
       description:
-        - time in seconds we should wait for when deleting a resource
+        - Time in seconds we should wait for when deleting a resource.
         - Required when I(wait=true).
       type: int
     retries:

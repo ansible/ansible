@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: ec2_vpc_subnet
 short_description: Manage subnets in AWS virtual private clouds
 description:
-    - Manage subnets in AWS virtual private clouds
+    - Manage subnets in AWS virtual private clouds.
 version_added: "2.0"
 author:
 - Robert Estelle (@erydo)
@@ -45,7 +45,7 @@ options:
     type: dict
   state:
     description:
-      - "Create or remove the subnet"
+      - "Create or remove the subnet."
     default: present
     choices: [ 'present', 'absent' ]
     type: str
@@ -68,7 +68,7 @@ options:
     version_added: "2.5"
   wait:
     description:
-      - "When specified,I(state=present) module will wait for subnet to be in available state before continuing."
+      - "When I(wait=true) and I(state=present), module will wait for subnet to be in available state before continuing."
     type: bool
     default: true
     version_added: "2.5"

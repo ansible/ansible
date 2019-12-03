@@ -42,13 +42,13 @@ options:
 
   domain:
     description:
-    - Name of the Active Directory domain
+    - Name of the Active Directory domain.
     - Required when I(state=present).
     type: str
 
   DNS:
     description:
-    - DNS server address for the Active Directory domain
+    - DNS server address for the Active Directory domain.
     - Required when I(state=present), to modify ActiveDirectory properties.
     type: str
 
@@ -59,12 +59,12 @@ options:
 
   username:
     description:
-    - Username of the Active Directory domain administrator
+    - Username of the Active Directory domain administrator.
     type: str
 
   password:
     description:
-    - Password of the Active Directory domain administrator
+    - Password of the Active Directory domain administrator.
     type: str
 '''
 

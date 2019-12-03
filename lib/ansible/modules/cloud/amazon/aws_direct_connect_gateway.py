@@ -15,12 +15,12 @@ DOCUMENTATION = '''
 module: aws_direct_connect_gateway
 author: Gobin Sougrakpam (@gobins)
 version_added: "2.5"
-short_description: Manage AWS Direct Connect Gateway.
+short_description: Manage AWS Direct Connect gateway.
 description:
-  - Creates AWS Direct Connect Gateway
-  - Deletes AWS Direct Connect Gateway
-  - Attaches Virtual Gateways to Direct Connect Gateway
-  - Detaches Virtual Gateways to Direct Connect Gateway
+  - Creates AWS Direct Connect Gateway.
+  - Deletes AWS Direct Connect Gateway.
+  - Attaches Virtual Gateways to Direct Connect Gateway.
+  - Detaches Virtual Gateways to Direct Connect Gateway.
 extends_documentation_fragment:
     - aws
     - ec2
@@ -28,32 +28,32 @@ requirements: [ boto3 ]
 options:
   state:
     description:
-        - present to ensure resource is created.
-        - absent to remove resource
+        - Set I(state=present) to ensure a resource is created.
+        - Set I(state=absent) to remove a resource.
     default: present
     choices: [ "present", "absent"]
     type: str
   name:
     description:
-        - name of the dxgw to be created or deleted
+        - Name of the Direct Connect Gateway to be created or deleted.
     type: str
   amazon_asn:
     description:
-        - amazon side asn
+        - The Amazon side ASN.
         - Required when I(state=present).
     type: str
   direct_connect_gateway_id:
     description:
-        - id of an existing direct connect gateway
+        - The id of an existing Direct Connect Gateway.
         - Required when I(state=absent).
     type: str
   virtual_gateway_id:
     description:
-        - vpn gateway id of an existing virtual gateway
+        - The VPN gateway id of an existing virtual gateway.
     type: str
   wait_timeout:
     description:
-        - How long to wait for the association to be deleted
+        - How long to wait for the association to be deleted.
     type: int
     default: 320
 '''

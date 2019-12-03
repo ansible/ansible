@@ -73,11 +73,11 @@ options:
   wait:
     description:
       - Whether or not to wait for the operation to complete. May be useful when waiting for virtual interfaces
-        to be deleted. May modify the time of waiting with C(wait_timeout).
+        to be deleted. May modify the time of waiting with I(wait_timeout).
     type: bool
   wait_timeout:
     description:
-      - The duration in seconds to wait if I(wait) is True.
+      - The duration in seconds to wait if I(wait=true)
     default: 120
     type: int
 """

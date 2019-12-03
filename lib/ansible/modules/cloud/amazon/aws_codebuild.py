@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: aws_codebuild
 short_description: Create or delete an AWS CodeBuild project
 notes:
-    - for details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html)
+    - For details of the parameters and returns see U(http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html).
 description:
     - Create or delete a CodeBuild projects on AWS, used for building code artifacts from source code.
 version_added: "2.9"
@@ -26,12 +26,12 @@ requirements: [ botocore, boto3 ]
 options:
     name:
         description:
-            - Name of the CodeBuild project
+            - Name of the CodeBuild project.
         required: true
         type: str
     description:
         description:
-            - Descriptive text of the CodeBuild project
+            - Descriptive text of the CodeBuild project.
         required: false
         type: str
     source:
@@ -41,7 +41,7 @@ options:
         suboptions:
             type:
                 description:
-                    - "The type of the source. Allows one of these: CODECOMMIT, CODEPIPELINE, GITHUB, S3, BITBUCKET, GITHUB_ENTERPRISE"
+                    - "The type of the source. Allows one of these: C(CODECOMMIT), C(CODEPIPELINE), C(GITHUB), C(S3), C(BITBUCKET), C(GITHUB_ENTERPRISE)."
                 required: true
                 type: str
             location:
@@ -72,7 +72,7 @@ options:
         suboptions:
             type:
                 description:
-                    - "The type of build output for artifacts. Can be one of the following: CODEPIPELINE, NO_ARTIFACTS, S3"
+                    - "The type of build output for artifacts. Can be one of the following: C(CODEPIPELINE), C(NO_ARTIFACTS), C(S3)."
                 required: true
             location:
                 description:
@@ -81,21 +81,21 @@ options:
             path:
                 description:
                     - Along with namespace_type and name, the pattern that AWS CodeBuild will use to name and store the output artifacts.
-                    - Used for path in S3 bucket when type is S3
+                    - Used for path in S3 bucket when type is C(S3).
                 required: false
             namespace_type:
                 description:
-                    - Along with path and name, the pattern that AWS CodeBuild will use to determine the name and location to store the output artifacts
-                    - Accepts BUILD_ID and NONE
-                    - "See docs here: U(http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project)"
+                    - Along with path and name, the pattern that AWS CodeBuild will use to determine the name and location to store the output artifacts.
+                    - Accepts C(BUILD_ID) and C(NONE).
+                    - "See docs here: U(http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project)."
                 required: false
             name:
                 description:
-                    - Along with path and namespace_type, the pattern that AWS CodeBuild will use to name and store the output artifact
+                    - Along with path and namespace_type, the pattern that AWS CodeBuild will use to name and store the output artifact.
                 required: false
             packaging:
                 description:
-                    - The type of build output artifact to create on S3, can be NONE for creating a folder or ZIP for a ZIP file
+                    - The type of build output artifact to create on S3, can be NONE for creating a folder or ZIP for a ZIP file.
                 required: false
         type: dict
     cache:
@@ -105,7 +105,7 @@ options:
         suboptions:
             type:
                 description:
-                    - Cache type. Can be NO_CACHE or S3.
+                    - Cache type. Can be C(NO_CACHE) or C(S3).
                 required: true
             location:
                 description:
@@ -119,7 +119,7 @@ options:
         suboptions:
             type:
                 description:
-                    - The type of build environment to use for the project. Usually LINUX_CONTAINER
+                    - The type of build environment to use for the project. Usually C(LINUX_CONTAINER).
                 required: true
             image:
                 description:
@@ -128,7 +128,7 @@ options:
             compute_type:
                 description:
                     - Information about the compute resources the build project will use.
-                    - "Available values include: BUILD_GENERAL1_SMALL, BUILD_GENERAL1_MEDIUM, BUILD_GENERAL1_LARGE"
+                    - "Available values include: C(BUILD_GENERAL1_SMALL), C(BUILD_GENERAL1_MEDIUM), C(BUILD_GENERAL1_LARGE)."
                 required: true
             environment_variables:
                 description:

@@ -63,7 +63,7 @@ options:
   link_aggregation_group:
     description:
       - The ID of the link aggregation group you want to associate with the connection.
-        This is optional in case a stand-alone connection is desired.
+      - This is optional when a stand-alone connection is desired.
     type: str
   forced_update:
     description:

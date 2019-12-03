@@ -31,7 +31,7 @@ author:
 options:
   event_name:
     description:
-      - unique name for event notification on bucket
+      - Unique name for event notification on bucket.
     required: true
     type: str
   lambda_function_arn:
@@ -41,7 +41,7 @@ options:
     type: str
   bucket_name:
     description:
-      - S3 bucket name
+      - S3 bucket name.
     required: true
     type: str
   state:
@@ -76,6 +76,7 @@ options:
               's3:ObjectRemoved:DeleteMarkerCreated', 's3:ObjectRestore:Post',
               's3:ObjectRestore:Completed', 's3:ReducedRedundancyLostObject']
     type: list
+    elements: str
   prefix:
     description:
       - Optional prefix to limit the notifications to objects with keys that start with matching
