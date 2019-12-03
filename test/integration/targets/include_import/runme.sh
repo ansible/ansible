@@ -83,3 +83,7 @@ test "$(grep -c '"item=foo"' test_include_dupe_loop.out)" = 3
 ansible-playbook public_exposure/playbook.yml -i inventory "$@"
 ansible-playbook public_exposure/no_bleeding.yml -i inventory "$@"
 ansible-playbook public_exposure/no_overwrite_roles.yml -i inventory "$@"
+
+# https://github.com/ansible/ansible/issues/64902
+ansible-playbook tasks/test_allow_single_role_dup.yml 2>&1 | tee test_allow_single_role_dup.out
+test "$(grep -c 'ok=3' test_allow_single_role_dup.out)" = 1
