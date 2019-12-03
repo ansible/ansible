@@ -24,7 +24,6 @@ class Static_routesFacts(object):
         self._module = module
         self.argument_spec = Static_routesArgs.argument_spec
         spec = deepcopy(self.argument_spec)
-        import q
         if subspec:
             if options:
                 facts_argument_spec = spec[subspec][options]
@@ -50,7 +49,6 @@ class Static_routesFacts(object):
         if not data:
             data = self.get_device_data(connection)
 
-        import q
         # split the config into instances of the resource
         resource_delim = 'ip.* route'
         find_pattern = r'(?:^|\n)%s.*?(?=(?:^|\n)%s|$)' % (resource_delim,
@@ -60,19 +58,19 @@ class Static_routesFacts(object):
         resource_vrf = {}
         for resource in resources:
             if resource and "vrf" not in resource:
-                resources_without_vrf.append(resource) 
+                resources_without_vrf.append(resource)
             else:
-                vrf = re.search(r'ip(v6)* route vrf (.*?) .*',resource)
+                vrf = re.search(r'ip(v6)* route vrf (.*?) .*', resource)
                 if vrf.group(2) in resource_vrf.keys():
                     vrf_val = resource_vrf[vrf.group(2)]
                     vrf_val.append(resource)
                     resource_vrf.update({vrf.group(2): vrf_val})
-                else :
+                else:
                     resource_vrf.update({vrf.group(2): [resource]})
         resources_without_vrf = ["\n".join(resources_without_vrf)]
         for vrf in resource_vrf.keys():
             vrflist = ["\n".join(resource_vrf[vrf])]
-            resource_vrf.update({vrf: vrflist}) 
+            resource_vrf.update({vrf: vrflist})
         objs = []
         for resource in resources_without_vrf:
             if resource:
@@ -107,7 +105,6 @@ class Static_routesFacts(object):
         :returns: The generated config
         """
         config = deepcopy(spec)
-        import q
         address_family_dict = {}
         route_dict = {}
         dest_list = []
@@ -118,7 +115,7 @@ class Static_routesFacts(object):
         config["address_families"] = []
         next_hops = {}
         interface_list = ["Ethernet", "Loopback", "Management",
-                            "Port-Channel", "Tunnel", "Vlan", "Vxlan", "vtep"]
+                          "Port-Channel", "Tunnel", "Vlan", "Vxlan", "vtep"]
         conf_list = conf.split('\n')
         for conf_elem in conf_list:
             matches = re.findall(r'(ip|ipv6) route ([\d\.\/:]+|vrf) (.+)$', conf_elem)
@@ -127,7 +124,7 @@ class Static_routesFacts(object):
                 route_update = False
                 if matches[0][1] == "vrf":
                     vrf = remainder.pop(0)
-                    # new vrf 
+                    # new vrf
                     if vrf not in vrf_list and vrf_list:
                         route_dict.update({"next_hops": next_hops})
                         routes.append(route_dict)
@@ -139,15 +136,15 @@ class Static_routesFacts(object):
                     dest = remainder.pop(0)
                 else:
                     config["vrf"] = None
-                    dest = matches[0][1] 
-                afi  = "ipv4" if matches[0][0] == "ip" else "ipv6"
+                    dest = matches[0][1]
+                afi = "ipv4" if matches[0][0] == "ip" else "ipv6"
                 if afi not in afi_list:
                     if afi_list and not route_update:
                         # new afi and not the first updating all prev configs
                         route_dict.update({"next_hops": next_hops})
                         routes.append(route_dict)
                         address_family_dict.update({"routes": routes})
-                        config["address_families"].append(address_family_dict)            
+                        config["address_families"].append(address_family_dict)
                         route_update = True
                     address_family_dict = {}
                     address_family_dict.update({"afi": afi})
