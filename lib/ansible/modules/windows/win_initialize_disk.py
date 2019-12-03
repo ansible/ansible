@@ -45,10 +45,9 @@ options:
         type: str
         choices: [ gpt, mbr ]
         default: gpt
-        required: false
     online:
         description:
-            If the disk is offline and/or readonly update the disk to be online and not readonly
+            - If the disk is offline and/or readonly update the disk to be online and not readonly.
         type: bool
         default: true
     force:
@@ -60,8 +59,7 @@ options:
 notes:
     - One of three parameters (I(disk_number), I(uniqueid), and I(path)) are mandatory to identify the target disk, but
       more than one cannot be specified at the same time.
-    - A minimum Operating System Version of 6.2 is required to use this module. To check if your OS is compatible, see
-      U(https://docs.microsoft.com/en-us/windows/desktop/sysinfo/operating-system-version).
+    - A minimum Operating System Version of Server 2012 or Windows 8 is required to use this module.
     - This module is idempotent if I(force) is not specified.
 
 seealso:
@@ -74,18 +72,15 @@ author:
 '''
 
 EXAMPLES = '''
-# Initialize a disk
 - name: Initialize a disk
   win_initialize_disk:
     disk_number: 1
 
-# Initialize a disk with an MBR partition style
-- name: Initialize a disk
+- name: Initialize a disk with an MBR partition style
   win_initialize_disk:
     disk_number: 1
     style: mbr
 
-# Initialize an already initialized disk
 - name: Forcefully initiallize a disk
   win_initialize_disk:
     disk_number: 2
