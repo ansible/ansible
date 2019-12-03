@@ -491,20 +491,21 @@ def main():
         elif command == 'default':
             if params['direction'] not in ['outgoing', 'incoming', 'routed', None]:
                 module.fail_json(msg='For default, direction must be one of "outgoing", "incoming" and "routed", or direction must not be specified.')
-            if module.check_mode:
-                regexp = r'Default: (deny|allow|reject) \(incoming\), (deny|allow|reject) \(outgoing\), (deny|allow|reject|disabled) \(routed\)'
-                extract = re.search(regexp, pre_state)
-                if extract is not None:
-                    current_default_values = {}
-                    current_default_values["incoming"] = extract.group(1)
-                    current_default_values["outgoing"] = extract.group(2)
-                    current_default_values["routed"] = extract.group(3)
-                    v = current_default_values[params['direction'] or 'incoming']
-                    if v not in (value, 'disabled'):
-                        changed = True
-                else:
+
+            regexp = r'Default: (deny|allow|reject) \(incoming\), (deny|allow|reject) \(outgoing\), (deny|allow|reject|disabled) \(routed\)'
+            extract = re.search(regexp, pre_state)
+            if extract:
+                current_default_values = {}
+                current_default_values["incoming"] = extract.group(1)
+                current_default_values["outgoing"] = extract.group(2)
+                current_default_values["routed"] = extract.group(3)
+                v = current_default_values[params['direction'] or 'incoming']
+                if v not in (value, 'disabled'):
                     changed = True
             else:
+                changed = True
+
+            if not module.check_mode:
                 execute(cmd + [[command], [value], [params['direction']]])
 
         elif command == 'rule':
