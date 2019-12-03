@@ -130,6 +130,7 @@ Codes
   undocumented-parameter                                       Documentation        Error                  Argument is listed in the argument_spec, but not documented in the module
   unidiomatic-typecheck                                        Syntax               Error                  Type comparison using ``type()`` found. Use ``isinstance()`` instead
   unknown-doc-fragment                                         Documentation        Warning                Unknown pre-existing ``DOCUMENTATION`` error
+  unknown-argument-spec-key                                    Parameters           Error                  Unknown key in argument_spec found
   use-boto3                                                    Imports              Error                  ``boto`` import found, new modules should use ``boto3``
   use-fail-json-not-sys-exit                                   Imports              Error                  ``sys.exit()`` call found. Should be ``exit_json``/``fail_json``
   use-module-utils-urls                                        Imports              Error                  ``requests`` import found, should use ``ansible.module_utils.urls`` instead

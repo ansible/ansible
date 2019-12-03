@@ -85,6 +85,25 @@ BLACKLIST_IMPORTS = {
 }
 SUBPROCESS_REGEX = re.compile(r'subprocess\.Po.*')
 OS_CALL_REGEX = re.compile(r'os\.call.*')
+VALID_ARGUMENT_SPEC_KEYS = frozenset((
+    'aliases',
+    'apply_defaults',
+    'choices',
+    'default',
+    'deprecated_aliases',
+    'elements',
+    'fallback',
+    'mutually_exclusive',
+    'no_log',
+    'options',
+    'removed_in_version',
+    'required',
+    'required_by',
+    'required_if',
+    'required_one_of',
+    'required_together',
+    'type',
+))
 
 
 class ReporterEncoder(json.JSONEncoder):
@@ -1189,6 +1208,17 @@ class ModuleValidator(Validator):
                     msg=msg,
                 )
                 continue
+            for key in data:
+                if key not in VALID_ARGUMENT_SPEC_KEYS:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " has an unknown key '%s' in argument_spec" % key
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='unknown-argument-spec-key',
+                        msg=msg,
+                    )
             aliases = data.get('aliases', [])
             if arg in aliases:
                 msg = "Argument '%s' in argument_spec" % arg
