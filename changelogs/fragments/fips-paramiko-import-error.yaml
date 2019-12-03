@@ -1,0 +1,2 @@
+bugfixes:
+  - paramiko - catch and handle ``cryptography.exceptions.InternalError`` to prevent stack trace when running on RHEL 8 in FIPS mode
