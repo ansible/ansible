@@ -50,7 +50,7 @@ def is_module_path(path):
     :type path: str
     :rtype: bool
     """
-    return '/lib/ansible/modules/' in path or '/plugins/modules/' in path or '/module_utils/' in path
+    return '/lib/ansible/modules/' in path or '/lib/ansible/module_utils/' in path or '/plugins/modules/' in path or '/plugins/module_utils/' in path
 
 
 class AnsibleBlacklistChecker(BaseChecker):
