@@ -1,0 +1,2 @@
+bugfixes:
+  - netscaler_service - fixed issue preventing use of graceful attribute
