@@ -17,6 +17,7 @@ url = http://${FOREMAN_HOST}:${FOREMAN_PORT}
 user = ansible-tester
 password = secure
 ssl_verify = False
+use_reports_api = False
 FOREMAN_INI
 
 # use ansible to validate the return data
