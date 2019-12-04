@@ -198,7 +198,7 @@ def main():
     argument_spec.update(
         cluster_name=dict(type='str', required=False),
         esxi_hostname=dict(type='list', required=False),
-        state=dict(str='str', default='present', choices=['present', 'absent'], required=False),
+        state=dict(type='str', default='present', choices=['present', 'absent'], required=False),
     )
 
     module = AnsibleModule(
