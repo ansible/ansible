@@ -1,0 +1,8 @@
+- block:
+  - include_tasks: run-test.yml
+    with_fileglob:
+    - "tests/*.yml"
+  when: docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_image tests!"
+  when: not(docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

@@ -1,0 +1,34 @@
+---
+- name: Create random name prefix
+  set_fact:
+    name_prefix: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
+- name: Create image and container list
+  set_fact:
+    inames: []
+    cnames: []
+
+- debug:
+    msg: "Using name prefix {{ name_prefix }}"
+
+- block:
+  - include_tasks: run-test.yml
+    with_fileglob:
+    - "tests/*.yml"
+
+  always:
+  - name: "Make sure all images are removed"
+    docker_image:
+      name: "{{ item }}"
+      state: absent
+    with_items: "{{ inames }}"
+  - name: "Make sure all containers are removed"
+    docker_container:
+      name: "{{ item }}"
+      state: absent
+      force_kill: yes
+    with_items: "{{ cnames }}"
+
+  when: docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_image tests!"
+  when: not(docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

@@ -1,4 +1,18 @@
 ---
+- name: Setup OpenSSL
+  include_role:
+    name: setup_openssl
+
+- name: Register registry cleanup
+  command: 'true'
+  # this must be registered before setup_docker is included
+  # otherwise setup_docker's own cleanup handler will run before registry cleanup, which will cause registry cleanup to fail
+  notify: Remove test registry
+
+- name: Setup Docker
+  include_role:
+    name: setup_docker
+
 - name: Create random name prefix and test registry name
   set_fact:
     name_prefix: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
@@ -99,40 +113,6 @@
       registry_frontend_address: "localhost:{{ nginx_container.container.NetworkSettings.Ports['5000/tcp'].0.HostPort }}"
 
   - debug: msg="Registry available under {{ registry_address }}, NGINX frontend available under {{ registry_frontend_address }}"
-
-  - include_tasks: run-test.yml
-    with_fileglob:
-    - "tests/*.yml"
-
-  always:
-  - name: "Make sure all images are removed"
-    docker_image:
-      name: "{{ item }}"
-      state: absent
-    with_items: "{{ inames }}"
-  - name: "Get registry logs"
-    command: "docker logs {{ registry_name }}"
-    register: registry_logs
-    no_log: yes
-  - name: "Printing registry logs"
-    debug: var=registry_logs.stdout_lines
-  - name: "Get nginx logs"
-    command: "docker logs {{ nginx_name }}"
-    register: nginx_logs
-    no_log: yes
-  - name: "Printing nginx logs"
-    debug: var=nginx_logs.stdout_lines
-  - name: "Make sure all containers are removed"
-    docker_container:
-      name: "{{ item }}"
-      state: absent
-      force_kill: yes
-    with_items: "{{ cnames }}"
-  - name: "Make sure all volumes are removed"
-    docker_volume:
-      name: "{{ item }}"
-      state: absent
-    with_items: "{{ vnames }}"
 
   when: docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')
 

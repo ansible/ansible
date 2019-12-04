@@ -12,6 +12,12 @@
 ## build.args ######################################################
 ####################################################################
 
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
 - name: buildargs
   docker_image:
     name: "{{ iname }}"
