@@ -514,7 +514,7 @@ class HttpApi:
         """
         return self.edit_config(config, commit, replace)
 
-    def edit_config(self, config, commit=False, replace=False):
+    def edit_config(self, config, commit=True, replace=False):
         """Loads the configuration onto the remote devices
 
         If the device doesn't support configuration sessions, this will
