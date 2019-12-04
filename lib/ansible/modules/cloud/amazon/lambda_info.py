@@ -26,7 +26,6 @@ options:
   query:
     description:
       - Specifies the resource type for which to gather information.  Leave blank to retrieve all information.
-    required: true
     choices: [ "aliases", "all", "config", "mappings", "policy", "versions" ]
     default: "all"
     type: str

@@ -32,16 +32,19 @@ options:
               Must contain no more than 255 alphanumeric characters,
               periods, spaces, underscores, or hyphens. Must not be "default".
         type: str
+        required: true
     description:
         description:
             - The description for the subnet group.
         type: str
+        required: true
     subnet_ids:
         description:
             - A list containing the subnet ids for the replication subnet group,
               needs to be at least 2 items in the list.
         type: list
         elements: str
+        required: true
 author:
     - "Rui Moreira (@ruimoreira)"
 extends_documentation_fragment:

@@ -36,7 +36,7 @@ options:
     description:
       - A dictionary of tags to add or remove from the resource.
       - If the value provided for a tag is null and I(state=absent), the tag will be removed regardless of its current value.
-    required: true
+      - Required when I(state=present) or I(state=absent).
     type: dict
   purge_tags:
     description:

@@ -30,7 +30,6 @@ options:
   state:
     description:
       - Create or remove the cross-region snapshot configuration.
-    required: true
     choices: [ "present", "absent" ]
     default: present
     type: str
@@ -50,7 +49,6 @@ options:
     description:
       - A grant for Amazon Redshift to use a master key in the I(destination_region).
       - See U(http://boto3.readthedocs.io/en/latest/reference/services/redshift.html#Redshift.Client.create_snapshot_copy_grant)
-    required: false
     aliases: [ "copy_grant" ]
     type: str
   snapshot_retention_period:

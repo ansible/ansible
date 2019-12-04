@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: elasticache_snapshot
-short_description: Manage cache snapshots in Amazon ElastiCache.
+short_description: Manage cache snapshots in Amazon ElastiCache
 description:
   - Manage cache snapshots in Amazon ElastiCache.
   - Returns information about the specified snapshot.
@@ -28,11 +28,12 @@ options:
   name:
     description:
       - The name of the snapshot we want to create, copy, delete.
-    required: yes
+    required: true
     type: str
   state:
     description:
       - Actions that will create, destroy, or copy a snapshot.
+    required: true
     choices: ['present', 'absent', 'copy']
     type: str
   replication_id:

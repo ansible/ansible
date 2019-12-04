@@ -29,7 +29,6 @@ options:
   query:
     description:
       - Specifies the resource type for which to gather facts.  Leave blank to retrieve all facts.
-    required: true
     choices: [ "aliases", "all", "config", "mappings", "policy", "versions" ]
     default: "all"
     type: str

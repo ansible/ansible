@@ -45,11 +45,13 @@ options:
     type: bool
   purge_tags:
     version_added: "2.5"
-    description: Purge existing tags that are not found in route table
+    description: Purge existing tags that are not found in route table.
     type: bool
     default: 'no'
   route_table_id:
-    description: The ID of the route table to update or delete.
+    description:
+    - The ID of the route table to update or delete.
+    - Required when I(lookup=id).
     type: str
   routes:
     description: List of routes in the route table.
@@ -58,9 +60,9 @@ options:
         If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
         Routes are required for present states.
     type: list
-    elements: str
+    elements: dict
   state:
-    description: Create or destroy the VPC route table
+    description: Create or destroy the VPC route table.
     default: present
     choices: [ 'present', 'absent' ]
     type: str
@@ -71,13 +73,14 @@ options:
     elements: str
   tags:
     description: >
-      A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }. Tags are
+      A dictionary of resource tags of the form: C({ tag1: value1, tag2: value2 }). Tags are
       used to uniquely identify route tables within a VPC when the route_table_id is not supplied.
     aliases: [ "resource_tags" ]
     type: dict
   vpc_id:
-    description: VPC ID of the VPC in which to create the route table.
-    required: true
+    description:
+    - VPC ID of the VPC in which to create the route table.
+    - Required when I(state=present) or I(lookup=tag).
     type: str
 extends_documentation_fragment:
     - aws

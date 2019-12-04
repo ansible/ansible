@@ -54,6 +54,7 @@ options:
         type: bool
     type: list
     elements: dict
+    required: true
   organization_source:
     description:
     - The region authorized to collect aggregated data.
@@ -72,6 +73,7 @@ options:
         - If true, aggregate existing AWS Config regions and future regions.
         type: bool
     type: dict
+    required: true
 extends_documentation_fragment:
   - aws
   - ec2

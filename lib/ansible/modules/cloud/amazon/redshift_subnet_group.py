@@ -25,6 +25,7 @@ options:
   state:
     description:
       - Specifies whether the subnet should be present or absent.
+    required: true
     choices: ['present', 'absent' ]
     type: str
   group_name:

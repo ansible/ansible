@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: aws_direct_connect_virtual_interface
-short_description: Manage Direct Connect virtual interfaces.
+short_description: Manage Direct Connect virtual interfaces
 description:
   - Create, delete, or modify a Direct Connect public or private virtual interface.
 version_added: "2.5"
@@ -27,11 +27,13 @@ options:
       - The desired state of the Direct Connect virtual interface.
     choices: [present, absent]
     type: str
+    required: true
   id_to_associate:
     description:
       - The ID of the link aggregation group or connection to associate with the virtual interface.
     aliases: [link_aggregation_group_id, connection_id]
     type: str
+    required: true
   public:
     description:
       - The type of virtual interface.
