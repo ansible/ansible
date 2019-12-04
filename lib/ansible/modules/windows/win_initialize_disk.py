@@ -28,17 +28,14 @@ options:
         description:
             - Used to specify the disk number of the disk to be initialized.
         type: int
-        required: true
     uniqueid:
         description:
             - Used to specify the uniqueid of the disk to be initialized.
         type: str
-        required: true
     path:
         description:
             - Used to specify the path to the disk to be initialized.
         type: str
-        required: true
     style:
         description:
             - The partition style to use for the disk. Valid options are mbr or gpt.
@@ -54,7 +51,6 @@ options:
         description:
             - Specify if initializing should be forced for disks that are already initialized.
         type: bool
-        default: false
 
 notes:
     - One of three parameters (I(disk_number), I(uniqueid), and I(path)) are mandatory to identify the target disk, but
