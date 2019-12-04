@@ -7,8 +7,8 @@
 
 - name: ensure exists is false
   assert:
-  that:
-    - test_store.exists == false
+    that:
+      - test_store.exists == false
 
 - name: get stats on the root certificate store
   win_cert_stat:
