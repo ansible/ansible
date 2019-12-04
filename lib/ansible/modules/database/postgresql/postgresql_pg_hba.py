@@ -191,12 +191,8 @@ import traceback
 IPADDRESS_IMP_ERR = None
 try:
     import ipaddress
-    HAS_IPADDRESS = True
 except ImportError:
     IPADDRESS_IMP_ERR = traceback.format_exc()
-    HAS_IPADDRESS = False
-else:
-    HAS_IPADDRESS = True
 
 import tempfile
 import shutil
@@ -684,8 +680,8 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True
     )
-    if not HAS_IPADDRESS:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=IPADDRESS_IMP_ERR)
+    if IPADDRESS_IMP_ERR is not None:
+        module.fail_json(msg=missing_required_lib('ipaddress'), exception=IPADDRESS_IMP_ERR)
 
     contype = module.params["contype"]
     create = bool(module.params["create"] or module.check_mode)
