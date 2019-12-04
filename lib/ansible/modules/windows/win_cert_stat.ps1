@@ -20,6 +20,8 @@ function Format-Date([DateTime]$date)
 
 function Get-CertificateInfo ($cert)
 {
+    $epoch_date = Get-Date -Date "01/01/1970"
+
     $cert_info = @{ }
     $cert_info.friendly_name = $cert.FriendlyName
     $cert_info.thumbprint = $cert.Thumbprint
