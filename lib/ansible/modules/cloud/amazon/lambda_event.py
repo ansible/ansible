@@ -47,14 +47,12 @@ options:
     description:
       - Version of the Lambda function.
       - Mutually exclusive with I(alias).
-    required: false
     type: int
   event_source:
     description:
       - Source of the event that triggers the lambda function.
       - For DynamoDB and Kinesis events, select C(stream)
       - For SQS queues, select C(sqs)
-    required: false
     default: stream
     choices: ['stream', 'sqs']
     type: str

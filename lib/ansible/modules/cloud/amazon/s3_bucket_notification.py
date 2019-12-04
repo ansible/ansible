@@ -54,13 +54,11 @@ options:
     description:
       - Name of the Lambda function alias.
       - Mutually exclusive with I(lambda_version).
-    required: false
     type: str
   lambda_version:
     description:
       - Version of the Lambda function.
       - Mutually exclusive with I(lambda_alias).
-    required: false
     type: int
   events:
     description:
@@ -81,13 +79,11 @@ options:
     description:
       - Optional prefix to limit the notifications to objects with keys that start with matching
         characters.
-    required: false
     type: str
   suffix:
     description:
       - Optional suffix to limit the notifications to objects with keys that end with matching
         characters.
-    required: false
     type: str
 requirements:
     - boto3

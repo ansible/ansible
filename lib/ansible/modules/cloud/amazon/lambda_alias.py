@@ -44,13 +44,11 @@ options:
   description:
     description:
       - A short, user-defined function alias description.
-    required: false
     type: str
   function_version:
     description:
       -  Version associated with the Lambda function alias.
          A value of 0 (or omitted parameter) sets the alias to the $LATEST version.
-    required: false
     aliases: ['version']
     type: int
 requirements:
