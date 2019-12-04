@@ -33,54 +33,51 @@ author: "Rob White (@wimnat)"
 options:
   access_logs_enabled:
     description:
-      - "Whether or not to enable access logs. When true, I(access_logs_s3_bucket) must be set."
-    required: false
+      - Whether or not to enable access logs.
+      - When set, I(access_logs_s3_bucket) must also be set.
     type: bool
   access_logs_s3_bucket:
     description:
       - The name of the S3 bucket for the access logs.
-      - Required if access logs in Amazon S3 are enabled.
       - The bucket must exist in the same
         region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.
-    required: false
+      - Required if access logs in Amazon S3 are enabled.
+      - When set, I(access_logs_enabled) must also be set.
     type: str
   access_logs_s3_prefix:
     description:
       - The prefix for the log location in the S3 bucket.
       - If you don't specify a prefix, the access logs are stored in the root of the bucket.
       - Cannot begin or end with a slash.
-    required: false
     type: str
   deletion_protection:
     description:
       - Indicates whether deletion protection for the ELB is enabled.
-    required: false
     default: no
     type: bool
   http2:
     description:
       - Indicates whether to enable HTTP2 routing.
-    required: false
     default: no
     type: bool
     version_added: 2.6
   idle_timeout:
     description:
       - The number of seconds to wait before an idle connection is closed.
-    required: false
     type: int
   listeners:
     description:
       - A list of dicts containing listeners to attach to the ELB. See examples for detail of the dict required. Note that listener keys
         are CamelCased.
-    required: false
     type: list
     suboptions:
         Port:
             description: The port on which the load balancer is listening.
+            required: true
             type: int
         Protocol:
             description: The protocol for connections from clients to the load balancer.
+            required: true
             type: str
         Certificates:
             description: The SSL server certificate.
@@ -94,6 +91,7 @@ options:
             type: str
         DefaultActions:
             description: The default actions for the listener.
+            required: true
             type: list
             suboptions:
                 Type:
@@ -134,25 +132,23 @@ options:
     description:
       - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
         tags will not be modified.
-    required: false
     default: yes
     type: bool
   subnets:
     description:
       - A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from
-        at least two Availability Zones. Required if state=present.
-    required: false
+        at least two Availability Zones.
+      - Required if I(state=present).
     type: list
   security_groups:
     description:
-      - A list of the names or IDs of the security groups to assign to the load balancer. Required if state=present.
-    required: false
+      - A list of the names or IDs of the security groups to assign to the load balancer.
+      - Required if I(state=present).
     default: []
     type: list
   scheme:
     description:
       - Internet-facing or internal load balancer. An ELB scheme can not be modified after creation.
-    required: false
     default: internet-facing
     choices: [ 'internet-facing', 'internal' ]
     type: str
@@ -165,7 +161,6 @@ options:
   tags:
     description:
       - A dictionary of one or more tags to assign to the load balancer.
-    required: false
     type: dict
   wait:
     description:

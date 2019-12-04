@@ -33,10 +33,12 @@ options:
     description:
     - The 12-digit account ID of the account authorized to aggregate data.
     type: str
+    required: true
   authorized_aws_region:
     description:
     - The region authorized to collect aggregated data.
     type: str
+    required: true
 extends_documentation_fragment:
   - aws
   - ec2
