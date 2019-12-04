@@ -41,7 +41,7 @@ commands:
   returned: always
   type: list
   sample: [
-    "Parent object-group: aws_all_critical_vpcs",
+    "object-group network aws_all_critical_vpcs",
      "group-object aws_critical_west",
         "group-object aws_critical_west_ngnix",
           "network-object 10.0.160.0 255.255.248.0",
@@ -89,7 +89,7 @@ def expand_nested_object_group(module, obj_list):
     exp_og_list = list()
 
     expanded_og_list = recurse_object_groups(exp_og_list, obj_list, my_obj)
-    expanded_og_list.insert(0, 'Parent object-group: ' + my_obj)
+    expanded_og_list.insert(0, 'object-group network ' + my_obj)
 
     return expanded_og_list
 

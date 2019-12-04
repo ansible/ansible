@@ -37,5 +37,15 @@ class TestAsaOgcontentModule(TestAsaModule):
         set_module_args(dict(
             name='aws_all_critical_vpcs'
         ))
-        commands = ['show running-config object-group']
+        commands = ['object-group network aws_all_critical_vpcs', 
+        'group-object aws_critical_west',
+        '  group-object aws_critical_west_ngnix',
+        '    network-object 10.0.160.0 255.255.248.0',
+        '  group-object aws_critical_west_sql',
+        '    network-object 10.0.168.0 255.255.248.0',
+        'group-object aws_critical_est',
+        '  group-object aws_critical_est_apache',
+        '    network-object 10.0.192.0 255.255.248.0',
+        '  group-object aws_critical_est_postgres',
+        '    network-object 10.0.200.0 255.255.248.0']
         self.execute_module(changed=False, commands=commands)
