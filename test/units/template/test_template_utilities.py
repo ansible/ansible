@@ -120,7 +120,5 @@ class TestCountNewlines(unittest.TestCase):
 class TestAnsibleUndefined(unittest.TestCase):
     def test_getattr(self):
         val = AnsibleUndefined()
-        
         self.assertIs(getattr(val, 'foo'), val)
-        
         self.assertRaises(AttributeError, getattr, val, '__UNSAFE__')
