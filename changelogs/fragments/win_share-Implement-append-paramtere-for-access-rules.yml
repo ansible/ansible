@@ -1,0 +1,2 @@
+minor_changes:
+  - "win_share - Implement append parameter for access rules (https://github.com/ansible/ansible/issues/59237)"
