@@ -40,7 +40,7 @@ options:
     default: {}
     version_added: "2.9"
   force:
-    description: Whether or not to set `cache-control: no-cache` header
+    description: Whether or not to set "cache-control" header with value "no-cache"
     type: boolean
     version_added: "2.10"
     default: False
