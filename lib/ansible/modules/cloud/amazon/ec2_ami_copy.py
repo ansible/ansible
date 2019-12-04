@@ -62,7 +62,7 @@ options:
     type: int
   tags:
     description:
-      - A hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
+      - 'A hash/dictionary of tags to add to the new copied AMI: C({"key":"value"}) and C({"key":"value","key":"value"})'
     type: dict
   tag_equality:
     description:

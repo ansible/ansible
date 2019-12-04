@@ -41,34 +41,34 @@ description:
     This module attempts to restrict such freedoms, to be idempotent, as per the Ansible philosophy.
     It does this through applying AWS resource "Name" tags to ACM certificates.
   - >
-    When C(state=present),
+    When I(state=present),
     if there is one certificate in ACM
     with a C(Name) tag equal to the C(name_tag) parameter,
     and an identical body and chain,
     this task will succeed without effect.
   - >
-    When C(state=present),
+    When I(state=present),
     if there is one certificate in ACM
-    a C(Name) tag equal to the C(name_tag) parameter,
+    a I(Name) tag equal to the I(name_tag) parameter,
     and a different body,
     this task will overwrite that certificate.
   - >
-    When C(state=present),
+    When I(state=present),
     if there are multiple certificates in ACM
-    with a C(Name) tag equal to the C(name_tag) parameter,
+    with a I(Name) tag equal to the I(name_tag) parameter,
     this task will fail.
   - >
-    When C(state=absent) and C(certificate_arn) is defined,
+    When I(state=absent) and I(certificate_arn) is defined,
     this module will delete the ACM resource with that ARN if it exists in this region,
     and succeed without effect if it doesn't exist.
   - >
-    When C(state=absent) and C(domain_name) is defined,
+    When I(state=absent) and I(domain_name) is defined,
     this module will delete all ACM resources in this AWS region with a corresponding domain name.
     If there are none, it will succeed without effect.
   - >
-    When C(state=absent) and C(certificate_arn) is not defined,
-    and C(domain_name) is not defined,
-    this module will delete all ACM resources in this AWS region with a corresponding C(Name) tag.
+    When I(state=absent) and I(certificate_arn) is not defined,
+    and I(domain_name) is not defined,
+    this module will delete all ACM resources in this AWS region with a corresponding I(Name) tag.
     If there are none, it will succeed without effect.
   - Note that this may not work properly with keys of size 4096 bits, due to a limitation of the ACM API.
 version_added: "2.10"
@@ -76,20 +76,20 @@ options:
   certificate:
     description:
       - The body of the PEM encoded public certificate.
-      - Required when C(state) is not C(absent).
+      - Required when I(state) is not C(absent).
       - If your certificate is in a file, use C(lookup('file', 'path/to/cert.pem')).
     type: str
 
   certificate_arn:
     description:
       - The ARN of a certificate in ACM to delete
-      - Ignored when C(state=present).
-      - If C(state=absent), you must provide one of C(certificate_arn), C(domain_name) or C(name_tag).
+      - Ignored when I(state=present).
+      - If I(state=absent), you must provide one of I(certificate_arn), I(domain_name) or I(name_tag).
       - >
-        If C(state=absent) and no resource exists with this ARN in this region,
+        If I(state=absent) and no resource exists with this ARN in this region,
         the task will succeed with no effect.
       - >
-        If C(state=absent) and the corresponding resource exists in a different region,
+        If I(state=absent) and the corresponding resource exists in a different region,
         this task may report success without deleting that resource.
     type: str
 
@@ -97,50 +97,50 @@ options:
     description:
       - The body of the PEM encoded chain for your certificate.
       - If your certificate chain is in a file, use C(lookup('file', 'path/to/chain.pem')).
-      - Ignored when C(state=absent)
+      - Ignored when I(state=absent)
     type: str
 
   domain_name:
     description:
       - The domain name of the certificate.
       - >
-        If C(state=absent) and C(domain_name) is specified,
+        If I(state=absent) and I(domain_name) is specified,
         this task will delete all ACM certificates with this domain.
-      - Exactly one of C(domain_name), C(name_tag)  and C(certificate_arn) must be provided.
+      - Exactly one of I(domain_name), I(name_tag)  and I(certificate_arn) must be provided.
       - >
-        If C(state=present) this must not be specified.
+        If I(state=present) this must not be specified.
         (Since the domain name is encoded within the public certificate's body.)
     type: str
 
   name_tag:
     description:
-      - The unique identifier for tagging resources using AWS tags, with key C(Name).
+      - The unique identifier for tagging resources using AWS tags, with key I(Name).
       - This can be any set of characters accepted by AWS for tag values.
       - >
         This is to ensure Ansible can treat certificates idempotently,
         even though the ACM API allows duplicate certificates.
-      - If C(state=preset), this must be specified.
+      - If I(state=preset), this must be specified.
       - >
-        If C(state=absent), you must provide exactly one of
-        C(certificate_arn), C(domain_name) or C(name_tag).
+        If I(state=absent), you must provide exactly one of
+        I(certificate_arn), I(domain_name) or I(name_tag).
     type: str
 
   private_key:
     description:
       - The body of the PEM encoded private key.
-      - Required when C(state) is C(present).
-      - Ignored when C(state) is C(absent).
+      - Required when I(state=present).
+      - Ignored when I(state=absent).
       - If your private key is in a file, use C(lookup('file', 'path/to/key.pem')).
     type: str
 
   state:
     description:
       - >
-        If C(state=present), the specified public certificate and private key
-        will be uploaded, with C(Name) tag equal to C(name_tag).
+        If I(state=present), the specified public certificate and private key
+        will be uploaded, with I(Name) tag equal to I(name_tag).
       - >
-        If C(state=absent), any certificates in this region
-        with a corresponding C(domain_name), C(name_tag) or C(certificate_arn)
+        If I(state=absent), any certificates in this region
+        with a corresponding I(domain_name), I(name_tag) or I(certificate_arn)
         will be deleted.
     choices: [present, absent]
     default: present
@@ -201,22 +201,23 @@ RETURN = '''
 certificate:
   description: Information about the certificate which was uploaded
   type: complex
-  returned: when C(state) is C(present)
+  returned: when I(state=present)
   contains:
     arn:
       description: The ARN of the certificate in ACM
       type: str
-      returned: when C(state) is C(present)
+      returned: when I(state=present)
       sample: "arn:aws:acm:ap-southeast-2:123456789012:certificate/01234567-abcd-abcd-abcd-012345678901"
     domain_name:
       description: The domain name encoded within the public certificate
       type: str
-      returned: when C(state) is C(present)
+      returned: when I(state=present)
       sample: acm.ansible.com
 arns:
   description: A list of the ARNs of the certificates in ACM which were deleted
   type: list
-  returned: when C(state) is C(absent)
+  elements: str
+  returned: when I(state=absent)
   sample:
    - "arn:aws:acm:ap-southeast-2:123456789012:certificate/01234567-abcd-abcd-abcd-012345678901"
 '''

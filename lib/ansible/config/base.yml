@@ -1754,7 +1754,9 @@ RETRY_FILES_ENABLED:
 RETRY_FILES_SAVE_PATH:
   name: Retry files path
   default: ~
-  description: This sets the path in which Ansible will save .retry files when a playbook fails and retry files are enabled.
+  description:
+    - This sets the path in which Ansible will save .retry files when a playbook fails and retry files are enabled.
+    - This file will be overwritten after each run with the list of failed hosts from all plays.
   env: [{name: ANSIBLE_RETRY_FILES_SAVE_PATH}]
   ini:
   - {key: retry_files_save_path, section: defaults}

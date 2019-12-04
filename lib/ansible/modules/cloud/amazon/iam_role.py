@@ -14,7 +14,7 @@ DOCUMENTATION = '''
 module: iam_role
 short_description: Manage AWS IAM roles
 description:
-  - Manage AWS IAM roles
+  - Manage AWS IAM roles.
 version_added: "2.3"
 author: "Rob White (@wimnat)"
 options:
@@ -30,15 +30,15 @@ options:
     type: str
   description:
     description:
-      - Provide a description of the new role.
+      - Provides a description of the role.
     version_added: "2.5"
     type: str
   boundary:
     description:
       - The ARN of an IAM managed policy to use to restrict the permissions this role can pass on to IAM roles/users that it creates.
-      - Boundaries cannot be set on Instance Profiles, so if this option is specified then I(create_instance_profile) must be false.
+      - Boundaries cannot be set on Instance Profiles, as such if this option is specified then I(create_instance_profile) must be C(false).
       - This is intended for roles/users that have permissions to create new IAM objects.
-      - For more information on boundaries, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
+      - For more information on boundaries, see U(https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html).
       - Requires botocore 1.10.57 or above.
     aliases: [boundary_policy_arn]
     version_added: "2.7"
@@ -46,13 +46,14 @@ options:
   assume_role_policy_document:
     description:
       - The trust relationship policy document that grants an entity permission to assume the role.
-      - "This parameter is required when I(state=present)."
+      - This parameter is required when I(state=present).
     type: json
-  managed_policy:
+  managed_policies:
     description:
       - A list of managed policy ARNs or, since Ansible 2.4, a list of either managed policy ARNs or friendly names.
-        To embed an inline policy, use M(iam_policy). To remove existing policies, use an empty list item.
-    aliases: [ managed_policies ]
+      - To remove all policies set I(purge_polices=true) and I(managed_policies=[None]).
+      - To embed an inline policy, use M(iam_policy).
+    aliases: ['managed_policy']
     type: list
   max_session_duration:
     description:
@@ -62,10 +63,11 @@ options:
     type: int
   purge_policies:
     description:
-      - Detaches any managed policies not listed in the I(managed_policy) option. Set to false if you want to attach policies elsewhere.
-    default: true
+      - When I(purge_policies=true) any managed policies not listed in I(managed_policies) will be detatched.
+      - By default I(purge_policies=true).  In Ansible 2.14 this will be changed to I(purge_policies=false).
     version_added: "2.5"
     type: bool
+    aliases: ['purge_policy', 'purge_managed_policies']
   state:
     description:
       - Create or remove the IAM role.
@@ -80,8 +82,8 @@ options:
     type: bool
   delete_instance_profile:
     description:
-      - When deleting a role will also delete the instance profile created with
-        the same name as the role.
+      - When I(delete_instance_profile=true) and I(state=absent) deleting a role will also delete the instance
+        profile created with the same I(name) as the role.
       - Only applies when I(state=absent).
     default: false
     version_added: "2.10"
@@ -119,14 +121,14 @@ EXAMPLES = '''
   iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
-    managed_policy:
+    managed_policies:
       - arn:aws:iam::aws:policy/PowerUserAccess
 
 - name: Keep the role created above but remove all managed policies
   iam_role:
     name: mynewrole
     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
-    managed_policy: []
+    managed_policies: []
 
 - name: Delete the role
   iam_role:
@@ -276,7 +278,10 @@ def create_or_update_role(connection, module):
         params['Description'] = module.params.get('description')
     if module.params.get('boundary') is not None:
         params['PermissionsBoundary'] = module.params.get('boundary')
-    managed_policies = module.params.get('managed_policy')
+    managed_policies = module.params.get('managed_policies')
+    purge_policies = module.params.get('purge_policies')
+    if purge_policies is None:
+        purge_policies = True
     create_instance_profile = module.params.get('create_instance_profile')
     if managed_policies:
         managed_policies = convert_friendly_names_to_arns(connection, module, managed_policies)
@@ -320,7 +325,7 @@ def create_or_update_role(connection, module):
         current_attached_policies_arn_list = [policy['PolicyArn'] for policy in current_attached_policies]
 
         # If a single empty list item then all managed policies to be removed
-        if len(managed_policies) == 1 and not managed_policies[0] and module.params.get('purge_policies'):
+        if len(managed_policies) == 1 and not managed_policies[0] and purge_policies:
 
             # Detach policies not present
             if remove_policies(connection, module, set(current_attached_policies_arn_list) - set(managed_policies), params):
@@ -329,7 +334,7 @@ def create_or_update_role(connection, module):
             # Make a list of the ARNs from the attached policies
 
             # Detach roles not defined in task
-            if module.params.get('purge_policies'):
+            if purge_policies:
                 if remove_policies(connection, module, set(current_attached_policies_arn_list) - set(managed_policies), params):
                     changed = True
 
@@ -565,20 +570,24 @@ def main():
         name=dict(type='str', required=True),
         path=dict(type='str', default="/"),
         assume_role_policy_document=dict(type='json'),
-        managed_policy=dict(type='list', aliases=['managed_policies']),
+        managed_policies=dict(type='list', aliases=['managed_policy']),
         max_session_duration=dict(type='int'),
         state=dict(type='str', choices=['present', 'absent'], default='present'),
         description=dict(type='str'),
         boundary=dict(type='str', aliases=['boundary_policy_arn']),
         create_instance_profile=dict(type='bool', default=True),
         delete_instance_profile=dict(type='bool', default=False),
-        purge_policies=dict(type='bool', default=True),
+        purge_policies=dict(type='bool', aliases=['purge_policy', 'purge_managed_policies']),
         tags=dict(type='dict'),
         purge_tags=dict(type='bool', default=True),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               required_if=[('state', 'present', ['assume_role_policy_document'])],
                               supports_check_mode=True)
+
+    if module.params.get('purge_policies') is None:
+        module.deprecate('In Ansible 2.14 the default value of purge_policies will change from true to false.'
+                         '  To maintain the existing behaviour explicity set purge_policies=true', version='2.14')
 
     if module.params.get('boundary'):
         if module.params.get('create_instance_profile'):

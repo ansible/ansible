@@ -27,7 +27,7 @@ author:
     - "Dusan Matejka (@D3DeFi)"
 requirements:
     - "python >= 2.6"
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
 options:
     template_name:
         description:
@@ -91,6 +91,7 @@ options:
     dump_format:
         description:
             - Format to use when dumping template with C(state=dump).
+            - This option is deprecated and will eventually be removed in 2.14.
         required: false
         choices: [json, xml]
         default: "json"
@@ -101,6 +102,7 @@ options:
             - On C(state=present) template will be created/imported or updated depending if it is already present.
             - On C(state=dump) template content will get dumped into required format specified in I(dump_format).
             - On C(state=absent) template will be deleted.
+            - The C(state=dump) is deprecated and will eventually be removed in 2.14. The M(zabbix_template_info) module should be used instead.
         required: false
         choices: [present, absent, dump]
         default: "present"
@@ -681,6 +683,7 @@ def main():
         module.exit_json(changed=True, result="Successfully deleted template %s" % template_name)
 
     elif state == "dump":
+        module.deprecate("The 'dump' state has been deprecated and will be removed, use 'zabbix_template_info' module instead.", version='2.14')
         if not template_ids:
             module.fail_json(msg='Template not found: %s' % template_name)
 

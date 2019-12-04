@@ -44,7 +44,7 @@ options:
     description:
       - Provides the list of domain suffixes to
         append to the hostname for the purpose of doing name resolution.
-        This argument accepts a list of names and will be reconciled
+        This argument accepts a name or list of names and will be reconciled
         with the current active configuration on the running node.
   lookup_source:
     description:
@@ -73,10 +73,14 @@ EXAMPLES = """
   net_system:
     hostname: ios01
     domain_name: test.example.com
-    domain-search:
+    domain_search:
       - ansible.com
       - redhat.com
       - cisco.com
+
+- name: domain search on single domain
+  net_system:
+    domain_search: ansible.com
 
 - name: remove configuration
   net_system:

@@ -572,9 +572,10 @@ def main():
     importer_ssl_client_cert = module.params['feed_client_cert']
     if importer_ssl_client_cert is None and module.params['client_cert'] is not None:
         importer_ssl_client_cert = module.params['client_cert']
-        module.deprecate(("To specify client certificates to be used with the repo to sync, and not for communication with pulp.io, use the new options "
-                          "`feed_client_cert` and `feed_client_key` (available since Ansible 2.10). Until Ansible 2.14, the default value for "
-                          "`feed_client_cert` will be taken from `client_cert` if only the latter is specified"), version="2.14")
+        module.deprecate("To specify client certificates to be used with the repo to sync, and not for communication with the "
+                         "Pulp instance, use the new options `feed_client_cert` and `feed_client_key` (available since "
+                         "Ansible 2.10). Until Ansible 2.14, the default value for `feed_client_cert` will be taken from "
+                         "`client_cert` if only the latter is specified", version="2.14")
     importer_ssl_client_key = module.params['feed_client_key']
     if importer_ssl_client_key is None and module.params['client_key'] is not None:
         importer_ssl_client_key = module.params['client_key']

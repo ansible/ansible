@@ -17,8 +17,8 @@
         template: "{{ virtual_machines[0].name }}"
         name: test_vm1
         disk:
-          - size: 10gb
-            autoselect_datastore: yes
+          - size: 1gb
+            datastore: "{{ rw_datastore }}"
         guest_id: rhel7_64guest
         hardware:
           memory_mb: 128
@@ -44,8 +44,8 @@
         folder: "{{ f0 }}"
         name: test_vm2
         disk:
-          - size: 10gb
-            autoselect_datastore: yes
+          - size: 1gb
+            datastore: "{{ rw_datastore }}"
         guest_id: rhel7_64guest
         hardware:
           memory_mb: 128
@@ -70,8 +70,8 @@
         folder: "{{ f0 }}"
         name: test_vm2
         disk:
-          - size: 10gb
-            autoselect_datastore: yes
+          - size: 1gb
+            datastore: "{{ rw_datastore }}"
         guest_id: rhel7_64guest
         hardware:
           memory_mb: 128
@@ -96,8 +96,8 @@
         folder: "{{ f0 }}"
         name: test_vm3
         disk:
-          - size: 10gb
-            autoselect_datastore: yes
+          - size: 1gb
+            datastore: "{{ rw_datastore }}"
         guest_id: rhel7_64guest
         hardware:
           memory_mb: 128
@@ -122,8 +122,8 @@
         folder: "{{ f0 }}"
         name: test_vm3
         disk:
-          - size: 10gb
-            autoselect_datastore: yes
+          - size: 1gb
+            datastore: "{{ rw_datastore }}"
         guest_id: rhel7_64guest
         hardware:
           memory_mb: 128

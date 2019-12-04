@@ -553,9 +553,6 @@ def main():
                 db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
             cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        except pgutils.LibraryError as e:
-            module.fail_json(msg="unable to connect to database: {0}".format(to_native(e)), exception=traceback.format_exc())
-
         except TypeError as e:
             if 'sslrootcert' in e.args[0]:
                 module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(to_native(e)),
