@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 module: aws_direct_connect_gateway
 author: Gobin Sougrakpam (@gobins)
 version_added: "2.5"
-short_description: Manage AWS Direct Connect gateway.
+short_description: Manage AWS Direct Connect gateway
 description:
   - Creates AWS Direct Connect Gateway.
   - Deletes AWS Direct Connect Gateway.

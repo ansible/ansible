@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: aws_direct_connect_link_aggregation_group
-short_description: Manage Direct Connect LAG bundles.
+short_description: Manage Direct Connect LAG bundles
 description:
   - Create, delete, or modify a Direct Connect link aggregation group.
 version_added: "2.4"

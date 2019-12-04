@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: elasticache_snapshot
-short_description: Manage cache snapshots in Amazon ElastiCache.
+short_description: Manage cache snapshots in Amazon ElastiCache
 description:
   - Manage cache snapshots in Amazon ElastiCache.
   - Returns information about the specified snapshot.

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: lambda_event
-short_description: Creates, updates or deletes AWS Lambda function event mappings.
+short_description: Creates, updates or deletes AWS Lambda function event mappings
 description:
     - This module allows the management of AWS Lambda function event source mappings such as DynamoDB and Kinesis stream
       events via the Ansible framework. These event source mappings are relevant only in the AWS Lambda pull model, where
