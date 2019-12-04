@@ -1,0 +1,51 @@
+---
+- debug:
+    msg: "START junos_static_routes overridden integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+- include_tasks: _base_config.yaml
+
+- set_fact:
+    expected_overridden_output:
+      - address_families:
+        - afi: 'ipv4'
+          routes:
+            - dest: 192.168.20.0/24
+              next_hop:
+                - forward_router_address: 192.168.20.1
+              metric: 10
+
+- block:
+    - name: Override the provided configuration with the exisiting running configuration
+      junos_static_routes: &overridden
+        config:
+          - address_families:
+            - afi: 'ipv4'
+              routes:
+                - dest: 192.168.20.0/24
+                  next_hop:
+                    - forward_router_address: 192.168.20.1
+                  metric: 10
+        state: overridden
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_overridden_output | symmetric_difference(result['after']) |length == 0 }}"
+      debugger: on_failed
+
+    - name: Override the provided configuration with the existing running configuration (IDEMPOTENT)
+      junos_static_routes: *overridden
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_static_routes overridden integration tests on connection={{ ansible_connection }}"
