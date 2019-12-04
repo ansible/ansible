@@ -1414,3 +1414,53 @@ releases:
     - win_partition-var.yaml
     - xml-deprecated-functions.yml
     release_date: '2019-11-13'
+  2.9.2:
+    codename: Immigrant Song
+    fragments:
+    - 59522-renamed-module-tls-client-auth-params-to-avoid-overlaping-with-fetch_url.yaml
+    - 59887-scale-bug.yml
+    - 62348-yarn-no_version_install_fix.yml
+    - 63887-docker_swarm_service-sort-lists-when-checking-changes.yml
+    - 63969-zabbix_action_argsfix.yml
+    - 64371-postgresql_privs-always-reports-as-changed-when-using-default_privs.yml
+    - 64397-netscaler_service-bugfix.yml
+    - 64648-acme_certificate-acmev1.yml
+    - 64661-postgres_py_add_query_params_arg.yml
+    - 64789-regression-rescue-vars-not-defined.yml
+    - 64807-postgresql_user_fix_not_commiting_changes_when_groups_is_set.yml
+    - 64946_update_modules_docs_notes.yml
+    - 64947_update_modules_docs_notes.yml
+    - 64948_update_modules_docs_notes.yml
+    - 64949_update_modules_docs_notes.yml
+    - 64950_update_modules_docs_notes.yml
+    - 64951_update_modules_docs_notes.yml
+    - 64982-fortios_httpapi_plugin_compability_fix.yml
+    - 65017-openssh_keypair-idempotence.yml
+    - 65018-docker-none-errors.yml
+    - 65043-enable-parameter-value-to-be-false.yaml
+    - 65065-plugins-netconf-ce-fix.yaml
+    - 65093-postgresql_lang_use_query_params_with_cursor.yml
+    - 65167_fix_nxos_facts_rendering.yaml
+    - 65198-ansibleundefined-is-not-unsafe.yml
+    - 65223-postgresql_db-exception-added.yml
+    - 65310-postgresql_owner_use_query_params.yml
+    - 65435-openssl_csr-privatekey_path-required.yml
+    - ansible-test-git-submodule.yml
+    - become-pass-precedence.yaml
+    - collection-install-url.yaml
+    - collection_error_fix.yml
+    - config-manager-vault-str.yaml
+    - galaxy-collections.yaml
+    - galaxy-error-reason.yaml
+    - include_vars_fix_none.yml
+    - netconf_persistent_fix.yml
+    - postgresol_privs-fix-status-sorting.yaml
+    - proxmox-6-version-detection.yaml
+    - typo_fix_vmware_guest_powerstate.yml
+    - v2.9.2_summary.yaml
+    - vmware_guest_restore_custom_values.yml
+    - win_chocolatey-check-install-path.yaml
+    - win_domain_computer-idempotence.yaml
+    - win_iis_webapppool-check-mode.yaml
+    - windows-coverage-encoding.yaml
+    release_date: '2019-12-04'

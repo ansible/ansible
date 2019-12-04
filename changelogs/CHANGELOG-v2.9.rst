@@ -5,6 +5,72 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.2
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-12-04
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Provides additional information about collection namespace name restrictions (https://github.com/ansible/ansible/issues/65151).
+- docker_swarm_service - Sort lists when checking for changes.
+
+Bugfixes
+--------
+
+- Check NoneType for raw_params before proceeding in include_vars (https://github.com/ansible/ansible/issues/64939).
+- Fix nxos_facts rendering of keys (https://github.com/ansible/ansible/pull/65167)
+- Fix regression when ``ansible_failed_task`` and ``ansible_failed_result`` are not defined in the rescue block (https://github.com/ansible/ansible/issues/64789)
+- Fix string parsing of inline vault strings for plugin config variable sources
+- Fixed typo in vmware_guest_powerstate module (https://github.com/ansible/ansible/issues/65161).
+- Revert customization of guest custom value behavior (https://github.com/ansible/ansible/issues/64291).
+- ``AnsibleUnsafe``/``AnsibleContext``/``Templar`` - Do not treat ``AnsibleUndefined`` as being "unsafe" (https://github.com/ansible/ansible/issues/65198)
+- acme_certificate - fix misbehavior when ACME v1 is used with ``modify_account`` set to ``false``.
+- ansible-galaxy - Fix ``collection install`` when installing from a URL or a file - https://github.com/ansible/ansible/issues/65109
+- ansible-galaxy - Return the HTTP code reason if no error msg was returned by the server - https://github.com/ansible/ansible/issues/64850
+- ansible-galaxy - Set ``User-Agent`` to Ansible version when interacting with Galaxy or Automation Hub
+- ansible-test now properly handles enumeration of git submodules. Enumeration is now done with ``git submodule status --recursive`` without specifying ``.`` for the path, since that could cause the command to fail. Instead, relative paths outside the current directory are filtered out of the results. Errors from ``git`` commands will now once again be reported as errors instead of warnings.
+- ansible-test windows coverage - Output temp files as UTF-8 with BOM to standardise against non coverage runs
+- become - Fix various plugins that still used play_context to get the become password instead of through the plugin - https://github.com/ansible/ansible/issues/62367
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- decouple k8s_scale from the k8s module utils so that it doesn't complain about missing arguments
+- docker_container - fix network idempotence comparison error.
+- docker_network - fix idempotence comparison error.
+- fix all checkpoint modules to be able to get parameter with value false (https://github.com/ansible/ansible/pull/65040)
+- fortios httpapi plugin - fix the issue that fortios httpapi plugin does not support python2
+- netconf_rpc module does not work with nxos (https://github.com/ansible/ansible/issues/63255).
+- netscaler_service - fixed issue preventing use of graceful attribute
+- openssh_keypair - fixes idempotence issue with public key (https://github.com/ansible/ansible/issues/64969).
+- openssl_csr - the module will now enforce that ``privatekey_path`` is specified when ``state=present``.
+- plugins-netconf-ce - Fix failed to get version information.
+- postgres.py - add a new keyword argument ``query_params`` (https://github.com/ansible/ansible/pull/64661).
+- postgresql_db - Removed exception for 'LibraryError' (https://github.com/ansible/ansible/issues/65223).
+- postgresql_idx.py - use the ``query_params`` arg of exec_sql function (https://github.com/ansible/ansible/pull/64661).
+- postgresql_lang - use query params with cursor.execute (https://github.com/ansible/ansible/pull/65093).
+- postgresql_owner - use query_params with cursor object (https://github.com/ansible/ansible/pull/65310).
+- postgresql_privs - sort results before comparing so that the values are compared and not the result of ``.sort()`` (https://github.com/ansible/ansible/pull/65125)
+- postgresql_privs.py - fix reports as changed behavior of module when using ``type=default_privs`` (https://github.com/ansible/ansible/issues/64371).
+- postgresql_user - fix the module doesn't correctly commit changes if groups is set (https://github.com/ansible/ansible/issues/64806).
+- proxmox - fix version detection of proxmox 6 and up (Fixes https://github.com/ansible/ansible/issues/59164)
+- pulp_repo - the ``client_cert`` and ``client_key`` options were used for both requests to the Pulp instance and for the repo to sync with, resulting in errors when they were used. Use the new options ``feed_client_cert`` and ``feed_client_key`` for client certificates that should only be used for repo synchronisation, and not for communication with the Pulp instance. (https://github.com/ansible/ansible/issues/59513)
+- runas - Fix the ``runas`` ``become_pass`` variable fallback from ``ansible_runas_runas`` to ``ansible_runas_pass``
+- win_chocolatey - Improve error checking when finding the path of a newly installed Chocolatey app
+- win_domain_computer - Fix idempotence checks when ``sAMAccountName`` is different from ``name``
+- win_iis_webapppool - Do not try and set attributes in check mode when the pool did not exist
+- yarn - handle no version when installing module by name (https://github.com/ansible/ansible/issues/55097)
+- zabbix_action - arguments ``event_source`` and ``esc_period`` no longer required when ``state=absent``
+
 v2.9.1
 ======
 
