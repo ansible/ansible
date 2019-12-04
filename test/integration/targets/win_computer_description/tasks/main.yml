@@ -1,0 +1,200 @@
+---
+- name: Blank out description, organization and owner
+  win_computer_description:
+   description: ""
+   organization: ""
+   owner: ""
+  register: blank_set
+  check_mode: no
+
+- name: Change description, organization and owner in check mode
+  win_computer_description:
+   description: "{{ test_description }}"
+   organization: "{{ test_organization }}"
+   owner: "{{ test_owner }}"
+  register: change1_checkmode
+  check_mode: yes
+
+- name: Change description, organization and owner
+  win_computer_description:
+   description: "{{ test_description }}"
+   organization: "{{ test_organization }}"
+   owner: "{{ test_owner }}"
+  register: change1_set
+  check_mode: no
+
+- name: Change description, organization and owner 2nd time, there should be no change happening
+  win_computer_description:
+   description: "{{ test_description }}"
+   organization: "{{ test_organization }}"
+   owner: "{{ test_owner }}"
+  register: change1_set2
+  check_mode: no
+
+- name: Assert that the above tasks returned the expected results
+  assert:
+   that:
+   - change1_checkmode is changed
+   - change1_set is changed
+   - change1_set2 is not changed
+
+- name: Get machine description
+  win_shell: (Get-CimInstance -class "Win32_OperatingSystem").description
+  register: description1_changed
+
+- name: Get organization name
+  win_reg_stat:
+   path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion
+   name: RegisteredOrganization
+  register: organization1_changed
+
+- name: Get owner
+  win_reg_stat:
+   path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion
+   name: RegisteredOwner
+  register: owner1_changed
+
+- name: Assert that retrieved values are equal to the values provided in the variables
+  assert:
+   that:
+   - description1_changed.stdout == "{{ test_description }}\r\n"
+   - organization1_changed.value == "{{ test_organization }}"
+   - owner1_changed.value == "{{ test_owner }}"
+
+- name: Change description and owner only in check mode
+  win_computer_description:
+   description: "{{ test_description2 }}"
+   owner: "{{ test_owner2 }}"
+  register: change2_checkmode
+  check_mode: yes
+
+- name: Change description and owner only
+  win_computer_description:
+   description: "{{ test_description2 }}"
+   owner: "{{ test_owner2 }}"
+  register: change2_set
+  check_mode: no
+
+- name: Change description and owner only 2nd time, there should be no change happening
+  win_computer_description:
+   description: "{{ test_description2 }}"
+   owner: "{{ test_owner2 }}"
+  register: change2_set2
+  check_mode: no
+
+- name: Assert that the above tasks returned the expected results
+  assert:
+   that:
+   - change2_checkmode is changed
+   - change2_set is changed
+   - change2_set2 is not changed
+
+- name: Get machine description
+  win_shell: (Get-CimInstance -class "Win32_OperatingSystem").description
+  register: description2_changed
+
+- name: Get organization name
+  win_reg_stat:
+   path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion
+   name: RegisteredOrganization
+  register: organization2_changed
+
+- name: Get owner
+  win_reg_stat:
+   path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion
+   name: RegisteredOwner
+  register: owner2_changed
+
+- name: Assert that retrieved values are equal to the desired values
+  assert:
+   that:
+   - description2_changed.stdout == "{{ test_description2 }}\r\n"
+   - organization2_changed.value == "{{ test_organization }}"
+   - owner2_changed.value == "{{ test_owner2 }}"
+
+- name: Change organization only in check mode
+  win_computer_description:
+   organization: "{{ test_organization2 }}"
+  register: change3_checkmode
+  check_mode: yes
+
+- name: Change organization only in check mode
+  win_computer_description:
+   organization: "{{ test_organization2 }}"
+  register: change3_set
+  check_mode: no
+
+- name: Change organization only in check mode
+  win_computer_description:
+   organization: "{{ test_organization2 }}"
+  register: change3_set2
+  check_mode: no
+
+- name: Assert that the above tasks returned the expected results
+  assert:
+   that:
+   - change3_checkmode is changed
+   - change3_set is changed
+   - change3_set2 is not changed
+
+- name: Get machine description
+  win_shell: (Get-CimInstance -class "Win32_OperatingSystem").description
+  register: description3_changed
+
+- name: Get organization name
+  win_reg_stat:
+   path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion
+   name: RegisteredOrganization
+  register: organization3_changed
+
+- name: Get owner
+  win_reg_stat:
+   path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion
+   name: RegisteredOwner
+  register: owner3_changed
+
+- name: Assert that retrieved values are equal to the desired values
+  assert:
+   that:
+   - description3_changed.stdout == "{{ test_description2 }}\r\n"
+   - organization3_changed.value == "{{ test_organization2 }}"
+   - owner3_changed.value == "{{ test_owner2 }}"
+
+- name: Try to apply the same values again in check mode, there should be no change
+  win_computer_description:
+   description: "{{ test_description2 }}"
+   organization: "{{ test_organization2 }}"
+   owner: "{{ test_owner2 }}"
+  register: change4_checkmode
+  check_mode: yes
+
+- name: Try to apply the same values again, there should be no change
+  win_computer_description:
+   description: "{{ test_description2 }}"
+   organization: "{{ test_organization2 }}"
+   owner: "{{ test_owner2 }}"
+  register: change4_set
+  check_mode: no
+
+- name: Try to apply the same values again for 2nd time, there should be no change
+  win_computer_description:
+   description: "{{ test_description2 }}"
+   organization: "{{ test_organization2 }}"
+   owner: "{{ test_owner2 }}"
+  register: change4_set2
+  check_mode: no
+
+- name: Assert that the above tasks returned the expected results
+  assert:
+   that:
+   - change4_checkmode is not changed
+   - change4_set is not changed
+   - change4_set2 is not changed
+
+- name: Blank the test values
+  win_computer_description:
+   description: ''
+   organization: ''
+   owner: ''
+  register: blank2_set
+  check_mode: no
