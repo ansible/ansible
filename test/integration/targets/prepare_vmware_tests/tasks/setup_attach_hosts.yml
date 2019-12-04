@@ -1,3 +1,7 @@
+- fail:
+    msg: "No ESXi hosts defined. esxi_hosts is empty."
+  when: "esxi_hosts|length == 0"
+
 - name: Add ESXi Hosts to vCenter
   vmware_host:
     datacenter_name: '{{ dc1 }}'
