@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix traceback when printing ``HostVars`` on native Jinja2 (https://github.com/ansible/ansible/issues/65365)
