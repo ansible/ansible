@@ -71,14 +71,14 @@ options:
             type: list
             suboptions:
               dest:
-                description: 
+                description:
                   - Destination IPv4 subnet (CIDR or address-mask notation).
                   - The address format is <v4/v6 address>/<mask> or <v4/v6 address> <mask>.
                   - The mask is number in range 0-32 for IPv4 and in range 0-128 for IPv6.
                 type: str
                 required: True
-              next_hops: 
-                description: 
+              next_hops:
+                description:
                   - Details of route to be taken.
                 type: list
                 elements: dict
@@ -107,7 +107,7 @@ options:
                         - Nexthop group
                     type: str
                   admin_distance:
-                    description: 
+                    description:
                       - Preference or administrative distance of route (range 1-255).
                     type: int
                   description:
@@ -181,9 +181,9 @@ veos(config)#
           - afi: ipv6
             routes:
               - dest: 2211::0/64
-                next_hop: 
+                next_hop:
                   - forward_router_address: 100:1::2
-                    interface: "Ethernet1"                
+                    interface: "Ethernet1"
     state: merged
 
 After State
@@ -289,17 +289,17 @@ returns :
                 next_hop:
                   - forward_router_address: 10.1.1.2
                     interface: "Ethernet1"
-		    admin_distance: 100
-         - afi: ipv6
+                    admin_distance: 100
+          - afi: ipv6
             routes:
               - dest: 5001::/64
                 next_hop:
-                  - interface: "Ethernet1"	
+                  - interface: "Ethernet1"
 
 
 # Using rendered
 
-i  eos_static_routes:
+   eos_static_routes:
     config:
       - address_families:
           - afi: ipv4
@@ -341,7 +341,58 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample:
+    - ip route vrf vrf1 192.2.2.0/24 125.2.3.1 93
+rendered:
+  description: The set of CLI commands generated from the value in C(config) option
+  returned: When C(state) is I(rendered)
+  type: list
+  sample: >
+    "address_families": [
+                        {
+                            "afi": "ipv4",
+                            "routes": [
+                                {
+                                    "dest": "192.2.2.0/24",
+                                    "next_hops": [
+                                        {
+                                            "admin_distance": 93,
+                                            "description": null,
+                                            "forward_router_address": null,
+                                            "interface": "125.2.3.1",
+                                            "mpls_label": null,
+                                            "nexthop_grp": null,
+                                            "tag": null,
+                                            "track": null,
+                                            "vrf": null
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "vrf": "vrf1"
+                }
+            ],
+            "running_config": null,
+            "state": "rendered"
+        }
+gathered:
+  description: The configuration as structured data transformed for the running configuration
+               fetched from remote host
+  returned: When C(state) is I(gathered)
+  type: list
+  sample: >
+    The configuration returned will always be in the same format
+    of the parameters above.
+parsed:
+  description: The configuration as structured data transformed for the value of
+               C(running_config) option
+  returned: When C(state) is I(parsed)
+  type: list
+  sample: >
+    The configuration returned will always be in the same format
+    of the parameters above.
 """
 
 
@@ -356,8 +407,17 @@ def main():
 
     :returns: the result form module invocation
     """
+
+    required_if = [('state', 'merged', ('config',)),
+                   ('state', 'replaced', ('config',)),
+                   ('state', 'overridden', ('config',)),
+                   ('state', 'parsed', ('running_config',))]
+    mutually_exclusive = [('config', 'running_config')]
+
     module = AnsibleModule(argument_spec=Static_routesArgs.argument_spec,
-                           supports_check_mode=True)
+                           required_if=required_if,
+                           supports_check_mode=True,
+                           mutually_exclusive=mutually_exclusive)
 
     result = Static_routes(module).execute_module()
     module.exit_json(**result)

@@ -9,6 +9,10 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import re
 from copy import deepcopy
 
@@ -36,7 +40,6 @@ class Static_routesFacts(object):
 
     def get_device_data(self, connection):
         return connection.get('show running-config | grep route')
-
 
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for static_routes
@@ -89,8 +92,6 @@ class Static_routesFacts(object):
             params = utils.validate_config(self.argument_spec, {'config': objs})
             for cfg in params['config']:
                 facts['static_routes'].append(utils.remove_empties(cfg))
-
-
         ansible_facts['ansible_network_resources'].update(facts)
         return ansible_facts
 
@@ -156,7 +157,7 @@ class Static_routesFacts(object):
                     dest = dest + ' ' + remainder.pop(0)
                 if dest not in dest_list:
                     # For new dest and  not the first dest
-                    if  dest_list and not route_update:
+                    if dest_list and not route_update:
                         route_dict.update({"next_hops": next_hops})
                         routes.append(route_dict)
                     dest_list.append(dest)
@@ -176,7 +177,7 @@ class Static_routesFacts(object):
                 else:
                     interface = remainder.pop(0)
                     if interface in interface_list:
-                        interface = interface +" "+ remainder.pop(0)
+                        interface = interface + " " + remainder.pop(0)
                     nexthops.update({"interface": interface})
                 for attribute in remainder:
                     forward_addr = re.search(r'([\dA-Fa-f]+[:\.]+)+[\dA-Fa-f]+', attribute)
@@ -188,7 +189,7 @@ class Static_routesFacts(object):
                             keyname = params
                             if attribute == "name":
                                 keyname = "description"
-                            nexthops.update({keyname: remainder.pop(remainder.index(attribute)+1)})
+                            nexthops.update({keyname: remainder.pop(remainder.index(attribute) + 1)})
                             remainder.pop(remainder.index(attribute))
                 if remainder:
                     metric = re.search(r'\d+', remainder[0])
