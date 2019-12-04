@@ -44,12 +44,12 @@ options:
     type: str
   direct_connect_gateway_id:
     description:
-        - The id of an existing Direct Connect Gateway.
+        - The ID of an existing Direct Connect Gateway.
         - Required when I(state=absent).
     type: str
   virtual_gateway_id:
     description:
-        - The VPN gateway id of an existing virtual gateway.
+        - The VPN gateway ID of an existing virtual gateway.
     type: str
   wait_timeout:
     description:
