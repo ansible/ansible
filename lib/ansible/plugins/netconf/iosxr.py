@@ -57,7 +57,7 @@ class Netconf(NetconfBase):
         install_filter = build_xml('install', install_meta, opcode='filter')
         try:
             reply = self.get(install_filter)
-            resp = remove_namespaces(re.sub('<\?xml version="1.0" encoding="UTF-8"\?>', '', reply))
+            resp = remove_namespaces(re.sub(r'<\?xml version="1.0" encoding="UTF-8"\?>', '', reply))
             ele_boot_variable = etree_find(resp, 'boot-variable/boot-variable')
             if ele_boot_variable is not None:
                 device_info['network_os_image'] = re.split('[:|,]', ele_boot_variable.text)[1]
@@ -68,7 +68,7 @@ class Netconf(NetconfBase):
 
             hostname_filter = build_xml('host-names', opcode='filter')
             reply = self.get(hostname_filter)
-            resp = remove_namespaces(re.sub('<\?xml version="1.0" encoding="UTF-8"\?>', '', reply))
+            resp = remove_namespaces(re.sub(r'<\?xml version="1.0" encoding="UTF-8"\?>', '', reply))
             hostname_ele = etree_find(resp.strip(), 'host-name')
             device_info['network_os_hostname'] = hostname_ele.text if hostname_ele is not None else None
         except Exception as exc:
