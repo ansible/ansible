@@ -291,44 +291,41 @@ EXAMPLES = """
   eos_static_routes:
     state: gathered
 
-
 # returns :
-  eos_static_routes:
-    config:
-      - address_families:
-          - afi: ipv4
-            routes:
-              - dest: 165.10.1.0/24
-                next_hop:
-                  - forward_router_address: 10.1.1.2
-                    interface: "Ethernet1"
-                    admin_distance: 100
-          - afi: ipv6
-            routes:
-              - dest: 5001::/64
-                next_hop:
-                  - interface: "Ethernet1"
+#  eos_static_routes:
+#    config:
+#      - address_families:
+#          - afi: ipv4
+#            routes:
+#              - dest: 165.10.1.0/24
+#                next_hop:
+#                  - forward_router_address: 10.1.1.2
+#                    interface: "Ethernet1"
+#                    admin_distance: 100
+#          - afi: ipv6
+#            routes:
+#              - dest: 5001::/64
+#                next_hop:
+#                  - interface: "Ethernet1"
 
 
 # Using rendered
 
-   eos_static_routes:
-    config:
-      - address_families:
-          - afi: ipv4
-            routes:
-              - dest: 165.10.1.0/24
-                next_hop:
-                  - forward_router_address: 10.1.1.2
-                    interface: "Ethernet1"
-                    admin_distance: 100
-         - afi: ipv6
-            routes:
-              - dest: 5001::/64
-                next_hop:
-                  - interface: "Ethernet1"
-
-
+#   eos_static_routes:
+#    config:
+#      - address_families:
+#          - afi: ipv4
+#            routes:
+#              - dest: 165.10.1.0/24
+#                next_hop:
+#                  - forward_router_address: 10.1.1.2
+#                    interface: "Ethernet1"
+#                    admin_distance: 100
+#         - afi: ipv6
+#            routes:
+#              - dest: 5001::/64
+#                next_hop:
+#                  - interface: "Ethernet1"
 
 # returns:
 
