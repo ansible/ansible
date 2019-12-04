@@ -166,6 +166,12 @@ db_list:
   type: list
   sample: ["foo", "bar"]
   version_added: '2.9'
+executed_commands:
+  description: List of commands which tried to run.
+  returned: if executed
+  type: list
+  sample: ["CREATE DATABASE acme"]
+  version_added: '2.10'
 '''
 
 import os
@@ -178,6 +184,7 @@ from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_native
 
+executed_commands = []
 
 # ===========================================
 # MySQL module specific support methods.
@@ -196,6 +203,7 @@ def db_delete(cursor, db):
         return False
     for each_db in db:
         query = "DROP DATABASE %s" % mysql_quote_identifier(each_db, 'database')
+        executed_commands.append(query)
         cursor.execute(query)
     return True
 
@@ -249,6 +257,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
     else:
         cmd += " > %s" % shlex_quote(target)
 
+    executed_commands.append(cmd)
     rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stdout, stderr
 
@@ -291,6 +300,8 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
     elif os.path.splitext(target)[-1] == '.xz':
         comp_prog_path = module.get_bin_path('xz', required=True)
     if comp_prog_path:
+        # The line above is for returned data only:
+        executed_commands.append('%s -dc %s | %s' % (comp_prog_path, target, ' '.join(cmd)))
         p1 = subprocess.Popen([comp_prog_path, '-dc', target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p2 = subprocess.Popen(cmd, stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout2, stderr2) = p2.communicate()
@@ -304,6 +315,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
     else:
         cmd = ' '.join(cmd)
         cmd += " < %s" % shlex_quote(target)
+        executed_commands.append(cmd)
         rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
         return rc, stdout, stderr
 
@@ -321,6 +333,12 @@ def db_create(cursor, db, encoding, collation):
             query.append("COLLATE %(collate)s")
         query = ' '.join(query)
         res += cursor.execute(query, query_params)
+        try:
+            executed_commands.append(cursor.mogrify(query, query_params))
+        except AttributeError:
+            executed_commands.append(cursor._executed)
+        except Exception:
+            executed_commands.append(query)
     return res > 0
 
 
@@ -431,7 +449,7 @@ def main():
             changed = db_delete(cursor, existence_list)
         except Exception as e:
             module.fail_json(msg="error deleting database: %s" % to_native(e))
-        module.exit_json(changed=changed, db=db_name, db_list=db)
+        module.exit_json(changed=changed, db=db_name, db_list=db, executed_commands=executed_commands)
     elif state == "present":
         if module.check_mode:
             module.exit_json(changed=bool(non_existence_list), db=db_name, db_list=db)
@@ -442,7 +460,7 @@ def main():
             except Exception as e:
                 module.fail_json(msg="error creating database: %s" % to_native(e),
                                  exception=traceback.format_exc())
-        module.exit_json(changed=changed, db=db_name, db_list=db)
+        module.exit_json(changed=changed, db=db_name, db_list=db, executed_commands=executed_commands)
     elif state == "dump":
         if non_existence_list and not all_databases:
             module.fail_json(msg="Cannot dump database(s) %r - not found" % (', '.join(non_existence_list)))
@@ -454,7 +472,8 @@ def main():
                                      ssl_ca, single_transaction, quick, ignore_tables, hex_blob, encoding)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
-        module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
+        module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout,
+                         executed_commands=executed_commands)
     elif state == "import":
         if module.check_mode:
             module.exit_json(changed=True, db=db_name, db_list=db)
@@ -471,7 +490,8 @@ def main():
                                        socket, ssl_cert, ssl_key, ssl_ca, encoding)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
-        module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout)
+        module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout,
+                         executed_commands=executed_commands)
 
 
 if __name__ == '__main__':
