@@ -21,6 +21,10 @@ short_description: Manage static IP routes on Arista EOS network devices
 description:
   - This module provides declarative management of static
     IP routes on Arista EOS network devices.
+deprecated:
+  removed in: '2.13'
+  alternative: eos_static_routes
+  Why: Updated modules with more functionality
 notes:
   - Tested against EOS 4.15
 options:

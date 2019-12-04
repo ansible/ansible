@@ -38,11 +38,12 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: eos_static_routes
-version_added: 2.10
+version_added: "2.10"
 short_description: Configures and manages attributes of static routes on Arista EOS platforms.
 description: This module configures and manages the attributes of static routes on Arista EOS platforms.
 author: Gomathi Selvi Srinivasan (@GomathiselviS)
 notes:
+ - Tested against: vEOS 4.20.10M
 options:
   config:
     description:
@@ -130,48 +131,60 @@ options:
                     description:
                       - VRF of the destination.
                     type: str
+  running_config:
+    description:
+      - The module, by default, will connect to the remote device and
+        retrieve the current running-config to use as a base for comparing
+        against the contents of source. There are times when it is not
+        desirable to have the task get the current running-config for
+        every task in a playbook.  The I(running_config) argument allows the
+        implementer to pass in the configuration to use as the base
+        config for comparison. This value of this option should be the
+        output received from device by executing command
+    version_added: "2.10"
+    type: str
   state:
     description:
       - The state the configuration should be left in.
     type: str
     choices:
-      ['deleted', 'merged', 'overridden', 'replaced', 'gathered', 'rendered']
+      ['deleted', 'merged', 'overridden', 'replaced', 'gathered', 'rendered', 'parsed']
     default:
       merged
 """
 EXAMPLES = """
 # Using deleted
 
-Before State
--------------
-veos(config)#show running-config | grep "route"
-ip route 165.10.1.0/24 Ethernet1 100
-ip route 172.17.252.0/24 Nexthop-Group testgroup
-ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
-ipv6 route 5001::/64 Ethernet1 50
-veos(config)#
+# Before State
+# -------------
+# veos(config)#show running-config | grep "route"
+# ip route 165.10.1.0/24 Ethernet1 100
+# ip route 172.17.252.0/24 Nexthop-Group testgroup
+# ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
+# ipv6 route 5001::/64 Ethernet1 50
+# veos(config)#
 
 - name: Delete static route configuration
   eos_static_routes:
     state: deleted
 
-After State
------------
+# After State
+# -----------
 
-veos(config)#show running-config | grep "route"
-veos(config)#
+# veos(config)#show running-config | grep "route"
+# veos(config)#
 
 
 # Using merged
 
-Before State
--------------
-veos(config)#show running-config | grep "route"
-ip route 165.10.1.0/24 Ethernet1 100
-ip route 172.17.252.0/24 Nexthop-Group testgroup
-ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
-ipv6 route 5001::/64 Ethernet1 50
-veos(config)#
+# Before State
+# -------------
+# veos(config)#show running-config | grep "route"
+# ip route 165.10.1.0/24 Ethernet1 100
+# ip route 172.17.252.0/24 Nexthop-Group testgroup
+# ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
+# ipv6 route 5001::/64 Ethernet1 50
+# veos(config)#
 
 - name: Merge new static route configuration
   eos_static_routes:
@@ -186,28 +199,28 @@ veos(config)#
                     interface: "Ethernet1"
     state: merged
 
-After State
------------
+# After State
+# -----------
 
-veos(config)#show running-config | grep "route"
-ip route 165.10.1.0/24 Ethernet1 100
-ip route 172.17.252.0/24 Nexthop-Group testgroup
-ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
-ipv6 route 2211::/64 Ethernet1 100:1::2
-ipv6 route 5001::/64 Ethernet1 50
-veos(config)#
+# veos(config)#show running-config | grep "route"
+# ip route 165.10.1.0/24 Ethernet1 100
+# ip route 172.17.252.0/24 Nexthop-Group testgroup
+# ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
+# ipv6 route 2211::/64 Ethernet1 100:1::2
+# ipv6 route 5001::/64 Ethernet1 50
+# veos(config)#
 
 
 # Using overridden
 
-Before State
--------------
-veos(config)#show running-config | grep "route"
-ip route 165.10.1.0/24 Ethernet1 100
-ip route 172.17.252.0/24 Nexthop-Group testgroup
-ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
-ipv6 route 5001::/64 Ethernet1 50
-veos(config)#
+# Before State
+# -------------
+# veos(config)#show running-config | grep "route"
+# ip route 165.10.1.0/24 Ethernet1 100
+# ip route 172.17.252.0/24 Nexthop-Group testgroup
+# ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
+# ipv6 route 5001::/64 Ethernet1 50
+# veos(config)#
 
 - name: Overridden static route configuration
   eos_static_routes:
@@ -222,24 +235,24 @@ veos(config)#
                     interface: "Ethernet1"
     state: replaced
 
-After State
------------
+# After State
+# -----------
 
-veos(config)#show running-config | grep "route"
-ip route 150.10.1.0/24 Ethernet1 10.1.1.2
-veos(config)#
+# veos(config)#show running-config | grep "route"
+# ip route 150.10.1.0/24 Ethernet1 10.1.1.2
+# veos(config)#
 
 
 # Using replaced
 
-Before State
--------------
-veos(config)#show running-config | grep "route"
-ip route 165.10.1.0/24 Ethernet1 100
-ip route 172.17.252.0/24 Nexthop-Group testgroup
-ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
-ipv6 route 5001::/64 Ethernet1 50
-veos(config)#
+# Before State
+# -------------
+# veos(config)#show running-config | grep "route"
+# ip route 165.10.1.0/24 Ethernet1 100
+# ip route 172.17.252.0/24 Nexthop-Group testgroup
+# ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
+# ipv6 route 5001::/64 Ethernet1 50
+# veos(config)#
 
 - name: Replace static route configuration
   eos_static_routes:
@@ -254,24 +267,24 @@ veos(config)#
                     interface: "Ethernet1"
     state: replaced
 
-After State
------------
+# After State
+# -----------
 
-veos(config)#show running-config | grep "route"
-ip route 165.10.1.0/24 Ethernet1 10.1.1.2
-ip route 172.17.252.0/24 Nexthop-Group testgroup
-ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
-ipv6 route 2211::/64 Ethernet1 100:1::2
-ipv6 route 5001::/64 Ethernet1 50
-veos(config)#
+# veos(config)#show running-config | grep "route"
+# ip route 165.10.1.0/24 Ethernet1 10.1.1.2
+# ip route 172.17.252.0/24 Nexthop-Group testgroup
+# ip route vrf testvrf 130.1.122.0/24 Ethernet1 tag 50
+# ipv6 route 2211::/64 Ethernet1 100:1::2
+# ipv6 route 5001::/64 Ethernet1 50
+# veos(config)#
 
 
-Before State
--------------
-veos(config)#show running-config | grep "route"
-ip route 165.10.1.0/24 Ethernet1 10.1.1.2 100
-ipv6 route 5001::/64 Ethernet1
-veos(config)#
+# Before State
+# -------------
+# veos(config)#show running-config | grep "route"
+# ip route 165.10.1.0/24 Ethernet1 10.1.1.2 100
+# ipv6 route 5001::/64 Ethernet1
+# veos(config)#
 
 
 - name: Gather the exisitng condiguration
@@ -279,7 +292,7 @@ veos(config)#
     state: gathered
 
 
-returns :
+# returns :
   eos_static_routes:
     config:
       - address_families:
@@ -317,10 +330,10 @@ returns :
 
 
 
-returns:
+# returns:
 
-ip route 165.10.1.0/24 Ethernet1 10.1.1.2 100
-ipv6 route 5001::/64 Ethernet1
+# ip route 165.10.1.0/24 Ethernet1 10.1.1.2 100
+# ipv6 route 5001::/64 Ethernet1
 
 
 """
@@ -328,12 +341,14 @@ RETURN = """
 before:
   description: The configuration prior to the model invocation.
   returned: always
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
   description: The resulting configuration model invocation.
   returned: when changed
+  type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
