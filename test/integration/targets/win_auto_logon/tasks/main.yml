@@ -1,36 +1,21 @@
-# test code for the slurp module when using winrm connection
-# (c) 2015, Chris Church <cchurch@ansible.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+# Copyright: (c) 2019, Prasoon Karunan V (@prasoonkarunan) <kvprasoon@Live.in>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
 - name: Set autologon registry keys
   win_auto_logon:
-    user: "{{test_win_user_name}}"
-    password: "{{test_win_user_password}}"
+    username: "{{ ansible_user }}"
+    password: "{{ ansible_password }}"
     state: present
   register: win_auto_logon_create_registry_key_set
 
 - name: check win_auto_logon_create_registry_key_set is changed
   assert:
     that:
-      - "win_auto_logon_create_registry_key_set is changed"
+    - win_auto_logon_create_registry_key_set is changed
 
 - name: Set autologon registry keys with missing input
   win_auto_logon:
-    user: "{{test_win_user_name}}"
+    username: "{{ ansible_user }}"
     state: present
   register: win_auto_logon_create_registry_key_missing_input
   ignore_errors: true
@@ -38,7 +23,7 @@
 - name: check win_auto_logon_create_registry_key_missing_input is failed
   assert:
     that:
-      - "win_group_create_invalid_state is failed"
+    - win_auto_logon_create_registry_key_missing_input is failed
 
 - name: Remove autologon registry keys
   win_auto_logon:
@@ -48,4 +33,4 @@
 - name: check win_auto_logon_create_registry_key_remove is changed
   assert:
     that:
-      - "win_auto_logon_create_registry_key_remove is changed"
+    - win_auto_logon_create_registry_key_remove is changed

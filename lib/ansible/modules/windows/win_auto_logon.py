@@ -16,23 +16,20 @@ description:
   - Used to apply auto logon registry setting.
 version_added: "2.10"
 options:
-  user:
+  username:
     description:
       - Username to login automatically.
-      - Value of this input will be set to DefaultUsername registry key..
+      - Must be set when C(state=present).
+      - This can be the Netlogon or UPN of a domain account and is
+        automatically parsed to the C(DefaultUserName) and C(DefaultDomainName)
+        registry properties.
     type: str
-    required: yes
   password:
     description:
       - Password to be used for automatic login.
-      - Value of this input will be used as password for Default user.
+      - Must be set when C(state=present).
+      - Value of this input will be used as password for I(username).
     type: str
-    required: yes
-  domain:
-    description:
-      - Domain name to be used while automatic login.
-    type: str
-    default: default user domain.
   state:
     description:
       - Whether the registry key should be C(present) or C(absent).
@@ -46,14 +43,13 @@ author:
 EXAMPLES = r'''
 - name: Set autologon for user1
   win_auto_logon:
-    user: User1
+    username: User1
     password: str0ngp@ssword
 
-- name: Set autologon for abc.com\\user1
+- name: Set autologon for abc.com\user1
   win_auto_logon:
-    user: User1
+    username: abc.com\User1
     password: str0ngp@ssword
-    domain: abc.com
 
 - name: Remove autologon for user1
   win_auto_logon:
@@ -61,9 +57,5 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-changed:
-    description: Returns true if autologon keys successfully set.
-    returned: true/false
-    type: bool
-    sample: true
+#
 '''

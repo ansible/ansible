@@ -9,75 +9,75 @@
 
 Set-StrictMode -Version 2.0
 
-$ErrorActionPreferrence = 'Stop'
-
-# argument spec hastable which has the input parameters and capabilities for this module
 $spec = @{
     options = @{
-        domain = @{type = "str"; default = $env:userdomain}
-        user = @{type = "str"; required = $true}
-        password = @{type = "str"; required = $true}
+        password = @{type = "str"; no_log = $true}
         state = @{type = "str"; choices = "absent","present"; default = "present"}
+        username = @{type = "str"}
     }
     required_if = @(
-        @("state", "present", @("user","password")),
-        @("state","absent",@())
+        , @("state", "present", @("username", "password"))
     )
 }
 
-$module = [Ansible.Basic.AnsibleModule]::Create($args,$spec)
-$domain = $module.params.domain
-$user = $module.params.user
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 $password = $module.params.password
 $state = $module.params.state
+$username = $module.params.username
+$domain = $null
 
-try {
-    #Build ParamHash
-
-    $autoAdminLogon = 1
-    $stateMessage = 'added'
-    if($state -eq 'absent'){
-        $autoadminlogon = 0
-        $stateMessage = 'removed'
+if ($username) {
+    # Try and get the Netlogon form of the username specified. Translating to and from a SID gives us an NTAccount
+    # in the Netlogon form that we desire.
+    $ntAccount = New-Object -TypeName System.Security.Principal.NTAccount -ArgumentList $username
+    try {
+        $accountSid = $ntAccount.Translate([System.Security.Principal.SecurityIdentifier])
+    } catch [System.Security.Principal.IdentityNotMappedException] {
+        $module.FailJson("Failed to find a local or domain user with the name '$username'", $_)
     }
-    $module.Result.Msg     = "Auto logon registry keys are already $stateMessage"
-    $autoLogonKeyList   = @{
-        DefaultPassword = $password
-        DefaultUserName = $user
-        DefaultDomain   = $domain
-        AutoAdminLogon  = $autoAdminLogon
-    }
-    $actionTaken = $null
-    $autoLogonRegPath   = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\'
-    $autoLogonKeyRegList   = Get-ItemProperty -LiteralPath $autoLogonRegPath -Name $autoLogonKeyList.GetEnumerator().Name -ErrorAction SilentlyContinue
+    $ntAccount = $accountSid.Translate([System.Security.Principal.NTAccount])
 
-    Foreach($key in $autoLogonKeyList.GetEnumerator().Name){
-        $currentKeyValue = $autoLogonKeyRegList | Select-Object -ExpandProperty $key -ErrorAction SilentlyContinue
-        if (-not [String]::IsNullOrEmpty($currentKeyValue)) {
-            $expectedValue = $autoLogonKeyList[$key]
-            if(($state -eq 'present') -and ($currentKeyValue -ne $expectedValue)) {
-                Set-ItemProperty -LiteralPath $autoLogonRegPath -Name $key -Value $autoLogonKeyList[$key] -Force
-                $actionTaken = $true
-            }
-            elseif($state -eq 'absent') {
-                $actionTaken = $true
-                Remove-ItemProperty -LiteralPath  $autoLogonRegPath -Name $key -Force
-            }
+    $domain, $username = $ntAccount.Value -split '\\'
+}
+
+#Build ParamHash
+
+$autoAdminLogon = 1
+if($state -eq 'absent'){
+    $autoadminlogon = 0
+}
+$autoLogonKeyList   = @{
+    DefaultPassword = $password
+    DefaultUserName = $username
+    DefaultDomain   = $domain
+    AutoAdminLogon  = $autoAdminLogon
+}
+$actionTaken = $null
+$autoLogonRegPath   = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\'
+$autoLogonKeyRegList   = Get-ItemProperty -LiteralPath $autoLogonRegPath -Name $autoLogonKeyList.GetEnumerator().Name -ErrorAction SilentlyContinue
+
+Foreach($key in $autoLogonKeyList.GetEnumerator().Name){
+    $currentKeyValue = $autoLogonKeyRegList | Select-Object -ExpandProperty $key -ErrorAction SilentlyContinue
+    if (-not [String]::IsNullOrEmpty($currentKeyValue)) {
+        $expectedValue = $autoLogonKeyList[$key]
+        if(($state -eq 'present') -and ($currentKeyValue -ne $expectedValue)) {
+            Set-ItemProperty -LiteralPath $autoLogonRegPath -Name $key -Value $autoLogonKeyList[$key] -Force
+            $actionTaken = $true
         }
-        else {
-            if ($state -eq 'present') {
-                $actionTaken = $true
-                New-ItemProperty -LiteralPath $autoLogonRegPath -Name $key -Value $autoLogonKeyList[$key] -Force | Out-Null
-            }
+        elseif($state -eq 'absent') {
+            $actionTaken = $true
+            Remove-ItemProperty -LiteralPath  $autoLogonRegPath -Name $key -Force
         }
     }
-    if($actionTaken){
-        $module.Result.Msg     = "Auto logon registry keys are $stateMessage"
-        $module.Result.changed = $true
+    else {
+        if ($state -eq 'present') {
+            $actionTaken = $true
+            New-ItemProperty -LiteralPath $autoLogonRegPath -Name $key -Value $autoLogonKeyList[$key] -Force | Out-Null
+        }
     }
 }
-catch {
-  $module.FailJson($_.Exception.Message)
+if($actionTaken){
+    $module.Result.changed = $true
 }
 
 $module.ExitJson()
