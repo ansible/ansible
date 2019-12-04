@@ -86,6 +86,7 @@ matrix:
     - env: T=freebsd/12.0/1
     - env: T=linux/centos6/1
     - env: T=linux/centos7/1
+    - env: T=linux/centos8/1
     - env: T=linux/fedora30/1
     - env: T=linux/fedora31/1
     - env: T=linux/opensuse15py2/1
@@ -100,6 +101,7 @@ matrix:
     - env: T=freebsd/12.0/2
     - env: T=linux/centos6/2
     - env: T=linux/centos7/2
+    - env: T=linux/centos8/2
     - env: T=linux/fedora30/2
     - env: T=linux/fedora31/2
     - env: T=linux/opensuse15py2/2
@@ -114,6 +116,7 @@ matrix:
     - env: T=freebsd/12.0/3
     - env: T=linux/centos6/3
     - env: T=linux/centos7/3
+    - env: T=linux/centos8/3
     - env: T=linux/fedora30/3
     - env: T=linux/fedora31/3
     - env: T=linux/opensuse15py2/3
@@ -128,6 +131,7 @@ matrix:
     - env: T=freebsd/12.0/4
     - env: T=linux/centos6/4
     - env: T=linux/centos7/4
+    - env: T=linux/centos8/4
     - env: T=linux/fedora30/4
     - env: T=linux/fedora31/4
     - env: T=linux/opensuse15py2/4
