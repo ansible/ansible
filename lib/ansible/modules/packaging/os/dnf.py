@@ -1179,7 +1179,7 @@ class DnfModule(YumDnf):
             else:
                 response['changed'] = True
                 if failure_response['failures']:
-                    failure_response['msg'] = 'Failed to install some of the specified packages',
+                    failure_response['msg'] = 'Failed to install some of the specified packages'
                     self.module.fail_json(**failure_response)
                 if self.module.check_mode:
                     response['msg'] = "Check mode: No changes made, but would have if not in check mode"
@@ -1209,7 +1209,7 @@ class DnfModule(YumDnf):
                         response['results'].append("Removed: {0}".format(package))
 
                 if failure_response['failures']:
-                    failure_response['msg'] = 'Failed to install some of the specified packages',
+                    failure_response['msg'] = 'Failed to install some of the specified packages'
                     self.module.exit_json(**response)
                 self.module.exit_json(**response)
         except dnf.exceptions.DepsolveError as e:
