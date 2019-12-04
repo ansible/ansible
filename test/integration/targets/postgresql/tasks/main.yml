@@ -107,7 +107,9 @@
 # depend only on Postgres version
 # (CentOS 6 repo contains the oldest PG version in these tests - 9.0):
 - import_tasks: postgresql_lang.yml
-  when: ansible_distribution == 'CentOS'
+  when:
+  - ansible_distribution == 'CentOS'
+  - postgres_version_resp.stdout is version('9.4', '>=')
 
 # dump/restore tests per format
 # ============================================================
