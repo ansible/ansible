@@ -1105,7 +1105,6 @@ lib/ansible/modules/cloud/openstack/os_volume.py validate-modules:doc-missing-ty
 lib/ansible/modules/cloud/openstack/os_volume.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/openstack/os_volume.py validate-modules:undocumented-parameter
 lib/ansible/modules/cloud/openstack/os_volume_snapshot.py validate-modules:doc-missing-type
-lib/ansible/modules/cloud/openstack/os_zone.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/cloud/openstack/os_zone.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/openstack/os_zone.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/oracle/oci_vcn.py validate-modules:parameter-type-not-in-doc
@@ -3942,17 +3941,11 @@ lib/ansible/modules/network/meraki/meraki_mx_l3_firewall.py validate-modules:par
 lib/ansible/modules/network/meraki/meraki_mx_l7_firewall.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/network/meraki/meraki_mx_l7_firewall.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/meraki/meraki_mx_l7_firewall.py pylint:ansible-bad-function
-lib/ansible/modules/network/meraki/meraki_nat.py validate-modules:doc-type-does-not-match-spec
-lib/ansible/modules/network/meraki/meraki_nat.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/meraki/meraki_network.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/meraki/meraki_organization.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/meraki/meraki_snmp.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/meraki/meraki_ssid.py validate-modules:doc-required-mismatch
-lib/ansible/modules/network/meraki/meraki_ssid.py validate-modules:doc-type-does-not-match-spec
 lib/ansible/modules/network/meraki/meraki_switchport.py validate-modules:doc-required-mismatch
 lib/ansible/modules/network/meraki/meraki_switchport.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/meraki/meraki_syslog.py validate-modules:doc-choices-do-not-match-spec
-lib/ansible/modules/network/meraki/meraki_syslog.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/meraki/meraki_vlan.py validate-modules:missing-suboption-docs
 lib/ansible/modules/network/meraki/meraki_vlan.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/meraki/meraki_vlan.py validate-modules:undocumented-parameter
