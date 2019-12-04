@@ -1,0 +1,36 @@
+# Copyright: (c) 2019, Prasoon Karunan V (@prasoonkarunan) <kvprasoon@Live.in>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Set autologon registry keys
+  win_auto_logon:
+    username: "{{ ansible_user }}"
+    password: "{{ ansible_password }}"
+    state: present
+  register: win_auto_logon_create_registry_key_set
+
+- name: check win_auto_logon_create_registry_key_set is changed
+  assert:
+    that:
+    - win_auto_logon_create_registry_key_set is changed
+
+- name: Set autologon registry keys with missing input
+  win_auto_logon:
+    username: "{{ ansible_user }}"
+    state: present
+  register: win_auto_logon_create_registry_key_missing_input
+  ignore_errors: true
+
+- name: check win_auto_logon_create_registry_key_missing_input is failed
+  assert:
+    that:
+    - win_auto_logon_create_registry_key_missing_input is failed
+
+- name: Remove autologon registry keys
+  win_auto_logon:
+    state: absent
+  register: win_auto_logon_create_registry_key_remove
+
+- name: check win_auto_logon_create_registry_key_remove is changed
+  assert:
+    that:
+    - win_auto_logon_create_registry_key_remove is changed
