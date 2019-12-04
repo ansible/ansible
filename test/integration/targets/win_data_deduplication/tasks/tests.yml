@@ -1,0 +1,47 @@
+---
+
+- name: Enable Data Deduplication on the T drive - check mode
+  win_data_deduplication:
+    drive_letter: "T"
+    state: present
+    settings:
+      no_compress: true
+      minimum_file_age_days: 2
+      minimum_file_size: 0
+  check_mode: yes
+  register: win_data_deduplication_enable_check_mode
+
+- name: Check that it was successful with a change - check mode
+  assert:
+    that:
+      - win_data_deduplication_enable_check_mode is changed
+
+- name: Enable Data Deduplication on the T drive
+  win_data_deduplication:
+    drive_letter: "T"
+    state: present
+    settings:
+      no_compress: true
+      minimum_file_age_days: 2
+      minimum_file_size: 0
+  register: win_data_deduplication_enable
+
+- name: Check that it was successful with a change
+  assert:
+    that:
+      - win_data_deduplication_enable is changed
+
+- name: Enable Data Deduplication on the T drive
+  win_data_deduplication:
+    drive_letter: "T"
+    state: present
+    settings:
+      no_compress: true
+      minimum_file_age_days: 2
+      minimum_file_size: 0
+  register: win_data_deduplication_enable_again
+
+- name: Check that it was successful without a change
+  assert:
+    that:
+      - win_data_deduplication_enable_again is not changed
