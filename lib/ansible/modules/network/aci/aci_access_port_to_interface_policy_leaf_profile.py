@@ -293,7 +293,7 @@ def main():
     argument_spec.update(
         leaf_interface_profile=dict(type='str', aliases=['leaf_interface_profile_name']),  # Not required for querying all objects
         access_port_selector=dict(type='str', aliases=['name', 'access_port_selector_name']),  # Not required for querying all objects
-        description=dict(typ='str'),
+        description=dict(type='str'),
         leaf_port_blk=dict(type='str', aliases=['leaf_port_blk_name']),
         leaf_port_blk_description=dict(type='str'),
         from_port=dict(type='str', aliases=['from', 'fromPort', 'from_port_range']),
