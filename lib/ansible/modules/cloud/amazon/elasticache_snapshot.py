@@ -28,7 +28,7 @@ options:
   name:
     description:
       - The name of the snapshot we want to create, copy, delete.
-    required: yes
+    required: true
     type: str
   state:
     description:
