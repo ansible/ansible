@@ -284,6 +284,7 @@ def create_instance_template(module, gce):
     metadata = module.params.get('metadata')
     description = module.params.get('description')
     disks_gce_struct = module.params.get('disks_gce_struct')
+    nic_gce_struct = module.params.get('nic_gce_struct')
     changed = False
 
     # args of ex_create_instancetemplate
@@ -377,6 +378,9 @@ def create_instance_template(module, gce):
 
     if disks_gce_struct is not None:
         gce_args['disks_gce_struct'] = disks_gce_struct
+
+    if nic_gce_struct is not None:
+        gce_args['nic_gce_struct'] = nic_gce_struct
 
     # Try to convert the user's metadata value into the format expected
     # by GCE.  First try to ensure user has proper quoting of a
