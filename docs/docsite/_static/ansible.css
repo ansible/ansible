@@ -136,7 +136,8 @@ table.documentation-table .value-required {
     position: relative;
 }
 /*! Ansible narrow the search box */.wy-side-nav-search input[type="text"] {
-    width: 90%
+    width: 90%;
+    padding-left: 24px;
 }
 /*! Ansible - remove so highlight indenting is correct  */.rst-content .highlighted {
     padding: 0;
