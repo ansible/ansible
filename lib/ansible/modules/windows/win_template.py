@@ -13,6 +13,7 @@ DOCUMENTATION = r'''
 ---
 module: win_template
 version_added: "1.9.2"
+short_description: Template a file out to a remote server
 options:
   backup:
     description:
