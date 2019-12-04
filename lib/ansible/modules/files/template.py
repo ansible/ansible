@@ -17,6 +17,7 @@ DOCUMENTATION = r'''
 ---
 module: template
 version_added: historical
+short_description: Template a file out to a remote server
 options:
   follow:
     description:
