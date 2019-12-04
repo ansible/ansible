@@ -848,8 +848,6 @@ class TaskExecutor:
                     raise
             else:
                 time_left -= self._task.poll
-            finally:
-                self._handler.cleanup(force=True)
 
         if int(async_result.get('finished', 0)) != 1:
             if async_result.get('_ansible_parsed'):
@@ -857,6 +855,7 @@ class TaskExecutor:
             else:
                 return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
         else:
+            async_handler.cleanup(force=True)
             return async_result
 
     def _get_become(self, name):
