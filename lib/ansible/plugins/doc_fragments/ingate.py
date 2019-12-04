@@ -8,6 +8,8 @@ class ModuleDocFragment(object):
     DOCUMENTATION = r'''
 options:
   client:
+    required: true
+    type: dict
     description:
       - A dict object containing connection details.
     suboptions:
