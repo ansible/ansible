@@ -649,6 +649,8 @@ class TaskExecutor:
                 return dict(failed=True, msg=to_text(e))
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
+            finally:
+                self._handler.cleanup()
             display.debug("handler run complete")
 
             # preserve no log
@@ -846,6 +848,8 @@ class TaskExecutor:
                     raise
             else:
                 time_left -= self._task.poll
+            finally:
+                self._handler.cleanup(force=True)
 
         if int(async_result.get('finished', 0)) != 1:
             if async_result.get('_ansible_parsed'):
