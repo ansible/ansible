@@ -266,7 +266,7 @@ except ImportError:
 
 try:
     from azure.cli.core.util import CLIError
-    from azure.common.credentials import get_azure_cli_credentials,get_cli_profile
+    from azure.common.credentials import get_azure_cli_credentials, get_cli_profile
     from azure.common.cloud import get_cli_active_cloud
 except ImportError:
     HAS_AZURE_CLI_CORE = False
