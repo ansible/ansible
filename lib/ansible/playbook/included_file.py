@@ -65,6 +65,8 @@ class IncludedFile:
 
             original_host = inventory.get_host(res['host_name'])
             original_task = iterator.get_last_task_for_host(original_host)
+            if not original_task:
+                continue
 
             if original_task.action in ('include', 'include_tasks', 'include_role'):
                 if original_task.loop:

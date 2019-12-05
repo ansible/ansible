@@ -48,6 +48,7 @@ from ansible.playbook.conditional import evaluate_conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.play_context import set_task_and_variable_override
+from ansible.playbook.role import ROLE_CACHE
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import new_loader as plugin_loader
 from ansible.template import Templar
@@ -579,9 +580,11 @@ class StrategyBase:
                     self._tqm._stats.increment("ignored", host_status["host_name"])
                 self._tqm._stats.increment("dark", host_status["host_name"])
 
-            if host_status['role_ran']:
-                # mark the role this host ran
-                pass
+            # if this task was part of a role, and the result indicates the task
+            # ran in some way (whether it was ok or failed), use the iterator to
+            # mark the role as having run a task.
+            if host_status['role_ran'] and original_task._role:
+                iterator.mark_role_ran_task(original_host, original_task._role)
 
             self._blocked_hosts.pop(host_status["host_name"], None)
             self._pending_results -= 1

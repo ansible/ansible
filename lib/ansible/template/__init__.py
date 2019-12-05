@@ -327,19 +327,15 @@ class JinjaPluginIntercept(MutableMapping):
             return self._delegatee.__getitem__(key)
 
         func = self._collection_jinja_func_cache.get(key)
-
         if func:
             return func
 
         acr = AnsibleCollectionRef.try_parse_fqcr(key, self._dirname)
-
         if not acr:
             raise KeyError('invalid plugin name: {0}'.format(key))
 
         # FIXME: error handling for bogus plugin name, bogus impl, bogus filter/test
-
         pkg = import_module(acr.n_python_package_name)
-
         parent_prefix = acr.collection
 
         if acr.subdirs:
@@ -349,10 +345,9 @@ class JinjaPluginIntercept(MutableMapping):
             if ispkg:
                 continue
 
-            plugin_impl = self._pluginloader.get(module_name)
+            plugin_impl = self._pluginloader.get(module_name)()
 
             method_map = getattr(plugin_impl, self._method_map_name)
-
             for f in iteritems(method_map()):
                 fq_name = '.'.join((parent_prefix, f[0]))
                 # FIXME: detect/warn on intra-collection function name collisions
@@ -443,8 +438,9 @@ class Templar:
         Returns filter plugins, after loading and caching them if need be
         '''
 
-        #if self._filters is not None:
-        #    return self._filters.copy()
+        # FIXME: caching these causes problems...
+        # if self._filters is not None:
+        #     return self._filters.copy()
 
         self._filters = dict()
 

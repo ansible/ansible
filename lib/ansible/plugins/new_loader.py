@@ -246,7 +246,7 @@ class PluginFinder:
         if not found_files:
             return None, None
         elif len(found_files) > 1:
-            display.warning("multiple plugins found matching '{0}'".format(name))
+            display.warning("multiple plugins found matching '{0}'".format(fq_name))
 
         return full_name, to_text(found_files[0])
 
@@ -439,6 +439,7 @@ class PluginFinder:
 def _configure_collection_loader():
     if not any((isinstance(l, AnsibleCollectionLoader) for l in sys.meta_path)):
         sys.meta_path.insert(0, AnsibleCollectionLoader(C.config))
+
 
 _configure_collection_loader()
 

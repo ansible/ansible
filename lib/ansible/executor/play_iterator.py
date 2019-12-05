@@ -53,6 +53,8 @@ class HostState:
         self.did_rescue = False
         self.did_start_at_task = False
         self.last_task = None
+        self.roles_run = []
+        self.roles_completed = []
 
     def __repr__(self):
         return "HostState(%r)" % self._blocks
@@ -127,6 +129,8 @@ class HostState:
         if self.always_child_state is not None:
             new_state.always_child_state = self.always_child_state.copy()
         new_state.last_task = self.last_task
+        new_state.roles_run = self.roles_run[:]
+        new_state.roles_completed = self.roles_completed[:]
         return new_state
 
 
@@ -229,6 +233,19 @@ class PlayIterator:
             self._host_states[host.name] = HostState(blocks=[])
 
         return self._host_states[host.name].copy()
+
+    def host_has_completed_role(self, host, role):
+        s = self.get_host_state(host)
+        allow_duplicates = False
+        if role._metadata:
+            allow_duplicates = role._metadata.allow_duplicates
+        return role._uuid in s.roles_completed and not allow_duplicates
+
+    def mark_role_ran_task(self, host, role):
+        s = self.get_host_state(host)
+        if role._uuid not in s.roles_run:
+            s.roles_run.append(role._uuid)
+        self._host_states[host.name] = s
 
     def cache_block_tasks(self, block):
         # now a noop, we've changed the way we do caching and finding of
@@ -421,8 +438,9 @@ class PlayIterator:
 
                             # we're advancing blocks, so if this was an end-of-role block we
                             # mark the current role complete
-                            if block._eor and host.name in block._role._had_task_run and not in_child and not peek:
-                                block._role._completed[host.name] = True
+                            if block._role and block._eor and block._role._uuid in state.roles_run:
+                                if block._role._uuid not in state.roles_completed:
+                                    state.roles_completed.append(block._role._uuid)
                     else:
                         task = block.always[state.cur_always_task]
                         if isinstance(task, Block):

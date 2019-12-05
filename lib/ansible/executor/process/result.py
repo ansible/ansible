@@ -84,8 +84,9 @@ class ResultProcess(AnsibleProcessBase):
         display.debug("RESULTS PROCESS EXITING")
 
     def handle_result(self, task_result):
+        task_data = task_result._task
         orig_host = Host().deserialize(task_result._host)
-        orig_task = Task().deserialize(task_result._task)
+        orig_task = Task().deserialize(task_data)
         task_result._host = orig_host
         task_result._task = orig_task
 

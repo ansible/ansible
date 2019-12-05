@@ -1033,7 +1033,8 @@ class TaskExecutor:
 
         # set options with 'templated vars' specific to this plugin and dependant ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
-        #self._set_plugin_options('shell', final_vars, templar, task_keys)
+        # FIXME: this is not working currently...
+        # self._set_plugin_options('shell', final_vars, templar, task_keys)
 
         if self._connection.become is not None:
             # FIXME: find alternate route to provide passwords,
@@ -1069,7 +1070,7 @@ class TaskExecutor:
             handler_name = 'normal'
             collections = None  # until then, we don't want the task's collection list to be consulted; use the builtin
 
-        handler = self._shared_loader_obj.action_loader.get(handler_name, collection_list=collections) (
+        handler = self._shared_loader_obj.action_loader.get(handler_name, collection_list=collections)(
             task=self._task,
             connection=connection,
             play_context=self._play_context,

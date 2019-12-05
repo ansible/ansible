@@ -404,6 +404,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def serialize(self):
         data = super(Task, self).serialize()
         data['search_path'] = self.get_search_path()
+        if self._role:
+            data['role_uuid'] = self._role._uuid
+            data['role_name'] = self._role._role_name
         # if not self._squashed and not self._finalized:
         #     if self._parent:
         #         data['parent'] = self._parent.serialize()
