@@ -57,7 +57,8 @@ class StrategyModule(StrategyBase):
 
         # We act only on hosts that are ready to flush handlers or failed hosts in notified_hosts if --force-handlers is used
         return [host for host in notified_hosts
-                if (host in self._flushed_hosts and self._flushed_hosts[host]) or self._tqm._failed_hosts.get(host.name, False)]
+                if (host in self._flushed_hosts and self._flushed_hosts[host]) or
+                self._tqm._failed_hosts.get(host.name, False)]
 
     def __init__(self, tqm):
         super(StrategyModule, self).__init__(tqm)
