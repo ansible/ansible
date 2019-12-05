@@ -21,7 +21,7 @@ $(for test in $(../../bin/ansible-test sanity --list-tests --allow-disabled); do
 EOF
 
 SHA_CMD="sha1sum"
-if ! $(which ${SHA_CMD}) > /dev/null 2>&1; then
+if ! which ${SHA_CMD} > /dev/null 2>&1; then
     SHA_CMD="sha1"
 fi
 
