@@ -1,36 +1,21 @@
-# Copyright: (c) 2019, Prasoon Karunan V (@prasoonkarunan) <kvprasoon@Live.in>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
-- name: Set autologon registry keys
-  win_auto_logon:
-    username: "{{ ansible_user }}"
-    password: "{{ ansible_password }}"
-    state: present
-  register: win_auto_logon_create_registry_key_set
+- name: get user domain split for ansible_user
+  win_shell: |
+    $account = New-Object -TypeName System.Security.Principal.NTAccount -ArgumentList '{{ ansible_user }}'
+    $sid = $account.Translate([System.Security.Principal.SecurityIdentifier])
+    $sid.Translate([System.Security.Principal.NTAccount]).Value -split '{{ "\\" }}'
+  changed_when: False
+  register: test_user_split
 
-- name: check win_auto_logon_create_registry_key_set is changed
-  assert:
-    that:
-    - win_auto_logon_create_registry_key_set is changed
+- set_fact:
+    test_domain: '{{ test_user_split.stdout_lines[0] }}'
+    test_user: '{{ test_user_split.stdout_lines[1] }}'
 
-- name: Set autologon registry keys with missing input
-  win_auto_logon:
-    username: "{{ ansible_user }}"
-    state: present
-  register: win_auto_logon_create_registry_key_missing_input
-  ignore_errors: true
+- block:
+  - name: run tests
+    include_tasks: tests.yml
 
-- name: check win_auto_logon_create_registry_key_missing_input is failed
-  assert:
-    that:
-    - win_auto_logon_create_registry_key_missing_input is failed
-
-- name: Remove autologon registry keys
-  win_auto_logon:
-    state: absent
-  register: win_auto_logon_create_registry_key_remove
-
-- name: check win_auto_logon_create_registry_key_remove is changed
-  assert:
-    that:
-    - win_auto_logon_create_registry_key_remove is changed
+  always:
+  - name: make sure the auto logon is cleared
+    win_auto_logon:
+      state: absent
