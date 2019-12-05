@@ -13,7 +13,7 @@ Can I deploy a virtual machine on a standalone ESXi server ?
 Yes. ``vmware_guest`` can deploy a virtual machine with required settings on a standalone ESXi server.
 
 .. note::
-Please note that executing ``vmware_guest`` using the free license version will result in an error as the API is read-only.
+    Please note that executing ``vmware_guest`` using the free license version will result in an error as the API is read-only.
 
 
 
