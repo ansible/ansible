@@ -213,26 +213,30 @@ def check_compatibility(module, client):
         module: Ansible module.
         client (cursor): Mongodb cursor on admin database.
     """
-    loose_srv_version = LooseVersion(client.server_info()['version'])
-    loose_driver_version = LooseVersion(PyMongoVersion)
+    COMPATIBILITY_TABLE = {
+        "4.2": "3.9",
+        "4.0": "3.7",
+        "3.6": "3.6",
+        "3.4": "3.4",
+        "3.2": "3.2",
+        "3.0": "2.8",
+        "2.6": "2.7",
+        "2.4": "2.5"
+    }
 
-    if loose_srv_version >= LooseVersion('3.6') and loose_driver_version < LooseVersion('3.6'):
-        module.fail_json(msg=' (Note: you must use pymongo 3.6+ with MongoDB >= 3.6)')
+    # NOTE: fishy way to retrieve major version
+    # e.g. 3.4.16 -> 3.4
+    srv_version = client.server_info()['version']
+    loose_srv_version = LooseVersion(''.join(srv_version.split())[:-3])
 
-    if loose_srv_version >= LooseVersion('3.4') and loose_driver_version < LooseVersion('3.4'):
-        module.fail_json(msg=' (Note: you must use pymongo 3.4+ with MongoDB >= 3.4)')
+    try:
+        loose_srv_requirement = LooseVersion(COMPATIBILITY_TABLE[loose_srv_version.vstring])
+    except KeyError:
+        pass
 
-    if loose_srv_version >= LooseVersion('3.2') and loose_driver_version < LooseVersion('3.2'):
-        module.fail_json(msg=' (Note: you must use pymongo 3.2+ with MongoDB >= 3.2)')
-
-    elif loose_srv_version >= LooseVersion('3.0') and loose_driver_version <= LooseVersion('2.8'):
-        module.fail_json(msg=' (Note: you must use pymongo 2.8+ with MongoDB 3.0)')
-
-    elif loose_srv_version >= LooseVersion('2.6') and loose_driver_version <= LooseVersion('2.7'):
-        module.fail_json(msg=' (Note: you must use pymongo 2.7+ with MongoDB 2.6)')
-
-    elif LooseVersion(PyMongoVersion) <= LooseVersion('2.5'):
-        module.fail_json(msg=' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)')
+    if LooseVersion(PyMongoVersion) < loose_srv_requirement:
+        msg = ' (Note: you must use pymongo {0} with MongoDB >= {1})'.format(loose_srv_requirement, loose_srv_version)
+        module.fail_json(msg=msg)
 
 
 def user_find(client, user, db_name):
