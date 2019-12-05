@@ -1,0 +1,2 @@
+minor_changes:
+- vars_prompt - throw error when encountering unsupported key
