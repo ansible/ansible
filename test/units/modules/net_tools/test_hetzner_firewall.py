@@ -169,7 +169,7 @@ class ModuleFailException(Exception):
         self.kwargs = kwargs
 
 
-def run_module(mocker, arguments, fetch_url):
+def run_module(mocker, module, arguments, fetch_url):
     def exit_json(module, **kwargs):
         module._return_formatted(kwargs)
         raise ModuleExitException(kwargs)
@@ -183,21 +183,21 @@ def run_module(mocker, arguments, fetch_url):
     mocker.patch('ansible.modules.net_tools.hetzner_firewall.AnsibleModule.exit_json', exit_json)
     mocker.patch('ansible.modules.net_tools.hetzner_firewall.AnsibleModule.fail_json', fail_json)
     set_module_args(arguments)
-    hetzner_firewall.main()
+    module.main()
 
 
-def run_module_success(mocker, arguments, fetch_url_calls):
+def run_module_success(mocker, module, arguments, fetch_url_calls):
     fetch_url = FetchUrlProxy(fetch_url_calls or [])
     with pytest.raises(ModuleExitException) as e:
-        run_module(mocker, arguments, fetch_url)
+        run_module(mocker, module, arguments, fetch_url)
     fetch_url.assert_is_done()
     return e.value.kwargs
 
 
-def run_module_failed(mocker, arguments, fetch_url_calls):
+def run_module_failed(mocker, module, arguments, fetch_url_calls):
     fetch_url = FetchUrlProxy(fetch_url_calls or [])
     with pytest.raises(ModuleFailException) as e:
-        run_module(mocker, arguments, fetch_url)
+        run_module(mocker, module, arguments, fetch_url)
     fetch_url.assert_is_done()
     return e.value.kwargs
 
@@ -210,7 +210,7 @@ def run_module_failed(mocker, arguments, fetch_url_calls):
 
 
 def test_absent_idempotency(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -240,7 +240,7 @@ def test_absent_idempotency(mocker):
 
 
 def test_absent_changed(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -285,7 +285,7 @@ def test_absent_changed(mocker):
 
 
 def test_present_idempotency(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -315,7 +315,7 @@ def test_present_idempotency(mocker):
 
 
 def test_present_changed(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -363,7 +363,7 @@ def test_present_changed(mocker):
 
 
 def test_absent_idempotency_check(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -394,7 +394,7 @@ def test_absent_idempotency_check(mocker):
 
 
 def test_absent_changed_check(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -425,7 +425,7 @@ def test_absent_changed_check(mocker):
 
 
 def test_present_idempotency_check(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -456,7 +456,7 @@ def test_present_idempotency_check(mocker):
 
 
 def test_present_changed_check(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -490,7 +490,7 @@ def test_present_changed_check(mocker):
 
 
 def test_port_idempotency(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -522,7 +522,7 @@ def test_port_idempotency(mocker):
 
 
 def test_port_changed(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -572,7 +572,7 @@ def test_port_changed(mocker):
 
 
 def test_whitelist_hos_idempotency(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -604,7 +604,7 @@ def test_whitelist_hos_idempotency(mocker):
 
 
 def test_whitelist_hos_changed(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -654,7 +654,7 @@ def test_whitelist_hos_changed(mocker):
 
 
 def test_wait_get(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -699,7 +699,7 @@ def test_wait_get(mocker):
 
 
 def test_wait_get_timeout(mocker):
-    result = run_module_failed(mocker, {
+    result = run_module_failed(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -740,7 +740,7 @@ def test_wait_get_timeout(mocker):
 
 
 def test_nowait_get(mocker):
-    result = run_module_failed(mocker, {
+    result = run_module_failed(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -769,7 +769,7 @@ def test_nowait_get(mocker):
 
 
 def test_wait_update(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -828,7 +828,7 @@ def test_wait_update(mocker):
 
 
 def test_wait_update_timeout(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -889,7 +889,7 @@ def test_wait_update_timeout(mocker):
 
 
 def test_nowait_update(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -936,7 +936,7 @@ def test_nowait_update(mocker):
 # Idempotency checks: different amount of input rules
 
 def test_input_rule_len_change_0_1(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -1012,7 +1012,7 @@ def test_input_rule_len_change_0_1(mocker):
 
 
 def test_input_rule_len_change_1_0(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -1073,7 +1073,7 @@ def test_input_rule_len_change_1_0(mocker):
 
 
 def test_input_rule_len_change_1_2(mocker):
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -1278,7 +1278,7 @@ def test_input_rule_value_change(mocker, parameter, before, after):
             after_call.expect_form_value_absent('rules[input][0][{0}]'.format(parameter))
         calls.append(after_call)
 
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
@@ -1384,7 +1384,7 @@ def test_input_rule_ip_normalization(mocker, ip_version, parameter, before_norma
         after_call.expect_form_value('rules[input][0][{0}]'.format(parameter), after_normalized)
         calls.append(after_call)
 
-    result = run_module_success(mocker, {
+    result = run_module_success(mocker, hetzner_firewall, {
         'hetzner_user': '',
         'hetzner_password': '',
         'server_ip': '1.2.3.4',
