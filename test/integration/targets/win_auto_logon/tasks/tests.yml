@@ -1,23 +1,6 @@
 # Copyright: (c) 2019, Prasoon Karunan V (@prasoonkarunan) <kvprasoon@Live.in>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
-- name: ensure defaults are set
-  win_regedit:
-    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
-    name: '{{ item.name }}'
-    data: '{{ item.value }}'
-    type: '{{ item.type }}'
-    state: present
-  loop:
-  # We set the DefaultPassword to ensure win_auto_logon clears this out
-  - name: DefaultPassword
-    value: abc
-    type: string
-  # Ensures the host we test on has a baseline key to check against
-  - name: AutoAdminLogon
-    value: 0
-    type: dword
-
 - name: set autologon registry keys (check mode)
   win_auto_logon:
     username: '{{ ansible_user }}'
