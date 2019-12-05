@@ -53,7 +53,6 @@ options:
     description: User-Agent to use in the request
     type: string
     version_added: "2.10"
-    default: None
   force_basic_auth:
     description: Force basic authentication
     type: boolean
@@ -73,17 +72,14 @@ options:
     description: String of file system path to unix socket file to use when establishing connection to the provided url
     type: string
     version_added: "2.10"
-    default: None
   ca_path:
     description: String of file system path to CA cert bundle to use
     type: string
     version_added: "2.10"
-    default: None
   unredirected_headers:
     description: A list of headers to not attach on a redirected request
     type: list
     version_added: "2.10"
-    default: None
 """
 
 EXAMPLES = """
