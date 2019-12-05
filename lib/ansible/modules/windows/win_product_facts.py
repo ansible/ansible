@@ -22,6 +22,14 @@ author:
 EXAMPLES = r'''
 - name: Get product id and product key
   win_product_facts:
+
+- name: Display Windows edition
+  debug:
+    var: ansible_os_license_edition
+
+- name: Display Windows license status
+  debug:
+    var: ansible_os_license_status
 '''
 
 RETURN = r'''

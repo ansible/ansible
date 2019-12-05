@@ -410,19 +410,18 @@ def comment(text, style='plain', **kw):
         str_end)
 
 
-def extract(item, container, morekeys=None):
-    from jinja2.runtime import Undefined
+@environmentfilter
+def extract(environment, item, container, morekeys=None):
+    if morekeys is None:
+        keys = [item]
+    elif isinstance(morekeys, list):
+        keys = [item] + morekeys
+    else:
+        keys = [item, morekeys]
 
-    value = container[item]
-
-    if value is not Undefined and morekeys is not None:
-        if not isinstance(morekeys, list):
-            morekeys = [morekeys]
-
-        try:
-            value = reduce(lambda d, k: d[k], morekeys, value)
-        except KeyError:
-            value = Undefined()
+    value = container
+    for key in keys:
+        value = environment.getitem(value, key)
 
     return value
 
