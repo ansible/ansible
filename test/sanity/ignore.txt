@@ -491,12 +491,7 @@ lib/ansible/modules/cloud/alicloud/ali_instance.py validate-modules:parameter-ty
 lib/ansible/modules/cloud/alicloud/ali_instance_info.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/alicloud/ali_instance_info.py validate-modules:doc-required-mismatch
 lib/ansible/modules/cloud/alicloud/ali_instance_info.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/cloud/amazon/cloudtrail.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/amazon/ec2.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/amazon/ec2_asg_lifecycle_hook.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/amazon/ec2_lc.py validate-modules:doc-required-mismatch
 lib/ansible/modules/cloud/amazon/ec2_placement_group.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/amazon/elb_network_lb.py validate-modules:doc-required-mismatch
 lib/ansible/modules/cloud/amazon/iam.py validate-modules:doc-required-mismatch
 lib/ansible/modules/cloud/amazon/iam_cert.py validate-modules:doc-required-mismatch
 lib/ansible/modules/cloud/amazon/iam_policy.py validate-modules:doc-required-mismatch
