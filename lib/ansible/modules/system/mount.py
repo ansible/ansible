@@ -36,6 +36,13 @@ options:
       - Device to be mounted on I(path).
       - Required when I(state) set to C(present) or C(mounted).
     type: path
+  verify_src:
+    description:
+      - Checks whether the specified I(src) path exists.
+      - The check does not work for remote or special file systems.
+    type: bool
+    default: yes
+    version_added: '2.10'
   fstype:
     description:
       - Filesystem type.
@@ -153,6 +160,16 @@ EXAMPLES = r'''
     opts: rw,sync,hard,intr
     state: mounted
     fstype: nfs
+    verify_src: false
+
+- name: Mount a Cephfs filesystem
+  mount:
+    src: 192.168.1.100,192.168.1.101,192.168.1.103:/cephfs/path
+    path: /mnt/cephfs
+    fstype: ceph
+    opts: name=client1,secret=eW91ciBjZXBoIGtleQ==,noatime,_netdev
+    state: mounted
+    verify_src: false
 '''
 
 
@@ -608,6 +625,7 @@ def main():
             opts=dict(type='str'),
             passno=dict(type='str'),
             src=dict(type='path'),
+            verify_src=dict(type='bool', default=True),
             backup=dict(type='bool', default=False),
             state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
         ),
@@ -719,7 +737,7 @@ def main():
 
             changed = True
     elif state == 'mounted':
-        if not os.path.exists(args['src']):
+        if module.params['verify_src'] and not os.path.exists(args['src']):
             module.fail_json(msg="Unable to mount %s as it does not exist" % args['src'])
 
         if not os.path.exists(name) and not module.check_mode:

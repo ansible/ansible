@@ -1,0 +1,2 @@
+minor_changes:
+  - mount - Added verify_src option to allow mounting of remote or special file systems.
