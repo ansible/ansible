@@ -3,8 +3,9 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
-import astroid
 import os
+
+import astroid
 
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
