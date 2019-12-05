@@ -216,12 +216,13 @@ a shared source like Galaxy).
    * Handler names and `listen` topics live in a global namespace.
    * Handler names are templatable and `listen` topics are not.
    * Use unique handler names. If you trigger more than one handler with the same name, the first one(s) get overwritten. Only the last one defined will run.
-   * You cannot notify a handler that is defined inside of an include. As of Ansible 2.1, this does work, however the include must be `static`.
+   * You can notify a handler defined inside a static include.
+   * You cannot notify a handler defined inside a dynamic include.
 
-Roles are described later on, but it's worthwhile to point out that:
+When using handlers within roles, note that:
 
-* handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed in the end of section where they were notified,
-* handlers notified within ``roles`` section are automatically flushed in the end of ``tasks`` section, but before any ``tasks`` handlers,
+* handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed in the end of section where they were notified.
+* handlers notified within ``roles`` section are automatically flushed in the end of ``tasks`` section, but before any ``tasks`` handlers.
 * handlers are play scoped and as such can be used outside of the role they are defined in.
 
 .. _playbook_ansible-pull:
