@@ -387,7 +387,7 @@ def main():
     module = AnsibleModule(
         argument_spec={
             'executable': {'type': 'str', 'default': 'podman'},
-            'name': {'type': 'list', 'elements': 'str'}
+            'name': {'type': 'list', 'elements': 'str'},
         },
         supports_check_mode=True,
     )
