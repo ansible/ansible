@@ -57,12 +57,15 @@ class StrategyModule(StrategyBase):
 
         # We act only on hosts that are ready to flush handlers or failed hosts in notified_hosts if --force-handlers is used
         return [host for host in notified_hosts
-                if (host in self._flushed_hosts and self._flushed_hosts[host]) or
-                self._tqm._failed_hosts.get(host.name, False)]
+                if (host in self._flushed_hosts and self._flushed_hosts[host]) or self.iterator.is_failed(host)]
 
     def __init__(self, tqm):
         super(StrategyModule, self).__init__(tqm)
         self._host_pinned = False
+
+        # The iterator is needed to check failed hosts that have not completed (for example, have an 'always' section to run)
+        # Initialize to None and set in run
+        self.iterator = None
 
     def run(self, iterator, play_context):
         '''
@@ -77,6 +80,7 @@ class StrategyModule(StrategyBase):
         list again, which would end up favoring hosts near the beginning of the
         list.
         '''
+        self.iterator = iterator
 
         # the last host to be given a task
         last_host = 0
