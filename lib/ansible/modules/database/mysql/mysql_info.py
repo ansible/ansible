@@ -38,6 +38,13 @@ options:
     - Database name to connect to.
     - It makes sense if I(login_user) is allowed to connect to a specific database only.
     type: str
+  exclude_fields:
+    description:
+    - List of fields which are not needed to collect.
+    - "Supports elements: C(db_size). Unsupported elements will be ignored"
+    type: list
+    elements: str
+    version_added: '2.10'
 
 author:
 - Andrew Klychkov (@Andersson007)
@@ -87,6 +94,15 @@ EXAMPLES = r'''
     config_file: /home/alice/.my.cnf
     filter:
     - databases
+    - version
+
+- name: Collect info about databases excluding their sizes
+  become: yes
+  mysql_info:
+    config_file: /home/alice/.my.cnf
+    filter:
+    - databases
+    exclude_fields: db_size
 '''
 
 RETURN = r'''
@@ -218,14 +234,14 @@ class MySQL_Info(object):
             'slave_status': {},
         }
 
-    def get_info(self, filter_):
+    def get_info(self, filter_, exclude_fields):
         """Get MySQL instance information based on filter_.
 
         Arguments:
             filter_ (list): List of collected subsets (e.g., databases, users, etc.),
                 when it is empty, return all available information.
         """
-        self.__collect()
+        self.__collect(exclude_fields)
 
         inc_list = []
         exc_list = []
@@ -259,9 +275,9 @@ class MySQL_Info(object):
         else:
             return self.info
 
-    def __collect(self):
+    def __collect(self, exclude_fields):
         """Collect all possible subsets."""
-        self.__get_databases()
+        self.__get_databases(exclude_fields)
         self.__get_global_variables()
         self.__get_global_status()
         self.__get_engines()
@@ -382,11 +398,16 @@ class MySQL_Info(object):
                     if vname not in ('Host', 'User'):
                         self.info['users'][host][user][vname] = self.__convert(val)
 
-    def __get_databases(self):
+    def __get_databases(self, exclude_fields):
         """Get info about databases."""
-        query = ('SELECT table_schema AS "name", '
-                 'SUM(data_length + index_length) AS "size" '
-                 'FROM information_schema.TABLES GROUP BY table_schema')
+        if not exclude_fields:
+            query = ('SELECT table_schema AS "name", '
+                     'SUM(data_length + index_length) AS "size" '
+                     'FROM information_schema.TABLES GROUP BY table_schema')
+        else:
+            if 'db_size' in exclude_fields:
+                query = ('SELECT table_schema AS "name" '
+                         'FROM information_schema.TABLES GROUP BY table_schema')
 
         res = self.__exec_sql(query)
 
@@ -394,7 +415,8 @@ class MySQL_Info(object):
             for db in res:
                 self.info['databases'][db['name']] = {}
 
-                self.info['databases'][db['name']]['size'] = int(db['size'])
+                if not exclude_fields or 'db_size' not in exclude_fields:
+                    self.info['databases'][db['name']]['size'] = int(db['size'])
 
     def __exec_sql(self, query, ddl=False):
         """Execute SQL.
@@ -427,6 +449,7 @@ def main():
     argument_spec.update(
         login_db=dict(type='str'),
         filter=dict(type='list'),
+        exclude_fields=dict(type='list'),
     )
 
     # The module doesn't support check_mode
@@ -445,9 +468,13 @@ def main():
     ssl_ca = module.params['ca_cert']
     config_file = module.params['config_file']
     filter_ = module.params['filter']
+    exclude_fields = module.params['exclude_fields']
 
     if filter_:
         filter_ = [f.strip() for f in filter_]
+
+    if exclude_fields:
+        exclude_fields = set([f.strip() for f in exclude_fields])
 
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
@@ -461,7 +488,7 @@ def main():
 
     mysql = MySQL_Info(module, cursor)
 
-    module.exit_json(changed=False, **mysql.get_info(filter_))
+    module.exit_json(changed=False, **mysql.get_info(filter_, exclude_fields))
 
 
 if __name__ == '__main__':
