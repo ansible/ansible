@@ -24,7 +24,7 @@ description:
 deprecated:
   removed_in: '2.13'
   alternative: eos_static_routes
-  Why: Updated modules with more functionality
+  why: Updated modules with more functionality
 notes:
   - Tested against EOS 4.15
 options:
