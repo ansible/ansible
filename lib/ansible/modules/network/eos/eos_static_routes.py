@@ -43,7 +43,9 @@ short_description: Configures and manages attributes of static routes on Arista 
 description: This module configures and manages the attributes of static routes on Arista EOS platforms.
 author: Gomathi Selvi Srinivasan (@GomathiselviS)
 notes:
- - Tested against: vEOS 4.20.10M
+- Tested against Arista EOS 4.20.10M
+- This module works with connection C(network_cli). See the
+  L(EOS Platform Options,../network/user_guide/platform_eos.html).
 options:
   config:
     description:
