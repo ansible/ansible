@@ -1,22 +1,31 @@
 ---
-- name: expect failure when setting paths to a file
+- name: expected skip when paths to a file
   win_find:
     paths: "{{win_find_dir}}\\single\\large.ps1"
   register: actual
-  failed_when: actual.msg != "Argument path '" + win_find_dir + "\\single\\large.ps1' is a file not a directory"
 
-- name: expect failure when path is set to a non existent folder
-  win_find:
-    paths: "{{win_find_dir}}\\thisisafakefolder"
-  register: actual
-
-- name: assert check when path is set to a non existent folder
+- name: assert skip when path is set to a file
   assert:
     that:
     - not actual is changed
     - actual.examined == 0
     - actual.files == []
     - actual.matched == 0
+    - actual.warnings == ["Argument path '" + win_find_dir + "\\single\\large.ps1' is a file not a directory, skipping"]
+
+- name: expect skip when path is set to a non existent folder
+  win_find:
+    paths: "{{win_find_dir}}\\thisisafakefolder"
+  register: actual
+
+- name: assert skip when path is set to a non existent folder
+  assert:
+    that:
+    - not actual is changed
+    - actual.examined == 0
+    - actual.files == []
+    - actual.matched == 0
+    - actual.warnings == ["Argument path '" + win_find_dir + "\\thisisafakefolder' does not exist, skipping"]
 
 - name: get files in single directory
   win_find:

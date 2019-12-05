@@ -195,10 +195,12 @@ Function Search-Path {
     )
 
     $dir_obj = New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path
-    if ([Int32]$dir_obj.Attribute -eq -1) {
-        $Module.FailJson("Argument path '$Path' does not exist, cannot get information on")
+    if ([Int32]$dir_obj.Attributes -eq -1) {
+        $Module.Warn("Argument path '$Path' does not exist, skipping")
+        return
     } elseif (-not $dir_obj.Attributes.HasFlag([System.IO.FileAttributes]::Directory)) {
-        $Module.FailJson("Argument path '$Path' is a file not a directory")
+        $Module.Warn("Argument path '$Path' is a file not a directory, skipping")
+        return
     }
 
     $dir_files = @()
