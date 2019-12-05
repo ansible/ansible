@@ -310,6 +310,10 @@
     that: 
       - output.changed
 
+- name: pasue 2 minutes, wait for deletion complete
+  pause:
+    minutes: 2
+
 - name: Delete gallery image
   azure_rm_galleryimage:
     resource_group: "{{ resource_group }}"
@@ -321,6 +325,10 @@
 - assert:
     that: 
       - output.changed
+
+- name: pasue 2 minutes, wait for deletion complete
+  pause:
+    minutes: 2
 
 - name: Delete gallery
   azure_rm_gallery:
