@@ -129,6 +129,13 @@ class AnsibleBlacklistChecker(BaseChecker):
                                        '/lib/ansible/module_utils/common/removed.py',
                                    ),
                                    modules_only=True),
+
+        'builtins.print': BlacklistEntry('module.log or module.debug',
+                                         ignore_paths=(
+                                             '/lib/ansible/module_utils/basic.py',
+                                             '/lib/ansible/module_utils/common/removed.py',
+                                         ),
+                                         modules_only=True),
     }
 
     def visit_import(self, node):
