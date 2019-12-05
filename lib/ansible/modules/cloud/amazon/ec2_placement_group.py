@@ -30,7 +30,6 @@ options:
   state:
     description:
       - Create or delete placement group.
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
     type: str
@@ -39,7 +38,6 @@ options:
       - Placement group strategy. Cluster will cluster instances into a
         low-latency group in a single Availability Zone, while Spread spreads
         instances across underlying hardware.
-    required: false
     default: cluster
     choices: [ 'cluster', 'spread' ]
     type: str

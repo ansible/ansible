@@ -24,31 +24,32 @@ options:
   cross_zone_load_balancing:
     description:
       - Indicates whether cross-zone load balancing is enabled.
-    required: false
-    default: no
+    default: false
     type: bool
   deletion_protection:
     description:
       - Indicates whether deletion protection for the ELB is enabled.
-    required: false
-    default: no
+    default: false
     type: bool
   listeners:
     description:
       - A list of dicts containing listeners to attach to the ELB. See examples for detail of the dict required. Note that listener keys
         are CamelCased.
-    required: false
     type: list
+    elements: dict
     suboptions:
         Port:
             description: The port on which the load balancer is listening.
             type: int
+            required: true
         Protocol:
             description: The protocol for connections from clients to the load balancer.
             type: str
+            required: true
         Certificates:
             description: The SSL server certificate.
             type: list
+            elements: dict
             suboptions:
                 CertificateArn:
                     description: The Amazon Resource Name (ARN) of the certificate.
@@ -58,7 +59,9 @@ options:
             type: str
         DefaultActions:
             description: The default actions for the listener.
+            required: true
             type: list
+            elements: dict
             suboptions:
                 Type:
                     description: The type of action.
@@ -74,46 +77,44 @@ options:
     type: str
   purge_listeners:
     description:
-      - If yes, existing listeners will be purged from the ELB to match exactly what is defined by I(listeners) parameter. If the I(listeners) parameter is
-        not set then listeners will not be modified
-    default: yes
+      - If I(purge_listeners=true), existing listeners will be purged from the ELB to match exactly what is defined by I(listeners) parameter.
+      - If the I(listeners) parameter is not set then listeners will not be modified.
+    default: true
     type: bool
   purge_tags:
     description:
-      - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
-        tags will not be modified.
-    required: false
-    default: yes
+      - If I(purge_tags=true), existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter.
+      - If the I(tags) parameter is not set then tags will not be modified.
+    default: true
     type: bool
   subnet_mappings:
     description:
       - A list of dicts containing the IDs of the subnets to attach to the load balancer. You can also specify the allocation ID of an Elastic IP
-        to attach to the load balancer. You can specify one Elastic IP address per subnet. This parameter is mutually exclusive with I(subnets)
-    required: false
+        to attach to the load balancer. You can specify one Elastic IP address per subnet.
+      - This parameter is mutually exclusive with I(subnets).
     type: list
+    elements: dict
   subnets:
     description:
       - A list of the IDs of the subnets to attach to the load balancer. You can specify only one subnet per Availability Zone. You must specify subnets from
-        at least two Availability Zones. Required if state=present. This parameter is mutually exclusive with I(subnet_mappings)
-    required: false
+        at least two Availability Zones.
+      - Required when I(state=present).
+      - This parameter is mutually exclusive with I(subnet_mappings).
     type: list
   scheme:
     description:
       - Internet-facing or internal load balancer. An ELB scheme can not be modified after creation.
-    required: false
     default: internet-facing
     choices: [ 'internet-facing', 'internal' ]
     type: str
   state:
     description:
       - Create or destroy the load balancer.
-    required: true
     choices: [ 'present', 'absent' ]
     type: str
   tags:
     description:
       - A dictionary of one or more tags to assign to the load balancer.
-    required: false
     type: dict
   wait:
     description:
