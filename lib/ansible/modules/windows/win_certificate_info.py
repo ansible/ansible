@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: win_cert_stat
+module: win_certificate_info
 version_added: "2.10"
 short_description: Get information on certificates from a Windows Certificate Store
 description:
@@ -45,12 +45,12 @@ author:
 
 EXAMPLES = r'''
 - name: Obtain information about a particular certificate in the computer's personal store
-  win_cert_stat:
+  win_certificate_info:
     thumbprint: BD7AF104CF1872BDB518D95C9534EA941665FD27
   register: mycert
 
 - name: Obtain information about all certificates in the root store
-  win_cert_stat:
+  win_certificate_info:
     store_name: Root
   register: ca
 
@@ -65,7 +65,7 @@ EXAMPLES = r'''
   register: mycert
 
 - name: Obtain information on each certificate that was touched
-  win_cert_stat:
+  win_certificate_info:
     thumbprint: "{{ item }}"
   register: mycert_stats
   loop: "{{ mycert.thumbprints }}"
