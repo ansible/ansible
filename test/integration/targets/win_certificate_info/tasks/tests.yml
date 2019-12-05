@@ -1,7 +1,7 @@
 ---
 
 - name: get stats on a store that doesn't exist
-  win_cert_stat:
+  win_certificate_info:
     store_name: teststore
   register: test_store
 
@@ -11,7 +11,7 @@
       - test_store.exists == false
 
 - name: get stats on the root certificate store
-  win_cert_stat:
+  win_certificate_info:
     store_name: Root
   register: root_store
 
@@ -22,7 +22,7 @@
       - "root_store.certificates | length > 0"
 
 - name: get stats on a certificate that doesn't exist
-  win_cert_stat:
+  win_certificate_info:
     thumbprint: ABC
   register: actual
 
@@ -31,7 +31,7 @@
     that: actual.exists == false
 
 - name: get stats on root certificate
-  win_cert_stat:
+  win_certificate_info:
     thumbprint: '{{ root_thumbprint }}'
     store_name: Root
   register: root_stats
@@ -61,7 +61,7 @@
       - root_stats.certificates[0].version == 3
 
 - name: get stats on subject certificate
-  win_cert_stat:
+  win_certificate_info:
     thumbprint: '{{ subj_thumbprint }}'
   register: subj_stats
 
