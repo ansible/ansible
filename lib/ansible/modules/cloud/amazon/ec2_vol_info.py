@@ -107,7 +107,7 @@ def list_ec2_volumes(connection, module, region):
 
     # Replace filter key underscores with dashes, for compatibility, except if we're dealing with tags
     sanitized_filters = module.params.get("filters")
-    for key in sanitized_filters:
+    for key in list(sanitized_filters):
         if not key.startswith("tag:"):
             sanitized_filters[key.replace("_", "-")] = sanitized_filters.pop(key)
     volume_dict_array = []
