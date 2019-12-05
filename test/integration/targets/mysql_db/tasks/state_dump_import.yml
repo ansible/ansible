@@ -64,6 +64,7 @@
     ignore_tables:
         - "{{ db_name }}.department"
     login_unix_socket: '{{ mysql_socket }}'
+    force: yes
   register: result
 
 - name: assert successful completion of dump operation

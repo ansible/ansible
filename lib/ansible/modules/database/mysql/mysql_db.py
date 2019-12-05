@@ -72,7 +72,8 @@ options:
     version_added: "2.10"
   force:
     description:
-      - Option use to skip errors when importing malformed sql files.
+      - Continue dump or import even if we get an SQL error.
+      - Used only when I(state) is C(dump) or C(import).
     required: no
     type: bool
     default: no
@@ -222,8 +223,10 @@ def db_delete(cursor, db):
     return True
 
 
-def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
-            single_transaction=None, quick=None, ignore_tables=None, hex_blob=None, encoding=None):
+def db_dump(module, host, user, password, db_name, target, all_databases, port,
+            config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
+            single_transaction=None, quick=None, ignore_tables=None, hex_blob=None,
+            encoding=None, force=False):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -238,6 +241,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --ssl-key=%s" % shlex_quote(ssl_key)
     if ssl_ca is not None:
         cmd += " --ssl-ca=%s" % shlex_quote(ssl_ca)
+    if force:
+        cmd += " --force"
     if socket is not None:
         cmd += " --socket=%s" % shlex_quote(socket)
     else:
@@ -487,7 +492,8 @@ def main():
         rc, stdout, stderr = db_dump(module, login_host, login_user,
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
-                                     ssl_ca, single_transaction, quick, ignore_tables, hex_blob, encoding)
+                                     ssl_ca, single_transaction, quick, ignore_tables,
+                                     hex_blob, encoding, force)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout,
