@@ -1,0 +1,2 @@
+minor_changes:
+- postgresql_db - add the ``executed_commands`` returned value (https://github.com/ansible/ansible/pull/65542).

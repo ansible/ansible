@@ -178,6 +178,16 @@ EXAMPLES = r'''
     tablespace: bar
 '''
 
+RETURN = r'''
+executed_commands:
+  description: List of commands which tried to run.
+  returned: always
+  type: list
+  sample: ["CREATE DATABASE acme"]
+  version_added: '2.10'
+'''
+
+
 import os
 import subprocess
 import traceback
@@ -197,6 +207,8 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_native
 
+executed_commands = []
+
 
 class NotSupportedError(Exception):
     pass
@@ -210,6 +222,7 @@ def set_owner(cursor, db, owner):
     query = 'ALTER DATABASE %s OWNER TO "%s"' % (
             pg_quote_identifier(db, 'database'),
             owner)
+    executed_commands.append(query)
     cursor.execute(query)
     return True
 
@@ -218,6 +231,7 @@ def set_conn_limit(cursor, db, conn_limit):
     query = "ALTER DATABASE %s CONNECTION LIMIT %s" % (
             pg_quote_identifier(db, 'database'),
             conn_limit)
+    executed_commands.append(query)
     cursor.execute(query)
     return True
 
@@ -252,6 +266,7 @@ def db_exists(cursor, db):
 def db_delete(cursor, db):
     if db_exists(cursor, db):
         query = "DROP DATABASE %s" % pg_quote_identifier(db, 'database')
+        executed_commands.append(query)
         cursor.execute(query)
         return True
     else:
@@ -277,6 +292,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_
         if conn_limit:
             query_fragments.append("CONNECTION LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
         query = ' '.join(query_fragments)
+        executed_commands.append(cursor.mogrify(query, params))
         cursor.execute(query, params)
         return True
     else:
@@ -459,6 +475,7 @@ def do_with_password(module, cmd, password):
     env = {}
     if password:
         env = {"PGPASSWORD": password}
+    executed_commands.append(cmd)
     rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True, environ_update=env)
     return rc, stderr, stdout, cmd
 
@@ -467,6 +484,7 @@ def set_tablespace(cursor, db, tablespace):
     query = "ALTER DATABASE %s SET TABLESPACE %s" % (
             pg_quote_identifier(db, 'database'),
             pg_quote_identifier(tablespace, 'tablespace'))
+    executed_commands.append(query)
     cursor.execute(query)
     return True
 
@@ -574,7 +592,7 @@ def main():
                 changed = db_exists(cursor, db)
             elif state == "present":
                 changed = not db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_limit, tablespace)
-            module.exit_json(changed=changed, db=db)
+            module.exit_json(changed=changed, db=db, executed_commands=executed_commands)
 
         if state == "absent":
             try:
@@ -595,7 +613,8 @@ def main():
                 if rc != 0:
                     module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
                 else:
-                    module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd)
+                    module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd,
+                                     executed_commands=executed_commands)
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -607,7 +626,7 @@ def main():
     except Exception as e:
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
-    module.exit_json(changed=changed, db=db)
+    module.exit_json(changed=changed, db=db, executed_commands=executed_commands)
 
 
 if __name__ == '__main__':

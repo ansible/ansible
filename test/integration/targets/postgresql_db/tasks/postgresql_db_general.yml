@@ -89,6 +89,7 @@
   - assert:
       that:
       - result is changed
+      - result.executed_commands == ['CREATE DATABASE "{{ db_name }}" TABLESPACE "{{ db_tablespace }}"']
 
   - name: postgresql_db_tablespace - Check actual DB tablespace, rowcount must be 1
     <<: *task_parameters

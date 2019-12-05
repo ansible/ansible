@@ -14,7 +14,8 @@
   assert:
     that:
        - result is changed
-       - "result.db == db_name"
+       - result.db == "{{ db_name }}"
+       - result.executed_commands == ['CREATE DATABASE "{{ db_name }}"']
 
 - name: Check that database created
   become_user: "{{ pg_user }}"
@@ -53,6 +54,7 @@
   assert:
     that:
        - result is changed
+       - result.executed_commands == ['DROP DATABASE "{{ db_name }}"']
 
 - name: Check that database was destroyed
   become_user: "{{ pg_user }}"
@@ -115,6 +117,12 @@
     lc_ctype: 'es_ES{{ locale_latin_suffix }}'
     template: 'template0'
     login_user: "{{ pg_user }}"
+  register: result
+
+- assert:
+    that:
+      - result is changed
+      - result.executed_commands == ["CREATE DATABASE \"{{ db_name }}\" TEMPLATE \"template0\" ENCODING 'LATIN1' LC_COLLATE 'pt_BR{{ locale_latin_suffix }}' LC_CTYPE 'es_ES{{ locale_latin_suffix }}' CONNECTION LIMIT 100"] or result.executed_commands == ["CREATE DATABASE \"{{ db_name }}\" TEMPLATE \"template0\" ENCODING E'LATIN1' LC_COLLATE E'pt_BR{{ locale_latin_suffix }}' LC_CTYPE E'es_ES{{ locale_latin_suffix }}' CONNECTION LIMIT 100"]
 
 - name: Check that the DB has all of our options
   become_user: "{{ pg_user }}"
@@ -186,6 +194,7 @@
 - assert:
     that:
       - result is changed
+      - result.executed_commands == ['ALTER DATABASE "{{ db_name }}" CONNECTION LIMIT 200']
 
 - name: Check that conn_limit has actually been set / updated to 200
   become_user: "{{ pg_user }}"
@@ -239,6 +248,12 @@
     state: "present"
     owner: "{{ db_user1 }}"
     login_user: "{{ pg_user }}"
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.executed_commands == ['CREATE DATABASE "{{ db_name }}" OWNER "{{ db_user1 }}"']
 
 - name: Check that the user owns the newly created DB
   become_user: "{{ pg_user }}"
@@ -265,6 +280,11 @@
     owner: "{{ db_user2 }}"
     login_user: "{{ pg_user }}"
   register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.executed_commands == ['ALTER DATABASE "{{ db_name }}" OWNER TO "{{ db_user2 }}"']
 
 - name: Check the previous step
   become_user: "{{ pg_user }}"
