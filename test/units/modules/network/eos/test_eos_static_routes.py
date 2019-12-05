@@ -78,7 +78,7 @@ class TestEosStaticRoutesModule(TestEosModule):
                               ])
                      ])
             ],
-                 state="merged"))
+            state="merged"))
         commands = ['ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55']
         self.execute_module(changed=True, commands=commands)
 
@@ -97,7 +97,7 @@ class TestEosStaticRoutesModule(TestEosModule):
                               ])
                      ])
             ],
-                 state="merged"))
+            state="merged"))
         self.execute_module(changed=False, commands=[])
 
     def test_eos_static_routes_default(self):
@@ -150,7 +150,7 @@ class TestEosStaticRoutesModule(TestEosModule):
                               ])
                      ])
             ],
-                 state="replaced"))
+            state="replaced"))
         commands = [
             'ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55',
             'no ip route vrf testvrf 120.1.1.0/24 Ethernet1 23'
@@ -172,7 +172,7 @@ class TestEosStaticRoutesModule(TestEosModule):
                               ])
                      ])
             ],
-                 state="replaced"))
+            state="replaced"))
         self.execute_module(changed=False, commands=[])
 
     def test_eos_static_routes_overridden(self):
@@ -190,7 +190,7 @@ class TestEosStaticRoutesModule(TestEosModule):
                               ])
                      ])
             ],
-                 state="overridden"))
+            state="overridden"))
         commands = [
             'ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55',
             'no ip route vrf testvrf 120.1.1.0/24 Ethernet1 23',
@@ -217,7 +217,7 @@ class TestEosStaticRoutesModule(TestEosModule):
                               ])
                      ])
             ],
-                 state="overridden"))
+            state="overridden"))
         self.execute_module(changed=False, commands=[])
 
     def test_eos_static_routes_deletedvrf(self):
@@ -233,7 +233,7 @@ class TestEosStaticRoutesModule(TestEosModule):
                          dict(afi="ipv4", routes=[dict(dest="120.1.1.0/24")])
                      ])
             ],
-                 state="deleted"))
+            state="deleted"))
         commands = ['no ip route vrf testvrf 120.1.1.0/24 Ethernet1 23']
 
         self.execute_module(changed=True, commands=commands)
@@ -243,6 +243,6 @@ class TestEosStaticRoutesModule(TestEosModule):
             dict(config=[
                 dict(vrf="testvrf", address_families=[dict(afi="ipv4")])
             ],
-                 state="deleted"))
+            state="deleted"))
         commands = ['no ip route vrf testvrf 120.1.1.0/24 Ethernet1 23']
         self.execute_module(changed=True, commands=commands)
