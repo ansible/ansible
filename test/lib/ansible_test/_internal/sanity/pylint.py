@@ -224,6 +224,9 @@ class PylintTest(SanitySingleVersion):
         env = ansible_environment(args)
         env['PYTHONPATH'] += os.path.pathsep + os.path.pathsep.join(append_python_path)
 
+        # expose plugin paths for use in custom plugins
+        env.update(dict(('ANSIBLE_TEST_%s_PATH' % k.upper(), os.path.abspath(v) + os.path.sep) for k, v in data_context().content.plugin_paths.items()))
+
         if paths:
             display.info('Checking %d file(s) in context "%s" with config: %s' % (len(paths), context, rcfile), verbosity=1)
 
