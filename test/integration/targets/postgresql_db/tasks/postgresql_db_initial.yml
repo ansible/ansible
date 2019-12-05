@@ -122,7 +122,7 @@
 - assert:
     that:
       - result is changed
-      - result.executed_commands == ["CREATE DATABASE \"{{ db_name }}\" TEMPLATE \"template0\" ENCODING 'LATIN1' LC_COLLATE 'pt_BR{{ locale_latin_suffix }}' LC_CTYPE 'es_ES{{ locale_latin_suffix }}' CONNECTION LIMIT 100"]
+      - result.executed_commands == ["CREATE DATABASE \"{{ db_name }}\" TEMPLATE \"template0\" ENCODING 'LATIN1' LC_COLLATE 'pt_BR{{ locale_latin_suffix }}' LC_CTYPE 'es_ES{{ locale_latin_suffix }}' CONNECTION LIMIT 100"] or result.executed_commands == ["CREATE DATABASE \"{{ db_name }}\" TEMPLATE \"template0\" ENCODING E'LATIN1' LC_COLLATE E'pt_BR{{ locale_latin_suffix }}' LC_CTYPE E'es_ES{{ locale_latin_suffix }}' CONNECTION LIMIT 100"]
 
 - name: Check that the DB has all of our options
   become_user: "{{ pg_user }}"
