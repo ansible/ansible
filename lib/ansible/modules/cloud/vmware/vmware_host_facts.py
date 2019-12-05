@@ -25,6 +25,7 @@ description:
     - If hostname or IP address of vCenter is provided as C(hostname) and C(esxi_hostname) is not specified, then the
       module will throw an error.
     - VSAN facts added in 2.7 version.
+    - SYSTEM fact uuid added in 2.10 version.
 version_added: 2.5
 author:
     - Wei Gao (@woshihaoren)
@@ -165,6 +166,7 @@ ansible_facts:
         "ansible_product_serial": "NA",
         "ansible_system_vendor": "Red Hat",
         "ansible_uptime": 1791680,
+        "ansible_uuid": "4c4c4544-0052-3410-804c-b2c04f4e3632",
         "ansible_vmk0": {
             "device": "vmk0",
             "ipv4": {
@@ -322,6 +324,7 @@ class VMwareHostFactManager(PyVmomi):
             'ansible_bios_version': self.host.hardware.biosInfo.biosVersion,
             'ansible_uptime': self.host.summary.quickStats.uptime,
             'ansible_in_maintenance_mode': self.host.runtime.inMaintenanceMode,
+            'ansible_uuid': self.host.hardware.systemInfo.uuid,
         }
         return facts
 
