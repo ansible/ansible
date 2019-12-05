@@ -318,6 +318,9 @@ class VaultCLI(CLI):
             if stdin_text == '':
                 raise AnsibleOptionsError('stdin was empty, not encrypting')
 
+            if sys.stdout.isatty() and not stdin_text.endswith("\n"):
+                display.display("\n")
+
             b_plaintext = to_bytes(stdin_text)
 
             # defaults to None

@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-vault - Fix ``encrypt_string`` output in a tty when using ``--sdtin-name`` option (https://github.com/ansible/ansible/issues/65121)
