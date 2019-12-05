@@ -317,7 +317,10 @@ $propParams = @{
 # First set the registry information
 # The DefaultPassword reg key should never be set, we use LSA to store the password in a more secure way.
 if ('DefaultPassword' -in (Get-Item -LiteralPath $autoLogonRegPath).Property) {
-    Remove-ItemProperty -Name 'DefaultPassword' @propParams
+    # Bug on older Windows hosts where -WhatIf causes it fail to find the property
+    if (-not $module.CheckMode) {
+        Remove-ItemProperty -Name 'DefaultPassword' @propParams
+    }
     $module.Result.changed = $true
 }
 
@@ -351,13 +354,15 @@ foreach ($key in $autoLogonKeyList.GetEnumerator()) {
         if ($null -ne $after) {
             $null = New-ItemProperty -Name $key.Key -Value $after @propParams
         }
-        else {
+        elseif (-not $module.CheckMode) {
             Remove-ItemProperty -Name $key.Key @propParams
         }
         $module.Result.changed = $true
     }
     elseif ($state -eq 'absent' -and $null -ne $beforeVal) {
-        Remove-ItemProperty -Name $key.Key @propParams
+        if (-not $module.CheckMode) {
+            Remove-ItemProperty -Name $key.Key @propParams
+        }
         $module.Result.changed = $true
     }
 }
