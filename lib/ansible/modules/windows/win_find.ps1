@@ -9,16 +9,16 @@
 $spec = @{
     options = @{
         paths = @{ type = "list"; elements = "str"; required = $true }
-        age = @{ type = "int" }
+        age = @{ type = "str" }
         age_stamp = @{ type = "str"; default = "mtime"; choices = "mtime", "ctime", "atime" }
         file_type = @{ type = "str"; default = "file"; choices = "file", "directory" }
         follow = @{ type = "bool"; default = $false }
         hidden = @{ type = "bool"; default = $false }
         patterns = @{ type = "list"; elements = "str"; aliases = "regex", "regexp" }
         recurse = @{ type = "bool"; default = $false }
-        size = @{ type = "int" }
+        size = @{ type = "str" }
         use_regex = @{ type = "bool"; default = $false }
-        get_checksum = @{ type = "bool"; default = $false }
+        get_checksum = @{ type = "bool"; default = $true }
         checksum_algorithm = @{ type = "str"; default = "sha1"; choices = "md5", "sha1", "sha256", "sha384", "sha512" }
     }
     supports_check_mode = $true
@@ -88,21 +88,21 @@ Function Assert-FileHidden {
 
 Function Assert-FileNamePattern {
     Param (
-        [System.String]$FileName,
+        [System.IO.FileSystemInfo]$File,
         [System.String[]]$Patterns,
         [Switch]$UseRegex
     )
 
-    $valid_match = $true
+    $valid_match = $false
     foreach ($pattern in $Patterns) {
         if ($UseRegex) {
-            if ($FileName -notmatch $pattern) {
-                $valid_match = $false
+            if ($File.Name -match $pattern) {
+                $valid_match = $true
                 break
             }
         } else {
-            if ($FileName -notlike $pattern) {
-                $valid_match = $false
+            if ($File.Name -like $pattern) {
+                $valid_match = $true
                 break
             }
         }
@@ -176,6 +176,9 @@ Function Search-Path {
         $Follow,
 
         [Switch]
+        $GetChecksum,
+
+        [Switch]
         $IsHidden,
 
         [System.String[]]
@@ -191,7 +194,7 @@ Function Search-Path {
         $UseRegex
     )
 
-    $dir_obj = New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path    
+    $dir_obj = New-Object -TypeName System.IO.DirectoryInfo -ArgumentList $Path
     if ([Int32]$dir_obj.Attribute -eq -1) {
         $Module.FailJson("Argument path '$Path' does not exist, cannot get information on")
     } elseif (-not $dir_obj.Attributes.HasFlag([System.IO.FileAttributes]::Directory)) {
@@ -207,7 +210,7 @@ Function Search-Path {
     foreach ($dir_child in $dir_files) {
         if ($dir_child.Attributes.HasFlag([System.IO.FileAttributes]::Directory) -and $Recurse) {
             if ($Follow -or -not $dir_child.Attributes.HasFlag([System.IO.FileAttributes]::ReparsePoint)) {
-                $PSBoundParameters.Remove('Path')
+                $PSBoundParameters.Remove('Path') > $null
                 Search-Path -Path $dir_child.FullName @PSBoundParameters
             }
         }
@@ -229,7 +232,7 @@ Function Search-Path {
         $hidden_match = Assert-FileHidden -File $dir_child -IsHidden:$IsHidden
 
         if ($PSBoundParameters.ContainsKey('Patterns')) {
-            $pattern_match = Assert-FileNamePattern -FileName $dir_child.FileName -Patterns $Patterns -UseRegex:$UseRegex
+            $pattern_match = Assert-FileNamePattern -File $dir_child -Patterns $Patterns -UseRegex:$UseRegex.IsPresent
         } else {
             $pattern_match = $true
         }
@@ -250,30 +253,24 @@ Function Search-Path {
         # TODO: Make this generic so it can be shared with win_find and win_stat.
         $epoch = New-Object -Type System.DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
         $file_info = @{
-            exists = $true
             attributes = $dir_child.Attributes.ToString()
+            checksum = $null
+            creationtime = (New-TimeSpan -Start $epoch -End $dir_child.CreationTime).TotalSeconds
+            exists = $true
+            extension = $null
+            filename = $dir_child.Name
             isarchive = $dir_child.Attributes.HasFlag([System.IO.FileAttributes]::Archive)
             isdir = $dir_child.Attributes.HasFlag([System.IO.FileAttributes]::Directory)
             ishidden = $dir_child.Attributes.HasFlag([System.IO.FileAttributes]::Hidden)
-            isjunction = $false
-            islnk = $false
             isreadonly = $dir_child.Attributes.HasFlag([System.IO.FileAttributes]::ReadOnly)
             isreg = $false
             isshared = $false
-            nlink = 1
-            lnk_target = $null
-            lnk_source = $null
-            hlnk_targets = @()
-            creationtime = (New-TimeSpan -Start $epoch -End $dir_child.CreationTime).TotalSeconds
             lastaccesstime = (New-TimeSpan -Start $epoch -End $dir_child.LastAccessTime).TotalSeconds
             lastwritetime = (New-TimeSpan -Start $epoch -End $dir_child.LastWriteTime).TotalSeconds
-            size = $null
-            path = $dir_child.FullName
-            filename = $dir_child.Name
-            extension = $null
             owner = $null
+            path = $dir_child.FullName
             sharename = $null
-            checksum = $null
+            size = $null
         }
 
         try {
@@ -291,7 +288,7 @@ Function Search-Path {
             $file_info.isreg = $true
             $file_info.size = $dir_child.Length
 
-            if ($get_checksum) {
+            if ($GetChecksum) {
                 try {
                     $file_info.checksum = Get-FileChecksum -Path $dir_child.FullName -Algorithm $checksum_algorithm
                 } catch {}  # Just keep the checksum as $null in the case of a failure.
@@ -299,32 +296,43 @@ Function Search-Path {
         }
 
         # Append the link information if the path is a link
-        $link_info = Get-Link -link_path $dir_child.FullName
-        if ($null -ne $link_info) {
-            switch ($link_type.Type) {
+        $link_info = @{
+            isjunction = $false
+            islnk = $false
+            nlink = 1
+            lnk_source = $null
+            lnk_target = $null
+            hlnk_targets = @()
+        }
+        $link_stat = Get-Link -link_path $dir_child.FullName
+        if ($null -ne $link_stat) {
+            switch ($link_stat.Type) {
                 "SymbolicLink" {
-                    $file_info.islnk = $true
-                    $file_info.isreg = $false
-                    $file_info.lnk_target = $link_info.TargetPath
-                    $file_info.lnk_source = $link_info.AbsolutePath
+                    $link_info.islnk = $true
+                    $link_info.isreg = $false
+                    $link_info.lnk_source = $link_stat.AbsolutePath
+                    $link_info.lnk_target = $link_stat.TargetPath
                     break
                 }
                 "JunctionPoint" {
-                    $file_info.isjunction = $true
-                    $file_info.isreg = $false
-                    $file_info.lnk_target = $link_info.TargetPath
-                    $file_info.lnk_source = $link_info.AbsolutePath
+                    $link_info.isjunction = $true
+                    $link_info.isreg = $false
+                    $link_info.lnk_source = $link_stat.AbsolutePath
+                    $link_info.lnk_target = $link_stat.TargetPath
                     break
                 }
                 "HardLink" {
-                    $file_info.nlink = $link_info.HardTargets.Count
+                    $link_info.nlink = $link_stat.HardTargets.Count
 
                     # remove current path from the targets
-                    $hlnk_targets = $link_info.HardTargets | Where-Object { $_ -ne $file_info.path }
-                    $file_info.hlnk_targets = @($hlnk_targets)
+                    $hlnk_targets = $link_info.HardTargets | Where-Object { $_ -ne $dir_child.FullName }
+                    $link_info.hlnk_targets = @($hlnk_targets)
                     break
                 }
             }
+        }
+        foreach ($kv in $link_info.GetEnumerator()) {
+            $file_info.$($kv.Key) = $kv.Value
         }
 
         # Output the file_info object
@@ -334,6 +342,7 @@ Function Search-Path {
 
 $search_params = @{
     CheckedPaths = [System.Collections.Generic.HashSet`1[System.String]]@()
+    GetChecksum = $get_checksum
     Module = $module
     FileType = $file_type
     Follow = $follow
@@ -355,12 +364,11 @@ if ($null -ne $age) {
 
         $total_seconds = $specified_seconds * ($seconds_per_unit.$chosen_unit)
 
-        $epoch = New-Object -Type System.DateTime -ArgumentList 1970, 1, 1, 0, 0, 0, 0
         if ($total_seconds -ge 0) {
-            $search_params.Age = $epoch.AddSeconds($total_seconds).Ticks
+            $search_params.Age = (Get-Date).AddSeconds($total_seconds * -1).Ticks
         } else {
-            # Make sure we add the positive value of seconds to EPOCH then make it negative for later comparisons.
-            $age = $epoch.AddSeconds($total_seconds * -1).Ticks
+            # Make sure we add the positive value of seconds to current time then make it negative for later comparisons.
+            $age = (Get-Date).AddSeconds($total_seconds).Ticks
             $search_params.Age = $age * -1
         }
         $search_params.AgeStamp = $age_stamp
@@ -400,7 +408,7 @@ $matched_files = foreach ($path in $paths) {
 }
 
 # Make sure we sort the files in alphabetical order.
-$module.Result.files = $matched_files | Sort-Object -Property @{e={$_.path}}
+$module.Result.files = @() + ($matched_files | Sort-Object -Property {$_.path})
 
 $module.ExitJson()
 
