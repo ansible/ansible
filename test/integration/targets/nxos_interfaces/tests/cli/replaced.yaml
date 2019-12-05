@@ -60,4 +60,4 @@
     - name: teardown
       cli_config: *cleanup
 
-  when: platform is not search('N3[5KL]|N[56]K')
+  when: platform is not search('N3[5KL]|N[56]K|titanium')
