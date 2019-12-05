@@ -633,7 +633,7 @@ def main():
         on_create_failure=dict(default=None, required=False, choices=['DO_NOTHING', 'ROLLBACK', 'DELETE']),
         create_timeout=dict(default=None, type='int'),
         template_url=dict(default=None, required=False),
-        template_body=dict(default=None, require=False),
+        template_body=dict(default=None, required=False),
         template_format=dict(default=None, choices=['json', 'yaml'], required=False),
         create_changeset=dict(default=False, type='bool'),
         changeset_name=dict(default=None, required=False),

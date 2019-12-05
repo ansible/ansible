@@ -474,7 +474,7 @@ def main():
                                 'dw2.large', 'dw2.8xlarge'], required=False),
         username=dict(required=False),
         password=dict(no_log=True, required=False),
-        db_name=dict(require=False),
+        db_name=dict(required=False),
         cluster_type=dict(choices=['multi-node', 'single-node'], default='single-node'),
         cluster_security_groups=dict(aliases=['security_groups'], type='list'),
         vpc_security_group_ids=dict(aliases=['vpc_security_groups'], type='list'),
