@@ -1,0 +1,2 @@
+bugfixes:
+- In vmware_vm_inventory plugin, use port value while connecting to vCenter when using "with_tags:True" (https://github.com/ansible/ansible/issues/64096).
