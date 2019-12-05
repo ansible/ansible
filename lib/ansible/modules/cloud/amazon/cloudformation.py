@@ -658,7 +658,7 @@ def main():
         on_create_failure=dict(default=None, required=False, choices=['DO_NOTHING', 'ROLLBACK', 'DELETE']),
         create_timeout=dict(default=None, type='int'),
         template_url=dict(default=None, required=False),
-        template_body=dict(default=None, require=False),
+        template_body=dict(default=None, required=False),
         template_format=dict(removed_in_version='2.14'),
         create_changeset=dict(default=False, type='bool'),
         changeset_name=dict(default=None, required=False),

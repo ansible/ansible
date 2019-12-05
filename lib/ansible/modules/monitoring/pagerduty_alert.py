@@ -190,8 +190,8 @@ def main():
         argument_spec=dict(
             name=dict(required=False),
             service_id=dict(required=True),
-            service_key=dict(require=False),
-            integration_key=dict(require=False),
+            service_key=dict(required=False),
+            integration_key=dict(required=False),
             api_key=dict(required=True),
             state=dict(required=True,
                        choices=['triggered', 'acknowledged', 'resolved']),

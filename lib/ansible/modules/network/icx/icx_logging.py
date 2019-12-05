@@ -508,7 +508,7 @@ def main():
                 'notifications',
                 'warnings']),
         facility=dict(
-            typr='str',
+            type='str',
             choices=[
                 'auth',
                 'cron',

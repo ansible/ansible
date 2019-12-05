@@ -236,7 +236,7 @@ def main():
         filter=dict(type='str', aliases=['filter_name']),  # Not required for querying all objects
         subject=dict(type='str', aliases=['contract_subject', 'subject_name']),  # Not required for querying all objects
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
-        log=dict(tyep='str', choices=['log', 'none'], aliases=['directive']),
+        log=dict(type='str', choices=['log', 'none'], aliases=['directive']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
