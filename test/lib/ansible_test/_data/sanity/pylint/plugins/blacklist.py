@@ -3,10 +3,15 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
+import os
+
 import astroid
 
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
+
+ANSIBLE_TEST_MODULES_PATH = os.environ['ANSIBLE_TEST_MODULES_PATH']
+ANSIBLE_TEST_MODULE_UTILS_PATH = os.environ['ANSIBLE_TEST_MODULE_UTILS_PATH']
 
 
 class BlacklistEntry:
@@ -50,7 +55,7 @@ def is_module_path(path):
     :type path: str
     :rtype: bool
     """
-    return '/lib/ansible/modules/' in path or '/lib/ansible/module_utils/' in path
+    return path.startswith(ANSIBLE_TEST_MODULES_PATH) or path.startswith(ANSIBLE_TEST_MODULE_UTILS_PATH)
 
 
 class AnsibleBlacklistChecker(BaseChecker):
