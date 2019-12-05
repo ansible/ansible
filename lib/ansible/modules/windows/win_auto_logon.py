@@ -16,6 +16,14 @@ description:
   - Used to apply auto logon registry setting.
 version_added: "2.10"
 options:
+  logon_count:
+    description:
+      - The number of times to do an automatic logon.
+      - This count is deremented by Windows everytime an automatic logon is
+        performed.
+      - Once the count reaches C(0) then the automatic logon process is
+        disabled.
+    type: int
   username:
     description:
       - Username to login automatically.
@@ -29,6 +37,8 @@ options:
       - Password to be used for automatic login.
       - Must be set when C(state=present).
       - Value of this input will be used as password for I(username).
+      - While this value is encrypted by LSA it is decryptable to any user who
+        is an Administrator on the remote host.
     type: str
   state:
     description:
@@ -54,6 +64,12 @@ EXAMPLES = r'''
 - name: Remove autologon for user1
   win_auto_logon:
     state: absent
+
+- name: Set autologon for user1 with a limited logon count
+  win_auto_logon:
+    username: User1
+    password: str0ngp@ssword
+    logon_count: 5
 '''
 
 RETURN = r'''
