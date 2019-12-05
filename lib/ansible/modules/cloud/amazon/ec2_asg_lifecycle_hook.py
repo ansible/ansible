@@ -42,7 +42,7 @@ options:
   transition:
     description:
       - The instance state to which you want to attach the lifecycle hook.
-    required: true
+      - Required when I(state=present).
     choices: ['autoscaling:EC2_INSTANCE_TERMINATING', 'autoscaling:EC2_INSTANCE_LAUNCHING']
     type: str
   role_arn:

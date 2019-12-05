@@ -37,15 +37,16 @@ options:
     description:
       - A list of dicts containing listeners to attach to the ELB. See examples for detail of the dict required. Note that listener keys
         are CamelCased.
-    required: false
     type: list
     suboptions:
         Port:
             description: The port on which the load balancer is listening.
             type: int
+            required: true
         Protocol:
             description: The protocol for connections from clients to the load balancer.
             type: str
+            required: true
         Certificates:
             description: The SSL server certificate.
             type: list
@@ -58,6 +59,7 @@ options:
             type: str
         DefaultActions:
             description: The default actions for the listener.
+            required: true
             type: list
             suboptions:
                 Type:
@@ -107,7 +109,6 @@ options:
   state:
     description:
       - Create or destroy the load balancer.
-    required: true
     choices: [ 'present', 'absent' ]
     type: str
   tags:

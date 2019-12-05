@@ -47,7 +47,7 @@ options:
   instance_type:
     description:
       - Instance type to use for the instance.
-    required: true
+      - Required when creating a new Launch Configuration.
     type: str
   image_id:
     description:

@@ -33,7 +33,6 @@ options:
       - I(state=enabled) is equivalet to I(state=present).
       - I(state=disabled) is equivalet to I(state=absent).
     type: str
-    required: true
     choices: ['present', 'absent', 'enabled', 'disabled']
     default: present
   name:
@@ -41,7 +40,6 @@ options:
       - Name for the CloudTrail.
       - Names are unique per-region unless the CloudTrail is a multi-region trail, in which case it is unique per-account.
     type: str
-    required: true
     default: default
   enable_logging:
     description:

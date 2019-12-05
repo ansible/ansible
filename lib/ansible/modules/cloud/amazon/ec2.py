@@ -58,7 +58,7 @@ options:
   instance_type:
     description:
       - Instance type to use for the instance, see U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html).
-    required: true
+      - Required when creating a new instance.
     type: str
     aliases: ['type']
   tenancy:
@@ -86,7 +86,7 @@ options:
   image:
     description:
        - I(ami) ID to use for the instance.
-    required: true
+       - Required when I(state=present).
     type: str
   kernel:
     description:
