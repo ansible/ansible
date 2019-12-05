@@ -152,7 +152,7 @@ def main():
             source=dict(required=False),
             description=dict(required=False),
             start_time=dict(required=False, default=None, type='int'),
-            end_time=dict(require=False, default=None, type='int'),
+            end_time=dict(required=False, default=None, type='int'),
             links=dict(type='list')
         )
     )
