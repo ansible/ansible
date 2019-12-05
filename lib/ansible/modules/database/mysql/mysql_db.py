@@ -70,6 +70,14 @@ options:
     default: false
     type: bool
     version_added: "2.10"
+  force:
+    description:
+      - Continue dump or import even if we get an SQL error.
+      - Used only when I(state) is C(dump) or C(import).
+    required: no
+    type: bool
+    default: no
+    version_added: "2.10"
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
@@ -104,6 +112,13 @@ EXAMPLES = r'''
     name: my_db
     state: import
     target: /tmp/dump.sql.bz2
+
+- name: Restore database ignoring errors
+  mysql_db:
+    name: my_db
+    state: import
+    target: /tmp/dump.sql.bz2
+    force: yes
 
 - name: Dump multiple databases
   mysql_db:
@@ -208,8 +223,10 @@ def db_delete(cursor, db):
     return True
 
 
-def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
-            single_transaction=None, quick=None, ignore_tables=None, hex_blob=None, encoding=None):
+def db_dump(module, host, user, password, db_name, target, all_databases, port,
+            config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
+            single_transaction=None, quick=None, ignore_tables=None, hex_blob=None,
+            encoding=None, force=False):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -224,6 +241,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --ssl-key=%s" % shlex_quote(ssl_key)
     if ssl_ca is not None:
         cmd += " --ssl-ca=%s" % shlex_quote(ssl_ca)
+    if force:
+        cmd += " --force"
     if socket is not None:
         cmd += " --socket=%s" % shlex_quote(socket)
     else:
@@ -263,7 +282,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
 
 
 def db_import(module, host, user, password, db_name, target, all_databases, port, config_file,
-              socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None, encoding=None):
+              socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None, encoding=None, force=False):
     if not os.path.exists(target):
         return module.fail_json(msg="target %s does not exist on the host" % target)
 
@@ -281,6 +300,8 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         cmd.append("--ssl-key=%s" % shlex_quote(ssl_key))
     if ssl_ca is not None:
         cmd.append("--ssl-ca=%s" % shlex_quote(ssl_ca))
+    if force:
+        cmd.append("-f")
     if socket is not None:
         cmd.append("--socket=%s" % shlex_quote(socket))
     else:
@@ -369,6 +390,7 @@ def main():
             quick=dict(type='bool', default=True),
             ignore_tables=dict(type='list', default=[]),
             hex_blob=dict(default=False, type='bool'),
+            force=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -404,6 +426,7 @@ def main():
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
     hex_blob = module.params["hex_blob"]
+    force = module.params["force"]
 
     if len(db) > 1 and state == 'import':
         module.fail_json(msg="Multiple databases are not supported with state=import")
@@ -469,7 +492,8 @@ def main():
         rc, stdout, stderr = db_dump(module, login_host, login_user,
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
-                                     ssl_ca, single_transaction, quick, ignore_tables, hex_blob, encoding)
+                                     ssl_ca, single_transaction, quick, ignore_tables,
+                                     hex_blob, encoding, force)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout,
@@ -487,7 +511,7 @@ def main():
                                        login_password, db, target,
                                        all_databases,
                                        login_port, config_file,
-                                       socket, ssl_cert, ssl_key, ssl_ca, encoding)
+                                       socket, ssl_cert, ssl_key, ssl_ca, encoding, force)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout,
