@@ -68,11 +68,14 @@ options:
     kind:
         description:
             - The kind of storage.
+            - The C(FileStorage) and C(BlockBlobStorage) only used when I(account_type=Premium_LRS) or I(account_type=Premium_ZRS).
         default: 'Storage'
         choices:
             - Storage
             - StorageV2
             - BlobStorage
+            - BlockBlobStorage
+            - FileStorage
         version_added: "2.2"
     access_tier:
         description:
@@ -151,6 +154,14 @@ EXAMPLES = '''
         tags:
           testing: testing
           delete: on-exit
+
+    - name: create an account with kind of FileStorage
+      azure_rm_storageaccount:
+        resource_group: myResourceGroup
+        name: clh0002
+        type: Premium_LRS
+        tags:
+          testing: testing
 
     - name: create an account with blob CORS
       azure_rm_storageaccount:
@@ -348,7 +359,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             state=dict(default='present', choices=['present', 'absent']),
             force_delete_nonempty=dict(type='bool', default=False, aliases=['force']),
             tags=dict(type='dict'),
-            kind=dict(type='str', default='Storage', choices=['Storage', 'StorageV2', 'BlobStorage']),
+            kind=dict(type='str', default='Storage', choices=['Storage', 'StorageV2', 'BlobStorage', 'FileStorage', 'BlockBlobStorage']),
             access_tier=dict(type='str', choices=['Hot', 'Cool']),
             https_only=dict(type='bool', default=False),
             blob_cors=dict(type='list', options=cors_rule_spec, elements='dict')
