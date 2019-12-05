@@ -6,7 +6,6 @@ __metaclass__ = type
 
 import crypt
 import multiprocessing
-import platform
 import random
 import string
 import sys
@@ -37,9 +36,6 @@ _LOCK = multiprocessing.Lock()
 
 DEFAULT_PASSWORD_LENGTH = 20
 
-IS_OPENBSD = u"OpenBSD" == to_text(platform.system(), errors='surrogate_or_strict')
-BCRYPT_CRYPT_ID = '2b' if IS_OPENBSD else '2a'
-
 
 def random_password(length=DEFAULT_PASSWORD_LENGTH, chars=C.DEFAULT_PASSWORD_CHARS):
     '''Return a random password string of length containing only chars
@@ -68,7 +64,7 @@ class BaseHash:
     algo = namedtuple('algo', ['crypt_id', 'salt_size', 'implicit_rounds'])
     algorithms = {
         'md5_crypt': algo(crypt_id='1', salt_size=8, implicit_rounds=None),
-        'bcrypt': algo(crypt_id=BCRYPT_CRYPT_ID, salt_size=22, implicit_rounds=None),
+        'bcrypt': algo(crypt_id='2a', salt_size=22, implicit_rounds=None),
         'sha256_crypt': algo(crypt_id='5', salt_size=16, implicit_rounds=5000),
         'sha512_crypt': algo(crypt_id='6', salt_size=16, implicit_rounds=5000),
     }
@@ -129,6 +125,7 @@ class PasslibHash(BaseHash):
             raise AnsibleError("passlib must be installed to hash with '%s'" % algorithm)
 
         try:
+            self.algorithms['bcrypt'].crypt_id = '2b'
             self.crypt_algo = getattr(passlib.hash, algorithm)
         except Exception:
             raise AnsibleError("passlib does not support '%s' algorithm" % algorithm)
