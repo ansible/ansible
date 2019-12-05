@@ -239,7 +239,7 @@ files:
             description: Whether the file exists, will always be true for M(win_find).
             returned: success, path exists
             type: bool
-            sample true
+            sample: true
         extension:
             description: The extension of the file at path.
             returned: success, path exists, path is a file
