@@ -1,2 +1,0 @@
-minor_changes:
-  - redhat_subscription - allow to set syspurpose attributes (https://github.com/ansible/ansible/pull/59850)

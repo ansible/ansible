@@ -1,2 +1,0 @@
-bugfixes:
-  - Make max_connections parameter work again in vmware_guest module (https://github.com/ansible/ansible/pull/58061).

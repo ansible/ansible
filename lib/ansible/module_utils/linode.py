@@ -4,7 +4,7 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# Copyright (c), Luke Murphy @lwm
+# Copyright (c), Luke Murphy @decentral1se
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,

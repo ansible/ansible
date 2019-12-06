@@ -2,6 +2,16 @@
 - debug:
     msg: "Start nxos_lacp_interfaces deleted integration tests connection={{ ansible_connection }}"
 
+#
+# "lacp mode delay" is not supported on Nexus 9500 series switches.
+# Three models of Nexus 9500 switches have chassis types C9504, C9508 and C9516.
+#
+
+- set_fact:
+    mode: delay
+  when: platform is not search('N3K|N5K|N6K|N7K') and imagetag is not search('A8|I2') and
+    image_version is not search ('9.2') and chassis_type is not search('C95')
+
 - name: setup1
   cli_config: &cleanup
     config: |
@@ -15,9 +25,17 @@
       config: |
         feature lacp
         interface port-channel5
-        lacp min-links 5
+          lacp min-links 5
         interface port-channel10
-        lacp mode delay
+          lacp max-bundle 10
+
+  - name: setup3 - L2 for mode command
+    cli_config:
+      config: |
+        interface port-channel10
+          switchport
+          lacp mode delay
+    when: mode is defined
 
   - name: Gather lacp_interfaces facts
     nxos_facts: &facts
@@ -39,8 +57,13 @@
         - "'interface port-channel5' in result.commands"
         - "'no lacp min-links' in result.commands"
         - "'interface port-channel10' in result.commands"
+        - "'no lacp max-bundle' in result.commands"
+
+  - assert:
+      that:
         - "'no lacp mode delay' in result.commands"
-        - "result.commands|length == 4"
+        - "result.commands|length == 5"
+    when: mode is defined
 
   - name: Idempotence - deleted
     nxos_lacp_interfaces: *deleted

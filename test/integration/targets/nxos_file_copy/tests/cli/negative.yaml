@@ -1,0 +1,133 @@
+---
+- debug: msg="START nxos_file_copy negative test"
+
+# This test uses a file that is committed to the Ansible core repository.
+# The file name and relative path is test/integration/targets/network-integration.cfg
+- set_fact: test_source_file="network-integration.cfg"
+- set_fact: test_destination_file="test_destination_file"
+
+# -------------------------
+# Tests for file_pull False
+# -------------------------
+- name: "Attempt to copy file to invalid file_system"
+  nxos_file_copy:
+    file_pull: False
+    local_file: "./{{ test_source_file }}"
+    file_system: "invalid_media_type:"
+    connect_ssh_port: "{{ ansible_ssh_port }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is search('Invalid nxos filesystem invalid_media_type:')
+
+- name: "Attempt to copy source file that does not exist on Ansible controller"
+  nxos_file_copy:
+    file_pull: False
+    local_file: "./{{ test_source_file }}_does_not_exist"
+    file_system: "bootflash:"
+    connect_ssh_port: "{{ ansible_ssh_port }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is search('Local file ./network-integration.cfg_does_not_exist not found')
+
+# -------------------------
+# Tests for file_pull True
+# -------------------------
+- name: "Try and copy file using an invalid remote scp server name"
+  nxos_file_copy:
+    file_pull: True
+    file_pull_timeout: 10
+    remote_file: "/{{ test_destination_file }}"
+    local_file: "{{ test_destination_file }}_copy"
+    local_file_directory: "dir1/dir2/dir3"
+    remote_scp_server: "scp_server_gone.example.com"
+    remote_scp_server_user: "{{ ansible_ssh_user }}"
+    remote_scp_server_password: "{{ ansible_ssh_pass }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+        - "result.changed == false"
+        - "'copy scp:' in result.copy_cmd"
+        - "'bootflash:' in result.file_system"
+        - "'No Transfer' in result.transfer_status"
+
+- assert:
+    that:
+        - result.error_data is search("ERROR Could not resolve hostname|Copying to.*from this server name is not permitted")
+
+- name: "Try and copy file using an invalid remote scp server ip address"
+  nxos_file_copy:
+    file_pull: True
+    file_pull_timeout: 300
+    remote_file: "/{{ test_destination_file }}"
+    local_file: "{{ test_destination_file }}_copy"
+    local_file_directory: "dir1/dir2/dir3"
+    remote_scp_server: "192.168.55.55"
+    remote_scp_server_user: "{{ ansible_ssh_user }}"
+    remote_scp_server_password: "{{ ansible_ssh_pass }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+        - "result.changed == false"
+        - "'copy scp:' in result.copy_cmd"
+        - "'timed out' in result.error_data"
+        - "'bootflash:' in result.file_system"
+        - "'No Transfer' in result.transfer_status"
+
+# Sometimes the previous negative test needs a few seconds after the timeout
+# failure before the next negative test is executed.
+- pause:
+    seconds: 10
+
+- name: "Try and copy file using an invalid username"
+  nxos_file_copy:
+    file_pull: True
+    file_pull_timeout: 10
+    remote_file: "/{{ test_destination_file }}"
+    local_file: "{{ test_destination_file }}_copy"
+    local_file_directory: "dir1/dir2/dir3"
+    remote_scp_server: "{{ inventory_hostname_short }}"
+    remote_scp_server_user: "invalid_user_name"
+    remote_scp_server_password: "{{ ansible_ssh_pass }}"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+        - "result.changed == false"
+        - "'copy scp:' in result.copy_cmd"
+        - "'Too many authentication failures' in result.error_data"
+        - "'bootflash:' in result.file_system"
+        - "'No Transfer' in result.transfer_status"
+
+- name: "Try and copy file using an invalid password"
+  nxos_file_copy:
+    file_pull: True
+    file_pull_timeout: 10
+    remote_file: "/{{ test_destination_file }}"
+    local_file: "{{ test_destination_file }}_copy"
+    local_file_directory: "dir1/dir2/dir3"
+    remote_scp_server: "{{ inventory_hostname_short }}"
+    remote_scp_server_user: "{{ ansible_ssh_user }}"
+    remote_scp_server_password: "invalid_password"
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+        - "result.changed == false"
+        - "'copy scp:' in result.copy_cmd"
+        - "'Too many authentication failures' in result.error_data"
+        - "'bootflash:' in result.file_system"
+        - "'No Transfer' in result.transfer_status"
+
+- debug: msg="END nxos_file_copy negative test"

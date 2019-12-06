@@ -16,7 +16,7 @@ __metaclass__ = type
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties
 from ansible.module_utils.network.nxos.facts.facts import Facts
-from ansible.module_utils.network.nxos.utils.utils import get_interface_type, normalize_interface, search_obj_in_list
+from ansible.module_utils.network.nxos.utils.utils import normalize_interface, search_obj_in_list
 
 
 class Lag_interfaces(ConfigBase):

@@ -1,2 +1,0 @@
-minor_changes:
-- "openssl_publickey - now works with both PyOpenSSL and cryptography Python libraries. Autodetection can be overridden with ``select_crypto_backend`` option."

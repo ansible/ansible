@@ -1,0 +1,21 @@
+---
+- debug:
+    msg: "Start junos_static_routes base config ansible_connection={{ ansible_connection }}"
+
+- name: Configure base static_routes
+  junos_static_routes:
+    config:
+      - address_families:
+        - afi: 'ipv4'
+          routes:
+            - dest: 192.168.0.0/24
+              next_hop:
+                - forward_router_address: 192.168.0.1
+        - afi: 'ipv6'
+          routes:
+            - dest: 2001:db8::5/128
+              next_hop:
+                - forward_router_address: 2001:db8:0:1:2a0:a502:0:19da
+
+- debug:
+    msg: "End junos_static_routes base config ansible_connection={{ ansible_connection }}"

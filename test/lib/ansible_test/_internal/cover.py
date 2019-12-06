@@ -31,13 +31,15 @@ from .util import (
     ApplicationError,
     common_environment,
     ANSIBLE_TEST_DATA_ROOT,
-    to_bytes,
     to_text,
+    make_dirs,
 )
 
 from .util_common import (
     intercept_command,
     ResultType,
+    write_text_test_results,
+    write_json_test_results,
 )
 
 from .config import (
@@ -68,7 +70,12 @@ def command_coverage_combine(args):
     :type args: CoverageConfig
     :rtype: list[str]
     """
-    return _command_coverage_combine_powershell(args) + _command_coverage_combine_python(args)
+    paths = _command_coverage_combine_powershell(args) + _command_coverage_combine_python(args)
+
+    for path in paths:
+        display.info('Generated combined output: %s' % path, verbosity=1)
+
+    return paths
 
 
 def _command_coverage_combine_python(args):
@@ -168,7 +175,7 @@ def _command_coverage_combine_python(args):
             updated.add_arcs({filename: list(arc_data[filename])})
 
         if args.all:
-            updated.add_arcs(dict((source, []) for source in sources))
+            updated.add_arcs(dict((source[0], []) for source in sources))
 
         if not args.explain:
             output_file = coverage_file + group
@@ -249,6 +256,7 @@ def _sanitise_filename(filename, modules=None, collection_search_re=None, collec
     """
     ansible_path = os.path.abspath('lib/ansible/') + '/'
     root_path = data_context().content.root + '/'
+    integration_temp_path = os.path.sep + os.path.join(ResultType.TMP.relative_path, 'integration') + os.path.sep
 
     if modules is None:
         modules = {}
@@ -293,9 +301,9 @@ def _sanitise_filename(filename, modules=None, collection_search_re=None, collec
         new_name = re.sub('^(/.*?)?/root/ansible/', root_path, filename)
         display.info('%s -> %s' % (filename, new_name), verbosity=3)
         filename = new_name
-    elif '/.ansible/test/tmp/' in filename:
+    elif integration_temp_path in filename:
         # Rewrite the path of code running from an integration test temporary directory.
-        new_name = re.sub(r'^.*/\.ansible/test/tmp/[^/]+/', root_path, filename)
+        new_name = re.sub(r'^.*' + re.escape(integration_temp_path) + '[^/]+/', root_path, filename)
         display.info('%s -> %s' % (filename, new_name), verbosity=3)
         filename = new_name
 
@@ -342,6 +350,7 @@ def command_coverage_html(args):
             continue
 
         dir_name = os.path.join(ResultType.REPORTS.path, os.path.basename(output_file))
+        make_dirs(dir_name)
         run_coverage(args, output_file, 'html', ['-i', '-d', dir_name])
 
         display.info('HTML report generated: file:///%s' % os.path.join(dir_name, 'index.html'))
@@ -354,7 +363,7 @@ def command_coverage_xml(args):
     output_files = command_coverage_combine(args)
 
     for output_file in output_files:
-        xml_name = os.path.join(ResultType.REPORTS.path, '%s.xml' % os.path.basename(output_file))
+        xml_name = '%s.xml' % os.path.basename(output_file)
         if output_file.endswith('-powershell'):
             report = _generage_powershell_xml(output_file)
 
@@ -362,10 +371,11 @@ def command_coverage_xml(args):
             reparsed = minidom.parseString(rough_string)
             pretty = reparsed.toprettyxml(indent='    ')
 
-            with open(xml_name, 'w') as xml_fd:
-                xml_fd.write(pretty)
+            write_text_test_results(ResultType.REPORTS, xml_name, pretty)
         else:
-            run_coverage(args, output_file, 'xml', ['-i', '-o', xml_name])
+            xml_path = os.path.join(ResultType.REPORTS.path, xml_name)
+            make_dirs(ResultType.REPORTS.path)
+            run_coverage(args, output_file, 'xml', ['-i', '-o', xml_path])
 
 
 def command_coverage_erase(args):
@@ -504,8 +514,6 @@ def _command_coverage_combine_powershell(args):
     invalid_path_count = 0
     invalid_path_chars = 0
 
-    coverage_file = os.path.join(ResultType.COVERAGE.path, COVERAGE_OUTPUT_FILE_NAME)
-
     for group in sorted(groups):
         coverage_data = groups[group]
 
@@ -528,11 +536,11 @@ def _command_coverage_combine_powershell(args):
                 coverage_data[source] = _default_stub_value(source_line_count)
 
         if not args.explain:
-            output_file = coverage_file + group + '-powershell'
-            with open(output_file, 'wb') as output_file_fd:
-                output_file_fd.write(to_bytes(json.dumps(coverage_data)))
+            output_file = COVERAGE_OUTPUT_FILE_NAME + group + '-powershell'
 
-            output_files.append(output_file)
+            write_json_test_results(ResultType.COVERAGE, output_file, coverage_data)
+
+            output_files.append(os.path.join(ResultType.COVERAGE.path, output_file))
 
     if invalid_path_count > 0:
         display.warning(

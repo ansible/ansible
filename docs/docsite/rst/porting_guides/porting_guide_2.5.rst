@@ -254,7 +254,7 @@ Inventory plugins have been fine tuned, and we have started to add some common f
 Shell
 -----
 
-Shell plugins have been migrated to the new plugin configuration framework. It is now possible to customize more settings, and settings which were previously 'global' can now also be overriden using host specific variables.
+Shell plugins have been migrated to the new plugin configuration framework. It is now possible to customize more settings, and settings which were previously 'global' can now also be overridden using host specific variables.
 
 For example, ``system_temps`` is a new setting that allows you to control what Ansible will consider a 'system temporary dir'. This is used when escalating privileges for a non-administrative user. Previously this was hardcoded to '/tmp', which some systems cannot use for privilege escalation. This setting now defaults to ``[ '/var/tmp', '/tmp']``.
 

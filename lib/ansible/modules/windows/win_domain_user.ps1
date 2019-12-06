@@ -78,7 +78,8 @@ $domain_password = Get-AnsibleParam -obj $params -name "domain_password" -type "
 $domain_server = Get-AnsibleParam -obj $params -name "domain_server" -type "str"
 
 # User account parameters
-$username = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
+$identity = Get-AnsibleParam -obj $params -name "identity" -type "str" -default $name
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
 $password = Get-AnsibleParam -obj $params -name "password" -type "str"
 $password_expired = Get-AnsibleParam -obj $params -name "password_expired" -type "bool"
@@ -124,11 +125,28 @@ if ($null -ne $domain_server) {
     $extra_args.Server = $domain_server
 }
 
+Function Get-PrincipalGroups {
+    Param ($identity, $args_extra)
+    try{
+        $groups = Get-ADPrincipalGroupMembership -Identity $identity @args_extra -ErrorAction Stop
+    } catch {
+        Add-Warning -obj $result -message "Failed to enumerate user groups but continuing on.: $($_.Exception.Message)"
+        return @()
+    }
+
+    $result_groups = foreach ($group in $groups) {
+        $group.DistinguishedName
+    }
+    return $result_groups
+}
+
 try {
-    $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+    $user_obj = Get-ADUser -Identity $identity -Properties * @extra_args
+    $user_guid = $user_obj.ObjectGUID
 }
 catch [Microsoft.ActiveDirectory.Management.ADIdentityNotFoundException] {
     $user_obj = $null
+    $user_guid = $null
 }
 
 If ($state -eq 'present') {
@@ -137,23 +155,28 @@ If ($state -eq 'present') {
 
     # If the account does not exist, create it
     If (-not $user_obj) {
+        $create_args = @{}
+        $create_args.Name = $name
         If ($null -ne $path){
-            New-ADUser -Name $username -Path $path -WhatIf:$check_mode @extra_args
+          $create_args.Path = $path
         }
-        Else {
-            New-ADUser -Name $username -WhatIf:$check_mode @extra_args
+        If ($null -ne $upn){
+          $create_args.UserPrincipalName  = $upn
+          $create_args.SamAccountName  = $upn.Split('@')[0]
         }
+        $user_obj = New-ADUser @create_args -WhatIf:$check_mode -PassThru @extra_args
+        $user_guid = $user_obj.ObjectGUID
         $new_user = $true
-	$result.created = $true
+        $result.created = $true
         $result.changed = $true
         If ($check_mode) {
             Exit-Json $result
         }
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
     }
 
     If ($password) {
-        # Don't uncecessary check for working credentials.
+        # Don't unnecessary check for working credentials.
         # Set the password if we need to.
         # For new_users there is also no difference between always and when_changed
         # so we don't need to differentiate between this two states.
@@ -166,8 +189,8 @@ If ($state -eq 'present') {
         }
         If ($set_new_credentials) {
             $secure_password = ConvertTo-SecureString $password -AsPlainText -Force
-            Set-ADAccountPassword -Identity $username -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
-            $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+            Set-ADAccountPassword -Identity $user_guid -Reset:$true -Confirm:$false -NewPassword $secure_password -WhatIf:$check_mode @extra_args
+            $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
             $result.password_updated = $true
             $result.changed = $true
         }
@@ -175,40 +198,40 @@ If ($state -eq 'present') {
 
     # Configure password policies
     If (($null -ne $password_never_expires) -and ($password_never_expires -ne $user_obj.PasswordNeverExpires)) {
-        Set-ADUser -Identity $username -PasswordNeverExpires $password_never_expires -WhatIf:$check_mode @extra_args
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+        Set-ADUser -Identity $user_guid -PasswordNeverExpires $password_never_expires -WhatIf:$check_mode @extra_args
+        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
         $result.changed = $true
     }
     If (($null -ne $password_expired) -and ($password_expired -ne $user_obj.PasswordExpired)) {
-        Set-ADUser -Identity $username -ChangePasswordAtLogon $password_expired -WhatIf:$check_mode @extra_args
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+        Set-ADUser -Identity $user_guid -ChangePasswordAtLogon $password_expired -WhatIf:$check_mode @extra_args
+        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
         $result.changed = $true
     }
     If (($null -ne $user_cannot_change_password) -and ($user_cannot_change_password -ne $user_obj.CannotChangePassword)) {
-        Set-ADUser -Identity $username -CannotChangePassword $user_cannot_change_password -WhatIf:$check_mode @extra_args
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+        Set-ADUser -Identity $user_guid -CannotChangePassword $user_cannot_change_password -WhatIf:$check_mode @extra_args
+        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
         $result.changed = $true
     }
 
     # Assign other account settings
     If (($null -ne $upn) -and ($upn -ne $user_obj.UserPrincipalName)) {
-        Set-ADUser -Identity $username -UserPrincipalName $upn -WhatIf:$check_mode @extra_args
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+        Set-ADUser -Identity $user_guid -UserPrincipalName $upn -WhatIf:$check_mode @extra_args
+        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
         $result.changed = $true
     }
     If (($null -ne $description) -and ($description -ne $user_obj.Description)) {
-        Set-ADUser -Identity $username -description $description -WhatIf:$check_mode @extra_args
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+        Set-ADUser -Identity $user_guid -description $description -WhatIf:$check_mode @extra_args
+        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
         $result.changed = $true
     }
     If ($enabled -ne $user_obj.Enabled) {
-        Set-ADUser -Identity $username -Enabled $enabled -WhatIf:$check_mode @extra_args
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+        Set-ADUser -Identity $user_guid -Enabled $enabled -WhatIf:$check_mode @extra_args
+        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
         $result.changed = $true
     }
     If ((-not $account_locked) -and ($user_obj.LockedOut -eq $true)) {
-        Unlock-ADAccount -Identity $username -WhatIf:$check_mode @extra_args
-        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+        Unlock-ADAccount -Identity $user_guid -WhatIf:$check_mode @extra_args
+        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
         $result.changed = $true
     }
 
@@ -221,9 +244,9 @@ If ($state -eq 'present') {
         If ($value -ne $user_obj.$key) {
             $set_args = $extra_args.Clone()
             $set_args.$key = $value
-            Set-ADUser -Identity $username -WhatIf:$check_mode @set_args
+            Set-ADUser -Identity $user_guid -WhatIf:$check_mode @set_args
             $result.changed = $true
-            $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+            $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
         }
     }
 
@@ -261,7 +284,7 @@ If ($state -eq 'present') {
         try {
             $user_obj = $user_obj | Set-ADUser -WhatIf:$check_mode -PassThru @set_args
         } catch {
-            Fail-Json $result "failed to change user $($username): $($_.Exception.Message)"
+            Fail-Json $result "failed to change user $($name): $($_.Exception.Message)"
         }
         $result.changed = $true
     }
@@ -276,17 +299,14 @@ If ($state -eq 'present') {
             $groups += (Get-ADGroup -Identity $group @extra_args).DistinguishedName
         }
 
-        $assigned_groups = @()
-        Foreach ($group in (Get-ADPrincipalGroupMembership -Identity $username @extra_args)) {
-            $assigned_groups += $group.DistinguishedName
-        }
+        $assigned_groups = Get-PrincipalGroups $user_guid $extra_args
 
         switch ($groups_action) {
             "add" {
                 Foreach ($group in $groups) {
                     If (-not ($assigned_groups -Contains $group)) {
-                        Add-ADGroupMember -Identity $group -Members $username -WhatIf:$check_mode @extra_args
-                        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+                        Add-ADGroupMember -Identity $group -Members $user_guid -WhatIf:$check_mode @extra_args
+                        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
                         $result.changed = $true
                     }
                 }
@@ -294,8 +314,8 @@ If ($state -eq 'present') {
             "remove" {
                 Foreach ($group in $groups) {
                     If ($assigned_groups -Contains $group) {
-                        Remove-ADGroupMember -Identity $group -Members $username -Confirm:$false -WhatIf:$check_mode @extra_args
-                        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+                        Remove-ADGroupMember -Identity $group -Members $user_guid -Confirm:$false -WhatIf:$check_mode @extra_args
+                        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
                         $result.changed = $true
                     }
                 }
@@ -303,15 +323,15 @@ If ($state -eq 'present') {
             "replace" {
                 Foreach ($group in $assigned_groups) {
                     If (($group -ne $user_obj.PrimaryGroup) -and -not ($groups -Contains $group)) {
-                        Remove-ADGroupMember -Identity $group -Members $username -Confirm:$false -WhatIf:$check_mode @extra_args
-                        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+                        Remove-ADGroupMember -Identity $group -Members $user_guid -Confirm:$false -WhatIf:$check_mode @extra_args
+                        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
                         $result.changed = $true
                     }
                 }
                 Foreach ($group in $groups) {
                     If (-not ($assigned_groups -Contains $group)) {
-                        Add-ADGroupMember -Identity $group -Members $username -WhatIf:$check_mode @extra_args
-                        $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+                        Add-ADGroupMember -Identity $group -Members $user_guid -WhatIf:$check_mode @extra_args
+                        $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
                         $result.changed = $true
                     }
                 }
@@ -331,7 +351,7 @@ If ($state -eq 'present') {
 }
 
 If ($user_obj) {
-    $user_obj = Get-ADUser -Identity $username -Properties * @extra_args
+    $user_obj = Get-ADUser -Identity $user_guid -Properties * @extra_args
     $result.name = $user_obj.Name
     $result.firstname = $user_obj.GivenName
     $result.surname = $user_obj.Surname
@@ -351,17 +371,13 @@ If ($user_obj) {
     $result.account_locked = $user_obj.LockedOut
     $result.sid = [string]$user_obj.SID
     $result.upn = $user_obj.UserPrincipalName
-    $user_groups = @()
-    Foreach ($group in (Get-ADPrincipalGroupMembership $username @extra_args)) {
-        $user_groups += $group.name
-    }
-    $result.groups = $user_groups
-    $result.msg = "User '$username' is present"
+    $result.groups = Get-PrincipalGroups $user_guid $extra_args
+    $result.msg = "User '$name' is present"
     $result.state = "present"
 }
 Else {
-    $result.name = $username
-    $result.msg = "User '$username' is absent"
+    $result.name = $name
+    $result.msg = "User '$name' is absent"
     $result.state = "absent"
 }
 

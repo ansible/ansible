@@ -260,7 +260,10 @@ def dict_diff(base, comparable):
     if not isinstance(base, dict):
         raise AssertionError("`base` must be of type <dict>")
     if not isinstance(comparable, dict):
-        raise AssertionError("`comparable` must be of type <dict>")
+        if comparable is None:
+            comparable = dict()
+        else:
+            raise AssertionError("`comparable` must be of type <dict>")
 
     updates = dict()
 
@@ -430,12 +433,10 @@ def validate_prefix(prefix):
 
 
 def load_provider(spec, args):
-    provider = args.get('provider', {})
+    provider = args.get('provider') or {}
     for key, value in iteritems(spec):
         if key not in provider:
-            if key in args:
-                provider[key] = args[key]
-            elif 'fallback' in value:
+            if 'fallback' in value:
                 provider[key] = _fallback(value['fallback'])
             elif 'default' in value:
                 provider[key] = value['default']
@@ -596,7 +597,7 @@ def validate_config(spec, data):
 
 def search_obj_in_list(name, lst, key='name'):
     for item in lst:
-        if item[key] == name:
+        if item.get(key) == name:
             return item
     return None
 

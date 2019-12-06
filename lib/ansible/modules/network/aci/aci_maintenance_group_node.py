@@ -22,18 +22,21 @@ options:
   group:
     description:
     - The maintenance group name that you want to add the node to.
+    type: str
     required: true
   node:
     description:
     - The node to be added to the maintenance group.
     - The value equals the nodeid.
+    type: str
     required: true
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
-    default: present
+    type: str
     choices: [ absent, present, query ]
+    default: present
 extends_documentation_fragment:
 - aci
 author:
@@ -189,9 +192,9 @@ def main():
         ],
     )
 
-    state = module.params['state']
-    group = module.params['group']
-    node = module.params['node']
+    state = module.params.get('state')
+    group = module.params.get('group')
+    node = module.params.get('node')
 
     aci = ACIModule(module)
     aci.construct_url(

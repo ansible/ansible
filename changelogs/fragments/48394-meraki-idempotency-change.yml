@@ -1,2 +1,0 @@
-minor_changes:
-  - "meraki_* - Idempotency check has been rewritten. The new version is more thorough."

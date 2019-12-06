@@ -234,28 +234,36 @@ class VMwareDvsPortgroup(PyVmomi):
         self.dvs_portgroup = None
         self.dv_switch = None
 
-    def process_state(self):
-        dvspg_states = {
-            'absent': {
-                'present': self.state_destroy_dvspg,
-                'absent': self.state_exit_unchanged,
-            },
-            'present': {
-                'update': self.state_update_dvspg,
-                'present': self.state_exit_unchanged,
-                'absent': self.state_create_dvspg,
-            }
-        }
-        try:
-            dvspg_states[self.module.params['state']][self.check_dvspg_state()]()
-        except vmodl.RuntimeFault as runtime_fault:
-            self.module.fail_json(msg=runtime_fault.msg)
-        except vmodl.MethodFault as method_fault:
-            self.module.fail_json(msg=method_fault.msg)
-        except Exception as e:
-            self.module.fail_json(msg=str(e))
+    def create_vlan_list(self):
+        vlan_id_list = []
+        for vlan_id_splitted in self.module.params['vlan_id'].split(','):
+            vlans = vlan_id_splitted.split('-')
+            if len(vlans) > 2:
+                self.module.fail_json(msg="Invalid VLAN range %s." % vlan_id_splitted)
+            if len(vlans) == 2:
+                vlan_id_start = vlans[0].strip()
+                vlan_id_end = vlans[1].strip()
+                if not vlan_id_start.isdigit():
+                    self.module.fail_json(msg="Invalid VLAN %s." % vlan_id_start)
+                if not vlan_id_end.isdigit():
+                    self.module.fail_json(msg="Invalid VLAN %s." % vlan_id_end)
+                vlan_id_start = int(vlan_id_start)
+                vlan_id_end = int(vlan_id_end)
+                if vlan_id_start not in range(0, 4095) or vlan_id_end not in range(0, 4095):
+                    self.module.fail_json(msg="vlan_id range %s specified is incorrect. The valid vlan_id range is from 0 to 4094." % vlan_id_splitted)
+                vlan_id_list.append((vlan_id_start, vlan_id_end))
+            else:
+                vlan_id = vlans[0].strip()
+                if not vlan_id.isdigit():
+                    self.module.fail_json(msg="Invalid VLAN %s." % vlan_id)
+                vlan_id = int(vlan_id)
+                vlan_id_list.append((vlan_id, vlan_id))
 
-    def create_port_group(self):
+        vlan_id_list.sort()
+
+        return vlan_id_list
+
+    def build_config(self):
         config = vim.dvs.DistributedVirtualPortgroup.ConfigSpec()
 
         # Basic config
@@ -266,16 +274,7 @@ class VMwareDvsPortgroup(PyVmomi):
         config.defaultPortConfig = vim.dvs.VmwareDistributedVirtualSwitch.VmwarePortConfigPolicy()
         if self.module.params['vlan_trunk']:
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec()
-            vlan_id_list = []
-            for vlan_id_splitted in self.module.params['vlan_id'].split(','):
-                try:
-                    vlan_id_start, vlan_id_end = map(int, vlan_id_splitted.split('-'))
-                    if vlan_id_start not in range(0, 4095) or vlan_id_end not in range(0, 4095):
-                        self.module.fail_json(msg="vlan_id range %s specified is incorrect. The valid vlan_id range is from 0 to 4094." % vlan_id_splitted)
-                    vlan_id_list.append(vim.NumericRange(start=vlan_id_start, end=vlan_id_end))
-                except ValueError:
-                    vlan_id_list.append(vim.NumericRange(start=int(vlan_id_splitted.strip()), end=int(vlan_id_splitted.strip())))
-            config.defaultPortConfig.vlan.vlanId = vlan_id_list
+            config.defaultPortConfig.vlan.vlanId = list(map(lambda x: vim.NumericRange(start=x[0], end=x[1]), self.create_vlan_list()))
         else:
             config.defaultPortConfig.vlan = vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec()
             config.defaultPortConfig.vlan.vlanId = int(self.module.params['vlan_id'])
@@ -310,6 +309,38 @@ class VMwareDvsPortgroup(PyVmomi):
         # PG Type
         config.type = self.module.params['portgroup_type']
 
+        return config
+
+    def process_state(self):
+        dvspg_states = {
+            'absent': {
+                'present': self.state_destroy_dvspg,
+                'absent': self.state_exit_unchanged,
+            },
+            'present': {
+                'update': self.state_update_dvspg,
+                'present': self.state_exit_unchanged,
+                'absent': self.state_create_dvspg,
+            }
+        }
+        try:
+            dvspg_states[self.module.params['state']][self.check_dvspg_state()]()
+        except vmodl.RuntimeFault as runtime_fault:
+            self.module.fail_json(msg=runtime_fault.msg)
+        except vmodl.MethodFault as method_fault:
+            self.module.fail_json(msg=method_fault.msg)
+        except Exception as e:
+            self.module.fail_json(msg=str(e))
+
+    def update_port_group(self):
+        config = self.build_config()
+        config.configVersion = self.dvs_portgroup.config.configVersion
+        task = self.dvs_portgroup.ReconfigureDVPortgroup_Task(config)
+        changed, result = wait_for_task(task)
+        return changed, result
+
+    def create_port_group(self):
+        config = self.build_config()
         task = self.dv_switch.AddDVPortgroup_Task([config])
         changed, result = wait_for_task(task)
         return changed, result
@@ -327,7 +358,12 @@ class VMwareDvsPortgroup(PyVmomi):
         self.module.exit_json(changed=False)
 
     def state_update_dvspg(self):
-        self.module.exit_json(changed=False, msg="Currently not implemented.")
+        changed = True
+        result = None
+
+        if not self.module.check_mode:
+            changed, result = self.update_port_group()
+        self.module.exit_json(changed=changed, result=str(result))
 
     def state_create_dvspg(self):
         changed = True
@@ -346,8 +382,58 @@ class VMwareDvsPortgroup(PyVmomi):
 
         if self.dvs_portgroup is None:
             return 'absent'
+
+        # Check config
+        # Basic config
+        if self.dvs_portgroup.config.numPorts != self.module.params['num_ports']:
+            return 'update'
+
+        # Default port config
+        defaultPortConfig = self.dvs_portgroup.config.defaultPortConfig
+        if self.module.params['vlan_trunk']:
+            if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.TrunkVlanSpec):
+                return 'update'
+            if map(lambda x: (x.start, x.end), defaultPortConfig.vlan.vlanId) != self.create_vlan_list():
+                return 'update'
         else:
-            return 'present'
+            if not isinstance(defaultPortConfig.vlan, vim.dvs.VmwareDistributedVirtualSwitch.VlanIdSpec):
+                return 'update'
+            if defaultPortConfig.vlan.vlanId != int(self.module.params['vlan_id']):
+                return 'update'
+
+        if defaultPortConfig.securityPolicy.allowPromiscuous.value != self.module.params['network_policy']['promiscuous'] or \
+                defaultPortConfig.securityPolicy.forgedTransmits.value != self.module.params['network_policy']['forged_transmits'] or \
+                defaultPortConfig.securityPolicy.macChanges.value != self.module.params['network_policy']['mac_changes']:
+            return 'update'
+
+        # Teaming Policy
+        teamingPolicy = self.dvs_portgroup.config.defaultPortConfig.uplinkTeamingPolicy
+        if teamingPolicy.policy.value != self.module.params['teaming_policy']['load_balance_policy'] or \
+                teamingPolicy.reversePolicy.value != self.module.params['teaming_policy']['inbound_policy'] or \
+                teamingPolicy.notifySwitches.value != self.module.params['teaming_policy']['notify_switches'] or \
+                teamingPolicy.rollingOrder.value != self.module.params['teaming_policy']['rolling_order']:
+            return 'update'
+
+        # PG policy (advanced_policy)
+        policy = self.dvs_portgroup.config.policy
+        if policy.blockOverrideAllowed != self.module.params['port_policy']['block_override'] or \
+                policy.ipfixOverrideAllowed != self.module.params['port_policy']['ipfix_override'] or \
+                policy.livePortMovingAllowed != self.module.params['port_policy']['live_port_move'] or \
+                policy.networkResourcePoolOverrideAllowed != self.module.params['port_policy']['network_rp_override'] or \
+                policy.portConfigResetAtDisconnect != self.module.params['port_policy']['port_config_reset_at_disconnect'] or \
+                policy.securityPolicyOverrideAllowed != self.module.params['port_policy']['security_override'] or \
+                policy.shapingOverrideAllowed != self.module.params['port_policy']['shaping_override'] or \
+                policy.trafficFilterOverrideAllowed != self.module.params['port_policy']['traffic_filter_override'] or \
+                policy.uplinkTeamingOverrideAllowed != self.module.params['port_policy']['uplink_teaming_override'] or \
+                policy.vendorConfigOverrideAllowed != self.module.params['port_policy']['vendor_config_override'] or \
+                policy.vlanOverrideAllowed != self.module.params['port_policy']['vlan_override']:
+            return 'update'
+
+        # PG Type
+        if self.dvs_portgroup.config.type != self.module.params['portgroup_type']:
+            return 'update'
+
+        return 'present'
 
 
 def main():

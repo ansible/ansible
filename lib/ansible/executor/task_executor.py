@@ -28,7 +28,7 @@ from ansible.plugins.loader import become_loader, cliconf_loader, connection_loa
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
+from ansible.utils.unsafe_proxy import AnsibleUnsafe, to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
@@ -152,7 +152,7 @@ class TaskExecutor:
 
             def _clean_res(res, errors='surrogate_or_strict'):
                 if isinstance(res, binary_type):
-                    return to_text(res, errors=errors)
+                    return to_unsafe_text(res, errors=errors)
                 elif isinstance(res, dict):
                     for k in res:
                         try:
@@ -242,7 +242,7 @@ class TaskExecutor:
                 setattr(mylookup, '_subdir', subdir + 's')
 
                 # run lookup
-                items = mylookup.run(terms=loop_terms, variables=self._job_vars, wantlist=True)
+                items = wrap_var(mylookup.run(terms=loop_terms, variables=self._job_vars, wantlist=True))
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop_with)
 
@@ -263,11 +263,6 @@ class TaskExecutor:
                 self._job_vars[k] = old_vars[k]
             else:
                 del self._job_vars[k]
-
-        if items:
-            for idx, item in enumerate(items):
-                if item is not None and not isinstance(item, AnsibleUnsafe):
-                    items[idx] = wrap_var(item)
 
         return items
 
@@ -931,7 +926,7 @@ class TaskExecutor:
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
 
             options = self._get_persistent_connection_options(connection, variables, templar)
-            socket_path = start_connection(self._play_context, options)
+            socket_path = start_connection(self._play_context, options, self._task._uuid)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
@@ -1051,7 +1046,7 @@ class TaskExecutor:
         return handler
 
 
-def start_connection(play_context, variables):
+def start_connection(play_context, variables, task_uuid):
     '''
     Starts the persistent connection
     '''
@@ -1060,6 +1055,7 @@ def start_connection(play_context, variables):
     for dirname in candidate_paths:
         ansible_connection = os.path.join(dirname, 'ansible-connection')
         if os.path.isfile(ansible_connection):
+            display.vvvv("Found ansible-connection at path {0}".format(ansible_connection))
             break
     else:
         raise AnsibleError("Unable to find location of 'ansible-connection'. "
@@ -1082,7 +1078,7 @@ def start_connection(play_context, variables):
     python = sys.executable
     master, slave = pty.openpty()
     p = subprocess.Popen(
-        [python, ansible_connection, to_text(os.getppid())],
+        [python, ansible_connection, to_text(os.getppid()), to_text(task_uuid)],
         stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
     )
     os.close(slave)

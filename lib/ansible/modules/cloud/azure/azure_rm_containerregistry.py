@@ -142,7 +142,7 @@ credentials:
             sample: pass2value
 tags:
     description:
-        - Tags assigned to the resource. Dictionary of string:string parirs.
+        - Tags assigned to the resource. Dictionary of string:string pairs.
     returned: always
     type: dict
 '''
@@ -274,7 +274,7 @@ class AzureRMContainerRegistry(AzureRMModuleBase):
                     to_do = Actions.NoAction
                     if (self.location is not None) and self.location != response['location']:
                         to_do = Actions.Update
-                    elif (self.sku is not None) and self.location != response['sku']:
+                    elif (self.sku is not None) and self.sku != response['sku']:
                         to_do = Actions.Update
                 else:
                     to_do = Actions.NoAction

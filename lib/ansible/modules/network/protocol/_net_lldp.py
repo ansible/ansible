@@ -42,7 +42,7 @@ EXAMPLES = """
 
 - name: Disable LLDP service
   net_lldp:
-    state: lldp
+    state: absent
 """
 
 RETURN = """

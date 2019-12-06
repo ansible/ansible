@@ -1,0 +1,2 @@
+bugfixes:
+  - cronvar - use correct binary name (https://github.com/ansible/ansible/issues/63274)

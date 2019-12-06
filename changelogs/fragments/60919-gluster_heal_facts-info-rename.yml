@@ -1,3 +1,0 @@
-minor_changes:
-- The ``gluster_heal_facts`` module has been renamed to ``gluster_heal_info``.
-  When called with the new name, the module no longer returns ``ansible_facts``.

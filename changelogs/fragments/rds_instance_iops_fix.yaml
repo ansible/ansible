@@ -1,2 +1,0 @@
-bugfixes:
-  - rds_instance no longer fails when passing neither storage_type nor iops

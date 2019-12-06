@@ -137,7 +137,7 @@ output:
                or pretty XML string response (human-readable) or response with
                namespace removed from XML string.
   returned: when the display format is selected as JSON it is returned as dict type, if the
-            display format is xml or pretty pretty it is retured as a string apart from low-level
+            display format is xml or pretty pretty it is returned as a string apart from low-level
             errors (such as action plugin).
   type: complex
   contains:

@@ -1,5 +1,0 @@
----
-bugfixes:
-  - os_port - handle binding:vnic_type as optional
-    (https://github.com/ansible/ansible/issues/55524,
-     https://github.com/ansible/ansible/issues/55525)

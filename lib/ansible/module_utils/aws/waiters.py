@@ -1,5 +1,9 @@
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 try:
     import botocore.waiter as core_waiter
 except ImportError:
@@ -148,6 +152,19 @@ ec2_data = {
                     "matcher": "error",
                     "expected": "InvalidVpnGatewayID.NotFound",
                     "state": "retry"
+                },
+            ]
+        },
+        "VpnGatewayDetached": {
+            "delay": 5,
+            "maxAttempts": 40,
+            "operation": "DescribeVpnGateways",
+            "acceptors": [
+                {
+                    "matcher": "path",
+                    "expected": True,
+                    "argument": "VpnGateways[0].State == 'available'",
+                    "state": "success"
                 },
             ]
         },
@@ -314,6 +331,12 @@ waiters_by_name = {
     ('EC2', 'vpn_gateway_exists'): lambda ec2: core_waiter.Waiter(
         'vpn_gateway_exists',
         ec2_model('VpnGatewayExists'),
+        core_waiter.NormalizedOperationMethod(
+            ec2.describe_vpn_gateways
+        )),
+    ('EC2', 'vpn_gateway_detached'): lambda ec2: core_waiter.Waiter(
+        'vpn_gateway_detached',
+        ec2_model('VpnGatewayDetached'),
         core_waiter.NormalizedOperationMethod(
             ec2.describe_vpn_gateways
         )),

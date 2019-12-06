@@ -1,10 +1,6 @@
 cryptography
 jinja2
 junit-xml
+ordereddict ; python_version < '2.7' # ansible-test junit callback plugin requirement
 paramiko
 pyyaml
-pexpect # for _user test
-scp # for Cisco ios
-selectors2 # for ncclient
-ncclient # for Junos
-jxmlease # for Junos

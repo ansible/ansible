@@ -1,2 +1,0 @@
-bugfixes:
-  - Handle IndexError while parsing empty limit file (https://github.com/ansible/ansible/issues/59695).

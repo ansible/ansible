@@ -1,2 +1,0 @@
-bugfixes:
-  - aws_kms module ensure tag keys have their case preserved by avoiding a second unnecessary format conversion

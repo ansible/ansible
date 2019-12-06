@@ -81,7 +81,7 @@ class Lldp_globalFacts(object):
         if holdtime:
             config['holdtime'] = int(holdtime)
         if 'lldp run' in conf:
-            config['enable'] = True
+            config['enabled'] = True
         if timer:
             config['timer'] = int(timer)
         if reinit:

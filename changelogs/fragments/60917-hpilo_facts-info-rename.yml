@@ -1,3 +1,0 @@
-minor_changes:
-- The ``hpilo_facts`` module has been renamed to ``hpilo_info``.
-  When called with the new name, the module no longer returns ``ansible_facts``.

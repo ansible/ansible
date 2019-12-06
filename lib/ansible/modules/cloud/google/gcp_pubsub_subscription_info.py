@@ -32,17 +32,62 @@ DOCUMENTATION = '''
 module: gcp_pubsub_subscription_info
 description:
 - Gather info for GCP Subscription
-- This module was called C(gcp_pubsub_subscription_facts) before Ansible 2.9. The
-  usage has not changed.
 short_description: Gather info for GCP Subscription
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
 - requests >= 2.18.4
 - google-auth >= 1.3.0
-options: {}
-extends_documentation_fragment: gcp
+options:
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
+notes:
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -82,6 +127,31 @@ resources:
       returned: success
       type: complex
       contains:
+        oidcToken:
+          description:
+          - If specified, Pub/Sub will generate and attach an OIDC JWT token as an
+            Authorization header in the HTTP request for every pushed message.
+          returned: success
+          type: complex
+          contains:
+            serviceAccountEmail:
+              description:
+              - Service account email to be used for generating the OIDC token.
+              - The caller (for subscriptions.create, subscriptions.patch, and subscriptions.modifyPushConfig
+                RPCs) must have the iam.serviceAccounts.actAs permission for the service
+                account.
+              returned: success
+              type: str
+            audience:
+              description:
+              - 'Audience to be used when generating OIDC token. The audience claim
+                identifies the recipients that the JWT is intended for. The audience
+                value is a single case-sensitive string. Having multiple values (array)
+                for the audience field is not supported. More info about the OIDC
+                JWT token audience here: U(https://tools.ietf.org/html/rfc7519#section-4.1.3)
+                Note: if not specified, the Push endpoint URL will be used.'
+              returned: success
+              type: str
         pushEndpoint:
           description:
           - A URL locating the endpoint to which messages should be pushed.
@@ -151,18 +221,16 @@ resources:
       - A subscription is considered active as long as any connected subscriber is
         successfully consuming messages from the subscription or is issuing operations
         on the subscription. If expirationPolicy is not set, a default policy with
-        ttl of 31 days will be used. The minimum allowed value for expirationPolicy.ttl
-        is 1 day.
+        ttl of 31 days will be used. If it is set but ttl is "", the resource never
+        expires. The minimum allowed value for expirationPolicy.ttl is 1 day.
       returned: success
       type: complex
       contains:
         ttl:
           description:
           - Specifies the "time-to-live" duration for an associated resource. The
-            resource expires if it is not active for a period of ttl. The definition
-            of "activity" depends on the type of the associated resource. The minimum
-            and maximum allowed values for ttl depend on the type of the associated
-            resource, as well. If ttl is not set, the associated resource never expires.
+            resource expires if it is not active for a period of ttl.
+          - If ttl is not set, the associated resource never expires.
           - A duration in seconds with up to nine fractional digits, terminated by
             's'.
           - Example - "3.5s".
@@ -183,9 +251,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict())
-
-    if module._name == 'gcp_pubsub_subscription_facts':
-        module.deprecate("The 'gcp_pubsub_subscription_facts' module has been renamed to 'gcp_pubsub_subscription_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/pubsub']

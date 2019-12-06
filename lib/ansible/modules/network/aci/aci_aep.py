@@ -222,10 +222,10 @@ def main():
         ],
     )
 
-    aep = module.params['aep']
-    description = module.params['description']
-    infra_vlan = module.params['infra_vlan']
-    state = module.params['state']
+    aep = module.params.get('aep')
+    description = module.params.get('description')
+    infra_vlan = module.params.get('infra_vlan')
+    state = module.params.get('state')
 
     if infra_vlan:
         child_configs = [dict(infraProvAcc=dict(attributes=dict(name='provacc')))]

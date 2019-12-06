@@ -1,5 +1,0 @@
-minor_changes:
-- The ``idrac_redfish_facts`` module has been renamed to ``idrac_redfish_info``.
-  When called with the new name, the module no longer returns ``ansible_facts``.
-- The ``redfish_facts`` module has been renamed to ``redfish_info``.
-  When called with the new name, the module no longer returns ``ansible_facts``.

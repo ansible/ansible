@@ -54,13 +54,13 @@ options:
           - Name of the interface LLDP needs to be configured on.
         type: str
         required: True
-      enable:
+      enabled:
         description:
           - This is a boolean value to control disabling of LLDP on the interface C(name)
         type: bool
   state:
     description:
-      - The state the configuration should be left in.
+      - The state of the configuration after module completion.
     type: str
     choices:
     - merged
@@ -82,7 +82,7 @@ EXAMPLES = """
     config:
       - name: ge-0/0/1
       - name: ge-0/0/2
-        enable: False
+        enabled: False
     state: merged
 
 # After state:
@@ -112,7 +112,7 @@ EXAMPLES = """
       - name: ge-0/0/2
         disable: False
       - name: ge-0/0/3
-        enable: False
+        enabled: False
     state: replaced
 
 # After state:
@@ -141,7 +141,7 @@ EXAMPLES = """
   junos_lldp_interfaces:
     config:
       - name: ge-0/0/2
-        enable: False
+        enabled: False
     state: overridden
 
 # After state:
@@ -182,14 +182,14 @@ EXAMPLES = """
 
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   type: list
   sample: >

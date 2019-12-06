@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible.basics - fix core C# recursive call when logging fails (e.g. if insufficient permissions are held) (https://github.com/ansible/ansible/pull/59503)

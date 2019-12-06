@@ -1,8 +1,0 @@
-minor_changes:
-  - zabbix_template - new parameter `template_xml` adds support for importing templates from XML documents
-  - zabbix_template - new parameter `dump_format` allows user to specify in which format (JSON or XML) should a template be exported from Zabbix
-  - zabbix_template - it is no longer accepted to provide parameters `template_name` and `template_groups` when using `template_json`
-  - zabbix_template - parameters `template_name`, `template_json` and `template_xml` are now mutually exclusive
-  - zabbix_template - parameter `template_groups` is now required when passing `template_name` and template is being created for the fisrt time. Not required when template is being updated.
-  - zabbix_template - now allows import of multiple templates at once when using `template_json` or `template_xml` parameters
-  - zabbix_template - template can now be updated with just a `clear_templates` parameter without requiring any additional parameters to be passed (see examples of the module)

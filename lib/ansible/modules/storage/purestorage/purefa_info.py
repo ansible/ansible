@@ -21,7 +21,7 @@ description:
     Purity//FA operating system. By default, the module will collect basic
     information including hosts, host groups, protection
     groups and volume counts. Additional information can be collected
-    based on the configured set of arguements.
+    based on the configured set of arguments.
 author:
   - Pure Storage ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:
@@ -30,7 +30,8 @@ options:
       - When supplied, this argument will define the information to be collected.
         Possible values for this include all, minimum, config, performance,
         capacity, network, subnet, interfaces, hgroups, pgroups, hosts,
-        admins, volumes, snapshots, pods, vgroups, offload, apps and arrays.
+        admins, volumes, snapshots, pods, vgroups, offload, apps, arrays,
+        certs and kmip.
     type: list
     required: false
     default: minimum
@@ -75,21 +76,21 @@ purefa_info:
   description: Returns the information collected from the FlashArray
   returned: always
   type: complex
-  contains:
+  sample: {
         "admins": {
             "pureuser": {
                 "role": "array_admin",
                 "type": "local"
             }
-        }
+        },
         "apps": {
             "offload": {
                 "description": "Snapshot offload to NFS or Amazon S3",
                 "status": "healthy",
                 "version": "5.2.1"
             }
-        }
-        "arrays": {}
+        },
+        "arrays": {},
         "capacity": {
             "data_reduction": 11.664774599686346,
             "free_space": 6995782867042,
@@ -101,7 +102,7 @@ purefa_info:
             "total_capacity": 7002920315199,
             "total_reduction": 64.86821472825108,
             "volume_space": 3781932919
-        }
+        },
         "config": {
             "directory_service": {
                 "base_dn": null,
@@ -134,7 +135,6 @@ purefa_info:
             "dns": {
                 "domain": "acme.com",
                 "nameservers": [
-                    "8.8.8.8",
                     "8.8.4.4"
                 ]
             },
@@ -163,18 +163,6 @@ purefa_info:
                 {
                     "auth_passphrase": null,
                     "auth_protocol": null,
-                    "community": null,
-                    "host": "localhost",
-                    "name": "localhost",
-                    "notification": null,
-                    "privacy_passphrase": null,
-                    "privacy_protocol": null,
-                    "user": null,
-                    "version": "v2c"
-                },
-                {
-                    "auth_passphrase": null,
-                    "auth_protocol": null,
                     "community": "****",
                     "host": "10.21.23.34",
                     "name": "manager1",
@@ -185,27 +173,10 @@ purefa_info:
                     "version": "v2c"
                 }
             ],
-            "ssl_certs": {
-                "common_name": null,
-                "country": null,
-                "email": null,
-                "issued_by": "",
-                "issued_to": "",
-                "key_size": 2048,
-                "locality": null,
-                "name": "management",
-                "organization": "Pure Storage, Inc.",
-                "organizational_unit": "Pure Storage, Inc.",
-                "state": null,
-                "status": "self-signed",
-                "valid_from": 1502492946000,
-                "valid_to": 1817852946000
-            },
             "syslog": [
-                "udp://prod-ntp1.puretec.purestorage.com:333",
                 "udp://prod-ntp2.puretec.purestorage.com:333"
             ]
-        }
+        },
         "default": {
             "admins": 1,
             "array_model": "FA-405",
@@ -219,8 +190,8 @@ purefa_info:
             "purity_version": "5.2.1",
             "snapshots": 2,
             "volume_groups": 1
-        }
-        "hgroups": {}
+        },
+        "hgroups": {},
         "hosts": {
             "@offload": {
                 "hgroup": null,
@@ -240,20 +211,16 @@ purefa_info:
                 "personality": null,
                 "preferred_array": [],
                 "target_port": [
-                    "CT1.ETH5",
-                    "CT0.ETH5",
                     "CT0.ETH4",
                     "CT1.ETH4"
                 ],
                 "wwn": []
             }
-        }
+        },
         "interfaces": {
             "CT0.ETH4": "iqn.2010-06.com.purestorage:flasharray.2111b767484e4682",
-            "CT0.ETH5": "iqn.2010-06.com.purestorage:flasharray.2111b767484e4682",
             "CT1.ETH4": "iqn.2010-06.com.purestorage:flasharray.2111b767484e4682",
-            "CT1.ETH5": "iqn.2010-06.com.purestorage:flasharray.2111b767484e4682"
-        }
+        },
         "network": {
             "@offload.data0": {
                 "address": "10.21.200.222",
@@ -343,8 +310,8 @@ purefa_info:
                 ],
                 "speed": 1000000000
             }
-        }
-        "nfs_offload": {}
+        },
+        "nfs_offload": {},
         "performance": {
             "input_per_sec": 0,
             "local_queue_usec_per_op": 0,
@@ -361,16 +328,16 @@ purefa_info:
             "usec_per_read_op": 0,
             "usec_per_write_op": 0,
             "writes_per_sec": 0
-        }
+        },
         "pgroups": {
-            "simon": {
+            "test_pg": {
                 "hgroups": null,
                 "hosts": null,
                 "source": "docker-host",
                 "targets": null,
                 "volumes": null
             }
-        }
+        },
         "pods": {
             "test": {
                 "arrays": [
@@ -383,7 +350,7 @@ purefa_info:
                 ],
                 "source": null
             }
-        }
+        },
         "s3_offload": {
             "s3-offload": {
                 "access_key_id": "AKIAILNVEPWZTV4FGWZQ",
@@ -391,15 +358,15 @@ purefa_info:
                 "protocol": "s3",
                 "status": "connected"
             }
-        }
+        },
         "snapshots": {
             "@offload_boot.1": {
                 "created": "2019-03-14T15:29:20Z",
                 "size": 68719476736,
                 "source": "@offload_boot"
             }
-        }
-        "subnet": {}
+        },
+        "subnet": {},
         "vgroups": {
             "test": {
                 "volumes": [
@@ -407,7 +374,7 @@ purefa_info:
                     "test/test1"
                 ]
             }
-        }
+        },
         "volumes": {
             "@offload_boot": {
                 "bandwidth": null,
@@ -434,13 +401,15 @@ purefa_info:
                 "source": null
             }
         }
+    }
 '''
 
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.pure import get_system, purefa_argument_spec
+import time
 
-
+ADMIN_API_VERSION = '1.14'
 S3_REQUIRED_API_VERSION = '1.16'
 LATENCY_REQUIRED_API_VERSION = '1.16'
 AC_REQUIRED_API_VERSION = '1.14'
@@ -448,7 +417,7 @@ CAP_REQUIRED_API_VERSION = '1.6'
 SAN_REQUIRED_API_VERSION = '1.10'
 NVME_API_VERSION = '1.16'
 PREFERRED_API_VERSION = '1.15'
-CONN_STATUS_API_VERSION = '1.17'
+P53_API_VERSION = '1.17'
 
 
 def generate_default_dict(array):
@@ -480,6 +449,8 @@ def generate_default_dict(array):
     default_info['protection_groups'] = len(pgroups)
     default_info['hostgroups'] = len(hgroups)
     default_info['admins'] = len(admins)
+    if P53_API_VERSION in api_version:
+        default_info['maintenance_window'] = array.list_maintenance_windows()
     return default_info
 
 
@@ -519,7 +490,7 @@ def generate_config_dict(array):
     config_info['dns'] = array.get_dns()
     # SMTP
     config_info['smtp'] = array.list_alert_recipients()
-    # SMNP
+    # SNMP
     config_info['snmp'] = array.list_snmp_managers()
     config_info['snmp_v3_engine_id'] = array.get_snmp_engine_id()['engine_id']
     # DS
@@ -553,8 +524,6 @@ def generate_config_dict(array):
     config_info['idle_timeout'] = array.get(idle_timeout=True)['idle_timeout']
     # SCSI Timeout
     config_info['scsi_timeout'] = array.get(scsi_timeout=True)['scsi_timeout']
-    # SSL
-    config_info['ssl_certs'] = array.get_certificate()
     # Global Admin settings
     if S3_REQUIRED_API_VERSION in api_version:
         config_info['global_admin'] = array.get_global_admin_attributes()
@@ -563,13 +532,15 @@ def generate_config_dict(array):
 
 def generate_admin_dict(array):
     admin_info = {}
-    admins = array.list_admins()
-    for admin in range(0, len(admins)):
-        admin_name = admins[admin]['name']
-        admin_info[admin_name] = {
-            'type': admins[admin]['type'],
-            'role': admins[admin]['role'],
-        }
+    api_version = array._list_available_rest_versions()
+    if ADMIN_API_VERSION in api_version:
+        admins = array.list_admins()
+        for admin in range(0, len(admins)):
+            admin_name = admins[admin]['name']
+            admin_info[admin_name] = {
+                'type': admins[admin]['type'],
+                'role': admins[admin]['role'],
+            }
     return admin_info
 
 
@@ -671,6 +642,9 @@ def generate_vol_dict(array):
             volume = qvols[qvol]['name']
             qos = qvols[qvol]['bandwidth_limit']
             volume_info[volume]['bandwidth'] = qos
+            if P53_API_VERSION in api_version:
+                iops = qvols[qvol]['iops_limit']
+                volume_info[volume]['iops_limit'] = iops
         vvols = array.list_volumes(protocol_endpoint=True)
         for vvol in range(0, len(vvols)):
             volume = vvols[vvol]['name']
@@ -679,10 +653,20 @@ def generate_vol_dict(array):
                 'serial': vvols[vvol]['serial'],
                 'hosts': []
             }
+            if P53_API_VERSION in array._list_available_rest_versions():
+                pe_e2ees = array.list_volumes(protocol_endpoint=True, host_encryption_key=True)
+                for pe_e2ee in range(0, len(pe_e2ees)):
+                    volume = pe_e2ees[pe_e2ee]['name']
+                    volume_info[volume]['host_encryption_key_status'] = pe_e2ees[pe_e2ee]['host_encryption_key_status']
+        if P53_API_VERSION in array._list_available_rest_versions():
+            e2ees = array.list_volumes(host_encryption_key=True)
+            for e2ee in range(0, len(e2ees)):
+                volume = e2ees[e2ee]['name']
+                volume_info[volume]['host_encryption_key_status'] = e2ees[e2ee]['host_encryption_key_status']
     cvols = array.list_volumes(connect=True)
     for cvol in range(0, len(cvols)):
         volume = cvols[cvol]['name']
-        voldict = [cvols[cvol]['host'], cvols[cvol]['lun']]
+        voldict = {'host': cvols[cvol]['host'], 'lun': cvols[cvol]['lun']}
         volume_info[volume]['hosts'].append(voldict)
     return volume_info
 
@@ -776,20 +760,28 @@ def generate_pods_dict(array):
 def generate_conn_array_dict(array):
     conn_array_info = {}
     api_version = array._list_available_rest_versions()
-    if CONN_STATUS_API_VERSION in api_version:
-        carrays = array.list_connected_arrays()
-        for carray in range(0, len(carrays)):
-            arrayname = carrays[carray]['array_name']
-            conn_array_info[arrayname] = {
-                'array_id': carrays[carray]['id'],
-                'throtled': carrays[carray]['throtled'],
-                'version': carrays[carray]['version'],
-                'type': carrays[carray]['type'],
-                'mgmt_ip': carrays[carray]['management_address'],
-                'repl_ip': carrays[carray]['replication_address'],
+    carrays = array.list_array_connections()
+    for carray in range(0, len(carrays)):
+        arrayname = carrays[carray]['array_name']
+        conn_array_info[arrayname] = {
+            'array_id': carrays[carray]['id'],
+            'throttled': carrays[carray]['throttled'],
+            'version': carrays[carray]['version'],
+            'type': carrays[carray]['type'],
+            'mgmt_ip': carrays[carray]['management_address'],
+            'repl_ip': carrays[carray]['replication_address'],
+        }
+        if P53_API_VERSION in api_version:
+            conn_array_info[arrayname]['status'] = carrays[carray]['status']
+    throttles = array.list_array_connections(throttle=True)
+    for throttle in range(0, len(throttles)):
+        arrayname = throttles[throttle]['array_name']
+        if conn_array_info[arrayname]['throttled']:
+            conn_array_info[arrayname]['throttling'] = {
+                'default_limit': throttles[throttle]['default_limit'],
+                'window_limit': throttles[throttle]['window_limit'],
+                'window': throttles[throttle]['window'],
             }
-            if CONN_STATUS_API_VERSION in api_version:
-                conn_array_info[arrayname]['status'] = carrays[carray]['status']
     return conn_array_info
 
 
@@ -821,6 +813,48 @@ def generate_vgroups_dict(array):
     return vgroups_info
 
 
+def generate_certs_dict(array):
+    certs_info = {}
+    api_version = array._list_available_rest_versions()
+    if P53_API_VERSION in api_version:
+        certs = array.list_certificates()
+        for cert in range(0, len(certs)):
+            certificate = certs[cert]['name']
+            valid_from = time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.localtime(certs[cert]['valid_from'] / 1000))
+            valid_to = time.strftime("%a, %d %b %Y %H:%M:%S %Z", time.localtime(certs[cert]['valid_to'] / 1000))
+            certs_info[certificate] = {
+                'status': certs[cert]['status'],
+                'issued_to': certs[cert]['issued_to'],
+                'valid_from': valid_from,
+                'locality': certs[cert]['locality'],
+                'country': certs[cert]['country'],
+                'issued_by': certs[cert]['issued_by'],
+                'valid_to': valid_to,
+                'state': certs[cert]['state'],
+                'key_size': certs[cert]['key_size'],
+                'org_unit': certs[cert]['organizational_unit'],
+                'common_name': certs[cert]['common_name'],
+                'organization': certs[cert]['organization'],
+                'email': certs[cert]['email'],
+            }
+    return certs_info
+
+
+def generate_kmip_dict(array):
+    kmip_info = {}
+    api_version = array._list_available_rest_versions()
+    if P53_API_VERSION in api_version:
+        kmips = array.list_kmip()
+        for kmip in range(0, len(kmips)):
+            key = kmips[kmip]['name']
+            kmip_info[key] = {
+                'certificate': kmips[kmip]['certificate'],
+                'ca_cert_configured': kmips[kmip]['ca_certificate_configured'],
+                'uri': kmips[kmip]['uri'],
+            }
+    return kmip_info
+
+
 def generate_nfs_offload_dict(array):
     offload_info = {}
     api_version = array._list_available_rest_versions()
@@ -850,6 +884,25 @@ def generate_s3_offload_dict(array):
                 'bucket': offload[target]['bucket'],
                 'protocol': offload[target]['protocol'],
                 'access_key_id': offload[target]['access_key_id'],
+            }
+            if P53_API_VERSION in api_version:
+                offload_info[offloadt]['placement_strategy'] = offload[target]['placement_strategy']
+    return offload_info
+
+
+def generate_azure_offload_dict(array):
+    offload_info = {}
+    api_version = array._list_available_rest_versions()
+    if P53_API_VERSION in api_version:
+        offload = array.list_azure_offload()
+        for target in range(0, len(offload)):
+            offloadt = offload[target]['name']
+            offload_info[offloadt] = {
+                'status': offload[target]['status'],
+                'account_name': offload[target]['account_name'],
+                'protocol': offload[target]['protocol'],
+                'secret_access_key': offload[target]['secret_access_key'],
+                'container_name': offload[target]['container_name'],
             }
     return offload_info
 
@@ -899,14 +952,13 @@ def main():
     ))
 
     module = AnsibleModule(argument_spec, supports_check_mode=False)
-
     array = get_system(module)
 
     subset = [test.lower() for test in module.params['gather_subset']]
     valid_subsets = ('all', 'minimum', 'config', 'performance', 'capacity',
                      'network', 'subnet', 'interfaces', 'hgroups', 'pgroups',
                      'hosts', 'admins', 'volumes', 'snapshots', 'pods',
-                     'vgroups', 'offload', 'apps', 'arrays')
+                     'vgroups', 'offload', 'apps', 'arrays', 'certs', 'kmip')
     subset_test = (test in valid_subsets for test in subset)
     if not all(subset_test):
         module.fail_json(msg="value must gather_subset must be one or more of: %s, got: %s"
@@ -914,7 +966,7 @@ def main():
 
     info = {}
 
-    if 'minimum' in subset or 'all' in subset:
+    if 'minimum' in subset or 'all' in subset or 'apps' in subset:
         info['default'] = generate_default_dict(array)
     if 'performance' in subset or 'all' in subset:
         info['performance'] = generate_perf_dict(array)
@@ -945,12 +997,20 @@ def main():
     if 'vgroups' in subset or 'all' in subset:
         info['vgroups'] = generate_vgroups_dict(array)
     if 'offload' in subset or 'all' in subset:
+        info['azure_offload'] = generate_azure_offload_dict(array)
         info['nfs_offload'] = generate_nfs_offload_dict(array)
         info['s3_offload'] = generate_s3_offload_dict(array)
     if 'apps' in subset or 'all' in subset:
-        info['apps'] = generate_apps_dict(array)
+        if 'CBS' not in info['default']['array_model']:
+            info['apps'] = generate_apps_dict(array)
+        else:
+            info['apps'] = {}
     if 'arrays' in subset or 'all' in subset:
         info['arrays'] = generate_conn_array_dict(array)
+    if 'certs' in subset or 'all' in subset:
+        info['certs'] = generate_certs_dict(array)
+    if 'kmip' in subset or 'all' in subset:
+        info['kmip'] = generate_kmip_dict(array)
 
     module.exit_json(changed=False, purefa_info=info)
 

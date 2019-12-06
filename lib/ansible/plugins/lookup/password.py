@@ -33,7 +33,6 @@ DOCUMENTATION = """
            - Note that the password is always stored as plain text, only the returning password is encrypted.
            - Encrypt also forces saving the salt value for idempotence.
            - Note that before 2.6 this option was incorrectly labeled as a boolean for a long time.
-        default: None
       chars:
         version_added: "1.4"
         description:
@@ -74,10 +73,10 @@ EXAMPLES = """
     password: "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}"
     priv: '{{ client }}_{{ tier }}_{{ role }}.*:ALL'
 
-- name: create a mysql user with a random password using only digits
+- name: create a mysql user with an 8 character random password using only digits
   mysql_user:
     name: "{{ client }}"
-    password: "{{ lookup('password', '/tmp/passwordfile chars=digits') }}"
+    password: "{{ lookup('password', '/tmp/passwordfile length=8 chars=digits') }}"
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
 - name: create a mysql user with a random password using many different char sets

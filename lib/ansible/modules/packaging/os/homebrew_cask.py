@@ -110,7 +110,7 @@ EXAMPLES = '''
 - homebrew_cask:
     name: alfred
     state: present
-    allow_external_apps: True
+    accept_external_apps: True
 
 - homebrew_cask:
     name: alfred

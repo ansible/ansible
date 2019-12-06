@@ -126,7 +126,7 @@ EXAMPLES = r'''
     group: foo
     mode: '0644'
 
-- name: Create an insecure file
+- name: Give insecure permissions to an existing file
   file:
     path: /work
     owner: root
@@ -770,7 +770,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     # Now that we might have created the symlink, get the arguments.
     # We need to do it now so we can properly follow the symlink if needed
     # because load_file_common_arguments sets 'path' according
-    # the value of follow and the symlink existance.
+    # the value of follow and the symlink existence.
     file_args = module.load_file_common_arguments(module.params)
 
     # Whenever we create a link to a nonexistent target we know that the nonexistent target

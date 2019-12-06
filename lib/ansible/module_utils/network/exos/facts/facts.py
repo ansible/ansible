@@ -14,7 +14,10 @@ __metaclass__ = type
 from ansible.module_utils.network.exos.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.exos.facts.lldp_global.lldp_global import Lldp_globalFacts
+from ansible.module_utils.network.exos.facts.vlans.vlans import VlansFacts
 from ansible.module_utils.network.exos.facts.legacy.base import Default, Hardware, Interfaces, Config
+from ansible.module_utils.network.exos.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
+from ansible.module_utils.network.exos.facts.l2_interfaces.l2_interfaces import L2_interfacesFacts
 
 FACT_LEGACY_SUBSETS = dict(
     default=Default,
@@ -24,6 +27,9 @@ FACT_LEGACY_SUBSETS = dict(
 
 FACT_RESOURCE_SUBSETS = dict(
     lldp_global=Lldp_globalFacts,
+    vlans=VlansFacts,
+    lldp_interfaces=Lldp_interfacesFacts,
+    l2_interfaces=L2_interfacesFacts,
 )
 
 
@@ -46,9 +52,8 @@ class Facts(FactsBase):
         :rtype: dict
         :return: the facts gathered
         """
-        netres_choices = FactsArgs.argument_spec['gather_network_resources'].get('choices', [])
         if self.VALID_RESOURCE_SUBSETS:
-            self.get_network_resources_facts(netres_choices, FACT_RESOURCE_SUBSETS, resource_facts_type, data)
+            self.get_network_resources_facts(FACT_RESOURCE_SUBSETS, resource_facts_type, data)
 
         if self.VALID_LEGACY_GATHER_SUBSETS:
             self.get_network_legacy_facts(FACT_LEGACY_SUBSETS, legacy_facts_type)

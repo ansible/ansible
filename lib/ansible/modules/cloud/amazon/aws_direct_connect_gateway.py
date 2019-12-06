@@ -15,12 +15,12 @@ DOCUMENTATION = '''
 module: aws_direct_connect_gateway
 author: Gobin Sougrakpam (@gobins)
 version_added: "2.5"
-short_description: Manage AWS Direct Connect Gateway.
+short_description: Manage AWS Direct Connect gateway
 description:
-  - Creates AWS Direct Connect Gateway
-  - Deletes AWS Direct Connect Gateway
-  - Attaches Virtual Gateways to Direct Connect Gateway
-  - Detaches Virtual Gateways to Direct Connect Gateway
+  - Creates AWS Direct Connect Gateway.
+  - Deletes AWS Direct Connect Gateway.
+  - Attaches Virtual Gateways to Direct Connect Gateway.
+  - Detaches Virtual Gateways to Direct Connect Gateway.
 extends_documentation_fragment:
     - aws
     - ec2
@@ -28,27 +28,34 @@ requirements: [ boto3 ]
 options:
   state:
     description:
-        - present to ensure resource is created.
-        - absent to remove resource
-    required: false
+        - Set I(state=present) to ensure a resource is created.
+        - Set I(state=absent) to remove a resource.
     default: present
     choices: [ "present", "absent"]
+    type: str
   name:
     description:
-        - name of the dxgw to be created or deleted
-    required: false
+        - Name of the Direct Connect Gateway to be created or deleted.
+    type: str
   amazon_asn:
     description:
-        - amazon side asn
-    required: true
+        - The Amazon side ASN.
+        - Required when I(state=present).
+    type: str
   direct_connect_gateway_id:
     description:
-        - id of an existing direct connect gateway
-    required: false
+        - The ID of an existing Direct Connect Gateway.
+        - Required when I(state=absent).
+    type: str
   virtual_gateway_id:
     description:
-        - vpn gateway id of an existing virtual gateway
-    required: false
+        - The VPN gateway ID of an existing virtual gateway.
+    type: str
+  wait_timeout:
+    description:
+        - How long to wait for the association to be deleted.
+    type: int
+    default: 320
 '''
 
 EXAMPLES = '''
@@ -78,14 +85,19 @@ result:
   contains:
     amazon_side_asn:
       description: ASN on the amazon side.
+      type: str
     direct_connect_gateway_id:
       description: The ID of the direct connect gateway.
+      type: str
     direct_connect_gateway_name:
       description: The name of the direct connect gateway.
+      type: str
     direct_connect_gateway_state:
       description: The state of the direct connect gateway.
+      type: str
     owner_account:
       description: The AWS account ID of the owner of the direct connect gateway.
+      type: str
 '''
 
 import time

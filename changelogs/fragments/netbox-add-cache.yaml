@@ -1,0 +1,2 @@
+minor_changes:
+ - netbox - use inventory cache if configured

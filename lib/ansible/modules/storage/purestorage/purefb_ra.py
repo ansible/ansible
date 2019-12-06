@@ -17,7 +17,7 @@ module: purefb_ra
 version_added: '2.9'
 short_description: Enable or Disable Pure Storage FlashBlade Remote Assist
 description:
-- Enablke or Disable Remote Assist for a Pure Storage FlashBlade.
+- Enable or Disable Remote Assist for a Pure Storage FlashBlade.
 author:
 - Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
 options:

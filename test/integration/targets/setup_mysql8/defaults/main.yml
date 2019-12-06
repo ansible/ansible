@@ -1,0 +1,21 @@
+repo_link: https://repo.mysql.com/mysql80-community-release-el{{ ansible_facts.distribution_major_version }}.rpm
+my_cnf: /etc/my.cnf
+
+mysql_data_dirs:
+  - /var/lib/mysql
+  - /usr/mysql
+
+mysql_support_packages:
+  - MySQL-python
+
+mysql_server_packages:
+  - mysql-community-server
+
+mysql_cleanup_packages:
+  - mysql-community-client
+  - mysql-community-common
+  - mysql-community-libs
+  - mysql-community-libs-compat
+  - mysql-community-server
+  - mysql80-community-release
+  - python3-PyMySQL

@@ -33,7 +33,7 @@ options:
         version_added: "2.8"
     return_dict:
         description:
-        - returns a parsesable dictonary instead of raw XML output
+        - returns a parsesable dictionary instead of raw XML output
         type: bool
         default: false
         version_added: "2.9"
@@ -150,7 +150,7 @@ class NetAppONTAPCommand(object):
         self.module.exit_json(changed=changed, msg=output)
 
     def parse_xml_to_dict(self, xmldata):
-        '''Parse raw XML from system-cli and create an Ansible parseable dictonary'''
+        '''Parse raw XML from system-cli and create an Ansible parseable dictionary'''
         xml_import_ok = True
         xml_parse_ok = True
 
@@ -197,7 +197,7 @@ class NetAppONTAPCommand(object):
         self.result_dict['xml_dict']['last_element'] = ""
 
     def _char_data(self, data):
-        ''' Dump XML elemet data '''
+        ''' Dump XML element data '''
         self.result_dict['xml_dict'][str(self.result_dict['xml_dict']['active_element'])]['data'] = repr(data)
 
     def _end_element(self, name):

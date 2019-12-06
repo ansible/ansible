@@ -14,7 +14,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
-from ansible.module_utils.network.common.utils import to_list, remove_empties, dict_diff, dict_merge
+from ansible.module_utils.network.common.utils import remove_empties, dict_diff
 from ansible.module_utils.network.nxos.facts.facts import Facts
 
 

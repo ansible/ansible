@@ -153,7 +153,7 @@ options:
                 type: int
             renew_interval:
                 description:
-                    - Time before lifetime expiraton to send NMMO HA re-registration (5 - 60).
+                    - Time before lifetime expiration to send NMMO HA re-registration (5 - 60).
                 type: int
             roaming_interface:
                 description:
@@ -168,7 +168,7 @@ options:
                     - enable
             tunnel_mode:
                 description:
-                    - NEMO tunnnel mode (GRE tunnel).
+                    - NEMO tunnel mode (GRE tunnel).
                 type: str
                 choices:
                     - gre

@@ -275,6 +275,7 @@ class NetworkConnectionBase(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(NetworkConnectionBase, self).__init__(play_context, new_stdin, *args, **kwargs)
         self._messages = []
+        self._conn_closed = False
 
         self._network_os = self._play_context.network_os
 
@@ -335,6 +336,7 @@ class NetworkConnectionBase(ConnectionBase):
         self.queue_message('vvvv', 'reset call on connection instance')
 
     def close(self):
+        self._conn_closed = True
         if self._connected:
             self._connected = False
 

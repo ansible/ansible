@@ -30,7 +30,7 @@
         config:
           - name: ge-0/0/1
           - name: ge-0/0/2
-            enable: False
+            enabled: False
         state: merged
       register: result
 

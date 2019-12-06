@@ -1,2 +1,0 @@
-bugfixes:
-- "acme_certificate - improve compatibility when finalizing ACME v2 orders. Fixes problem with Buypass' ACME v2 testing endpoint."

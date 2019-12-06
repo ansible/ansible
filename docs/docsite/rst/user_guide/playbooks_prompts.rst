@@ -94,7 +94,7 @@ Depending on your platform at most the following crypt schemes are supported:
 If you need to put in special characters (i.e `{%`) that might create templating errors, use the ``unsafe`` option::
 
    vars_prompt:
-     - name: "my_password_with_wierd_chars"
+     - name: "my_password_with_weird_chars"
        prompt: "Enter password"
        unsafe: yes
        private: yes

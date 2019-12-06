@@ -27,7 +27,7 @@ author:
     - "Dusan Matejka (@D3DeFi)"
 requirements:
     - "python >= 2.6"
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
 options:
     template_name:
         description:
@@ -54,7 +54,7 @@ options:
         version_added: '2.9'
     template_groups:
         description:
-            - List of host groups to add template to when template is createad.
+            - List of host groups to add template to when template is created.
             - Replaces the current host groups the template belongs to if the template is already present.
             - Required when creating a new template with C(state=present) and I(template_name) is used.
               Not required when updating an existing template.
@@ -91,6 +91,7 @@ options:
     dump_format:
         description:
             - Format to use when dumping template with C(state=dump).
+            - This option is deprecated and will eventually be removed in 2.14.
         required: false
         choices: [json, xml]
         default: "json"
@@ -101,6 +102,7 @@ options:
             - On C(state=present) template will be created/imported or updated depending if it is already present.
             - On C(state=dump) template content will get dumped into required format specified in I(dump_format).
             - On C(state=absent) template will be deleted.
+            - The C(state=dump) is deprecated and will eventually be removed in 2.14. The M(zabbix_template_info) module should be used instead.
         required: false
         choices: [present, absent, dump]
         default: "present"
@@ -363,7 +365,7 @@ class Template(object):
                                template_macros, template_content, template_type):
         """Compares template parameters to already existing values if any are found.
 
-        template_json - JSON structures are compared as deep sorted dictonaries,
+        template_json - JSON structures are compared as deep sorted dictionaries,
         template_xml - XML structures are compared as strings, but filtered and formatted first,
         If none above is used, all the other arguments are compared to their existing counterparts
         retrieved from Zabbix API."""
@@ -379,7 +381,7 @@ class Template(object):
             return changed
 
         existing_template = self.dump_template(template_ids, template_type='json')
-        # Compare JSON objects as deep sorted python dictonaries
+        # Compare JSON objects as deep sorted python dictionaries
         if template_content is not None and template_type == 'json':
             parsed_template_json = self.load_json_template(template_content)
             if self.diff_template(parsed_template_json, existing_template):
@@ -454,7 +456,7 @@ class Template(object):
         try:
             dump = self._zapi.configuration.export({'format': template_type, 'options': {'templates': template_ids}})
             if template_type == 'xml':
-                return str(ET.tostring(ET.fromstring(dump.encode('utf-8')), encoding='utf-8'))
+                return str(ET.tostring(ET.fromstring(dump.encode('utf-8')), encoding='utf-8').decode('utf-8'))
             else:
                 return self.load_json_template(dump)
 
@@ -509,7 +511,7 @@ class Template(object):
                 if element.text is None and len(list(element)) == 0:
                     template.remove(element)
 
-        # Filter new lines and identation
+        # Filter new lines and indentation
         xml_root_text = list(line.strip() for line in ET.tostring(parsed_xml_root).split('\n'))
         return ''.join(xml_root_text)
 
@@ -681,6 +683,7 @@ def main():
         module.exit_json(changed=True, result="Successfully deleted template %s" % template_name)
 
     elif state == "dump":
+        module.deprecate("The 'dump' state has been deprecated and will be removed, use 'zabbix_template_info' module instead.", version='2.14')
         if not template_ids:
             module.fail_json(msg='Template not found: %s' % template_name)
 

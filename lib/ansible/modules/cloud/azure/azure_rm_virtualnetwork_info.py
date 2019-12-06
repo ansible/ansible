@@ -214,7 +214,6 @@ class AzureRMNetworkInterfaceInfo(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_virtualnetworks=[]),
             virtualnetworks=[]
         )
 
@@ -242,7 +241,9 @@ class AzureRMNetworkInterfaceInfo(AzureRMModuleBase):
             results = self.list_items()
 
         if is_old_facts:
-            self.results['ansible_facts']['azure_virtualnetworks'] = self.serialize(results)
+            self.results['ansible_facts'] = {
+                'azure_virtualnetworks': self.serialize(results)
+            }
         self.results['virtualnetworks'] = self.curated(results)
 
         return self.results

@@ -122,9 +122,7 @@ def command_units(args):
 
         if plugins:
             env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest/plugins')
-
-            for plugin in plugins:
-                cmd.extend(['-p', plugin])
+            env['PYTEST_PLUGINS'] = ','.join(plugins)
 
         if args.collect_only:
             cmd.append('--collect-only')

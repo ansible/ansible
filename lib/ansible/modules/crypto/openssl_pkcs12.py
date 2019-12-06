@@ -33,6 +33,7 @@ options:
         description:
             - List of other certificates to include. Pre 2.8 this parameter was called C(ca_certificates)
         type: list
+        elements: path
         aliases: [ ca_certificates ]
     certificate_path:
         description:
@@ -271,7 +272,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
                 return False
 
             if pkcs12_privatekey:
-                # This check is required because pyOpenSSL will not return a firendly name
+                # This check is required because pyOpenSSL will not return a friendly name
                 # if the private key is not set in the file
                 if ((self.pkcs12.get_friendlyname() is not None) and (pkcs12_friendly_name is not None)):
                     if self.pkcs12.get_friendlyname() != pkcs12_friendly_name:

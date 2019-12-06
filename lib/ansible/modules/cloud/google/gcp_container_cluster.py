@@ -33,7 +33,7 @@ module: gcp_container_cluster
 description:
 - A Google Container Engine cluster.
 short_description: Creates a GCP Cluster
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -176,7 +176,7 @@ options:
           for more information about support for GPUs.
         required: false
         type: list
-        version_added: 2.9
+        version_added: '2.9'
         suboptions:
           accelerator_count:
             description:
@@ -194,14 +194,14 @@ options:
           If unspecified, the default disk type is 'pd-standard' .
         required: false
         type: str
-        version_added: 2.9
+        version_added: '2.9'
       min_cpu_platform:
         description:
         - Minimum CPU platform to be used by this instance. The instance may be scheduled
           on the specified or newer CPU platform.
         required: false
         type: str
-        version_added: 2.9
+        version_added: '2.9'
       taints:
         description:
         - List of kubernetes taints to be applied to each node.
@@ -209,7 +209,7 @@ options:
           .'
         required: false
         type: list
-        version_added: 2.9
+        version_added: '2.9'
         suboptions:
           key:
             description:
@@ -253,7 +253,7 @@ options:
           is issued.
         required: false
         type: dict
-        version_added: 2.9
+        version_added: '2.9'
         suboptions:
           issue_client_certificate:
             description:
@@ -290,7 +290,7 @@ options:
     - Configuration for a private cluster.
     required: false
     type: dict
-    version_added: 2.8
+    version_added: '2.8'
     suboptions:
       enable_private_nodes:
         description:
@@ -361,7 +361,7 @@ options:
           for the nodes.
         required: false
         type: dict
-        version_added: 2.9
+        version_added: '2.9'
         suboptions:
           disabled:
             description:
@@ -381,20 +381,20 @@ options:
     type: list
     aliases:
     - nodeLocations
-    version_added: 2.9
+    version_added: '2.9'
   resource_labels:
     description:
     - The resource labels for the cluster to use to annotate any related Google Compute
       Engine resources.
     required: false
     type: dict
-    version_added: 2.9
+    version_added: '2.9'
   legacy_abac:
     description:
     - Configuration for the legacy ABAC authorization mode.
     required: false
     type: dict
-    version_added: 2.9
+    version_added: '2.9'
     suboptions:
       enabled:
         description:
@@ -409,7 +409,7 @@ options:
     - Configuration options for the NetworkPolicy feature.
     required: false
     type: dict
-    version_added: 2.9
+    version_added: '2.9'
     suboptions:
       provider:
         description:
@@ -429,7 +429,7 @@ options:
     - Only honored if cluster created with IP Alias support.
     required: false
     type: dict
-    version_added: 2.9
+    version_added: '2.9'
     suboptions:
       max_pods_per_node:
         description:
@@ -441,7 +441,7 @@ options:
     - Configuration for controlling how IPs are allocated in the cluster.
     required: false
     type: dict
-    version_added: 2.9
+    version_added: '2.9'
     suboptions:
       use_ip_aliases:
         description:
@@ -515,13 +515,42 @@ options:
     - Enable the ability to use Cloud TPUs in this cluster.
     required: false
     type: bool
-    version_added: 2.9
+    version_added: '2.9'
   tpu_ipv4_cidr_block:
     description:
     - The IP address range of the Cloud TPUs in this cluster, in CIDR notation.
     required: false
     type: str
-    version_added: 2.9
+    version_added: '2.9'
+  master_authorized_networks_config:
+    description:
+    - Configuration for controlling how IPs are allocated in the cluster.
+    required: false
+    type: dict
+    version_added: '2.10'
+    suboptions:
+      enabled:
+        description:
+        - Whether or not master authorized networks is enabled.
+        required: false
+        type: bool
+      cidr_blocks:
+        description:
+        - Define up to 50 external networks that could access Kubernetes master through
+          HTTPS.
+        required: false
+        type: list
+        suboptions:
+          display_name:
+            description:
+            - Optional field used to identify cidr blocks.
+            required: false
+            type: str
+          cidr_block:
+            description:
+            - Block specified in CIDR notation.
+            required: false
+            type: str
   location:
     description:
     - The location where the cluster is deployed.
@@ -529,7 +558,7 @@ options:
     type: str
     aliases:
     - zone
-    version_added: 2.8
+    version_added: '2.8'
   kubectl_path:
     description:
     - The path that the kubectl config file will be written to.
@@ -538,15 +567,51 @@ options:
     - This requires the PyYaml library.
     required: false
     type: str
-    version_added: 2.9
+    version_added: '2.9'
   kubectl_context:
     description:
     - The name of the context for the kubectl config file. Will default to the cluster
       name.
     required: false
     type: str
-    version_added: 2.9
-extends_documentation_fragment: gcp
+    version_added: '2.9'
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -1129,6 +1194,34 @@ conditions:
       - Human-friendly representation of the condition.
       returned: success
       type: str
+masterAuthorizedNetworksConfig:
+  description:
+  - Configuration for controlling how IPs are allocated in the cluster.
+  returned: success
+  type: complex
+  contains:
+    enabled:
+      description:
+      - Whether or not master authorized networks is enabled.
+      returned: success
+      type: bool
+    cidrBlocks:
+      description:
+      - Define up to 50 external networks that could access Kubernetes master through
+        HTTPS.
+      returned: success
+      type: complex
+      contains:
+        displayName:
+          description:
+          - Optional field used to identify cidr blocks.
+          returned: success
+          type: str
+        cidrBlock:
+          description:
+          - Block specified in CIDR notation.
+          returned: success
+          type: str
 location:
   description:
   - The location where the cluster is deployed.
@@ -1237,6 +1330,13 @@ def main():
             ),
             enable_tpu=dict(type='bool'),
             tpu_ipv4_cidr_block=dict(type='str'),
+            master_authorized_networks_config=dict(
+                type='dict',
+                options=dict(
+                    enabled=dict(type='bool'),
+                    cidr_blocks=dict(type='list', elements='dict', options=dict(display_name=dict(type='str'), cidr_block=dict(type='str'))),
+                ),
+            ),
             location=dict(required=True, type='str', aliases=['zone']),
             kubectl_path=dict(type='str'),
             kubectl_context=dict(type='str'),
@@ -1313,6 +1413,9 @@ def resource_to_request(module):
         u'ipAllocationPolicy': ClusterIpallocationpolicy(module.params.get('ip_allocation_policy', {}), module).to_request(),
         u'enableTpu': module.params.get('enable_tpu'),
         u'tpuIpv4CidrBlock': module.params.get('tpu_ipv4_cidr_block'),
+        u'masterAuthorizedNetworksConfig': ClusterMasterauthorizednetworksconfig(
+            module.params.get('master_authorized_networks_config', {}), module
+        ).to_request(),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -1412,6 +1515,7 @@ def response_to_hash(module, response):
         u'enableTpu': response.get(u'enableTpu'),
         u'tpuIpv4CidrBlock': response.get(u'tpuIpv4CidrBlock'),
         u'conditions': ClusterConditionsArray(response.get(u'conditions', []), module).from_response(),
+        u'masterAuthorizedNetworksConfig': ClusterMasterauthorizednetworksconfig(response.get(u'masterAuthorizedNetworksConfig', {}), module).from_response(),
     }
 
 
@@ -1899,6 +2003,52 @@ class ClusterConditionsArray(object):
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({u'code': item.get(u'code'), u'message': item.get(u'message')})
+
+
+class ClusterMasterauthorizednetworksconfig(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get('enabled'), u'cidrBlocks': ClusterCidrblocksArray(self.request.get('cidr_blocks', []), self.module).to_request()}
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get(u'enabled'), u'cidrBlocks': ClusterCidrblocksArray(self.request.get(u'cidrBlocks', []), self.module).from_response()}
+        )
+
+
+class ClusterCidrblocksArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'displayName': item.get('display_name'), u'cidrBlock': item.get('cidr_block')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'displayName': item.get(u'displayName'), u'cidrBlock': item.get(u'cidrBlock')})
 
 
 if __name__ == '__main__':

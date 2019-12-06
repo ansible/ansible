@@ -1,0 +1,3 @@
+<rpc-reply message-id="801" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" flow-id="98">
+  <ok/>
+</rpc-reply>

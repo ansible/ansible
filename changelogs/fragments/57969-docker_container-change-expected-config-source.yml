@@ -1,2 +1,0 @@
-bugfixes:
-    - "docker_container - switch to ``Config`` data source for images (API>=1.21)."

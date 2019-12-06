@@ -225,7 +225,7 @@ EXAMPLES = r'''
 - name: Add several more beers to the 'beers' element and add them before the 'Rochefort 10' element
   xml:
     path: /foo/bar.xml
-    xpath: '/business/beers/beer[text()=\"Rochefort 10\"]'
+    xpath: '/business/beers/beer[text()="Rochefort 10"]'
     insertbefore: yes
     add_children:
     - beer: Old Rasputin
@@ -274,7 +274,7 @@ EXAMPLES = r'''
     xpath: /business/website
     children: []
 
-# In case of namespaces, like in below XML, they have to be explicitely stated.
+# In case of namespaces, like in below XML, they have to be explicitly stated.
 #
 # <foo xmlns="http://x.test" xmlns:attr="http://z.test">
 #   <bar>
@@ -441,7 +441,7 @@ def delete_xpath_target(module, tree, xpath, namespaces):
 
 
 def replace_children_of(children, match):
-    for element in match.getchildren():
+    for element in list(match):
         match.remove(element)
     match.extend(children)
 
@@ -458,8 +458,8 @@ def set_target_children_inner(module, tree, xpath, namespaces, children, in_type
     # xpaths always return matches as a list, so....
     for match in matches:
         # Check if elements differ
-        if len(match.getchildren()) == len(children):
-            for idx, element in enumerate(match.getchildren()):
+        if len(list(match)) == len(children):
+            for idx, element in enumerate(list(match)):
                 if etree.tostring(element) != children_as_string[idx]:
                     replace_children_of(children, match)
                     changed = True
@@ -639,7 +639,7 @@ def set_target_inner(module, tree, xpath, namespaces, attribute, value):
     except Exception as e:
         missing_namespace = ""
         # NOTE: This checks only the namespaces defined in root element!
-        # TODO: Implement a more robust check to check for child namespaces' existance
+        # TODO: Implement a more robust check to check for child namespaces' existence
         if tree.getroot().nsmap and ":" not in xpath:
             missing_namespace = "XML document has namespace(s) defined, but no namespace prefix(es) used in xpath!\n"
         module.fail_json(msg="%sXpath %s causes a failure: %s\n  -- tree is %s" %

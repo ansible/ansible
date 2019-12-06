@@ -60,7 +60,7 @@ options:
         choices: [0, 1]
       reinit:
         description:
-          - Amount of time to delay the intialization of LLDP on any interface (in seconds)
+          - Amount of time to delay the initialization of LLDP on any interface (in seconds)
         type: int
       timer:
         description:
@@ -122,7 +122,7 @@ options:
                 type: bool
   state:
     description:
-      - The state the configuration should be left in
+      - The state of the configuration after module completion
     type: str
     choices:
       - merged
@@ -208,14 +208,14 @@ EXAMPLES = """
 """
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   type: dict
   sample: >

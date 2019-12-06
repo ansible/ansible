@@ -162,7 +162,7 @@ class ElementOSVolume(object):
     def __init__(self):
         """
         Parse arguments, setup state variables,
-        check paramenters and ensure SDK is installed
+        check parameters and ensure SDK is installed
         """
         self._size_unit_map = netapp_utils.SF_BYTE_MAP
 

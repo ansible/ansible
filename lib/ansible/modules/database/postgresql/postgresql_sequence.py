@@ -41,7 +41,7 @@ options:
     - Specifies the data type of the sequence. Valid types are bigint, integer,
       and smallint. bigint is the default. The data type determines the default
       minimum and maximum values of the sequence. For more info see the
-      documention
+      documentation
       U(https://www.postgresql.org/docs/current/sql-createsequence.html).
     - Supported from PostgreSQL 10.
     choices: [ bigint, integer, smallint ]
@@ -92,6 +92,7 @@ options:
       has reached its maximum value will return an error. False (NO CYCLE) is
       the default.
     type: bool
+    default: no
   cascade:
     description:
     - Automatically drop objects that depend on the sequence, and in turn all
@@ -99,6 +100,7 @@ options:
     - Ignored if I(state=present).
     - Only used with I(state=absent).
     type: bool
+    default: no
   rename_to:
     description:
     - The new name for the I(sequence).
@@ -310,11 +312,11 @@ class Sequence(object):
 
     Arguments:
         module (AnsibleModule) -- object of AnsibleModule class
-        cursor (cursor) -- cursor objec of psycopg2 library
+        cursor (cursor) -- cursor object of psycopg2 library
 
     Attributes:
         module (AnsibleModule) -- object of AnsibleModule class
-        cursor (cursor) -- cursor objec of psycopg2 library
+        cursor (cursor) -- cursor object of psycopg2 library
         changed (bool) --  something was changed after execution or not
         executed_queries (list) -- executed queries
         name (str) -- name of the sequence
@@ -471,9 +473,9 @@ def main():
         maxvalue=dict(type='int', aliases=['max']),
         start=dict(type='int'),
         cache=dict(type='int'),
-        cycle=dict(type='bool'),
+        cycle=dict(type='bool', default=False),
         schema=dict(type='str', default='public'),
-        cascade=dict(type='bool'),
+        cascade=dict(type='bool', default=False),
         rename_to=dict(type='str'),
         owner=dict(type='str'),
         newschema=dict(type='str'),

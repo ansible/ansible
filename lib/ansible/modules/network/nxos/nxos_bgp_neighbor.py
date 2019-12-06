@@ -180,7 +180,7 @@ commands:
 import re
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
@@ -434,7 +434,6 @@ def main():
     )
 
     warnings = list()
-    check_args(module, warnings)
     result = dict(changed=False, warnings=warnings)
 
     state = module.params['state']
@@ -472,7 +471,8 @@ def main():
 
     if candidate:
         candidate = candidate.items_text()
-        load_config(module, candidate)
+        if not module.check_mode:
+            load_config(module, candidate)
         result['changed'] = True
         result['commands'] = candidate
     else:

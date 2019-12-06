@@ -4,6 +4,7 @@ __metaclass__ = type
 
 import json
 import os
+import re
 import traceback
 import uuid
 import errno
@@ -630,6 +631,13 @@ class SshKey:
 
         if not os.path.isfile(key) or not os.path.isfile(pub):
             run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', 'rsa', '-N', '', '-f', key])
+
+            # newer ssh-keygen PEM output (such as on RHEL 8.1) is not recognized by paramiko
+            with open(key, 'r+') as key_fd:
+                key_contents = key_fd.read()
+                key_contents = re.sub(r'(BEGIN|END) PRIVATE KEY', r'\1 RSA PRIVATE KEY', key_contents)
+                key_fd.seek(0)
+                key_fd.write(key_contents)
 
         return key, pub
 

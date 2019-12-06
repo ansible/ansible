@@ -40,10 +40,13 @@ options:
     description:
       - If the C(replace) argument is set to C(yes), it will replace
         the entire running-config of the device with the C(config)
-        argument value. For NXOS devices, C(replace) argument takes
-        path to the file on the device that will be used for replacing
-        the entire running-config. Nexus 9K devices only support replace.
-        Use I(net_put) or I(nxos_file_copy) module to copy the flat file
+        argument value. For devices that support replacing running
+        configuration from file on device like NXOS/JUNOS, the
+        C(replace) argument takes path to the file on the device
+        that will be used for replacing the entire running-config.
+        The value of C(config) option should be I(None) for such devices.
+        Nexus 9K devices only support replace. Use I(net_put) or
+        I(nxos_file_copy) in case of NXOS module to copy the flat file
         to remote device and then use set the fullpath to this argument.
     type: 'str'
   backup:
@@ -168,6 +171,10 @@ EXAMPLES = """
   cli_config:
     replace: 'bootflash:nxoscfg'
 
+- name: junos replace config
+  cli_config:
+    replace: '/var/home/ansible/junos01.cfg'
+
 - name: commit with comment
   cli_config:
     config: set system host-name foo
@@ -242,6 +249,11 @@ def run(module, device_operations, connection, candidate, running, rollback_id):
     elif replace in ('no', 'false', 'False'):
         replace = False
 
+    if replace is not None and replace not in [True, False] and candidate is not None:
+        module.fail_json(msg="Replace value '%s' is a configuration file path already"
+                             " present on the device. Hence 'replace' and 'config' options"
+                             " are mutually exclusive" % replace)
+
     if rollback_id is not None:
         resp = connection.rollback(rollback_id, commit)
         if 'diff' in resp:
@@ -255,7 +267,7 @@ def run(module, device_operations, connection, candidate, running, rollback_id):
         if diff_ignore_lines:
             module.warn('diff_ignore_lines is ignored as the device supports onbox diff')
 
-        if not isinstance(candidate, list):
+        if candidate and not isinstance(candidate, list):
             candidate = candidate.strip('\n').splitlines()
 
         kwargs = {'candidate': candidate, 'commit': commit, 'replace': replace,
@@ -375,7 +387,7 @@ def main():
     if module.params['backup']:
         result['__backup__'] = running
 
-    if candidate or rollback_id:
+    if candidate or rollback_id or module.params['replace']:
         try:
             result.update(run(module, device_operations, connection, candidate, running, rollback_id))
         except Exception as exc:

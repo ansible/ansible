@@ -12,6 +12,6 @@
 
 - assert:
      that:
-        - result.failed and result.msg is search('Transport')
+        - result.failed and result.msg is search('Connection type must be <network_cli>')
 
 - debug: msg="END nxapi/badtransport.yaml"

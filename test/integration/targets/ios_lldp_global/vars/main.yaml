@@ -12,14 +12,14 @@ merged:
     timer: 20
     holdtime: 10
     reinit: 3
-    enable: True
+    enabled: True
 
 replaced:
   before:
     timer: 100
     holdtime: 10
     reinit: 3
-    enable: True
+    enabled: True
 
   commands:
     - "no lldp run"
@@ -36,7 +36,7 @@ deleted:
     timer: 100
     holdtime: 10
     reinit: 3
-    enable: True
+    enabled: True
 
   commands:
     - "no lldp holdtime"

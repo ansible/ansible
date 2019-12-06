@@ -47,6 +47,7 @@ options:
       - List of Compose file names relative to I(project_src). Overrides C(docker-compose.yml) or C(docker-compose.yaml).
       - Files are loaded and merged in the order given.
     type: list
+    elements: path
   state:
     description:
       - Desired state of the project.
@@ -64,6 +65,7 @@ options:
         on a subset of services.
       - If empty, which is the default, the operation will be performed on all services defined in the Compose file (or inline I(definition)).
     type: list
+    elements: str
   scale:
     description:
       - When I(state) is C(present) scale services. Provide a dictionary of key/value pairs where the key
@@ -326,6 +328,7 @@ services:
                   description: One or more commands to be executed in the container.
                   returned: success
                   type: list
+                  elements: str
                   example: ["postgres"]
               image:
                   description: Name of the image from which the container was built.
@@ -335,12 +338,13 @@ services:
               labels:
                   description: Meta data assigned to the container.
                   returned: success
-                  type: complex
+                  type: dict
                   example: {...}
               networks:
                   description: Contains a dictionary for each network to which the container is a member.
                   returned: success
-                  type: complex
+                  type: list
+                  elements: dict
                   contains:
                       IPAddress:
                           description: The IP address assigned to the container.
@@ -356,6 +360,7 @@ services:
                           description: Aliases assigned to the container by the network.
                           returned: success
                           type: list
+                          elements: str
                           example: ['db']
                       globalIPv6:
                           description: IPv6 address assigned to the container.
@@ -371,6 +376,7 @@ services:
                           description: List of container names to which this container is linked.
                           returned: success
                           type: list
+                          elements: str
                           example: null
                       macAddress:
                           description: Mac Address assigned to the virtual NIC.
@@ -380,7 +386,7 @@ services:
               state:
                   description: Information regarding the current disposition of the container.
                   returned: success
-                  type: complex
+                  type: dict
                   contains:
                       running:
                           description: Whether or not the container is up with a running process.
@@ -434,6 +440,7 @@ actions:
                   description: A descriptive name of the action to be performed on the service's containers.
                   returned: always
                   type: list
+                  elements: str
                   contains:
                       id:
                           description: the container's long ID
@@ -886,11 +893,18 @@ class ContainerManager(DockerBaseClass):
                 except Exception as exc:
                     self.client.fail("Error: service image lookup failed - %s" % str(exc))
 
+                out_redir_name, err_redir_name = make_redirection_tempfiles()
                 # pull the image
                 try:
-                    service.pull(ignore_pull_failures=False)
+                    with stdout_redirector(out_redir_name):
+                        with stderr_redirector(err_redir_name):
+                            service.pull(ignore_pull_failures=False)
                 except Exception as exc:
-                    self.client.fail("Error: pull failed with %s" % str(exc))
+                    fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                                   msg_format="Error: pull failed with %s")
+                    self.client.fail(**fail_reason)
+                else:
+                    cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
 
                 # store the new image ID
                 new_image_id = ''
@@ -933,11 +947,18 @@ class ContainerManager(DockerBaseClass):
                     except Exception as exc:
                         self.client.fail("Error: service image lookup failed - %s" % str(exc))
 
+                    out_redir_name, err_redir_name = make_redirection_tempfiles()
                     # build the image
                     try:
-                        new_image_id = service.build(pull=self.pull, no_cache=self.nocache)
+                        with stdout_redirector(out_redir_name):
+                            with stderr_redirector(err_redir_name):
+                                new_image_id = service.build(pull=self.pull, no_cache=self.nocache)
                     except Exception as exc:
-                        self.client.fail("Error: build failed with %s" % str(exc))
+                        fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                                       msg_format="Error: build failed with %s")
+                        self.client.fail(**fail_reason)
+                    else:
+                        cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
 
                     if new_image_id not in old_image_id:
                         # if a new image was built
@@ -966,10 +987,17 @@ class ContainerManager(DockerBaseClass):
             ))
         if not self.check_mode and result['changed']:
             image_type = image_type_from_opt('--rmi', self.remove_images)
+            out_redir_name, err_redir_name = make_redirection_tempfiles()
             try:
-                self.project.down(image_type, self.remove_volumes, self.remove_orphans)
+                with stdout_redirector(out_redir_name):
+                    with stderr_redirector(err_redir_name):
+                        self.project.down(image_type, self.remove_volumes, self.remove_orphans)
             except Exception as exc:
-                self.client.fail("Error stopping project - %s" % str(exc))
+                fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                               msg_format="Error stopping project - %s")
+                self.client.fail(**fail_reason)
+            else:
+                cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
         return result
 
     def cmd_stop(self, service_names):
@@ -1057,10 +1085,17 @@ class ContainerManager(DockerBaseClass):
                     result['changed'] = True
                     service_res['scale'] = scale - len(containers)
                     if not self.check_mode:
+                        out_redir_name, err_redir_name = make_redirection_tempfiles()
                         try:
-                            service.scale(scale)
+                            with stdout_redirector(out_redir_name):
+                                with stderr_redirector(err_redir_name):
+                                    service.scale(scale)
                         except Exception as exc:
-                            self.client.fail("Error scaling %s - %s" % (service.name, str(exc)))
+                            fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
+                                                           msg_format="Error scaling {0} - %s".format(service.name))
+                            self.client.fail(**fail_reason)
+                        else:
+                            cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
                     result['actions'].append(service_res)
         return result
 

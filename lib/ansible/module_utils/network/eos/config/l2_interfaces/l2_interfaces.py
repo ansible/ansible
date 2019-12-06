@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 The eos_l2_interfaces class
 It is in this file where the current configuration (as dict)
@@ -12,10 +13,10 @@ created
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.network.common.utils import to_list
-
 from ansible.module_utils.network.common.cfg.base import ConfigBase
+from ansible.module_utils.network.common.utils import to_list, param_list_to_dict
 from ansible.module_utils.network.eos.facts.facts import Facts
+from ansible.module_utils.network.eos.utils.utils import normalize_interface
 
 
 class L2_interfaces(ConfigBase):
@@ -94,6 +95,8 @@ class L2_interfaces(ConfigBase):
                   to the desired configuration
         """
         state = self._module.params['state']
+        want = param_list_to_dict(want)
+        have = param_list_to_dict(have)
         if state == 'overridden':
             commands = self._state_overridden(want, have)
         elif state == 'deleted':
@@ -113,15 +116,20 @@ class L2_interfaces(ConfigBase):
                   to the desired configuration
         """
         commands = []
-        for interface in want:
-            for extant in have:
-                if extant['name'] == interface['name']:
-                    break
+        for key, desired in want.items():
+            interface_name = normalize_interface(key)
+            if interface_name in have:
+                extant = have[interface_name]
             else:
-                continue
+                extant = dict()
 
-            commands.extend(clear_interface(interface, extant))
-            commands.extend(set_interface(interface, extant))
+            intf_commands = set_interface(desired, extant)
+            intf_commands.extend(clear_interface(desired, extant))
+
+            if intf_commands:
+                commands.append("interface {0}".format(interface_name))
+                commands.extend(intf_commands)
+
         return commands
 
     @staticmethod
@@ -133,19 +141,19 @@ class L2_interfaces(ConfigBase):
                   to the desired configuration
         """
         commands = []
-        for extant in have:
-            for interface in want:
-                if extant['name'] == interface['name']:
-                    break
+        for key, extant in have.items():
+            if key in want:
+                desired = want[key]
             else:
-                # We didn't find a matching desired state, which means we can
-                # pretend we recieved an empty desired state.
-                interface = dict(name=extant['name'])
-                commands.extend(clear_interface(interface, extant))
-                continue
+                desired = dict()
 
-            commands.extend(clear_interface(interface, extant))
-            commands.extend(set_interface(interface, extant))
+            intf_commands = set_interface(desired, extant)
+            intf_commands.extend(clear_interface(desired, extant))
+
+            if intf_commands:
+                commands.append("interface {0}".format(key))
+                commands.extend(intf_commands)
+
         return commands
 
     @staticmethod
@@ -157,14 +165,18 @@ class L2_interfaces(ConfigBase):
                   the current configuration
         """
         commands = []
-        for interface in want:
-            for extant in have:
-                if extant['name'] == interface['name']:
-                    break
+        for key, desired in want.items():
+            interface_name = normalize_interface(key)
+            if interface_name in have:
+                extant = have[interface_name]
             else:
-                continue
+                extant = dict()
 
-            commands.extend(set_interface(interface, extant))
+            intf_commands = set_interface(desired, extant)
+
+            if intf_commands:
+                commands.append("interface {0}".format(interface_name))
+                commands.extend(intf_commands)
 
         return commands
 
@@ -177,29 +189,31 @@ class L2_interfaces(ConfigBase):
                   of the provided objects
         """
         commands = []
-        for interface in want:
-            for extant in have:
-                if extant['name'] == interface['name']:
-                    break
+        for key in want:
+            desired = dict()
+            if key in have:
+                extant = have[key]
             else:
                 continue
 
-            # Use an empty configuration, just in case
-            interface = dict(name=interface['name'])
-            commands.extend(clear_interface(interface, extant))
+            intf_commands = clear_interface(desired, extant)
+
+            if intf_commands:
+                commands.append("interface {0}".format(key))
+                commands.extend(intf_commands)
 
         return commands
 
 
 def set_interface(want, have):
     commands = []
-    wants_access = want["access"]
+    wants_access = want.get("access")
     if wants_access:
         access_vlan = wants_access.get("vlan")
         if access_vlan and access_vlan != have.get("access", {}).get("vlan"):
             commands.append("switchport access vlan {0}".format(access_vlan))
 
-    wants_trunk = want["trunk"]
+    wants_trunk = want.get("trunk")
     if wants_trunk:
         has_trunk = have.get("trunk", {})
         native_vlan = wants_trunk.get("native_vlan")
@@ -210,9 +224,6 @@ def set_interface(want, have):
         if allowed_vlans:
             allowed_vlans = ','.join(allowed_vlans)
             commands.append("switchport trunk allowed vlan {0}".format(allowed_vlans))
-
-    if commands:
-        commands.insert(0, "interface {0}".format(want['name']))
     return commands
 
 
@@ -227,7 +238,4 @@ def clear_interface(want, have):
         commands.append("no switchport trunk allowed vlan")
     if "native_vlan" in has_trunk and "native_vlan" not in wants_trunk:
         commands.append("no switchport trunk native vlan")
-
-    if commands:
-        commands.insert(0, "interface {0}".format(want["name"]))
     return commands

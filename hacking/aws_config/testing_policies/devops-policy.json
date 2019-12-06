@@ -6,11 +6,11 @@
         "Effect": "Allow",
         "Action": [
           "codecommit:ListRepositories",
-          "codecommit:CreateRepositories",
-          "codecommit:DeleteRpositories"
+          "codecommit:*Repository",
+          "codecommit:*RepositoryDescription"
         ],
         "Resource": [
-          "arn:aws:codecommit:*"
+          "*"
         ]
       }
     ]

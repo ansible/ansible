@@ -306,7 +306,6 @@ class Connection(NetworkConnectionBase):
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
-
         self._ssh_shell = None
 
         self._matched_prompt = None
@@ -315,10 +314,12 @@ class Connection(NetworkConnectionBase):
         self._last_response = None
         self._history = list()
         self._command_response = None
+        self._last_recv_window = None
 
         self._terminal = None
         self.cliconf = None
-        self.paramiko_conn = None
+        self._paramiko_conn = None
+        self._task_uuid = to_text(kwargs.get('task_uuid', ''))
 
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
@@ -330,8 +331,9 @@ class Connection(NetworkConnectionBase):
 
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
-                self.queue_message('vvvv', 'loaded cliconf plugin for network_os %s' % self._network_os)
-                self._sub_plugin = {'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf}
+                self._sub_plugin = {'type': 'cliconf', 'name': self.cliconf._load_name, 'obj': self.cliconf}
+                self.queue_message('vvvv', 'loaded cliconf plugin %s from path %s for network_os %s' %
+                                   (self.cliconf._load_name, self.cliconf._original_path, self._network_os))
             else:
                 self.queue_message('vvvv', 'unable to load cliconf for network_os %s' % self._network_os)
         else:
@@ -341,11 +343,19 @@ class Connection(NetworkConnectionBase):
             )
         self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
+    @property
+    def paramiko_conn(self):
+        if self._paramiko_conn is None:
+            self._paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
+            self._paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
+        return self._paramiko_conn
+
     def _get_log_channel(self):
         name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
         name += "paramiko [%s]" % self._play_context.remote_addr
         return name
 
+    @ensure_connect
     def get_prompt(self):
         """Returns the current prompt from the device"""
         return self._matched_prompt
@@ -399,14 +409,18 @@ class Connection(NetworkConnectionBase):
         if hasattr(self, 'disable_response_logging'):
             self.disable_response_logging()
 
+    def update_cli_prompt_context(self, task_uuid):
+        # set cli prompt context at the start of new task run only
+        if self._task_uuid != task_uuid:
+            self.set_cli_prompt_context()
+            self._task_uuid = task_uuid
+
     def _connect(self):
         '''
         Connects to the remote device and starts the terminal
         '''
         if not self.connected:
-            self.paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
             self.paramiko_conn._set_log_channel(self._get_log_channel())
-            self.paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
             self.paramiko_conn.force_persistence = self.force_persistence
 
             command_timeout = self.get_option('persistent_command_timeout')
@@ -446,13 +460,13 @@ class Connection(NetworkConnectionBase):
 
             self.receive(prompts=terminal_initial_prompt, answer=terminal_initial_answer, newline=newline, check_all=check_all)
 
-            self.queue_message('vvvv', 'firing event: on_open_shell()')
-            self._terminal.on_open_shell()
-
             if self._play_context.become and self._play_context.become_method == 'enable':
                 self.queue_message('vvvv', 'firing event: on_become')
                 auth_pass = self._play_context.become_pass
                 self._terminal.on_become(passwd=auth_pass)
+
+            self.queue_message('vvvv', 'firing event: on_open_shell()')
+            self._terminal.on_open_shell()
 
             self.queue_message('vvvv', 'ssh connection has completed successfully')
 
@@ -473,7 +487,7 @@ class Connection(NetworkConnectionBase):
                 self.queue_message('debug', "cli session is now closed")
 
                 self.paramiko_conn.close()
-                self.paramiko_conn = None
+                self._paramiko_conn = None
                 self.queue_message('debug', "ssh connection has been closed successfully")
         super(Connection, self).close()
 
@@ -535,6 +549,7 @@ class Connection(NetworkConnectionBase):
             recv.seek(offset)
 
             window = self._strip(recv.read())
+            self._last_recv_window = window
             window_count += 1
 
             if prompts and not handled:
@@ -576,7 +591,7 @@ class Connection(NetworkConnectionBase):
             if sendonly:
                 return
             response = self.receive(command, prompt, answer, newline, prompt_retry_check, check_all)
-            return to_text(response, errors='surrogate_or_strict')
+            return to_text(response, errors='surrogate_then_replace')
         except (socket.timeout, AttributeError):
             self.queue_message('error', traceback.format_exc())
             raise AnsibleConnectionFailure("timeout value %s seconds reached while trying to send command: %s"

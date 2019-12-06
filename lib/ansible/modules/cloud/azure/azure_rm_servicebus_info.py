@@ -196,7 +196,7 @@ servicebuses:
             sample: 1
         count_details:
             description:
-                - Message count deatils.
+                - Message count details.
             returned: always
             type: complex
             contains:

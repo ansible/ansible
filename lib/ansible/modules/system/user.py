@@ -57,8 +57,7 @@ options:
     groups:
         description:
             - List of groups user will be added to. When set to an empty string C(''),
-              C(null), or C(~), the user is removed from all groups except the
-              primary group. (C(~) means C(null) in YAML)
+              the user is removed from all groups except the primary group.
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
             - Mutually exclusive with C(local)
         type: list
@@ -93,6 +92,7 @@ options:
             - Optionally set the user's password to this crypted value.
             - On macOS systems, this value has to be cleartext. Beware of security issues.
             - To create a disabled account on Linux systems, set this to C('!') or C('*').
+            - To create a disabled account on OpenBSD, set this to C('*************').
             - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
         type: str
@@ -420,8 +420,9 @@ import subprocess
 import time
 
 from ansible.module_utils import distro
-from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.sys_info import get_platform_subclass
 
 try:
     import spwd
@@ -458,7 +459,8 @@ class User(object):
     DATE_FORMAT = '%Y-%m-%d'
 
     def __new__(cls, *args, **kwargs):
-        return load_platform_subclass(User, args, kwargs)
+        new_cls = get_platform_subclass(User)
+        return super(cls, new_cls).__new__(new_cls)
 
     def __init__(self, module):
         self.module = module
@@ -514,8 +516,8 @@ class User(object):
         if self.module.params['password'] and self.platform != 'Darwin':
             maybe_invalid = False
 
-            # Allow setting the password to * or ! in order to disable the account
-            if self.module.params['password'] in set(['*', '!']):
+            # Allow setting certain passwords in order to disable the account
+            if self.module.params['password'] in set(['*', '!', '*************']):
                 maybe_invalid = False
             else:
                 # : for delimiter, * for disable user, ! for lock user
@@ -911,7 +913,7 @@ class User(object):
                 # Python 3.6 raises PermissionError instead of KeyError
                 # Due to absence of PermissionError in python2.7 need to check
                 # errno
-                if e.errno in (errno.EACCES, errno.EPERM):
+                if e.errno in (errno.EACCES, errno.EPERM, errno.ENOENT):
                     return passwd, expires
                 raise
 
@@ -2303,7 +2305,7 @@ class DarwinUser(User):
         for field in self.fields:
             if field[0] in self.__dict__ and self.__dict__[field[0]]:
                 current = self._get_user_property(field[1])
-                if current is None or current != self.__dict__[field[0]]:
+                if current is None or current != to_text(self.__dict__[field[0]]):
                     cmd = self._get_dscl()
                     cmd += ['-create', '/Users/%s' % self.name, field[1], self.__dict__[field[0]]]
                     (rc, _err, _out) = self.execute_command(cmd)
@@ -2501,29 +2503,31 @@ class AIX(User):
         """
 
         b_name = to_bytes(self.name)
+        b_passwd = b''
+        b_expires = b''
         if os.path.exists(self.SHADOWFILE) and os.access(self.SHADOWFILE, os.R_OK):
             with open(self.SHADOWFILE, 'rb') as bf:
                 b_lines = bf.readlines()
 
             b_passwd_line = b''
             b_expires_line = b''
-            for index, b_line in enumerate(b_lines):
-                # Get password and lastupdate lines which come after the username
-                if b_line.startswith(b'%s:' % b_name):
-                    b_passwd_line = b_lines[index + 1]
-                    b_expires_line = b_lines[index + 2]
-                    break
+            try:
+                for index, b_line in enumerate(b_lines):
+                    # Get password and lastupdate lines which come after the username
+                    if b_line.startswith(b'%s:' % b_name):
+                        b_passwd_line = b_lines[index + 1]
+                        b_expires_line = b_lines[index + 2]
+                        break
 
-            # Sanity check the lines because sometimes both are not present
-            if b' = ' in b_passwd_line:
-                b_passwd = b_passwd_line.split(b' = ', 1)[-1].strip()
-            else:
-                b_passwd = b''
+                # Sanity check the lines because sometimes both are not present
+                if b' = ' in b_passwd_line:
+                    b_passwd = b_passwd_line.split(b' = ', 1)[-1].strip()
 
-            if b' = ' in b_expires_line:
-                b_expires = b_expires_line.split(b' = ', 1)[-1].strip()
-            else:
-                b_expires = b''
+                if b' = ' in b_expires_line:
+                    b_expires = b_expires_line.split(b' = ', 1)[-1].strip()
+
+            except IndexError:
+                self.module.fail_json(msg='Failed to parse shadow file %s' % self.SHADOWFILE)
 
         passwd = to_native(b_passwd)
         expires = to_native(b_expires) or -1

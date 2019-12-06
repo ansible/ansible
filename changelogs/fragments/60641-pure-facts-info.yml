@@ -1,3 +1,0 @@
-minor_changes:
-- The ``purefa_facts`` module has been deprecated. Use ``purefa_info`` instead.
-- The ``purefb_facts`` module has been deprecated. Use ``purefb_info`` instead.

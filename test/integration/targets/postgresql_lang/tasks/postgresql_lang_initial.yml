@@ -1,0 +1,231 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Preparation for tests:
+- name: Install PostgreSQL support packages
+  become: yes
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: "{{ postgresql_lang_packages }}"
+    state: present
+
+###############
+# Do main tests
+#
+
+# Create language in check_mode:
+- name: postgresql_lang - create plperl in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_lang:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: plperl
+  register: result
+  ignore_errors: yes
+  check_mode: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == []
+
+- name: postgresql_lang - check that lang doesn't exist after previous step, rowcount must be 0
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_language WHERE lanname = 'plperl'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# Create language:
+- name: postgresql_lang - create plperl
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_lang:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: plperl
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['CREATE LANGUAGE "plperl"']
+
+- name: postgresql_lang - check that lang exists after previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_language WHERE lanname = 'plperl'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# Drop language in check_mode:
+- name: postgresql_lang - drop plperl in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_lang:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: plperl
+    state: absent
+  register: result
+  ignore_errors: yes
+  check_mode: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == []
+
+- name: postgresql_lang - check that lang exists after previous step, rowcount must be 1
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_language WHERE lanname = 'plperl'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# Drop language:
+- name: postgresql_lang - drop plperl
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_lang:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: plperl
+    state: absent
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['DROP LANGUAGE "plperl"']
+
+- name: postgresql_lang - check that lang doesn't exist after previous step, rowcount must be 0
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_language WHERE lanname = 'plperl'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# Check fail_on_drop yes
+- name: postgresql_lang - drop c language to check fail_on_drop yes
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_lang:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: c
+    state: absent
+    fail_on_drop: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.failed == true
+
+# Check fail_on_drop no
+- name: postgresql_lang - drop c language to check fail_on_drop no
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_lang:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: c
+    state: absent
+    fail_on_drop: no
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.failed == false
+
+# Create trusted language:
+- name: postgresql_lang - create plpythonu
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_lang:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: plpythonu
+    trust: yes
+    force_trust: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['CREATE TRUSTED LANGUAGE "plpythonu"', "UPDATE pg_language SET lanpltrusted = true WHERE lanname = 'plpythonu'"]
+
+- name: postgresql_lang - check that lang exists and it's trusted after previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_language WHERE lanname = 'plpythonu' AND lanpltrusted = 't'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# Drop language cascade, tests of aliases:
+- name: postgresql_lang - drop plpythonu cascade
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_lang:
+    login_db: postgres
+    login_user: "{{ pg_user }}"
+    login_port: 5432
+    lang: plpythonu
+    state: absent
+    cascade: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['DROP LANGUAGE "plpythonu" CASCADE']
+
+- name: postgresql_lang - check that lang doesn't exist after previous step, rowcount must be 0
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_language WHERE lanname = 'plpythonu'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0

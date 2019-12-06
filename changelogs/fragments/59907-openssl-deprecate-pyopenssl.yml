@@ -1,9 +1,0 @@
-minor_changes:
- - "get_certificate - the ``pyopenssl`` backend has been deprecated, it will be removed in Ansible 2.13."
- - "openssl_certificate - the ``pyopenssl`` backend has been deprecated, it will be removed in Ansible 2.13."
- - "openssl_certificate_info - the ``pyopenssl`` backend has been deprecated, it will be removed in Ansible 2.13."
- - "openssl_csr - the ``pyopenssl`` backend has been deprecated, it will be removed in Ansible 2.13."
- - "openssl_csr_info - the ``pyopenssl`` backend has been deprecated, it will be removed in Ansible 2.13."
- - "openssl_privatekey - the ``pyopenssl`` backend has been deprecated, it will be removed in Ansible 2.13."
- - "openssl_privatekey_info - the ``pyopenssl`` backend has been deprecated, it will be removed in Ansible 2.13."
- - "openssl_publickey - the ``pyopenssl`` backend has been deprecated, it will be removed in Ansible 2.13."

@@ -13,9 +13,9 @@ merged:
     - "interface GigabitEthernet0/1"
     - "ip address dhcp client-id GigabitEthernet 0/0 hostname test.com"
     - "interface GigabitEthernet0/2"
-    - "ip address 192.168.3.1 255.255.255.0 secondary"
-    - "ip address 192.168.3.2 255.255.255.0"
-    - "ipv6 address fd5d:12c9:2201:1::1/64"
+    - "ip address 198.51.100.1 255.255.255.0 secondary"
+    - "ip address 198.51.100.2 255.255.255.0"
+    - "ipv6 address 2001:db8:0:3::/64"
 
   after:
     - name: loopback888
@@ -29,11 +29,11 @@ merged:
         dhcp_hostname: test.com
       name: GigabitEthernet0/1
     - ipv4:
-      - address: 192.168.3.1 255.255.255.0
+      - address: 198.51.100.1 255.255.255.0
         secondary: true
-      - address: 192.168.3.2 255.255.255.0
+      - address: 198.51.100.2 255.255.255.0
       ipv6:
-      - address: fd5d:12c9:2201:1::1/64
+      - address: 2001:db8:0:3::/64
       name: GigabitEthernet0/2
 
 
@@ -45,26 +45,24 @@ replaced:
       - address: dhcp
       name: GigabitEthernet0/0
     - ipv4:
-      - address: dhcp
-        dhcp_client: 0
-        dhcp_hostname: test.com
+      - address: 203.0.113.27 255.255.255.0
       name: GigabitEthernet0/1
     - ipv4:
-      - address: 192.168.2.1 255.255.255.0
+      - address: 192.0.2.1 255.255.255.0
         secondary: true
-      - address: 192.168.2.2 255.255.255.0
+      - address: 192.0.2.2 255.255.255.0
       ipv6:
-      - address: fd5d:12c9:2201:1::1/64
+      - address: 2001:db8:0:3::/64
       name: GigabitEthernet0/2
 
   commands:
     - "interface GigabitEthernet0/1"
-    - "ip address 192.168.3.1 255.255.255.0"
+    - "ip address 203.0.114.1 255.255.255.0"
     - "interface GigabitEthernet0/2"
     - "no ip address"
     - "no ipv6 address"
-    - "ip address 192.168.4.1 255.255.255.0 secondary"
-    - "ip address 192.168.4.2 255.255.255.0"
+    - "ip address 198.51.100.1 255.255.255.0 secondary"
+    - "ip address 198.51.100.2 255.255.255.0"
 
   after:
     - name: loopback888
@@ -73,12 +71,12 @@ replaced:
       - address: dhcp
       name: GigabitEthernet0/0
     - ipv4:
-      - address: 192.168.3.1 255.255.255.0
+      - address: 203.0.114.1 255.255.255.0
       name: GigabitEthernet0/1
     - ipv4:
-      - address: 192.168.4.1 255.255.255.0
+      - address: 198.51.100.1 255.255.255.0
         secondary: true
-      - address: 192.168.4.2 255.255.255.0
+      - address: 198.51.100.2 255.255.255.0
       name: GigabitEthernet0/2
 
 overridden:
@@ -89,16 +87,14 @@ overridden:
       - address: dhcp
       name: GigabitEthernet0/0
     - ipv4:
-      - address: dhcp
-        dhcp_client: 0
-        dhcp_hostname: test.com
+      - address: 203.0.113.27 255.255.255.0
       name: GigabitEthernet0/1
     - ipv4:
-      - address: 192.168.2.1 255.255.255.0
+      - address: 192.0.2.1 255.255.255.0
         secondary: true
-      - address: 192.168.2.2 255.255.255.0
+      - address: 192.0.2.2 255.255.255.0
       ipv6:
-      - address: fd5d:12c9:2201:1::1/64
+      - address: 2001:db8:0:3::/64
       name: GigabitEthernet0/2
 
   commands:
@@ -107,8 +103,8 @@ overridden:
     - "interface GigabitEthernet0/2"
     - "no ip address"
     - "no ipv6 address"
-    - "ip address 192.168.4.1 255.255.255.0"
-    - "ip address 192.168.4.2 255.255.255.0 secondary"
+    - "ip address 198.51.100.1 255.255.255.0"
+    - "ip address 198.51.100.2 255.255.255.0 secondary"
 
   after:
     - name: loopback888
@@ -118,9 +114,9 @@ overridden:
       name: GigabitEthernet0/0
     - name: GigabitEthernet0/1
     - ipv4:
-      - address: 192.168.4.2 255.255.255.0
+      - address: 198.51.100.2 255.255.255.0
         secondary: true
-      - address: 192.168.4.1 255.255.255.0
+      - address: 198.51.100.1 255.255.255.0
       name: GigabitEthernet0/2
 
 deleted:
@@ -131,16 +127,14 @@ deleted:
       - address: dhcp
       name: GigabitEthernet0/0
     - ipv4:
-      - address: dhcp
-        dhcp_client: 0
-        dhcp_hostname: test.com
+      - address: 203.0.113.27 255.255.255.0
       name: GigabitEthernet0/1
     - ipv4:
-      - address: 192.168.2.1 255.255.255.0
+      - address: 192.0.2.1 255.255.255.0
         secondary: true
-      - address: 192.168.2.2 255.255.255.0
+      - address: 192.0.2.2 255.255.255.0
       ipv6:
-      - address: fd5d:12c9:2201:1::1/64
+      - address: 2001:db8:0:3::/64
       name: GigabitEthernet0/2
 
   commands:

@@ -44,7 +44,7 @@ short_description: Manages link aggregation groups on Arista EOS devices
 description: This module manages attributes of link aggregation groups on Arista EOS devices.
 author: Nathaniel Case (@Qalthos)
 notes:
-- 'Tested against vEOS v4.20.x'
+- Tested against Arista EOS 4.20.10M
 - This module works with connection C(network_cli). See the
   L(EOS Platform Options,../network/user_guide/platform_eos.html).
 options:
@@ -78,7 +78,7 @@ options:
               - passive
   state:
     description:
-      - The state the configuration should be left in.
+      - The state of the configuration after module completion.
     type: str
     choices:
     - merged
@@ -208,14 +208,14 @@ EXAMPLES = """
 
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   type: list
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   type: list
   sample: >

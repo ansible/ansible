@@ -137,7 +137,7 @@ status:
     description: A dictionary with the key=value pairs returned from `systemctl show`
     returned: success
     type: complex
-    contains: {
+    sample: {
             "ActiveEnterTimestamp": "Sun 2016-05-15 18:28:49 EDT",
             "ActiveEnterTimestampMonotonic": "8135942",
             "ActiveExitTimestampMonotonic": "0",
@@ -271,7 +271,7 @@ from ansible.module_utils._text import to_native
 
 
 def is_running_service(service_status):
-    return service_status['ActiveState'] in set(['active', 'activating', 'deactivating'])
+    return service_status['ActiveState'] in set(['active', 'activating'])
 
 
 def is_deactivating_service(service_status):

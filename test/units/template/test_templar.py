@@ -27,7 +27,7 @@ from units.compat.mock import patch
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import string_types
-from ansible.template import Templar, AnsibleContext, AnsibleEnvironment
+from ansible.template import Templar, AnsibleContext, AnsibleEnvironment, AnsibleUndefined
 from ansible.utils.unsafe_proxy import AnsibleUnsafe, wrap_var
 from units.mock.loader import DictDataLoader
 
@@ -56,31 +56,10 @@ class BaseTemplar(object):
             "/path/to/my_file.txt": "foo\n",
         })
         self.templar = Templar(loader=self.fake_loader, variables=self.test_vars)
+        self._ansible_context = AnsibleContext(self.templar.environment, {}, {}, {})
 
     def is_unsafe(self, obj):
-        if obj is None:
-            return False
-
-        if hasattr(obj, '__UNSAFE__'):
-            return True
-
-        if isinstance(obj, AnsibleUnsafe):
-            return True
-
-        if isinstance(obj, dict):
-            for key in obj.keys():
-                if self.is_unsafe(key) or self.is_unsafe(obj[key]):
-                    return True
-
-        if isinstance(obj, list):
-            for item in obj:
-                if self.is_unsafe(item):
-                    return True
-
-        if isinstance(obj, string_types) and hasattr(obj, '__UNSAFE__'):
-            return True
-
-        return False
+        return self._ansible_context._is_unsafe(obj)
 
 
 # class used for testing arbitrary objects passed to template
@@ -286,9 +265,9 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
         # FIXME Use assertRaises() as a context manager (added in 2.7) once we do not run tests on Python 2.6 anymore.
         try:
             templar.available_variables = "foo=bam"
-        except AssertionError as e:
+        except AssertionError:
             pass
-        except Exception:
+        except Exception as e:
             self.fail(e)
 
     def test_templar_escape_backslashes(self):
@@ -461,3 +440,7 @@ class TestAnsibleContext(BaseTemplar, unittest.TestCase):
         # self.assertNotIsInstance(res, AnsibleUnsafe)
         self.assertFalse(self.is_unsafe(res),
                          'return of AnsibleContext.resolve (%s) was not expected to be marked unsafe but was' % res)
+
+    def test_is_unsafe(self):
+        context = self._context()
+        self.assertFalse(context._is_unsafe(AnsibleUndefined()))

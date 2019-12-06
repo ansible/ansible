@@ -1,0 +1,3 @@
+bugfixes:
+- Remove case sensitivity on interface names from eos_interfaces, eos_l2_interfaces, eos_l3_interfaces,
+  eos_lacp_interfaces, eos_lag_interfaces, and eos_lldp_interfaces.

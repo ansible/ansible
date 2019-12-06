@@ -87,7 +87,7 @@ options:
       check_running_config:
         description:
           - Check running configuration. This can be set as environment variable.
-           Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+           Module will use environment variable value(default:True), unless it is overridden, by specifying it as module parameter.
         type: bool
   state:
     description:
@@ -98,7 +98,7 @@ options:
   check_running_config:
     description:
       - Check running configuration. This can be set as environment variable.
-       Module will use environment variable value(default:True), unless it is overriden, by specifying it as module parameter.
+       Module will use environment variable value(default:True), unless it is overridden, by specifying it as module parameter.
     type: bool
     default: yes
 """
@@ -508,7 +508,7 @@ def main():
                 'notifications',
                 'warnings']),
         facility=dict(
-            typr='str',
+            type='str',
             choices=[
                 'auth',
                 'cron',

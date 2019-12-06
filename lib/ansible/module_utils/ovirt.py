@@ -69,7 +69,7 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
             value = None
         nested_obj = dict(
             (attr, convert_value(getattr(value, attr)))
-            for attr in attributes if getattr(value, attr, None)
+            for attr in attributes if getattr(value, attr, None) is not None
         )
         nested_obj['id'] = getattr(value, 'id', None)
         nested_obj['href'] = getattr(value, 'href', None)
@@ -102,7 +102,7 @@ def get_dict_of_struct(struct, connection=None, fetch_nested=False, attributes=N
             ret = []
             for i in value:
                 if isinstance(i, sdk.Struct):
-                    if fetch_nested and i.href:
+                    if not nested and fetch_nested and i.href:
                         ret.append(resolve_href(i))
                     elif not nested:
                         ret.append(get_dict_of_struct(i))
@@ -254,7 +254,8 @@ def search_by_attributes(service, list_params=None, **kwargs):
     # Check if 'list' method support search(look for search parameter):
     if 'search' in inspect.getargspec(service.list)[0]:
         res = service.list(
-            search=' and '.join('{0}={1}'.format(k, v) for k, v in kwargs.items()),
+            # There must be double quotes around name, because some oVirt resources it's possible to create then with space in name.
+            search=' and '.join('{0}="{1}"'.format(k, v) for k, v in kwargs.items()),
             **list_params
         )
     else:
@@ -281,7 +282,8 @@ def search_by_name(service, name, **kwargs):
     # Check if 'list' method support search(look for search parameter):
     if 'search' in inspect.getargspec(service.list)[0]:
         res = service.list(
-            search="name={name}".format(name=name)
+            # There must be double quotes around name, because some oVirt resources it's possible to create then with space in name.
+            search='name="{name}"'.format(name=name)
         )
     else:
         res = [e for e in service.list() if e.name == name]

@@ -105,7 +105,7 @@ options:
     type: str
   enhanced_lagpolicy_dn:
     description:
-    - Distingushied name of EPG lagpolicy. This attribute can only be used with vmmDomain domain association.
+    - Distinguished name of EPG lagpolicy. This attribute can only be used with vmmDomain domain association.
     type: str
   state:
     description:
@@ -126,7 +126,7 @@ extends_documentation_fragment: mso
 
 EXAMPLES = r'''
 - name: Add a new static leaf to a site EPG
-  mso_schema_template_anp_epg_domain:
+  mso_schema_site_anp_epg_domain:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -143,7 +143,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a static leaf from a site EPG
-  mso_schema_template_anp_epg_domain:
+  mso_schema_site_anp_epg_domain:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -160,7 +160,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Query a specific site EPG static leaf
-  mso_schema_template_anp_epg_domain:
+  mso_schema_site_anp_epg_domain:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -176,7 +176,7 @@ EXAMPLES = r'''
   register: query_result
 
 - name: Query all site EPG static leafs
-  mso_schema_template_anp_epg_domain:
+  mso_schema_site_anp_epg_domain:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -232,26 +232,26 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    site = module.params['site']
-    template = module.params['template']
-    anp = module.params['anp']
-    epg = module.params['epg']
-    domain_association_type = module.params['domain_association_type']
-    domain_profile = module.params['domain_profile']
-    deployment_immediacy = module.params['deployment_immediacy']
-    resolution_immediacy = module.params['resolution_immediacy']
-    state = module.params['state']
-    micro_seg_vlan_type = module.params['micro_seg_vlan_type']
-    micro_seg_vlan = module.params['micro_seg_vlan']
-    port_encap_vlan_type = module.params['port_encap_vlan_type']
-    port_encap_vlan = module.params['port_encap_vlan']
-    vlan_encap_mode = module.params['vlan_encap_mode']
-    allow_micro_segmentation = module.params['allow_micro_segmentation']
-    switch_type = module.params['switch_type']
-    switching_mode = module.params['switching_mode']
-    enhanced_lagpolicy_name = module.params['enhanced_lagpolicy_name']
-    enhanced_lagpolicy_dn = module.params['enhanced_lagpolicy_dn']
+    schema = module.params.get('schema')
+    site = module.params.get('site')
+    template = module.params.get('template')
+    anp = module.params.get('anp')
+    epg = module.params.get('epg')
+    domain_association_type = module.params.get('domain_association_type')
+    domain_profile = module.params.get('domain_profile')
+    deployment_immediacy = module.params.get('deployment_immediacy')
+    resolution_immediacy = module.params.get('resolution_immediacy')
+    state = module.params.get('state')
+    micro_seg_vlan_type = module.params.get('micro_seg_vlan_type')
+    micro_seg_vlan = module.params.get('micro_seg_vlan')
+    port_encap_vlan_type = module.params.get('port_encap_vlan_type')
+    port_encap_vlan = module.params.get('port_encap_vlan')
+    vlan_encap_mode = module.params.get('vlan_encap_mode')
+    allow_micro_segmentation = module.params.get('allow_micro_segmentation')
+    switch_type = module.params.get('switch_type')
+    switching_mode = module.params.get('switching_mode')
+    enhanced_lagpolicy_name = module.params.get('enhanced_lagpolicy_name')
+    enhanced_lagpolicy_dn = module.params.get('enhanced_lagpolicy_dn')
 
     mso = MSOModule(module)
 
@@ -261,13 +261,13 @@ def main():
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     schema_path = 'schemas/{id}'.format(**schema_obj)
-    schema_id = schema_obj['id']
+    schema_id = schema_obj.get('id')
 
     # Get site
     site_id = mso.lookup_site(site)
 
     # Get site_idx
-    sites = [(s['siteId'], s['templateName']) for s in schema_obj['sites']]
+    sites = [(s.get('siteId'), s.get('templateName')) for s in schema_obj.get('sites')]
     if (site_id, template) not in sites:
         mso.fail_json(msg="Provided site/template '{0}-{1}' does not exist. Existing sites/templates: {2}".format(site, template, ', '.join(sites)))
 
@@ -278,7 +278,7 @@ def main():
 
     # Get ANP
     anp_ref = mso.anp_ref(schema_id=schema_id, template=template, anp=anp)
-    anps = [a['anpRef'] for a in schema_obj['sites'][site_idx]['anps']]
+    anps = [a.get('anpRef') for a in schema_obj.get('sites')[site_idx]['anps']]
     if anp_ref not in anps:
         mso.fail_json(msg="Provided anp '{0}' does not exist. Existing anps: {1}".format(anp, ', '.join(anps)))
     anp_idx = anps.index(anp_ref)
@@ -286,9 +286,9 @@ def main():
     # Get EPG
     epg_ref = mso.epg_ref(schema_id=schema_id, template=template, anp=anp, epg=epg)
     print(epg_ref)
-    epgs = [e['epgRef'] for e in schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs']]
+    epgs = [e.get('epgRef') for e in schema_obj.get('sites')[site_idx]['anps'][anp_idx]['epgs']]
     if epg_ref not in epgs:
-        mso.fail_json(msg="Provided epg '{0}' does not exist. Existing epgs: {1} epgref {2}".format(epg, str(schema_obj['sites'][site_idx]), epg_ref))
+        mso.fail_json(msg="Provided epg '{0}' does not exist. Existing epgs: {1} epgref {2}".format(epg, str(schema_obj.get('sites')[site_idx]), epg_ref))
     epg_idx = epgs.index(epg_ref)
 
     if domain_association_type == 'vmmDomain':
@@ -305,15 +305,15 @@ def main():
         domain_dn = ''
 
     # Get Domains
-    domains = [dom['dn'] for dom in schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs'][epg_idx]['domainAssociations']]
+    domains = [dom.get('dn') for dom in schema_obj.get('sites')[site_idx]['anps'][anp_idx]['epgs'][epg_idx]['domainAssociations']]
     if domain_dn in domains:
         domain_idx = domains.index(domain_dn)
         domain_path = '/sites/{0}/anps/{1}/epgs/{2}/domainAssociations/{3}'.format(site_template, anp, epg, domain_idx)
-        mso.existing = schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs'][epg_idx]['domainAssociations'][domain_idx]
+        mso.existing = schema_obj.get('sites')[site_idx]['anps'][anp_idx]['epgs'][epg_idx]['domainAssociations'][domain_idx]
 
     if state == 'query':
         if domain_association_type is None or domain_profile is None:
-            mso.existing = schema_obj['sites'][site_idx]['anps'][anp_idx]['epgs'][epg_idx]['domainAssociations']
+            mso.existing = schema_obj.get('sites')[site_idx]['anps'][anp_idx]['epgs'][epg_idx]['domainAssociations']
         elif not mso.existing:
             mso.fail_json(msg="Domain association '{domain_association_type}/{domain_profile}' not found".format(
                           domain_association_type=domain_association_type,
@@ -328,7 +328,7 @@ def main():
             microSegVlan = dict(vlanType=micro_seg_vlan_type, vlan=micro_seg_vlan)
             vmmDomainProperties['microSegVlan'] = microSegVlan
         elif not micro_seg_vlan_type and micro_seg_vlan:
-            mso.fail_json(msg="micro_seg_vlan_type is required when micro_seg_vlan is provied.")
+            mso.fail_json(msg="micro_seg_vlan_type is required when micro_seg_vlan is provided.")
         elif micro_seg_vlan_type and not micro_seg_vlan:
             mso.fail_json(msg="micro_seg_vlan is required when micro_seg_vlan_type is provided.")
 
@@ -336,7 +336,7 @@ def main():
             portEncapVlan = dict(vlanType=port_encap_vlan_type, vlan=port_encap_vlan)
             vmmDomainProperties['portEncapVlan'] = portEncapVlan
         elif not port_encap_vlan_type and port_encap_vlan:
-            mso.fail_json(msg="port_encap_vlan_type is required when port_encap_vlan is provied.")
+            mso.fail_json(msg="port_encap_vlan_type is required when port_encap_vlan is provided.")
         elif port_encap_vlan_type and not port_encap_vlan:
             mso.fail_json(msg="port_encap_vlan is required when port_encap_vlan_type is provided.")
 
@@ -355,9 +355,9 @@ def main():
             epgLagPol = dict(enhancedLagPol=enhancedLagPol)
             vmmDomainProperties['epgLagPol'] = epgLagPol
         elif not enhanced_lagpolicy_name and enhanced_lagpolicy_dn:
-            mso.fail_json(msg="enhanced_lagpolicy_name is required when enhanced_lagpolicy_dn is provied.")
+            mso.fail_json(msg="enhanced_lagpolicy_name is required when enhanced_lagpolicy_dn is provided.")
         elif enhanced_lagpolicy_name and not enhanced_lagpolicy_dn:
-            mso.fail_json(msg="enhanced_lagpolicy_dn is required when enhanced_lagpolicy_name is provied.")
+            mso.fail_json(msg="enhanced_lagpolicy_dn is required when enhanced_lagpolicy_name is provided.")
 
         payload = dict(
             dn=domain_dn,

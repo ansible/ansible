@@ -91,12 +91,13 @@ account_uri:
 account:
   description: The account information, as retrieved from the ACME server.
   returned: if account exists
-  type: complex
+  type: dict
   contains:
     contact:
       description: the challenge resource that must be created for validation
       returned: always
       type: list
+      elements: str
       sample: "['mailto:me@example.com', 'tel:00123456789']"
     status:
       description: the account's status
@@ -116,7 +117,7 @@ account:
       description: the public account key as a L(JSON Web Key,https://tools.ietf.org/html/rfc7517).
       returned: always
       type: str
-      sample: https://example.ca/account/1/orders
+      sample: '{"kty":"EC","crv":"P-256","x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4","y":"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM"}'
 
 orders:
   description:
@@ -124,6 +125,7 @@ orders:
     - "If I(retrieve_orders) is C(url_list), this will be a list of URLs."
     - "If I(retrieve_orders) is C(object_list), this will be a list of objects."
   type: list
+  #elements: ... depends on retrieve_orders
   returned: if account exists, I(retrieve_orders) is not C(ignore), and server supports order listing
   contains:
     status:
@@ -146,6 +148,7 @@ orders:
       description:
         - List of identifiers this order is for.
       type: list
+      elements: dict
       contains:
         type:
           description: Type of identifier. C(dns) or C(ip).
@@ -174,14 +177,15 @@ orders:
       returned: when server returns this
     error:
       description:
-        - In case an error occured during processing, this contains information about the error.
+        - In case an error occurred during processing, this contains information about the error.
         - The field is structured as a problem document (RFC7807).
-      type: complex
+      type: dict
       returned: when an error occurred
     authorizations:
       description:
         - A list of URLs for authorizations for this order.
       type: list
+      elements: str
     finalize:
       description:
         - A URL used for finalizing an ACME order.
@@ -194,7 +198,11 @@ orders:
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, ACMEAccount, set_crypto_backend, process_links,
+    ModuleFailException,
+    ACMEAccount,
+    handle_standard_module_arguments,
+    process_links,
+    get_default_argspec,
 )
 
 from ansible.module_utils.basic import AnsibleModule
@@ -238,17 +246,12 @@ def get_order(account, order_url):
 
 
 def main():
+    argument_spec = get_default_argspec()
+    argument_spec.update(dict(
+        retrieve_orders=dict(type='str', default='ignore', choices=['ignore', 'url_list', 'object_list']),
+    ))
     module = AnsibleModule(
-        argument_spec=dict(
-            account_key_src=dict(type='path', aliases=['account_key']),
-            account_key_content=dict(type='str', no_log=True),
-            account_uri=dict(type='str'),
-            acme_directory=dict(type='str', default='https://acme-staging.api.letsencrypt.org/directory'),
-            acme_version=dict(type='int', default=1, choices=[1, 2]),
-            validate_certs=dict(type='bool', default=True),
-            select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
-            retrieve_orders=dict(type='str', default='ignore', choices=['ignore', 'url_list', 'object_list']),
-        ),
+        argument_spec=argument_spec,
         required_one_of=(
             ['account_key_src', 'account_key_content'],
         ),
@@ -259,14 +262,7 @@ def main():
     )
     if module._name == 'acme_account_facts':
         module.deprecate("The 'acme_account_facts' module has been renamed to 'acme_account_info'", version='2.12')
-    set_crypto_backend(module)
-
-    if not module.params.get('validate_certs'):
-        module.warn(warning='Disabling certificate validation for communications with ACME endpoint. ' +
-                            'This should only be done for testing against a local ACME server for ' +
-                            'development purposes, but *never* for production purposes.')
-    if module.params.get('acme_version') < 2:
-        module.fail_json(msg='The acme_account module requires the ACME v2 protocol!')
+    handle_standard_module_arguments(module, needs_acme_v2=True)
 
     try:
         account = ACMEAccount(module)

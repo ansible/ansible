@@ -13,11 +13,11 @@
     datacenter: "{{ dc1 }}"
     hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: eagerzeroedthick
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
           disk_mode: 'invalid_disk_mode'
     state: poweredoff
     folder: "{{ f0 }}"
@@ -42,11 +42,11 @@
     datacenter: "{{ dc1 }}"
     hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: eagerzeroedthick
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
           disk_mode: 'independent_persistent'
     state: poweredoff
     folder: "{{ f0 }}"
@@ -73,11 +73,11 @@
       datacenter: "{{ dc1 }}"
       hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
       disk:
         - size: 1gb
           type: eagerzeroedthick
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
           disk_mode: 'independent_persistent'
       state: poweredoff
       folder: "{{ f0 }}"

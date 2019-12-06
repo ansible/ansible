@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright 2019 Red Hat
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 The eos interfaces fact class
 It is in this file the configuration is collected from the device
@@ -36,16 +37,20 @@ class InterfacesFacts(object):
 
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
+    def get_device_data(self, connection):
+        return connection.get('show running-config | section ^interface')
+
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for interfaces
 
         :param connection: the device connection
+        :param ansible_facts: Facts dictionary
         :param data: previously collected configuration
         :rtype: dictionary
         :returns: facts
         """
         if not data:
-            data = connection.get('show running-config | section ^interface')
+            data = self.get_device_data(connection)
 
         # operate on a collection of resource x
         config = data.split('interface ')
@@ -55,9 +60,8 @@ class InterfacesFacts(object):
                 obj = self.render_config(self.generated_spec, conf)
                 if obj:
                     objs.append(obj)
-        facts = {}
+        facts = {'interfaces': []}
         if objs:
-            facts['interfaces'] = []
             params = utils.validate_config(self.argument_spec, {'config': objs})
             for cfg in params['config']:
                 facts['interfaces'].append(utils.remove_empties(cfg))

@@ -6,6 +6,9 @@ ansible-playbook setup.yml "$@"
 
 trap 'ansible-playbook cleanup.yml' EXIT
 
+# Very simple version test
+ansible-galaxy --version
+
 # Need a relative custom roles path for testing various scenarios of -p
 galaxy_relative_rolespath="my/custom/roles/path"
 

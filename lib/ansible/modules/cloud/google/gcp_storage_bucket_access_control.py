@@ -42,7 +42,7 @@ description:
   see Access Control, with the caveat that this API uses READER, WRITER, and OWNER
   instead of READ, WRITE, and FULL_CONTROL.'
 short_description: Creates a GCP BucketAccessControl
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -77,35 +77,49 @@ options:
       the entity would be domain-example.com.
     required: true
     type: str
-  entity_id:
-    description:
-    - The ID for the entity.
-    required: false
-    type: str
-  project_team:
-    description:
-    - The project team associated with the entity.
-    required: false
-    type: dict
-    suboptions:
-      project_number:
-        description:
-        - The project team associated with the entity.
-        required: false
-        type: str
-      team:
-        description:
-        - The team.
-        - 'Some valid choices include: "editors", "owners", "viewers"'
-        required: false
-        type: str
   role:
     description:
     - The access permission for the entity.
     - 'Some valid choices include: "OWNER", "READER", "WRITER"'
     required: false
     type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -208,8 +222,6 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             bucket=dict(required=True, type='dict'),
             entity=dict(required=True, type='str'),
-            entity_id=dict(type='str'),
-            project_team=dict(type='dict', options=dict(project_number=dict(type='str'), team=dict(type='str'))),
             role=dict(type='str'),
         )
     )
@@ -265,8 +277,6 @@ def resource_to_request(module):
         u'kind': 'storage#bucketAccessControl',
         u'bucket': replace_resource_dict(module.params.get(u'bucket', {}), 'name'),
         u'entity': module.params.get('entity'),
-        u'entityId': module.params.get('entity_id'),
-        u'projectTeam': BucketAccessControlProjectteam(module.params.get('project_team', {}), module).to_request(),
         u'role': module.params.get('role'),
     }
     return_vals = {}
@@ -335,10 +345,10 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
-        u'bucket': response.get(u'bucket'),
+        u'bucket': replace_resource_dict(module.params.get(u'bucket', {}), 'name'),
         u'domain': response.get(u'domain'),
         u'email': response.get(u'email'),
-        u'entity': response.get(u'entity'),
+        u'entity': module.params.get('entity'),
         u'entityId': response.get(u'entityId'),
         u'id': response.get(u'id'),
         u'projectTeam': BucketAccessControlProjectteam(response.get(u'projectTeam', {}), module).from_response(),

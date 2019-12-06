@@ -65,7 +65,7 @@ options:
     required: true
   health_check_path:
     description:
-      - Url to call for cheking. Required for HTTP health check. maxLength=1000
+      - Url to call for checking. Required for HTTP health check. maxLength=1000
     required: false
   health_check_parse:
     description:

@@ -1,3 +1,0 @@
-minor_changes:
-- The ``online_server_facts`` module has been deprecated. Use ``online_server_info`` instead.
-- The ``online_user_facts`` module has been deprecated. Use ``online_user_info`` instead.

@@ -92,6 +92,7 @@ options:
         description:
             - Allows clients to receive notifications when certain events occur.
             - Please see U(https://docs.microsoft.com/en-us/azure/redis-cache/cache-configure#advanced-settings) for more detail.
+        type: str
     shard_count:
         description:
             - The number of shards to be created when I(sku=premium).
@@ -353,7 +354,7 @@ class AzureRMRedisCaches(AzureRMModuleBase):
                 ]
             ),
             notify_keyspace_events=dict(
-                type='int'
+                type='str'
             ),
             shard_count=dict(
                 type='int'

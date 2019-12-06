@@ -94,7 +94,7 @@ class NetAppOntapVscanScannerPool(object):
         self.argument_spec.update(dict(
             state=dict(choices=['present', 'absent'], default='present'),
             vserver=dict(required=True, type='str'),
-            hostnames=dict(requried=False, type='list'),
+            hostnames=dict(required=False, type='list'),
             privileged_users=dict(required=False, type='list'),
             scanner_pool=dict(required=True, type='str'),
             scanner_policy=dict(required=False, choices=['primary', 'secondary', 'idle'])
@@ -151,7 +151,7 @@ class NetAppOntapVscanScannerPool(object):
         try:
             self.server.invoke_successfully(apply_policy_obj, True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error appling policy %s to pool %s: %s' %
+            self.module.fail_json(msg='Error applying policy %s to pool %s: %s' %
                                       (self.scanner_policy, self.scanner_pool, to_native(error)),
                                   exception=traceback.format_exc())
 

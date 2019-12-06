@@ -2,7 +2,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
 import os
+import sys
 
 from . import types as t
 
@@ -15,6 +17,7 @@ from .util import (
     SubprocessError,
     get_available_python_versions,
     SUPPORTED_PYTHON_VERSIONS,
+    ANSIBLE_TEST_DATA_ROOT,
     display,
     remove_tree,
 )
@@ -44,9 +47,13 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
 
     if python_version >= (3, 0):
         # use the built-in 'venv' module on Python 3.x
-        if run_venv(args, python, system_site_packages, pip, path):
-            display.info('Created Python %s virtual environment using "venv": %s' % (version, path), verbosity=1)
-            return True
+        # creating a virtual environment using 'venv' when running in a virtual environment created by 'virtualenv' results
+        # in a copy of the original virtual environment instead of creation of a new one
+        # avoid this issue by only using "real" python interpreters to invoke 'venv'
+        for real_python in iterate_real_pythons(args, version):
+            if run_venv(args, real_python, system_site_packages, pip, path):
+                display.info('Created Python %s virtual environment using "venv": %s' % (version, path), verbosity=1)
+                return True
 
         # something went wrong, most likely the package maintainer for the Python installation removed ensurepip
         # which will prevent creation of a virtual environment without installation of other OS packages
@@ -76,6 +83,56 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
 
     # no suitable 'virtualenv' available
     return False
+
+
+def iterate_real_pythons(args, version):  # type: (EnvironmentConfig, str) -> t.Iterable[str]
+    """
+    Iterate through available real python interpreters of the requested version.
+    The current interpreter will be checked and then the path will be searched.
+    """
+    version_info = tuple(int(n) for n in version.split('.'))
+    current_python = None
+
+    if version_info == sys.version_info[:len(version_info)]:
+        current_python = sys.executable
+        real_prefix = get_python_real_prefix(args, current_python)
+
+        if real_prefix:
+            current_python = find_python(version, os.path.join(real_prefix, 'bin'))
+
+        if current_python:
+            yield current_python
+
+    path = os.environ.get('PATH', os.path.defpath)
+
+    if not path:
+        return
+
+    found_python = find_python(version, path)
+
+    if not found_python:
+        return
+
+    if found_python == current_python:
+        return
+
+    real_prefix = get_python_real_prefix(args, found_python)
+
+    if real_prefix:
+        found_python = find_python(version, os.path.join(real_prefix, 'bin'))
+
+    if found_python:
+        yield found_python
+
+
+def get_python_real_prefix(args, path):  # type: (EnvironmentConfig, str) -> t.Optional[str]
+    """
+    Return the real prefix of the specified interpreter or None if the interpreter is not a virtual environment created by 'virtualenv'.
+    """
+    cmd = [path, os.path.join(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'virtualenvcheck.py'))]
+    check_result = json.loads(run_command(args, cmd, capture=True, always=True)[0])
+    real_prefix = check_result['real_prefix']
+    return real_prefix
 
 
 def run_venv(args,  # type: EnvironmentConfig

@@ -263,7 +263,7 @@ EXAMPLES = """
 
 # Using replaced
 # This action will replace telemetry configuration on the device with the
-# telmetry configuration defined in the playbook.
+# telemetry configuration defined in the playbook.
 
 - name: Override Telemetry Configuration
   nxos_telemetry:
@@ -290,14 +290,14 @@ EXAMPLES = """
 """
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   type: dict
   sample: >

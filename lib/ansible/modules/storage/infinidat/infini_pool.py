@@ -119,7 +119,7 @@ def create_pool(module, system):
             pool = system.pools.create(name=name, physical_capacity=Capacity('1TB'), virtual_capacity=Capacity(vsize))
         else:
             pool = system.pools.create(name=name, physical_capacity=Capacity(size), virtual_capacity=Capacity(vsize))
-        # Default value of ssd_cache is True. Disable ssd chacing if False
+        # Default value of ssd_cache is True. Disable ssd caching if False
         if not ssd_cache:
             pool.update_ssd_enabled(ssd_cache)
 

@@ -26,6 +26,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import re
 import traceback
@@ -554,6 +557,12 @@ def _hashable_policy(policy, policy_list):
          ('Version', (u'2012-10-17',)))]
 
     """
+    # Amazon will automatically convert bool and int to strings for us
+    if isinstance(policy, bool):
+        return tuple([str(policy).lower()])
+    elif isinstance(policy, int):
+        return tuple([str(policy)])
+
     if isinstance(policy, list):
         for each in policy:
             tupleified = _hashable_policy(each, [])

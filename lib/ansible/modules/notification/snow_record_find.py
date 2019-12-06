@@ -41,7 +41,7 @@ options:
     order_by:
       description:
       - Field to sort the results on.
-      - Can prefix with "-" or "+" to change decending or ascending sort order.
+      - Can prefix with "-" or "+" to change descending or ascending sort order.
       type: str
       default: "-created_on"
       required: false

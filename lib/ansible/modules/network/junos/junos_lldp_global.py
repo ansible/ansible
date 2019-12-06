@@ -48,9 +48,9 @@ options:
     description: The list of link layer discovery protocol attribute configurations
     type: dict
     suboptions:
-      enable:
+      enabled:
         description:
-          - This argument is a boolean value to enable or disable LLDP.
+          - This argument is a boolean value to enabled or disable LLDP.
         type: bool
       interval:
         description:
@@ -73,7 +73,7 @@ options:
         type: int
   state:
     description:
-      - The state the configuration should be left in.
+      - The state of the configuration after module completion.
     type: str
     choices:
     - merged
@@ -126,7 +126,7 @@ EXAMPLES = """
     config:
       address: 20.2.2.2
       hold_multiplier: 30
-      enable: False
+      enabled: False
     state: replaced
 
 # After state:
@@ -154,14 +154,14 @@ EXAMPLES = """
 """
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   type: dict
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   type: dict
   sample: >

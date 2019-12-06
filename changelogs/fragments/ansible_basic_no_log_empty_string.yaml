@@ -1,0 +1,2 @@
+bugfixes:
+- Ansible.Basic - Fix issue when setting a ``no_log`` parameter to an empty string - https://github.com/ansible/ansible/issues/62613

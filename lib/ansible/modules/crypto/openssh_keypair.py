@@ -63,6 +63,8 @@ options:
             - Provides a new comment to the public key. When checking if the key is in the correct state this will be ignored.
         type: str
         version_added: "2.9"
+notes:
+    - In case the ssh key is broken or password protected, it will be regenerated.
 
 extends_documentation_fragment: files
 '''
@@ -171,7 +173,7 @@ class Keypair(object):
 
     def generate(self, module):
         # generate a keypair
-        if not self.isPrivateKeyValid(module, perms_required=False) or self.force:
+        if self.force or not self.isPrivateKeyValid(module, perms_required=False):
             args = [
                 module.get_bin_path('ssh-keygen', True),
                 '-q',
@@ -202,7 +204,7 @@ class Keypair(object):
                 self.remove()
                 module.fail_json(msg="%s" % to_native(e))
 
-        elif not self.isPublicKeyValid(module):
+        elif not self.isPublicKeyValid(module, perms_required=False):
             pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
             pubkey = pubkey[1].strip('\n')
             try:
@@ -230,6 +232,9 @@ class Keypair(object):
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
+        file_args['path'] = file_args['path'] + '.pub'
+        if module.set_fs_attributes_if_different(file_args, False):
+            self.changed = True
 
     def isPrivateKeyValid(self, module, perms_required=True):
 
@@ -237,7 +242,17 @@ class Keypair(object):
         def _check_state():
             return os.path.exists(self.path)
 
+        def _check_pass_protected_or_broken_key():
+            key_state = module.run_command([module.get_bin_path('ssh-keygen', True),
+                                            '-P', '', '-yf', self.path], check_rc=False)
+            if 'incorrect passphrase' in key_state[2] or 'load failed' in key_state[2]:
+                return True
+            return False
+
         if _check_state():
+            if _check_pass_protected_or_broken_key():
+                return False
+
             proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path], check_rc=False)
             if not proc[0] == 0:
                 if os.path.isdir(self.path):
@@ -268,7 +283,7 @@ class Keypair(object):
 
         return _check_state() and _check_perms(module) and _check_type() and _check_size()
 
-    def isPublicKeyValid(self, module):
+    def isPublicKeyValid(self, module, perms_required=True):
 
         def _get_pubkey_content():
             if os.path.exists(self.path + ".pub"):
@@ -278,8 +293,7 @@ class Keypair(object):
             else:
                 return False
 
-        def _parse_pubkey():
-            pubkey_content = _get_pubkey_content()
+        def _parse_pubkey(pubkey_content):
             if pubkey_content:
                 parts = pubkey_content.split(' ', 2)
                 return parts[0], parts[1], '' if len(parts) <= 2 else parts[2]
@@ -287,8 +301,7 @@ class Keypair(object):
 
         def _pubkey_valid(pubkey):
             if pubkey_parts:
-                current_pubkey = ' '.join([pubkey_parts[0], pubkey_parts[1]])
-                return current_pubkey == pubkey
+                return pubkey_parts[:2] == _parse_pubkey(pubkey)[:2]
             return False
 
         def _comment_valid():
@@ -296,16 +309,24 @@ class Keypair(object):
                 return pubkey_parts[2] == self.comment
             return False
 
+        def _check_perms(module):
+            file_args = module.load_file_common_arguments(module.params)
+            file_args['path'] = file_args['path'] + '.pub'
+            return not module.set_fs_attributes_if_different(file_args, False)
+
         pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
         pubkey = pubkey[1].strip('\n')
-        pubkey_parts = _parse_pubkey()
+        pubkey_parts = _parse_pubkey(_get_pubkey_content())
         if _pubkey_valid(pubkey):
             self.public_key = pubkey
 
         if not self.comment:
             return _pubkey_valid(pubkey)
 
-        return _pubkey_valid(pubkey) and _comment_valid()
+        if not perms_required:
+            return _pubkey_valid(pubkey) and _comment_valid()
+
+        return _pubkey_valid(pubkey) and _comment_valid() and _check_perms(module)
 
     def dump(self):
         # return result as a dict

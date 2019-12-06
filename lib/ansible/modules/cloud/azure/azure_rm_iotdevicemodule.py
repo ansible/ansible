@@ -340,7 +340,6 @@ class AzureRMIoTDeviceModule(AzureRMModuleBase):
             url = '/devices/{0}/modules/{1}'.format(self.device, self.name)
             return self._https_get(url, self.query_parameters, self.header_parameters)
         except Exception:
-            pass
             return None
 
     def get_twin(self):

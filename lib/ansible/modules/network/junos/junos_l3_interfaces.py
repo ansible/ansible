@@ -90,7 +90,7 @@ options:
             type: str
   state:
     description:
-    - The state the configuration should be left in
+    - The state of the configuration after module completion
     type: str
     choices:
     - merged
@@ -271,7 +271,7 @@ EXAMPLES = """
 #     }
 # }
 # ge-0/0/2 {
-#     description "L3 interface whith ipv6";
+#     description "L3 interface with ipv6";
 #     unit 0 {
 #         family inet6 {
 #             address 2001:db8:3000::/64;
@@ -360,14 +360,14 @@ EXAMPLES = """
 """
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
   type: list
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   sample: >
     The configuration returned will always be in the same format

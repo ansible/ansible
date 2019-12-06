@@ -1,2 +1,0 @@
-bugfixes:
-  - 'ipaddr: prevent integer indices from being parsed as ip nets'

@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-doc now properly handles removed modules/plugins

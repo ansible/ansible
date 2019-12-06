@@ -1,0 +1,44 @@
+---
+- debug: msg="START nxos_netconf cli/basic.yaml"
+
+- include_vars: "{{playbook_dir }}/targets/nxos_netconf/tests/fixtures/config.yaml"
+
+- debug: msg=" {{ playbook_dir }}"
+
+- block:
+  - name: Configure vlan
+    netconf_config: &config_vlan
+      datastore: running
+      commit: false
+      get_filter: <System xmlns="http://cisco.com/ns/yang/cisco-nx-os-device"><bd-items><bd-items><BD-list></BD-list></bd-items></bd-items></System>
+      content: "{{ vlan_config }}"
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Configure vlan - idempotence check
+    netconf_config: *config_vlan
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Query Running Config
+    netconf_get:
+      source: running
+      filter: <System xmlns="http://cisco.com/ns/yang/cisco-nx-os-device"><bd-items><bd-items><BD-list></BD-list></bd-items></bd-items></System>
+    register: result
+
+  - assert:
+      that:
+        - "'vlan-42' in result.stdout"
+
+  vars:
+    ansible_connection: netconf
+    ansible_port: 830
+
+  always:
+  - debug: msg="END nxos_netconf cli/basic.yaml"

@@ -1,2 +1,0 @@
-minor_changes:
-- The ``ecs_taskdefinition_facts`` module has been renamed to ``ecs_taskdefinition_info``.

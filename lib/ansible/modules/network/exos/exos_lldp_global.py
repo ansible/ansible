@@ -39,7 +39,7 @@ DOCUMENTATION = """
 ---
 module: exos_lldp_global
 version_added: 2.9
-short_description: Configure and manage Link Layer Discovery Protocol(LLDP) attribures on EXOS platforms.
+short_description: Configure and manage Link Layer Discovery Protocol(LLDP) attributes on EXOS platforms.
 description: This module configures and manages the Link Layer Discovery Protocol(LLDP) attributes on Extreme Networks EXOS platforms.
 author: Ujwal Komarla (@ujwalkomarla)
 notes:
@@ -86,7 +86,7 @@ options:
 
   state:
     description:
-      - The state the configuration should be left in.
+      - The state of the configuration after module completion.
     type: str
     choices:
     - merged
@@ -385,14 +385,14 @@ EXAMPLES = """
 """
 RETURN = """
 before:
-  description: The configuration prior to the model invocation.
+  description: The configuration as structured data prior to module invocation.
   returned: always
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
   type: list
 after:
-  description: The resulting configuration model invocation.
+  description: The configuration as structured data after module completion.
   returned: when changed
   sample: >
     The configuration returned will always be in the same format

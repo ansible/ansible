@@ -1,6 +1,6 @@
 ---
 - debug:
-      msg: "START vyos_interfaces replaced integration tests on connection={{ ansible_connection }}"
+    msg: "START vyos_interfaces replaced integration tests on connection={{ ansible_connection }}"
 
 - include_tasks: _remove_config.yaml
 
@@ -13,8 +13,8 @@
           - name: eth1
             description: "Replaced by Ansible"
             vifs:
-                - vlan_id: 100
-                  description: "VIF 100 - Replaced by Ansible"
+              - vlan_id: 100
+                description: "VIF 100 - Replaced by Ansible"
 
           - name: eth2
             mtu: 1400
@@ -24,8 +24,8 @@
 
     - name: Assert that correct set of commands were generated
       assert:
-       that:
-         - "{{ replaced['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+        that:
+          - "{{ replaced['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
 
     - name: Assert that before dicts are correctly generated
       assert:
@@ -43,13 +43,13 @@
 
     - name: Assert that task was idempotent
       assert:
-       that:
-         - "result['changed'] == false"
+        that:
+          - "result['changed'] == false"
 
     - name: Assert that before dict is correctly generated
       assert:
-       that:
-         - "{{ replaced['after'] | symmetric_difference(result['before']) |length == 0 }}"
+        that:
+          - "{{ replaced['after'] | symmetric_difference(result['before']) |length == 0 }}"
 
   always:
     - include_tasks: _remove_config.yaml

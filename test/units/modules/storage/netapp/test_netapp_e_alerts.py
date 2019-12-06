@@ -71,8 +71,8 @@ class AlertsTest(ModuleTestCase):
         # Expecting an update
         with mock.patch(self.REQ_FUNC, return_value=(200, expected)) as req:
             actual = alerts.get_configuration()
-            self.assertEquals(expected, actual)
-            self.assertEquals(req.call_count, 1)
+            self.assertEqual(expected, actual)
+            self.assertEqual(req.call_count, 1)
 
     def test_update_configuration(self):
         """Validate updating the configuration"""

@@ -98,11 +98,13 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-results:
+datastore_status:
     description: Action taken for datastore
     returned: always
     type: dict
-    sample:
+    sample: {
+        "ds_226_01": "Datastore 'ds_226_01' is already in maintenance mode."
+    }
 '''
 
 try:
@@ -189,7 +191,7 @@ class VmwareDatastoreMaintenanceMgr(PyVmomi):
         changed = False
         if any(change_datastore_list):
             changed = True
-        self.module.exit_json(changed=changed, results=datastore_results)
+        self.module.exit_json(changed=changed, datastore_status=datastore_results)
 
 
 def main():

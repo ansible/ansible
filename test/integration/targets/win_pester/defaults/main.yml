@@ -1,2 +1,3 @@
 ---
 test_win_pester_path: C:\ansible\win_pester
+test_report_file: c:\ansible\win_pester\test_report.xml

@@ -26,6 +26,7 @@ from distutils.version import LooseVersion, StrictVersion
 from ansible import errors
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.display import Display
 
 display = Display()
@@ -165,6 +166,34 @@ def version_compare(value, version, operator='eq', strict=False):
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 
 
+def truthy(value, convert_bool=False):
+    """Evaluate as value for truthiness using python ``bool``
+
+    Optionally, attempt to do a conversion to bool from boolean like values
+    such as ``"false"``, ``"true"``, ``"yes"``, ``"no"``, ``"on"``, ``"off"``, etc.
+
+    .. versionadded:: 2.10
+    """
+    if convert_bool:
+        try:
+            value = boolean(value)
+        except TypeError:
+            pass
+
+    return bool(value)
+
+
+def falsy(value, convert_bool=False):
+    """Evaluate as value for falsiness using python ``bool``
+
+    Optionally, attempt to do a conversion to bool from boolean like values
+    such as ``"false"``, ``"true"``, ``"yes"``, ``"no"``, ``"on"``, ``"off"``, etc.
+
+    .. versionadded:: 2.10
+    """
+    return not truthy(value, convert_bool=convert_bool)
+
+
 class TestModule(object):
     ''' Ansible core jinja2 tests '''
 
@@ -203,4 +232,8 @@ class TestModule(object):
             # lists
             'any': any,
             'all': all,
+
+            # truthiness
+            'truthy': truthy,
+            'falsy': falsy,
         }

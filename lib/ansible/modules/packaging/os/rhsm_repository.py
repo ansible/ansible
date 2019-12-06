@@ -87,7 +87,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def run_subscription_manager(module, arguments):
-    # Execute subuscription-manager with arguments and manage common errors
+    # Execute subscription-manager with arguments and manage common errors
     rhsm_bin = module.get_bin_path('subscription-manager')
     if not rhsm_bin:
         module.fail_json(msg='The executable file subscription-manager was not found in PATH')

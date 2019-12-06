@@ -34,8 +34,8 @@ options:
         all, hardware, config, and interfaces.  Can specify a list of
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
-        not be collected. To maintain backward compatbility old style facts
-        can be retrieved by explicilty adding C(ofacts)  to value, this reqires
+        not be collected. To maintain backward compatibility old style facts
+        can be retrieved by explicitly adding C(ofacts)  to value, this requires
         junos-eznc to be installed as a prerequisite. Valid value of gather_subset
         are default, hardware, config, interfaces, ofacts. If C(ofacts) is present in the
         list it fetches the old style facts (fact keys without 'ansible_' prefix) and it requires
@@ -63,16 +63,11 @@ options:
         to a given subset. Possible values for this argument include
         all and the resources like interfaces, vlans etc.
         Can specify a list of values to include a larger subset.
-    choices: ['all', '!all',
-              'interfaces', '!interfaces',
-              'lacp', '!lacp',
-              'lacp_interfaces', '!lacp_interfaces',
-              'lag_interfaces', '!lag_interfaces',
-              'l2_interfaces', '!l2_interfaces',
-              'l3_interfaces', '!l3_interfaces',
-              'lldp_global', '!lldp_global',
-              'lldp_interfaces', '!lldp_interfaces',
-              'vlans', '!vlans']
+        Values can also be used with an initial C(M(!)) to specify that
+        a specific subset should not be collected.
+        Valid subsets are 'all', 'interfaces', 'lacp', 'lacp_interfaces',
+              'lag_interfaces', 'l2_interfaces', 'l3_interfaces', 'lldp_global',
+              'lldp_interfaces', 'vlans'.
     required: false
     version_added: "2.9"
 requirements:

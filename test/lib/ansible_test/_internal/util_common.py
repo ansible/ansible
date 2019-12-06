@@ -7,6 +7,7 @@ import contextlib
 import json
 import os
 import shutil
+import sys
 import tempfile
 import textwrap
 
@@ -18,6 +19,7 @@ from .util import (
     display,
     find_python,
     is_shippable,
+    remove_tree,
     MODE_DIRECTORY,
     MODE_FILE_EXECUTE,
     PYTHON_PATHS,
@@ -93,9 +95,6 @@ class CommonConfig:
         self.debug = args.debug  # type: bool
         self.truncate = args.truncate  # type: int
         self.redact = args.redact  # type: bool
-
-        if is_shippable():
-            self.redact = True
 
         self.cache = {}
 
@@ -204,22 +203,7 @@ def get_python_path(args, interpreter):
     else:
         display.info('Injecting "%s" as a execv wrapper for the "%s" interpreter.' % (injected_interpreter, interpreter), verbosity=1)
 
-        code = textwrap.dedent('''
-        #!%s
-
-        from __future__ import absolute_import
-
-        from os import execv
-        from sys import argv
-
-        python = '%s'
-
-        execv(python, [python] + argv[1:])
-        ''' % (interpreter, interpreter)).lstrip()
-
-        write_text_file(injected_interpreter, code)
-
-        os.chmod(injected_interpreter, MODE_FILE_EXECUTE)
+        create_interpreter_wrapper(interpreter, injected_interpreter)
 
     os.chmod(python_path, MODE_DIRECTORY)
 
@@ -229,6 +213,37 @@ def get_python_path(args, interpreter):
     PYTHON_PATHS[interpreter] = python_path
 
     return python_path
+
+
+def create_temp_dir(prefix=None, suffix=None, base_dir=None):  # type: (t.Optional[str], t.Optional[str], t.Optional[str]) -> str
+    """Create a temporary directory that persists until the current process exits."""
+    temp_path = tempfile.mkdtemp(prefix=prefix or 'tmp', suffix=suffix or '', dir=base_dir)
+    atexit.register(remove_tree, temp_path)
+    return temp_path
+
+
+def create_interpreter_wrapper(interpreter, injected_interpreter):  # type: (str, str) -> None
+    """Create a wrapper for the given Python interpreter at the specified path."""
+    # sys.executable is used for the shebang to guarantee it is a binary instead of a script
+    # injected_interpreter could be a script from the system or our own wrapper created for the --venv option
+    shebang_interpreter = sys.executable
+
+    code = textwrap.dedent('''
+    #!%s
+
+    from __future__ import absolute_import
+
+    from os import execv
+    from sys import argv
+
+    python = '%s'
+
+    execv(python, [python] + argv[1:])
+    ''' % (shebang_interpreter, interpreter)).lstrip()
+
+    write_text_file(injected_interpreter, code)
+
+    os.chmod(injected_interpreter, MODE_FILE_EXECUTE)
 
 
 def cleanup_python_paths():
@@ -320,6 +335,8 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
     """
     if not env:
         env = common_environment()
+    else:
+        env = env.copy()
 
     cmd = list(cmd)
     version = python_version or args.python_version

@@ -47,7 +47,7 @@ options:
     aliases: ['level']
   facility_level:
     description:
-      - Set logging serverity levels for facility based log messages.
+      - Set logging severity levels for facility based log messages.
   aggregate:
     description: List of logging definitions.
   state:
@@ -182,7 +182,7 @@ import re
 import copy
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands, save_module_context, read_module_context
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args, normalize_interface
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, normalize_interface
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -204,7 +204,7 @@ DEFAULT_LOGGING_LEVEL = {0: [],
                          2: ['pktmgr'],
                          3: ['adjmgr', 'arp', 'icmpv6', 'l2rib', 'netstack'],
                          4: [],
-                         5: ['mrib'],
+                         5: ['mrib', 'm6rib'],
                          6: [],
                          7: []}
 
@@ -761,7 +761,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

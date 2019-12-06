@@ -46,17 +46,6 @@ vyos_provider_spec = {
 vyos_argument_spec = {
     'provider': dict(type='dict', options=vyos_provider_spec),
 }
-vyos_top_spec = {
-    'host': dict(removed_in_version=2.9),
-    'port': dict(removed_in_version=2.9, type='int'),
-
-    'username': dict(removed_in_version=2.9),
-    'password': dict(removed_in_version=2.9, no_log=True),
-    'ssh_keyfile': dict(removed_in_version=2.9, type='path'),
-
-    'timeout': dict(removed_in_version=2.9, type='int'),
-}
-vyos_argument_spec.update(vyos_top_spec)
 
 
 def get_provider_argspec():

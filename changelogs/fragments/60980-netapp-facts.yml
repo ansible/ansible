@@ -1,2 +1,0 @@
-minor_changes:
-- The ``na_ontap_gather_facts`` module has been deprecated. Use ``na_ontap_info`` instead.

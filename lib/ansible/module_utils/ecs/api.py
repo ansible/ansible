@@ -241,7 +241,10 @@ class ECSSession(object):
         return resource
 
     def _set_config(self, name, **kwargs):
-        headers = {"Content-Type": "application/json"}
+        headers = {
+            "Content-Type": "application/json",
+            "Connection": "keep-alive",
+        }
         self.request = Request(headers=headers, timeout=60)
 
         configurators = [self._read_config_vars]

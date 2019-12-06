@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.common.utils import is_masklen, to_netmask
+from ansible.module_utils.network.common.utils import dict_diff, is_masklen, to_netmask, search_obj_in_list
 
 
 def remove_command_from_config_list(interface, cmd, commands):
@@ -96,6 +96,10 @@ def filter_dict_having_none_value(want, have):
                     if each.get('secondary') and diff_ip is True:
                         test_key_dict.update({'secondary': True})
                     test_dict.update({'ipv4': test_key_dict})
+                # Checks if want doesn't have secondary IP but have has secondary IP set
+                elif have.get('ipv4'):
+                    if [True for each_have in have.get('ipv4') if 'secondary' in each_have]:
+                        test_dict.update({'ipv4': {'secondary': True}})
         if k == 'l2protocol':
             if want[k] != have.get('l2protocol') and have.get('l2protocol'):
                 test_dict.update({k: v})
@@ -174,12 +178,13 @@ def diff_list_of_dicts(w, h):
         h = []
 
     diff = []
-    set_w = set(tuple(d.items()) for d in w)
-    set_h = set(tuple(d.items()) for d in h)
-    difference = set_w.difference(set_h)
-
-    for element in difference:
-        diff.append(dict((x, y) for x, y in element))
+    for w_item in w:
+        h_item = search_obj_in_list(w_item['member'], h, key='member') or {}
+        d = dict_diff(h_item, w_item)
+        if d:
+            if 'member' not in d.keys():
+                d['member'] = w_item['member']
+            diff.append(d)
 
     return diff
 

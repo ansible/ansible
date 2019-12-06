@@ -77,13 +77,13 @@ class TestConnectionClass(unittest.TestCase):
         terminal = MagicMock(supports_multiplexing=False)
         conn._terminal = terminal
         conn._ssh_shell = MagicMock()
-        conn.paramiko_conn = MagicMock()
+        conn._paramiko_conn = MagicMock()
         conn._connected = True
 
         conn.close()
         self.assertTrue(terminal.on_close_shell.called)
         self.assertIsNone(conn._ssh_shell)
-        self.assertIsNone(conn.paramiko_conn)
+        self.assertIsNone(conn._paramiko_conn)
 
     @patch("ansible.plugins.connection.paramiko_ssh.Connection._connect")
     def test_network_cli_exec_command(self, mocked_super):

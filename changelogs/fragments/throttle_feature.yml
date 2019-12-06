@@ -1,2 +1,0 @@
-minor_changes:
-  - Added new `throttle` keyword, which can be used at the task, block, or play level to limit the number of workers (up to the specified forks or serial setting) allowed.

@@ -417,10 +417,4 @@ class ActionModule(ActionBase):
         # run the module and store the result
         result.update(self._execute_module('synchronize', module_args=_tmp_args, task_vars=task_vars))
 
-        if 'SyntaxError' in result.get('exception', result.get('msg', '')):
-            # Emit a warning about using python3 because synchronize is
-            # somewhat unique in running on localhost
-            result['exception'] = result['msg']
-            result['msg'] = ('SyntaxError parsing module.  Perhaps invoking "python" on your local (or delegate_to) machine invokes python3. '
-                             'You can set ansible_python_interpreter for localhost (or the delegate_to machine) to the location of python2 to fix this')
         return result

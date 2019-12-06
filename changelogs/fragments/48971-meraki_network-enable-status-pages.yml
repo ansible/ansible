@@ -1,2 +1,0 @@
-minor_changes:
-  - meraki_network - Add support for disabling remote status page on a network.

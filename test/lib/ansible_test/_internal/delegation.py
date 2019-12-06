@@ -48,12 +48,16 @@ from .util import (
     display,
     ANSIBLE_BIN_PATH,
     ANSIBLE_TEST_DATA_ROOT,
+    ANSIBLE_LIB_ROOT,
+    ANSIBLE_TEST_ROOT,
     tempdir,
+    make_dirs,
 )
 
 from .util_common import (
     run_command,
     ResultType,
+    create_interpreter_wrapper,
 )
 
 from .docker_util import (
@@ -135,10 +139,6 @@ def delegate_command(args, exclude, require, integration_targets):
         delegate_venv(args, exclude, require, integration_targets)
         return True
 
-    if args.tox:
-        delegate_tox(args, exclude, require, integration_targets)
-        return True
-
     if args.docker:
         delegate_docker(args, exclude, require, integration_targets)
         return True
@@ -148,71 +148,6 @@ def delegate_command(args, exclude, require, integration_targets):
         return True
 
     return False
-
-
-def delegate_tox(args, exclude, require, integration_targets):
-    """
-    :type args: EnvironmentConfig
-    :type exclude: list[str]
-    :type require: list[str]
-    :type integration_targets: tuple[IntegrationTarget]
-    """
-    if args.python:
-        versions = (args.python_version,)
-
-        if args.python_version not in SUPPORTED_PYTHON_VERSIONS:
-            raise ApplicationError('tox does not support Python version %s' % args.python_version)
-    else:
-        versions = SUPPORTED_PYTHON_VERSIONS
-
-    if args.httptester:
-        needs_httptester = sorted(target.name for target in integration_targets if 'needs/httptester/' in target.aliases)
-
-        if needs_httptester:
-            display.warning('Use --docker or --remote to enable httptester for tests marked "needs/httptester": %s' % ', '.join(needs_httptester))
-
-    options = {
-        '--tox': args.tox_args,
-        '--tox-sitepackages': 0,
-    }
-
-    for version in versions:
-        tox = ['tox', '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'tox.ini'), '-e', 'py' + version.replace('.', '')]
-
-        if args.tox_sitepackages:
-            tox.append('--sitepackages')
-
-        tox.append('--')
-
-        cmd = generate_command(args, None, ANSIBLE_BIN_PATH, data_context().content.root, options, exclude, require)
-
-        if not args.python:
-            cmd += ['--python', version]
-
-        # newer versions of tox do not support older python versions and will silently fall back to a different version
-        # passing this option will allow the delegated ansible-test to verify it is running under the expected python version
-        # tox 3.0.0 dropped official python 2.6 support: https://tox.readthedocs.io/en/latest/changelog.html#v3-0-0-2018-04-02
-        # tox 3.1.3 is the first version to support python 3.8 and later: https://tox.readthedocs.io/en/latest/changelog.html#v3-1-3-2018-08-03
-        # tox 3.1.3 appears to still work with python 2.6, making it a good version to use when supporting all python versions we use
-        # virtualenv 16.0.0 dropped python 2.6 support: https://virtualenv.pypa.io/en/latest/changes/#v16-0-0-2018-05-16
-        cmd += ['--check-python', version]
-
-        if isinstance(args, TestConfig):
-            if args.coverage and not args.coverage_label:
-                cmd += ['--coverage-label', 'tox-%s' % version]
-
-        env = common_environment()
-
-        # temporary solution to permit ansible-test delegated to tox to provision remote resources
-        optional = (
-            'SHIPPABLE',
-            'SHIPPABLE_BUILD_ID',
-            'SHIPPABLE_JOB_NUMBER',
-        )
-
-        env.update(pass_vars(required=[], optional=optional))
-
-        run_command(args, tox + cmd, env=env)
 
 
 def delegate_venv(args,  # type: EnvironmentConfig
@@ -244,7 +179,7 @@ def delegate_venv(args,  # type: EnvironmentConfig
 
     with tempdir() as inject_path:
         for version, path in venvs.items():
-            os.symlink(os.path.join(path, 'bin', 'python'), os.path.join(inject_path, 'python%s' % version))
+            create_interpreter_wrapper(os.path.join(path, 'bin', 'python'), os.path.join(inject_path, 'python%s' % version))
 
         python_interpreter = os.path.join(inject_path, 'python%s' % args.python_version)
 
@@ -255,11 +190,18 @@ def delegate_venv(args,  # type: EnvironmentConfig
                 cmd += ['--coverage-label', 'venv']
 
         env = common_environment()
-        env.update(
-            PATH=inject_path + os.pathsep + env['PATH'],
-        )
 
-        run_command(args, cmd, env=env)
+        with tempdir() as library_path:
+            # expose ansible and ansible_test to the virtual environment (only required when running from an install)
+            os.symlink(ANSIBLE_LIB_ROOT, os.path.join(library_path, 'ansible'))
+            os.symlink(ANSIBLE_TEST_ROOT, os.path.join(library_path, 'ansible_test'))
+
+            env.update(
+                PATH=inject_path + os.pathsep + env['PATH'],
+                PYTHONPATH=library_path,
+            )
+
+            run_command(args, cmd, env=env)
 
 
 def delegate_docker(args, exclude, require, integration_targets):
@@ -414,7 +356,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 remote_temp_file = os.path.join('/root', remote_results_name + '.tgz')
 
                 with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
-                    docker_exec(args, test_id, ['tar', 'czf', remote_temp_file, '-C', remote_test_root, remote_results_name])
+                    docker_exec(args, test_id, ['tar', 'czf', remote_temp_file, '--exclude', ResultType.TMP.name, '-C', remote_test_root, remote_results_name])
                     docker_get(args, test_id, remote_temp_file, local_result_fd.name)
                     run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', local_test_root])
         finally:
@@ -536,7 +478,7 @@ def delegate_remote(args, exclude, require, integration_targets):
                 remote_results_name = os.path.basename(remote_results_root)
                 remote_temp_path = os.path.join('/tmp', remote_results_name)
 
-                manage.ssh('rm -rf {0} && cp -a {1} {0} && chmod -R a+r {0}'.format(remote_temp_path, remote_results_root))
+                manage.ssh('rm -rf {0} && mkdir {0} && cp -a {1}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, remote_results_root))
                 manage.download(remote_temp_path, local_test_root)
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
@@ -606,6 +548,7 @@ def filter_options(args, argv, options, exclude, require):
     options['--requirements'] = 0
     options['--truncate'] = 1
     options['--redact'] = 0
+    options['--no-redact'] = 0
 
     if isinstance(args, TestConfig):
         options.update({
@@ -670,3 +613,5 @@ def filter_options(args, argv, options, exclude, require):
 
     if args.redact:
         yield '--redact'
+    else:
+        yield '--no-redact'

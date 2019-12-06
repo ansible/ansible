@@ -13,7 +13,6 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from ansible.module_utils.network.ios.argspec.facts.facts import FactsArgs
 from ansible.module_utils.network.common.facts.facts import FactsBase
 from ansible.module_utils.network.ios.facts.interfaces.interfaces import InterfacesFacts
 from ansible.module_utils.network.ios.facts.l2_interfaces.l2_interfaces import L2_InterfacesFacts
@@ -65,9 +64,8 @@ class Facts(FactsBase):
         :rtype: dict
         :return: the facts gathered
         """
-        netres_choices = FactsArgs.argument_spec['gather_network_resources'].get('choices', [])
         if self.VALID_RESOURCE_SUBSETS:
-            self.get_network_resources_facts(netres_choices, FACT_RESOURCE_SUBSETS, resource_facts_type, data)
+            self.get_network_resources_facts(FACT_RESOURCE_SUBSETS, resource_facts_type, data)
 
         if self.VALID_LEGACY_GATHER_SUBSETS:
             self.get_network_legacy_facts(FACT_LEGACY_SUBSETS, legacy_facts_type)

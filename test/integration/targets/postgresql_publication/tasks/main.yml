@@ -1,0 +1,3 @@
+# Initial CI tests of postgresql_publication module
+- import_tasks: postgresql_publication_initial.yml
+  when: postgres_version_resp.stdout is version('10', '>=')

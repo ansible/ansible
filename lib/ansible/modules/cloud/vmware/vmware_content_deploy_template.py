@@ -19,13 +19,15 @@ module: vmware_content_deploy_template
 short_description: Deploy Virtual Machine from template stored in content library.
 description:
 - Module to deploy virtual machine from template in content library.
-- Content Library feature is introduced in vSphere 6.0 version, so this module is not supported in the earlier versions of vSphere.
+- Content Library feature is introduced in vSphere 6.0 version.
+- vmtx templates feature is introduced in vSphere 67U1 and APIs for clone template from content library in 67U2.
+- This module does not work with vSphere version older than 67U2.
 - All variables and VMware object names are case sensitive.
 version_added: '2.9'
 author:
 - Pavan Bidkar (@pgbidkar)
 notes:
-- Tested on vSphere 6.5, 6.7
+- Tested on vSphere 6.7 U3
 requirements:
 - python >= 2.6
 - PyVmomi
@@ -75,7 +77,7 @@ options:
       required: False
     state:
       description:
-      - The state of Virutal Machine deployed from template in content library.
+      - The state of Virtual Machine deployed from template in content library.
       - If set to C(present) and VM does not exists, then VM is created.
       - If set to C(present) and VM exists, no action is taken.
       - If set to C(poweredon) and VM does not exists, then VM is created with powered on state.

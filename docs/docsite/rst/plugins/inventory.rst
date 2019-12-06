@@ -31,6 +31,15 @@ This list also establishes the order in which each plugin tries to parse an inve
    [inventory]
    enable_plugins = advanced_host_list, constructed, yaml
 
+The ``auto`` inventory plugin can be used to automatically determines which inventory plugin to use for a YAML configuration file. It can also be used for inventory plugins in a collection.
+
+To whitelist specific inventory plugins in a collection you need to use the fully qualified name:
+
+.. code-block:: ini
+
+   [inventory]
+   enable_plugins = namespace.collection_name.inventory_plugin_name
+
 
 .. _using_inventory:
 
@@ -55,6 +64,12 @@ Or for the openstack plugin the file has to be called ``clouds.yml`` or ``openst
     # clouds.yml or openstack.(yml|yaml)
     plugin: openstack
 
+To use a plugin in a collection provide the fully qualified name:
+
+.. code-block:: yaml
+
+    plugin: namespace.collection_name.inventory_plugin_name
+
 The ``auto`` inventory plugin is enabled by default and works by using the ``plugin`` field to indicate the plugin that should attempt to parse it. You can configure the whitelist/precedence of inventory plugins used to parse source using the `ansible.cfg` ['inventory'] ``enable_plugins`` list. After enabling the plugin and providing any required options, you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``:
 
 .. code-block:: text
@@ -64,6 +79,8 @@ The ``auto`` inventory plugin is enabled by default and works by using the ``plu
       |  |--ec2-12-345-678-901.compute-1.amazonaws.com
       |  |--ec2-98-765-432-10.compute-1.amazonaws.com
       |--@ungrouped:
+
+If you are using an inventory plugin in a playbook-adjacent collection and want to test your setup with ``ansible-inventory``, you will need to use the ``--playbook-dir`` flag.
 
 You can set the default inventory path (via ``inventory`` in the `ansible.cfg` [defaults] section or the :envvar:`ANSIBLE_INVENTORY` environment variable) to your inventory source(s). Now running ``ansible-inventory --graph`` should yield the same output as when you passed your YAML configuration source(s) directly. You can add custom inventory plugins to your plugin path to use in the same way.
 
@@ -127,13 +144,15 @@ Here is an example of setting inventory caching with some fact caching defaults 
 .. code-block:: ini
 
    [defaults]
-   fact_caching = json
+   fact_caching = jsonfile
    fact_caching_connection = /tmp/ansible_facts
    cache_timeout = 3600
 
    [inventory]
    cache = yes
    cache_connection = /tmp/ansible_inventory
+
+Besides cache plugins shipped with Ansible, cache plugins eligible for caching inventory can also reside in a custom cache plugin path. Cache plugins in collections are not supported yet for inventory.
 
 .. _inventory_plugin_list:
 

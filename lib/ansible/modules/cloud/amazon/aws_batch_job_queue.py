@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Jon Meran <jonathan.meran@sonos.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -23,19 +26,19 @@ options:
     description:
       - The name for the job queue
     required: true
-
+    type: str
   state:
     description:
       - Describes the desired state.
     default: "present"
     choices: ["present", "absent"]
-
+    type: str
   job_queue_state:
     description:
       - The state of the job queue. If the job queue state is ENABLED , it is able to accept jobs.
     default: "ENABLED"
     choices: ["ENABLED", "DISABLED"]
-
+    type: str
   priority:
     description:
       - The priority of the job queue. Job queues with a higher priority (or a lower integer value for the priority
@@ -43,7 +46,7 @@ options:
         ascending order, for example, a job queue with a priority value of 1 is given scheduling preference over a job
         queue with a priority value of 10.
     required: true
-
+    type: int
   compute_environment_order:
     description:
       - The set of compute environments mapped to a job queue and their order relative to each other. The job
@@ -51,7 +54,15 @@ options:
         environments must be in the VALID state before you can associate them with a job queue. You can associate up to
         3 compute environments with a job queue.
     required: true
-
+    type: list
+    elements: dict
+    suboptions:
+        order:
+            type: int
+            description: The relative priority of the environment.
+        compute_environment:
+            type: str
+            description: The name of the compute environment.
 requirements:
     - boto3
 extends_documentation_fragment:
@@ -67,7 +78,7 @@ EXAMPLES = '''
     state: present
   tasks:
   - name: My Batch Job Queue
-    batch_job_queue:
+    aws_batch_job_queue:
       job_queue_name: jobQueueName
       state: present
       region: us-east-1
@@ -78,9 +89,11 @@ EXAMPLES = '''
           compute_environment: my_compute_env1
         - order: 2
           compute_environment: my_compute_env2
+    register: batch_job_queue_action
 
   - name: show results
-    debug: var=batch_job_queue_action
+    debug:
+      var: batch_job_queue_action
 '''
 
 RETURN = '''
@@ -233,7 +246,7 @@ def manage_state(module, aws):
     if state == 'present':
         if current_state == 'present':
             updates = False
-            # Update Batch Job Queuet configuration
+            # Update Batch Job Queue configuration
             job_kwargs = {'jobQueue': job_queue_name}
 
             # Update configuration if needed

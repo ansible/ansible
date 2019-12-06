@@ -41,9 +41,8 @@ options:
     choices: ['on', 'host', 'console', 'monitor', 'buffered', 'trap']
   name:
     description:
-      - If value of C(dest) is I(file) it indicates file-name,
-        for I(user) it indicates username and for I(host) indicates
-        the host name to be notified.
+      - The hostname or IP address of the destination.
+      - Required when I(dest=host).
   size:
     description:
       - Size of buffer. The acceptable value is in range from 4096 to
@@ -127,7 +126,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec, validate_ip_address
 from ansible.module_utils.network.ios.ios import get_config, load_config
 from ansible.module_utils.network.ios.ios import get_capabilities
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import ios_argument_spec
 
 
 def validate_size(value, module):
@@ -407,7 +406,6 @@ def main():
     os_version = device_info['device_info']['network_os_version']
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

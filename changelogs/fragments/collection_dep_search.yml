@@ -1,4 +1,0 @@
-minor_changes:
-  - collection role dependencies will first search for unqualified role names in the containing collection.
-  - roles that define a collections search list in metadata will attempt to use the defined search list
-    when resolving unqualified role names.

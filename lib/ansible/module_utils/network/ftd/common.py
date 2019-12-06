@@ -24,7 +24,7 @@ from ansible.module_utils.six import iteritems
 INVALID_IDENTIFIER_SYMBOLS = r'[^a-zA-Z0-9_]'
 
 IDENTITY_PROPERTIES = ['id', 'version', 'ruleId']
-NON_COMPARABLE_PROPERTIES = IDENTITY_PROPERTIES + ['isSystemDefined', 'links']
+NON_COMPARABLE_PROPERTIES = IDENTITY_PROPERTIES + ['isSystemDefined', 'links', 'token', 'rulePosition']
 
 
 class HTTPMethod:

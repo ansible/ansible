@@ -89,7 +89,7 @@
   wait_for:
     path: "/proc/{{ item }}/status"
     state: absent
-  with_items: "{{ pids_of_mongod }}"
+  with_items: "{{ pids_of_mongod.pids }}"
 
 - set_fact:
     current_replicaset: "{{ mongodb_replicaset1 }}"

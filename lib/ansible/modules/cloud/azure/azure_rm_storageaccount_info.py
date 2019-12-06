@@ -371,7 +371,6 @@ class AzureRMStorageAccountInfo(AzureRMModuleBase):
 
         self.results = dict(
             changed=False,
-            ansible_facts=dict(azure_storageaccounts=[]),
             storageaccounts=[]
         )
 
@@ -407,8 +406,10 @@ class AzureRMStorageAccountInfo(AzureRMModuleBase):
         filtered = self.filter_tag(results)
 
         if is_old_facts:
-            self.results['ansible_facts']['azure_storageaccounts'] = self.serialize(filtered)
-            self.results['ansible_facts']['storageaccounts'] = self.format_to_dict(filtered)
+            self.results['ansible_facts'] = {
+                'azure_storageaccounts': self.serialize(filtered),
+                'storageaccounts': self.format_to_dict(filtered),
+            }
         self.results['storageaccounts'] = self.format_to_dict(filtered)
         return self.results
 
@@ -434,7 +435,7 @@ class AzureRMStorageAccountInfo(AzureRMModuleBase):
     def list_all(self):
         self.log('List all items')
         try:
-            response = self.storage_client.storage_accounts.list_by_resource_group(self.resource_group)
+            response = self.storage_client.storage_accounts.list()
         except Exception as exc:
             self.fail("Error listing all items - {0}".format(str(exc)))
 

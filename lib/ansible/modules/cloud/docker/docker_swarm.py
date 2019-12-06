@@ -27,7 +27,7 @@ options:
           port number, like C(eth0:4567).
       - If the port number is omitted,
           the port number from the listen address is used.
-      - If C(advertise_addr) is not specified, it will be automatically
+      - If I(advertise_addr) is not specified, it will be automatically
           detected when possible.
       - Only used when swarm is initialised or joined. Because of this it's not
         considered for idempotency checking.
@@ -39,6 +39,7 @@ options:
         for idempotency checking.
       - Requires API version >= 1.39.
     type: list
+    elements: str
     version_added: "2.8"
   subnet_size:
     description:
@@ -98,6 +99,7 @@ options:
       - Remote address of one or more manager nodes of an existing Swarm to connect to.
       - Used with I(state=join).
     type: list
+    elements: str
   task_history_retention_limit:
     description:
       - Maximum number of tasks history stored.
@@ -234,20 +236,20 @@ RETURN = '''
 swarm_facts:
   description: Informations about swarm.
   returned: success
-  type: complex
+  type: dict
   contains:
       JoinTokens:
           description: Tokens to connect to the Swarm.
           returned: success
-          type: complex
+          type: dict
           contains:
               Worker:
-                  description: Token to create a new I(worker) node
+                  description: Token to create a new *worker* node
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx
               Manager:
-                  description: Token to create a new I(manager) node
+                  description: Token to create a new *manager* node
                   returned: success
                   type: str
                   example: SWMTKN-1--xxxxx
@@ -262,6 +264,7 @@ actions:
   description: Provides the actions done on the swarm.
   returned: when action failed.
   type: list
+  elements: str
   example: "['This cluster is already a swarm cluster']"
 
 '''

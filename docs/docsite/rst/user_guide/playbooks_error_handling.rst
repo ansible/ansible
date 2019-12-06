@@ -28,6 +28,35 @@ so if you have an undefined variable used or a syntax error, it will still raise
 Note that this will not prevent failures on connection or execution issues.
 This feature only works when the task must be able to run and return a value of 'failed'.
 
+Ignoring Unreachable Host Errors
+````````````````````````````````````````
+
+.. versionadded:: 2.7
+
+You may ignore task failure due to the host instance being 'UNREACHABLE' with the ``ignore_unreachable`` keyword.
+Note that task errors are what's being ignored, not the unreachable host.
+
+Here's an example explaining the behavior for an unreachable host at the task level::
+
+    - name: this executes, fails, and the failure is ignored
+      command: /bin/true
+      ignore_unreachable: yes
+
+    - name: this executes, fails, and ends the play for this host
+      command: /bin/true
+
+And at the playbook level::
+
+    - hosts: all
+      ignore_unreachable: yes
+      tasks:
+      - name: this executes, fails, and the failure is ignored
+        command: /bin/true
+
+      - name: this executes, fails, and ends the play for this host
+        command: /bin/true
+        ignore_unreachable: no
+
 .. _resetting_unreachable:
 
 Resetting Unreachable Hosts
@@ -152,12 +181,18 @@ Aborting the play
 
 Sometimes it's desirable to abort the entire play on failure, not just skip remaining tasks for a host.
 
-The ``any_errors_fatal`` play option will end the play when any tasks results in an error and stop execution of the play::
+The ``any_errors_fatal`` option will end the play and prevent any subsequent plays from running. When an error is encountered, all hosts in the current batch are given the opportunity to finish the fatal task and then the execution of the play stops. ``any_errors_fatal`` can be set at the play or block level::
 
      - hosts: somehosts
        any_errors_fatal: true
        roles:
          - myrole
+
+     - hosts: somehosts
+       tasks:
+         - block:
+             - include_tasks: mytasks.yml
+           any_errors_fatal: true
 
 for finer-grained control ``max_fail_percentage`` can be used to abort the run after a given percentage of hosts has failed.
 

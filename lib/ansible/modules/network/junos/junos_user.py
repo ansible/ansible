@@ -224,8 +224,7 @@ def map_obj_to_ele(module, want):
                 SubElement(user, 'full-name').text = item['full_name']
 
             if item.get('sshkey'):
-                if 'auth' not in locals():
-                    auth = SubElement(user, 'authentication')
+                auth = SubElement(user, 'authentication')
                 if 'ssh-rsa' in item['sshkey']:
                     ssh_rsa = SubElement(auth, 'ssh-rsa')
                 elif 'ssh-dss' in item['sshkey']:
@@ -234,11 +233,10 @@ def map_obj_to_ele(module, want):
                     ssh_rsa = SubElement(auth, 'ssh-ecdsa')
                 elif 'ssh-ed25519' in item['sshkey']:
                     ssh_rsa = SubElement(auth, 'ssh-ed25519')
-                key = SubElement(ssh_rsa, 'name').text = item['sshkey']
+                SubElement(ssh_rsa, 'name').text = item['sshkey']
 
             if item.get('encrypted_password'):
-                if 'auth' not in locals():
-                    auth = SubElement(user, 'authentication')
+                auth = SubElement(user, 'authentication')
                 SubElement(auth, 'encrypted-password').text = item['encrypted_password']
 
     return element
@@ -314,7 +312,7 @@ def main():
         name=dict(),
         full_name=dict(),
         role=dict(choices=ROLES),
-        encrypted_password=dict(),
+        encrypted_password=dict(no_log=True),
         sshkey=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
         active=dict(type='bool', default=True)

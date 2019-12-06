@@ -23,7 +23,10 @@ except ImportError:
     import_module = __import__
 
 _SYNTHETIC_PACKAGES = {
-    'ansible_collections.ansible': dict(type='pkg_only'),
+    # these provide fallback package definitions when there are no on-disk paths
+    'ansible_collections': dict(type='pkg_only', allow_external_subpackages=True),
+    'ansible_collections.ansible': dict(type='pkg_only', allow_external_subpackages=True),
+    # these implement the ansible.builtin synthetic collection mapped to the packages inside the ansible distribution
     'ansible_collections.ansible.builtin': dict(type='pkg_only'),
     'ansible_collections.ansible.builtin.plugins': dict(type='map', map='ansible.plugins'),
     'ansible_collections.ansible.builtin.plugins.module_utils': dict(type='map', map='ansible.module_utils', graft=True),
@@ -100,15 +103,31 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         return self._default_collection
 
     def find_module(self, fullname, path=None):
-        # this loader is only concerned with items under the Ansible Collections namespace hierarchy, ignore others
-        if fullname.startswith('ansible_collections.') or fullname == 'ansible_collections':
+        if self._find_module(fullname, path, load=False)[0]:
             return self
 
         return None
 
     def load_module(self, fullname):
+        mod = self._find_module(fullname, None, load=True)[1]
+
+        if not mod:
+            raise ImportError('module {0} not found'.format(fullname))
+
+        return mod
+
+    def _find_module(self, fullname, path, load):
+        # this loader is only concerned with items under the Ansible Collections namespace hierarchy, ignore others
+        if not fullname.startswith('ansible_collections.') and fullname != 'ansible_collections':
+            return False, None
+
         if sys.modules.get(fullname):
-            return sys.modules[fullname]
+            if not load:
+                return True, None
+
+            return True, sys.modules[fullname]
+
+        newmod = None
 
         # this loader implements key functionality for Ansible collections
         # * implicit distributed namespace packages for the root Ansible namespace (no pkgutil.extend_path hackery reqd)
@@ -132,10 +151,13 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         synpkg_remainder = ''
 
         if not synpkg_def:
-            synpkg_def = _SYNTHETIC_PACKAGES.get(parent_pkg_name)
-            synpkg_remainder = '.' + fullname.rpartition('.')[2]
+            # if the parent is a grafted package, we have some special work to do, otherwise just look for stuff on disk
+            parent_synpkg_def = _SYNTHETIC_PACKAGES.get(parent_pkg_name)
+            if parent_synpkg_def and parent_synpkg_def.get('graft'):
+                synpkg_def = parent_synpkg_def
+                synpkg_remainder = '.' + fullname.rpartition('.')[2]
 
-        # FIXME: collapse as much of this back to on-demand as possible (maybe stub packages that get replaced when actually loaded?)
+        # FUTURE: collapse as much of this back to on-demand as possible (maybe stub packages that get replaced when actually loaded?)
         if synpkg_def:
             pkg_type = synpkg_def.get('type')
             if not pkg_type:
@@ -145,23 +167,34 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
 
                 if not map_package:
                     raise KeyError('invalid synthetic map package definition (no target "map" defined)')
+
+                if not load:
+                    return True, None
+
                 mod = import_module(map_package + synpkg_remainder)
 
                 sys.modules[fullname] = mod
 
-                return mod
+                return True, mod
             elif pkg_type == 'flatmap':
                 raise NotImplementedError()
             elif pkg_type == 'pkg_only':
+                if not load:
+                    return True, None
+
                 newmod = ModuleType(fullname)
                 newmod.__package__ = fullname
                 newmod.__file__ = '<ansible_synthetic_collection_package>'
                 newmod.__loader__ = self
                 newmod.__path__ = []
 
-                sys.modules[fullname] = newmod
+                if not synpkg_def.get('allow_external_subpackages'):
+                    # if external subpackages are NOT allowed, we're done
+                    sys.modules[fullname] = newmod
+                    return True, newmod
 
-                return newmod
+                # if external subpackages ARE allowed, check for on-disk implementations and return a normal
+                # package if we find one, otherwise return the one we created here
 
         if not parent_pkg:  # top-level package, look for NS subpackages on all collection paths
             package_paths = [self._extend_path_with_ns(p, fullname) for p in self.n_collection_paths]
@@ -183,6 +216,9 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                                     candidate_child_path + '.py']:
                     if not os.path.isfile(to_bytes(source_path)):
                         continue
+
+                    if not load:
+                        return True, None
 
                     with open(to_bytes(source_path), 'rb') as fd:
                         source = fd.read()
@@ -215,11 +251,16 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
                 # FIXME: decide cases where we don't actually want to exec the code?
                 exec(code_object, newmod.__dict__)
 
-            return newmod
+            return True, newmod
+
+        # even if we didn't find one on disk, fall back to a synthetic package if we have one...
+        if newmod:
+            sys.modules[fullname] = newmod
+            return True, newmod
 
         # FIXME: need to handle the "no dirs present" case for at least the root and synthetic internal collections like ansible.builtin
 
-        raise ImportError('module {0} not found'.format(fullname))
+        return False, None
 
     @staticmethod
     def _extend_path_with_ns(path, ns):
@@ -433,7 +474,7 @@ class AnsibleCollectionRef:
     @staticmethod
     def is_valid_collection_name(collection_name):
         """
-        Validates if is string is a well-formed collection name (does not look up the collection itself)
+        Validates if the given string is a well-formed collection name (does not look up the collection itself)
         :param collection_name: candidate collection name to validate (a valid name is of the form 'ns.collname')
         :return: True if the collection name passed is well-formed, False otherwise
         """
@@ -502,7 +543,7 @@ def get_collection_name_from_path(path):
             # strip off the common prefix (handle weird testing cases of nested collection roots, eg)
             collection_remnant = n_path[len(coll_path):]
             # commonprefix may include the trailing /, prepend to the remnant if necessary (eg trailing / on root)
-            if collection_remnant[0] != '/':
+            if collection_remnant and collection_remnant[0] != '/':
                 collection_remnant = '/' + collection_remnant
             # the path lives under this collection root, see if it maps to a collection
             found_collection = _N_COLLECTION_PATH_RE.search(collection_remnant)

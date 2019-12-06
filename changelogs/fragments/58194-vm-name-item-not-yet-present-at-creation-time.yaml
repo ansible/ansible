@@ -1,2 +1,0 @@
-bugfixes:
-  - proxmox_kvm - fixed issue when vm has not yet a name item (https://github.com/ansible/ansible/issues/58194)

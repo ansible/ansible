@@ -17,163 +17,251 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_galleryimageversion
 version_added: '2.9'
-short_description: Manage Azure SIG Image Version instance.
+short_description: Manage Azure SIG Image Version instance
 description:
-  - 'Create, update and delete instance of Azure SIG Image Version.'
+    - Create, update and delete instance of Azure SIG Image Version.
 options:
-  resource_group:
-    description:
-      - The name of the resource group.
-    required: true
-    type: str
-  gallery_name:
-    description:
-      - >-
-        The name of the Shared Image Gallery in which the Image Definition
-        resides.
-    required: true
-    type: str
-  gallery_image_name:
-    description:
-      - >-
-        The name of the gallery Image Definition in which the Image Version is
-        to be created.
-    required: true
-    type: str
-  name:
-    description:
-      - >-
-        The name of the gallery Image Version to be created. Needs to follow
-        semantic version name pattern: The allowed characters are digit and
-        period. Digits must be within the range of a 32-bit integer. Format:
-        <MajorVersion>.<MinorVersion>.<Patch>
-    required: true
-    type: str
-  location:
-    description:
-      - Resource location
-    type: str
-  publishing_profile:
-    description:
-      - Publishing profile.
-    required: true
-    type: dict
-    suboptions:
-      target_regions:
+    resource_group:
         description:
-          - >-
-            The target regions where the Image Version is going to be replicated
-            to. This property is updatable.
-        type: list
+            - The name of the resource group.
+        required: true
+        type: str
+    gallery_name:
+        description:
+            - The name of the Shared Image Gallery in which the Image Definition resides.
+        required: true
+        type: str
+    gallery_image_name:
+        description:
+            - The name of the gallery Image Definition in which the Image Version is to be created.
+        required: true
+        type: str
+    name:
+        description:
+            - The name of the gallery Image Version to be created.
+            - Needs to follow semantic version name pattern, The allowed characters are digit and period.
+            - Digits must be within the range of a 32-bit integer. For example <MajorVersion>.<MinorVersion>.<Patch>.
+        required: true
+        type: str
+    location:
+        description:
+            - Resource location.
+        type: str
+    storage_profile:
+        description:
+            - Storage profile
+        required: true
+        version_added: "2.10"
+        type: dict
         suboptions:
-          name:
-            description:
-              - Region name.
-            type: str
-          regional_replica_count:
-            description:
-              - >-
-                The number of replicas of the Image Version to be created per
-                region. This property would take effect for a region when
-                regionalReplicaCount is not specified. This property is updatable.
-            type: str
-          storage_account_type:
-            description:
-              - Storage account type.
-            type: str
-      managed_image:
+            source_image:
+                description:
+                    - Reference to managed image or gallery image version
+                    - Could be resource ID to managed image, or dictionary containing I(resource_group) and I(name)
+                    - Could be resource ID to image version, or dictionary containing I(resource_group),I(gallery_name), I(gallery_image_name) and I(version)
+                    - Mutual exclusive with os_disk and data_disks
+                type: raw
+            os_disk:
+                description:
+                    - os disk snapshot
+                    - Mutual exclusive with source_image
+                type: raw
+                suboptions:
+                    source:
+                        description:
+                            - Reference to os disk snapshot. Could be resource ID or dictionary containing I(resource_group) and I(name)
+                        type: str
+                    host_caching:
+                        description:
+                            - host disk caching
+                        type: str
+                        default: None
+                        choices:
+                            - None
+                            - ReadOnly
+                            - ReadWrite
+            data_disks:
+                description:
+                    - list of data disk snapshot
+                    - Mutual exclusive with source_image
+                type: list
+                suboptions:
+                    source:
+                        description:
+                            - Reference to data disk snapshot. Could be resource ID or dictionary containing I(resource_group) and I(name)
+                        type: str
+                    lun:
+                        description:
+                            - lun of the data disk
+                        type: int
+                    host_caching:
+                        description:
+                            - host disk caching
+                        type: str
+                        default: None
+                        choices:
+                            - None
+                            - ReadOnly
+                            - ReadWrite
+    publishing_profile:
         description:
-          - Managed image reference, could be resource id, or dictionary containing C(resource_group) and C(name)
-        type: raw
-      snapshot:
+            - Publishing profile.
+        required: true
+        type: dict
+        suboptions:
+            target_regions:
+                description:
+                    - The target regions where the Image Version is going to be replicated to.
+                    - This property is updatable.
+                type: list
+                suboptions:
+                    name:
+                        description:
+                            - Region name.
+                        type: str
+                    regional_replica_count:
+                        description:
+                            - The number of replicas of the Image Version to be created per region.
+                            - This property would take effect for a region when regionalReplicaCount is not specified.
+                            - This property is updatable.
+                        type: str
+                    storage_account_type:
+                        description:
+                            - Storage account type.
+                        type: str
+            managed_image:
+                description:
+                    - Managed image reference, could be resource ID, or dictionary containing I(resource_group) and I(name)
+                    - Obsolete since 2.10, use storage_profile instead
+            snapshot:
+                description:
+                    - Source snapshot to be used.
+                    - Obsolete since 2.10, use storage_profile instead
+            replica_count:
+                description:
+                    - The number of replicas of the Image Version to be created per region.
+                    - This property would take effect for a region when regionalReplicaCount is not specified.
+                    - This property is updatable.
+                type: int
+            exclude_from_latest:
+                description:
+                    If I(exclude_from_latest=true), Virtual Machines deployed from the latest version of the Image Definition won't use this Image Version.
+                type: bool
+            end_of_life_date:
+                description:
+                    - The end of life date of the gallery Image Version.
+                    - This property can be used for decommissioning purposes.
+                    - This property is updatable. Format should be according to ISO-8601, for instance "2019-06-26".
+                type: str
+            storage_account_type:
+                description:
+                    - Specifies the storage account type to be used to store the image.
+                    - This property is not updatable.
+                type: str
+    state:
         description:
-          - Source snapshot to be used.
-        type: raw
-      replica_count:
-        description:
-          - >-
-            The number of replicas of the Image Version to be created per
-            region. This property would take effect for a region when
-            regionalReplicaCount is not specified. This property is updatable.
-            type: number
-      exclude_from_latest:
-        description:
-          - >-
-            If set to true, Virtual Machines deployed from the latest version of
-            the Image Definition won't use this Image Version.
-            type: bool
-      end_of_life_date:
-        description:
-          - >-
-            The end of life date of the gallery Image Version. This property can
-            be used for decommissioning purposes. This property is updatable.
-            Format should be according to ISO-8601, for instance "2019-06-26".
+            - Assert the state of the GalleryImageVersion.
+            - Use C(present) to create or update an GalleryImageVersion and C(absent) to delete it.
+        default: present
+        choices:
+            - absent
+            - present
         type: str
-      storage_account_type:
-        description:
-          - >-
-            Specifies the storage account type to be used to store the image.
-            This property is not updatable.
-        type: str
-  state:
-    description:
-      - Assert the state of the GalleryImageVersion.
-      - >-
-        Use C(present) to create or update an GalleryImageVersion and C(absent)
-        to delete it.
-    default: present
-    choices:
-      - absent
-      - present
-    type: str
 extends_documentation_fragment:
-  - azure
-  - azure_tags
+    - azure
+    - azure_tags
 author:
-  - Zim Kalinowski (@zikalino)
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
-- name: Create or update a simple gallery Image Version.
+- name: Create a gallery image version form a managed image
   azure_rm_galleryimageversion:
     resource_group: myResourceGroup
-    gallery_name: myGallery1283
-    gallery_image_name: myImage
-    name: 10.1.3
-    location: West US
+    gallery_name: myGallery
+    gallery_image_name: myGalleryImage
+    name: 1.1.0
+    location: East US
     publishing_profile:
       end_of_life_date: "2020-10-01t00:00:00+00:00"
       exclude_from_latest: yes
-      replica_count: 3
+      replica_count: 4
       storage_account_type: Standard_LRS
       target_regions:
         - name: West US
           regional_replica_count: 1
         - name: East US
-          regional_replica_count: 2
-          storage_account_type: Standard_ZRS
-      managed_image:
-        name: myImage
-        resource_group: myResourceGroup
+          regional_replica_count: 3
+          storage_account_type: Standard_LRS
+    storage_profile:
+        source_image: /subscriptions/sub123/resourceGroups/group123/providers/Microsoft.Compute/images/myOsImage
+
+- name: Create a gallery image version from another gallery image version
+  azure_rm_galleryimageversion:
+    resource_group: myResourceGroup
+    gallery_name: myGallery
+    gallery_image_name: myGalleryImage
+    name: 1.2.0
+    location: East US
+    publishing_profile:
+      end_of_life_date: "2020-10-01t00:00:00+00:00"
+      exclude_from_latest: yes
+      replica_count: 4
+      storage_account_type: Standard_LRS
+      target_regions:
+        - name: West US
+          regional_replica_count: 1
+        - name: East US
+          regional_replica_count: 3
+          storage_account_type: Standard_LRS
+    storage_profile:
+        source_image:
+            version: 1.1.0
+            gallery_name: myGallery2
+            gallery_image_name: myGalleryImage2
+
+- name: Create gallery image by using one os dist snapshot and zero or many data disk snapshots
+  azure_rm_galleryimageversion:
+    resource_group: myRsourceGroup
+    gallery_name: myGallery
+    gallery_image_name: myGalleryImage
+    name: 3.4.0
+    location: East  US
+    publishing_profile:
+      end_of_life_date: "2020-10-01t00:00:00+00:00"
+      exclude_from_latest: yes
+      replica_count: 1
+      storage_account_type: Standard_LRS
+      target_regions:
+        - name: East US
+          regional_replica_count: 1
+          storage_account_type: Standard_LRS
+    storage_profile:
+      os_disk:
+          source: "/subscriptions/mySub/resourceGroups/myGroup/providers/Microsoft.Compute/snapshots/os_snapshot_vma"
+      data_disks:
+          - lun: 0
+            source:
+              name: data_snapshot_vma
+          - lun: 1
+            source: "/subscriptions/mySub/resourceGroups/myGroup/providers/Microsoft.Compute/snapshots/data_snapshot_vmb"
 '''
 
 RETURN = '''
 id:
-  description:
-    - Resource Id
-  returned: always
-  type: str
-  sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGalle
+    description:
+        - Resource ID.
+    returned: always
+    type: str
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/galleries/myGalle
            ry1283/images/myImage/versions/10.1.3"
 '''
 
 import time
 import json
-import re
 from ansible.module_utils.azure_rm_common_ext import AzureRMModuleBaseExt
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
-from copy import deepcopy
 try:
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
@@ -215,7 +303,72 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
             location=dict(
                 type='str',
                 updatable=False,
-                disposition='/'
+                disposition='/',
+                comparison='location'
+            ),
+            storage_profile=dict(
+                type='dict',
+                updatable=False,
+                disposition='/properties/storageProfile',
+                comparison='ignore',
+                options=dict(
+                    source_image=dict(
+                        type='raw',
+                        disposition='source/id',
+                        purgeIfNone=True,
+                        pattern=[('/subscriptions/{subscription_id}/resourceGroups'
+                                  '/{resource_group}/providers/Microsoft.Compute'
+                                  '/images/{name}'),
+                                 ('/subscriptions/{subscription_id}/resourceGroups'
+                                  '/{resource_group}/providers/Microsoft.Compute'
+                                  '/galleries/{gallery_name}/images/{gallery_image_name}'
+                                  '/versions/{version}')]
+                    ),
+                    os_disk=dict(
+                        type='dict',
+                        disposition='osDiskImage',
+                        purgeIfNone=True,
+                        comparison='ignore',
+                        options=dict(
+                            source=dict(
+                                type='raw',
+                                disposition='source/id',
+                                pattern=('/subscriptions/{subscription_id}/resourceGroups'
+                                         '/{resource_group}/providers/Microsoft.Compute'
+                                         '/snapshots/{name}')
+                            ),
+                            host_caching=dict(
+                                type='str',
+                                disposition='hostCaching',
+                                default="None",
+                                choices=["ReadOnly", "ReadWrite", "None"]
+                            )
+                        )
+                    ),
+                    data_disks=dict(
+                        type='list',
+                        disposition='dataDiskImages',
+                        purgeIfNone=True,
+                        options=dict(
+                            lun=dict(
+                                type='int'
+                            ),
+                            source=dict(
+                                type='raw',
+                                disposition="source/id",
+                                pattern=('/subscriptions/{subscription_id}/resourceGroups'
+                                         '/{resource_group}/providers/Microsoft.Compute'
+                                         '/snapshots/{name}')
+                            ),
+                            host_caching=dict(
+                                type='str',
+                                disposition='hostCaching',
+                                default="None",
+                                choices=["ReadOnly", "ReadWrite", "None"]
+                            )
+                        )
+                    )
+                )
             ),
             publishing_profile=dict(
                 type='dict',
@@ -227,7 +380,8 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                         options=dict(
                             name=dict(
                                 type='str',
-                                required=True
+                                required=True,
+                                comparison='location'
                             ),
                             regional_replica_count=dict(
                                 type='int',
@@ -244,14 +398,14 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                         pattern=('/subscriptions/{subscription_id}/resourceGroups'
                                  '/{resource_group}/providers/Microsoft.Compute'
                                  '/images/{name}'),
-                        disposition='source/managedImage/id'
+                        comparison='ignore'
                     ),
                     snapshot=dict(
                         type='raw',
                         pattern=('/subscriptions/{subscription_id}/resourceGroups'
                                  '/{resource_group}/providers/Microsoft.Compute'
                                  '/snapshots/{name}'),
-                        disposition='source/managedImage/id'
+                        comparison='ignore'
                     ),
                     replica_count=dict(
                         type='int',
@@ -295,7 +449,7 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
 
         self.body = {}
         self.query_parameters = {}
-        self.query_parameters['api-version'] = '2019-03-01'
+        self.query_parameters['api-version'] = '2019-07-01'
         self.header_parameters = {}
         self.header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
@@ -311,6 +465,14 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                 self.body[key] = kwargs[key]
 
         self.inflate_parameters(self.module_arg_spec, self.body, 0)
+
+        # keep backward compatibility
+        snapshot = self.body.get('properties', {}).get('publishingProfile', {}).pop('snapshot', None)
+        if snapshot is not None:
+            self.body['properties'].setdefault('storageProfile', {}).setdefault('osDiskImage', {}).setdefault('source', {})['id'] = snapshot
+        managed_image = self.body.get('properties', {}).get('publishingProfile', {}).pop('managed_image', None)
+        if managed_image:
+            self.body['properties'].setdefault('storageProfile', {}).setdefault('source', {})['id'] = managed_image
 
         old_response = None
         response = None
@@ -363,10 +525,6 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                 if not self.default_compare(modifiers, self.body, old_response, '', self.results):
                     self.to_do = Actions.Update
 
-        # fix leftovers (if empty structures were left)
-        self.body.get('properties', {}).get('publishingProfile', {}).pop('snapshot', None)
-        self.body.get('properties', {}).get('publishingProfile', {}).pop('managed_image', None)
-
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log('Need to Create / Update the GalleryImageVersion instance')
 
@@ -393,7 +551,6 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
 
         if response:
             self.results["id"] = response["id"]
-            self.results["old_response"] = response
 
         return self.results
 
