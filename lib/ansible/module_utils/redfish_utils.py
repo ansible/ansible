@@ -1904,6 +1904,68 @@ class RedfishUtils(object):
                                 inventory['entries']))
         return dict(ret=ret, entries=entries)
 
+    def get_serial_interfaces(self, resource_uri):
+        result = {}
+        serial_interface_list = []
+        serial_interface_results = []
+        key = "SerialInterfaces"
+        # Get these entries, but does not fail if not found
+        properties = ['SignalType', 'BitRate', 'InterfaceEnabled', 'Id',
+                      'DataBits', 'StopBits', 'Name', 'Parity', 'PinOut',
+                      'ConnectorType', 'Description', 'FlowControl']
+
+        response = self.get_request(self.root_uri + resource_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
+        serial_interfaces_uri = data[key]["@odata.id"]
+
+        # Get a list of all serial interfaces and build respective URIs
+        response = self.get_request(self.root_uri + serial_interfaces_uri)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        for serial_interface in data[u'Members']:
+            serial_interface_list.append(serial_interface[u'@odata.id'])
+
+        for n in serial_interface_list:
+            serial_interface = {}
+            uri = self.root_uri + n
+            response = self.get_request(uri)
+            if response['ret'] is False:
+                return response
+            data = response['data']
+
+            for property in properties:
+                if property in data:
+                    serial_interface[property] = data[property]
+
+            serial_interface_results.append(serial_interface)
+
+        result["entries"] = serial_interface_results
+        return result
+
+    def get_multi_serialinterfaces(self):
+        ret = True
+        entries = []
+
+        resource_uris = self.manager_uris
+
+        for resource_uri in resource_uris:
+            serialinterfaces = self.get_serial_interfaces(resource_uri)
+            ret = serialinterfaces.pop('ret') and ret
+            if 'entries' in serialinterfaces:
+                entries.append(({'resource_uri': resource_uri},
+                               serialinterfaces['entries']))
+        return dict(ret=ret, entries=entries)
+
     def get_virtualmedia(self, resource_uri):
         result = {}
         virtualmedia_list = []

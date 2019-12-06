@@ -102,6 +102,17 @@ EXAMPLES = '''
       timeout: 20
     register: result
 
+  - name: Get Serial Interfaces information
+    redfish_info:
+      category: Manager
+      command: GetSerialInterfaces
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+    register: result
+  - debug:
+      msg: "{{ result.redfish_info.serial_interfaces.entries | to_nice_json }}"
+
   - name: Get Virtual Media information
     redfish_info:
       category: Manager
@@ -284,7 +295,7 @@ CATEGORY_COMMANDS_ALL = {
     "Accounts": ["ListUsers"],
     "Sessions": ["GetSessions"],
     "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities", "GetSoftwareInventory"],
-    "Manager": ["GetManagerNicInventory", "GetVirtualMedia", "GetLogs", "GetNetworkProtocols",
+    "Manager": ["GetManagerNicInventory", "GetSerialInterfaces", "GetVirtualMedia", "GetLogs", "GetNetworkProtocols",
                 "GetHealthReport"],
 }
 
@@ -452,6 +463,8 @@ def main():
             for command in command_list:
                 if command == "GetManagerNicInventory":
                     result["manager_nics"] = rf_utils.get_multi_nic_inventory(category)
+                elif command == "GetSerialInterfaces":
+                    result["serial_interfaces"] = rf_utils.get_multi_serialinterfaces()
                 elif command == "GetVirtualMedia":
                     result["virtual_media"] = rf_utils.get_multi_virtualmedia()
                 elif command == "GetLogs":
