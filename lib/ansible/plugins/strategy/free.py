@@ -50,22 +50,23 @@ class StrategyModule(StrategyBase):
     # This strategy manages throttling on its own, so we don't want it done in queue_task
     ALLOW_BASE_THROTTLING = False
 
+    def _filter_notified_failed_hosts(self, iterator, notified_hosts):
+
+        # If --force-handlers is used we may act on hosts that have failed
+        return [host for host in notified_hosts if iterator.is_failed(host)]
+
     def _filter_notified_hosts(self, notified_hosts):
         '''
         Filter notified hosts accordingly to strategy
         '''
 
-        # We act only on hosts that are ready to flush handlers or failed hosts in notified_hosts if --force-handlers is used
+        # We act only on hosts that are ready to flush handlers
         return [host for host in notified_hosts
-                if (host in self._flushed_hosts and self._flushed_hosts[host]) or self.iterator.is_failed(host)]
+                if host in self._flushed_hosts and self._flushed_hosts[host]]
 
     def __init__(self, tqm):
         super(StrategyModule, self).__init__(tqm)
         self._host_pinned = False
-
-        # The iterator is needed to check failed hosts that have not completed (for example, have an 'always' section to run)
-        # Initialize to None and set in run
-        self.iterator = None
 
     def run(self, iterator, play_context):
         '''
@@ -80,7 +81,6 @@ class StrategyModule(StrategyBase):
         list again, which would end up favoring hosts near the beginning of the
         list.
         '''
-        self.iterator = iterator
 
         # the last host to be given a task
         last_host = 0
