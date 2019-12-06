@@ -71,8 +71,8 @@ class YamllintTest(SanitySingleVersion):
         :type python_version: str
         :rtype: TestResult
         """
-        ansible_util.check_pyyaml(args, python_version)
-        if not ansible_util.CHECK_YAML_VERSIONS[python_version]['cloader']:
+        pyyaml_presence = ansible_util.check_pyyaml(args, python_version)
+        if not pyyaml_presence['cloader']:
             display.warning("Skipping sanity test '%s' due to missing libyaml support in PyYAML."
                             % self.name)
             return SanitySkipped(self.name)
