@@ -6,5 +6,5 @@
         "lib/ansible/",
         "plugins/"
     ],
-    "output": "path-line-column-message"
+    "output": "path-message"
 }

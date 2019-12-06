@@ -5,25 +5,27 @@ __metaclass__ = type
 import re
 import sys
 
-ASSERT_RE = re.compile(r'^.*\bunwrap_var\(')
+UNWRAP_RE = re.compile(r'^.*\bunwrap_var\(')
 
-WHITELIST = frozenset((
-    'lib/ansible/utils/unsafe_proxy.py',
-))
+# Format is the file as the key, and the number of appearances to ignore
+# All changes to the whitelist need to be approved by an Ansible core committer
+WHITELIST = {
+    'lib/ansible/utils/unsafe_proxy.py': 4,
+}
 
 def main():
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        if path in WHITELIST:
-            continue
+        found = 0
         with open(path, 'r') as f:
             for i, line in enumerate(f.readlines()):
-                matches = ASSERT_RE.findall(line)
+                matches = UNWRAP_RE.findall(line)
                 if matches:
-                    lineno = i + 1
-                    colno = line.index('unwrap_var') + 1
-                    print(
-                        '%s:%d:%d: use of unwrap_var is strictly monitored for incorrect use: %s' % (path, lineno, colno, matches[0][colno - 1:])
-                    )
+                    found += 1
+
+        if found > WHITELIST.get(path, 0):
+            print(
+                '%s: use of unwrap_var is strictly monitored for incorrect use. Please seek guidance from a core committer' % (path,)
+            )
 
 
 if __name__ == '__main__':
