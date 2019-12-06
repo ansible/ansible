@@ -1,0 +1,2 @@
+minor_changes:
+  - zabbix_* - underlying python module now required in version zabbix-api==0.5.4 (https://github.com/ansible/ansible/pull/65145)
