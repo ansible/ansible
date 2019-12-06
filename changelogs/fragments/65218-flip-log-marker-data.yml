@@ -1,0 +1,2 @@
+bugfixes:
+- "utils - correct user/pid markers in logging spec flipped in #56311 (https://github.com/ansible/ansible/issues/65218)."
