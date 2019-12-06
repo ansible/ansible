@@ -98,6 +98,10 @@ Noteworthy module changes
 * :ref:`zabbix_action <zabbix_action_module>` no longer requires ``esc_period`` and ``event_source`` arguments when ``state=absent``.
 * :ref:`gitlab_user <gitlab_user_module>` no longer requires ``name``, ``email`` and ``password`` arguments when ``state=absent``.
 * :ref:`win_pester <win_pester_module>` no longer runs all ``*.ps1`` file in the directory specified due to it executing potentially unknown scripts. It will follow the default behaviour of only running tests for files that are like ``*.tests.ps1`` which is built into Pester itself
+* :ref:`win_find <win_find_module>` has been refactored to better match the behaviour of the ``find`` module. Here is what has changed:
+    * When the directory specified by ``paths`` does not exist or is a file, it will no longer fail and will just warn the user
+    * Junction points are no longer reported as ``islnk``, use ``isjunction`` to properly report these files. This behaviour matches the :ref:`win_stat <win_stat_module>`
+    * Directories no longer return a ``size``, this matches the ``stat`` and ``find`` behaviour and has been removed due to the difficulties in correctly reporting the size of a directory
 
 Plugins
 =======
