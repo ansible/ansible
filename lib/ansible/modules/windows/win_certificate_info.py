@@ -23,12 +23,14 @@ options:
     description:
     - The thumbprint as a hex string of a certificate to find.
     - When specified, filters the I(certificates) return value to a single certificate
-    - See M(win_certificate_store) for how to format the thumbprint.
+    - See the examples for how to format the thumbprint.
     type: str
     required: no
   store_name:
     description:
     - The name of the store to search.
+    - See U(https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.x509certificates.storename)
+      for a list of built-in store names.
     type: str
     default: My
   store_location:
@@ -47,6 +49,12 @@ EXAMPLES = r'''
 - name: Obtain information about a particular certificate in the computer's personal store
   win_certificate_info:
     thumbprint: BD7AF104CF1872BDB518D95C9534EA941665FD27
+  register: mycert
+
+# thumbprint can also be lower case
+- name: Obtain information about a particular certificate in the computer's personal store
+  win_certificate_info:
+    thumbprint: bd7af104cf1872bdb518d95c9534ea941665fd27
   register: mycert
 
 - name: Obtain information about all certificates in the root store
@@ -81,7 +89,7 @@ exists:
   sample: true
 certificates:
   description:
-    - A list of information about certificates found in the store.
+    - A list of information about certificates found in the store, sorted by thumbprint.
   returned: success
   type: list
   elements: dict
@@ -200,7 +208,9 @@ certificates:
       type: str
       sample: 'CN=Apple Worldwide Developer Relations Certification Authority, OU=Apple Worldwide Developer Relations, O=Apple Inc., C=US'
     thumbprint:
-      description: The thumbprint as a hex string of the certificate.
+      description:
+        - The thumbprint as a hex string of the certificate.
+        - The return format will always be upper case.
       type: str
       sample: FF6797793A3CD798DC5B2ABEF56F73EDC9F83A64
     valid_from:

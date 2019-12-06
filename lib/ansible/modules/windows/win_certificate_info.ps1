@@ -38,13 +38,12 @@ function Get-CertificateInfo ($cert)
     $cert_info.issued_by = $cert.GetNameInfo('SimpleName', $true)
     $cert_info.issued_to = $cert.GetNameInfo('SimpleName', $false)
     $cert_info.signature_algorithm = $cert.SignatureAlgorithm.FriendlyName
-    $cert_info.dns_names = @($cert_info.issued_to)
+    $cert_info.dns_names = [System.Collections.Generic.List`1[String]]@($cert_info.issued_to)
     $cert_info.raw = [System.Convert]::ToBase64String($cert.GetRawCertData())
     $cert_info.public_key = [System.Convert]::ToBase64String($cert.GetPublicKey())
-    $cert_info.extensions = @()
-    foreach ($extension in $cert.Extensions)
+    $cert_info.extensions = foreach ($extension in $cert.Extensions)
     {
-        $cert_info.extensions += @{
+        $extension_info = @{
             critical = $extension.Critical
             field    = $extension.Oid.FriendlyName
             value    = $extension.Format($false)
@@ -74,10 +73,11 @@ function Get-CertificateInfo ($cert)
                 $san_parts = $san.Split("=")
                 if ($san_parts.Length -ge 2 -and $san_parts[0].Trim() -eq 'DNS Name')
                 {
-                    $cert_info.dns_names += $san_parts[1].Trim()
+                    $cert_info.dns_names.Add($san_parts[1].Trim())
                 }
             }
         }
+        $extension_info
     }
     return $cert_info
 }
@@ -99,22 +99,7 @@ $store_name = $module.Params.store_name
 $store_location = [System.Security.Cryptography.X509Certificates.Storelocation]"$($module.Params.store_location)"
 
 $store = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Store -ArgumentList $store_name, $store_location
-try
-{
-    $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-}
-catch [System.Security.Cryptography.CryptographicException]
-{
-    $module.FailJson("Unable to open the store as it is not readable: $($_.Exception.Message)", $_)
-}
-catch [System.Security.SecurityException]
-{
-    $module.FailJson("Unable to open the store with the current permissions: $($_.Exception.Message)", $_)
-}
-catch
-{
-    $module.FailJson("Unable to open the store: $($_.Exception.Message)", $_)
-}
+$store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadOnly)
 
 $module.Result.exists = $false
 $module.Result.certificates = @()
@@ -133,9 +118,8 @@ try
     if ($found_certs.Count -gt 0)
     {
         $module.Result.exists = $true
-        [array]$module.Result.certificates = $found_certs | ForEach-Object { Get-CertificateInfo -cert $_ }
+        [array]$module.Result.certificates = $found_certs | ForEach-Object { Get-CertificateInfo -cert $_ } | Sort-Object -Property { $_.thumbprint }
     }
-
 }
 finally
 {
