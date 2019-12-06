@@ -1,0 +1,2 @@
+bugfixes:
+- mysql - remove error handling from ``mysql_connect`` function (https://github.com/ansible/ansible/issues/64560).
