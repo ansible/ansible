@@ -513,6 +513,7 @@ files:
     labels: [ tower ]
     maintainers: $team_tower
     ignored: wwitzel3
+    migrated_to: awx.awx
   $modules/web_infrastructure/sophos_utm/:
     maintainers: $team_e_spirit
     keywords:
