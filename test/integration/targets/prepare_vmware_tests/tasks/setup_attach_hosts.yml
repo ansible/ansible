@@ -17,3 +17,14 @@
     esxi_hostname: '{{ item }}'
     state: absent
   with_items: "{{ esxi_hosts }}"
+
+- name: Add Management Network VM Portgroup
+  vmware_portgroup:
+    hostname: '{{ item }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    esxi_hostname: 'item'
+    switch: "vSwitch0"
+    portgroup: VM Network
+    validate_certs: no
+  with_items: "{{ esxi_hosts }}"
