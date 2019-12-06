@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_user_group
-short_description: Create/update/delete/dump Zabbix user group
+short_description: Create/update/delete Zabbix user group
 description:
-    - Create/update/delete/dump Zabbix user group.
+    - Create/update/delete Zabbix user group.
 version_added: "2.10"
 author:
     - Emmanuel Riviere (@emriver)
@@ -79,10 +79,9 @@ options:
             - State of the group
             - If C(present), the group will be created or updated if the group configuration is different
             - If C(absent), the group will be deleted
-            - If C(dump), the group data will be dumped as json
         required: false
         type: str
-        choices: [present, absent, dump]
+        choices: [present, absent]
         default: present
 
 extends_documentation_fragment:
@@ -91,15 +90,6 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 ---
-- name: Dump Zabbix user group info
-  local_action:
-    module: zabbix_user_group
-    server_url: http://127.0.0.1
-    login_user: username
-    login_password: password
-    name: team1
-    state: dump
-
 - name: Create default user groups
   local_action:
     module: zabbix_user_group
@@ -118,33 +108,6 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
-template_json:
-  description: The JSON dump of the group
-  returned: when state is dump
-  type: str
-  sample: {
-    "group_json": {
-        "debug_mode": "0",
-        "gui_access": "0",
-        "name": "Test group",
-        "rights": [
-            {
-                "id": "20",
-                "permission": "3"
-            },
-        ],
-        "users": [
-            {
-                "userid": "6"
-            },
-            {
-                "userid": "12"
-            }
-        ],
-        "users_status": "0",
-        "usrgrpid": "19"
-    }
-  }
 '''
 
 import traceback
@@ -309,7 +272,7 @@ def main():
                 required=False,
                 elements='str'
             ),
-            state=dict(default="present", choices=['present', 'absent', 'dump']),
+            state=dict(default="present", choices=['present', 'absent']),
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True
@@ -352,11 +315,6 @@ def main():
             module.exit_json(changed=False, msg="User group not found, no change: %s" % name)
         user_group.delete_group(group_id)
         module.exit_json(changed=True, result="Successfully deleted group %s" % name)
-
-    elif state == "dump":
-        if not group_id:
-            module.fail_json(msg='User group not found: %s' % name)
-        module.exit_json(changed=False, group_json=user_group.dump_group(group_id))
 
     elif state == "present":
         # Does not exists going to create it

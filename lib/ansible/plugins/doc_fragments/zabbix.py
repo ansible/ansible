@@ -30,7 +30,7 @@ options:
         description:
             - Basic Auth login
         type: str
-        required: true
+        required: false
         version_added: "2.1"
     http_login_password:
         description:
