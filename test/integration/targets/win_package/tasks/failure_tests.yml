@@ -13,19 +13,19 @@
     state: present
     expected_return_code: 0,abc
   register: fail_invalid_return_code
-  failed_when: fail_invalid_return_code.msg != 'failed to parse expected return code abc as an integer'
+  failed_when: "'argument for list entry expected_return_code is of type System>String and we were unable to convert to in' in fail_invalid_return_code.msg"
 
 - name: fail when path is not set and state!= absent
   win_package:
     state: present
   register: fail_no_path
-  failed_when: fail_no_path.msg != 'path can only be null when state=absent and product_id is not null'
+  failed_when: 'fail_no_path.msg != "state is present but all of the following are missing: path"'
 
 - name: fail when path is not set and state=absent but product_id is null
   win_package:
     state: absent
   register: fail_no_path_state_absent_no_id
-  failed_when: fail_no_path_state_absent_no_id.msg != 'path can only be null when state=absent and product_id is not null'
+  failed_when: 'fail_no_path_state_absent_no_id.msg != "state is absent but any of the following are missing: path, product_id"'
 
 - name: fail when product_id is not set and path is not a local MSI
   win_package:
@@ -70,7 +70,7 @@
     state: present
     creates_version: 1
   register: fail_creates_version_without_path
-  failed_when: fail_creates_version_without_path.msg != 'creates_path must be set when creates_version is set'
+  failed_when: "fail_creates_version_without_path.msg != \"missing parameter(s) required by 'creates_version': creates_path\""
 
 - name: fail to check version without when path is not a file
   win_package:

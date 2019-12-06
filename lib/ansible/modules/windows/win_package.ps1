@@ -4,33 +4,57 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
-#Requires -Module Ansible.ModuleUtils.CommandUtil
+#AnsibleRequires -CSharpUtil Ansible.Basic
+#Requires -Module Ansible.ModuleUtils.AddType
 #Requires -Module Ansible.ModuleUtils.ArgvParser
+#Requires -Module Ansible.ModuleUtils.CommandUtil
 
-$ErrorActionPreference = 'Stop'
-
-$params = Parse-Args -arguments $args -supports_check_mode $true
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-
-$arguments = Get-AnsibleParam -obj $params -name "arguments"
-$expected_return_code = Get-AnsibleParam -obj $params -name "expected_return_code" -type "list" -default @(0, 3010)
-$path = Get-AnsibleParam -obj $params -name "path" -type "str"
-$chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
-$product_id = Get-AnsibleParam -obj $params -name "product_id" -type "str" -aliases "productid"
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present" -aliases "ensure"
-$username = Get-AnsibleParam -obj $params -name "username" -type "str" -aliases "user_name"
-$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($null -ne $username) -aliases "user_password"
-$validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
-$creates_path = Get-AnsibleParam -obj $params -name "creates_path" -type "path"
-$creates_version = Get-AnsibleParam -obj $params -name "creates_version" -type "str"
-$creates_service = Get-AnsibleParam -obj $params -name "creates_service" -type "str"
-$log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
-
-$result = @{
-    changed = $false
-    reboot_required = $false
+$spec = @{
+    options = @{
+        arguments = @{ type = "raw" }
+        expected_return_code = @{ type = "list"; elements = "int"; default = @(0, 3010) }
+        path = @{ type = "str"}
+        chdir = @{ type = "path" }
+        product_id = @{ type = "str"; aliases = @(,"productid") }
+        state = @{ type = "str"; default = "present"; choices = "absent", "present"; aliases = @(,"ensure") }
+        username = @{ type = "str"; aliases = @(,"user_name") }
+        password = @{ type = "str"; no_log = $true; aliases = @(,"user_password") }
+        validate_certs = @{ type = "bool"; default = $true }
+        creates_path = @{ type = "path" }
+        creates_version = @{ type = "str" }
+        creates_service = @{ type = "str" }
+        log_path = @{ type = "path" }
+    }
+    required_by = @{
+        creates_version = "creates_path"
+    }
+    required_if = @(
+        @("state", "present", @("path")),
+        @("state", "absent", @("path", "product_id"), $true)
+    )
+    required_together = @(,@("username", "password"))
+    supports_check_mode = $true
 }
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+$check_mode = $module.CheckMode
+
+$arguments = $module.Params.arguments
+$expected_return_code = $module.Params.expected_return_code
+$path = $module.Params.path
+$chdir = $module.Params.chdir
+$product_id = $module.Params.product_id
+$state = $module.Params.state
+$username = $module.Params.username
+$password = $module.Params.password
+$validate_certs = $module.Params.validate_certs
+$creates_path = $module.Params.creates_path
+$creates_version = $module.Params.creates_version
+$creates_service = $module.Params.creates_service
+$log_path = $module.Params.log_path
+
+$module.Result.reboot_required = $false
 
 if ($null -ne $arguments) {
     # convert a list to a string and escape the values
@@ -57,26 +81,6 @@ $credential = $null
 if ($null -ne $username) {
     $sec_user_password = ConvertTo-SecureString -String $password -AsPlainText -Force
     $credential = New-Object -TypeName PSCredential -ArgumentList $username, $sec_user_password
-}
-
-$valid_return_codes = @()
-foreach ($rc in ($expected_return_code)) {
-    try {
-        $int_rc = [Int32]::Parse($rc)
-        $valid_return_codes += $int_rc
-    } catch {
-        Fail-Json -obj $result -message "failed to parse expected return code $rc as an integer"
-    }
-}
-
-if ($null -eq $path) {
-    if (-not ($state -eq "absent" -and $null -ne $product_id)) {
-        Fail-Json -obj $result -message "path can only be null when state=absent and product_id is not null"
-    }
-}
-
-if ($null -ne $creates_version -and $null -eq $creates_path) {
-    Fail-Json -obj $result -Message "creates_path must be set when creates_version is set"
 }
 
 $msi_tools = @"
@@ -115,7 +119,7 @@ namespace Ansible {
 }
 "@
 
-Add-Type -TypeDefinition @"
+Add-CSharpType -AnsibleModule $module -References @"
 public enum LocationType {
     Empty,
     Local,
@@ -129,7 +133,7 @@ Function Download-File($url, $path) {
     try {
         $web_client.DownloadFile($url, $path)
     } catch {
-        Fail-Json -obj $result -message "failed to download $url to $($path): $($_.Exception.Message)"
+        $module.FailJson("failed to download $url to $($path): $($_.Exception.Message)", $_)
     }
 }
 
@@ -185,7 +189,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
                 try {
                     New-PSDrive -Name win_package -PSProvider FileSystem -Root $file_path -Credential $credential -Scope Script
                 } catch {
-                    Fail-Json -obj $result -message "failed to connect network drive with credentials: $($_.Exception.Message)"
+                    $module.FailJson("failed to connect network drive with credentials: $($_.Exception.Message)", $_)
                 }
                 $test_path = "win_package:\$file_name"
             } else {
@@ -215,15 +219,15 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
     } else {
         # we can get the product_id if the path is an msi and is either a local file or unc file with credential delegation
         if (($metadata.msi -eq $true) -and (($metadata.location_type -eq [LocationType]::Local) -or ($metadata.location_type -eq [LocationType]::Unc -and $null -eq $credential))) {
-            Add-Type -TypeDefinition $msi_tools
+            Add-CSharpType -AnsibleModule $module -References $msi_tools
             try {
                 $metadata.product_id = [Ansible.MsiTools]::GetPackageProperty($path, "ProductCode")
             } catch {
-                Fail-Json -obj $result -message "failed to get product_id from MSI at $($path): $($_.Exception.Message)"
+                $module.FailJson("failed to get product_id from MSI at $($path): $($_.Exception.Message)", $_)
             }
         } elseif ($null -eq $creates_path -and $null -eq $creates_service) {
             # we need to fail without the product id at this point
-            Fail-Json $result "product_id is required when the path is not an MSI or the path is an MSI but not local"
+            $module.FailJson("product_id is required when the path is not an MSI or the path is an MSI but not local")
         }
     }
 
@@ -259,7 +263,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
                 $version_matched = $creates_version -eq $existing_version
                 $metadata.installed = $version_matched
             } else {
-                Fail-Json -obj $result -message "creates_path must be a file not a directory when creates_version is set"
+                $module.FailJson("creates_path must be a file not a directory when creates_version is set")
             }
         }
     }
@@ -272,7 +276,7 @@ Function Get-ProgramMetadata($state, $path, $product_id, [PSCredential]$credenti
 
     # finally throw error if path is not valid unless we want to uninstall the package and it already is
     if ($null -ne $metadata.path_error -and (-not ($state -eq "absent" -and $metadata.installed -eq $false))) {
-        Fail-Json -obj $result -message $metadata.path_error
+        $module.FailJson($metadata.path_error)
     }
 
     return $metadata
@@ -360,7 +364,7 @@ if ($state -eq "absent") {
                 try {
                     $process_result = Run-Command @command_args
                 } catch {
-                    Fail-Json -obj $result -message "failed to run uninstall process ($($command_args['command'])): $($_.Exception.Message)"
+                    $module.FailJson("failed to run uninstall process ($($command_args['command'])): $($_.Exception.Message)", $_)
                 }
 
                 if (($null -ne $log_path) -and (Test-Path -LiteralPath $log_path)) {
@@ -369,20 +373,20 @@ if ($state -eq "absent") {
                     $log_content = $null
                 }
 
-                $result.rc = $process_result.rc
-                if ($valid_return_codes -notcontains $process_result.rc) {
-                    $result.stdout = Convert-Encoding -string $process_result.stdout
-                    $result.stderr = Convert-Encoding -string $process_result.stderr
+                $module.Result.rc = $process_result.rc
+                if ($expected_return_code -notcontains $process_result.rc) {
+                    $module.Result.stdout = Convert-Encoding -string $process_result.stdout
+                    $module.Result.stderr = Convert-Encoding -string $process_result.stderr
                     if ($null -ne $log_content) {
-                        $result.log = $log_content
+                        $module.Result.log = $log_content
                     }
-                    Fail-Json -obj $result -message "unexpected rc from uninstall $uninstall_exe $($uninstall_arguments): see rc, stdout and stderr for more details"
+                    $module.FailJson("unexpected rc from uninstall $uninstall_exe $($uninstall_arguments): see rc, stdout and stderr for more details")
                 } else {
-                    $result.failed = $false
+                    $module.Result.failed = $false
                 }
 
                 if ($process_result.rc -eq 3010) {
-                    $result.reboot_required = $true
+                    $module.Result.reboot_required = $true
                 }
             }
         } finally {
@@ -394,7 +398,7 @@ if ($state -eq "absent") {
             }
         }
 
-        $result.changed = $true
+        $module.Result.changed = $true
     }
 } else {
     if ($program_metadata.installed -eq $false) {
@@ -448,7 +452,7 @@ if ($state -eq "absent") {
                 try {
                     $process_result = Run-Command @command_args
                 } catch {
-                    Fail-Json -obj $result -message "failed to run install process ($($command_args['command'])): $($_.Exception.Message)"
+                    $module.FailJson("failed to run install process ($($command_args['command'])): $($_.Exception.Message)", $_)
                 }
 
                 if (($null -ne $log_path) -and (Test-Path -LiteralPath $log_path)) {
@@ -457,20 +461,20 @@ if ($state -eq "absent") {
                     $log_content = $null
                 }
 
-                $result.rc = $process_result.rc
-                if ($valid_return_codes -notcontains $process_result.rc) {
-                    $result.stdout = Convert-Encoding -string $process_result.stdout
-                    $result.stderr = Convert-Encoding -string $process_result.stderr
+                $module.Result.rc = $process_result.rc
+                if ($expected_return_code -notcontains $process_result.rc) {
+                    $module.Result.stdout = Convert-Encoding -string $process_result.stdout
+                    $module.Result.stderr = Convert-Encoding -string $process_result.stderr
                     if ($null -ne $log_content) {
-                        $result.log = $log_content
+                        $module.Result.log = $log_content
                     }
-                    Fail-Json -obj $result -message "unexpected rc from install $install_exe $($install_arguments): see rc, stdout and stderr for more details"
+                    $module.FailJson("unexpected rc from install $install_exe $($install_arguments): see rc, stdout and stderr for more details")
                 } else {
-                    $result.failed = $false
+                    $module.Result.failed = $false
                 }
 
                 if ($process_result.rc -eq 3010) {
-                    $result.reboot_required = $true
+                    $module.Result.reboot_required = $true
                 }
             }
         } finally {
@@ -482,8 +486,9 @@ if ($state -eq "absent") {
             }
         }
 
-        $result.changed = $true
+        $module.Result.changed = $true
     }
 }
 
-Exit-Json -obj $result
+$module.ExitJson()
+
