@@ -1,103 +1,139 @@
 ---
-- name: expect failure when not setting paths
-  win_find:
-    patterns: a
-  register: actual
-  failed_when: "actual.msg != 'Get-AnsibleParam: Missing required argument: paths'"
-
-- name: expect failure when setting paths to a file
+- name: expected skip when paths to a file
   win_find:
     paths: "{{win_find_dir}}\\single\\large.ps1"
   register: actual
-  failed_when: actual.msg != 'Argument path ' + win_find_dir + '\\single\\large.ps1 is a file not a directory'
 
-- name: expect failure when path is set to a non existent folder
+- name: assert skip when path is set to a file
+  assert:
+    that:
+    - not actual is changed
+    - actual.examined == 0
+    - actual.files == []
+    - actual.matched == 0
+    - actual.warnings == ["Argument path '" + win_find_dir + "\\single\\large.ps1' is a file not a directory, skipping"]
+
+- name: expect skip when path is set to a non existent folder
   win_find:
     paths: "{{win_find_dir}}\\thisisafakefolder"
   register: actual
-  failed_when: actual.msg != 'Argument path ' + win_find_dir + '\\thisisafakefolder does not exist cannot get information on'
+
+- name: assert skip when path is set to a non existent folder
+  assert:
+    that:
+    - not actual is changed
+    - actual.examined == 0
+    - actual.files == []
+    - actual.matched == 0
+    - actual.warnings == ["Argument path '" + win_find_dir + "\\thisisafakefolder' does not exist, skipping"]
 
 - name: get files in single directory
   win_find:
     paths: "{{win_find_dir}}\\single"
   register: actual
 
-- name: set expected value for files in a single directory
-  set_fact:
-    expected:
-      changed: False
-      examined: 5
-      failed: False
-      files:
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: f8d100cdcf0e6c1007db2f8dd0b7ee2884df89af,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: large.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\large.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 260002 }
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .log,
-          filename: out_20161101-091005.log,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\out_20161101-091005.log",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 86f7e437faa5a7fce15d1ddcb9eaeaea377667b8,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: small.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\small.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 1 }
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: test.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\test.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      matched: 4
-
-- name: assert actual == expected
+- name: assert get files in single directory
   assert:
-    that: actual == expected
+    that:
+    - not actual is changed
+    - actual.examined == 5
+    - actual.matched == 4
+    - actual.files[0].attributes == 'Archive'
+    - actual.files[0].checksum == 'f8d100cdcf0e6c1007db2f8dd0b7ee2884df89af'
+    - actual.files[0].creationtime == 1477984205
+    - actual.files[0].exists == True
+    - actual.files[0].extension == '.ps1'
+    - actual.files[0].filename == 'large.ps1'
+    - actual.files[0].hlnk_targets == []
+    - actual.files[0].isarchive == True
+    - actual.files[0].isdir == False
+    - actual.files[0].ishidden == False
+    - actual.files[0].isjunction == False
+    - actual.files[0].islnk == False
+    - actual.files[0].isreadonly == False
+    - actual.files[0].isreg == True
+    - actual.files[0].isshared == False
+    - actual.files[0].lastaccesstime == 1477984205
+    - actual.files[0].lastwritetime == 1477984205
+    - actual.files[0].lnk_source == None
+    - actual.files[0].lnk_target == None
+    - actual.files[0].nlink == 1
+    - actual.files[0].owner == 'BUILTIN\\Administrators'
+    - actual.files[0].path == win_find_dir + '\\single\\large.ps1'
+    - actual.files[0].sharename == None
+    - actual.files[0].size == 260002
+    - actual.files[1].attributes == 'Archive'
+    - actual.files[1].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
+    - actual.files[1].creationtime == 1477984205
+    - actual.files[1].exists == True
+    - actual.files[1].extension == '.log'
+    - actual.files[1].filename == 'out_20161101-091005.log'
+    - actual.files[1].hlnk_targets == []
+    - actual.files[1].isarchive == True
+    - actual.files[1].isdir == False
+    - actual.files[1].ishidden == False
+    - actual.files[1].isjunction == False
+    - actual.files[1].islnk == False
+    - actual.files[1].isreadonly == False
+    - actual.files[1].isreg == True
+    - actual.files[1].isshared == False
+    - actual.files[1].lastaccesstime == 1477984205
+    - actual.files[1].lastwritetime == 1477984205
+    - actual.files[1].lnk_source == None
+    - actual.files[1].lnk_target == None
+    - actual.files[1].nlink == 1
+    - actual.files[1].owner == 'BUILTIN\\Administrators'
+    - actual.files[1].path == win_find_dir + '\\single\\out_20161101-091005.log'
+    - actual.files[1].sharename == None
+    - actual.files[1].size == 14
+    - actual.files[2].attributes == 'Archive'
+    - actual.files[2].checksum == '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8'
+    - actual.files[2].creationtime == 1477984205
+    - actual.files[2].exists == True
+    - actual.files[2].extension == '.ps1'
+    - actual.files[2].filename == 'small.ps1'
+    - actual.files[2].hlnk_targets == []
+    - actual.files[2].isarchive == True
+    - actual.files[2].isdir == False
+    - actual.files[2].ishidden == False
+    - actual.files[2].isjunction == False
+    - actual.files[2].islnk == False
+    - actual.files[2].isreadonly == False
+    - actual.files[2].isreg == True
+    - actual.files[2].isshared == False
+    - actual.files[2].lastaccesstime == 1477984205
+    - actual.files[2].lastwritetime == 1477984205
+    - actual.files[2].lnk_source == None
+    - actual.files[2].lnk_target == None
+    - actual.files[2].nlink == 1
+    - actual.files[2].owner == 'BUILTIN\\Administrators'
+    - actual.files[2].path == win_find_dir + '\\single\\small.ps1'
+    - actual.files[2].sharename == None
+    - actual.files[2].size == 1
+    - actual.files[3].attributes == 'Archive'
+    - actual.files[3].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
+    - actual.files[3].creationtime == 1477984205
+    - actual.files[3].exists == True
+    - actual.files[3].extension == '.ps1'
+    - actual.files[3].filename == 'test.ps1'
+    - actual.files[3].hlnk_targets == []
+    - actual.files[3].isarchive == True
+    - actual.files[3].isdir == False
+    - actual.files[3].ishidden == False
+    - actual.files[3].isjunction == False
+    - actual.files[3].islnk == False
+    - actual.files[3].isreadonly == False
+    - actual.files[3].isreg == True
+    - actual.files[3].isshared == False
+    - actual.files[3].lastaccesstime == 1477984205
+    - actual.files[3].lastwritetime == 1477984205
+    - actual.files[3].lnk_source == None
+    - actual.files[3].lnk_target == None
+    - actual.files[3].nlink == 1
+    - actual.files[3].owner == 'BUILTIN\\Administrators'
+    - actual.files[3].path == win_find_dir + '\\single\\test.ps1'
+    - actual.files[3].sharename == None
+    - actual.files[3].size == 14
 
 - name: find hidden files
   win_find:
@@ -105,34 +141,36 @@
     hidden: True
   register: actual
 
-- name: set fact for hidden files
-  set_fact:
-    expected:
-      changed: False
-      examined: 11
-      failed: False
-      files:
-      - { isarchive: True,
-          attributes: "Hidden, Archive",
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: hidden.ps1,
-          ishidden: True,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\hidden.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      matched: 1
-
-- name: assert actual == expected
+- name: assert get files in single directory
   assert:
-    that: actual == expected
+    that:
+    - not actual is changed
+    - actual.examined == 11
+    - actual.matched == 1
+    - actual.files[0].attributes == 'Hidden, Archive'
+    - actual.files[0].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
+    - actual.files[0].creationtime == 1477984205
+    - actual.files[0].exists == True
+    - actual.files[0].extension == '.ps1'
+    - actual.files[0].filename == 'hidden.ps1'
+    - actual.files[0].hlnk_targets == []
+    - actual.files[0].isarchive == True
+    - actual.files[0].isdir == False
+    - actual.files[0].ishidden == True
+    - actual.files[0].isjunction == False
+    - actual.files[0].islnk == False
+    - actual.files[0].isreadonly == False
+    - actual.files[0].isreg == True
+    - actual.files[0].isshared == False
+    - actual.files[0].lastaccesstime == 1477984205
+    - actual.files[0].lastwritetime == 1477984205
+    - actual.files[0].lnk_source == None
+    - actual.files[0].lnk_target == None
+    - actual.files[0].nlink == 1
+    - actual.files[0].owner == 'BUILTIN\\Administrators'
+    - actual.files[0].path == win_find_dir + '\\single\\hidden.ps1'
+    - actual.files[0].sharename == None
+    - actual.files[0].size == 14
 
 - name: find file based on pattern
   win_find:
@@ -147,36 +185,37 @@
     use_regex: True
   register: actual_regex
 
-- name: set fact for pattern files
-  set_fact:
-    expected:
-      changed: False
-      examined: 5
-      failed: False
-      files:
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .log,
-          filename: out_20161101-091005.log,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\out_20161101-091005.log",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      matched: 1
-
-- name: assert actual == expected
+- name: assert find file based on pattern
   assert:
-    that: 
-    - actual_pattern == expected
-    - actual_regex == expected
+    that:
+    - not actual_pattern is changed
+    - actual_pattern.examined == 5
+    - actual_pattern.matched == 1
+    - actual_pattern.files[0].attributes == 'Archive'
+    - actual_pattern.files[0].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
+    - actual_pattern.files[0].creationtime == 1477984205
+    - actual_pattern.files[0].exists == True
+    - actual_pattern.files[0].extension == '.log'
+    - actual_pattern.files[0].filename == 'out_20161101-091005.log'
+    - actual_pattern.files[0].hlnk_targets == []
+    - actual_pattern.files[0].isarchive == True
+    - actual_pattern.files[0].isdir == False
+    - actual_pattern.files[0].ishidden == False
+    - actual_pattern.files[0].isjunction == False
+    - actual_pattern.files[0].islnk == False
+    - actual_pattern.files[0].isreadonly == False
+    - actual_pattern.files[0].isreg == True
+    - actual_pattern.files[0].isshared == False
+    - actual_pattern.files[0].lastaccesstime == 1477984205
+    - actual_pattern.files[0].lastwritetime == 1477984205
+    - actual_pattern.files[0].lnk_source == None
+    - actual_pattern.files[0].lnk_target == None
+    - actual_pattern.files[0].nlink == 1
+    - actual_pattern.files[0].owner == 'BUILTIN\\Administrators'
+    - actual_pattern.files[0].path == win_find_dir + '\\single\\out_20161101-091005.log'
+    - actual_pattern.files[0].sharename == None
+    - actual_pattern.files[0].size == 14
+    - actual_pattern == actual_regex
 
 - name: find files with recurse set
   win_find:
@@ -185,66 +224,84 @@
     patterns: "*.ps1"
   register: actual
 
-- name: set expected value for files in a nested directory
-  set_fact:
-    expected:
-      changed: False
-      examined: 8
-      failed: False
-      files:
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: file.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\file.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: test.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\sub-nest\\test.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: test.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\test.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      matched: 3
-
-- name: assert actual == expected
+- name: assert find files with recurse set
   assert:
-    that: actual == expected
+    that:
+    - not actual is changed
+    - actual.examined == 8
+    - actual.matched == 3
+    - actual.files[0].attributes == 'Archive'
+    - actual.files[0].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
+    - actual.files[0].creationtime == 1477984205
+    - actual.files[0].exists == True
+    - actual.files[0].extension == '.ps1'
+    - actual.files[0].filename == 'file.ps1'
+    - actual.files[0].hlnk_targets == []
+    - actual.files[0].isarchive == True
+    - actual.files[0].isdir == False
+    - actual.files[0].ishidden == False
+    - actual.files[0].isjunction == False
+    - actual.files[0].islnk == False
+    - actual.files[0].isreadonly == False
+    - actual.files[0].isreg == True
+    - actual.files[0].isshared == False
+    - actual.files[0].lastaccesstime == 1477984205
+    - actual.files[0].lastwritetime == 1477984205
+    - actual.files[0].lnk_source == None
+    - actual.files[0].lnk_target == None
+    - actual.files[0].nlink == 1
+    - actual.files[0].owner == 'BUILTIN\\Administrators'
+    - actual.files[0].path == win_find_dir + '\\nested\\file.ps1'
+    - actual.files[0].sharename == None
+    - actual.files[0].size == 14
+    - actual.files[1].attributes == 'Archive'
+    - actual.files[1].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
+    - actual.files[1].creationtime == 1477984205
+    - actual.files[1].exists == True
+    - actual.files[1].extension == '.ps1'
+    - actual.files[1].filename == 'test.ps1'
+    - actual.files[1].hlnk_targets == []
+    - actual.files[1].isarchive == True
+    - actual.files[1].isdir == False
+    - actual.files[1].ishidden == False
+    - actual.files[1].isjunction == False
+    - actual.files[1].islnk == False
+    - actual.files[1].isreadonly == False
+    - actual.files[1].isreg == True
+    - actual.files[1].isshared == False
+    - actual.files[1].lastaccesstime == 1477984205
+    - actual.files[1].lastwritetime == 1477984205
+    - actual.files[1].lnk_source == None
+    - actual.files[1].lnk_target == None
+    - actual.files[1].nlink == 1
+    - actual.files[1].owner == 'BUILTIN\\Administrators'
+    - actual.files[1].path == win_find_dir + '\\nested\\sub-nest\\test.ps1'
+    - actual.files[1].sharename == None
+    - actual.files[1].size == 14
+    - actual.files[2].attributes == 'Archive'
+    - actual.files[2].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
+    - actual.files[2].creationtime == 1477984205
+    - actual.files[2].exists == True
+    - actual.files[2].extension == '.ps1'
+    - actual.files[2].filename == 'test.ps1'
+    - actual.files[2].hlnk_targets == []
+    - actual.files[2].isarchive == True
+    - actual.files[2].isdir == False
+    - actual.files[2].ishidden == False
+    - actual.files[2].isjunction == False
+    - actual.files[2].islnk == False
+    - actual.files[2].isreadonly == False
+    - actual.files[2].isreg == True
+    - actual.files[2].isshared == False
+    - actual.files[2].lastaccesstime == 1477984205
+    - actual.files[2].lastwritetime == 1477984205
+    - actual.files[2].lnk_source == None
+    - actual.files[2].lnk_target == None
+    - actual.files[2].nlink == 1
+    - actual.files[2].owner == 'BUILTIN\\Administrators'
+    - actual.files[2].path == win_find_dir + '\\nested\\test.ps1'
+    - actual.files[2].sharename == None
+    - actual.files[2].size == 14
 
 - name: find files with recurse set and follow links
   win_find:
@@ -254,82 +311,108 @@
     patterns: "*.ps1"
   register: actual
 
-- name: set expected value for files in a nested directory while following links
-  set_fact:
-    expected:
-      changed: False
-      examined: 10
-      failed: False
-      files:
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: file.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\file.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: link.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\link\\link.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: test.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\sub-nest\\test.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 8df33cee3325596517df5bb5aa980cf9c5c1fda3,
-          creationtime: 1477984205,
-          extension: .ps1,
-          filename: test.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\nested\\test.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 14 }
-      matched: 4
-
-- name: assert actual == expected
+- name: assert find files with recurse set and follow links
   assert:
-    that: actual == expected
+    that:
+    - not actual is changed
+    - actual.examined == 10
+    - actual.matched == 4
+    - actual.files[0].attributes == 'Archive'
+    - actual.files[0].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
+    - actual.files[0].creationtime == 1477984205
+    - actual.files[0].exists == True
+    - actual.files[0].extension == '.ps1'
+    - actual.files[0].filename == 'file.ps1'
+    - actual.files[0].hlnk_targets == []
+    - actual.files[0].isarchive == True
+    - actual.files[0].isdir == False
+    - actual.files[0].ishidden == False
+    - actual.files[0].isjunction == False
+    - actual.files[0].islnk == False
+    - actual.files[0].isreadonly == False
+    - actual.files[0].isreg == True
+    - actual.files[0].isshared == False
+    - actual.files[0].lastaccesstime == 1477984205
+    - actual.files[0].lastwritetime == 1477984205
+    - actual.files[0].lnk_source == None
+    - actual.files[0].lnk_target == None
+    - actual.files[0].nlink == 1
+    - actual.files[0].owner == 'BUILTIN\\Administrators'
+    - actual.files[0].path == win_find_dir + '\\nested\\file.ps1'
+    - actual.files[0].sharename == None
+    - actual.files[0].size == 14
+    - actual.files[1].attributes == 'Archive'
+    - actual.files[1].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
+    - actual.files[1].creationtime == 1477984205
+    - actual.files[1].exists == True
+    - actual.files[1].extension == '.ps1'
+    - actual.files[1].filename == 'link.ps1'
+    - actual.files[1].hlnk_targets == []
+    - actual.files[1].isarchive == True
+    - actual.files[1].isdir == False
+    - actual.files[1].ishidden == False
+    - actual.files[1].isjunction == False
+    - actual.files[1].islnk == False
+    - actual.files[1].isreadonly == False
+    - actual.files[1].isreg == True
+    - actual.files[1].isshared == False
+    - actual.files[1].lastaccesstime == 1477984205
+    - actual.files[1].lastwritetime == 1477984205
+    - actual.files[1].lnk_source == None
+    - actual.files[1].lnk_target == None
+    - actual.files[1].nlink == 1
+    - actual.files[1].owner == 'BUILTIN\\Administrators'
+    - actual.files[1].path == win_find_dir + '\\nested\\link\\link.ps1'
+    - actual.files[1].sharename == None
+    - actual.files[1].size == 14
+    - actual.files[2].attributes == 'Archive'
+    - actual.files[2].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
+    - actual.files[2].creationtime == 1477984205
+    - actual.files[2].exists == True
+    - actual.files[2].extension == '.ps1'
+    - actual.files[2].filename == 'test.ps1'
+    - actual.files[2].hlnk_targets == []
+    - actual.files[2].isarchive == True
+    - actual.files[2].isdir == False
+    - actual.files[2].ishidden == False
+    - actual.files[2].isjunction == False
+    - actual.files[2].islnk == False
+    - actual.files[2].isreadonly == False
+    - actual.files[2].isreg == True
+    - actual.files[2].isshared == False
+    - actual.files[2].lastaccesstime == 1477984205
+    - actual.files[2].lastwritetime == 1477984205
+    - actual.files[2].lnk_source == None
+    - actual.files[2].lnk_target == None
+    - actual.files[2].nlink == 1
+    - actual.files[2].owner == 'BUILTIN\\Administrators'
+    - actual.files[2].path == win_find_dir + '\\nested\\sub-nest\\test.ps1'
+    - actual.files[2].sharename == None
+    - actual.files[2].size == 14
+    - actual.files[3].attributes == 'Archive'
+    - actual.files[3].checksum == '8df33cee3325596517df5bb5aa980cf9c5c1fda3'
+    - actual.files[3].creationtime == 1477984205
+    - actual.files[3].exists == True
+    - actual.files[3].extension == '.ps1'
+    - actual.files[3].filename == 'test.ps1'
+    - actual.files[3].hlnk_targets == []
+    - actual.files[3].isarchive == True
+    - actual.files[3].isdir == False
+    - actual.files[3].ishidden == False
+    - actual.files[3].isjunction == False
+    - actual.files[3].islnk == False
+    - actual.files[3].isreadonly == False
+    - actual.files[3].isreg == True
+    - actual.files[3].isshared == False
+    - actual.files[3].lastaccesstime == 1477984205
+    - actual.files[3].lastwritetime == 1477984205
+    - actual.files[3].lnk_source == None
+    - actual.files[3].lnk_target == None
+    - actual.files[3].nlink == 1
+    - actual.files[3].owner == 'BUILTIN\\Administrators'
+    - actual.files[3].path == win_find_dir + '\\nested\\test.ps1'
+    - actual.files[3].sharename == None
+    - actual.files[3].size == 14
 
 - name: find directories
   win_find:
@@ -337,32 +420,36 @@
     file_type: directory
   register: actual
 
-- name: set expected fact for directories with recurse and follow
-  set_fact:
-    expected:
-      changed: False
-      examined: 2
-      failed: False
-      files:
-      - { isarchive: False,
-          attributes: Directory,
-          creationtime: 1477984205,
-          filename: sub-link,
-          ishidden: False,
-          isdir: True,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\link-dest\\sub-link",
-          isreadonly: False,
-          isshared: False,
-          size: 0 }
-      matched: 1
-
-- name: assert actual == expected
+- name: assert find directories
   assert:
-    that: actual == expected
+    that:
+    - not actual is changed
+    - actual.examined == 2
+    - actual.matched == 1
+    - actual.files[0].attributes == 'Directory'
+    - actual.files[0].checksum == None
+    - actual.files[0].creationtime == 1477984205
+    - actual.files[0].exists == True
+    - actual.files[0].extension == None
+    - actual.files[0].filename == 'sub-link'
+    - actual.files[0].hlnk_targets == []
+    - actual.files[0].isarchive == False
+    - actual.files[0].isdir == True
+    - actual.files[0].ishidden == False
+    - actual.files[0].isjunction == False
+    - actual.files[0].islnk == False
+    - actual.files[0].isreadonly == False
+    - actual.files[0].isreg == False
+    - actual.files[0].isshared == False
+    - actual.files[0].lastaccesstime == 1477984205
+    - actual.files[0].lastwritetime == 1477984205
+    - actual.files[0].lnk_source == None
+    - actual.files[0].lnk_target == None
+    - actual.files[0].nlink == 1
+    - actual.files[0].owner == 'BUILTIN\\Administrators'
+    - actual.files[0].path == win_find_dir + '\\link-dest\\sub-link'
+    - actual.files[0].sharename == None
+    - actual.files[0].size == None
 
 - name: find directories recurse and follow with a broken link
   win_find:
@@ -375,12 +462,15 @@
 - name: check directory count with recurse and follow is correct
   assert:
     that:
+    - not actual is changed
     - actual.examined == 37
     - actual.matched == 17
     - actual.files[0].filename == 'broken-link'
+    - actual.files[0].isjunction == False
     - actual.files[0].islnk == True
     - actual.files[6].filename == 'junction-link'
-    - actual.files[6].islnk == True
+    - actual.files[6].isjunction == True
+    - actual.files[6].islnk == False
     - actual.files[6].lnk_source == win_find_dir + '\\junction-link-dest'
     - actual.files[11].filename == 'link'
     - actual.files[11].islnk == True
@@ -402,36 +492,37 @@
     size: 253k
   register: actual_with_byte
 
-- name: set expected fact for files by size
-  set_fact:
-    expected:
-      changed: False
-      examined: 5
-      failed: False
-      files:
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: f8d100cdcf0e6c1007db2f8dd0b7ee2884df89af,
-          creationtime: 1477984205,
-          extension: ".ps1",
-          filename: large.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\large.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 260002 }
-      matched: 1
-
-- name: assert actual == expected
+- name: assert filter files by size
   assert:
-    that: 
-    - actual_without_byte == expected
-    - actual_with_byte == expected
+    that:
+    - not actual_without_byte is changed
+    - actual_without_byte.examined == 5
+    - actual_without_byte.matched == 1
+    - actual_without_byte.files[0].attributes == 'Archive'
+    - actual_without_byte.files[0].checksum == 'f8d100cdcf0e6c1007db2f8dd0b7ee2884df89af'
+    - actual_without_byte.files[0].creationtime == 1477984205
+    - actual_without_byte.files[0].exists == True
+    - actual_without_byte.files[0].extension == '.ps1'
+    - actual_without_byte.files[0].filename == 'large.ps1'
+    - actual_without_byte.files[0].hlnk_targets == []
+    - actual_without_byte.files[0].isarchive == True
+    - actual_without_byte.files[0].isdir == False
+    - actual_without_byte.files[0].ishidden == False
+    - actual_without_byte.files[0].isjunction == False
+    - actual_without_byte.files[0].islnk == False
+    - actual_without_byte.files[0].isreadonly == False
+    - actual_without_byte.files[0].isreg == True
+    - actual_without_byte.files[0].isshared == False
+    - actual_without_byte.files[0].lastaccesstime == 1477984205
+    - actual_without_byte.files[0].lastwritetime == 1477984205
+    - actual_without_byte.files[0].lnk_source == None
+    - actual_without_byte.files[0].lnk_target == None
+    - actual_without_byte.files[0].nlink == 1
+    - actual_without_byte.files[0].owner == 'BUILTIN\\Administrators'
+    - actual_without_byte.files[0].path == win_find_dir + '\\single\\large.ps1'
+    - actual_without_byte.files[0].sharename == None
+    - actual_without_byte.files[0].size == 260002
+    - actual_without_byte == actual_with_byte
 
 - name: filter files by size (less than) without byte specified
   win_find:
@@ -445,36 +536,37 @@
     size: -4b
   register: actual_with_byte
 
-- name: set expected fact for files by size (less than)
-  set_fact:
-    expected:
-      changed: False
-      examined: 5
-      failed: False
-      files:
-      - { isarchive: True,
-          attributes: Archive,
-          checksum: 86f7e437faa5a7fce15d1ddcb9eaeaea377667b8,
-          creationtime: 1477984205,
-          extension: ".ps1",
-          filename: small.ps1,
-          ishidden: False,
-          isdir: False,
-          islnk: False,
-          lastaccesstime: 1477984205,
-          lastwritetime: 1477984205,
-          owner: BUILTIN\Administrators,
-          path: "{{win_find_dir}}\\single\\small.ps1",
-          isreadonly: False,
-          isshared: False,
-          size: 1 }
-      matched: 1
-
-- name: assert actual == expected
+- name: assert filter files by size (less than) without byte specified
   assert:
-    that: 
-    - actual_without_byte == expected
-    - actual_with_byte == expected
+    that:
+    - not actual_without_byte is changed
+    - actual_without_byte.examined == 5
+    - actual_without_byte.matched == 1
+    - actual_without_byte.files[0].attributes == 'Archive'
+    - actual_without_byte.files[0].checksum == '86f7e437faa5a7fce15d1ddcb9eaeaea377667b8'
+    - actual_without_byte.files[0].creationtime == 1477984205
+    - actual_without_byte.files[0].exists == True
+    - actual_without_byte.files[0].extension == '.ps1'
+    - actual_without_byte.files[0].filename == 'small.ps1'
+    - actual_without_byte.files[0].hlnk_targets == []
+    - actual_without_byte.files[0].isarchive == True
+    - actual_without_byte.files[0].isdir == False
+    - actual_without_byte.files[0].ishidden == False
+    - actual_without_byte.files[0].isjunction == False
+    - actual_without_byte.files[0].islnk == False
+    - actual_without_byte.files[0].isreadonly == False
+    - actual_without_byte.files[0].isreg == True
+    - actual_without_byte.files[0].isshared == False
+    - actual_without_byte.files[0].lastaccesstime == 1477984205
+    - actual_without_byte.files[0].lastwritetime == 1477984205
+    - actual_without_byte.files[0].lnk_source == None
+    - actual_without_byte.files[0].lnk_target == None
+    - actual_without_byte.files[0].nlink == 1
+    - actual_without_byte.files[0].owner == 'BUILTIN\\Administrators'
+    - actual_without_byte.files[0].path == win_find_dir + '\\single\\small.ps1'
+    - actual_without_byte.files[0].sharename == None
+    - actual_without_byte.files[0].size == 1
+    - actual_without_byte == actual_with_byte
 
 # For dates we cannot assert against expected as the times change, this is a poor mans attempt at testing
 - name: filter files by age without unit specified
@@ -528,7 +620,7 @@
   assert:
     that:
     - actual_md5_checksum.files[0].checksum == 'd1713d0f1d2e8fae230328d8fd59de01'
-  
+
 - name: get list of files with sha1 checksum
   win_find:
     paths: "{{win_find_dir}}\\single"
@@ -587,7 +679,7 @@
 - name: assert no checksum is returned
   assert:
     that:
-    - actual_no_checksum.files[0].checksum is undefined
+    - actual_no_checksum.files[0].checksum == None
 
 # https://github.com/ansible/ansible/issues/26158
 - name: get list of files in an empty nested directory
@@ -656,7 +748,8 @@
 - name: assert win_find only examined 2 files with under-privileged account
   assert:
     that:
-    - secure_result.examined == 2
-    - secure_result.matched == 2
+    - secure_result.examined == 3
+    - secure_result.matched == 3
     - secure_result.files[0].path == win_find_dir + "\secure-tests\open"
     - secure_result.files[1].path == win_find_dir + "\secure-tests\open\internal-folder"
+    - secure_result.files[2].path == win_find_dir + "\secure-tests\secure"
