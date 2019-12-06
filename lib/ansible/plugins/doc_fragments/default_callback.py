@@ -76,5 +76,5 @@ class ModuleDocFragment(object):
         ini:
           - key: always_display_failed_task_path
             section: defaults
-        version_added: 'x.y'
+        version_added: '2.10'
 '''
