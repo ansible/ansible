@@ -22,7 +22,7 @@ function Get-CertificateInfo ($cert)
 {
     $epoch_date = Get-Date -Date "01/01/1970"
 
-    $cert_info = @{ }
+    $cert_info = @{ extensions = @() }
     $cert_info.friendly_name = $cert.FriendlyName
     $cert_info.thumbprint = $cert.Thumbprint
     $cert_info.subject = $cert.Subject
@@ -41,43 +41,46 @@ function Get-CertificateInfo ($cert)
     $cert_info.dns_names = [System.Collections.Generic.List`1[String]]@($cert_info.issued_to)
     $cert_info.raw = [System.Convert]::ToBase64String($cert.GetRawCertData())
     $cert_info.public_key = [System.Convert]::ToBase64String($cert.GetPublicKey())
-    $cert_info.extensions = foreach ($extension in $cert.Extensions)
+    if ($cert.Extensions.Count -gt 0)
     {
-        $extension_info = @{
-            critical = $extension.Critical
-            field    = $extension.Oid.FriendlyName
-            value    = $extension.Format($false)
-        }
-        if ($extension -is [System.Security.Cryptography.X509Certificates.X509BasicConstraintsExtension])
+        [array]$cert_info.extensions = foreach ($extension in $cert.Extensions)
         {
-            $cert_info.is_ca = $extension.CertificateAuthority
-            $cert_info.path_length_constraint = $extension.PathLengthConstraint
-        }
-        elseif ($extension -is [System.Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension])
-        {
-            $cert_info.intended_purposes = $extension.EnhancedKeyUsages.FriendlyName -as [string[]]
-        }
-        elseif ($extension -is [System.Security.Cryptography.X509Certificates.X509KeyUsageExtension])
-        {
-            $cert_info.key_usages = $extension.KeyUsages.ToString().Split(',').Trim() -as [string[]]
-        }
-        elseif ($extension -is [System.Security.Cryptography.X509Certificates.X509SubjectKeyIdentifierExtension])
-        {
-            $cert_info.ski = $extension.SubjectKeyIdentifier
-        }
-        elseif ($extension.Oid.value -eq '2.5.29.17')
-        {
-            $sans = $extension.Format($true).Split("`r`n", [System.StringSplitOptions]::RemoveEmptyEntries)
-            foreach ($san in $sans)
+            $extension_info = @{
+                critical = $extension.Critical
+                field    = $extension.Oid.FriendlyName
+                value    = $extension.Format($false)
+            }
+            if ($extension -is [System.Security.Cryptography.X509Certificates.X509BasicConstraintsExtension])
             {
-                $san_parts = $san.Split("=")
-                if ($san_parts.Length -ge 2 -and $san_parts[0].Trim() -eq 'DNS Name')
+                $cert_info.is_ca = $extension.CertificateAuthority
+                $cert_info.path_length_constraint = $extension.PathLengthConstraint
+            }
+            elseif ($extension -is [System.Security.Cryptography.X509Certificates.X509EnhancedKeyUsageExtension])
+            {
+                $cert_info.intended_purposes = $extension.EnhancedKeyUsages.FriendlyName -as [string[]]
+            }
+            elseif ($extension -is [System.Security.Cryptography.X509Certificates.X509KeyUsageExtension])
+            {
+                $cert_info.key_usages = $extension.KeyUsages.ToString().Split(',').Trim() -as [string[]]
+            }
+            elseif ($extension -is [System.Security.Cryptography.X509Certificates.X509SubjectKeyIdentifierExtension])
+            {
+                $cert_info.ski = $extension.SubjectKeyIdentifier
+            }
+            elseif ($extension.Oid.value -eq '2.5.29.17')
+            {
+                $sans = $extension.Format($true).Split("`r`n", [System.StringSplitOptions]::RemoveEmptyEntries)
+                foreach ($san in $sans)
                 {
-                    $cert_info.dns_names.Add($san_parts[1].Trim())
+                    $san_parts = $san.Split("=")
+                    if ($san_parts.Length -ge 2 -and $san_parts[0].Trim() -eq 'DNS Name')
+                    {
+                        $cert_info.dns_names.Add($san_parts[1].Trim())
+                    }
                 }
             }
+            $extension_info
         }
-        $extension_info
     }
     return $cert_info
 }
