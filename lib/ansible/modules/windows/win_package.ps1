@@ -15,10 +15,10 @@ $spec = @{
         expected_return_code = @{ type = "list"; elements = "int"; default = @(0, 3010) }
         path = @{ type = "str"}
         chdir = @{ type = "path" }
-        product_id = @{ type = "str"; aliases = "productid" }
-        state = @{ type = "str"; default = "present"; choices = "absent", "present"; aliases = "ensure" }
-        username = @{ type = "str"; aliases = "user_name" }
-        password = @{ type = "str"; no_log = $true; aliases = "user_password" }
+        product_id = @{ type = "str"; aliases = @(,"productid") }
+        state = @{ type = "str"; default = "present"; choices = "absent", "present"; aliases = @(,"ensure") }
+        username = @{ type = "str"; aliases = @(,"user_name") }
+        password = @{ type = "str"; no_log = $true; aliases = @(,"user_password") }
         validate_certs = @{ type = "bool"; default = $true }
         creates_path = @{ type = "path" }
         creates_version = @{ type = "str" }
