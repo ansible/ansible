@@ -4,8 +4,8 @@
     config: "{{ lines }}"
   vars:
     lines: |
-      ip route vrf ansible_vrf 192.168.2.0 255.255.255.0 10.0.0.8 tag 50 name test_vrf track 150
-      ip route 192.168.3.0 255.255.255.0 10.0.0.3 name route_3
-      ip route 192.168.3.0 255.255.255.0 10.0.0.2 30 name route_2
-      ip route 192.168.3.0 255.255.255.0 10.0.0.1 110 tag 40 name route_1 multicast
-      ipv6 route FD5D:12C9:2201:1::/64 FD5D:12C9:2202::2 tag 105 name test_v6
+      ip route vrf ansible_temp_vrf 192.0.2.0/24 255.255.255.0 192.0.2.1 tag 50 name test_vrf track 150
+      ip route 198.51.100.0 255.255.255.0 198.51.101.3 name route_3
+      ip route 198.51.100.0 255.255.255.0 198.51.101.2 30 name route_2
+      ip route 198.51.100.0 255.255.255.0 198.51.101.1 110 tag 40 name route_1 multicast
+      ipv6 route 2001:db8:0:3::/64 2001:db8:0:3::2 tag 105 name test_v6

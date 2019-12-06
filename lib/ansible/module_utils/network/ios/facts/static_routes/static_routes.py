@@ -67,6 +67,15 @@ class Static_RoutesFacts(object):
                     objs.append(obj)
         facts = {}
 
+        # append all static routes address_family with NO VRF together
+        no_vrf_address_family = {
+            'address_families': [each.get('address_families')[0] for each in objs if each.get('vrf') is None]
+        }
+
+        temp_objs = [each for each in objs if each.get('vrf') is not None]
+        temp_objs.append(no_vrf_address_family)
+        objs = temp_objs
+
         if objs:
             facts['static_routes'] = []
             params = utils.validate_config(self.argument_spec, {'config': objs})
@@ -102,16 +111,17 @@ class Static_RoutesFacts(object):
                     filter_vrf = utils.parse_conf_arg(i, ip_str)
                     if '/' not in filter_vrf and '::' not in filter_vrf:
                         filter_vrf, dest_vrf = self.update_netmask_to_cidr(filter_vrf, 1, 2)
+                        dest_vrf = dest_vrf + '_vrf'
                     else:
                         dest_vrf = filter_vrf.split(' ')[1]
                     if dest_vrf not in same_dest.keys():
-                        same_dest[dest_vrf + '_vrf'] = []
-                        same_dest[dest_vrf + '_vrf'].append('vrf ' + filter_vrf)
+                        same_dest[dest_vrf] = []
+                        same_dest[dest_vrf].append('vrf ' + filter_vrf)
                     elif 'vrf' not in same_dest[dest_vrf][0]:
-                        same_dest[dest_vrf + '_vrf'] = []
-                        same_dest[dest_vrf + '_vrf'].append('vrf ' + filter_vrf)
+                        same_dest[dest_vrf] = []
+                        same_dest[dest_vrf].append('vrf ' + filter_vrf)
                     else:
-                        same_dest[dest_vrf + '_vrf'] = same_dest[dest_vrf + '_vrf'].append(('vrf ' + filter_vrf))
+                        same_dest[dest_vrf].append(('vrf ' + filter_vrf))
                 else:
                     filter = utils.parse_conf_arg(i, ip_str)
                     if '/' not in filter and '::' not in filter:
@@ -156,7 +166,6 @@ class Static_RoutesFacts(object):
             else:
                 route_dict['dest'] = conf
             if 'vrf' in conf_val[0]:
-                next_hops = []
                 hops = {}
                 if '::' in conf:
                     hops['forward_router_address'] = route[3]

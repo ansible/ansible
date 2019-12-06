@@ -10,31 +10,31 @@
     - name: Replaces device configuration of listed interfaces with provided configuration
       ios_static_routes: &replaced
         config:
-          - vrf: ansible_vrf
+          - vrf: ansible_temp_vrf
             address_families:
             - afi: ipv4
               routes:
-              - dest: 192.168.2.0/24
+              - dest: 192.0.2.0/24
                 next_hops:
-                - forward_router_address: 10.0.0.8
+                - forward_router_address: 192.0.2.1
                   name: replaced_vrf
                   tag: 75
                   track: 155
           - address_families:
             - afi: ipv4
               routes:
-              - dest: 192.168.3.0/24
+              - dest: 198.51.100.0/24
                 next_hops:
-                - forward_router_address: 10.0.0.1
+                - forward_router_address: 198.51.101.1
                   name: replaced_route
                   distance_metric: 175
                   tag: 70
                   multicast: True
             - afi: ipv6
               routes:
-              - dest: FD5D:12C9:2201:1::/64
+              - dest: 2001:db8:0:3::/64
                 next_hops:
-                - forward_router_address: FD5D:12C9:2202::2
+                - forward_router_address: 2001:db8:0:3::2
                   name: replaced_v6
                   tag: 110
         state: replaced

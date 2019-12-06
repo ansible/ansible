@@ -10,36 +10,36 @@
     - name: Delete attributes of provided configured interfaces
       ios_static_routes: &deleted
         config:
-          - vrf: ansible_vrf
+          - vrf: ansible_temp_vrf
             address_families:
             - afi: ipv4
               routes:
-              - dest: 192.168.2.0/24
+              - dest: 192.0.2.0/24
                 next_hops:
-                - forward_router_address: 10.0.0.8
+                - forward_router_address: 192.0.2.1
                   name: test_vrf
                   tag: 50
                   track: 150
           - address_families:
             - afi: ipv4
               routes:
-              - dest: 192.168.3.0/24
+              - dest: 198.51.100.0/24
                 next_hops:
-                - forward_router_address: 10.0.0.1
+                - forward_router_address: 198.51.101.1
                   name: route_1
                   distance_metric: 110
                   tag: 40
                   multicast: True
-                - forward_router_address: 10.0.0.2
+                - forward_router_address: 198.51.101.2
                   name: route_2
                   distance_metric: 30
-                - forward_router_address: 10.0.0.3
+                - forward_router_address: 198.51.101.3
                   name: route_3
             - afi: ipv6
               routes:
-              - dest: FD5D:12C9:2201:1::/64
+              - dest: 2001:db8:0:3::/64
                 next_hops:
-                - forward_router_address: FD5D:12C9:2202::2
+                - forward_router_address: 2001:db8:0:3::2
                   name: test_v6
                   tag: 105
         state: deleted

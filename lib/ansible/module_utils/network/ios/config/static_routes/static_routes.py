@@ -61,21 +61,40 @@ class Static_Routes(ConfigBase):
         commands = list()
         warnings = list()
 
-        existing_static_routes_facts = self.get_static_routes_facts()
-        commands.extend(self.set_config(existing_static_routes_facts))
-        if commands:
+        if self.state in self.ACTION_STATES:
+            existing_static_routes_facts = self.get_static_routes_facts()
+        else:
+            existing_static_routes_facts = []
+
+        if self.state in self.ACTION_STATES or self.state == 'rendered':
+            commands.extend(self.set_config(existing_static_routes_facts))
+
+        if commands and self.state in self.ACTION_STATES:
             if not self._module.check_mode:
                 self._connection.edit_config(commands)
             result['changed'] = True
-        result['commands'] = commands
 
-        changed_static_routes_facts = self.get_static_routes_facts()
+        if self.state in self.ACTION_STATES:
+            result['commands'] = commands
 
-        result['before'] = existing_static_routes_facts
-        if result['changed']:
-            result['after'] = changed_static_routes_facts
+        if self.state in self.ACTION_STATES or self.state == 'gathered':
+            changed_static_routes_facts = self.get_static_routes_facts()
+        elif self.state == 'rendered':
+            result['rendered'] = commands
+        elif self.state == 'parsed':
+            result['parsed'] = self.get_static_routes_facts(data=self._module.params['running_config'])
+        else:
+            changed_static_routes_facts = []
+
+        if self.state in self.ACTION_STATES:
+            result['before'] = existing_static_routes_facts
+            if result['changed']:
+                result['after'] = changed_static_routes_facts
+        elif self.state == 'gathered':
+            result['gathered'] = changed_static_routes_facts
 
         result['warnings'] = warnings
+
         return result
 
     def set_config(self, existing_static_routes_facts):
@@ -103,7 +122,7 @@ class Static_Routes(ConfigBase):
         state = self._module.params['state']
         if state in ('overridden', 'merged', 'replaced') and not want:
             self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(state))
-
+        commands = []
         if state == 'overridden':
             commands = self._state_overridden(want, have)
         elif state == 'deleted':
@@ -293,7 +312,7 @@ class Static_Routes(ConfigBase):
                             if check:
                                 break
         else:
-            # Drill each iteration of have and then based on dest and afi tyoe comparison fire delete config call
+            # Drill each iteration of have and then based on dest and afi type comparison fire delete config call
             for h in have:
                 for addr_have in h.get('address_families'):
                     for route_have in addr_have.get('routes'):
