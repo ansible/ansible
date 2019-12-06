@@ -654,6 +654,12 @@ def add_environments(parser, tox_version=False, tox_only=False):
                               action='store_true',
                               help='run from ansible-test managed virtual environments')
 
+    venv = parser.add_argument_group(title='venv arguments')
+
+    venv.add_argument('--venv-system-site-packages',
+                      action='store_true',
+                      help='enable system site packages')
+
     if data_context().content.is_ansible:
         if tox_version:
             environments.add_argument('--tox',

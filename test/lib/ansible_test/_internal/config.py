@@ -44,6 +44,7 @@ class EnvironmentConfig(CommonConfig):
 
         self.local = args.local is True
         self.venv = args.venv
+        self.venv_system_site_packages = args.venv_system_site_packages
 
         if args.tox is True or args.tox is False or args.tox is None:
             self.tox = args.tox is True

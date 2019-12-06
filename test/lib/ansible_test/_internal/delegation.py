@@ -245,14 +245,20 @@ def delegate_venv(args,  # type: EnvironmentConfig
         if needs_httptester:
             display.warning('Use --docker or --remote to enable httptester for tests marked "needs/httptester": %s' % ', '.join(needs_httptester))
 
-    venvs = dict((version, os.path.join(ResultType.TMP.path, 'delegation', 'python%s' % version)) for version in versions)
-    venvs = dict((version, path) for version, path in venvs.items() if create_virtual_environment(args, version, path))
+    if args.venv_system_site_packages:
+        suffix = '-ssp'
+    else:
+        suffix = ''
+
+    venvs = dict((version, os.path.join(ResultType.TMP.path, 'delegation', 'python%s%s' % (version, suffix))) for version in versions)
+    venvs = dict((version, path) for version, path in venvs.items() if create_virtual_environment(args, version, path, args.venv_system_site_packages))
 
     if not venvs:
         raise ApplicationError('No usable virtual environment support found.')
 
     options = {
         '--venv': 0,
+        '--venv-system-site-packages': 0,
     }
 
     with tempdir() as inject_path:
