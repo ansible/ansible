@@ -68,7 +68,7 @@ options:
     kind:
         description:
             - The kind of storage.
-            - The C(FileStorage) and C(BlockBlobStorage) only used when I(account_type=Premium_LRS) or I(account_type=Premium_ZRS).
+            - The C(FileStorage) and C(BlockBlobStorage) only used when I(account_type=Premium_LRS).
         default: 'Storage'
         choices:
             - Storage
