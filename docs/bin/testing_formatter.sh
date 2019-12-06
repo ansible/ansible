@@ -20,6 +20,8 @@ $(for test in $(../../bin/ansible-test sanity --list-tests --allow-disabled); do
 
 EOF
 
+# By default use sha1sum which exists on Linux, if not present select the correct binary
+# based on platform defaults
 SHA_CMD="sha1sum"
 if ! which ${SHA_CMD} > /dev/null 2>&1; then
     SHA_CMD="sha1"
