@@ -2,6 +2,7 @@
 - name: Setup
   cli_config:
     config: "{{ lines }}"
+  become: yes
   vars:
     lines: |
       no vrf definition testvrf

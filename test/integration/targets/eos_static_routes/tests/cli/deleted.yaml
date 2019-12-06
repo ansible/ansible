@@ -44,6 +44,7 @@
           routes:
           - dest: '1000:10::/64'      
     state: deleted
+  become: yes
   register: result
 
 - eos_facts:
@@ -57,6 +58,7 @@
 
 - name: Idempotency check
   eos_static_routes: *deleted
+  become: yes
   register: result
 
 - assert:
