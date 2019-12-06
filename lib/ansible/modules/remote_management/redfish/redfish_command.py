@@ -297,8 +297,8 @@ EXAMPLES = '''
 
   - name: Clear Sessions
     redfish_command:
-      category: Sessions 
-      command: ClearSessions 
+      category: Sessions
+      command: ClearSessions
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
