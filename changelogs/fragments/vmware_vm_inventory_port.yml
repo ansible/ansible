@@ -1,0 +1,2 @@
+bugfixes:
+- vmware_vm_inventory inventory plugin, use the port value while connecting to vCenter (https://github.com/ansible/ansible/issues/64096).
