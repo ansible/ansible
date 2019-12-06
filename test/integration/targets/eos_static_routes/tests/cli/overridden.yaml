@@ -27,6 +27,7 @@
             - interface:  Ethernet1
               admin_distance: 55
     state: overridden
+  become: yes
   register: result
 
 - eos_facts:
@@ -40,6 +41,7 @@
 
 - name: Idempotency check
   eos_static_routes: *overridden
+  become: yes
   register: result
 
 - assert:

@@ -26,6 +26,7 @@
               - nexthop_grp: testgrp
                 tag: 100
       state: rendered
+    become: yes
     register: result
 
 

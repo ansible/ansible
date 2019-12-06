@@ -58,6 +58,7 @@
             - interface:  Ethernet1
               admin_distance: 55
     state: replaced
+  become: yes
   register: result
 
 - eos_facts:
@@ -71,6 +72,7 @@
 
 - name: Idempotency check
   eos_static_routes: *replaced
+  become: yes
   register: result
 
 - assert:

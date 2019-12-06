@@ -75,6 +75,7 @@
             - nexthop_grp: testgrp
               tag: 100 
     state: merged
+  become: yes
   register: result
 
 - eos_facts:
@@ -88,6 +89,7 @@
 
 - name: Idempotency check
   eos_static_routes: *merged
+  become: yes
   register: result
 
 - assert:

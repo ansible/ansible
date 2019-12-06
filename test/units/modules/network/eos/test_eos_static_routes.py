@@ -8,8 +8,10 @@ __metaclass__ = type
 
 from units.compat.mock import patch
 from ansible.modules.network.eos import eos_static_routes
+from ansible.module_utils.network.eos.config.static_routes.static_routes import add_commands
 from units.modules.utils import set_module_args
 from .eos_module import TestEosModule, load_fixture
+import itertools
 
 
 class TestEosStaticRoutesModule(TestEosModule):
@@ -57,9 +59,12 @@ class TestEosStaticRoutesModule(TestEosModule):
         self.mock_load_config.stop()
         self.mock_execute_show_command.stop()
 
-    def load_fixtures(self, commands=None, transport='cli'):
+    def load_fixtures(self, commands=None, transport='cli', filename=None):
+        if filename is None:
+            filename = 'eos_static_routes_config.cfg'
         def load_from_file(*args, **kwargs):
-            return load_fixture('eos_static_routes_config.cfg')
+            output = load_fixture(filename)
+            return  output
 
         self.execute_show_command.side_effect = load_from_file
 
@@ -79,7 +84,8 @@ class TestEosStaticRoutesModule(TestEosModule):
                      ])
             ], state="merged"))
         commands = ['ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55']
-        self.execute_module(changed=True, commands=commands)
+        result = self.execute_module(changed=True, commands=commands)
+
 
     def test_eos_static_routes_merged_idempotent(self):
         set_module_args(
@@ -116,7 +122,7 @@ class TestEosStaticRoutesModule(TestEosModule):
         commands = ['ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55']
         self.execute_module(changed=True, commands=commands)
 
-    def test_eos_static_routes_merged_default(self):
+    def test_eos_static_routes_default_idempotent(self):
         set_module_args(
             dict(config=[
                 dict(vrf="testvrf",
@@ -189,11 +195,8 @@ class TestEosStaticRoutesModule(TestEosModule):
         commands = [
             'ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55',
             'no ip route vrf testvrf 120.1.1.0/24 Ethernet1 23',
-            'no ip route vrf vrftest1 77.77.1.0/24 33.1.1.1',
-            'no ip route 10.1.1.0/24 Ethernet1 20.1.1.3 track bfd 200',
             'no ip route 10.1.1.0/24 Management1',
-            'no ip route 10.50.0.0/16 Management1',
-            'no ip route 23.1.0.0/16 Nexthop-Group testgrp tag 42'
+            'no ipv6 route 1000:10::/64 Ethernet1 67 tag 98'
         ]
         self.execute_module(changed=True, commands=commands)
 
@@ -238,3 +241,49 @@ class TestEosStaticRoutesModule(TestEosModule):
             ], state="deleted"))
         commands = ['no ip route vrf testvrf 120.1.1.0/24 Ethernet1 23']
         self.execute_module(changed=True, commands=commands)
+
+    def test_eos_static_routes_gathered(self):
+        set_module_args(
+            dict(config=[],
+                 state="gathered"))
+        result = self.execute_module(changed=False, filename='eos_static_routes_config.cfg')
+        commands = []
+        for gathered_cmds in result['gathered']:
+            cfg = add_commands(gathered_cmds)
+            commands.append(cfg)
+        commands = list(itertools.chain(*commands))
+        config_commands = ['ip route 10.1.1.0/24 Management1', 'ipv6 route 1000:10::/64 Ethernet1 67 tag 98',
+                           'ip route vrf testvrf 120.1.1.0/24 Ethernet1 23']
+        self.assertEqual(sorted(config_commands), sorted(commands), result['gathered'])
+
+    def test_eos_static_routes_rendered(self):
+        set_module_args(
+            dict(config=[
+                dict(vrf="testvrf",
+                     address_families=[
+                         dict(afi="ipv6",
+                              routes=[
+                                  dict(dest="1200:10::/64",
+                                       next_hops=[
+                                           dict(interface="Ethernet1",
+                                                admin_distance=55)
+                                       ])
+                              ])
+                     ])
+            ], state="rendered"))
+        commands = ['ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55']
+        result = self.execute_module(changed=False)
+        self.assertEqual(sorted(result['rendered']), sorted(commands), result['rendered'])
+
+    def test_eos_static_routes_parsed(self):
+        set_module_args(
+            dict(running_config="ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55",
+                 state="parsed"))
+        commands = ['ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55']
+        result = self.execute_module(changed=False)
+        parsed_commands = []
+        for cmds in result['parsed']:
+            cfg = add_commands(cmds)
+            parsed_commands.append(cfg)
+        parsed_commands = list(itertools.chain(*parsed_commands))
+        self.assertEqual(sorted(parsed_commands), sorted(commands), result['parsed'])

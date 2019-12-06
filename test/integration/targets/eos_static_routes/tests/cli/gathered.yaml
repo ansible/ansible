@@ -11,6 +11,7 @@
     eos_static_routes: &gathered
       config:
       state: gathered
+    become: yes
     register: result
 
   - set_fact:
@@ -62,6 +63,7 @@
 
   - name: Gather the existing running configuration (IDEMPOTENT)
     eos_static_routes: *gathered
+    become: yes
     register: result
 
   - name: Assert that the previous task was idempotent

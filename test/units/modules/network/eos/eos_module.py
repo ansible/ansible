@@ -102,3 +102,4 @@ class TestEosModule(ModuleTestCase):
 
     def load_fixtures(self, commands=None, transport='cli', filename=None):
         pass
+
