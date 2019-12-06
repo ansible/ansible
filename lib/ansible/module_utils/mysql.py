@@ -40,8 +40,6 @@ except ImportError:
     except ImportError:
         mysql_driver = None
 
-from ansible.module_utils._text import to_native
-
 mysql_driver_fail_msg = 'The PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) module is required.'
 
 
