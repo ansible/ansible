@@ -45,6 +45,7 @@ class EnvironmentConfig(CommonConfig):
 
         self.local = args.local is True
         self.venv = args.venv
+        self.venv_system_site_packages = args.venv_system_site_packages
 
         self.python = args.python if 'python' in args else None  # type: str
 
