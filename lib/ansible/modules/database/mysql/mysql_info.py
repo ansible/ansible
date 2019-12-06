@@ -46,6 +46,10 @@ options:
     elements: str
     version_added: '2.10'
 
+notes:
+- Calculating the size of a database might be slow, depending on the number and size of tables in it.
+  To avoid this, use I(exclude_fields=db_size).
+
 author:
 - Andrew Klychkov (@Andersson007)
 
