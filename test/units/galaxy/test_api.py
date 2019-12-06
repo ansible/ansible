@@ -158,7 +158,9 @@ def test_initialise_galaxy(monkeypatch):
     assert actual == {u'token': u'my token'}
     assert mock_open.call_count == 2
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api/'
+    assert 'ansible-galaxy' in mock_open.mock_calls[0][2]['http_agent']
     assert mock_open.mock_calls[1][1][0] == 'https://galaxy.ansible.com/api/v1/tokens/'
+    assert 'ansible-galaxy' in mock_open.mock_calls[1][2]['http_agent']
     assert mock_open.mock_calls[1][2]['data'] == 'github_token=github_token'
 
 
@@ -179,7 +181,9 @@ def test_initialise_galaxy_with_auth(monkeypatch):
     assert actual == {u'token': u'my token'}
     assert mock_open.call_count == 2
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api/'
+    assert 'ansible-galaxy' in mock_open.mock_calls[0][2]['http_agent']
     assert mock_open.mock_calls[1][1][0] == 'https://galaxy.ansible.com/api/v1/tokens/'
+    assert 'ansible-galaxy' in mock_open.mock_calls[1][2]['http_agent']
     assert mock_open.mock_calls[1][2]['data'] == 'github_token=github_token'
 
 
@@ -201,6 +205,7 @@ def test_initialise_automation_hub(monkeypatch):
     assert api.available_api_versions['v3'] == u'v3/'
 
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api/'
+    assert 'ansible-galaxy' in mock_open.mock_calls[0][2]['http_agent']
     assert mock_open.mock_calls[0][2]['headers'] == {'Authorization': 'Bearer my_token'}
 
 
@@ -235,6 +240,7 @@ def test_get_available_api_versions(monkeypatch):
 
     assert mock_open.call_count == 1
     assert mock_open.mock_calls[0][1][0] == 'https://galaxy.ansible.com/api/'
+    assert 'ansible-galaxy' in mock_open.mock_calls[0][2]['http_agent']
 
 
 def test_publish_collection_missing_file():

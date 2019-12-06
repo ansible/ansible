@@ -33,6 +33,7 @@ from shutil import rmtree
 
 from ansible import context
 from ansible.errors import AnsibleError
+from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
@@ -179,7 +180,7 @@ class GalaxyRole(object):
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url, validate_certs=self._validate_certs)
+                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent())
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
