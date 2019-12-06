@@ -212,6 +212,7 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
         self.max_size_in_mb = None
         self.requires_duplicate_detection = None
         self.status = None
+        self.requires_session = None
 
         self.results = dict(
             changed=False,
@@ -239,7 +240,9 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
                 forward_dead_lettered_messages_to=self.forward_dead_lettered_messages_to,
                 forward_to=self.forward_to,
                 max_delivery_count=self.max_delivery_count,
-                max_size_in_megabytes=self.max_size_in_mb
+                max_size_in_megabytes=self.max_size_in_mb,
+                requires_session=self.requires_session,
+                requires_duplicate_detection=self.requires_duplicate_detection
             )
             if self.status:
                 params['status'] = self.servicebus_models.EntityStatus(str.capitalize(_snake_to_camel(self.status)))
