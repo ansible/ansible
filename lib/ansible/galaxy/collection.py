@@ -207,9 +207,10 @@ class CollectionRequirement:
 
         # Compare installed version versus requirement version
         if self.latest_version != remote_collection.latest_version:
-            display.display("\n'%s' has a version mismatch" % to_text(self))
-            display.display("Found '%s'" % self.latest_version)
+            display.display("'%s' has a version mismatch" % to_text(self))
             display.display("Expected '%s'" % remote_collection.latest_version)
+            display.display("Found '%s'" % self.latest_version)
+            display.display("")
             return
 
         verified = True
@@ -282,9 +283,10 @@ class CollectionRequirement:
             actual_hash = self._get_hash(file_object)
 
         if expected_hash != actual_hash:
-            display.display("\n'%s' has a hash mismatch for '%s'" % (to_text(self), filename))
+            display.display("'%s' has a hash mismatch for '%s'" % (to_text(self), filename))
             display.display('Expected %s' % expected_hash)
             display.display('Found %s' % actual_hash)
+            display.display("")
             return False
         return True
 
@@ -600,9 +602,7 @@ def validate_collection_path(collection_path):
 def verify_collections(collections, search_path, apis, validate_certs, ignore_errors):
     existing_collections = _find_existing_collections(search_path)
 
-    current_collections = dict(
-            ('%s.%s' % (collection.namespace, collection.name), collection) for collection in existing_collections
-    )
+    current_collections = dict(('%s.%s' % (collection.namespace, collection.name), collection) for collection in existing_collections)
 
     with _display_progress():
         with _tempdir() as b_temp_path:

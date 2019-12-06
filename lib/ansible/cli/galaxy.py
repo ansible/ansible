@@ -239,18 +239,18 @@ class GalaxyCLI(CLI):
 
     def add_verify_options(self, parser, parents=None):
         galaxy_type = 'collection'
-        verify_parser = parser.add_parser('verify', parents=parents,
-                help='Compare checksums with the collection(s) found on the server and the installed copy. This does not verify dependencies.')
+        verify_parser = parser.add_parser('verify', parents=parents, help='Compare checksums with the collection(s) '
+                                          'found on the server and the installed copy. This does not verify dependencies.')
         verify_parser.set_defaults(func=self.execute_verify)
 
         verify_parser.add_argument('-p', '--collections-path', dest='collections_path', default=C.COLLECTIONS_PATHS[0],
-                help='The path to the directory containing your collections.')
-        verify_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*',
-                help='The collection(s) name or path/url to a tar.gz collection artifact. This is mutually exclusive with --requirements-file.')
+                                   help='The path to the directory containing your collections.')
+        verify_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', help='The collection(s) name or '
+                                   'path/url to a tar.gz collection artifact. This is mutually exclusive with --requirements-file.')
         verify_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
-                help='Ignore errors during verification and continue with the next specified collection.')
+                                   help='Ignore errors during verification and continue with the next specified collection.')
         verify_parser.add_argument('-r', '--requirements-file', dest='requirements',
-                help='A file containing a list of collections to be verified.')
+                                   help='A file containing a list of collections to be verified.')
 
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -620,7 +620,6 @@ class GalaxyCLI(CLI):
                     name, dummy, requirement = collection_input.partition(':')
                 requirements.append((name, requirement or '*', None))
         return requirements
-
 
 ############################
 # execute actions
