@@ -78,6 +78,23 @@ options:
     type: bool
     default: no
     version_added: "2.10"
+seealso:
+- module: mysql_info
+- module: mysql_variables
+- module: mysql_user
+- module: mysql_replication
+- name: MySQL command-line client reference
+  description: Complete reference of the MySQL command-line client documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/mysql.html
+- name: mysqldump reference
+  description: Complete reference of the ``mysqldump`` client utility documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html
+- name: CREATE DATABASE reference
+  description: Complete reference of the CREATE DATABASE command documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/create-database.html
+- name: DROP DATABASE reference
+  description: Complete reference of the DROP DATABASE command documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/drop-database.html
 author: "Ansible Core Team"
 requirements:
    - mysql (command line binary)
