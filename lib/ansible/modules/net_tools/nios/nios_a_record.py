@@ -116,17 +116,6 @@ EXAMPLES = '''
       password: admin
   connection: local
 
-- name: update an A record IP address
-  nios_a_record:
-    name: a.ansible.com
-    ipv4: {new_ipv4addr: 192.168.11.10, old_ipv4addr: 192.168.10.1}
-    state: present
-    provider:
-      host: "{{ inventory_hostname_short }}"
-      username: admin
-      password: admin
-  connection: local
-
 - name: dynamically add a record to next available ip
   nios_a_record:
     name: a.ansible.com
