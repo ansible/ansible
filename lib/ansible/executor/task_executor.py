@@ -649,6 +649,8 @@ class TaskExecutor:
                 return dict(failed=True, msg=to_text(e))
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
+            finally:
+                self._handler.cleanup()
             display.debug("handler run complete")
 
             # preserve no log
@@ -853,6 +855,7 @@ class TaskExecutor:
             else:
                 return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
         else:
+            async_handler.cleanup(force=True)
             return async_result
 
     def _get_become(self, name):

@@ -115,6 +115,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return result
 
+    def cleanup(self, force=False):
+        """Method to perform a clean up at the end of an action plugin execution
+
+        By default this is designed to clean up the shell tmpdir, and is toggled based on whether
+        async is in use
+
+        Action plugins may override this if they deem necessary, but should still call this method
+        via super
+        """
+        if force or not self._task.async_val:
+            self._remove_tmp_path(self._connection._shell.tmpdir)
+
     def get_plugin_option(self, plugin, option, default=None):
         """Helper to get an option from a plugin without having to use
         the try/except dance everywhere to set a default
