@@ -76,6 +76,7 @@ options:
     home:
         description:
             - Optionally set the user's home directory.
+            - Mutually exclusive with C(base)
         type: path
     skeleton:
         description:
@@ -259,6 +260,22 @@ options:
         type: str
         version_added: "2.12"
 
+    base:
+        description:
+            - Optionally set the user's home base directory.
+            - Does nothing when used with other platforms.
+            - Mutually exclusive with C(home)
+            - Currently supported on Illumos/Solaris.
+        type: path
+        version_added: "2.9"
+    is_role:
+        description:
+            - Sets the user to be a role.
+            - Does nothing when used with other platforms.
+            - Currently supported on Illumos/Solaris.
+        type: bool
+        default: no
+        version_added: "2.9"
 notes:
   - There are specific requirements per platform on user management utilities. However
     they generally come pre-installed with the system and Ansible will require they
@@ -270,6 +287,8 @@ notes:
     C(/Library/Preferences/com.apple.loginwindow.plist).
   - On FreeBSD, this module uses C(pw useradd) and C(chpass) to create, C(pw usermod) and C(chpass) to modify,
     C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
+  - On SunOS, this module uses C(useradd), C(usermod) and C(userdel) if is_role is no or C(roleadd), 
+    C(rolemod) and C(roledel) if is_role is yes.
   - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
     C(userdel) to remove accounts.
   - Supports C(check_mode).
@@ -541,6 +560,8 @@ class User(object):
 
         if self.umask is not None and self.local:
             module.fail_json(msg="'umask' can not be used with 'local'")
+        self.base = module.params['base']
+        self.is_role = module.params['is_role']
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -1918,7 +1939,6 @@ class SunOS(User):
     platform = 'SunOS'
     distribution = None
     SHADOWFILE = '/etc/shadow'
-    USER_ATTR = '/etc/user_attr'
 
     def get_password_defaults(self):
         # Read password aging defaults
@@ -1947,7 +1967,15 @@ class SunOS(User):
         return (minweeks, maxweeks, warnweeks)
 
     def remove_user(self):
-        cmd = [self.module.get_bin_path('userdel', True)]
+        info = self.user_info()
+
+        if info[10] == 'role':
+            command_name = 'roledel'
+        else:
+            command_name = 'userdel'
+
+        cmd = [self.module.get_bin_path(command_name, True)]
+
         if self.remove:
             cmd.append('-r')
         cmd.append(self.name)
@@ -1955,7 +1983,12 @@ class SunOS(User):
         return self.execute_command(cmd)
 
     def create_user(self):
-        cmd = [self.module.get_bin_path('useradd', True)]
+        if self.is_role:
+            command_name = 'roleadd'
+        else:
+            command_name = 'useradd'
+
+        cmd = [self.module.get_bin_path(command_name, True)]
 
         if self.uid is not None:
             cmd.append('-u')
@@ -2010,6 +2043,10 @@ class SunOS(User):
             cmd.append('-R')
             cmd.append(self.role)
 
+        if self.base is not None:
+            cmd.append('-b')
+            cmd.append(self.base)
+
         cmd.append(self.name)
 
         (rc, out, err) = self.execute_command(cmd)
@@ -2059,10 +2096,16 @@ class SunOS(User):
 
         return (rc, out, err)
 
-    def modify_user_usermod(self):
-        cmd = [self.module.get_bin_path('usermod', True)]
-        cmd_len = len(cmd)
+    def modify_user(self):
         info = self.user_info()
+
+        if info[10] == 'role':
+            command_name = 'rolemod'
+        else:
+            command_name = 'usermod'
+
+        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd_len = len(cmd)
 
         if self.uid is not None and info[2] != int(self.uid):
             cmd.append('-u')
@@ -2127,6 +2170,19 @@ class SunOS(User):
             cmd.append('-R')
             cmd.append(self.role)
 
+        if self.is_role and info[10] == 'normal':
+            cmd.append('-K')
+            cmd.append('type=normal')
+        elif not self.is_role and info[10] == 'role':
+            cmd.append('-K')
+            cmd.append('type=role')
+
+        if self.base is not None:
+            auto_home_path = os.path.join(self.base, self.name)
+            if info[11] != auto_home_path:
+                # NYI
+                self.module.warn("Can not modify base dir from %s to %s." %(info[10], auto_home_path))
+
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
             cmd.append(self.name)
@@ -2173,18 +2229,41 @@ class SunOS(User):
         info = super(SunOS, self).user_info()
         if info:
             info += self._user_attr_info()
+            info += self._user_home()
         return info
 
     def _user_attr_info(self):
-        info = [''] * 3
-        with open(self.USER_ATTR, 'r') as file_handler:
-            for line in file_handler:
-                lines = line.strip().split('::::')
-                if lines[0] == self.name:
-                    tmp = dict(x.split('=') for x in lines[1].split(';'))
+        cmd = [self.module.get_bin_path('getent', True)]
+        cmd += ['user_attr', self.name]
+        (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
+        if rc != 0:
+            return None
+        lines = out.splitlines()
+        if len(lines) != 1:
+            return None
+        info = [''] * 4
+        records = lines[0].strip().split(':')
+        if records[0] == self.name:
+            tmp = dict(x.split('=') for x in records[4].split(';'))
                     info[0] = tmp.get('profiles', '')
                     info[1] = tmp.get('auths', '')
                     info[2] = tmp.get('roles', '')
+            info[3] = tmp.get('type', 'normal')
+        return info
+
+    def _user_home(self):
+        cmd = [self.module.get_bin_path('getent', True)]
+        cmd += ['automount/auto_home', self.name]
+        (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
+        if rc != 0:
+            return None
+        lines = out.splitlines()
+        if len(lines) != 1:
+            return None
+        info = ['']
+        records = lines[0].strip().split(' ')
+        if records[0] == self.name:
+            info[0] = records[1]
         return info
 
 
@@ -3078,12 +3157,18 @@ def main():
             expires=dict(type='float'),
             password_lock=dict(type='bool', no_log=False),
             local=dict(type='bool'),
+            # following options are specific to Solaris
             profile=dict(type='str'),
             authorization=dict(type='str'),
             role=dict(type='str'),
             umask=dict(type='str'),
+            base=dict(type='path'),
+            is_role=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
+        mutually_exclusive=[
+            ('home', 'base')
+        ]
     )
 
     user = User(module)
