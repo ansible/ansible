@@ -1,0 +1,23 @@
+---
+- name: Tiller namespace
+  k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ tiller_namespace }}"
+    state: "{{ status | default('present') }}"
+    wait: true
+
+- name: Tiller requirements
+  k8s:
+    state: "{{ status | default('present') }}"
+    resource_definition: "{{ lookup('template', item) | from_yaml }}"
+    wait: true
+  with_fileglob:
+  - ../templates/*.yml
+
+- name: deploy tiller
+  shell: "helm init --wait --service-account tiller --tiller-namespace {{ tiller_namespace }}"
+  environment:
+    KUBECONFIG: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+  ignore_errors: yes
+  when: "status | default('present') == 'present'"

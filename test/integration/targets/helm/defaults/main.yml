@@ -1,0 +1,7 @@
+---
+helm_archive_name: "helm-{{ helm_version }}-linux-amd64.tar.gz"
+helm_binary: "/usr/local/bin/helm"
+helm_namespace: helm
+
+tiller_namespace: tiller
+tiller_cluster_role: cluster-admin

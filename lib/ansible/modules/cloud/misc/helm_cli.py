@@ -20,8 +20,6 @@ version_added: "2.10"
 author:
   - Lucas Boisserie (@LucasBoisserie)
   - Matthieu Diehr (@d-matt)
-notes:
-  - Support for helm3 is not finished waiting fix on helm 3
 requirements:
   - "helm"
   - "yaml"
@@ -105,11 +103,13 @@ options:
   tiller_host:
     description:
       - Address of Tiller
+      - Ignored when is helm 3
     type: str
     version_added: "2.10"
   tiller_namespace:
     description:
       - Namespace of Tiller
+      - Ignored when is helm 3
     default: "kube-system"
     type: str
     version_added: "2.10"
@@ -138,6 +138,12 @@ options:
       - Helm option to specify which kubeconfig context to use
     type: str
     version_added: "2.10"
+  kubeconfig_path:
+    description:
+      - Helm option to specify kubeconfig path to use
+    type: path
+    version_added: "2.10"
+    aliases: [ kubeconfig ]
   purge:
     description:
       - Remove the release from the store and make its name free for later use
@@ -174,6 +180,12 @@ EXAMPLES = '''
     tiller_namespace: helm
     values: "{{ lookup('template', 'somefile.yaml') | from_yaml }}"
 
+# Remove test release
+- helm_cli:
+    name: test
+    state: absent
+    tiller_namespace: helm
+
 # With Helm3
 - helm_cli:
     name: test
@@ -182,11 +194,6 @@ EXAMPLES = '''
     values:
       replicas: 2
 
-# Remove test release
-- helm_cli:
-    name: test
-    state: absent
-    tiller_namespace: helm
 '''
 
 RETURN = """
@@ -195,35 +202,35 @@ status:
   description: A dictionary of status output
   returned: on success Creation/Upgrade/Already deploy
   contains:
-    AppVersion:
+    appversion:
       type: str
       returned: always
       description: Version of app deployed
-    Chart:
+    chart:
       type: str
       returned: always
       description: Chart name and chart version
-    Name:
+    name:
       type: str
       returned: always
       description: Name of the release
-    Namespace:
+    namespace:
       type: str
       returned: always
       description: Namespace where the release is deployed
-    Revision:
+    revision:
       type: str
       returned: always
       description: Number of time where the release has been updated
-    Status:
+    status:
       type: str
       returned: always
       description: Status of release (can be DEPLOYED, FAILED, ...)
-    Updated:
+    updated:
       type: str
       returned: always
       description: The Date of last update
-    Values:
+    values:
       type: str
       returned: always
       description: Dict of Values used to deploy
@@ -299,7 +306,7 @@ def get_values(command, release_name, release_namespace):
         )
 
     # Helm 3 return "null" string when no values are set
-    if not is_helm_2 and out == "null":
+    if not is_helm_2 and out.rstrip("\n") == "null":
         return yaml.safe_load('{}')
     else:
         return yaml.safe_load(out)
@@ -310,14 +317,19 @@ def get_release(state, release_name, release_namespace):
     if state is not None:
         if is_helm_2:
             for release in state['Releases']:
-              release =  {k.lower(): v for k, v in release.items()}
-              if release['name'] == release_name and release['namespace'] == release_namespace:
-                return release
+                # release = {k.lower(): v for k, v in release.items()} # NOT WORKING wit python 2.6
+                release_lower = dict()
+                for k, v in release.items():
+                    release_lower[k.lower()] = v
+                release = release_lower
+                if release['name'] == release_name and release['namespace'] == release_namespace:
+                    return release
         else:
-          for release in state:
-              if release['name'] == release_name and release['namespace'] == release_namespace:
-                return release
+            for release in state:
+                if release['name'] == release_name and release['namespace'] == release_namespace:
+                    return release
     return None
+
 
 # Get Release state from deployed release
 def get_release_status(command, release_name, release_namespace):
@@ -441,6 +453,7 @@ def delete_3(command, release_name, release_namespace, purge, disable_hook):
 
     return delete_command
 
+
 def main():
     global module, is_helm_2
     module = AnsibleModule(
@@ -463,6 +476,7 @@ def main():
             disable_hook=dict(type='bool', default=False),
             force=dict(type='bool', default=False),
             kube_context=dict(type='str'),
+            kubeconfig_path=dict(type='path', aliases=['kubeconfig']),
             purge=dict(type='bool', default=True),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(type='str'),
@@ -500,6 +514,7 @@ def main():
     disable_hook = module.params.get('disable_hook')
     force = module.params.get('force')
     kube_context = module.params.get('kube_context')
+    kubeconfig_path = module.params.get('kubeconfig_path')
     purge = module.params.get('purge')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
@@ -519,7 +534,10 @@ def main():
             helm_cmd_common += " --tiller-namespace=" + tiller_namespace
 
     if kube_context is not None:
-      helm_cmd_common += " --kube-context " + kube_context
+        helm_cmd_common += " --kube-context " + kube_context
+
+    if kubeconfig_path is not None:
+        helm_cmd_common += " --kubeconfig " + kubeconfig_path
 
     if update_repo_cache:
         run_repo_update(helm_cmd_common)
@@ -533,7 +551,7 @@ def main():
         if is_helm_2:
             helm_cmd = delete_2(helm_cmd, release_name, purge, disable_hook)
         else:
-            helm_cmd = delete_3(helm_cmd, release_name, release_namespace,purge, disable_hook)
+            helm_cmd = delete_3(helm_cmd, release_name, release_namespace, purge, disable_hook)
         changed = True
     elif release_state == "present":
 
@@ -554,7 +572,7 @@ def main():
                               disable_hook, False)
             changed = True
 
-        elif is_helm_2 and release_namespace != release_status['Namespace']:
+        elif is_helm_2 and release_namespace != release_status['namespace']:
             module.fail_json(
                 msg="With helm2, Target Namespace can't be changed on deployed chart ! Need to destroy the release "
                     "and recreate it "

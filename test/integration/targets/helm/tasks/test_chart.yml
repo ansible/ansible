@@ -1,0 +1,190 @@
+---
+- name: add chart repo
+  shell: "helm repo add stable https://kubernetes-charts.storage.googleapis.com/"
+
+- name: Create helm namespace
+  k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ helm_namespace }}"
+    wait: true
+
+- name: Install IngressMonitorController
+  helm_cli:
+    kubeconfig_path: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+    name: test
+    chart_ref: stable/ingressmonitorcontroller
+    chart_version: 1.0.47
+    namespace: "{{ helm_namespace }}"
+    tiller_namespace: "{{ tiller_namespace }}"
+  register: ingressmonitorcontroller_install
+
+- name: assert that IngressMonitorController chart is installed
+  assert:
+    that:
+      - ingressmonitorcontroller_install is changed
+      - ingressmonitorcontroller_install.status.chart == 'ingressmonitorcontroller-1.0.47'
+      - ingressmonitorcontroller_install.status.status | lower == 'deployed'
+
+- name: Check idempotency
+  helm_cli:
+    kubeconfig_path: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+    name: test
+    chart_ref: stable/ingressmonitorcontroller
+    chart_version: 1.0.47
+    namespace: "{{ helm_namespace }}"
+    tiller_namespace: "{{ tiller_namespace }}"
+  register: ingressmonitorcontroller_install
+
+- name: assert idempotency
+  assert:
+    that:
+      - ingressmonitorcontroller_install is not changed
+      - ingressmonitorcontroller_install.status.chart == 'ingressmonitorcontroller-1.0.47'
+      - ingressmonitorcontroller_install.status.status | lower == 'deployed'
+
+- name: Add vars to IngressMonitorController
+  helm_cli:
+    kubeconfig_path: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+    name: test
+    chart_ref: stable/ingressmonitorcontroller
+    chart_version: 1.0.47
+    namespace: "{{ helm_namespace }}"
+    tiller_namespace: "{{ tiller_namespace }}"
+    values:
+      useFullName: true
+  register: ingressmonitorcontroller_install
+
+- name: assert that IngressMonitorController chart is upgraded with new var
+  assert:
+    that:
+      - ingressmonitorcontroller_install is changed
+      - ingressmonitorcontroller_install.status.status | lower == 'deployed'
+      - ingressmonitorcontroller_install.status.chart == 'ingressmonitorcontroller-1.0.47'
+      - "ingressmonitorcontroller_install.status['values'].useFullName == true"
+
+- name: Check idempotency after add vars
+  helm_cli:
+    kubeconfig_path: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+    name: test
+    chart_ref: stable/ingressmonitorcontroller
+    chart_version: 1.0.47
+    namespace: "{{ helm_namespace }}"
+    tiller_namespace: "{{ tiller_namespace }}"
+    values:
+      useFullName: true
+  register: ingressmonitorcontroller_install
+
+- name: assert idempotency after add vars
+  assert:
+    that:
+      - ingressmonitorcontroller_install is not changed
+      - ingressmonitorcontroller_install.status.status | lower == 'deployed'
+      - ingressmonitorcontroller_install.status.chart == 'ingressmonitorcontroller-1.0.47'
+      - "ingressmonitorcontroller_install.status['values'].useFullName == true"
+
+- name: Remove Vars to IngressMonitorController
+  helm_cli:
+    kubeconfig_path: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+    name: test
+    chart_ref: stable/ingressmonitorcontroller
+    chart_version: 1.0.47
+    namespace: "{{ helm_namespace }}"
+    tiller_namespace: "{{ tiller_namespace }}"
+  register: ingressmonitorcontroller_install
+
+- name: assert that IngressMonitorController chart is upgraded with new var
+  assert:
+    that:
+      - ingressmonitorcontroller_install is changed
+      - ingressmonitorcontroller_install.status.status | lower == 'deployed'
+      - ingressmonitorcontroller_install.status.chart == 'ingressmonitorcontroller-1.0.47'
+      - ingressmonitorcontroller_install.status['values'] == {}
+
+- name: Check idempotency after remove vars
+  helm_cli:
+    kubeconfig_path: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+    name: test
+    chart_ref: stable/ingressmonitorcontroller
+    chart_version: 1.0.47
+    namespace: "{{ helm_namespace }}"
+    tiller_namespace: "{{ tiller_namespace }}"
+  register: ingressmonitorcontroller_install
+
+- name: assert idempotency after remove vars
+  assert:
+    that:
+      - ingressmonitorcontroller_install is not changed
+      - ingressmonitorcontroller_install.status.status | lower == 'deployed'
+      - ingressmonitorcontroller_install.status.chart == 'ingressmonitorcontroller-1.0.47'
+      - ingressmonitorcontroller_install.status['values'] == {}
+
+- name: Upgrade IngressMonitorController
+  helm_cli:
+    kubeconfig_path: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+    name: test
+    chart_ref: stable/ingressmonitorcontroller
+    chart_version: 1.0.48
+    namespace: "{{ helm_namespace }}"
+    tiller_namespace: "{{ tiller_namespace }}"
+  register: ingressmonitorcontroller_install
+
+- name: assert that IngressMonitorController chart is upgraded with new version
+  assert:
+    that:
+      - ingressmonitorcontroller_install is changed
+      - ingressmonitorcontroller_install.status.status | lower == 'deployed'
+      - ingressmonitorcontroller_install.status.chart == 'ingressmonitorcontroller-1.0.48'
+
+- name: Check idempotency after upgrade
+  helm_cli:
+    kubeconfig_path: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+    name: test
+    chart_ref: stable/ingressmonitorcontroller
+    chart_version: 1.0.48
+    namespace: "{{ helm_namespace }}"
+    tiller_namespace: "{{ tiller_namespace }}"
+  register: ingressmonitorcontroller_install
+
+- name: assert idempotency after upgrade
+  assert:
+    that:
+      - ingressmonitorcontroller_install is not changed
+      - ingressmonitorcontroller_install.status.status | lower == 'deployed'
+      - ingressmonitorcontroller_install.status.chart == 'ingressmonitorcontroller-1.0.48'
+
+- name: Remove IngressMonitorController
+  helm_cli:
+    kubeconfig_path: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+    state: absent
+    name: test
+    namespace: "{{ helm_namespace }}"
+    tiller_namespace: "{{ tiller_namespace }}"
+  register: ingressmonitorcontroller_install
+
+- name: assert that IngressMonitorController chart is remove
+  assert:
+    that:
+      - ingressmonitorcontroller_install is changed
+
+- name: Check idempotency after remove
+  helm_cli:
+    kubeconfig_path: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+    state: absent
+    name: test
+    namespace: "{{ helm_namespace }}"
+    tiller_namespace: "{{ tiller_namespace }}"
+  register: ingressmonitorcontroller_install
+
+- name: assert idempotency
+  assert:
+    that:
+      - ingressmonitorcontroller_install is not changed
+
+- name: Remove helm namespace
+  k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ helm_namespace }}"
+    state: absent
+    wait: true

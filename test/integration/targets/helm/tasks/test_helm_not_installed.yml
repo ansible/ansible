@@ -1,0 +1,13 @@
+---
+- name: Failed test when helm is not install
+  helm_cli:
+    name: test
+    chart_ref: stable/prometheus-blackbox-exporter
+  ignore_errors: yes
+  register: helm_missing_binary
+
+- name: assert that helm is not installed
+  assert:
+    that:
+      - helm_missing_binary is failed
+      - "'Failed to find required executable helm in paths' in helm_missing_binary.msg"

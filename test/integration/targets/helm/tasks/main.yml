@@ -1,0 +1,8 @@
+---
+- name: run test
+  include_tasks: run_test.yml
+  loop_control:
+    loop_var: helm_version
+  with_items:
+#    - "v2.16.1" # Can't be tested because openshift cluster haven't node and tiller deployement need to be up
+    - "v3.0.0"

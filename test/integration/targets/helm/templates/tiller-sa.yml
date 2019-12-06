@@ -1,0 +1,6 @@
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: tiller
+  namespace: "{{ tiller_namespace }}"

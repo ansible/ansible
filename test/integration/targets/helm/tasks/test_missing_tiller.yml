@@ -1,0 +1,15 @@
+---
+- name: Failed test when tiller is missing
+  helm_cli:
+    name: test
+    chart_ref: stable/prometheus-blackbox-exporter
+    tiller_namespace: helm
+    kubeconfig_path: "{{ ansible_env.K8S_AUTH_KUBECONFIG }}"
+  ignore_errors: yes
+  register: missing_tiller
+
+- name: assert that tiller is missing
+  assert:
+    that:
+      - missing_tiller is failed
+      - "'could not find tiller' in missing_tiller.msg"

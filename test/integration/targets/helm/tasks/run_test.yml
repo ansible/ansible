@@ -1,0 +1,39 @@
+---
+- name: Ensure helm is not install
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ helm_binary }}"
+    - "{{ ansible_env.HOME }}/.helm"
+
+- name: check failed if helm is not install
+  include_tasks: test_helm_not_installed.yml
+
+- name: install helm
+  include_tasks: install.yml
+
+- name: Check if failed when tiller is not installed
+  include_tasks: test_missing_tiller.yml
+  when: "helm_version.startswith('v2')"
+
+- name: install tiller
+  include_tasks: tiller.yml
+  when: "helm_version.startswith('v2')"
+
+- name: run test
+  include_tasks: test_chart.yml
+
+- name: clean tiller
+  include_tasks: tiller.yml
+  vars:
+    status: absent
+  when: "helm_version.startswith('v2')"
+
+- name: clean helm install
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ helm_binary }}"
+    - "{{ ansible_env.HOME }}/.helm"

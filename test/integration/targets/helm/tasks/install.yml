@@ -1,0 +1,23 @@
+---
+- name: Init Helm folders
+  file:
+    path: /tmp/helm/
+    state: directory
+
+- name: Unarchive Helm binary
+  unarchive:
+    src: 'https://get.helm.sh/{{ helm_archive_name }}'
+    dest: /tmp/helm/
+    remote_src: yes
+
+- name: Deploy helm binary
+  become: yes
+  copy:
+    src: /tmp/helm/linux-amd64/helm
+    dest: "{{ helm_binary }}"
+    mode: '0755'
+
+- name: Remove Install Files
+  file:
+    path: /tmp/helm/
+    state: absent
