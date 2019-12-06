@@ -105,7 +105,6 @@
         that:
           - out is changed
           - out.metric_filters[0].metric_namespace == "made_with_ansible"
-          
 
     - name: checkmode delete metric filter on '{{ log_group_name }}'
       cloudwatchlogs_log_group_metric_filter:
@@ -155,3 +154,4 @@
       cloudwatchlogs_log_group:
         state: absent
         log_group_name: '{{ log_group_name }}'
+  ignore_errors: true
