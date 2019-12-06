@@ -316,9 +316,9 @@ Function Get-AnsibleWebRequest {
             none { $web_request.AllowAutoRedirect = $false }
             safe {
                 if ($web_request.Method -in @("GET", "HEAD")) {
-                    $web_request.AllowAutoRedirect = $false
-                } else {
                     $web_request.AllowAutoRedirect = $true
+                } else {
+                    $web_request.AllowAutoRedirect = $false
                 }
             }
             all { $web_request.AllowAutoRedirect = $true }
