@@ -7,6 +7,8 @@ user_name_2: 'db_user2'
 user_password_1: 'gadfFDSdtTU^Sdfuj'
 user_password_2: 'jkFKUdfhdso78yi&td'
 
+root_password: 'zevuR6oPh7'
+
 db_names:
     - clientdb
     - employeedb
