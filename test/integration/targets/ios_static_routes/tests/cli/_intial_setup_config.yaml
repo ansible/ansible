@@ -6,7 +6,7 @@
     lines: |
       vrf definition ansible_temp_vrf
       address-family ipv4
-      ip route vrf ansible_temp_vrf 192.0.2.0/24 255.255.255.0 192.0.2.1 tag 50 name test_vrf track 150
+      ip route vrf ansible_temp_vrf 192.0.2.0 255.255.255.0 192.0.2.1 tag 50 name test_vrf track 150
       ip route 198.51.100.0 255.255.255.0 198.51.101.3 name route_3
       ip route 198.51.100.0 255.255.255.0 198.51.101.2 30 name route_2
       ip route 198.51.100.0 255.255.255.0 198.51.101.1 110 tag 40 name route_1 multicast
