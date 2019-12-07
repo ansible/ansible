@@ -37,9 +37,9 @@
                   name: route_3
             - afi: ipv6
               routes:
-              - dest: 2001:db8:0:3::/64
+              - dest: 2001:DB8:0:3::/64
                 next_hops:
-                - forward_router_address: 2001:db8:0:3::2
+                - forward_router_address: 2001:DB8:0:3::2
                   name: test_v6
                   tag: 105
         state: deleted
