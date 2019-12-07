@@ -1033,8 +1033,7 @@ class TaskExecutor:
 
         # set options with 'templated vars' specific to this plugin and dependant ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
-        # FIXME: this is not working currently...
-        # self._set_plugin_options('shell', final_vars, templar, task_keys)
+        self._set_plugin_options('shell', final_vars, templar, task_keys)
 
         if self._connection.become is not None:
             # FIXME: find alternate route to provide passwords,
