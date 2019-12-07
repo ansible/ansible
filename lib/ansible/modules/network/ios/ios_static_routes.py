@@ -54,23 +54,22 @@ options:
     suboptions:
       vrf:
         description:
-        - IP VPN Routing/Forwarding instance name.
-        - NOTE, In case of IPV4/IPV6 VRF routing table should pre-exist before
-          configuring.
-        - NOTE, if the vrf information is not provided then the routes shall be
-          configured under global vrf.
+          - IP VPN Routing/Forwarding instance name.
+          - NOTE, In case of IPV4/IPV6 VRF routing table should pre-exist before
+            configuring.
+          - NOTE, if the vrf information is not provided then the routes shall be
+            configured under global vrf.
         type: str
       address_families:
         elements: dict
         description:
-        - Address family to use for the static routes
+          - Address family to use for the static routes
         type: list
         suboptions:
           afi:
             description:
-            - Top level address family indicator.
+              - Top level address family indicator.
             type: str
-            required: true
             choices:
               - ipv4
               - ipv6
@@ -85,9 +84,9 @@ options:
                 required: true
               topology:
                 description:
-                - Configure static route for a Topology Routing/Forwarding instance
-                - NOTE, VRF and Topology can be used together only with Multicast and
-                  Topology should pre-exist before it can be used
+                  - Configure static route for a Topology Routing/Forwarding instance
+                  - NOTE, VRF and Topology can be used together only with Multicast and
+                    Topology should pre-exist before it can be used
                 type: str
               next_hops:
                 description:
@@ -121,31 +120,43 @@ options:
                     type: bool
                   tag:
                     description:
-                    - Set tag for this route
-                    - Refer to vendor documentation for valid values.
+                      - Set tag for this route
+                      - Refer to vendor documentation for valid values.
                     type: int
                   track:
                     description:
-                    - Install route depending on tracked item with tracked object number.
-                    - Tracking does not support multicast
-                    - Refer to vendor documentation for valid values.
+                      - Install route depending on tracked item with tracked object number.
+                      - Tracking does not support multicast
+                      - Refer to vendor documentation for valid values.
                     type: int
+  running_config:
+    description:
+      - The module, by default, will connect to the remote device and
+        retrieve the current running-config to use as a base for comparing
+        against the contents of source. There are times when it is not
+        desirable to have the task get the current running-config for
+        every task in a playbook.  The I(running_config) argument allows the
+        implementer to pass in the configuration to use as the base
+        config for comparison. This value of this option should be the
+        output received from device by executing command
+        C(show configuration commands | grep 'static route')
+    type: str
   state:
     description:
-    - The state the configuration should be left in
-    - The states I(rendered), I(gathered) and I(parsed) does not perform any change on the
-      device.
-    - The state I(rendered) will transform the configuration in C(config) option to platform
-      specific CLI commands which will be returned in the I(rendered) key within the result.
-      For state I(rendered) active connection to remote host is not required.
-    - The state I(gathered) will fetch the running configuration from device and transform
-      it into structured data in the format as per the resource module argspec and the
-      value is returned in the I(gathered) key within the result.
-    - The state I(parsed) reads the configuration from C(running_config) option and transforms
-      it into JSON format as per the resource module parameters and the value is returned in
-      the I(parsed) key within the result. The value of C(running_config) option should be the
-      same format as the output of command I(show running-config | include ip route|ipv6 route)
-      executed on device. For state I(parsed) active connection to remote host is not required.
+      - The state the configuration should be left in
+      - The states I(rendered), I(gathered) and I(parsed) does not perform any change on the
+        device.
+      - The state I(rendered) will transform the configuration in C(config) option to platform
+        specific CLI commands which will be returned in the I(rendered) key within the result.
+        For state I(rendered) active connection to remote host is not required.
+      - The state I(gathered) will fetch the running configuration from device and transform
+        it into structured data in the format as per the resource module argspec and the
+        value is returned in the I(gathered) key within the result.
+      - The state I(parsed) reads the configuration from C(running_config) option and transforms
+        it into JSON format as per the resource module parameters and the value is returned in
+        the I(parsed) key within the result. The value of C(running_config) option should be the
+        same format as the output of command I(show running-config | include ip route|ipv6 route)
+        executed on device. For state I(parsed) active connection to remote host is not required.
     type: str
     choices:
     - merged
