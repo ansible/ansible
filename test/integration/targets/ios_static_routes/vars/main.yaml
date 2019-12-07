@@ -12,6 +12,13 @@ merged:
             track: 150
       vrf: ansible_temp_vrf
     - address_families:
+      - afi: ipv6
+        routes:
+        - dest: 2001:DB8:0:3::/64
+          next_hops:
+          - forward_router_address: 2001:DB8:0:3::2
+            name: test_v6
+            tag: 105
       - afi: ipv4
         routes:
         - dest: 198.51.100.0/24
@@ -26,13 +33,6 @@ merged:
             name: route_2
           - forward_router_address: 198.51.101.3
             name: route_3
-      - afi: ipv6
-        routes:
-        - dest: 2001:DB8:0:3::/64
-          next_hops:
-          - forward_router_address: 2001:DB8:0:3::2
-            name: test_v6
-            tag: 105
 
   commands:
     - "ip route vrf ansible_temp_vrf 192.0.2.0 255.255.255.0 192.0.2.1 name merged_vrf track 150 tag 50"
@@ -53,6 +53,13 @@ merged:
             track: 150
       vrf: ansible_temp_vrf
     - address_families:
+      - afi: ipv6
+        routes:
+        - dest: 2001:DB8:0:3::/64
+          next_hops:
+          - forward_router_address: 2001:DB8:0:3::2
+            name: merged_v6
+            tag: 105
       - afi: ipv4
         routes:
         - dest: 198.51.100.0/24
@@ -67,13 +74,6 @@ merged:
             name: merged_route_2
           - forward_router_address: 198.51.101.3
             name: merged_route_3
-      - afi: ipv6
-        routes:
-        - dest: 2001:DB8:0:3::/64
-          next_hops:
-          - forward_router_address: 2001:DB8:0:3::2
-            name: merged_v6
-            tag: 105
 
 replaced:
   before:
@@ -162,13 +162,6 @@ overridden:
             track: 150
       vrf: ansible_temp_vrf
     - address_families:
-      - afi: ipv6
-        routes:
-        - dest: 2001:DB8:0:3::/64
-          next_hops:
-          - forward_router_address: 2001:DB8:0:3::2
-            name: test_v6
-            tag: 105
       - afi: ipv4
         routes:
         - dest: 198.51.100.0/24
@@ -183,6 +176,13 @@ overridden:
             name: route_2
           - forward_router_address: 198.51.101.3
             name: route_3
+      - afi: ipv6
+        routes:
+        - dest: 2001:DB8:0:3::/64
+          next_hops:
+          - forward_router_address: 2001:DB8:0:3::2
+            name: test_v6
+            tag: 105
 
   commands:
     - "no ip route 198.51.100.0 255.255.255.0 198.51.101.1 110 multicast name route_1 tag 40"
@@ -206,6 +206,12 @@ overridden:
             track: 150
       vrf: ansible_temp_vrf
     - address_families:
+      - afi: ipv4
+        routes:
+        - dest: 198.51.100.0/24
+          next_hops:
+          - forward_router_address: 198.51.101.3
+            name: override_route
       - afi: ipv6
         routes:
         - dest: 2001:DB8:0:3::/64
@@ -213,12 +219,6 @@ overridden:
           - forward_router_address: 2001:DB8:0:3::2
             name: override_v6
             tag: 175
-      - afi: ipv4
-        routes:
-        - dest: 198.51.100.0/24
-          next_hops:
-          - forward_router_address: 198.51.101.3
-            name: override_route
 
 deleted:
   before:
@@ -233,6 +233,13 @@ deleted:
             track: 150
       vrf: ansible_temp_vrf
     - address_families:
+      - afi: ipv6
+        routes:
+        - dest: 2001:DB8:0:3::/64
+          next_hops:
+          - forward_router_address: 2001:DB8:0:3::2
+            name: test_v6
+            tag: 105
       - afi: ipv4
         routes:
         - dest: 198.51.100.0/24
@@ -247,13 +254,6 @@ deleted:
             name: route_2
           - forward_router_address: 198.51.101.3
             name: route_3
-      - afi: ipv6
-        routes:
-        - dest: 2001:DB8:0:3::/64
-          next_hops:
-          - forward_router_address: 2001:DB8:0:3::2
-            name: test_v6
-            tag: 105
 
   commands:
     - "no ip route vrf ansible_temp_vrf 192.0.2.0 255.255.255.0 192.0.2.1 name test_vrf track 150 tag 50"
@@ -262,4 +262,5 @@ deleted:
     - "no ip route 198.51.100.0 255.255.255.0 198.51.101.3 name route_3"
     - "no ipv6 route 2001:DB8:0:3::/64 2001:DB8:0:3::2 name test_v6 tag 105"
 
-  after: []
+  after:
+  - {}
