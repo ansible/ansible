@@ -33,6 +33,21 @@ It's also possible to change the indentation of both (new in version 2.2)::
     {{ some_variable | to_nice_json(indent=2) }}
     {{ some_variable | to_nice_yaml(indent=8) }}
 
+Note that to_nice_yaml(indent=n) only affects each new line that ``to_nice_yaml`` and ``to_json`` create, and does not take into account the line offset where the Jinja2 template is called. You should therefore incorporate a Jinja2 ``indent`` filter to get all lines with the expected indentation::
+
+      cisco_wireless_controllers:
+        {{ snmp_credentials.cisco_wireless_controllers | to_nice_yaml(indent=2) | indent(4) }}
+        walk:
+          - ...
+
+might produce the following (adding auth and version keys)
+
+      cisco_wireless_controllers:
+        auth:
+          community: whocares
+        version: 2
+        walk:
+          - ...
 
 ``to_yaml`` and ``to_nice_yaml`` filters use `PyYAML library`_ which has a default 80 symbol string length limit. That causes unexpected line break after 80th symbol (if there is a space after 80th symbol)
 To avoid such behaviour and generate long lines it is possible to use ``width`` option::
