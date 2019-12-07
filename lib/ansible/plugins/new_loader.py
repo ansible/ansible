@@ -376,6 +376,14 @@ class PluginFinder:
             return None
 
     def _load_plugin_class(self, name, path):
+        # FIXME: doubtful any other types will do this, but should this
+        #        be something that's set in the class instead of hard-
+        #        coding it this way?
+        # filter and test plugins can can contain multiple plugins
+        # they must have a unique python module name to prevent them
+        # from shadowing each other
+        if self.subdir in ('filter_plugins', 'test_plugins') and '.' not in name:
+            name = '{0}_{1}'.format(abs(hash(path)), name)
         module_source = self._load_module_source(name, path)
         self._load_config_defs(name, module_source, path)
         obj_class = getattr(module_source, self.class_name)
