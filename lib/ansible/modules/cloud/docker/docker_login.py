@@ -29,7 +29,6 @@ description:
     - Running in check mode will perform the authentication without updating the config file.
 options:
   registry_url:
-    required: False
     description:
       - The registry URL.
     type: str
@@ -48,7 +47,6 @@ options:
     type: str
     required: yes
   email:
-    required: False
     description:
       - Does nothing, do not use.
       - Will be removed in Ansible 2.14.
@@ -447,8 +445,8 @@ def main():
 
     argument_spec = dict(
         registry_url=dict(type='str', default=DEFAULT_DOCKER_REGISTRY, aliases=['registry', 'url']),
-        username=dict(type='str'),
-        password=dict(type='str', no_log=True),
+        username=dict(type='str', required=True),
+        password=dict(type='str', required=True, no_log=True),
         email=dict(type='str', removed_in_version='2.14'),
         reauthorize=dict(type='bool', default=False, aliases=['reauth']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
