@@ -187,6 +187,26 @@ def get_fingerprint(path, passphrase=None, content=None):
     return get_fingerprint_of_bytes(publickey)
 
 
+def load_file_if_exists(path, module=None, ignore_errors=False):
+    try:
+        with open(path, 'rb') as f:
+            return f.read()
+    except EnvironmentError as exc:
+        if exc.errno == errno.ENOENT:
+            return None
+        if ignore_errors:
+            return None
+        if module is None:
+            raise
+        module.fail_json('Error while loading {0} - {1}'.format(path, str(exc)))
+    except Exception as exc:
+        if ignore_errors:
+            return None
+        if module is None:
+            raise
+        module.fail_json('Error while loading {0} - {1}'.format(path, str(exc)))
+
+
 def load_privatekey(path, passphrase=None, check_passphrase=True, content=None, backend='pyopenssl'):
     """Load the specified OpenSSL private key.
 
