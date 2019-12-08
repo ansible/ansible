@@ -164,7 +164,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         for mod_type in self._connection.module_implementation_preferences:
             # Check to determine if PowerShell modules are supported, and apply
             # some fixes (hacks) to module name + args.
-            if mod_type == '.ps1':
+            if mod_type == 'ps1':
                 # win_stat, win_file, and win_copy are not just like their
                 # python counterparts but they are compatible enough for our
                 # internal usage

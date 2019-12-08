@@ -46,7 +46,7 @@ display = Display()
 
 GENERAL_CACHE_ENTRY_FIELDS = ['obj', 'deprecated', 'aliases']
 
-PathCacheEntry = namedtuple('PathCacheEntry', ['name'] + GENERAL_CACHE_ENTRY_FIELDS)
+PathCacheEntry = namedtuple('PathCacheEntry', ['name', 'extension'] + GENERAL_CACHE_ENTRY_FIELDS)
 PluginCacheEntry = namedtuple('PluginCacheEntry', ['path'] + GENERAL_CACHE_ENTRY_FIELDS)
 
 
@@ -159,13 +159,16 @@ class PluginFinder:
                     splitname = os.path.splitext(candidate_name)
                     base_name = splitname[0]
                     try:
-                        extension = splitname[1]
+                        extension = splitname[1].replace('.', '')
                     except IndexError:
                         extension = ''
 
-                    if base_name not in self._plugin_cache:
-                        self._plugin_cache[base_name] = PluginCacheEntry(candidate_path, None, False, [])
-                        self._path_cache[candidate_path] = PathCacheEntry(base_name, None, False, [])
+                    if (base_name, extension) not in self._plugin_cache:
+                        if extension in ('', 'py') or self.class_name:
+                            self._plugin_cache[(base_name, '')] = PluginCacheEntry(candidate_path, None, False, [])
+                        else:
+                            self._plugin_cache[(base_name, extension)] = PluginCacheEntry(candidate_path, None, False, [])
+                        self._path_cache[candidate_path] = PathCacheEntry(base_name, extension, None, False, [])
             if recursive:
                 for x in subdirs:
                     subdir_path = os.path.join(root, x)
@@ -195,12 +198,12 @@ class PluginFinder:
 
     has_plugin = __contains__
 
-    def _find_legacy_plugin(self, name):
+    def _find_legacy_plugin(self, name, suffix):
         '''
         used to find "legacy" plugins, which ship with Ansible and
         are located in the python library directory under plugins/
         '''
-        return self._plugin_cache[name]
+        return self._plugin_cache[(name, suffix)]
 
     def _find_fq_plugin(self, fq_name, extension):
         '''
@@ -259,9 +262,6 @@ class PluginFinder:
 
         if mod_type:
             suffix = mod_type
-        elif self.class_name:
-            # Ansible plugins that run in the controller process (most plugins)
-            suffix = '.py'
         else:
             # Only Ansible Modules.  Ansible modules can be any executable so
             # they can have any suffix
@@ -283,7 +283,7 @@ class PluginFinder:
                         # just pass the raw name to the old lookup function to check in all the usual locations
                         full_name = name
                         # p = self._find_plugin_legacy(name.replace('ansible.legacy.', '', 1), ignore_deprecated, check_aliases, suffix)
-                        entry = self._find_legacy_plugin(name.replace('ansible.legacy.', '', 1))
+                        entry = self._find_legacy_plugin(name.replace('ansible.legacy.', '', 1), suffix)
                         if entry:
                             return_path = entry.path
                     else:
@@ -300,7 +300,7 @@ class PluginFinder:
 
         # if we got here, there's no collection list and it's not an FQ name, so do legacy lookup
         try:
-            entry = self._find_legacy_plugin(name)
+            entry = self._find_legacy_plugin(name, suffix)
             if entry:
                 return_path = entry.path
         except KeyError:
@@ -309,45 +309,45 @@ class PluginFinder:
 
     # methods for loading plugins
 
-    def get(self, name, collection_list=None):
-        name, path = self.find_plugin(name, collection_list=collection_list)
+    def get(self, name, ext='', collection_list=None):
+        name, path = self.find_plugin(name, ext, collection_list=collection_list)
         if not path:
             return None
         if AnsibleCollectionRef.is_valid_fqcr(name):
             return self._load_plugin_class(name, path)
         else:
-            return self._load_legacy_plugin(name)
+            return self._load_legacy_plugin(name, ext)
 
-    def _load_legacy_plugin(self, name, *args, **kwargs):
+    def _load_legacy_plugin(self, name, ext, *args, **kwargs):
         if not self.class_name:
             return None
         try:
-            entry = self._find_legacy_plugin(name)
+            entry = self._find_legacy_plugin(name, ext)
             if entry.obj is None:
-                entry = entry._replace(obj=self.load_plugin(name, entry=entry))
-                self._plugin_cache[name] = entry
+                entry = entry._replace(obj=self.load_plugin(name, ext, entry=entry))
+                self._plugin_cache[(name, ext)] = entry
             return entry.obj
         except KeyError:
             return None
 
     def all(self):
-        for name in self._plugin_cache.keys():
+        for name, ext in self._plugin_cache.keys():
             try:
-                entry = self._plugin_cache[name]
+                entry = self._plugin_cache[(name, ext)]
                 if entry.obj is None:
-                    entry = entry._replace(obj=self.load_plugin(name, entry=entry))
-                    self._plugin_cache[name] = entry
+                    entry = entry._replace(obj=self.load_plugin(name, ext, entry=entry))
+                    self._plugin_cache[(name, ext)] = entry
                 yield entry.obj
             except GeneratorExit:
                 break
 
-    def load_plugin(self, name, entry=None):
+    def load_plugin(self, name, ext='', entry=None):
         try:
             if name in self.aliases:
                 name = self.aliases[name]
 
             if not entry:
-                entry = self._plugin_cache[name]
+                entry = self._plugin_cache[(name, ext)]
             if entry.obj:
                 return entry.obj
 

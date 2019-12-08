@@ -133,7 +133,7 @@ class TestWinUpdatesActionPlugin(object):
         task.async_val = 10
 
         connection = MagicMock()
-        connection.module_implementation_preferences = ('.ps1', '.exe', '')
+        connection.module_implementation_preferences = ('ps1', 'exe', '')
 
         play_context = MagicMock()
         play_context.check_mode = False

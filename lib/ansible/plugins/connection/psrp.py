@@ -332,7 +332,7 @@ display = Display()
 class Connection(ConnectionBase):
 
     transport = 'psrp'
-    module_implementation_preferences = ('.ps1', '.exe', '')
+    module_implementation_preferences = ('ps1', 'exe', '')
     allow_executable = False
     has_pipelining = True
     allow_extras = True
