@@ -38,14 +38,14 @@ options:
       - url
   username:
     description:
-      - The username for the registry account
+      - The username for the registry account.
+      - Required when I(state) is C(present).
     type: str
-    required: yes
   password:
     description:
-      - The plaintext password for the registry account
+      - The plaintext password for the registry account.
+      - Required when I(state) is C(present).
     type: str
-    required: yes
   email:
     description:
       - Does nothing, do not use.
@@ -445,8 +445,8 @@ def main():
 
     argument_spec = dict(
         registry_url=dict(type='str', default=DEFAULT_DOCKER_REGISTRY, aliases=['registry', 'url']),
-        username=dict(type='str', required=True),
-        password=dict(type='str', required=True, no_log=True),
+        username=dict(type='str'),
+        password=dict(type='str', no_log=True),
         email=dict(type='str', removed_in_version='2.14'),
         reauthorize=dict(type='bool', default=False, aliases=['reauth']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
