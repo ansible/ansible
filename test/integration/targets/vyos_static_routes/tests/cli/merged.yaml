@@ -11,21 +11,21 @@
        - address_families:
          - afi: 'ipv4'
            routes:
-             - dest: 192.0.0.0/24        
+             - dest: 192.0.2.32/28
                blackhole_config:
                  type: 'blackhole'
                next_hops:
-                 - forward_router_address: 192.11.11.11
-                 - forward_router_address: 192.11.11.12
+                 - forward_router_address: 192.0.2.10
+                 - forward_router_address: 192.0.2.9
        - address_families:
          - afi: 'ipv6'
            routes: 
-             - dest: 2001:db8::0/32
+             - dest: 2001:db8:1000::/36
                blackhole_config:
                  distance: 2 
                next_hops:
-                 - forward_router_address: 2001:db8::5
-                 - forward_router_address: 2001:db8::1      
+                 - forward_router_address: 2001:db8:2000:2::1
+                 - forward_router_address: 2001:db8:2000:2::2
       state: merged
     register: result
 

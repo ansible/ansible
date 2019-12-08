@@ -38,7 +38,6 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: vyos_static_routes
-version_added: '2.10'
 short_description: Manages attributes of static routes on VyOS network devices.
 description: This module manages attributes of static routes on VyOS network devices.
 notes:
@@ -125,19 +124,6 @@ options:
   state:
     description:
       - The state of the configuration after module completion.
-      - The states I(rendered), I(gathered) and I(parsed) does not perform any
-        change on the device.
-      - The state I(rendered) will transform the configuration in C(config) option to platform
-        specific CLI commands which will be returned in the I(rendered) key within the result.
-        For state I(rendered) active connection to remote host is not required.
-      - The state I(gathered) will fetch the running configuration from device and transform
-        it into structured data in the format as per the resource module argspec and the
-        value is returned in the I(gathered) key within the result.
-      - The state I(parsed) reads the configuration from C(running_config) option and transforms
-        it into JSON format as per the resource module parameters and the value is returned in
-        the I(parsed) key within the result. The value of C(running_config) option should be the
-        same format as the output of command I(show configuration | grep 'static route')
-        executed on device. For state I(parsed) active connection to remote host is not required.
     type: str
     choices:
     - merged
@@ -158,27 +144,27 @@ EXAMPLES = """
 # vyos@vyos:~$ show configuration  commands | grep static
 #
 - name: Merge the provided configuration with the exisiting running configuration
-  vyos_static_routes:
-    config:
-     - address_families:
-       - afi: 'ipv4'
-         routes:
-         - dest: 192.0.0.0/24
-           blackhole_config:
-             type: 'blackhole'
-           next_hops:
-             - forward_router_address: 192.11.11.11
-             - forward_router_address: 192.11.11.12
-     - address_families:
-       - afi: 'ipv6'
-         routes:
-         - dest: 2001:db8::0/32
-           blackhole_config:
-             distance: 2
-           next_hops:
-             - forward_router_address: 2001:db8::5
-             - forward_router_address: 2001:db8::1
-    state: merged
+      vyos_static_routes:
+        config:
+         - address_families:
+           - afi: 'ipv4'
+             routes:
+               - dest: 192.0.2.32/28
+                 blackhole_config:
+                   type: 'blackhole'
+                 next_hops:
+                   - forward_router_address: 192.0.2.6
+                   - forward_router_address: 192.0.2.7
+         - address_families:
+           - afi: 'ipv6'
+             routes:
+               - dest: 2001:db8:1000::/36
+                 blackhole_config:
+                   distance: 2
+                 next_hops:
+                   - forward_router_address: 2001:db8:2000:2::1
+                   - forward_router_address: 2001:db8:2000:2::2
+        state: merged
 #
 #
 # -------------------------
@@ -188,14 +174,14 @@ EXAMPLES = """
 # before": []
 #
 #    "commands": [
-#        "set protocols static route 192.0.0.0/24",
-#        "set protocols static route 192.0.0.0/24 blackhole",
-#        "set protocols static route 192.0.0.0/24 next-hop '192.11.11.11'",
-#        "set protocols static route 192.0.0.0/24 next-hop '192.11.11.12'",
-#        "set protocols static route6 2001:db8::0/32",
-#        "set protocols static route6 2001:db8::0/32 blackhole distance '2'",
-#        "set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5'",
-#        "set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'"
+#        "set protocols static route 192.0.2.32/28",
+#        "set protocols static route 192.0.2.32/28 blackhole",
+#        "set protocols static route 192.0.2.32/28 next-hop '192.0.2.6'",
+#        "set protocols static route 192.0.2.32/28 next-hop '192.0.2.7'",
+#        "set protocols static route6 2001:db8:1000::/36",
+#        "set protocols static route6 2001:db8:1000::/36 blackhole distance '2'",
+#        "set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::1'",
+#        "set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'"
 #    ]
 #
 # "after": [
@@ -208,22 +194,18 @@ EXAMPLES = """
 #                            "blackhole_config": {
 #                                "type": "blackhole"
 #                            },
-#                            "dest": "192.0.0.0/24",
+#                            "dest": "192.0.2.32/28",
 #                            "next_hops": [
 #                                {
-#                                    "forward_router_address": "192.11.11.11"
+#                                    "forward_router_address": "192.0.2.6"
 #                                },
 #                                {
-#                                    "forward_router_address": "192.11.11.12"
+#                                    "forward_router_address": "192.0.2.7"
 #                                }
 #                            ]
 #                        }
 #                    ]
-#                }
-#            ]
-#        },
-#        {
-#            "address_families": [
+#                },
 #                {
 #                    "afi": "ipv6",
 #                    "routes": [
@@ -231,13 +213,13 @@ EXAMPLES = """
 #                            "blackhole_config": {
 #                                "distance": 2
 #                            },
-#                            "dest": "2001:db8::0/32",
+#                            "dest": "2001:db8:1000::/36",
 #                            "next_hops": [
 #                                {
-#                                    "forward_router_address": "2001:db8::1"
+#                                    "forward_router_address": "2001:db8:2000:2::1"
 #                                },
 #                                {
-#                                    "forward_router_address": "2001:db8::5"
+#                                    "forward_router_address": "2001:db8:2000:2::2"
 #                                }
 #                            ]
 #                        }
@@ -251,12 +233,12 @@ EXAMPLES = """
 # -------------
 #
 # vyos@vyos:~$ show configuration commands| grep static
-# set protocols static route 192.0.0.0/24 'blackhole'
-# set protocols static route 192.0.0.0/24 next-hop '192.11.11.11'
-# set protocols static route 192.0.0.0/24 next-hop '192.11.11.12'
-# set protocols static route6 2001:db8::0/32 blackhole distance '2'
-# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'
-# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5'
+# set protocols static route 192.0.2.32/28 'blackhole'
+# set protocols static route 192.0.2.32/28 next-hop '192.0.2.6'
+# set protocols static route 192.0.2.32/28 next-hop '192.0.2.7'
+# set protocols static route6 2001:db8:1000::/36 blackhole distance '2'
+# set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::1'
+# set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'
 
 
 # Using replaced
@@ -265,27 +247,27 @@ EXAMPLES = """
 # -------------
 #
 # vyos@vyos:~$ show configuration commands| grep static
-# set protocols static route 192.0.0.0/24 'blackhole'
-# set protocols static route 192.0.0.0/24 next-hop '192.11.11.11'
-# set protocols static route 192.0.0.0/24 next-hop '192.11.11.12'
-# set protocols static route6 2001:db8::0/32 blackhole distance '2'
-# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'
-# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5'
+# set protocols static route 192.0.2.32/28 'blackhole'
+# set protocols static route 192.0.2.32/28 next-hop '192.0.2.6'
+# set protocols static route 192.0.2.32/28 next-hop '192.0.2.7'
+# set protocols static route6 2001:db8:1000::/36 blackhole distance '2'
+# set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::1'
+# set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'
 #
 - name: Replace device configurations of listed static routes with provided configurations
-  vyos_static_routes:
-    config:
-     - address_families:
-       - afi: 'ipv4'
-         routes:
-         - dest: 192.0.0.0/24
-           blackhole_config:
-             distance: 2
-           next_hops:
-             - forward_router_address: 192.1.1.11
-             - forward_router_address: 192.11.11.12
-             - forward_router_address: 192.3.3.13
-    state: replaced
+      vyos_static_routes:
+          config:
+            - address_families:
+              - afi: 'ipv4'
+                routes:
+                  - dest: 192.0.2.32/28
+                    blackhole_config:
+                      distance: 2
+                    next_hops:
+                      - forward_router_address: 192.0.2.7
+                        enabled: false
+                      - forward_router_address: 192.0.2.8
+          state: replaced
 #
 #
 # -------------------------
@@ -302,22 +284,18 @@ EXAMPLES = """
 #                            "blackhole_config": {
 #                                "type": "blackhole"
 #                            },
-#                            "dest": "192.0.0.0/24",
+#                            "dest": "192.0.2.32/28",
 #                            "next_hops": [
 #                                {
-#                                    "forward_router_address": "192.11.11.11"
+#                                    "forward_router_address": "192.0.2.6"
 #                                },
 #                                {
-#                                    "forward_router_address": "192.11.11.12"
+#                                    "forward_router_address": "192.0.2.7"
 #                                }
 #                            ]
 #                        }
 #                    ]
-#                }
-#            ]
-#        },
-#        {
-#            "address_families": [
+#                },
 #                {
 #                    "afi": "ipv6",
 #                    "routes": [
@@ -325,13 +303,13 @@ EXAMPLES = """
 #                            "blackhole_config": {
 #                                "distance": 2
 #                            },
-#                            "dest": "2001:db8::0/32",
+#                            "dest": "2001:db8:1000::/36",
 #                            "next_hops": [
 #                                {
-#                                    "forward_router_address": "2001:db8::1"
+#                                    "forward_router_address": "2001:db8:2000:2::1"
 #                                },
 #                                {
-#                                    "forward_router_address": "2001:db8::5"
+#                                    "forward_router_address": "2001:db8:2000:2::2"
 #                                }
 #                            ]
 #                        }
@@ -342,10 +320,12 @@ EXAMPLES = """
 #    ]
 #
 # "commands": [
-#        "delete protocols static route 192.0.0.0/24 next-hop '192.11.11.11'",
-#        "set protocols static route 192.0.0.0/24 next-hop '192.1.1.11'",
-#        "set protocols static route 192.0.0.0/24 next-hop '192.3.3.13'",
-#        "set protocols static route 192.0.0.0/24 blackhole distance '2'"
+#        "delete protocols static route 192.0.2.32/28 next-hop '192.0.2.6'",
+#        "delete protocols static route 192.0.2.32/28 next-hop '192.0.2.7'",
+#        "set protocols static route 192.0.2.32/28 next-hop 192.0.2.7 'disable'",
+#        "set protocols static route 192.0.2.32/28 next-hop '192.0.2.7'",
+#        "set protocols static route 192.0.2.32/28 next-hop '192.0.2.9'",
+#        "set protocols static route 192.0.2.32/28 blackhole distance '2'"
 #    ]
 #
 #    "after": [
@@ -358,25 +338,19 @@ EXAMPLES = """
 #                            "blackhole_config": {
 #                                "distance": 2
 #                            },
-#                            "dest": "192.0.0.0/24",
+#                            "dest": "192.0.2.32/28",
 #                            "next_hops": [
 #                                {
-#                                    "forward_router_address": "192.1.1.11"
+#                                    "enabled": false,
+#                                    "forward_router_address": "192.0.2.7"
 #                                },
 #                                {
-#                                    "forward_router_address": "192.3.3.13"
-#                                },
-#                                {
-#                                    "forward_router_address": "192.11.11.12"
+#                                    "forward_router_address": "192.0.2.9"
 #                                }
 #                            ]
 #                        }
 #                    ]
-#                }
-#            ]
-#        },
-#        {
-#            "address_families": [
+#                },
 #                {
 #                    "afi": "ipv6",
 #                    "routes": [
@@ -384,13 +358,13 @@ EXAMPLES = """
 #                            "blackhole_config": {
 #                                "distance": 2
 #                            },
-#                            "dest": "2001:db8::0/32",
+#                            "dest": "2001:db8:1000::/36",
 #                            "next_hops": [
 #                                {
-#                                    "forward_router_address": "2001:db8::1"
+#                                    "forward_router_address": "2001:db8:2000:2::1"
 #                                },
 #                                {
-#                                    "forward_router_address": "2001:db8::5"
+#                                    "forward_router_address": "2001:db8:2000:2::2"
 #                                }
 #                            ]
 #                        }
@@ -399,18 +373,17 @@ EXAMPLES = """
 #            ]
 #        }
 #    ]
-#
+# 
 # After state:
 # -------------
 #
 # vyos@vyos:~$ show configuration commands| grep static
-# set protocols static route 192.0.0.0/24 blackhole distance '2'
-# set protocols static route 192.0.0.0/24 next-hop '192.1.1.11'
-# set protocols static route 192.0.0.0/24 next-hop '192.3.3.13'
-# set protocols static route 192.0.0.0/24 next-hop '192.11.11.12'
-# set protocols static route6 2001:db8::0/32 blackhole distance '2'
-# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'
-# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5'
+# set protocols static route 192.0.2.32/28 blackhole distance '2'
+# set protocols static route 192.0.2.32/28 next-hop 192.0.2.7 'disable'
+# set protocols static route 192.0.2.32/28 next-hop '192.0.2.9'
+# set protocols static route6 2001:db8:1000::/36 blackhole distance '2'
+# set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::1'
+# set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'
 
 
 # Using overridden
@@ -419,24 +392,23 @@ EXAMPLES = """
 # --------------
 #
 # vyos@vyos:~$ show configuration commands| grep static
-# set protocols static route 192.0.0.0/24 blackhole distance '2'
-# set protocols static route 192.0.0.0/24 next-hop '192.1.1.11'
-# set protocols static route 192.0.0.0/24 next-hop '192.3.3.13'
-# set protocols static route 192.0.0.0/24 next-hop '192.11.11.12'
-# set protocols static route6 2001:db8::0/32 blackhole distance '2'
-# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'
-# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5'
+# set protocols static route 192.0.2.32/28 blackhole distance '2'
+# set protocols static route 192.0.2.32/28 next-hop 192.0.2.7 'disable'
+# set protocols static route 192.0.2.32/28 next-hop '192.0.2.9'
+# set protocols static route6 2001:db8:1000::/36 blackhole distance '2'
+# set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::1'
+# set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'
 #
 - name: Overrides all device configuration with provided configuration
-  vyos_static_routes:
-    config:
-     - address_families:
-       - afi: 'ipv4'
-         routes:
-         - dest: 198.0.0.0/24
-           next_hops:
-             - forward_router_address: 198.98.98.98
-    state: overridden
+      vyos_static_routes:
+         config:
+           - address_families:
+             - afi: 'ipv4'
+               routes:
+                 - dest: 198.0.2.48/28
+                   next_hops:
+                     - forward_router_address: 192.0.2.18
+         state: overridden
 #
 #
 # -------------------------
@@ -453,25 +425,19 @@ EXAMPLES = """
 #                            "blackhole_config": {
 #                                "distance": 2
 #                            },
-#                            "dest": "192.0.0.0/24",
+#                            "dest": "192.0.2.32/28",
 #                            "next_hops": [
 #                                {
-#                                    "forward_router_address": "192.1.1.11"
+#                                    "enabled": false,
+#                                    "forward_router_address": "192.0.2.7"
 #                                },
 #                                {
-#                                    "forward_router_address": "192.3.3.13"
-#                                },
-#                                {
-#                                    "forward_router_address": "192.11.11.12"
+#                                    "forward_router_address": "192.0.2.9"
 #                                }
 #                            ]
 #                        }
 #                    ]
-#                }
-#            ]
-#        },
-#        {
-#            "address_families": [
+#                },
 #                {
 #                    "afi": "ipv6",
 #                    "routes": [
@@ -479,13 +445,13 @@ EXAMPLES = """
 #                            "blackhole_config": {
 #                                "distance": 2
 #                            },
-#                            "dest": "2001:db8::0/32",
+#                            "dest": "2001:db8:1000::/36",
 #                            "next_hops": [
 #                                {
-#                                    "forward_router_address": "2001:db8::1"
+#                                    "forward_router_address": "2001:db8:2000:2::1"
 #                                },
 #                                {
-#                                    "forward_router_address": "2001:db8::5"
+#                                    "forward_router_address": "2001:db8:2000:2::2"
 #                                }
 #                            ]
 #                        }
@@ -496,10 +462,10 @@ EXAMPLES = """
 #    ]
 #
 #    "commands": [
-#        "delete protocols static route 192.0.0.0/24",
-#        "delete protocols static route6 2001:db8:1000::0/38",
-#        "set protocols static route 198.0.0.0/24 next-hop '198.98.98.98'",
-#        "set protocols static route 198.0.0.0/24"
+#        "delete protocols static route 192.0.2.32/28",
+#        "delete protocols static route6 2001:db8:1000::/36",
+#        "set protocols static route 198.0.2.48/28",
+#        "set protocols static route 198.0.2.48/28 next-hop '192.0.2.18'"
 #
 #
 #    "after": [
@@ -509,10 +475,10 @@ EXAMPLES = """
 #                    "afi": "ipv4",
 #                    "routes": [
 #                        {
-#                            "dest": "198.0.0.0/24",
+#                            "dest": "198.0.2.48/28",
 #                            "next_hops": [
 #                                {
-#                                    "forward_router_address": "198.98.98.98"
+#                                    "forward_router_address": "192.0.2.18"
 #                                }
 #                            ]
 #                        }
@@ -527,7 +493,7 @@ EXAMPLES = """
 # ------------
 #
 # vyos@vyos:~$ show configuration commands| grep static
-# set protocols static route 198.0.0.0/24 next-hop '198.98.98.98'
+# set protocols static route 198.0.2.48/28 next-hop '192.0.2.18'
 
 
 # Using deleted
@@ -536,25 +502,25 @@ EXAMPLES = """
 # -------------
 #
 # vyos@vyos:~$ show configuration commands| grep static
-# set protocols static route 192.0.0.0/24 'blackhole'
-# set protocols static route 192.0.0.0/24 next-hop '192.11.11.11'
-# set protocols static route 192.0.0.0/24 next-hop '192.11.11.12'
-# set protocols static route6 2001:db8::0/32 blackhole distance '2'
-# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::1'
-# set protocols static route6 2001:db8::0/32 next-hop '2001:db8::5'
+# set protocols static route 192.0.2.32/28 'blackhole'
+# set protocols static route 192.0.2.32/28 next-hop '192.0.2.6'
+# set protocols static route 192.0.2.32/28 next-hop '192.0.2.7'
+# set protocols static route6 2001:db8:1000::/36 blackhole distance '2'
+# set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::1'
+# set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'
 #
 - name: Delete attributes of given static routes.
-  vyos_static_routes:
-    config:
-     - address_families:
-       - afi: 'ipv4'
-         routes:
-         - dest: '192.0.0.0/24'
-     - address_families:
-       - afi: 'ipv6'
-         routes:
-         - dest: '2001:db8::0/32'
-    state: deleted
+      vyos_static_routes:
+        config:
+          - address_families:
+            - afi: 'ipv4'
+              routes:
+                - dest: '192.0.2.32/28'
+          - address_families:
+            - afi: 'ipv6'
+              routes:
+                - dest: '2001:db8:1000::/36'
+        state: deleted
 #
 #
 # ------------------------
@@ -571,22 +537,18 @@ EXAMPLES = """
 #                            "blackhole_config": {
 #                                "type": "blackhole"
 #                            },
-#                            "dest": "192.0.0.0/24",
+#                            "dest": "192.0.2.32/28",
 #                            "next_hops": [
 #                                {
-#                                    "forward_router_address": "192.11.11.11"
+#                                    "forward_router_address": "192.0.2.6"
 #                                },
 #                                {
-#                                    "forward_router_address": "192.11.11.12"
+#                                    "forward_router_address": "192.0.2.7"
 #                                }
 #                            ]
 #                        }
 #                    ]
-#                }
-#            ]
-#        },
-#        {
-#            "address_families": [
+#                },
 #                {
 #                    "afi": "ipv6",
 #                    "routes": [
@@ -594,13 +556,13 @@ EXAMPLES = """
 #                            "blackhole_config": {
 #                                "distance": 2
 #                            },
-#                            "dest": "2001:db8::0/32",
+#                            "dest": "2001:db8:1000::/36",
 #                            "next_hops": [
 #                                {
-#                                    "forward_router_address": "2001:db8::1"
+#                                    "forward_router_address": "2001:db8:2000:2::1"
 #                                },
 #                                {
-#                                    "forward_router_address": "2001:db8::5"
+#                                    "forward_router_address": "2001:db8:2000:2::2"
 #                                }
 #                            ]
 #                        }
@@ -610,8 +572,8 @@ EXAMPLES = """
 #        }
 #    ]
 #    "commands": [
-#        "delete protocols static route 192.0.0.0/24",
-#        "delete protocols static route6 2001:db8::0/32"
+#       "delete protocols static route 192.0.2.32/28",
+#       "delete protocols static route6 2001:db8:1000::/36"
 #    ]
 #
 # "after": []

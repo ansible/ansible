@@ -13,13 +13,13 @@
           - address_families:
             - afi: 'ipv4'
               routes:
-                - dest: 192.0.0.0/24
+                - dest: 192.0.2.32/28
                   blackhole_config:
                     distance: 2
                   next_hops:
-                    - forward_router_address: 192.1.1.11
-                    - forward_router_address: 192.11.11.12
-                    - forward_router_address: 192.3.3.13
+                    - forward_router_address: 192.0.2.7
+                    - forward_router_address: 192.0.2.8
+                    - forward_router_address: 192.0.2.9
         state: replaced
     register: result
 

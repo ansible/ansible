@@ -125,48 +125,37 @@ class Static_routes(ConfigBase):
             commands.extend(self._state_overridden(want=want, have=have))
         elif self.state == 'deleted':
             if want:
-                for want_item in want:
-                    af_want = want_item['address_families']
-                    for element in af_want:
-                        want_routes = element['routes']
-                        for route in want_routes:
-                            have_route = self.search_route_in_have(have, route['dest'])
-                            if have_route:
-                                commands.extend(self._state_deleted(want=None, have=have_route))
+                routes = self._get_routes(want)
+                for r in routes:
+                    h_route = self.search_route_in_have(have, r['dest'])
+                    if h_route:
+                        commands.extend(self._state_deleted(want=None, have=h_route))
             else:
-                for have_item in have:
-                    af_have = have_item['address_families']
-                    for element in af_have:
-                        have_routes = element['routes']
-                        for have_route in have_routes:
-                            commands.extend(self._state_deleted(want=None, have=have_route))
+                routes = self._get_routes(have)
+                for r in routes:
+                    commands.extend(self._state_deleted(want=None, have=r))
         elif want:
-            for want_item in want:
-                af_want = want_item['address_families']
-                for element in af_want:
-                    want_routes = element['routes']
-                    for route in want_routes:
-                        have_item = self.search_route_in_have(have, route['dest'])
-                        if self.state == 'merged' or self.state == 'rendered':
-                            commands.extend(self._state_merged(want=route, have=have_item))
-                        elif self.state == 'replaced':
-                            commands.extend(self._state_replaced(want=route, have=have_item))
+            routes = self._get_routes(want)
+            for r in routes:
+                h_item = self.search_route_in_have(have, r['dest'])
+                if self.state == 'merged' or self.state == 'rendered':
+                    commands.extend(self._state_merged(want=r, have=h_item))
+                elif self.state == 'replaced':
+                    commands.extend(self._state_replaced(want=r, have=h_item))
         return commands
 
     def search_route_in_have(self, have, want_dest):
         """
-
+        This function  returns the route if its found in
+        have config.
         :param have:
         :param dest:
-        :return:
+        :return: the matched route
         """
-        for have_item in have:
-            af_have = have_item['address_families']
-            for element in af_have:
-                have_routes = element['routes']
-                for item in have_routes:
-                    if item['dest'] == want_dest:
-                        return item
+        routes = self._get_routes(have)
+        for r in routes:
+            if r['dest'] == want_dest:
+                return r
         return None
 
     def _state_replaced(self, want, have):
@@ -191,24 +180,15 @@ class Static_routes(ConfigBase):
         """
 
         commands = []
-        for have_item in have:
-            af_have = have_item['address_families']
-            for element in af_have:
-                have_routes = element['routes']
-                for route in have_routes:
-                    route_in_want = self.search_route_in_have(want, route['dest'])
-                    if not route_in_want:
-                        commands.append(
-                            self._compute_command(route['dest'], remove=True)
-                        )
-
-        for want_item in want:
-            af_want = want_item['address_families']
-            for element in af_want:
-                want_routes = element['routes']
-                for route in want_routes:
-                    route_in_have = self.search_route_in_have(have, route['dest'])
-                    commands.extend(self._state_replaced(route, route_in_have))
+        routes = self._get_routes(have)
+        for r in routes:
+            route_in_want = self.search_route_in_have(want, r['dest'])
+            if not route_in_want:
+                commands.append(self._compute_command(r['dest'], remove=True))
+        routes = self._get_routes(want)
+        for r in routes:
+            route_in_have = self.search_route_in_have(have, r['dest'])
+            commands.extend(self._state_replaced(r, route_in_have))
 
         return commands
 
@@ -250,6 +230,12 @@ class Static_routes(ConfigBase):
         return commands
 
     def _render_set_commands(self, want):
+        """
+        This function returns the list of commands to add attributes which are
+        present in want
+        :param want:
+        :return: list of commands.
+        """
         commands = []
         have = {}
         for key, value in iteritems(want):
@@ -267,6 +253,14 @@ class Static_routes(ConfigBase):
         return commands
 
     def _add_blackhole(self, key, want, have):
+        """
+        This function gets the diff for blackhole config specific attributes
+        and form the commands for attributes which are present in want but not in have.
+        :param key:
+        :param want:
+        :param have:
+        :return: list of commands
+        """
         commands = []
         want_copy = deepcopy(remove_empties(want))
         have_copy = deepcopy(remove_empties(have))
@@ -290,6 +284,13 @@ class Static_routes(ConfigBase):
         return commands
 
     def _add_next_hop(self, want, have):
+        """
+        This function gets the diff for next hop specific attributes
+        and form the commands to add attributes which are present in want but not in have.
+        :param want:
+        :param have:
+        :return: list of commands.
+        """
         commands = []
         want_copy = deepcopy(remove_empties(want))
         have_copy = deepcopy(remove_empties(have))
@@ -320,6 +321,17 @@ class Static_routes(ConfigBase):
         return commands
 
     def _update_blackhole(self, key, want, have):
+        """
+        This function gets the difference for blackhole dict and
+        form the commands to delete the attributes which are present in have but not in want.
+        :param want:
+        :param have:
+        :return: list of commands
+        :param key:
+        :param want:
+        :param have:
+        :return: list of commands
+        """
         commands = []
         want_copy = deepcopy(remove_empties(want))
         have_copy = deepcopy(remove_empties(have))
@@ -342,6 +354,13 @@ class Static_routes(ConfigBase):
         return commands
 
     def _update_next_hop(self, want, have):
+        """
+        This function gets the difference for next_hops list and
+        form the commands to delete the attributes which are present in have but not in want.
+        :param want:
+        :param have:
+        :return: list of commands
+        """
         commands = []
 
         want_copy = deepcopy(remove_empties(want))
@@ -373,6 +392,14 @@ class Static_routes(ConfigBase):
         return commands
 
     def _render_updates(self, want, have):
+        """
+        This function takes the diff between want and have and
+        invokes the appropriate functions to create the commands
+        to update the attributes.
+        :param want:
+        :param have:
+        :return: list of commands
+        """
         commands = []
         temp_have_next_hops = have.pop('next_hops', None)
         temp_want_next_hops = want.pop('next_hops', None)
@@ -396,6 +423,15 @@ class Static_routes(ConfigBase):
         return commands
 
     def _compute_command(self, dest, key=None, attrib=None, value=None, remove=False):
+        """
+        This functions construct the required command based on the passed arguments.
+        :param dest:
+        :param key:
+        :param attrib:
+        :param value:
+        :param remove:
+        :return:  constructed command
+        """
         if remove:
             cmd = 'delete protocols static ' + get_route_type(dest)
         else:
@@ -408,3 +444,18 @@ class Static_routes(ConfigBase):
         if value:
             cmd += (" '" + value + "'")
         return cmd
+
+    def _get_routes(self, lst):
+        """
+        This function returns the list of routes
+        :param lst: list of address families
+        :return: list of routes
+        """
+        r_list = []
+        for item in lst:
+            af = item['address_families']
+            for element in af:
+                routes = element['routes']
+                for r in routes:
+                    r_list.append(r)
+        return r_list

@@ -54,21 +54,30 @@ class Static_routesFacts(object):
             # data = connection.get('show running-config | section ^interface')
             # using mock data instead
         objs = []
+        r_v4 = []
+        r_v6 = []
+        af = []
         static_routes = findall(r'set protocols static route(6)? (\S+)', data, M)
         if static_routes:
             for route in set(static_routes):
                 route_regex = r' %s .+$' % route[1]
                 cfg = findall(route_regex, data, M)
-                obj = self.render_config(cfg)
-                dest = route[1].strip("'")
-                af = obj['address_families']
-                for element in af:
-                    routes = element['routes']
-                for static_route in routes:
-                    static_route['dest'] = dest
-                    element['afi'] = self.get_afi(static_route['dest'])
-                if obj:
-                    objs.append(obj)
+                sr = self.render_config(cfg)
+                sr['dest'] = route[1].strip("'")
+                afi = self.get_afi(sr['dest'])
+                if afi == 'ipv4':
+                    r_v4.append(sr)
+                else:
+                    r_v6.append(sr)
+            if r_v4:
+                afi_v4 = {'afi': 'ipv4', 'routes': r_v4}
+                af.append(afi_v4)
+            if r_v6:
+                afi_v6 = {'afi': 'ipv6', 'routes': r_v6}
+                af.append(afi_v6)
+            config = {'address_families': af}
+            if config:
+                objs.append(config)
 
         ansible_facts['ansible_network_resources'].pop('static_routes', None)
         facts = {}
@@ -91,18 +100,13 @@ class Static_routesFacts(object):
         :rtype: dictionary
         :returns: The generated config
         """
-        address_families = []
         routes = []
         next_hops_conf = '\n'.join(filter(lambda x: ('next-hop' in x), conf))
         blackhole_conf = '\n'.join(filter(lambda x: ('blackhole' in x), conf))
         routes_dict = {'blackhole_config': self.parse_blackhole(blackhole_conf),
                        'next_hops': self.parse_next_hop(next_hops_conf)}
         routes.append(routes_dict)
-        af_dict = {'routes': routes}
-        address_families.append(af_dict)
-        config = {'address_families': address_families}
-
-        return utils.remove_empties(config)
+        return routes_dict
 
     def parse_blackhole(self, conf):
         blackhole = None
