@@ -841,6 +841,30 @@ def is_truthy(value):
     return False
 
 
+# options is the dict as defined in the module parameters, current_options is
+# the list of the currently set options as returned by the vSphere API.
+def option_diff(options, current_options):
+    current_options_dict = {}
+    for option in current_options:
+        current_options_dict[option.key] = option.value
+
+    change_option_list = []
+    for option_key, option_value in options.items():
+        if is_boolean(option_value):
+            option_value = VmomiSupport.vmodlTypes['bool'](is_truthy(option_value))
+        elif isinstance(option_value, int):
+            option_value = VmomiSupport.vmodlTypes['int'](option_value)
+        elif isinstance(option_value, float):
+            option_value = VmomiSupport.vmodlTypes['float'](option_value)
+        elif isinstance(option_value, str):
+            option_value = VmomiSupport.vmodlTypes['string'](option_value)
+
+        if option_key not in current_options_dict or current_options_dict[option_key] != option_value:
+            change_option_list.append(vim.option.OptionValue(key=option_key, value=option_value))
+
+    return change_option_list
+
+
 def quote_obj_name(object_name=None):
     """
     Replace special characters in object name

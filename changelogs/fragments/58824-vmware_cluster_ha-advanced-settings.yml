@@ -1,0 +1,2 @@
+minor_changes:
+- vmware_cluster_ha - Implemented HA advanced settings (https://github.com/ansible/ansible/issues/61421)

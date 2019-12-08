@@ -127,14 +127,48 @@
     that:
         - "{{ cluster_ha_result_0006.changed == true }}"
 
-# Delete test cluster
-- name: Delete test cluster
-  vmware_cluster:
-    validate_certs: False
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter_name: "{{ dc1 }}"
-    cluster_name: test_cluster_ha
-    state: absent
-  when: vcsim is not defined
+- when: vcsim is not defined
+  block:
+  - name: Change advanced setting "number of heartbeat datastores" (check-mode)
+    vmware_cluster_ha: &change_num_heartbeat_ds
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter_name: "{{ dc1 }}"
+      cluster_name: test_cluster_ha
+      advanced_settings:
+          'das.heartbeatDsPerHost': '4'
+    check_mode: yes
+    register: change_num_heartbeat_ds_check
+
+  - assert:
+      that:
+        - change_num_heartbeat_ds_check.changed
+
+  - name: Change advanced setting "number of heartbeat datastores"
+    vmware_cluster_ha: *change_num_heartbeat_ds
+    register: change_num_heartbeat_ds
+
+  - assert:
+      that:
+        - change_num_heartbeat_ds.changed
+
+  - name: Change advanced setting "number of heartbeat datastores" again
+    vmware_cluster_ha: *change_num_heartbeat_ds
+    register: change_num_heartbeat_ds_again
+
+  - assert:
+      that:
+        - not change_num_heartbeat_ds_again.changed
+
+  # Delete test cluster
+  - name: Delete test cluster
+    vmware_cluster:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter_name: "{{ dc1 }}"
+      cluster_name: test_cluster_ha
+      state: absent
