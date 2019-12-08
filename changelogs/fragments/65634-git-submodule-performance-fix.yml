@@ -1,0 +1,2 @@
+bugfixes:
+  - git - add an ability to just run git submodule update without fetching every submodule (https://github.com/ansible/ansible/pull/65634)

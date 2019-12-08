@@ -184,6 +184,16 @@ options:
         default: []
         version_added: "2.9"
 
+    update_submodules:
+        description:
+            - Run 'git submodule update' on the repository. This is done without
+              fetching every submodule to determine if it has changed, thus
+              combining this with recursive=False offers significant performance
+              boost compared to recursive=True when using submodules.
+        type: bool
+        default: 'no'
+        version_added: "2.10"
+
 requirements:
     - git>=1.7.1 (the command line tool)
 
@@ -1069,6 +1079,7 @@ def main():
             archive=dict(type='path'),
             archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
+            update_submodules=dict(default='no', type='bool'),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare')],
         required_by={'archive_prefix': ['archive']},
@@ -1095,6 +1106,7 @@ def main():
     archive = module.params['archive']
     archive_prefix = module.params['archive_prefix']
     separate_git_dir = module.params['separate_git_dir']
+    update_submodules = module.params['update_submodules']
 
     result = dict(changed=False, warnings=list())
 
@@ -1251,8 +1263,9 @@ def main():
                 result.update(changed=True, after=remote_head)
                 module.exit_json(**result)
 
-            # Switch to version specified
-            submodule_update(git_path, module, dest, track_submodules, force=force)
+    if (submodules_updated or update_submodules) and not bare:
+        # Switch to version specified
+        submodule_update(git_path, module, dest, track_submodules, force=force)
 
     # determine if we changed anything
     result['after'] = get_version(module, git_path, dest)
