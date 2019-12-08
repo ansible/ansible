@@ -1,0 +1,2 @@
+bugfixes:
+  - docker_image - improve file handling when loading images from disk.
