@@ -2408,7 +2408,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['present', 'absent']),
             path=dict(type='path', required=True),
-            provider=dict(type='str', choices=['acme', 'assertonly', 'entrust', 'ownca', 'selfsigned']),
+            provider=dict(type='str', required=True, choices=['acme', 'assertonly', 'entrust', 'ownca', 'selfsigned']),
             force=dict(type='bool', default=False,),
             csr_path=dict(type='path'),
             backup=dict(type='bool', default=False),
