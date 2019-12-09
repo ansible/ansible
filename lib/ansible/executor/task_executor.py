@@ -1113,16 +1113,21 @@ def start_connection(play_context, variables, task_uuid):
             result = {'error': to_text(stderr, errors='surrogate_then_replace')}
 
     if 'messages' in result:
-        for level, message in result['messages']:
-            if level == 'log':
-                display.display(message, log_only=True)
-            elif level in ('debug', 'v', 'vv', 'vvv', 'vvvv', 'vvvvv', 'vvvvvv'):
-                getattr(display, level)(message, host=play_context.remote_addr)
-            else:
-                if hasattr(display, level):
-                    getattr(display, level)(message)
+        for entry in result['messages']:
+            try:
+                level, message = entry
+                if level == 'log':
+                    display.display(message, log_only=True)
+                elif level in ('debug', 'v', 'vv', 'vvv', 'vvvv', 'vvvvv', 'vvvvvv'):
+                    getattr(display, level)(message, host=play_context.remote_addr)
                 else:
-                    display.vvvv(message, host=play_context.remote_addr)
+                    if hasattr(display, level):
+                        getattr(display, level)(message)
+                    else:
+                        display.vvvv(message, host=play_context.remote_addr)
+            except ValueError:
+                # Something is here that shouldn't be.
+                display.vvvv(entry, host=play_context.remote_addr)
 
     if 'error' in result:
         if play_context.verbosity > 2:
