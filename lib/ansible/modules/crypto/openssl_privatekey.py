@@ -377,7 +377,7 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             return False
 
         if not self._check_format():
-            if ignore_conversion or self.format_mismatch != 'convert':
+            if not ignore_conversion or self.format_mismatch != 'convert':
                 return False
 
         return True
@@ -678,6 +678,7 @@ class PrivateKeyCryptography(PrivateKeyBase):
 
     def _check_size_and_type(self):
         privatekey = self._load_privatekey()
+        self.privatekey = privatekey
 
         if isinstance(privatekey, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
             return self.type == 'RSA' and self.size == privatekey.key_size
