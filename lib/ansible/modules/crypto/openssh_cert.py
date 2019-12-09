@@ -34,8 +34,8 @@ options:
     type:
         description:
             - Whether the module should generate a host or a user certificate.
+            - Required if I(state) is C(present).
         type: str
-        required: true
         choices: ['host', 'user']
     force:
         description:
@@ -50,29 +50,29 @@ options:
     signing_key:
         description:
             - The path to the private openssh key that is used for signing the public key in order to generate the certificate.
+            - Required if I(state) is C(present).
         type: path
-        required: true
     public_key:
         description:
             - The path to the public key that will be signed with the signing key in order to generate the certificate.
+            - Required if I(state) is C(present).
         type: path
-        required: true
     valid_from:
         description:
             - "The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
                Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | always)
                where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
+            - Required if I(state) is C(present).
         type: str
-        required: true
     valid_to:
         description:
             - "The point in time the certificate is valid to. Time can be specified either as relative time or as absolute timestamp.
                Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | forever)
                where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
+            - Required if I(state) is C(present).
         type: str
-        required: true
     valid_at:
         description:
             - "Check if the certificate is valid at a certain point in time. If it is not the certificate will be regenerated.

@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_certificate - ``provider`` option was documented as required, but it was not checked whether it was provided. It is now only required when ``state`` is ``present``."
