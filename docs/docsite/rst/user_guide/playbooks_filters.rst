@@ -1135,7 +1135,7 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
 .. note:: If you want to match the whole string and you are using ``*`` make sure to always wraparound your regular expression with the start/end anchors.
    For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some Python versions will match the whole string and an empty string at the
-   end, which means it will make two replacements.
+   end, which means it will make two replacements::
 
     # add "https://" prefix to each item in a list
     GOOD:
