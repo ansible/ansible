@@ -245,7 +245,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(required=True, choices=['present', 'absent']),
-        name=dict(),
+        name=dict(required=True),
         cert=dict(),
         key=dict(no_log=True),
         cert_chain=dict(),
