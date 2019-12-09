@@ -92,6 +92,7 @@ options:
         If I(state=absent) and the corresponding resource exists in a different region,
         this task may report success without deleting that resource.
     type: str
+    aliases: [arn]
 
   certificate_chain:
     description:
@@ -111,6 +112,7 @@ options:
         If I(state=present) this must not be specified.
         (Since the domain name is encoded within the public certificate's body.)
     type: str
+    aliases: [domain]
 
   name_tag:
     description:
@@ -124,6 +126,7 @@ options:
         If I(state=absent), you must provide exactly one of
         I(certificate_arn), I(domain_name) or I(name_tag).
     type: str
+    aliases: [name]
 
   private_key:
     description:
@@ -289,10 +292,10 @@ def pem_chain_split(module, pem):
 def main():
     argument_spec = dict(
         certificate=dict(),
-        certificate_arn=dict(alias=['arn']),
+        certificate_arn=dict(aliases=['arn']),
         certificate_chain=dict(),
-        domain_name=dict(alias=['domain']),
-        name_tag=dict(alias=['name']),
+        domain_name=dict(aliases=['domain']),
+        name_tag=dict(aliases=['name']),
         private_key=dict(no_log=True),
         state=dict(default='present', choices=['present', 'absent'])
     )
