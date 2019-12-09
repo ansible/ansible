@@ -62,9 +62,10 @@ class TestEosStaticRoutesModule(TestEosModule):
     def load_fixtures(self, commands=None, transport='cli', filename=None):
         if filename is None:
             filename = 'eos_static_routes_config.cfg'
+
         def load_from_file(*args, **kwargs):
             output = load_fixture(filename)
-            return  output
+            return output
 
         self.execute_show_command.side_effect = load_from_file
 
@@ -85,7 +86,6 @@ class TestEosStaticRoutesModule(TestEosModule):
             ], state="merged"))
         commands = ['ipv6 route vrf testvrf 1200:10::/64 Ethernet1 55']
         result = self.execute_module(changed=True, commands=commands)
-
 
     def test_eos_static_routes_merged_idempotent(self):
         set_module_args(
