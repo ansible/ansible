@@ -1,0 +1,47 @@
+---
+  - debug:
+      msg: "Start nxos_static_routes rendered tests connection={{ ansible_connection }}"
+
+  - name: Rendered
+    nxos_static_routes: &rendered
+      config:
+        - vrf: trial_vrf
+          address_families:
+            - afi: ipv4
+              routes:
+                - dest: 192.123.131.0/24
+                  next_hops: 
+                    - forward_router_address: 193.145.12.3
+                      tag: 12
+                      
+        - address_families:
+            - afi: ipv4
+              routes:
+                - dest: 12.12.12.0/24
+                  next_hops:
+                    - forward_router_address: 192.168.12.2
+                
+                - dest: 12.12.13.0/24 
+                  next_hops:
+                    - forward_router_address: 192.168.12.3
+                      tag: 15
+      state: rendered
+    register: result
+        
+  - assert:
+      that:
+        - "result.changed == false"
+        - "'vrf context default' in result.rendered"
+        - "'ip route 12.12.12.0/24 192.168.12.2' in result.rendered"
+        - "'ip route 12.12.13.0/24 192.168.12.3 tag 15' in result.rendered"
+        - "'vrf context trial_vrf' in result.rendered"
+        - "'ip route 192.123.131.0/24 193.145.12.3 tag 12' in result.rendered"
+        - "result.rendered | length == 5"
+  
+  - name: Idempotence - Rendered
+    nxos_static_routes: *rendered
+    register: result
+    
+  - assert:
+      that:
+        - "result.changed == false"

@@ -1,0 +1,72 @@
+---
+  - debug:
+      msg: "Start nxos_static_routes replaced integration tests connection = {{ansible_connection}}"
+
+  - include_tasks: populate_config.yaml
+
+  - block:
+    - name: Gather static_routes post facts
+      nxos_facts:
+        gather_subset:
+          - '!all'
+          - '!min'
+        gather_network_resources: static_routes
+
+    - debug:
+        var: ansible_facts.network_resources.static_routes
+
+    - name: Replaced
+      nxos_static_routes: &replaced
+        config:
+          - vrf: trial_vrf
+            address_families:
+              - afi: ipv4
+                routes:
+                  - dest: 192.123.131.0/24
+                    next_hops:
+                      - forward_router_address: 18.18.18.3
+                        route_name: replaced_vrf_route
+                        admin_distance: 3
+        state: replaced
+      register: result
+
+    - debug:
+        var: result
+
+    - assert:
+        that:
+          - "result.changed == true"
+          - "'vrf context trial_vrf' in result.commands"
+          - "'no ip route 192.123.131.0/24 192.168.12.3 tag 4' in result.commands"
+          - "'ip route 192.123.131.0/24 18.18.18.3 name replaced_vrf_route 3' in result.commands"
+
+    - name: Gather static_routes post facts
+      nxos_facts:
+        gather_subset:
+          - '!all'
+          - '!min'
+        gather_network_resources: static_routes
+    
+    - debug:
+        var: ansible_facts.network_resources.static_routes
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources.static_routes == result.after"
+
+    - name: Idempotence - Replaced
+      nxos_static_routes: *replaced
+      register: result
+    
+    - debug:
+        var: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+
+    - debug:
+        var: result
+    
+    always:
+    - include_tasks: remove_config.yaml

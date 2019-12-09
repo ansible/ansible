@@ -1,0 +1,62 @@
+---
+  - debug:
+      msg: "Start nxos_static_routes overridden tests connection={{ ansible_connection }}"
+
+  - include_tasks: populate_config.yaml
+
+  - block:
+      - name: Gather static_routes facts
+        nxos_facts: &facts
+          gather_subset:
+            - '!all'
+            - '!min'
+          gather_network_resources: static_routes
+
+      - name: Overridden
+        nxos_static_routes: &overridden
+          config:
+              - vrf: trial_vrf
+                address_families:
+                  - afi: ipv4
+                    routes:
+                      - dest: 192.131.145.0/24
+                        next_hops:
+                          - forward_router_address: 168.12.63.9
+                          - forward_router_address: 168.12.63.12
+                            admin_distance: 1
+                            route_name: overridden_route
+          state: overridden
+        register: result 
+
+      - debug:
+          var: result   
+
+      - assert:
+          that:
+            - "ansible_facts.network_resources.static_routes == result.before"
+            - "'vrf context trial_vrf' in result.commands"
+            - "'no ip route 192.123.131.0/24 192.168.12.3 tag 4' in result.commands"
+            - "'ip route 192.131.145.0/24 168.12.63.9' in result.commands"
+            - "'ip route 192.131.145.0/24 168.12.63.12 name overridden_route 1' in result.commands"
+            - "'vrf context default' in result.commands"
+            - "'no ip route 12.12.12.0/24 192.168.12.2 name new_route' in result.commands"
+            - "'no ip route 12.12.13.0/24 192.168.12.3 tag 12' in result.commands"
+            - "result.commands | length == 7"
+              
+      - name: Gather static_routes post facts
+        nxos_facts: *facts
+
+      - assert:
+          that:
+            - "ansible_facts.network_resources.static_routes == result.after"
+
+      - name: Idempotence - overridden
+        nxos_static_routes: *overridden
+        register: result
+
+      - assert:
+          that:
+            - "result.changed == false"
+
+    always:
+    - include_tasks: remove_config.yaml

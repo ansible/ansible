@@ -1,0 +1,53 @@
+---
+  - debug:
+      msg: "Start nxos_static_routes deleted integration tests connection = {{ ansible_connection }}"
+
+  - include_tasks: populate_config.yaml
+
+  - block:
+    - name: Gather static_routes facts
+      nxos_facts: &facts
+        gather_subset:
+          - '!all'
+          - '!min'
+        gather_network_resources: static_routes
+        
+    - debug:
+        var: ansible_facts.network_resources.static_routes
+
+    - name: Deleted
+      nxos_static_routes: &deleted
+        state: deleted
+      register: result
+
+    - debug:
+        var: result
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources.static_routes == result.before"
+          - "'vrf context trial_vrf' in result.commands"
+          - "'no ip route 192.123.131.0/24 192.168.12.3 tag 4' in result.commands"
+          - "'vrf context default' in result.commands"
+          - "'no ip route 12.12.12.0/24 192.168.12.2 name new_route' in result.commands"
+          - "'no ip route 12.12.13.0/24 192.168.12.3 tag 12' in result.commands"
+          - "result.changed == true "
+          - "result.after | length == 0"
+
+    - name: Gather static_routes post facts
+      nxos_facts: *facts
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources == {} "
+
+    - name: Idempotence - deleted
+      nxos_static_routes: *deleted
+      register: result
+      
+    - assert:
+        that:
+          - "result.changed == false"
+  
+    always:
+    - include_tasks: remove_config.yaml
