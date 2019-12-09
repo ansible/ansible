@@ -118,7 +118,7 @@ class ResultProcess(AnsibleProcessBase):
             if orig_task.ignore_errors:
                 status_type = 'failed_ignored'
                 status_msg = 'task failed, but ignore_error was enabled'
-            elif orig_task.run_once:
+            elif orig_task.run_once or orig_task.any_errors_fatal:
                 # if we're using run_once, we have to fail every host here
                 status_type = 'failed_all'
                 status_msg = 'failing all hosts because a run_once task failed'
