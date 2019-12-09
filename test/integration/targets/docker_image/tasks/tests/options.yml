@@ -276,7 +276,7 @@
     name: "{{ iname }}"
     build:
       path: "{{ role_path }}/files"
-      dockefile: "EtcHostsDockerfile"
+      dockerfile: "EtcHostsDockerfile"
       pull: no
       etc_hosts:
         some-custom-host: "127.0.0.1"
