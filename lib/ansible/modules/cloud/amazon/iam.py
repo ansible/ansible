@@ -24,6 +24,7 @@ options:
       - Type of IAM resource.
     choices: ["user", "group", "role"]
     type: str
+    required: true
   name:
     description:
       - Name of IAM resource to create or identify.
@@ -632,7 +633,7 @@ def main():
             'Active', 'Inactive', 'Create', 'Remove']),
         access_key_ids=dict(type='list', default=None, required=False),
         key_count=dict(type='int', default=1, required=False),
-        name=dict(default=None, required=False),
+        name=dict(required=True),
         trust_policy_filepath=dict(default=None, required=False),
         trust_policy=dict(type='dict', default=None, required=False),
         new_name=dict(default=None, required=False),
