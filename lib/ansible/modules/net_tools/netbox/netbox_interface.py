@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2018, Mikhail Yohman (@FragmentedPacket) <mikhail.yohman@gmail.com>
+# Copyright: (c) 2019, Alexander Stauch (@BlackestDawn) <blacke4dawn@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -22,6 +23,7 @@ notes:
   - This should be ran with connection C(local) and hosts C(localhost)
 author:
   - Mikhail Yohman (@FragmentedPacket)
+  - Alexander Stauch (@BlackestDawn)
 requirements:
   - pynetbox
 version_added: "2.8"
@@ -204,15 +206,7 @@ import json
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.net_tools.netbox.netbox_utils import (
-    find_ids,
-    normalize_data,
-    create_netbox_object,
-    delete_netbox_object,
-    update_netbox_object,
-    INTF_FORM_FACTOR,
-    INTF_MODE,
-)
+from ansible.module_utils.net_tools.netbox.netbox_utils import *
 from ansible.module_utils.compat import ipaddress
 from ansible.module_utils._text import to_text
 
@@ -225,127 +219,51 @@ except ImportError:
     PYNETBOX_IMP_ERR = traceback.format_exc()
     HAS_PYNETBOX = False
 
+class PyNetboxInterface(PyNetboxBase):
+    def __init__(self, module):
+        """Constructor"""
+        super(PyNetboxInterface, self).__init__(module)
+        self._set_endpoint('interfaces')
+        # Main parameters for status messages and return data
+        self.param_usage = {
+            'type': "interface",
+            'success': "name",
+            'fail': "name",
+            'rname': "interface",
+            'search': {
+                'name': self.normalized_data['name'],
+                'device_id': self.normalized_data['device']
+            }
+        }
+
+    def _check_and_adapt_data(self):
+        data = self._find_ids()
+        if data.get("form_factor"):
+            data["form_factor"] = INTF_FORM_FACTOR.get(data["form_factor"].lower())
+        if data.get("mode"):
+            data["mode"] = INTF_MODE.get(data["mode"].lower())
+        self.normalized_data = data
 
 def main():
     """
     Main entry point for module execution
     """
-    argument_spec = dict(
-        netbox_url=dict(type="str", required=True),
-        netbox_token=dict(type="str", required=True, no_log=True),
-        data=dict(type="dict", required=True),
-        state=dict(required=False, default="present", choices=["present", "absent"]),
-        validate_certs=dict(type="bool", default=True)
-    )
+    argument_spec = netbox_argument_spec()
+    argument_spec.update( dict(
+        state=dict(required=False, default='present', choices=['present', 'absent'])
+    ))
 
-    global module
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    pynb = PyNetboxInterface(module)
 
-    # Fail module if pynetbox is not installed
-    if not HAS_PYNETBOX:
-        module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
-    # Assign variables to be used with module
-    app = "dcim"
-    endpoint = "interfaces"
-    url = module.params["netbox_url"]
-    token = module.params["netbox_token"]
-    data = module.params["data"]
-    state = module.params["state"]
-    validate_certs = module.params["validate_certs"]
-    # Attempt to create Netbox API object
     try:
-        nb = pynetbox.api(url, token=token, ssl_verify=validate_certs)
-    except Exception:
-        module.fail_json(msg="Failed to establish connection to Netbox API")
-    try:
-        nb_app = getattr(nb, app)
-    except AttributeError:
-        module.fail_json(msg="Incorrect application specified: %s" % (app))
-    nb_endpoint = getattr(nb_app, endpoint)
-    norm_data = normalize_data(data)
-    try:
-        norm_data = _check_and_adapt_data(nb, norm_data)
-
-        if "present" in state:
-            return module.exit_json(
-                **ensure_interface_present(nb, nb_endpoint, norm_data)
-            )
-        else:
-            return module.exit_json(
-                **ensure_interface_absent(nb, nb_endpoint, norm_data)
-            )
+        pynb.run_module()
     except pynetbox.RequestError as e:
         return module.fail_json(msg=json.loads(e.error))
     except ValueError as e:
         return module.fail_json(msg=str(e))
     except AttributeError as e:
         return module.fail_json(msg=str(e))
-
-
-def _check_and_adapt_data(nb, data):
-    data = find_ids(nb, data)
-
-    if data.get("form_factor"):
-        data["form_factor"] = INTF_FORM_FACTOR.get(data["form_factor"].lower())
-    if data.get("mode"):
-        data["mode"] = INTF_MODE.get(data["mode"].lower())
-
-    return data
-
-
-def ensure_interface_present(nb, nb_endpoint, data):
-    """
-    :returns dict(interface, msg, changed): dictionary resulting of the request,
-    where 'interface' is the serialized interface fetched or newly created in Netbox
-    """
-
-    if not isinstance(data, dict):
-        changed = False
-        return {"msg": data, "changed": changed}
-
-    nb_intf = nb_endpoint.get(name=data["name"], device_id=data["device"])
-    result = dict()
-
-    if not nb_intf:
-        intf, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
-        changed = True
-        msg = "Interface %s created" % (data["name"])
-    else:
-        intf, diff = update_netbox_object(nb_intf, data, module.check_mode)
-        if intf is False:
-            module.fail_json(
-                msg="Request failed, couldn't update device: %s" % (data["name"])
-            )
-        if diff:
-            msg = "Interface %s updated" % (data["name"])
-            changed = True
-            result["diff"] = diff
-        else:
-            msg = "Interface %s already exists" % (data["name"])
-            changed = False
-    result.update({"interface": intf, "msg": msg, "changed": changed})
-    return result
-
-
-def ensure_interface_absent(nb, nb_endpoint, data):
-    """
-    :returns dict(msg, changed, diff)
-    """
-    nb_intf = nb_endpoint.get(name=data["name"], device_id=data["device"])
-    result = dict()
-    if nb_intf:
-        dummy, diff = delete_netbox_object(nb_intf, module.check_mode)
-        changed = True
-        msg = "Interface %s deleted" % (data["name"])
-        result["diff"] = diff
-    else:
-        msg = "Interface %s already absent" % (data["name"])
-        changed = False
-
-    result.update({"msg": msg, "changed": changed})
-    return result
-
 
 if __name__ == "__main__":
     main()

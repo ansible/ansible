@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Mikhail Yohman (@FragmentedPacket) <mikhail.yohman@gmail.com>
 # Copyright: (c) 2018, David Gomez (@amb1s1) <david.gomez@networktocode.com>
+# Copyright: (c) 2019, Alexander Stauch (@BlackestDawn) <blacke4dawn@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -23,6 +24,7 @@ notes:
 author:
   - Mikhail Yohman (@FragmentedPacket)
   - David Gomez (@amb1s1)
+  - Alexander Stauch (@BlackestDawn)
 requirements:
   - pynetbox
 version_added: '2.8'
@@ -174,15 +176,7 @@ import json
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.net_tools.netbox.netbox_utils import (
-    find_ids,
-    normalize_data,
-    create_netbox_object,
-    delete_netbox_object,
-    update_netbox_object,
-    DEVICE_STATUS,
-    FACE_ID
-)
+from ansible.module_utils.net_tools.netbox.netbox_utils import *
 
 PYNETBOX_IMP_ERR = None
 try:
@@ -192,121 +186,58 @@ except ImportError:
     PYNETBOX_IMP_ERR = traceback.format_exc()
     HAS_PYNETBOX = False
 
+class PyNetboxDevice(PyNetboxBase):
+    def __init__(self, module):
+        """Constructor"""
+        super(PyNetboxDevice, self).__init__(module)
+        self._set_endpoint('devices')
+        # Main parameters for status messages and return data
+        self.param_usage = {
+            'type': "device",
+            'success': "name",
+            'fail': "name",
+            'rname': "device",
+            'search': "name"
+        }
+
+    def run_module(self):
+        """Main runner"""
+        # Checks for existing device and creates or updates as necessary
+        if self.state == "present":
+            if "status" in self.normalized_data:
+                self.normalized_data["status"] = DEVICE_STATUS.get(self.normalized_data["status"].lower())
+            if "face" in self.normalized_data:
+                self.normalized_data["face"] = FACE_ID.get(self.normalized_data["face"].lower())
+            self._find_ids()
+            self.ensure_object_present()
+
+        # Deletes device if present
+        elif self.state == "absent":
+            self.ensure_object_absent()
+
+        # Unknown state
+        else:
+            return self.module.fail_json(msg="Invalid state %s" % self.state)
+        self.module.exit_json(**self.result)
 
 def main():
     '''
     Main entry point for module execution
     '''
-    argument_spec = dict(
-        netbox_url=dict(type="str", required=True),
-        netbox_token=dict(type="str", required=True, no_log=True),
-        data=dict(type="dict", required=True),
-        state=dict(required=False, default='present', choices=['present', 'absent']),
-        validate_certs=dict(type="bool", default=True)
-    )
+    argument_spec = netbox_argument_spec()
+    argument_spec.update( dict(
+        state=dict(required=False, default='present', choices=['present', 'absent'])
+    ))
 
-    global module
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    pynb = PyNetboxDevice(module)
 
-    # Fail module if pynetbox is not installed
-    if not HAS_PYNETBOX:
-        module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
-
-    # Fail if device name is not given
-    if not module.params["data"].get("name"):
-        module.fail_json(msg="missing device name")
-
-    # Assign variables to be used with module
-    app = 'dcim'
-    endpoint = 'devices'
-    url = module.params["netbox_url"]
-    token = module.params["netbox_token"]
-    data = module.params["data"]
-    state = module.params["state"]
-    validate_certs = module.params["validate_certs"]
-
-    # Attempt to create Netbox API object
     try:
-        nb = pynetbox.api(url, token=token, ssl_verify=validate_certs)
-    except Exception:
-        module.fail_json(msg="Failed to establish connection to Netbox API")
-    try:
-        nb_app = getattr(nb, app)
-    except AttributeError:
-        module.fail_json(msg="Incorrect application specified: %s" % (app))
-
-    nb_endpoint = getattr(nb_app, endpoint)
-    norm_data = normalize_data(data)
-    try:
-        if 'present' in state:
-            result = ensure_device_present(nb, nb_endpoint, norm_data)
-        else:
-            result = ensure_device_absent(nb_endpoint, norm_data)
-        return module.exit_json(**result)
+        pynb.run_module()
     except pynetbox.RequestError as e:
         return module.fail_json(msg=json.loads(e.error))
     except ValueError as e:
         return module.fail_json(msg=str(e))
-
-
-def _find_ids(nb, data):
-    if data.get("status"):
-        data["status"] = DEVICE_STATUS.get(data["status"].lower())
-    if data.get("face"):
-        data["face"] = FACE_ID.get(data["face"].lower())
-    return find_ids(nb, data)
-
-
-def ensure_device_present(nb, nb_endpoint, normalized_data):
-    '''
-    :returns dict(device, msg, changed, diff): dictionary resulting of the request,
-        where `device` is the serialized device fetched or newly created in
-        Netbox
-    '''
-    data = _find_ids(nb, normalized_data)
-    nb_device = nb_endpoint.get(name=data["name"])
-    result = {}
-    if not nb_device:
-        device, diff = create_netbox_object(nb_endpoint, data, module.check_mode)
-        msg = "Device %s created" % (data["name"])
-        changed = True
-        result["diff"] = diff
-    else:
-        device, diff = update_netbox_object(nb_device, data, module.check_mode)
-        if device is False:
-            module.fail_json(
-                msg="Request failed, couldn't update device: %s" % data["name"]
-            )
-        if diff:
-            msg = "Device %s updated" % (data["name"])
-            changed = True
-            result["diff"] = diff
-        else:
-            msg = "Device %s already exists" % (data["name"])
-            changed = False
-    result.update({"device": device, "changed": changed, "msg": msg})
-    return result
-
-
-def ensure_device_absent(nb_endpoint, data):
-    '''
-    :returns dict(msg, changed, diff)
-    '''
-    nb_device = nb_endpoint.get(name=data["name"])
-    result = {}
-    if nb_device:
-        dummy, diff = delete_netbox_object(nb_device, module.check_mode)
-        msg = 'Device %s deleted' % (data["name"])
-        changed = True
-        result["diff"] = diff
-    else:
-        msg = 'Device %s already absent' % (data["name"])
-        changed = False
-
-    result.update({"changed": changed, "msg": msg})
-    return result
-
 
 if __name__ == "__main__":
     main()
