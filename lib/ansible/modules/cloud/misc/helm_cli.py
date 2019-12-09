@@ -21,8 +21,8 @@ author:
   - Lucas Boisserie (@LucasBoisserie)
   - Matthieu Diehr (@d-matt)
 requirements:
-  - "helm"
-  - "yaml"
+  - "helm (https://github.com/helm/helm/releases)"
+  - "yaml (https://pypi.org/project/PyYAML/)"
 options:
   binary_path:
     description:
@@ -30,7 +30,6 @@ options:
         unless you supply an absolute path.
     required: false
     type: path
-    version_added: "2.10"
   chart_ref:
     description:
       - chart_reference on chart repository
@@ -40,40 +39,34 @@ options:
       - Required when release_state is set to present
     required: false
     type: str
-    version_added: "2.10"
   chart_repo_url:
     description:
       - Chart repository url where to locate the requested chart
     required: false
     type: str
-    version_added: "2.10"
   chart_repo_username:
     description:
       - Chart repository username where to locate the requested chart
       - Required if chart_repo_password is specified
     required: false
     type: str
-    version_added: "2.10"
   chart_repo_password:
     description:
       - Chart repository password where to locate the requested chart
       - Required if chart_repo_username is specified
     required: false
     type: str
-    version_added: "2.10"
   chart_version:
     description:
       - Chart version to install. If this is not specified, the latest version is installed
     required: false
     type: str
-    version_added: "2.10"
   release_name:
     description:
       - Release name to manage
     required: true
     type: str
     aliases: [ name ]
-    version_added: "2.10"
   release_namespace:
     description:
       - Kubernetes namespace where the chart should be installed
@@ -82,7 +75,6 @@ options:
     required: false
     type: str
     aliases: [ namespace ]
-    version_added: "2.10"
   release_state:
     choices: ['present', 'absent']
     description:
@@ -90,7 +82,6 @@ options:
     required: false
     default: present
     aliases: [ state ]
-    version_added: "2.10"
     type: str
   release_values:
     description:
@@ -98,27 +89,23 @@ options:
     required: false
     default: {}
     aliases: [ values ]
-    version_added: "2.10"
     type: dict
   tiller_host:
     description:
       - Address of Tiller
       - Ignored when is helm 3
     type: str
-    version_added: "2.10"
   tiller_namespace:
     description:
       - Namespace of Tiller
       - Ignored when is helm 3
     default: "kube-system"
     type: str
-    version_added: "2.10"
   update_repo_cache:
     description:
       - Run `helm repo update` before the operation. Can be run as part of the package installation or as a separate step.
     default: "false"
     type: bool
-    version_added: "2.10"
 
 #Helm options
   disable_hook:
@@ -126,46 +113,40 @@ options:
       - Helm option to disable hook on install/upgrade/delete
     default: False
     type: bool
-    version_added: "2.10"
   force:
     description:
       - Helm option to force reinstall, ignore on new install
     default: False
     type: bool
-    version_added: "2.10"
   kube_context:
     description:
       - Helm option to specify which kubeconfig context to use
     type: str
-    version_added: "2.10"
   kubeconfig_path:
     description:
       - Helm option to specify kubeconfig path to use
     type: path
-    version_added: "2.10"
     aliases: [ kubeconfig ]
   purge:
     description:
       - Remove the release from the store and make its name free for later use
     default: True
     type: bool
-    version_added: "2.10"
   wait:
     description:
       - Wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment are in a ready state before marking the release as successful
     default: False
     type: bool
-    version_added: "2.10"
   wait_timeout:
     description:
       - Timeout when wait option is enabled (helm2 is a number of seconds, helm3 is a duration
     type: str
-    version_added: "2.10"
 '''
 
 EXAMPLES = '''
-# Deploy grafana with params version
-- helm_cli:
+# With Helm 2
+- name: Deploy grafana with params version
+  helm_cli:
     name: test
     chart_ref: stable/grafana
     chart_version: 3.3.8
@@ -173,21 +154,30 @@ EXAMPLES = '''
     values:
       replicas: 2
 
-# Load Value from template
-- helm_cli:
+- name: Load Value from template
+  helm_cli:
     name: test
     chart_ref: stable/grafana
     tiller_namespace: helm
     values: "{{ lookup('template', 'somefile.yaml') | from_yaml }}"
 
-# Remove test release
-- helm_cli:
+- name: Remove test release and waiting suppression ending
+  helm_cli:
     name: test
     state: absent
     tiller_namespace: helm
+    wait: true
 
-# With Helm3
-- helm_cli:
+# With Helm 3
+- name: Create helm namespace HELM 3 doesn't create it automatically
+  k8s:
+    api_version: v1
+    kind: Namespace
+    name: "monitoring"
+    wait: true
+
+- name: Deploy latest version of Grafana chart inside monitoring namespace
+  helm_cli:
     name: test
     chart_ref: stable/grafana
     release_namespace: monitoring
