@@ -1479,8 +1479,9 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                         image_reference = None
 
                     # You can't change a vm zone
-                    if vm_dict['zones'] != self.zones:
-                        self.fail("You can't change the Availability Zone of a virtual machine (have: {0}, want: {1})".format(vm_dict['zones'], self.zones))
+                    if not self.generalized:
+                        if vm_dict['zones'] != self.zones:
+                            self.fail("You can't change the Availability Zone of a virtual machine (have: {0}, want: {1})".format(vm_dict['zones'], self.zones))
 
                     if 'osProfile' in vm_dict['properties']:
                         os_profile = self.compute_models.OSProfile(
