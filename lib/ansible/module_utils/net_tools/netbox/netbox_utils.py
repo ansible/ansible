@@ -7,8 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import ssl
-import json
 import traceback
 
 PYNETBOX_IMP_ERR = None
@@ -230,6 +228,7 @@ DEFAULT_QUERY_PARAM = {
     "clusters": "name"
 }
 
+
 # Some helper functions
 def build_diff(before=None, after=None, these_keys_only=None):
     """Returns dict containing the difference between before and after inputs"""
@@ -246,11 +245,13 @@ def build_diff(before=None, after=None, these_keys_only=None):
                 data_after[key] = after[key]
     return {"before": data_before, "after": data_after}
 
+
 def find_app(endpoint):
     """Find an endpoint's corresponding app"""
     for k, v in API_APPS_ENDPOINTS.items():
         if endpoint in v:
             return k
+
 
 def connect_to_api(module):
     """Helps connect to Netbox's API"""
@@ -265,10 +266,6 @@ def connect_to_api(module):
     try:
         nb_obj = pynetbox.api(url, token=token, ssl_verify=validate_certs)
         nb_obj.ipam.choices()
-    except requests.exceptions.MissingSchema:
-        module.fail_json(msg="Badly formatted URL given: %s" % (url))
-    except socket.gaierror:
-        module.fail_json(msg="Name or service unknown: %s" % (url))
     except pynetbox.core.query.RequestError as request_err:
         if request_err.error.startswith("{"):
             err = eval(request_err.error)
@@ -280,9 +277,10 @@ def connect_to_api(module):
             err_msg = request_err
         module.fail_json(msg="Request failed: %s" % (err_msg))
     except Exception as generic_err:
-        module.fail_json(msg="Unknown error while connection to Netbox API: %s" % (generic_err.msg))
+        module.fail_json(msg="Unknown error while connecting to Netbox API: %s" % (generic_err))
 
     return nb_obj
+
 
 def netbox_argument_spec():
     """Returns a dict of the defualt argument specification for Netbox"""
@@ -305,6 +303,7 @@ def netbox_argument_spec():
             default=True
         )
     )
+
 
 # Main class
 class PyNetboxBase(object):
@@ -341,7 +340,7 @@ class PyNetboxBase(object):
         # Normalize, check, and do custom adaptation to data-spec
         if not isinstance(self.params['data'], dict):
             self.module.fail_json({"msg": "Improper or malformed data provided: %s" % (self.params['data'])})
-        self._normalize_data(self.params['data'])
+        self.normalized_data = self._normalize_data(self.params['data'])
         self._check_and_adapt_data()
         # Check if state supplied
         if 'state' in self.params:
@@ -364,7 +363,7 @@ class PyNetboxBase(object):
 
         # Unknown state
         else:
-            return self.module.fail_json(msg="Invalid state %s" % self.state)
+            self.module.fail_json(msg="Invalid state %s" % self.state)
         self.module.exit_json(**self.result)
 
     def _check_and_adapt_data(self):
@@ -515,8 +514,8 @@ class PyNetboxBase(object):
         """
         try:
             if (
-                    type(endpoint) is pynetbox.core.endpoint.Endpoint or
-                    type(endpoint) is pynetbox.core.endpoint.DetailEndpoint
+                    isinstance(endpoint, pynetbox.core.endpoint.Endpoint) or
+                    isinstance(endpoint, pynetbox.core.endpoint.DetailEndpoint)
             ):
                 return endpoint
             elif endpoint in API_APPS_ENDPOINTS[find_app(endpoint)]:
@@ -536,18 +535,18 @@ class PyNetboxBase(object):
             query_params = self.param_usage['search']
         nb_endpoint = self._get_endpoint(endpoint)
         try:
-            if type(query_params) is str:
+            if isinstance(query_params, str):
                 search = dict()
                 for param in query_params.split(','):
                     search[param] = self.normalized_data[param]
                 return nb_endpoint.get(**search)
-            elif type(query_params) is dict:
+            elif isinstance(query_params, dict):
                 return nb_endpoint.get(**query_params)
-            elif type(query_params) is int:
+            elif isinstance(query_params, int):
                 return nb_endpoint.get(query_params)
             else:
                 self.module.fail_json(msg="Invalid query parameter type: %s" % (type(query_params)))
-        except:
+        except Exception:
             self.module.fail_json(**self._multiple_results_error(query_params))
 
     def _retrieve_object_id(self, query_params=None, endpoint=None):
@@ -583,7 +582,7 @@ class PyNetboxBase(object):
                 elif isinstance(search_value, list):
                     id_list = list()
                     for sub_value in search_value:
-                        norm_data = normalize_data(sub_value)
+                        norm_data = self._normalize_data(sub_value)
                         temp_dict = self._build_query_params(search_param, norm_data)
                         query_id = nb_endpoint.get(**temp_dict)
                         if query_id:
@@ -678,4 +677,4 @@ class PyNetboxBase(object):
                 elif data_type == "timezone":
                     if " " in v:
                         data[k] = v.replace(" ", "_")
-        self.normalized_data = data
+        return data

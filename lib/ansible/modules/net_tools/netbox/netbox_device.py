@@ -175,8 +175,13 @@ msg:
 import json
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.net_tools.netbox.netbox_utils import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.net_tools.netbox.netbox_utils import (
+    PyNetboxBase,
+    netbox_argument_spec,
+    DEVICE_STATUS,
+    FACE_ID
+)
 
 PYNETBOX_IMP_ERR = None
 try:
@@ -185,6 +190,7 @@ try:
 except ImportError:
     PYNETBOX_IMP_ERR = traceback.format_exc()
     HAS_PYNETBOX = False
+
 
 class PyNetboxDevice(PyNetboxBase):
     def __init__(self, module):
@@ -217,15 +223,16 @@ class PyNetboxDevice(PyNetboxBase):
 
         # Unknown state
         else:
-            return self.module.fail_json(msg="Invalid state %s" % self.state)
+            self.module.fail_json(msg="Invalid state %s" % self.state)
         self.module.exit_json(**self.result)
+
 
 def main():
     '''
     Main entry point for module execution
     '''
     argument_spec = netbox_argument_spec()
-    argument_spec.update( dict(
+    argument_spec.update(dict(
         state=dict(required=False, default='present', choices=['present', 'absent'])
     ))
 
@@ -238,6 +245,7 @@ def main():
         return module.fail_json(msg=json.loads(e.error))
     except ValueError as e:
         return module.fail_json(msg=str(e))
+
 
 if __name__ == "__main__":
     main()

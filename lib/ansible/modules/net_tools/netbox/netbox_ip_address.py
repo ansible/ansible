@@ -224,10 +224,14 @@ msg:
 import json
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.net_tools.netbox.netbox_utils import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.net_tools.netbox.netbox_utils import (
+    PyNetboxBase,
+    netbox_argument_spec,
+    IP_ADDRESS_STATUS,
+    IP_ADDRESS_ROLE
+)
 from ansible.module_utils.compat import ipaddress
-from ansible.module_utils._text import to_text
 
 PYNETBOX_IMP_ERR = None
 try:
@@ -236,6 +240,7 @@ try:
 except ImportError:
     PYNETBOX_IMP_ERR = traceback.format_exc()
     HAS_PYNETBOX = False
+
 
 class PyNetboxIP(PyNetboxBase):
     def __init__(self, module):
@@ -266,12 +271,13 @@ class PyNetboxIP(PyNetboxBase):
                 }
                 if 'vrf' in self.normalized_data:
                     query_params['vrf_id'] = self.normalized_data['vrf']
-                attached_ips = self.nb_prefix.filter(**query_params)
+                nb_prefix = self._search_prefix()
+                attached_ips = nb_prefix.filter(**query_params)
                 if attached_ips:
                     ip_addr = attached_ips[-1].serialize()
                     self.result.update({
-                    'changed': False,
-                    'msg': "IP Address %s already attached" % (ip_addr["address"])
+                        'changed': False,
+                        'msg': "IP Address %s already attached" % (ip_addr["address"])
                     })
                 else:
                     self.fetch_new_ip()
@@ -292,16 +298,13 @@ class PyNetboxIP(PyNetboxBase):
 
         # Unknown state
         else:
-            return self.module.fail_json(msg="Invalid state %s" % self.state)
+            self.module.fail_json(msg="Invalid state %s" % self.state)
         self.module.exit_json(**self.result)
 
     # Object manipulation helpers
     def fetch_new_ip(self):
         """Registers next available IP as taken"""
-        prefix_query = {"prefix": self.normalized_data['prefix']}
-        if 'vrf' in self.normalized_data:
-            prefix_query['vrf_id'] = self.normalized_data['vrf']
-        nb_prefix = self._retrieve_object(prefix_query, 'prefixes')
+        nb_prefix = self._search_prefix()
         if not nb_prefix:
             self.module.fail_json(msg="%s does not exist - please create it first" % (self.normalized_data["prefix"]))
         elif nb_prefix.available_ips.list():
@@ -323,6 +326,13 @@ class PyNetboxIP(PyNetboxBase):
             data["role"] = IP_ADDRESS_ROLE.get(data["role"].lower())
         self.normalized_data.update(data)
 
+    def _search_prefix(self):
+        """Return prefix-object from registered data"""
+        prefix_query = {"prefix": self.normalized_data['prefix']}
+        if 'vrf' in self.normalized_data:
+            prefix_query['vrf_id'] = self.normalized_data['vrf']
+        return self._retrieve_object(prefix_query, 'prefixes')
+
     def _multiple_results_error(self, data=None):
         """Overridden parent method"""
         if data is None:
@@ -335,12 +345,13 @@ class PyNetboxIP(PyNetboxBase):
                 "changed": False
             }
 
+
 def main():
     '''
     Main entry point for module execution
     '''
     argument_spec = netbox_argument_spec()
-    argument_spec.update( dict(
+    argument_spec.update(dict(
         state=dict(required=False, default='present', choices=['present', 'absent', 'new'])
     ))
 
@@ -353,6 +364,7 @@ def main():
         return module.fail_json(msg=json.loads(e.error))
     except ValueError as e:
         return module.fail_json(msg=str(e))
+
 
 if __name__ == "__main__":
     main()

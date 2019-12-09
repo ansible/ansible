@@ -69,7 +69,7 @@ def fake_get_endpoint(self, endpoint):
 
 @pytest.fixture
 def nb_obj_mock(mocker):
-    serialized_object = { 'testname': "Some mock object" }
+    serialized_object = {'testname': "Some mock object"}
     nb_obj = mocker.Mock(name="nb_obj_mock")
     nb_obj.delete.return_value = True
     nb_obj.update.return_value = True
@@ -114,7 +114,7 @@ def nb_class_mock(monkeypatch, fake_ansible_module):
 
 
 def test_build_diff():
-    before = { "The state before": 1 }
+    before = {"The state before": 1}
     after = {"A": "more", "complicated": "state"}
     diff = netbox_module_utils.build_diff(before=before, after=after)
     assert diff == {"before": before, "after": after}

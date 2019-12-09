@@ -230,10 +230,13 @@ msg:
 
 import json
 import traceback
-import re
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.net_tools.netbox.netbox_utils import *
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.net_tools.netbox.netbox_utils import (
+    PyNetboxBase,
+    netbox_argument_spec,
+    PREFIX_STATUS
+)
 from ansible.module_utils.compat import ipaddress
 from ansible.module_utils._text import to_text
 
@@ -245,6 +248,7 @@ try:
 except ImportError:
     PYNETBOX_IMP_ERR = traceback.format_exc()
     HAS_PYNETBOX = False
+
 
 class PyNetboxPrefix(PyNetboxBase):
     def __init__(self, module):
@@ -267,14 +271,19 @@ class PyNetboxPrefix(PyNetboxBase):
         if self.state == "present":
             if self.first_available:
                 if (
-                    'parent' in self.normalized_data and
-                    'prefix_length' in self.normalized_data
-                ):
+                        'parent' in self.normalized_data and
+                        'prefix_length' in self.normalized_data
+                    ):
                     parent_prefix = self._search_prefix()
                     if not parent_prefix:
-                        self.module.fail_json(msg="Parent prefix does not exist: %s" % (self.normalized_data['parent']))
+                        self.module.fail_json(
+                            msg="Parent prefix does not exist: %s" % (self.normalized_data['parent'])
+                        )
                     elif parent_prefix.available_prefixes.list():
-                        self._create_object(endpoint=parent_prefix.available_prefixes, fail_param="parent")
+                        self._create_object(
+                            endpoint=parent_prefix.available_prefixes,
+                            fail_param="parent"
+                        )
                     else:
                         self.result['msg'] = "No available prefixes within %s" % (self.normalized_data['prefix'])
                 else:
@@ -291,7 +300,7 @@ class PyNetboxPrefix(PyNetboxBase):
 
         # Unknown state
         else:
-            return self.module.fail_json(msg="Invalid state %s" % self.state)
+            self.module.fail_json(msg="Invalid state %s" % self.state)
         self.module.exit_json(**self.result)
 
     # Helper methods
@@ -333,12 +342,13 @@ class PyNetboxPrefix(PyNetboxBase):
             query_params['vrf_id'] = self.normalized_data['vrf']
         return self._retrieve_object(query_params)
 
+
 def main():
     """
     Main entry point for module execution
     """
     argument_spec = netbox_argument_spec()
-    argument_spec.update( dict(
+    argument_spec.update(dict(
         state=dict(required=False, default="present", choices=["present", "absent"]),
         first_available=dict(type="bool", required=False, default=False),
     ))
@@ -355,6 +365,7 @@ def main():
         return module.fail_json(msg=str(e))
     except AttributeError as e:
         return module.fail_json(msg=str(e))
+
 
 if __name__ == "__main__":
     main()
