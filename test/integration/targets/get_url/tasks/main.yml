@@ -95,7 +95,10 @@
       - result is failed
 
 - name: test https fetch
-  get_url: url="https://{{ httpbin_host }}/get" dest={{remote_tmp_dir}}/get_url.txt force=yes
+  get_url:
+    url: "https://{{ httpbin_host }}/get"
+    dest: "{{ remote_tmp_dir }}/get_url.txt"
+    force: yes
   register: result
 
 - name: assert the get_url call was successful
