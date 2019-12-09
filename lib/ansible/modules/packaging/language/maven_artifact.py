@@ -73,6 +73,15 @@ options:
             - Add custom HTTP headers to a request in hash/dict format.
         type: dict
         version_added: "2.8"
+    force_basic_auth:
+        version_added: "2.10"
+        description:
+          - httplib2, the library used by the uri module only sends authentication information when a webservice
+            responds to an initial request with a 401 status. Since some basic auth services do not properly
+            send a 401, logins will fail. This option forces the sending of the Basic authentication header
+            upon initial request.
+        default: 'no'
+        type: bool
     dest:
         description:
             - The path where the artifact should be written to
@@ -548,6 +557,7 @@ def main():
             username=dict(default=None, aliases=['aws_secret_key']),
             password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
             headers=dict(type='dict'),
+            force_basic_auth=dict(default=False, type='bool'),
             state=dict(default="present", choices=["present", "absent"]),  # TODO - Implement a "latest" state
             timeout=dict(default=10, type='int'),
             dest=dict(type="path", required=True),
