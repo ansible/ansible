@@ -18,6 +18,8 @@ description:
     - Configuration of zone/zoneset for Cisco MDS NXOS.
 author:
     - Suhas Bharadwaj (@srbharadwaj) (subharad@cisco.com)
+notes:
+  - Tested against NX-OS 8.4(1)
 options:
     zone_zoneset_details:
         description:

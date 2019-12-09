@@ -17,6 +17,8 @@ description:
     - Configuration of vsan for Cisco MDS NXOS.
 author:
     - Suhas Bharadwaj (@srbharadwaj) (subharad@cisco.com)
+notes:
+  - Tested against NX-OS 8.4(1)
 options:
     vsan:
         description:
