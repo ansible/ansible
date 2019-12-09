@@ -50,6 +50,7 @@ def load_fixture(name):
 class TestEosModule(ModuleTestCase):
 
     def execute_module(self, failed=False, changed=False, commands=None, inputs=None, sort=True, defaults=False, transport='cli', filename=None):
+
         if filename is None:
             self.load_fixtures(commands, transport=transport)
         else:
