@@ -102,7 +102,7 @@ instances = {
          u'RootDeviceType': 'ebs',
          u'RootDeviceName': '/dev/xvda',
          u'VirtualizationType': 'hvm',
-         u'Tags': [{u'Value': 'test', u'Key': 'ansible'}, {u'Value': 'aws_ec2', u'Key': 'name'}],
+         u'Tags': [{u'Value': 'test', u'Key': 'ansible'}, {u'Value': 'aws_ec2', u'Key': 'Name'}],
          u'AmiLaunchIndex': 0}],
     u'ReservationId': 'r-01234567890000000',
     u'Groups': [],
@@ -149,6 +149,12 @@ def test_get_hostname(inventory):
     hostnames = ['ip-address', 'dns-name']
     instance = instances['Instances'][0]
     assert inventory._get_hostname(instance, hostnames) == "12.345.67.890"
+
+
+def test_get_hostname_dict(inventory):
+    hostnames = [{'name': 'private-ip-address', 'separator': '_', 'prefix': 'tag:Name'}]
+    instance = instances['Instances'][0]
+    assert inventory._get_hostname(instance, hostnames) == "aws_ec2_098.76.54.321"
 
 
 def test_set_credentials(inventory):
