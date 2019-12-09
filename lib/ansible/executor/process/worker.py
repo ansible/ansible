@@ -41,6 +41,7 @@ from ansible.executor.process.base import AnsibleProcessBase
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.urls import ParseResultDottedDict as DottedDict
 from ansible.plugins import new_loader as plugin_loader
 from ansible.plugins.new_loader import add_all_plugin_dirs
@@ -137,6 +138,12 @@ class WorkerProcess(AnsibleProcessBase):
                         add_group(update['host'], update['add_group'], self._hostvars._inventory)
                     elif 'plugin_path' in update:
                         add_all_plugin_dirs(update['plugin_path'])
+                    elif 'host_vars' in update:
+                        # facts that came in as an include_vars result, this is the
+                        # same code the results processing does in strategy/Base
+                        for (var_name, var_value) in iteritems(update['host_vars']):
+                            for target_host in update['host_list']:
+                                self._hostvars._variable_manager.set_host_variable(target_host, var_name, var_value)
 
                 # read in task vars from the temp file and clean it up
                 display.debug("reading task vars file")

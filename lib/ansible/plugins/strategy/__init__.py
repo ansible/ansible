@@ -489,6 +489,13 @@ class StrategyBase:
                                 # be a host that is not really in inventory at all
                                 for target_host in host_list:
                                     self._variable_manager.set_host_variable(target_host, var_name, var_value)
+                                # add the info to the worker update queue so we
+                                # can update the workers as we go later
+                                with self._worker_update_lock:
+                                    self._worker_update_list.append({
+                                        "host_vars": result_item['ansible_facts'],
+                                        "host_list": [host for host in host_list],
+                                    })
                         else:
                             cacheable = result_item.pop('_ansible_facts_cacheable', False)
                             for target_host in host_list:

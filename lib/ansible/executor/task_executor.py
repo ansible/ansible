@@ -316,13 +316,12 @@ class TaskExecutor:
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
 
         if self._task.loop_control:
-            # FIXME: validate that these are templated now that post_validate is
-            #        working on a dict of things and we don't need loop_control
-            #        to be templated earlier for loop stuff
-            loop_var = self._task.loop_control['loop_var']
-            index_var = self._task.loop_control['index_var']
-            loop_pause = self._task.loop_control['pause']
-            extended = self._task.loop_control['extended']
+            loop_var = templar.template(self._task.loop_control['loop_var'])
+            index_var = templar.template(self._task.loop_control['index_var'])
+            loop_pause = templar.template(self._task.loop_control['pause'])
+            extended = templar.template(self._task.loop_control['extended'])
+
+            # This may be 'None',so it is templated below after we ensure a value and an item is assigned
             label = self._task.loop_control['label']
 
         # ensure we always have a label
