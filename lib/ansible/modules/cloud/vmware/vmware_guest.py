@@ -453,6 +453,8 @@ EXAMPLES = r'''
     - size_gb: 10
       type: thin
       datastore: g73_datastore
+    # Add another disk from an existing VMDK
+    - filename: "[datastore1] testvms/testvm_2_1/testvm_2_1.vmdk"
     hardware:
       memory_mb: 512
       num_cpus: 6
@@ -1962,34 +1964,15 @@ class PyVmomiHelper(PyVmomi):
         self.module.fail_json(
             msg="No size, size_kb, size_mb, size_gb or size_tb attribute found into disk configuration")
 
-    def find_vmdk(self, vmdk_path):
-        """
-        Takes a vsphere datastore path in the format
-
-            [datastore_name] path/to/file.vmdk
-
-        Returns vsphere file object or raises RuntimeError
-        """
-        datastore_name, vmdk_fullpath, vmdk_filename, vmdk_folder = self.vmdk_disk_path_split(vmdk_path)
-
-        datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
-
-        if datastore is None:
-            self.module.fail_json(msg="Failed to find the datastore %s" % datastore_name)
-
-        return self.find_vmdk_file(datastore, vmdk_fullpath, vmdk_filename, vmdk_folder)
-
     def add_existing_vmdk(self, vm_obj, expected_disk_spec, diskspec, scsi_ctl):
         """
         Adds vmdk file described by expected_disk_spec['filename'], retrieves the file
         information and adds the correct spec to self.configspec.deviceChange.
         """
         filename = expected_disk_spec['filename']
-        # if this is a new disk, or the disk file names are different
+        # If this is a new disk, or the disk file names are different
         if (vm_obj and diskspec.device.backing.fileName != filename) or vm_obj is None:
-            vmdk_file = self.find_vmdk(expected_disk_spec['filename'])
-            diskspec.device.backing.fileName = expected_disk_spec['filename']
-            diskspec.device.capacityInKB = VmomiSupport.vmodlTypes['long'](vmdk_file.fileSize / 1024)
+            diskspec.device.backing.fileName = filename
             diskspec.device.key = -1
             self.change_detected = True
             self.configspec.deviceChange.append(diskspec)
