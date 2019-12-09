@@ -1,0 +1,2 @@
+minor_changes:
+- iam_policy - make `iam_name` a required field.

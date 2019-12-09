@@ -292,7 +292,7 @@ def main():
     argument_spec = dict(
         iam_type=dict(required=True, choices=['user', 'group', 'role']),
         state=dict(default='present', choices=['present', 'absent']),
-        iam_name=dict(default=None, required=False),
+        iam_name=dict(required=True),
         policy_name=dict(required=True),
         policy_document=dict(default=None, required=False),
         policy_json=dict(type='json', default=None, required=False),
