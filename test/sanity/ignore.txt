@@ -787,10 +787,6 @@ lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py validate-modules:d
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py validate-modules:doc-required-mismatch
 lib/ansible/modules/cloud/dimensiondata/dimensiondata_vlan.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/docker/docker_container.py use-argspec-type-path # uses colon-separated paths, can't use type=path
-lib/ansible/modules/cloud/docker/docker_image_info.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/docker/docker_login.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/docker/docker_swarm.py validate-modules:doc-required-mismatch
-lib/ansible/modules/cloud/docker/docker_swarm_service.py validate-modules:doc-required-mismatch
 lib/ansible/modules/cloud/google/_gcdns_record.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/google/_gcdns_zone.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/google/_gce.py pylint:blacklisted-name
