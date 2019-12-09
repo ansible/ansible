@@ -424,7 +424,11 @@ def main():
             user_add(module, client, db_name, user, password, roles)
         except Exception as e:
             module.fail_json(msg='Unable to add or update user: %s' % to_native(e), exception=traceback.format_exc())
-
+        finally:
+            try:
+                client.close()
+            except Exception:
+                pass
             # Here we can  check password change if mongo provide a query for that : https://jira.mongodb.org/browse/SERVER-22848
             # newuinfo = user_find(client, user, db_name)
             # if uinfo['role'] == newuinfo['role'] and CheckPasswordHere:
@@ -435,7 +439,11 @@ def main():
             user_remove(module, client, db_name, user)
         except Exception as e:
             module.fail_json(msg='Unable to remove user: %s' % to_native(e), exception=traceback.format_exc())
-
+        finally:
+            try:
+                client.close()
+            except Exception:
+                pass
     module.exit_json(changed=True, user=user)
 
 
