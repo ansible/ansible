@@ -270,15 +270,10 @@ class PyNetboxPrefix(PyNetboxBase):
         # Creates or updates prefix as necessary
         if self.state == "present":
             if self.first_available:
-                if (
-                        'parent' in self.normalized_data and
-                        'prefix_length' in self.normalized_data
-                    ):
+                if ('parent' in self.normalized_data and 'prefix_length' in self.normalized_data):
                     parent_prefix = self._search_prefix()
                     if not parent_prefix:
-                        self.module.fail_json(
-                            msg="Parent prefix does not exist: %s" % (self.normalized_data['parent'])
-                        )
+                        self.module.fail_json(msg="Parent prefix does not exist: %s" % (self.normalized_data['parent']))
                     elif parent_prefix.available_prefixes.list():
                         self._create_object(
                             endpoint=parent_prefix.available_prefixes,
