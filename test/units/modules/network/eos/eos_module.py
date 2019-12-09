@@ -24,7 +24,6 @@ import os
 
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase
 from ansible.module_utils.network.common.utils import dict_diff, param_list_to_dict
-#from ansible.module_utils.network.common.utils import Entity
 
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -51,6 +50,7 @@ def load_fixture(name):
 class TestEosModule(ModuleTestCase):
 
     def execute_module(self, failed=False, changed=False, commands=None, inputs=None, sort=True, defaults=False, transport='cli', filename=None):
+        
 
         if filename is None:
             self.load_fixtures(commands, transport=transport)
@@ -103,4 +103,3 @@ class TestEosModule(ModuleTestCase):
 
     def load_fixtures(self, commands=None, transport='cli', filename=None):
         pass
-
