@@ -289,7 +289,7 @@ class InventoryCLI(CLI):
         '''
 
         for key, value in hash_to_integrate.items():
-            new_path = path + [key]
+            new_path = path + [str(key)]
             flattened_path = '.'.join(new_path)
             if isinstance(value, MutableMapping):  # We are not at a leaf
                 if flattened_path in results:
