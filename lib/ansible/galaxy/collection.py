@@ -17,7 +17,7 @@ import time
 import yaml
 
 from contextlib import contextmanager
-from distutils.version import LooseVersion, StrictVersion
+from distutils.version import LooseVersion
 from hashlib import sha256
 from io import BytesIO
 from yaml.error import YAMLError
@@ -31,6 +31,7 @@ import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.api import CollectionVersionMetadata, GalaxyError
+from ansible.galaxy.semantic_version import SemanticVersion
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -96,7 +97,7 @@ class CollectionRequirement:
     @property
     def latest_version(self):
         try:
-            return max([v for v in self.versions if v != '*'], key=LooseVersion)
+            return max([v for v in self.versions if v != '*'], key=SemanticVersion)
         except ValueError:  # ValueError: max() arg is an empty sequence
             return '*'
 
@@ -318,9 +319,9 @@ class CollectionRequirement:
                 else:
                     resp = api.get_collection_versions(namespace, name)
 
-                    # Galaxy supports semver but ansible-galaxy does not. We ignore any versions that don't match
-                    # StrictVersion (x.y.z) and only support pre-releases if an explicit version was set (done above).
-                    versions = [v for v in resp if StrictVersion.version_re.match(v)]
+                    # We only support pre-releases if an explicit version was
+                    # set (done above).
+                    versions = [v for v in resp if not SemanticVersion(v).is_prerelease]
             except GalaxyError as err:
                 if err.http_code == 404:
                     display.vvv("Collection '%s' is not available from server %s %s"
