@@ -76,7 +76,6 @@ options:
         Note that removing requires Docker SDK for Python >= 2.4.0.
       - Set to C(inspect) to display swarm informations.
     type: str
-    required: yes
     default: present
     choices:
       - present

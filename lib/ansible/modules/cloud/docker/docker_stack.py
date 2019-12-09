@@ -218,7 +218,7 @@ def main():
             'prune': dict(type='bool', default=False),
             'with_registry_auth': dict(type='bool', default=False),
             'resolve_image': dict(type='str', choices=['always', 'changed', 'never']),
-            'state': dict(tpye='str', default='present', choices=['present', 'absent']),
+            'state': dict(type='str', default='present', choices=['present', 'absent']),
             'absent_retries': dict(type='int', default=0),
             'absent_retries_interval': dict(type='int', default=1)
         },

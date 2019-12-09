@@ -804,7 +804,7 @@ class ImageManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         source=dict(type='str', choices=['build', 'load', 'pull', 'local']),
-        build=dict(type='dict', suboptions=dict(
+        build=dict(type='dict', options=dict(
             cache_from=dict(type='list', elements='str'),
             container_limits=dict(type='dict', options=dict(
                 memory=dict(type='int'),
