@@ -19,11 +19,12 @@ from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties, dict_diff
 from ansible.module_utils.network.nxos.facts.facts import Facts
 from ansible.module_utils.network.nxos.utils.utils import flatten_dict, search_obj_in_list, get_interface_type, normalize_interface
+import q
 
 
 class Static_routes(ConfigBase):
     """
-    The nxos_static_routes class
+    The nxos_xstatic_routes class
     """
 
     gather_subset = [
@@ -62,29 +63,31 @@ class Static_routes(ConfigBase):
         warnings = list()
         commands = list()
         state = self._module.params['state']
-        existing_static_routes_facts = self.get_static_routes_facts()
         action_states = ['merged', 'replaced', 'deleted', 'overridden']
-        result['before'] = existing_static_routes_facts
+
         if state == 'gathered':
-            result['gathered'] = result['before']
+            result['gathered'] = self.get_static_routes_facts()
+        elif state == 'rendered':
+            result['rendered'] = self.set_config({})
+            # no need to fetch facts for rendered
+        elif state == 'parsed':
+            result['parsed'] = self.set_config({})
+            # no need to fetch facts for parsed
         else:
+            existing_static_routes_facts = self.get_static_routes_facts()
             commands.extend(self.set_config(existing_static_routes_facts))
             if commands and state in action_states:
                 if not self._module.check_mode:
                     self._connection.edit_config(commands)
                 result['changed'] = True
+                result['before'] = existing_static_routes_facts
                 result['commands'] = commands
-            if state == 'rendered':
-                result['rendered'] = commands
-            elif state == 'parsed':
-                result['parsed'] = commands
+
             changed_static_routes_facts = self.get_static_routes_facts()
             if result['changed']:
                 result['after'] = changed_static_routes_facts
-
-        if state not in action_states:
-            del result['before']
         result['warnings'] = warnings
+        q(result)
         return result
 
     def set_config(self, existing_static_routes_facts):
@@ -104,6 +107,7 @@ class Static_routes(ConfigBase):
         want = self.add_default_vrf(deepcopy(want))
         have = self.add_default_vrf(deepcopy(have))
         resp = self.set_state(want, have)
+        q(to_list(resp))
         return to_list(resp)
 
     def set_state(self, want, have):
@@ -141,6 +145,7 @@ class Static_routes(ConfigBase):
         commands = []
         for w in want:
             commands.extend(self.set_commands(w, {}))
+        q(commands)
         return commands
 
     def _state_replaced(self, want, have):

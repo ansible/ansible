@@ -27,7 +27,7 @@
                       tag: 15
       state: rendered
     register: result
-        
+  
   - assert:
       that:
         - "result.changed == false"

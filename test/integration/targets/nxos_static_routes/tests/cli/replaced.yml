@@ -30,9 +30,6 @@
         state: replaced
       register: result
 
-    - debug:
-        var: result
-
     - assert:
         that:
           - "result.changed == true"
@@ -57,16 +54,10 @@
     - name: Idempotence - Replaced
       nxos_static_routes: *replaced
       register: result
-    
-    - debug:
-        var: result
 
     - assert:
         that:
           - "result.changed == false"
-
-    - debug:
-        var: result
     
     always:
     - include_tasks: remove_config.yaml

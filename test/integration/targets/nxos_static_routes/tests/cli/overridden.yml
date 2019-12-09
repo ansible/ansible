@@ -26,10 +26,7 @@
                             admin_distance: 1
                             route_name: overridden_route
           state: overridden
-        register: result 
-
-      - debug:
-          var: result   
+        register: result  
 
       - assert:
           that:

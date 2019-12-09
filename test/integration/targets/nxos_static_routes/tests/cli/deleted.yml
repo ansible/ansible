@@ -20,9 +20,6 @@
         state: deleted
       register: result
 
-    - debug:
-        var: result
-
     - assert:
         that:
           - "ansible_facts.network_resources.static_routes == result.before"
