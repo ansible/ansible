@@ -24,7 +24,7 @@ author:
     - Emmanuel Riviere (@emriver)
 requirements:
     - "python >= 2.7"
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
 options:
     name:
         description:
@@ -71,7 +71,7 @@ options:
                 choices: [denied, RO, RW]
     users:
         description:
-            -List of user aliases to add in the group
+            - List of user aliases to add in the group
         required: false
         type: list
     state:
@@ -110,6 +110,7 @@ RETURN = '''
 ---
 '''
 
+import atexit
 import traceback
 
 from distutils.version import LooseVersion
@@ -302,6 +303,7 @@ def main():
     try:
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password, validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except ZabbixAPIException as error:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % error)
 
