@@ -1,0 +1,2 @@
+minor_changes:
+- Minor typo fixes in vmware_httpapi related modules and module_utils.
