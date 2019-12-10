@@ -95,7 +95,7 @@
 
   - name: tearDown
     nxos_user: &tear
-      name: ansible
+      name: "{{ ansible_user }}"
       purge: yes
       provider: "{{ connection }}"
     register: result
