@@ -24,11 +24,11 @@ author: Jon Meran (@jonmer85)
 options:
   job_definition_arn:
     description:
-      - The arn for the job definition
+      - The ARN for the job definition.
     type: str
   job_definition_name:
     description:
-      - The name for the job definition
+      - The name for the job definition.
     required: true
     type: str
   state:
@@ -39,7 +39,7 @@ options:
     type: str
   type:
     description:
-      - The type of job definition
+      - The type of job definition.
     required: true
     type: str
   parameters:
@@ -55,24 +55,27 @@ options:
         Up to 255 letters (uppercase and lowercase), numbers, hyphens, underscores, colons, periods, forward slashes,
         and number signs are allowed. This parameter maps to Image in the Create a container section of the Docker
         Remote API and the IMAGE parameter of docker run.
+    required: true
     type: str
   vcpus:
     description:
       - The number of vCPUs reserved for the container. This parameter maps to CpuShares in the Create a container
         section of the Docker Remote API and the --cpu-shares option to docker run. Each vCPU is equivalent to
         1,024 CPU shares.
+    required: true
     type: int
   memory:
     description:
       - The hard limit (in MiB) of memory to present to the container. If your container attempts to exceed the memory
         specified here, the container is killed. This parameter maps to Memory in the Create a container section of the
         Docker Remote API and the --memory option to docker run.
+    required: true
     type: int
   command:
     description:
       - The command that is passed to the container. This parameter maps to Cmd in the Create a container section of
         the Docker Remote API and the COMMAND parameter to docker run. For more information,
-        see U(https://docs.docker.com/engine/reference/builder/#cmd)
+        see U(https://docs.docker.com/engine/reference/builder/#cmd).
     type: list
     elements: str
   job_role_arn:
@@ -81,7 +84,7 @@ options:
     type: str
   volumes:
     description:
-      - A list of data volumes used in a job. List of dictionaries.
+      - A list of data volumes used in a job.
     suboptions:
       host:
         description:
@@ -104,7 +107,7 @@ options:
   environment:
     description:
       - The environment variables to pass to a container. This parameter maps to Env in the Create a container section
-        of the Docker Remote API and the --env option to docker run. List of dictionaries.
+        of the Docker Remote API and the --env option to docker run.
     suboptions:
       name:
         description:
@@ -117,7 +120,7 @@ options:
   mount_points:
     description:
       - The mount points for data volumes in your container. This parameter maps to Volumes in the Create a container
-        section of the Docker Remote API and the --volume option to docker run. List of dictionaries.
+        section of the Docker Remote API and the --volume option to docker run.
     suboptions:
       containerPath:
         description:
@@ -125,7 +128,7 @@ options:
       readOnly:
         description:
           - If this value is true , the container has read-only access to the volume; otherwise, the container can write
-             to the volume. The default value is false.
+             to the volume. The default value is C(false).
       sourceVolume:
         description:
           - The name of the volume to mount.
@@ -146,7 +149,7 @@ options:
   ulimits:
     description:
       - A list of ulimits to set in the container. This parameter maps to Ulimits in the Create a container section
-        of the Docker Remote API and the --ulimit option to docker run. List of dictionaries.
+        of the Docker Remote API and the --ulimit option to docker run.
     suboptions:
       hardLimit:
         description:

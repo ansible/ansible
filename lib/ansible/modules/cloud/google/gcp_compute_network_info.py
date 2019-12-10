@@ -129,17 +129,6 @@ resources:
       - The unique identifier for the resource.
       returned: success
       type: int
-    ipv4_range:
-      description:
-      - If this field is specified, a deprecated legacy network is created.
-      - You will no longer be able to create a legacy network on Feb 1, 2020.
-      - See the [legacy network docs](U(https://cloud.google.com/vpc/docs/legacy))
-        for more details.
-      - The range of internal addresses that are legal on this legacy network.
-      - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
-      - The resource must be recreated to modify this field.
-      returned: success
-      type: str
     name:
       description:
       - Name of the resource. Provided by the client when the resource is created.

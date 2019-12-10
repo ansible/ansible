@@ -260,7 +260,10 @@ def dict_diff(base, comparable):
     if not isinstance(base, dict):
         raise AssertionError("`base` must be of type <dict>")
     if not isinstance(comparable, dict):
-        raise AssertionError("`comparable` must be of type <dict>")
+        if comparable is None:
+            comparable = dict()
+        else:
+            raise AssertionError("`comparable` must be of type <dict>")
 
     updates = dict()
 
@@ -594,7 +597,7 @@ def validate_config(spec, data):
 
 def search_obj_in_list(name, lst, key='name'):
     for item in lst:
-        if item[key] == name:
+        if item.get(key) == name:
             return item
     return None
 

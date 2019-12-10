@@ -8,14 +8,17 @@
     python_suffix: "-py3"
   when: ansible_python_version is version('3', '>=')
 
-- include_vars: '{{ item }}'
-  with_first_found:
-    - files:
+- name: Include distribution and Python version specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
         - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}{{ python_suffix }}.yml'
         - '{{ ansible_distribution }}-{{ ansible_distribution_version }}{{ python_suffix }}.yml'
         - '{{ ansible_os_family }}{{ python_suffix }}.yml'
         - 'default{{ python_suffix }}.yml'
-      paths: '../vars'
+      paths:
+        - "{{ role_path }}/vars"
 
 - name: make sure the dbus service is started under systemd
   systemd:
@@ -107,11 +110,14 @@
 # instLangs parameter).
 
 - block:
-  - name: Install langpacks (rhel8 beta)
+  - name: Install langpacks (RHEL8)
     yum:
-      name: glibc-all-langpacks
+      name:
+        - glibc-langpack-es
+        - glibc-langpack-pt
+        - glibc-all-langpacks
       state: present
-    when: ansible_distribution_major_version|int >= 8
+    when: ansible_distribution_major_version is version('8', '>=')
 
   - name: Check if locales need to be generated (RedHat)
     shell: "localedef --list-archive | grep -a -q '^{{ locale }}$'"
@@ -136,7 +142,7 @@
   with_items:
     - glibc-langpack-es
     - glibc-langpack-pt
-  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int >= 24
+  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('24', '>=')
 
 - name: enable postgresql service (FreeBSD)
   lineinfile:

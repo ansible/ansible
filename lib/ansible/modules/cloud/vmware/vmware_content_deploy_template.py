@@ -19,7 +19,9 @@ module: vmware_content_deploy_template
 short_description: Deploy Virtual Machine from template stored in content library.
 description:
 - Module to deploy virtual machine from template in content library.
-- Content Library feature is introduced in vSphere 6.0 version, so this module is not supported in the earlier versions of vSphere.
+- Content Library feature is introduced in vSphere 6.0 version.
+- vmtx templates feature is introduced in vSphere 67U1 and APIs for clone template from content library in 67U2.
+- This module does not work with vSphere version older than 67U2.
 - All variables and VMware object names are case sensitive.
 version_added: '2.9'
 author:

@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: cloudformation_info
 short_description: Obtain information about an AWS CloudFormation stack
 description:
-  - Gets information about an AWS CloudFormation stack
+  - Gets information about an AWS CloudFormation stack.
   - This module was called C(cloudformation_facts) before Ansible 2.9, returning C(ansible_facts).
     Note that the M(cloudformation_info) module no longer returns C(ansible_facts)!
 requirements:
@@ -28,31 +28,32 @@ options:
     stack_name:
         description:
           - The name or id of the CloudFormation stack. Gathers information on all stacks by default.
+        type: str
     all_facts:
         description:
-            - Get all stack information for the stack
+            - Get all stack information for the stack.
         type: bool
-        default: 'no'
+        default: false
     stack_events:
         description:
-            - Get stack events for the stack
+            - Get stack events for the stack.
         type: bool
-        default: 'no'
+        default: false
     stack_template:
         description:
-            - Get stack template body for the stack
+            - Get stack template body for the stack.
         type: bool
-        default: 'no'
+        default: false
     stack_resources:
         description:
-            - Get stack resources for the stack
+            - Get stack resources for the stack.
         type: bool
-        default: 'no'
+        default: false
     stack_policy:
         description:
-            - Get stack policy for the stack
+            - Get stack policy for the stack.
         type: bool
-        default: 'no'
+        default: false
 extends_documentation_fragment:
     - aws
     - ec2
@@ -107,24 +108,6 @@ EXAMPLES = '''
     stack_name: nonexistent-stack
     all_facts: yes
   failed_when: cloudformation['nonexistent-stack'] is undefined
-
-# Example dictionary outputs for stack_outputs, stack_parameters and stack_resources:
-# "stack_outputs": {
-#     "ApplicationDatabaseName": "dazvlpr01xj55a.ap-southeast-2.rds.amazonaws.com",
-#     ...
-# },
-# "stack_parameters": {
-#     "DatabaseEngine": "mysql",
-#     "DatabasePassword": "****",
-#     ...
-# },
-# "stack_resources": {
-#     "AutoscalingGroup": "dev-someapp-AutoscalingGroup-1SKEXXBCAN0S7",
-#     "AutoscalingSecurityGroup": "sg-abcd1234",
-#     "ApplicationDatabase": "dazvlpr01xj55a",
-#     "EcsTaskDefinition": "arn:aws:ecs:ap-southeast-2:123456789:task-definition/dev-someapp-EcsTaskDefinition-1F2VM9QB0I7K9:1"
-#     ...
-# }
 '''
 
 RETURN = '''
@@ -137,11 +120,16 @@ stack_outputs:
                  output 'OutputValue' parameter
     returned: if the stack exists
     type: dict
+    sample:
+      ApplicationDatabaseName: dazvlpr01xj55a.ap-southeast-2.rds.amazonaws.com
 stack_parameters:
     description: Dictionary of stack parameters keyed by the value of each parameter 'ParameterKey' parameter and corresponding value of
                  each parameter 'ParameterValue' parameter
     returned: if the stack exists
     type: dict
+    sample:
+      DatabaseEngine: mysql
+      DatabasePassword: "***"
 stack_events:
     description: All stack events for the stack
     returned: only if all_facts or stack_events is true and the stack exists
@@ -163,6 +151,10 @@ stack_resources:
                  resource 'PhysicalResourceId' parameter
     returned: only if all_facts or stack_resourses is true and the stack exists
     type: dict
+    sample:
+      AutoScalingGroup: "dev-someapp-AutoscalingGroup-1SKEXXBCAN0S7"
+      AutoScalingSecurityGroup: "sg-abcd1234"
+      ApplicationDatabase: "dazvlpr01xj55a"
 '''
 
 import json

@@ -329,7 +329,7 @@ class LocalNxapi:
 
         headers = {'Content-Type': 'application/json'}
         result = list()
-        timeout = self._module.params['timeout']
+        timeout = self._module.params['provider']['timeout']
         use_proxy = self._module.params['provider']['use_proxy']
 
         for req in requests:
@@ -603,6 +603,8 @@ class HttpApi:
             if opts.get('ignore_timeout') and code:
                 responses.append(code)
                 return responses
+            elif opts.get('catch_clierror') and '400' in code:
+                return [code, err]
             elif code and 'no graceful-restart' in err:
                 if 'ISSU/HA will be affected if Graceful Restart is disabled' in err:
                     msg = ['']

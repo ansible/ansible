@@ -11,3 +11,5 @@ pip install passlib
 ANSIBLE_ROLES_PATH=../ ansible-playbook lookups.yml "$@"
 
 ansible-playbook template_lookup_vaulted.yml --vault-password-file test_vault_pass "$@"
+
+ansible-playbook -i template_deepcopy/hosts template_deepcopy/playbook.yml "$@"

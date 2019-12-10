@@ -16,7 +16,7 @@ DOCUMENTATION = '''
       - Jesse Keating <jesse.keating@rackspace.com>
     short_description: OpenStack inventory source
     requirements:
-        - openstacksdk
+        - "openstacksdk >= 0.28"
     extends_documentation_fragment:
         - inventory_cache
         - constructed
@@ -81,6 +81,12 @@ DOCUMENTATION = '''
                 inventory script's option fail_on_errors)
             type: bool
             default: 'no'
+        all_projects:
+            description: |
+                Lists servers from all projects
+            type: bool
+            default: 'no'
+            version_added: 2.10
         clouds_yaml_path:
             description: |
                 Override path to clouds.yaml file. If this value is given it
@@ -107,6 +113,7 @@ EXAMPLES = '''
 plugin: openstack
 expand_hostvars: yes
 fail_on_errors: yes
+all_projects: yes
 '''
 
 import collections
@@ -202,9 +209,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             expand_hostvars = self._config_data.get('expand_hostvars', False)
             fail_on_errors = self._config_data.get('fail_on_errors', False)
+            all_projects = self._config_data.get('all_projects', False)
 
             source_data = cloud_inventory.list_hosts(
-                expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
+                expand=expand_hostvars, fail_on_cloud_config=fail_on_errors,
+                all_projects=all_projects)
 
             if cache_needs_update:
                 self._cache[cache_key] = source_data

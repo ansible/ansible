@@ -635,7 +635,7 @@ class VmwareRestModule(AnsibleModule):
             if with_filter:
                 self.url += self._build_filter(object_type)
         except KeyError:
-            self.handle_object_key_error
+            self.handle_object_key_error()
         return self.url
 
     def get_url_with_filter(self, object_type):

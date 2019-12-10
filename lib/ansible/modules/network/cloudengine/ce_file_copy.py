@@ -19,6 +19,9 @@ author:
 notes:
     - The feature must be enabled with feature scp-server.
     - If the file is already present, no transfer will take place.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 requirements:
     - paramiko
 options:

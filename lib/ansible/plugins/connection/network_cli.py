@@ -314,10 +314,12 @@ class Connection(NetworkConnectionBase):
         self._last_response = None
         self._history = list()
         self._command_response = None
+        self._last_recv_window = None
 
         self._terminal = None
         self.cliconf = None
         self._paramiko_conn = None
+        self._task_uuid = to_text(kwargs.get('task_uuid', ''))
 
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
@@ -329,8 +331,9 @@ class Connection(NetworkConnectionBase):
 
             self.cliconf = cliconf_loader.get(self._network_os, self)
             if self.cliconf:
-                self.queue_message('vvvv', 'loaded cliconf plugin for network_os %s' % self._network_os)
-                self._sub_plugin = {'type': 'cliconf', 'name': self._network_os, 'obj': self.cliconf}
+                self._sub_plugin = {'type': 'cliconf', 'name': self.cliconf._load_name, 'obj': self.cliconf}
+                self.queue_message('vvvv', 'loaded cliconf plugin %s from path %s for network_os %s' %
+                                   (self.cliconf._load_name, self.cliconf._original_path, self._network_os))
             else:
                 self.queue_message('vvvv', 'unable to load cliconf for network_os %s' % self._network_os)
         else:
@@ -405,6 +408,12 @@ class Connection(NetworkConnectionBase):
             self.reset_history()
         if hasattr(self, 'disable_response_logging'):
             self.disable_response_logging()
+
+    def update_cli_prompt_context(self, task_uuid):
+        # set cli prompt context at the start of new task run only
+        if self._task_uuid != task_uuid:
+            self.set_cli_prompt_context()
+            self._task_uuid = task_uuid
 
     def _connect(self):
         '''
@@ -540,6 +549,7 @@ class Connection(NetworkConnectionBase):
             recv.seek(offset)
 
             window = self._strip(recv.read())
+            self._last_recv_window = window
             window_count += 1
 
             if prompts and not handled:

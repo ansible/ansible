@@ -1,0 +1,10 @@
+[mysqld]
+server_id           = 1
+port                = {{ primary_db.port }}
+datadir             = {{ primary_db.datadir }}
+socket              = {{ primary_db.datadir }}/mysql.sock
+pid-file            = {{ primary_db.datadir }}/mysql.pid
+log_bin             = {{ primary_db.logdir }}/mysql-bin.log
+sync_binlog         = 1
+binlog-format       = ROW
+innodb_flush_log_at_trx_commit  = 1

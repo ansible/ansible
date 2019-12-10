@@ -276,8 +276,15 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
         reraise(AnsibleFilterError, AnsibleFilterError(to_native(e), orig_exc=e), sys.exc_info()[2])
 
 
-def to_uuid(string):
-    return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
+def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
+    uuid_namespace = namespace
+    if not isinstance(uuid_namespace, uuid.UUID):
+        try:
+            uuid_namespace = uuid.UUID(namespace)
+        except (AttributeError, ValueError) as e:
+            raise AnsibleFilterError("Invalid value '%s' for 'namespace': %s" % (to_native(namespace), to_native(e)))
+    # uuid.uuid5() requires bytes on Python 2 and bytes or text or Python 3
+    return to_text(uuid.uuid5(uuid_namespace, to_native(string, errors='surrogate_or_strict')))
 
 
 def mandatory(a, msg=None):
@@ -403,19 +410,18 @@ def comment(text, style='plain', **kw):
         str_end)
 
 
-def extract(item, container, morekeys=None):
-    from jinja2.runtime import Undefined
+@environmentfilter
+def extract(environment, item, container, morekeys=None):
+    if morekeys is None:
+        keys = [item]
+    elif isinstance(morekeys, list):
+        keys = [item] + morekeys
+    else:
+        keys = [item, morekeys]
 
-    value = container[item]
-
-    if value is not Undefined and morekeys is not None:
-        if not isinstance(morekeys, list):
-            morekeys = [morekeys]
-
-        try:
-            value = reduce(lambda d, k: d[k], morekeys, value)
-        except KeyError:
-            value = Undefined()
+    value = container
+    for key in keys:
+        value = environment.getitem(value, key)
 
     return value
 

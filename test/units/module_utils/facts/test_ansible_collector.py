@@ -324,7 +324,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
         expected = {'needed_fact': 'THE_NEEDED_FACT_VALUE',
                     'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_on_compound_fact(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
@@ -334,7 +334,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
 
         expected = {'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_on_needed_fact(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
@@ -344,7 +344,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
 
         expected = {'needed_fact': 'THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_on_compound_gather_compound(self):
         _mock_module = mock_module(gather_subset=['!all', '!any', 'compound_fact'],
@@ -354,7 +354,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
 
         expected = {'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_no_match(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
@@ -363,7 +363,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
         facts_dict = self._collect(_mock_module)
 
         expected = {}
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_concat_collector(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'])

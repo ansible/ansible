@@ -100,7 +100,7 @@ Your pattern must match your inventory syntax. If you define a host as an :ref:`
         maxRequestsPerChild: 808
         host: 127.0.0.2
 
-you must use the alias in your pattern. In the example above, your must use ``host1`` in your pattern. If you use the IP address, you will once again get the error::
+you must use the alias in your pattern. In the example above, you must use ``host1`` in your pattern. If you use the IP address, you will once again get the error::
 
    [WARNING]: Could not match supplied host pattern, ignoring: 127.0.0.2
 
@@ -152,6 +152,10 @@ You can change the behavior of the patterns defined in playbooks using command-l
 Finally, you can use ``--limit`` to read the list of hosts from a file by prefixing the file name with ``@``::
 
     ansible-playbook site.yml --limit @retry_hosts.txt
+
+If :ref:`RETRY_FILES_ENABLED` is set to ``True``, a ``.retry`` file will be created after the ``ansible-playbook`` run containing a list of failed hosts from all plays. This file is overwritten each time ``ansible-playook`` finishes running.
+
+    ansible-playbook site.yml --limit @site.retry
 
 To apply your knowledge of patterns with Ansible commands and playbooks, read :ref:`intro_adhoc` and :ref:`playbooks_intro`.
 

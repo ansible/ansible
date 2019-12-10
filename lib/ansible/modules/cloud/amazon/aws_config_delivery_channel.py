@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 module: aws_config_delivery_channel
 short_description: Manage AWS Config delivery channels
 description:
-    - This module manages AWS Config delivery locations for rule checks and configuration info
+    - This module manages AWS Config delivery locations for rule checks and configuration info.
 version_added: "2.6"
 requirements: [ 'botocore', 'boto3' ]
 author:
@@ -38,6 +38,7 @@ options:
     description:
     - The name of the Amazon S3 bucket to which AWS Config delivers configuration snapshots and configuration history files.
     type: str
+    required: true
   s3_prefix:
     description:
     - The prefix for the specified Amazon S3 bucket.

@@ -367,8 +367,8 @@ class TestJsonRpc(unittest.TestCase):
         ]
         open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
         client = nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False)
-        self.assertEquals(True, client.exists('/exists'))
-        self.assertEquals(False, client.exists('/not-exists'))
+        self.assertEqual(True, client.exists('/exists'))
+        self.assertEqual(False, client.exists('/not-exists'))
 
         self.assertEqual(0, len(calls))
 
@@ -380,7 +380,7 @@ class TestJsonRpc(unittest.TestCase):
         ]
         open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
         client = nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False)
-        self.assertEquals(False, client.exists('/list{missing-parent}/list{child}'))
+        self.assertEqual(False, client.exists('/list{missing-parent}/list{child}'))
 
         self.assertEqual(0, len(calls))
 
@@ -404,11 +404,11 @@ class TestValueBuilder(unittest.TestCase):
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, 'ansible-nso:id-two', schema)
         values = list(vb.values)
-        self.assertEquals(1, len(values))
+        self.assertEqual(1, len(values))
         value = values[0]
-        self.assertEquals(parent, value.path)
-        self.assertEquals('set', value.state)
-        self.assertEquals('an:id-two', value.value)
+        self.assertEqual(parent, value.path)
+        self.assertEqual('set', value.state)
+        self.assertEqual('an:id-two', value.value)
 
         self.assertEqual(0, len(calls))
 
@@ -431,11 +431,11 @@ class TestValueBuilder(unittest.TestCase):
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, 'id-name-value', [{'name': 'ansible-nso:id-one', 'value': '1'}], schema)
         values = list(vb.values)
-        self.assertEquals(1, len(values))
+        self.assertEqual(1, len(values))
         value = values[0]
-        self.assertEquals('{0}/id-name-value{{an:id-one}}/value'.format(parent), value.path)
-        self.assertEquals('set', value.state)
-        self.assertEquals('1', value.value)
+        self.assertEqual('{0}/id-name-value{{an:id-one}}/value'.format(parent), value.path)
+        self.assertEqual('set', value.state)
+        self.assertEqual('1', value.value)
 
         self.assertEqual(0, len(calls))
 
@@ -459,16 +459,16 @@ class TestValueBuilder(unittest.TestCase):
         vb.build(parent, None, [{'name': 'direct', 'direct-child': 'direct-value'},
                                 {'name': 'nested', 'nested-child': 'nested-value'}], schema)
         values = list(vb.values)
-        self.assertEquals(2, len(values))
+        self.assertEqual(2, len(values))
         value = values[0]
-        self.assertEquals('{0}{{direct}}/direct-child'.format(parent), value.path)
-        self.assertEquals('set', value.state)
-        self.assertEquals('direct-value', value.value)
+        self.assertEqual('{0}{{direct}}/direct-child'.format(parent), value.path)
+        self.assertEqual('set', value.state)
+        self.assertEqual('direct-value', value.value)
 
         value = values[1]
-        self.assertEquals('{0}{{nested}}/nested-child'.format(parent), value.path)
-        self.assertEquals('set', value.state)
-        self.assertEquals('nested-value', value.value)
+        self.assertEqual('{0}{{nested}}/nested-child'.format(parent), value.path)
+        self.assertEqual('set', value.state)
+        self.assertEqual('nested-value', value.value)
 
         self.assertEqual(0, len(calls))
 
@@ -489,10 +489,10 @@ class TestValueBuilder(unittest.TestCase):
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, {'device-list': ['one', 'two']}, schema)
         values = list(vb.values)
-        self.assertEquals(1, len(values))
+        self.assertEqual(1, len(values))
         value = values[0]
-        self.assertEquals('{0}/device-list'.format(parent), value.path)
-        self.assertEquals(['one', 'two'], value.value)
+        self.assertEqual('{0}/device-list'.format(parent), value.path)
+        self.assertEqual(['one', 'two'], value.value)
 
         self.assertEqual(0, len(calls))
 
@@ -513,16 +513,16 @@ class TestValueBuilder(unittest.TestCase):
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, {'device-list': ['one', 'two']}, schema)
         values = list(vb.values)
-        self.assertEquals(3, len(values))
+        self.assertEqual(3, len(values))
         value = values[0]
-        self.assertEquals('{0}/device-list'.format(parent), value.path)
-        self.assertEquals(nso.State.ABSENT, value.state)
+        self.assertEqual('{0}/device-list'.format(parent), value.path)
+        self.assertEqual(nso.State.ABSENT, value.state)
         value = values[1]
-        self.assertEquals('{0}/device-list{{one}}'.format(parent), value.path)
-        self.assertEquals(nso.State.PRESENT, value.state)
+        self.assertEqual('{0}/device-list{{one}}'.format(parent), value.path)
+        self.assertEqual(nso.State.PRESENT, value.state)
         value = values[2]
-        self.assertEquals('{0}/device-list{{two}}'.format(parent), value.path)
-        self.assertEquals(nso.State.PRESENT, value.state)
+        self.assertEqual('{0}/device-list{{two}}'.format(parent), value.path)
+        self.assertEqual(nso.State.PRESENT, value.state)
 
         self.assertEqual(0, len(calls))
 
@@ -549,16 +549,16 @@ class TestValueBuilder(unittest.TestCase):
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, values, schema)
         values = list(vb.values)
-        self.assertEquals(3, len(values))
+        self.assertEqual(3, len(values))
         value = values[0]
-        self.assertEquals('{0}/c'.format(parent), value.path)
-        self.assertEquals('3', value.value)
+        self.assertEqual('{0}/c'.format(parent), value.path)
+        self.assertEqual('3', value.value)
         value = values[1]
-        self.assertEquals('{0}/a'.format(parent), value.path)
-        self.assertEquals('1', value.value)
+        self.assertEqual('{0}/a'.format(parent), value.path)
+        self.assertEqual('1', value.value)
         value = values[2]
-        self.assertEquals('{0}/b'.format(parent), value.path)
-        self.assertEquals('2', value.value)
+        self.assertEqual('{0}/b'.format(parent), value.path)
+        self.assertEqual('2', value.value)
 
         self.assertEqual(0, len(calls))
 
@@ -584,13 +584,13 @@ class TestValueBuilder(unittest.TestCase):
         vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, values, schema)
         values = list(vb.values)
-        self.assertEquals(2, len(values))
+        self.assertEqual(2, len(values))
         value = values[0]
-        self.assertEquals('{0}/a'.format(parent), value.path)
-        self.assertEquals('1', value.value)
+        self.assertEqual('{0}/a'.format(parent), value.path)
+        self.assertEqual('1', value.value)
         value = values[1]
-        self.assertEquals('{0}/b'.format(parent), value.path)
-        self.assertEquals('2', value.value)
+        self.assertEqual('{0}/b'.format(parent), value.path)
+        self.assertEqual('2', value.value)
 
         self.assertEqual(0, len(calls))
 
@@ -624,7 +624,7 @@ class TestValueSort(unittest.TestCase):
 
         result = [v.path for v in nso.ValueBuilder.sort_values(values)]
 
-        self.assertEquals(['/test/list{entry}', '/test/entry', '/test/list{entry}/description'], result)
+        self.assertEqual(['/test/list{entry}', '/test/entry', '/test/list{entry}/description'], result)
 
     def test_sort_break_direct_cycle(self):
         values = [
@@ -635,7 +635,7 @@ class TestValueSort(unittest.TestCase):
 
         result = [v.path for v in nso.ValueBuilder.sort_values(values)]
 
-        self.assertEquals(['/test/a', '/test/b', '/test/c'], result)
+        self.assertEqual(['/test/a', '/test/b', '/test/c'], result)
 
     def test_sort_break_indirect_cycle(self):
         values = [
@@ -646,7 +646,7 @@ class TestValueSort(unittest.TestCase):
 
         result = [v.path for v in nso.ValueBuilder.sort_values(values)]
 
-        self.assertEquals(['/test/a', '/test/c', '/test/b'], result)
+        self.assertEqual(['/test/a', '/test/c', '/test/b'], result)
 
     def test_sort_depend_on_self(self):
         values = [

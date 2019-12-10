@@ -198,11 +198,11 @@ def main():
         ],
     )
 
-    description = module.params['description']
-    dst_group = module.params['dst_group']
-    src_group = module.params['src_group']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    description = module.params.get('description')
+    dst_group = module.params.get('dst_group')
+    src_group = module.params.get('src_group')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci = ACIModule(module)
     aci.construct_url(

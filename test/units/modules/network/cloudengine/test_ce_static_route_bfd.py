@@ -99,4 +99,4 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
         )
         set_module_args(config)
         result = self.execute_module(changed=True)
-        self.assertEquals(sorted(result['updates']), sorted(updates))
+        self.assertEqual(sorted(result['updates']), sorted(updates))

@@ -321,15 +321,15 @@ def main():
         ],
     )
 
-    allocation_mode = module.params['allocation_mode']
-    description = module.params['description']
-    pool = module.params['pool']
-    pool_allocation_mode = module.params['pool_allocation_mode']
-    pool_type = module.params['pool_type']
-    range_end = module.params['range_end']
-    range_name = module.params['range_name']
-    range_start = module.params['range_start']
-    state = module.params['state']
+    allocation_mode = module.params.get('allocation_mode')
+    description = module.params.get('description')
+    pool = module.params.get('pool')
+    pool_allocation_mode = module.params.get('pool_allocation_mode')
+    pool_type = module.params.get('pool_type')
+    range_end = module.params.get('range_end')
+    range_name = module.params.get('range_name')
+    range_start = module.params.get('range_start')
+    state = module.params.get('state')
 
     if range_end is not None:
         encap_end = '{0}-{1}'.format(pool_type, range_end)

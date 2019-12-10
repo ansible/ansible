@@ -57,15 +57,30 @@ class FilterBlackList(logging.Filter):
         return not any(f.filter(record) for f in self.blacklist)
 
 
+class FilterUserInjector(logging.Filter):
+    """
+    This is a filter which injects the current user as the 'user' attribute on each record. We need to add this filter
+    to all logger handlers so that 3rd party libraries won't print an exception due to user not being defined.
+    """
+    username = getpass.getuser()
+
+    def filter(self, record):
+        record.user = FilterUserInjector.username
+        return True
+
+
 logger = None
 # TODO: make this a callback event instead
 if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.INFO, format='%(asctime)s p=%(user)s u=%(process)d | %(message)s')
-        logger = logging.LoggerAdapter(logging.getLogger('ansible'), {'user': getpass.getuser()})
+        logging.basicConfig(filename=path, level=logging.DEBUG,
+                            format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s | %(message)s')
+
+        logger = logging.getLogger('ansible')
         for handler in logging.root.handlers:
             handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
+            handler.addFilter(FilterUserInjector())
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 

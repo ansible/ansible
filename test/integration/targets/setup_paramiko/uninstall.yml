@@ -9,6 +9,7 @@
           include_tasks: "{{ item }}"
           with_first_found:
             - "uninstall-{{ ansible_distribution }}-{{ ansible_distribution_major_version }}-python-{{ ansible_python.version.major }}.yml"
+            - "uninstall-{{ ansible_os_family }}-{{ ansible_distribution_major_version }}-python-{{ ansible_python.version.major }}.yml"
             - "uninstall-{{ ansible_pkg_mgr }}-python-{{ ansible_python.version.major }}.yml"
             - "uninstall-{{ ansible_pkg_mgr }}.yml"
             - "uninstall-fail.yml"

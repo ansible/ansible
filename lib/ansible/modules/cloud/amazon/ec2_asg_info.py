@@ -26,6 +26,7 @@ options:
     description:
       - The prefix or name of the auto scaling group(s) you are searching for.
       - "Note: This is a regular expression match with implicit '^' (beginning of string). Append '$' for a complete name match."
+    type: str
     required: false
   tags:
     description:
@@ -33,6 +34,7 @@ options:
         A dictionary/hash of tags in the format { tag1_name: 'tag1_value', tag2_name: 'tag2_value' } to match against the auto scaling
         group(s) you are searching for.
     required: false
+    type: dict
 extends_documentation_fragment:
     - aws
     - ec2

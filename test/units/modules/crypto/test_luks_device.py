@@ -64,16 +64,24 @@ def test_run_luks_remove(monkeypatch):
 
 # ===== ConditionsHandler methods data and tests =====
 
-# device, key, state, is_luks, label, expected
+# device, key, passphrase, state, is_luks, label, expected
 LUKS_CREATE_DATA = (
-    ("dummy", "key", "present", False, None, True),
-    (None, "key", "present", False, None, False),
-    (None, "key", "present", False, "labelName", True),
-    ("dummy", None, "present", False, None, False),
-    ("dummy", "key", "absent", False, None, False),
-    ("dummy", "key", "opened", True, None, False),
-    ("dummy", "key", "closed", True, None, False),
-    ("dummy", "key", "present", True, None, False))
+    ("dummy", "key", None, "present", False, None, True),
+    (None, "key", None, "present", False, None, False),
+    (None, "key", None, "present", False, "labelName", True),
+    ("dummy", None, None, "present", False, None, False),
+    ("dummy", "key", None, "absent", False, None, False),
+    ("dummy", "key", None, "opened", True, None, False),
+    ("dummy", "key", None, "closed", True, None, False),
+    ("dummy", "key", None, "present", True, None, False),
+    ("dummy", None, "foo", "present", False, None, True),
+    (None, None, "bar", "present", False, None, False),
+    (None, None, "baz", "present", False, "labelName", True),
+    ("dummy", None, None, "present", False, None, False),
+    ("dummy", None, "quz", "absent", False, None, False),
+    ("dummy", None, "qux", "opened", True, None, False),
+    ("dummy", None, "quux", "closed", True, None, False),
+    ("dummy", None, "corge", "present", True, None, False))
 
 # device, state, is_luks, expected
 LUKS_REMOVE_DATA = (
@@ -82,16 +90,24 @@ LUKS_REMOVE_DATA = (
     ("dummy", "present", True, False),
     ("dummy", "absent", False, False))
 
-# device, key, state, name, name_by_dev, expected
+# device, key, passphrase, state, name, name_by_dev, expected
 LUKS_OPEN_DATA = (
-    ("dummy", "key", "present", "name", None, False),
-    ("dummy", "key", "absent", "name", None, False),
-    ("dummy", "key", "closed", "name", None, False),
-    ("dummy", "key", "opened", "name", None, True),
-    (None, "key", "opened", "name", None, False),
-    ("dummy", None, "opened", "name", None, False),
-    ("dummy", "key", "opened", "name", "name", False),
-    ("dummy", "key", "opened", "beer", "name", "exception"))
+    ("dummy", "key", None, "present", "name", None, False),
+    ("dummy", "key", None, "absent", "name", None, False),
+    ("dummy", "key", None, "closed", "name", None, False),
+    ("dummy", "key", None, "opened", "name", None, True),
+    (None, "key", None, "opened", "name", None, False),
+    ("dummy", None, None, "opened", "name", None, False),
+    ("dummy", "key", None, "opened", "name", "name", False),
+    ("dummy", "key", None, "opened", "beer", "name", "exception"),
+    ("dummy", None, "foo", "present", "name", None, False),
+    ("dummy", None, "bar", "absent", "name", None, False),
+    ("dummy", None, "baz", "closed", "name", None, False),
+    ("dummy", None, "qux", "opened", "name", None, True),
+    (None, None, "quux", "opened", "name", None, False),
+    ("dummy", None, None, "opened", "name", None, False),
+    ("dummy", None, "quuz", "opened", "name", "name", False),
+    ("dummy", None, "corge", "opened", "beer", "name", "exception"))
 
 # device, dev_by_name, name, name_by_dev, state, label, expected
 LUKS_CLOSE_DATA = (
@@ -103,33 +119,50 @@ LUKS_CLOSE_DATA = (
     ("dummy", "dummy", None, "name", "closed", None, True),
     (None, "dummy", None, "name", "closed", None, False))
 
-# device, key, new_key, state, label, expected
+# device, key, passphrase, new_key, new_passphrase, state, label, expected
 LUKS_ADD_KEY_DATA = (
-    ("dummy", "key", "new_key", "present", None, True),
-    (None, "key", "new_key", "present", "labelName", True),
-    (None, "key", "new_key", "present", None, False),
-    ("dummy", None, "new_key", "present", None, False),
-    ("dummy", "key", None, "present", None, False),
-    ("dummy", "key", "new_key", "absent", None, "exception"))
+    ("dummy", "key", None, "new_key", None, "present", None, True),
+    (None, "key", None, "new_key", None, "present", "labelName", True),
+    (None, "key", None, "new_key", None, "present", None, False),
+    ("dummy", None, None, "new_key", None, "present", None, False),
+    ("dummy", "key", None, None, None, "present", None, False),
+    ("dummy", "key", None, "new_key", None, "absent", None, "exception"),
+    ("dummy", None, "pass", "new_key", None, "present", None, True),
+    (None, None, "pass", "new_key", None, "present", "labelName", True),
+    ("dummy", "key", None, None, "new_pass", "present", None, True),
+    (None, "key", None, None, "new_pass", "present", "labelName", True),
+    (None, "key", None, None, "new_pass", "present", None, False),
+    ("dummy", None, None, None, "new_pass", "present", None, False),
+    ("dummy", "key", None, None, None, "present", None, False),
+    ("dummy", "key", None, None, "new_pass", "absent", None, "exception"),
+    ("dummy", None, "pass", None, "new_pass", "present", None, True),
+    (None, None, "pass", None, "new_pass", "present", "labelName", True))
 
-# device, remove_key, state, label, expected
+# device, remove_key, remove_passphrase, state, label, expected
 LUKS_REMOVE_KEY_DATA = (
-    ("dummy", "key", "present", None, True),
-    (None, "key", "present", None, False),
-    (None, "key", "present", "labelName", True),
-    ("dummy", None, "present", None, False),
-    ("dummy", "key", "absent", None, "exception"))
+    ("dummy", "key", None, "present", None, True),
+    (None, "key", None, "present", None, False),
+    (None, "key", None, "present", "labelName", True),
+    ("dummy", None, None, "present", None, False),
+    ("dummy", "key", None, "absent", None, "exception"),
+    ("dummy", None, "foo", "present", None, True),
+    (None, None, "foo", "present", None, False),
+    (None, None, "foo", "present", "labelName", True),
+    ("dummy", None, None, "present", None, False),
+    ("dummy", None, "foo", "absent", None, "exception"))
 
 
-@pytest.mark.parametrize("device, keyfile, state, is_luks, label, expected",
-                         ((d[0], d[1], d[2], d[3], d[4], d[5])
+@pytest.mark.parametrize("device, keyfile, passphrase, state, is_luks, " +
+                         "label, expected",
+                         ((d[0], d[1], d[2], d[3], d[4], d[5], d[6])
                           for d in LUKS_CREATE_DATA))
-def test_luks_create(device, keyfile, state, is_luks, label, expected,
-                     monkeypatch):
+def test_luks_create(device, keyfile, passphrase, state, is_luks, label,
+                     expected, monkeypatch):
     module = DummyModule()
 
     module.params["device"] = device
     module.params["keyfile"] = keyfile
+    module.params["passphrase"] = passphrase
     module.params["state"] = state
     module.params["label"] = label
 
@@ -165,15 +198,16 @@ def test_luks_remove(device, state, is_luks, expected, monkeypatch):
         assert expected == "exception"
 
 
-@pytest.mark.parametrize("device, keyfile, state, name, "
+@pytest.mark.parametrize("device, keyfile, passphrase, state, name, "
                          "name_by_dev, expected",
-                         ((d[0], d[1], d[2], d[3], d[4], d[5])
+                         ((d[0], d[1], d[2], d[3], d[4], d[5], d[6])
                           for d in LUKS_OPEN_DATA))
-def test_luks_open(device, keyfile, state, name, name_by_dev,
+def test_luks_open(device, keyfile, passphrase, state, name, name_by_dev,
                    expected, monkeypatch):
     module = DummyModule()
     module.params["device"] = device
     module.params["keyfile"] = keyfile
+    module.params["passphrase"] = passphrase
     module.params["state"] = state
     module.params["name"] = name
 
@@ -219,14 +253,18 @@ def test_luks_close(device, dev_by_name, name, name_by_dev, state,
         assert expected == "exception"
 
 
-@pytest.mark.parametrize("device, keyfile, new_keyfile, state, label, expected",
-                         ((d[0], d[1], d[2], d[3], d[4], d[5])
+@pytest.mark.parametrize("device, keyfile, passphrase, new_keyfile, " +
+                         "new_passphrase, state, label, expected",
+                         ((d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7])
                           for d in LUKS_ADD_KEY_DATA))
-def test_luks_add_key(device, keyfile, new_keyfile, state, label, expected, monkeypatch):
+def test_luks_add_key(device, keyfile, passphrase, new_keyfile, new_passphrase,
+                      state, label, expected, monkeypatch):
     module = DummyModule()
     module.params["device"] = device
     module.params["keyfile"] = keyfile
+    module.params["passphrase"] = passphrase
     module.params["new_keyfile"] = new_keyfile
+    module.params["new_passphrase"] = new_passphrase
     module.params["state"] = state
     module.params["label"] = label
 
@@ -240,14 +278,17 @@ def test_luks_add_key(device, keyfile, new_keyfile, state, label, expected, monk
         assert expected == "exception"
 
 
-@pytest.mark.parametrize("device, remove_keyfile, state, label, expected",
-                         ((d[0], d[1], d[2], d[3], d[4])
+@pytest.mark.parametrize("device, remove_keyfile, remove_passphrase, state, " +
+                         "label, expected",
+                         ((d[0], d[1], d[2], d[3], d[4], d[5])
                           for d in LUKS_REMOVE_KEY_DATA))
-def test_luks_remove_key(device, remove_keyfile, state, label, expected, monkeypatch):
+def test_luks_remove_key(device, remove_keyfile, remove_passphrase, state,
+                         label, expected, monkeypatch):
 
     module = DummyModule()
     module.params["device"] = device
     module.params["remove_keyfile"] = remove_keyfile
+    module.params["remove_passphrase"] = remove_passphrase
     module.params["state"] = state
     module.params["label"] = label
 

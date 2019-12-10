@@ -23,6 +23,10 @@ description:
     - Manages LLDP configuration on HUAWEI CloudEngine switches.
 author:
     - xuxiaowei0512 (@CloudEngine-Ansible)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     lldpenable:
         description:
@@ -218,7 +222,7 @@ import copy
 import re
 from xml.etree import ElementTree
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import set_nc_config, get_nc_config, execute_nc_action
+from ansible.module_utils.network.cloudengine.ce import set_nc_config, get_nc_config
 
 CE_NC_GET_GLOBAL_LLDPENABLE_CONFIG = """
 <filter type="subtree">

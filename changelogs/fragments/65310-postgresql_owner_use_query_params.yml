@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_owner - use query_params with cursor object (https://github.com/ansible/ansible/pull/65310).

@@ -64,12 +64,6 @@ class TestVariableUtils(unittest.TestCase):
         ),
     )
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_merge_hash(self):
         for test in self.test_merge_data:
             self.assertEqual(merge_hash(test['a'], test['b']), test['result'])

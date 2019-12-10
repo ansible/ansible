@@ -152,7 +152,7 @@ options:
   disk_size:
     description:
       - The size of the disk created for new instances (in MB, GB, TB,...).
-      - NOTE':' If The Template hats Mutiple Disks the Order of the Sizes is
+      - NOTE':' If The Template hats Multiple Disks the Order of the Sizes is
       - matched against the order specified in C(template_id)/C(template_name).
   cpu:
     description:
@@ -644,7 +644,7 @@ def get_template_by_id(module, client, template_id):
 
 
 def get_template_id(module, client, requested_id, requested_name):
-    template = get_template_by_id(module, client, requested_id) if requested_id else get_template_by_name(module, client, requested_name)
+    template = get_template_by_id(module, client, requested_id) if requested_id is not None else get_template_by_name(module, client, requested_name)
     if template:
         return template.ID
     else:
@@ -1300,15 +1300,16 @@ def get_connection_info(module):
     if not username:
         if not password:
             authfile = os.environ.get('ONE_AUTH')
-            if authfile is not None:
-                try:
-                    authstring = open(authfile, "r").read().rstrip()
-                    username = authstring.split(":")[0]
-                    password = authstring.split(":")[1]
-                except BaseException:
-                    module.fail_json(msg="Could not read ONE_AUTH file")
-            else:
-                module.fail_json(msg="No Credentials are set")
+            if authfile is None:
+                authfile = os.path.join(os.environ.get("HOME"), ".one", "one_auth")
+            try:
+                authstring = open(authfile, "r").read().rstrip()
+                username = authstring.split(":")[0]
+                password = authstring.split(":")[1]
+            except (OSError, IOError):
+                module.fail_json(msg=("Could not find or read ONE_AUTH file at '%s'" % authfile))
+            except Exception:
+                module.fail_json(msg=("Error occurs when read ONE_AUTH file at '%s'" % authfile))
     if not url:
         module.fail_json(msg="Opennebula API url (api_url) is not specified")
     from collections import namedtuple
@@ -1430,10 +1431,10 @@ def main():
 
     # Fetch template
     template_id = None
-    if requested_template_id or requested_template_name:
+    if requested_template_id is not None or requested_template_name:
         template_id = get_template_id(module, one_client, requested_template_id, requested_template_name)
         if template_id is None:
-            if requested_template_id:
+            if requested_template_id is not None:
                 module.fail_json(msg='There is no template with template_id: ' + str(requested_template_id))
             elif requested_template_name:
                 module.fail_json(msg="There is no template with name: " + requested_template_name)
@@ -1444,7 +1445,7 @@ def main():
         datastore_id = get_datastore_id(module, one_client, requested_datastore_id, requested_datastore_name)
         if datastore_id is None:
             if requested_datastore_id:
-                module.fail_json(msg='There is no datastore with template_id: ' + str(requested_datastore_id))
+                module.fail_json(msg='There is no datastore with datastore_id: ' + str(requested_datastore_id))
             elif requested_datastore_name:
                 module.fail_json(msg="There is no datastore with name: " + requested_datastore_name)
         else:

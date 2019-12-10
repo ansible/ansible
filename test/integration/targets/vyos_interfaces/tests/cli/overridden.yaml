@@ -1,6 +1,6 @@
 ---
 - debug:
-      msg: "START vyos_interfaces overridden integration tests on connection={{ ansible_connection }}"
+    msg: "START vyos_interfaces overridden integration tests on connection={{ ansible_connection }}"
 
 - include_tasks: _remove_config.yaml
 
@@ -22,7 +22,7 @@
     - name: Assert that before dicts were correctly generated
       assert:
         that:
-         - "{{ populate | symmetric_difference(result['before']) |length == 0 }}"
+          - "{{ populate | symmetric_difference(result['before']) |length == 0 }}"
 
     - name: Assert that correct commands were generated
       assert:
@@ -47,6 +47,6 @@
       assert:
         that:
           - "{{ overridden['after'] | symmetric_difference(result['before']) |length == 0 }}"
-  
+
   always:
     - include_tasks: _remove_config.yaml

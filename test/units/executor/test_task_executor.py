@@ -35,12 +35,6 @@ from units.mock.loader import DictDataLoader
 
 class TestTaskExecutor(unittest.TestCase):
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_task_executor_init(self):
         fake_loader = DictDataLoader({})
         mock_host = MagicMock()

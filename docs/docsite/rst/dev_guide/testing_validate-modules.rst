@@ -68,6 +68,7 @@ Codes
   doc-default-does-not-match-spec                              Documentation        Error                  Value for "default" from the argument_spec does not match the documentation
   doc-default-incompatible-type                                Documentation        Error                  Default value from the documentation is not compatible with type defined in the argument_spec
   doc-missing-type                                             Documentation        Error                  Documentation doesn't specify a type but argument in ``argument_spec`` use default type (``str``)
+  doc-required-mismatch                                        Documentation        Error                  argument in argument_spec is required but documentation says it is not, or vice versa
   doc-type-does-not-match-spec                                 Documentation        Error                  Argument_spec defines type different than documentation does
   documentation-error                                          Documentation        Error                  Unknown ``DOCUMENTATION`` error
   documentation-syntax-error                                   Documentation        Error                  Invalid ``DOCUMENTATION`` schema
@@ -119,6 +120,9 @@ Codes
   parameter-invalid-elements                                   Documentation        Error                  Value for "elements" is valid only when value of "type" is ``list``
   implied-parameter-type-mismatch                              Documentation        Error                  Argument_spec implies ``type="str"`` but documentation defines it as different data type
   parameter-type-not-in-doc                                    Documentation        Error                  Type value is defined in ``argument_spec`` but documentation doesn't specify a type
+  parameter-alias-repeated                                     Parameters           Error                  argument in argument_spec has at least one alias specified multiple times in aliases
+  parameter-alias-self                                         Parameters           Error                  argument in argument_spec is specified as its own alias
+  parameter-documented-multiple-times                          Documentation        Error                  argument in argument_spec with aliases is documented multiple times
   python-syntax-error                                          Syntax               Error                  Python ``SyntaxError`` while parsing module
   return-syntax-error                                          Documentation        Error                  ``RETURN`` is not valid YAML, ``RETURN`` fragments missing  or invalid
   subdirectory-missing-init                                    Naming               Error                  Ansible module subdirectories must contain an ``__init__.py``

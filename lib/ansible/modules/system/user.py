@@ -420,8 +420,9 @@ import subprocess
 import time
 
 from ansible.module_utils import distro
-from ansible.module_utils._text import to_native, to_bytes, to_text
-from ansible.module_utils.basic import load_platform_subclass, AnsibleModule
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.sys_info import get_platform_subclass
 
 try:
     import spwd
@@ -458,7 +459,8 @@ class User(object):
     DATE_FORMAT = '%Y-%m-%d'
 
     def __new__(cls, *args, **kwargs):
-        return load_platform_subclass(User, args, kwargs)
+        new_cls = get_platform_subclass(User)
+        return super(cls, new_cls).__new__(new_cls)
 
     def __init__(self, module):
         self.module = module
@@ -2303,7 +2305,7 @@ class DarwinUser(User):
         for field in self.fields:
             if field[0] in self.__dict__ and self.__dict__[field[0]]:
                 current = self._get_user_property(field[1])
-                if current is None or current != self.__dict__[field[0]]:
+                if current is None or current != to_text(self.__dict__[field[0]]):
                     cmd = self._get_dscl()
                     cmd += ['-create', '/Users/%s' % self.name, field[1], self.__dict__[field[0]]]
                     (rc, _err, _out) = self.execute_command(cmd)

@@ -12,6 +12,21 @@ Set-StrictMode -Version 2
 $ErrorActionPreference = "Stop"
 $ConfirmPreference = "None"
 
+Set-Variable -Visibility Public -Option ReadOnly,AllScope,Constant -Name "AddressFamilies" -Value @(
+    [System.Net.Sockets.AddressFamily]::InterNetworkV6,
+    [System.Net.Sockets.AddressFamily]::InterNetwork
+)
+$result = @{changed=$false}
+
+$params = Parse-Args -arguments $args -supports_check_mode $true
+Set-Variable -Visibility Public -Option ReadOnly,AllScope,Constant -Name "log_path" -Value (
+    Get-AnsibleParam $params "log_path"
+)
+$adapter_names = Get-AnsibleParam $params "adapter_names" -Default "*"
+$dns_servers = Get-AnsibleParam $params "dns_servers" -aliases "ipv4_addresses","ip_addresses","addresses" -FailIfEmpty $result
+$check_mode = Get-AnsibleParam $params "_ansible_check_mode" -Default $false
+
+
 Function Write-DebugLog {
     Param(
     [string]$msg
@@ -23,83 +38,104 @@ Function Write-DebugLog {
     $msg = "$date_str $msg"
 
     Write-Debug $msg
-
-    $log_path = $null
-    $log_path = Get-AnsibleParam -obj $params -name "log_path"
-
     if($log_path) {
         Add-Content $log_path $msg
     }
 }
 
-# minimal impl of Get-NetAdapter we need on 2008/2008R2
-Function Get-NetAdapterLegacy {
-    Param([string]$Name="*")
-
-    $wmiargs = @{Class="Win32_NetworkAdapter"}
-
-    If($Name.Contains("*")) {
-        $wmiargs.Filter = "NetConnectionID LIKE '$($Name.Replace("*","%"))'"
-    }
-    Else {
-        $wmiargs.Filter = "NetConnectionID = '$Name'"
-    }
-
-    $wmiprop = @(
-        @{Name="Name"; Expression={$_.NetConnectionID}},
-        @{Name="ifIndex"; Expression={$_.DeviceID}}
+Function Get-NetAdapterInfo {
+    [CmdletBinding()]
+    Param (
+        [Parameter(ValueFromPipeline=$true)]
+        [String]$Name = "*"
     )
 
-    $res = Get-CIMInstance @wmiargs | Select-Object -Property $wmiprop
+    Process {
+        if (Get-Command -Name Get-NetAdapter -ErrorAction SilentlyContinue) {
+            $adapter_info = Get-NetAdapter @PSBoundParameters | Select-Object -Property Name, InterfaceIndex
+        } else {
+            # Older hosts 2008/2008R2 don't have Get-NetAdapter, fallback to deprecated Win32_NetworkAdapter
+            $cim_params = @{
+                ClassName = "Win32_NetworkAdapter"
+                Property = "InterfaceIndex", "NetConnectionID"
+            }
 
-    If(@($res).Count -eq 0 -and -not $Name.Contains("*")) {
-        throw "Get-NetAdapterLegacy: No Win32_NetworkAdapter objects found with property 'NetConnectionID' equal to '$Name'"
+            if ($Name.Contains("*")) {
+                $cim_params.Filter = "NetConnectionID LIKE '$($Name.Replace("*", "%"))'"
+            } else {
+                $cim_params.Filter = "NetConnectionID = '$Name'"
+            }
+
+            $adapter_info = Get-CimInstance @cim_params | Select-Object -Property @(
+                @{Name="Name"; Expression={$_.NetConnectionID}},
+                @{Name="InterfaceIndex"; Expression={$_.InterfaceIndex}}
+            )
+        }
+
+        # Need to filter the adapter that are not IPEnabled, while we are at it, also get the DNS config.
+        $net_info = $adapter_info | ForEach-Object -Process {
+            $cim_params = @{
+                ClassName = "Win32_NetworkAdapterConfiguration"
+                Filter = "InterfaceIndex = $($_.InterfaceIndex)"
+                Property = "DNSServerSearchOrder", "IPEnabled"
+            }
+            $adapter_config = Get-CimInstance @cim_params
+            if ($adapter_config.IPEnabled -eq $false) {
+                return
+            }
+
+            if (Get-Command -Name Get-DnsClientServerAddress -ErrorAction SilentlyContinue) {
+                $dns_servers = Get-DnsClientServerAddress -InterfaceIndex $_.InterfaceIndex | Select-Object -Property @(
+                    "AddressFamily",
+                    "ServerAddresses"
+                )
+            } else {
+                $dns_servers = @(
+                    [PSCustomObject]@{
+                        AddressFamily = [System.Net.Sockets.AddressFamily]::InterNetwork
+                        ServerAddresses = $adapter_config.DNSServerSearchOrder
+                    },
+                    [PSCustomObject]@{
+                        AddressFamily = [System.Net.Sockets.AddressFamily]::InterNetworkV6
+                        ServerAddresses = @()  # WMI does not support IPv6 so we just keep it blank.
+                    }
+                )
+            }
+
+            [PSCustomObject]@{
+                Name = $_.Name
+                InterfaceIndex = $_.InterfaceIndex
+                DNSServers = $dns_servers
+            }
+        }
+
+        if (@($net_info).Count -eq 0 -and -not $Name.Contains("*")) {
+            throw "Get-NetAdapterInfo: Failed to find network adapter(s) that are IP enabled with the name '$Name'"
+        }
+
+        $net_info
     }
-
-    Write-Output $res
-}
-
-If(-not $(Get-Command Get-NetAdapter -ErrorAction SilentlyContinue)) {
-    New-Alias Get-NetAdapter Get-NetAdapterLegacy -Force
-}
-
-# minimal impl of Get-DnsClientServerAddress for 2008/2008R2
-Function Get-DnsClientServerAddressLegacy {
-    Param([string]$InterfaceAlias)
-
-    $idx = Get-NetAdapter -Name $InterfaceAlias | Select-Object -ExpandProperty ifIndex
-
-    $adapter_config = Get-CIMInstance Win32_NetworkAdapterConfiguration -Filter "Index=$idx"
-
-    return @(
-        # IPv4 values
-        [PSCustomObject]@{InterfaceAlias=$InterfaceAlias;InterfaceIndex=$idx;AddressFamily=2;ServerAddresses=$adapter_config.DNSServerSearchOrder};
-        # IPv6, only here for completeness since we don't support it yet
-        [PSCustomObject]@{InterfaceAlias=$InterfaceAlias;InterfaceIndex=$idx;AddressFamily=23;ServerAddresses=@()};
-    )
-}
-
-If(-not $(Get-Command Get-DnsClientServerAddress -ErrorAction SilentlyContinue)) {
-    New-Alias Get-DnsClientServerAddress Get-DnsClientServerAddressLegacy
 }
 
 # minimal impl of Set-DnsClientServerAddress for 2008/2008R2
 Function Set-DnsClientServerAddressLegacy {
     Param(
-        [string]$InterfaceAlias,
+        [int]$InterfaceIndex,
         [Array]$ServerAddresses=@(),
         [switch]$ResetServerAddresses
     )
-
-    $idx = Get-NetAdapter -Name $InterfaceAlias | Select-Object -ExpandProperty ifIndex
-
-    $adapter_config = Get-CIMInstance Win32_NetworkAdapterConfiguration -Filter "Index=$idx"
+    $cim_params = @{
+        ClassName = "Win32_NetworkAdapterConfiguration"
+        Filter = "InterfaceIndex = $InterfaceIndex"
+        KeyOnly = $true
+    }
+    $adapter_config = Get-CimInstance @cim_params
 
     If($ResetServerAddresses) {
         $arguments = @{}
     }
     Else {
-        $arguments = @{ DNSServerSearchOrder = $ServerAddresses }
+        $arguments = @{ DNSServerSearchOrder = [string[]]$ServerAddresses }
     }
     $res = Invoke-CimMethod -InputObject $adapter_config -MethodName SetDNSServerSearchOrder -Arguments $arguments
 
@@ -112,40 +148,43 @@ If(-not $(Get-Command Set-DnsClientServerAddress -ErrorAction SilentlyContinue))
     New-Alias Set-DnsClientServerAddress Set-DnsClientServerAddressLegacy
 }
 
-Function Get-DnsClientMatch {
+Function Test-DnsClientMatch {
     Param(
-        [string] $adapter_name,
-        [string[]] $ipv4_addresses
+        [PSCustomObject]$AdapterInfo,
+        [System.Net.IPAddress[]] $dns_servers
     )
+    Write-DebugLog ("Getting DNS config for adapter {0}" -f $AdapterInfo.Name)
 
-    Write-DebugLog ("Getting DNS config for adapter {0}" -f $adapter_name)
+    $current_dns = [System.Net.IPAddress[]]($AdapterInfo.DNSServers.ServerAddresses)
+    Write-DebugLog ("Current DNS settings: {0}" -f ([string[]]$dns_servers -join ", "))
 
-    $current_dns_all = Get-DnsClientServerAddress -InterfaceAlias $adapter_name
-
-    Write-DebugLog ("Current DNS settings: " + $($current_dns_all | Out-String))
-
-    $current_dns_v4 = ($current_dns_all | Where-Object AddressFamily -eq 2 <# IPv4 #>).ServerAddresses
-
-    If (($null -eq $current_dns_v4) -and ($null -eq $ipv4_addresses)) {
-        $v4_match = $True
+    if(($null -eq $current_dns) -and ($null -eq $dns_servers)) {
+        Write-DebugLog "Neither are dns servers configured nor specified within the playbook."
+        return $true
+    } elseif ($null -eq $current_dns) {
+        Write-DebugLog "There are currently no dns servers specified, but they should be present."
+        return $false
+    } elseif ($null -eq $dns_servers) {
+        Write-DebugLog "There are currently dns servers specified, but they should be absent."
+        return $false
     }
-
-    ElseIf (($null -eq $current_dns_v4) -or ($null -eq $ipv4_addresses)) {
-        $v4_match = $False
+    foreach($address in $current_dns) {
+        if($address -notin $dns_servers) {
+            Write-DebugLog "There are currently fewer dns servers present than specified within the playbook."
+            return $false
+        }
     }
-
-    Else {
-        $v4_match = @(Compare-Object $current_dns_v4 $ipv4_addresses -SyncWindow 0).Count -eq 0
+    foreach($address in $dns_servers) {
+        if($address -notin $current_dns) {
+            Write-DebugLog "There are currently further dns servers present than specified within the playbook."
+            return $false
+        }
     }
-
-    # TODO: implement IPv6
-
-    Write-DebugLog ("Current DNS settings match ({0}) : {1}" -f ($ipv4_addresses -join ", "), $v4_match)
-
-    return $v4_match
+    Write-DebugLog ("Current DNS settings match ({0})." -f ([string[]]$dns_servers -join ", "))
+    return $true
 }
 
-Function Validate-IPAddress {
+Function Assert-IPAddress {
     Param([string] $address)
 
     $addrout = $null
@@ -156,73 +195,49 @@ Function Validate-IPAddress {
 Function Set-DnsClientAddresses
 {
     Param(
-        [string] $adapter_name,
-        [string[]] $ipv4_addresses
+        [PSCustomObject]$AdapterInfo,
+        [System.Net.IPAddress[]] $dns_servers
     )
 
-    Write-DebugLog ("Setting DNS addresses for adapter {0} to ({1})" -f $adapter_name, ($ipv4_addresses -join ", "))
+    Write-DebugLog ("Setting DNS addresses for adapter {0} to ({1})" -f $AdapterInfo.Name, ([string[]]$dns_servers -join ", "))
 
-    If ($null -eq $ipv4_addresses) {
-        Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ResetServerAddress
-    }
-
-    Else {
-    # this silently ignores invalid IPs, so we validate parseability ourselves up front...
-        Set-DnsClientServerAddress -InterfaceAlias $adapter_name -ServerAddresses $ipv4_addresses
-    }
-
-    # TODO: implement IPv6
-}
-
-$result = @{changed=$false}
-
-$params = Parse-Args -arguments $args -supports_check_mode $true
-
-$adapter_names = Get-AnsibleParam $params "adapter_names" -Default "*"
-$ipv4_addresses = Get-AnsibleParam $params "ipv4_addresses" -FailIfEmpty $result
-
-If($ipv4_addresses -is [string]) {
-    If($ipv4_addresses.Length -gt 0) {
-        $ipv4_addresses = @($ipv4_addresses)
-    }
-    Else {
-        $ipv4_addresses = @()
+    If ($dns_servers) {
+        Set-DnsClientServerAddress -InterfaceIndex $AdapterInfo.InterfaceIndex -ServerAddresses $dns_servers
+    } Else {
+        Set-DnsClientServerAddress -InterfaceIndex $AdapterInfo.InterfaceIndex -ResetServerAddress
     }
 }
 
-$check_mode = Get-AnsibleParam $params "_ansible_check_mode" -Default $false
+if($dns_servers -is [string]) {
+    if($dns_servers.Length -gt 0) {
+        $dns_servers = @($dns_servers)
+    } else {
+        $dns_servers = @()
+    }
+}
+# Using object equals here, to check for exact match (without implicit type conversion)
+if([System.Object]::Equals($adapter_names, "*")) {
+    $adapters = Get-NetAdapterInfo
+} else {
+    $adapters = $adapter_names | Get-NetAdapterInfo
+}
 
 Try {
 
-    Write-DebugLog ("Validating adapter name {0}" -f $adapter_names)
-
-    $adapters = @($adapter_names)
-
-    If($adapter_names -eq "*") {
-        $adapters = Get-NetAdapter | Select-Object -ExpandProperty Name
-    }
-    # TODO: add support for an actual list of adapter names
-    # validate network adapter names
-    ElseIf(@(Get-NetAdapter | Where-Object Name -eq $adapter_names).Count -eq 0) {
-        throw "Invalid network adapter name: {0}" -f $adapter_names
-    }
-
-    Write-DebugLog ("Validating IP addresses ({0})" -f ($ipv4_addresses -join ", "))
-
-    $invalid_addresses = @($ipv4_addresses | Where-Object  { -not (Validate-IPAddress $_) })
-
-    If($invalid_addresses.Count -gt 0) {
+    Write-DebugLog ("Validating IP addresses ({0})" -f ($dns_servers -join ", "))
+    $invalid_addresses = @($dns_servers | Where-Object { -not (Assert-IPAddress $_) })
+    if($invalid_addresses.Count -gt 0) {
         throw "Invalid IP address(es): ({0})" -f ($invalid_addresses -join ", ")
     }
 
-    ForEach($adapter_name in $adapters) {
-        $result.changed = $result.changed -or (-not (Get-DnsClientMatch $adapter_name $ipv4_addresses))
+    foreach($adapter_info in $adapters) {
+        Write-DebugLog ("Validating adapter name {0}" -f $adapter_info.Name)
 
-        If($result.changed) {
-            If(-not $check_mode) {
-                Set-DnsClientAddresses $adapter_name $ipv4_addresses
-            }
-            Else {
+        if(-not (Test-DnsClientMatch $adapter_info $dns_servers)) {
+            $result.changed = $true
+            if(-not $check_mode) {
+                Set-DnsClientAddresses $adapter_info $dns_servers
+            } else {
                 Write-DebugLog "Check mode, skipping"
             }
         }

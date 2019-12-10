@@ -237,6 +237,30 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+
+  - name: Get system health report
+    redfish_info:
+      category: Systems
+      command: GetHealthReport
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Get chassis health report
+    redfish_info:
+      category: Chassis
+      command: GetHealthReport
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Get manager health report
+    redfish_info:
+      category: Manager
+      command: GetHealthReport
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -252,14 +276,16 @@ from ansible.module_utils.redfish_utils import RedfishUtils
 
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
-                "GetMemoryInventory", "GetNicInventory",
+                "GetMemoryInventory", "GetNicInventory", "GetHealthReport",
                 "GetStorageControllerInventory", "GetDiskInventory", "GetVolumeInventory",
                 "GetBiosAttributes", "GetBootOrder", "GetBootOverride"],
-    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisPower", "GetChassisThermals", "GetChassisInventory"],
+    "Chassis": ["GetFanInventory", "GetPsuInventory", "GetChassisPower",
+                "GetChassisThermals", "GetChassisInventory", "GetHealthReport"],
     "Accounts": ["ListUsers"],
     "Sessions": ["GetSessions"],
     "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities", "GetSoftwareInventory"],
-    "Manager": ["GetManagerNicInventory", "GetVirtualMedia", "GetLogs", "GetNetworkProtocols"],
+    "Manager": ["GetManagerNicInventory", "GetVirtualMedia", "GetLogs", "GetNetworkProtocols",
+                "GetHealthReport"],
 }
 
 CATEGORY_COMMANDS_DEFAULT = {
@@ -360,6 +386,8 @@ def main():
                     result["boot_order"] = rf_utils.get_multi_boot_order()
                 elif command == "GetBootOverride":
                     result["boot_override"] = rf_utils.get_multi_boot_override()
+                elif command == "GetHealthReport":
+                    result["health_report"] = rf_utils.get_multi_system_health_report()
 
         elif category == "Chassis":
             # execute only if we find Chassis resource
@@ -378,6 +406,8 @@ def main():
                     result["chassis_power"] = rf_utils.get_chassis_power()
                 elif command == "GetChassisInventory":
                     result["chassis"] = rf_utils.get_chassis_inventory()
+                elif command == "GetHealthReport":
+                    result["health_report"] = rf_utils.get_multi_chassis_health_report()
 
         elif category == "Accounts":
             # execute only if we find an Account service resource
@@ -428,6 +458,8 @@ def main():
                     result["log"] = rf_utils.get_logs()
                 elif command == "GetNetworkProtocols":
                     result["network_protocols"] = rf_utils.get_network_protocols()
+                elif command == "GetHealthReport":
+                    result["health_report"] = rf_utils.get_multi_manager_health_report()
 
     # Return data back
     if is_old_facts:

@@ -1603,10 +1603,6 @@ def get_integration_filter(args, targets):
     :type targets: tuple[IntegrationTarget]
     :rtype: list[str]
     """
-    if args.tox:
-        # tox has the same exclusions as the local environment
-        return get_integration_local_filter(args, targets)
-
     if args.docker:
         return get_integration_docker_filter(args, targets)
 

@@ -11,7 +11,7 @@
     resource_pool: Resources
     guest_id: windows9_64Guest
     hardware:
-      memory_mb: 1024
+      memory_mb: 128
       num_cpus: 1
       virt_based_security: True
       version: 14
@@ -20,7 +20,7 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: '{{ ds2 }}'
+      datastore: '{{ rw_datastore }}'
     cdrom:
       type: client
   register: vbs_vm
@@ -46,7 +46,7 @@
     resource_pool: Resources
     guest_id: windows9Server64Guest
     hardware:
-      memory_mb: 1024
+      memory_mb: 128
       num_cpus: 1
       version: 14
       boot_firmware: efi
@@ -54,7 +54,7 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: '{{ ds2 }}'
+      datastore: '{{ rw_datastore }}'
     cdrom:
       type: client
   register: vbs_vm
@@ -79,7 +79,7 @@
     disk:
     - size_mb: 256
       type: thin
-      datastore: '{{ ds2 }}'
+      datastore: '{{ rw_datastore }}'
     hardware:
       virt_based_security: True
     state: present

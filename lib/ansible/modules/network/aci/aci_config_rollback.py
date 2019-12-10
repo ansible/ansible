@@ -226,14 +226,14 @@ def main():
 
     aci = ACIModule(module)
 
-    description = module.params['description']
-    export_policy = module.params['export_policy']
-    fail_on_decrypt = aci.boolean(module.params['fail_on_decrypt'])
-    import_mode = module.params['import_mode']
-    import_policy = module.params['import_policy']
-    import_type = module.params['import_type']
-    snapshot = module.params['snapshot']
-    state = module.params['state']
+    description = module.params.get('description')
+    export_policy = module.params.get('export_policy')
+    fail_on_decrypt = aci.boolean(module.params.get('fail_on_decrypt'))
+    import_mode = module.params.get('import_mode')
+    import_policy = module.params.get('import_policy')
+    import_type = module.params.get('import_type')
+    snapshot = module.params.get('snapshot')
+    state = module.params.get('state')
 
     if state == 'rollback':
         if snapshot.startswith('run-'):
@@ -291,13 +291,14 @@ def get_preview(aci):
     This function is used to generate a preview between two snapshots and add the parsed results to the aci module return data.
     '''
     uri = aci.url + aci.filter_string
-    resp, info = fetch_url(aci.module, uri, headers=aci.headers, method='GET', timeout=aci.module.params['timeout'], use_proxy=aci.module.params['use_proxy'])
+    resp, info = fetch_url(aci.module, uri, headers=aci.headers, method='GET', timeout=aci.module.params.get('timeout'),
+                           use_proxy=aci.module.params.get('use_proxy'))
     aci.method = 'GET'
-    aci.response = info['msg']
-    aci.status = info['status']
+    aci.response = info.get('msg')
+    aci.status = info.get('status')
 
     # Handle APIC response
-    if info['status'] == 200:
+    if info.get('status') == 200:
         xml_to_json(aci, resp.read())
     else:
         aci.result['raw'] = resp.read()

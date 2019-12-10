@@ -13,19 +13,13 @@
 - name: setup1
   nxos_config:
     lines:
-      - "no channel-group 10"
-    parents: "{{ item }}"
+      - no interface port-channel 10
+      - no interface port-channel 19
   ignore_errors: yes
-  loop:
-    - "interface {{ test_int1 }}"
-    - "interface {{ test_int2 }}"
 
 - name: setup2
-  nxos_config: &cleanup2
-    lines:
-      - "no channel-group 19"
-    parents: "interface {{ test_int3 }}"
-  ignore_errors: yes
+  nxos_lag_interfaces: &remove_lags
+    state: deleted
 
 - block:
   - name: setup3
@@ -74,18 +68,8 @@
       that:
         - "result.changed == false"
   always:
-  - name: teardown1
-    nxos_config:
-      lines:
-        - "no channel-group 10"
-      parents: "{{ item }}"
-    ignore_errors: yes
-    loop:
-      - "interface {{ test_int1 }}"
-      - "interface {{ test_int2 }}"
-
-  - name: teardown2
-    nxos_config: *cleanup2
+  - name: Teardown
+    nxos_lag_interfaces: *remove_lags
     ignore_errors: yes
 
   - name: disable feature lacp

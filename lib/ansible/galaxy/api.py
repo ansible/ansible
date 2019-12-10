@@ -13,6 +13,7 @@ import time
 
 from ansible import context
 from ansible.errors import AnsibleError
+from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse
@@ -20,6 +21,12 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    # Python 2
+    from urlparse import urlparse
 
 display = Display()
 
@@ -104,7 +111,7 @@ class GalaxyError(AnsibleError):
 
         url_split = self.url.split('/')
         if 'v2' in url_split:
-            galaxy_msg = err_info.get('message', 'Unknown error returned by Galaxy server.')
+            galaxy_msg = err_info.get('message', http_error.reason)
             code = err_info.get('code', 'Unknown')
             full_error_msg = u"%s (HTTP Code: %d, Message: %s Code: %s)" % (message, self.http_code, galaxy_msg, code)
         elif 'v3' in url_split:
@@ -114,7 +121,7 @@ class GalaxyError(AnsibleError):
 
             message_lines = []
             for error in errors:
-                error_msg = error.get('detail') or error.get('title') or 'Unknown error returned by Galaxy server.'
+                error_msg = error.get('detail') or error.get('title') or http_error.reason
                 error_code = error.get('code') or 'Unknown'
                 message_line = u"(HTTP Code: %d, Message: %s Code: %s)" % (self.http_code, error_msg, error_code)
                 message_lines.append(message_line)
@@ -122,7 +129,7 @@ class GalaxyError(AnsibleError):
             full_error_msg = "%s %s" % (message, ', '.join(message_lines))
         else:
             # v1 and unknown API endpoints
-            galaxy_msg = err_info.get('default', 'Unknown error returned by Galaxy server.')
+            galaxy_msg = err_info.get('default', http_error.reason)
             full_error_msg = u"%s (HTTP Code: %d, Message: %s)" % (message, self.http_code, galaxy_msg)
 
         self.message = to_native(full_error_msg)
@@ -178,7 +185,7 @@ class GalaxyAPI:
         try:
             display.vvvv("Calling Galaxy at %s" % url)
             resp = open_url(to_native(url), data=args, validate_certs=self.validate_certs, headers=headers,
-                            method=method, timeout=20)
+                            method=method, timeout=20, http_agent=user_agent())
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
         except Exception as e:
@@ -212,7 +219,7 @@ class GalaxyAPI:
         """
         url = _urljoin(self.api_server, self.available_api_versions['v1'], "tokens") + '/'
         args = urlencode({"github_token": github_token})
-        resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST")
+        resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent())
         data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
         return data
 
@@ -289,14 +296,20 @@ class GalaxyAPI:
             data = self._call_galaxy(url)
             results = data['results']
             done = (data.get('next_link', None) is None)
+
+            # https://github.com/ansible/ansible/issues/64355
+            # api_server contains part of the API path but next_link includes the the /api part so strip it out.
+            url_info = urlparse(self.api_server)
+            base_url = "%s://%s/" % (url_info.scheme, url_info.netloc)
+
             while not done:
-                url = _urljoin(self.api_server, data['next_link'])
+                url = _urljoin(base_url, data['next_link'])
                 data = self._call_galaxy(url)
                 results += data['results']
                 done = (data.get('next_link', None) is None)
         except Exception as e:
-            display.vvvv("Unable to retrive role (id=%s) data (%s), but this is not fatal so we continue: %s"
-                         % (role_id, related, to_text(e)))
+            display.warning("Unable to retrieve role (id=%s) data (%s), but this is not fatal so we continue: %s"
+                            % (role_id, related, to_text(e)))
         return results
 
     @g_connect(['v1'])

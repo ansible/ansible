@@ -40,7 +40,7 @@ def main():
             'maintainers': Any(list_string_types, *string_types),
             'migrated_to': All(
                 Any(*string_types),
-                Match(r'^https://galaxy.ansible.com/'),
+                Match(r'^\w+\.\w+$'),
             ),
             'notified': Any(list_string_types, *string_types),
             'supershipit': Any(list_string_types, *string_types),
@@ -80,10 +80,11 @@ def main():
         path_macros.append(macro)
 
     # Ensure all `files` correspond to a file
-    for file in botmeta['files']:
+    for file, file_meta in botmeta['files'].items():
+        migrated = isinstance(file_meta, dict) and file_meta.get('migrated_to') is not None
         for macro in path_macros:
             file = file.replace('$' + macro, botmeta.get('macros', {}).get(macro, ''))
-        if not os.path.exists(file):
+        if not os.path.exists(file) and not migrated:
             # Not a file or directory, though maybe the prefix to one?
             # https://github.com/ansible/ansibullbot/pull/1023
             if not glob.glob('%s*' % file):

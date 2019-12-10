@@ -42,16 +42,27 @@
   systemd:
     name: dbus
     state: started
-  when: ansible_service_mgr == 'systemd' and ansible_distribution == 'Fedora'
+  when:
+    - ansible_service_mgr == 'systemd'
+    - ansible_distribution == 'Fedora'
+    - ansible_facts.distribution_major_version is version('31', '<')
 
-- name: set timezone to Etc/UTC
-  timezone:
-    name: Etc/UTC
-  register: original_timezone
 
-- block:
-    - include: test.yml
-  always:
-    - name: Restore original system timezone - {{ original_timezone.diff.before.name }}
+- name: Run tests
+  # Skip tests on Fedora 31 because dbus fails to start unless the container is run in priveleged mode.
+  # Even then, it starts unreliably. This may be due to the move to cgroup v2 in Fedora 31.
+  # https://www.redhat.com/sysadmin/fedora-31-control-group-v2
+  when: ansible_facts.distribution ~ ansible_facts.distribution_major_version != 'Fedora31'
+  block:
+    - name: set timezone to Etc/UTC
       timezone:
-        name: "{{ original_timezone.diff.before.name }}"
+        name: Etc/UTC
+      register: original_timezone
+
+    - block:
+        - include_tasks: test.yml
+      always:
+        - name: Restore original system timezone - {{ original_timezone.diff.before.name }}
+          timezone:
+            name: "{{ original_timezone.diff.before.name }}"
+          when: original_timezone is changed

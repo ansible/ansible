@@ -1,31 +1,28 @@
-[mysqld1]
+[mysqld.{{ primary_db.name }}]
 server_id           = 1
-port                = {{ master_port }}
-datadir             = {{ master_datadir }}
-socket              = {{ master_datadir }}/mysql.sock
-pid-file            = {{ master_datadir }}/mysql.pid
-mysqladmin          = /usr/bin/mysqladmin
-log_bin             = /var/log/mariadb/mysql-bin.log
+port                = {{ primary_db.port }}
+datadir             = {{ primary_db.datadir }}
+socket              = {{ primary_db.datadir }}/mysql.sock
+pid-file            = {{ primary_db.datadir }}/mysql.pid
+log_bin             = {{ primary_db.logdir }}/mysql-bin.log
 sync_binlog         = 1
 binlog-format       = ROW
 innodb_flush_log_at_trx_commit  = 1
 
-[mysqld2]
+[mysqld.{{ replica_db.name }}]
 server_id           = 2
-port                = {{ standby_port }}
-socket              = /var/run/mysqld/mysqld_slave.sock
-pid-file            = /var/run/mysqld/mysqld_slave.pid
-datadir             = {{ standby_datadir }}
-log_bin             = {{ standby_logdir }}/mysql-bin.log
-relay-log           = {{ standby_logdir }}/relay-bin
-relay-log-index     = {{ standby_logdir }}/relay-bin.index
-master-info-file    = {{ standby_logdir }}/master.info
-relay-log-info-file = {{ standby_logdir }}/relay-log.info
-mysqladmin          = /usr/bin/mysqladmin
+port                = {{ replica_db.port }}
+datadir             = {{ replica_db.datadir }}
+socket              = {{ replica_db.datadir }}/mysqld_replica.sock
+pid-file            = {{ replica_db.datadir }}/mysqld_replica.pid
+log_bin             = {{ replica_db.logdir }}/mysql-bin.log
+relay-log           = {{ replica_db.logdir }}/relay-bin
+relay-log-index     = {{ replica_db.logdir }}/relay-bin.index
+master-info-file    = {{ replica_db.logdir }}/master.info
+relay-log-info-file = {{ replica_db.logdir }}/relay-log.info
 
 [mysqld_multi]
 mysqld     = /usr/bin/mysqld_safe
-mysqladmin = /usr/bin/mysqladmin
 user       = multi_admin
 password   = multipass
 

@@ -54,7 +54,7 @@ options:
         For example, changing one module to C(dedicated) requires setting all
         others to C(none). Setting the level of a module to C(none) means that
         the module is not activated.
-      - Use C(state) absent to set c(level) to none and de-provision module.
+      - Use C(state) absent to set C(level) to none and de-provision module.
       - This parameter is not relevant to C(cgnat - pre tmos 15.0) or C(mgmt) and will not be
         applied to the C(cgnat - pre tmos 15.0) or C(mgmt) module.
     type: str

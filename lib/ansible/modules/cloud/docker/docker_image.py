@@ -426,6 +426,7 @@ image:
     sample: {}
 '''
 
+import errno
 import os
 import re
 import traceback
@@ -787,20 +788,15 @@ class ImageManager(DockerBaseClass):
         '''
         try:
             self.log("Opening image %s" % self.load_path)
-            image_tar = open(self.load_path, 'rb')
-        except Exception as exc:
-            self.fail("Error opening image %s - %s" % (self.load_path, str(exc)))
-
-        try:
-            self.log("Loading image from %s" % self.load_path)
-            self.client.load_image(image_tar)
+            with open(self.load_path, 'rb') as image_tar:
+                self.log("Loading image from %s" % self.load_path)
+                self.client.load_image(image_tar)
+        except EnvironmentError as exc:
+            if exc.errno == errno.ENOENT:
+                self.fail("Error opening image %s - %s" % (self.load_path, str(exc)))
+            self.fail("Error loading image %s - %s" % (self.name, str(exc)))
         except Exception as exc:
             self.fail("Error loading image %s - %s" % (self.name, str(exc)))
-
-        try:
-            image_tar.close()
-        except Exception as exc:
-            self.fail("Error closing image %s - %s" % (self.name, str(exc)))
 
         return self.client.find_image(self.name, self.tag)
 
@@ -808,7 +804,7 @@ class ImageManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         source=dict(type='str', choices=['build', 'load', 'pull', 'local']),
-        build=dict(type='dict', suboptions=dict(
+        build=dict(type='dict', options=dict(
             cache_from=dict(type='list', elements='str'),
             container_limits=dict(type='dict', options=dict(
                 memory=dict(type='int'),

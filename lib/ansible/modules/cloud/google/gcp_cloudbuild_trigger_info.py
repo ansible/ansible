@@ -109,6 +109,11 @@ resources:
       - The unique identifier for the trigger.
       returned: success
       type: str
+    name:
+      description:
+      - Name of the trigger. Must be unique within the project.
+      returned: success
+      type: str
     description:
       description:
       - Human-readable description of the trigger.
