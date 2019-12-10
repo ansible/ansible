@@ -69,6 +69,7 @@ options:
           afi:
             description:
               - Top level address family indicator.
+            required: true
             type: str
             choices:
               - ipv4
@@ -503,7 +504,7 @@ def main():
     required_if = [('state', 'merged', ('config',)),
                    ('state', 'replaced', ('config',)),
                    ('state', 'overridden', ('config',)),
-                   ('state', 'parsed', ('config',))]
+                   ('state', 'parsed', ('running_config',))]
     mutually_exclusive = [('config', 'running_config')]
 
     module = AnsibleModule(argument_spec=Static_RoutesArgs.argument_spec,

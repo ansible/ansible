@@ -46,7 +46,7 @@ class Static_RoutesArgs(object):
                     'elements': 'dict',
                     'type': 'list',
                     'options': {
-                        'afi': {'choices': ['ipv4', 'ipv6'], 'type': 'str'},
+                        'afi': {'required': True, 'choices': ['ipv4', 'ipv6'], 'type': 'str'},
                         'routes': {
                             'elements': 'dict',
                             'type': 'list',

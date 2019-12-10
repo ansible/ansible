@@ -50,8 +50,6 @@ class Static_RoutesFacts(object):
         :rtype: dictionary
         :returns: facts
         """
-        if connection:
-            pass
 
         objs = []
         if not data:

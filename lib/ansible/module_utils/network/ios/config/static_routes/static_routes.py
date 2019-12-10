@@ -19,7 +19,7 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.ios.facts.facts import Facts
-from ansible.module_utils.network.ios.utils.utils import new_dict_to_set, validate_n_expand_ipv4
+from ansible.module_utils.network.ios.utils.utils import new_dict_to_set, validate_n_expand_ipv4, filter_dict_having_none_value
 
 
 class Static_Routes(ConfigBase):
@@ -82,7 +82,10 @@ class Static_Routes(ConfigBase):
         elif self.state == 'rendered':
             result['rendered'] = commands
         elif self.state == 'parsed':
-            result['parsed'] = self.get_static_routes_facts(data=self._module.params['running_config'])
+            running_config = self._module.params['running_config']
+            if not running_config:
+                self._module.fail_json(msg="Value of running_config parameter must not be empty for state parsed")
+            result['parsed'] = self.get_static_routes_facts(data=running_config)
         else:
             changed_static_routes_facts = []
 
@@ -161,6 +164,22 @@ class Static_Routes(ConfigBase):
                                         new_dict_to_set(each, [], want_set, 0)
                                         new_hops.append(want_set)
                                     new_dict_to_set(addr_have, [], have_set, 0)
+                                    # Check if the have dict next_hops value is diff from want dict next_hops
+                                    have_dict = filter_dict_having_none_value(route_want.get('next_hops')[0],
+                                                                              route_have.get('next_hops')[0])
+                                    # update the have_dict with forward_router_address
+                                    have_dict.update({'forward_router_address': route_have.get('next_hops')[0].
+                                                     get('forward_router_address')})
+                                    have_dict = {k: v for k, v in have_dict.items() if v is not None}
+                                    # if the have_dict has only name and forward_router_address then skip deleting
+                                    # else if it has other diff first delete the respective config and then set the
+                                    # new config with user provided want next_hops
+                                    if len(have_dict) > 2:
+                                        clear_route_have = copy.deepcopy(route_have)
+                                        clear_route_have['next_hops'] = [have_dict]
+                                        commands.extend(self._clear_config(w, h, addr_want, addr_have,
+                                                                           route_want, clear_route_have))
+                                    # Set the new config from the user provided want config
                                     commands.extend(self._set_config(w, h, addr_want,
                                                                      route_want, route_have, new_hops, have_set))
                             if check:
@@ -175,6 +194,8 @@ class Static_Routes(ConfigBase):
                             new_dict_to_set(each, [], want_set, 0)
                             new_hops.append(want_set)
                         commands.extend(self._set_config(w, {}, addr_want, route_want, {}, new_hops, set()))
+        commands = [each for each in commands if 'no' in each] + \
+                   [each for each in commands if 'no' not in each]
 
         return commands
 
@@ -221,7 +242,6 @@ class Static_Routes(ConfigBase):
                         if check:
                             break
                     if not check:
-                        have_set = set()
                         commands.extend(self._clear_config({}, h, {}, addr_have, {}, route_have))
         # For configuring any non-existing want config
         for w in temp_want:
