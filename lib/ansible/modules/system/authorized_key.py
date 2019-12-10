@@ -541,13 +541,13 @@ def enforce_state(module, params):
     error_msg = "Error getting key from: %s"
 
     # if the key is a url, request it and use it as key source
-    if key.startswith("http"):
+    if re.search("^([A-Za-z0-9+.-]+:)?/", key):
         try:
             resp, info = fetch_url(module, key)
-            if info['status'] != 200:
-                module.fail_json(msg=error_msg % key)
-            else:
+            if resp:
                 key = resp.read()
+            else:
+                module.fail_json(msg=error_msg % key)
         except Exception:
             module.fail_json(msg=error_msg % key)
 
