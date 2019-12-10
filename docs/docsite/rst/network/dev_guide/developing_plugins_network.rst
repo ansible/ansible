@@ -116,3 +116,52 @@ The ``handle_httperror(self, exception)`` method can deal with status codes retu
 * A value of ``false`` means that the plugin is unable to recover from this response. The status code will be returned to the calling module as an exception. Any other value will be taken as a nonfatal response from the request. This may be useful if the server returns error messages in the body of the response. Returning the original exception is usually sufficient in this case, as HTTPError objects have the same interface as a successful response.
 
 For example httpapi plugins, see the `source code for the httpapi plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/httpapi>`_ included with Ansible Core.
+
+.. contents::
+   :local:
+
+.. _developing_plugins_netconf:
+
+Developing NETCONF plugins
+==========================
+
+* This connection plugin provides a connection to remote devices over the ``SSH NETCONF`` subsystem. This connection plugin is typically used by network devices for sending and receiving ``RPC`` calls over ``NETCONF``.
+* Note this connection plugin requires ncclient to be installed on the local Ansible controller.
+* Netconf connection uses ncclient python library under the hood to initiate a netconf session with netconf enabled remote network device and execute netconf RPC requests and receive responses. 
+* If the network device supports standard netconf (RFC 6241) operations like ``get``, ``get-config``, ``edit-config``, set the value of ``ansible_network_os=default``
+* :ref:`netconf_get <netconf_get_module>`, :ref:`netconf_config <netconf_gconfig_module>` and :ref:`netconf_rpc <netconf_rpc_module>` modules can be used to talk to netconf enable remote host.
+* As a contributor and user, you should be able to use all the methods under ``NetconfBase`` class if your device supports standard netconf. You can contribute a new plugin if the device you are working with has vendor specific netconf RPC’s.
+* To support vendor specific netconf RPC’s add the implementation in network os specific netconf plugin. For example in case of junos the proprietary RPC methods are implemented in ``plugins/netconf/junos.py`` and value of ``ansible_network_os`` is set the name of the netconf plugin file, that is ``junos`` in this case.
+
+.. contents::
+   :local:
+
+.. _developing_plugins_network_cli:
+
+Developing network_cli plugins
+==============================
+* network_cli (``plugins/connection/network_cli.py``) connection type uses paramiko_ssh under the hood which creates a pseudo terminal to send commands and receive responses
+* network_cli loads two platform specific plugins based on the value of ``ansible_network_os``
+
+    + Terminal plugin (eg. ``plugins/terminal/ios.py``)
+    + Cliconf plugin (eg. ``plugins/cliconf/ios.py``)
+* The terminal plugin controls the parameters related to terminal like setting terminal length and width, page disabling and privilege escalation. Also it define regex to identify command prompt and error prompts.
+* The cliconf plugin provides an abstraction layer for low level send, receive operations. For eg. ``edit_config()`` method ensures the prompt is in config mode before executing configuration commands.
+* As a contributor, to support a new network operating system to work with the network_cli connection, implement the cliconf and terminal plugins.
+* After adding the cliconf and terminal plugins in the expected locations the :ref:`cli_command <cli_command_module>` and :ref:`cli_config <cli_config_module>` modules can be used to run an arbitrary command on the device and configuration changes respectively on the remote hosts without platform-specific modules.
+* The plugins can reside in
+
+    + Adjacent to playbook in folders
+
+        * cliconf_plugins/
+        * terminal_plugins/
+
+    + Roles
+
+        * myrole/cliconf_plugins/
+        * myrole/terminal_plugins/
+
+    + Collections
+
+        * myorg/mycollection/plugins/terminal/
+        * myorg/mycollection/plugins/cliconf/
