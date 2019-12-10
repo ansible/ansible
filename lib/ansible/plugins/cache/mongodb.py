@@ -35,7 +35,7 @@ DOCUMENTATION = '''
             section: defaults
       _timeout:
         default: 86400
-        description: Expiration timeout in seconds for the cache plugin data
+        description: Expiration timeout in seconds for the cache plugin data. Set to 0 to never expire
         env:
           - name: ANSIBLE_CACHE_PLUGIN_TIMEOUT
         ini:
