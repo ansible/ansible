@@ -54,6 +54,10 @@ class LinuxVirtual(Virtual):
                     virtual_facts['virtualization_type'] = 'lxc'
                     virtual_facts['virtualization_role'] = 'guest'
                     return virtual_facts
+                if re.search('container=podman', line):
+                    virtual_facts['virtualization_type'] = 'podman'
+                    virtual_facts['virtualization_role'] = 'guest'
+                    return virtual_facts
 
         if os.path.exists('/proc/vz') and not os.path.exists('/proc/lve'):
             virtual_facts['virtualization_type'] = 'openvz'
