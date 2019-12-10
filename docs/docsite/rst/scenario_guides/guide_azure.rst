@@ -84,6 +84,7 @@ To pass Active Directory username/password via the environment, define the follo
 
 * AZURE_AD_USER
 * AZURE_PASSWORD
+* AZURE_SUBSCRIPTION_ID
 
 To pass Active Directory username/password in ADFS via the environment, define the following variables:
 
@@ -129,6 +130,7 @@ Or, pass the following parameters for Active Directory username/password:
 
 * ad_user
 * password
+* subscription_id
 
 Or, pass the following parameters for ADFS username/pasword:
 
