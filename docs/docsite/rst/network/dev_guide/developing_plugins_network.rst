@@ -129,9 +129,9 @@ Developing NETCONF plugins
 * Note this connection plugin requires ncclient to be installed on the local Ansible controller.
 * Netconf connection uses ncclient python library under the hood to initiate a netconf session with netconf enabled remote network device and execute netconf RPC requests and receive responses. 
 * If the network device supports standard netconf (RFC 6241) operations like ``get``, ``get-config``, ``edit-config``, set the value of ``ansible_network_os=default``
-* :ref:`netconf_get <netconf_get_module>`, :ref:`netconf_config <netconf_gconfig_module>` and :ref:`netconf_rpc <netconf_rpc_module>` modules can be used to talk to netconf enable remote host.
-* As a contributor and user, you should be able to use all the methods under ``NetconfBase`` class if your device supports standard netconf. You can contribute a new plugin if the device you are working with has vendor specific netconf RPC’s.
-* To support vendor specific netconf RPC’s add the implementation in network os specific netconf plugin. For example in case of junos the proprietary RPC methods are implemented in ``plugins/netconf/junos.py`` and value of ``ansible_network_os`` is set the name of the netconf plugin file, that is ``junos`` in this case.
+* :ref:`netconf_get <netconf_get_module>`, :ref:`netconf_config <netconf_config_module>` and :ref:`netconf_rpc <netconf_rpc_module>` modules can be used to talk to netconf enable remote host.
+* As a contributor and user, you should be able to use all the methods under ``NetconfBase`` class if your device supports standard netconf. You can contribute a new plugin if the device you are working with has vendor specific netconf RPC.
+* To support vendor specific netconf RPC add the implementation in network os specific netconf plugin. For example in case of junos the proprietary RPC methods are implemented in ``plugins/netconf/junos.py`` and value of ``ansible_network_os`` is set the name of the netconf plugin file, that is ``junos`` in this case.
 
 .. contents::
    :local:
