@@ -43,6 +43,10 @@ options:
   name:
     description:
       - Zone name.
+      - A zone name must be unique name.
+      - A zone name must begin with an alpha-numeric character.
+      - The name can contain alpha-numeric characters, underbars I(_), hyphens I(-), and periods I(.).
+      - The name cannot be longer than 64 characters.
     type: str
     required: true
   path:
@@ -147,6 +151,7 @@ EXAMPLES = '''
 
 import os
 import platform
+import re
 import tempfile
 import time
 
@@ -182,6 +187,11 @@ class Zone(object):
         (self.os_major, self.os_minor) = platform.release().split('.')
         if int(self.os_minor) < 10:
             self.module.fail_json(msg='This module requires Solaris 10 or later')
+
+        match = re.match('^[a-zA-Z0-9][-_.a-zA-Z0-9]{0,62}$', self.name)
+        if not match:
+            self.module.fail_json(msg="Provided zone name is not a valid zone name. "
+                                      "Please refer documentation for correct zone name specifications.")
 
     def configure(self):
         if not self.path:
