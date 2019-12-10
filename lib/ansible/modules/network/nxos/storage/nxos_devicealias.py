@@ -71,31 +71,26 @@ options:
 
 EXAMPLES = '''
 ---
--
-  name: "Test that device alias module works"
+- name: 'Test that device alias module works'
   nxos_devicealias:
     da:
-      -
-        name: test1_add
-        pwwn: "56:2:22:11:22:88:11:67"
-      -
-        name: test2_add
-        pwwn: "65:22:22:11:22:22:11:d"
-      -
-        name: dev1
+      - name: test1_add
+        pwwn: '56:2:22:11:22:88:11:67'
+      - name: test2_add
+        pwwn: '65:22:22:11:22:22:11:d'
+      - name: dev1
         remove: true
-      -
-        name: dev2
+      - name: dev2
         remove: true
     distribute: true
     mode: enhanced
     rename:
-      -
-        new_name: bcd
+      - new_name: bcd
         old_name: abc
-      -
-        new_name: bcd1
+      - new_name: bcd1
         old_name: abc1
+
+
 '''
 
 RETURN = '''

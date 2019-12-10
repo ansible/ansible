@@ -125,82 +125,58 @@ options:
 EXAMPLES = '''
 ---
 -
-  name: "Test that zone/zoneset module works"
+  name: 'Test that zone/zoneset module works'
   nxos_zone_zoneset:
     zone_zoneset_details:
-      -
-        mode: enhanced
+      - mode: enhanced
         vsan: 22
         zone:
-          -
-            members:
-              -
-                pwwn: "11:11:11:11:11:11:11:11"
-              -
-                device_alias: test123
-              -
-                pwwn: "61:61:62:62:12:12:12:12"
+          - members:
+              - pwwn: '11:11:11:11:11:11:11:11'
+              - device_alias: test123
+              - pwwn: '61:61:62:62:12:12:12:12'
                 remove: true
             name: zoneA
-          -
-            members:
-              -
-                pwwn: "10:11:11:11:11:11:11:11"
-              -
-                pwwn: "62:62:62:62:21:21:21:21"
+          - members:
+              - pwwn: '10:11:11:11:11:11:11:11'
+              - pwwn: '62:62:62:62:21:21:21:21'
             name: zoneB
-          -
-            name: zoneC
+          - name: zoneC
             remove: true
         zoneset:
-          -
-            action: activate
+          - action: activate
             members:
-              -
-                name: zoneA
-              -
-                name: zoneB
-              -
-                name: zoneC
+              - name: zoneA
+              - name: zoneB
+              - name: zoneC
                 remove: true
             name: zsetname1
-          -
-            action: deactivate
+          - action: deactivate
             name: zsetTestExtra
             remove: true
-      -
-        mode: basic
+      - mode: basic
         smart_zoning: true
         vsan: 21
         zone:
-          -
-            members:
-              -
-                devtype: both
-                pwwn: "11:11:11:11:11:11:11:11"
-              -
-                pwwn: "62:62:62:62:12:12:12:12"
-              -
-                devtype: both
-                pwwn: "92:62:62:62:12:12:1a:1a"
+          - members:
+              - devtype: both
+                pwwn: '11:11:11:11:11:11:11:11'
+              - pwwn: '62:62:62:62:12:12:12:12'
+              - devtype: both
+                pwwn: '92:62:62:62:12:12:1a:1a'
                 remove: true
             name: zone21A
-          -
-            members:
-              -
-                pwwn: "10:11:11:11:11:11:11:11"
-              -
-                pwwn: "62:62:62:62:21:21:21:21"
+          - members:
+              - pwwn: '10:11:11:11:11:11:11:11'
+              - pwwn: '62:62:62:62:21:21:21:21'
             name: zone21B
         zoneset:
-          -
-            action: activate
+          - action: activate
             members:
-              -
-                name: zone21A
-              -
-                name: zone21B
-            name: zsetname21
+              - name: zone21A
+              - name: zone21B
+            name: zsetname212
+
 '''
 
 RETURN = '''
