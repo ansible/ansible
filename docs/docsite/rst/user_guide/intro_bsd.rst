@@ -33,11 +33,11 @@ On your control machine you can execute the following for most versions of FreeB
 
     ansible -m raw -a "pkg install -y python27" mybsdhost1
 
-Or for most versions of OpenBSD:
+Or for OpenBSD:
 
 .. code-block:: bash
 
-    ansible -m raw -a "pkg_add -z python-2.7"
+    ansible -m raw -a "pkg_add python%3.7"
 
 Once this is done you can now use other Ansible modules apart from the ``raw`` module.
 
@@ -56,7 +56,7 @@ To support a variety of Unix/Linux operating systems and distributions, Ansible 
     [freebsd:vars]
     ansible_python_interpreter=/usr/local/bin/python2.7
     [openbsd:vars]
-    ansible_python_interpreter=/usr/local/bin/python2.7
+    ansible_python_interpreter=/usr/local/bin/python3.7
 
 If you use additional plugins beyond those bundled with Ansible, you can set similar variables for ``bash``, ``perl`` or ``ruby``, depending on how the plugin is written. For example:
 
