@@ -101,6 +101,10 @@ groupings:
   - aws
   aws_ssm_parameter_store:
   - aws
+  aws_step_functions_state_machine:
+  - aws
+  aws_step_functions_state_machine_execution:
+  - aws
   aws_waf_condition:
   - aws
   aws_waf_facts:

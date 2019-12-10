@@ -235,9 +235,13 @@
             "Action": [
               "states:CreateStateMachine",
               "states:DeleteStateMachine",
+              "states:DescribeExecution",
               "states:DescribeStateMachine",
+              "states:ListExecutions",
               "states:ListStateMachines",
               "states:ListTagsForResource",
+              "states:StartExecution",
+              "states:StopExecution",
               "states:TagResource",
               "states:UntagResource",
               "states:UpdateStateMachine"
