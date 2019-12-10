@@ -4,6 +4,11 @@
         "HelloWorld": {
             "Type": "Pass",
             "Result": "Some other result",
+            "Next": "Wait"
+        },
+        "Wait": {
+            "Type": "Wait",
+            "Seconds": 30,
             "End": true
         }
     }
