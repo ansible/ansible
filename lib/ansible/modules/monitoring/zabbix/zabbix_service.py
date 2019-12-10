@@ -16,15 +16,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_service
-short_description: Create/update/delete/dump Zabbix service
+short_description: Create/update/delete Zabbix service
 description:
-    - Create/update/delete/dump Zabbix service.
+    - Create/update/delete Zabbix service.
 version_added: "2.10"
 author:
     - "Emmanuel Riviere (@emriver)"
 requirements:
     - "python >= 2.7"
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
 options:
     name:
         description:
@@ -70,7 +70,7 @@ options:
         description:
             - 'State: present - create/update service; absent - delete service'
         required: false
-        choices: [present, absent, dump]
+        choices: [present, absent]
         default: "present"
         type: str
 
@@ -80,16 +80,6 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 ---
-# Dumps Zabbix service information
-- name: Dump Zabbix service info
-  local_action:
-    module: zabbix_service
-    server_url: http://192.168.1.1
-    login_user: username
-    login_password: password
-    name: apache2 availability
-    state: dump
-
 # Creates a new Zabbix service
 - name: Manage services
   local_action:
@@ -108,26 +98,9 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
-template_json:
-  description: The JSON dump of the template
-  returned: when state is dump
-  type: str
-  sample: {
-      "service_json": [
-        {
-            "algorithm": "1",
-            "goodsla": "99.9990",
-            "name": "apache2 availability",
-            "serviceid": "9",
-            "showsla": "0",
-            "sortorder": "1",
-            "status": "4",
-            "triggerid": "16313"
-        }
-    ]
-  }
 '''
 
+import atexit
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
@@ -254,7 +227,7 @@ def main():
             algorithm=dict(default='one_child', required=False, choices=['no', 'one_child', 'all_children']),
             trigger_name=dict(type='str', required=False),
             trigger_host=dict(type='str', required=False),
-            state=dict(default="present", choices=['present', 'absent', 'dump']),
+            state=dict(default="present", choices=['present', 'absent']),
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True
@@ -285,6 +258,7 @@ def main():
     try:
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password, validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except ZabbixAPIException as error:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % error)
 
@@ -300,11 +274,6 @@ def main():
             module.exit_json(changed=False, msg="Service not found, no change: %s" % name)
         service.delete_service(service_ids)
         module.exit_json(changed=True, result="Successfully deleted service(s) %s" % name)
-
-    elif state == "dump":
-        if not service_ids:
-            module.fail_json(msg='Service not found: %s' % name)
-        module.exit_json(changed=False, service_json=service_json)
 
     elif state == "present":
         if (trigger_name and not trigger_host) or (trigger_host and not trigger_name):
