@@ -38,18 +38,20 @@ DOCUMENTATION = '''
 
 EXAMPLES = '''
     # inventory.config file in YAML format
+    # remember to enable this inventory plugin in the ansible.cfg before using
+    # View the output using `ansible-inventory -i inventory.config --list`
     plugin: generator
     strict: False
     hosts:
-        name: "{{ operation }}-{{ application }}-{{ environment }}-runner"
+        name: "{{ operation }}_{{ application }}_{{ environment }}_runner"
         parents:
-          - name: "{{ operation }}-{{ application }}-{{ environment }}"
+          - name: "{{ operation }}_{{ application }}_{{ environment }}"
             parents:
-              - name: "{{ operation }}-{{ application }}"
+              - name: "{{ operation }}_{{ application }}"
                 parents:
                   - name: "{{ operation }}"
                   - name: "{{ application }}"
-              - name: "{{ application }}-{{ environment }}"
+              - name: "{{ application }}_{{ environment }}"
                 parents:
                   - name: "{{ application }}"
                     vars:
