@@ -189,7 +189,6 @@ class NetworksModule(BaseModule):
             mtu=self._module.params['mtu'],
             external_provider=otypes.OpenStackNetworkProvider(id=on_service.get().id)
             if self.param('external_provider') else None,
-
         )
 
     def post_create(self, entity):
