@@ -75,6 +75,16 @@ following packages installed:
 - sphinx-notfound-page
 - straight.plugin
 
+To check the HTML output of your documentation:
+
+#. Ensure you have a working :ref:`development environment <environment_setup>`.
+#. Install the required Python packages (drop '--user' in venv/virtualenv):
+
+   .. code-block:: bash
+
+      pip install --user -r requirements.txt
+      pip install --user -r docs/docsite/requirements.txt
+      
 .. note::
 
     On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work wth ``sphinx``.
