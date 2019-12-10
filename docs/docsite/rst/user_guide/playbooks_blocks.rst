@@ -72,7 +72,7 @@ Rescue blocks specify tasks to run when an earlier task in a block fails. This a
       - debug:
           msg: 'I caught an error, can do stuff here to fix it, :-)'
 
-You can also add an ``always`` section to a block. Tasks in the ``always`` section run no matter what the task status is.
+You can also add an ``always`` section to a block. Tasks in the ``always`` section run no matter what the task status of the previous block is.
 
 .. _block_always:
 .. code-block:: YAML

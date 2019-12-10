@@ -195,7 +195,7 @@ For human readable output, you can use::
     {{ some_variable | to_nice_json }}
     {{ some_variable | to_nice_yaml }}
 
-You can change the indentation of either format (new in version 2.2)::
+You can change the indentation of either format::
 
     {{ some_variable | to_nice_json(indent=2) }}
     {{ some_variable | to_nice_yaml(indent=8) }}
@@ -417,7 +417,6 @@ Combining lists
 
 This set of filters returns a list of combined lists.
 
-.. versionadded:: 2.3
 
 permutations
 ^^^^^^^^^^^^
@@ -462,7 +461,6 @@ This would result in::
 Selecting JSON data: JSON queries
 ---------------------------------
 
-.. versionadded:: 2.2
 
 Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a loop structure.
 
@@ -590,6 +588,7 @@ To get a random MAC address from a string prefix starting with '52:54:00'::
 
 Note that if anything is wrong with the prefix string, the filter will issue an error.
 
+ .. versionadded:: 2.9
 As of Ansible version 2.9, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent MAC addresses::
 
     "{{ '52:54:00' | random_mac(seed=inventory_hostname) }}"
@@ -599,7 +598,6 @@ As of Ansible version 2.9, it's also possible to initialize the random number ge
 Random items or numbers
 -----------------------
 
-.. versionadded:: 1.6
 
 This filter can be used similar to the default Jinja2 random filter (returning a random item from a sequence of
 items), but can also generate a random number based on a range.
@@ -626,14 +624,13 @@ Get a random number from 1 to 100 but in steps of 10::
     {{ 101 | random(start=1, step=10) }}
     # => 51
 
-As of Ansible version 2.3, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
+It's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
 
     "{{ 60 | random(seed=inventory_hostname) }} * * * * root /script/from/cron"
 
 Shuffling a list
 ----------------
 
-.. versionadded:: 1.8
 
 This filter will randomize an existing list, giving a different order every invocation.
 
@@ -644,7 +641,7 @@ To get a random list from an existing  list::
     {{ ['a','b','c'] | shuffle }}
     # => ['b','c','a']
 
-As of Ansible version 2.3, it's also possible to shuffle a list idempotent. All you need is a seed.::
+It's also possible to shuffle a list idempotent. All you need is a seed.::
 
     {{ ['a','b','c'] | shuffle(seed=inventory_hostname) }}
     # => ['b','a','c']
@@ -658,7 +655,6 @@ List filters
 
 These filters all operate on list variables.
 
-.. versionadded:: 1.8
 
 To get the minimum value from list of numbers::
 
@@ -1052,7 +1048,6 @@ These filters work with strings and text.
 Adding comments to files
 ------------------------
 
-.. versionadded:: 2.0
 
 The `comment` filter lets you turn text in a template into comments in a file, with a variety of comment styles. By default Ansible uses ``#`` to start a comment line and adds a blank comment line above and below your comment text. For example the following::
 
@@ -1358,7 +1353,7 @@ To make use of one attribute from each item in a list of complex variables, use 
 Date and time filters
 =====================
 
-To get a date object from a string use the `to_datetime` filter, (new in version in 2.2)::
+To get a date object from a string use the `to_datetime` filter::
 
     # Get total amount of seconds between two dates. Default date format is %Y-%m-%d %H:%M:%S but you can pass your own format
     {{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime('%Y-%m-%d'))).total_seconds()  }}
