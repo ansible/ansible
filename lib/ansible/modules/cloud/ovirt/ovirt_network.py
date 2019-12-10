@@ -169,15 +169,9 @@ from ansible.module_utils.ovirt import (
 
 
 class NetworksModule(BaseModule):
-    def import_external_network(self):
+    def build_entity(self):
         ons_service = self._connection.system_service().openstack_network_providers_service()
         on_service = ons_service.provider_service(get_id_by_name(ons_service, self.param('external_provider')))
-        networks_service = on_service.networks_service()
-        network_service = networks_service.network_service(get_id_by_name(networks_service, self.param('name')))
-        network_service.import_(data_center=otypes.DataCenter(name=self._module.params['data_center']))
-        return {"network": get_dict_of_struct(network_service.get()), "changed": True}
-
-    def build_entity(self):
         return otypes.Network(
             name=self._module.params['name'],
             comment=self._module.params['comment'],
@@ -193,6 +187,9 @@ class NetworksModule(BaseModule):
                 otypes.NetworkUsage.VM if self._module.params['vm_network'] else None
             ] if self._module.params['vm_network'] is not None else None,
             mtu=self._module.params['mtu'],
+            external_provider=otypes.OpenStackNetworkProvider(id=on_service.get().id)
+            if self.param('external_provider') else None,
+
         )
 
     def post_create(self, entity):
@@ -317,10 +314,7 @@ def main():
             'datacenter': module.params['data_center'],
         }
         if state == 'present':
-            if module.params.get('external_provider'):
-                ret = networks_module.import_external_network()
-            else:
-                ret = networks_module.create(search_params=search_params)
+            ret = networks_module.create(search_params=search_params)
             # Update clusters networks:
             if module.params.get('clusters') is not None:
                 for param_cluster in module.params.get('clusters'):
