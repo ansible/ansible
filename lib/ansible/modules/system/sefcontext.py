@@ -148,7 +148,7 @@ option_to_file_type_str = dict(
     f='regular file',
     l='symbolic link',
     p='named pipe',
-    s='socket file',
+    s='socket',
 )
 
 
