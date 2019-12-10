@@ -24,7 +24,14 @@ EOF
 # based on platform defaults
 SHA_CMD="sha1sum"
 if ! which ${SHA_CMD} > /dev/null 2>&1; then
-    SHA_CMD="sha1"
+    if which sha1 > /dev/null 2>&1; then
+        SHA_CMD="sha1"
+    elif which shasum > /dev/null 2>&1; then
+        SHA_CMD="shasum"
+    else
+        # exit early with an error if no hashing binary can be found since it is required later
+        exit 1
+    fi
 fi
 
 # Put file into place if it has changed
