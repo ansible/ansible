@@ -610,6 +610,12 @@ class OpenSUSELeapHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class OpenSUSETumbleweedHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Opensuse-tumbleweed'
+    strategy_class = SystemdStrategy
+
+
 class AsteraHostname(Hostname):
     platform = 'Linux'
     distribution = '"astralinuxce"'
