@@ -1,0 +1,6 @@
+removed_features:
+- "azure_rm_networkinterface - the deprecated options ``private_ip_address``, ``private_ip_allocation_method``, ``public_ip``, ``public_ip_address_name``, ``public_ip_allocation_method`` were removed. Use ``ip_configurations`` instead."
+- "azure_rm_loadbalancer - the deprecated option ``public_ip_address_name`` was removed. Use ``frontend_ip_configurations`` instead."
+- "azure_rm_loadbalancer - the deprecated options ``probe_port``, ``probe_protocol``, ``probe_interval``, ``probe_fail_count``, ``probe_request_path`` were removed. Use ``probes`` instead."
+- "azure_rm_loadbalancer - the deprecated options ``protocol``, ``load_distribution``, ``frontend_port``, ``backend_port``, ``idle_timeout`` were removed. Use ``load_balancing_rules`` instead."
+- "azure_rm_loadbalancer - the deprecated options ``natpool_frontend_port_start``, ``natpool_frontend_port_end``, ``natpool_backend_port``, ``natpool_protocol`` were removed. Use ``inbound_nat_pools`` instead."

@@ -103,6 +103,12 @@ Noteworthy module changes
     * When the directory specified by ``paths`` does not exist or is a file, it will no longer fail and will just warn the user
     * Junction points are no longer reported as ``islnk``, use ``isjunction`` to properly report these files. This behaviour matches the :ref:`win_stat <win_stat_module>`
     * Directories no longer return a ``size``, this matches the ``stat`` and ``find`` behaviour and has been removed due to the difficulties in correctly reporting the size of a directory
+* The deprecated options ``private_ip_address``, ``private_ip_allocation_method``, ``public_ip``, ``public_ip_address_name``, ``public_ip_allocation_method`` of :ref:`azure_rm_networkinterface <azure_rm_networkinterface_module>` were removed. Use the ``ip_configurations`` option instead.
+* The deprecated option ``public_ip_address_name`` of :ref:`azure_rm_loadbalancer <azure_rm_loadbalancer_module>` was removed. Use ``frontend_ip_configurations`` instead."
+* The deprecated options ``probe_port``, ``probe_protocol``, ``probe_interval``, ``probe_fail_count``, ``probe_request_path`` of :ref:`azure_rm_loadbalancer <azure_rm_loadbalancer_module>` were removed. Use ``probes`` instead."
+* The deprecated options ``protocol``, ``load_distribution``, ``frontend_port``, ``backend_port``, ``idle_timeout`` of :ref:`azure_rm_loadbalancer <azure_rm_loadbalancer_module>` were removed. Use ``load_balancing_rules`` instead."
+* The deprecated options ``natpool_frontend_port_start``, ``natpool_frontend_port_end``, ``natpool_backend_port``, ``natpool_protocol`` of :ref:`azure_rm_loadbalancer <azure_rm_loadbalancer_module>` were removed. Use ``inbound_nat_pools`` instead."
+
 
 Plugins
 =======

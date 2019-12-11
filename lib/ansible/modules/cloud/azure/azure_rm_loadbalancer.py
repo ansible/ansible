@@ -271,84 +271,6 @@ options:
                     - Receive bidirectional TCP Reset on TCP flow idle timeout or unexpected connection termination.
                     - This element is only used when I(protocol=Tcp).
         version_added: '2.8'
-    public_ip_address_name:
-        description:
-            - (deprecated) Name of an existing public IP address object to associate with the security group.
-            - This option has been deprecated, and will be removed in 2.9. Use I(frontend_ip_configurations) instead.
-        aliases:
-            - public_ip_address
-            - public_ip_name
-            - public_ip
-    probe_port:
-        description:
-            - (deprecated) The port that the health probe will use.
-            - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
-    probe_protocol:
-        description:
-            - (deprecated) The protocol to use for the health probe.
-            - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
-        choices:
-            - Tcp
-            - Http
-            - Https
-    probe_interval:
-        description:
-            - (deprecated) Time (in seconds) between endpoint health probes.
-            - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
-        default: 15
-    probe_fail_count:
-        description:
-            - (deprecated) The amount of probe failures for the load balancer to make a health determination.
-            - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
-        default: 3
-    probe_request_path:
-        description:
-            - (deprecated) The URL that an HTTP probe or HTTPS probe will use (only relevant if I(probe_protocol=Http) or I(probe_protocol=Https)).
-            - This option has been deprecated, and will be removed in 2.9. Use I(probes) instead.
-    protocol:
-        description:
-            - (deprecated) The protocol (TCP or UDP) that the load balancer will use.
-            - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
-        choices:
-            - Tcp
-            - Udp
-    load_distribution:
-        description:
-            - (deprecated) The type of load distribution that the load balancer will employ.
-            - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
-        choices:
-            - Default
-            - SourceIP
-            - SourceIPProtocol
-    frontend_port:
-        description:
-            - (deprecated) Frontend port that will be exposed for the load balancer.
-            - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
-    backend_port:
-        description:
-            - (deprecated) Backend port that will be exposed for the load balancer.
-            - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
-    idle_timeout:
-        description:
-            - (deprecated) Timeout for TCP idle connection in minutes.
-            - This option has been deprecated, and will be removed in 2.9. Use I(load_balancing_rules) instead.
-        default: 4
-    natpool_frontend_port_start:
-        description:
-            - (deprecated) Start of the port range for a NAT pool.
-            - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
-    natpool_frontend_port_end:
-        description:
-            - (deprecated) End of the port range for a NAT pool.
-            - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
-    natpool_backend_port:
-        description:
-            - (deprecated) Backend port used by the NAT pool.
-            - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
-    natpool_protocol:
-        description:
-            - (deprecated) The protocol for the NAT pool.
-            - This option has been deprecated, and will be removed in 2.9. Use I(inbound_nat_pools) instead.
 extends_documentation_fragment:
     - azure
     - azure_tags
@@ -632,58 +554,6 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 elements='dict',
                 options=load_balancing_rule_spec
             ),
-            public_ip_address_name=dict(
-                type='str',
-                aliases=['public_ip_address', 'public_ip_name', 'public_ip']
-            ),
-            probe_port=dict(
-                type='int'
-            ),
-            probe_protocol=dict(
-                type='str',
-                choices=['Tcp', 'Http', 'Https']
-            ),
-            probe_interval=dict(
-                type='int',
-                default=15
-            ),
-            probe_fail_count=dict(
-                type='int',
-                default=3
-            ),
-            probe_request_path=dict(
-                type='str'
-            ),
-            protocol=dict(
-                type='str',
-                choices=['Tcp', 'Udp']
-            ),
-            load_distribution=dict(
-                type='str',
-                choices=['Default', 'SourceIP', 'SourceIPProtocol']
-            ),
-            frontend_port=dict(
-                type='int'
-            ),
-            backend_port=dict(
-                type='int'
-            ),
-            idle_timeout=dict(
-                type='int',
-                default=4
-            ),
-            natpool_frontend_port_start=dict(
-                type='int'
-            ),
-            natpool_frontend_port_end=dict(
-                type='int'
-            ),
-            natpool_backend_port=dict(
-                type='int'
-            ),
-            natpool_protocol=dict(
-                type='str'
-            )
         )
 
         self.resource_group = None
@@ -696,22 +566,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.inbound_nat_rules = None
         self.inbound_nat_pools = None
         self.load_balancing_rules = None
-        self.public_ip_address_name = None
         self.state = None
-        self.probe_port = None
-        self.probe_protocol = None
-        self.probe_interval = None
-        self.probe_fail_count = None
-        self.probe_request_path = None
-        self.protocol = None
-        self.load_distribution = None
-        self.frontend_port = None
-        self.backend_port = None
-        self.idle_timeout = None
-        self.natpool_frontend_port_start = None
-        self.natpool_frontend_port_end = None
-        self.natpool_backend_port = None
-        self.natpool_protocol = None
         self.tags = None
 
         self.results = dict(changed=False, state=dict())
@@ -735,54 +590,6 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         load_balancer = self.get_load_balancer()
 
         if self.state == 'present':
-            # compatible parameters
-            is_compatible_param = not self.frontend_ip_configurations and not self.backend_address_pools and not self.probes and not self.inbound_nat_pools
-            is_compatible_param = is_compatible_param and not load_balancer  # the instance should not be exist
-            is_compatible_param = is_compatible_param or self.public_ip_address_name or self.probe_protocol or self.natpool_protocol or self.protocol
-            if is_compatible_param:
-                self.deprecate('Discrete load balancer config settings are deprecated and will be removed.'
-                               ' Use frontend_ip_configurations, backend_address_pools, probes, inbound_nat_pools lists instead.', version='2.9')
-                frontend_ip_name = 'frontendip0'
-                backend_address_pool_name = 'backendaddrp0'
-                prob_name = 'prob0'
-                inbound_nat_pool_name = 'inboundnatp0'
-                lb_rule_name = 'lbr'
-                self.frontend_ip_configurations = [dict(
-                    name=frontend_ip_name,
-                    public_ip_address=self.public_ip_address_name
-                )]
-                self.backend_address_pools = [dict(
-                    name=backend_address_pool_name
-                )]
-                self.probes = [dict(
-                    name=prob_name,
-                    port=self.probe_port,
-                    protocol=self.probe_protocol,
-                    interval=self.probe_interval,
-                    fail_count=self.probe_fail_count,
-                    request_path=self.probe_request_path
-                )] if self.probe_protocol else None
-                self.inbound_nat_pools = [dict(
-                    name=inbound_nat_pool_name,
-                    frontend_ip_configuration_name=frontend_ip_name,
-                    protocol=self.natpool_protocol,
-                    frontend_port_range_start=self.natpool_frontend_port_start,
-                    frontend_port_range_end=self.natpool_frontend_port_end,
-                    backend_port=self.natpool_backend_port
-                )] if self.natpool_protocol else None
-                self.load_balancing_rules = [dict(
-                    name=lb_rule_name,
-                    frontend_ip_configuration=frontend_ip_name,
-                    backend_address_pool=backend_address_pool_name,
-                    probe=prob_name,
-                    protocol=self.protocol,
-                    load_distribution=self.load_distribution,
-                    frontend_port=self.frontend_port,
-                    backend_port=self.backend_port,
-                    idle_timeout=self.idle_timeout,
-                    enable_floating_ip=False
-                )] if self.protocol else None
-
             # create new load balancer structure early, so it can be easily compared
             frontend_ip_configurations_param = [self.network_models.FrontendIPConfiguration(
                 name=item.get('name'),
