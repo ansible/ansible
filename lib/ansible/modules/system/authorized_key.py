@@ -227,7 +227,8 @@ from operator import itemgetter
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.module_utils.urls import fetch_url, generic_urlparse
 
 
 class keydict(dict):
@@ -541,7 +542,7 @@ def enforce_state(module, params):
     error_msg = "Error getting key from: %s"
 
     # if the key is a url, request it and use it as key source
-    if re.search("^([A-Za-z0-9+.-]+:)?/", key):
+    if generic_urlparse(urlparse(key)).scheme:
         try:
             resp, info = fetch_url(module, key)
             if resp:
