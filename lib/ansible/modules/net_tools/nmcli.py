@@ -22,13 +22,15 @@ author:
 short_description: Manage Networking
 requirements:
 - dbus
-- NetworkManager-glib
+- NetworkManager-libnm (or NetworkManager-glib on older systems)
 - nmcli
 version_added: "2.0"
 description:
     - Manage the network devices. Create, modify and manage various connection and device type e.g., ethernet, teams, bonds, vlans etc.
-    - 'On CentOS and Fedora like systems, the requirements can be met by installing the following packages: NetworkManager-glib,
+    - 'On CentOS 7 and Fedora <=28 like systems, the requirements can be met by installing the following packages: NetworkManager-glib,
       libnm-qt-devel.x86_64, nm-connection-editor.x86_64, libsemanage-python, policycoreutils-python.'
+    - 'On CentOS 8 and Fedora >=29 like systems, the requirements can be met by installing the following packages: NetworkManager-nmlib,
+      libsemanage-python, policycoreutils-python.'
     - 'On Ubuntu and Debian like systems, the requirements can be met by installing the following packages: network-manager,
       python-dbus (or python3-dbus, depending on the Python version in use), libnm-glib-dev.'
 options:
@@ -367,7 +369,7 @@ EXAMPLES = r'''
   - name: install needed network manager libs
     package:
       name:
-        - NetworkManager-glib
+        - NetworkManager-libnm
         - nm-connection-editor
         - libsemanage-python
         - policycoreutils-python
@@ -560,17 +562,20 @@ except ImportError:
     DBUS_IMP_ERR = traceback.format_exc()
     HAVE_DBUS = False
 
+import gi
 NM_CLIENT_IMP_ERR = None
+HAVE_NM_CLIENT = True
 try:
-    import gi
-    gi.require_version('NMClient', '1.0')
-    gi.require_version('NetworkManager', '1.0')
-
-    from gi.repository import NetworkManager, NMClient
-    HAVE_NM_CLIENT = True
+    gi.require_version('NM', '1.0')
+    from gi.repository import NM
 except (ImportError, ValueError):
-    NM_CLIENT_IMP_ERR = traceback.format_exc()
-    HAVE_NM_CLIENT = False
+    try:
+        gi.require_version('NMClient', '1.0')
+        gi.require_version('NetworkManager', '1.0')
+        from gi.repository import NetworkManager, NMClient
+    except (ImportError, ValueError):
+        NM_CLIENT_IMP_ERR = traceback.format_exc()
+        HAVE_NM_CLIENT = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
