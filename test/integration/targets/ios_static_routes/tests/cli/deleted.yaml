@@ -51,14 +51,44 @@
           - "{{ deleted['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
 
     - name: Assert that before dicts are correctly generated
+       assert:
+         that:
+           - "{{ deleted['before'] | symmetric_difference(result['before']) | length == 0 }}"
+      register: deleted_before
+      ignore_errors: yes
+
+    - name: Assert that alternate before dicts are correctly generated
       assert:
-        that:
-          - "{{ deleted['before'] | symmetric_difference(result['before']) | length == 0 }}"
+         that:
+           - "{{ deleted_alternate['before'] | symmetric_difference(result['before']) | length == 0 }}"
+      register: deleted_before_alternate
+      ignore_errors: yes
+
+    - name: check for errors
+      fail:
+        msg: Assertion failed
+      when: (deleted_before['msg'] == "Assertion failed") and
+            (deleted_before_alternate['msg'] == "Assertion failed")
 
     - name: Assert that after dict is correctly generated
       assert:
         that:
           - "{{ deleted['after'] | symmetric_difference(result['after']) | length == 0 }}"
+      register: deleted_after
+      ignore_errors: yes
+
+    - name: Assert that alternate after dicts are correctly generated
+      assert:
+         that:
+           - "{{ deleted_alternate['after'] | symmetric_difference(result['after']) | length == 0 }}"
+      register: deleted_after_alternate
+      ignore_errors: yes
+
+    - name: check for errors
+      fail:
+        msg: Assertion failed
+      when: (deleted_after['msg'] == "Assertion failed") and
+            (deleted_after_alternate['msg'] == "Assertion failed")
 
     - name: Delete attributes of all configured interfaces (IDEMPOTENT)
       ios_static_routes: *deleted

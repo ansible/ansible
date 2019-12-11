@@ -170,13 +170,18 @@ class Static_Routes(ConfigBase):
                                     # update the have_dict with forward_router_address
                                     have_dict.update({'forward_router_address': route_have.get('next_hops')[0].
                                                      get('forward_router_address')})
-                                    have_dict = {k: v for k, v in have_dict.items() if v is not None}
+                                    # updating the have_dict with next_hops val that's not None
+                                    new_have_dict = {}
+                                    for k, v in have_dict.items():
+                                        if v is not None:
+                                            new_have_dict.update({k: v})
+
                                     # if the have_dict has only name and forward_router_address then skip deleting
                                     # else if it has other diff first delete the respective config and then set the
                                     # new config with user provided want next_hops
-                                    if len(have_dict) > 2:
+                                    if len(new_have_dict) > 2:
                                         clear_route_have = copy.deepcopy(route_have)
-                                        clear_route_have['next_hops'] = [have_dict]
+                                        clear_route_have['next_hops'] = [new_have_dict]
                                         commands.extend(self._clear_config(w, h, addr_want, addr_have,
                                                                            route_want, clear_route_have))
                                     # Set the new config from the user provided want config

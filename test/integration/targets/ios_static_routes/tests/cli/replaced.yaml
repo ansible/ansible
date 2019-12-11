@@ -49,11 +49,41 @@
       assert:
         that:
           - "{{ replaced['before'] | symmetric_difference(result['before']) | length == 0 }}"
+      register: replaced_before
+      ignore_errors: yes
+
+    - name: Assert that alternate before dicts are correctly generated
+      assert:
+         that:
+           - "{{ replaced_alternate['before'] | symmetric_difference(result['before']) | length == 0 }}"
+      register: replaced_before_alternate
+      ignore_errors: yes
+
+    - name: check for errors
+      fail:
+        msg: Assertion failed
+      when: (replaced_before['msg'] == "Assertion failed") and
+            (replaced_before_alternate['msg'] == "Assertion failed")
 
     - name: Assert that after dict is correctly generated
       assert:
         that:
           - "{{ replaced['after'] | symmetric_difference(result['after']) | length == 0 }}"
+      register: replaced_after
+      ignore_errors: yes
+
+    - name: Assert that alternate after dicts are correctly generated
+      assert:
+         that:
+           - "{{ replaced_alternate['after'] | symmetric_difference(result['after']) | length == 0 }}"
+      register: replaced_after_alternate
+      ignore_errors: yes
+
+    - name: check for errors
+      fail:
+        msg: Assertion failed
+      when: (replaced_after['msg'] == "Assertion failed") and
+            (replaced_after_alternate['msg'] == "Assertion failed")
 
     - name: Replaces device configuration of listed interfaces with provided configuration (IDEMPOTENT)
       ios_static_routes: *replaced

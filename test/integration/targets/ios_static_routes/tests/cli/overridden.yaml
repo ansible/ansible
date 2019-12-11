@@ -44,13 +44,43 @@
 
     - name: Assert that before dicts are correctly generated
       assert:
-        that:
-          - "{{ overridden['before'] | symmetric_difference(result['before']) | length == 0 }}"
+         that:
+           - "{{ overridden['before'] | symmetric_difference(result['before']) | length == 0 }}"
+      register: overridden_before
+      ignore_errors: yes
+
+    - name: Assert that alternate before dicts are correctly generated
+      assert:
+         that:
+           - "{{ overridden_alternate['before'] | symmetric_difference(result['before']) | length == 0 }}"
+      register: overridden_before_alternate
+      ignore_errors: yes
+
+    - name: check for errors
+      fail:
+        msg: Assertion failed
+      when: (overridden_before['msg'] == "Assertion failed") and
+            (overridden_before_alternate['msg'] == "Assertion failed")
 
     - name: Assert that after dict is correctly generated
       assert:
         that:
           - "{{ overridden['after'] | symmetric_difference(result['after']) | length == 0 }}"
+      register: overridden_after
+      ignore_errors: yes
+
+    - name: Assert that alternate after dicts are correctly generated
+      assert:
+         that:
+           - "{{ overridden_alternate['after'] | symmetric_difference(result['after']) | length == 0 }}"
+      register: overridden_after_alternate
+      ignore_errors: yes
+
+    - name: check for errors
+      fail:
+        msg: Assertion failed
+      when: (overridden_after['msg'] == "Assertion failed") and
+            (overridden_after_alternate['msg'] == "Assertion failed")
 
     - name: Override device configuration of all interfaces with provided configuration (IDEMPOTENT)
       ios_static_routes: *overridden

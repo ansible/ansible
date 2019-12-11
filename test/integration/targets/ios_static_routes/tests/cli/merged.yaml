@@ -54,11 +54,41 @@
       assert:
         that:
           - "{{ merged['before'] | symmetric_difference(result['before']) | length == 0 }}"
+      register: merged_before
+      ignore_errors: yes
+
+    - name: Assert that alternate before dicts are correctly generated
+      assert:
+         that:
+           - "{{ merged_alternate['before'] | symmetric_difference(result['before']) | length == 0 }}"
+      register: merged_before_alternate
+      ignore_errors: yes
+
+    - name: check for errors
+      fail:
+        msg: Assertion failed
+      when: (merged_before['msg'] == "Assertion failed") and
+            (merged_before_alternate['msg'] == "Assertion failed")
 
     - name: Assert that after dict is correctly generated
       assert:
         that:
           - "{{ merged['after'] | symmetric_difference(result['after']) | length == 0 }}"
+      register: merged_after
+      ignore_errors: yes
+
+    - name: Assert that alternate after dicts are correctly generated
+      assert:
+         that:
+           - "{{ merged_alternate['after'] | symmetric_difference(result['after']) | length == 0 }}"
+      register: merged_after_alternate
+      ignore_errors: yes
+
+    - name: check for errors
+      fail:
+        msg: Assertion failed
+      when: (merged_after['msg'] == "Assertion failed") and
+            (merged_after_alternate['msg'] == "Assertion failed")
 
     - name: Merge provided configuration with device configuration (IDEMPOTENT)
       ios_static_routes: *merged
