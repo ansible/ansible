@@ -135,21 +135,21 @@ EXAMPLES = '''
     state: absent
 
 - cloudwatchevent_rule:
-        name: MyCronTask
-        schedule_expression: "rate(1 hour)"
-        description: Run my scheduled task
-        region: us-east-1
-        targets:
-          - id: MyTargetId
-            role_arn: arn:aws:iam::123456789012:role/ecs_role
-            arn: arn:aws:ecs:us-east-1:123456789012:cluster/dev
-            ecs_parameters:
-              task_definition_arn: arn:aws:ecs:us-east-1:123456789012:task-definition/task:1"
-              task_count: 1
-              launch_type: "FARGATE"
-              network_configuration:
-                subnets: "subnet-1234567"
-                security_groups: "sg-012345678996"
+    name: MyCronTask
+    schedule_expression: "rate(1 hour)"
+    description: Run my scheduled task
+    region: us-east-1
+    targets:
+      - id: MyTargetId
+        role_arn: arn:aws:iam::123456789012:role/ecs_role
+        arn: arn:aws:ecs:us-east-1:123456789012:cluster/dev
+        ecs_parameters:
+          task_definition_arn: arn:aws:ecs:us-east-1:123456789012:task-definition/task:1"
+          task_count: 1
+          launch_type: "FARGATE"
+          network_configuration:
+            subnets: "subnet-1234567"
+            security_groups: "sg-012345678996"
 '''
 
 RETURN = '''
@@ -176,7 +176,7 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, get_ec2_security_group_ids_from_names
 from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info
 
 
