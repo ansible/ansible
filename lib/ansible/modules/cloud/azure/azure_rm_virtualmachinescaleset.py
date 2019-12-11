@@ -926,8 +926,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                 publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name, parameters=term)
                         except Exception as exc:
                             self.fail(("Error accepting terms for virtual machine {0} with plan {1}. " +
-                                        "Only service admin/account admin users can purchase images " +
-                                        "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
+                                       "Only service admin/account admin users can purchase images " +
+                                       "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
 
                     self.log("Create virtual machine with parameters:")
                     self.create_or_update_vmss(vmss_resource)
