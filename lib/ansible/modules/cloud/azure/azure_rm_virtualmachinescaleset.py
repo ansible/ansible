@@ -228,14 +228,6 @@ options:
             promotion_code:
                 description:
                     - Optional promotion code.
-    accept_terms:
-        description:
-            - Accept terms for Marketplace images that require it.
-            - Only Azure service admin/account admin users can purchase images from the Marketplace.
-            - Only valid when a I(plan) is specified.
-        type: bool
-        default: false
-        version_added: "2.10"
     zones:
         description:
             - A list of Availability Zones for your virtual machine scale set.
@@ -310,7 +302,6 @@ EXAMPLES = '''
       name: cis-ubuntu-linux-1804-l1
       product: cis-ubuntu-linux-1804-l1
       publisher: center-for-internet-security-inc
-    accept_terms: True
     data_disks:
       - lun: 0
         disk_size_gb: 64
@@ -517,7 +508,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             plan=dict(type='dict', options=dict(publisher=dict(type='str', required=True),
                       product=dict(type='str', required=True), name=dict(type='str', required=True),
                       promotion_code=dict(type='str'))),
-            accept_terms=dict(type='bool', default=False),
         )
 
         self.resource_group = None
@@ -552,7 +542,6 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.zones = None
         self.custom_data = None
         self.plan = None
-        self.accept_terms = None
 
         required_if = [
             ('state', 'present', [
@@ -925,10 +914,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
 
                         vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
 
-                    # Before creating VM accept terms of plan if `accept_terms` is True
-                    if self.accept_terms is True:
-                        if not self.plan or not all([self.plan.get('name'), self.plan.get('product'), self.plan.get('publisher')]):
-                            self.fail("parameter error: plan must be specified and include name, product, and publisher")
+                    if self.plan:
                         try:
                             plan_name = self.plan.get('name')
                             plan_product = self.plan.get('product')
@@ -940,8 +926,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                 publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name, parameters=term)
                         except Exception as exc:
                             self.fail(("Error accepting terms for virtual machine {0} with plan {1}. " +
-                                       "Only service admin/account admin users can purchase images " +
-                                       "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
+                                        "Only service admin/account admin users can purchase images " +
+                                        "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
 
                     self.log("Create virtual machine with parameters:")
                     self.create_or_update_vmss(vmss_resource)
