@@ -2,6 +2,7 @@
 - name: Reset state
   cli_config:
     config: |
+      interface Port-Channel10
       interface Ethernet1
          channel-group 5 mode on
       interface Ethernet2
@@ -14,6 +15,7 @@
 
 - set_fact:
     expected_config:
+      - name: "Port-Channel10"
       - name: "Port-Channel5"
         members:
           - member: Ethernet1

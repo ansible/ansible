@@ -1,5 +1,5 @@
 ---
-- include_tasks: reset_config.yml
+- include_tasks: _reset_config.yml
 
 - set_fact:
     config:
@@ -33,6 +33,7 @@
 
 - set_fact:
     expected_config:
+      - name: "Port-Channel10"
       - name: "Port-Channel5"
         members:
           - member: Ethernet1
