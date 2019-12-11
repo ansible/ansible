@@ -1,0 +1,2 @@
+bugfixes:
+- Multiple fixes in nios_* modules (https://github.com/ansible/ansible/issues/64034).

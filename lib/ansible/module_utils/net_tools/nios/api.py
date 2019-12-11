@@ -463,9 +463,45 @@ class WapiModule(WapiBase):
                 # resolves issue where a_record with uppercase name was returning null and was failing
                 test_obj_filter = obj_filter
                 test_obj_filter['name'] = test_obj_filter['name'].lower()
+                # resolves issue where multiple a_records with same name and different IP address
+                try:
+                    ipaddr_obj = self.module._check_type_dict(obj_filter['ipv4addr'])
+                    ipaddr = ipaddr_obj['old_ipv4addr']
+                except TypeError:
+                    ipaddr = obj_filter['ipv4addr']
+                test_obj_filter['ipv4addr'] = ipaddr
+            elif (ib_obj_type == NIOS_TXT_RECORD):
+                # resolves issue where multiple txt_records with same name and different text
+                test_obj_filter = obj_filter
+                try:
+                    text_obj = self.module._check_type_dict(obj_filter['text'])
+                    txt = text_obj['old_text']
+                except TypeError:
+                    txt = obj_filter['text']
+                test_obj_filter['text'] = txt
             # check if test_obj_filter is empty copy passed obj_filter
             else:
                 test_obj_filter = obj_filter
+            ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
+        elif (ib_obj_type == NIOS_A_RECORD):
+            # resolves issue where multiple a_records with same name and different IP address
+            test_obj_filter = obj_filter
+            try:
+                ipaddr_obj = self.module._check_type_dict(obj_filter['ipv4addr'])
+                ipaddr = ipaddr_obj['old_ipv4addr']
+            except TypeError:
+                ipaddr = obj_filter['ipv4addr']
+            test_obj_filter['ipv4addr'] = ipaddr
+            ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
+        elif (ib_obj_type == NIOS_TXT_RECORD):
+            # resolves issue where multiple txt_records with same name and different text
+            test_obj_filter = obj_filter
+            try:
+                text_obj = self.module._check_type_dict(obj_filter['text'])
+                txt = text_obj['old_text']
+            except TypeError:
+                txt = obj_filter['text']
+            test_obj_filter['text'] = txt
             ib_obj = self.get_object(ib_obj_type, test_obj_filter.copy(), return_fields=ib_spec.keys())
         elif (ib_obj_type == NIOS_ZONE):
             # del key 'restart_if_needed' as nios_zone get_object fails with the key present
