@@ -221,7 +221,7 @@
       - result is changed
       - "stat_result.stat.mode == '0707'"
 
-- name: Test that setting file modes on an already downlaoded file work
+- name: Test that setting file modes on an already downloaded file work
   get_url:
     url: 'https://{{ httpbin_host }}/'
     dest: '{{ remote_tmp_dir }}/test'
@@ -237,6 +237,19 @@
     that:
       - result is changed
       - "stat_result.stat.mode == '0070'"
+
+# https://github.com/ansible/ansible/pull/65307/
+- name: Test that on http status 304, we get a status_code field.
+  get_url:
+    url: 'https://{{ httpbin_host }}/status/304'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we get the appropriate status_code
+  assert:
+    that:
+      - "'status_code' in result"
+      - "result.status_code == 304"
 
 # https://github.com/ansible/ansible/issues/29614
 - name: Change mode on an already downloaded file and specify checksum
