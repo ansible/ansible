@@ -27,7 +27,7 @@ short_description: Use junos netconf plugin to run netconf commands on Juniper J
 description:
   - This junos plugin provides low level abstraction apis for
     sending and receiving netconf commands from Juniper JUNOS network devices.
-version_added: "2.10"
+version_added: "2.9"
 options:
   ncclient_device_handler:
     type: str

@@ -27,7 +27,7 @@ short_description: Use default netconf plugin to run standard netconf commands a
 description:
   - This default plugin provides low level abstraction apis for
     sending and receiving netconf commands as per Netconf RFC specification.
-version_added: "2.10"
+version_added: "2.9"
 options:
   ncclient_device_handler:
     type: str

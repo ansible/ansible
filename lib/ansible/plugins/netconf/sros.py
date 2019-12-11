@@ -23,14 +23,18 @@ DOCUMENTATION = """
 ---
 netconf: sros
 short_description: Use Nokia SROS netconf plugin to run netconf commands on Nokia SROS platform
+deprecated:
+    why: This plugin moved in 'nokia.sros' collection
+    removed_in: '2.13'
+    alternative: "Use the netconf plugin in 'nokia.sros' collection within Ansible galaxy"
 description:
   - This sros plugin provides low level abstraction apis for
     sending and receiving netconf commands from Nokia sros network devices.
-version_added: "2.10"
+version_added: "2.9"
 options:
   ncclient_device_handler:
     type: str
-    default: alu
+    default: default
     description:
       - Specifies the ncclient device handler name for Nokia sros network os. To
         identify the ncclient device handler name refer ncclient library documentation.

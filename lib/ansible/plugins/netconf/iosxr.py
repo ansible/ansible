@@ -28,7 +28,7 @@ short_description: Use iosxr netconf plugin to run netconf commands on Cisco IOS
 description:
   - This iosxr plugin provides low level abstraction apis for
     sending and receiving netconf commands from Cisco iosxr network devices.
-version_added: "2.10"
+version_added: "2.9"
 options:
   ncclient_device_handler:
     type: str
