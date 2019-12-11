@@ -43,6 +43,7 @@ options:
         per substring, up to a total of 512 bytes. To enter leading,
         trailing, or embedded spaces in the text, add quotes around the
         text to preserve the spaces.
+    required: true
   ttl:
     description:
       - Configures the TTL to be associated with this tst record
@@ -106,7 +107,7 @@ def main():
     ib_spec = dict(
         name=dict(required=True, ib_req=True),
         view=dict(default='default', aliases=['dns_view'], ib_req=True),
-        text=dict(type='str'),
+        text=dict(ib_req=True),
         ttl=dict(type='int'),
         extattrs=dict(type='dict'),
         comment=dict(),
