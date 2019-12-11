@@ -160,36 +160,53 @@ class Static_routes(ConfigBase):
             want_afi_list = [w['afi'] for w in want['address_families']]
             for h in obj_in_have['address_families']:
                 if h['afi'] in want_afi_list:
-                    want_afi = search_obj_in_list(
-                        h['afi'], want['address_families'], 'afi')
+                    want_afi = search_obj_in_list(h['afi'],
+                                                  want['address_families'],
+                                                  'afi')
                     want_dest_list = [w['dest'] for w in want_afi['routes']]
                     for ro in h['routes']:
                         if ro['dest'] in want_dest_list:
                             want_dest = search_obj_in_list(
                                 ro['dest'], want_afi['routes'], 'dest')
                             want_next_hops = [
-                                nh for nh in want_dest['next_hops']]
+                                nh for nh in want_dest['next_hops']
+                            ]
                             for next_hop in ro['next_hops']:
                                 if next_hop not in want_next_hops:
                                     # have's next hop not in want, so delete it
-                                    delete_dict = {'vrf': obj_in_have['vrf'], 'address_families': [
-                                        {'afi': h['afi'], 'routes':[{'dest': ro['dest'], 'next_hops':[next_hop]
-                                                                     }]
-                                         }
-                                    ]
+                                    delete_dict = {
+                                        'vrf':
+                                        obj_in_have['vrf'],
+                                        'address_families': [{
+                                            'afi':
+                                            h['afi'],
+                                            'routes': [{
+                                                'dest': ro['dest'],
+                                                'next_hops': [next_hop]
+                                            }]
+                                        }]
                                     }
                                     delete_commands.extend(
                                         self.del_commands([delete_dict]))
                         else:
                             # have's dest not in want, so delete ro['dest']
-                            delete_dict = {'vrf': obj_in_have['vrf'], 'address_families': [
-                                {'afi': h['afi'], 'routes':[ro]}]}
+                            delete_dict = {
+                                'vrf':
+                                obj_in_have['vrf'],
+                                'address_families': [{
+                                    'afi': h['afi'],
+                                    'routes': [ro]
+                                }]
+                            }
                             delete_commands.extend(
                                 self.del_commands([delete_dict]))
                 else:
                     # have's afi not in want, so delete h['afi']
-                    delete_commands.extend(self.del_commands(
-                        [{'address_families': [h], 'vrf': obj_in_have['vrf']}]))
+                    delete_commands.extend(
+                        self.del_commands([{
+                            'address_families': [h],
+                            'vrf': obj_in_have['vrf']
+                        }]))
         final_delete_commands = []
         for d in delete_commands:
             if d not in final_delete_commands:
@@ -250,22 +267,42 @@ class Static_routes(ConfigBase):
                         afi_list = [o['afi'] for o in o1]
                         for w1 in w['address_families']:
                             if w1['afi'] in afi_list:
-                                o2 = search_obj_in_list(
-                                    w1['afi'], o1, 'afi')
+                                o2 = search_obj_in_list(w1['afi'], o1, 'afi')
                                 if 'routes' in w1.keys():
                                     for w2 in w1['routes']:
                                         o3 = search_obj_in_list(
                                             w2['dest'], o2['routes'], 'dest')
                                         if o3:
-                                            delete_dict = {'vrf': obj_in_have['vrf'], 'address_families': [
-                                                {'afi': w1['afi'], 'routes':[{'dest': w2['dest'], 'next_hops':o3['next_hops']}]}]}
+                                            delete_dict = {
+                                                'vrf':
+                                                obj_in_have['vrf'],
+                                                'address_families': [{
+                                                    'afi':
+                                                    w1['afi'],
+                                                    'routes': [{
+                                                        'dest':
+                                                        w2['dest'],
+                                                        'next_hops':
+                                                        o3['next_hops']
+                                                    }]
+                                                }]
+                                            }
                                             commands.extend(
-                                                self.del_commands([delete_dict]))
+                                                self.del_commands(
+                                                    [delete_dict]))
                                         # else, dest's route does not exist in device, ignore
                                 else:
                                     # case when only afi given for delete
-                                    delete_dict = {'vrf': obj_in_have['vrf'], 'address_families': [
-                                        {'afi': o2['afi'], 'routes':o2['routes']}]}
+                                    delete_dict = {
+                                        'vrf':
+                                        obj_in_have['vrf'],
+                                        'address_families': [{
+                                            'afi':
+                                            o2['afi'],
+                                            'routes':
+                                            o2['routes']
+                                        }]
+                                    }
                                     commands.extend(
                                         self.del_commands([delete_dict]))
                     else:
@@ -311,18 +348,18 @@ class Static_routes(ConfigBase):
         if 'admin_distance' in params:
             pref = str(want['admin_distance']) + ' '
         if 'track' in params:
-            track = 'track ' + str(want['track'])+' '
+            track = 'track ' + str(want['track']) + ' '
         if 'dest_vrf' in params:
-            vrf = 'vrf '+str(want['dest_vrf']) + ' '
+            vrf = 'vrf ' + str(want['dest_vrf']) + ' '
         if 'forward_router_address' in params:
-            ip = want['forward_router_address']+' '
+            ip = want['forward_router_address'] + ' '
         if 'interface' in params:
-            intf = normalize_interface(want['interface'])+' '
+            intf = normalize_interface(want['interface']) + ' '
         if 'route_name' in params:
-            name = 'name ' + str(want['route_name'])+' '
+            name = 'name ' + str(want['route_name']) + ' '
         if 'tag' in params:
-            tag = 'tag '+str(want['tag'])+' '
-        command = intf+ip+vrf+name+tag+track+pref
+            tag = 'tag ' + str(want['tag']) + ' '
+        command = intf + ip + vrf + name + tag + track + pref
         return command
 
     def set_commands(self, want, have):
@@ -376,8 +413,8 @@ class Static_routes(ConfigBase):
             for af in want['address_families']:
                 for ro in af['routes']:
                     for nh in ro['next_hops']:
-                        commands = self.set_next_hop(
-                            want, af, nh, ro, commands)
+                        commands = self.set_next_hop(want, af, nh, ro,
+                                                     commands)
         return commands
 
     def set_next_hop(self, want, h2, nh, ro, commands):

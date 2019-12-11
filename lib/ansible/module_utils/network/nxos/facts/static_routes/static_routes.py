@@ -13,7 +13,6 @@ import re
 from copy import deepcopy
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.nxos.argspec.static_routes.static_routes import Static_routesArgs
-import q
 
 
 class Static_routesFacts(object):
