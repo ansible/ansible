@@ -45,6 +45,8 @@ author: Adharsh Srivats Rangarajan (@adharshsrivatsr)
 notes:
   - Tested against NX-OS 7.3.(0)D1(1) on VIRL
   - To parse configuration text, provide the output of show running-config | section interface  or a mocked up config
+  - When a route is configured for a non-existent VRF, the VRF is created and the route is added to it. 
+  - When deleting routes for a VRF, all routes inside the VRF are deleted, but the VRF is not deleted. 
 options:
   running_config:
     description:
@@ -139,8 +141,8 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# ip route 12.12.12.0/24 192.168.12.2 name new_route
-# ip route 12.12.13.0/24 192.168.12.3 tag 12 
+# ip route 192.0.2.32/28 192.0.2.12 name new_route
+# ip route 192.0.2.26/24 192.0.2.13 tag 12 
 
 - name: Delete static route configuration
   nxos_static_routes:
@@ -156,48 +158,45 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# ip route 12.12.13.0/24 192.168.12.3 tag 12
+# 
 
 - name: Merge new static route configuration
   nxos_static_routes:
     config:
-      - vrf: Test1
+      - vrf: trial_vrf
         address_families:
           - afi: ipv4
             routes:
-              - dest: 15.15.15.15/24
-                next_hop: 
-                  - forward_router_address: 193.145.98.12
-                    admin_distance: 5                
-                  - forward_router_address: 178.12.112.24
-                    vrf: Trial
+              - dest: 192.0.2.64/24
+                next_hops: 
+                  - forward_router_address: 192.0.2.22
+                    tag: 4
+                    admin_distance: 2
 
-          - afi: ipv4
-            routes:
-              dest: 13.13.13.13/24
-              next_hop:
-                - interface: Null0
-      
       - address_families:
           - afi: ipv4
             routes:
-              - dest: 12.12.12.12/24
-                next_hop:
-                  - forward_router_address: 193.145.98.12
+              - dest: 192.0.2.16/24
+                next_hops:
+                  - forward_router_address: 192.0.2.24
                     route_name: new_route
-    state:
-        - merged
+              
+          - afi: ipv6
+            routes:
+              - dest: 2001:db8::/64
+                next_hops:
+                  - interface: eth1/3
+                    forward_router_address: 2001:db8::12
+    state: merged
 
 # After state:
 # ------------
 #
-# ip route 12.12.13.0/24 192.168.12.3 tag 12
-# ip route 12.12.12.0/24 193.145.98.12 name new_route
+# ip route 192.0.2.16/24 192.0.2.24 name new_route 
+# ipv6 route 2001:db8::/64 Ethernet1/3 2001:db8::12
 #
-# vrf context Test1
-# ip route 15.15.15.15/24 193.145.98.12 5
-# ip route 15.15.15.15/24 178.12.112.24 vrf Trial
-# ip route 13.13.13.13/24 Null0
+# vrf context trial_vrf
+#   ip route 192.0.2.0/24 192.0.2.22 tag 4 2
 
 
 # Using overridden:
@@ -205,66 +204,74 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# ip route 12.12.12.0/24 192.168.12.2 name new_route
-# ip route 12.12.13.0/24 192.168.12.3 tag 12
-# ip route 15.15.15.0/24 193.145.98.12 5
+# ip route 192.0.2.16/24 192.0.2.24 name new_route 
+# ipv6 route 2001:db8::/64 Ethernet1/3 2001:db8::12
+#
+# vrf context trial_vrf
+#   ip route 192.0.2.0/24 192.0.2.22 tag 4 2
 
 - name: Overriden existing static route configuration with new configuration
   nxos_static_routes:
     config:
       - address_families:
-          - afi: ipv6
+          - afi: ipv4
             routes:
-              - dest: 4011:0DB1::/48              
-                next_hop:
-                  - interface: null0
-    state: 
-        - overridden
+              - dest: 192.0.2.44/30
+                next_hops:
+                  - forward_router_address: 192.0.2.55
+                    tag: 1
+                    admin_distance: 1
+      
+    state: overridden
     
 # After state:
 # ------------
 #
-# ipv6 route 4011:0DB1::/48 Null0
+# ip route 192.0.2.44/30 192.0.2.55 tag 1 1
+# vrf context trial_vrf
 
 
 # Using replaced:
 
 # Before state:
 #
-# ip route 12.12.12.12/24 192.168.121.1 
-# ip route 12.12.12.12/24 192.168.123.45 5
-# ip route 12.12.12.12/24 192.168.124.5 10
-# ip route 12.12.13.0/24 192.168.12.3 tag 12
-# ip route 15.15.15.0/24 193.145.98.12 5
+# ip route 192.0.2.16/24 192.0.2.24 name new_route 
+# ipv6 route 2001:db8::/64 Ethernet1/3 2001:db8::12
+#
+# vrf context trial_vrf
+#   ip route 192.0.2.0/24 192.0.2.22 tag 4 2
 
 - name: Replaced the existing static configuration of a prefix with new configuration
   nxos_static_routes:
     config:
-      - address_families:
-          - afi: ipv4
+      - vrf: trial_vrf
+        address_families:
+          - afi: ipv6
             routes:
-              - dest: 12.12.12.12/24
-                next_hop:
-                  - ip: 195.134.175.12
+              - dest: 2001:db8::/32
+                next_hops:
+                  - forward_router_address: 2001:db8:125::12
                     route_name: replaced_route
     state:
         - replaced
 
 # After state:
 #
-# ip route 12.12.12.0/24 195.135.175.12 name replaced_route
-# ip route 12.12.13.0/24 192.168.12.3 tag 12
-# ip route 15.15.15.0/24 193.145.98.12 5
+# ip route 192.0.2.16/24 192.0.2.24 name new_route 
+# ipv6 route 2001:db8::/64 Ethernet1/3 2001:db8::12
+#
+# vrf context trial_vrf
+#   ipv6 route 2001:db8::/32 2001:db8:125::12 name replaced_route
 
 
 # Using gathered:
 
 # Before state:
 #
-# ipv6 route 4011::0db1/128 6::6 
+# ipv6 route 2001:db8:12::/32  2001:db8::12
 # vrf context Test
-#    ip route 12.12.12.0/24 192.168.121.1 
-#    ip route 12.12.12.0/24 192.168.123.45 5
+#    ip route 192.0.2.48/28 192.0.2.13 
+#    ip route 192.0.2.48/28 192.0.2.14 5
 
 - name: Gather the exisitng condiguration
   nxos_static_routes:
@@ -272,33 +279,32 @@ EXAMPLES = """
 
 # After state:
 #
-# ipv6 route 4011::0db1/128 6::6 
+# ipv6 route 2001:db8:12::/32 2001:db8::12
 # vrf context Test
-#   ip route 12.12.12.0/24 192.168.121.1 
-#   ip route 12.12.12.0/24 192.168.123.45 5
+#    ip route 192.0.2.48/28 192.0.2.13 
+#    ip route 192.0.2.48/28 192.0.2.14 5
 
 # returns:
-# 
-#  nxos_static_routes:
-#    config:
-#        -   vrf: Test
-#            address_families:
-#               -   afi: ipv4
-                    routes:
-#                   -   dest: 12.12.12.0/24
-#                       next_hop: 
-#                            -   forward_router_address: 192.168.121.1 
 #
-#                            -   forward_router_address: 192.168.123.45
-#                                admin_distance: 5
-#
-#        -   address_families:
-                - afi: ipv6
-#                 routes:
-#                     -   dest: 4011::0db1/128
-#                         next_hop:
-#                             -   forward_router_address: 6::6
-#
+# nxos_static_routes:
+#   config:
+#     - vrf: Test
+#       address_families:
+#         - afi: ipv4
+#           routes:
+#             - dest: 192.0.2.48/28
+#               next_hops:
+#                 - forward_router_address: 192.0.2.13
+#                
+#                 - forward_router_address: 192.0.2.14
+#                   admin_distance: 5
+#        
+#     - address_families:
+#         - afi: ipv6
+#           routes:
+#             - dest: 2001:db8:12::/32
+#               next_hops:
+#                 - forward_router_address: 2001:db8::12
 
 
 # Using rendered:
@@ -310,15 +316,19 @@ EXAMPLES = """
 - name: Render required configuration to be pushed to the device
   nxos_static_routes:
     config:
-        - vrf: 123
-          address_families:
-            - afi: ipv4  
-              routes:
-                    - dest: 14.14.14.14/24
-                      next_hop:
-                        -   forward_router_address: 192.112.134.78
+      - address_families:
+          - afi: ipv4
+            routes:
+              - dest: 192.0.2.48/28
+                next_hops:
+                  - forward_router_address: 192.0.2.13
 
-    state: rendered
+          - afi: ipv6
+            routes:
+              - dest: 2001:db8::/64
+                next_hops:
+                  - interface: eth1/3
+                    forward_router_address: 2001:db8::12
 
 # After state:
 # -----------
@@ -326,9 +336,10 @@ EXAMPLES = """
 
 
 # returns
-# commands:
-# vrf context 123
-# ip route 14.14.14.14/24 192.112.134.78
+# 
+# vrf context default
+# ip route 192.0.2.48/28 192.0.2.13 
+# ipv6 route 2001:db8::/64 Ethernet1/3 2001:db8::12
 
 
 # Using parsed
@@ -339,35 +350,37 @@ EXAMPLES = """
 
 - name: Parse the config to structured data
   nxos_static_routes:
-    running_config: |
-        ipv6 route 4011::0db1/128 6::6 
+      running_config: |
+        ipv6 route 2002:db8:12::/32 2002:db8:12::1
         vrf context Test
-           ip route 12.12.12.0/24 192.168.121.1 
-           ip route 12.12.12.0/24 192.168.123.45 5
+          ip route 192.0.2.48/28 192.0.2.13 
+          ip route 192.0.2.48/28 192.0.2.14 5
 
 # After state:
 # ------------
 #
 
-#returns
-#after:
-#    -   vrf: Test
-#        address_families:
-#            -   afi: ipv4
-#                routes:
-#                -   dest: 12.12.12.0/24
-#                    next_hop: 
-#                        -   forward_router_address: 192.168.121.1 
+# returns:
+# 
+# nxos_static_routes:
+#   config:
+#     - vrf: Test
+#       address_families:
+#         - afi: ipv4
+#           routes:
+#             - dest: 192.0.2.48/28
+#               next_hops:
+#                 - forward_router_address: 192.0.2.13
+#
+#                 - forward_router_address: 192.0.2.14
+#                   admin_distance: 5
 #    
-#                        -   forward_router_address: 192.168.123.45
-#                            admin_distance: 5
-#    
-#    -   address_families:
-#            - afi: ipv6
-#                routes:
-#                    -   dest: 4011::0db1/128
-#                        next_hop:
-#                            -   forward_router_address: 6::6
+#     - address_families:
+#         - afi: ipv6
+#           routes:
+#             - dest: 2002:db8:12::/32
+#               next_hops:
+#                 - forward_router_address: 2002:db8:12::1
 
 
 """
@@ -388,7 +401,7 @@ commands:
   description: The set of commands pushed to the remote device.
   returned: always
   type: list
-  sample: ['command 1', 'command 2', 'command 3']
+  sample: ['ip route 192.0.2.48/28 192.0.2.12 Ethernet1/2 name sample_route', 'ipv6 route 2001:db8:3000::/36 2001:db8:200:2::2', 'vrf context test','ip route 192.0.2.48/28 192.0.2.121']
 """
 
 

@@ -2,6 +2,8 @@
 - name: Remove config
   cli_config:
     config: |
-      no ip route 12.12.12.0/24 192.168.12.2 name new_route
-      no ip route 12.12.13.0/24 192.168.12.3 tag 12 
+      no ip route 192.0.2.16/28 192.0.2.24 name new_route
+      no ip route 192.0.2.80/28 192.0.2.26 tag 12
       no vrf context trial_vrf
+  ignore_errors: yes
+  #error is thrown if we deleted trial_vrf when it is not present already. ignore_errors circumvents it

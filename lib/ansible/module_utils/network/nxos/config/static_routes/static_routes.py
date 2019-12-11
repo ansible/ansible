@@ -19,7 +19,6 @@ from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties, dict_diff
 from ansible.module_utils.network.nxos.facts.facts import Facts
 from ansible.module_utils.network.nxos.utils.utils import flatten_dict, search_obj_in_list, get_interface_type, normalize_interface
-import q
 
 
 class Static_routes(ConfigBase):
@@ -87,7 +86,6 @@ class Static_routes(ConfigBase):
             if result['changed']:
                 result['after'] = changed_static_routes_facts
         result['warnings'] = warnings
-        q(result)
         return result
 
     def set_config(self, existing_static_routes_facts):
@@ -107,7 +105,6 @@ class Static_routes(ConfigBase):
         want = self.add_default_vrf(deepcopy(want))
         have = self.add_default_vrf(deepcopy(have))
         resp = self.set_state(want, have)
-        q(to_list(resp))
         return to_list(resp)
 
     def set_state(self, want, have):
@@ -145,7 +142,6 @@ class Static_routes(ConfigBase):
         commands = []
         for w in want:
             commands.extend(self.set_commands(w, {}))
-        q(commands)
         return commands
 
     def _state_replaced(self, want, have):

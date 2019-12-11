@@ -13,6 +13,7 @@ import re
 from copy import deepcopy
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.nxos.argspec.static_routes.static_routes import Static_routesArgs
+import q
 
 
 class Static_routesFacts(object):
@@ -70,6 +71,8 @@ class Static_routesFacts(object):
                 else:
                     non_vrf_data.append(data[i])
                     i += 1
+                q(vrf_data)
+                q(non_vrf_data)
         objs = []
         new_vrf_data = []
         for v in vrf_data:

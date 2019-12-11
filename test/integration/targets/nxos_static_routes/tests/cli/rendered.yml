@@ -7,24 +7,26 @@
       config:
         - vrf: trial_vrf
           address_families:
-            - afi: ipv4
+            - afi: ipv6
               routes:
-                - dest: 192.123.131.0/24
-                  next_hops: 
-                    - forward_router_address: 193.145.12.3
-                      tag: 12
+                - dest: 2001:db8:12::/32
+                  next_hops:
+                    - forward_router_address: 2001:db8::1001
+                      route_name: rendered_route
+                      admin_distance: 3
                       
         - address_families:
             - afi: ipv4
               routes:
-                - dest: 12.12.12.0/24
+                - dest: 192.0.2.16/28
                   next_hops:
-                    - forward_router_address: 192.168.12.2
-                
-                - dest: 12.12.13.0/24 
+                    - forward_router_address: 192.0.2.24
+                      route_name: new_route
+                                  
+                - dest: 192.0.2.80/28 
                   next_hops:
-                    - forward_router_address: 192.168.12.3
-                      tag: 15
+                    - forward_router_address: 192.0.2.26
+                      tag: 12
       state: rendered
     register: result
   
@@ -32,10 +34,10 @@
       that:
         - "result.changed == false"
         - "'vrf context default' in result.rendered"
-        - "'ip route 12.12.12.0/24 192.168.12.2' in result.rendered"
-        - "'ip route 12.12.13.0/24 192.168.12.3 tag 15' in result.rendered"
+        - "'ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.rendered"
+        - "'ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.rendered"
         - "'vrf context trial_vrf' in result.rendered"
-        - "'ip route 192.123.131.0/24 193.145.12.3 tag 12' in result.rendered"
+        - "'ipv6 route 2001:db8:12::/32 2001:db8::1001 name rendered_route 3' in result.rendered"
         - "result.rendered | length == 5"
   
   - name: Idempotence - Rendered

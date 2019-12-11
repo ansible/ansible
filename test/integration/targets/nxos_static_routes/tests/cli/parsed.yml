@@ -15,10 +15,11 @@
     - name: Parsed
       nxos_static_routes: &parsed
         running_config: |
-          ip route 12.12.12.0/24 192.168.12.2 name new_route
-          ip route 12.12.13.0/24 192.168.12.3 tag 12
+          ip route 192.0.2.16/28 192.0.2.24 name new_route
+          ip route 192.0.2.80/28 192.0.2.26 tag 12
           vrf context trial_vrf
-          ip route 192.123.131.0/24 192.168.12.3 tag 4
+          ip route 192.0.2.64/28 192.0.2.22 tag 4
+          ip route 192.0.2.64/28 192.0.2.23 name merged_route 1
         state: parsed
       register: result
 

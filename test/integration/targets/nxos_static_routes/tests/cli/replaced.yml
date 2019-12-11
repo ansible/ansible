@@ -20,11 +20,11 @@
         config:
           - vrf: trial_vrf
             address_families:
-              - afi: ipv4
+              - afi: ipv6
                 routes:
-                  - dest: 192.123.131.0/24
+                  - dest: 2001:db8:12::/32
                     next_hops:
-                      - forward_router_address: 18.18.18.3
+                      - forward_router_address: 2001:db8::1001
                         route_name: replaced_vrf_route
                         admin_distance: 3
         state: replaced
@@ -34,8 +34,9 @@
         that:
           - "result.changed == true"
           - "'vrf context trial_vrf' in result.commands"
-          - "'no ip route 192.123.131.0/24 192.168.12.3 tag 4' in result.commands"
-          - "'ip route 192.123.131.0/24 18.18.18.3 name replaced_vrf_route 3' in result.commands"
+          - "'no ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
+          - "'no ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
+          - "'ipv6 route 2001:db8:12::/32 2001:db8::1001 name replaced_vrf_route 3' in result.commands"
 
     - name: Gather static_routes post facts
       nxos_facts:
@@ -55,6 +56,9 @@
       nxos_static_routes: *replaced
       register: result
 
+    - debug:
+        var: result
+        
     - assert:
         that:
           - "result.changed == false"

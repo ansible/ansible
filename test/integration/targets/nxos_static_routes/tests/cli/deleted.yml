@@ -11,23 +11,24 @@
           - '!all'
           - '!min'
         gather_network_resources: static_routes
-        
-    - debug:
-        var: ansible_facts.network_resources.static_routes
 
     - name: Deleted
       nxos_static_routes: &deleted
         state: deleted
       register: result
+    
+    - debug:
+        var: result
 
     - assert:
         that:
           - "ansible_facts.network_resources.static_routes == result.before"
           - "'vrf context trial_vrf' in result.commands"
-          - "'no ip route 192.123.131.0/24 192.168.12.3 tag 4' in result.commands"
+          - "'no ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
+          - "'no ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
           - "'vrf context default' in result.commands"
-          - "'no ip route 12.12.12.0/24 192.168.12.2 name new_route' in result.commands"
-          - "'no ip route 12.12.13.0/24 192.168.12.3 tag 12' in result.commands"
+          - "'no ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.commands"
+          - "'no ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.commands"
           - "result.changed == true "
           - "result.after | length == 0"
 

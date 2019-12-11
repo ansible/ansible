@@ -17,28 +17,30 @@
           config:
               - vrf: trial_vrf
                 address_families:
-                  - afi: ipv4
+                  - afi: ipv6
                     routes:
-                      - dest: 192.131.145.0/24
+                      - dest: 2001:db8:12::/32
                         next_hops:
-                          - forward_router_address: 168.12.63.9
-                          - forward_router_address: 168.12.63.12
-                            admin_distance: 1
+                          - forward_router_address: 2001:db8::1001
                             route_name: overridden_route
+                            admin_distance: 3
           state: overridden
         register: result  
+
+      - debug:
+          var: result
 
       - assert:
           that:
             - "ansible_facts.network_resources.static_routes == result.before"
             - "'vrf context trial_vrf' in result.commands"
-            - "'no ip route 192.123.131.0/24 192.168.12.3 tag 4' in result.commands"
-            - "'ip route 192.131.145.0/24 168.12.63.9' in result.commands"
-            - "'ip route 192.131.145.0/24 168.12.63.12 name overridden_route 1' in result.commands"
+            - "'no ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
+            - "'no ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
+            - "'ipv6 route 2001:db8:12::/32 2001:db8::1001 name overridden_route 3' in result.commands"
             - "'vrf context default' in result.commands"
-            - "'no ip route 12.12.12.0/24 192.168.12.2 name new_route' in result.commands"
-            - "'no ip route 12.12.13.0/24 192.168.12.3 tag 12' in result.commands"
-            - "result.commands | length == 7"
+            - "'no ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.commands"
+            - "'no ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.commands"
+            - "result.commands | length == 8"
               
       - name: Gather static_routes post facts
         nxos_facts: *facts
@@ -50,6 +52,9 @@
       - name: Idempotence - overridden
         nxos_static_routes: *overridden
         register: result
+        
+      - debug:
+          var: result
 
       - assert:
           that:
