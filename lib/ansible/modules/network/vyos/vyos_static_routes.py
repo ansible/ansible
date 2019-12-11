@@ -38,6 +38,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = """
 ---
 module: vyos_static_routes
+version_added: '2.10'
 short_description: Manages attributes of static routes on VyOS network devices.
 description: This module manages attributes of static routes on VyOS network devices.
 notes:
@@ -144,27 +145,27 @@ EXAMPLES = """
 # vyos@vyos:~$ show configuration  commands | grep static
 #
 - name: Merge the provided configuration with the exisiting running configuration
-      vyos_static_routes:
-        config:
-         - address_families:
-           - afi: 'ipv4'
-             routes:
-               - dest: 192.0.2.32/28
-                 blackhole_config:
-                   type: 'blackhole'
-                 next_hops:
-                   - forward_router_address: 192.0.2.6
-                   - forward_router_address: 192.0.2.7
-         - address_families:
-           - afi: 'ipv6'
-             routes:
-               - dest: 2001:db8:1000::/36
-                 blackhole_config:
-                   distance: 2
-                 next_hops:
-                   - forward_router_address: 2001:db8:2000:2::1
-                   - forward_router_address: 2001:db8:2000:2::2
-        state: merged
+  vyos_static_routes:
+    config:
+     - address_families:
+       - afi: 'ipv4'
+         routes:
+           - dest: 192.0.2.32/28
+             blackhole_config:
+               type: 'blackhole'
+             next_hops:
+               - forward_router_address: 192.0.2.6
+               - forward_router_address: 192.0.2.7
+     - address_families:
+       - afi: 'ipv6'
+         routes:
+           - dest: 2001:db8:1000::/36
+             blackhole_config:
+               distance: 2
+             next_hops:
+               - forward_router_address: 2001:db8:2000:2::1
+               - forward_router_address: 2001:db8:2000:2::2
+    state: merged
 #
 #
 # -------------------------
@@ -255,19 +256,19 @@ EXAMPLES = """
 # set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'
 #
 - name: Replace device configurations of listed static routes with provided configurations
-      vyos_static_routes:
-          config:
-            - address_families:
-              - afi: 'ipv4'
-                routes:
-                  - dest: 192.0.2.32/28
-                    blackhole_config:
-                      distance: 2
-                    next_hops:
-                      - forward_router_address: 192.0.2.7
-                        enabled: false
-                      - forward_router_address: 192.0.2.8
-          state: replaced
+  vyos_static_routes:
+    config:
+     - address_families:
+       - afi: 'ipv4'
+         routes:
+           - dest: 192.0.2.32/28
+             blackhole_config:
+               distance: 2
+             next_hops:
+               - forward_router_address: 192.0.2.7
+                 enabled: false
+               - forward_router_address: 192.0.2.8
+    state: replaced
 #
 #
 # -------------------------
@@ -373,7 +374,7 @@ EXAMPLES = """
 #            ]
 #        }
 #    ]
-# 
+#
 # After state:
 # -------------
 #
@@ -400,15 +401,15 @@ EXAMPLES = """
 # set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'
 #
 - name: Overrides all device configuration with provided configuration
-      vyos_static_routes:
-         config:
-           - address_families:
-             - afi: 'ipv4'
-               routes:
-                 - dest: 198.0.2.48/28
-                   next_hops:
-                     - forward_router_address: 192.0.2.18
-         state: overridden
+  vyos_static_routes:
+    config:
+     - address_families:
+       - afi: 'ipv4'
+         routes:
+           - dest: 198.0.2.48/28
+             next_hops:
+               - forward_router_address: 192.0.2.18
+    state: overridden
 #
 #
 # -------------------------
@@ -510,17 +511,17 @@ EXAMPLES = """
 # set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'
 #
 - name: Delete attributes of given static routes.
-      vyos_static_routes:
-        config:
-          - address_families:
-            - afi: 'ipv4'
-              routes:
-                - dest: '192.0.2.32/28'
-          - address_families:
-            - afi: 'ipv6'
-              routes:
-                - dest: '2001:db8:1000::/36'
-        state: deleted
+  vyos_static_routes:
+    config:
+     - address_families:
+       - afi: 'ipv4'
+         routes:
+           - dest: '192.0.2.32/28'
+     - address_families:
+       - afi: 'ipv6'
+         routes:
+           - dest: '2001:db8:1000::/36'
+    state: deleted
 #
 #
 # ------------------------

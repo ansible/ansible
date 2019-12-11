@@ -100,18 +100,15 @@ class Static_routesFacts(object):
         :rtype: dictionary
         :returns: The generated config
         """
-        routes = []
         next_hops_conf = '\n'.join(filter(lambda x: ('next-hop' in x), conf))
         blackhole_conf = '\n'.join(filter(lambda x: ('blackhole' in x), conf))
         routes_dict = {'blackhole_config': self.parse_blackhole(blackhole_conf),
                        'next_hops': self.parse_next_hop(next_hops_conf)}
-        routes.append(routes_dict)
         return routes_dict
 
     def parse_blackhole(self, conf):
         blackhole = None
         if conf:
-
             distance = search(r'^.*blackhole distance (.\S+)', conf, M)
             bh = conf.find('blackhole')
             if distance is not None:
@@ -121,7 +118,6 @@ class Static_routesFacts(object):
             elif bh:
                 blackhole = {}
                 blackhole['type'] = 'blackhole'
-
         return blackhole
 
     def get_afi(self, address):
@@ -136,7 +132,6 @@ class Static_routesFacts(object):
         if conf:
             nh_list = []
             hop_list = findall(r"^.*next-hop (.+)", conf, M)
-
             if hop_list:
                 for hop in hop_list:
                     distance = search(r'^.*distance (.\S+)', hop, M)

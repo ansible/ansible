@@ -82,7 +82,12 @@ class Static_routes(ConfigBase):
         elif self.state == 'rendered':
             result['rendered'] = commands
         elif self.state == 'parsed':
-            result['parsed'] = self.get_static_routes_facts(data=self._module.params['running_config'])
+            running_config = self._module.params['running_config']
+            if not running_config:
+                self._module.fail_json(
+                    msg="value of running_config parameter must not be empty for state parsed"
+                )
+            result['parsed'] = self.get_static_routes_facts(data=running_config)
         else:
             changed_static_routes_facts = []
 
