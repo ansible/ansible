@@ -344,7 +344,7 @@ class CloudWatchEventRule(object):
                 if 'launch_type' in target['ecs_parameters']:
                     target_request['EcsParameters']['LaunchType'] = ecs_parameters['launch_type']
                 if 'network_configuration' in target['ecs_parameters']:
-                     target_request['EcsParameters']['NetworkConfiguration'] = self.format_network_configuration(ecs_parameters['network_configuration'])
+                    target_request['EcsParameters']['NetworkConfiguration'] = self.format_network_configuration(ecs_parameters['network_configuration'])
             targets_request.append(target_request)
         return targets_request
 
