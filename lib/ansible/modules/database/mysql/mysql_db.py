@@ -70,6 +70,13 @@ options:
     default: false
     type: bool
     version_added: "2.10"
+  only_tables:
+    description:
+      - dump only tabels of exactly one database, without use database inside the dump
+    required: false
+    default: false
+    type: bool
+    version_added: "?? devel"
   force:
     description:
       - Continue dump or import even if we get an SQL error.
@@ -243,7 +250,7 @@ def db_delete(cursor, db):
 def db_dump(module, host, user, password, db_name, target, all_databases, port,
             config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
             single_transaction=None, quick=None, ignore_tables=None, hex_blob=None,
-            encoding=None, force=False):
+            encoding=None, only_tables=None, force=False):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -266,6 +273,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port,
         cmd += " --host=%s --port=%i" % (shlex_quote(host), port)
     if all_databases:
         cmd += " --all-databases"
+    elif only_tables and len(db_name) == 1:
+        cmd += " %s" % db_name[0]
     else:
         cmd += " --databases {0} --skip-lock-tables".format(' '.join(db_name))
     if (encoding is not None) and (encoding != ""):
@@ -404,6 +413,7 @@ def main():
             connect_timeout=dict(type='int', default=30),
             config_file=dict(type='path', default='~/.my.cnf'),
             single_transaction=dict(type='bool', default=False),
+            only_tables=dict(type='bool', default=False),
             quick=dict(type='bool', default=True),
             ignore_tables=dict(type='list', default=[]),
             hex_blob=dict(default=False, type='bool'),
@@ -448,6 +458,10 @@ def main():
     if len(db) > 1 and state == 'import':
         module.fail_json(msg="Multiple databases are not supported with state=import")
     db_name = ' '.join(db)
+
+    only_tables = module.params["only_tables"]
+    if only_tables and len(db) > 1 and state == 'dump':
+        module.fail_json(msg="Multiple databases are not supported with only_tables=yes and  state=dump")
 
     all_databases = False
     if state in ['dump', 'import']:
@@ -510,7 +524,7 @@ def main():
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
                                      ssl_ca, single_transaction, quick, ignore_tables,
-                                     hex_blob, encoding, force)
+                                     hex_blob, encoding, only_tables, force)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout,
