@@ -564,10 +564,10 @@ except ImportError:
     DBUS_IMP_ERR = traceback.format_exc()
     HAVE_DBUS = False
 
-import gi
 NM_CLIENT_IMP_ERR = None
 HAVE_NM_CLIENT = True
 try:
+    import gi
     gi.require_version('NM', '1.0')
     from gi.repository import NM
 except (ImportError, ValueError):
