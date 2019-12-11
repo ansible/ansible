@@ -1,2 +1,4 @@
 shippable/posix/group2
 needs/root
+skip/aix
+skip/ibmi

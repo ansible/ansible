@@ -1,3 +1,5 @@
 command
 shippable/posix/group2
 shell
+skip/aix
+skip/ibmi

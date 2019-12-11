@@ -1,2 +1,4 @@
 shippable/posix/group5
 handlers
+skip/aix
+skip/ibmi

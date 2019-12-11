@@ -1,5 +1,7 @@
 destructive
 shippable/posix/group4
+skip/aix
+skip/ibmi
 skip/osx
 skip/centos
 skip/redhat

@@ -1,4 +1,6 @@
 destructive
 shippable/posix/group4
 postgresql_user
+skip/aix
+skip/ibmi
 skip/osx

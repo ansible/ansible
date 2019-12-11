@@ -89,6 +89,10 @@ class AnsibleCoreCI:
             azure=(
                 'azure',
             ),
+            ibmcloud=(
+                'aix',
+                'ibmi',
+            ),
             parallels=(
                 'osx',
             ),
@@ -114,7 +118,7 @@ class AnsibleCoreCI:
 
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
-        if self.provider in ('aws', 'azure'):
+        if self.provider in ('aws', 'azure', 'ibmcloud'):
             if self.provider != 'aws':
                 self.resource = self.provider
 
@@ -141,6 +145,9 @@ class AnsibleCoreCI:
                 self.port = 5986
             else:
                 self.port = 22
+
+            if self.provider == 'ibmcloud':
+                self.max_threshold = 6
         elif self.provider == 'parallels':
             self.endpoints = self._get_parallels_endpoints()
             self.max_threshold = 6
@@ -151,7 +158,6 @@ class AnsibleCoreCI:
             self.ssh_key = SshKey(args)
             self.endpoints = ['https://access.ws.testing.ansible.com']
             self.max_threshold = 1
-
         else:
             raise ApplicationError('Unsupported platform: %s' % platform)
 

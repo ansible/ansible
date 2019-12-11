@@ -1,3 +1,5 @@
 needs/root
 shippable/posix/group2
 needs/target/template
+skip/aix
+skip/ibmi

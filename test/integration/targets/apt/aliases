@@ -3,3 +3,5 @@ destructive
 skip/freebsd
 skip/osx
 skip/rhel
+skip/aix
+skip/ibmi

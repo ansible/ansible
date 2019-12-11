@@ -1,2 +1,4 @@
 destructive
 shippable/posix/group2
+skip/aix
+skip/ibmi

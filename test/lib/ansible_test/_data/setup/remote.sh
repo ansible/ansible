@@ -78,6 +78,21 @@ elif [ "${platform}" = "osx" ]; then
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
     done
+elif [ "${platform}" = "aix" ]; then
+    chfs -a size=5G /
+    chfs -a size=10G /opt
+    while true; do
+        yum install -q -y \
+            gcc \
+            libffi-devel \
+            python-jinja2 \
+            python-cryptography \
+            python-pip && \
+        pip install --quiet virtualenv \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
 fi
 
 # Generate our ssh key and add it to our authorized_keys file.

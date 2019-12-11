@@ -2,3 +2,5 @@ shippable/posix/group1
 skip/freebsd
 skip/osx
 skip/rhel
+skip/aix
+skip/ibmi
