@@ -133,6 +133,23 @@ EXAMPLES = '''
 - cloudwatchevent_rule:
     name: MyCronTask
     state: absent
+
+- cloudwatchevent_rule:
+        name: MyCronTask
+        schedule_expression: "rate(1 hour)"
+        description: Run my scheduled task
+        region: us-east-1
+        targets:
+          - id: MyTargetId
+            role_arn: arn:aws:iam::123456789012:role/ecs_role
+            arn: arn:aws:ecs:us-east-1:123456789012:cluster/dev
+            ecs_parameters:
+              task_definition_arn: arn:aws:ecs:us-east-1:123456789012:task-definition/task:1"
+              task_count: 1
+              launch_type: "FARGATE"
+              network_configuration:
+                subnets: "subnet-1234567"
+                security_groups: "sg-012345678996"
 '''
 
 RETURN = '''
@@ -286,6 +303,23 @@ class CloudWatchEventRule(object):
         targets = self.list_targets()
         return self.remove_targets([t['id'] for t in targets])
 
+    def format_network_configuration(self, network_config):
+        result = dict()
+        if 'subnets' in network_config:
+            result['Subnets'] = network_config['subnets']
+        else:
+            self.module.fail_json(msg="Network configuration must include subnets")
+        if 'security_groups' in network_config:
+            groups = network_config['security_groups']
+            if any(not sg.startswith('sg-') for sg in groups):
+                try:
+                    vpc_id = self.ec2.describe_subnets(SubnetIds=[result['subnets'][0]])['Subnets'][0]['VpcId']
+                    groups = get_ec2_security_group_ids_from_names(groups, self.ec2, vpc_id)
+                except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+                    self.module.fail_json_aws(e, msg="Couldn't look up security groups")
+            result['SecurityGroups'] = groups
+        return dict(awsvpcConfiguration=result)
+
     def _targets_request(self, targets):
         """Formats each target for the request"""
         targets_request = []
@@ -307,6 +341,10 @@ class CloudWatchEventRule(object):
                     target_request['EcsParameters']['TaskDefinitionArn'] = ecs_parameters['task_definition_arn']
                 if 'task_count' in target['ecs_parameters']:
                     target_request['EcsParameters']['TaskCount'] = ecs_parameters['task_count']
+                if 'launch_type' in target['ecs_parameters']:
+                    target_request['EcsParameters']['LaunchType'] = ecs_parameters['launch_type']
+                if 'network_configuration' in target['ecs_parameters']:
+                     target_request['EcsParameters']['NetworkConfiguration'] = self.format_network_configuration(ecs_parameters['network_configuration'])
             targets_request.append(target_request)
         return targets_request
 
