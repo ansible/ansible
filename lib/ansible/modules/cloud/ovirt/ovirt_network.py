@@ -214,7 +214,6 @@ class NetworksModule(BaseModule):
         return (
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('name'), entity.name) and
-            equal(self._module.params.get('external_provider'), entity.external_provider) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self._module.params.get('vlan_tag'), getattr(entity.vlan, 'id', None)) and
             equal(self._module.params.get('vm_network'), True if entity.usages else False) and
