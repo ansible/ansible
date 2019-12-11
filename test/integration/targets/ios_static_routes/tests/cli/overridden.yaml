@@ -51,8 +51,8 @@
 
     - name: Assert that alternate before dicts are correctly generated
       assert:
-         that:
-           - "{{ overridden_alternate['before'] | symmetric_difference(result['before']) | length == 0 }}"
+        that:
+          - "{{ overridden_alternate['before'] | symmetric_difference(result['before']) | length == 0 }}"
       register: overridden_before_alternate
       ignore_errors: yes
 
@@ -71,8 +71,8 @@
 
     - name: Assert that alternate after dicts are correctly generated
       assert:
-         that:
-           - "{{ overridden_alternate['after'] | symmetric_difference(result['after']) | length == 0 }}"
+        that:
+          - "{{ overridden_alternate['after'] | symmetric_difference(result['after']) | length == 0 }}"
       register: overridden_after_alternate
       ignore_errors: yes
 
