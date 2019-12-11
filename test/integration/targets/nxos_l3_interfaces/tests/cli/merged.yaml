@@ -3,15 +3,15 @@
     msg: "Start nxos_l3_interfaces merged integration tests connection={{ ansible_connection }}"
 
 - set_fact:
-    test_int4: "{{ nxos_int4 }}"
-    subint4: "{{ nxos_int4 }}.42"
+    test_int3: "{{ nxos_int3 }}"
+    subint3: "{{ nxos_int3 }}.42"
 
 - name: setup1
   cli_config: &cleanup
     config: |
       no system default switchport
-      default interface {{ test_int4 }}
-      interface {{ test_int4 }}
+      default interface {{ test_int3 }}
+      interface {{ test_int3 }}
         no switchport
   ignore_errors: yes
 
@@ -23,7 +23,7 @@
   - name: Merged
     nxos_l3_interfaces: &merged
       config:
-        - name: "{{ subint4 }}"
+        - name: "{{ subint3 }}"
           dot1q: 42
           redirects: false
           unreachables: true
@@ -36,7 +36,7 @@
       that:
         - "result.changed == true"
         - "result.before|length == 0"
-        - "'interface {{ subint4 }}' in result.commands"
+        - "'interface {{ subint3 }}' in result.commands"
         - "'encapsulation dot1q 42' in result.commands"
         - "'no ip redirects' in result.commands"
         - "'ip unreachables' in result.commands"
@@ -67,5 +67,5 @@
   - name: teardown
     cli_config:
       config: |
-        no interface {{ subint4 }}
+        no interface {{ subint3 }}
     ignore_errors: yes

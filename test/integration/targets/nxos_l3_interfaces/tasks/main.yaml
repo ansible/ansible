@@ -1,6 +1,4 @@
 ---
-- set_fact: nxos_int4="{{ intdataraw[4].interface }}"
-
 # mgmt0 is included in L3 facts but excluded from result.before/after, so check
 # for an IP on mgmt0 to account for the possible extra interface in facts.
 - set_fact:
