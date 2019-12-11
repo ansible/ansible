@@ -330,7 +330,10 @@ def main():
         module.fail_json(msg='Could not load the user credentials')
 
     # Create the API client
-    client = NTTMCPClient(credentials, module.params['region'])
+    try:
+        client = NTTMCPClient(credentials, module.params.get('region'))
+    except NTTMCPAPIException as e:
+        module.fail_json(msg=e.msg)
 
     get_image(module=module, client=client)
 

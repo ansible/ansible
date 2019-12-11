@@ -64,7 +64,7 @@ options:
         type: str
     description:
         description:
-            - The description of the VLAN
+            - The description of the server
         required: false
         type: str
     image:
@@ -192,11 +192,28 @@ options:
         required: false
         type: list
         suboptions:
-            id:
+            controller_type:
                 description:
-                    - The UUID of the disk
+                    - The the controller/disk type
                 required: false
                 type: str
+                choices:
+                    - scsi
+                    - sata
+                    - ide
+            controller_number:
+                description:
+                    - The controller number on the bus as an integer
+                required: false
+                type: int
+                default: 0
+            disk_number:
+                description:
+                    - The disk number on the controller as an integer
+                    - If no disk number is provided the last disk of that type on the controller will be assumed
+                required: false
+                type: int
+                default: 0
             speed:
                 description:
                     - The disk speed required
@@ -211,7 +228,7 @@ options:
                 description:
                     - The number of required IOPS as an Integer
                     - IOPS are only applicable for PROVISIONEDIOPS disk speeds
-                    - Ensure IOPS is within the range for a disk size. The lower the IOPS the longer the deployment time
+                    - Ensure IOPS is within the range for a disk size.
                     - The higher the IOPS the greater the cost
                 required: false
                 type: int
@@ -329,12 +346,15 @@ EXAMPLES = '''
     ntt_mcp_server:
       region: na
       datacenter: NA9
-      name: APITEST
+      name: my_server_01
       image: "CentOS 7 64-bit 2 CPU"
       disks:
-        - id: xxxx
+        - controller_type: scsi
+          controller_number: 0
+          disk_number: 0
+          id: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
           speed: STANDARD
-        - id: zzzz
+        - id: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
           speed: PROVISIONEDIOPS
           iops: 50
       cpu:
@@ -342,12 +362,12 @@ EXAMPLES = '''
         count: 1
         coresPerSocket: 2
       network_info:
-        network_domain: xyz
+        network_domain: my_cnd
         primary_nic:
-          vlan: zyx
+          vlan: my_vlan
         additional_nic:
           - networkAdapter: VMXNET3
-            vlan: abc
+            vlan: my_vlan_2
             privateIpv4: "10.0.0.20"
     start: True
     wait_for_vmtools: True
@@ -357,8 +377,8 @@ EXAMPLES = '''
     ntt_mcp_server:
       region: na
       datacenter: NA9
-      network_domain: xxxx
-      name: APITEST
+      network_domain: my_cnd
+      name: my_server_01
       memory_gb: 4
       cpu:
         count: 2
@@ -372,7 +392,7 @@ EXAMPLES = '''
     ntt_mcp_server:
       region: na
       datacenter: NA9
-      name: APITEST
+      name: my_server_01
       wait: True
       state: absent
 
@@ -381,7 +401,7 @@ EXAMPLES = '''
       region: na
       datacenter: NA9
       network_domain: APITEST
-      name: yyyy
+      name: my_server_01
       state: stop
       wait_for_vmtools: True
 '''
@@ -768,6 +788,47 @@ CORE = {
     'wait_for_vmtools': False}
 
 
+def get_disks(module, image):
+    """
+    Create a server
+
+    :arg module: The Ansible module instance
+    :arg client: The CC API client instance
+    :returns: A list of disks
+    """
+    disks = module.params.get('disks')
+    new_disks = list()
+    try:
+        for disk in disks:
+            new_disk = dict()
+            controller_type = disk.get('controller_type')
+            if controller_type == 'scsi':
+                controller_name = 'scsiController'
+            elif controller_type == 'sata':
+                controller_name = 'sataController'
+            elif controller_type == 'ide':
+                controller_name = 'ideController'
+            else:
+                module.fail_json(msg='Invalid disk type.')
+            new_disk['id'] = image.get(controller_name, [])[disk.get('controller_number')].get('disk', [])[disk.get('disk_number')].get('id')
+            if not new_disk.get('id'):
+                module.fail_json(msg='Failed to find disk {0} on the {1} controller number {2}'.format(
+                    disk.get('disk_number'),
+                    controller_type,
+                    disk.get('controller_number')))
+            if disk.get('speed'):
+                new_disk['speed'] = disk.get('speed')
+            if disk.get('iops'):
+                new_disk['iops'] = disk.get('iops')
+            new_disks.append(new_disk)
+    except (KeyError, IndexError, AttributeError, TypeError) as e:
+        module.fail_json(msg='Failed to find disk {0} on the {1} controller number {2}: {3}'.format(disk.get('disk_number'),
+                                                                                                    controller_type,
+                                                                                                    disk.get('controller_number'),
+                                                                                                    e))
+    return new_disks
+
+
 def create_server(module, client):
     """
     Create a server
@@ -777,9 +838,7 @@ def create_server(module, client):
     :returns: The created server
     """
     return_data = return_object('server')
-    return_data['server'] = {}
-    params = {}
-    disks = module.params.get('disks')
+    return_data['server'] = params = image = dict()
     network = module.params.get('network_info')
     datacenter = module.params.get('datacenter')
     ngoc = module.params.get('ngoc')
@@ -788,24 +847,27 @@ def create_server(module, client):
     datacenter = module.params.get('datacenter')
 
     try:
-        image = client.list_image(datacenter_id=datacenter, image_name=image_name)
-        if image.get('osImage'):
-            image_id = image.get('osImage')[0].get('id')
+        images = client.list_image(datacenter_id=datacenter, image_name=image_name)
+        if images.get('osImage'):
+            image_id = images.get('osImage')[0].get('id')
+            image = images.get('osImage')[0]
         else:
-            image = client.list_customer_image(datacenter_id=datacenter, image_name=image_name)
-            image_id = image.get('customerImage')[0].get('id')
+            images = client.list_customer_image(datacenter_id=datacenter, image_name=image_name)
+            image_id = images.get('customerImage')[0].get('id')
+            image = images.get('customerImage')[0]
     except (KeyError, IndexError, NTTMCPAPIException) as e:
-        module.fail_json(msg='Failed to find the  Image {0} - {1}'.format(image_name, e))
+        module.fail_json(msg='Failed to find the Image {0} - {1}'.format(image_name, e))
 
     # Check disk configurations
+    disks = get_disks(module, image)
     if disks:
-        params['disk'] = []
+        params['disk'] = list()
         for disk in disks:
             if 'id' in disk:
                 if 'speed' not in disk:
                     module.fail_json(msg='Disk speed is required.')
-                elif ('iops' in disk and disk['speed'] not in VARIABLE_IOPS):
-                    module.fail_json(msg='Disk IOPS are required when disk_speed is: {0}.'.format(disk['speed']))
+                elif ('iops' in disk and disk.get('speed') not in VARIABLE_IOPS):
+                    module.fail_json(msg='Disk IOPS are required when disk_speed is: {0}.'.format(disk.get('speed')))
                 params['disk'].append(disk)
             else:
                 module.fail_json(msg='Disks IDs are required.')
@@ -849,7 +911,7 @@ def create_server(module, client):
                                                                 datacenter=module.params['datacenter'],
                                                                 network_domain_id=(params['networkInfo']['networkDomainId']))['id']
                 else:
-                    module.fail_json('An IPv4 address of VLAN is required for additional NICs')
+                    module.fail_json(msg='An IPv4 address of VLAN is required for additional NICs')
                 additional_nic.append(new_nic)
             params['networkInfo']['additionalNic'] = additional_nic
     except (KeyError, IndexError, NTTMCPAPIException) as e:
@@ -879,7 +941,6 @@ def create_server(module, client):
             params['administratorPassword'] = module.params['admin_password']
         else:
             params['administratorPassword'] = generate_password()
-
     try:
         result = client.create_server(ngoc, params)
         new_server_id = result['info'][0]['value']
@@ -1308,7 +1369,7 @@ def wait_for_server(module, client, name, datacenter, network_domain_id, state, 
         try:
             actual_state = server[0]['state']
             start_state = server[0]['started']
-        except (KeyError, IndexError) as e:
+        except (KeyError, IndexError):
             module.fail_json(msg='Failed to find the server - {0}'.format(name))
 
         if actual_state != state:
@@ -1342,7 +1403,7 @@ def main():
     """
     module = AnsibleModule(
         argument_spec=dict(
-            region=dict(default='na', typ='str'),
+            region=dict(default='na', type='str'),
             datacenter=dict(required=True, type='str'),
             network_domain=dict(default=None, required=False, type='str'),
             vlan=dict(default=None, required=False, type='str'),

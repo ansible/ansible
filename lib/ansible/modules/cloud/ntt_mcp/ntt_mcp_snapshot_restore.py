@@ -70,13 +70,13 @@ options:
             - Should Ansible wait for the task to complete before continuing
         required: false
         type: bool
-        default: true
+        default: false
     wait_time:
         description:
             - The maximum time the Ansible should wait for the task to complete in seconds
         required: false
         type: int
-        default: 1800
+        default: 3600
     wait_poll_interval:
         description:
             - The time in between checking the status of the task in seconds
@@ -222,7 +222,7 @@ def main():
         if module.params.get('wait'):
             server_id = next((item for item in result.get('info') if item["name"] == "serverId"), dict()).get('value')
             if not server_id:
-                module.fail_json('Snapshot restore was successful but could not find the server to wait for status updates')
+                module.fail_json(msg='Snapshot restore was successful but could not find the server to wait for status updates')
             wait_for_snapshot(module, client, server_id)
             module.exit_json(changed=True, msg='The file/directory have been successfully restored')
         module.exit_json(changed=True, msg='The restoration process is in progress. '

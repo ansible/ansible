@@ -413,7 +413,7 @@ def verify_member_schema(module, client, network_domain_id):
     members = []
 
     if not isinstance(member_names, list):
-        module.fail_json('The members argument must be a YAML list/array')
+        module.fail_json(msg='The members argument must be a YAML list/array')
     # If the user has supplied more than 100 members, truncate to 100 as this is the maximum number of members in a VIP Pool
     elif len(member_names) > 100:
         del member_names[100:]
@@ -421,7 +421,7 @@ def verify_member_schema(module, client, network_domain_id):
         nodes = client.list_vip_node(network_domain_id=network_domain_id)
         for member in member_names:
             if not isinstance(member, dict):
-                module.fail_json('The members must be a YAML object/dictionary. Got {0}'.format(member))
+                module.fail_json(msg='The members must be a YAML object/dictionary. Got {0}'.format(member))
             elif 'name' in member and 'port' in member:
                 if member.get('name') is None or not isinstance(member.get('port'), int):
                     module.fail_json(msg='The member name cannot be None and the member port must be an integer')
@@ -435,7 +435,7 @@ def verify_member_schema(module, client, network_domain_id):
                 if member_id:
                     members.append({'id': member_id, 'port': member.get('port'), 'status': status})
             else:
-                module.fail_json('Each member must contain a name and a port attribute. Got {0}'.format(member))
+                module.fail_json(msg='Each member must contain a name and a port attribute. Got {0}'.format(member))
     except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as exc:
         module.fail_json(msg='Could not validate the schema of all of the member objects - {0}'.format(exc))
     if members:

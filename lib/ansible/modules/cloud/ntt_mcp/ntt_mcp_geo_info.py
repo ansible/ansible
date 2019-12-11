@@ -108,7 +108,7 @@ data:
                     type: str
                 isHome:
                     description: Is this the home geo for the user
-                    type: boolean
+                    type: bool
                 monitoringUrl:
                     description: The monitoring service URL for this geo
                     type: str

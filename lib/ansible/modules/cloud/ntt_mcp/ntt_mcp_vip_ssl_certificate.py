@@ -178,7 +178,7 @@ def import_ssl_cert(module, client, network_domain_id):
     ssl_type = module.params.get('type')
 
     if not name:
-        module.fail_json('A valid SSL certificate/chain name is required')
+        module.fail_json(msg='A valid SSL certificate/chain name is required')
 
     # Attempt to load the certificate and key and verify they are valid
     try:
@@ -214,7 +214,7 @@ def delete_ssl_cert(module, client, ssl_id):
     :arg ssl_id: The UUID of the SSL certificate/chain
     """
     if not ssl_id:
-        module.fail_json('A valid SSL certificate/chain ID is required')
+        module.fail_json(msg='A valid SSL certificate/chain ID is required')
     try:
         client.remove_ssl(module.params.get('type'), ssl_id)
     except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as exc:

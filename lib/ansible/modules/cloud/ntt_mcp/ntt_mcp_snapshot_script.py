@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {
 }
 DOCUMENTATION = '''
 ---
-module: ntt_mcp_snapshot_service
+module: ntt_mcp_snapshot_script
 short_description: Enable/Disable and Update the Snapshot Service on a server
 description:
     - Enable/Disable and Update the Snapshot Service on a server
@@ -75,6 +75,7 @@ options:
         description:
             - What to do in the event of a sript failure
         required: false
+        type: str
         default: CONTINUE
         choices:
             - CONTINUE

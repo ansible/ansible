@@ -62,19 +62,9 @@ options:
             - The description of the VLAN
         required: false
         type: str
-    ipv4_network_address:
+    ipv4_cidr:
         description:
-            - The IPv4 network address for the VLAN
-        required: false
-        type: str
-    ipv4_prefix_size:
-        description:
-            - The prefix size for the VLAN (e.g. /24)
-        required: false
-        type: int
-    ipv6_network_address:
-        description:
-            - The IPv6 network address for the VLAN (used for searching only)
+            - The IPv4 CIDR for the VLAN (e.g. 10.0.0.0/24)
         required: false
         type: str
     vlan_type:
@@ -157,8 +147,7 @@ EXAMPLES = '''
       datacenter: NA12
       network_domain: myCND
       name: myVLAN2
-      ipv4_network_address: "10.1.78.0"
-      ipv4_prefix_size: 24
+      ipv4_cidr: "10.1.78.0/24"
       attached_vlan_gw: HIGH
       state: present
 
@@ -168,8 +157,7 @@ EXAMPLES = '''
       datacenter: NA12
       network_domain: myCND
       name: myVLAN3
-      ipv4_network_address: "10.1.79.0"
-      ipv4_prefix_size: 24
+      ipv4_cidr: "10.1.79.0/24"
       vlan_type: detachedVlan
       detached_vlan_gw: "10.1.79.1"
       state: present
@@ -180,8 +168,7 @@ EXAMPLES = '''
       datacenter: NA12
       network_domain: myCND
       name: myVLAN3
-      ipv4_network_address: "10.1.79.0"
-      ipv4_prefix_size: 24
+      ipv4_cidr: "10.1.79.0/24"
       vlan_type: detachedVlan
       detached_vlan_gw: "10.1.79.2"
       new_name: myVLAN4
@@ -314,6 +301,7 @@ try:
 except NameError:
     unicode = str
 
+
 def create_vlan(module, client, network_domain_id):
     """
     Create a VLAN
@@ -321,13 +309,11 @@ def create_vlan(module, client, network_domain_id):
     :arg module: The Ansible module instance
     :arg client: The CC API client instance
     :arg network_domain_id: The UUID of the network domain
+    :arg ipv4_cidr: The IPv4 network address and mask represented as an ipaddress object
     :returns: VLAN Object
     """
     return_data = return_object('vlan')
-    if not module.params.get('ipv4_network_address'):
-        module.fail_json(msg='An IPv4 network address is required for a new VLAN.')
-    if not module.params.get('ipv4_prefix_size'):
-        module.fail_json(msg='An IPv4 Prefix Size is required for a new VLAN.')
+    ipv4_cidr = None
 
     # Determine the IPv4 network and mask
     try:
@@ -338,8 +324,8 @@ def create_vlan(module, client, network_domain_id):
     datacenter = module.params['datacenter']
     name = module.params['name']
     vlan_type = module.params['vlan_type']
-    ipv4_network = module.params['ipv4_network_address']
-    ipv4_prefix = module.params['ipv4_prefix_size']
+    ipv4_network = str(ipv4_cidr.network_address)
+    ipv4_prefix = str(ipv4_cidr.prefixlen)
     wait = module.params['wait']
 
     if vlan_type == 'attachedVlan':
@@ -534,9 +520,7 @@ def main():
             network_domain=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
             description=dict(required=False, type='str'),
-            ipv4_network_address=dict(required=False, type='str'),
-            ipv4_prefix_size=dict(required=False, type='int'),
-            ipv6_network_address=dict(required=False, type='str'),
+            ipv4_cidr=dict(default=None, required=False, type='str'),
             vlan_type=dict(default='attachedVlan', choices=['attachedVlan', 'detachedVlan']),
             attached_vlan_gw=dict(required=False, default='LOW', choices=['LOW', 'HIGH']),
             detached_vlan_gw=dict(required=False, type='str'),

@@ -611,9 +611,8 @@ def main():
                 pass
             module.exit_json(changed=True, data=server)
         except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
-            module.fail_json(msg='Could not remove the monitoring from server {0} - {0}'.format(
-                module.params.get('name'),
-                e))
+            module.fail_json(msg='Could not remove the monitoring from server {0} - {1}'.format(module.params.get('name'),
+                                                                                                e))
 
 
 if __name__ == '__main__':

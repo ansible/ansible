@@ -136,11 +136,10 @@ data:
             sample: 10.0.0.10
         block:
             description: List of Public IPv4 addresses within the new block
-            type: complex
+            type: list
             returned: when next_free_public_ipv4 == False
-            contains:
-                type: str
-                sample: 10.0.0.10
+            sample:
+              - 10.0.0.10
         id:
             description: UUID of the public IPv4 block if allocating public IPv4
             type: str

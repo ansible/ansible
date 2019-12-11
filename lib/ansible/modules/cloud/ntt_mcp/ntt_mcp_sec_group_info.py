@@ -54,11 +54,12 @@ options:
     type:
         description:
             - The type of security group
+        required: false
         default: vlan
+        type: str
         choices:
             - vlan
             - server
-        type: str
     name:
         description:
             - The name of the Security Group
@@ -144,13 +145,14 @@ data:
             sample: 1
         security_group:
             description: List of Security Group objects
+            type: complex
             contains:
                 name:
-                    description:
-                    type: string
+                    description: The name of the Security Group
+                    type: str
                     sample: my_vlan_security_group
                 nics:
-                    description:
+                    description: List of NICs associated with the Security Group
                     returned: type == vlan and at least 1 NIC is configured in this group
                     type: complex
                     contains:
@@ -160,7 +162,7 @@ data:
                             contains:
                                 ipv4Address:
                                     description: The IPv4 address of the NIC
-                                    type: string
+                                    type: str
                                     sample: 10.0.0.7
                                 server:
                                     description: dict containing server information for this NIC
@@ -168,35 +170,35 @@ data:
                                     contains:
                                         id:
                                             description: The UUID of the server
-                                            type: string
+                                            type: str
                                             sample: b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae
                                         name:
                                             description: The name of the server
-                                            type: string
+                                            type: str
                                             sample: myServer03
                                 id:
                                     description: The UUID of the NIC
-                                    type: string
+                                    type: str
                                     sample: 7b664273-05fa-467f-82c2-6dea32cdf233
                                 ipv6Address:
                                     description: The IPv6 address of the NIC
-                                    type: string
+                                    type: str
                                     sample: 1111:1111:1111:1111:0:0:0:1
                                 primary:
                                     description: Is the NIC the primary NIC on the server
                                     type: bool
                         vlanId:
                             description: The UUID of the VLAN for the NICs
-                            type: string
+                            type: str
                             sample: b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae
                 servers:
                     description: List of servers associated with the Security Group
                     returned: type == server and at least 1 server is configured in this group
                     type: complex
                     contains:
-                        networkDomainId: The UUID of the Cloud Network Domain
-                            description:
-                            type: string
+                        networkDomainId:
+                            description: The UUID of the Cloud Network Domain
+                            type: str
                             sample: b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae
                         server:
                             description: List of server objects
@@ -204,35 +206,35 @@ data:
                             contains:
                                 id:
                                     description: The UUID of the server
-                                    type: string
+                                    type: str
                                     sample: b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae
                                 name:
                                     description: The name of the server
-                                    type: string
+                                    type: str
                                     sample: myServer01
                 createTime:
                     description: The time (in zulu) that the Security Group was created
-                    type: string
-                    sample: 2019-11-26T19:29:52.000Z
+                    type: str
+                    sample: "2019-11-26T19:29:52.000Z"
                 datacenterId:
                     description: The MCP/datacenter ID
-                    type: string
+                    type: str
                     sample: NA12
                 state:
                     description: The operational state
-                    type: string
+                    type: str
                     sample: NORMAL
                 type:
                     description: The Security Group type
-                    type: string
+                    type: str
                     sample: VLAN
                 id:
                     description: The UUID of the Security Group
-                    type: string
+                    type: str
                     sample: b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae
                 description:
                     description: Text description
-                    type: string
+                    type: str
                     sample: My VLAN security group
 '''
 

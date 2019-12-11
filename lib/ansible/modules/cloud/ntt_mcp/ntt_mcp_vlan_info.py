@@ -69,14 +69,14 @@ EXAMPLES = '''
   tasks:
 
   - name: Get a specific VLAN
-    ntt_mcp_vlan_facts:
+    ntt_mcp_vlan_info:
       region: na
       datacenter: NA9
       network_domain: myCND
       vlan: myVLAN
 
   - name: List all VLANs
-    ntt_mcp_vlan_facts:
+    ntt_mcp_vlan_info:
       region: na
       datacenter: NA9
       network_domain: myCND

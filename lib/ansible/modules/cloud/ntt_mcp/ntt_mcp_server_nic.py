@@ -720,7 +720,7 @@ def change_nic_state(module, client, network_domain_id, server, nic_id):
         result = client.change_nic_state(nic_id=nic_id,
                                          nic_state=module.params.get('connected'))
         if result.get('responseCode') != 'IN_PROGRESS':
-            module.fail_json('Changing the NIC state failed with - {0}', format(result.get('responseCode')))
+            module.fail_json(msg='Changing the NIC state failed with - {0}'.format(result.get('responseCode')))
         if module.params.get('wait'):
             wait_for_server(module, client, server.get('name'), module.params.get('datacenter'), network_domain_id,
                             'NORMAL', False, False, module.params.get('wait_poll_interval'))

@@ -249,8 +249,8 @@ def create_preview_server(module, client, replica, networks):
                                                                module.params.get('preserve_mac'))
         server_id = next((item for item in result.get('info') if item["name"] == "serverId"), dict()).get('value')
         if not server_id:
-            module.fail_json('The Snapshot Preview Server deployment was successful but could not find the server to '
-                             'wait for status updates')
+            module.fail_json(msg='The Snapshot Preview Server deployment was successful but could not find the server '
+                             'to wait for status updates')
         if module.params.get('wait'):
             wait_for_snapshot(module, client, server_id, CORE.get('start'))
             if module.params.get('migrate'):
@@ -306,7 +306,7 @@ def check_replica_input(module, client):
     try:
         for nic in networks:
             nic_dict = dict()
-            if not type(nic.get('nic')) == int:
+            if not isinstance(nic.get('nic'), int):
                 module.fail_json(msg='NIC number must be an integer that matches the NIC on the parent server')
             # Check the VLAN supplied actually exists
             vlan = next(x for x in vlans if x['name'] == nic.get('vlan'))

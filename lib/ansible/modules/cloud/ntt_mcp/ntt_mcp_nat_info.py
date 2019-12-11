@@ -142,7 +142,6 @@ data:
                     type: str
                     sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
                 state:
-                    state:
                     description: Status of the VLAN
                     type: str
                     sample: NORMAL

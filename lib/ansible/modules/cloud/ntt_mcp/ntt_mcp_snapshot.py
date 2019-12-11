@@ -65,6 +65,15 @@ options:
             - Optional description for the manual snapshot
         required: false
         type: str
+    state:
+        description:
+            - The action to be performed
+        required: true
+        type: str
+        default: present
+        choices:
+            - present
+            - absent
 notes:
     - Requires NTT Ltd. MCP account/credentials
 requirements:

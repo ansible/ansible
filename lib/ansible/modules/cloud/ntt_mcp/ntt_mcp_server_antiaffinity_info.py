@@ -119,7 +119,7 @@ data:
                 createTime:
                     description: The creation date of the Anti-Affinity Group
                     type: str
-                    sample: 2019-01-14T11:12:31.000Z
+                    sample: "2019-01-14T11:12:31.000Z"
                 state:
                     description: Status of the Anti-Affinity Group
                     type: str
@@ -146,7 +146,7 @@ data:
                                     sample: b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae
                                 networkDomainName:
                                     description: The name of the Cloud Network Domain for this server
-                                    type: str:
+                                    type: str
                                     sample: my_cnd
                                 primary_nic:
                                     description: Information in the primary NIC for this server

@@ -154,7 +154,6 @@ data:
             type: str
             sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
         state:
-            state:
             description: Status of the static route
             type: str
             sample: NORMAL
@@ -317,7 +316,10 @@ def main():
     if credentials is False:
         module.fail_json(msg='Error: Could not load the user credentials')
 
-    client = NTTMCPClient(credentials, module.params.get('region'))
+    try:
+        client = NTTMCPClient(credentials, module.params.get('region'))
+    except NTTMCPAPIException as e:
+        module.fail_json(msg=e.msg)
 
     # Check to see the CIDR provided is valid
     if module.params.get('cidr'):

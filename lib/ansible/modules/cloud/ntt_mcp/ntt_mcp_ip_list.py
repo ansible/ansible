@@ -184,32 +184,32 @@ data:
     contains:
         id:
             description: IP Address List UUID
-            type: string
+            type: str
             returned: when state == present
             sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
         description:
             description: IP Address List description
-            type: string
+            type: str
             returned: when state == present
             sample: "My IP Address List description"
         name:
             description: IP Address List name
-            type: string
+            type: str
             returned: when state == present
             sample: "My IP Address List"
         createTime:
             description: The creation date of the image
-            type: string
+            type: str
             returned: when state == present
             sample: "2019-01-14T11:12:31.000Z"
         state:
             description: Status of the VLAN
-            type: string
+            type: str
             returned: when state == present
             sample: NORMAL
         ipVersion:
             description: The IP version for the IP Address List
-            type: string
+            type: str
             returned: when state == present
             sample: "IPV6"
         ipAddress:
@@ -227,7 +227,7 @@ data:
                     sample: x.x.x.x
                 prefixSize:
                     description: The prefix size for a given subnet
-                    type: string
+                    type: str
                     sample: "24"
         childIpAddressList:
             description: List of child IP Address Lists
@@ -236,11 +236,11 @@ data:
             contains:
                 id:
                     description: The ID of the IP Address List
-                    type: string
+                    type: str
                     sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
                 name:
                     description: The name of the IP Address List
-                    type: string
+                    type: str
                     sample: "My Child IP Address List"
 '''
 

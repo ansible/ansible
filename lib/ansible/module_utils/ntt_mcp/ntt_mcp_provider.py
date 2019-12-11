@@ -1283,6 +1283,110 @@ class NTTMCPClient():
         else:
             raise NTTMCPAPIException('No response from the API')
 
+    def set_vapp(self, server_id=None, iso=False, vmtools=True, vapp=list()):
+        """
+        Enable and set vApp properties on a server
+        """
+        params = dict()
+
+        if server_id is None:
+            raise NTTMCPAPIException('A valid server_id is required')
+        params['serverId'] = server_id
+        params['isoTransport'] = iso
+        params['vmwareTransport'] = vmtools
+        if vapp is not None:
+            params['vAppProperty'] = list()
+        for prop in vapp:
+            temp_prop = dict()
+            if prop.get('key') is None:
+                raise NTTMCPAPIException('A valid key is required for all supplied vApp properties')
+            temp_prop['key'] = prop.get('key')
+            temp_prop['set'] = dict()
+            temp_prop['set']['schema'] = dict()
+            if prop.get('value') is not None:
+                temp_prop['set']['value'] = prop.get('value')
+            if prop.get('id') is None:
+                raise NTTMCPAPIException('A valid id is required for all supplied vApp properties')
+            temp_prop['set']['schema']['id'] = prop.get('id')
+            if prop.get('type') is None:
+                raise NTTMCPAPIException('A valid type is required for all supplied vApp properties')
+            temp_prop['set']['schema']['type'] = prop.get('type')
+            if prop.get('class_id') is not None:
+                temp_prop['set']['schema']['classId'] = prop.get('class_id')
+            if prop.get('instance_id') is not None:
+                temp_prop['set']['schema']['instanceId'] = prop.get('instance_id')
+            if prop.get('category') is not None:
+                temp_prop['set']['schema']['category'] = prop.get('category')
+            if prop.get('label') is not None:
+                temp_prop['set']['schema']['label'] = prop.get('label')
+            if prop.get('description') is not None:
+                temp_prop['set']['schema']['description'] = prop.get('description')
+            if prop.get('configurable') is not None:
+                temp_prop['set']['schema']['userConfigurable'] = prop.get('configurable')
+            if prop.get('default_value') is not None:
+                temp_prop['set']['schema']['defaultValue'] = prop.get('default_value')
+            params['vAppProperty'].append(temp_prop)
+
+        url = self.base_url + 'server/setVAppProperties'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            return response.json()
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def remove_vapp_property(self, server_id=None, iso=False, vmtools=True, vapp_keys=list()):
+        """
+        Remove vApp properties from a server
+        """
+        params = dict()
+
+        if server_id is None:
+            raise NTTMCPAPIException('A valid server_id is required')
+        if len(vapp_keys) <= 0:
+            raise NTTMCPAPIException('A least 1 vApp property key must be provided')
+
+        params['serverId'] = server_id
+        params['isoTransport'] = iso
+        params['vmwareTransport'] = vmtools
+        params['vAppProperty'] = list()
+        for vapp_key in vapp_keys:
+            temp_key = dict()
+            temp_key['key'] = vapp_key
+            temp_key['delete'] = dict()
+            params['vAppProperty'].append(temp_key)
+
+        url = self.base_url + 'server/setVAppProperties'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            return response.json()
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def disable_vapp(self, server_id=None):
+        """
+        Remove vApp properties from a server
+
+        :kw server_id: The UUID of the server
+        :returns: API response
+        """
+
+        params = dict()
+
+        if server_id is None:
+            raise NTTMCPAPIException('A valid server_id is required')
+
+        params['serverId'] = server_id
+
+        url = self.base_url + 'server/disableVAppProperties'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            return response.json()
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
     '''
     SNAT Functions
     '''
@@ -1439,9 +1543,7 @@ class NTTMCPClient():
                     if route.get('name') == name:
                         return_data.append(route)
                     elif all([network, prefix, next_hop]):
-                        if (route.get('destinationNetworkAddress') == network
-                                and route.get('destinationPrefixSize') == prefix
-                                and route.get('nextHopAddress') == next_hop):
+                        if (route.get('destinationNetworkAddress') == network and route.get('destinationPrefixSize') == prefix and route.get('nextHopAddress') == next_hop):
                             return_data.append(route)
                     elif all([network, prefix]):
                         if route.get('destinationNetworkAddress') == network and route.get('destinationPrefixSize') == prefix:
@@ -1584,6 +1686,10 @@ class NTTMCPClient():
         else:
             raise NTTMCPAPIException('No response from the API')
 
+    """
+    Image Functions
+    """
+
     def list_image(self, datacenter_id=None, image_id=None, image_name=None, os_family=None):
         """
         Return an array of images based on a datacenter, UUID, name or family
@@ -1724,6 +1830,95 @@ class NTTMCPClient():
             return response.json()
         else:
             raise NTTMCPAPIException('No response from the API')
+
+    def get_image_export_history(self, image_id):
+        """
+        Return the export history for a given image export ID
+
+        :arg image_id: The ID of the image export
+        :returns: The API response
+        """
+        params = dict()
+        if image_id is None:
+            raise NTTMCPAPIException('A valid Image ID is required to find the export history')
+
+        params['imageExportId'] = image_id
+
+        url = self.base_url + 'image/exportInProgress'
+
+        response = self.api_get_call(url, params)
+        try:
+            return response.json()
+        except Exception:
+            return dict()
+
+    def export_image(self, image_id=None, ovf_name=None):
+        """
+        Export a customer image
+
+        :arg image_id: The ID of the image to export
+        :arg ovf_name: The name of the OVF package
+        :returns: The UUID of the image export
+        """
+        params = dict()
+        if image_id is None:
+            raise NTTMCPAPIException('A valid Image ID is required to export an image')
+        if ovf_name is None:
+            raise NTTMCPAPIException('A valid OVF Name is required to export an image')
+
+        params['imageId'] = image_id
+        params['ovfPackagePrefix'] = ovf_name
+
+        url = self.base_url + 'image/exportImage'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            if response.json().get('responseCode') == 'IN_PROGRESS':
+                return next((item for item in response.json().get('info') if item.get("name") == "imageExportId"), dict()).get('value')
+            else:
+                raise NTTMCPAPIException('Could not confirm that the image export started successfully: {0}'.format(response.content))
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    def clone_server_to_image(self, server_id=None, image_name=None, description=None, cluster_id=None, goc=True):
+        """
+        Clone an existing server to a customer image
+
+        :kw server_id: The UUID of the server to clone
+        :kw image_name: The name of the new image
+        :kw description: The image description
+        :kw cluster_id: The cluster ID when in a multi-cluster environment
+        :kw goc: Guest OS customization on this image
+        :returns: The UUID of the new image
+        """
+        params = dict()
+        if server_id is None:
+            raise NTTMCPAPIException('A valid server ID is required')
+        if image_name is None:
+            raise NTTMCPAPIException('A valid image name is required')
+
+        params['id'] = server_id
+        params['imageName'] = image_name
+        params['guestOsCustomization'] = goc
+        if description:
+            params['description'] = description
+        if cluster_id:
+            params['clusterId'] = cluster_id
+
+        url = self.base_url + 'server/cloneServer'
+
+        response = self.api_post_call(url, params)
+        if response is not None:
+            if response.json().get('responseCode') == 'IN_PROGRESS':
+                return next((item for item in response.json().get('info') if item.get("name") == "imageId"), dict()).get('value')
+            else:
+                raise NTTMCPAPIException('Could not confirm that the image export started successfully: {0}'.format(response.content))
+        else:
+            raise NTTMCPAPIException('No response from the API')
+
+    """
+    IPAM Functions
+    """
 
     def list_public_ipv4(self, network_domain_id):
         """
@@ -2721,6 +2916,40 @@ class NTTMCPClient():
                 return response.json()['error']
         except KeyError:
             raise NTTMCPAPIException('Could not confirm that the remove firewall rule request was accepted')
+
+    """
+    VIP Functions
+    """
+    def list_vip_function(self, network_domain_id=None, function_type='health_monitor'):
+        """
+        Return information on available VIP support functions
+
+        :kw network_domain_id: The UUID of a Cloud Network Domain
+        :kw function_type: The type of VIP support function to search on
+        :return: List of VIP support functions for the supplied function type
+        """
+        params = dict()
+        api_entity = None
+
+        if network_domain_id is None:
+            raise NTTMCPAPIException('Network Domain is required')
+
+        if function_type == 'health_monitor':
+            api_entity = 'defaultHealthMonitor'
+        elif function_type == 'persistence_profile':
+            api_entity = 'defaultPersistenceProfile'
+        elif function_type == 'irule':
+            api_entity = 'defaultIrule'
+
+        url = self.base_url + 'networkDomainVip/' + api_entity
+
+        params['networkDomainId'] = network_domain_id
+        response = self.api_get_call(url, params)
+        try:
+            return response.json().get(api_entity)
+        except Exception:
+            return []
+
 
     def list_vip_node(self, network_domain_id=None, name=None, ip_address=None):
         """

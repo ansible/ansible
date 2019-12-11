@@ -142,11 +142,11 @@ data:
                 healthMonitor:
                     description: The procedure that the load balancer uses to verify that the VIP Pool is considered healthy and available for load balancing
                     type: complex
-                    suboptions:
+                    contains:
                         id:
-                            description:
+                            description: The UUID of the Health Monitor
                             type: str
-                            sample: The UUID of the Health Monitor
+                            sample: "b2fbd7e6-ddbb-4eb6-a2dd-ad048bc5b9ae"
                         name:
                             description: The Health Monitor display name
                             type: str
@@ -154,7 +154,7 @@ data:
                 members:
                     description: List of VIP Pool Members
                     type: complex
-                    suboptions:
+                    contains:
                         createTime:
                             description: The creation date of the VIP Pool
                             type: str
@@ -162,7 +162,7 @@ data:
                         node:
                             description: The member node
                             type: complex
-                            suboptions:
+                            contains:
                                 status:
                                     description: The operational status of the node
                                     type: str

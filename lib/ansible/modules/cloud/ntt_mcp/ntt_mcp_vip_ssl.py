@@ -221,7 +221,7 @@ def import_ssl_cert(module, client, network_domain_id):
     description = module.params.get('certificate').get('description')
 
     if not name:
-        module.fail_json('A valid certificate name is required')
+        module.fail_json(msg='A valid certificate name is required')
 
     # Attempt to load the certificate and key and verify they are valid
     try:
@@ -258,7 +258,7 @@ def import_ssl_cert_chain(module, client, network_domain_id):
     description = module.params.get('chain').get('description')
 
     if not name:
-        module.fail_json('A valid certificate chain name is required')
+        module.fail_json(msg='A valid certificate chain name is required')
 
     # Attempt to load the certificate and key and verify they are valid
     try:

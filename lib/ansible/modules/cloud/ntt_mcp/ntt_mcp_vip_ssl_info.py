@@ -165,7 +165,7 @@ data:
             contains:
                 datacenterId:
                     description: The MCP ID
-                    type: existing_member
+                    type: str
                     sample: NA9
                 networkDomainId:
                     description: The UUID of the Cloud Network Domain

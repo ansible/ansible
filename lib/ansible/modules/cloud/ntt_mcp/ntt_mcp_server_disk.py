@@ -75,7 +75,7 @@ options:
             - IDE
     controller_number:
         description:
-            - The controller number on the controller as an integer
+            - The controller number on the bus as an integer
         required: false
         type: int
         default: 0

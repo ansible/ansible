@@ -27,10 +27,11 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: ntt_mcp_image
+module: ntt_mcp_image_import
 short_description: Import a custom OVF into Cloud Control
 description:
     - Import a custom OVF into Cloud Control or delete an existing imported OVF
+    - For large images, set a higher wait_time to ensure Ansible will wait for the complete import or set wait == False
 version_added: 2.10
 author:
     - Ken Sinfield (@kensinfield)
@@ -89,7 +90,7 @@ options:
         description: The maximum time the Ansible should wait for the task to complete in seconds
         required: false
         type: int
-        default: 600
+        default: 3600
     wait_poll_interval:
         description:
             - The time in between checking the status of the task in seconds
@@ -108,7 +109,7 @@ EXAMPLES = '''
   tasks:
 
   - name: Import an image into NA9
-    ntt_mcp_image:
+    ntt_mcp_image_import:
       region: na
       datacenter: NA9
       name: myImage
@@ -117,7 +118,7 @@ EXAMPLES = '''
       state: present
 
   - name: Remove an image into NA9
-    ntt_mcp_image:
+    ntt_mcp_image_import:
       region: na
       datacenter: NA9
       name: myImage
@@ -300,7 +301,7 @@ def import_image(module, client):
     try:
         image_id = result['info'][0]['value']
     except (KeyError, IndexError) as e:
-        module.fail_json(msg='Could not import the OVF package - {0}'.format(result))
+        module.fail_json(msg='Could not import the OVF package - {0} - {1}'.format(result, e))
 
     if wait:
         wait_result = wait_for_image_import(module, client, image_id, 'NORMAL')
@@ -337,7 +338,7 @@ def delete_image(module, client, image):
             try:
                 images = client.list_customer_image(datacenter_id=datacenter, image_name=image_name)
                 image_exists = [image for image in images if image.get('name') == image_name]
-            except (KeyError, AttributeError, NTTMCPAPIException) as e:
+            except (KeyError, AttributeError, NTTMCPAPIException):
                 pass
             sleep(wait_poll_interval)
             time = time + wait_poll_interval
@@ -369,7 +370,7 @@ def wait_for_image_import(module, client, image_id, state):
             module.fail_json(msg='Error: Failed to get the image - %s' % e)
         try:
             actual_state = image['state']
-        except (KeyError, IndexError) as e:
+        except (KeyError, IndexError):
             pass
         sleep(module.params['wait_poll_interval'])
         time = time + module.params['wait_poll_interval']
@@ -395,7 +396,7 @@ def main():
             guest_customization=dict(required=False, default=True, type='bool'),
             state=dict(default='present', choices=['present', 'absent']),
             wait=dict(required=False, default=True, type='bool'),
-            wait_time=dict(required=False, default=600, type='int'),
+            wait_time=dict(required=False, default=3600, type='int'),
             wait_poll_interval=dict(required=False, default=15, type='int')
         ),
         supports_check_mode=True
@@ -419,7 +420,10 @@ def main():
         module.fail_json(msg='Could not load the user credentials')
 
     # Create the API client
-    client = NTTMCPClient(credentials, module.params['region'])
+    try:
+        client = NTTMCPClient(credentials, module.params.get('region'))
+    except NTTMCPAPIException as e:
+        module.fail_json(msg=e.msg)
 
     # Check if the image already exists
     try:
@@ -434,7 +438,8 @@ def main():
         if image_exists:
             # Implement check_mode
             if module.check_mode:
-                module.exit_json(msg='An image with this name already exists. Existing image is included', data=image_exists)
+                module.exit_json(msg='An image with this name already exists. Existing image is included',
+                                 data=image_exists)
             module.fail_json(msg='Image name {0} already exists'.format(module.params['name']))
         # Implement check_mode
         if module.check_mode:

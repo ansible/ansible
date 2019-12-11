@@ -141,350 +141,325 @@ data:
             returned: on a list operation
             type: int
             sample: 1
-        contains:
-            snapshot_plan_info:
-                description: List of Snapshot Plans
-                returned: type == plan
-                type: complex
-                contains:
-                    available:
-                        description: When "true" indicates that the plan is available for use
-                        returned: success
-                        type: bool
+        snapshot_plan_info:
+            description: List of Snapshot Plans
+            returned: type == plan
+            type: complex
+            contains:
+                available:
+                    description: When "true" indicates that the plan is available for use
+                    returned: success
+                    type: bool
+                description:
+                    description: More detailed description of what comprises the plan.
+                    returned: success
+                    type: str
+                    sample: "Daily Snapshots retained for 14 Days, Weekly Snapshots retained for 90 Days"
+                displayName:
+                    description: Simple text display name. Useful for reference and display in UI integration.
+                    type: str
+                    sample: "One Month: 7d-4w"
+                id:
+                    description: String UID or UUID identifying the entity
+                    returned: success
+                    type: str
+                    sample: ONE_MONTH or d62596e8-fe2b-44ba-8ad2-a669b9dfcb51
+                snapshotFrequency:
+                    description: The frequency of SYSTEM snapshots for the plan. Values are DAILY and WEEKLY
+                    returned: success
+                    type: str
+                    sample: DAILY
+                supportsReplication:
+                    description: When True indicates that the plan supports Snapshot Replication
+                    returned: success
+                    type: str
+        server_snaphot_info:
+            description: The Snapshot configuration for a server
+            returned: type == server
+            type: complex
+            contains:
+                manualSnapshotInProgress:
+                    description: Is a manual Snapshot currently being processed
+                    returned: success
+                    type: bool
+                servicePlan:
+                    description: The type fo Snapshot Plan configured for this server
+                    returned: success
+                    type: str
+                    sample: ONE_MONTH
+                state:
+                    description: Simple text display name. Useful for reference and display in UI integration.
+                    type: str
+                    sample: "One Month: 7d-4w"
+                window:
+                    description: The window for the configured Snapshot service
+                    returned: success
+                    type: complex
+                    contains:
+                        dayOfWeek:
+                            description: Which day it the Snapshot is taken on (this should always be daily)
+                            returned: success
+                            type: str
+                            sample: DAILY
+                        startHour:
+                            description: Snapshot Windows begin on 2 hour periods
+                            returned: success
+                            type: str
+                            sample: 8
+        snapshot_window_info:
+            description: List of Snapshot Windows
+            returned: type == window
+            type: complex
+            contains:
+                availabilityStatus:
+                    description: RESERVED_FOR_MAINTENANCE, AVAILABLE or NOT_CURRENTLY_AVAILABLE
+                    returned: success
+                    type: str
+                    sample: OVERLAPS_WITH_MAINTENANCE
+                availableSlotCount:
+                    description: The number of available slots in the Snapshot Window
+                    returned: success
+                    type: int
+                    sample: 59
+                dayOfWeek:
+                    description: Which day it the Snapshot is taken on (this should always be daily)
+                    returned: success
+                    type: str
+                    sample: DAILY
+                startHour:
+                    description: Snapshot Windows begin on 2 hour periods
+                    returned: success
+                    type: int
+                    sample: 8
+                timeZone:
+                    description: The timeZone that the Snapshot Window is relative to
+                    returned: success
+                    type: str
+                    sample: Etc/UTC
+        snapshot_info:
+            description: List of Snapshots for a server
+            returned: type == snapshot
+            type: complex
+            contains:
+                indexState:
+                    description: Possible values for indexState are INDEX_NOT_COMPLETE, INDEX_VALID, INDEX_INVALID
+                    type: str
+                    sample: INDEX_VALID
+                expiryTime:
+                    description: Snapshots exist for a limited period after which the system will remove them
+                    type: str
+                    sample: "2019-11-22T08:00:05.000Z"
+                id:
+                    description: UUID identifying the Snapshot.
+                    type: str
+                    sample: 68138b18-1e08-49bd-96e3-49a4d80e7c62
+                datacenterId:
+                    description: ID of the datacenter
+                    type: str
+                    sample: NA12
+                state:
+                    description: The state of the Snapshot
+                    type: str
+                    sample: NORMAL
+                replica:
                     description:
-                        description: More detailed description of what comprises the plan.
-                        returned: success
-                        type: str
-                        sample: "Daily Snapshots retained for 14 Days, Weekly Snapshots retained for 90 Days"
-                    displayName:
-                        description: Simple text display name. Useful for reference and display in UI integration.
-                        type: str
-                        sample: "One Month: 7d-4w"
-                    id:
-                        description: String UID or UUID identifying the entity
-                        returned: success
-                        type: str
-                        sample: ONE_MONTH or d62596e8-fe2b-44ba-8ad2-a669b9dfcb51
-                    snapshotFrequency:
-                        description: The frequency of SYSTEM snapshots for the plan. Values are DAILY and WEEKLY
-                        returned: success
-                        type: str
-                        sample: DAILY
-                    supportsReplication:
-                        description: When True indicates that the plan supports Snapshot Replication
-                        returned: success
-                        type: str
-            server_snaphot_info:
-                description: The Snapshot configuration for a server
-                returned: type == server
-                type: complex
-                contains:
-                    manualSnapshotInProgress:
-                        description: Is a manual Snapshot currently being processed
-                        returned: success
-                        type: bool
-                    servicePlan:
-                        description: The type fo Snapshot Plan configured for this server
-                        returned: success
-                        type: str
-                        sample: ONE_MONTH
-                    state:
-                        description: Simple text display name. Useful for reference and display in UI integration.
-                        type: str
-                        sample: "One Month: 7d-4w"
-                    window:
-                        description: The window for the configured Snapshot service
-                        returned: success
-                        type: complex
-                        contains:
-                            dayOfWeek:
-                                description: Which day it the Snapshot is taken on (this should always be daily)
-                                returned: success
-                                type: str
-                                sample: DAILY
-                            startHour:
-                                description: Snapshot Windows begin on 2 hour periods
-                                returned: success
-                                type: str
-                                sample: 8
-            snapshot_window_info:
-                description: List of Snapshot Windows
-                returned: type == window
-                type: complex
-                contains:
-                    availabilityStatus:
-                        description: RESERVED_FOR_MAINTENANCE, AVAILABLE or NOT_CURRENTLY_AVAILABLE
-                        returned: success
-                        type: str
-                        sample: OVERLAPS_WITH_MAINTENANCE
-                    availableSlotCount:
-                        description: The number of available slots in the Snapshot Window
-                        returned: success
-                        type: int
-                        sample: 59
-                    dayOfWeek:
-                        description: Which day it the Snapshot is taken on (this should always be daily)
-                        returned: success
-                        type: str
-                        sample: DAILY
-                    startHour:
-                        description: Snapshot Windows begin on 2 hour periods
-                        returned: success
-                        type: int
-                        sample: 8
-                    timeZone:
-                        description: The timeZone that the Snapshot Window is relative to
-                        returned: success
-                        type: str
-                        sample: Etc/UTC
-            snapshot_info:
-                description: List of Snapshots for a server
-                returned: type == snapshot
-                type: complex
-                contains:
-                    indexState:
-                        description: Possible values for indexState are: INDEX_NOT_COMPLETE, INDEX_VALID, INDEX_INVALID
-                        type: string
-                        sample: INDEX_VALID
-                    expiryTime:
-                        description: Snapshots exist for a limited period after which the system will remove them
-                        type: string
-                        sample: 2019-11-22T08:00:05.000Z
-                    id:
-                        description: UUID identifying the Snapshot.
-                        type: string
-                        sample: 68138b18-1e08-49bd-96e3-49a4d80e7c62
-                    datacenterId:
-                        description: ID of the datacenter
-                        type: string
-                        sample: NA12
-                    state:
-                        description: The state of the Snapshot
-                        type: string
-                        sample: NORMAL
-                    replica:
-                        description:
-                            - Boolean identifying whether or not a the Snapshot is local or one replicated
-                            - from another Data Center
-                        type: bool
-                    startTime:
-                        description: The time at which the system begins the snapshot process.
-                        type: string
-                        sample: 2019-11-15T08:00:05.000Z
-                    serverConfig:
-                        description: The specification of the Server at the time the Snapshot was taken
-                        type: complex
-                        contains:
-                            guest:
-                                description: Information about the guest OS
-                                type: complex
-                                contains:
-                                    osCustomization:
-                                        description: Does the image support guest OS customization
-                                        type: bool
-                                    operatingSystem:
-                                        description: Operating system information
-                                        type: complex
-                                        contains:
-                                            displayName:
-                                                description: The OS display name
-                                                type: string
-                                                sample: UBUNTU16/64
-                                            id:
-                                                description: The OS UUID
-                                                type: string
-                                                sample: UBUNTU1664
-                                            family:
-                                                description: The OS family
-                                                type: string
-                                                sample: UNIX
-                            networkInfo:
-                                description: Server network information
-                                type: complex
-                                contains:
-                                    primaryNic:
-                                        description: The primary NIC on the server
-                                        type: complex
-                                        contains:
-                                            vlanName:
-                                                description: The name of the VLAN the server resides in
-                                                type: string
-                                                sample: vlan_01
-                                            vlanId:
-                                                description:
-                                                type: string
-                                                sample: b7de0cfd-46d5-4316-845b-d1283245c79f
-                                            state:
-                                                description: The UUID of the VLAN the server resides in
-                                                type: string
-                                                sample: NORMAL
-                                            privateIpv4:
-                                                description: The IPv4 address of the server
-                                                type: string
-                                                sample: 10.0.0.6
-                                            connected:
-                                                description: Is the NIC connected
-                                                type: bool
-                                            key:
-                                                description: Internal Usage
-                                                type: int
-                                                sample: 4000
-                                            ipv6:
-                                                description: The IPv6 address of the server
-                                                type: string
-                                                sample: 2607:f480:211:1238:3678:58e8:4e42:93fc
-                                            networkAdapter:
-                                                description: The VMWare NIC type
-                                                type: string
-                                                sample: VMXNET3
-                                            id:
-                                                description: The UUID of the NIC
-                                                type: string
-                                                sample: a616cd9b-82bc-4f8c-bec2-7d58fea88a9c
-                                    networkDomainId:
-                                        description: The UUID of the Cloud Network Domain the server resides in
-                                        type: string
-                                        sample: 2495e11a-8d52-40f1-9d67-512ade6139ee
-                                    networkDomainName:
-                                        description: The name of the Cloud Network Domain the server resides in
-                                        type: string
-                                        sample: ansible_test
-                            cluster:
-                                description: The vCenter cluster for the server
-                                type: complex
-                                contains:
-                                    id:
-                                        description: The UUID of the cluster
-                                        type: string
-                                        sample: NA12-01
-                                    name:
-                                        description: The name of the cluster
-                                        type: string
-                                        sample: Default Cluster
-                            memoryGb:
-                                description: Server memory in GB
-                                type: int
-                                sample: 4
-                            scsiController:
-                                description: List of the SCSI controllers and disk configuration for the image
-                                type: list
-                                contains:
-                                    busNumber:
-                                        description: The SCSI bus number
-                                        type: int
-                                        sample: 0
-                                    state:
-                                        description: The state of the SCSI Controller
-                                        type: string
-                                        sample: NORMAL
-                                    disk:
-                                        description: List of disks associated with this image
-                                        type: list
-                                        contains:
-                                            sizeGb:
-                                                description: The initial size of the disk in GB
-                                                type: int
-                                                sample: 20
-                                            state:
-                                                description: The state of the disk
-                                                type: string
-                                                sample: NORMAL
-                                            driveType:
-                                                description: The type of disk
-                                                type: string
-                                                sample: DISK
-                                            scsiId:
-                                                description: The ID of the disk on the controller
-                                                type: int
-                                                sample: 0
-                                            speed:
-                                                description: The disk speed
-                                                type: string
-                                                sample: STANDARD
-                                            id:
-                                                description: The disk UUID
-                                                type: string
-                                                sample: 93df19a6-3136-4078-836e-f37aeb139bfd
-                                    id:
-                                        description: The UUID of the SCSI Controller
-                                        type: string
-                                        sample: 62602df5-10b1-44e4-817a-38b97ca18c48
-                                    adapterType:
-                                        description: the SCSI Controller type
-                                        type: string
-                                        sample: LSI_LOGIC_PARALLEL
-                            virtualHardwareVersion:
-                                description: The VM hardware version
-                                type: string
-                                sample: vmx-10
-                            advancedVirtualizationSetting:
-                                description: Advanced virtualization settings for the VM
-                                type: list
-                                contains:
-                                    name:
-                                        description: Advanced VMWare setting
-                                        type: string
-                                        sample: nestedHardwareVirtualization
-                                    value:
-                                        description: Advanced VMWare setting
-                                        type: string
-                                        sample: false
-                                    name:
-                                        description: Advanced VMWare setting
-                                        type: string
-                                        sample: cpuLatencySensitivity
-                                    value:
-                                        description: Advanced VMWare setting
-                                        type: string
-                                        sample: NORMAL
-                                    name:
-                                        description: Advanced VMWare setting
-                                        type: string
-                                        sample: numaAutosize
-                                    value:
-                                        description: Advanced VMWare setting
-                                        type: string
-                                        sample: false
-                                    name:
-                                        description: Advanced VMWare setting
-                                        type: string
-                                        sample: enableHostInfoToVmTools
-                                    value:
-                                        description: Advanced VMWare setting
-                                        type: string
-                                        sample: false
-                            cpu:
-                                description: The CPU specifications for the server
-                                type: complex
-                                contains:
-                                    coresPerSocket:
-                                        description: The number of cores per socket
-                                        type: int
-                                        sample: 1
-                                    count:
-                                        description: The number of CPUs
-                                        type: int
-                                        sample: 2
-                                    speed:
-                                        description: The CPU speed
-                                        type: string
-                                        sample: STANDARD
-                    type:
-                        description: Indicates whether or not the Snapshot is a SYSTEM scheduled Snapshot or a MANUAL
-                        type: string
-                        sample: SYSTEM
-                    createTime:
-                        description:
-                            - For User initiated Manual Snapshot createTime corresponds to the point in time that
-                            - CloudControl processed the Initiate Manual Snapshot for a Server API.
-                        type: string
-                        sample: 2019-11-15T08:31:22.000Z
-                    consistencyLevel:
-                        description:
-                            - Returned for snapshots which have completed successfully
-                            - (have a NORMAL value for state).
-                        type: string
-                        sample: CRASH_CONSISTENT
+                        - Boolean identifying whether or not a the Snapshot is local or one replicated
+                        - from another Data Center
+                    type: bool
+                startTime:
+                    description: The time at which the system begins the snapshot process.
+                    type: str
+                    sample: "2019-11-15T08:00:05.000Z"
+                serverConfig:
+                    description: The specification of the Server at the time the Snapshot was taken
+                    type: complex
+                    contains:
+                        guest:
+                            description: Information about the guest OS
+                            type: complex
+                            contains:
+                                osCustomization:
+                                    description: Does the image support guest OS customization
+                                    type: bool
+                                operatingSystem:
+                                    description: Operating system information
+                                    type: complex
+                                    contains:
+                                        displayName:
+                                            description: The OS display name
+                                            type: str
+                                            sample: UBUNTU16/64
+                                        id:
+                                            description: The OS UUID
+                                            type: str
+                                            sample: UBUNTU1664
+                                        family:
+                                            description: The OS family
+                                            type: str
+                                            sample: UNIX
+                        networkInfo:
+                            description: Server network information
+                            type: complex
+                            contains:
+                                primaryNic:
+                                    description: The primary NIC on the server
+                                    type: complex
+                                    contains:
+                                        vlanName:
+                                            description: The name of the VLAN the server resides in
+                                            type: str
+                                            sample: vlan_01
+                                        vlanId:
+                                            description: The UUID of the VLAN
+                                            type: str
+                                            sample: b7de0cfd-46d5-4316-845b-d1283245c79f
+                                        state:
+                                            description: The UUID of the VLAN the server resides in
+                                            type: str
+                                            sample: NORMAL
+                                        privateIpv4:
+                                            description: The IPv4 address of the server
+                                            type: str
+                                            sample: 10.0.0.6
+                                        connected:
+                                            description: Is the NIC connected
+                                            type: bool
+                                        key:
+                                            description: Internal Usage
+                                            type: int
+                                            sample: 4000
+                                        ipv6:
+                                            description: The IPv6 address of the server
+                                            type: str
+                                            sample: 2607:f480:211:1238:3678:58e8:4e42:93fc
+                                        networkAdapter:
+                                            description: The VMWare NIC type
+                                            type: str
+                                            sample: VMXNET3
+                                        id:
+                                            description: The UUID of the NIC
+                                            type: str
+                                            sample: a616cd9b-82bc-4f8c-bec2-7d58fea88a9c
+                                networkDomainId:
+                                    description: The UUID of the Cloud Network Domain the server resides in
+                                    type: str
+                                    sample: 2495e11a-8d52-40f1-9d67-512ade6139ee
+                                networkDomainName:
+                                    description: The name of the Cloud Network Domain the server resides in
+                                    type: str
+                                    sample: ansible_test
+                        cluster:
+                            description: The vCenter cluster for the server
+                            type: complex
+                            contains:
+                                id:
+                                    description: The UUID of the cluster
+                                    type: str
+                                    sample: NA12-01
+                                name:
+                                    description: The name of the cluster
+                                    type: str
+                                    sample: Default Cluster
+                        memoryGb:
+                            description: Server memory in GB
+                            type: int
+                            sample: 4
+                        scsiController:
+                            description: List of the SCSI controllers and disk configuration for the image
+                            type: list
+                            contains:
+                                busNumber:
+                                    description: The SCSI bus number
+                                    type: int
+                                    sample: 0
+                                state:
+                                    description: The state of the SCSI Controller
+                                    type: str
+                                    sample: NORMAL
+                                disk:
+                                    description: List of disks associated with this image
+                                    type: list
+                                    contains:
+                                        sizeGb:
+                                            description: The initial size of the disk in GB
+                                            type: int
+                                            sample: 20
+                                        state:
+                                            description: The state of the disk
+                                            type: str
+                                            sample: NORMAL
+                                        driveType:
+                                            description: The type of disk
+                                            type: str
+                                            sample: DISK
+                                        scsiId:
+                                            description: The ID of the disk on the controller
+                                            type: int
+                                            sample: 0
+                                        speed:
+                                            description: The disk speed
+                                            type: str
+                                            sample: STANDARD
+                                        id:
+                                            description: The disk UUID
+                                            type: str
+                                            sample: 93df19a6-3136-4078-836e-f37aeb139bfd
+                                id:
+                                    description: The UUID of the SCSI Controller
+                                    type: str
+                                    sample: 62602df5-10b1-44e4-817a-38b97ca18c48
+                                adapterType:
+                                    description: the SCSI Controller type
+                                    type: str
+                                    sample: LSI_LOGIC_PARALLEL
+                        virtualHardwareVersion:
+                            description: The VM hardware version
+                            type: str
+                            sample: vmx-10
+                        advancedVirtualizationSetting:
+                            description: Advanced virtualization settings for the VM
+                            type: list
+                            contains:
+                                name:
+                                    description: Advanced VMWare setting
+                                    type: str
+                                    sample: nestedHardwareVirtualization
+                                value:
+                                    description: Advanced VMWare setting
+                                    type: str
+                                    sample: false
+                        cpu:
+                            description: The CPU specifications for the server
+                            type: complex
+                            contains:
+                                coresPerSocket:
+                                    description: The number of cores per socket
+                                    type: int
+                                    sample: 1
+                                count:
+                                    description: The number of CPUs
+                                    type: int
+                                    sample: 2
+                                speed:
+                                    description: The CPU speed
+                                    type: str
+                                    sample: STANDARD
+                type:
+                    description: Indicates whether or not the Snapshot is a SYSTEM scheduled Snapshot or a MANUAL
+                    type: str
+                    sample: SYSTEM
+                createTime:
+                    description:
+                        - For User initiated Manual Snapshot createTime corresponds to the point in time that
+                        - CloudControl processed the Initiate Manual Snapshot for a Server API.
+                    type: str
+                    sample: "2019-11-15T08:31:22.000Z"
+                consistencyLevel:
+                    description:
+                        - Returned for snapshots which have completed successfully
+                        - (have a NORMAL value for state).
+                    type: str
+                    sample: CRASH_CONSISTENT
 '''
 
 from ansible.module_utils.basic import AnsibleModule

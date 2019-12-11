@@ -28,7 +28,7 @@ HTTP_HEADERS = {'Content-Type': 'application/json',
                 'Accept': 'application/json'}
 
 # API Versions
-API_VERSION = '2.10'
+API_VERSION = '2.11'
 
 # API end-points
 API_ENDPOINTS = {
