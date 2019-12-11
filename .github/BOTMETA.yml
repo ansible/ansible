@@ -97,7 +97,7 @@ files:
     support: community
   $modules/cloud/dimensiondata/dimensiondata_network.py: tintoy
   $modules/cloud/docker/: &docker
-    ignored: ThomasSteinbach
+    ignored: ThomasSteinbach cove
     labels: [ cloud, docker ]
     maintainers: $team_docker
     supershipit: felixfontein
