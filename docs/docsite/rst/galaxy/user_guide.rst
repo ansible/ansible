@@ -287,6 +287,29 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
+Installing roles and collections from the same requirements.yml file
+---------------------------------------------------------------------
+
+You can install roles and collections from the same requirements files, with some caveats.
+
+.. code-block:: yaml
+
+    ---
+    roles:
+      # Install a role from Ansible Galaxy.
+      - src: geerlingguy.java
+        version: 1.9.6
+
+    collections:
+      # Install a collection from Ansible Galaxy.
+      - name: geerlingguy.php_roles
+        version: 0.9.3
+        source: https://galaxy.ansible.com
+
+.. note::
+   While both roles and collections can be specified in one requirements file, they need to be installed separately.
+   The ``ansible-galaxy role install -r requirements.yml`` will only install roles and  ``ansible-galaxy collection install -r requirements.yml -p ./`` will only install collections.
+
 Installing multiple roles from multiple files
 ---------------------------------------------
 
