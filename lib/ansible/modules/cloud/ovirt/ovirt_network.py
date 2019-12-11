@@ -61,6 +61,7 @@ options:
     external_provider:
         description:
             - "Name of external network provider."
+            - "At first it tries to import the network when not found it will create network in external provider."
         version_added: 2.8
     vm_network:
         description:
@@ -312,7 +313,19 @@ def main():
             'datacenter': module.params['data_center'],
         }
         if state == 'present':
+            imported = False
+            if module.params.get('external_provider') and module.params.get('name') not in [net.name for net in networks_service.list()]:
+                # Try to import network
+                ons_service = connection.system_service().openstack_network_providers_service()
+                on_service = ons_service.provider_service(get_id_by_name(ons_service, module.params.get('external_provider')))
+                on_networks_service = on_service.networks_service()
+                if module.params.get('name') in [net.name for net in on_networks_service.list()]:
+                    network_service = on_networks_service.network_service(get_id_by_name(on_networks_service, module.params.get('name')))
+                    network_service.import_(data_center=otypes.DataCenter(name=module.params.get('data_center')))
+                    imported = True
+
             ret = networks_module.create(search_params=search_params)
+            ret['changed'] = ret['changed'] or imported
             # Update clusters networks:
             if module.params.get('clusters') is not None:
                 for param_cluster in module.params.get('clusters'):
