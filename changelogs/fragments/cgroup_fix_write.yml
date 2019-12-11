@@ -1,0 +1,2 @@
+bugfixes:
+- Handle write_files option in cgroup_perf_recap callback plugin (https://github.com/ansible/ansible/issues/64936).
