@@ -441,7 +441,7 @@ def main():
                    ('state', 'parsed', ('running_config',))]
     mutually_exclusive = [('config', 'running_config')]
 
-    module = AnsibleModule(argument_spec=Firewall_routesArgs.argument_spec,
+    module = AnsibleModule(argument_spec=Firewall_rulesArgs.argument_spec,
                            required_if=required_if,
                            supports_check_mode=True,
                            mutually_exclusive=mutually_exclusive)

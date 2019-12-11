@@ -12,7 +12,7 @@ based on the configuration.
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 import q
-from re import findall, M
+from re import findall, search, M
 from copy import deepcopy
 from ansible.module_utils.network.common import utils
 from ansible.module_utils.network.vyos.argspec.firewall_rules.firewall_rules import Firewall_rulesArgs
@@ -51,16 +51,16 @@ class Firewall_rulesFacts(object):
             # typically data is populated from the current device configuration
             # data = connection.get('show running-config | section ^interface')
             # using mock data instead
-            data = self.get_device_data(connection)
+            data = connection.get_config()
 
         # split the config into instances of the resource
         objs = []
-        f_r = findall(r'(set firewall ipv6-name|set firewall name)  (\S+)', data, M)
-        if f_r:
-            for r in set(f_r):
+        rules = findall(r'(set firewall ipv6-name|set firewall name) (\S+)', data, M)
+        if rules:
+            for r in set(rules):
                 route_regex = r' %s .+$' % r[1]
                 cfg = findall(route_regex, data, M)
-                config = self.render_config(cfg)
+                config = self.render_config(self.generated_spec, cfg)
             if config:
                 objs.append(config)
 
@@ -88,8 +88,33 @@ class Firewall_rulesFacts(object):
         config = deepcopy(spec)
         q(config)
         q(conf)
+        rules = []
+        r_num = '\n'.join(filter(lambda x: ('rule' in x), conf))
+        des = '\n'.join(filter(lambda x: ('description' in x), conf))
+        act = '\n'.join(filter(lambda x: ('action' in x), conf))
+        #dest = '\n'.join(filter(lambda x: ('destination' in x), conf))
 
-        config['name'] = utils.parse_conf_arg(conf, 'resource')
-        config['some_string'] = utils.parse_conf_arg(conf, 'a_string')
+        rule = {'number': self.parse_num(r_num), 'description': self.parse_num(des),
+                'action': self.parse_act(r_num)}
+        rules.append(rule)
 
-        return utils.remove_empties(config)
+        return rules
+
+    def parse_act(self, conf):
+        if conf:
+            act = search(r'^.*rule.*action (.\S+)', conf, M)
+            value = act.group(1).strip("'")
+            return value
+
+    def parse_num(self, conf):
+        if conf:
+            num = search(r'^.*rule (.\S+)', conf, M)
+            value = num.group(1).strip("'")
+        return int(value)
+
+    def parse_des(self, conf):
+        if conf:
+            des = search(r'^.*rule.*description (.\S+)', conf, M)
+            value = des.group(1).strip("'")
+        return value
+
