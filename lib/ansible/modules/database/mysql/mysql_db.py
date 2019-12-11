@@ -76,7 +76,7 @@ options:
     required: false
     default: false
     type: bool
-    version_added: "?? devel"
+    version_added: "2.10"
   force:
     description:
       - Continue dump or import even if we get an SQL error.
