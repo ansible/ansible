@@ -136,6 +136,8 @@ class IPAClient(object):
             data['params'] = [[], {}]
         elif method == 'config_mod':
             data['params'] = [[], item]
+        elif method in ('automountkey_find', 'automountkey_show', 'automountkey_add', 'automountkey_del', 'automountkey_mod'):
+            data['params'] = [name, item]
         else:
             data['params'] = [[name], item]
 
