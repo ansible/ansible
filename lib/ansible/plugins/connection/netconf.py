@@ -219,7 +219,7 @@ class Connection(NetworkConnectionBase):
         self._network_os = self._network_os or 'auto'
 
         self.netconf = netconf_loader.get(self._network_os, self)
-        if self.netconf :
+        if self.netconf:
             self._sub_plugin = {'type': 'netconf', 'name': self.netconf._load_name, 'obj': self.netconf}
             self.queue_message('vvvv', 'loaded netconf plugin %s from path %s for network_os %s' %
                                (self.netconf._load_name, self.netconf._original_path, self._network_os))
@@ -302,7 +302,7 @@ class Connection(NetworkConnectionBase):
         except KeyError:
             ncclient_device_handler = 'default'
         self.queue_message('vvv', 'identified ncclient device handler: %s.' % ncclient_device_handler)
-        device_params = {'name':  ncclient_device_handler}
+        device_params = {'name': ncclient_device_handler}
 
         try:
             port = self._play_context.port or 830
