@@ -19,9 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat.mock import patch, MagicMock
+from units.compat.mock import patch
 from ansible.modules.network.eos import eos_logging
-from ansible.plugins.cliconf.eos import Cliconf
 from units.modules.utils import set_module_args
 from .eos_module import TestEosModule, load_fixture
 
@@ -72,31 +71,29 @@ class TestEosLoggingModule(TestEosModule):
     def test_eos_buffer_size(self):
         set_module_args(dict(dest='buffered', size=5000))
         commands = ['logging buffered 5000']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_buffer_size_idempotent(self):
         set_module_args(dict(dest='buffered', size=50000, level='informational'))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_eos_facilty(self):
         set_module_args(dict(facility='local2'))
         commands = ['logging facility local2']
-        result = self.execute_module(changed=True, commands=commands)
-        # when dest is not passed, 'None' is set to dest
-        # self.assertEqual(sorted(result['commands'])[1], commands[0])
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_facility_idempotent(self):
         set_module_args(dict(facility='local7'))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_eos_level(self):
         set_module_args(dict(dest='console', level='critical'))
         commands = ['logging console critical']
-        result = self.execute_module(changed=True, commands=commands)
+        self.execute_module(changed=True, commands=commands)
 
     def test_eos_level_idempotent(self):
         set_module_args(dict(dest='console', level='warnings'))
-        result = self.execute_module(changed=False, commands=[])
+        self.execute_module(changed=False, commands=[])
 
     def test_eos_logging_state_absent(self):
         set_module_args(dict(dest='host', name='175.16.0.10', state='absent'))

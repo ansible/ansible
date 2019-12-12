@@ -160,9 +160,3 @@ class TestEosEapiModule(TestEosModule):
         set_module_args(dict(state='stopped', timeout=1))
         result = self.start_configured(failed=True)
         'timeout expired before eapi running state changed' in result['msg']
-
-    def test_eos_eapi_state_failed(self):
-        self.mock_verify_state.stop()
-        set_module_args(dict(state='stopped', timeout=1))
-        result = self.start_configured(failed=True)
-        'timeout expired before eapi running state changed' in result['msg']
