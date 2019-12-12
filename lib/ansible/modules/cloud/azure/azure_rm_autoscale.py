@@ -373,7 +373,7 @@ def timedelta_to_minutes(time):
 
 
 def get_enum_value(item):
-    if 'value' in dir(item):
+    if hasattr(item, 'value'):
         return to_native(item.value)
     return to_native(item)
 

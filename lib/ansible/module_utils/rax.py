@@ -74,7 +74,7 @@ def rax_to_dict(obj, obj_type='standard'):
 
     """
     instance = {}
-    for key in dir(obj):
+    for key in obj.__dict__:
         value = getattr(obj, key)
         if obj_type == 'clb' and key == 'nodes':
             instance[key] = []

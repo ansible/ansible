@@ -71,7 +71,7 @@ class NetworkInterfaceBase(list):
     def to_dict(self):
 
         data = {}
-        for attr in dir(self):
+        for attr in self.__dict__:
             if attr.startswith('__') or attr == 'boto3':
                 continue
 
@@ -221,7 +221,7 @@ class InstanceBase(object):
     def to_dict(self):
 
         data = {}
-        for attr in dir(self):
+        for attr in self.__dict__:
             if attr.startswith(('__', '_ignore')) or attr in ['to_dict', 'boto3']:
                 continue
 

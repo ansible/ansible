@@ -208,7 +208,7 @@ def test_verbosity_arguments(cli_args, expected, tmp_path_factory, monkeypatch):
     cli_args.extend(['--vault-id', pass_file])
 
     # Mock out the functions so we don't actually execute anything
-    for func_name in [f for f in dir(VaultCLI) if f.startswith("execute_")]:
+    for func_name in [f for f in VaultCLI.__dict__ if f.startswith("execute_")]:
         monkeypatch.setattr(VaultCLI, func_name, MagicMock())
 
     cli = VaultCLI(args=cli_args)

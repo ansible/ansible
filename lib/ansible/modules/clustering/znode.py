@@ -213,7 +213,7 @@ class KazooCommandProxy():
         if self.exists(path):
             value, zstat = self.zk.get(path)
             stat_dict = {}
-            for i in dir(zstat):
+            for i in zstat.__dict__:
                 if not i.startswith('_'):
                     attr = getattr(zstat, i)
                     if isinstance(attr, (int, str)):

@@ -185,7 +185,7 @@ class VMwareInventory(object):
             if depth <= 0:
                 return obj_unicode
             d = {}
-            for attr in dir(obj):
+            for attr in obj.__dict__:
                 if attr.startswith('_'):
                     continue
                 try:

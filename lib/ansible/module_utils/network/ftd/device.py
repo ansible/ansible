@@ -46,7 +46,7 @@ class FtdModel:
 
     @classmethod
     def supported_models(cls):
-        return [getattr(cls, item) for item in dir(cls) if item.startswith('FTD_')]
+        return [getattr(cls, item) for item in cls.__dict__ if item.startswith('FTD_')]
 
 
 class FtdPlatformFactory(object):

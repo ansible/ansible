@@ -190,7 +190,7 @@ def rax_slugify(value):
 
 def to_dict(obj):
     instance = {}
-    for key in dir(obj):
+    for key in obj.__dict__:
         value = getattr(obj, key)
         if isinstance(value, NON_CALLABLES) and not key.startswith('_'):
             key = rax_slugify(key)

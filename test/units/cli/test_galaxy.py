@@ -475,7 +475,7 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
 ])
 def test_verbosity_arguments(cli_args, expected, monkeypatch):
     # Mock out the functions so we don't actually execute anything
-    for func_name in [f for f in dir(GalaxyCLI) if f.startswith("execute_")]:
+    for func_name in [f for f in GalaxyCLI.__dict__ if f.startswith("execute_")]:
         monkeypatch.setattr(GalaxyCLI, func_name, MagicMock())
 
     cli = GalaxyCLI(args=cli_args)

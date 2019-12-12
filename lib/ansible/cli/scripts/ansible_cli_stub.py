@@ -92,7 +92,7 @@ if __name__ == '__main__':
             mycli = getattr(__import__("ansible.cli.%s" % sub, fromlist=[myclass]), myclass)
         except ImportError as e:
             # ImportError members have changed in py3
-            if 'msg' in dir(e):
+            if hasattr(e, 'msg'):
                 msg = e.msg
             else:
                 msg = e.message

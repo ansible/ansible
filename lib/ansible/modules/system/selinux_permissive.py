@@ -99,7 +99,7 @@ def main():
         module.fail_json(domain=domain, msg=to_native(e), exception=traceback.format_exc())
 
     # not supported on EL 6
-    if 'set_reload' in dir(permissive_domains):
+    if hasattr(permissive_domains, 'set_reload'):
         permissive_domains.set_reload(not no_reload)
 
     try:
