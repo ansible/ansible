@@ -64,10 +64,15 @@
       return_pkcs12_content: yes
     register: p12_standard_idempotency
 
+  - name: Read ansible.p12
+    slurp:
+      src: "{{ output_dir }}/ansible.p12"
+    register: ansible_p12_content
+
   - name: 'Validate PKCS#12'
     assert:
       that:
-        - p12_standard.pkcs12 == (lookup('file', output_dir ~ '/ansible.p12', rstrip=False) | b64encode)
+        - p12_standard.pkcs12 == ansible_p12_content.content
         - p12_standard_idempotency.pkcs12 == p12_standard.pkcs12
 
   - name: 'Generate PKCS#12 file (force)'

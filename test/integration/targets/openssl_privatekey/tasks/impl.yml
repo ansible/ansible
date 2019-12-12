@@ -402,10 +402,15 @@
       return_privatekey_content: yes
     register: privatekey_fmt_2_step_3
 
+  - name: Read privatekey_fmt_2.pem
+    slurp:
+      src: "{{ output_dir }}/privatekey_fmt_2.pem"
+    register: content
+
   - name: Generate privatekey_fmt_2 - verify that returned content is base64 encoded
     assert:
       that:
-        - privatekey_fmt_2_step_3.privatekey == (lookup('file', output_dir ~ '/privatekey_fmt_2.pem', rstrip=False) | b64encode)
+        - privatekey_fmt_2_step_3.privatekey == content.content
 
   - name: Generate privatekey_fmt_2 - raw format (idempotent)
     openssl_privatekey:
@@ -416,10 +421,15 @@
       return_privatekey_content: yes
     register: privatekey_fmt_2_step_4
 
+  - name: Read privatekey_fmt_2.pem
+    slurp:
+      src: "{{ output_dir }}/privatekey_fmt_2.pem"
+    register: content
+
   - name: Generate privatekey_fmt_2 - verify that returned content is base64 encoded
     assert:
       that:
-        - privatekey_fmt_2_step_4.privatekey == (lookup('file', output_dir ~ '/privatekey_fmt_2.pem', rstrip=False) | b64encode)
+        - privatekey_fmt_2_step_4.privatekey == content.content
 
   - name: Generate privatekey_fmt_2 - auto format (ignore)
     openssl_privatekey:
@@ -430,10 +440,15 @@
       return_privatekey_content: yes
     register: privatekey_fmt_2_step_5
 
+  - name: Read privatekey_fmt_2.pem
+    slurp:
+      src: "{{ output_dir }}/privatekey_fmt_2.pem"
+    register: content
+
   - name: Generate privatekey_fmt_2 - verify that returned content is base64 encoded
     assert:
       that:
-        - privatekey_fmt_2_step_5.privatekey == (lookup('file', output_dir ~ '/privatekey_fmt_2.pem', rstrip=False) | b64encode)
+        - privatekey_fmt_2_step_5.privatekey == content.content
 
   - name: Generate privatekey_fmt_2 - auto format (no ignore)
     openssl_privatekey:
