@@ -107,4 +107,4 @@ class TestEosSystemModule(TestEosModule):
     def test_eos_system_missing_vrf(self):
         name_servers = dict(server='8.8.8.8', vrf='missing')
         set_module_args(dict(name_servers=name_servers))
-        result = self.execute_module(failed=True)
+        self.execute_module(failed=True)
