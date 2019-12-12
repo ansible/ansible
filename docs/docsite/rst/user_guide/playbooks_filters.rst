@@ -15,7 +15,7 @@ Templating happens on the Ansible controller, **not** on the target host, so fil
 Handling undefined variables
 ============================
 
-Filters can help you manage missing or undefined variables by providing defaults or allowing null values. If you configure Ansible to ignore most undefined variables, you can mark some variables as requiring values with the ``mandatory`` filter.
+Filters can help you manage missing or undefined variables by providing defaults or making some variable optional. If you configure Ansible to ignore most undefined variables, you can mark some variables as requiring values with the ``mandatory`` filter.
 
 .. _defaulting_undefined_variables:
 
@@ -37,10 +37,10 @@ If you want to use the default value when variables evaluate to false or an empt
 
 .. _omitting_undefined_variables:
 
-Omit: allowing null values
---------------------------
+Making variables optional
+-------------------------
 
-If you want to allow null values for a variable, use the special ``omit`` variable as a default value::
+In some cases, you want to make a variable optional. For example, if you want to use a system default for some items and control the value for others. To make a variable optional, set the default value to the special variable ``omit``::
 
     - name: touch files with an optional mode
       file:
