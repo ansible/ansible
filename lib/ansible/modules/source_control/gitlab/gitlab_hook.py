@@ -62,7 +62,7 @@ options:
     description:
       - Branch name of wildcard to trigger hook on push events
     type: str
-    version_added: "2.9"
+    version_added: "2.10"
   issues_events:
     description:
       - Trigger hook on issues events.
