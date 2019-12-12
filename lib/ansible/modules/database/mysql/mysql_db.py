@@ -57,6 +57,12 @@ options:
     type: bool
     default: 'yes'
     version_added: "2.1"
+  create_new:
+    description:
+      - Option used to exclude CREATE DATABASE and USE commands
+    type: bool
+    default: 'no'
+    version_added: "2.X"
   ignore_tables:
     description:
       - A list of table names that will be ignored in the dump of the form database_name.table_name
@@ -243,7 +249,7 @@ def db_delete(cursor, db):
 def db_dump(module, host, user, password, db_name, target, all_databases, port,
             config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
             single_transaction=None, quick=None, ignore_tables=None, hex_blob=None,
-            encoding=None, force=False):
+            encoding=None, force=False, create_new=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -274,6 +280,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port,
         cmd += " --single-transaction=true"
     if quick:
         cmd += " --quick"
+    if create_new:
+        cmd += " --no-create-db"
     if ignore_tables:
         for an_ignored_table in ignore_tables:
             cmd += " --ignore-table={0}".format(an_ignored_table)
