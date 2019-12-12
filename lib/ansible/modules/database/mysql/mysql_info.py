@@ -428,6 +428,16 @@ class MySQL_Info(object):
                 if not exclude_fields or 'db_size' not in exclude_fields:
                     self.info['databases'][db['name']]['size'] = int(db['size'])
 
+        # Add info about empty databases (issue #65727):
+        res = self.__exec_sql('SHOW DATABASES')
+        if res:
+            for db in res:
+                if db['Database'] not in self.info['databases']:
+                    self.info['databases'][db['Database']] = {}
+
+                    if not exclude_fields or 'db_size' not in exclude_fields:
+                        self.info['databases'][db['Database']]['size'] = 0
+
     def __exec_sql(self, query, ddl=False):
         """Execute SQL.
 
