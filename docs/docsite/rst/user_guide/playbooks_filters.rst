@@ -169,13 +169,13 @@ If you are unsure of the underlying Python type of a variable, you can use the `
 
     {{ myvar | type_debug }}
 
-Setting the data type
+Forcing the data type
 ---------------------
 
-You can cast values as certain types. This is especially useful for ensuring that Ansible knows when to treat a value like "True" as a Boolean and when to treat it as a string::
+You can cast values as certain types. For example, if you expect the input "True" from a :ref:`vars_prompt <playbooks_prompts>` and you want Ansible to recognize it as a Boolean value instead of a string::
 
    - debug:
-       msg: test
+     msg: test
      when: some_string_value | bool
 
 .. versionadded:: 1.6
