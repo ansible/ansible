@@ -329,14 +329,15 @@ def install_packages(module, pacman_path, state, packages, package_files):
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
 
-        data = stdout.split('\n')[3].split(' ')[2:]
-        data = [i for i in data if i != '']
-        for i, pkg in enumerate(data):
-            data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
-            if module._diff:
-                diff['after'] += "%s\n" % pkg
+        if len(stdout.split('\n')) > 3:
+            data = stdout.split('\n')[3].split(' ')[2:]
+            data = [i for i in data if i != '']
+            for i, pkg in enumerate(data):
+                data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+                if module._diff:
+                    diff['after'] += "%s\n" % pkg
 
-        install_c += len(to_install_repos)
+            install_c += len(to_install_repos)
 
     if to_install_files:
         cmd = "%s --upgrade --noconfirm --noprogressbar --needed %s %s" % (pacman_path, module.params["extra_args"], " ".join(to_install_files))
@@ -345,14 +346,15 @@ def install_packages(module, pacman_path, state, packages, package_files):
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
 
-        data = stdout.split('\n')[3].split(' ')[2:]
-        data = [i for i in data if i != '']
-        for i, pkg in enumerate(data):
-            data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
-            if module._diff:
-                diff['after'] += "%s\n" % pkg
+        if len(stdout.split('\n')) > 3:
+            data = stdout.split('\n')[3].split(' ')[2:]
+            data = [i for i in data if i != '']
+            for i, pkg in enumerate(data):
+                data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+                if module._diff:
+                    diff['after'] += "%s\n" % pkg
 
-        install_c += len(to_install_files)
+            install_c += len(to_install_files)
 
     if state == 'latest' and len(package_err) > 0:
         message = "But could not ensure 'latest' state for %s package(s) as remote version could not be fetched." % (package_err)
