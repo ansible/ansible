@@ -1,14 +1,15 @@
 .. _playbooks_templating:
 
+*******************
 Templating (Jinja2)
-===================
+*******************
 
-As already referenced in the variables section, Ansible uses Jinja2 templating to enable dynamic expressions and access to variables.
-Ansible greatly expands the number of filters and tests available, as well as adding a new plugin type: lookups.
+Ansible uses Jinja2 templating to enable dynamic expressions and access to variables. Ansible includes a lot of specialized filters and tests for templating. You can use all the standard filters and tests included in Jinja2 as well. Ansible also offers a new plugin type: :ref:`lookup_plugins`.
 
-Please note that all templating happens on the Ansible controller before the task is sent and executed on the target machine. This is done to minimize the requirements on the target (jinja2 is only required on the controller) and to be able to pass the minimal information needed for the task, so the target machine does not need a copy of all the data that the controller has access to.
+All templating happens on the Ansible controller **before** the task is sent and executed on the target machine. This approach minimizes the package requirements on the target (jinja2 is only required on the controller). It also limits the amount of data Ansible passes to the target machine. Ansible parses templates on the controller and passes only the information needed for each task to the target machine, instead of passing all the data on the controller and parsing it on the target.
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 .. toctree::
    :maxdepth: 2
@@ -21,20 +22,19 @@ Please note that all templating happens on the Ansible controller before the tas
 .. _templating_now:
 
 Get the current time
-````````````````````
+====================
 
 .. versionadded:: 2.8
 
-The ``now()`` Jinja2 function, allows you to retrieve python datetime object or a string representation for the current time.
+The ``now()`` Jinja2 function retrieves a Python datetime object or a string representation for the current time.
 
 The ``now()`` function supports 2 arguments:
 
 utc
-  Specify ``True`` to get the current time in UTC. Defaults to ``False``
+  Specify ``True`` to get the current time in UTC. Defaults to ``False``.
 
 fmt
-  Accepts a `strftime <https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior>`_ string that will be used
-  to return a formatted date time string
+  Accepts a `strftime <https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior>`_ string that returns a formatted date time string.
 
 
 .. seealso::

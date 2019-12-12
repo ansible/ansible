@@ -11,8 +11,44 @@ ControlPersist and paramiko
 
 By default, Ansible uses native OpenSSH, because it supports ControlPersist (a performance feature), Kerberos, and options in ``~/.ssh/config`` such as Jump Host setup. If your control machine uses an older version of OpenSSH that does not support ControlPersist, Ansible will fallback to a Python implementation of OpenSSH called 'paramiko'.
 
-SSH key setup
--------------
+.. _connection_set_user:
+
+Setting a remote user
+---------------------
+
+By default, Ansible connects to all remote devices with the user name you are using on the control node. If that user name does not exist on a remote device, you can set a different user name for the connection. If you just need to do some tasks as a different user, look at :ref:`become`. You can set the connection user in a playbook:
+
+.. code-block:: yaml
+
+   ---
+   - name: update webservers
+     hosts: webservers
+     remote_user: admin
+
+     tasks:
+     - name: thing to do first in this playbook
+     . . .
+
+as a host variable in inventory:
+
+.. code-block:: text
+
+   other1.example.com     ansible_connection=ssh        ansible_user=myuser
+   other2.example.com     ansible_connection=ssh        ansible_user=myotheruser
+
+or as a group variable in inventory:
+
+.. code-block:: yaml
+
+    cloud:
+      hosts:
+        cloud1: my_backup.cloud.com
+        cloud2: my_backup2.cloud.com
+      vars:
+        ansible_user: admin
+
+Setting up SSH keys
+-------------------
 
 By default, Ansible assumes you are using SSH keys to connect to remote machines.  SSH keys are encouraged, but you can use password authentication if needed with the ``--ask-pass`` option. If you need to provide a password for :ref:`privilege escalation <become>` (sudo, pbrun, etc.), use ``--ask-become-pass``.
 
@@ -51,8 +87,8 @@ You can specify localhost explicitly by adding this to your inventory file:
 
 .. _host_key_checking_on:
 
-Host key checking
------------------
+Managing host key checking
+--------------------------
 
 Ansible enables host key checking by default. Checking host keys guards against server spoofing and man-in-the-middle attacks, but it does require some maintenance.
 

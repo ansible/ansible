@@ -21,6 +21,7 @@ This guide covers how to work with Ansible, including using the command line, wo
    playbooks
    become
    vault
+   sample_setup
    modules
    ../plugins/plugins
    intro_bsd

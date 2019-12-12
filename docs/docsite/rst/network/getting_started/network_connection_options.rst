@@ -10,7 +10,7 @@ Common options are:
 
 * ``become`` and ``become_method`` as described in :ref:`privilege_escalation`.
 * ``network_os`` - set to match your network platform you are communicating with. See the :ref:`platform-specific <platform_options>` pages.
-* ``remote_user`` as described in :ref:`playbook_hosts_and_users`.
+* ``remote_user`` as described in :ref:`connection_set_user`.
 * Timeout options - ``persistent_command_timeout``, ``persistent_connect_timeout``, and ``timeout``.
 
 .. _timeout_options:

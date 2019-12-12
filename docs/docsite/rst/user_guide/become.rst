@@ -63,6 +63,9 @@ To do something as the ``nobody`` user when the shell is nologin:
       become_user: nobody
       become_flags: '-s /bin/sh'
 
+To specify a password for sudo, run ``ansible-playbook`` with ``--ask-become-pass`` (``-K`` for short).
+If you run a playbook utilizing ``become`` and the playbook seems to hang, most likely it is stuck at the privilege escalation prompt. Stop it with `CTRL-c`, then execute the playbook with ``-K`` and the appropriate password.
+
 Become connection variables
 ---------------------------
 
