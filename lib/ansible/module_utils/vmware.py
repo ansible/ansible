@@ -739,6 +739,7 @@ def set_vm_power_state(content, vm, state, force, timeout=0):
     if not force and current_state not in ['poweredon', 'poweredoff']:
         result['failed'] = True
         result['msg'] = "Virtual Machine is in %s power state. Force is required!" % current_state
+        result['instance'] = gather_vm_facts(content, vm)
         return result
 
     # State is not already true
