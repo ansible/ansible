@@ -205,6 +205,10 @@ files:
     maintainers: ctrufan
   $modules/crypto/entrust/: ctrufan tylert
   $modules/database/influxdb/: kamsz
+  $modules/database/mongodb/mongodb_user.py: Lujeni
+  $modules/database/mongodb/mongodb_shard.py: rhysmeister
+  $modules/database/mongodb/mongodb_replicaset.py: rhysmeister
+  $modules/database/mongodb/mongodb_parameter.py: netzhul
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
   $modules/database/mysql/: &mysql
     keywords: [ mariadb, proxysql ]
