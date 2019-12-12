@@ -1,2 +1,2 @@
-bugfixes:
-- mysql_info - doesn't list empty databases (https://github.com/ansible/ansible/issues/65727).
+minor_changes:
+- mysql_info - add ``return_empty_dbs`` parameter to list empty databases (https://github.com/ansible/ansible/issues/65727).

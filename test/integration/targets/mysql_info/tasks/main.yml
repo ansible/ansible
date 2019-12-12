@@ -154,6 +154,7 @@
     login_password: '{{ user_pass }}'
     filter:
     - databases
+    return_empty_dbs: yes
   register: result
 
 # Check acme is in returned dict
@@ -171,6 +172,7 @@
     - databases
     exclude_fields:
     - db_size
+    return_empty_dbs: yes
   register: result
 
 # Check acme is in returned dict
