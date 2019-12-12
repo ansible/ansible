@@ -160,7 +160,7 @@ Mock objects (from https://docs.python.org/3/library/unittest.mock.html) can be 
 useful in building unit tests for special / difficult cases, but they can also
 lead to complex and confusing coding situations.  One good use for mocks would be in
 simulating an API. As for 'six', the 'mock' python package is bundled with Ansible (use
-``import units.compat.mock``). See for example
+``import units.compat.mock``).
 
 Ensuring failure cases are visible with mock objects
 ----------------------------------------------------
