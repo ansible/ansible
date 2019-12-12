@@ -158,6 +158,7 @@ options:
         description:
           - Sets how the alarm handles missing data points.
         required: false
+        type: str
         choices:
           - 'breaching'
           - 'notBreaching'
