@@ -109,7 +109,7 @@
 
   - assert: *false
 
-  rescue:
+  always:
   - name: "Set interface back to default"
     nxos_config: *intcleanup
     ignore_errors: yes
@@ -124,5 +124,4 @@
       state: disabled
     ignore_errors: yes
 
-  always:
   - debug: msg="END connection={{ ansible_connection }} nxos_interface sanity test"
