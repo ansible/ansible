@@ -224,7 +224,7 @@ except ImportError:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils._text import to_text
-
+import ansible.module_utils.ec2 as ec2
 
 class EcsTaskManager:
     """Handles ECS Tasks"""
@@ -234,6 +234,7 @@ class EcsTaskManager:
 
         self.ecs = module.client('ecs')
 
+    @ec2.AWSRetry.backoff()
     def describe_task(self, task_name):
         try:
             response = self.ecs.describe_task_definition(taskDefinition=task_name)
@@ -241,6 +242,7 @@ class EcsTaskManager:
         except botocore.exceptions.ClientError:
             return None
 
+    @ec2.AWSRetry.backoff()
     def register_task(self, family, task_role_arn, execution_role_arn, network_mode, container_definitions, volumes, launch_type, cpu, memory):
         validated_containers = []
 
@@ -285,6 +287,7 @@ class EcsTaskManager:
 
         return response['taskDefinition']
 
+    @ec2.AWSRetry.backoff()
     def describe_task_definitions(self, family):
         data = {
             "taskDefinitionArns": [],
@@ -317,6 +320,7 @@ class EcsTaskManager:
             )
         )
 
+    @ec2.AWSRetry.backoff()
     def deregister_task(self, taskArn):
         response = self.ecs.deregister_task_definition(taskDefinition=taskArn)
         return response['taskDefinition']
