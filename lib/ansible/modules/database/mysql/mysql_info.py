@@ -45,6 +45,12 @@ options:
     type: list
     elements: str
     version_added: '2.10'
+  return_empty_dbs:
+    description:
+    - Includes names of empty databases to returned dictionary.
+    type: bool
+    default: no
+    version_added: '2.10'
 
 notes:
 - Calculating the size of a database might be slow, depending on the number and size of tables in it.
@@ -106,13 +112,14 @@ EXAMPLES = r'''
     - databases
     - version
 
-- name: Collect info about databases excluding their sizes
+- name: Collect info about databases including empty and excluding their sizes
   become: yes
   mysql_info:
     config_file: /home/alice/.my.cnf
     filter:
     - databases
     exclude_fields: db_size
+    return_empty_dbs: yes
 '''
 
 RETURN = r'''
@@ -244,14 +251,14 @@ class MySQL_Info(object):
             'slave_status': {},
         }
 
-    def get_info(self, filter_, exclude_fields):
+    def get_info(self, filter_, exclude_fields, return_empty_dbs):
         """Get MySQL instance information based on filter_.
 
         Arguments:
             filter_ (list): List of collected subsets (e.g., databases, users, etc.),
                 when it is empty, return all available information.
         """
-        self.__collect(exclude_fields)
+        self.__collect(exclude_fields, return_empty_dbs)
 
         inc_list = []
         exc_list = []
@@ -285,9 +292,9 @@ class MySQL_Info(object):
         else:
             return self.info
 
-    def __collect(self, exclude_fields):
+    def __collect(self, exclude_fields, return_empty_dbs):
         """Collect all possible subsets."""
-        self.__get_databases(exclude_fields)
+        self.__get_databases(exclude_fields, return_empty_dbs)
         self.__get_global_variables()
         self.__get_global_status()
         self.__get_engines()
@@ -408,7 +415,7 @@ class MySQL_Info(object):
                     if vname not in ('Host', 'User'):
                         self.info['users'][host][user][vname] = self.__convert(val)
 
-    def __get_databases(self, exclude_fields):
+    def __get_databases(self, exclude_fields, return_empty_dbs):
         """Get info about databases."""
         if not exclude_fields:
             query = ('SELECT table_schema AS "name", '
@@ -427,6 +434,20 @@ class MySQL_Info(object):
 
                 if not exclude_fields or 'db_size' not in exclude_fields:
                     self.info['databases'][db['name']]['size'] = int(db['size'])
+
+        # If empty dbs are not needed in the returned dict, exit from the method
+        if not return_empty_dbs:
+            return None
+
+        # Add info about empty databases (issue #65727):
+        res = self.__exec_sql('SHOW DATABASES')
+        if res:
+            for db in res:
+                if db['Database'] not in self.info['databases']:
+                    self.info['databases'][db['Database']] = {}
+
+                    if not exclude_fields or 'db_size' not in exclude_fields:
+                        self.info['databases'][db['Database']]['size'] = 0
 
     def __exec_sql(self, query, ddl=False):
         """Execute SQL.
@@ -460,6 +481,7 @@ def main():
         login_db=dict(type='str'),
         filter=dict(type='list'),
         exclude_fields=dict(type='list'),
+        return_empty_dbs=dict(type='bool', default=False),
     )
 
     # The module doesn't support check_mode
@@ -479,6 +501,7 @@ def main():
     config_file = module.params['config_file']
     filter_ = module.params['filter']
     exclude_fields = module.params['exclude_fields']
+    return_empty_dbs = module.params['return_empty_dbs']
 
     if filter_:
         filter_ = [f.strip() for f in filter_]
@@ -502,7 +525,7 @@ def main():
 
     mysql = MySQL_Info(module, cursor)
 
-    module.exit_json(changed=False, **mysql.get_info(filter_, exclude_fields))
+    module.exit_json(changed=False, **mysql.get_info(filter_, exclude_fields, return_empty_dbs))
 
 
 if __name__ == '__main__':
