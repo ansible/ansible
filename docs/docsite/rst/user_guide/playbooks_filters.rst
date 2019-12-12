@@ -200,14 +200,13 @@ You can change the indentation of either format::
     {{ some_variable | to_nice_json(indent=2) }}
     {{ some_variable | to_nice_yaml(indent=8) }}
 
-The ``to_yaml`` and ``to_nice_yaml`` filters use `PyYAML library`_ which has a default 80 symbol string length limit. That causes unexpected line break after 80th symbol (if there is a space after 80th symbol)
-To avoid such behavior and generate long lines, use the ``width`` option::
+The ``to_yaml`` and ``to_nice_yaml`` filters use the `PyYAML library`_ which has a default 80 symbol string length limit. That causes unexpected line break after 80th symbol (if there is a space after 80th symbol)
+To avoid such behavior and generate long lines, use the ``width`` option. You must use a hardcoded number to define the width, instead of a construction like ``float("inf")``, because the filter does not support proxying Python functions. For example::
 
     {{ some_variable | to_yaml(indent=8, width=1337) }}
     {{ some_variable | to_nice_yaml(indent=8, width=1337) }}
 
-While it would be nicer to use a construction like ``float("inf")`` instead of a hardcoded number, unfortunately the filter doesn't support proxying Python functions.
-Note that it also supports passing through other YAML parameters. Full list can be found in `PyYAML documentation`_.
+The filter does support passing through other YAML parameters. For a full list, see the `PyYAML documentation`_.
 
 If you are reading in some already formatted data::
 
@@ -589,9 +588,11 @@ To get a random MAC address from a string prefix starting with '52:54:00'::
 Note that if anything is wrong with the prefix string, the filter will issue an error.
 
  .. versionadded:: 2.9
-As of Ansible version 2.9, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent MAC addresses::
+
+As of Ansible version 2.9, you can also initialize the random number generator from a seed. This way, you can create random-but-idempotent MAC addresses::
 
     "{{ '52:54:00' | random_mac(seed=inventory_hostname) }}"
+
 
 .. _random_filter:
 
@@ -646,7 +647,7 @@ It's also possible to shuffle a list idempotent. All you need is a seed.::
     {{ ['a','b','c'] | shuffle(seed=inventory_hostname) }}
     # => ['b','a','c']
 
-note that when used with a non 'listable' item it is a noop, otherwise it always returns a list
+The shuffle filter returns a list whenever possible. If you use it with a non 'listable' item, the filter does nothing.
 
 .. _list_filters:
 

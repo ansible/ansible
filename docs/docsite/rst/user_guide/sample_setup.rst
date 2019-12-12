@@ -136,8 +136,7 @@ If necessary, you can define specific hardware variance in systems in a host_var
     foo_agent_port: 86
     bar_agent_port: 99
 
-Again, if we are using dynamic inventory sources, many dynamic groups are automatically created.  So a tag like "class:webserver" would load in
-variables from the file "group_vars/ec2_tag_class_webserver" automatically.
+Again, if you are using :ref:`dynamic inventory <dynamic_inventory>`, Ansible creates many dynamic groups automatically.  So a tag like "class:webserver" would load in variables from the file "group_vars/ec2_tag_class_webserver" automatically.
 
 .. _split_by_role:
 

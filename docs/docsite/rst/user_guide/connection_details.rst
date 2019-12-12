@@ -21,9 +21,9 @@ By default, Ansible connects to all remote devices with the user name you are us
 .. code-block:: yaml
 
    ---
-   - name: do sudo tasks on webservers
+   - name: update webservers
      hosts: webservers
-     remote_user: root
+     remote_user: admin
 
      tasks:
      - name: thing to do first in this playbook
