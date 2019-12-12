@@ -251,14 +251,14 @@ class MySQL_Info(object):
             'slave_status': {},
         }
 
-    def get_info(self, filter_, exclude_fields):
+    def get_info(self, filter_, exclude_fields, return_empty_dbs):
         """Get MySQL instance information based on filter_.
 
         Arguments:
             filter_ (list): List of collected subsets (e.g., databases, users, etc.),
                 when it is empty, return all available information.
         """
-        self.__collect(exclude_fields)
+        self.__collect(exclude_fields, return_empty_dbs)
 
         inc_list = []
         exc_list = []
@@ -294,7 +294,7 @@ class MySQL_Info(object):
 
     def __collect(self, exclude_fields, return_empty_dbs):
         """Collect all possible subsets."""
-        self.__get_databases(exclude_fields)
+        self.__get_databases(exclude_fields, return_empty_dbs)
         self.__get_global_variables()
         self.__get_global_status()
         self.__get_engines()
