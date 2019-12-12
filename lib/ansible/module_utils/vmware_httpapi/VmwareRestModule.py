@@ -10,6 +10,7 @@ import sys
 
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils._text import to_native
 
 # VMware ReST APIs
 #
@@ -307,6 +308,11 @@ INVENTORY = dict(
         url='/tagging/tag',
         filters=[],
     ),
+    session=dict(
+        api='cis',
+        url='/session',
+        filters=[],
+    ),
     vm=dict(
         api='vcenter',
         url='/vm',
@@ -363,6 +369,13 @@ class VmwareRestModule(AnsibleModule):
         # Initialize AnsibleModule superclass before params
         super(VmwareRestModule, self).__init__(*args, **kwargs)
 
+        # Turn on debug if not specified, but ANSIBLE_DEBUG is set
+        self.module_debug = {}
+        if self._debug:
+            self.warn('Enable debug output because ANSIBLE_DEBUG was set.')
+            self.params['log_level'] = 'debug'
+        self.log_level = self.params['log_level']
+
         # Params
         #
         # REQUIRED: Their absence will chuck a rod
@@ -373,7 +386,10 @@ class VmwareRestModule(AnsibleModule):
         self.state = self.params.get('state')
 
         # Initialize connection via httpapi connector. See "REST API Calls"
-        self._connection = Connection(self._socket_path)
+        try:
+            self._connection = Connection(self._socket_path)
+        except Exception as e:
+            self.fail(msg=to_native(e))
 
         # Register default status handlers. See "Dynamic Status Handlers"
         self._status_handlers = {
@@ -384,13 +400,6 @@ class VmwareRestModule(AnsibleModule):
         }
         if self.use_object_handler:
             self._status_handlers['default'] = self.handle_default_object
-
-        # Turn on debug if not specified, but ANSIBLE_DEBUG is set
-        self.module_debug = {}
-        if self._debug:
-            self.warn('Enable debug output because ANSIBLE_DEBUG was set.')
-            self.params['log_level'] = 'debug'
-        self.log_level = self.params['log_level']
 
     # Debugging
     #
@@ -523,7 +532,10 @@ class VmwareRestModule(AnsibleModule):
             method='POST',
         )
         self.key = key
-        self.response['status'], self.response['data'] = self._connection.send_request(url, data, method='POST')
+        try:
+            self.response['status'], self.response['data'] = self._connection.send_request(url, data, method='POST')
+        except Exception as e:
+            self.fail(msg=to_native(e))
         self._use_handler()
 
     def put(self, url='/rest', data=None, key='result'):
