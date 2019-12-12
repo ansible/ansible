@@ -52,7 +52,7 @@ class Interfaces(ConfigBase):
     def get_interfaces_facts(self, get_default_interfaces=False):
         """ Get the 'facts' (the current configuration)
 
-        :get_default_interfaces: A list of 'default' interface names, in the context of the interfaces module.
+        :get_default_interfaces: boolean - when True include a list of existing-but-default interface names in the facts dict.
           - The defaults list is primarily used to detect non-existent virtual interfaces.
         :rtype: A dictionary
         :returns: The current configuration as a dictionary
