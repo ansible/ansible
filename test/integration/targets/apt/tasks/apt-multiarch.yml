@@ -4,6 +4,8 @@
 
 - name: install hello:{{ apt_foreign_arch }} with apt
   apt: pkg=hello:{{ apt_foreign_arch }} state=present update_cache=yes
+  register: apt_result
+  until: apt_result is success
 
 - name: uninstall hello:{{ apt_foreign_arch }} with apt
   apt: pkg=hello:{{ apt_foreign_arch }} state=absent purge=yes
