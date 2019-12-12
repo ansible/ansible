@@ -271,19 +271,11 @@ class PluginLoader:
         # PLUGIN_PATHS_CACHE, and MODULE_CACHE.  Since those three dicts key
         # on the class_name and neither regular modules nor powershell modules
         # would have class_names, they would not work as written.
-        reordered_paths = []
-        win_dirs = []
-
-        for path in ret:
-            if path.endswith('windows'):
-                win_dirs.append(path)
-            else:
-                reordered_paths.append(path)
-        reordered_paths.extend(win_dirs)
+        ret.sort(key=lambda p: p.endswith('/windows'))
 
         # cache and return the result
-        self._paths = reordered_paths
-        return reordered_paths
+        self._paths = ret
+        return ret
 
     def _load_config_defs(self, name, module, path):
         ''' Reads plugin docs to find configuration setting definitions, to push to config manager for later use '''
