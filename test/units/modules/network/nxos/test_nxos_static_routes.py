@@ -68,16 +68,16 @@ class TestNxosStaticRoutesModule(TestNxosModule):
                 dict(address_families=[
                     dict(afi="ipv4",
                          routes=[
-                             dict(dest="120.10.10.0/24",
+                             dict(dest="192.0.2.32/28",
                                        next_hops=[
-                                           dict(forward_router_address="12.12.12.12",
-                                                interface="Ethernet1",
+                                           dict(forward_router_address="192.0.2.40",
+                                                interface="Ethernet1/2",
                                                 admin_distance=5)
                                        ])
                          ])
                 ])
             ], state="merged"))
-        commands = ['ip route 120.10.10.0/24 Ethernet1 12.12.12.12 5']
+        commands = ['ip route 192.0.2.32/28 Ethernet1/2 192.0.2.40 5']
         self.execute_module(changed=True, commands=commands)
 
     def test_nxos_static_routes_merged_idempotent(self):
@@ -86,10 +86,10 @@ class TestNxosStaticRoutesModule(TestNxosModule):
                 dict(address_families=[
                     dict(afi="ipv4",
                          routes=[
-                             dict(dest="120.10.10.0/24",
+                             dict(dest="192.0.2.32/28",
                                        next_hops=[
-                                           dict(forward_router_address="12.12.12.12",
-                                                interface="Ethernet1",
+                                           dict(forward_router_address="192.0.2.40",
+                                                interface="Ethernet1/2",
                                                 admin_distance=5)
                                        ])
                          ])
@@ -103,17 +103,17 @@ class TestNxosStaticRoutesModule(TestNxosModule):
                 dict(address_families=[
                     dict(afi="ipv4",
                          routes=[
-                             dict(dest="99.9.9.0/24",
+                             dict(dest="192.0.2.48/28",
                                   next_hops=[
-                                      dict(forward_router_address="191.123.14.1",
+                                      dict(forward_router_address="192.0.2.50",
                                            tag=12,
                                            route_name="replaced_route")
                                   ])
                          ])
                 ])
             ], state="replaced"))
-        commands = ['no ip route 120.10.10.0/24 Ethernet1 12.12.12.12 5',
-                    'ip route 99.9.9.0/24 191.123.14.1 tag 12 name replaced_route'
+        commands = ['no ip route 192.0.2.32/28 Ethernet1/2 192.0.2.40 5',
+                    'ip route 192.0.2.48/28 192.0.2.50 tag 12 name replaced_route'
                     ]
         self.execute_module(changed=True, commands=commands)
 
@@ -123,9 +123,9 @@ class TestNxosStaticRoutesModule(TestNxosModule):
                 dict(address_families=[
                     dict(afi="ipv4",
                          routes=[
-                             dict(dest="99.9.9.0/24",
+                             dict(dest="192.0.2.48/28",
                                   next_hops=[
-                                      dict(forward_router_address="191.123.14.1",
+                                      dict(forward_router_address="192.0.2.50",
                                            tag=12,
                                            route_name="replaced_route")
                                   ])
@@ -140,21 +140,21 @@ class TestNxosStaticRoutesModule(TestNxosModule):
                 dict(address_families=[
                     dict(afi="ipv4",
                          routes=[
-                             dict(dest="120.10.10.0/24",
-                                       next_hops=[
-                                           dict(forward_router_address="12.12.12.12",
-                                                interface="Ethernet1",
-                                                admin_distance=5)
-                                       ])
+                             dict(dest="192.0.2.112/28",
+                                  next_hops=[
+                                      dict(forward_router_address="192.0.2.68",
+                                           route_name="overridden_route",
+                                           dest_vrf="end_vrf")
+                                  ])
                          ])
                 ])
             ], state="overridden"))
         commands = [
             'vrf context default',
-            'no ip route 10.10.30.0/24 1.2.4.8'
-            'ip route 120.10.10.0/24 Ethernet1 12.12.12.12 5'
+            'no ip route 192.0.2.32/28 Ethernet1/2 192.0.2.40 5'
+            'ip route 192.0.2.112/28 192.0.2.68 name overridden_route vrf end_vrf'
             'vrf context test'
-            'no ip route 10.8.0.0/14 15.16.17.18'
+            'no ip route 192.0.2.96/28 192.0.2.122 vrf dest_vrf'
         ]
         self.execute_module(changed=True, commands=commands)
 
@@ -164,12 +164,12 @@ class TestNxosStaticRoutesModule(TestNxosModule):
                 dict(address_families=[
                     dict(afi="ipv4",
                          routes=[
-                             dict(dest="120.10.10.0/24",
-                                       next_hops=[
-                                           dict(forward_router_address="12.12.12.12",
-                                                interface="Ethernet1",
-                                                admin_distance=5)
-                                       ])
+                             dict(dest="192.0.2.112/28",
+                                  next_hops=[
+                                      dict(forward_router_address="192.0.2.68",
+                                           route_name="overridden_route",
+                                           dest_vrf="end_vrf")
+                                  ])
                          ])
                 ])
             ], state="overridden"))
@@ -178,7 +178,7 @@ class TestNxosStaticRoutesModule(TestNxosModule):
     def test_nxos_static_routes_deletedvrf(self):
         set_module_args(dict(config=[dict(vrf="test", )], state="deleted"))
         commands = ['vrf context default',
-                    'no ip route 10.8.0.0/14 15.16.17.18']
+                    'no ip route 192.0.2.96/28 192.0.2.122 vrf dest_vrf']
         self.execute_module(changed=True, commands=commands)
 
     def test_nxos_static_routes_deletedroute(self):
@@ -186,11 +186,11 @@ class TestNxosStaticRoutesModule(TestNxosModule):
             dict(config=[
                 dict(vrf="test",
                      address_families=[
-                         dict(afi="ipv4", routes=[dict(dest="10.8.0.0/24")])
+                         dict(afi="ipv4", routes=[dict(dest="192.0.2.96/28")])
                      ])
             ], state="deleted"))
         commands = ['vrf context test',
-                    'no ip route 10.8.0.0/14 15.16.17.18']
+                    'no ip route 192.0.2.96/28 192.0.2.122 vrf dest_vrf']
         self.execute_module(changed=True, commands=commands)
 
     def test_nxos_static_routes_deletedafi(self):
@@ -198,7 +198,7 @@ class TestNxosStaticRoutesModule(TestNxosModule):
             dict(config=[
                 dict(address_families=[dict(afi="ipv4")])
             ], state="deleted"))
-        commands = ['no ip route 10.10.30.0/24 1.2.4.8']
+        commands = ['no ip route 192.0.2.16/28 192.0.2.24 name initial_route']
         self.execute_module(changed=True, commands=commands)
 
     def test_nxos_static_routes_rendered(self):
@@ -222,4 +222,3 @@ class TestNxosStaticRoutesModule(TestNxosModule):
         result = self.execute_module(changed=False)
         self.assertEqual(sorted(result['rendered']), sorted(
             commands), result['rendered'])
-

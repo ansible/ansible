@@ -436,8 +436,8 @@ class Static_routes(ConfigBase):
 
     def add_default_vrf(self, dictionary):
         '''
-        This method is used to add 'default' vrf to the facts collected as global/default vrf 
-        is not shown in facts. vrf key exists for all vrfs except global. 
+        This method is used to add 'default' vrf to the facts collected as global/default vrf
+        is not shown in facts. vrf key exists for all vrfs except global.
         '''
         for d in dictionary:
             if 'vrf' not in d.keys():

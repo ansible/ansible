@@ -1,34 +1,34 @@
 ---
-  - debug:
-      msg: "Start nxos_static_routes gathered tests connection={{ ansible_connection }}"
-  
-  - include_tasks: populate_config.yaml
+   - debug:
+        msg: "Start nxos_static_routes gathered tests connection={{ ansible_connection }}"
 
-  - block:
-    - name: Gather static_routes facts
-      nxos_facts: &facts
-        gather_subset:
-          - '!all'
-          - '!min'
-        gather_network_resources: static_routes
-    
-    - name: Gathered
-      nxos_static_routes: &gathered
-        state: gathered
-      register: result
+    - include_tasks: populate_config.yaml
 
-    - assert:
-        that: 
-          - "result.changed == false"
-          - "ansible_facts.network_resources.static_routes == result.gathered"
+    - block:
+        - name: Gather static_routes facts
+            nxos_facts: & facts
+               gather_subset:
+                    - '!all'
+                    - '!min'
+                gather_network_resources: static_routes
 
-    - name: Idempotence - Gathered
-      nxos_static_routes: *gathered
-      register: result
-    
-    - assert:
-        that:
-          - "result.changed == false"
+        - name: Gathered
+            nxos_static_routes: & gathered
+               state: gathered
+            register: result
 
-    always:
-      - include_tasks: remove_config.yaml
+        - assert:
+            that:
+                - "result.changed == false"
+                - "ansible_facts.network_resources.static_routes == result.gathered"
+
+        - name: Idempotence - Gathered
+           nxos_static_routes: *gathered
+            register: result
+
+        - assert:
+            that:
+                - "result.changed == false"
+
+        always:
+            - include_tasks: remove_config.yaml

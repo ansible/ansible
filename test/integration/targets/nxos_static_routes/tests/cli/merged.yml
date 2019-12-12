@@ -1,76 +1,75 @@
 ---
-  - debug:
-      msg: "Start nxos_static_routes merged integration tests connection={{ansible_connection}}"
+   - debug:
+        msg: "Start nxos_static_routes merged integration tests connection={{ansible_connection}}"
 
-  - include_tasks: populate_config.yaml
+    - include_tasks: populate_config.yaml
 
-  - include_tasks: remove_config.yaml
-
-  - block:
-    - name: Merged
-      nxos_static_routes: &merged
-        config:
-          - vrf: trial_vrf
-            address_families:
-              - afi: ipv4
-                routes:
-                  - dest: 192.0.2.64/28
-                    next_hops: 
-                      - forward_router_address: 192.0.2.22
-                        tag: 4
-
-                      - forward_router_address: 192.0.2.23
-                        route_name: merged_route
-                        admin_distance: 1
-
-                        
-          - address_families:
-              - afi: ipv4
-                routes:
-                  - dest: 192.0.2.16/28
-                    next_hops:
-                      - forward_router_address: 192.0.2.24
-                        route_name: new_route
-                  
-                  - dest: 192.0.2.80/28 
-                    next_hops:
-                      - forward_router_address: 192.0.2.26
-                        tag: 12
-        state: merged
-      register: result
-
-    - assert:
-        that:
-          - "result.changed == true"
-          - "'vrf context default' in result.commands"
-          - "'ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.commands"
-          - "'ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.commands"
-          - "'vrf context trial_vrf' in result.commands"
-          - "'ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
-          - "'ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
-          - "result.commands | length == 6"
-
-    - name: Gather static_routes facts
-      nxos_facts:
-        gather_subset:
-          - '!all'
-          - '!min'
-        gather_network_resources: static_routes
-
-    - assert:
-        that:
-          - "ansible_facts.network_resources.static_routes == result.after"
-
-    - name: Idempotence - Merged
-      nxos_static_routes: *merged
-      register: result
-
-    - debug:
-        var: result
-        
-    - assert:
-        that:
-          - "result.changed == false"
-
-    always:
     - include_tasks: remove_config.yaml
+
+    - block:
+        - name: Merged
+            nxos_static_routes: & merged
+               config:
+                    - vrf: trial_vrf
+                       address_families:
+                            - afi: ipv4
+                               routes:
+                                    - dest: 192.0.2.64/28
+                                        next_hops:
+                                            - forward_router_address: 192.0.2.22
+                                               tag: 4
+
+                                            - forward_router_address: 192.0.2.23
+                                               route_name: merged_route
+                                                admin_distance: 1
+
+                    - address_families:
+                        - afi: ipv4
+                           routes:
+                                - dest: 192.0.2.16/28
+                                   next_hops:
+                                        - forward_router_address: 192.0.2.24
+                                           route_name: new_route
+
+                                - dest: 192.0.2.80/28
+                                   next_hops:
+                                        - forward_router_address: 192.0.2.26
+                                           tag: 12
+                state: merged
+            register: result
+
+        - assert:
+            that:
+                - "result.changed == true"
+                - "'vrf context default' in result.commands"
+                - "'ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.commands"
+                - "'ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.commands"
+                - "'vrf context trial_vrf' in result.commands"
+                - "'ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
+                - "'ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
+                - "result.commands | length == 6"
+
+        - name: Gather static_routes facts
+           nxos_facts:
+                gather_subset:
+                    - '!all'
+                    - '!min'
+                gather_network_resources: static_routes
+
+        - assert:
+            that:
+                - "ansible_facts.network_resources.static_routes == result.after"
+
+        - name: Idempotence - Merged
+           nxos_static_routes: *merged
+            register: result
+
+        - debug:
+            var: result
+
+        - assert:
+            that:
+                - "result.changed == false"
+
+        always:
+        - include_tasks: remove_config.yaml

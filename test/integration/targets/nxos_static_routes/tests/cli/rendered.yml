@@ -1,49 +1,49 @@
 ---
-  - debug:
-      msg: "Start nxos_static_routes rendered tests connection={{ ansible_connection }}"
+   - debug:
+        msg: "Start nxos_static_routes rendered tests connection={{ ansible_connection }}"
 
-  - name: Rendered
-    nxos_static_routes: &rendered
-      config:
-        - vrf: trial_vrf
-          address_families:
-            - afi: ipv6
-              routes:
-                - dest: 2001:db8:12::/32
-                  next_hops:
-                    - forward_router_address: 2001:db8::1001
-                      route_name: rendered_route
-                      admin_distance: 3
-                      
-        - address_families:
-            - afi: ipv4
-              routes:
-                - dest: 192.0.2.16/28
-                  next_hops:
-                    - forward_router_address: 192.0.2.24
-                      route_name: new_route
-                                  
-                - dest: 192.0.2.80/28 
-                  next_hops:
-                    - forward_router_address: 192.0.2.26
-                      tag: 12
-      state: rendered
-    register: result
-  
-  - assert:
-      that:
-        - "result.changed == false"
-        - "'vrf context default' in result.rendered"
-        - "'ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.rendered"
-        - "'ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.rendered"
-        - "'vrf context trial_vrf' in result.rendered"
-        - "'ipv6 route 2001:db8:12::/32 2001:db8::1001 name rendered_route 3' in result.rendered"
-        - "result.rendered | length == 5"
-  
-  - name: Idempotence - Rendered
-    nxos_static_routes: *rendered
-    register: result
-    
-  - assert:
-      that:
-        - "result.changed == false"
+    - name: Rendered
+        nxos_static_routes: & rendered
+           config:
+                - vrf: trial_vrf
+                   address_families:
+                        - afi: ipv6
+                           routes:
+                                - dest: 2001: db8:12::/32
+                                   next_hops:
+                                        - forward_router_address: 2001: db8::1001
+                                           route_name: rendered_route
+                                            admin_distance: 3
+
+                - address_families:
+                    - afi: ipv4
+                       routes:
+                            - dest: 192.0.2.16/28
+                               next_hops:
+                                    - forward_router_address: 192.0.2.24
+                                       route_name: new_route
+
+                            - dest: 192.0.2.80/28
+                               next_hops:
+                                    - forward_router_address: 192.0.2.26
+                                       tag: 12
+            state: rendered
+        register: result
+
+    - assert:
+        that:
+            - "result.changed == false"
+            - "'vrf context default' in result.rendered"
+            - "'ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.rendered"
+            - "'ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.rendered"
+            - "'vrf context trial_vrf' in result.rendered"
+            - "'ipv6 route 2001:db8:12::/32 2001:db8::1001 name rendered_route 3' in result.rendered"
+            - "result.rendered | length == 5"
+
+    - name: Idempotence - Rendered
+       nxos_static_routes: *rendered
+        register: result
+
+    - assert:
+        that:
+            - "result.changed == false"

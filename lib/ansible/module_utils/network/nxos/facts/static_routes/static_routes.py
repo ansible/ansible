@@ -9,6 +9,9 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import re
 from copy import deepcopy
 from ansible.module_utils.network.common import utils
@@ -18,7 +21,6 @@ from ansible.module_utils.network.nxos.argspec.static_routes.static_routes impor
 class Static_routesFacts(object):
     """ The nxos static_routes fact class
     """
-
     def __init__(self, module, subspec='config', options='options'):
         self._module = module
         self.argument_spec = Static_routesArgs.argument_spec
@@ -58,12 +60,12 @@ class Static_routesFacts(object):
             # used for parsed state where data is from the 'running-config' key
             data = data.split('\n')
             i = 0
-            while i <= (len(data)-1):
+            while i <= (len(data) - 1):
                 if 'vrf context ' in data[i]:
                     vrf_conf = data[i]
-                    j = i+1
+                    j = i + 1
                     while j < len(data) and 'vrf context ' not in data[j]:
-                        vrf_conf += '\n'+data[j]
+                        vrf_conf += '\n' + data[j]
                         j += 1
                     i = j
                     vrf_data.append(vrf_conf)
@@ -80,15 +82,15 @@ class Static_routesFacts(object):
                 # dont consider vrf if it does not have routes
         for i in range(len(new_vrf_data)):
             if not re.search('^vrf context', new_vrf_data[i]):
-                new_vrf_data[i] = 'vrf context'+new_vrf_data[i]
+                new_vrf_data[i] = 'vrf context' + new_vrf_data[i]
 
-        resources = non_vrf_data+new_vrf_data
+        resources = non_vrf_data + new_vrf_data
         objs = self.render_config(self.generated_spec, resources)
         ansible_facts['ansible_network_resources'].pop('static_routes', None)
         facts = {}
         if objs:
-            params = utils.validate_config(
-                self.argument_spec, {'config': objs})
+            params = utils.validate_config(self.argument_spec,
+                                           {'config': objs})
             params = utils.remove_empties(params)
             for c in params['config']:
                 if c == {'vrf': 'default'}:
@@ -153,16 +155,20 @@ class Static_routesFacts(object):
             afi_list.append(inner_dict['afi'])
 
         next_hop = {}
-        params = ['forward_router_address', 'interface',
-                  'admin_distance', 'route_name', 'tag', 'track', 'dest_vrf']
+        params = [
+            'forward_router_address', 'interface', 'admin_distance',
+            'route_name', 'tag', 'track', 'dest_vrf'
+        ]
         for p in params:
             if p in inner_dict.keys():
                 next_hop.update({p: inner_dict[p]})
 
         if inner_dict['dest'] not in dest_list:
             dest_list.append(inner_dict['dest'])
-            af[-1]['routes'].append({'dest': inner_dict['dest'],
-                                     'next_hops': []})
+            af[-1]['routes'].append({
+                'dest': inner_dict['dest'],
+                'next_hops': []
+            })
             # if 'dest' is new, create new list under 'routes'
             af[-1]['routes'][-1]['next_hops'].append(next_hop)
         else:
@@ -198,16 +204,15 @@ class Static_routesFacts(object):
                     conf = conf[1:]
                     for c in conf:
                         if 'ip route' in c or 'ipv6 route' in c:
-                            self.get_command(
-                                c, afi_list, dest_list, af)
+                            self.get_command(c, afi_list, dest_list, af)
                             config_dict['address_families'] = af
                     config.append(config_dict)
                 else:
                     if 'ip route' in conf or 'ipv6 route' in conf:
-                        self.get_command(
-                            conf, global_afi_list, global_dest_list, global_af)
+                        self.get_command(conf, global_afi_list,
+                                         global_dest_list, global_af)
             if global_af:
-                config.append(utils.remove_empties(
-                    {'address_families': global_af}))
+                config.append(
+                    utils.remove_empties({'address_families': global_af}))
 
         return config
