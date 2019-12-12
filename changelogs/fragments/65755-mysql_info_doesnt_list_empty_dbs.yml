@@ -1,0 +1,2 @@
+bugfixes:
+- mysql_info - doesn't list empty databases (https://github.com/ansible/ansible/issues/65727).
