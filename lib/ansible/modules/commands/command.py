@@ -23,7 +23,7 @@ description:
      - The given command will be executed on all selected nodes.
      - The command(s) will not be
        processed through the shell, so variables like C($HOME) and operations
-       like C("<"), C(">"), C("|"), C(";") and C("&") will not work.
+       like C("*"), C("<"), C(">"), C("|"), C(";") and C("&") will not work.
        Use the M(shell) module if you need these features.
      - To create C(command) tasks that are easier to read than the ones using space-delimited
        arguments, pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task)
