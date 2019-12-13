@@ -15,7 +15,8 @@ set -eux
 
 run_test() {
 	local testname=$1
-	local TEST_FOLDER_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+	local TEST_FOLDER_PATH
+	TEST_FOLDER_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 	# The shenanigans with redirection and 'tee' are to capture STDOUT and
 	# STDERR separately while still displaying both to the console
@@ -63,15 +64,15 @@ diff_failure() {
 
 cleanup() {
 	if [[ $INIT = 0 ]]; then
-		rm -rf ${OUTFILE}.*
+		rm -rf "${OUTFILE}.*"
 	fi
 
 	if [[ -f "${BASEFILE}.unreachable.stdout" ]]; then
-		rm -rf ${BASEFILE}.unreachable.stdout
+		rm -rf "${BASEFILE}.unreachable.stdout"
 	fi
 
 	if [[ -f "${BASEFILE}.unreachable.stderr" ]]; then
-		rm -rf ${BASEFILE}.unreachable.stderr
+		rm -rf "${BASEFILE}.unreachable.stderr"
 	fi
 
 	# Restore TTY cols
