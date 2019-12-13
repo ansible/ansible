@@ -544,6 +544,9 @@ class Template(object):
                 'updateExisting': True,
                 'deleteMissing': True
             },
+            'groups': {
+                'createMissing': True
+            },
             'httptests': {
                 'createMissing': True,
                 'updateExisting': True,
