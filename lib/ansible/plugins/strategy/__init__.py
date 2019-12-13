@@ -487,6 +487,14 @@ class StrategyBase:
             if task_result.is_failed():
                 role_ran = True
                 ignore_errors = original_task.ignore_errors
+                if handler_templar.is_template(ignore_errors):
+                    handler_templar.available_variables = self._variable_manager.get_vars(
+                        play=iterator._play,
+                        task=original_task,
+                        _hosts=self._hosts_cache,
+                        _hosts_all=self._hosts_cache_all
+                    )
+                    ignore_errors = handler_templar.template(ignore_errors)
                 if not ignore_errors:
                     display.debug("marking %s as failed" % original_host.name)
                     if original_task.run_once:

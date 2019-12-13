@@ -1,0 +1,2 @@
+bugfixes:
+    - Use correct variable values for template var in ignore_errors (https://github.com/ansible/ansible/issues/56345).
