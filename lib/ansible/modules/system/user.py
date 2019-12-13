@@ -511,6 +511,9 @@ class User(object):
         else:
             self.ssh_file = os.path.join('.ssh', 'id_%s' % self.ssh_type)
 
+        if self.groups is None and self.append:
+            module.warn("Append is set, but no groups are specified. Use 'groups' for appending new groups.")
+            
     def check_password_encrypted(self):
         # Darwin needs cleartext password, so skip validation
         if self.module.params['password'] and self.platform != 'Darwin':
