@@ -636,7 +636,7 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
         'format': MANIFEST_FORMAT,
     }
 
-    def _walk(b_path, b_top_level_dir):
+    def _walk(b_path, b_top_level_dir, resolved_dirs=set()):
         for b_item in os.listdir(b_path):
             b_abs_path = os.path.join(b_path, b_item)
             b_rel_base_dir = b'' if b_path == b_top_level_dir else b_path[len(b_top_level_dir) + 1:]
@@ -657,13 +657,18 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
                                         % to_text(b_abs_path))
                         continue
 
+                    if b_link_target in resolved_dirs:
+                        continue
+
+                    resolved_dirs.add(b_link_target)
+
                 manifest_entry = entry_template.copy()
                 manifest_entry['name'] = rel_path
                 manifest_entry['ftype'] = 'dir'
 
                 manifest['files'].append(manifest_entry)
 
-                _walk(b_abs_path, b_top_level_dir)
+                _walk(b_abs_path, b_top_level_dir, resolved_dirs=resolved_dirs)
             else:
                 if any(fnmatch.fnmatch(b_rel_path, b_pattern) for b_pattern in b_ignore_patterns):
                     display.vvv("Skipping '%s' for collection build" % to_text(b_abs_path))
