@@ -212,8 +212,8 @@ EXAMPLES = '''
     inventory: 'Local'
     survey_enabled: true
     survey_spec:
-      name: 'New customer'
-      description: 'New customer'
+      name: 'New host'
+      description: 'New host'
       spec:
         - question_name: 'What is the hostname?'
           question_description: 'Hostname for the machine'
