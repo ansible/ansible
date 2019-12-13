@@ -38,8 +38,9 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'eos_config' else False
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
-        if self._play_context.connection in ('network_cli', 'httpapi'):
+        if persistent_connection in ('network_cli', 'httpapi'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)

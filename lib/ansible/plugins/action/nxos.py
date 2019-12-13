@@ -39,9 +39,9 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'nxos_config' else False
-        socket_path = None
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
-        if (self._play_context.connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
+        if (persistent_connection == 'httpapi' or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
                 and module_name in ('nxos_file_copy', 'nxos_nxapi'):
             return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (module_name)}
 
@@ -71,7 +71,7 @@ class ActionModule(ActionNetworkModule):
                 msg += ' Current persistent_connect_timeout setting:' + str(persistent_connect_timeout)
                 return {'failed': True, 'msg': msg}
 
-        if self._play_context.connection in ('network_cli', 'httpapi'):
+        if persistent_connection in ('network_cli', 'httpapi'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)

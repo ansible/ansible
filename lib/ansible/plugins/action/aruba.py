@@ -36,7 +36,8 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        self._config_module = True if self._task.action == 'aruba_config' else False
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'aruba_config' else False
 
         if self._play_context.connection != 'local':
             return dict(
