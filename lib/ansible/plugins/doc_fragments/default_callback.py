@@ -72,7 +72,7 @@ class ModuleDocFragment(object):
         type: bool
         default: no
         env:
-          - name: ANSIBLE_DISPLAY_FAILED_TASK
+          - name: ANSIBLE_DISPLAY_FAILED_PATH
         ini:
           - key: display_failed_path
             section: defaults
