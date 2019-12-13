@@ -15,6 +15,7 @@ set -eux
 
 run_test() {
 	local testname=$1
+	local TEST_FOLDER_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 	# The shenanigans with redirection and 'tee' are to capture STDOUT and
 	# STDERR separately while still displaying both to the console
@@ -23,6 +24,11 @@ run_test() {
 		2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2)
 	# Scrub deprication warning that shows up in Python 2.6 on CentOS 6
 	sed -i -e '/RandomPool_DeprecationWarning/d' "${OUTFILE}.${testname}.stderr"
+
+	# Printing task path includes absolute paths specific to the machine
+	# Replace any occurences of test folder path with TEST_FOLDER_PATH palceholder
+	sed -i -e "s#${TEST_FOLDER_PATH}#TEST_FOLDER_PATH#g" "${OUTFILE}.${testname}.stdout"
+
 
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
 	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
