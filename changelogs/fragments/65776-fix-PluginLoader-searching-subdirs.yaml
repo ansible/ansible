@@ -1,0 +1,3 @@
+bugfixes:
+  - PluginLoader - Allow recursively adding subdirs from extra and configured plugin paths
+    (https://github.com/ansible/ansible/issues/65565)
