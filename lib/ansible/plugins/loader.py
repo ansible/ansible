@@ -231,6 +231,11 @@ class PluginLoader:
             return self._all_directories(self.package_path)
         return [self.package_path]
 
+    def _find_sub_directories(self, path):
+        for root, subdirs, files in os.walk(path, followlinks=True):
+            for subdir in subdirs:
+                yield os.path.join(root, subdir)
+
     def _get_paths(self, subdirs=True):
         ''' Return a list of paths to search for plugins in '''
 
@@ -252,8 +257,7 @@ class PluginLoader:
         # look in extra and configured plugin paths to add nested directories
         if subdirs:
             for path in ret:
-                # iterate over directories in the path recursively
-                for directory in glob.glob("%s/**%s" % (path, os.sep), recursive=True):
+                for directory in self._find_sub_directories(path):
                     if directory not in ret:
                         ret.append(directory)
 
