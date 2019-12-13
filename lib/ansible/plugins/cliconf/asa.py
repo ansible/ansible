@@ -58,7 +58,7 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_firepower_version'] = match.group(1)
 
-        match = re.search('Device .+ Version (\S+)', data)
+        match = re.search(r'Device .+ Version (\S+)', data)
         if match:
             device_info['network_os_device_mgr_version'] = match.group(1)
 

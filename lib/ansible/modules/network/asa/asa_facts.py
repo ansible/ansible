@@ -99,11 +99,11 @@ ansible_net_firepower_version:
   returned: always
   type: str
 ansible_net_device_mgr_version:
-  description: The Device manager version running on the remote device
+  description: The Device manager version running on the remote device.
   returned: always
   type: str
 ansible_net_asatype:
-  description: The operating system type (Cisco ASA) running on the remote device
+  description: The operating system type (Cisco ASA) running on the remote device.
   returned: always
   type: str
 ansible_net_hostname:
