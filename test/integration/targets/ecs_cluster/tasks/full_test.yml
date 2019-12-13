@@ -623,7 +623,7 @@
     - name: check that facts contain network configuration
       assert:
         that:
-          - "'networkConfiguration' in ecs_service_info.ansible_facts.services[0]"
+          - "'networkConfiguration' in ecs_service_info.services[0]"
 
     - name: attempt to get facts from missing task definition
       ecs_taskdefinition_info:
@@ -857,12 +857,12 @@
         state: present
         name: "{{ ecs_service_name }}"
         cluster: "{{ ecs_cluster_name }}"
-        task_definition: "{{ ecs_service_info.ansible_facts.services[0].taskDefinition }}"
+        task_definition: "{{ ecs_service_info.services[0].taskDefinition }}"
         desired_count: 0
         deployment_configuration: "{{ ecs_service_deployment_configuration }}"
         placement_strategy: "{{ ecs_service_placement_strategy }}"
         load_balancers:
-          - targetGroupArn: "{{ ecs_service_info.ansible_facts.services[0].loadBalancers[0].targetGroupArn }}"
+          - targetGroupArn: "{{ ecs_service_info.services[0].loadBalancers[0].targetGroupArn }}"
             containerName: "{{ ecs_task_name }}"
             containerPort: "{{ ecs_task_container_port }}"
         <<: *aws_connection_info
@@ -883,12 +883,12 @@
         state: present
         name: "{{ ecs_service_name }}2"
         cluster: "{{ ecs_cluster_name }}"
-        task_definition: "{{ ecs_service_info.ansible_facts.services[0].taskDefinition }}"
+        task_definition: "{{ ecs_service_info.services[0].taskDefinition }}"
         desired_count: 0
         deployment_configuration: "{{ ecs_service_deployment_configuration }}"
         placement_strategy: "{{ ecs_service_placement_strategy }}"
         load_balancers:
-          - targetGroupArn: "{{ ecs_service_info.ansible_facts.services[0].loadBalancers[0].targetGroupArn }}"
+          - targetGroupArn: "{{ ecs_service_info.services[0].loadBalancers[0].targetGroupArn }}"
             containerName: "{{ ecs_task_name }}"
             containerPort: "{{ ecs_task_container_port }}"
         <<: *aws_connection_info
