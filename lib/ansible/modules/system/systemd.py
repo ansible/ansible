@@ -73,7 +73,7 @@ options:
                 This can be used to change from "graphical.target" to "multi-user.target" and stop the graphical mode.
                 This should be used only once otherwise the task will always be seen as changed.
         choices: [ 'enforce', 'no', 'only', 'yes' ]
-        default: no
+        default: 'no'
         version_added: "2.10"
     user:
         description:
