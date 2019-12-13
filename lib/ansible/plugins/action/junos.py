@@ -39,6 +39,7 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'junos_config' else False
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
         if self._play_context.connection == 'local':
             provider = load_provider(junos_provider_spec, self._task.args)
@@ -76,7 +77,7 @@ class ActionModule(ActionNetworkModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
-        elif self._play_context.connection in ('netconf', 'network_cli'):
+        elif persistent_connection in ('netconf', 'network_cli'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 # for legacy reasons provider value is required for junos_facts(optional) and junos_package
@@ -85,8 +86,8 @@ class ActionModule(ActionNetworkModule):
                     display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
                     del self._task.args['provider']
 
-            if (self._play_context.connection == 'network_cli' and module_name not in CLI_SUPPORTED_MODULES) or \
-                    (self._play_context.connection == 'netconf' and module_name in CLI_SUPPORTED_MODULES[0:2]):
+            if (persistent_connection == 'network_cli' and module_name not in CLI_SUPPORTED_MODULES) or \
+                    (persistent_connection == 'netconf' and module_name in CLI_SUPPORTED_MODULES[0:2]):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module. "
                                                "Please see https://docs.ansible.com/ansible/latest/network/user_guide/platform_junos.html"
                                                % (self._play_context.connection, module_name)}

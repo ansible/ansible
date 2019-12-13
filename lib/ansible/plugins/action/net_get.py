@@ -37,15 +37,16 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         socket_path = None
-        play_context = copy.deepcopy(self._play_context)
-        play_context.network_os = self._get_network_os(task_vars)
+        network_os = self._get_network_os(task_vars)
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
-        if play_context.connection != 'network_cli':
+        if persistent_connection != 'network_cli':
             # It is supported only with network_cli
             result['failed'] = True
-            result['msg'] = ('please use network_cli connection type for net_get module')
+            result['msg'] = ('connection type %s is not valid for net_get module,'
+                             ' please use fully qualified name of network_cli connection type' % self._play_context.connection)
             return result
 
         try:

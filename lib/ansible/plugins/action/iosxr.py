@@ -38,6 +38,7 @@ class ActionModule(ActionNetworkModule):
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'iosxr_config' else False
         force_cli = module_name in ('iosxr_netconf', 'iosxr_config', 'iosxr_command', 'iosxr_facts')
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
         if self._play_context.connection == 'local':
             provider = load_provider(iosxr_provider_spec, self._task.args)
@@ -71,8 +72,8 @@ class ActionModule(ActionNetworkModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
-        elif self._play_context.connection in ('netconf', 'network_cli'):
-            if force_cli and self._play_context.connection != 'network_cli':
+        elif persistent_connection in ('netconf', 'network_cli'):
+            if force_cli and persistent_connection != 'network_cli':
                 return {'failed': True, 'msg': 'Connection type %s is not valid for module %s' %
                         (self._play_context.connection, module_name)}
             provider = self._task.args.get('provider', {})
