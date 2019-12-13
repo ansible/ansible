@@ -1,0 +1,2 @@
+minor_changes:
+- Include new feature in systemd.py to allow modification of the target mode (https://github.com/ansible/ansible/issues/65785)

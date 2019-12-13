@@ -57,6 +57,24 @@ options:
         default: no
         aliases: [ daemon-reexec ]
         version_added: "2.8"
+    default_set:
+        description:
+            - Systemd default target you want to apply on your system
+              Target modes can be included and actives in others. Such as "multi-user.target" which is included and active in "graphical.target" mode.
+              If you want to ensure that you are running in the desired mode, you can use the "default_apply": "enforce" option to force the mode.
+        version_added: "2.10"
+    default_apply:
+        description:
+            - Apply the Systemd default target if required.
+              * The 'no' option will set the desired target mode for next boot. It will not update the current node.
+              * The 'yes' option will set the desired target mode and ensure that the desired mode is active.
+              * The 'only' option will only ensure that the desired mode is active.
+              * The 'enforce' option will do the same stuff as 'yes' but it will enforce the mode at the desired level.
+                This can be used to change from "graphical.target" to "multi-user.target" and stop the graphical mode.
+                This should be used only once otherwise the task will always be seen as changed.
+        choices: [ no, yes, only, enforce ]
+        default: no
+        version_added: "2.10"
     user:
         description:
             - (deprecated) run ``systemctl`` talking to the service manager of the calling user, rather than the service manager
@@ -81,8 +99,8 @@ options:
         default: no
         version_added: "2.3"
 notes:
-    - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', ('daemon_reexec' since 2.8),
-      and all except 'daemon_reload' (and 'daemon_reexec' since 2.8) also require 'name'.
+    - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', ('daemon_reexec' since 2.8), ('default_set' since 2.10),
+      and all except 'daemon_reload' (and 'daemon_reexec' since 2.8 or 'default_set' since 2.10) also require 'name'.
     - Before 2.4 you always required 'name'.
     - Globs are not supported in name, i.e ``postgres*.service``.
 requirements:
@@ -130,6 +148,15 @@ EXAMPLES = '''
 - name: just force systemd to re-execute itself (2.8 and above)
   systemd:
     daemon_reexec: yes
+
+- name: set the default target mode to "graphical.target", it will be applied on next boot (2.10 and above)
+  systemd:
+   default_set: graphical.target
+
+- name: apply the target mode "multi-user.target".
+  systemd:
+    default_set: multi-user.target
+    default_apply: only
 '''
 
 RETURN = '''
@@ -281,7 +308,6 @@ def is_deactivating_service(service_status):
 def request_was_ignored(out):
     return '=' not in out and 'ignoring request' in out
 
-
 def parse_systemctl_show(lines):
     # The output of 'systemctl show' can contain values that span multiple lines. At first glance it
     # appears that such values are always surrounded by {}, so the previous version of this code
@@ -334,9 +360,11 @@ def main():
             user=dict(type='bool'),
             scope=dict(type='str', choices=['system', 'user', 'global']),
             no_block=dict(type='bool', default=False),
+            default_set=dict(type='str'),
+            default_apply=dict(type='str', choices=['enforce', 'only','no','yes'], default='no'),
         ),
         supports_check_mode=True,
-        required_one_of=[['state', 'enabled', 'masked', 'daemon_reload', 'daemon_reexec']],
+        required_one_of=[['state', 'enabled', 'masked', 'daemon_reload', 'daemon_reexec', 'default_set']],
         required_by=dict(
             state=('name', ),
             enabled=('name', ),
@@ -395,6 +423,40 @@ def main():
         (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
+
+    # Set and/or apply the Systemd default target
+    # List of the available status:
+    # default_target_previous => mode that we have overwritten
+    # target_mode_status => status of the mode (active/inactive)
+    # default_target_applied => the mode was isolated on the system
+    if module.params['default_set']:
+        target_name = module.params['default_set']
+        target_apply = module.params['default_apply']
+        result['name'] = target_name
+        (rc, out, err) = module.run_command("%s get-default" % (systemctl))
+        if rc != 0:
+            module.fail_json(msg='failure %d when retrieving the default target: %s' % (rc, err))
+        default_target_current = out.rstrip("\n\r")
+        if default_target_current != target_name and target_apply != "only":
+            result['status']['default_target_previous'] = default_target_current
+            result['status']['default_target_applied'] = target_name
+            result['changed'] = True
+            if not module.check_mode:
+                (rc, out, err) = module.run_command("%s set-default %s" % (systemctl, target_name))
+                if rc != 0:
+                    module.fail_json(msg='failure %d when changing the default target: %s' % (rc, err))
+        if target_apply != "no":
+            (rc, out, err) = module.run_command("%s is-active %s" % (systemctl, target_name))
+            if err:
+                module.fail_json(msg='failure %d when checking the active target: %s' % (rc, err))
+            result['status']['target_mode_status'] = out.rstrip("\n\r")
+            if result['status']['target_mode_status'] != "active" or target_apply == "enforce":
+                result['changed'] = True
+                result['status']['target_mode__applied_' + target_apply] = target_name
+                if not module.check_mode:
+                    (rc, out, err) = module.run_command("%s isolate %s" % (systemctl, target_name))
+                    if rc != 0:
+                        module.fail_json(msg='failure %d when applying the new target: %s' % (rc, err))
 
     if unit:
         found = False

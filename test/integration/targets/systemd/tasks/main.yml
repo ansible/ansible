@@ -46,5 +46,9 @@
               - 'systemd_test0.status is defined'
               - 'not systemd_test0.changed'
               - 'systemd_test0.state == "started"'
+    - name: test modification of the target mode
+      systemd:
+          default_set: graphical.target
+          default_apply: yes
 
   when: 'systemctl_check.rc == 0'
