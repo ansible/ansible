@@ -29,7 +29,6 @@ from units.modules.utils import set_module_args as _set_module_args
 def set_module_args(args, ignore_provider=None):
     if 'provider' not in args and not ignore_provider:
         args['provider'] = {'transport': args.get('transport') or 'cli'}
-
     return _set_module_args(args)
 
 
@@ -79,7 +78,6 @@ class TestNxosModule(ModuleTestCase):
         return retvals
 
     def execute_module(self, failed=False, changed=False, commands=None, sort=True, device=''):
-
         self.load_fixtures(commands, device=device)
 
         if failed:
@@ -91,11 +89,18 @@ class TestNxosModule(ModuleTestCase):
         if commands is not None and len(commands) > 0:
             if sort:
                 self.assertEqual(sorted(commands), sorted(
+<<<<<<< HEAD
                     result['commands']), result['commands'])
             else:
                 self.assertEqual(
                     commands, result['commands'], result['commands'])
 
+=======
+                    result['commands']), result)
+            else:
+                self.assertEqual(
+                    commands, result['commands'], result)
+>>>>>>> Unit tests and formatting
         return result
 
     def failed(self):
@@ -108,7 +113,6 @@ class TestNxosModule(ModuleTestCase):
     def changed(self, changed=False):
         with self.assertRaises(AnsibleExitJson) as exc:
             self.module.main()
-
         result = exc.exception.args[0]
         self.assertEqual(result['changed'], changed, result)
         return result

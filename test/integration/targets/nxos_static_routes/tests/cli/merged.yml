@@ -1,5 +1,5 @@
 ---
-   - debug:
+    - debug:
         msg: "Start nxos_static_routes merged integration tests connection={{ansible_connection}}"
 
     - include_tasks: populate_config.yaml
@@ -8,35 +8,35 @@
 
     - block:
         - name: Merged
-            nxos_static_routes: & merged
-               config:
-                    - vrf: trial_vrf
-                       address_families:
-                            - afi: ipv4
-                               routes:
-                                    - dest: 192.0.2.64/28
-                                        next_hops:
-                                            - forward_router_address: 192.0.2.22
-                                               tag: 4
+          nxos_static_routes: &merged
+            config:
+              - vrf: trial_vrf
+                address_families:
+                  - afi: ipv4
+                    routes:
+                      - dest: 192.0.2.64/28
+                        next_hops:
+                          - forward_router_address: 192.0.2.22
+                            tag: 4
+                          
+                          - forward_router_address: 192.0.2.23
+                            route_name: merged_route
+                            admin_distance: 1
 
-                                            - forward_router_address: 192.0.2.23
-                                               route_name: merged_route
-                                                admin_distance: 1
-
-                    - address_families:
-                        - afi: ipv4
-                           routes:
-                                - dest: 192.0.2.16/28
-                                   next_hops:
-                                        - forward_router_address: 192.0.2.24
-                                           route_name: new_route
-
-                                - dest: 192.0.2.80/28
-                                   next_hops:
-                                        - forward_router_address: 192.0.2.26
-                                           tag: 12
-                state: merged
-            register: result
+              - address_families:
+                  - afi: ipv4
+                    routes:
+                      - dest: 192.0.2.16/28
+                        next_hops:
+                          - forward_router_address: 192.0.2.24
+                            route_name: new_route
+                            
+                      - dest: 192.0.2.80/28
+                        next_hops:
+                        - forward_router_address: 192.0.2.26
+                          tag: 12
+            state: merged
+          register: result
 
         - assert:
             that:
@@ -50,26 +50,26 @@
                 - "result.commands | length == 6"
 
         - name: Gather static_routes facts
-           nxos_facts:
-                gather_subset:
-                    - '!all'
-                    - '!min'
-                gather_network_resources: static_routes
+          nxos_facts:
+            gather_subset:
+              - '!all'
+              - '!min'
+            gather_network_resources: static_routes
 
         - assert:
             that:
-                - "ansible_facts.network_resources.static_routes == result.after"
+              - "ansible_facts.network_resources.static_routes == result.after"
 
         - name: Idempotence - Merged
-           nxos_static_routes: *merged
-            register: result
+          nxos_static_routes: *merged
+          register: result
 
         - debug:
             var: result
 
         - assert:
             that:
-                - "result.changed == false"
+              - "result.changed == false"
 
-        always:
+      always:
         - include_tasks: remove_config.yaml

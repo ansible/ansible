@@ -6,14 +6,14 @@
 
   - block:
       - name: Gather static_routes facts
-        nxos_facts: & facts
+        nxos_facts: &facts
           gather_subset:
             - '!all'
             - '!min'
           gather_network_resources: static_routes
 
       - name: Overridden
-        nxos_static_routes: & overridden
+        nxos_static_routes: &overridden
           config:
               - vrf: trial_vrf
                 address_families:

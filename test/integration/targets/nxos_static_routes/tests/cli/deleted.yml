@@ -1,51 +1,51 @@
 ---
-   - debug:
-        msg: "Start nxos_static_routes deleted integration tests connection = {{ ansible_connection }}"
+  - debug:
+      msg: "Start nxos_static_routes deleted integration tests connection = {{ ansible_connection }}"
 
-    - include_tasks: populate_config.yaml
+  - include_tasks: populate_config.yaml
 
-    - block:
-        - name: Gather static_routes facts
-            nxos_facts: & facts
-               gather_subset:
-                    - '!all'
-                    - '!min'
-                gather_network_resources: static_routes
+  - block:
+      - name: Gather static_routes facts
+        nxos_facts: &facts
+            gather_subset:
+                - '!all'
+                - '!min'
+            gather_network_resources: static_routes
 
-        - name: Deleted
-            nxos_static_routes: & deleted
-               state: deleted
-            register: result
+      - name: Deleted
+        nxos_static_routes: &deleted
+            state: deleted
+        register: result
 
-        - debug:
-            var: result
+      - debug:
+          var: result
 
-        - assert:
-            that:
-                - "ansible_facts.network_resources.static_routes == result.before"
-                - "'vrf context trial_vrf' in result.commands"
-                - "'no ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
-                - "'no ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
-                - "'vrf context default' in result.commands"
-                - "'no ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.commands"
-                - "'no ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.commands"
-                - "result.changed == true "
-                - "result.after | length == 0"
+      - assert:
+          that:
+              - "ansible_facts.network_resources.static_routes == result.before"
+              - "'vrf context trial_vrf' in result.commands"
+              - "'no ip route 192.0.2.64/28 192.0.2.22 tag 4' in result.commands"
+              - "'no ip route 192.0.2.64/28 192.0.2.23 name merged_route 1' in result.commands"
+              - "'vrf context default' in result.commands"
+              - "'no ip route 192.0.2.16/28 192.0.2.24 name new_route' in result.commands"
+              - "'no ip route 192.0.2.80/28 192.0.2.26 tag 12' in result.commands"
+              - "result.changed == true "
+              - "result.after | length == 0"
 
-        - name: Gather static_routes post facts
-           nxos_facts: *facts
+      - name: Gather static_routes post facts
+        nxos_facts: *facts
 
-        - assert:
-            that:
-                - "ansible_facts.network_resources == {} "
+      - assert:
+          that:
+            - "ansible_facts.network_resources == {} "
 
-        - name: Idempotence - deleted
-           nxos_static_routes: *deleted
-            register: result
+      - name: Idempotence - deleted
+        nxos_static_routes: *deleted
+        register: result
 
-        - assert:
-            that:
-                - "result.changed == false"
+      - assert:
+          that:
+            - "result.changed == false"
 
-        always:
-        - include_tasks: remove_config.yaml
+    always:
+    - include_tasks: remove_config.yaml

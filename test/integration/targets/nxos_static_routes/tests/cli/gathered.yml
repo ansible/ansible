@@ -1,5 +1,5 @@
 ---
-   - debug:
+    - debug:
         msg: "Start nxos_static_routes gathered tests connection={{ ansible_connection }}"
 
     - include_tasks: populate_config.yaml

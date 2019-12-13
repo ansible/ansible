@@ -1,5 +1,5 @@
 ---
-   - debug:
+    - debug:
         msg: "Start nxos_static_routes rendered tests connection={{ ansible_connection }}"
 
     - name: Rendered

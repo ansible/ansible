@@ -50,7 +50,14 @@ class Static_routes(ConfigBase):
             'static_routes')
         if not static_routes_facts:
             return []
+
         return static_routes_facts
+
+    def edit_config(self, commands):
+        """Wrapper method for `_connection.edit_config()`
+        This exists solely to allow the unit test framework to mock device connection calls.
+        """
+        return self._connection.edit_config(commands)
 
     def execute_module(self):
         """ Execute the module
@@ -264,7 +271,7 @@ class Static_routes(ConfigBase):
                 if obj_in_have:
                     if 'address_families' in w.keys():
                         o1 = obj_in_have['address_families']
-                        afi_list = [o['afi'] for o in o1]
+                        afi_list = [o['afi'] for o in o1]  # have's afi list
                         for w1 in w['address_families']:
                             if w1['afi'] in afi_list:
                                 o2 = search_obj_in_list(w1['afi'], o1, 'afi')
@@ -294,8 +301,7 @@ class Static_routes(ConfigBase):
                                 else:
                                     # case when only afi given for delete
                                     delete_dict = {
-                                        'vrf':
-                                        obj_in_have['vrf'],
+                                        'vrf': obj_in_have['vrf'],
                                         'address_families': [{
                                             'afi':
                                             o2['afi'],
@@ -306,6 +312,7 @@ class Static_routes(ConfigBase):
                                     commands.extend(
                                         self.del_commands([delete_dict]))
                     else:
+                        # only vrf given to delete
                         commands.extend(self.del_commands([obj_in_have]))
         else:
             if have:

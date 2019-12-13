@@ -1,19 +1,19 @@
 ---
-   - debug:
+    - debug:
         msg: "Start nxos_static_routes parsed tests connection={{ ansible_connection }}"
 
     - include_tasks: populate_config.yaml
 
     - block:
         - name: Gather static_routes facts
-            nxos_facts: & facts
+            nxos_facts: &facts
                gather_subset:
                     - '!all'
                     - '!min'
                 gather_network_resources: static_routes
-
+  
         - name: Parsed
-            nxos_static_routes: & parsed
+            nxos_static_routes: &parsed
                running_config: |
                    ip route 192.0.2.16/28 192.0.2.24 name new_route
                     ip route 192.0.2.80/28 192.0.2.26 tag 12

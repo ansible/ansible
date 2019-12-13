@@ -21,6 +21,7 @@ from ansible.module_utils.network.nxos.argspec.static_routes.static_routes impor
 class Static_routesFacts(object):
     """ The nxos static_routes fact class
     """
+
     def __init__(self, module, subspec='config', options='options'):
         self._module = module
         self.argument_spec = Static_routesArgs.argument_spec
@@ -35,14 +36,7 @@ class Static_routesFacts(object):
 
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
-    def populate_facts(self, connection, ansible_facts, data=None):
-        """ Populate the facts for static_routes
-        :param connection: the device connection
-        :param ansible_facts: Facts dictionary
-        :param data: previously collected conf
-        :rtype: dictionary
-        :returns: facts
-        """
+    def get_device_data(self, connection, data):
         vrf_data = []
         non_vrf_data = []
         if not data:
@@ -72,9 +66,7 @@ class Static_routesFacts(object):
                 else:
                     non_vrf_data.append(data[i])
                     i += 1
-                q(vrf_data)
-                q(non_vrf_data)
-        objs = []
+
         new_vrf_data = []
         for v in vrf_data:
             if re.search('\n\s*ip(v6)? route', v):
@@ -85,6 +77,18 @@ class Static_routesFacts(object):
                 new_vrf_data[i] = 'vrf context' + new_vrf_data[i]
 
         resources = non_vrf_data + new_vrf_data
+        return resources
+
+    def populate_facts(self, connection, ansible_facts, data=None):
+        """ Populate the facts for static_routes
+        :param connection: the device connection
+        :param ansible_facts: Facts dictionary
+        :param data: previously collected conf
+        :rtype: dictionary
+        :returns: facts
+        """
+        objs = []
+        resources = self.get_device_data(connection, data)
         objs = self.render_config(self.generated_spec, resources)
         ansible_facts['ansible_network_resources'].pop('static_routes', None)
         facts = {}
@@ -214,5 +218,4 @@ class Static_routesFacts(object):
             if global_af:
                 config.append(
                     utils.remove_empties({'address_families': global_af}))
-
         return config

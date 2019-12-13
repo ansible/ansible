@@ -7,81 +7,80 @@
     - include_tasks: remove_config.yaml
 
     - name: Apply the provided configuration(base config)
-       nxos_static_routes:
-            config:
-                - address_families:
-                    - afi: ipv4
-                       routes:
-                            - dest: 192.0.2.36/30
-                               next_hops:
-                                    - forward_router_address: 192.0.2.32
-                                       route_name: test_route1
-                                        tag: 14
-
-                                    - forward_router_address: 192.0.2.48
-                                       route_name: test_route2
-                                        admin_distance: 2
-
-                - vrf: trial_vrf
-                   address_families:
-                        - afi: ipv6
-                           routes:
-                                - dest: 2001: db8: 3000: : / 36
-                                   next_hops:
-                                        - forward_router_address: 2001: db8: 2000: 2: : 2
-                                           dest_vrf: test_dest_vrf
-            state: merged
-        register: base_config
+      nxos_static_routes:
+        config:
+          - address_families:
+              - afi: ipv4
+                routes:
+                  - dest: 192.0.2.36/30
+                    next_hops:
+                      - forward_router_address: 192.0.2.32
+                        route_name: test_route1
+                        tag: 14
+                      
+                      - forward_router_address: 192.0.2.48
+                        route_name: test_route2
+                        admin_distance: 2
+          - vrf: trial_vrf
+            address_families:
+              - afi: ipv6
+                routes:
+                  - dest: 2001:db8:3000::/36
+                    next_hops:
+                      - forward_router_address: 2001:db8:2000:2::2
+                        dest_vrf: test_dest_vrf
+        state: merged
+      register: base_config
 
     - name: Gather interfaces facts
-       nxos_facts:
-            gather_subset:
-                - "!all"
-                - "!min"
-            gather_network_resources:
-                - static_routes
+      nxos_facts:
+        gather_subset:
+          - "!all"
+          - "!min"
+        gather_network_resources:
+          - static_routes
 
     - name: Apply provided configuration(this will be reverted)
-       nxos_static_routes:
-            config:
-                - address_families:
-                    - afi: ipv4
-                       routes:
-                            - dest: 192.0.2.44/30
-                               next_hops:
-                                    - forward_router_address: 192.0.2.55
-                                       tag: 1
-                                        admin_distance: 1
-
-            state: overridden
-        register: result
+      nxos_static_routes:
+        config:
+          - address_families:
+              - afi: ipv4
+                routes:
+                  - dest: 192.0.2.44/30
+                    next_hops:
+                      - forward_router_address: 192.0.2.55
+                        tag: 1
+                        admin_distance: 1
+        state: overridden
+      register: result
 
     - debug:
         var: result
 
     - name: Assert that changes are applied
-        assert:
-            that:
-                - "result.changed == true"
-                - "'vrf context default' in result.commands"
-                - "'no ip route 192.0.2.36/30 192.0.2.32 name test_route1 tag 14' in result.commands"
-                - "'no ip route 192.0.2.36/30 192.0.2.48 name test_route2 2'"
-                - "'ip route 192.0.2.44/30 192.0.2.55 tag 1 1' in result.commands"
-                - "'vrf context trial_vrf' in result.commands"
-                - "'no ipv6 route 2001:db8:3000::/36 2001:db8:2000:2::2 vrf test_dest_vrf' in result.commands"
-                - "'vrf context management' in result.commands"
-                - "'no ip route 0.0.0.0/0 10.0.2.2' in result.commands"
-                - "result.commands | length == 8"
+      assert:
+        that:
+            - "result.changed == true"
+            - "'vrf context default' in result.commands"
+            - "'no ip route 192.0.2.36/30 192.0.2.32 name test_route1 tag 14' in result.commands"
+            - "'no ip route 192.0.2.36/30 192.0.2.48 name test_route2 2'"
+            - "'ip route 192.0.2.44/30 192.0.2.55 tag 1 1' in result.commands"
+            - "'vrf context trial_vrf' in result.commands"
+            - "'no ipv6 route 2001:db8:3000::/36 2001:db8:2000:2::2 vrf test_dest_vrf' in result.commands"
+            - "'vrf context management' in result.commands"
+            - "'no ip route 0.0.0.0/0 10.0.2.2' in result.commands"
+            - "result.commands | length == 8"
 
     - name: Revert back to base configuration
-       nxos_static_routes:
-            config: "{{ ansible_facts['network_resources']['static_routes'] }}"
-            state: overridden
-        register: revert
+      nxos_static_routes:
+        config: "{{ ansible_facts['network_resources']['static_routes'] }}"
+        state: overridden
+      register: revert
 
     - name: Assert that config was reverted
-       assert:
-            that: "{{ base_config['after'] | symmetric_difference(revert['after'] | length == 0"
+      assert:
+        that: "{{ base_config['after'] | symmetric_difference(revert['after'] | length == 0"
 
-    always:
+      always:
         - include_tasks: remove_config.yaml
+        
