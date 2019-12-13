@@ -25,6 +25,28 @@
         <<: *aws_connection_info
       register: ecs_taskdefinition_creation
 
+    # even after deleting the cluster and recreating with a different name
+    # the previous service can prevent the current service from starting
+    # while it's in a draining state. Check the service info and sleep
+    # if the service does not report as inactive.
+
+    - name: check if service is still running from a previous task
+      ecs_service_info:
+        service: "{{ resource_prefix }}"
+        cluster: "{{ resource_prefix }}"
+        details: yes
+        <<: *aws_connection_info
+      register: ecs_service_info_results
+    - name: delay if the service was not inactive
+      debug: var=ecs_service_info_results
+
+    - name: delay if the service was not inactive
+      pause:
+        seconds: 30
+      when:
+        - ecs_service_info_results.services|length >0
+        - ecs_service_info_results.services[0]['status'] != 'INACTIVE'
+
     - name: create ecs_service
       ecs_service:
         name: "{{ resource_prefix }}"

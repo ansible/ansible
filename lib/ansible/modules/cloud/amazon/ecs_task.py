@@ -84,6 +84,12 @@ options:
         version_added: 2.8
         choices: ["EC2", "FARGATE"]
         type: str
+    tags:
+        type: dict
+        description:
+          - Tags that will be added to ecs tasks on start and run
+        required: false
+        version_added: "2.10"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -108,6 +114,11 @@ EXAMPLES = '''
       cluster: console-sample-app-static-cluster
       task_definition: console-sample-app-static-taskdef
       task: "arn:aws:ecs:us-west-2:172139249013:task/3f8353d1-29a8-4689-bbf6-ad79937ffe8a"
+      tags:
+        resourceName: a_task_for_ansible_to_run
+        type: long_running_task
+        network: internal
+        version: 1.4
       container_instances:
       - arn:aws:ecs:us-west-2:172139249013:container-instance/79c23f22-876c-438a-bddf-55c98a3538a8
       started_by: ansible_user
@@ -209,7 +220,8 @@ task:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_ec2_security_group_ids_from_names
+from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.ec2 import ec2_argument_spec, get_ec2_security_group_ids_from_names, ansible_dict_to_boto3_tag_list
 
 try:
     import botocore
@@ -254,7 +266,7 @@ class EcsExecManager:
                     return c
         return None
 
-    def run_task(self, cluster, task_definition, overrides, count, startedBy, launch_type):
+    def run_task(self, cluster, task_definition, overrides, count, startedBy, launch_type, tags):
         if overrides is None:
             overrides = dict()
         params = dict(cluster=cluster, taskDefinition=task_definition,
@@ -263,6 +275,10 @@ class EcsExecManager:
             params['networkConfiguration'] = self.format_network_configuration(self.module.params['network_configuration'])
         if launch_type:
             params['launchType'] = launch_type
+        if tags:
+            params['tags'] = ansible_dict_to_boto3_tag_list(tags, 'key', 'value')
+
+            # TODO: need to check if long arn format enabled.
         try:
             response = self.ecs.run_task(**params)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -270,7 +286,7 @@ class EcsExecManager:
         # include tasks and failures
         return response['tasks']
 
-    def start_task(self, cluster, task_definition, overrides, container_instances, startedBy):
+    def start_task(self, cluster, task_definition, overrides, container_instances, startedBy, tags):
         args = dict()
         if cluster:
             args['cluster'] = cluster
@@ -284,6 +300,8 @@ class EcsExecManager:
             args['startedBy'] = startedBy
         if self.module.params['network_configuration']:
             args['networkConfiguration'] = self.format_network_configuration(self.module.params['network_configuration'])
+        if tags:
+            args['tags'] = ansible_dict_to_boto3_tag_list(tags, 'key', 'value')
         try:
             response = self.ecs.start_task(**args)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -301,6 +319,17 @@ class EcsExecManager:
         # for attributes (and networkConfiguration is not an explicit argument
         # to e.g. ecs.run_task, it's just passed as a keyword argument)
         return LooseVersion(botocore.__version__) >= LooseVersion('1.8.4')
+
+    def ecs_task_long_format_enabled(self):
+        account_support = self.ecs.list_account_settings(name='taskLongArnFormat', effectiveSettings=True)
+        return account_support['settings'][0]['value'] == 'enabled'
+
+    def ecs_api_handles_tags(self):
+        from distutils.version import LooseVersion
+        # There doesn't seem to be a nice way to inspect botocore to look
+        # for attributes (and networkConfiguration is not an explicit argument
+        # to e.g. ecs.run_task, it's just passed as a keyword argument)
+        return LooseVersion(botocore.__version__) >= LooseVersion('1.12.46')
 
     def ecs_api_handles_network_configuration(self):
         from distutils.version import LooseVersion
@@ -322,7 +351,8 @@ def main():
         container_instances=dict(required=False, type='list'),  # S*
         started_by=dict(required=False, type='str'),  # R S
         network_configuration=dict(required=False, type='dict'),
-        launch_type=dict(required=False, choices=['EC2', 'FARGATE'])
+        launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
+        tags=dict(required=False, type='dict')
     ))
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True,
@@ -359,6 +389,12 @@ def main():
     if module.params['launch_type'] and not service_mgr.ecs_api_handles_launch_type():
         module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch type')
 
+    if module.params['tags']:
+        if not service_mgr.ecs_api_handles_tags():
+            module.fail_json(msg=missing_required_lib("botocore >= 1.12.46", reason="to use tags"))
+        if not service_mgr.ecs_task_long_format_enabled():
+            module.fail_json(msg="Cannot set task tags: long format task arns are required to set tags")
+
     existing = service_mgr.list_tasks(module.params['cluster'], task_to_list, status_type)
 
     results = dict(changed=False)
@@ -374,7 +410,9 @@ def main():
                     module.params['overrides'],
                     module.params['count'],
                     module.params['started_by'],
-                    module.params['launch_type'])
+                    module.params['launch_type'],
+                    module.params['tags'],
+                )
             results['changed'] = True
 
     elif module.params['operation'] == 'start':
@@ -388,7 +426,8 @@ def main():
                     module.params['task_definition'],
                     module.params['overrides'],
                     module.params['container_instances'],
-                    module.params['started_by']
+                    module.params['started_by'],
+                    module.params['tags'],
                 )
             results['changed'] = True
 

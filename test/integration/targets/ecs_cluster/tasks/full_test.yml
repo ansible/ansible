@@ -623,7 +623,7 @@
     - name: check that facts contain network configuration
       assert:
         that:
-          - "'networkConfiguration' in ecs_service_info.ansible_facts.services[0]"
+          - "'networkConfiguration' in ecs_service_info.services[0]"
 
     - name: attempt to get facts from missing task definition
       ecs_taskdefinition_info:
@@ -738,6 +738,11 @@
         <<: *aws_connection_info
       register: ecs_fargate_service_network_with_awsvpc
 
+    - name: assert that public IP assignment is enabled
+      assert:
+        that:
+          - 'ecs_fargate_service_network_with_awsvpc.service.networkConfiguration.awsvpcConfiguration.assignPublicIp == "ENABLED"'
+
     - name: create fargate ECS task with run task
       ecs_task:
         operation: run
@@ -754,10 +759,67 @@
         <<: *aws_connection_info
       register: fargate_run_task_output
 
-    - name: assert that public IP assignment is enabled
-      assert:
-        that:
-          - 'ecs_fargate_service_network_with_awsvpc.service.networkConfiguration.awsvpcConfiguration.assignPublicIp == "ENABLED"'
+      # aws cli not installed in docker container; make sure it's installed.
+    - name: install awscli
+      pip:
+        state: present
+        name: awscli
+
+    - name: disable taskLongArnFormat
+      command: aws ecs put-account-setting --name taskLongArnFormat --value disabled
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+    - name: create fargate ECS task with run task and tags (LF disabled) (should fail)
+      ecs_task:
+        operation: run
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}-vpc"
+        launch_type: FARGATE
+        count: 1
+        tags:
+          tag_key: tag_value
+          tag_key2: tag_value2
+        network_configuration:
+          subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
+          security_groups:
+            - '{{ setup_sg.group_id }}'
+          assign_public_ip: true
+        started_by: ansible_user
+        <<: *aws_connection_info
+      register: fargate_run_task_output_with_tags_fail
+      ignore_errors: yes
+
+    - name: enable taskLongArnFormat
+      command: aws ecs put-account-setting --name taskLongArnFormat --value enabled
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token | default('') }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+    - name: create fargate ECS task with run task and tags
+      ecs_task:
+        operation: run
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}-vpc"
+        launch_type: FARGATE
+        count: 1
+        tags:
+          tag_key: tag_value
+          tag_key2: tag_value2
+        network_configuration:
+          subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
+          security_groups:
+            - '{{ setup_sg.group_id }}'
+          assign_public_ip: true
+        started_by: ansible_user
+        <<: *aws_connection_info
+      register: fargate_run_task_output_with_tags
+
 
     # ============================================================
     # End tests for Fargate
@@ -795,12 +857,12 @@
         state: present
         name: "{{ ecs_service_name }}"
         cluster: "{{ ecs_cluster_name }}"
-        task_definition: "{{ ecs_service_info.ansible_facts.services[0].taskDefinition }}"
+        task_definition: "{{ ecs_service_info.services[0].taskDefinition }}"
         desired_count: 0
         deployment_configuration: "{{ ecs_service_deployment_configuration }}"
         placement_strategy: "{{ ecs_service_placement_strategy }}"
         load_balancers:
-          - targetGroupArn: "{{ ecs_service_info.ansible_facts.services[0].loadBalancers[0].targetGroupArn }}"
+          - targetGroupArn: "{{ ecs_service_info.services[0].loadBalancers[0].targetGroupArn }}"
             containerName: "{{ ecs_task_name }}"
             containerPort: "{{ ecs_task_container_port }}"
         <<: *aws_connection_info
@@ -821,12 +883,12 @@
         state: present
         name: "{{ ecs_service_name }}2"
         cluster: "{{ ecs_cluster_name }}"
-        task_definition: "{{ ecs_service_info.ansible_facts.services[0].taskDefinition }}"
+        task_definition: "{{ ecs_service_info.services[0].taskDefinition }}"
         desired_count: 0
         deployment_configuration: "{{ ecs_service_deployment_configuration }}"
         placement_strategy: "{{ ecs_service_placement_strategy }}"
         load_balancers:
-          - targetGroupArn: "{{ ecs_service_info.ansible_facts.services[0].loadBalancers[0].targetGroupArn }}"
+          - targetGroupArn: "{{ ecs_service_info.services[0].loadBalancers[0].targetGroupArn }}"
             containerName: "{{ ecs_task_name }}"
             containerPort: "{{ ecs_task_container_port }}"
         <<: *aws_connection_info
@@ -904,6 +966,14 @@
         <<: *aws_connection_info
       ignore_errors: yes
 
+    - name: stop Fargate ECS task
+      ecs_task:
+        task: "{{ fargate_run_task_output_with_tags.task[0].taskArn }}"
+        task_definition: "{{ ecs_task_name }}-vpc"
+        operation: stop
+        cluster: "{{ ecs_cluster_name }}"
+        <<: *aws_connection_info
+      ignore_errors: yes
     - name: pause to allow services to scale down
       pause:
         seconds: 60
