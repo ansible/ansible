@@ -61,7 +61,7 @@ options:
         description:
             - Systemd default target you want to apply on your system
               Target modes can be included and actives in others. Such as "multi-user.target" which is included and active in "graphical.target" mode.
-              If you want to ensure that you are running in the desired mode, you can use the "default_apply": "enforce" option to force the mode.
+              If you want to ensure that you are running in the desired mode, you can use the "default_apply" option with "enforce" value to force the mode.
         version_added: "2.10"
     default_apply:
         description:
@@ -72,7 +72,7 @@ options:
               * The 'enforce' option will do the same stuff as 'yes' but it will enforce the mode at the desired level.
                 This can be used to change from "graphical.target" to "multi-user.target" and stop the graphical mode.
                 This should be used only once otherwise the task will always be seen as changed.
-        choices: [ no, yes, only, enforce ]
+        choices: [ enforce, no, only, yes ]
         default: no
         version_added: "2.10"
     user:
@@ -99,8 +99,8 @@ options:
         default: no
         version_added: "2.3"
 notes:
-    - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', ('daemon_reexec' since 2.8), ('default_set' since 2.10),
-      and all except 'daemon_reload' (and 'daemon_reexec' since 2.8 or 'default_set' since 2.10) also require 'name'.
+    - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', ('daemon_reexec' since 2.8),
+      ('default_set' since 2.10), and all except 'daemon_reload' (and 'daemon_reexec' since 2.8 or 'default_set' since 2.10) also require 'name'.
     - Before 2.4 you always required 'name'.
     - Globs are not supported in name, i.e ``postgres*.service``.
 requirements:
@@ -308,6 +308,7 @@ def is_deactivating_service(service_status):
 def request_was_ignored(out):
     return '=' not in out and 'ignoring request' in out
 
+
 def parse_systemctl_show(lines):
     # The output of 'systemctl show' can contain values that span multiple lines. At first glance it
     # appears that such values are always surrounded by {}, so the previous version of this code
@@ -361,7 +362,7 @@ def main():
             scope=dict(type='str', choices=['system', 'user', 'global']),
             no_block=dict(type='bool', default=False),
             default_set=dict(type='str'),
-            default_apply=dict(type='str', choices=['enforce', 'only','no','yes'], default='no'),
+            default_apply=dict(type='str', choices=['enforce', 'no', 'only', 'yes'], default='no'),
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload', 'daemon_reexec', 'default_set']],
