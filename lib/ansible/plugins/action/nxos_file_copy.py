@@ -466,10 +466,10 @@ class ActionModule(ActionBase):
         self.play_context = copy.deepcopy(self._play_context)
         self.results = super(ActionModule, self).run(task_vars=task_vars)
 
-        if self.play_context.connection != 'network_cli':
+        if self.play_context.connection.split('.')[-1] != 'network_cli':
             # Plugin is supported only with network_cli
             self.results['failed'] = True
-            self.results['msg'] = ('Connection type must be <network_cli>')
+            self.results['msg'] = 'Connection type must be fully qualified name for network_cli connection type, got %s' % self.play_context.connection
             return self.results
 
         # Get playbook values

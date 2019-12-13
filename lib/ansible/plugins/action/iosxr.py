@@ -73,7 +73,7 @@ class ActionModule(ActionNetworkModule):
 
             task_vars['ansible_socket'] = socket_path
         elif persistent_connection in ('netconf', 'network_cli'):
-            if force_cli and self._play_context.connection != 'network_cli':
+            if force_cli and persistent_connection != 'network_cli':
                 return {'failed': True, 'msg': 'Connection type %s is not valid for module %s' %
                         (self._play_context.connection, module_name)}
             provider = self._task.args.get('provider', {})
