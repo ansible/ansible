@@ -226,6 +226,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils._text import to_text
 import ansible.module_utils.ec2 as ec2
 
+
 class EcsTaskManager:
     """Handles ECS Tasks"""
 
