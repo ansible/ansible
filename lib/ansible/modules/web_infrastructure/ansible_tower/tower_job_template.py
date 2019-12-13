@@ -197,6 +197,38 @@ EXAMPLES = '''
     tower_config_file: "~/tower_cli.cfg"
     survey_enabled: yes
     survey_spec: "{{ lookup('file', 'my_survey.json') }}"
+
+- name: 'Create tower Deploy host job template'
+  tower_job_template:
+    name: 'Deploy Host'
+    tower_host: 'tower.example.com'
+    tower_username: 'admin'
+    tower_password: 'supersecret'
+    validate_certs: true
+    state: 'present'
+    project: 'Demo'
+    playbook: 'deploy_host.yml'
+    job_type: 'run'
+    inventory: 'Local'
+    survey_enabled: true
+    survey_spec:
+      name: 'New customer'
+      description: 'New customer'
+      spec:
+        - question_name: 'What is the hostname?'
+          question_description: 'Hostname for the machine'
+          required: true
+          type: 'text'
+          variable: 'deploy_host_name'
+          min: 0
+          max: 15
+        - question_name: 'Host VM size?'
+          question_description: 'The template used to create this host'
+          required: true
+          type: 'multiplechoice'
+          choices: "Small\nMedium\nLarge"
+          default: 'Small'
+          variable: 'deploy_host_size'
 '''
 
 from ansible.module_utils.ansible_tower import TowerModule, tower_auth_config, tower_check_mode

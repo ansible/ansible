@@ -78,13 +78,29 @@ extends_documentation_fragment: tower
 
 
 EXAMPLES = '''
-- tower_workflow_template:
+- name: 'Create Sample JSON file'
+  copy:
+    dest: 'my_workflow.json
+    content: |
+      ---
+      - project: 'my_project'
+        success:
+          - job_template: 'Deploy Host'
+            success:
+              job_template: 'Configure Host'
+        failure:
+          - job_template: 'Clean up'
+        always:
+          - inventory_source: 'Local'
+- name: 'Create my first workflow template'
+  tower_workflow_template:
     name: Workflow Template
     description: My very first Workflow Template
     organization: My optional Organization
     schema: "{{ lookup('file', 'my_workflow.json') }}"
 
-- tower_workflow_template:
+- name: 'Remove my first workflow template'
+  tower_worflow_template:
     name: Workflow Template
     state: absent
 '''
