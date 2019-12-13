@@ -203,21 +203,17 @@ class CollectionRequirement:
         display.vvv("Installed collection found at '%s'" % collection_path)
         display.vvv("Remote collection found at '%s'" % remote_collection._metadata.download_url)
 
-        remote_collection._get_metadata()
-
         # Compare installed version versus requirement version
         if self.latest_version != remote_collection.latest_version:
-            display.display("'%s' has a version mismatch" % to_text(self))
-            display.display("Expected '%s'" % remote_collection.latest_version)
-            display.display("Found '%s'" % self.latest_version)
-            display.display("")
+            err = "%s has the version '%s' but is being compared to '%s'" % (to_text(self), self.latest_version, remote_collection.latest_version)
+            display.display(err)
             return
 
-        verified = True
+        error_queue = []
 
         # Verify the manifest hash matches before verifying the file manifest
         expected_hash = self._get_tar_file_hash(b_temp_tar_path, 'MANIFEST.json')
-        manifest, verified = self._get_file_and_verified(b_collection_path, b_temp_tar_path, 'MANIFEST.json', expected_hash, verified)
+        manifest, error_queue = self._get_file_and_verified(b_collection_path, b_temp_tar_path, 'MANIFEST.json', expected_hash, error_queue)
 
         # Use the manifest to verify the file manifest checksum
         file_manifest_data = manifest['file_manifest_file']
@@ -225,27 +221,30 @@ class CollectionRequirement:
         expected_hash = file_manifest_data['chksum_%s' % file_manifest_data['chksum_type']]
 
         # Verify the file manifest before using it to verify individual files
-        file_manifest, verified = self._get_file_and_verified(b_collection_path, b_temp_tar_path, file_manifest_filename, expected_hash, verified)
+        file_manifest, error_queue = self._get_file_and_verified(b_collection_path, b_temp_tar_path, file_manifest_filename, expected_hash, error_queue)
 
         # Use the file manifest to verify individual file checksums
         for manifest_data in file_manifest['files']:
             if manifest_data['ftype'] == 'file':
                 expected_hash = manifest_data['chksum_%s' % manifest_data['chksum_type']]
-                if not self._verify_file_hash(b_collection_path, manifest_data['name'], expected_hash):
-                    verified = False
+                dummy, error_queue = self._verify_file_hash(b_collection_path, manifest_data['name'], expected_hash, error_queue)
 
-        if verified:
+        if error_queue:
+            display.display("Collection %s contains modified files.\n\n" % to_text(self))
+            for err in error_queue:
+                display.display(err)
+        else:
             display.vvv("Successfully verified that checksums for '%s:%s' match the remote collection" % (to_text(self), self.latest_version))
 
-    def _get_file_and_verified(self, b_collection_path, b_temp_tar_path, filename, expected_hash, verified):
+    def _get_file_and_verified(self, b_collection_path, b_temp_tar_path, filename, expected_hash, error_queue):
         # Verify the installed file hash matches the expected hash
         # If it does not, download the file from the temporary tar path to use for subsequent comparison
-        if not self._verify_file_hash(b_collection_path, filename, expected_hash):
-            verified = False
+        match, error_queue = self._verify_file_hash(b_collection_path, filename, expected_hash, error_queue)
+        if not match:
             json_contents = self._load_file_as_json(b_temp_tar_path, filename, tar=True)
         else:
             json_contents = self._load_file_as_json(b_collection_path, filename)
-        return json_contents, verified
+        return json_contents, error_queue
 
     def _load_file_as_json(self, b_path, filename, tar=False):
         if tar:
@@ -276,19 +275,18 @@ class CollectionRequirement:
             data = file_obj.read(bufsize)
         return file_contents
 
-    def _verify_file_hash(self, b_path, filename, expected_hash):
+    def _verify_file_hash(self, b_path, filename, expected_hash, error_queue):
         b_file_path = to_bytes(os.path.join(to_text(b_path), filename), errors='surrogate_or_strict')
+        match = True
 
         with open(b_file_path, mode='rb') as file_object:
             actual_hash = self._get_hash(file_object)
 
         if expected_hash != actual_hash:
-            display.display("'%s' has a hash mismatch for '%s'" % (to_text(self), filename))
-            display.display('Expected %s' % expected_hash)
-            display.display('Found %s' % actual_hash)
-            display.display("")
-            return False
-        return True
+            error_queue.append("%s\nExpected: %s\nFound: %s\n\n" % (filename, expected_hash, actual_hash))
+            match = False
+
+        return match, error_queue
 
     def _get_tar_file_hash(self, b_temp_tar_path, filename):
         with tarfile.open(b_temp_tar_path, mode='r') as collection_tar:
