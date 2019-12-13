@@ -1,0 +1,2 @@
+minor_changes:
+  - callback - When a task fails, display the path to the task file and the line number of the task.
