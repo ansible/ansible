@@ -57,15 +57,15 @@ diff_failure() {
 
 cleanup() {
 	if [[ $INIT = 0 ]]; then
-		rm -rf "${OUTFILE}.*"
+		rm -rf ${OUTFILE}.*
 	fi
 
 	if [[ -f "${BASEFILE}.unreachable.stdout" ]]; then
-		rm -rf "${BASEFILE}.unreachable.stdout"
+		rm -rf ${BASEFILE}.unreachable.stdout
 	fi
 
 	if [[ -f "${BASEFILE}.unreachable.stderr" ]]; then
-		rm -rf "${BASEFILE}.unreachable.stderr"
+		rm -rf ${BASEFILE}.unreachable.stderr
 	fi
 
 	# Restore TTY cols
@@ -138,6 +138,12 @@ export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
 
 run_test failed_to_stderr
+
+# Display failed path
+export ANSIBLE_DISPLAY_FAILED_STDERR=0
+export ANSIBLE_DISPLAY_FAILED_PATH=True
+run_test display_failed_path
+export ANSIBLE_DISPLAY_FAILED_PATH=False
 
 # Default settings with unreachable tasks
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
