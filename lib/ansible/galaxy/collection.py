@@ -636,7 +636,10 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
         'format': MANIFEST_FORMAT,
     }
 
-    def _walk(b_path, b_top_level_dir, resolved_dirs=set()):
+    def _walk(b_path, b_top_level_dir, resolved_dirs=None):
+        if resolved_dirs is None:
+            resolved_dirs = set()
+
         for b_item in os.listdir(b_path):
             b_abs_path = os.path.join(b_path, b_item)
             b_rel_base_dir = b'' if b_path == b_top_level_dir else b_path[len(b_top_level_dir) + 1:]
