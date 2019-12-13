@@ -47,6 +47,47 @@ Configuring the ``ansible-galaxy`` client
 
 .. _using_collections:
 
+Verifying collections
+=====================
+
+Verifying collections with ``ansible-galaxy``
+---------------------------------------------
+
+Once installed, you can verify that the content of the collection matches with that of the server.
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify my_namespace.my_collection
+
+Add the version if you want to verify the contents of a version other than the latest. Pre-release versions also require this.
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify my_namespace.my_collection:1.0.0
+
+In addition to the my_namespace.my_collection:version format, you can verify collections by providing a requirements.yml file, a tarball, a URL to a tarball, or the directory of the installed collection.
+If you have dependencies listed in your requirements.yml you will need to verify those separately.
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify -r requirements.yml
+
+   ansible-galaxy collection verify /path/to/my_namespace_my_collection-1.0.0.tar.gz
+
+   ansible-galaxy collection verify https://../../my_namespace_my_collection-1.0.0.tar.gz
+
+   ansible-galaxy collection verify collections/ansible_collections/my_namespace/my_collection
+
+Use extra verbosity (-vvv) to display the location of the installed collection and the remote collection used for validation. It will also display the version being validated if you used the implicit latest.
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify my_namespace.my_collection -vvv
+   ...
+   Verifying 'my_namespace.my_collection:1.0.0'.
+   Installed collection found at '/path/to/ansible_collections/my_namespace/my_collection/'
+   Remote collection found at 'https://galaxy.ansible.com/download/my_namespace-my_collection-1.0.0.tar.gz'
+
 Using collections in a Playbook
 ===============================
 
