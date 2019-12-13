@@ -271,6 +271,10 @@ class PluginLoader:
         # PLUGIN_PATHS_CACHE, and MODULE_CACHE.  Since those three dicts key
         # on the class_name and neither regular modules nor powershell modules
         # would have class_names, they would not work as written.
+        #
+        # The expected sort order is paths in the order in 'ret' with paths ending in '/windows' at the end,
+        # also in the original order they were found in 'ret'.
+        # The .sort() method is guaranteed to be stable, so original order is preserved.
         ret.sort(key=lambda p: p.endswith('/windows'))
 
         # cache and return the result
