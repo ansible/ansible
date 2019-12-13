@@ -187,9 +187,11 @@ class PgSlot(object):
                 query = "SELECT pg_create_physical_replication_slot(%(name)s)"
 
             else:
-                query = "SELECT pg_create_physical_replication_slot(%(name)s, %s)" % immediately_reserve)
+                query = "SELECT pg_create_physical_replication_slot(%(name)s, %(i_reserve)s)"
 
-            self.changed = exec_sql(self, query, query_params={'name': self.name}, ddl=True)
+            self.changed = exec_sql(self, query,
+                                    query_params={'name': self.name, 'i_reserve': immediately_reserve},
+                                    ddl=True)
 
         elif kind == 'logical':
             query = "SELECT pg_create_logical_replication_slot(%(name)s, %(o_plugin)s)"

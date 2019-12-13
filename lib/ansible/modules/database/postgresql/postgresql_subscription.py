@@ -575,7 +575,7 @@ class PgSubscription():
                  "JOIN pg_catalog.pg_class c ON c.oid = r.srrelid "
                  "WHERE s.subname = %(name)s")
 
-        result = exec_sql(self, query, query_params={'name', self.name}, add_to_executed=False)
+        result = exec_sql(self, query, query_params={'name': self.name}, add_to_executed=False)
         if result:
             return [dict(row) for row in result]
         else:
