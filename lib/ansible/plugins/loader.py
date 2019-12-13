@@ -242,17 +242,20 @@ class PluginLoader:
 
         ret = self._extra_dirs[:]
 
-        # look in any configured plugin paths, allow one level deep for subcategories
+        # append configured plugin paths
         if self.config is not None:
             for path in self.config:
                 path = os.path.realpath(os.path.expanduser(path))
-                if subdirs:
-                    contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
-                    for c in contents:
-                        if os.path.isdir(c) and c not in ret:
-                            ret.append(c)
                 if path not in ret:
                     ret.append(path)
+
+        # look in extra and configured plugin paths to add nested directories
+        if subdirs:
+            for path in ret:
+                # iterate over directories in the path recursively
+                for directory in glob.glob("%s/**%s" % (path, os.sep), recursive=True):
+                    if directory not in ret:
+                        ret.append(directory)
 
         # look for any plugins installed in the package subtree
         # Note package path always gets added last so that every other type of
