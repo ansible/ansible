@@ -80,7 +80,7 @@ extends_documentation_fragment: tower
 EXAMPLES = '''
 - name: 'Create Sample JSON file'
   copy:
-    dest: 'my_workflow.json
+    dest: 'my_workflow.json'
     content: |
       ---
       - project: 'my_project'
@@ -92,6 +92,7 @@ EXAMPLES = '''
           - job_template: 'Clean up'
         always:
           - inventory_source: 'Local'
+
 - name: 'Create my first workflow template'
   tower_workflow_template:
     name: Workflow Template
