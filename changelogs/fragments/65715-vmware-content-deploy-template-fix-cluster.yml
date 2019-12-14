@@ -1,0 +1,2 @@
+bugfixes:
+- "`vmware_content_deploy_template`'s `cluster` argument no longer fails with an error message about resource pools."
