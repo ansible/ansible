@@ -188,7 +188,7 @@ class VmwareContentDeployTemplate(VmwareRestClient):
         # Find the Cluster by the given Cluster name
         self.cluster_id = None
         if self.cluster:
-            self.cluster_id = self.get_resource_pool_by_name(self.datacenter, self.resourcepool)
+            self.cluster_id = self.get_cluster_by_name(self.datacenter, self.cluster)
             if not self.cluster_id:
                 self.module.fail_json(msg="Failed to find the Cluster %s" % self.cluster)
         # Create VM placement specs
