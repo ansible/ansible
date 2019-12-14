@@ -1,3 +1,4 @@
+---
 - name: Enable Ethernet1 interface and disable switchport
   eos_config:
     lines:
