@@ -555,9 +555,9 @@ class PgSubscription():
                  "ON s.subdbid = d.oid "
                  "JOIN pg_catalog.pg_roles AS r "
                  "ON s.subowner = r.oid "
-                 "WHERE s.subname = '%s' AND d.datname = '%s'" % (self.name, self.db))
+                 "WHERE s.subname = %(name)s AND d.datname = %(db)s")
 
-        result = exec_sql(self, query, add_to_executed=False)
+        result = exec_sql(self, query, query_params={'name': self.name, 'db': self.db}, add_to_executed=False)
         if result:
             return result[0]
         else:
@@ -573,9 +573,9 @@ class PgSubscription():
                  "FROM pg_catalog.pg_subscription_rel r "
                  "JOIN pg_catalog.pg_subscription s ON s.oid = r.srsubid "
                  "JOIN pg_catalog.pg_class c ON c.oid = r.srrelid "
-                 "WHERE s.subname = '%s'" % self.name)
+                 "WHERE s.subname = %(name)s")
 
-        result = exec_sql(self, query, add_to_executed=False)
+        result = exec_sql(self, query, query_params={'name': self.name}, add_to_executed=False)
         if result:
             return [dict(row) for row in result]
         else:

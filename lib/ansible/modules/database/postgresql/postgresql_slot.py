@@ -184,26 +184,30 @@ class PgSlot(object):
         if kind == 'physical':
             # Check server version (needs for immedately_reserverd needs 9.6+):
             if self.cursor.connection.server_version < 96000:
-                query = "SELECT pg_create_physical_replication_slot('%s')" % self.name
+                query = "SELECT pg_create_physical_replication_slot(%(name)s)"
 
             else:
-                query = "SELECT pg_create_physical_replication_slot('%s', %s)" % (self.name, immediately_reserve)
+                query = "SELECT pg_create_physical_replication_slot(%(name)s, %(i_reserve)s)"
+
+            self.changed = exec_sql(self, query,
+                                    query_params={'name': self.name, 'i_reserve': immediately_reserve},
+                                    ddl=True)
 
         elif kind == 'logical':
-            query = "SELECT pg_create_logical_replication_slot('%s', '%s')" % (self.name, output_plugin)
-
-        self.changed = exec_sql(self, query, ddl=True)
+            query = "SELECT pg_create_logical_replication_slot(%(name)s, %(o_plugin)s)"
+            self.changed = exec_sql(self, query,
+                                    query_params={'name': self.name, 'o_plugin': output_plugin}, ddl=True)
 
     def drop(self):
         if not self.exists:
             return False
 
-        query = "SELECT pg_drop_replication_slot('%s')" % self.name
-        self.changed = exec_sql(self, query, ddl=True)
+        query = "SELECT pg_drop_replication_slot(%(name)s)"
+        self.changed = exec_sql(self, query, query_params={'name': self.name}, ddl=True)
 
     def __slot_exists(self):
-        query = "SELECT slot_type FROM pg_replication_slots WHERE slot_name = '%s'" % self.name
-        res = exec_sql(self, query, add_to_executed=False)
+        query = "SELECT slot_type FROM pg_replication_slots WHERE slot_name = %(name)s"
+        res = exec_sql(self, query, query_params={'name': self.name}, add_to_executed=False)
         if res:
             self.exists = True
             self.kind = res[0][0]

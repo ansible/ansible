@@ -1,0 +1,4 @@
+bugfixes:
+- postgresql_set - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65791).
+- postgresql_slot - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65791).
+- postgresql_subscription - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65791).

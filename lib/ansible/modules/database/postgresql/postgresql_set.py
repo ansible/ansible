@@ -185,9 +185,9 @@ POSSIBLE_SIZE_UNITS = ("mb", "gb", "tb")
 
 def param_get(cursor, module, name):
     query = ("SELECT name, setting, unit, context, boot_val "
-             "FROM pg_settings WHERE name = '%s'" % name)
+             "FROM pg_settings WHERE name = %(name)s")
     try:
-        cursor.execute(query)
+        cursor.execute(query, {'name': name})
         info = cursor.fetchall()
         cursor.execute("SHOW %s" % name)
         val = cursor.fetchone()
