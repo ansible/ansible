@@ -331,26 +331,6 @@ def container_names_in_network(network):
     return [c['Name'] for c in network['Containers'].values()] if network['Containers'] else []
 
 
-CIDR_IPV4 = re.compile(r'^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$')
-CIDR_IPV6 = re.compile(r'^[0-9a-fA-F:]+/([0-9]|[1-9][0-9]|1[0-2][0-9])$')
-
-
-def get_ip_version(cidr):
-    """Gets the IP version of a CIDR string
-
-    :param cidr: Valid CIDR
-    :type cidr: str
-    :return: ``ipv4`` or ``ipv6``
-    :rtype: str
-    :raises ValueError: If ``cidr`` is not a valid CIDR
-    """
-    if CIDR_IPV4.match(cidr):
-        return 'ipv4'
-    elif CIDR_IPV6.match(cidr):
-        return 'ipv6'
-    raise ValueError('"{0}" is not a valid CIDR'.format(cidr))
-
-
 def normalize_ipam_config_key(key):
     """Normalizes IPAM config keys returned by Docker API to match Ansible keys
 
@@ -363,6 +343,16 @@ def normalize_ipam_config_key(key):
         'AuxiliaryAddresses': 'aux_addresses'
     }
     return special_cases.get(key, key.lower())
+
+
+def dicts_are_essentially_equal(a, b):
+    """Make sure that a is a subset of b, where None entries of a are ignored."""
+    for k, v in a.items():
+        if not v:
+            continue
+        if b.get(k) != v:
+            return False
+    return True
 
 
 class DockerNetworkManager(object):
@@ -449,30 +439,29 @@ class DockerNetworkManager(object):
                                 parameter=self.parameters.ipam_config,
                                 active=net.get('IPAM', {}).get('Config'))
             else:
+                # Put network's IPAM config into the same format as module's IPAM config
+                net_ipam_configs = []
+                for net_ipam_config in net['IPAM']['Config']:
+                    config = dict()
+                    for k, v in net_ipam_config.items():
+                        config[normalize_ipam_config_key(k)] = v
+                    net_ipam_configs.append(config)
+                # Compare lists of dicts as sets of dicts
                 for idx, ipam_config in enumerate(self.parameters.ipam_config):
                     net_config = dict()
-                    try:
-                        ip_version = get_ip_version(ipam_config['subnet'])
-                        for net_ipam_config in net['IPAM']['Config']:
-                            if ip_version == get_ip_version(net_ipam_config['Subnet']):
-                                net_config = net_ipam_config
-                    except ValueError as e:
-                        self.client.fail(str(e))
-
+                    for net_ipam_config in net_ipam_configs:
+                        if dicts_are_essentially_equal(ipam_config, net_ipam_config):
+                            net_config = net_ipam_config
+                            break
                     for key, value in ipam_config.items():
                         if value is None:
                             # due to recursive argument_spec, all keys are always present
                             # (but have default value None if not specified)
                             continue
-                        camelkey = None
-                        for net_key in net_config:
-                            if key == normalize_ipam_config_key(net_key):
-                                camelkey = net_key
-                                break
-                        if not camelkey or net_config.get(camelkey) != value:
+                        if value != net_config.get(key):
                             differences.add('ipam_config[%s].%s' % (idx, key),
                                             parameter=value,
-                                            active=net_config.get(camelkey) if camelkey else None)
+                                            active=net_config.get(key))
 
         if self.parameters.enable_ipv6 is not None and self.parameters.enable_ipv6 != net.get('EnableIPv6', False):
             differences.add('enable_ipv6',
