@@ -462,8 +462,19 @@ class PyVmomiHelper(PyVmomi):
                                 nic_device.connectable.connected = network['connected']
                                 self.change_detected = True
                             if 'name' in network and nic_device.deviceInfo.summary != network['name']:
-                                nic_device.deviceInfo.summary = network['name']
-                                self.change_detected = True
+                                pg_obj = self.find_network_by_name(network_name=network['name'])[0]
+                                if pg_obj:
+                                    if isinstance(pg_obj, vim.Network):
+                                        nic_device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
+                                        nic_device.backing.deviceName = network['name']
+                                        nic_device.backing.network = pg_obj
+                                        self.change_detected = True
+                                    elif hasattr(pg_obj, vim.dvs.DistributedVirtualPortgroup):
+                                        nic_device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+                                        nic_device.device.backing.port = vim.dvs.PortConnection()
+                                        nic_device.backing.port.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
+                                        nic_device.backing.port.portgroupKey = pg_obj.key
+                                        self.change_detected = True
                             if 'manual_mac' in network and nic_device.macAddress != network['manual_mac']:
                                 if vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOff:
                                     self.module.fail_json(msg='Expected power state is poweredOff to reconfigure MAC address')
