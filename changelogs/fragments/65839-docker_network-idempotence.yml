@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_network - fix idempotency for multiple IPAM configs of the same IP version (https://github.com/ansible/ansible/issues/65815)."
