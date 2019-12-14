@@ -1,4 +1,5 @@
 ---
+
 - name: Ensure required interfaces are present in running-config
   cli_config:
     config: "{{ lines }}"
