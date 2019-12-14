@@ -30,7 +30,7 @@ options:
     description:
       - The protocol the load balancer uses when performing health checks on targets.
     required: false
-    choices: [ 'http', 'https', 'tcp' ]
+    choices: [ 'http', 'https', 'tcp', 'udp', 'tcp_udp' ]
   health_check_port:
     description:
       - The port the load balancer uses when performing health checks on targets.
@@ -460,7 +460,8 @@ def create_or_update_target_group(connection, module):
             params['UnhealthyThresholdCount'] = module.params.get("unhealthy_threshold_count")
 
         # Only need to check response code and path for http(s) health checks
-        if module.params.get("health_check_protocol") is not None and module.params.get("health_check_protocol").upper() != 'TCP':
+        protocol = module.params.get("health_check_protocol")
+        if protocol is not None and protocol.upper() in ['HTTP', 'HTTPS']:
 
             if module.params.get("health_check_path") is not None:
                 params['HealthCheckPath'] = module.params.get("health_check_path")
@@ -515,7 +516,7 @@ def create_or_update_target_group(connection, module):
                 health_check_params['UnhealthyThresholdCount'] = params['UnhealthyThresholdCount']
 
             # Only need to check response code and path for http(s) health checks
-            if tg['HealthCheckProtocol'] != 'TCP':
+            if tg['HealthCheckProtocol'] in ['HTTP', 'HTTPS']:
                 # Health check path
                 if 'HealthCheckPath'in params and tg['HealthCheckPath'] != params['HealthCheckPath']:
                     health_check_params['HealthCheckPath'] = params['HealthCheckPath']
@@ -779,11 +780,13 @@ def delete_target_group(connection, module):
 
 
 def main():
+    protocols_list = ['http', 'https', 'tcp', 'udp', 'tcp_udp', 'HTTP',
+                      'HTTPS', 'TCP', 'UDP', 'TCP_UDP']
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
             deregistration_delay_timeout=dict(type='int'),
-            health_check_protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP']),
+            health_check_protocol=dict(choices=protocols_list),
             health_check_port=dict(),
             health_check_path=dict(),
             health_check_interval=dict(type='int'),
@@ -792,7 +795,7 @@ def main():
             modify_targets=dict(default=True, type='bool'),
             name=dict(required=True),
             port=dict(type='int'),
-            protocol=dict(choices=['http', 'https', 'tcp', 'HTTP', 'HTTPS', 'TCP']),
+            protocol=dict(choices=protocols_list),
             purge_tags=dict(default=True, type='bool'),
             stickiness_enabled=dict(type='bool'),
             stickiness_type=dict(default='lb_cookie'),
@@ -809,12 +812,10 @@ def main():
         )
     )
 
-    module = AnsibleAWSModule(argument_spec=argument_spec,
-                              required_if=[
-                                  ['target_type', 'instance', ['protocol', 'port', 'vpc_id']],
-                                  ['target_type', 'ip', ['protocol', 'port', 'vpc_id']],
-                              ]
-                              )
+    module = AnsibleAWSModule(argument_spec=argument_spec, required_if=[
+        ['target_type', 'instance', ['protocol', 'port', 'vpc_id']],
+        ['target_type', 'ip', ['protocol', 'port', 'vpc_id']],
+    ])
 
     connection = module.client('elbv2')
 
