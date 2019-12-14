@@ -469,7 +469,7 @@ class PyVmomiHelper(PyVmomi):
                                         nic_device.backing.deviceName = network['name']
                                         nic_device.backing.network = pg_obj
                                         self.change_detected = True
-                                    elif hasattr(pg_obj, vim.dvs.DistributedVirtualPortgroup):
+                                    elif isinstance(pg_obj, vim.dvs.DistributedVirtualPortgroup):
                                         nic_device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
                                         nic_device.device.backing.port = vim.dvs.PortConnection()
                                         nic_device.backing.port.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
