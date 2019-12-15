@@ -505,7 +505,7 @@ EXAMPLES = '''
     node        : sabrewulf
     state       : current
 
-# Update VM configuration
+    # Update VM configuration
 - proxmox_kvm:
     api_user    : root@pam
     api_password: secret
@@ -592,6 +592,7 @@ from ansible.module_utils._text import to_native
 
 
 VZ_TYPE = 'qemu'
+PVE_MAJOR_VERSION = 0
 
 
 def get_nextvmid(module, proxmox):
@@ -708,7 +709,7 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
             kwargs.update(kwargs[k])
             del kwargs[k]
 
-    # Rename numa_enabled  to numa. According the API documentation
+    # Rename numa_enabled to numa. According the API documentation
     if 'numa_enabled' in kwargs:
         kwargs['numa'] = kwargs['numa_enabled']
         del kwargs['numa_enabled']
@@ -781,11 +782,6 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
                              % proxmox.nodes(vm[0]['node']).tasks(taskid).log.get()[:1])
         time.sleep(1)
     return False
-
-
-def proxmox_version(proxmox):
-    apireturn = proxmox.version.get()
-    return LooseVersion(apireturn['version'])
 
 
 def main():
@@ -901,9 +897,7 @@ def main():
 
     try:
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
-        global VZ_TYPE
-        global PVE_MAJOR_VERSION
-        PVE_MAJOR_VERSION = 3 if proxmox_version(proxmox) < LooseVersion('4.0') else 4
+        PVE_MAJOR_VERSION = int(proxmox.version.get()['version'].split('.')[0])
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
