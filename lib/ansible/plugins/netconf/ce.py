@@ -22,17 +22,17 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 netconf: ce
-short_description: Use ce netconf plugin to run netconf commands on Huawei cloudengine platform
+short_description: Use ce netconf plugin to run netconf commands on Huawei Cloudengine platform
 description:
   - This ce plugin provides low level abstraction apis for
-    sending and receiving netconf commands from Juniper JUNOS network devices.
+    sending and receiving netconf commands from Huawei Cloudengine network devices.
 version_added: "2.9"
 options:
   ncclient_device_handler:
     type: str
     default: huawei
     description:
-      - Specifies the ncclient device handler name for Huawei cloudengine.
+      - Specifies the ncclient device handler name for Huawei Cloudengine.
         To identify the ncclient device handler name refer ncclient library documentation.
 """
 
