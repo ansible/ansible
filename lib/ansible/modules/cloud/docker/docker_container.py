@@ -2003,6 +2003,12 @@ class Container(DockerBaseClass):
         return True if self.container else False
 
     @property
+    def removing(self):
+        if self.container and self.container.get('State'):
+            return self.container['State'].get('Status') == 'removing'
+        return False
+
+    @property
     def running(self):
         if self.container and self.container.get('State'):
             if self.container['State'].get('Running') and not self.container['State'].get('Ghost', False):
@@ -2642,12 +2648,18 @@ class ContainerManager(DockerBaseClass):
         # image ID.
         image = self._get_image()
         self.log(image, pretty_print=True)
-        if not container.exists:
+        if not container.exists or container.removing:
             # New container
-            self.log('No container found')
+            if container.removing:
+                self.log('Found container in removal phase')
+            else:
+                self.log('No container found')
             if not self.parameters.image:
                 self.fail('Cannot create container when image is not specified!')
             self.diff_tracker.add('exists', parameter=True, active=False)
+            if container.removing:
+                # Wait for container to be removed before trying to create it
+                self.wait_for_state(container.Id, wait_states=['removing'], accept_removal=True)
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
