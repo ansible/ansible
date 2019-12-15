@@ -24,7 +24,8 @@ import re
 import time
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text, to_bytes, to_native
+from ansible.module_utils.common import validation
 from ansible.module_utils.connection import Connection
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
@@ -58,9 +59,9 @@ class ActionModule(ActionBase):
             file_pull_timeout=dict(type='int', default=300),
             file_pull_compact=dict(type='bool', default=False),
             file_pull_kstack=dict(type='bool', default=False),
-            local_file=dict(type='str'),
-            local_file_directory=dict(type='str'),
-            remote_file=dict(type='str'),
+            local_file=dict(type='path'),
+            local_file_directory=dict(type='path'),
+            remote_file=dict(type='path'),
             remote_scp_server=dict(type='str'),
             remote_scp_server_user=dict(type='str'),
             remote_scp_server_password=dict(no_log=True),
@@ -72,24 +73,23 @@ class ActionModule(ActionBase):
             playvals[key] = self._task.args.get(key, argument_spec[key].get('default'))
             if playvals[key] is None:
                 continue
-            if argument_spec[key].get('type') is None:
-                argument_spec[key]['type'] = 'str'
-            type_ok = False
-            type = argument_spec[key]['type']
-            if type == 'str':
-                if isinstance(playvals[key], six.string_types):
-                    type_ok = True
-            elif type == 'int':
-                if isinstance(playvals[key], int):
-                    type_ok = True
-            elif type == 'bool':
-                if isinstance(playvals[key], bool):
-                    type_ok = True
-            else:
-                raise AnsibleError('Unrecognized type <{0}> for playbook parameter <{1}>'.format(type, key))
 
-            if not type_ok:
-                raise AnsibleError('Playbook parameter <{0}> value should be of type <{1}>'.format(key, type))
+            option_type = argument_spec[key].get('type', 'str')
+            try:
+                if option_type == 'str':
+                    playvals[key] = validation.check_type_str(playvals[key])
+                elif option_type == 'int':
+                    playvals[key] = validation.check_type_int(playvals[key])
+                elif option_type == 'bool':
+                    playvals[key] = validation.check_type_bool(playvals[key])
+                elif option_type == 'path':
+                    playvals[key] = validation.check_type_path(playvals[key])
+                else:
+                    raise AnsibleError('Unrecognized type <{0}> for playbook parameter <{1}>'.format(type, key))
+
+            except (TypeError, ValueError) as e:
+                raise AnsibleError("argument %s is of type %s and we were unable to convert to %s: %s"
+                                   % (key, type(playvals[key]), option_type, to_native(e)))
 
         # Validate playbook dependencies
         if playvals['file_pull']:

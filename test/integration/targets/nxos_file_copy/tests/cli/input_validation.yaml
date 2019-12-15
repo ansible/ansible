@@ -1,15 +1,16 @@
 ---
 - debug: msg="START nxos_file_copy input_validation test"
 
-- name: "Input Validation - param should be type <str>"
+- name: "Input Validation - param should be type <path>"
   nxos_file_copy:
     remote_file: 500
+    file_pull: True
   register: result
   ignore_errors: true
 
 - assert:
     that:
-      - result is search('Playbook parameter <remote_file> value should be of type <str>')
+      - not result is search('argument remote_file is of type')
 
 - name: "Input Validation - param should be type <int>"
   nxos_file_copy:
@@ -19,7 +20,7 @@
 
 - assert:
     that:
-      - result is search('Playbook parameter <file_pull_timeout> value should be of type <int>')
+      - result is search("argument file_pull_timeout is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> and we were unable to convert to int")
 
 - name: "Input Validation - param should be type <bool>"
   nxos_file_copy:
@@ -29,7 +30,7 @@
 
 - assert:
     that:
-      - result is search('Playbook parameter <file_pull> value should be of type <bool>')
+      - result is search("argument file_pull is of type <class 'ansible.parsing.yaml.objects.AnsibleUnicode'> and we were unable to convert to bool")
 
 - name: "Input Validation - param <file_pull> <remote_file> dependency"
   nxos_file_copy:
@@ -39,7 +40,7 @@
 
 - assert:
     that:
-      - result is search('Playbook parameter <remote_file> required when <file_pull> is True')
+      - result is search("Playbook parameter <remote_file> required when <file_pull> is True")
 
 - name: "Input Validation - param <file_pull> <remote_scp_server> dependency"
   nxos_file_copy:
