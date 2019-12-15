@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "proxmox - add support of node auto detection for create_vm and clone"
