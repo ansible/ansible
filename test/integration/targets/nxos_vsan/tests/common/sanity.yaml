@@ -29,15 +29,21 @@
 
     - assert: &true
         that:
-          - "result.changed == true"
-
+          - result.changed == true
+    - assert:
+        that: 
+          - result.commands == ["terminal dont-ask", "vsan database", "vsan 922", "vsan 922 name vsan-SAN-A", "vsan 922 suspend", "vsan 922 interface fc1/1", "vsan 923", "vsan 923 name vsan-SAN-B", "no vsan 923 suspend", "vsan 923 interface fc1/2", "no terminal dont-ask"]
+    
     - name: Idempotence Check
       nxos_vsan: *config
       register: result
 
     - assert: &false
         that:
-          - "result.changed == false"
+          - result.changed == false
+    - assert:
+        that: 
+          - result.commands == []
 
   always:
     - name: Remove vsan config

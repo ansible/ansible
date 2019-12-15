@@ -80,13 +80,21 @@
       register: result
     - assert:
         that:
-          - "result.changed == true"
+          - result.changed == true
+    - assert:
+        that: 
+          - result.commands == ["terminal dont-ask", "zone mode enhanced vsan 922", "zone name zoneA vsan 922", "member pwwn 11:11:11:11:11:11:11:11", "member device-alias test123", "zone name zoneB vsan 922", "member pwwn 10:11:11:11:11:11:11:11", "member pwwn 62:62:62:62:21:21:21:21", "zoneset name zsetname1 vsan 922", "member zoneA", "member zoneB", "zoneset activate name zsetname1 vsan 922", "zone commit vsan 922", "zone smart-zoning enable vsan 923", "zone name zone21A vsan 923", "member pwwn 11:11:11:11:11:11:11:11 both", "member pwwn 62:62:62:62:12:12:12:12", "zone name zone21B vsan 923", "member pwwn 10:11:11:11:11:11:11:11", "member pwwn 62:62:62:62:21:21:21:21", "member device-alias somedummyname", "zoneset name zsetname21 vsan 923", "member zone21A", "member zone21B", "zoneset activate name zsetname21 vsan 923", "no terminal dont-ask"]
+    
     - name: "Idempotence Check"
       nxos_zone_zoneset: *zoneset
       register: result
     - assert:
+        that: 
+          - result.commands == []
+    - assert:
         that:
-          - "result.changed == false"
+          - result.changed == false
+
     - name: "Delete zone and zoneset that was configured"
       nxos_zone_zoneset: &zonesetdelete
         zone_zoneset_details:
@@ -117,12 +125,21 @@
               - name: zsetname21
                 remove: true
       register: result
+
     - assert:
         that:
-          - "result.changed == true"
+          - result.changed == true
+    - assert:
+        that: 
+          - result.commands == ["terminal dont-ask", "no zone name zoneA vsan 922", "no zone name zoneB vsan 922", "no zoneset name zsetname1 vsan 922", "zone commit vsan 922", "no zone name zone21A vsan 923", "no zone name zone21B vsan 923", "no zoneset name zsetname21 vsan 923", "no terminal dont-ask"]
+
     - name: "Idempotence Check for zone/zoneset removal"
       nxos_zone_zoneset: *zonesetdelete
       register: result
+
+    - assert:
+        that: 
+          - result.commands == []
     - assert:
         that:
-          - "result.changed == false"
+          - result.changed == false
