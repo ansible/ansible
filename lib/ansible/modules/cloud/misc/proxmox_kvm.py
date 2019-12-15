@@ -1051,9 +1051,9 @@ def main():
                            scsi=module.params['scsi'],
                            virtio=module.params['virtio'])
             if update:
-                module.exit_json(changed=True, vmid=vmid, name=name, state=state)
+                module.exit_json(changed=True, msg="VM %s with vmid %s updated" % (name, vmid))
             elif clone is not None:
-                module.exit_json(changed=True, vmid=newid, name=name, source=vmid, state=state)
+                module.exit_json(changed=True, msg="VM %s with newid %s cloned from vm with vmid %s" % (name, newid, vmid))
             else:
                 module.exit_json(changed=True, msg="VM %s with vmid %s deployed" % (name, vmid), **results)
         except Exception as e:
