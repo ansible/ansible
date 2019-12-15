@@ -331,8 +331,28 @@ def container_names_in_network(network):
     return [c['Name'] for c in network['Containers'].values()] if network['Containers'] else []
 
 
+CIDR_IPV4 = re.compile(r'^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$')
+CIDR_IPV6 = re.compile(r'^[0-9a-fA-F:]+/([0-9]|[1-9][0-9]|1[0-2][0-9])$')
+
+
+def validate_cidr(cidr):
+    """Validate CIDR. Return IP version of a CIDR string on success.
+
+    :param cidr: Valid CIDR
+    :type cidr: str
+    :return: ``ipv4`` or ``ipv6``
+    :rtype: str
+    :raises ValueError: If ``cidr`` is not a valid CIDR
+    """
+    if CIDR_IPV4.match(cidr):
+        return 'ipv4'
+    elif CIDR_IPV6.match(cidr):
+        return 'ipv6'
+    raise ValueError('"{0}" is not a valid CIDR'.format(cidr))
+
+
 def normalize_ipam_config_key(key):
-    """Normalizes IPAM config keys returned by Docker API to match Ansible keys
+    """Normalizes IPAM config keys returned by Docker API to match Ansible keys.
 
     :param key: Docker API key
     :type key: str
@@ -377,6 +397,13 @@ class DockerNetworkManager(object):
         if (self.parameters.ipam_options['subnet'] or self.parameters.ipam_options['iprange'] or
                 self.parameters.ipam_options['gateway'] or self.parameters.ipam_options['aux_addresses']):
             self.parameters.ipam_config = [self.parameters.ipam_options]
+
+        if self.parameters.ipam_config:
+            try:
+                for ipam_config in self.parameters.ipam_config:
+                    validate_cidr(ipam_config['subnet'])
+            except ValueError as e:
+                self.client.fail(str(e))
 
         if self.parameters.driver_options:
             self.parameters.driver_options = clean_dict_booleans_for_docker_api(self.parameters.driver_options)
