@@ -348,7 +348,7 @@
       name: "{{ nname_ipam_3 }}"
       state: absent
 
-  when: ansible_default_ipv4.alias is defined
+  when: ansible_facts.virtualization_type != 'docker'
 
 
 #################### IPAM driver options ####################
