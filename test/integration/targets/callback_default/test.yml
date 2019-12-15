@@ -57,6 +57,12 @@
         - name: Rescue task
           command: echo rescued
 
+    - name: Using show_per_host_start variable - {{ sample_var }}
+      debug:
+        msg: "{{ sample_var }}"
+      vars:
+        sample_var: "hello world"
+
   handlers:
     - name: Test handler 1
       command: echo foo

@@ -2,27 +2,33 @@
 PLAY [testhost] ****************************************************************
 
 TASK [Changed task] ************************************************************
+ [started Changed task on testhost]
 changed: [testhost]
 
 TASK [Ok task] *****************************************************************
+ [started Ok task on testhost]
 ok: [testhost]
 
 TASK [Failed task] *************************************************************
-fatal: [testhost]: FAILED! => {"changed": false, "msg": "no reason"}
+ [started Failed task on testhost]
 ...ignoring
 
 TASK [Skipped task] ************************************************************
+ [started Skipped task on testhost]
 skipping: [testhost]
 
 TASK [Task with var in name (foo bar)] *****************************************
+ [started Task with var in name (foo bar) on testhost]
 changed: [testhost]
 
 TASK [Loop task] ***************************************************************
+ [started Loop task on testhost]
 changed: [testhost] => (item=foo-1)
 changed: [testhost] => (item=foo-2)
 changed: [testhost] => (item=foo-3)
 
 TASK [debug loop] **************************************************************
+ [started debug loop on testhost]
 changed: [testhost] => (item=debug-1) => {
     "msg": "debug-1"
 }
@@ -33,33 +39,39 @@ ok: [testhost] => (item=debug-3) => {
     "msg": "debug-3"
 }
 skipping: [testhost] => (item=debug-4) 
-fatal: [testhost]: FAILED! => {"msg": "All items completed"}
 ...ignoring
 
 TASK [EXPECTED FAILURE Failed task to be rescued] ******************************
-fatal: [testhost]: FAILED! => {"changed": false, "msg": "Failed as requested from task"}
+ [started EXPECTED FAILURE Failed task to be rescued on testhost]
 
 TASK [Rescue task] *************************************************************
+ [started Rescue task on testhost]
 changed: [testhost]
 
 TASK [Using show_per_host_start variable - hello world] ************************
+ [started Using show_per_host_start variable - hello world on testhost]
 ok: [testhost] => {
     "msg": "hello world"
 }
 
 RUNNING HANDLER [Test handler 1] ***********************************************
+ [started Test handler 1 on testhost]
 changed: [testhost]
 
 RUNNING HANDLER [Test handler 2] ***********************************************
+ [started Test handler 2 on testhost]
 ok: [testhost]
 
 RUNNING HANDLER [Test handler 3] ***********************************************
+ [started Test handler 3 on testhost]
 changed: [testhost]
 
 PLAY [testhost] ****************************************************************
+ [started None on testhost]
 
 TASK [First free task] *********************************************************
 changed: [testhost]
+ [started None on testhost]
 
 TASK [Second free task] ********************************************************
 changed: [testhost]

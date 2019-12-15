@@ -176,3 +176,10 @@ run_test_dryrun check_nomarkers_wet
 
 # Test the dry run without check markers
 run_test_dryrun check_nomarkers_dry --check
+
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
+export ANSIBLE_DISPLAY_OK_HOSTS=1
+export ANSIBLE_DISPLAY_FAILED_STDERR=1
+export ANSIBLE_SHOW_PER_HOST_START=1
+
+run_test default_show_per_host_start

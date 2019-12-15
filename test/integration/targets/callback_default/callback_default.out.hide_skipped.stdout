@@ -38,6 +38,11 @@ fatal: [testhost]: FAILED! => {"changed": false, "msg": "Failed as requested fro
 TASK [Rescue task] *************************************************************
 changed: [testhost]
 
+TASK [Using show_per_host_start variable - hello world] ************************
+ok: [testhost] => {
+    "msg": "hello world"
+}
+
 RUNNING HANDLER [Test handler 1] ***********************************************
 changed: [testhost]
 
@@ -56,5 +61,5 @@ TASK [Second free task] ********************************************************
 changed: [testhost]
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=12   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
+testhost                   : ok=13   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
 

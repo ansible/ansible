@@ -254,7 +254,7 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_start(self, host, task):
         if self.get_option('show_per_host_start'):
-            self._display.display(" [started %s on %s]" % (task, host), color=C.COLOR_OK)
+            self._display.display(" [started %s on %s]" % (self._last_task_name, host), color=C.COLOR_OK)
 
     def v2_playbook_on_play_start(self, play):
         name = play.get_name().strip()
