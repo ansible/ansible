@@ -202,8 +202,9 @@ options:
   node:
     description:
       - Proxmox VE node, where the new VM will be created.
-      - Only required for C(state=present).
-      - For other states, it will be autodiscovered.
+      - Will be autodiscovered if not specified.
+    type: str
+    default: 'auto'
   numa:
     description:
       - A hash/dictionaries of NUMA topology. C(numa='{"key":"value", "key":"value"}').
@@ -314,8 +315,12 @@ options:
     default: 'no'
   target:
     description:
-      - Target node. Only allowed if the original VM is on shared storage.
+      - Target node if specified, otherwise will be detected.
+      - Will be autodiscovered if not specified.
       - Used only with clone
+      - Only allowed if the original VM is on shared storage.
+    type: string
+    default: auto
   tdf:
     description:
       - Enables/disables time drift fix.
@@ -612,6 +617,16 @@ def get_vm(proxmox, vmid):
     return [vm for vm in proxmox.cluster.resources.get(type='vm') if vm['vmid'] == int(vmid)]
 
 
+def get_freenode(module, proxmox):
+    try:
+      nodes = proxmox.cluster.resources.get(type='node')
+      nodes = list(filter(lambda node: node['status'] == 'online', nodes))
+      nodes = sorted(nodes, key=lambda node: ((node['maxmem'] - node['mem']), (node['maxcpu'] - node['cpu'])), reverse=True)
+      return nodes[0]['node']
+    except Exception as e:
+        module.fail_json(msg="Unable to autodetect free node in cluster")
+
+
 def node_check(proxmox, node):
     return [True for nd in proxmox.nodes.get() if nd['node'] == node]
 
@@ -677,6 +692,14 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
     clone_params = {}
     # Default args for vm. Note: -args option is for experts only. It allows you to pass arbitrary arguments to kvm.
     vm_args = "-serial unix:/var/run/qemu-server/{0}.serial,server,nowait".format(vmid)
+
+    if node == 'auto':
+        if module.params['clone'] is not None:
+            node = get_vm(proxmox, vmid)[0]['node']
+            if module.params['target'] == 'auto':
+                module.params['target'] = get_freenode(module, proxmox)
+        else:
+            node = get_freenode(module, proxmox)
 
     proxmox_node = proxmox.nodes(node)
 
@@ -825,7 +848,7 @@ def main():
             name=dict(type='str'),
             net=dict(type='dict'),
             newid=dict(type='int', default=None),
-            node=dict(),
+            node=dict(type='str', default='auto'),
             numa=dict(type='dict'),
             numa_enabled=dict(type='bool'),
             onboot=dict(type='bool', default='yes'),
@@ -849,7 +872,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted', 'current']),
             storage=dict(type='str'),
             tablet=dict(type='bool', default='no'),
-            target=dict(type='str'),
+            target=dict(type='str', default='auto'),
             tdf=dict(type='bool'),
             template=dict(type='bool', default='no'),
             timeout=dict(type='int', default=30),
@@ -862,7 +885,7 @@ def main():
             watchdog=dict(),
         ),
         mutually_exclusive=[('delete', 'revert'), ('delete', 'update'), ('revert', 'update'), ('clone', 'update'), ('clone', 'delete'), ('clone', 'revert')],
-        required_one_of=[('name', 'vmid',)],
+        required_one_of=[('name', 'vmid')],
         required_if=[('state', 'present', ['node'])]
     )
 
@@ -957,9 +980,9 @@ def main():
                 module.exit_json(changed=False, msg="VM with vmid <%s> already exists" % vmid)
             elif get_vmid(proxmox, name) and not (update or clone):
                 module.exit_json(changed=False, msg="VM with name <%s> already exists" % name)
-            elif not (node, name):
-                module.fail_json(msg='node, name is mandatory for creating/updating vm')
-            elif not node_check(proxmox, node):
+            elif not name:
+                module.fail_json(msg='name is mandatory for creating/updating vm')
+            elif node != 'auto' and not node_check(proxmox, node):
                 module.fail_json(msg="node '%s' does not exist in cluster" % node)
 
             create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sockets, timeout, update,
@@ -1023,9 +1046,9 @@ def main():
                            scsi=module.params['scsi'],
                            virtio=module.params['virtio'])
             if update:
-                module.exit_json(changed=True, msg="VM %s with vmid %s updated" % (name, vmid))
+                module.exit_json(changed=True, vmid=vmid, name=name, state=state)
             elif clone is not None:
-                module.exit_json(changed=True, msg="VM %s with newid %s cloned from vm with vmid %s" % (name, newid, vmid))
+                module.exit_json(changed=True, vmid=newid, name=name, source=vmid, state=state)
             else:
                 module.exit_json(changed=True, msg="VM %s with vmid %s deployed" % (name, vmid), **results)
         except Exception as e:
@@ -1034,7 +1057,7 @@ def main():
             elif clone is not None:
                 module.fail_json(msg="Unable to clone vm {0} from vmid {1}=".format(name, vmid) + str(e))
             else:
-                module.fail_json(msg="creation of %s VM %s with vmid %s failed with exception=%s" % (VZ_TYPE, name, vmid, e))
+                module.fail_json(msg="Creation of %s VM %s with vmid %s failed with exception=%s" % (VZ_TYPE, name, vmid, e))
 
     elif state == 'started':
         try:
