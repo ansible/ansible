@@ -1,0 +1,2 @@
+bugfixes:
+  - vmware_guest_network - Fixed an issue where portgroups would not change(https://github.com/ansible/ansible/issues/64456).
