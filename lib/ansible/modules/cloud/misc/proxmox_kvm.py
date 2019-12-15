@@ -319,7 +319,7 @@ options:
       - Will be autodiscovered if not specified.
       - Used only with clone
       - Only allowed if the original VM is on shared storage.
-    type: string
+    type: str
     default: auto
   tdf:
     description:
@@ -619,10 +619,10 @@ def get_vm(proxmox, vmid):
 
 def get_freenode(module, proxmox):
     try:
-      nodes = proxmox.cluster.resources.get(type='node')
-      nodes = list(filter(lambda node: node['status'] == 'online', nodes))
-      nodes = sorted(nodes, key=lambda node: ((node['maxmem'] - node['mem']), (node['maxcpu'] - node['cpu'])), reverse=True)
-      return nodes[0]['node']
+        nodes = proxmox.cluster.resources.get(type='node')
+        nodes = list(filter(lambda node: node['status'] == 'online', nodes))
+        nodes = sorted(nodes, key=lambda node: ((node['maxmem'] - node['mem']), (node['maxcpu'] - node['cpu'])), reverse=True)
+        return nodes[0]['node']
     except Exception as e:
         module.fail_json(msg="Unable to autodetect free node in cluster")
 
