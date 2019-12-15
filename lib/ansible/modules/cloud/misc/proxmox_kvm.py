@@ -510,7 +510,7 @@ EXAMPLES = '''
     node        : sabrewulf
     state       : current
 
-    # Update VM configuration
+# Update VM configuration
 - proxmox_kvm:
     api_user    : root@pam
     api_password: secret
@@ -584,6 +584,7 @@ import os
 import re
 import time
 import traceback
+from distutils.version import LooseVersion
 
 try:
     from proxmoxer import ProxmoxAPI
@@ -596,7 +597,6 @@ from ansible.module_utils._text import to_native
 
 
 VZ_TYPE = 'qemu'
-PVE_MAJOR_VERSION = 0
 
 
 def get_nextvmid(module, proxmox):
@@ -806,6 +806,11 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
     return False
 
 
+def proxmox_version(proxmox):
+    apireturn = proxmox.version.get()
+    return LooseVersion(apireturn['version'])
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -919,7 +924,8 @@ def main():
 
     try:
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
-        PVE_MAJOR_VERSION = int(proxmox.version.get()['version'].split('.')[0])
+        global PVE_MAJOR_VERSION
+        PVE_MAJOR_VERSION = 3 if proxmox_version(proxmox) < LooseVersion('4.0') else 4
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
