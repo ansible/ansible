@@ -584,7 +584,6 @@ import os
 import re
 import time
 import traceback
-from distutils.version import LooseVersion
 
 try:
     from proxmoxer import ProxmoxAPI
