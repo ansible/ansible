@@ -41,6 +41,7 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'junos_config' else False
+        socket_path = None
         persistent_connection = self._play_context.connection.split('.')[-1]
 
         if self._play_context.connection == 'local':

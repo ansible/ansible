@@ -38,6 +38,7 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'enos_config' else False
+        socket_path = None
 
         if self._play_context.connection == 'local':
             provider = load_provider(enos_provider_spec, self._task.args)
