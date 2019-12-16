@@ -33,7 +33,7 @@ options:
     aliases: [ name ]
   src:
     description:
-      - Device to be mounted on I(path).
+      - Device (or NFS volume, or something else) to be mounted on I(path).
       - Required when I(state) set to C(present) or C(mounted).
     type: path
   fstype:
