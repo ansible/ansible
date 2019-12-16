@@ -85,7 +85,7 @@ class ActionModule(ActionBase):
                 elif option_type == 'path':
                     playvals[key] = validation.check_type_path(playvals[key])
                 else:
-                    raise AnsibleError('Unrecognized type <{0}> for playbook parameter <{1}>'.format(type, key))
+                    raise AnsibleError('Unrecognized type <{0}> for playbook parameter <{1}>'.format(option_type, key))
 
             except (TypeError, ValueError) as e:
                 raise AnsibleError("argument %s is of type %s and we were unable to convert to %s: %s"
