@@ -20,12 +20,11 @@ using System.Web.Script.Serialization;
 // loaded in PSCore, ignore CS1702 so the code will ignore this warning
 //NoWarn -Name CS1702 -CLR Core
 
-//AssemblyReference -Name Newtonsoft.Json.dll -CLR Core
-//AssemblyReference -Name System.ComponentModel.Primitives.dll -CLR Core
-//AssemblyReference -Name System.Diagnostics.EventLog.dll -CLR Core
-//AssemblyReference -Name System.IO.FileSystem.AccessControl.dll -CLR Core
-//AssemblyReference -Name System.Security.Principal.Windows.dll -CLR Core
-//AssemblyReference -Name System.Security.AccessControl.dll -CLR Core
+//AssemblyReference -Type Newtonsoft.Json.JsonConvert -CLR Core
+//AssemblyReference -Type System.Diagnostics.EventLog -CLR Core
+//AssemblyReference -Type System.Security.AccessControl.NativeObjectSecurity -CLR Core
+//AssemblyReference -Type System.Security.AccessControl.DirectorySecurity -CLR Core
+//AssemblyReference -Type System.Security.Principal.IdentityReference -CLR Core
 
 //AssemblyReference -Name System.Web.Extensions.dll -CLR Framework
 
