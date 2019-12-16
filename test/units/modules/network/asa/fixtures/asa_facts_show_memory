@@ -1,0 +1,14 @@
+Free memory:        7176970240 bytes (84%)
+Used memory:        2590688668 bytes (16%)
+-------------     ------------------
+Total memory:       8589934592 bytes (100%)
+
+Virtual platform memory
+-----------------------
+Provisioned       8192 MB
+Allowed           4096 MB
+
+Note: Free memory is the free system memory. Additional memory may
+      be available from memory pools internal to the firewall process.
+      Use 'show memory detail' to see this information, but use it
+      with care since it may cause CPU hogs and packet loss under load.

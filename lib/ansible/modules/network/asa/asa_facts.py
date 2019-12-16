@@ -38,7 +38,6 @@ description:
     and can enable or disable collection of additional facts.
   - Note, to collects facts from ASA device properly user should
     elevate the privilege to become.
-extends_documentation_fragment: asa
 notes:
   - Tested against asa 9.10(1)11
 options:
@@ -52,6 +51,7 @@ options:
       - Use a value with an initial C(!) to collect all facts except that subset.
     required: false
     default: '!config'
+    type: 'list'
 """
 
 EXAMPLES = """
@@ -94,8 +94,7 @@ ansible_net_version:
   returned: always
   type: str
 ansible_net_firepower_version:
-  description: The Firepower operating system version running on the
-  remote device.
+  description: The Firepower operating system version running on the remote device.
   returned: always
   type: str
 ansible_net_device_mgr_version:
@@ -170,7 +169,6 @@ def main():
     """ Main entry point for AnsibleModule
     """
     argument_spec = FactsArgs.argument_spec
-    argument_spec.update(asa_argument_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

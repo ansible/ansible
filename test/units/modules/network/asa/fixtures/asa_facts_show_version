@@ -1,0 +1,50 @@
+
+Cisco Adaptive Security Appliance Software Version 9.10(1)11
+Firepower Extensible Operating System Version 2.4(1.227)
+Device Manager Version 7.10(1)
+
+Compiled on Thu 21-Feb-19 14:10 PST by builders
+System image file is "boot:/asa9101-11-smp-k8.bin"
+Config file at boot was "startup-config"
+
+ciscoasa up 21 days 7 hours
+
+Hardware:   ASAv, 8192 MB RAM, CPU Xeon E5 series 2300 MHz, 1 CPU (2 cores)
+Model Id:   ASAv10
+Internal ATA Compact Flash, 10240MB
+Slot 1: ATA Compact Flash, 10240MB
+BIOS Flash Firmware Hub @ 0x0, 0KB
+
+
+ 0: Ext: Management0/0       : address is 02ac.8ef2.59aa, irq 0
+ 1: Ext: GigabitEthernet0/0  : address is 024e.1f85.94da, irq 0
+
+License mode: AWS Licensing
+License state: LICENSED
+
+Licensed features for this platform:
+Maximum VLANs                     : 50
+Inside Hosts                      : Unlimited
+Failover                          : Active/Standby
+Encryption-DES                    : Enabled
+Encryption-3DES-AES               : Enabled
+Security Contexts                 : 0
+Carrier                           : Enabled
+AnyConnect Premium Peers          : 250
+AnyConnect Essentials             : Disabled
+Other VPN Peers                   : 250
+Total VPN Peers                   : 250
+AnyConnect for Mobile             : Enabled
+AnyConnect for Cisco VPN Phone    : Enabled
+Advanced Endpoint Assessment      : Enabled
+Shared License                    : Disabled
+Total TLS Proxy Sessions          : 498
+Botnet Traffic Filter             : Enabled
+Cluster                           : Disabled
+
+Serial Number: 9AWFX1S46VQ
+
+Image type          : Release
+Key version         : A
+
+Configuration last modified by enable_15 at 06:41:15.559 UTC Fri Nov 22 2019
