@@ -17,7 +17,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import copy
 import os
 import re
 import uuid
@@ -37,7 +36,7 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         socket_path = None
-        network_os = self._get_network_os(task_vars)
+        self._get_network_os(task_vars)
         persistent_connection = self._play_context.connection.split('.')[-1]
 
         result = super(ActionModule, self).run(task_vars=task_vars)
