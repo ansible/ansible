@@ -368,7 +368,7 @@ def normalize_ipam_config_key(key):
 def dicts_are_essentially_equal(a, b):
     """Make sure that a is a subset of b, where None entries of a are ignored."""
     for k, v in a.items():
-        if not v:
+        if v is None:
             continue
         if b.get(k) != v:
             return False
