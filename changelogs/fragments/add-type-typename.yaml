@@ -1,0 +1,2 @@
+minor_changes:
+- PowerShell Add-Type - Add an easier way to reference extra types when compiling C# code on PowerShell Core
