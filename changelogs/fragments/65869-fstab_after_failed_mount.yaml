@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "mount - if the mount fails, don't leave the non-working fstab entry and the mount point behind"
