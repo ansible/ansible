@@ -36,13 +36,13 @@
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 10050
+        port: "10050"
       - type: 4
         main: 1
         useip: 1
         ip: 10.1.1.1
         dns: ""
-        port: 12345
+        port: "12345"
   register: zabbix_host1
 
 - name: Update an existing host's tls settings
@@ -58,7 +58,7 @@
         useip: 1
         ip: 10.1.1.2
         dns: ""
-        port: 10050
+        port: "10050"
     host_groups:
       - Linux servers
     tls_psk_identity: test
