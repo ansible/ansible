@@ -1,0 +1,2 @@
+bugfixes:
+  - Fixes in network action plugins load from collections using module prefix (https://github.com/ansible/ansible/issues/65071)
