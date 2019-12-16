@@ -31,7 +31,7 @@ options:
     description:
       - Package atom or set, e.g. C(sys-apps/foo) or C(>foo-2.13) or C(@world)
     type: list
-    elements: str
+    elements: str_strict
 
   state:
     description:
@@ -464,7 +464,7 @@ portage_absent_states = ['absent', 'unmerged', 'removed']
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            package=dict(type='list', elements='str', default=None, aliases=['name']),
+            package=dict(type='list', elements='str_strict', default=None, aliases=['name']),
             state=dict(
                 default=portage_present_states[0],
                 choices=portage_present_states + portage_absent_states,
