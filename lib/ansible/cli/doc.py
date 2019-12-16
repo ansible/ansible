@@ -968,6 +968,11 @@ class DocCLI(CLI, RoleMixin):
                 if 'default' in opt or not required:
                     default = "[Default: %s" % to_text(opt.pop('default', '(null)')) + "]"
 
+            # Show 'str_strict' as 'str' in the docs
+            if 'type' in opt:
+                if opt['type'] == 'str_strict':
+                    opt['type'] = 'str'
+
             text.append(textwrap.fill(DocCLI.tty_ify(aliases + choices + default), limit,
                                       initial_indent=opt_indent, subsequent_indent=opt_indent))
 
