@@ -44,6 +44,7 @@ from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVar
 from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Sequence, Mapping, MutableMapping
+from ansible.module_utils.common.collections import is_sequence
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
@@ -269,11 +270,11 @@ class AnsibleContext(Context):
         a key or value which contains jinja2 syntax and would otherwise
         lose the AnsibleUnsafe value.
         '''
-        if isinstance(val, dict):
+        if isinstance(val, Mapping):
             for key in val.keys():
                 if self._is_unsafe(val[key]):
                     return True
-        elif isinstance(val, list):
+        elif is_sequence(val):
             for item in val:
                 if self._is_unsafe(item):
                     return True
@@ -632,7 +633,7 @@ class Templar:
 
                 return result
 
-            elif isinstance(variable, (list, tuple)):
+            elif is_sequence(variable):
                 return [self.template(
                     v,
                     preserve_trailing_newlines=preserve_trailing_newlines,
@@ -640,7 +641,7 @@ class Templar:
                     overrides=overrides,
                     disable_lookups=disable_lookups,
                 ) for v in variable]
-            elif isinstance(variable, (dict, Mapping)):
+            elif isinstance(variable, Mapping):
                 d = {}
                 # we don't use iteritems() here to avoid problems if the underlying dict
                 # changes sizes due to the templating, which can happen with hostvars
@@ -669,11 +670,11 @@ class Templar:
         '''lets us know if data has a template'''
         if isinstance(data, string_types):
             return is_template(data, self.environment)
-        elif isinstance(data, (list, tuple)):
+        elif is_sequence(data):
             for v in data:
                 if self.is_template(v):
                     return True
-        elif isinstance(data, dict):
+        elif isinstance(data, Mapping):
             for k in data:
                 if self.is_template(k) or self.is_template(data[k]):
                     return True
