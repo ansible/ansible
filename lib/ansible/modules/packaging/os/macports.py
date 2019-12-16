@@ -30,7 +30,7 @@ options:
             - A list of port names.
         aliases: ['port']
         type: list
-        elements: str
+        elements: str_strict
     selfupdate:
         description:
             - Update Macports and the ports tree, either prior to installing ports or as a separate step.
@@ -269,7 +269,7 @@ def deactivate_ports(module, port_path, ports):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='list', elements='str', aliases=["port"]),
+            name=dict(type='list', elements='str_strict', aliases=["port"]),
             selfupdate=dict(aliases=["update_cache", "update_ports"], default=False, type='bool'),
             state=dict(default="present", choices=["present", "installed", "absent", "removed", "active", "inactive"]),
             upgrade=dict(default=False, type='bool'),
