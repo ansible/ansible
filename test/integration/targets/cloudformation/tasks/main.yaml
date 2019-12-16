@@ -15,7 +15,7 @@
         stack_name: "{{ stack_name }}"
         template_body: "{{ lookup('file', 'cloudformation_template.yaml') }}"
         template_parameters:
-          TopicName: "CloudformationInfoIntegrationTest"
+          TopicName: "{{ topic_name }}"
           DisplayName: "CloudformationInfoIntegrationTest"
         <<: *aws_connection_info
 
@@ -25,7 +25,7 @@
         stack_name: "{{ stack_name }}"
         template_body: "{{ lookup('file', 'cloudformation_template.yaml') }}"
         template_parameters:
-          TopicName: "CloudformationInfoIntegrationTest"
+          TopicName: "{{ topic_name }}"
           DisplayName: "CloudformationInfoIntegrationTestChanged"
         <<: *aws_connection_info
 
@@ -98,7 +98,7 @@
     - name: "DisplayName parameter value"
       assert:
         that:
-          - "mystack.cloudformation[stack_name].stack_parameters.DisplayName == 'CloudformationInfoIntegrationTest'"
+          - "mystack.cloudformation[stack_name].stack_parameters.DisplayName == {{ topic_name }}"
         fail_msg: "DisplayName in stack_parameters does not match expeced value 'CloudformationInfoIntegrationTest'"
 
     - name: "stack_description description value"

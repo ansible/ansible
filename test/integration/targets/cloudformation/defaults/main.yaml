@@ -1,1 +1,2 @@
-stack_name: ansible-test-cloudformation-info
+stack_name: "{{ resource_prefix }}-stack"
+topic_name: "{{ resource_prefix }}-topic_name"
