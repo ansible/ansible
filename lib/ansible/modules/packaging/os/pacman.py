@@ -31,7 +31,7 @@ options:
               Can't be used in combination with C(upgrade).
         aliases: [ package, pkg ]
         type: list
-        elements: str
+        elements: str_strict
 
     state:
         description:
@@ -418,7 +418,7 @@ def expand_package_groups(module, pacman_path, pkgs):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='list', elements='str', aliases=['pkg', 'package']),
+            name=dict(type='list', elements='str_strict', aliases=['pkg', 'package']),
             state=dict(type='str', default='present', choices=['present', 'installed', 'latest', 'absent', 'removed']),
             force=dict(type='bool', default=False),
             extra_args=dict(type='str', default=''),
