@@ -16,4 +16,4 @@
 
   - cli_command:
       command: show version
-  when: ansible_connection == "network_cli"
+  when: ansible_connection.endswith("network_cli")
