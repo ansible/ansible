@@ -77,7 +77,7 @@ class CliconfBase(AnsiblePlugin):
 
     __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get', 'enable_response_logging', 'disable_response_logging']
 
-    def __init__(self, connection):
+    def __init__(self, connection, *args, **kwargs):
         super(CliconfBase, self).__init__()
         self._connection = connection
         self.history = list()

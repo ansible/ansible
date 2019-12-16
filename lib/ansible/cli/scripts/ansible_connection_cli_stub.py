@@ -71,7 +71,7 @@ class ConnectionProcess(object):
     The connection process wraps around a Connection object that manages
     the connection to a remote device that persists over the playbook
     '''
-    def __init__(self, fd, play_context, socket_path, original_path, task_uuid=None, ansible_playbook_pid=None):
+    def __init__(self, fd, play_context, socket_path, original_path, task_uuid=None, ansible_playbook_pid=None, collection_list=None):
         self.play_context = play_context
         self.socket_path = socket_path
         self.original_path = original_path
@@ -85,6 +85,7 @@ class ConnectionProcess(object):
 
         self.connection = None
         self._ansible_playbook_pid = ansible_playbook_pid
+        self._collection_list = collection_list.split(',') if collection_list and collection_list != 'None' else []
 
     def start(self, variables):
         try:
@@ -98,8 +99,8 @@ class ConnectionProcess(object):
             # find it now that our cwd is /
             if self.play_context.private_key_file and self.play_context.private_key_file[0] not in '~/':
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
-            self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
-                                                    task_uuid=self._task_uuid, ansible_playbook_pid=self._ansible_playbook_pid)
+            self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null', task_uuid=self._task_uuid,
+                                                    ansible_playbook_pid=self._ansible_playbook_pid, collection_list=self._collection_list)
             self.connection.set_options(var_options=variables)
 
             self.connection._socket_path = self.socket_path
@@ -259,6 +260,7 @@ def main():
         ssh = connection_loader.get('ssh', class_only=True)
         ansible_playbook_pid = sys.argv[1]
         task_uuid = sys.argv[2]
+        collection_list = sys.argv[3]
         cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user, play_context.connection, ansible_playbook_pid)
         # create the persistent connection dir if need be and create the paths
         # which we will be using later
@@ -279,7 +281,7 @@ def main():
                     try:
                         os.close(r)
                         wfd = os.fdopen(w, 'w')
-                        process = ConnectionProcess(wfd, play_context, socket_path, original_path, task_uuid, ansible_playbook_pid)
+                        process = ConnectionProcess(wfd, play_context, socket_path, original_path, task_uuid, ansible_playbook_pid, collection_list)
                         process.start(variables)
                     except Exception:
                         messages.append(('error', traceback.format_exc()))

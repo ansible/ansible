@@ -56,7 +56,7 @@ dellos9_provider_spec = {
     'timeout': dict(type='int'),
 }
 dellos9_argument_spec = {
-    'provider': dict(type='dict', options=dellos9_provider_spec),
+    'provider': dict(type='dict', options=dellos9_provider_spec, removed_in_version=2.14),
 }
 dellos9_top_spec = {
     'host': dict(removed_in_version=2.9),

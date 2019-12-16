@@ -47,6 +47,7 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
         self._task_uuid = to_text(kwargs.get('task_uuid', ''))
+        self._collection_list = kwargs.get('collection_list')
 
     def _connect(self):
         self._connected = True
@@ -76,7 +77,7 @@ class Connection(ConnectionBase):
         """
         display.vvvv('starting connection from persistent connection plugin', host=self._play_context.remote_addr)
         variables = {'ansible_command_timeout': self.get_option('persistent_command_timeout')}
-        socket_path = start_connection(self._play_context, variables, self._task_uuid)
+        socket_path = start_connection(self._play_context, variables, self._task_uuid, collection_list=self._collection_list)
         display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
         setattr(self, '_socket_path', socket_path)
         return socket_path

@@ -54,7 +54,7 @@ enos_provider_spec = {
 }
 
 enos_argument_spec = {
-    'provider': dict(type='dict', options=enos_provider_spec),
+    'provider': dict(type='dict', options=enos_provider_spec, removed_in_version=2.14),
 }
 
 command_spec = {

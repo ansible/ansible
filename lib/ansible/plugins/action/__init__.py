@@ -47,7 +47,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     # A set of valid arguments
     _VALID_ARGS = frozenset([])
 
-    def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
+    def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj, collection_list=None):
         self._task = task
         self._connection = connection
         self._play_context = play_context
@@ -55,6 +55,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         self._templar = templar
         self._shared_loader_obj = shared_loader_obj
         self._cleanup_remote_tmp = False
+        self._collection_list = collection_list
 
         self._supports_check_mode = True
         self._supports_async = False

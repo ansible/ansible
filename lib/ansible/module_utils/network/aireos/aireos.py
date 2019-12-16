@@ -41,7 +41,7 @@ aireos_provider_spec = {
     'timeout': dict(type='int'),
 }
 aireos_argument_spec = {
-    'provider': dict(type='dict', options=aireos_provider_spec)
+    'provider': dict(type='dict', options=aireos_provider_spec, removed_in_version=2.14)
 }
 
 aireos_top_spec = {

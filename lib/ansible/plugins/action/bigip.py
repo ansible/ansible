@@ -48,6 +48,7 @@ class ActionModule(ActionNetworkModule):
         persistent_connection = self._play_context.connection.split('.')[-1]
         socket_path = None
         transport = 'rest'
+        warnings = []
 
         if persistent_connection == 'network_cli':
             provider = self._task.args.get('provider', {})
@@ -61,7 +62,7 @@ class ActionModule(ActionNetworkModule):
 
             if transport == 'cli':
                 pc = copy.deepcopy(self._play_context)
-                pc.connection = 'network_cli'
+                pc.connection = 'ansible.netcommon.network_cli'
                 pc.network_os = 'bigip'
                 pc.remote_addr = provider.get('server', self._play_context.remote_addr)
                 pc.port = int(provider['server_port'] or self._play_context.port or 22)
@@ -70,8 +71,15 @@ class ActionModule(ActionNetworkModule):
                 pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
                 command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
-                display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
-                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
+                connection = self._shared_loader_obj.connection_loader.get('ansible.netcommon.persistent', pc, sys.stdin,
+                                                                           task_uuid=self._task._uuid, collection_list=self._collection_list)
+
+                # TODO: Remove below code after ansible minimal is cut out
+                if connection is None:
+                    pc.connection = 'network_cli'
+                    connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
+
+                display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
                 connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
                 socket_path = connection.run()
@@ -84,6 +92,8 @@ class ActionModule(ActionNetworkModule):
                     }
 
                 task_vars['ansible_socket'] = socket_path
+                warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14,'
+                                 ' use connection %s' % pc.connection])
 
         if (self._play_context.connection == 'local' and transport == 'cli') or persistent_connection == 'network_cli':
             # make sure we are in the right cli context which should be
@@ -98,4 +108,9 @@ class ActionModule(ActionNetworkModule):
                 out = conn.get_prompt()
 
         result = super(ActionModule, self).run(task_vars=task_vars)
+        if warnings:
+            if 'warnings' in result:
+                result['warnings'].extend(warnings)
+            else:
+                result['warnings'] = warnings
         return result

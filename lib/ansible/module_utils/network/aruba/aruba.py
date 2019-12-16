@@ -44,7 +44,7 @@ aruba_provider_spec = {
     'timeout': dict(type='int'),
 }
 aruba_argument_spec = {
-    'provider': dict(type='dict', options=aruba_provider_spec)
+    'provider': dict(type='dict', options=aruba_provider_spec, removed_in_version=2.14)
 }
 
 aruba_top_spec = {

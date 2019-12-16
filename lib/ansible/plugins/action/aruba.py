@@ -38,40 +38,55 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'aruba_config' else False
+        persistent_connection = self._play_context.connection.split('.')[-1]
+        warnings = []
 
-        if self._play_context.connection != 'local':
+        if persistent_connection == 'network_cli':
+            provider = self._task.args.get('provider', {})
+            if any(provider.values()):
+                display.warning('provider is unnecessary when using network_cli and will be ignored')
+                del self._task.args['provider']
+        elif self._play_context.connection == 'local':
+            provider = load_provider(aruba_provider_spec, self._task.args)
+            pc = copy.deepcopy(self._play_context)
+            pc.connection = 'ansible.netcommon.network_cli'
+            pc.network_os = 'aruba'
+            pc.remote_addr = provider['host'] or self._play_context.remote_addr
+            pc.port = int(provider['port'] or self._play_context.port or 22)
+            pc.remote_user = provider['username'] or self._play_context.connection_user
+            pc.password = provider['password'] or self._play_context.password
+            pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
+            command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
+
+            connection = self._shared_loader_obj.connection_loader.get('ansible.netcommon.persistent', pc, sys.stdin,
+                                                                       task_uuid=self._task._uuid, collection_list=self._collection_list)
+
+            # TODO: Remove below code after ansible minimal is cut out
+            if connection is None:
+                pc.connection = 'network_cli'
+                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
+
+            display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
+            connection.set_options(direct={'persistent_command_timeout': command_timeout})
+
+            socket_path = connection.run()
+            display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
+            if not socket_path:
+                return {'failed': True,
+                        'msg': 'unable to open shell. Please see: ' +
+                               'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
+
+            task_vars['ansible_socket'] = socket_path
+            warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14,'
+                 ' use connection %s' % pc.connection])
+        else:
             return dict(
                 failed=True,
-                msg='invalid connection specified, expected connection=local, '
+                msg='invalid connection specified, expected connection is either network_cli or ansible.netcommon.network_cli'
                     'got %s' % self._play_context.connection
             )
 
-        provider = load_provider(aruba_provider_spec, self._task.args)
-
-        pc = copy.deepcopy(self._play_context)
-        pc.connection = 'network_cli'
-        pc.network_os = 'aruba'
-        pc.remote_addr = provider['host'] or self._play_context.remote_addr
-        pc.port = int(provider['port'] or self._play_context.port or 22)
-        pc.remote_user = provider['username'] or self._play_context.connection_user
-        pc.password = provider['password'] or self._play_context.password
-        pc.private_key_file = provider['ssh_keyfile'] or self._play_context.private_key_file
-        command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
-
-        display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-        connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
-        connection.set_options(direct={'persistent_command_timeout': command_timeout})
-
-        socket_path = connection.run()
-        display.vvvv('socket_path: %s' % socket_path, pc.remote_addr)
-        if not socket_path:
-            return {'failed': True,
-                    'msg': 'unable to open shell. Please see: ' +
-                           'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
-
-        task_vars['ansible_socket'] = socket_path
-
-        if self._play_context.become_method == 'enable':
+        if self._play_context.become_method and self._play_context.become_method.split('.')[-1] == 'enable':
             self._play_context.become = False
             self._play_context.become_method = None
 

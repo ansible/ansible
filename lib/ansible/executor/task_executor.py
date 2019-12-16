@@ -929,7 +929,7 @@ class TaskExecutor:
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
 
             options = self._get_persistent_connection_options(connection, variables, templar)
-            socket_path = start_connection(self._play_context, options, self._task._uuid)
+            socket_path = start_connection(self._play_context, options, self._task._uuid, self._task.collections)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
@@ -1049,10 +1049,12 @@ class TaskExecutor:
         return handler
 
 
-def start_connection(play_context, variables, task_uuid):
+def start_connection(play_context, variables, task_uuid, collection_list):
     '''
     Starts the persistent connection
     '''
+    if collection_list is None:
+        collection_list = []
     candidate_paths = [C.ANSIBLE_CONNECTION_PATH or os.path.dirname(sys.argv[0])]
     candidate_paths.extend(os.environ['PATH'].split(os.pathsep))
     for dirname in candidate_paths:
@@ -1081,7 +1083,7 @@ def start_connection(play_context, variables, task_uuid):
     python = sys.executable
     master, slave = pty.openpty()
     p = subprocess.Popen(
-        [python, ansible_connection, to_text(os.getppid()), to_text(task_uuid)],
+        [python, ansible_connection, to_text(os.getppid()), to_text(task_uuid), to_text(",".join(collection_list))],
         stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
     )
     os.close(slave)

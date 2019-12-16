@@ -334,16 +334,17 @@ class Connection(NetworkConnectionBase):
         # Managing prompt context
         self._check_prompt = False
         self._task_uuid = to_text(kwargs.get('task_uuid', ''))
+        self._collection_list = kwargs.get('collection_list')
 
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
 
         if self._network_os:
-            self._terminal = terminal_loader.get(self._network_os, self)
+            self._terminal = terminal_loader.get(self._network_os, self, collection_list=self._collection_list)
             if not self._terminal:
                 raise AnsibleConnectionFailure('network os %s is not supported' % self._network_os)
 
-            self.cliconf = cliconf_loader.get(self._network_os, self)
+            self.cliconf = cliconf_loader.get(self._network_os, self, collection_list=self._collection_list)
             if self.cliconf:
                 self._sub_plugin = {'type': 'cliconf', 'name': self.cliconf._load_name, 'obj': self.cliconf}
                 self.queue_message('vvvv', 'loaded cliconf plugin %s from path %s for network_os %s' %
