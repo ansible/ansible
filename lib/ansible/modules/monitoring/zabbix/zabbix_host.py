@@ -287,6 +287,7 @@ except ImportError:
     ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
+from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
@@ -294,6 +295,7 @@ class Host(object):
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
+        self._zbx_api_version = zbx.api_version()[:5]
 
     # exist host
     def is_host_exist(self, host_name):
@@ -542,11 +544,15 @@ class Host(object):
                 return True
 
         if inventory_mode:
-            if host['inventory']:
-                if int(host['inventory']['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+            if LooseVersion(self._zbx_api_version) <= LooseVersion('4.4.0'):
+                if host['inventory']:
+                    if int(host['inventory']['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+                        return True
+                elif inventory_mode != 'disabled':
                     return True
-            elif inventory_mode != 'disabled':
-                return True
+            else:
+                if int(host['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+                    return True
 
         if inventory_zabbix:
             proposed_inventory = copy.deepcopy(host['inventory'])
