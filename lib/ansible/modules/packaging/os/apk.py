@@ -36,7 +36,7 @@ options:
     description:
       - A package name, like C(foo), or multiple packages, like C(foo, bar).
     type: list
-    elements: str
+    elements: str_strict
   repository:
     description:
       - A package repository or multiple repositories.
@@ -300,7 +300,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'installed', 'absent', 'removed', 'latest']),
-            name=dict(type='list', elements='str'),
+            name=dict(type='list', elements='str_strict'),
             repository=dict(type='list'),
             update_cache=dict(default='no', type='bool'),
             upgrade=dict(default='no', type='bool'),
