@@ -97,7 +97,7 @@ notes:
   - 'Currently boto does not support the removal of Managed Policies, the module will error out if your
     user/group/role has managed policies when you try to do state=absent. They will need to be removed manually.'
 author:
-    - "Jonathan I. Davila (@defionscode)"
+    - "Jonathan I. Davila"
     - "Paul Seiffert (@seiffert)"
 extends_documentation_fragment:
   - aws

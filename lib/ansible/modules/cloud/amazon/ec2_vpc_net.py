@@ -19,7 +19,7 @@ description:
     - Create, modify, and terminate AWS virtual private clouds.
 version_added: "2.0"
 author:
-  - Jonathan Davila (@defionscode)
+  - Jonathan Davila
   - Sloane Hertel (@s-hertel)
 options:
   name:

@@ -80,7 +80,7 @@ options:
     type: bool
 
 requirements: [ "boto" ]
-author: Jonathan I. Davila (@defionscode)
+author: Jonathan I. Davila
 extends_documentation_fragment:
     - aws
     - ec2

@@ -63,7 +63,7 @@ options:
     type: bool
 
 author:
-  - "Jonathan I. Davila (@defionscode)"
+  - "Jonathan I. Davila"
   - "Dennis Podkovyrin (@sbj-ss)"
 extends_documentation_fragment:
     - aws
