@@ -31,12 +31,16 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
-from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.plugins.new_loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.vars import combine_vars
 
 
-__all__ = ['Role', 'hash_params']
+__all__ = ['Role', 'hash_params', 'ROLE_CACHE']
+
+
+ROLE_CACHE = {}
+
 
 # TODO: this should be a utility function, but can't be a member of
 #       the role due to the fact that it would require the use of self
@@ -155,8 +159,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             params['from_include'] = from_include
 
             hashed_params = hash_params(params)
-            if role_include.role in play.ROLE_CACHE:
-                for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
+            if role_include.role in ROLE_CACHE:
+                for (entry, role_obj) in iteritems(ROLE_CACHE[role_include.role]):
                     if hashed_params == entry:
                         if parent_role:
                             role_obj.add_parent(parent_role)
@@ -169,11 +173,11 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             r = Role(play=play, from_files=from_files, from_include=from_include)
             r._load_role_data(role_include, parent_role=parent_role)
 
-            if role_include.role not in play.ROLE_CACHE:
-                play.ROLE_CACHE[role_include.role] = dict()
+            if role_include.role not in ROLE_CACHE:
+                ROLE_CACHE[role_include.role] = dict()
 
             # FIXME: how to handle cache keys for collection-based roles, since they're technically adjustable per task?
-            play.ROLE_CACHE[role_include.role][hashed_params] = r
+            ROLE_CACHE[role_include.role][hashed_params] = r
             return r
 
         except RuntimeError:

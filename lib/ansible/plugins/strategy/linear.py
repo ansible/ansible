@@ -30,6 +30,7 @@ DOCUMENTATION = '''
      - This was the default Ansible behaviour before 'strategy plugins' were introduced in 2.0.
     author: Ansible Core Team
 '''
+import time
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.executor.play_iterator import PlayIterator
@@ -38,7 +39,7 @@ from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
-from ansible.plugins.loader import action_loader
+from ansible.plugins.new_loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.utils.display import Display
@@ -154,12 +155,14 @@ class StrategyModule(StrategyBase):
                 host_state_task = host_tasks.get(host.name)
                 if host_state_task is None:
                     continue
-                (s, t) = host_state_task
-                s = iterator.get_active_state(s)
+                (cur_s, t) = host_state_task
                 if t is None:
                     continue
+                s = iterator.get_active_state(cur_s)
                 if s.run_state == cur_state and s.cur_block == cur_block:
-                    new_t = iterator.get_next_task_for_host(host)
+                    # we peeked the task and state already, to make it official
+                    # we just set the state back for the host in the iterator
+                    iterator._host_states[host.name] = cur_s
                     rvals.append((host, t))
                 else:
                     rvals.append((host, noop_task))
@@ -219,7 +222,6 @@ class StrategyModule(StrategyBase):
                 callback_sent = False
                 work_to_do = False
 
-                host_results = []
                 host_tasks = self._get_next_task_lockstep(hosts_left, iterator)
 
                 # skip control
@@ -230,6 +232,25 @@ class StrategyModule(StrategyBase):
                 any_errors_fatal = False
 
                 results = []
+
+                target_task = None
+                for (host, task) in host_tasks:
+                    if task:
+                        target_task = task
+                        break
+
+                action = None
+                if target_task:
+                    # test to see if the task across all hosts points to an action plugin which
+                    # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
+                    # will only send this task to the first host in the list.
+                    try:
+                        action = action_loader.get(target_task.action)
+                    except KeyError:
+                        # we don't care here, because the action may simply not have a
+                        # corresponding action plugin
+                        pass
+
                 for (host, task) in host_tasks:
                     if not task:
                         continue
@@ -240,25 +261,11 @@ class StrategyModule(StrategyBase):
                     run_once = False
                     work_to_do = True
 
-                    # test to see if the task across all hosts points to an action plugin which
-                    # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
-                    # will only send this task to the first host in the list.
-
-                    try:
-                        action = action_loader.get(task.action, class_only=True)
-                    except KeyError:
-                        # we don't care here, because the action may simply not have a
-                        # corresponding action plugin
-                        action = None
-
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
-                    if task._role and task._role.has_run(host):
-                        # If there is no metadata, the default behavior is to not allow duplicates,
-                        # if there is metadata, check to see if the allow_duplicates flag was set to true
-                        if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
-                            display.debug("'%s' skipped because role has already run" % task)
-                            continue
+                    if task._role and iterator.host_has_completed_role(host, task._role):
+                        display.debug("'%s' skipped because role has already run" % task)
+                        continue
 
                     if task.action == 'meta':
                         # for the linear strategy, we run meta tasks just once and for
@@ -279,7 +286,7 @@ class StrategyModule(StrategyBase):
 
                         display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
-                                                                    _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
+                                                                    _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all, include_hostvars=False)
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
@@ -289,32 +296,13 @@ class StrategyModule(StrategyBase):
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
 
-                        if not callback_sent:
-                            display.debug("sending task start callback, copying the task so we can template it temporarily")
-                            saved_name = task.name
-                            display.debug("done copying, going to template now")
-                            try:
-                                task.name = to_text(templar.template(task.name, fail_on_undefined=False), nonstring='empty')
-                                display.debug("done templating")
-                            except Exception:
-                                # just ignore any errors during task name templating,
-                                # we don't care if it just shows the raw name
-                                display.debug("templating failed for some reason")
-                            display.debug("here goes the callback...")
-                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
-                            task.name = saved_name
-                            callback_sent = True
-                            display.debug("sending task start callback")
-
-                        self._blocked_hosts[host.get_name()] = True
+                        self._blocked_hosts[host.name] = True
                         self._queue_task(host, task, task_vars, play_context)
                         del task_vars
 
                     # if we're bypassing the host loop, break out now
                     if run_once:
                         break
-
-                    results += self._process_pending_results(iterator, max_passes=max(1, int(len(self._tqm._workers) * 0.1)))
 
                 # go to next host/task group
                 if skip_rest:
@@ -324,12 +312,12 @@ class StrategyModule(StrategyBase):
                 if self._pending_results > 0:
                     results += self._wait_on_pending_results(iterator)
 
-                host_results.extend(results)
-
                 self.update_active_connections(results)
 
+                included_files = []
                 included_files = IncludedFile.process_include_results(
-                    host_results,
+                    results,
+                    inventory=self._inventory,
                     iterator=iterator,
                     loader=self._loader,
                     variable_manager=self._variable_manager
@@ -355,6 +343,9 @@ class StrategyModule(StrategyBase):
                                     variable_manager=self._variable_manager,
                                     loader=self._loader,
                                 )
+
+                                with self._worker_update_lock:
+                                    self._worker_update_list.append({"plugin_path": new_ir._role_path})
                             else:
                                 new_blocks = self._load_included_file(included_file, iterator=iterator)
 
@@ -400,15 +391,17 @@ class StrategyModule(StrategyBase):
                 display.debug("results queue empty")
 
                 display.debug("checking for any_errors_fatal")
+                # FIXME: all of this should be handled by process_pending_results
+                #        so all of the strategy specific stuff may go away?
                 failed_hosts = []
                 unreachable_hosts = []
-                for res in results:
-                    # execute_meta() does not set 'failed' in the TaskResult
-                    # so we skip checking it with the meta tasks and look just at the iterator
-                    if (res.is_failed() or res._task.action == 'meta') and iterator.is_failed(res._host):
-                        failed_hosts.append(res._host.name)
-                    elif res.is_unreachable():
-                        unreachable_hosts.append(res._host.name)
+                # for res in results:
+                #     # execute_meta() does not set 'failed' in the TaskResult
+                #     # so we skip checking it with the meta tasks and look just at the iterator
+                #     if (res.is_failed() or res._task.action == 'meta') and iterator.is_failed(res._host):
+                #         failed_hosts.append(res._host.name)
+                #     elif res.is_unreachable():
+                #         unreachable_hosts.append(res._host.name)
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):

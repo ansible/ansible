@@ -1,4 +1,4 @@
-# (c) 2016, Steve Kuznetsov <skuznets@redhat.com>
+# (c) 2019, Red Hat, Inc.
 #
 # This file is part of Ansible
 #
@@ -15,22 +15,35 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 
-from units.compat import unittest
-from units.compat.mock import MagicMock
+import ctypes
+import struct
 
-from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.playbook import Playbook
-from ansible.plugins.callback import CallbackBase
-from ansible.utils import context_objects as co
 
 __metaclass__ = type
 
 
-class TestTaskQueueManagerCallbacks(unittest.TestCase):
-    # FIXME: callbacks now occur in the results proc, but
-    #        the TQM can still send direct callbacks there
-    #        so we may want to rewrite this test.
-    pass
+_libc = ctypes.CDLL(None, use_errno=True)
+
+
+try:
+    sched_setaffinity = _libc.sched_setaffinity
+except AttributeError:
+    # this system doesn't support sched_setaffinity, so
+    # we just make it a dummy that does nothing for now
+    def dummy():
+        pass
+    sched_setaffinity = dummy
+
+
+def mask_to_bytes(mask):
+    """
+    Convert the (type long) mask to a cpu_set_t.
+    """
+    chunks = []
+    shiftmask = (2 ** 64) - 1
+    for x in range(16):
+        chunks.append(struct.pack('<Q', mask & shiftmask))
+        mask >>= 64
+    return str.encode('').join(chunks)

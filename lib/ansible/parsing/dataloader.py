@@ -51,7 +51,7 @@ class DataLoader:
     '''
 
     def __init__(self):
-        self._basedir = '.'
+        self._basedir = unfrackpath('.')
         self._FILE_CACHE = dict()
         self._tempfiles = set()
 
@@ -168,7 +168,7 @@ class DataLoader:
         ''' sets the base directory, used to find files when a relative path is given '''
 
         if basedir is not None:
-            self._basedir = to_text(basedir)
+            self._basedir = unfrackpath(to_text(basedir))
 
     def path_dwim(self, given):
         '''

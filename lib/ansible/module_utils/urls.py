@@ -554,6 +554,10 @@ class ParseResultDottedDict(dict):
         '''
         return [self.get(k, None) for k in ('scheme', 'netloc', 'path', 'params', 'query', 'fragment')]
 
+    def copy(self):
+        # FIXME: this is a shallow copy and may need to deepdish instead
+        return ParseResultDottedDict(dict(self))
+
 
 def generic_urlparse(parts):
     '''

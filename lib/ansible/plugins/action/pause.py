@@ -112,10 +112,10 @@ class ActionModule(ActionBase):
 
         # Is 'prompt' a key in 'args'?
         if 'prompt' in self._task.args:
-            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), self._task.args['prompt'], echo_prompt)
+            prompt = "[%s]\n%s%s:" % (self._task.name.strip(), self._task.args['prompt'], echo_prompt)
         else:
             # If no custom prompt is specified, set a default prompt
-            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), 'Press enter to continue, Ctrl+C to interrupt', echo_prompt)
+            prompt = "[%s]\n%s%s:" % (self._task.name.strip(), 'Press enter to continue, Ctrl+C to interrupt', echo_prompt)
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
         if 'minutes' in self._task.args or 'seconds' in self._task.args:

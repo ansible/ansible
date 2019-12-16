@@ -190,7 +190,7 @@ class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
 
     transport = 'winrm'
-    module_implementation_preferences = ('.ps1', '.exe', '')
+    module_implementation_preferences = ('ps1', 'exe', '')
     allow_executable = False
     has_pipelining = True
     allow_extras = True

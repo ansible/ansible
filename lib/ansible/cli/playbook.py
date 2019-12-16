@@ -17,7 +17,7 @@ from ansible.module_utils._text import to_bytes
 from ansible.playbook.block import Block
 from ansible.utils.display import Display
 from ansible.utils.collection_loader import AnsibleCollectionLoader, get_collection_name_from_path, set_collection_playbook_paths
-from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.plugins.new_loader import add_all_plugin_dirs
 
 
 display = Display()

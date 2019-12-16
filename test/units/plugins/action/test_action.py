@@ -164,7 +164,7 @@ class TestActionBase(unittest.TestCase):
         with patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))):
             mock_task.action = 'win_copy'
             mock_task.args = dict(b=2)
-            mock_connection.module_implementation_preferences = ('.ps1',)
+            mock_connection.module_implementation_preferences = ('ps1',)
             (style, shebang, data, path) = action_base._configure_module('stat', mock_task.args)
             self.assertEqual(style, "new")
             self.assertEqual(shebang, u'#!powershell')

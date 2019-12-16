@@ -36,7 +36,7 @@ import time
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.included_file import IncludedFile
-from ansible.plugins.loader import action_loader
+from ansible.plugins.new_loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.module_utils._text import to_text
@@ -138,9 +138,10 @@ class StrategyModule(StrategyBase):
 
                         if throttle > 0:
                             same_tasks = 0
-                            for worker in self._workers:
-                                if worker and worker.is_alive() and worker._task._uuid == task._uuid:
-                                    same_tasks += 1
+                            # FIXME: not sure how _task gets assigned to the worker
+                            # for worker in self._workers:
+                            #     if worker and worker.proc.is_alive() and worker._task._uuid == task._uuid:
+                            #         same_tasks += 1
 
                             display.debug("task: %s, same_tasks: %d" % (task.get_name(), same_tasks))
                             if same_tasks >= throttle:
@@ -148,10 +149,10 @@ class StrategyModule(StrategyBase):
 
                         # pop the task, mark the host blocked, and queue it
                         self._blocked_hosts[host_name] = True
-                        (state, task) = iterator.get_next_task_for_host(host)
+                        iterator._host_states[host_name] = state
 
                         try:
-                            action = action_loader.get(task.action, class_only=True)
+                            action = action_loader.get(task.action)
                         except KeyError:
                             # we don't care here, because the action may simply not have a
                             # corresponding action plugin
@@ -227,6 +228,7 @@ class StrategyModule(StrategyBase):
 
             included_files = IncludedFile.process_include_results(
                 host_results,
+                inventory=self._inventory,
                 iterator=iterator,
                 loader=self._loader,
                 variable_manager=self._variable_manager

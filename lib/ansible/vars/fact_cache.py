@@ -10,7 +10,7 @@ __metaclass__ = type
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.common._collections_compat import MutableMapping
-from ansible.plugins.loader import cache_loader
+from ansible.plugins.new_loader import cache_loader
 from ansible.utils.display import Display
 
 
@@ -21,7 +21,7 @@ class FactCache(MutableMapping):
 
     def __init__(self, *args, **kwargs):
 
-        self._plugin = cache_loader.get(C.CACHE_PLUGIN)
+        self._plugin = cache_loader.get(C.CACHE_PLUGIN)()
         if not self._plugin:
             raise AnsibleError('Unable to load the facts cache plugin (%s).' % (C.CACHE_PLUGIN))
 

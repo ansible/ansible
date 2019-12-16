@@ -13,11 +13,14 @@ from ansible.errors import AnsibleError
 from ansible.module_utils import six
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
-from ansible.plugins.loader import connection_loader
+from ansible.plugins.new_loader import connection_loader
 from ansible.utils.display import Display
 
 
 display = Display()
+
+
+RE_INTERP = re.compile('^ansible_.*_interpreter$')
 
 
 def module_response_deepcopy(v):
@@ -132,12 +135,12 @@ def clean_facts(facts):
     remove_keys.update(fact_keys.intersection(C.COMMON_CONNECTION_VARS))
 
     # next we remove any connection plugin specific vars
-    for conn_path in connection_loader.all(path_only=True):
-        conn_name = os.path.splitext(os.path.basename(conn_path))[0]
-        re_key = re.compile('^ansible_%s_' % conn_name)
+    # FIXME: this won't clean connection vars for connection
+    #        plugins that came from collections
+    for conn_name in connection_loader._plugin_cache.keys():
         for fact_key in fact_keys:
             # most lightweight VM or container tech creates devices with this pattern, this avoids filtering them out
-            if (re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge'))) or fact_key.startswith('ansible_become_'):
+            if (fact_key[8:len(conn_name)] == conn_name and not fact_key.endswith(('_bridge', '_gwbridge'))) or fact_key.startswith('ansible_become_'):
                 remove_keys.add(fact_key)
 
     # remove some KNOWN keys
@@ -146,9 +149,8 @@ def clean_facts(facts):
             remove_keys.add(hard)
 
     # finally, we search for interpreter keys to remove
-    re_interp = re.compile('^ansible_.*_interpreter$')
     for fact_key in fact_keys:
-        if re_interp.match(fact_key):
+        if RE_INTERP.match(fact_key):
             remove_keys.add(fact_key)
     # then we remove them (except for ssh host keys)
     for r_key in remove_keys:

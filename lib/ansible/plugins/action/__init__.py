@@ -164,7 +164,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         for mod_type in self._connection.module_implementation_preferences:
             # Check to determine if PowerShell modules are supported, and apply
             # some fixes (hacks) to module name + args.
-            if mod_type == '.ps1':
+            if mod_type == 'ps1':
                 # win_stat, win_file, and win_copy are not just like their
                 # python counterparts but they are compatible enough for our
                 # internal usage
@@ -177,7 +177,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         if key in module_args:
                             module_args[key] = self._connection._shell._unquote(module_args[key])
 
-            module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type, collection_list=self._task.collections)
+            _drop, module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type, collection_list=self._task.collections)
             if module_path:
                 break
         else:  # This is a for-else: http://bit.ly/1ElPkyg
@@ -1168,7 +1168,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         # dwim already deals with playbook basedirs
-        path_stack = self._task.get_search_path()
+        path_stack = self._task.search_path
 
         # if missing it will return a file not found exception
         return self._loader.path_dwim_relative_stack(path_stack, dirname, needle)

@@ -51,8 +51,8 @@ class TaskInclude(Task):
 
     _static = FieldAttribute(isa='bool', default=None)
 
-    def __init__(self, block=None, role=None, task_include=None):
-        super(TaskInclude, self).__init__(block=block, role=role, task_include=task_include)
+    def __init__(self, block=None, role=None, task_include=None, generate_id=True):
+        super(TaskInclude, self).__init__(block=block, role=role, task_include=task_include, generate_id=generate_id)
         self.statically_loaded = False
 
     @staticmethod

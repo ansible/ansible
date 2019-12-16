@@ -143,17 +143,17 @@ class ActionModule(ActionBase):
         return result
 
     def _set_root_dir(self):
-        if self._task._role:
+        if self._task.role:
             if self.source_dir.split('/')[0] == 'vars':
                 path_to_use = (
-                    path.join(self._task._role._role_path, self.source_dir)
+                    path.join(self._task.role['path'], self.source_dir)
                 )
                 if path.exists(path_to_use):
                     self.source_dir = path_to_use
             else:
                 path_to_use = (
                     path.join(
-                        self._task._role._role_path, 'vars', self.source_dir
+                        self._task.role['path'], 'vars', self.source_dir
                     )
                 )
                 self.source_dir = path_to_use
@@ -252,8 +252,8 @@ class ActionModule(ActionBase):
         for filename in var_files:
             stop_iter = False
             # Never include main.yml from a role, as that is the default included by the role
-            if self._task._role:
-                if path.join(self._task._role._role_path, filename) == path.join(root_dir, 'vars', 'main.yml'):
+            if self._task.role:
+                if path.join(self._task.role['path'], filename) == path.join(root_dir, 'vars', 'main.yml'):
                     stop_iter = True
                     continue
 

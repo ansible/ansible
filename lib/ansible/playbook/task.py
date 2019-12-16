@@ -27,7 +27,7 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
-from ansible.plugins.loader import lookup_loader
+from ansible.plugins.new_loader import lookup_loader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
@@ -68,13 +68,13 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     # inheritance is only triggered if the 'current value' is None,
     # default can be set at play/top level object and inheritance will take it's course.
 
-    _args = FieldAttribute(isa='dict', default=dict)
+    _args = FieldAttribute(isa='dict', default=dict, always_post_validate=True)
     _action = FieldAttribute(isa='string')
 
     _async_val = FieldAttribute(isa='int', default=0, alias='async')
     _changed_when = FieldAttribute(isa='list', default=list)
     _delay = FieldAttribute(isa='int', default=5)
-    _delegate_to = FieldAttribute(isa='string')
+    _delegate_to = FieldAttribute(isa='string', always_post_validate=True)
     _delegate_facts = FieldAttribute(isa='bool')
     _failed_when = FieldAttribute(isa='list', default=list)
     _loop = FieldAttribute()
@@ -88,7 +88,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     # deprecated, used to be loop and loop_args but loop has been repurposed
     _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
 
-    def __init__(self, block=None, role=None, task_include=None):
+    def __init__(self, block=None, role=None, task_include=None, generate_id=True):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
 
         self._role = role
@@ -99,7 +99,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         else:
             self._parent = block
 
-        super(Task, self).__init__()
+        super(Task, self).__init__(generate_id=generate_id)
 
     def get_path(self):
         ''' return the absolute path of the task with its line number '''
@@ -107,7 +107,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         path = ""
         if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
             path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
-        elif hasattr(self._parent._play, '_ds') and hasattr(self._parent._play._ds, '_data_source') and hasattr(self._parent._play._ds, '_line_number'):
+        elif self._parent and hasattr(self._parent._play, '_ds') and \
+                hasattr(self._parent._play._ds, '_data_source') and \
+                hasattr(self._parent._play._ds, '_line_number'):
             path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
         return path
 
@@ -401,15 +403,21 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
     def serialize(self):
         data = super(Task, self).serialize()
-
-        if not self._squashed and not self._finalized:
-            if self._parent:
-                data['parent'] = self._parent.serialize()
-                data['parent_type'] = self._parent.__class__.__name__
-
-            if self._role:
-                data['role'] = self._role.serialize()
-
+        data['search_path'] = self.get_search_path()
+        role_data = None
+        if self._role:
+            role_data = {
+                'uuid': self._role._uuid,
+                'name': self._role._role_name,
+                'path': self._role._role_path,
+            }
+        data['role'] = role_data
+        # if not self._squashed and not self._finalized:
+        #     if self._parent:
+        #         data['parent'] = self._parent.serialize()
+        #         data['parent_type'] = self._parent.__class__.__name__
+        #     if self._role:
+        #         data['role'] = self._role.serialize()
         return data
 
     def deserialize(self, data):
@@ -438,7 +446,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             self._role = r
             del data['role']
 
-        super(Task, self).deserialize(data)
+        return super(Task, self).deserialize(data)
 
     def set_loader(self, loader):
         '''

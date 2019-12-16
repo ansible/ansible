@@ -394,7 +394,7 @@ class TestSSHConnectionRun(object):
             [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
             [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
             []]
-        self.mock_selector.get_map.side_effect = lambda: True
+        self.mock_selector.get_map.side_effect = lambda: False
 
         return_code, b_stdout, b_stderr = self.conn._run("ssh", "this is input data")
         assert return_code == 0
@@ -417,7 +417,7 @@ class TestSSHConnectionRun(object):
             [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
             [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
             []]
-        self.mock_selector.get_map.side_effect = lambda: True
+        self.mock_selector.get_map.side_effect = lambda: False
 
         return_code, b_stdout, b_stderr = self.conn._run(["ssh", "is", "a", "cmd"], "this is more data")
         assert return_code == 0
@@ -449,7 +449,7 @@ class TestSSHConnectionRun(object):
             [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ),
              (SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
             []]
-        self.mock_selector.get_map.side_effect = lambda: True
+        self.mock_selector.get_map.side_effect = lambda: False
 
         return_code, b_stdout, b_stderr = self.conn._run("ssh", "this is input data")
         assert return_code == 0
@@ -477,7 +477,7 @@ class TestSSHConnectionRun(object):
             [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
             [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
             []]
-        self.mock_selector.get_map.side_effect = lambda: True
+        self.mock_selector.get_map.side_effect = lambda: False
 
         return_code, b_stdout, b_stderr = self.conn._run("ssh", "this is input data")
         self.mock_popen_res.stdin.flush.assert_called_once_with()
@@ -505,7 +505,7 @@ class TestSSHConnectionRun(object):
             [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
             [(SelectorKey(self.mock_popen_res.stdout, 1001, [EVENT_READ], None), EVENT_READ)],
             []]
-        self.mock_selector.get_map.side_effect = lambda: True
+        self.mock_selector.get_map.side_effect = lambda: False
 
         return_code, b_stdout, b_stderr = self.conn._run("ssh", "")
         assert return_code == 0
@@ -533,7 +533,7 @@ class TestSSHConnectionRetries(object):
             [],
         ]
 
-        self.mock_selector.get_map.side_effect = lambda: True
+        self.mock_selector.get_map.side_effect = lambda: False
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = [b'sshpass', b'-d41', b'ssh', b'-C']
@@ -564,7 +564,7 @@ class TestSSHConnectionRetries(object):
             [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
             []
         ]
-        self.mock_selector.get_map.side_effect = lambda: True
+        self.mock_selector.get_map.side_effect = lambda: False
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = 'ssh'
@@ -591,7 +591,7 @@ class TestSSHConnectionRetries(object):
             [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
             [],
         ] * 10
-        self.mock_selector.get_map.side_effect = lambda: True
+        self.mock_selector.get_map.side_effect = lambda: False
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = 'ssh'
@@ -636,7 +636,7 @@ class TestSSHConnectionRetries(object):
             [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
             []
         ]
-        self.mock_selector.get_map.side_effect = lambda: True
+        self.mock_selector.get_map.side_effect = lambda: False
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = 'sftp'
@@ -667,7 +667,7 @@ class TestSSHConnectionRetries(object):
             [(SelectorKey(self.mock_popen_res.stderr, 1002, [EVENT_READ], None), EVENT_READ)],
             []
         ]
-        self.mock_selector.get_map.side_effect = lambda: True
+        self.mock_selector.get_map.side_effect = lambda: False
 
         self.conn._build_command = MagicMock()
         self.conn._build_command.return_value = 'sftp'

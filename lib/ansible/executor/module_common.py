@@ -37,7 +37,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils._text import to_bytes, to_text, to_native
-from ansible.plugins.loader import module_utils_loader
+from ansible.plugins.new_loader import module_utils_loader
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
@@ -695,7 +695,8 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
     # Determine what imports that we've found are modules (vs class, function.
     # variable names) for packages
     #
-    module_utils_paths = [p for p in module_utils_loader._get_paths(subdirs=False) if os.path.isdir(p)]
+    # module_utils_paths = [p for p in module_utils_loader._get_paths(subdirs=False) if os.path.isdir(p)]
+    module_utils_paths = [p for p in module_utils_loader._scanned_paths.keys() if os.path.isdir(p)]
     # FIXME: Do we still need this?  It feels like module-utils_loader should include
     # _MODULE_UTILS_PATH
     module_utils_paths.append(_MODULE_UTILS_PATH)

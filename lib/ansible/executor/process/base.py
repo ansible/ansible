@@ -1,5 +1,4 @@
-# (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-# (c) 2014, Serge van Ginderachter <serge@vanginderachter.be>
+# (c) 2019, Red Hat, Inc.
 #
 # This file is part of Ansible
 #
@@ -15,33 +14,38 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import (absolute_import, division, print_function)
+
+import os
+
+from abc import abstractmethod
+from ansible.module_utils._text import to_text
+from ansible.utils.display import Display
+from ansible.utils.multiprocessing import context as multiprocessing_context
+
+
 __metaclass__ = type
 
-import os.path
-
-from ansible.plugins import AnsiblePlugin
-from ansible.utils.path import basedir
-from ansible.utils.display import Display
 
 display = Display()
 
 
-class BaseVarsPlugin(AnsiblePlugin):
+class AnsibleProcessBase(multiprocessing_context.Process):
 
-    """
-    Loads variables for groups and/or hosts
-    """
+    def _hard_exit(self, e):
+        try:
+            display.debug(u"WORKER HARD EXIT: %s" % to_text(e))
+        except BaseException:
+            pass
+        os._exit(1)
 
-    def __init__(self):
-        """ constructor """
-        super(BaseVarsPlugin, self).__init__()
-        self._display = display
+    def run(self):
+        try:
+            return self._run()
+        except BaseException as e:
+            self._hard_exit(e)
 
-    def get_vars(self, loader, path, entities):
-        """ Gets variables. """
-        if not hasattr(self, '_basedir'):
-            if os.path.isdir(path):
-                self._basedir = path
-            else:
-                self._basedir = os.path.realpath(os.path.dirname(path))
+    @abstractmethod
+    def _run(self):
+        pass

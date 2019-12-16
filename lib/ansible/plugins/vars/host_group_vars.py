@@ -76,39 +76,49 @@ class VarsModule(BaseVarsPlugin):
 
         super(VarsModule, self).get_vars(loader, path, entities)
 
+        if not hasattr(self, 'b_hostvars_subdir'):
+            b_hostvars_subdir = to_bytes(os.path.join(self._basedir, "host_vars"))
+            b_groupvars_subdir = to_bytes(os.path.join(self._basedir, "group_vars"))
+            self._ignore_paths = []
+
         data = {}
         for entity in entities:
             if isinstance(entity, Host):
-                subdir = 'host_vars'
+                b_opath = b_hostvars_subdir
             elif isinstance(entity, Group):
-                subdir = 'group_vars'
+                b_opath = b_groupvars_subdir
             else:
                 raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
 
+            if b_opath in self._ignore_paths:
+                continue
+
             # avoid 'chroot' type inventory hostnames /path/to/chroot
-            if not entity.name.startswith(os.path.sep):
+            if not entity.name[0] == os.path.sep:
                 try:
                     found_files = []
                     # load vars
-                    b_opath = os.path.realpath(to_bytes(os.path.join(self._basedir, subdir)))
                     opath = to_text(b_opath)
                     key = '%s.%s' % (entity.name, opath)
                     if cache and key in FOUND:
                         found_files = FOUND[key]
                     else:
                         # no need to do much if path does not exist for basedir
-                        if os.path.exists(b_opath):
-                            if os.path.isdir(b_opath):
-                                self._display.debug("\tprocessing dir %s" % opath)
-                                found_files = loader.find_vars_files(opath, entity.name)
-                                FOUND[key] = found_files
-                            else:
-                                self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
+                        try:
+                            self._display.debug("\tprocessing dir %s" % opath)
+                            found_files = loader.find_vars_files(opath, entity.name)
+                            FOUND[key] = found_files
+                        except Exception as e:
+                            # FIXME: do we care? In a large inventory this may call os.path.exists
+                            #        a LOT of times, which is a very slow operation
+                            # if os.path.exists(b_opath):
+                            #     self._display.warning("Found something that is not a directory, skipping: %s" % (opath,))
+                            self._ignore_paths.append(b_opath)
 
                     for found in found_files:
                         new_data = loader.load_from_file(found, cache=True, unsafe=True)
                         if new_data:  # ignore empty files
-                            data = combine_vars(data, new_data)
+                            combine_vars(data, new_data, inplace=True)
 
                 except Exception as e:
                     raise AnsibleParserError(to_native(e))

@@ -24,7 +24,7 @@ import sys
 from ansible import constants as C
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import builtins
-from ansible.plugins.loader import filter_loader, test_loader
+from ansible.plugins.new_loader import filter_loader, test_loader
 
 
 def safe_eval(expr, locals=None, include_exceptions=False):
@@ -105,11 +105,11 @@ def safe_eval(expr, locals=None, include_exceptions=False):
 
     filter_list = []
     for filter_ in filter_loader.all():
-        filter_list.extend(filter_.filters().keys())
+        filter_list.extend(filter_().filters().keys())
 
     test_list = []
     for test in test_loader.all():
-        test_list.extend(test.tests().keys())
+        test_list.extend(test().tests().keys())
 
     CALL_WHITELIST = C.DEFAULT_CALLABLE_WHITELIST + filter_list + test_list
 

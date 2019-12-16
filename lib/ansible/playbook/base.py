@@ -31,11 +31,10 @@ display = Display()
 def _generic_g(prop_name, self):
     try:
         value = self._attributes[prop_name]
+        if value is Sentinel:
+            value = self._attr_defaults[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
-
-    if value is Sentinel:
-        value = self._attr_defaults[prop_name]
 
     return value
 
@@ -59,21 +58,149 @@ def _generic_g_parent(prop_name, self):
                 value = self._get_parent_attribute(prop_name)
             except AttributeError:
                 value = self._attributes[prop_name]
+        if value is Sentinel:
+            value = self._attr_defaults[prop_name]
     except KeyError:
         raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
-
-    if value is Sentinel:
-        value = self._attr_defaults[prop_name]
 
     return value
 
 
 def _generic_s(prop_name, self, value):
+    self._dumped_attrs = None
     self._attributes[prop_name] = value
 
 
 def _generic_d(prop_name, self):
     del self._attributes[prop_name]
+
+
+def get_validated_value(name, attribute, value, templar, ds=None):
+    isa = attribute['isa']
+    if isa == 'string':
+        value = to_text(value)
+    elif isa == 'int':
+        value = int(value)
+    elif isa == 'float':
+        value = float(value)
+    elif isa == 'bool':
+        value = boolean(value, strict=False)
+    elif isa == 'percent':
+        # special value, which may be an integer or float
+        # with an optional '%' at the end
+        if isinstance(value, string_types) and '%' in value:
+            value = value.replace('%', '')
+        value = float(value)
+    elif isa == 'list':
+        if value is None:
+            value = []
+        elif not isinstance(value, list):
+            value = [value]
+        if attribute['listof'] is not None:
+            for item in value:
+                # FIXME: how can we get the ds structure back to these errors?
+                if not isinstance(item, attribute['listof']):
+                    raise AnsibleParserError("the field '%s' should be a list of %s, "
+                                             "but the item '%s' is a %s" % (name, attribute['listof'], item, type(item)), obj=ds)
+                elif attribute['required'] and attribute['listof'] == string_types:
+                    if item is None or item.strip() == "":
+                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=ds)
+    elif isa == 'set':
+        if value is None:
+            value = set()
+        elif not isinstance(value, (list, set)):
+            if isinstance(value, string_types):
+                value = value.split(',')
+            else:
+                # Making a list like this handles strings of
+                # text and bytes properly
+                value = [value]
+        if not isinstance(value, set):
+            value = set(value)
+    elif isa == 'dict':
+        if value is None:
+            value = dict()
+        elif not isinstance(value, dict):
+            raise TypeError("%s is not a dictionary" % value)
+    elif isa == 'class':
+        # if not isinstance(value, attribute['class_type']):
+        #     raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute['class_type'], type(value)))
+        value = post_validate(value, templar=templar)
+    return value
+
+
+def post_validate(data, templar):
+    '''
+    we can't tell that everything is of the right type until we have
+    all the variables.  Run basic types (from isa) as well as
+    any _post_validate_<foo> functions.
+    '''
+
+    # save the omit value for later checking
+    omit_value = templar.available_variables.get('omit')
+
+    valid_attrs = data.pop('valid_attrs')
+
+    for (name, attribute) in valid_attrs:
+
+        if attribute['static']:
+            value = data[name]
+
+            # we don't template 'vars' but allow template as values for later use
+            if name not in ('vars',) and templar.is_template(value):
+                display.warning('"%s" is not templatable, but we found: %s, '
+                                'it will not be templated and will be used "as is".' % (name, value))
+            continue
+
+        if data[name] is None:
+            if not attribute['required']:
+                continue
+            else:
+                raise AnsibleParserError("the field '%s' is required but was not set" % name)
+        elif not attribute['always_post_validate'] and data['class_name'] not in ('Task', 'Handler', 'PlayContext'):
+            # Intermediate objects like Play() won't have their fields validated by
+            # default, as their values are often inherited by other objects and validated
+            # later, so we don't want them to fail out early
+            continue
+
+        try:
+            # Run the post-validator if present. These methods are responsible for
+            # using the given templar to template the values, if required.
+            if attribute['post_validate_method']:
+                value = attribute['post_validate_method'](attribute, data[name], templar)
+            else:
+                # if the attribute contains a variable, template it now
+                value = templar.template(data[name])
+
+            # if this evaluated to the omit value, set the value back to
+            # the default specified in the FieldAttribute and move on
+            if omit_value is not None and value == omit_value:
+                if callable(attribute['default']):
+                    data[name] = attribute['default']()
+                else:
+                    data[name] = attribute['default']
+                continue
+
+            # and make sure the attribute is of the type it should be
+            if value is not None:
+                value = get_validated_value(name, attribute, value, templar, ds=data.get('ds', None))
+
+            # and assign the massaged value back to the attribute field
+            data[name] = value
+        except (TypeError, ValueError) as e:
+            value = data[name]
+            raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
+                                     "The error was: %s" % (name, value, attribute['isa'], e), obj=data.get('ds', None), orig_exc=e)
+        except (AnsibleUndefinedVariable, UndefinedError) as e:
+            if templar._fail_on_undefined_errors and name != 'name':
+                if name == 'args':
+                    msg = "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
+                else:
+                    msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
+                raise AnsibleParserError(msg, obj=data.get('ds', None), orig_exc=e)
+
+    data['finalized'] = True
+    return data
 
 
 class BaseMeta(type):
@@ -146,12 +273,14 @@ class BaseMeta(type):
         _create_attrs(dct, dct)
         _process_parents(parents, dct)
 
+        dct['_valid_attrs_repr'] = [(name, attribute.serialize()) for (name, attribute) in iteritems(dct['_valid_attrs'])]
+
         return super(BaseMeta, cls).__new__(cls, name, parents, dct)
 
 
 class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
-    def __init__(self):
+    def __init__(self, generate_id=True):
 
         # initialize the data loader and variable manager, which will be provided
         # later when the object is actually loaded
@@ -162,9 +291,12 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         self._validated = False
         self._squashed = False
         self._finalized = False
+        self._dumped_attrs = None
 
         # every object gets a random uuid:
-        self._uuid = get_unique_id()
+        self._uuid = None
+        if generate_id:
+            self._uuid = get_unique_id()
 
         # we create a copy of the attributes here due to the fact that
         # it was initialized as a class param in the meta class, so we
@@ -177,7 +309,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 self._attr_defaults[key] = value()
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
-        self.vars = dict()
+        self.vars = {}
 
     def dump_me(self, depth=0):
         ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
@@ -309,13 +441,14 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             for name in self._valid_attrs.keys():
                 self._attributes[name] = getattr(self, name)
             self._squashed = True
+        return self
 
     def copy(self):
         '''
         Create a copy of this object and return it.
         '''
 
-        new_me = self.__class__()
+        new_me = self.__class__(generate_id=False)
 
         for name in self._valid_attrs.keys():
             if name in self._alias_attrs:
@@ -330,134 +463,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         new_me._uuid = self._uuid
 
         # if the ds value was set on the object, copy it to the new copy too
-        if hasattr(self, '_ds'):
-            new_me._ds = self._ds
+        new_me._ds = getattr(self, '_ds', None)
 
         return new_me
-
-    def get_validated_value(self, name, attribute, value, templar):
-        if attribute.isa == 'string':
-            value = to_text(value)
-        elif attribute.isa == 'int':
-            value = int(value)
-        elif attribute.isa == 'float':
-            value = float(value)
-        elif attribute.isa == 'bool':
-            value = boolean(value, strict=False)
-        elif attribute.isa == 'percent':
-            # special value, which may be an integer or float
-            # with an optional '%' at the end
-            if isinstance(value, string_types) and '%' in value:
-                value = value.replace('%', '')
-            value = float(value)
-        elif attribute.isa == 'list':
-            if value is None:
-                value = []
-            elif not isinstance(value, list):
-                value = [value]
-            if attribute.listof is not None:
-                for item in value:
-                    if not isinstance(item, attribute.listof):
-                        raise AnsibleParserError("the field '%s' should be a list of %s, "
-                                                 "but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
-                    elif attribute.required and attribute.listof == string_types:
-                        if item is None or item.strip() == "":
-                            raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
-        elif attribute.isa == 'set':
-            if value is None:
-                value = set()
-            elif not isinstance(value, (list, set)):
-                if isinstance(value, string_types):
-                    value = value.split(',')
-                else:
-                    # Making a list like this handles strings of
-                    # text and bytes properly
-                    value = [value]
-            if not isinstance(value, set):
-                value = set(value)
-        elif attribute.isa == 'dict':
-            if value is None:
-                value = dict()
-            elif not isinstance(value, dict):
-                raise TypeError("%s is not a dictionary" % value)
-        elif attribute.isa == 'class':
-            if not isinstance(value, attribute.class_type):
-                raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
-            value.post_validate(templar=templar)
-        return value
-
-    def post_validate(self, templar):
-        '''
-        we can't tell that everything is of the right type until we have
-        all the variables.  Run basic types (from isa) as well as
-        any _post_validate_<foo> functions.
-        '''
-
-        # save the omit value for later checking
-        omit_value = templar.available_variables.get('omit')
-
-        for (name, attribute) in iteritems(self._valid_attrs):
-
-            if attribute.static:
-                value = getattr(self, name)
-
-                # we don't template 'vars' but allow template as values for later use
-                if name not in ('vars',) and templar.is_template(value):
-                    display.warning('"%s" is not templatable, but we found: %s, '
-                                    'it will not be templated and will be used "as is".' % (name, value))
-                continue
-
-            if getattr(self, name) is None:
-                if not attribute.required:
-                    continue
-                else:
-                    raise AnsibleParserError("the field '%s' is required but was not set" % name)
-            elif not attribute.always_post_validate and self.__class__.__name__ not in ('Task', 'Handler', 'PlayContext'):
-                # Intermediate objects like Play() won't have their fields validated by
-                # default, as their values are often inherited by other objects and validated
-                # later, so we don't want them to fail out early
-                continue
-
-            try:
-                # Run the post-validator if present. These methods are responsible for
-                # using the given templar to template the values, if required.
-                method = getattr(self, '_post_validate_%s' % name, None)
-                if method:
-                    value = method(attribute, getattr(self, name), templar)
-                elif attribute.isa == 'class':
-                    value = getattr(self, name)
-                else:
-                    # if the attribute contains a variable, template it now
-                    value = templar.template(getattr(self, name))
-
-                # if this evaluated to the omit value, set the value back to
-                # the default specified in the FieldAttribute and move on
-                if omit_value is not None and value == omit_value:
-                    if callable(attribute.default):
-                        setattr(self, name, attribute.default())
-                    else:
-                        setattr(self, name, attribute.default)
-                    continue
-
-                # and make sure the attribute is of the type it should be
-                if value is not None:
-                    value = self.get_validated_value(name, attribute, value, templar)
-
-                # and assign the massaged value back to the attribute field
-                setattr(self, name, value)
-            except (TypeError, ValueError) as e:
-                value = getattr(self, name)
-                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
-                                         "The error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds(), orig_exc=e)
-            except (AnsibleUndefinedVariable, UndefinedError) as e:
-                if templar._fail_on_undefined_errors and name != 'name':
-                    if name == 'args':
-                        msg = "The task includes an option with an undefined variable. The error was: %s" % (to_native(e))
-                    else:
-                        msg = "The field '%s' has an invalid value, which includes an undefined variable. The error was: %s" % (name, to_native(e))
-                    raise AnsibleParserError(msg, obj=self.get_ds(), orig_exc=e)
-
-        self._finalized = True
 
     def _load_vars(self, attr, ds):
         '''
@@ -522,14 +530,16 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
         Dumps all attributes to a dictionary
         '''
-        attrs = {}
-        for (name, attribute) in iteritems(self._valid_attrs):
-            attr = getattr(self, name)
-            if attribute.isa == 'class' and hasattr(attr, 'serialize'):
-                attrs[name] = attr.serialize()
-            else:
-                attrs[name] = attr
-        return attrs
+        if self._dumped_attrs is None:
+            attrs = {}
+            for (name, attribute) in iteritems(self._valid_attrs):
+                attr = getattr(self, name)
+                if attribute.isa == 'class' and hasattr(attr, 'serialize'):
+                    attrs[name] = attr.serialize()
+                else:
+                    attrs[name] = attr
+            self._dumped_attrs = attrs
+        return self._dumped_attrs
 
     def from_attrs(self, attrs):
         '''
@@ -541,9 +551,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 if attribute.isa == 'class' and isinstance(value, dict):
                     obj = attribute.class_type()
                     obj.deserialize(value)
-                    setattr(self, attr, obj)
+                    self._attributes[attr] = obj
                 else:
-                    setattr(self, attr, value)
+                    self._attributes[attr] = value
 
     def serialize(self):
         '''
@@ -560,6 +570,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         repr['uuid'] = self._uuid
         repr['finalized'] = self._finalized
         repr['squashed'] = self._squashed
+        repr['valid_attrs'] = self._valid_attrs_repr
+        repr['class_name'] = self.__class__.__name__
+        repr['ds'] = self.get_ds()
 
         return repr
 
@@ -587,6 +600,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         setattr(self, '_uuid', data.get('uuid'))
         self._finalized = data.get('finalized', False)
         self._squashed = data.get('squashed', False)
+        self._ds = data.get('ds', None)
+
+        return self
 
 
 class Base(FieldAttributeBase):

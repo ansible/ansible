@@ -35,7 +35,7 @@ from ansible.inventory.data import InventoryData
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
-from ansible.plugins.loader import inventory_loader
+from ansible.plugins.new_loader import inventory_loader
 from ansible.utils.helpers import deduplicate_list
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
@@ -161,6 +161,7 @@ class InventoryManager(object):
             self._sources = sources
 
         # get to work!
+        self._source_dirs = []
         self.parse_sources(cache=True)
 
     @property
@@ -198,7 +199,7 @@ class InventoryManager(object):
 
         plugins = []
         for name in C.INVENTORY_ENABLED:
-            plugin = inventory_loader.get(name)
+            plugin = inventory_loader.get(name)()
             if plugin:
                 plugins.append(plugin)
             else:
@@ -214,13 +215,21 @@ class InventoryManager(object):
 
         parsed = False
         # allow for multiple inventory parsing
+        self._source_dirs = []
         for source in self._sources:
-
             if source:
                 if ',' not in source:
                     source = unfrackpath(source, follow=False)
                 parse = self.parse_source(source, cache=cache)
                 if parse and not parsed:
+                    # save the directory of this source for later use
+                    source_dir = None
+                    if os.path.isdir(source):
+                        source_dir = source
+                    else:
+                        source_dir = os.path.dirname(source)
+                    if source_dir:
+                        self._source_dirs.append(source_dir)
                     parsed = True
 
         if parsed:

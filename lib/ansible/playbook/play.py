@@ -83,13 +83,12 @@ class Play(Base, Taggable, CollectionSearch):
 
     # =================================================================================
 
-    def __init__(self):
-        super(Play, self).__init__()
+    def __init__(self, generate_id=True):
+        super(Play, self).__init__(generate_id=generate_id)
 
         self._included_conditional = None
         self._included_path = None
         self._removed_hosts = []
-        self.ROLE_CACHE = {}
 
         self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
         self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
@@ -229,13 +228,12 @@ class Play(Base, Taggable, CollectionSearch):
 
         block_list = []
 
-        if len(self.roles) > 0:
-            for r in self.roles:
-                # Don't insert tasks from ``import/include_role``, preventing
-                # duplicate execution at the wrong time
-                if r.from_include:
-                    continue
-                block_list.extend(r.compile(play=self))
+        for r in self.roles:
+            # Don't insert tasks from ``import/include_role``, preventing
+            # duplicate execution at the wrong time
+            if r.from_include:
+                continue
+            block_list.extend(r.compile(play=self))
 
         return block_list
 
@@ -247,11 +245,10 @@ class Play(Base, Taggable, CollectionSearch):
 
         block_list = []
 
-        if len(self.roles) > 0:
-            for r in self.roles:
-                if r.from_include:
-                    continue
-                block_list.extend(r.get_handler_blocks(play=self))
+        for r in self.roles:
+            if r.from_include:
+                continue
+            block_list.extend(r.get_handler_blocks(play=self))
 
         return block_list
 
@@ -281,6 +278,12 @@ class Play(Base, Taggable, CollectionSearch):
         block_list.append(flush_block)
         block_list.extend(self.post_tasks)
         block_list.append(flush_block)
+
+        # compile the blocks, which squashes all tasks in the
+        # block now so we don't have to do it later during the
+        # main program execution
+        for block in block_list:
+            block.compile()
 
         return block_list
 
@@ -321,6 +324,7 @@ class Play(Base, Taggable, CollectionSearch):
         return data
 
     def deserialize(self, data):
+
         super(Play, self).deserialize(data)
 
         self._included_path = data.get('included_path', None)
@@ -333,11 +337,11 @@ class Play(Base, Taggable, CollectionSearch):
                 roles.append(r)
 
             setattr(self, 'roles', roles)
-            del data['roles']
+
+        return self
 
     def copy(self):
         new_me = super(Play, self).copy()
-        new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
         new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
         return new_me

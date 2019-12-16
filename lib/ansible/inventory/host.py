@@ -57,7 +57,7 @@ class Host:
     def serialize(self):
         groups = []
         for group in self.groups:
-            groups.append(group.serialize())
+            groups.append(group.serialize(exclude_hosts=True))
 
         return dict(
             name=self.name,
@@ -83,21 +83,25 @@ class Host:
             g.deserialize(group_data)
             self.groups.append(g)
 
+        return self
+
     def __init__(self, name=None, port=None, gen_uuid=True):
 
         self.vars = {}
         self.groups = []
         self._uuid = None
+        self.implicit = False
 
         self.name = name
         self.address = name
 
         if port:
-            self.set_variable('ansible_port', int(port))
+            self.set_variable('ansible_port', int(port), cache_view=False)
 
         if gen_uuid:
             self._uuid = get_unique_id()
-        self.implicit = False
+
+        self._serialized_view = self.serialize()
 
     def get_name(self):
         return self.name
@@ -111,6 +115,7 @@ class Host:
             for group in additions:
                 if group not in self.groups:
                     self.groups.append(group)
+        self._serialized_view = self.serialize()
 
     def add_group(self, group):
 
@@ -122,6 +127,7 @@ class Host:
         # actually add group
         if group not in self.groups:
             self.groups.append(group)
+            self._serialized_view = self.serialize()
 
     def remove_group(self, group):
 
@@ -136,12 +142,15 @@ class Host:
                             break
                     else:
                         self.remove_group(oldg)
+            self._serialized_view = self.serialize()
 
-    def set_variable(self, key, value):
+    def set_variable(self, key, value, cache_view=True):
         if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
             self.vars[key] = combine_vars(self.vars[key], value)
         else:
             self.vars[key] = value
+        if cache_view:
+            self._serialized_view = self.serialize()
 
     def get_groups(self):
         return self.groups

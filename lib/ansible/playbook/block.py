@@ -38,14 +38,14 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
     _always = FieldAttribute(isa='list', default=list, inherit=False)
 
     # other fields
-    _delegate_to = FieldAttribute(isa='string')
+    _delegate_to = FieldAttribute(isa='string', always_post_validate=True)
     _delegate_facts = FieldAttribute(isa='bool')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
     # _otherwise = FieldAttribute(isa='list')
 
-    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
+    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False, generate_id=True):
         self._play = play
         self._role = role
         self._parent = None
@@ -61,7 +61,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         elif parent_block:
             self._parent = parent_block
 
-        super(Block, self).__init__()
+        super(Block, self).__init__(generate_id=generate_id)
 
     def __repr__(self):
         return "BLOCK(uuid=%s)(id=%s)(parent=%s)" % (self._uuid, id(self), self._parent)
@@ -223,7 +223,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         new_me.validate()
         return new_me
 
-    def serialize(self):
+    def serialize(self, include_parent=True):
         '''
         Override of the default serialize method, since when we're serializing
         a task we don't want to include the attribute list of tasks.
@@ -239,7 +239,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
         if self._role is not None:
             data['role'] = self._role.serialize()
-        if self._parent is not None:
+        if self._parent is not None and include_parent:
             data['parent'] = self._parent.copy(exclude_tasks=True).serialize()
             data['parent_type'] = self._parent.__class__.__name__
 
@@ -361,6 +361,16 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             pass
 
         return value
+
+    def compile(self):
+        squashed_tasks = []
+        for item in self.block:
+            if isinstance(item, Block):
+                item.compile()
+                squashed_tasks.append(item)
+            else:
+                squashed_tasks.append(item.squash())
+        self.block = squashed_tasks
 
     def filter_tagged_tasks(self, all_vars):
         '''

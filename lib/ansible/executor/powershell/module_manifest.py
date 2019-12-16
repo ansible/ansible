@@ -23,7 +23,7 @@ except ImportError:
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.plugins.loader import ps_module_utils_loader
+from ansible.plugins.new_loader import ps_module_utils_loader
 
 
 class PSModuleDepFinder(object):

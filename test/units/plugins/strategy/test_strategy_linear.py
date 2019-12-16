@@ -82,96 +82,101 @@ class TestStrategyLinear(unittest.TestCase):
             passwords=None,
             forks=5,
         )
-        tqm._initialize_processes(3)
-        strategy = StrategyModule(tqm)
-        strategy._hosts_cache = [h.name for h in hosts]
-        strategy._hosts_cache_all = [h.name for h in hosts]
 
-        # implicit meta: flush_handlers
-        hosts_left = strategy.get_hosts_left(itr)
-        hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
-        host1_task = hosts_tasks[0][1]
-        host2_task = hosts_tasks[1][1]
-        self.assertIsNotNone(host1_task)
-        self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'meta')
+        try:
+            tqm._initialize_processes(3)
+            strategy = StrategyModule(tqm)
+            strategy._hosts_cache = [h.name for h in hosts]
+            strategy._hosts_cache_all = [h.name for h in hosts]
 
-        # debug: task1, debug: task1
-        hosts_left = strategy.get_hosts_left(itr)
-        hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
-        host1_task = hosts_tasks[0][1]
-        host2_task = hosts_tasks[1][1]
-        self.assertIsNotNone(host1_task)
-        self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'debug')
-        self.assertEqual(host2_task.action, 'debug')
-        self.assertEqual(host1_task.name, 'task1')
-        self.assertEqual(host2_task.name, 'task1')
+            # implicit meta: flush_handlers
+            hosts_left = strategy.get_hosts_left(itr)
+            hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
+            host1_task = hosts_tasks[0][1]
+            host2_task = hosts_tasks[1][1]
+            self.assertIsNotNone(host1_task)
+            self.assertIsNotNone(host2_task)
+            self.assertEqual(host1_task.action, 'meta')
+            self.assertEqual(host2_task.action, 'meta')
 
-        # mark the second host failed
-        itr.mark_host_failed(hosts[1])
+            # debug: task1, debug: task1
+            hosts_left = strategy.get_hosts_left(itr)
+            hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
+            host1_task = hosts_tasks[0][1]
+            host2_task = hosts_tasks[1][1]
+            self.assertIsNotNone(host1_task)
+            self.assertIsNotNone(host2_task)
+            self.assertEqual(host1_task.action, 'debug')
+            self.assertEqual(host2_task.action, 'debug')
+            self.assertEqual(host1_task.name, 'task1')
+            self.assertEqual(host2_task.name, 'task1')
 
-        # debug: task2, meta: noop
-        hosts_left = strategy.get_hosts_left(itr)
-        hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
-        host1_task = hosts_tasks[0][1]
-        host2_task = hosts_tasks[1][1]
-        self.assertIsNotNone(host1_task)
-        self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'debug')
-        self.assertEqual(host2_task.action, 'meta')
-        self.assertEqual(host1_task.name, 'task2')
-        self.assertEqual(host2_task.name, '')
+            # mark the second host failed
+            itr.mark_host_failed(hosts[1])
 
-        # meta: noop, debug: rescue1
-        hosts_left = strategy.get_hosts_left(itr)
-        hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
-        host1_task = hosts_tasks[0][1]
-        host2_task = hosts_tasks[1][1]
-        self.assertIsNotNone(host1_task)
-        self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'debug')
-        self.assertEqual(host1_task.name, '')
-        self.assertEqual(host2_task.name, 'rescue1')
+            # debug: task2, meta: noop
+            hosts_left = strategy.get_hosts_left(itr)
+            hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
+            host1_task = hosts_tasks[0][1]
+            host2_task = hosts_tasks[1][1]
+            self.assertIsNotNone(host1_task)
+            self.assertIsNotNone(host2_task)
+            self.assertEqual(host1_task.action, 'debug')
+            self.assertEqual(host2_task.action, 'meta')
+            self.assertEqual(host1_task.name, 'task2')
+            self.assertEqual(host2_task.name, '')
 
-        # meta: noop, debug: rescue2
-        hosts_left = strategy.get_hosts_left(itr)
-        hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
-        host1_task = hosts_tasks[0][1]
-        host2_task = hosts_tasks[1][1]
-        self.assertIsNotNone(host1_task)
-        self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'debug')
-        self.assertEqual(host1_task.name, '')
-        self.assertEqual(host2_task.name, 'rescue2')
+            # meta: noop, debug: rescue1
+            hosts_left = strategy.get_hosts_left(itr)
+            hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
+            host1_task = hosts_tasks[0][1]
+            host2_task = hosts_tasks[1][1]
+            self.assertIsNotNone(host1_task)
+            self.assertIsNotNone(host2_task)
+            self.assertEqual(host1_task.action, 'meta')
+            self.assertEqual(host2_task.action, 'debug')
+            self.assertEqual(host1_task.name, '')
+            self.assertEqual(host2_task.name, 'rescue1')
 
-        # implicit meta: flush_handlers
-        hosts_left = strategy.get_hosts_left(itr)
-        hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
-        host1_task = hosts_tasks[0][1]
-        host2_task = hosts_tasks[1][1]
-        self.assertIsNotNone(host1_task)
-        self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'meta')
+            # meta: noop, debug: rescue2
+            hosts_left = strategy.get_hosts_left(itr)
+            hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
+            host1_task = hosts_tasks[0][1]
+            host2_task = hosts_tasks[1][1]
+            self.assertIsNotNone(host1_task)
+            self.assertIsNotNone(host2_task)
+            self.assertEqual(host1_task.action, 'meta')
+            self.assertEqual(host2_task.action, 'debug')
+            self.assertEqual(host1_task.name, '')
+            self.assertEqual(host2_task.name, 'rescue2')
 
-        # implicit meta: flush_handlers
-        hosts_left = strategy.get_hosts_left(itr)
-        hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
-        host1_task = hosts_tasks[0][1]
-        host2_task = hosts_tasks[1][1]
-        self.assertIsNotNone(host1_task)
-        self.assertIsNotNone(host2_task)
-        self.assertEqual(host1_task.action, 'meta')
-        self.assertEqual(host2_task.action, 'meta')
+            # implicit meta: flush_handlers
+            hosts_left = strategy.get_hosts_left(itr)
+            hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
+            host1_task = hosts_tasks[0][1]
+            host2_task = hosts_tasks[1][1]
+            self.assertIsNotNone(host1_task)
+            self.assertIsNotNone(host2_task)
+            self.assertEqual(host1_task.action, 'meta')
+            self.assertEqual(host2_task.action, 'meta')
 
-        # end of iteration
-        hosts_left = strategy.get_hosts_left(itr)
-        hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
-        host1_task = hosts_tasks[0][1]
-        host2_task = hosts_tasks[1][1]
-        self.assertIsNone(host1_task)
-        self.assertIsNone(host2_task)
+            # implicit meta: flush_handlers
+            hosts_left = strategy.get_hosts_left(itr)
+            hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
+            host1_task = hosts_tasks[0][1]
+            host2_task = hosts_tasks[1][1]
+            self.assertIsNotNone(host1_task)
+            self.assertIsNotNone(host2_task)
+            self.assertEqual(host1_task.action, 'meta')
+            self.assertEqual(host2_task.action, 'meta')
+
+            # end of iteration
+            hosts_left = strategy.get_hosts_left(itr)
+            hosts_tasks = strategy._get_next_task_lockstep(hosts_left, itr)
+            host1_task = hosts_tasks[0][1]
+            host2_task = hosts_tasks[1][1]
+            self.assertIsNone(host1_task)
+            self.assertIsNone(host2_task)
+        finally:
+            tqm.cleanup()
+            tqm.terminate()

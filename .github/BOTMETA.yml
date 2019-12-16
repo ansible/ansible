@@ -885,7 +885,7 @@ files:
     support: community
   $plugins/__init__.py:
     support: core
-  $plugins/loader.py:
+  $plugins/new_loader.py:
     support: core
 
 ###############################
