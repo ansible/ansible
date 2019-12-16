@@ -719,9 +719,6 @@ def main():
 
             changed = True
     elif state == 'mounted':
-        if not os.path.exists(args['src']):
-            module.fail_json(msg="Unable to mount %s as it does not exist" % args['src'])
-
         if not os.path.exists(name) and not module.check_mode:
             try:
                 os.makedirs(name)
