@@ -1,0 +1,2 @@
+minor_changes:
+  - add new parameter type, ``str_strict``, that will warn or fail when a non-string value is given for a parameter of this type
