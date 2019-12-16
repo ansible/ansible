@@ -329,7 +329,7 @@ class Connection(NetworkConnectionBase):
             self._manager._timeout = self.get_option('persistent_command_timeout')
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(to_native(exc))
-        except ImportError as exc:
+        except ImportError:
             raise AnsibleError("connection=netconf is not supported on {0}".format(self._network_os))
 
         if not self._manager.connected:

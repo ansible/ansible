@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text
 from ansible.plugins.netconf import NetconfBase
 
 

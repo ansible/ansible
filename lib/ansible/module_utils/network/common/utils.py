@@ -35,8 +35,6 @@ import socket
 import json
 
 from itertools import chain
-from socket import inet_aton
-from json import dumps
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Mapping
@@ -45,7 +43,9 @@ from ansible.module_utils import basic
 from ansible.module_utils.parsing.convert_bool import boolean
 
 # Backwards compatibility for 3rd party modules
-from ansible.module_utils.common.network import (
+# TODO(pabelanger): With move to ansible.netcommon, we should clean this code
+# up and have modules import directly themself.
+from ansible.module_utils.common.network import (  # noqa: F401
     to_bits, is_netmask, is_masklen, to_netmask, to_masklen, to_subnet, to_ipv6_network, VALID_MASKS
 )
 

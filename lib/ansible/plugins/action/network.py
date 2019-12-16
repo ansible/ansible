@@ -21,7 +21,6 @@ __metaclass__ = type
 
 import os
 import time
-import glob
 import re
 
 from ansible.errors import AnsibleError
