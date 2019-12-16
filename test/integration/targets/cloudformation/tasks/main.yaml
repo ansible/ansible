@@ -98,8 +98,8 @@
     - name: "DisplayName parameter value"
       assert:
         that:
-          - "mystack.cloudformation[stack_name].stack_parameters.DisplayName == '{{ topic_name }}'"
-        fail_msg: "DisplayName in stack_parameters does not match expeced value 'CloudformationInfoIntegrationTest'"
+          - "mystack.cloudformation[stack_name].stack_parameters.DisplayName == 'CloudformationInfoIntegrationTestChanged'"
+        fail_msg: "DisplayName in stack_parameters does not match expeced value 'CloudformationInfoIntegrationTestChanged'"
 
     - name: "stack_description description value"
       assert:
