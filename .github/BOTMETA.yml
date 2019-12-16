@@ -1096,12 +1096,10 @@ files:
     maintainers: rdvencioneck $team_extreme
   $module_utils/network/f5:
     maintainers: caphrim007 wojtek0806
-    migrated_to: f5networks.f5_modules
   $module_utils/f5_utils.py:
     maintainers: caphrim007 wojtek0806
     labels:
       - f5
-    migrated_to: f5networks.f5_modules
   $module_utils/network/fortios:
     maintainers: bjolivot
   $module_utils/network/fortimanager:
@@ -1509,6 +1507,9 @@ files:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
   $plugins/doc_fragments/oracle*: *oracle
+  $plugins/doc_fragments/f5.py:
+    maintainers: caphrim007 wojtek0806
+    migrated_to: f5networks.f5modules
 ###############################
 # plugins/filter
   $plugins/filter/:
@@ -1753,6 +1754,9 @@ files:
   $plugins/terminal/vyos.py:
     support: network
     maintainers: $team_networking
+  $plugins/terminal/bigip.py:
+    maintainers: caphrim007 wojtek0806
+    migrated_to: f5networks.f5_modules
 ###############################
 # plugins/test
   $plugins/test:
