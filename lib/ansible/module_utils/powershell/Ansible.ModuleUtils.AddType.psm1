@@ -48,6 +48,8 @@ Function Add-CSharpType {
         * CORECLR - Added when running on PowerShell Core.
         * WINDOWS - Added when running on Windows.
         * UNIX - Added when running on non-Windows.
+        * X86 - Added when running on a 32-bit process (Ansible 2.10+)
+        * AMD64 - Added when running on a 64-bit process (Ansible 2.10+)
 
     * Ignore compiler warnings inline with the following comment inline
 
@@ -81,6 +83,13 @@ Function Add-CSharpType {
     # the Is* variables are defined on PSCore, if absent we assume an
     # older version of PowerShell under .NET Framework and Windows
     $defined_symbols = [System.Collections.ArrayList]$CompileSymbols
+
+    if ([System.IntPtr]::Size -eq 4) {
+        $defined_symbols.Add('X86')
+    } else {
+        $defined_symbols.Add('AMD64')
+    }
+
     $is_coreclr = Get-Variable -Name IsCoreCLR -ErrorAction SilentlyContinue
     if ($null -ne $is_coreclr) {
         if ($is_coreclr.Value) {
