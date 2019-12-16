@@ -804,6 +804,34 @@
       that:
           - "zabbix_host1 is not changed"
 
+- name: "test: change host inventory mode to disabled"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    inventory_mode: disabled
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
+- name: "test: change host inventory mode to manual"
+  zabbix_host:
+    server_url: "{{ zabbix_server_url }}"
+    login_user: "{{ zabbix_login_user }}"
+    login_password: "{{ zabbix_login_password }}"
+    host_name: ExampleHost
+    inventory_mode: manual
+  register: zabbix_host1
+
+- name: expect to succeed and that things have changed
+  assert:
+      that:
+          - "zabbix_host1 is changed"
+
 - name: "test: attempt to delete host created earlier"
   zabbix_host:
     server_url: "{{ zabbix_server_url }}"
