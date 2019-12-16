@@ -1,0 +1,145 @@
+---
+- debug: "msg=\"START nxos_zone_zoneset sanity test with connection={{ ansible_connection }} \""
+- debug: "msg=\"Using vsans {{ vsan1 }}, {{ vsan2 }} for running this sanity test, please make sure these are not used in the setup, these will be deleted after the tests\""
+- always:
+    - name: "Remove vsan config"
+      nxos_vsan:
+        vsan:
+          - id: "{{ vsan1 | int }}"
+            remove: true
+          - id: "{{ vsan2 | int }}"
+            remove: true
+  block:
+    - ignore_errors: true
+      name: "Setup - Remove vsan if configured"
+      nxos_vsan:
+        vsan:
+          - id: "{{ vsan1 | int }}"
+            remove: true
+          - id: "{{ vsan2 | int }}"
+            remove: true
+    - name: "Configure vsan"
+      nxos_vsan:
+        vsan:
+          - id: "{{ vsan1 | int }}"
+          - id: "{{ vsan2 | int }}"
+    - name: "Configure zone and zoneset"
+      nxos_zone_zoneset: &zoneset
+        zone_zoneset_details:
+          - mode: enhanced
+            vsan: "{{ vsan1 | int }}"
+            zone:
+              - members:
+                  - pwwn: "11:11:11:11:11:11:11:11"
+                  - device_alias: test123
+                  - pwwn: "61:61:62:62:12:12:12:12"
+                    remove: true
+                name: zoneA
+              - members:
+                  - pwwn: "10:11:11:11:11:11:11:11"
+                  - pwwn: "62:62:62:62:21:21:21:21"
+                name: zoneB
+              - name: zoneC
+                remove: true
+            zoneset:
+              - action: activate
+                members:
+                  - name: zoneA
+                  - name: zoneB
+                  - name: zoneC
+                    remove: true
+                name: zsetname1
+              - action: deactivate
+                name: zsetTestExtra
+                remove: true
+          - mode: basic
+            smart_zoning: true
+            vsan: "{{ vsan2 | int }}"
+            zone:
+              - members:
+                  - devtype: both
+                    pwwn: "11:11:11:11:11:11:11:11"
+                  - pwwn: "62:62:62:62:12:12:12:12"
+                  - devtype: both
+                    pwwn: "92:62:62:62:12:12:1a:1a"
+                    remove: true
+                name: zone21A
+              - members:
+                  - pwwn: "10:11:11:11:11:11:11:11"
+                  - pwwn: "62:62:62:62:21:21:21:21"
+                  - device_alias: somedummyname
+                  - device_alias: anydummyname
+                    remove: true
+                name: zone21B
+            zoneset:
+              - action: activate
+                members:
+                  - name: zone21A
+                  - name: zone21B
+                name: zsetname21
+      register: result
+    - assert:
+        that:
+          - result.changed == true
+    - assert:
+        that: 
+          - result.commands == ["terminal dont-ask", "zone mode enhanced vsan 922", "zone name zoneA vsan 922", "member pwwn 11:11:11:11:11:11:11:11", "member device-alias test123", "zone name zoneB vsan 922", "member pwwn 10:11:11:11:11:11:11:11", "member pwwn 62:62:62:62:21:21:21:21", "zoneset name zsetname1 vsan 922", "member zoneA", "member zoneB", "zoneset activate name zsetname1 vsan 922", "zone commit vsan 922", "zone smart-zoning enable vsan 923", "zone name zone21A vsan 923", "member pwwn 11:11:11:11:11:11:11:11 both", "member pwwn 62:62:62:62:12:12:12:12", "zone name zone21B vsan 923", "member pwwn 10:11:11:11:11:11:11:11", "member pwwn 62:62:62:62:21:21:21:21", "member device-alias somedummyname", "zoneset name zsetname21 vsan 923", "member zone21A", "member zone21B", "zoneset activate name zsetname21 vsan 923", "no terminal dont-ask"]
+    
+    - name: "Idempotence Check"
+      nxos_zone_zoneset: *zoneset
+      register: result
+    - assert:
+        that: 
+          - result.commands == []
+    - assert:
+        that:
+          - result.changed == false
+
+    - name: "Delete zone and zoneset that was configured"
+      nxos_zone_zoneset: &zonesetdelete
+        zone_zoneset_details:
+          - mode: enhanced
+            vsan: "{{ vsan1 | int }}"
+            zone:
+              - name: zoneA
+                remove: true
+              - name: zoneB
+                remove: true
+              - name: zoneC
+                remove: true
+            zoneset:
+              - name: zsetname1
+                remove: true
+              - action: deactivate
+                name: zsetTestExtra
+                remove: true
+          - mode: basic
+            smart_zoning: true
+            vsan: "{{ vsan2 | int }}"
+            zone:
+              - name: zone21A
+                remove: true
+              - name: zone21B
+                remove: true
+            zoneset:
+              - name: zsetname21
+                remove: true
+      register: result
+
+    - assert:
+        that:
+          - result.changed == true
+    - assert:
+        that: 
+          - result.commands == ["terminal dont-ask", "no zone name zoneA vsan 922", "no zone name zoneB vsan 922", "no zoneset name zsetname1 vsan 922", "zone commit vsan 922", "no zone name zone21A vsan 923", "no zone name zone21B vsan 923", "no zoneset name zsetname21 vsan 923", "no terminal dont-ask"]
+
+    - name: "Idempotence Check for zone/zoneset removal"
+      nxos_zone_zoneset: *zonesetdelete
+      register: result
+
+    - assert:
+        that: 
+          - result.commands == []
+    - assert:
+        that:
+          - result.changed == false

@@ -1,0 +1,16 @@
+#---
+# Check platform type and skip if not MDS
+---
+- name: Check platform type and skip if not MDS
+  nxos_command:
+    commands: show version | grep MDS
+  register: result
+ 
+- set_fact: skip_test=False
+- set_fact: skip_test=True
+  when: result.stdout[0] is not search('MDS')
+ 
+- include: cli.yaml
+  tags: 'cli'
+  when: not skip_test
+ 
