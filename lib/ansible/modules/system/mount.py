@@ -156,13 +156,14 @@ EXAMPLES = r'''
 '''
 
 
+import errno
 import os
 import platform
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ismount import ismount
 from ansible.module_utils.six import iteritems
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_bytes, to_native
 
 
 def write_fstab(module, lines, path):
@@ -198,8 +199,15 @@ def _escape_fstab(v):
 
 def set_mount(module, args):
     """Set/change a mount point location in fstab."""
+    name, backup_lines, changed = _set_mount_save_old(module, args)
+    return name, changed
+
+
+def _set_mount_save_old(module, args):
+    """Set/change a mount point location in fstab. Save the old fstab contents."""
 
     to_write = []
+    old_lines = []
     exists = False
     changed = False
     escaped_args = dict([(k, _escape_fstab(v)) for k, v in iteritems(args)])
@@ -210,6 +218,8 @@ def set_mount(module, args):
             '%(src)s - %(name)s %(fstype)s %(passno)s %(boot)s %(opts)s\n')
 
     for line in open(args['fstab'], 'r').readlines():
+        old_lines.append(line)
+
         if not line.strip():
             to_write.append(line)
 
@@ -292,7 +302,7 @@ def set_mount(module, args):
     if changed and not module.check_mode:
         write_fstab(module, to_write, args['fstab'])
 
-    return (args['name'], changed)
+    return (args['name'], old_lines, changed)
 
 
 def unset_mount(module, args):
@@ -719,14 +729,34 @@ def main():
 
             changed = True
     elif state == 'mounted':
+        dirs_created = []
         if not os.path.exists(name) and not module.check_mode:
             try:
-                os.makedirs(name)
+                # Something like mkdir -p but with the possibility to undo.
+                # Based on some copy-paste from the "file" module.
+                curpath = ''
+                for dirname in name.strip('/').split('/'):
+                    curpath = '/'.join([curpath, dirname])
+                    # Remove leading slash if we're creating a relative path
+                    if not os.path.isabs(name):
+                        curpath = curpath.lstrip('/')
+
+                    b_curpath = to_bytes(curpath, errors='surrogate_or_strict')
+                    if not os.path.exists(b_curpath):
+                        try:
+                            os.mkdir(b_curpath)
+                            dirs_created.append(b_curpath)
+                        except OSError as ex:
+                            # Possibly something else created the dir since the os.path.exists
+                            # check above. As long as it's a dir, we don't need to error out.
+                            if not (ex.errno == errno.EEXIST and os.path.isdir(b_curpath)):
+                                raise
+
             except (OSError, IOError) as e:
                 module.fail_json(
                     msg="Error making dir %s: %s" % (name, to_native(e)))
 
-        name, changed = set_mount(module, args)
+        name, backup_lines, changed = _set_mount_save_old(module, args)
         res = 0
 
         if (
@@ -743,6 +773,18 @@ def main():
                 res, msg = mount(module, args)
 
         if res:
+            # Not restoring fstab after a failed mount was reported as bug #59183
+            try:
+                write_fstab(module, backup_lines, args['fstab'])
+            except Exception:
+                pass
+
+            try:
+                for dirname in dirs_created[::-1]:
+                    os.rmdir(dirname)
+            except Exception:
+                pass
+
             module.fail_json(msg="Error mounting %s: %s" % (name, msg))
     elif state == 'present':
         name, changed = set_mount(module, args)
