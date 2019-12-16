@@ -252,13 +252,13 @@ EXAMPLES = '''
         useip: 1
         ip: 10.xx.xx.xx
         dns: ""
-        port: 10050
+        port: "10050"
       - type: 4
         main: 1
         useip: 1
         ip: 10.xx.xx.xx
         dns: ""
-        port: 12345
+        port: "12345"
     proxy: a.zabbix.proxy
 - name: Update an existing host's TLS settings
   local_action:
@@ -780,6 +780,11 @@ def main():
                 interface['ip'] = ''
             if 'main' not in interface:
                 interface['main'] = 0
+            if 'port' in interface and not isinstance(interface['port'], str):
+                try:
+                    interface['port'] = str(interface['port'])
+                except ValueError:
+                    module.fail_json(msg="port should be convertable to string on interface '%s'." % interface)
             if 'port' not in interface:
                 if interface['type'] == 1:
                     interface['port'] = "10050"
@@ -840,7 +845,7 @@ def main():
                             interface.pop(key, None)
 
                     for index in interface.keys():
-                        if index in ['useip', 'main', 'type', 'port']:
+                        if index in ['useip', 'main', 'type']:
                             interface[index] = int(interface[index])
 
                     if interface not in interfaces:
