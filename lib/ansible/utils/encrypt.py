@@ -118,6 +118,8 @@ class CryptHash(BaseHash):
 
 
 class PasslibHash(BaseHash):
+    BaseHash.algorithms['bcrypt'] = BaseHash.algo(crypt_id='2b', salt_size=22, implicit_rounds=None)
+
     def __init__(self, algorithm):
         super(PasslibHash, self).__init__(algorithm)
 
@@ -125,7 +127,6 @@ class PasslibHash(BaseHash):
             raise AnsibleError("passlib must be installed to hash with '%s'" % algorithm)
 
         try:
-            self.algorithms['bcrypt'].crypt_id = '2b'
             self.crypt_algo = getattr(passlib.hash, algorithm)
         except Exception:
             raise AnsibleError("passlib does not support '%s' algorithm" % algorithm)
