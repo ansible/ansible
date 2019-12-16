@@ -85,9 +85,9 @@ Function Add-CSharpType {
     $defined_symbols = [System.Collections.ArrayList]$CompileSymbols
 
     if ([System.IntPtr]::Size -eq 4) {
-        $defined_symbols.Add('X86')
+        $defined_symbols.Add('X86') > $null
     } else {
-        $defined_symbols.Add('AMD64')
+        $defined_symbols.Add('AMD64') > $null
     }
 
     $is_coreclr = Get-Variable -Name IsCoreCLR -ErrorAction SilentlyContinue
