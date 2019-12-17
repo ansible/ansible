@@ -97,10 +97,7 @@ class UptimeRobot:
         self.params = self.check_dict(self.params)
         for k, v in self.params.items():
             if k == 'type':
-                if v == 'dns':
-                    self.params[k] = 2
-                else:
-                    self.params[k] = 1
+                self.params[k] = 2 if v == 'dns' else 1
         self.body = json.dumps(self.params)
         for state, method in self.api_methods.items():
             if state == self.params['status']:
