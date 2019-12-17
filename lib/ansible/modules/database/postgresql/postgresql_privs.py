@@ -749,8 +749,16 @@ class Connection(object):
         executed_queries.append(query)
         self.cursor.execute(query)
         status_after = get_status(objs)
-        status_before.sort()
-        status_after.sort()
+
+        def nonesorted(e):
+            # For python 3+ that can fail trying
+            # to compare NoneType elements by sort method.
+            if e is None:
+                return ''
+            return e
+
+        status_before.sort(key=nonesorted)
+        status_after.sort(key=nonesorted)
         return status_before != status_after
 
 
