@@ -65,6 +65,15 @@ options:
         If this is not specified, the default `terraform.tfstate` will be used.
       - This option is ignored when plan is specified.
     required: false
+  state_out_file:
+    description:
+      - The path to write updated state file.This option presevers working directory
+        and allows reuse.
+        If this is not specified, the default `terraform.tfstate` will be used.
+      - This option is ignored when 'state' has the 'planned' value.
+      - When 'state' has the 'absent' value mention the path in state_file instead
+        to destroy this state's deployment.
+    required: false
   variables_file:
     description:
       - The path to a variables file for Terraform to fill into the TF
@@ -280,6 +289,7 @@ def main():
             variables_file=dict(type='path'),
             plan_file=dict(type='path'),
             state_file=dict(type='path'),
+            state_out_file=dict(type='path'),
             targets=dict(type='list', default=[]),
             lock=dict(type='bool', default=True),
             lock_timeout=dict(type='int',),
@@ -299,6 +309,7 @@ def main():
     variables_file = module.params.get('variables_file')
     plan_file = module.params.get('plan_file')
     state_file = module.params.get('state_file')
+    state_out_file = module.params.get('state_out_file')
     force_init = module.params.get('force_init')
     backend_config = module.params.get('backend_config')
 
@@ -319,9 +330,12 @@ def main():
 
     if state == 'present':
         command.extend(APPLY_ARGS)
+        if state_out_file:
+          command.extend(['-state-out', state_out_file])
     elif state == 'absent':
         command.extend(DESTROY_ARGS)
 
+        
     variables_args = []
     for k, v in variables.items():
         variables_args.extend([
@@ -349,6 +363,7 @@ def main():
 
     if state == 'absent':
         command.extend(variables_args)
+        command.extend(_state_args(state_file))
     elif state == 'present' and plan_file:
         if os.path.exists(project_path + "/" + plan_file):
             command.append(plan_file)
@@ -371,7 +386,7 @@ def main():
                 command=' '.join(command)
             )
 
-    outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file)
+    outputs_command = [command[0], 'output', '-no-color', '-json'] + (['-state', state_out_file] if state == 'present' and state_out_file else _state_args(state_file))
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
     if rc == 1:
         module.warn("Could not get Terraform outputs. This usually means none have been defined.\nstdout: {0}\nstderr: {1}".format(outputs_text, outputs_err))
