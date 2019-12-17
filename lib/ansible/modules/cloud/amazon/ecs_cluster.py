@@ -35,6 +35,18 @@ options:
             - The cluster name.
         required: true
         type: str
+    tags:
+        description:
+            - The cluster name.
+        required: false 
+        type: dict
+    purge_tags:
+        description:
+          - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
+            tags will not be modified.
+        required: false
+        default: yes
+        type: bool
     delay:
         description:
             - Number of seconds to wait.
@@ -71,6 +83,10 @@ EXAMPLES = '''
     state: has_instances
     delay: 10
     repeat: 10
+    tags:
+      Env: dev
+      Channel: lsl
+      EcsClusterId: general
   register: task_output
 
 '''
@@ -115,8 +131,14 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
+try:
+    from botocore.exceptions import BotoCoreError, ClientError
+except ImportError:
+    pass  # caught by AnsibleAWSModule
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info, \
+    boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
 
 
 class EcsClusterManager:
@@ -137,9 +159,7 @@ class EcsClusterManager:
         return None
 
     def describe_cluster(self, cluster_name):
-        response = self.ecs.describe_clusters(clusters=[
-            cluster_name
-        ])
+        response = self.ecs.describe_clusters(clusters=[cluster_name],include=['TAGS'])
         if len(response['failures']) > 0:
             c = self.find_in_array(response['failures'], cluster_name, 'arn')
             if c and c['reason'] == 'MISSING':
@@ -150,6 +170,27 @@ class EcsClusterManager:
             if c:
                 return c
         raise Exception("Unknown problem describing cluster %s." % cluster_name)
+
+    def update_tags(self, module, cluster):
+
+        current_tags = boto3_tag_list_to_ansible_dict(cluster['tags'])
+        tags_need_modify, tags_to_delete = compare_aws_tags(current_tags, module.params['tags'],
+                                                            module.params['purge_tags'])
+        if not module.check_mode:
+            if tags_to_delete:
+                try:
+                    self.ecs.untag_resource(resourceArn=cluster['clusterArn'], tagKeys=tags_to_delete)
+                except Exception as e:
+                    module.fail_json(msg=str(e) + " Unable to delete tags {0}".format(tags_to_delete))
+
+            # Add/update tags
+            if tags_need_modify:
+                try:
+                    self.ecs.tag_resource(resourceArn=cluster['clusterArn'], tags=ansible_dict_to_boto3_tag_list(tags_need_modify, tag_name_key_name='key', tag_value_key_name='value'))
+                except Exception as e:
+                    module.fail_json(msg=str(e) + " Unable to add tags {0}".format(tags_need_modify))
+
+        return bool(tags_need_modify or tags_to_delete)
 
     def create_cluster(self, clusterName='default'):
         response = self.ecs.create_cluster(clusterName=clusterName)
@@ -166,7 +207,9 @@ def main():
         state=dict(required=True, choices=['present', 'absent', 'has_instances']),
         name=dict(required=True, type='str'),
         delay=dict(required=False, type='int', default=10),
-        repeat=dict(required=False, type='int', default=10)
+        repeat=dict(required=False, type='int', default=10),
+        tags=dict(required=False, type='dict'),
+        purge_tags=dict(default=True, required=False, type='bool')
     ))
     required_together = [['state', 'name']]
 
@@ -190,6 +233,9 @@ def main():
                 # doesn't exist. create it.
                 results['cluster'] = cluster_mgr.create_cluster(module.params['name'])
             results['changed'] = True
+
+        if module.params['tags'] is not None and results['cluster'] is not None:
+            results['changed'] |= cluster_mgr.update_tags(module, results['cluster'])
 
     # delete the cluster
     elif module.params['state'] == 'absent':
