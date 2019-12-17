@@ -55,11 +55,12 @@
       that:
         - "result.changed == false"
                     
-  - name: "teardown"
-    ios_config:
-      lines:
-        - "no macro name {{ macro_name }}"
-        - 'do show clock'
-      match: none
+  always:
+    - name: "teardown"
+      ios_config:
+        lines:
+          - "no macro name {{ macro_name }}"
+          - 'do show clock'
+        match: none
 
 - debug: msg="END cli/cli_macro.yaml on connection={{ ansible_connection }}"
