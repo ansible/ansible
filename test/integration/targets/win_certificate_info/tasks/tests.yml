@@ -1,0 +1,90 @@
+---
+
+- name: get stats on a store that doesn't exist
+  win_certificate_info:
+    store_name: teststore
+  register: test_store
+
+- name: ensure exists is false
+  assert:
+    that:
+      - test_store.exists == false
+
+- name: get stats on the root certificate store
+  win_certificate_info:
+    store_name: Root
+  register: root_store
+
+- name: at least one certificate is returned
+  assert:
+    that:
+      - "root_store.exists"
+      - "root_store.certificates | length > 0"
+
+- name: get stats on a certificate that doesn't exist
+  win_certificate_info:
+    thumbprint: ABC
+  register: actual
+
+- name: ensure exists is false
+  assert:
+    that: actual.exists == false
+
+- name: get stats on root certificate
+  win_certificate_info:
+    thumbprint: '{{ root_thumbprint }}'
+    store_name: Root
+  register: root_stats
+
+- name: root certificate stats returned are expected values
+  assert:
+    that:
+      - root_stats.exists
+      - root_stats.certificates[0].archived == false
+      - root_stats.certificates[0].dns_names == [ 'root.ansible.com' ]
+      - root_stats.certificates[0].extensions|count == 3
+      - root_stats.certificates[0].has_private_key == false
+      - root_stats.certificates[0].issued_by == 'root.ansible.com'
+      - root_stats.certificates[0].issued_to == 'root.ansible.com'
+      - root_stats.certificates[0].issuer == 'C=US, CN=root.ansible.com'
+      - root_stats.certificates[0].path_length_constraint == 0
+#      - root_stats.certificates[0].public_key == (root_pub.stdout_lines|join())
+      - root_stats.certificates[0].raw == root_raw.stdout_lines|join()
+      - root_stats.certificates[0].serial_number == '00FD6F21D1A0309BFF'
+      - root_stats.certificates[0].signature_algorithm == 'sha256RSA'
+      - root_stats.certificates[0].ski == 'BA7D9382E63A7011E113ABAA16FE08575B936FA8'
+      - root_stats.certificates[0].subject == 'C=US, CN=root.ansible.com'
+      - root_stats.certificates[0].valid_from == 1513327172
+      - root_stats.certificates[0].valid_from_iso8601 == '2017-12-15T08:39:32Z'
+      - root_stats.certificates[0].valid_to == 3660799172
+      - root_stats.certificates[0].valid_to_iso8601 == '2086-01-02T08:39:32Z'
+      - root_stats.certificates[0].version == 3
+
+- name: get stats on subject certificate
+  win_certificate_info:
+    thumbprint: '{{ subj_thumbprint }}'
+  register: subj_stats
+
+- name: subject certificate stats returned are expected values
+  assert:
+    that:
+      - subj_stats.exists
+      - subj_stats.certificates[0].archived == false
+      - subj_stats.certificates[0].dns_names == [ 'subject.ansible.com' ]
+      - subj_stats.certificates[0].extensions|count == 0
+      - subj_stats.certificates[0].has_private_key == false
+      - subj_stats.certificates[0].issued_by == 'root.ansible.com'
+      - subj_stats.certificates[0].issued_to == 'subject.ansible.com'
+      - subj_stats.certificates[0].issuer == 'C=US, CN=root.ansible.com'
+      - subj_stats.certificates[0].path_length_constraint is undefined
+#      - subj_stats.certificates[0].public_key == subj_pub.stdout_lines|join()
+      - subj_stats.certificates[0].raw == subj_raw.stdout_lines|join()
+      - subj_stats.certificates[0].serial_number == '00BF32D3816B5503A7'
+      - subj_stats.certificates[0].signature_algorithm == 'sha256RSA'
+      - subj_stats.certificates[0].ski is undefined
+      - subj_stats.certificates[0].subject == 'C=US, CN=subject.ansible.com'
+      - subj_stats.certificates[0].valid_from == 1513328190
+      - subj_stats.certificates[0].valid_from_iso8601 == '2017-12-15T08:56:30Z'
+      - subj_stats.certificates[0].valid_to == 3660800190
+      - subj_stats.certificates[0].valid_to_iso8601 == '2086-01-02T08:56:30Z'
+      - subj_stats.certificates[0].version == 1
