@@ -221,7 +221,6 @@ class OnyxUsernameModule(BaseOnyxModule):
                 self._commands.append("username {0} full-name {1}".format(username, full_name))
 
             disabled = required_config.get('disabled')
-            print(current_user.get('disabled'), disabled)
             if disabled is not None and current_user.get('disabled') != disabled:
                 if disabled == 'none':
                     self._commands.append("no username {0} disable".format(username))
