@@ -180,6 +180,15 @@ options:
             - "C(false) - Override the global setting to I(false)."
             - "C(inherit) - Use value which is set globally."
         choices: ['true', 'false', 'inherit']
+    migration_encrypted:
+        description:
+            - "If I(True) encryption is used during live migration of the virtual machine."
+            - "Following options are supported:"
+            - "C(true) - Override the global setting to I(true)."
+            - "C(false) - Override the global setting to I(false)."
+            - "C(inherit) - Use value which is set globally."
+        choices: ['true', 'false', 'inherit']
+        version_added: "2.10"
     migration_policy:
         description:
             - "A migration policy defines the conditions for live migrating
@@ -471,6 +480,9 @@ class ClustersModule(BaseModule):
                 compressed=otypes.InheritableBoolean(
                     self.param('migration_compressed'),
                 ) if self.param('migration_compressed') else None,
+                encrypted=otypes.InheritableBoolean(
+                    self.param('migration_encrypted'),
+                ) if self.param('migration_encrypted') else None,
                 policy=otypes.MigrationPolicy(
                     id=self._get_policy_id()
                 ) if self.param('migration_policy') else None,
@@ -479,6 +491,7 @@ class ClustersModule(BaseModule):
                 self.param('migration_bandwidth_limit') is not None or
                 self.param('migration_auto_converge') is not None or
                 self.param('migration_compressed') is not None or
+                self.param('migration_encrypted') is not None or
                 self.param('migration_policy') is not None
             ) else None,
             error_handling=otypes.ErrorHandling(
@@ -631,6 +644,7 @@ class ClustersModule(BaseModule):
             equal(self.param('migration_bandwidth'), str(entity.migration.bandwidth.assignment_method)) and
             equal(self.param('migration_auto_converge'), str(entity.migration.auto_converge)) and
             equal(self.param('migration_compressed'), str(entity.migration.compressed)) and
+            equal(self.param('migration_encrypted'), str(entity.migration.encrypted)) and
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
             equal(self.param('scheduling_policy'), getattr(self._connection.follow_link(entity.scheduling_policy), 'name', None)) and
@@ -690,6 +704,7 @@ def main():
         migration_bandwidth_limit=dict(default=None, type='int'),
         migration_auto_converge=dict(default=None, choices=['true', 'false', 'inherit']),
         migration_compressed=dict(default=None, choices=['true', 'false', 'inherit']),
+        migration_encrypted=dict(default=None, choices=['true', 'false', 'inherit']),
         migration_policy=dict(
             default=None,
             choices=['legacy', 'minimal_downtime', 'suspend_workload', 'post_copy']
