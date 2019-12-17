@@ -1,0 +1,65 @@
+# Test code for the vmware_object_rename Operations.
+# Copyright: (c) 2019, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_datacenter: true
+
+    - name: Rename datastore dc1
+      vmware_object_rename:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        object_type: Datacenter
+        object_name: "{{ dc1 }}"
+        new_name: "datacenter_0001"
+      register: rename_result
+
+    - debug: var=rename_result
+
+    - name: Check if VM rename status
+      assert:
+        that:
+          - rename_result.changed
+          - rename_result.rename_status.current_name == "datacenter_0001"
+          - rename_result.rename_status.desired_name == "datacenter_0001"
+          - rename_result.rename_status.previous_name == "{{ dc1 }}"
+
+    - name: Rename datastore dc1 (again)
+      vmware_object_rename:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        object_type: Datacenter
+        object_name: "{{ dc1 }}"
+        new_name: "datacenter_0001"
+      register: rename_result
+
+    - debug: var=rename_result
+
+    - name: Check if VM rename status is changed==false
+      assert:
+        that:
+          - rename_result.changed == false
+
+    - name: Revert the renaming
+      vmware_object_rename:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        object_type: Datacenter
+        object_name: "new_datacenter"
+        new_name: "{{ dc1 }}"
+      register: rename_result
+
+    - debug: var=rename_result
+
+    - name: Check if VM rename status
+      assert:
+        that:
+          - rename_result.changed == true
+          - rename_result.rename_status.current_name == "{{ dc1 }}"
