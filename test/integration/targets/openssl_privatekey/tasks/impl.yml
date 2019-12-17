@@ -394,15 +394,17 @@
   - name: Generate privatekey_fmt_2 - auto format (ignore)
     openssl_privatekey:
       path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
       format: auto_ignore
       select_crypto_backend: '{{ select_crypto_backend }}'
-    register: privatekey_fmt_1_step_5
+    register: privatekey_fmt_2_step_5
 
   - name: Generate privatekey_fmt_2 - auto format (no ignore)
     openssl_privatekey:
       path: '{{ output_dir }}/privatekey_fmt_2.pem'
+      type: X448
       format: auto
       select_crypto_backend: '{{ select_crypto_backend }}'
-    register: privatekey_fmt_1_step_6
+    register: privatekey_fmt_2_step_6
 
   when: 'select_crypto_backend == "cryptography" and cryptography_version.stdout is version("2.6", ">=")'

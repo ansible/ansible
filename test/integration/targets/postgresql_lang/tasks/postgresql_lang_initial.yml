@@ -2,14 +2,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Preparation for tests:
-- name: postgresql_lang - install lang plperl
+- name: Install PostgreSQL support packages
   become: yes
-  package:
-    name: "{{ item }}"
+  action: "{{ ansible_facts.pkg_mgr }}"
+  args:
+    name: "{{ postgresql_lang_packages }}"
     state: present
-  with_items:
-  - postgresql-plperl
-  - postgresql-plpython
 
 ###############
 # Do main tests
@@ -185,7 +183,7 @@
 - assert:
     that:
     - result is changed
-    - result.queries == ['CREATE TRUSTED LANGUAGE "plpythonu"', "UPDATE pg_language SET lanpltrusted = 'True' WHERE lanname = 'plpythonu'"]
+    - result.queries == ['CREATE TRUSTED LANGUAGE "plpythonu"', "UPDATE pg_language SET lanpltrusted = true WHERE lanname = 'plpythonu'"]
 
 - name: postgresql_lang - check that lang exists and it's trusted after previous step
   become_user: "{{ pg_user }}"

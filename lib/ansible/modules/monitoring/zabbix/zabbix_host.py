@@ -28,7 +28,7 @@ author:
     - Eike Frost (@eikef)
 requirements:
     - "python >= 2.6"
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
 options:
     host_name:
         description:
@@ -252,13 +252,13 @@ EXAMPLES = '''
         useip: 1
         ip: 10.xx.xx.xx
         dns: ""
-        port: 10050
+        port: "10050"
       - type: 4
         main: 1
         useip: 1
         ip: 10.xx.xx.xx
         dns: ""
-        port: 12345
+        port: "12345"
     proxy: a.zabbix.proxy
 - name: Update an existing host's TLS settings
   local_action:
@@ -287,6 +287,7 @@ except ImportError:
     ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
+from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
@@ -294,6 +295,7 @@ class Host(object):
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
+        self._zbx_api_version = zbx.api_version()[:5]
 
     # exist host
     def is_host_exist(self, host_name):
@@ -533,7 +535,7 @@ class Host(object):
 
         # Check whether the visible_name has changed; Zabbix defaults to the technical hostname if not set.
         if visible_name:
-            if host['name'] != visible_name and host['name'] != host_name:
+            if host['name'] != visible_name:
                 return True
 
         # Only compare description if it is given as a module parameter
@@ -542,11 +544,15 @@ class Host(object):
                 return True
 
         if inventory_mode:
-            if host['inventory']:
-                if int(host['inventory']['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+            if LooseVersion(self._zbx_api_version) <= LooseVersion('4.4.0'):
+                if host['inventory']:
+                    if int(host['inventory']['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+                        return True
+                elif inventory_mode != 'disabled':
                     return True
-            elif inventory_mode != 'disabled':
-                return True
+            else:
+                if int(host['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+                    return True
 
         if inventory_zabbix:
             proposed_inventory = copy.deepcopy(host['inventory'])
@@ -780,6 +786,11 @@ def main():
                 interface['ip'] = ''
             if 'main' not in interface:
                 interface['main'] = 0
+            if 'port' in interface and not isinstance(interface['port'], str):
+                try:
+                    interface['port'] = str(interface['port'])
+                except ValueError:
+                    module.fail_json(msg="port should be convertable to string on interface '%s'." % interface)
             if 'port' not in interface:
                 if interface['type'] == 1:
                     interface['port'] = "10050"
@@ -840,7 +851,7 @@ def main():
                             interface.pop(key, None)
 
                     for index in interface.keys():
-                        if index in ['useip', 'main', 'type', 'port']:
+                        if index in ['useip', 'main', 'type']:
                             interface[index] = int(interface[index])
 
                     if interface not in interfaces:

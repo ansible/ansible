@@ -19,6 +19,7 @@
 # ============================================================
 - set_fact:
     db_file_name="{{tmp_dir}}/{{file}}"
+    wrong_sql_file="{{tmp_dir}}/wrong.sql"
     dump_file1="{{tmp_dir}}/{{file2}}"
     dump_file2="{{tmp_dir}}/{{file3}}"
 
@@ -63,6 +64,7 @@
     ignore_tables:
         - "{{ db_name }}.department"
     login_unix_socket: '{{ mysql_socket }}'
+    force: yes
   register: result
 
 - name: assert successful completion of dump operation
@@ -277,6 +279,44 @@
        - "'47' in result.stdout"
        - "'Joe Smith' in result.stdout"
 
+##########################
+# Test ``force`` parameter
+##########################
+
+- name: create wrong sql file
+  shell: echo 'CREATE TABLE hello (id int); CREATE ELBAT ehlo (int id);' >> '{{ wrong_sql_file }}'
+
+- name: try to import without force parameter, must fail
+  mysql_db:
+    name: '{{ db_name }}'
+    state: import
+    target: '{{ wrong_sql_file }}'
+    login_unix_socket: '{{ mysql_socket }}'
+    force: no
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.failed == true
+
+- name: try to import with force parameter
+  mysql_db:
+    name: '{{ db_name }}'
+    state: import
+    target: '{{ wrong_sql_file }}'
+    login_unix_socket: '{{ mysql_socket }}'
+    force: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+
+##########
+# Clean up
+##########
+
 - name: remove database name
   mysql_db:
     name: '{{ db_name }}'
@@ -291,6 +331,9 @@
 
 - name: remove file name
   file: name={{ db_file_name }}  state=absent
+
+- name: remove file name
+  file: name={{ wrong_sql_file }}  state=absent
 
 - name: remove dump file1
   file: name={{ dump_file1 }}  state=absent

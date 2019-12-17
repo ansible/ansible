@@ -384,7 +384,7 @@ Otherwise, for each value returned, provide the following fields. All fields are
   :description:
     Detailed description of what this value represents. Capitalized and with trailing dot.
   :returned:
-    When this value is returned, such as ``always``, or ``on success``.
+    When this value is returned, such as ``always``, ``changed`` or ``success``. This is a string and can contain any human-readable content.
   :type:
     Data type.
   :elements:
@@ -420,7 +420,7 @@ Here are two example ``RETURN`` sections, one with three simple fields and one w
     RETURN = r'''
     packages:
         description: Information about package requirements
-        returned: On success
+        returned: success
         type: complex
         contains:
             missing:

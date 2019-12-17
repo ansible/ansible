@@ -22,7 +22,7 @@ __metaclass__ = type
 import jinja2
 from units.compat import unittest
 
-from ansible.template import _escape_backslashes, _count_newlines_from_end
+from ansible.template import AnsibleUndefined, _escape_backslashes, _count_newlines_from_end
 
 # These are internal utility functions only needed for templating.  They're
 # algorithmic so good candidates for unittesting by themselves
@@ -106,3 +106,12 @@ class TestCountNewlines(unittest.TestCase):
 
     def test_mostly_newlines(self):
         self.assertEqual(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' + u'\n' * 1000), 1000)
+
+
+class TestAnsibleUndefined(unittest.TestCase):
+    def test_getattr(self):
+        val = AnsibleUndefined()
+
+        self.assertIs(getattr(val, 'foo'), val)
+
+        self.assertRaises(AttributeError, getattr, val, '__UNSAFE__')

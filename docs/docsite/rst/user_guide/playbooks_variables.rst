@@ -30,6 +30,8 @@ Variable names should be letters, numbers, and underscores.  Variables should al
 
 ``foo-port``, ``foo port``, ``foo.port`` and ``12`` are not valid variable names.
 
+`Python keywords <https://docs.python.org/3/reference/lexical_analysis.html#keywords>`_  such as ``async`` and ``lambda`` are not valid variable names and thus must be avoided.
+
 YAML also supports dictionaries which map keys to values.  For instance::
 
   foo:
@@ -1184,7 +1186,7 @@ This can often be used for things that might apply to some hosts multiple times.
            myname: John
 
 In this example, the same role was invoked multiple times.  It's quite likely there was
-no default for ``name`` supplied at all.  Ansible can warn you when variables aren't defined -- it's the default behavior in fact.
+no default for ``myname`` supplied at all.  Ansible can warn you when variables aren't defined -- it's the default behavior in fact.
 
 There are a few other things that go on with roles.
 

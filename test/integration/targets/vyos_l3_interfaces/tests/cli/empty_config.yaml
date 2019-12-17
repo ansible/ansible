@@ -1,13 +1,13 @@
 ---
 - debug:
-      msg: "START vyos_l3_interfaces empty_config integration tests on connection={{ ansible_connection }}"
+    msg: "START vyos_l3_interfaces empty_config integration tests on connection={{ ansible_connection }}"
 
 - name: Merged with empty config should give appropriate error message
   vyos_l3_interfaces:
     config:
     state: merged
   register: result
-  ignore_errors: True
+  ignore_errors: true
 
 - assert:
     that:
@@ -18,7 +18,7 @@
     config:
     state: replaced
   register: result
-  ignore_errors: True
+  ignore_errors: true
 
 - assert:
     that:
@@ -29,7 +29,7 @@
     config:
     state: overridden
   register: result
-  ignore_errors: True
+  ignore_errors: true
 
 - assert:
     that:

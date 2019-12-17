@@ -16,12 +16,12 @@ DOCUMENTATION = '''
 module: dms_replication_subnet_group
 short_description: creates or destroys a data migration services subnet group
 description:
-    - Creates or destroys a data migration services subnet group
+    - Creates or destroys a data migration services subnet group.
 version_added: "2.9"
 options:
     state:
         description:
-            - State of the subnet group
+            - State of the subnet group.
         default: present
         choices: ['present', 'absent']
         type: str
@@ -32,15 +32,19 @@ options:
               Must contain no more than 255 alphanumeric characters,
               periods, spaces, underscores, or hyphens. Must not be "default".
         type: str
+        required: true
     description:
         description:
             - The description for the subnet group.
         type: str
+        required: true
     subnet_ids:
         description:
             - A list containing the subnet ids for the replication subnet group,
-              needs to be at least 2 items in the list
+              needs to be at least 2 items in the list.
         type: list
+        elements: str
+        required: true
 author:
     - "Rui Moreira (@ruimoreira)"
 extends_documentation_fragment:

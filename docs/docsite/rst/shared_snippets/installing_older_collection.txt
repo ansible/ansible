@@ -1,36 +1,25 @@
 
-By default ``ansible-galaxy`` installs the latest collection that is available but you can add a version range
-identifier to install a specific version.
-
-To install the 1.0.0 version of the collection:
-
-.. code-block:: bash
-
-   ansible-galaxy collection install my_namespace.my_collection:1.0.0
-
-To install the 1.0.0-beta.1 version of the collection:
+You can only have one version of a collection installed at a time. By default ``ansible-galaxy`` installs the latest available version. If you want to install a specific version, you can add a version range identifier. For example, to install the 1.0.0-beta.1 version of the collection:
 
 .. code-block:: bash
 
    ansible-galaxy collection install my_namespace.my_collection:==1.0.0-beta.1
 
-To install the collections that are greater than or equal to 1.0.0 or less than 2.0.0:
+You can specify multiple range identifiers separated by ``,``. Use single quotes so the shell passes the entire command, including ``>``, ``!``, and other operators, along. For example, to install the most recent version that is greater than or equal to 1.0.0 and less than 2.0.0:
 
 .. code-block:: bash
 
-   ansible-galaxy collection install my_namespace.my_collection:>=1.0.0,<2.0.0
+   ansible-galaxy collection install 'my_namespace.my_collection:>=1.0.0,<2.0.0'
 
+Ansible will always install the most recent version that meets the range identifiers you specify. You can use the following range identifiers:
 
-You can specify multiple range identifiers which are split by ``,``. You can use the following range identifiers:
-
-* ``*``: Any version, this is the default used when no range specified is set.
-* ``!=``: Version is not equal to the one specified.
-* ``==``: Version must be the one specified.
-* ``>=``: Version is greater than or equal to the one specified.
-* ``>``: Version is greater than the one specified.
-* ``<=``: Version is less than or equal to the one specified.
-* ``<``: Version is less than the one specified.
+* ``*``: The most recent version. This is the default.
+* ``!=``: Not equal to the version specified.
+* ``==``: Exactly the version specified.
+* ``>=``: Greater than or equal to the version specified.
+* ``>``: Greater than the version specified.
+* ``<=``: Less than or equal to the version specified.
+* ``<``: Less than the version specified.
 
 .. note::
-    The ``ansible-galaxy`` command ignores any pre-release versions unless the ``==`` range identifier is used to
-    explicitly set to that pre-release version.
+    By default ``ansible-galaxy`` ignores pre-release versions. To install a pre-release version, you must use the ``==`` range identifier to require it explicitly.

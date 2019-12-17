@@ -6,9 +6,11 @@
             "Effect": "Allow",
             "Action": [
                 "route53:CreateHostedZone",
+                "route53:ChangeResourceRecordSets",
                 "route53:DeleteHostedZone",
                 "route53:GetHostedZone",
                 "route53:ListHostedZones",
+                "route53:ListResourceRecordSets",
                 "route53:UpdateHostedZoneComment"
             ],
             "Resource": "*"

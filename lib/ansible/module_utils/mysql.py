@@ -40,8 +40,6 @@ except ImportError:
     except ImportError:
         mysql_driver = None
 
-from ansible.module_utils._text import to_native
-
 mysql_driver_fail_msg = 'The PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) module is required.'
 
 
@@ -78,11 +76,7 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
     if connect_timeout is not None:
         config['connect_timeout'] = connect_timeout
 
-    try:
-        db_connection = mysql_driver.connect(**config)
-
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+    db_connection = mysql_driver.connect(**config)
 
     if cursor_class == 'DictCursor':
         return db_connection.cursor(**{_mysql_cursor_param: mysql_driver.cursors.DictCursor})

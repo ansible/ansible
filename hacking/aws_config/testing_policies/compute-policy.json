@@ -235,9 +235,13 @@
             "Action": [
               "states:CreateStateMachine",
               "states:DeleteStateMachine",
+              "states:DescribeExecution",
               "states:DescribeStateMachine",
+              "states:ListExecutions",
               "states:ListStateMachines",
               "states:ListTagsForResource",
+              "states:StartExecution",
+              "states:StopExecution",
               "states:TagResource",
               "states:UntagResource",
               "states:UpdateStateMachine"
@@ -245,6 +249,20 @@
             "Resource": [
               "arn:aws:states:*"
             ]
+        },
+        {
+            "Sid": "AllowLightsail",
+            "Effect": "Allow",
+            "Action": [
+              "lightsail:CreateInstances",
+              "lightsail:DeleteInstance",
+              "lightsail:GetInstance",
+              "lightsail:GetInstances",
+              "lightsail:RebootInstance",
+              "lightsail:StartInstance",
+              "lightsail:StopInstance"
+            ],
+            "Resource": "arn:aws:lightsail:*:*:*"
         }
     ]
 }

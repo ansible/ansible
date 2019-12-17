@@ -431,15 +431,15 @@ class PgPublication():
                      "p.pubupdate , p.pubdelete, p.pubtruncate FROM pg_publication AS p "
                      "JOIN pg_catalog.pg_roles AS r "
                      "ON p.pubowner = r.oid "
-                     "WHERE p.pubname = '%s'" % self.name)
+                     "WHERE p.pubname = %(pname)s")
         else:
             query = ("SELECT r.rolname AS pubowner, p.puballtables, p.pubinsert, "
                      "p.pubupdate , p.pubdelete FROM pg_publication AS p "
                      "JOIN pg_catalog.pg_roles AS r "
                      "ON p.pubowner = r.oid "
-                     "WHERE p.pubname = '%s'" % self.name)
+                     "WHERE p.pubname = %(pname)s")
 
-        result = exec_sql(self, query, add_to_executed=False)
+        result = exec_sql(self, query, query_params={'pname': self.name}, add_to_executed=False)
         if result:
             return result[0]
         else:
@@ -452,8 +452,8 @@ class PgPublication():
             List of dicts with published tables.
         """
         query = ("SELECT schemaname, tablename "
-                 "FROM pg_publication_tables WHERE pubname = '%s'" % self.name)
-        return exec_sql(self, query, add_to_executed=False)
+                 "FROM pg_publication_tables WHERE pubname = %(pname)s")
+        return exec_sql(self, query, query_params={'pname': self.name}, add_to_executed=False)
 
     def __pub_add_table(self, table, check_mode=False):
         """Add a table to the publication.

@@ -159,6 +159,8 @@ from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
+from ansible.module_utils.gitlab import gitlabAuthentication
+
 try:
     cmp
 except NameError:
@@ -250,10 +252,10 @@ class GitLabRunner(object):
     @param description Description of the runner
     '''
     def findRunner(self, description):
-        runners = self._gitlab.runners.list(as_list=False)
+        runners = self._gitlab.runners.all(as_list=False)
         for runner in runners:
-            if (runner.description == description):
-                return self._gitlab.runners.get(runner.id)
+            if (runner['description'] == description):
+                return self._gitlab.runners.get(runner['id'])
 
     '''
     @param description Description of the runner
@@ -306,12 +308,6 @@ def main():
         supports_check_mode=True,
     )
 
-    gitlab_url = module.params['api_url']
-    validate_certs = module.params['validate_certs']
-    gitlab_user = module.params['api_username']
-    gitlab_password = module.params['api_password']
-    gitlab_token = module.params['api_token']
-
     state = module.params['state']
     runner_description = module.params['description']
     runner_active = module.params['active']
@@ -325,15 +321,7 @@ def main():
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
-    try:
-        gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
-                                        private_token=gitlab_token, api_version=4)
-        gitlab_instance.auth()
-    except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
-    except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to GitLab server: %s. \
-            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
+    gitlab_instance = gitlabAuthentication(module)
 
     gitlab_runner = GitLabRunner(module, gitlab_instance)
     runner_exists = gitlab_runner.existsRunner(runner_description)

@@ -47,7 +47,7 @@ options:
   instance_type:
     description:
       - Instance type to use for the instance.
-    required: true
+      - Required when creating a new Launch Configuration.
     type: str
   image_id:
     description:
@@ -65,11 +65,58 @@ options:
     elements: str
   volumes:
     description:
-      - A list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io
-        device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less
-        than 1 will be interpreted as a request not to create the volume.
+      - A list dictionaries defining the volumes to create.
+      - For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
     type: list
     elements: dict
+    suboptions:
+      device_name:
+        type: str
+        description:
+          - The name for the volume (For example C(/dev/sda)).
+        required: true
+      no_device:
+        type: bool
+        description:
+          - When I(no_device=true) the device will not be created.
+      snapshot:
+        type: str
+        description:
+          - The ID of an EBS snapshot to copy when creating the volume.
+          - Mutually exclusive with the I(ephemeral) parameter.
+      ephemeral:
+        type: str
+        description:
+          - Whether the volume should be ephemeral.
+          - Data on ephemeral volumes is lost when the instance is stopped.
+          - Mutually exclusive with the I(snapshot) parameter.
+      volume_size:
+        type: int
+        description:
+          - The size of the volume (in GiB).
+          - Required unless one of I(ephemeral), I(snapshot) or I(no_device) is set.
+      volume_type:
+        type: str
+        description:
+          - The type of volume to create.
+          - See
+            U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html) for more information on the available volume types.
+      delete_on_termination:
+        type: bool
+        default: false
+        description:
+          - Whether the volume should be automatically deleted when the instance
+            is terminated.
+      iops:
+        type: int
+        description:
+          - The number of IOPS per second to provision for the volume.
+          - Required when I(volume_type=io1).
+      encrypted:
+        type: bool
+        default: false
+        description:
+          - Whether the volume should be encrypted using the 'aws/ebs' KMS CMK.
   user_data:
     description:
       - Opaque blob of data which is made available to the ec2 instance. Mutually exclusive with I(user_data_path).

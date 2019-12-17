@@ -45,18 +45,18 @@ options:
       compliance_types:
         description:
         - The resource types of only those AWS resources that you want to trigger an evaluation for the rule.
-          You can only specify one type if you also specify a resource ID for `compliance_id`.
+          You can only specify one type if you also specify a resource ID for I(compliance_id).
       compliance_id:
         description:
         - The ID of the only AWS resource that you want to trigger an evaluation for the rule. If you specify a resource ID,
-          you must specify one resource type for `compliance_types`.
+          you must specify one resource type for I(compliance_types).
       tag_key:
         description:
         - The tag key that is applied to only those AWS resources that you want to trigger an evaluation for the rule.
       tag_value:
         description:
         - The tag value applied to only those AWS resources that you want to trigger an evaluation for the rule.
-          If you specify a value for `tag_value`, you must also specify a value for `tag_key`.
+          If you specify a value for I(tag_value), you must also specify a value for I(tag_key).
     type: dict
   source:
     description:
@@ -66,11 +66,11 @@ options:
       owner:
         description:
         - The resource types of only those AWS resources that you want to trigger an evaluation for the rule.
-          You can only specify one type if you also specify a resource ID for `compliance_id`.
+          You can only specify one type if you also specify a resource ID for I(compliance_id).
       identifier:
         description:
         - The ID of the only AWS resource that you want to trigger an evaluation for the rule.
-          If you specify a resource ID, you must specify one resource type for `compliance_types`.
+          If you specify a resource ID, you must specify one resource type for I(compliance_types).
       details:
         description:
         - Provides the source and type of the event that causes AWS Config to evaluate your AWS resources.
@@ -79,6 +79,7 @@ options:
         - Key `MessageType` The type of notification that triggers AWS Config to run an evaluation for a rule.
         - Key `MaximumExecutionFrequency` The frequency at which you want AWS Config to run evaluations for a custom rule with a periodic trigger.
     type: dict
+    required: true
   input_parameters:
     description:
     - A string, in JSON format, that is passed to the AWS Config rule Lambda function.

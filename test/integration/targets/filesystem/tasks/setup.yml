@@ -17,7 +17,7 @@
       - ansible_os_family != 'Suse'
       - not (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.04', '<='))
       - ansible_system != "FreeBSD"
-      - not (ansible_distribution == "RedHat" and ansible_distribution_major_version|int >= 8)
+      - not (ansible_facts.os_family == "RedHat" and ansible_facts.distribution_major_version is version('8', '>='))
 
   - name: install btrfs progs (Ubuntu <= 16.04)
     package:
@@ -78,7 +78,7 @@
   when:
     - ansible_system == 'Linux'
     - ansible_os_family != 'Suse'
-    - ansible_os_family != 'RedHat' or (ansible_distribution == 'CentOS' and ansible_distribution_version is version('7.0', '>='))
+    - ansible_os_family != 'RedHat' or (ansible_distribution == 'CentOS' and ansible_distribution_version is version('7.0', '=='))
 
 - command: mke2fs -V
   register: mke2fs

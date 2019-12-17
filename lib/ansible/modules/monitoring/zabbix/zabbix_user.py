@@ -21,8 +21,8 @@ version_added: '2.10'
 description:
     - This module allows you to create, modify and delete Zabbix users.
 requirements:
-    - python >= 2.6
-    - zabbix-api
+    - "python >= 2.6"
+    - "zabbix-api >= 0.5.4"
 options:
     alias:
         description:

@@ -649,6 +649,8 @@ class TaskExecutor:
                 return dict(failed=True, msg=to_text(e))
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
+            finally:
+                self._handler.cleanup()
             display.debug("handler run complete")
 
             # preserve no log
@@ -853,6 +855,7 @@ class TaskExecutor:
             else:
                 return dict(failed=True, msg="async task produced unparseable results", async_result=async_result)
         else:
+            async_handler.cleanup(force=True)
             return async_result
 
     def _get_become(self, name):
@@ -926,7 +929,7 @@ class TaskExecutor:
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
 
             options = self._get_persistent_connection_options(connection, variables, templar)
-            socket_path = start_connection(self._play_context, options)
+            socket_path = start_connection(self._play_context, options, self._task._uuid)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
@@ -1022,7 +1025,7 @@ class TaskExecutor:
         if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
         # FIXME: is this code path even live anymore? check w/ networking folks; it trips sometimes when it shouldn't
-        elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
+        elif all((module_prefix in C.NETWORK_GROUP_MODULES, self._shared_loader_obj.action_loader.has_plugin(module_prefix, collection_list=collections))):
             handler_name = module_prefix
         else:
             # FUTURE: once we're comfortable with collections impl, preface this action with ansible.builtin so it can't be hijacked
@@ -1046,7 +1049,7 @@ class TaskExecutor:
         return handler
 
 
-def start_connection(play_context, variables):
+def start_connection(play_context, variables, task_uuid):
     '''
     Starts the persistent connection
     '''
@@ -1078,7 +1081,7 @@ def start_connection(play_context, variables):
     python = sys.executable
     master, slave = pty.openpty()
     p = subprocess.Popen(
-        [python, ansible_connection, to_text(os.getppid())],
+        [python, ansible_connection, to_text(os.getppid()), to_text(task_uuid)],
         stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
     )
     os.close(slave)

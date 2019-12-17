@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test - add check for ``print()`` calls in modules and module_utils."

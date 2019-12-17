@@ -19,10 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from jinja2.runtime import Undefined
-
 from ansible.module_utils.common._collections_compat import Mapping
-from ansible.template import Templar
+from ansible.template import Templar, AnsibleUndefined
 
 STATIC_VARS = [
     'ansible_version',
@@ -75,13 +73,13 @@ class HostVars(Mapping):
         '''
         host = self._find_host(host_name)
         if host is None:
-            return Undefined(name="hostvars['%s']" % host_name)
+            return AnsibleUndefined(name="hostvars['%s']" % host_name)
 
         return self._variable_manager.get_vars(host=host, include_hostvars=False)
 
     def __getitem__(self, host_name):
         data = self.raw_get(host_name)
-        if isinstance(data, Undefined):
+        if isinstance(data, AnsibleUndefined):
             return data
         return HostVarsVars(data, loader=self._loader)
 

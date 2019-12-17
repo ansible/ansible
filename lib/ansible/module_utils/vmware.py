@@ -139,7 +139,7 @@ def find_object_by_name(content, name, obj_type, folder=None, recurse=True):
 
 def find_cluster_by_name(content, cluster_name, datacenter=None):
 
-    if datacenter:
+    if datacenter and hasattr(datacenter, 'hostFolder'):
         folder = datacenter.hostFolder
     else:
         folder = content.rootFolder
@@ -166,8 +166,8 @@ def get_parent_datacenter(obj):
     return datacenter
 
 
-def find_datastore_by_name(content, datastore_name):
-    return find_object_by_name(content, datastore_name, [vim.Datastore])
+def find_datastore_by_name(content, datastore_name, datacenter_name=None):
+    return find_object_by_name(content, datastore_name, [vim.Datastore], datacenter_name)
 
 
 def find_dvs_by_name(content, switch_name, folder=None):
@@ -739,6 +739,7 @@ def set_vm_power_state(content, vm, state, force, timeout=0):
     if not force and current_state not in ['poweredon', 'poweredoff']:
         result['failed'] = True
         result['msg'] = "Virtual Machine is in %s power state. Force is required!" % current_state
+        result['instance'] = gather_vm_facts(content, vm)
         return result
 
     # State is not already true
@@ -1311,16 +1312,18 @@ class PyVmomi(object):
             return False
         return True
 
-    def find_datastore_by_name(self, datastore_name):
+    def find_datastore_by_name(self, datastore_name, datacenter_name=None):
         """
         Get datastore managed object by name
         Args:
             datastore_name: Name of datastore
+            datacenter_name: Name of datacenter where the datastore resides.  This is needed because Datastores can be
+            shared across Datacenters, so we need to specify the datacenter to assure we get the correct Managed Object Reference
 
         Returns: datastore managed object if found else None
 
         """
-        return find_datastore_by_name(self.content, datastore_name=datastore_name)
+        return find_datastore_by_name(self.content, datastore_name=datastore_name, datacenter_name=datacenter_name)
 
     # Datastore cluster
     def find_datastore_cluster_by_name(self, datastore_cluster_name):

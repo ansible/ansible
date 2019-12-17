@@ -88,13 +88,32 @@ options:
       - A dictionary of headers to post with the message.
     default: {}
     type: dict
+  cafile:
+    description:
+      - CA file used during connection to the RabbitMQ server over SSL.
+      - If this option is specified, also I(certfile) and I(keyfile) must be specified.
+    version_added: '2.10'
+  certfile:
+    description:
+      - Client certificate to establish SSL connection.
+      - If this option is specified, also I(cafile) and I(keyfile) must be specified.
+    version_added: '2.10'
+  keyfile:
+    description:
+      - Client key to establish SSL connection.
+      - If this option is specified, also I(cafile) and I(certfile) must be specified.
+    version_added: '2.10'
+
 
 
 requirements: [ pika ]
 notes:
   - This module requires the pika python library U(https://pika.readthedocs.io/).
   - Pika is a pure-Python implementation of the AMQP 0-9-1 protocol that tries to stay fairly independent of the underlying network support library.
-  - This plugin is tested against RabbitMQ. Other AMQP 0.9.1 protocol based servers may work but not tested/guaranteed.
+  - This module is tested against RabbitMQ. Other AMQP 0.9.1 protocol based servers may work but not tested/guaranteed.
+  - The certificate authentication was tested with certificates created
+    via U(https://www.rabbitmq.com/ssl.html#automated-certificate-generation) and RabbitMQ
+    configuration variables C(ssl_options.verify = verify_peer) & C(ssl_options.fail_if_no_peer_cert = true).
 author: "John Imison (@Im0)"
 '''
 
@@ -120,6 +139,17 @@ EXAMPLES = '''
     url: "amqp://guest:guest@192.168.0.32:5672/%2F"
     body: "Hello world random queue from ansible module rabbitmq_publish"
     content_type: "text/plain"
+
+- name: Publish with certs
+  rabbitmq_publish:
+    url: "amqps://guest:guest@192.168.0.32:5671/%2F"
+    body: "Hello test queue from ansible module rabbitmq_publish via SSL certs"
+    queue: 'test'
+    content_type: "text/plain"
+    cafile: 'ca_certificate.pem'
+    certfile: 'client_certificate.pem'
+    keyfile: 'client_key.pem'
+
 '''
 
 RETURN = '''
@@ -155,11 +185,15 @@ def main():
         durable=dict(default=False, type='bool'),
         exclusive=dict(default=False, type='bool'),
         auto_delete=dict(default=False, type='bool'),
-        headers=dict(default={}, type='dict')
+        headers=dict(default={}, type='dict'),
+        cafile=dict(type='str', required=False),
+        certfile=dict(type='str', required=False),
+        keyfile=dict(type='str', required=False),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[['body', 'src']],
+        required_together=[['cafile', 'certfile', 'keyfile']],
         supports_check_mode=False
     )
 

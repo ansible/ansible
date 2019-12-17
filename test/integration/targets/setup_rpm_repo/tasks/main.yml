@@ -6,52 +6,30 @@
       - ansible_distribution in ['RedHat']
       - ansible_distribution_major_version is version('7', '==')
 
-  - name: Install rpmfluff and deps
-    package:
-      name: "{{ item }}"
-    with_items:
-      - python{{ ansible_python_version.split(".")[0] }}-rpmfluff
-      - createrepo
-    when:
-      - ansible_distribution in ['Fedora']
+  - name: Include distribution specific variables
+    include_vars: "{{ lookup('first_found', params) }}"
+    vars:
+      params:
+        files:
+          - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_version }}.yml"
+          - "{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}.yml"
+          - "{{ ansible_facts.distribution }}.yml"
+          - "{{ ansible_facts.os_family }}.yml"
+          - default.yml
+        paths:
+          - "{{ role_path }}/vars"
 
   - name: Install rpmfluff and deps
-    package:
-      name: "{{ item }}"
-    with_items:
-      - python-rpmfluff
-      - createrepo_c
-      - createrepo  # used by el6 version of rpmfluff
-    when:
-      - ansible_distribution not in ['Fedora']
-      - ansible_python["version"]["major"] == 2
-
-  - name: Install rpmfluff and deps
-    package:
-      name: "{{ item }}"
-    with_items:
-      - python3-rpmfluff
-      - createrepo_c
-      - createrepo  # used by el6 version of rpmfluff
-    when:
-      - ansible_distribution not in ['Fedora']
-      - ansible_python["version"]["major"] == 3
-      - not (ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>='))
+    action: "{{ ansible_facts.pkg_mgr }}"
+    args:
+      name: "{{ rpm_repo_packages }}"
 
   - name: Install rpmfluff from pip on RHEL 8 and later
     pip:
       name: rpmfluff
     when:
-      - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>=')
-
-  - name: Install packages needed on RHEL 8 and later
-    dnf:
-      name: "{{ item }}"
-    with_items:
-      - createrepo_c
-      - rpm-build
-    when:
-      - ansible_distribution == 'RedHat' and ansible_distribution_major_version is version('8', '>=')
+      - ansible_facts.distribution in ['RedHat', 'CentOS']
+      - ansible_facts.distribution_major_version is version('8', '>=')
 
   - name: Copy script for creating a repo
     copy:
