@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: ecs_cluster_tag
+module: ecs_tag
 short_description: create and remove tags on ecs clusters.
 description:
     - Creates, removes and lists tags for an ecs_cluster.  The resource is referenced by its cluster name.
@@ -65,7 +65,7 @@ extends_documentation_fragment:
 
 EXAMPLES = '''
 - name: Ensure tags are present on a resource
-  ecs_cluster_tag:
+  ecs_tag:
     region: eu-west-1
     cluster_name: mycluster
     resource_type: cluster
@@ -75,16 +75,16 @@ EXAMPLES = '''
       env: prod
 
 - name: Retrieve all tags on a cluster
-  ecs_cluster_tag:
+  ecs_tag:
     region: eu-west-1
     cluster_name: mycluster
     resource: http_task
     resource_type: task 
     state: list
-  register: ecs_cluster_tags
+  register: ecs_tags
 
 - name: Remove the Env tag
-  ecs_cluster_tag:
+  ecs_tag:
     region: eu-west-1
     cluster_name: mycluster
     resource_type: cluster
@@ -93,7 +93,7 @@ EXAMPLES = '''
     state: absent
 
 - name: Remove the Env tag if it's currently 'development'
-  ecs_cluster_tag:
+  ecs_tag:
     region: eu-west-1
     cluster_name: mycluster
     resource_type: cluster
@@ -102,7 +102,7 @@ EXAMPLES = '''
     state: absent
 
 - name: Remove all tags except for Name from a cluster
-  ecs_cluster_tag:
+  ecs_tag:
     region: eu-west-1
     cluster_name: mycluster
     resource_type: cluster
