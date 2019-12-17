@@ -87,7 +87,8 @@ class ActionModule(ActionNetworkModule):
                 # make sure a transport value is set in args
                 self._task.args['transport'] = transport
                 self._task.args['provider'] = provider
-                warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14, use connection %s' % pc.connection])
+                warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14,'
+                                 ' use connection %s' % pc.connection])
         elif persistent_connection in ('netconf', 'network_cli'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):

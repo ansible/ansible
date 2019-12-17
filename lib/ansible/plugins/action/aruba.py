@@ -77,8 +77,8 @@ class ActionModule(ActionNetworkModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
-            warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14,'
-                 ' use connection %s' % pc.connection])
+            warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14, '
+                             'use connection %s' % pc.connection])
         else:
             return dict(
                 failed=True,

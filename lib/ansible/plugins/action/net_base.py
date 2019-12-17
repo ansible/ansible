@@ -72,10 +72,12 @@ class ActionModule(ActionBase):
             if self._play_context.connection == 'local':
                 if self.provider.get('transport') == 'nxapi' and play_context.network_os == 'nxos':
                     self._task.args['provider'] = _NxosActionModule.nxapi_implementation(self.provider, self._play_context)
-                    self._warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14, use connection httpapi'])
+                    self._warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14,'
+                                           ' use connection httpapi'])
                 elif self.provider.get('transport') == 'eapi' and play_context.network_os == 'eos':
                     self._task.args['provider'] = _EosActionModule.eapi_implementation(self.provider, self._play_context)
-                    self._warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14, use connection httpapi'])
+                    self._warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14,'
+                                           ' use connection httpapi'])
                 else:
                     socket_path = self._start_connection(play_context)
                     task_vars['ansible_socket'] = socket_path
@@ -166,7 +168,8 @@ class ActionModule(ActionBase):
         if self._play_context.become_method == 'enable':
             self._play_context.become = False
             self._play_context.become_method = None
-        self._warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14, use connection %s' % play_context.connection])
+        self._warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14,'
+                               ' use connection %s' % play_context.connection])
         return socket_path
 
     def _get_network_os(self, task_vars):
