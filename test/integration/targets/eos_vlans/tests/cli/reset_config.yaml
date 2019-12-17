@@ -13,6 +13,10 @@
     gather_network_resources: vlans
   become: yes
 
+- name: print facts - 1
+  debug:
+    msg: "{{ ansible_facts }}"
+
 - set_fact:
     expected_config:
       - vlan_id: 10
@@ -20,6 +24,10 @@
       - vlan_id: 20
         name: twenty
 
+- name: print facts - 2
+  debug:
+    msg: "{{ ansible_facts }}"
+
 - assert:
     that:
-      - "expected_config|symmetric_difference(ansible_facts.network_resources.vlans) == []"
+      - "expected_config|symmetric_difference(ansible_facts.ansible_network_resources.vlans) == []"

@@ -28,4 +28,4 @@
 
 - assert:
     that:
-      - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(expected_config) == []"
+      - "ansible_facts.ansible_network_resources.l2_interfaces|symmetric_difference(expected_config) == []"

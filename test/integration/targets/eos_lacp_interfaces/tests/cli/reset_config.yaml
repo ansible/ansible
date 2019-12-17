@@ -23,4 +23,4 @@
 
 - assert:
     that:
-      - "expected_config|symmetric_difference(ansible_facts.network_resources.lacp_interfaces) == []"
+      - "expected_config|symmetric_difference(ansible_facts.ansible_network_resources.lacp_interfaces) == []"

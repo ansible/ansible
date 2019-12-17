@@ -32,4 +32,4 @@
 
 - assert:
     that:
-      - "expected_config|difference(ansible_facts.network_resources.interfaces) == []"
+      - "expected_config|difference(ansible_facts.ansible_network_resources.interfaces) == []"
