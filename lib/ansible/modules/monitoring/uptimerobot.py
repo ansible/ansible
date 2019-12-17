@@ -88,8 +88,9 @@ SUPPORTS_CHECK_MODE = False
 
 class UptimeRobot:
     def __init__(self, params, api_methods):
-        self.headers = {}
-        self.headers['Content-Type'] = "application/json"
+        self.headers = {
+            'Content-Type': "application/json"
+        }
         self.uri = ''
         self.api_methods = api_methods
         self.params = params
