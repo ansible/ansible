@@ -102,6 +102,9 @@ def _wrap_dict(v):
 
 
 def _wrap_sequence(v):
+    """Wraps a sequence with unsafe, not meant for strings, primarily
+    ``tuple`` and ``list``
+    """
     v_type = type(v)
     return v_type(wrap_var(item) for item in v)
 
