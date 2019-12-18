@@ -504,7 +504,6 @@ class Homebrew(object):
             self.changed = True
             self.message = 'Homebrew would be updated.'
             raise HomebrewException(self.message)
-
         rc, out, err = self.module.run_command([
             self.brew_path,
             'update',
@@ -535,7 +534,6 @@ class Homebrew(object):
             self.changed = True
             self.message = 'Homebrew packages would be upgraded.'
             raise HomebrewException(self.message)
-
         rc, out, err = self.module.run_command([
             self.brew_path,
             'upgrade',
