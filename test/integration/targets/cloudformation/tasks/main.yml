@@ -193,6 +193,17 @@
           - "'change_set_id' in create_changeset_result"
           - "'Stack CREATE_CHANGESET complete' in create_changeset_result.output"
 
+    - name: get stack details with changesets
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        stack_change_sets: True
+      register: stack_info
+
+    - name: assert changesets in info
+      assert:
+        that:
+          - "'stack_change_sets' in stack_info.cloudformation[stack_name]"
+
     # try to create an empty changeset by passing in unchanged template
     - name: create a changeset
       cloudformation:
