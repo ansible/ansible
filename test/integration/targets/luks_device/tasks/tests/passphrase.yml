@@ -52,7 +52,6 @@
 - name: Give access to passphrase2
   luks_device:
     device: "{{ cryptfile_device }}"
-    state: closed
     passphrase: "{{ cryptfile_passphrase1 }}"
     new_passphrase: "{{ cryptfile_passphrase2 }}"
   become: yes
@@ -68,6 +67,7 @@
 - assert:
     that:
     - open_try is not failed
+
 - name: Close
   luks_device:
     device: "{{ cryptfile_device }}"

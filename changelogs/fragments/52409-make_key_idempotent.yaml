@@ -1,0 +1,2 @@
+minor_changes:
+  - luks_device - make key add/removel idempotent

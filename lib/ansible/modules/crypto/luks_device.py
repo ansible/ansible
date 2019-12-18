@@ -85,9 +85,6 @@ options:
               Needs I(keyfile) or I(passphrase) option for authorization.
               LUKS container supports up to 8 keyslots. Parameter value
               is the path to the keyfile with the passphrase."
-            - "NOTE that adding additional keys is *not idempotent*.
-              A new keyslot will be used even if another keyslot already
-              exists for this keyfile."
             - "BEWARE that working with keyfiles in plaintext is dangerous.
               Make sure that they are protected."
         type: path
@@ -107,8 +104,6 @@ options:
             - "Removes given key from the container on I(device). Does not
               remove the keyfile from filesystem.
               Parameter value is the path to the keyfile with the passphrase."
-            - "NOTE that removing keys is *not idempotent*. Trying to remove
-              a key which no longer exists results in an error."
             - "NOTE that to remove the last key from a LUKS container, the
               I(force_remove_last_key) option must be set to C(yes)."
             - "BEWARE that working with keyfiles in plaintext is dangerous.
@@ -415,6 +410,8 @@ class CryptHandler(Handler):
         if result[RETURN_CODE] != 0:
             raise ValueError('Error while opening LUKS container on %s: %s'
                              % (device, result[STDERR]))
+        else:
+            return True
 
     def run_luks_close(self, name):
         result = self._run_command([self._cryptsetup_bin, 'close', name])
@@ -744,15 +741,32 @@ def run_module():
     # luks add key
     if conditions.luks_add_key():
         if not module.check_mode:
+            # check if key already exists
+            key_exists = False
+            slotname = str(os.stat(conditions.device).st_mtime)
             try:
-                crypt.run_luks_add_key(conditions.device,
-                                       module.params['keyfile'],
-                                       module.params['passphrase'],
-                                       module.params['new_keyfile'],
-                                       module.params['new_passphrase'])
+                key_exists = crypt.run_luks_open(conditions.device,
+                                                 module.params['new_keyfile'],
+                                                 module.params['passphrase'],
+                                                 slotname)
+            except ValueError:
+                pass
+
+            try:
+                if key_exists:
+                    crypt.run_luks_close(slotname)
+                else:
+                    crypt.run_luks_add_key(conditions.device,
+                                           module.params['keyfile'],
+                                           module.params['passphrase'],
+                                           module.params['new_keyfile'],
+                                           module.params['new_passphrase'])
             except ValueError as e:
                 module.fail_json(msg="luks_device error: %s" % e)
-        result['changed'] = True
+
+            if key_exists is False:
+                result['changed'] = True
+                result['name'] = slotname
         if module.check_mode:
             module.exit_json(**result)
 
@@ -765,9 +779,9 @@ def run_module():
                                           module.params['remove_keyfile'],
                                           module.params['remove_passphrase'],
                                           force_remove_last_key=last_key)
+                result['changed'] = True
             except ValueError as e:
-                module.fail_json(msg="luks_device error: %s" % e)
-        result['changed'] = True
+                result['changed'] = False
         if module.check_mode:
             module.exit_json(**result)
 
