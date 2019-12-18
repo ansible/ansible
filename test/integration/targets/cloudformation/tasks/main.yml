@@ -250,7 +250,6 @@
         that:
           - "'stack_change_sets' in stack_info.cloudformation[stack_name]"
 
-
     # try to create an empty changeset by passing in unchanged template
     - name: create a changeset
       cloudformation:
