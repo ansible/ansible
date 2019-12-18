@@ -66,12 +66,14 @@ options:
             - JSON or dict that represents the new lifecycle policy
         required: false
         version_added: '2.10'
+        type: json
     purge_lifecycle_policy:
         description:
             - if yes, remove the lifecycle policy from the repository
         required: false
         default: false
         version_added: '2.10'
+        type: bool
     state:
         description:
             - Create or destroy the repository.
@@ -123,6 +125,11 @@ EXAMPLES = '''
     name: needs-no-policy
     purge_policy: yes
 
+- name: create immutable ecr-repo
+  ecs_ecr:
+    name: super/cool
+    image_tag_mutability: immutable
+
 - name: set-lifecycle-policy
   ecs_ecr:
     name: needs-lifecycle-policy
@@ -138,10 +145,10 @@ EXAMPLES = '''
           action:
             type: expire
 
-- name: delete-lifecycle-policy
+- name: purge-lifecycle-policy
   ecs_ecr:
     name: needs-no-lifecycle-policy
-    delete_lifecycle_policy: yes
+    purge_lifecycle_policy: true
 '''
 
 RETURN = '''
@@ -298,6 +305,23 @@ class EcsEcr:
                 return policy
             return None
 
+    def put_image_tag_mutability(self, registry_id, name, new_mutability_configuration):
+        repo = self.get_repository(registry_id, name)
+        current_mutability_configuration = repo.get('imageTagMutability')
+
+        if current_mutability_configuration != new_mutability_configuration:
+            if not self.check_mode:
+                self.ecr.put_image_tag_mutability(
+                    repositoryName=name,
+                    imageTagMutability=new_mutability_configuration,
+                    **build_kwargs(registry_id))
+            else:
+                self.skipped = True
+            self.changed = True
+
+        repo['imageTagMutability'] = new_mutability_configuration
+        return repo
+
     def get_lifecycle_policy(self, registry_id, name):
         try:
             res = self.ecr.get_lifecycle_policy(
@@ -328,7 +352,7 @@ class EcsEcr:
                     'could not find repository {0}'.format(printable))
             return
 
-    def delete_lifecycle_policy(self, registry_id, name):
+    def purge_lifecycle_policy(self, registry_id, name):
         if not self.check_mode:
             policy = self.ecr.delete_lifecycle_policy(
                 repositoryName=name, **build_kwargs(registry_id))
@@ -361,8 +385,9 @@ def run(ecr, params):
         purge_policy = params['purge_policy']
         registry_id = params['registry_id']
         force_set_policy = params['force_set_policy']
+        image_tag_mutability = params['image_tag_mutability'].upper()
         lifecycle_policy_text = params['lifecycle_policy']
-        delete_lifecycle_policy = params['delete_lifecycle_policy']
+        purge_lifecycle_policy = params['purge_lifecycle_policy']
 
         # Parse policies, if they are given
         try:
@@ -403,7 +428,7 @@ def run(ecr, params):
                 result['lifecycle_policy'] = None
 
                 if original_lifecycle_policy:
-                    ecr.delete_lifecycle_policy(registry_id, name)
+                    ecr.purge_lifecycle_policy(registry_id, name)
                     result['changed'] = True
 
             elif lifecycle_policy_text is not None:
@@ -491,6 +516,8 @@ def main():
                    default='present'),
         force_set_policy=dict(required=False, type='bool', default=False),
         policy=dict(required=False, type='json'),
+        image_tag_mutability=dict(required=False, choices=['mutable', 'immutable'],
+                                  default='mutable'),
         purge_policy=dict(required=False, type='bool', aliases=['delete_policy']),
         lifecycle_policy=dict(required=False, type='json'),
         purge_lifecycle_policy=dict(required=False, type='bool')))
@@ -498,7 +525,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True,
                            mutually_exclusive=[
-                               ['policy', 'delete_policy', 'purge_policy'],
+                               ['policy', 'purge_policy'],
                                ['lifecycle_policy', 'purge_lifecycle_policy']])
     if module.params.get('delete_policy'):
         module.deprecate(
