@@ -240,14 +240,12 @@ EXAMPLES = '''
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.direct_connect import DirectConnectError, delete_virtual_interface
-from ansible.module_utils.ec2 import (AWSRetry, HAS_BOTO3, boto3_conn,
-                                      ec2_argument_spec, get_aws_connection_info,
-                                      camel_dict_to_snake_dict)
+from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict
 
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    # handled by HAS_BOTO3
+    # handled by AnsibleAWSModule
     pass
 
 
@@ -461,8 +459,7 @@ def ensure_state(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(required=True, choices=['present', 'absent']),
         id_to_associate=dict(required=True, aliases=['link_aggregation_group_id', 'connection_id']),
         public=dict(type='bool'),
@@ -476,7 +473,7 @@ def main():
         cidr=dict(type='list'),
         virtual_gateway_id=dict(),
         virtual_interface_id=dict()
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               required_one_of=[['virtual_interface_id', 'name']],
@@ -486,8 +483,7 @@ def main():
                                            ['public', True, ['customer_address']],
                                            ['public', True, ['cidr']]])
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='directconnect', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    connection = module.client('directconnect')
 
     try:
         changed, latest_state = ensure_state(connection, module)

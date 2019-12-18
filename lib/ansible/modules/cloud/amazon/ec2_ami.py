@@ -364,14 +364,13 @@ snapshots_deleted:
 '''
 
 import time
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec, boto3_conn, camel_dict_to_snake_dict
-from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, compare_aws_tags
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict, compare_aws_tags
 from ansible.module_utils.aws.core import AnsibleAWSModule
 
 try:
     import botocore
 except ImportError:
-    pass
+    pass  # caught by AnsibleAWSModule
 
 
 def get_block_device_mapping(image):
@@ -686,8 +685,7 @@ def rename_item_if_exists(dict_object, attribute, new_attribute, child_node=None
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         instance_id=dict(),
         image_id=dict(),
         architecture=dict(default='x86_64'),
@@ -710,7 +708,7 @@ def main():
         ramdisk_id=dict(),
         sriov_net_support=dict(),
         purge_tags=dict(type='bool', default=False)
-    ))
+    )
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
@@ -724,11 +722,7 @@ def main():
     if not any([module.params['image_id'], module.params['name']]):
         module.fail_json(msg="one of the following is required: name, image_id")
 
-    try:
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except botocore.exceptions.NoRegionError:
-        module.fail_json(msg=("Region must be specified as a parameter in AWS_DEFAULT_REGION environment variable or in boto configuration file."))
+    connection = module.client('ec2')
 
     if module.params.get('state') == 'absent':
         deregister_image(module, connection)

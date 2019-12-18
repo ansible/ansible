@@ -93,7 +93,6 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 
 def describe_app(ebs, app_name, module):
@@ -147,15 +146,11 @@ def filter_empty(**kwargs):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-
-    argument_spec.update(
-        dict(
-            app_name=dict(aliases=['name'], type='str', required=False),
-            description=dict(),
-            state=dict(choices=['present', 'absent'], default='present'),
-            terminate_by_force=dict(type='bool', default=False, required=False)
-        )
+    argument_spec = dict(
+        app_name=dict(aliases=['name'], type='str', required=False),
+        description=dict(),
+        state=dict(choices=['present', 'absent'], default='present'),
+        terminate_by_force=dict(type='bool', default=False, required=False)
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -169,9 +164,8 @@ def main():
         module.fail_json(msg='Module parameter "app_name" is required')
 
     result = {}
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    ebs = boto3_conn(module, conn_type='client', resource='elasticbeanstalk',
-                     region=region, endpoint=ec2_url, **aws_connect_params)
+
+    ebs = module.client('elasticbeanstalk')
 
     app = describe_app(ebs, app_name, module)
 

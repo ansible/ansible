@@ -396,7 +396,6 @@ statement_label = {
 }
 
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
-from ansible.module_utils.ec2 import ec2_argument_spec
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.ec2 import compare_aws_tags, compare_policies
@@ -926,25 +925,22 @@ def assert_policy_shape(policy):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            alias=dict(aliases=['key_alias']),
-            policy_mode=dict(aliases=['mode'], choices=['grant', 'deny'], default='grant'),
-            policy_role_name=dict(aliases=['role_name']),
-            policy_role_arn=dict(aliases=['role_arn']),
-            policy_grant_types=dict(aliases=['grant_types'], type='list'),
-            policy_clean_invalid_entries=dict(aliases=['clean_invalid_entries'], type='bool', default=True),
-            key_id=dict(aliases=['key_arn']),
-            description=dict(),
-            enabled=dict(type='bool', default=True),
-            tags=dict(type='dict', default={}),
-            purge_tags=dict(type='bool', default=False),
-            grants=dict(type='list', default=[]),
-            policy=dict(),
-            purge_grants=dict(type='bool', default=False),
-            state=dict(default='present', choices=['present', 'absent']),
-        )
+    argument_spec = dict(
+        alias=dict(aliases=['key_alias']),
+        policy_mode=dict(aliases=['mode'], choices=['grant', 'deny'], default='grant'),
+        policy_role_name=dict(aliases=['role_name']),
+        policy_role_arn=dict(aliases=['role_arn']),
+        policy_grant_types=dict(aliases=['grant_types'], type='list'),
+        policy_clean_invalid_entries=dict(aliases=['clean_invalid_entries'], type='bool', default=True),
+        key_id=dict(aliases=['key_arn']),
+        description=dict(),
+        enabled=dict(type='bool', default=True),
+        tags=dict(type='dict', default={}),
+        purge_tags=dict(type='bool', default=False),
+        grants=dict(type='list', default=[]),
+        policy=dict(),
+        purge_grants=dict(type='bool', default=False),
+        state=dict(default='present', choices=['present', 'absent']),
     )
 
     module = AnsibleAWSModule(
