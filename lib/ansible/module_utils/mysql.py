@@ -75,10 +75,15 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
         config['db'] = db
     if connect_timeout is not None:
         config['connect_timeout'] = connect_timeout
-    if autocommit:
-        config['autocommit'] = autocommit
 
-    db_connection = mysql_driver.connect(**config)
+    if _mysql_cursor_param == 'cursor':
+        # In case of PyMySQL driver:
+        db_connection = mysql_driver.connect(autocommit=autocommit, **config)
+    else:
+        # In case of MySQLdb driver
+        db_connection = mysql_driver.connect(**config)
+        if autocommit:
+            db_connection.autocommit(True)
 
     if cursor_class == 'DictCursor':
         return db_connection.cursor(**{_mysql_cursor_param: mysql_driver.cursors.DictCursor})

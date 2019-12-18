@@ -3,3 +3,4 @@ user_name: alice
 user_pass: alice
 test_db: testdb
 test_table1: test1
+test_script_path: /tmp/test.sql

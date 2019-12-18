@@ -29,6 +29,32 @@
     dest: '/root/non-default_my.cnf'
     mode: 0400
 
+# Prepare SQL script:
+- name: Remove SQL script if exists
+  become: yes
+  file:
+    path: '{{ test_script_path }}'
+    state: absent
+  ignore_errors: yes
+
+- name: Create test sql script
+  become: yes
+  file:
+    path: '{{ test_script_path }}'
+    state: touch
+    mode: 0644
+
+- name: Prepare SQL script
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: 'echo "{{ item }}" >> ~{{ pg_user}}/test.sql'
+  ignore_errors: yes
+  with_items:
+  - 'INSERT INTO {{ test_table1 }} VALUES (1, 2, 3);'
+  - 'INSERT INTO {{ test_table1 }} VALUES (4, 5, 6);'
+  when: sql_file_created
+
+
 ###############
 # Do tests
 
