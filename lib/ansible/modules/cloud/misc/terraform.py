@@ -74,6 +74,7 @@ options:
       - When 'state' has the 'absent' value mention the path in state_file instead
         to destroy this state's deployment.
     required: false
+    version_added: 2.10
   variables_file:
     description:
       - The path to a variables file for Terraform to fill into the TF
@@ -331,11 +332,10 @@ def main():
     if state == 'present':
         command.extend(APPLY_ARGS)
         if state_out_file:
-          command.extend(['-state-out', state_out_file])
+            command.extend(['-state-out', state_out_file])
     elif state == 'absent':
         command.extend(DESTROY_ARGS)
 
-        
     variables_args = []
     for k, v in variables.items():
         variables_args.extend([
@@ -386,7 +386,8 @@ def main():
                 command=' '.join(command)
             )
 
-    outputs_command = [command[0], 'output', '-no-color', '-json'] + (['-state', state_out_file] if state == 'present' and state_out_file else _state_args(state_file))
+    outputs_command = [command[0], 'output', '-no-color', '-json'] + \
+    (['-state', state_out_file] if state == 'present' and state_out_file else _state_args(state_file))
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
     if rc == 1:
         module.warn("Could not get Terraform outputs. This usually means none have been defined.\nstdout: {0}\nstderr: {1}".format(outputs_text, outputs_err))
