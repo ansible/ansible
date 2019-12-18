@@ -1,3 +1,5 @@
 shippable/vcenter/group1
 cloud/vcenter
 destructive
+needs/target/prepare_vmware_tests
+zuul/vmware/vcenter_only

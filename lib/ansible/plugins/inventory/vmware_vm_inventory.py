@@ -24,8 +24,8 @@ DOCUMENTATION = '''
       - "Python >= 2.7"
       - "PyVmomi"
       - "requests >= 2.3"
-      - "vSphere Automation SDK - For tag feature"
-      - "vCloud Suite SDK - For tag feature"
+      - "vSphere Automation SDK"
+      - "vCloud Suite SDK"
     options:
         hostname:
             description: Name of vCenter or ESXi server.
@@ -77,6 +77,53 @@ DOCUMENTATION = '''
                        'customValue'
                        ]
             version_added: "2.9"
+        datacenters:
+            description:
+            - A list of names of datacenter.
+            version_added: "2.10"
+            required: False
+            type: list
+        clusters:
+            description:
+            - A list of names of the clusters.
+            version_added: "2.10"
+            required: False
+            type: list
+        folders:
+            description:
+            - A list of folder name where VM reside.
+            - Folder that contains the virtual machine for the virtual machine to match the filter.
+            - This is not absolute or relative path to virtual machine but a single folder name.
+            version_added: "2.10"
+            required: False
+            type: list
+        esxi_hostsystems:
+            description:
+            - A list of ESXi host systems.
+            version_added: "2.10"
+            required: False
+            type: list
+        resource_pools:
+            description:
+            - A list of resource pools.
+            version_added: "2.10"
+            required: False
+            type: list
+        no_object_failure:
+            description:
+            - This parameter governs the behaviour when C(datacenters), C(hosts), C(folders)
+              and C(resource_pools) are specified as filters to gather VMs information.
+            - When set to C(silent), no warnings or failures will occur if filters specified but not found in the infrastructure.
+            - When set to C(warn), warnings will occur if filters specified but not found in the infrastructure.
+            - When set to C(error), failures will occur if filters specified and not found in the infrastructure.
+            version_added: "2.10"
+            required: False
+            default: silent
+            type: str
+            choices:
+            - silent
+            - warn
+            - error
 '''
 
 EXAMPLES = '''
@@ -100,11 +147,30 @@ EXAMPLES = '''
     properties:
     - 'name'
     - 'guest.ipAddress'
+
+# Use Datacenter, Cluster and Folder value to list VMs
+    plugin: vmware_vm_inventory
+    strict: False
+    hostname: 10.65.200.241
+    username: administrator@vsphere.local
+    password: Esxi@123$%
+    validate_certs: False
+    with_tags: True
+    datacenters:
+    - Asia-Datacenter1
+    clusters:
+    - Asia-Cluster1
+    folders:
+    - dev
+    - prod
 '''
 
 import ssl
 import atexit
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.utils.display import Display
+
+display = Display()
 
 try:
     # requests is required for exception handling of the ConnectionError
@@ -123,6 +189,7 @@ except ImportError:
 try:
     from com.vmware.vapi.std_client import DynamicID
     from vmware.vapi.vsphere.client import create_vsphere_client
+    from com.vmware.vcenter_client import Cluster, Datacenter, Folder, Host, ResourcePool, VM
     HAS_VSPHERE = True
 except ImportError:
     HAS_VSPHERE = False
@@ -141,15 +208,15 @@ class BaseVMwareInventory:
         self.validate_certs = validate_certs
         self.content = None
         self.rest_content = None
+        self.si = None
 
     def do_login(self):
         """
         Check requirements and do login
         """
         self.check_requirements()
-        self.content = self._login()
-        if self.with_tags:
-            self.rest_content = self._login_vapi()
+        self.si, self.content = self._login()
+        self.rest_content = self._login_vapi()
 
     def _login_vapi(self):
         """
@@ -212,10 +279,10 @@ class BaseVMwareInventory:
             raise AnsibleParserError("Unknown error while connecting to vCenter or ESXi API at %s:%s" % (self.hostname, self.port))
 
         atexit.register(connect.Disconnect, service_instance)
-        return service_instance.RetrieveContent()
+        return service_instance, service_instance.RetrieveContent()
 
     def check_requirements(self):
-        """ Check all requirements for this inventory are satisified"""
+        """ Check all requirements for this inventory are satisfied"""
         if not HAS_REQUESTS:
             raise AnsibleParserError('Please install "requests" Python module as this is required'
                                      ' for VMware Guest dynamic inventory plugin.')
@@ -245,53 +312,6 @@ class BaseVMwareInventory:
         if not all([self.hostname, self.username, self.password]):
             raise AnsibleError("Missing one of the following : hostname, username, password. Please read "
                                "the documentation for more information.")
-
-    def _get_managed_objects_properties(self, vim_type, properties=None):
-        """
-        Look up a Managed Object Reference in vCenter / ESXi Environment
-        :param vim_type: Type of vim object e.g, for datacenter - vim.Datacenter
-        :param properties: List of properties related to vim object e.g. Name
-        :return: local content object
-        """
-        # Get Root Folder
-        root_folder = self.content.rootFolder
-
-        if properties is None:
-            properties = ['name']
-
-        # Create Container View with default root folder
-        mor = self.content.viewManager.CreateContainerView(root_folder, [vim_type], True)
-
-        # Create Traversal spec
-        traversal_spec = vmodl.query.PropertyCollector.TraversalSpec(
-            name="traversal_spec",
-            path='view',
-            skip=False,
-            type=vim.view.ContainerView
-        )
-
-        # Create Property Spec
-        property_spec = vmodl.query.PropertyCollector.PropertySpec(
-            type=vim_type,  # Type of object to retrieved
-            all=False,
-            pathSet=properties
-        )
-
-        # Create Object Spec
-        object_spec = vmodl.query.PropertyCollector.ObjectSpec(
-            obj=mor,
-            skip=True,
-            selectSet=[traversal_spec]
-        )
-
-        # Create Filter Spec
-        filter_spec = vmodl.query.PropertyCollector.FilterSpec(
-            objectSet=[object_spec],
-            propSet=[property_spec],
-            reportMissingObjectsInResults=False
-        )
-
-        return self.content.propertyCollector.RetrieveContents([filter_spec])
 
     @staticmethod
     def _get_object_prop(vm, attributes):
@@ -379,6 +399,77 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     self._populate_host_vars([host], hostvars.get(host, {}), group)
                 self.inventory.add_child('all', group)
 
+    def _handle_error(self, message):
+        no_object_failure = self.get_option('no_object_failure') or 'silent'
+        if no_object_failure == 'warn':
+            display.warning(message)
+        elif no_object_failure == 'error':
+            raise AnsibleError(message)
+
+    def _get_vm_filter_spec(self):
+        vm_filter_spec = VM.FilterSpec()
+        datacenters = self.get_option('datacenters')
+        if datacenters:
+            temp_dcs = []
+            for datacenter_name in datacenters:
+                dc_filter_spec = Datacenter.FilterSpec(names=set([datacenter_name]))
+                datacenter_summaries = self.pyv.rest_content.vcenter.Datacenter.list(dc_filter_spec)
+                if len(datacenter_summaries) > 0:
+                    temp_dcs.append(datacenter_summaries[0].datacenter)
+                else:
+                    self._handle_error(message="Unable to find datacenter %s" % datacenter_name)
+            vm_filter_spec.datacenters = set(temp_dcs)
+
+        clusters = self.get_option('clusters')
+        if clusters:
+            temp_clusters = []
+            for cluster_name in clusters:
+                ccr_filter_spec = Cluster.FilterSpec(names=set([cluster_name]))
+                cluster_summaries = self.pyv.rest_content.vcenter.Cluster.list(ccr_filter_spec)
+                if len(cluster_summaries) > 0:
+                    temp_clusters.append(cluster_summaries[0].cluster)
+                else:
+                    self._handle_error(message="Unable to find cluster %s" % cluster_name)
+            vm_filter_spec.clusters = set(temp_clusters)
+
+        folders = self.get_option('folders')
+        if folders:
+            temp_folders = []
+            for folder_name in folders:
+                folder_filter_spec = Folder.FilterSpec(names=set([folder_name]))
+                folder_summaries = self.pyv.rest_content.vcenter.Folder.list(folder_filter_spec)
+                if len(folder_summaries) > 0:
+                    temp_folders.append(folder_summaries[0].folder)
+                else:
+                    self._handle_error(message="Unable to find folder %s" % folder_name)
+            vm_filter_spec.folders = set(temp_folders)
+
+        esxi_hosts = self.get_option('esxi_hostsystems')
+        if esxi_hosts:
+            temp_hosts = []
+            for esxi_name in esxi_hosts:
+                esxi_filter_spec = Host.FilterSpec(names=set([esxi_name]))
+                esxi_summaries = self.pyv.rest_content.vcenter.Host.list(esxi_filter_spec)
+                if len(esxi_summaries) > 0:
+                    temp_hosts.append(esxi_summaries[0].host)
+                else:
+                    self._handle_error(message="Unable to find esxi hostsystem %s" % esxi_name)
+            vm_filter_spec.folders = set(temp_hosts)
+
+        resource_pools = self.get_option('resource_pools')
+        if resource_pools:
+            temp_rps = []
+            for rp_name in resource_pools:
+                rp_filter_spec = ResourcePool.FilterSpec(names=set([rp_name]))
+                rp_summaries = self.pyv.rest_content.vcenter.ResourcePool.list(rp_filter_spec)
+                if len(rp_summaries) > 0:
+                    temp_rps.append(rp_summaries[0].resourcepool)
+                else:
+                    self._handle_error(message="Unable to find resource pool %s" % rp_name)
+            vm_filter_spec.folders = set(temp_rps)
+
+        return vm_filter_spec
+
     def _populate_from_source(self, source_data, using_current_cache):
         """
         Populate inventory data from direct source
@@ -390,9 +481,9 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         cacheable_results = {'_meta': {'hostvars': {}}}
         hostvars = {}
-        objects = self.pyv._get_managed_objects_properties(vim_type=vim.VirtualMachine,
-                                                           properties=['name'])
 
+        vm_filter_spec = self._get_vm_filter_spec()
+        objects = self.pyv.rest_content.vcenter.VM.list(vm_filter_spec)
         if self.pyv.with_tags:
             tag_svc = self.pyv.rest_content.tagging.Tag
             tag_association = self.pyv.rest_content.tagging.TagAssociation
@@ -406,53 +497,51 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     cacheable_results[tag_obj.name] = {'hosts': []}
                     self.inventory.add_group(tag_obj.name)
 
-        for vm_obj in objects:
-            for vm_obj_property in vm_obj.propSet:
-                # VMware does not provide a way to uniquely identify VM by its name
-                # i.e. there can be two virtual machines with same name
-                # Appending "_" and VMware UUID to make it unique
-                if not vm_obj.obj.config:
-                    # Sometime orphaned VMs return no configurations
-                    continue
+        for o in objects:
+            vm_obj = vim.VirtualMachine(o.vm, self.pyv.si._stub)
 
-                current_host = vm_obj_property.val + "_" + vm_obj.obj.config.uuid
+            if not vm_obj.config:
+                # Sometime orphaned VMs return no configurations
+                continue
 
-                if current_host not in hostvars:
-                    hostvars[current_host] = {}
-                    self.inventory.add_host(current_host)
+            current_host = vm_obj.name + "_" + vm_obj.config.uuid
 
-                    host_ip = vm_obj.obj.guest.ipAddress
-                    if host_ip:
-                        self.inventory.set_variable(current_host, 'ansible_host', host_ip)
+            if current_host not in hostvars:
+                hostvars[current_host] = {}
+                self.inventory.add_host(current_host)
 
-                    self._populate_host_properties(vm_obj, current_host)
+                host_ip = vm_obj.guest.ipAddress
+                if host_ip:
+                    self.inventory.set_variable(current_host, 'ansible_host', host_ip)
 
-                    # Only gather facts related to tag if vCloud and vSphere is installed.
-                    if HAS_VSPHERE and self.pyv.with_tags:
-                        # Add virtual machine to appropriate tag group
-                        vm_mo_id = vm_obj.obj._GetMoId()
-                        vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
-                        attached_tags = tag_association.list_attached_tags(vm_dynamic_id)
+                self._populate_host_properties(vm_obj, current_host)
 
-                        for tag_id in attached_tags:
-                            self.inventory.add_child(tags_info[tag_id], current_host)
-                            cacheable_results[tags_info[tag_id]]['hosts'].append(current_host)
+                # Only gather facts related to tag if vCloud and vSphere is installed.
+                if self.pyv.with_tags:
+                    # Add virtual machine to appropriate tag group
+                    vm_mo_id = vm_obj._GetMoId()
+                    vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
+                    attached_tags = tag_association.list_attached_tags(vm_dynamic_id)
 
-                    # Based on power state of virtual machine
-                    vm_power = str(vm_obj.obj.summary.runtime.powerState)
-                    if vm_power not in cacheable_results:
-                        cacheable_results[vm_power] = {'hosts': []}
-                        self.inventory.add_group(vm_power)
-                    cacheable_results[vm_power]['hosts'].append(current_host)
-                    self.inventory.add_child(vm_power, current_host)
+                    for tag_id in attached_tags:
+                        self.inventory.add_child(tags_info[tag_id], current_host)
+                        cacheable_results[tags_info[tag_id]]['hosts'].append(current_host)
 
-                    # Based on guest id
-                    vm_guest_id = vm_obj.obj.config.guestId
-                    if vm_guest_id and vm_guest_id not in cacheable_results:
-                        cacheable_results[vm_guest_id] = {'hosts': []}
-                        self.inventory.add_group(vm_guest_id)
-                    cacheable_results[vm_guest_id]['hosts'].append(current_host)
-                    self.inventory.add_child(vm_guest_id, current_host)
+                # Based on power state of virtual machine
+                vm_power = str(vm_obj.summary.runtime.powerState)
+                if vm_power not in cacheable_results:
+                    cacheable_results[vm_power] = {'hosts': []}
+                    self.inventory.add_group(vm_power)
+                cacheable_results[vm_power]['hosts'].append(current_host)
+                self.inventory.add_child(vm_power, current_host)
+
+                # Based on guest id
+                vm_guest_id = vm_obj.config.guestId
+                if vm_guest_id and vm_guest_id not in cacheable_results:
+                    cacheable_results[vm_guest_id] = {'hosts': []}
+                    self.inventory.add_group(vm_guest_id)
+                cacheable_results[vm_guest_id]['hosts'].append(current_host)
+                self.inventory.add_child(vm_guest_id, current_host)
 
         for host in hostvars:
             h = self.inventory.get_host(host)
@@ -468,10 +557,10 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         for vm_prop in vm_properties:
             if vm_prop == 'customValue':
-                for cust_value in vm_obj.obj.customValue:
+                for cust_value in vm_obj.customValue:
                     self.inventory.set_variable(current_host,
                                                 [y.name for y in field_mgr if y.key == cust_value.key][0],
                                                 cust_value.value)
             else:
-                vm_value = self.pyv._get_object_prop(vm_obj.obj, vm_prop.split("."))
+                vm_value = self.pyv._get_object_prop(vm_obj, vm_prop.split("."))
                 self.inventory.set_variable(current_host, vm_prop, vm_value)
