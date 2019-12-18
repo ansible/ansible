@@ -228,7 +228,7 @@ def do_ini(module, filename, section=None, option=None, value=None,
                             newline = '%s\n' % option
                         else:
                             newline = assignment_format % (option, value)
-                        option_changed = ini_lines[index] != newline
+                        option_changed = ini_lines[index] != newline and not re.match('%s\s*=\s*%s' % (option, value), ini_lines[index])
                         changed = changed or option_changed
                         if option_changed:
                             msg = 'option changed'
