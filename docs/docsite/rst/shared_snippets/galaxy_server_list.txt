@@ -16,7 +16,7 @@ To configure a Galaxy server list in ``ansible.cfg``:
 
 .. note::
     The ``url`` option for each server name must end with a forward slash ``/``.
-    
+
 For Automation Hub, you additionally need to:
 
 #. Set the ``auth_url`` option for each server name.
@@ -62,7 +62,7 @@ finally ``test_galaxy`` until the collection is found. The actual Galaxy instanc
 define the following keys:
 
 * ``url``: The URL of the galaxy instance to connect to, this is required.
-* ``token``: A token key to use for authentication against the Galaxy instance, this is mutually exclusive with ``username``
+* ``token``: An API token key to use for authentication against the Galaxy instance, this is mutually exclusive with ``username``
 * ``username``: The username to use for basic authentication against the Galaxy instance, this is mutually exclusive with ``token``
 * ``password``: The password to use for basic authentication
 * ``auth_url``: The URL of a Keycloak server 'token_endpoint' if using SSO auth (Automation Hub for ex). This is mutually exclusive with ``username``. ``auth_url`` requires ``token``.

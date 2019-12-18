@@ -310,12 +310,66 @@ You can publish collections to Galaxy using the ``ansible-galaxy collection publ
 Getting your token or API key
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To upload your collection to Galaxy, you must first obtain an API token (``--api-key`` in the ``ansible-galaxy`` CLI command). The API token is a secret token used to protect your content.
+To upload your collection to Galaxy, you must first obtain an API token (``--api-key`` in the ``ansible-galaxy`` CLI command or ``token`` in the :file:`ansible.cfg` file under the ``galaxy`` section). The API token is a secret token used to protect your content.
 
 To get your API token:
 
 * For galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API token`.
 * For Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Get API token` from the version dropdown.
+
+Storing or using your API token
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once you have retrieved your AP token, you have three options on how you can store or use that token for collections:
+
+* Pass the token to  the ``ansible-galaxy`` command using the ``--api-key``.
+* Save the token in a Galaxy token file.
+* Specify the token within a Galaxy server list in your :file:`ansible.cfg` file.
+
+Using the ``api-key``
+.....................
+
+You can use the ``--api-key`` argument with the ``ansible-galaxy`` command (in conjunction with the ``--server`` argument or :ref:`GALAXY_SERVER` setting in your :file:`ansible.cfg` file). You cannot use ``apt-key``  with any servers defined in your :ref:`Galaxy server list <galaxy_server_config>`.
+
+.. code-block:: bash
+
+    ansible-galaxy collection publish ./geerlingguy-collection-1.2.3.tar.gz --api-key=[key goes here]
+
+Use a galaxy token file
+.......................
+
+You can store your API token in your a Galaxy token file (in conjunction with the ``--server`` argument or :ref:`GALAXY_SERVER` setting in your :file:`ansible.cfg` file). This file is :file:`~/.ansible/galaxy_token` by default. Use the :ref:`GALAXY_TOKEN_PATH` to tell the ``ansible-galaxy`` command to find the token file at some other location. You cannot use the token file with any servers defined in your :ref:`Galaxy server list <galaxy_server_config>`.
+
+1. Save the token in the default token file (:file:`~/.ansible/galaxy_token`).
+2. Publish to the default server:
+
+  .. code-block:: bash
+
+      ansible-galaxy collection publish ./geerlingguy-collection-1.2.3.tar.gz
+
+3. Alternately, publish to another server:
+
+  .. code-block:: bash
+
+      ansible-galaxy collection publish --server my_private_galaxy ./geerlingguy-collection-1.2.3.tar.gz
+
+
+Specify the token within a Galaxy server list
+.............................................
+
+With this option, you configure one or more servers for Galaxy in your :file:`ansible.cfg` file under the ``galaxy_server_list`` section. For each server, you also configure the token.
+
+
+
+.. code-block:: ini
+
+   [galaxy]
+   server_list = release_galaxy
+
+   [galaxy_server.release_galaxy]
+     url=https://galaxy.ansible.com/
+     token=my_token
+
 
 .. _upload_collection_ansible_galaxy:
 
@@ -329,14 +383,17 @@ To upload the collection artifact with the ``ansible-galaxy`` command:
 
 .. code-block:: bash
 
-     ansible-galaxy collection publish path/to/my_namespace-my_collection-1.0.0.tar.gz --api-key=SECRET
+     ansible-galaxy collection publish path/to/my_namespace-my_collection-1.0.0.tar.gz
 
-The above command triggers an import process, just as if you uploaded the collection through the Galaxy website.
+.. note::
+
+	The above command assumes you have retrieved and stored your API token in a file at the default token path or as part of a Galaxy server list. See :ref:`galaxy_get_token` for details.
+
+The ``ansible-galaxy collection publish`` command triggers an import process, just as if you uploaded the collection through the Galaxy website.
 The command waits until the import process completes before reporting the status back. If you wish to continue
 without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your
 `My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
 
-The API key is a secret token used by the Galaxy server to protect your content. See :ref:`galaxy_get_token` for details.
 
 .. _upload_collection_galaxy:
 
