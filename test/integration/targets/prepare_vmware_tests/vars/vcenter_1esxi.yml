@@ -4,6 +4,7 @@ esxi_hosts:
 rw_datastore: rw_datastore
 ro_datastore: ro_datastore
 esxi_password: '{{ esxi1_password }}'
+esxi_user: '{{ esxi1_username }}'
 infra:
   datastores:
     rw_datastore:
