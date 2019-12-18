@@ -346,7 +346,7 @@ You can use the transformed data with ``loop`` to iterate over the same subeleme
 .. _combine_filter:
 
 Combining hashes/dictionaries
-`````````````````````````````
+-----------------------------
 
 .. versionadded:: 2.0
 
