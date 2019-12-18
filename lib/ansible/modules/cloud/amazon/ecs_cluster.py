@@ -39,6 +39,7 @@ options:
         description:
             - The cluster name.
         required: false 
+        version_added: "2.10"
         type: dict
     purge_tags:
         description:
@@ -46,6 +47,7 @@ options:
             tags will not be modified.
         required: false
         default: yes
+        version_added: "2.10"
         type: bool
     delay:
         description:
