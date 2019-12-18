@@ -1,6 +1,6 @@
 ---
 - set_fact:
-    ecr_name: '{{ resource_prefix | lower }}-ecr'
+    ecr_name: '{{ resource_prefix }}-ecr'
 
 - block:
 
@@ -289,6 +289,8 @@
         that:
           - result is changed
           - not result.created
+          - result.lifecycle_policy is defined
+          - result.lifecycle_policy|from_json|selectattr("rules")|length == 1
 
 
     - name: When in check mode, and purging a lifecyle policy that exists
