@@ -1,8 +1,8 @@
 ---
 # defaults file for ec2_instance
-ec2_instance_name: '{{ resource_prefix }}-node'
 ec2_instance_owner: 'integration-run-{{ resource_prefix }}'
 ec2_instance_type: 't3.micro'
+ec2_instance_tag_TestId: '{{ resource_prefix }}-{{ inventory_hostname }}'
 ec2_ami_name: 'amzn2-ami-hvm-2.*-x86_64-gp2'
 
 vpc_name: '{{ resource_prefix }}-vpc'

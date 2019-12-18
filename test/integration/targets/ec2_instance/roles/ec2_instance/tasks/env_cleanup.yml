@@ -1,4 +1,4 @@
-- name: remove Instances
+- name: "remove Instances"
   ec2_instance:
     state: absent
     filters:
@@ -7,33 +7,33 @@
   ignore_errors: yes
   retries: 10
 
-- name: remove ENIs
+- name: "remove ENIs"
   ec2_eni_info:
     filters:
       vpc-id: "{{ testing_vpc.vpc.id }}"
   register: enis
 
-- name: delete all ENIs
+- name: "delete all ENIs"
   ec2_eni:
-    eni_id: "{{ item.id }}"
     state: absent
+    eni_id: "{{ item.id }}"
   until: removed is not failed
   with_items: "{{ enis.network_interfaces }}"
   ignore_errors: yes
   retries: 10
 
-- name: remove the security group
+- name: "remove the security group"
   ec2_group:
+    state: absent
     name: "{{ resource_prefix }}-sg"
     description: a security group for ansible tests
     vpc_id: "{{ testing_vpc.vpc.id }}"
-    state: absent
   register: removed
   until: removed is not failed
   ignore_errors: yes
   retries: 10
 
-- name: remove routing rules
+- name: "remove routing rules"
   ec2_vpc_route_table:
     state: absent
     vpc_id: "{{ testing_vpc.vpc.id }}"
@@ -50,16 +50,16 @@
   ignore_errors: yes
   retries: 10
 
-- name: remove internet gateway
+- name: "remove internet gateway"
   ec2_vpc_igw:
-    vpc_id: "{{ testing_vpc.vpc.id }}"
     state: absent
+    vpc_id: "{{ testing_vpc.vpc.id }}"
   register: removed
   until: removed is not failed
   ignore_errors: yes
   retries: 10
 
-- name: remove subnet A
+- name: "remove subnet A"
   ec2_vpc_subnet:
     state: absent
     vpc_id: "{{ testing_vpc.vpc.id }}"
@@ -69,7 +69,7 @@
   ignore_errors: yes
   retries: 10
 
-- name: remove subnet B
+- name: "remove subnet B"
   ec2_vpc_subnet:
     state: absent
     vpc_id: "{{ testing_vpc.vpc.id }}"
@@ -79,11 +79,11 @@
   ignore_errors: yes
   retries: 10
 
-- name: remove the VPC
+- name: "remove the VPC"
   ec2_vpc_net:
+    state: absent
     name: "{{ vpc_name }}"
     cidr_block: "{{ vpc_cidr }}"
-    state: absent
     tags:
       Name: Ansible Testing VPC
     tenancy: default

@@ -1,11 +1,12 @@
 - block:
-  - name: New instance and don't wait for it to complete
+  - name: "New instance and don't wait for it to complete"
     ec2_instance:
+      state: present
       name: "{{ resource_prefix }}-test-no-wait"
       image_id: "{{ ec2_ami_image }}"
       vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
       tags:
-        TestId: "{{ resource_prefix }}"
+        TestId: "{{ ec2_instance_tag_TestId }}"
       wait: false
       instance_type: "{{ ec2_instance_type }}"
     register: in_test_vpc
@@ -18,18 +19,19 @@
       - in_test_vpc.instance_ids is defined
       - in_test_vpc.instance_ids | length > 0
 
-  - name: New instance and don't wait for it to complete ( check mode )
+  - name: "New instance and don't wait for it to complete ( check mode )"
     ec2_instance:
+      state: present
       name: "{{ resource_prefix }}-test-no-wait-checkmode"
       image_id: "{{ ec2_ami_image }}"
       vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
       tags:
-        TestId: "{{ resource_prefix }}"
+        TestId: "{{ ec2_instance_tag_TestId }}"
       wait: false
       instance_type: "{{ ec2_instance_type }}"
     check_mode: yes
 
-  - name: Facts for ec2 test instance
+  - name: "Facts for ec2 test instance"
     ec2_instance_info:
       filters:
         "tag:Name": "{{ resource_prefix }}-test-no-wait"
@@ -37,7 +39,7 @@
     until: real_instance_fact.instances | length > 0
     retries: 10
 
-  - name: Facts for checkmode ec2 test instance
+  - name: "Facts for checkmode ec2 test instance"
     ec2_instance_info:
       filters:
         "tag:Name": "{{ resource_prefix }}-test-no-wait-checkmode"
@@ -49,16 +51,18 @@
         - "{{ real_instance_fact.instances | length }} > 0"
         - "{{ checkmode_instance_fact.instances | length }} == 0"
 
-  - name: Terminate instances
+  - name: "Terminate instances"
     ec2_instance:
-      instance_ids: "{{ in_test_vpc.instance_ids }}"
       state: absent
+      instance_ids: "{{ in_test_vpc.instance_ids }}"
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
 
   always:
-    - name: Terminate test-ebs-vols instances
-      ec2_instance:
-        filters:
-          "tag:Name": "{{ resource_prefix }}-test-no-wait-checkmode"
-        state: absent
-        wait: no
-      ignore_errors: yes
+  - name: "Terminate instance_no_wait instances"
+    ec2_instance:
+      state: absent
+      filters:
+        "tag:TestId": "{{ ec2_instance_tag_TestId }}"
+      wait: yes
+    ignore_errors: yes
