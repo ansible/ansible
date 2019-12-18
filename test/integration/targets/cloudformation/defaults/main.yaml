@@ -1,2 +1,0 @@
-stack_name: "ansible-test-{{ resource_prefix }}-stack"
-topic_name: "{{ resource_prefix }}-topic_name"
