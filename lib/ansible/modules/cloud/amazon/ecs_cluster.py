@@ -161,7 +161,7 @@ class EcsClusterManager:
         return None
 
     def describe_cluster(self, cluster_name):
-        response = self.ecs.describe_clusters(clusters=[cluster_name],include=['TAGS'])
+        response = self.ecs.describe_clusters(clusters=[cluster_name], include=['TAGS'])
         if len(response['failures']) > 0:
             c = self.find_in_array(response['failures'], cluster_name, 'arn')
             if c and c['reason'] == 'MISSING':
