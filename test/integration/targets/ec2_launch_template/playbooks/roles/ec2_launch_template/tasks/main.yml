@@ -17,6 +17,7 @@
   block:
     - include_tasks: cpu_options.yml
     - include_tasks: iam_instance_role.yml
+    - include_tasks: versions.yml
 
   always:
   - debug:
