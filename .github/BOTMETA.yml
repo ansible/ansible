@@ -1551,6 +1551,8 @@ files:
   test/lib/ansible_test/_internal/cloud/acme.py: *crypto
   test/sanity/:
     notified: mattclay
+  test/sanity/ignore.txt:
+    notified: tremble
   test/units/module_utils/docker/:
     <<: *docker
     support: community
