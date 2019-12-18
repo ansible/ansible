@@ -38,13 +38,14 @@ options:
     tags:
         description:
             - The cluster name.
-        required: false 
+        required: false
         version_added: "2.10"
         type: dict
     purge_tags:
         description:
-          - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter is not set then
-            tags will not be modified.
+          - If yes, existing tags will be purged from the resource to match 
+            exactly what is defined by I(tags) parameter. If the I(tags) parameter 
+            is not set then tags will not be modified.
         required: false
         default: yes
         version_added: "2.10"
@@ -188,7 +189,10 @@ class EcsClusterManager:
             # Add/update tags
             if tags_need_modify:
                 try:
-                    self.ecs.tag_resource(resourceArn=cluster['clusterArn'], tags=ansible_dict_to_boto3_tag_list(tags_need_modify, tag_name_key_name='key', tag_value_key_name='value'))
+                    self.ecs.tag_resource(resourceArn=cluster['clusterArn'], 
+                        tags=ansible_dict_to_boto3_tag_list(tags_need_modify, 
+                            tag_name_key_name='key', 
+                            tag_value_key_name='value'))
                 except Exception as e:
                     module.fail_json(msg=str(e) + " Unable to add tags {0}".format(tags_need_modify))
 
