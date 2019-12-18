@@ -407,6 +407,9 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                 self.fail("Parameter error: expecting custom_domain to have a use_sub_domain "
                           "attribute of type boolean.")
 
+        if self.kind in ['FileStorage','BlockBlobStorage'] and self.account_type != 'Premium_LRS':
+            self.fail("Parameter error: storage account {0} require account type is Premium_LRS".format(self.kind))
+
         self.account_dict = self.get_account()
 
         if self.state == 'present' and self.account_dict and \
