@@ -31,6 +31,9 @@ options:
   connected:
     description:
       - List of container names or container IDs to connect to a network.
+      - Please note that the module only makes sure that these containers are connected to the network,
+        but does not care about connection options. If you rely on specific IP addresses etc., use the
+        M(docker_container) module to ensure your containers are correctly connected to this network.
     type: list
     elements: str
     aliases:
@@ -184,6 +187,15 @@ options:
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
+
+notes:
+  - When network options are changed, the module disconnects all containers from the network, deletes the network, and re-creates the network.
+    It does not try to reconnect containers, except the ones listed in (I(connected), and even for these, it does not consider specific
+    connection options like fixed IP addresses or MAC addresses. If you need more control over how the containers are connected to the
+    network, loop the M(docker_container) module to loop over your containers to make sure they are connected properly.
+  - The module does not support Docker Swarm, i.e. it will not try to disconnect or reconnect services. If services are connected to the
+    network, deleting the network will fail. When network options are changed, the network has to be deleted and recreated, so this will
+    fail as well.
 
 author:
   - "Ben Keith (@keitwb)"
