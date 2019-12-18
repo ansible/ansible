@@ -80,6 +80,20 @@ EXAMPLES = '''
   tower_job_wait:
     job_id: "{{ job.id }}"
     timeout: 120
+    
+# Launch job template with extra vars
+- name: Launch a job template with Extra Vars on remote tower instance
+  tower_job_launch:
+    job_template: "My Job Template"
+    extra_vars: >
+      var1: "My First Variable",
+      var2: "My Second Variable",
+      var3: "My Third Variable"
+    tower_host: "{{ my_tower_host }}"
+    tower_username: "{{ my_tower_username }}"
+    tower_password: "{{ my_tower_password }}"
+    job_type: run
+    
 '''
 
 RETURN = '''
