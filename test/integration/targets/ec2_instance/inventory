@@ -1,5 +1,4 @@
 [tests]
-#dummy
 # Sorted fastest to slowest
 version_fail_wrapper
 ebs_optimized
