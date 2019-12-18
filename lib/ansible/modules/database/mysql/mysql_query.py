@@ -21,7 +21,6 @@ description:
 - Runs arbitrary MySQL queries.
 - Pay attention, the module does not support check mode!
   All queries will be executed in autocommit mode.
-- Can run queries from SQL script files.
 version_added: '2.10'
 options:
   query:

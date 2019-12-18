@@ -325,7 +325,7 @@
     - result.query == "DROP DATABASE {{ test_db }}"
 
 # Clean up:
-- name: Create test sql script
+- name: Remove test sql script
   become: yes
   file:
     path: '{{ test_script_path }}'
