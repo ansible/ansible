@@ -1,0 +1,4 @@
+---
+
+bugfixes:
+  - flatten filter now properly handles (skips) null values
