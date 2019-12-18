@@ -10,6 +10,9 @@
 - set_fact: log_neighbor_changesd="disable"
   when: (imagetag and (imagetag is version_compare('D1', 'ne')) and (imagetag is version_compare('N1', 'ne')))
 
+- debug:
+    var: titanium
+
 - set_fact: remove_private_asa="all"
   when: not titanium
 - set_fact: remove_private_asr="replace-as"
