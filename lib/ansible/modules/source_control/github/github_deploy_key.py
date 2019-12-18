@@ -69,8 +69,6 @@ options:
     description:
       - The 6 digit One Time Password for 2-Factor Authentication. Required together with I(username) and I(password).
     aliases: ['2fa_token']
-requirements:
-   - python-requests
 notes:
    - "Refer to GitHub's API documentation here: https://developer.github.com/v3/repos/keys/."
 '''
@@ -152,82 +150,89 @@ id:
     sample: 24381901
 '''
 
-import json
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
+from re import findall
 
 
 class GithubDeployKey(object):
-    def __init__(self, module=None, url=None, state=None, username=None, password=None, token=None, otp=None):
+    def __init__(self, module):
         self.module = module
-        self.url = url
-        self.state = state
-        self.username = username
-        self.password = password
-        self.token = token
-        self.otp = otp
-        self.timeout = 5
-        self.auth = None
-        self.headers = None
 
-        if username is not None and password is not None:
-            self.module.params['url_username'] = module.params['username']
-            self.module.params['url_password'] = module.params['password']
+        self.name = module.params['name']
+        self.key = module.params['key']
+        self.state = module.params['state']
+        self.read_only = module.params.get('read_only', True)
+        self.force = module.params.get('force', False)
+        self.username = module.params.get('username', None)
+        self.password = module.params.get('password', None)
+        self.token = module.params.get('token', None)
+        self.otp = module.params.get('otp', None)
+
+    @property
+    def url(self):
+        owner = self.module.params['owner']
+        repo = self.module.params['repo']
+        return "https://api.github.com/repos/{0}/{1}/keys".format(owner, repo)
+
+    @property
+    def headers(self):
+        if self.username is not None and self.password is not None:
+            self.module.params['url_username'] = self.username
+            self.module.params['url_password'] = self.password
             self.module.params['force_basic_auth'] = True
             if self.otp is not None:
-                self.headers = {"X-GitHub-OTP": self.otp}
+                return {"X-GitHub-OTP": self.otp}
+        elif self.token is not None:
+            return {"Authorization": "token {0}".format(self.token)}
         else:
-            self.headers = {"Authorization": "token {0}".format(self.token)}
+            return None
 
-    def get_existing_key(self, key, title, force):
-        resp, info = fetch_url(self.module, self.url, headers=self.headers, method="GET")
+    def paginate(self, url):
+        while url:
+            resp, info = fetch_url(self.module, url, headers=self.headers, method="GET")
 
-        status_code = info["status"]
+            if info["status"] == 200:
+                yield self.module.from_json(resp.read())
 
-        if status_code == 200:
-            response_body = json.loads(resp.read())
+                links = {}
+                for x, y in findall(r'<([^>]+)>;\s*rel="(\w+)"', info["link"]):
+                    links[y] = x
 
-            if response_body:
-                for i in response_body:
+                url = links.get('next')
+            else:
+                self.handle_error(method="GET", info=info)
+
+    def get_existing_key(self):
+        for keys in self.paginate(self.url):
+            if keys:
+                for i in keys:
                     existing_key_id = str(i["id"])
-                    if i["key"].split() == key.split()[:2]:
+                    if i["key"].split() == self.key.split()[:2]:
                         return existing_key_id
-                    elif i['title'] == title and force:
+                    elif i['title'] == self.name and self.force:
                         return existing_key_id
             else:
-                if self.state == 'absent':
-                    self.module.exit_json(changed=False, msg="Deploy key does not exist")
-                else:
-                    return None
-        elif status_code == 401:
-            self.module.fail_json(msg="Failed to connect to github.com due to invalid credentials", http_status_code=status_code)
-        elif status_code == 404:
-            self.module.fail_json(msg="GitHub repository does not exist", http_status_code=status_code)
-        else:
-            self.module.fail_json(msg="Failed to retrieve existing deploy keys", http_status_code=status_code)
+                return None
 
-    def add_new_key(self, request_body):
-        resp, info = fetch_url(self.module, self.url, data=json.dumps(request_body), headers=self.headers, method="POST")
+    def add_new_key(self):
+        request_body = {"title": self.name, "key": self.key, "read_only": self.read_only}
+
+        resp, info = fetch_url(self.module, self.url, data=self.module.jsonify(request_body), headers=self.headers, method="POST", timeout=30)
 
         status_code = info["status"]
 
         if status_code == 201:
-            response_body = json.loads(resp.read())
+            response_body = self.module.from_json(resp.read())
             key_id = response_body["id"]
             self.module.exit_json(changed=True, msg="Deploy key successfully added", id=key_id)
-        elif status_code == 401:
-            self.module.fail_json(msg="Failed to connect to github.com due to invalid credentials", http_status_code=status_code)
-        elif status_code == 404:
-            self.module.fail_json(msg="GitHub repository does not exist", http_status_code=status_code)
         elif status_code == 422:
             self.module.exit_json(changed=False, msg="Deploy key already exists")
         else:
-            err = info["body"]
-            self.module.fail_json(msg="Failed to add deploy key", http_status_code=status_code, error=err)
+            self.handle_error(method="POST", info=info)
 
     def remove_existing_key(self, key_id):
-        resp, info = fetch_url(self.module, self.url + "/{0}".format(key_id), headers=self.headers, method="DELETE")
+        resp, info = fetch_url(self.module, "{0}/{1}".format(self.url, key_id), headers=self.headers, method="DELETE")
 
         status_code = info["status"]
 
@@ -235,11 +240,28 @@ class GithubDeployKey(object):
             if self.state == 'absent':
                 self.module.exit_json(changed=True, msg="Deploy key successfully deleted", id=key_id)
         else:
-            self.module.fail_json(msg="Failed to delete existing deploy key", id=key_id, http_status_code=status_code)
+            self.handle_error(method="DELETE", info=info, key_id=key_id)
+
+    def handle_error(self, method, info, key_id=None):
+        status_code = info['status']
+        body = info.get('body')
+        if body:
+            err = self.module.from_json(body)['message']
+
+        if status_code == 401:
+            self.module.fail_json(msg="Failed to connect to github.com due to invalid credentials", http_status_code=status_code, error=err)
+        elif status_code == 404:
+            self.module.fail_json(msg="GitHub repository does not exist", http_status_code=status_code, error=err)
+        else:
+            if method == "GET":
+                self.module.fail_json(msg="Failed to retrieve existing deploy keys", http_status_code=status_code, error=err)
+            elif method == "POST":
+                self.module.fail_json(msg="Failed to add deploy key", http_status_code=status_code, error=err)
+            elif method == "DELETE":
+                self.module.fail_json(msg="Failed to delete existing deploy key", id=key_id, http_status_code=status_code, error=err)
 
 
 def main():
-
     module = AnsibleModule(
         argument_spec=dict(
             owner=dict(required=True, type='str', aliases=['account', 'organization']),
@@ -267,37 +289,26 @@ def main():
         supports_check_mode=True,
     )
 
-    owner = module.params['owner']
-    repo = module.params['repo']
-    name = module.params['name']
-    key = module.params['key']
-    state = module.params['state']
-    read_only = module.params.get('read_only', True)
-    force = module.params.get('force', False)
-    username = module.params.get('username', None)
-    password = module.params.get('password', None)
-    token = module.params.get('token', None)
-    otp = module.params.get('otp', None)
-
-    GITHUB_API_URL = "https://api.github.com/repos/{0}/{1}/keys".format(owner, repo)
-
-    deploy_key = GithubDeployKey(module, GITHUB_API_URL, state, username, password, token, otp)
+    deploy_key = GithubDeployKey(module)
 
     if module.check_mode:
-        key_id = deploy_key.get_existing_key(key, name, force)
-        if state == "present" and key_id is None:
+        key_id = deploy_key.get_existing_key()
+        if deploy_key.state == "present" and key_id is None:
             module.exit_json(changed=True)
-        elif state == "present" and key_id is not None:
+        elif deploy_key.state == "present" and key_id is not None:
             module.exit_json(changed=False)
 
     # to forcefully modify an existing key, the existing key must be deleted first
-    if state == 'absent' or force:
-        key_id = deploy_key.get_existing_key(key, name, force)
+    if deploy_key.state == 'absent' or deploy_key.force:
+        key_id = deploy_key.get_existing_key()
 
         if key_id is not None:
             deploy_key.remove_existing_key(key_id)
+        elif deploy_key.state == 'absent':
+            module.exit_json(changed=False, msg="Deploy key does not exist")
 
-    deploy_key.add_new_key({"title": name, "key": key, "read_only": read_only})
+    if deploy_key.state == "present":
+        deploy_key.add_new_key()
 
 
 if __name__ == '__main__':

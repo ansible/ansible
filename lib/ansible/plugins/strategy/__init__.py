@@ -510,7 +510,7 @@ class StrategyBase:
                     if state and iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE:
                         self._tqm._stats.increment('rescued', original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
-                            original_host,
+                            original_host.name,
                             dict(
                                 ansible_failed_task=original_task.serialize(),
                                 ansible_failed_result=task_result._result,

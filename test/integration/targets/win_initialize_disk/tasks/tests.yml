@@ -1,0 +1,104 @@
+---
+- name: Initialize the disk with the default partition style (check mode)
+  win_initialize_disk:
+    disk_number: 1
+  register: default_part_style_check
+  check_mode: yes
+
+- name: Get result of default initialization (check mode)
+  win_command: powershell.exe "if ( (Get-Disk -Number 1).PartitionStyle -eq 'RAW' ) {'true'} else {'false'}"
+  register: default_part_style_actual_check
+
+- name: assert default initialization (check mode)
+  assert:
+    that:
+      - default_part_style_check is changed
+      - default_part_style_actual_check.stdout == 'true\r\n'
+
+- name: Initialize the disk with the default partition style
+  win_initialize_disk:
+    disk_number: 1
+  register: default_part_style
+
+- name: Get result of default initialization
+  win_command: powershell.exe "if ( (Get-Disk -Number 1).PartitionStyle -eq 'GPT' ) {'true'} else {'false'}"
+  register: default_part_style_actual
+
+- name: assert default initialization
+  assert:
+    that:
+      - default_part_style is changed
+      - default_part_style_actual.stdout == 'true\r\n'
+
+- name: Initialize the disk with the default partition style (idempotence)
+  win_initialize_disk:
+    disk_number: 1
+  register: default_part_style_idempotence
+
+- name: Get result of default initialization (idempotence)
+  win_command: powershell.exe "if ( (Get-Disk -Number 1).PartitionStyle -eq 'GPT' ) {'true'} else {'false'}"
+  register: default_part_style_actual_idempotence
+
+- name: assert default initialization (idempotence)
+  assert:
+    that:
+      - not default_part_style_idempotence is changed
+      - default_part_style_actual_idempotence.stdout == 'true\r\n'
+
+- name: Partition style change without force fails
+  win_initialize_disk:
+    disk_number: 1
+    style: mbr
+  register: change_part_style
+  ignore_errors: True
+
+- name: assert failed partition style change
+  assert:
+    that:
+      - change_part_style is failed
+
+- name: Partition style change with force is successful (check mode)
+  win_initialize_disk:
+    disk_number: 1
+    style: mbr
+    force: yes
+  register: change_part_style_forced_check
+  check_mode: yes
+
+- name: Get result of forced initialization (check mode)
+  win_command: powershell.exe "if ( (Get-Disk -Number 1).PartitionStyle -eq 'GPT' ) {'true'} else {'false'}"
+  register: change_part_style_forced_actual_check
+
+- name: assert forced initialization (check mode)
+  assert:
+    that:
+      - change_part_style_forced_check is changed
+      - change_part_style_forced_actual_check.stdout == 'true\r\n'
+
+- name: Partition style change with force is successful
+  win_initialize_disk:
+    disk_number: 1
+    style: mbr
+    force: yes
+  register: change_part_style_forced
+
+- name: Get result of forced initialization
+  win_command: powershell.exe "if ( (Get-Disk -Number 1).PartitionStyle -eq 'MBR' ) {'true'} else {'false'}"
+  register: change_part_style_forced_actual
+
+- name: assert forced initialization
+  assert:
+    that:
+      - change_part_style_forced is changed
+      - change_part_style_forced_actual.stdout == 'true\r\n'
+
+- name: Unknown disk number fails
+  win_initialize_disk:
+    disk_number: 3
+  register: unknown_disk_number
+  ignore_errors: True
+
+- name: assert unknown disk number fails
+  assert:
+    that:
+      - unknown_disk_number is failed

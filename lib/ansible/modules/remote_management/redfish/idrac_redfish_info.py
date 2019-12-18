@@ -15,11 +15,11 @@ DOCUMENTATION = '''
 ---
 module: idrac_redfish_info
 version_added: "2.8"
-short_description: Manages servers through iDRAC using Dell Redfish APIs
+short_description: Gather PowerEdge server information through iDRAC using Redfish APIs
 description:
   - Builds Redfish URIs locally and sends them to remote iDRAC controllers to
     get information back.
-  - For use with Dell iDRAC operations that require Redfish OEM extensions
+  - For use with Dell EMC iDRAC operations that require Redfish OEM extensions
   - This module was called C(idrac_redfish_facts) before Ansible 2.9, returning C(ansible_facts).
     Note that the M(idrac_redfish_info) module no longer returns C(ansible_facts)!
 options:
@@ -32,6 +32,8 @@ options:
     required: true
     description:
       - List of commands to execute on iDRAC controller
+      - C(GetManagerAttributes) returns the list of dicts containing iDRAC,
+        LifecycleController and System attributes
     type: list
   baseuri:
     required: true
@@ -59,13 +61,54 @@ author: "Jose Delarosa (@jose-delarosa)"
 
 EXAMPLES = '''
   - name: Get Manager attributes with a default of 20 seconds
-    idrac_redfish_command:
+    idrac_redfish_info:
       category: Manager
       command: GetManagerAttributes
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
       timeout: 20
+    register: result
+
+  # Examples to display the value of all or a single iDRAC attribute
+  - name: Store iDRAC attributes as a fact variable
+    set_fact:
+      idrac_attributes: "{{ result.redfish_facts.entries | selectattr('Id', 'defined') | selectattr('Id', 'equalto', 'iDRACAttributes') | list | first }}"
+
+  - name: Display all iDRAC attributes
+    debug:
+      var: idrac_attributes
+
+  - name: Display the value of 'Syslog.1.SysLogEnable' iDRAC attribute
+    debug:
+      var: idrac_attributes['Syslog.1.SysLogEnable']
+
+  # Examples to display the value of all or a single LifecycleController attribute
+  - name: Store LifecycleController attributes as a fact variable
+    set_fact:
+      lc_attributes: "{{ result.redfish_facts.entries | selectattr('Id', 'defined') | selectattr('Id', 'equalto', 'LCAttributes') | list | first }}"
+
+  - name: Display LifecycleController attributes
+    debug:
+      var: lc_attributes
+
+  - name: Display the value of 'CollectSystemInventoryOnRestart' attribute
+    debug:
+      var: lc_attributes['LCAttributes.1.CollectSystemInventoryOnRestart']
+
+  # Examples to display the value of all or a single System attribute
+  - name: Store System attributes as a fact variable
+    set_fact:
+      system_attributes: "{{ result.redfish_facts.entries | selectattr('Id', 'defined') | selectattr('Id', 'equalto', 'SystemAttributes') | list | first }}"
+
+  - name: Display System attributes
+    debug:
+      var: system_attributes
+
+  - name: Display the value of 'PSRedPolicy'
+    debug:
+      var: system_attributes['ServerPwr.1.PSRedPolicy']
+
 '''
 
 RETURN = '''
@@ -85,20 +128,40 @@ class IdracRedfishUtils(RedfishUtils):
 
     def get_manager_attributes(self):
         result = {}
-        manager_attributes = {}
-        key = "Attributes"
+        manager_attributes = []
+        properties = ['Attributes', 'Id']
 
-        response = self.get_request(self.root_uri + self.manager_uri + "/" + key)
+        response = self.get_request(self.root_uri + self.manager_uri)
+
         if response['ret'] is False:
             return response
-        result['ret'] = True
         data = response['data']
 
-        if key not in data:
-            return {'ret': False, 'msg': "Key %s not found" % key}
+        # Manager attributes are supported as part of iDRAC OEM extension
+        # Attributes are supported only on iDRAC9
+        try:
+            for members in data[u'Links'][u'Oem'][u'Dell'][u'DellAttributes']:
+                attributes_uri = members[u'@odata.id']
 
-        for attribute in data[key].items():
-            manager_attributes[attribute[0]] = attribute[1]
+                response = self.get_request(self.root_uri + attributes_uri)
+                if response['ret'] is False:
+                    return response
+                data = response['data']
+
+                attributes = {}
+                for prop in properties:
+                    if prop in data:
+                        attributes[prop] = data.get(prop)
+
+                if attributes:
+                    manager_attributes.append(attributes)
+
+            result['ret'] = True
+
+        except (AttributeError, KeyError) as e:
+            result['ret'] = False
+            result['msg'] = "Failed to find attribute/key: " + str(e)
+
         result["entries"] = manager_attributes
         return result
 

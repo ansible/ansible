@@ -58,6 +58,11 @@ options:
       - Trigger hook on push events.
     type: bool
     default: yes
+  push_events_branch_filter:
+    description:
+      - Branch name of wildcard to trigger hook on push events
+    type: str
+    version_added: "2.10"
   issues_events:
     description:
       - Trigger hook on issues events.
@@ -177,7 +182,7 @@ from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
-from ansible.module_utils.gitlab import findProject
+from ansible.module_utils.gitlab import findProject, gitlabAuthentication
 
 
 class GitLabHook(object):
@@ -200,6 +205,7 @@ class GitLabHook(object):
             hook = self.createHook(project, {
                 'url': hook_url,
                 'push_events': options['push_events'],
+                'push_events_branch_filter': options['push_events_branch_filter'],
                 'issues_events': options['issues_events'],
                 'merge_requests_events': options['merge_requests_events'],
                 'tag_push_events': options['tag_push_events'],
@@ -213,6 +219,7 @@ class GitLabHook(object):
         else:
             changed, hook = self.updateHook(self.hookObject, {
                 'push_events': options['push_events'],
+                'push_events_branch_filter': options['push_events_branch_filter'],
                 'issues_events': options['issues_events'],
                 'merge_requests_events': options['merge_requests_events'],
                 'tag_push_events': options['tag_push_events'],
@@ -300,6 +307,7 @@ def main():
         project=dict(type='str', required=True),
         hook_url=dict(type='str', required=True),
         push_events=dict(type='bool', default=True),
+        push_events_branch_filter=dict(type='str', default=''),
         issues_events=dict(type='bool', default=False),
         merge_requests_events=dict(type='bool', default=False),
         tag_push_events=dict(type='bool', default=False),
@@ -326,16 +334,11 @@ def main():
         supports_check_mode=True,
     )
 
-    gitlab_url = re.sub('/api.*', '', module.params['api_url'])
-    validate_certs = module.params['validate_certs']
-    gitlab_user = module.params['api_username']
-    gitlab_password = module.params['api_password']
-    gitlab_token = module.params['api_token']
-
     state = module.params['state']
     project_identifier = module.params['project']
     hook_url = module.params['hook_url']
     push_events = module.params['push_events']
+    push_events_branch_filter = module.params['push_events_branch_filter']
     issues_events = module.params['issues_events']
     merge_requests_events = module.params['merge_requests_events']
     tag_push_events = module.params['tag_push_events']
@@ -349,15 +352,7 @@ def main():
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
-    try:
-        gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
-                                        private_token=gitlab_token, api_version=4)
-        gitlab_instance.auth()
-    except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
-    except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to GitLab server: %s. \
-            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
+    gitlab_instance = gitlabAuthentication(module)
 
     gitlab_hook = GitLabHook(module, gitlab_instance)
 
@@ -378,6 +373,7 @@ def main():
     if state == 'present':
         if gitlab_hook.createOrUpdateHook(project, hook_url, {
                                           "push_events": push_events,
+                                          "push_events_branch_filter": push_events_branch_filter,
                                           "issues_events": issues_events,
                                           "merge_requests_events": merge_requests_events,
                                           "tag_push_events": tag_push_events,

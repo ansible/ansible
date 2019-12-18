@@ -160,8 +160,8 @@ resources:
           - For Network Endpoint Groups this defines list of endpoints. All endpoints
             of Network Endpoint Group must be hosted on instances located in the same
             zone as the Network Endpoint Group.
-          - Backend service can not contain mix of Instance Group and Network Endpoint
-            Group backends.
+          - Backend services cannot mix Instance Group and Network Endpoint Group
+            backends.
           - Note that you must specify an Instance Group or Network Endpoint Group
             resource using the fully-qualified URL, rather than a partial URL.
           returned: success

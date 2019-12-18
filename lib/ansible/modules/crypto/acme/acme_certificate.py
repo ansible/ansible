@@ -646,9 +646,6 @@ class ACMEClient(object):
         Return the authorization object of the new authorization
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.4
         '''
-        if self.account.uri is None:
-            return
-
         new_authz = {
             "resource": "new-authz",
             "identifier": {"type": identifier_type, "value": identifier},
@@ -859,7 +856,7 @@ class ACMEClient(object):
             if relation == 'up':
                 chain_result, chain_info = self.account.get_request(link, parse_json_result=False)
                 if chain_info['status'] in [200, 201]:
-                    chain.clear()
+                    del chain[:]
                     chain.append(self._der_to_pem(chain_result))
 
         process_links(info, f)

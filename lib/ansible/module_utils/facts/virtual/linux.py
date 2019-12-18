@@ -54,6 +54,10 @@ class LinuxVirtual(Virtual):
                     virtual_facts['virtualization_type'] = 'lxc'
                     virtual_facts['virtualization_role'] = 'guest'
                     return virtual_facts
+                if re.search('container=podman', line):
+                    virtual_facts['virtualization_type'] = 'podman'
+                    virtual_facts['virtualization_role'] = 'guest'
+                    return virtual_facts
 
         if os.path.exists('/proc/vz') and not os.path.exists('/proc/lve'):
             virtual_facts['virtualization_type'] = 'openvz'
@@ -85,7 +89,7 @@ class LinuxVirtual(Virtual):
 
         product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
 
-        if product_name in ('KVM', 'Bochs'):
+        if product_name in ('KVM', 'Bochs', 'AHV'):
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts
 
@@ -117,7 +121,7 @@ class LinuxVirtual(Virtual):
 
         sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
 
-        KVM_SYS_VENDORS = ('QEMU', 'oVirt', 'Amazon EC2', 'DigitalOcean', 'Google', 'Scaleway')
+        KVM_SYS_VENDORS = ('QEMU', 'oVirt', 'Amazon EC2', 'DigitalOcean', 'Google', 'Scaleway', 'Nutanix')
         if sys_vendor in KVM_SYS_VENDORS:
             virtual_facts['virtualization_type'] = 'kvm'
             return virtual_facts

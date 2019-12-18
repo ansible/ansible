@@ -56,9 +56,11 @@ Ansible releases a new major release of Ansible approximately three to four time
 
 .. toctree::
    :maxdepth: 2
-   :caption: Ansible for Network Automation
+   :caption: Ansible Network Automation
 
-   network/index
+   network/getting_started/index
+   network/user_guide/index
+   network/dev_guide/index
 
 .. toctree::
    :maxdepth: 2
@@ -88,6 +90,7 @@ Ansible releases a new major release of Ansible approximately three to four time
    reference_appendices/module_utils
    reference_appendices/special_variables
    reference_appendices/tower
+   reference_appendices/automationhub
    reference_appendices/logging
 
 

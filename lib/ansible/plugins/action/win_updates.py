@@ -8,6 +8,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.plugins.action import ActionBase
+from ansible.plugins.loader import become_loader
 from ansible.utils.display import Display
 
 display = Display()
@@ -103,27 +104,19 @@ class ActionModule(ActionBase):
 
     def _execute_module_with_become(self, module_name, module_args, task_vars,
                                     wrap_async, use_task):
-        orig_become = self._play_context.become
-        orig_become_method = self._play_context.become_method
-        orig_become_user = self._play_context.become_user
-
-        if not use_task:
-            if orig_become is None or orig_become is False:
-                self._play_context.become = True
-            if orig_become_method != 'runas':
-                self._play_context.become_method = 'runas'
-            if orig_become_user is None or orig_become_user == 'root':
-                self._play_context.become_user = 'SYSTEM'
-
+        orig_become = self._connection.become
         try:
+            if not use_task and orig_become is None:
+                become = become_loader.get('runas')
+                become.set_options(direct={'become_user': 'SYSTEM', 'become_pass': None})
+                self._connection.set_become_plugin(become)
+
             module_res = self._execute_module(module_name=module_name,
                                               module_args=module_args,
                                               task_vars=task_vars,
                                               wrap_async=wrap_async)
         finally:
-            self._play_context.become = orig_become
-            self._play_context.become_method = orig_become_method
-            self._play_context.become_user = orig_become_user
+            self._connection.set_become_plugin(orig_become)
 
         return module_res
 

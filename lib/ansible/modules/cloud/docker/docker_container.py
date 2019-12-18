@@ -112,11 +112,19 @@ options:
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period.
+      - See I(cpus) for an easier to use alternative.
     type: int
   cpu_quota:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) quota.
+      - See I(cpus) for an easier to use alternative.
     type: int
+  cpus:
+    description:
+      - Specify how much of the available CPU resources a container can use.
+      - A value of C(1.5) means that at most one and a half CPU (core) will be used.
+    type: float
+    version_added: '2.10'
   cpuset_cpus:
     description:
       - CPUs in which to allow execution C(1,3) or C(1-3).
@@ -519,7 +527,11 @@ options:
     required: yes
   network_mode:
     description:
-      - Connect the container to a network. Choices are C(bridge), C(host), C(none) or C(container:<name|id>).
+      - Connect the container to a network. Choices are C(bridge), C(host), C(none), C(container:<name|id>), C(<network_name>) or C(default).
+      - "*Note* that from Ansible 2.14 on, if I(networks_cli_compatible) is C(true) and I(networks) contains at least one network,
+         the default value for I(network_mode) will be the name of the first network in the I(networks) list. You can prevent this
+         by explicitly specifying a value for I(network_mode), like the default value C(default) which will be used by Docker if
+         I(network_mode) is not specified."
     type: str
   userns_mode:
     description:
@@ -574,10 +586,13 @@ options:
       - "If I(networks_cli_compatible) is set to C(yes), this module will behave as
          C(docker run --network) and will *not* add the default network if I(networks) is
          specified. If I(networks) is not specified, the default network will be attached."
-      - "Note that docker CLI also sets I(network_mode) to the name of the first network
+      - "*Note* that docker CLI also sets I(network_mode) to the name of the first network
          added if C(--network) is specified. For more compatibility with docker CLI, you
          explicitly have to set I(network_mode) to the name of the first network you're
-         adding."
+         adding. This behavior will change for Ansible 2.14: then I(network_mode) will
+         automatically be set to the first network name in I(networks) if I(network_mode)
+         is not specified, I(networks) has at least one entry and I(networks_cli_compatible)
+         is C(true)."
       - Current value is C(no). A new default of C(yes) will be set in Ansible 2.12.
     type: bool
     version_added: "2.8"
@@ -1207,6 +1222,7 @@ class TaskParameters(DockerBaseClass):
         self.command = None
         self.cpu_period = None
         self.cpu_quota = None
+        self.cpus = None
         self.cpuset_cpus = None
         self.cpuset_mems = None
         self.cpu_shares = None
@@ -1292,6 +1308,9 @@ class TaskParameters(DockerBaseClass):
         # Only the container's name is needed.
         if self.state == 'absent':
             return
+
+        if self.cpus is not None:
+            self.cpus = int(round(self.cpus * 1E9))
 
         if self.groups:
             # In case integers are passed as groups, we need to convert them to
@@ -1544,6 +1563,7 @@ class TaskParameters(DockerBaseClass):
             device_write_iops='device_write_iops',
             pids_limit='pids_limit',
             mounts='mounts',
+            nano_cpus='cpus',
         )
 
         if self.client.docker_py_version >= LooseVersion('1.9') and self.client.docker_api_version >= LooseVersion('1.22'):
@@ -2125,6 +2145,7 @@ class Container(DockerBaseClass):
             # The previous tag, v1.9.1, has API version 1.21 and does not have
             # HostConfig.Mounts. I have no idea what about API 1.25...
             expected_mounts=self._decode_mounts(host_config.get('Mounts')),
+            cpus=host_config.get('NanoCpus'),
         )
         # Options which don't make sense without their accompanying option
         if self.parameters.restart_policy:
@@ -2263,7 +2284,7 @@ class Container(DockerBaseClass):
                 ))
             else:
                 diff = False
-                network_info_ipam = network_info.get('IPAMConfig', {})
+                network_info_ipam = network_info.get('IPAMConfig') or {}
                 if network.get('ipv4_address') and network['ipv4_address'] != network_info_ipam.get('IPv4Address'):
                     diff = True
                 if network.get('ipv6_address') and network['ipv6_address'] != network_info_ipam.get('IPv6Address'):
@@ -3156,6 +3177,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             uts=dict(docker_py_version='3.5.0', docker_api_version='1.25'),
             pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
             mounts=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
+            cpus=dict(docker_py_version='2.3.0', docker_api_version='1.25'),
             # specials
             ipvX_address_supported=dict(docker_py_version='1.9.0', docker_api_version='1.22',
                                         detect_usage=detect_ipvX_address_usage,
@@ -3212,6 +3234,7 @@ def main():
         container_default_behavior=dict(type='str', choices=['compatibility', 'no_defaults']),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
+        cpus=dict(type='float'),
         cpuset_cpus=dict(type='str'),
         cpuset_mems=dict(type='str'),
         cpu_shares=dict(type='int'),
@@ -3347,6 +3370,18 @@ def main():
             'the new `networks_cli_compatible` option to `yes`, and remove this warning by setting '
             'it to `no`',
             version='2.12'
+        )
+    if client.module.params['networks_cli_compatible'] is True and client.module.params['networks'] and client.module.params['network_mode'] is None:
+        client.module.deprecate(
+            'Please note that the default value for `network_mode` will change from not specified '
+            '(which is equal to `default`) to the name of the first network in `networks` if '
+            '`networks` has at least one entry and `networks_cli_compatible` is `true`. You can '
+            'change the behavior now by explicitly setting `network_mode` to the name of the first '
+            'network in `networks`, and remove this warning by setting `network_mode` to `default`. '
+            'Please make sure that the value you set to `network_mode` equals the inspection result '
+            'for existing containers, otherwise the module will recreate them. You can find out the '
+            'correct value by running "docker inspect --format \'{{.HostConfig.NetworkMode}}\' <container_name>"',
+            version='2.14'
         )
 
     try:

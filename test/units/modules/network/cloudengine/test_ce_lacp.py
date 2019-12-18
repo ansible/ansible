@@ -75,7 +75,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
                         select='Speed',
                         state='present'))
         result = self.execute_module(changed=True)
-        self.assertEquals(sorted(result['updates']), sorted(update))
+        self.assertEqual(sorted(result['updates']), sorted(update))
 
     def test_lacp_eturnk_absent(self):
         xml_existing = load_fixture('ce_lacp', 'ce_lacp_10.txt')
@@ -112,7 +112,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
                         state='absent'
                         ))
         result = self.execute_module(changed=True)
-        self.assertEquals(sorted(result['updates']), sorted(default_values))
+        self.assertEqual(sorted(result['updates']), sorted(default_values))
 
     def test_lacp_global_present(self):
         xml_existing = load_fixture('ce_lacp', 'ce_lacp_10.txt')
@@ -121,7 +121,7 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
         set_module_args(dict(global_priority=32769,
                              state='present'))
         result = self.execute_module(changed=True)
-        self.assertEquals(result['updates'], ['lacp priority 32769'])
+        self.assertEqual(result['updates'], ['lacp priority 32769'])
 
     def test_lacp_global_absent(self):
         xml_existing = load_fixture('ce_lacp', 'ce_lacp_11.txt')
@@ -131,4 +131,4 @@ class TestCloudEngineLacpModule(TestCloudEngineModule):
                              state='absent'))
         result = self.execute_module(changed=True)
         # excpect: lacp priority is set to default value(32768)
-        self.assertEquals(result['updates'], ['lacp priority 32768'])
+        self.assertEqual(result['updates'], ['lacp priority 32768'])

@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 module: aws_config_aggregation_authorization
 short_description: Manage cross-account AWS Config authorizations
 description:
-    - Module manages AWS Config resources
+    - Module manages AWS Config resources.
 version_added: "2.6"
 requirements: [ 'botocore', 'boto3' ]
 author:
@@ -33,10 +33,12 @@ options:
     description:
     - The 12-digit account ID of the account authorized to aggregate data.
     type: str
+    required: true
   authorized_aws_region:
     description:
     - The region authorized to collect aggregated data.
     type: str
+    required: true
 extends_documentation_fragment:
   - aws
   - ec2

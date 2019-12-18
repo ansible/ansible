@@ -175,7 +175,7 @@ container:
     returned: always
     type: dict
     sample: {
-        "last_mdoified": "09-Mar-2016 19:28:26 +0000",
+        "last_modified": "09-Mar-2016 19:28:26 +0000",
         "name": "foo",
         "tags": {}
     }
@@ -319,7 +319,7 @@ class AzureRMStorageBlob(AzureRMModuleBase):
             result = dict(
                 name=container.name,
                 tags=container.metadata,
-                last_mdoified=container.properties.last_modified.strftime('%d-%b-%Y %H:%M:%S %z'),
+                last_modified=container.properties.last_modified.strftime('%d-%b-%Y %H:%M:%S %z'),
             )
         return result
 

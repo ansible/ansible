@@ -8,33 +8,6 @@
     fail:
       msg: Please define an API key
     when: auth_key is not defined
-    
-  - name: Use an invalid domain
-    meraki_organization:
-      auth_key: '{{ auth_key }}'
-      host: marrrraki.com
-      state: present
-      org_name: IntTestOrg
-      output_level: debug
-    delegate_to: localhost
-    register: invalid_domain
-    ignore_errors: yes
-    
-  - name: Disable HTTP
-    meraki_organization:
-      auth_key: '{{ auth_key }}'
-      use_https: false
-      state: query
-      output_level: debug
-    delegate_to: localhost
-    register: http
-    ignore_errors: yes
-
-  - name: Connection assertions
-    assert:
-      that:
-        - '"Failed to connect to" in invalid_domain.msg'
-        - '"http" in http.url'
 
   - name: Create network
     meraki_network:

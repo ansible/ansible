@@ -38,8 +38,9 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'eos_config' else False
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
-        if self._play_context.connection in ('network_cli', 'httpapi'):
+        if persistent_connection in ('network_cli', 'httpapi'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
@@ -68,7 +69,7 @@ class ActionModule(ActionNetworkModule):
                 pc.become_pass = provider['auth_pass']
 
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
 
                 command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
                 connection.set_options(direct={'persistent_command_timeout': command_timeout})

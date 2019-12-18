@@ -142,6 +142,32 @@
   register: constraints_3
   ignore_errors: yes
 
+- name: placement.constraints (add)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      constraints:
+        - "node.role == worker"
+        - "node.label != non_existent_label"
+  register: constraints_4
+  ignore_errors: yes
+
+- name: placement.constraints (order idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      constraints:
+        - "node.label != non_existent_label"
+        - "node.role == worker"
+  register: constraints_5
+  ignore_errors: yes
+
 - name: placement.constraints (empty)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -150,7 +176,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       constraints: []
-  register: constraints_4
+  register: constraints_6
   ignore_errors: yes
 
 - name: placement.constraints (empty idempotency)
@@ -161,7 +187,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       constraints: []
-  register: constraints_5
+  register: constraints_7
   ignore_errors: yes
 
 - name: cleanup
@@ -178,6 +204,8 @@
       - constraints_3 is changed
       - constraints_4 is changed
       - constraints_5 is not changed
+      - constraints_6 is changed
+      - constraints_7 is not changed
   when: docker_api_version is version('1.27', '>=') and docker_py_version is version('2.4.0', '>=')
 - assert:
     that:

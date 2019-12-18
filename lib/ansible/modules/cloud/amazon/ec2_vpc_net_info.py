@@ -106,6 +106,28 @@ vpcs:
             description: True/False depending on attribute setting for DNS support.
             returned: always
             type: bool
+        cidr_block_association_set:
+            description: An array of IPv4 cidr block association set information.
+            returned: always
+            type: complex
+            contains:
+                association_id:
+                    description: The association ID
+                    returned: always
+                    type: str
+                cidr_block:
+                    description: The IPv4 CIDR block that is associated with the VPC.
+                    returned: always
+                    type: str
+                cidr_block_state:
+                    description: A hash/dict that contains a single item. The state of the cidr block association.
+                    returned: always
+                    type: dict
+                    contains:
+                        state:
+                            description: The CIDR block association state.
+                            returned: always
+                            type: str
         ipv6_cidr_block_association_set:
             description: An array of IPv6 cidr block association set information.
             returned: always

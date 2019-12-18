@@ -74,6 +74,29 @@ EXAMPLES = '''
     state: present
 '''
 
+RETURN = r'''
+gid:
+  description: Group ID of the group.
+  returned: When C(state) is 'present'
+  type: int
+  sample: 1001
+name:
+  description: Group name
+  returned: always
+  type: str
+  sample: users
+state:
+  description: Whether the group is present or not
+  returned: always
+  type: str
+  sample: 'absent'
+system:
+  description: Whether the group is a system group or not
+  returned: When C(state) is 'present'
+  type: bool
+  sample: False
+'''
+
 import grp
 
 from ansible.module_utils._text import to_bytes

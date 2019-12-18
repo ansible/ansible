@@ -6,7 +6,7 @@ Committers Guidelines
 
 These are the guidelines for people with commit privileges on the Ansible GitHub repository. Committers are essentially acting as members of the Ansible Core team, although not necessarily as employees of Ansible and Red Hat. Please read the guidelines before you commit.
 
-These guidelines apply to everyone. At the same time, this ISN'T a process document. So just use good judgement. You've been given commit access because we trust your judgement.
+These guidelines apply to everyone. At the same time, this ISN'T a process document. So just use good judgment. You've been given commit access because we trust your judgment.
 
 That said, use the trust wisely.
 

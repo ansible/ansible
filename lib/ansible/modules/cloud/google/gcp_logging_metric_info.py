@@ -178,6 +178,14 @@ resources:
               - The type of data that can be assigned to the label.
               returned: success
               type: str
+        displayName:
+          description:
+          - A concise name for the metric, which can be displayed in user interfaces.
+            Use sentence case without an ending period, for example "Request count".
+            This field is optional but it is recommended to be set for any metrics
+            associated with user-visible concepts, such as Quota.
+          returned: success
+          type: str
     labelExtractors:
       description:
       - A map from a label key string to an extractor expression which is used to

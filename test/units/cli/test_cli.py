@@ -178,7 +178,7 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.assertEqual(len(res), 2)
         matches = vault.match_secrets(res, ['prompt1'])
         self.assertIn('prompt1', [x[0] for x in matches])
-        self.assertEquals(len(matches), 1)
+        self.assertEqual(len(matches), 1)
 
     @patch('ansible.cli.get_file_vault_secret')
     @patch('ansible.cli.PromptVaultSecret')

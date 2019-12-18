@@ -555,9 +555,9 @@ class PgSubscription():
                  "ON s.subdbid = d.oid "
                  "JOIN pg_catalog.pg_roles AS r "
                  "ON s.subowner = r.oid "
-                 "WHERE s.subname = '%s' AND d.datname = '%s'" % (self.name, self.db))
+                 "WHERE s.subname = %(name)s AND d.datname = %(db)s")
 
-        result = exec_sql(self, query, add_to_executed=False)
+        result = exec_sql(self, query, query_params={'name': self.name, 'db': self.db}, add_to_executed=False)
         if result:
             return result[0]
         else:
@@ -573,9 +573,9 @@ class PgSubscription():
                  "FROM pg_catalog.pg_subscription_rel r "
                  "JOIN pg_catalog.pg_subscription s ON s.oid = r.srsubid "
                  "JOIN pg_catalog.pg_class c ON c.oid = r.srrelid "
-                 "WHERE s.subname = '%s'" % self.name)
+                 "WHERE s.subname = %(name)s")
 
-        result = exec_sql(self, query, add_to_executed=False)
+        result = exec_sql(self, query, query_params={'name': self.name}, add_to_executed=False)
         if result:
             return [dict(row) for row in result]
         else:
@@ -639,17 +639,17 @@ def main():
     relinfo = module.params['relinfo']
 
     if state == 'present' and cascade:
-        module.warm('parameter "cascade" is ignored when state is not absent')
+        module.warn('parameter "cascade" is ignored when state is not absent')
 
     if state != 'present':
         if owner:
-            module.warm("parameter 'owner' is ignored when state is not 'present'")
+            module.warn("parameter 'owner' is ignored when state is not 'present'")
         if publications:
-            module.warm("parameter 'publications' is ignored when state is not 'present'")
+            module.warn("parameter 'publications' is ignored when state is not 'present'")
         if connparams:
-            module.warm("parameter 'connparams' is ignored when state is not 'present'")
+            module.warn("parameter 'connparams' is ignored when state is not 'present'")
         if subsparams:
-            module.warm("parameter 'subsparams' is ignored when state is not 'present'")
+            module.warn("parameter 'subsparams' is ignored when state is not 'present'")
 
     # Connect to DB and make cursor object:
     pg_conn_params = get_conn_params(module, module.params)
@@ -679,7 +679,7 @@ def main():
         # Information has been collected already, so nothing is needed:
         pass
 
-    if state == 'present':
+    elif state == 'present':
         if not subscription.exists:
             if subsparams:
                 subsparams = convert_subscr_params(subsparams)
@@ -699,7 +699,7 @@ def main():
                                           check_mode=module.check_mode)
 
         if owner and subscription.attrs['owner'] != owner:
-            changed = subscription.set_owner(owner, check_mode=module.check_mode)
+            changed = subscription.set_owner(owner, check_mode=module.check_mode) or changed
 
     elif state == 'absent':
         changed = subscription.drop(cascade, check_mode=module.check_mode)
@@ -712,7 +712,8 @@ def main():
         changed = subscription.refresh(check_mode=module.check_mode)
 
     # Get final subscription info if needed:
-    final_state = subscription.get_info()
+    if state != 'stat':
+        final_state = subscription.get_info()
 
     # Connection is not needed any more:
     cursor.close()

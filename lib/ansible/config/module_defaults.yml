@@ -101,6 +101,10 @@ groupings:
   - aws
   aws_ssm_parameter_store:
   - aws
+  aws_step_functions_state_machine:
+  - aws
+  aws_step_functions_state_machine_execution:
+  - aws
   aws_waf_condition:
   - aws
   aws_waf_facts:
@@ -488,6 +492,8 @@ groupings:
   lambda_policy:
   - aws
   lightsail:
+  - aws
+  lightsail_keypair:
   - aws
   rds:
   - aws
@@ -1428,4 +1434,10 @@ groupings:
   vsphere_copy:
   - vmware
   vsphere_file:
+  - vmware
+  vmware_guest_register_operation:
+  - vmware
+  vmware_guest_serial_port:
+  - vmware
+  vmware_guest_tools_info:
   - vmware

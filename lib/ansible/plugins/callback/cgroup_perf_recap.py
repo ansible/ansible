@@ -277,6 +277,7 @@ class CallbackModule(CallbackBase):
 
         self._file_per_task = False
         self._counter = 0
+        self.write_files = False
 
     def _open_files(self, task_uuid=None):
         output_format = self._output_format
@@ -296,13 +297,14 @@ class CallbackModule(CallbackBase):
                 except Exception:
                     pass
 
-            filename = self._file_name_format % data
+            if self.write_files:
+                filename = self._file_name_format % data
 
-            self._files[feature] = open(os.path.join(output_dir, filename), 'w+')
-            if output_format == b'csv':
-                self._writers[feature] = partial(csv_writer, csv.writer(self._files[feature]))
-            elif output_format == b'json':
-                self._writers[feature] = partial(json_writer, self._files[feature])
+                self._files[feature] = open(os.path.join(output_dir, filename), 'w+')
+                if output_format == b'csv':
+                    self._writers[feature] = partial(csv_writer, csv.writer(self._files[feature]))
+                elif output_format == b'json':
+                    self._writers[feature] = partial(json_writer, self._files[feature])
 
     def set_options(self, task_keys=None, var_options=None, direct=None):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
@@ -355,7 +357,7 @@ class CallbackModule(CallbackBase):
             'pids': partial(PidsProf, pid_current_file, poll_interval=pid_poll_interval),
         }
 
-        write_files = self.get_option('write_files')
+        self.write_files = self.get_option('write_files')
         file_per_task = self.get_option('file_per_task')
         self._output_format = to_bytes(self.get_option('output_format'))
         output_dir = to_bytes(self.get_option('output_dir'), errors='surrogate_or_strict')
@@ -368,7 +370,7 @@ class CallbackModule(CallbackBase):
 
         file_name_format = to_bytes(self.get_option('file_name_format'))
 
-        if write_files:
+        if self.write_files:
             if file_per_task:
                 self._file_per_task = True
                 if file_name_format == b'%(feature)s.%(ext)s':

@@ -319,6 +319,7 @@ class Connection(NetworkConnectionBase):
         self._terminal = None
         self.cliconf = None
         self._paramiko_conn = None
+        self._task_uuid = to_text(kwargs.get('task_uuid', ''))
 
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
@@ -408,6 +409,12 @@ class Connection(NetworkConnectionBase):
         if hasattr(self, 'disable_response_logging'):
             self.disable_response_logging()
 
+    def update_cli_prompt_context(self, task_uuid):
+        # set cli prompt context at the start of new task run only
+        if self._task_uuid != task_uuid:
+            self.set_cli_prompt_context()
+            self._task_uuid = task_uuid
+
     def _connect(self):
         '''
         Connects to the remote device and starts the terminal
@@ -453,7 +460,7 @@ class Connection(NetworkConnectionBase):
 
             self.receive(prompts=terminal_initial_prompt, answer=terminal_initial_answer, newline=newline, check_all=check_all)
 
-            if self._play_context.become and self._play_context.become_method == 'enable':
+            if self._play_context.become:
                 self.queue_message('vvvv', 'firing event: on_become')
                 auth_pass = self._play_context.become_pass
                 self._terminal.on_become(passwd=auth_pass)

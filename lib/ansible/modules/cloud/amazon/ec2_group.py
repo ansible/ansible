@@ -515,7 +515,11 @@ def rule_from_group_permission(perm):
             )
     if 'UserIdGroupPairs' in perm and perm['UserIdGroupPairs']:
         for pair in perm['UserIdGroupPairs']:
-            target = pair['GroupId']
+            target = (
+                pair.get('UserId', None),
+                pair.get('GroupId', None),
+                pair.get('GroupName', None),
+            )
             if pair.get('UserId', '').startswith('amazon-'):
                 # amazon-elb and amazon-prefix rules don't need
                 # group-id specified, so remove it when querying

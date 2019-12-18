@@ -27,7 +27,7 @@ description:
       to emulate C(assertonly) usage with M(openssl_certificate_info), M(openssl_csr_info),
       M(openssl_privatekey_info) and M(assert). This also allows more flexible checks than
       the ones offered by the C(assertonly) provider.
-    - The C(ownca) provider is intended for generate OpenSSL certificate signed with your own
+    - The C(ownca) provider is intended for generating OpenSSL certificate signed with your own
       CA (Certificate Authority) certificate (self-signed certificate).
     - Many properties that can be specified in this module are for validation of an
       existing or newly generated certificate. The proper place to specify them, if you
@@ -68,8 +68,8 @@ options:
               M(openssl_privatekey_info) and M(assert).
             - "The C(entrust) provider was added for Ansible 2.9 and requires credentials for the
                L(https://www.entrustdatacard.com/products/categories/ssl-certificates,Entrust Certificate Services) (ECS) API."
+            - Required if I(state) is C(present).
         type: str
-        required: true
         choices: [ acme, assertonly, entrust, ownca, selfsigned ]
 
     force:
@@ -2486,9 +2486,10 @@ def main():
         supports_check_mode=True,
         add_file_common_args=True,
         required_if=[
+            ['state', 'present', ['provider']],
             ['provider', 'entrust', ['entrust_requester_email', 'entrust_requester_name', 'entrust_requester_phone',
                                      'entrust_api_user', 'entrust_api_key', 'entrust_api_client_cert_path',
-                                     'entrust_api_client_cert_key_path']]
+                                     'entrust_api_client_cert_key_path']],
         ]
     )
 

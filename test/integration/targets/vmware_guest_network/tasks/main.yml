@@ -24,7 +24,7 @@
       disk:
       - size_gb: 1
         type: thin
-        datastore: '{{ ds2 }}'
+        datastore: '{{ rw_datastore }}'
       hardware:
         version: latest
         memory_mb: 1024
@@ -32,7 +32,7 @@
         scsi: paravirtual
       cdrom:
         type: iso
-        iso_path: "[{{ ds1 }}] fedora.iso"
+        iso_path: "[{{ ro_datastore }}] fedora.iso"
       networks:
       - name: VM Network
 
@@ -162,6 +162,36 @@
       that:
         - del_again_netadapter is changed
         - "{{ del_again_netadapter.network_data | length | int }} == {{ netadapter_num | int + 1 }}"
+
+  - name: disable DirectPath I/O on a Vmxnet3 adapter
+    vmware_guest_network:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "test_vm1"
+      networks:
+        - state: present
+          mac: "aa:50:56:58:59:61"
+          directpath_io: False
+    register: disable_directpath_io
+
+  - debug: var=disable_directpath_io
+
+  - name: enable DirectPath I/O on a Vmxnet3 adapter
+    vmware_guest_network:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: "test_vm1"
+      networks:
+        - state: present
+          mac: "aa:50:56:58:59:61"
+          directpath_io: True
+    register: enable_directpath_io
+
+  - debug: var=enable_directpath_io
 
   - name: disconnect one specified network adapter
     vmware_guest_network:

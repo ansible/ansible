@@ -15,13 +15,13 @@
         guest_id: centos64Guest
         datacenter: "{{ dc1 }}"
         hardware:
-          num_cpus: 4
-          memory_mb: 512
+          num_cpus: 1
+          memory_mb: 128
           mem_reservation: 0
         disk:
           - size: 1gb
             type: thin
-            autoselect_datastore: True
+            datastore: "{{ rw_datastore }}"
         state: present
         folder: "{{ virtual_machines[0].folder }}"
       register: mem_reserve_result_0001
@@ -55,13 +55,13 @@
         guest_id: centos64Guest
         datacenter: "{{ dc1 }}"
         hardware:
-          num_cpus: 4
-          memory_mb: 512
+          num_cpus: 1
+          memory_mb: 128
           memory_reservation: 0
         disk:
           - size: 1gb
             type: thin
-            autoselect_datastore: True
+            datastore: "{{ rw_datastore }}"
         state: present
         folder: "{{ virtual_machines[0].folder }}"
       register: memory_reserve_result_0003
@@ -95,13 +95,13 @@
         guest_id: centos64Guest
         datacenter: "{{ dc1 }}"
         hardware:
-          num_cpus: 4
-          memory_mb: 512
+          num_cpus: 1
+          memory_mb: 128
           memory_reservation: 0
         disk:
           - size: 1gb
             type: thin
-            autoselect_datastore: True
+            datastore: "{{ rw_datastore }}"
         state: present
         folder: "{{ virtual_machines[0].folder }}"
       register: no_memory_reserve_result_0005
