@@ -202,7 +202,7 @@
     - name: assert changesets in info
       assert:
         that:
-          - "'stack_change_sets' in create_changeset_result"
+          - "'stack_change_sets' in stack_info.cloudformation[stack_name]"
 
     # try to create an empty changeset by passing in unchanged template
     - name: create a changeset
