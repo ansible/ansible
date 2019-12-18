@@ -44,18 +44,14 @@ options:
         required: false
         default: false
         type: bool
-    delete_policy:
-        description:
-            - deprecated. Use I(purge_policy) instead. To be removed in
-              Ansible 2.14
-        required: false
-        default: false
     purge_policy:
         description:
             - If yes, remove the policy from the repository.
+            - Alias C(delete_policy) has been deprecated and will be removed in Ansible 2.14
         required: false
         default: false
         type: bool
+        aliases: [ delete_policy ]
         version_added: '2.10'
     image_tag_mutability:
         description:
@@ -362,7 +358,7 @@ def run(ecr, params):
         name = params['name']
         state = params['state']
         policy_text = params['policy']
-        purge_policy = params['purge_policy'] or params['delete_policy']
+        purge_policy = params['purge_policy']
         registry_id = params['registry_id']
         force_set_policy = params['force_set_policy']
         lifecycle_policy_text = params['lifecycle_policy']
@@ -495,9 +491,7 @@ def main():
                    default='present'),
         force_set_policy=dict(required=False, type='bool', default=False),
         policy=dict(required=False, type='json'),
-        delete_policy=dict(required=False, type='bool',
-                           removed_in_version='2.9'),
-        purge_policy=dict(required=False, type='bool'),
+        purge_policy=dict(required=False, type='bool', aliases=['delete_policy']),
         lifecycle_policy=dict(required=False, type='json'),
         purge_lifecycle_policy=dict(required=False, type='bool')))
 
@@ -506,6 +500,11 @@ def main():
                            mutually_exclusive=[
                                ['policy', 'delete_policy', 'purge_policy'],
                                ['lifecycle_policy', 'purge_lifecycle_policy']])
+    if module.params.get('delete_policy'):
+        module.deprecate(
+            'The alias "delete_policy" has been deprecated and will be removed, '
+            'use "purge_policy" instead',
+            version='2.14')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')
