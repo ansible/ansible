@@ -17,7 +17,7 @@ notes:
 description:
     - Creates, removes and lists tags for an ecs_cluster.
        The resource is referenced by its cluster name.  It is designed to be used with complex args (tags), see the examples.
-version_added: '2.9'
+version_added: '2.10'
 author:
   - Lester Wade (@lwade)
   - Paul Arthur (@flowerysong)
