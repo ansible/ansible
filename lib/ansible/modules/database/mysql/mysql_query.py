@@ -116,7 +116,8 @@ from ansible.module_utils.mysql import (
 from ansible.module_utils._text import to_native
 
 DML_QUERY_KEYWORDS = ('INSERT', 'UPDATE', 'DELETE')
-DDL_QUERY_KEYWORDS = ('CREATE', 'DROP', 'ALTER')
+# TRUNCATE is not DDL query but it also returns 0 rows affected:
+DDL_QUERY_KEYWORDS = ('CREATE', 'DROP', 'ALTER', 'TRUNCATE')
 
 
 # ===========================================

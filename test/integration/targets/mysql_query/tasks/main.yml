@@ -1,0 +1,2 @@
+# mysql_query module initial CI tests
+- import_tasks: mysql_query_initial.yml

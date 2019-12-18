@@ -1,0 +1,52 @@
+# Test code for mysql_query module
+# Copyright: (c) 2020, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+###################
+# Prepare for tests
+#
+
+# Create role for tests
+- name: Create mysql user {{ user_name }}
+  mysql_user:
+    name: '{{ user_name }}'
+    password: '{{ user_pass }}'
+    state: present
+    priv: '*.*:ALL'
+    login_unix_socket: '{{ mysql_socket }}'
+
+# Create default MySQL config file with credentials
+- name: Create default config file
+  template:
+    src: my.cnf.j2
+    dest: '/root/.my.cnf'
+    mode: 0400
+
+# Create non-default MySQL config file with credentials
+- name: Create non-default config file
+  template:
+    src: my.cnf.j2
+    dest: '/root/non-default_my.cnf'
+    mode: 0400
+
+###############
+# Do tests
+
+- name: Create db {{ test_db }}
+  mysql_query:
+    login_user: '{{ user_name }}'
+    query: 'CREATE DATABASE {{ test_db }}'
+  register: result
+
+- assert:
+    that: result is changed
+
+- name: Create table {{ test_table1 }}
+  mysql_query:
+    login_db: '{{ test_db }}'
+    login_user: '{{ user_name }}'
+    query: 'CREATE TABLE {{ test_table1 }} (id int)'
+  register: result
+
+- assert:
+    that: result is changed

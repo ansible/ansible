@@ -1,0 +1,5 @@
+db_name: data
+user_name: alice
+user_pass: alice
+test_db: testdb
+test_table1: test1
