@@ -52,7 +52,6 @@ options:
         default: false
         type: bool
         aliases: [ delete_policy ]
-        version_added: '2.10'
     image_tag_mutability:
         description:
             - Configure whether repository should be mutable (ie. an already existing tag can be overwritten) or not.
