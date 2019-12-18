@@ -238,3 +238,95 @@
     - result is not changed
     - result.query == "DELETE FROM {{ test_table1 }} WHERE id = 0"
     - result.rowcount == 0
+
+- name: Truncate {{ test_table1 }}
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: "TRUNCATE {{ test_table1 }}"
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "TRUNCATE {{ test_table1 }}"
+    - result.rowcount == 0
+
+- name: Check the prev truncate
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: "SELECT * FROM {{ test_table1 }}"
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT * FROM {{ test_table1 }}"
+    - result.rowcount == 0
+
+- name: Truncate {{ test_table1 }}
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: "RENAME TABLE {{ test_table1 }} TO {{ test_table2 }}"
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "RENAME TABLE {{ test_table1 }} TO {{ test_table2 }}"
+    - result.rowcount == 0
+
+- name: Check the prev rename
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: "SELECT * FROM {{ test_table1 }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.failed == true
+
+- name: Check the prev rename
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: "SELECT * FROM {{ test_table2 }}"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+- name: Drop db {{ test_db }}
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    query: 'DROP DATABASE {{ test_db }}'
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "DROP DATABASE {{ test_db }}"
+
+# Clean up:
+- name: Create test sql script
+  become: yes
+  file:
+    path: '{{ test_script_path }}'
+    state: absent
