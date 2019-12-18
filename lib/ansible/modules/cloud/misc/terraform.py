@@ -386,7 +386,7 @@ def main():
                 command=' '.join(command)
             )
 
-    outputs_command = [command[0], 'output', '-no-color', '-json'] + (['-state', state_out_file] 
+    outputs_command = [command[0], 'output', '-no-color', '-json'] + (['-state', state_out_file]
                                                                       if state == 'present' and state_out_file else _state_args(state_file))
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
     if rc == 1:
