@@ -1,4 +1,7 @@
 ---
+- include_role:
+    name: 'setup_remote_tmp_dir'
+
 - set_fact:
     virtualenv: "{{ remote_tmp_dir }}/virtualenv"
     virtualenv_command: "{{ ansible_python_interpreter }} -m virtualenv"
@@ -7,7 +10,7 @@
     virtualenv_interpreter: "{{ virtualenv }}/bin/python"
 
 - pip:
-    name: virtualenv
+    name: "virtualenv"
 
 - pip:
     name:
@@ -23,5 +26,5 @@
     ansible_python_interpreter: "{{ virtualenv_interpreter }}"
 
 - file:
-    path: "{{ virtualenv }}"
     state: absent
+    path: "{{ virtualenv }}"
