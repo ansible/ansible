@@ -1,72 +1,71 @@
 #!/usr/bin/python
-# Copyright: Ansible Project
+# -*- coding: utf-8 -*-
+# Copyright: (c) 2019, Michael Pechner <mikey@mikey.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
+                    'status': ['preview'],
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ecs_tag
 short_description: create and remove tags on ecs clusters.
+notes:
+    - none
 description:
-    - Creates, removes and lists tags for an ecs_cluster.  The resource is referenced by its cluster name.
-      It is designed to be used with complex args (tags), see the examples.
-version_added: "2.8"
-requirements: [ "boto3", "botocore" ]
+    - Creates, removes and lists tags for an ecs_cluster.
+       The resource is referenced by its cluster name.  It is designed to be used with complex args (tags), see the examples.
+version_added: '2.9'
+author:
+  - Lester Wade (@lwade)
+  - Paul Arthur (@flowerysong)
+  - Michael Pechner (@mpechner)
+requirements: [ boto3, botocore ]
 options:
   cluster_name:
     description:
       - The name of the cluster who's resources we are tagging
     required: true
+    type: str
   resource:
     description:
       - The ecs resource name. Can be none only if resource_type is cluster.
     required: false
+    type: str
   resource_type:
     description:
       - The type of resource
-      default: cluster
-      choices: ['cluster', 'task', 'service', task_definition', 'container']
+    default: cluster
+    choices: ['cluster', 'task', 'service', 'task_definition', 'container']
+    type: str
   state:
     description:
-      - Whether the tags should be present or absent on the resource. Use 
-        list to interrogate the tags of a ecs resource.
+      - Whether the tags should be present or absent on the resource. Use list to interrogate the tags of a ecs resource.
     default: present
     choices: ['present', 'absent', 'list']
+    type: str
   tags:
     description:
       - A dictionary of tags to add or remove from the resource.
-      - If the value provided for a tag is null and C(state) is I(absent), the 
-        tag will be removed regardless of its current value.
+      - If the value provided for a tag is null and C(state) is I(absent), the tag will be removed regardless of its current value.
     required: true
+    type: dict
   purge_tags:
     description:
       - Whether unspecified tags should be removed from the resource.
       - "Note that when combined with C(state: absent), specified tags with non-matching values are not purged."
     type: bool
     default: no
-    version_added: '2.8'
-
-author:
-  - Lester Wade (@lwade)
-  - Paul Arthur (@flowerysong)
-  - Michael Pechner (@mpechner)
 extends_documentation_fragment:
     - aws
-    - ecs
+    - ec2
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Ensure tags are present on a resource
   ecs_tag:
-    region: eu-west-1
     cluster_name: mycluster
     resource_type: cluster
     state: present
@@ -76,16 +75,13 @@ EXAMPLES = '''
 
 - name: Retrieve all tags on a cluster
   ecs_tag:
-    region: eu-west-1
     cluster_name: mycluster
     resource: http_task
-    resource_type: task 
+    resource_type: task
     state: list
-  register: ecs_tags
 
 - name: Remove the Env tag
   ecs_tag:
-    region: eu-west-1
     cluster_name: mycluster
     resource_type: cluster
     tags:
@@ -94,7 +90,6 @@ EXAMPLES = '''
 
 - name: Remove the Env tag if it's currently 'development'
   ecs_tag:
-    region: eu-west-1
     cluster_name: mycluster
     resource_type: cluster
     tags:
@@ -103,16 +98,15 @@ EXAMPLES = '''
 
 - name: Remove all tags except for Name from a cluster
   ecs_tag:
-    region: eu-west-1
     cluster_name: mycluster
-    resource_type: cluster
+    resource_type: cluster:27
     tags:
-        Name: ''
+        Name: foo
     state: absent
     purge_tags: true
 '''
 
-RETURN = '''
+RETURN = r'''
 tags:
   description: A dict containing the tags on the resource
   returned: always
@@ -134,6 +128,7 @@ try:
     from botocore.exceptions import BotoCoreError, ClientError
 except Exception:
     pass    # Handled by AnsibleAWSModule
+__metaclass__ = type
 
 
 def get_tags(ecs, module, resource):
@@ -147,10 +142,11 @@ def main():
     argument_spec = dict(
         cluster_name=dict(required=True),
         resource=dict(required=False),
-        tags=dict(type='dict'),
+        tags=dict(type='dict', required=True),
         purge_tags=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent', 'list']),
         resource_type=dict(default='cluster', choices=['cluster', 'task', 'service', 'task_definition', 'container'])
+
     )
     required_if = [('state', 'present', ['tags']), ('state', 'absent', ['tags'])]
 
