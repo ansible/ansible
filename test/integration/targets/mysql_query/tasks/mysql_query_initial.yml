@@ -6,29 +6,6 @@
 # Prepare for tests
 #
 
-# Create role for tests
-- name: Create mysql user {{ user_name }}
-  mysql_user:
-    name: '{{ user_name }}'
-    password: '{{ user_pass }}'
-    state: present
-    priv: '*.*:ALL'
-    login_unix_socket: '{{ mysql_socket }}'
-
-# Create default MySQL config file with credentials
-- name: Create default config file
-  template:
-    src: my.cnf.j2
-    dest: '/root/.my.cnf'
-    mode: 0400
-
-# Create non-default MySQL config file with credentials
-- name: Create non-default config file
-  template:
-    src: my.cnf.j2
-    dest: '/root/non-default_my.cnf'
-    mode: 0400
-
 # Prepare SQL script:
 - name: Remove SQL script if exists
   become: yes
@@ -45,34 +22,219 @@
     mode: 0644
 
 - name: Prepare SQL script
-  become_user: "{{ pg_user }}"
   become: yes
-  shell: 'echo "{{ item }}" >> ~{{ pg_user}}/test.sql'
+  shell: 'echo "{{ item }}" >> {{ test_script_path }}'
   ignore_errors: yes
-  with_items:
-  - 'INSERT INTO {{ test_table1 }} VALUES (1, 2, 3);'
-  - 'INSERT INTO {{ test_table1 }} VALUES (4, 5, 6);'
-  when: sql_file_created
-
+  loop:
+  - 'INSERT INTO {{ test_table1 }} (id) VALUES (1), (2), (3);'
 
 ###############
 # Do tests
 
 - name: Create db {{ test_db }}
   mysql_query:
-    login_user: '{{ user_name }}'
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
     query: 'CREATE DATABASE {{ test_db }}'
   register: result
 
 - assert:
-    that: result is changed
+    that:
+    - result is changed
+    - result.query == "CREATE DATABASE {{ test_db }}"
 
 - name: Create table {{ test_table1 }}
   mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
     login_db: '{{ test_db }}'
-    login_user: '{{ user_name }}'
     query: 'CREATE TABLE {{ test_table1 }} (id int)'
   register: result
 
 - assert:
+    that:
+    - result is changed
+    - result.query == "CREATE TABLE {{ test_table1 }} (id int)"
+
+- name: Run queries from sql script file
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    path_to_script: '{{ test_script_path }}'
+  register: result
+
+- assert:
     that: result is changed
+
+- name: Check data in {{ test_table1 }}
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: 'SELECT * FROM {{ test_table1 }}'
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT * FROM {{ test_table1 }}"
+    - result.rowcount == 3
+    - result.query_result[0].id == 1
+    - result.query_result[1].id == 2
+    - result.query_result[2].id == 3
+
+- name: Check data in {{ test_table1 }} using positional args
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: 'SELECT * FROM {{ test_table1 }} WHERE id = %s'
+    positional_args:
+    - 1
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT * FROM {{ test_table1 }} WHERE id = 1"
+    - result.rowcount == 1
+    - result.query_result[0].id == 1
+
+- name: Check data in {{ test_table1 }} using named args
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: 'SELECT * FROM {{ test_table1 }} WHERE id = %(some_id)s'
+    named_args:
+      some_id: 1
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT * FROM {{ test_table1 }} WHERE id = 1"
+    - result.rowcount == 1
+    - result.query_result[0].id == 1
+
+- name: Update data in {{ test_table1 }}
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: "UPDATE {{ test_table1 }} SET id = %(new_id)s WHERE id = %(current_id)s"
+    named_args:
+      current_id: 1
+      new_id: 0
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "UPDATE {{ test_table1 }} SET id = 0 WHERE id = 1"
+    - result.rowcount == 1
+
+- name: Check the prev update - row with value 1 does not exist anymore
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: 'SELECT * FROM {{ test_table1 }} WHERE id = %(some_id)s'
+    named_args:
+      some_id: 1
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT * FROM {{ test_table1 }} WHERE id = 1"
+    - result.rowcount == 0
+
+- name: Check the prev update - row with value - exist
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: 'SELECT * FROM {{ test_table1 }} WHERE id = %(some_id)s'
+    named_args:
+      some_id: 0
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT * FROM {{ test_table1 }} WHERE id = 0"
+    - result.rowcount == 1
+
+- name: Update data in {{ test_table1 }} again
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: "UPDATE {{ test_table1 }} SET id = %(new_id)s WHERE id = %(current_id)s"
+    named_args:
+      current_id: 1
+      new_id: 0
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "UPDATE {{ test_table1 }} SET id = 0 WHERE id = 1"
+    - result.rowcount == 0
+
+- name: Delete data from {{ test_table1 }}
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: "DELETE FROM {{ test_table1 }} WHERE id = 0"
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.query == "DELETE FROM {{ test_table1 }} WHERE id = 0"
+    - result.rowcount == 1
+
+- name: Check the prev delete - row with value 0 does not exist anymore
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: "SELECT * FROM {{ test_table1 }} WHERE id = 0"
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "SELECT * FROM {{ test_table1 }} WHERE id = 0"
+    - result.rowcount == 0
+
+- name: Delete data from {{ test_table1 }} again
+  mysql_query:
+    login_unix_socket: '{{ mysql_socket }}'
+    login_user: '{{ root_user }}'
+    login_password: '{{ root_pass }}'
+    login_db: '{{ test_db }}'
+    query: "DELETE FROM {{ test_table1 }} WHERE id = 0"
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.query == "DELETE FROM {{ test_table1 }} WHERE id = 0"
+    - result.rowcount == 0

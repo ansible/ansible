@@ -163,7 +163,8 @@ def main():
 
     if path_to_script:
         try:
-            query = open(path_to_script, 'r').read()
+            query = to_native(open(path_to_script, 'rb').read())
+            query = query.replace('\n', ' ')
         except Exception as e:
             module.fail_json(msg="Cannot read file '%s' : %s" % (path_to_script, to_native(e)))
 
@@ -194,6 +195,7 @@ def main():
     # Execute query:
     try:
         cursor.execute(query, arguments)
+
     except Exception as e:
         cursor.close()
         module.fail_json(msg="Cannot execute SQL '%s' args [%s]: %s" % (query, arguments, to_native(e)))
