@@ -44,7 +44,7 @@ mysql_driver_fail_msg = 'The PyMySQL (Python 2.7 and Python 3.X) or MySQL-python
 
 
 def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None,
-                  connect_timeout=30):
+                  connect_timeout=30, autocommit=False):
     config = {}
 
     if ssl_ca is not None or ssl_key is not None or ssl_cert is not None:
@@ -75,6 +75,8 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
         config['db'] = db
     if connect_timeout is not None:
         config['connect_timeout'] = connect_timeout
+    if autocommit:
+        config['autocommit'] = autocommit
 
     db_connection = mysql_driver.connect(**config)
 
