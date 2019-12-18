@@ -207,6 +207,27 @@ options:
         type: bool
         default: True
         version_added: "2.9"
+    plan:
+        description:
+            - Third-party billing plan for the VM.
+        version_added: "2.10"
+        type: dict
+        suboptions:
+            name:
+                description:
+                    - Billing plan name.
+                required: true
+            product:
+                description:
+                    - Product name.
+                required: true
+            publisher:
+                description:
+                    - Publisher offering the plan.
+                required: true
+            promotion_code:
+                description:
+                    - Optional promotion code.
     zones:
         description:
             - A list of Availability Zones for your virtual machine scale set.
@@ -251,6 +272,36 @@ EXAMPLES = '''
       publisher: CoreOS
       sku: Stable
       version: latest
+    data_disks:
+      - lun: 0
+        disk_size_gb: 64
+        caching: ReadWrite
+        managed_disk_type: Standard_LRS
+
+- name: Create VMSS with an image that requires plan information
+  azure_rm_virtualmachinescaleset:
+    resource_group: myResourceGroup
+    name: testvmss
+    vm_size: Standard_DS1_v2
+    capacity: 3
+    virtual_network_name: testvnet
+    upgrade_policy: Manual
+    subnet_name: testsubnet
+    admin_username: adminUser
+    ssh_password_enabled: false
+    ssh_public_keys:
+      - path: /home/adminUser/.ssh/authorized_keys
+        key_data: < insert yor ssh public key here... >
+    managed_disk_type: Standard_LRS
+    image:
+      offer: cis-ubuntu-linux-1804-l1
+      publisher: center-for-internet-security-inc
+      sku: Stable
+      version: latest
+    plan:
+      name: cis-ubuntu-linux-1804-l1
+      product: cis-ubuntu-linux-1804-l1
+      publisher: center-for-internet-security-inc
     data_disks:
       - lun: 0
         disk_size_gb: 64
@@ -453,7 +504,10 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             overprovision=dict(type='bool', default=True),
             single_placement_group=dict(type='bool', default=True),
             zones=dict(type='list'),
-            custom_data=dict(type='str')
+            custom_data=dict(type='str'),
+            plan=dict(type='dict', options=dict(publisher=dict(type='str', required=True),
+                      product=dict(type='str', required=True), name=dict(type='str', required=True),
+                      promotion_code=dict(type='str'))),
         )
 
         self.resource_group = None
@@ -487,6 +541,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.single_placement_group = None
         self.zones = None
         self.custom_data = None
+        self.plan = None
 
         required_if = [
             ('state', 'present', [
@@ -758,6 +813,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         if nsg:
                             self.security_group = self.network_models.NetworkSecurityGroup(id=nsg.get('id'))
 
+                    plan = None
+                    if self.plan:
+                        plan = self.compute_models.Plan(name=self.plan.get('name'), product=self.plan.get('product'),
+                                                        publisher=self.plan.get('publisher'),
+                                                        promotion_code=self.plan.get('promotion_code'))
+
                     os_profile = None
                     if self.admin_username or self.custom_data or self.ssh_public_keys:
                         os_profile = self.compute_models.VirtualMachineScaleSetOSProfile(
@@ -779,6 +840,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             capacity=self.capacity,
                             tier=self.tier,
                         ),
+                        plan=plan,
                         virtual_machine_profile=self.compute_models.VirtualMachineScaleSetVMProfile(
                             os_profile=os_profile,
                             storage_profile=self.compute_models.VirtualMachineScaleSetStorageProfile(
@@ -851,6 +913,21 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             ))
 
                         vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
+
+                    if self.plan:
+                        try:
+                            plan_name = self.plan.get('name')
+                            plan_product = self.plan.get('product')
+                            plan_publisher = self.plan.get('publisher')
+                            term = self.marketplace_client.marketplace_agreements.get(
+                                publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name)
+                            term.accepted = True
+                            self.marketplace_client.marketplace_agreements.create(
+                                publisher_id=plan_publisher, offer_id=plan_product, plan_id=plan_name, parameters=term)
+                        except Exception as exc:
+                            self.fail(("Error accepting terms for virtual machine {0} with plan {1}. " +
+                                       "Only service admin/account admin users can purchase images " +
+                                       "from the marketplace. - {2}").format(self.name, self.plan, str(exc)))
 
                     self.log("Create virtual machine with parameters:")
                     self.create_or_update_vmss(vmss_resource)
