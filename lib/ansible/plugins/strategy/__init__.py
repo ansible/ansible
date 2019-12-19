@@ -911,7 +911,10 @@ class StrategyBase:
         if notified_hosts is None:
             notified_hosts = handler.notified_hosts[:]
 
+        # strategy plugins that filter hosts need access to the iterator to identify failed hosts
+        failed_hosts = self._filter_notified_failed_hosts(iterator, notified_hosts)
         notified_hosts = self._filter_notified_hosts(notified_hosts)
+        notified_hosts += failed_hosts
 
         if len(notified_hosts) > 0:
             saved_name = handler.name
@@ -990,6 +993,9 @@ class StrategyBase:
             if h not in notified_hosts]
         display.debug("done running handlers, result is: %s" % result)
         return result
+
+    def _filter_notified_failed_hosts(self, iterator, notified_hosts):
+        return []
 
     def _filter_notified_hosts(self, notified_hosts):
         '''
