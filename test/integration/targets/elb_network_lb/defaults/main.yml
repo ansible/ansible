@@ -4,3 +4,4 @@
 # was created and allows tests to be run in parallel
 nlb_name: "my-nlb-{{ resource_prefix | regex_search('([0-9]+)$') }}"
 tg_name: "my-tg-{{ resource_prefix | regex_search('([0-9]+)$') }}"
+tg_tcpudp_name: "my-tg-tcpudp-{{ resource_prefix | regex_search('([0-9]+)$') }}"
