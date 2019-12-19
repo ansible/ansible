@@ -45,3 +45,17 @@ if [[ $file_count -ne 1 ]]; then
     fi
     exit 1
 fi
+
+# Ensure extra vars filename is prepended with '@' sign
+if ansible-playbook -i ../../inventory --extra-vars /tmp/non-existing-file playbook.yml; then
+    echo "extra_vars filename without '@' sign should cause failure"
+    exit 1
+fi
+
+# Ensure extra vars filename is prepended with '@' sign
+if ansible-playbook -i ../../inventory --extra-vars ./vars.yml playbook.yml; then
+    echo "extra_vars filename without '@' sign should cause failure"
+    exit 1
+fi
+
+ansible-playbook -i ../../inventory --extra-vars @./vars.yml playbook.yml
