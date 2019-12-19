@@ -413,6 +413,7 @@ def main():
             config_file=dict(type='path', default='~/.my.cnf'),
             single_transaction=dict(type='bool', default=False),
             quick=dict(type='bool', default=True),
+            no_create_db=dict(type='bool', Default=False),
             ignore_tables=dict(type='list', default=[]),
             hex_blob=dict(default=False, type='bool'),
             force=dict(type='bool', default=False),
@@ -450,6 +451,7 @@ def main():
             module.fail_json(msg="Name of ignored table cannot be empty")
     single_transaction = module.params["single_transaction"]
     quick = module.params["quick"]
+    no_create_db = module.params["no_create_db"]
     hex_blob = module.params["hex_blob"]
     force = module.params["force"]
 
