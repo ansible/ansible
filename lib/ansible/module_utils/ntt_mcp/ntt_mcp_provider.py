@@ -2,21 +2,7 @@
 #
 # Copyright (c) 2019, Ken Sinfield <ken.sinfield@cis.ntt.com>
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Authors:
-#   - Ken Sinfield (@kensinfield)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 # NTT LTD MCP Cloud API Provider (MCP 2.0)
 
@@ -1546,7 +1532,8 @@ class NTTMCPClient():
                     if route.get('name') == name:
                         return_data.append(route)
                     elif all([network, prefix, next_hop]):
-                        if (route.get('destinationNetworkAddress') == network and route.get('destinationPrefixSize') == prefix and route.get('nextHopAddress') == next_hop):
+                        if (route.get('destinationNetworkAddress') == network and route.get('destinationPrefixSize') == prefix and
+                                route.get('nextHopAddress') == next_hop):
                             return_data.append(route)
                     elif all([network, prefix]):
                         if route.get('destinationNetworkAddress') == network and route.get('destinationPrefixSize') == prefix:
@@ -2952,7 +2939,6 @@ class NTTMCPClient():
             return response.json().get(api_entity)
         except Exception:
             return []
-
 
     def list_vip_node(self, network_domain_id=None, name=None, ip_address=None):
         """

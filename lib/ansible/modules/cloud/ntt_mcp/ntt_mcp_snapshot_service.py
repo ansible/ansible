@@ -3,18 +3,7 @@
 #
 # Copyright (c) 2019, Ken Sinfield <ken.sinfield@cis.ntt.com>
 #
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -33,7 +22,7 @@ description:
     - When disabling snapshot replication on a server it can take 2-4 hours for this process to finish even if though
     - the tasks returns immediately. Disabling the snapshot service on a server requires that snapshot replication is
     - already disabled.
-version_added: 2.10
+version_added: "2.10"
 author:
     - Ken Sinfield (@kensinfield)
 options:
@@ -61,12 +50,12 @@ options:
     plan:
         description:
             - The name of a desired Service Plan. Use ntt_mcp_snapshot_info to get a list of valid plans.
-        required: true
+        required: false
         type: str
     window:
         description:
             - The starting hour for the snapshot window (24 hour notation). Use ntt_mcp_snapshot_info to find a window.
-        required: true
+        required: false
         type: int
     replication:
         description:
@@ -78,7 +67,7 @@ options:
     state:
         description:
             - The action to be performed
-        required: true
+        required: false
         type: str
         default: present
         choices:
