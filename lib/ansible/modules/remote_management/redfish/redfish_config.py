@@ -276,7 +276,7 @@ def main():
             'bios_attribute_value']
         module.deprecate(msg='The bios_attribute_name/bios_attribute_value '
                          'options are deprecated. Use bios_attributes instead',
-                         version='2.10')
+                         version='2.14')
 
     # boot order
     boot_order = module.params['boot_order']
