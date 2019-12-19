@@ -1269,11 +1269,12 @@ class NTTMCPClient():
         else:
             raise NTTMCPAPIException('No response from the API')
 
-    def set_vapp(self, server_id=None, iso=False, vmtools=True, vapp=list()):
+    def set_vapp(self, server_id=None, iso=False, vmtools=True, vapp=None):
         """
         Enable and set vApp properties on a server
         """
         params = dict()
+        vapp = list()
 
         if server_id is None:
             raise NTTMCPAPIException('A valid server_id is required')
@@ -1324,11 +1325,12 @@ class NTTMCPClient():
         else:
             raise NTTMCPAPIException('No response from the API')
 
-    def remove_vapp_property(self, server_id=None, iso=False, vmtools=True, vapp_keys=list()):
+    def remove_vapp_property(self, server_id=None, iso=False, vmtools=True, vapp_keys=None):
         """
         Remove vApp properties from a server
         """
         params = dict()
+        vapp_keys = list()
 
         if server_id is None:
             raise NTTMCPAPIException('A valid server_id is required')
