@@ -94,7 +94,6 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
     AWSRetry,
     boto3_conn,
-    ec2_argument_spec,
     get_aws_connection_info,
     camel_dict_to_snake_dict,
     boto3_tag_list_to_ansible_dict,
@@ -257,13 +256,10 @@ class AnsibleEc2Igw(object):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            vpc_id=dict(required=True),
-            state=dict(default='present', choices=['present', 'absent']),
-            tags=dict(default=dict(), required=False, type='dict', aliases=['resource_tags'])
-        )
+    argument_spec = dict(
+        vpc_id=dict(required=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        tags=dict(default=dict(), required=False, type='dict', aliases=['resource_tags'])
     )
 
     module = AnsibleAWSModule(

@@ -223,7 +223,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, get_aws_connection_info
 from ansible.module_utils._text import to_text
 
 
@@ -325,8 +325,7 @@ class EcsTaskManager:
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(required=True, choices=['present', 'absent']),
         arn=dict(required=False, type='str'),
         family=dict(required=False, type='str'),
@@ -340,7 +339,7 @@ def main():
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         cpu=dict(),
         memory=dict(required=False, type='str')
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,

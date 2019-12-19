@@ -262,7 +262,7 @@ try:
     import botocore
 except ImportError:
     pass  # handled by AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, snake_dict_to_camel_dict
+from ansible.module_utils.ec2 import snake_dict_to_camel_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 
 
@@ -505,8 +505,7 @@ def modify_cluster(module, redshift):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         command=dict(choices=['create', 'facts', 'delete', 'modify'], required=True),
         identifier=dict(required=True),
         node_type=dict(choices=['ds1.xlarge', 'ds1.8xlarge', 'ds2.xlarge',
@@ -538,7 +537,7 @@ def main():
         enhanced_vpc_routing=dict(type='bool', default=False),
         wait=dict(type='bool', default=False),
         wait_timeout=dict(type='int', default=300),
-    ))
+    )
 
     required_if = [
         ('command', 'delete', ['skip_final_cluster_snapshot']),

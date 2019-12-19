@@ -815,7 +815,6 @@ from ansible.module_utils.six.moves.urllib import parse as urlparse
 from ansible.module_utils._text import to_bytes, to_native
 import ansible.module_utils.ec2 as ec2_utils
 from ansible.module_utils.ec2 import (boto3_conn,
-                                      ec2_argument_spec,
                                       get_aws_connection_info,
                                       AWSRetry,
                                       ansible_dict_to_boto3_filter_list,
@@ -1675,8 +1674,7 @@ def run_instances(ec2, **instance_spec):
 
 def main():
     global module
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(default='present', choices=['present', 'started', 'running', 'stopped', 'restarted', 'rebooted', 'terminated', 'absent']),
         wait=dict(default=True, type='bool'),
         wait_timeout=dict(default=600, type='int'),
@@ -1711,7 +1709,7 @@ def main():
         instance_ids=dict(default=[], type='list'),
         network=dict(default=None, type='dict'),
         volumes=dict(default=None, type='list'),
-    ))
+    )
     # running/present are synonyms
     # as are terminated/absent
     module = AnsibleAWSModule(

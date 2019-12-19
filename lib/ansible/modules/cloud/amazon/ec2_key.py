@@ -134,7 +134,7 @@ key:
 import uuid
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn
+from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 from ansible.module_utils._text import to_bytes
 
 try:
@@ -242,16 +242,13 @@ def delete_key_pair(module, ec2_client, name, finish_task=True):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            key_material=dict(),
-            force=dict(type='bool', default=True),
-            state=dict(default='present', choices=['present', 'absent']),
-            wait=dict(type='bool', removed_in_version='2.14'),
-            wait_timeout=dict(type='int', removed_in_version='2.14')
-        )
+    argument_spec = dict(
+        name=dict(required=True),
+        key_material=dict(),
+        force=dict(type='bool', default=True),
+        state=dict(default='present', choices=['present', 'absent']),
+        wait=dict(type='bool', removed_in_version='2.14'),
+        wait_timeout=dict(type='int', removed_in_version='2.14')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)

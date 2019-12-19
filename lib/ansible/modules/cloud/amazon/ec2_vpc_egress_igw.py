@@ -64,7 +64,6 @@ vpc_id:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
     boto3_conn,
-    ec2_argument_spec,
     get_aws_connection_info,
     camel_dict_to_snake_dict
 )
@@ -167,11 +166,10 @@ def describe_eigws(module, conn, vpc_id):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         vpc_id=dict(required=True),
         state=dict(default='present', choices=['present', 'absent'])
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 

@@ -225,7 +225,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list, ansible_dict_to_boto3_tag_list,
-                                      ec2_argument_spec, camel_dict_to_snake_dict, get_aws_connection_info,
+                                      camel_dict_to_snake_dict, get_aws_connection_info,
                                       boto3_conn, boto3_tag_list_to_ansible_dict, compare_aws_tags, AWSRetry)
 
 
@@ -563,21 +563,18 @@ def ensure_subnet_absent(conn, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            az=dict(default=None, required=False),
-            cidr=dict(required=True),
-            ipv6_cidr=dict(default='', required=False),
-            state=dict(default='present', choices=['present', 'absent']),
-            tags=dict(default={}, required=False, type='dict', aliases=['resource_tags']),
-            vpc_id=dict(required=True),
-            map_public=dict(default=False, required=False, type='bool'),
-            assign_instances_ipv6=dict(default=False, required=False, type='bool'),
-            wait=dict(type='bool', default=True),
-            wait_timeout=dict(type='int', default=300, required=False),
-            purge_tags=dict(default=True, type='bool')
-        )
+    argument_spec = dict(
+        az=dict(default=None, required=False),
+        cidr=dict(required=True),
+        ipv6_cidr=dict(default='', required=False),
+        state=dict(default='present', choices=['present', 'absent']),
+        tags=dict(default={}, required=False, type='dict', aliases=['resource_tags']),
+        vpc_id=dict(required=True),
+        map_public=dict(default=False, required=False, type='bool'),
+        assign_instances_ipv6=dict(default=False, required=False, type='bool'),
+        wait=dict(type='bool', default=True),
+        wait_timeout=dict(type='int', default=300, required=False),
+        purge_tags=dict(default=True, type='bool')
     )
 
     required_if = [('assign_instances_ipv6', True, ['ipv6_cidr'])]

@@ -157,7 +157,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
 
 
@@ -239,11 +239,10 @@ def main():
     """
      Module action handler
     """
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         name=dict(aliases=['role_name']),
         path_prefix=dict(),
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,

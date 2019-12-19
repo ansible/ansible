@@ -234,7 +234,7 @@ import re
 from time import sleep
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.waiters import get_waiter
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, snake_dict_to_camel_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
@@ -715,21 +715,18 @@ def ensure_route_table_present(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            lookup=dict(default='tag', choices=['tag', 'id']),
-            propagating_vgw_ids=dict(type='list'),
-            purge_routes=dict(default=True, type='bool'),
-            purge_subnets=dict(default=True, type='bool'),
-            purge_tags=dict(default=False, type='bool'),
-            route_table_id=dict(),
-            routes=dict(default=[], type='list'),
-            state=dict(default='present', choices=['present', 'absent']),
-            subnets=dict(type='list'),
-            tags=dict(type='dict', aliases=['resource_tags']),
-            vpc_id=dict()
-        )
+    argument_spec = dict(
+        lookup=dict(default='tag', choices=['tag', 'id']),
+        propagating_vgw_ids=dict(type='list'),
+        purge_routes=dict(default=True, type='bool'),
+        purge_subnets=dict(default=True, type='bool'),
+        purge_tags=dict(default=False, type='bool'),
+        route_table_id=dict(),
+        routes=dict(default=[], type='list'),
+        state=dict(default='present', choices=['present', 'absent']),
+        subnets=dict(type='list'),
+        tags=dict(type='dict', aliases=['resource_tags']),
+        vpc_id=dict()
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,

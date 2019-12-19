@@ -150,7 +150,6 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
     AWSRetry,
     boto3_conn,
-    ec2_argument_spec,
     get_aws_connection_info,
     camel_dict_to_snake_dict,
     boto3_tag_list_to_ansible_dict
@@ -200,10 +199,8 @@ def lb_instance_health(connection, load_balancer_name, instances, state):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         names={'default': [], 'type': 'list'}
-    )
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True)

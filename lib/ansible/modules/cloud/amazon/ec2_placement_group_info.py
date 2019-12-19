@@ -77,7 +77,6 @@ placement_groups:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (connect_to_aws,
                                       boto3_conn,
-                                      ec2_argument_spec,
                                       get_aws_connection_info)
 try:
     from botocore.exceptions import (BotoCoreError, ClientError)
@@ -112,11 +111,8 @@ def get_placement_groups_details(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            names=dict(type='list', default=[])
-        )
+    argument_spec = dict(
+        names=dict(type='list', default=[])
     )
 
     module = AnsibleAWSModule(

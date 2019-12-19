@@ -303,7 +303,7 @@ placement_constraints:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_conn, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_conn, get_aws_connection_info
 
 try:
     import botocore
@@ -312,10 +312,9 @@ except ImportError:
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         task_definition=dict(required=True, type='str')
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._name == 'ecs_taskdefinition_facts':

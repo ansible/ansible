@@ -93,7 +93,6 @@ placement_group:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (AWSRetry,
                                       boto3_conn,
-                                      ec2_argument_spec,
                                       get_aws_connection_info)
 try:
     from botocore.exceptions import (BotoCoreError, ClientError)
@@ -167,13 +166,10 @@ def delete_placement_group(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True, type='str'),
-            state=dict(default='present', choices=['present', 'absent']),
-            strategy=dict(default='cluster', choices=['cluster', 'spread'])
-        )
+    argument_spec = dict(
+        name=dict(required=True, type='str'),
+        state=dict(default='present', choices=['present', 'absent']),
+        strategy=dict(default='cluster', choices=['cluster', 'spread'])
     )
 
     module = AnsibleAWSModule(

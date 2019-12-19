@@ -182,7 +182,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
+from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, AWSRetry
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 from ansible.module_utils._text import to_native
 
@@ -360,13 +360,12 @@ def main():
     """
     Module action handler
     """
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         id=dict(),
         name=dict(aliases=['creation_token']),
         tags=dict(type="dict", default={}),
         targets=dict(type="list", default=[])
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True)
