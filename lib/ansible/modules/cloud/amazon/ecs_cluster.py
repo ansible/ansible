@@ -3,13 +3,12 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -43,8 +42,8 @@ options:
         type: dict
     purge_tags:
         description:
-          - If yes, existing tags will be purged from the resource to match 
-            exactly what is defined by I(tags) parameter. If the I(tags) parameter 
+          - If yes, existing tags will be purged from the resource to match
+            exactly what is defined by I(tags) parameter. If the I(tags) parameter
             is not set then tags will not be modified.
         required: false
         default: yes
@@ -130,6 +129,7 @@ import time
 
 try:
     import boto3
+
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
@@ -189,10 +189,10 @@ class EcsClusterManager:
             # Add/update tags
             if tags_need_modify:
                 try:
-                    self.ecs.tag_resource(resourceArn=cluster['clusterArn'], 
-                        tags=ansible_dict_to_boto3_tag_list(tags_need_modify, 
-                            tag_name_key_name='key', 
-                            tag_value_key_name='value'))
+                    self.ecs.tag_resource(resourceArn=cluster['clusterArn'],
+                                          tags=ansible_dict_to_boto3_tag_list(tags_need_modify,
+                                                                              tag_name_key_name='key',
+                                                                              tag_value_key_name='value'))
                 except Exception as e:
                     module.fail_json(msg=str(e) + " Unable to add tags {0}".format(tags_need_modify))
 
@@ -207,7 +207,6 @@ class EcsClusterManager:
 
 
 def main():
-
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(required=True, choices=['present', 'absent', 'has_instances']),
@@ -275,7 +274,8 @@ def main():
                 break
             time.sleep(delay)
         if count == 0 and i is repeat - 1:
-            module.fail_json(msg="Cluster instance count still zero after " + str(repeat) + " tries of " + str(delay) + " seconds each.")
+            module.fail_json(msg="Cluster instance count still zero after " + str(repeat) + " tries of " + str(
+                delay) + " seconds each.")
             return
 
     module.exit_json(**results)
