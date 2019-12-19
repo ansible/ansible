@@ -39,6 +39,7 @@
       query:
       - 'INSERT INTO {{ test_table1 }} VALUES (1), (2)'
       - 'INSERT INTO {{ test_table1 }} VALUES (3)'
+      single_transaction: yes
     register: result
 
   - assert:

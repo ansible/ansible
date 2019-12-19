@@ -86,9 +86,9 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
             db_connection.autocommit(True)
 
     if cursor_class == 'DictCursor':
-        return db_connection.cursor(**{_mysql_cursor_param: mysql_driver.cursors.DictCursor})
+        return db_connection.cursor(**{_mysql_cursor_param: mysql_driver.cursors.DictCursor}), db_connection
     else:
-        return db_connection.cursor()
+        return db_connection.cursor(), db_connection
 
 
 def mysql_common_argument_spec():

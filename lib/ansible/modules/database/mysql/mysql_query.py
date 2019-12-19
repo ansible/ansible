@@ -41,6 +41,11 @@ options:
     description:
     - Name of database to connect to and run queries against.
     type: str
+  single_transaction:
+    description:
+    - Where run passed queries in a single transaction or commit them one-by-one.
+    type: bool
+    default: no
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: mysql
@@ -68,12 +73,13 @@ EXAMPLES = r'''
       id_val: 1
       story_val: test
 
-- name: Run several insert queries against db test_db
+- name: Run several insert queries against db test_db in single transaction
   mysql_query:
     login_db: test_db
     query:
     - INSERT INTO articles (id, story) VALUES (2, 'my_long_story')
     - INSERT INTO prices (id, price) VALUES (123, '100.00')
+    single_transaction: yes
 '''
 
 RETURN = r'''
@@ -121,6 +127,7 @@ def main():
         login_db=dict(type='str'),
         positional_args=dict(type='list'),
         named_args=dict(type='dict'),
+        single_transaction=dict(type='bool', default=False),
     )
 
     module = AnsibleModule(
@@ -141,6 +148,10 @@ def main():
     query = module.params["query"]
     positional_args = module.params["positional_args"]
     named_args = module.params["named_args"]
+    if module.params["single_transaction"]:
+        autocommit = False
+    else:
+        autocommit = True
 
     if positional_args and named_args:
         module.fail_json(msg="positional_args and named_args params are mutually exclusive")
@@ -150,10 +161,10 @@ def main():
 
     # Connect to DB:
     try:
-        cursor = mysql_connect(module, login_user, login_password,
-                               config_file, ssl_cert, ssl_key, ssl_ca, db,
-                               connect_timeout=connect_timeout,
-                               cursor_class='DictCursor', autocommit=True)
+        cursor, db_connection = mysql_connect(module, login_user, login_password,
+                                              config_file, ssl_cert, ssl_key, ssl_ca, db,
+                                              connect_timeout=connect_timeout,
+                                              cursor_class='DictCursor', autocommit=autocommit)
     except Exception as e:
         module.fail_json(msg="unable to connect to database, check login_user and "
                              "login_password are correct or %s has the credentials. "
@@ -198,6 +209,10 @@ def main():
 
         executed_queries.append(cursor._last_executed)
         rowcount.append(cursor.rowcount)
+
+    # When the module run with the single_transaction == True:
+    if not autocommit:
+        db_connection.commit()
 
     # Create dict with returned values:
     kw = {
