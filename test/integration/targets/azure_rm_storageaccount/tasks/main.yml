@@ -109,7 +109,7 @@
    ignore_errors: yes
 
  - name: Assert CNAME failure
-   assert: { that: "'custom domain name could not be verified' in  change_account['msg']" }
+   assert: { that: "'Azure Error: StorageCustomDomainNameNotValid' in  change_account['msg']" }
 
  - name: Update account tags
    azure_rm_storageaccount:
