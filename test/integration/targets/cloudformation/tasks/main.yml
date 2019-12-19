@@ -153,11 +153,45 @@
           - "'stack_tags' in stack_info.cloudformation[stack_name]"
           - "stack_info.cloudformation[stack_name].stack_tags.Stack == stack_name"
 
+    - name: get stack details (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+      check_mode: yes
+
+    - name: assert stack info
+      assert:
+        that:
+          - "'cloudformation' in stack_info"
+          - "stack_info.cloudformation | length == 1"
+          - "stack_name in stack_info.cloudformation"
+          - "'stack_description' in stack_info.cloudformation[stack_name]"
+          - "'stack_outputs' in stack_info.cloudformation[stack_name]"
+          - "'stack_parameters' in stack_info.cloudformation[stack_name]"
+          - "'stack_tags' in stack_info.cloudformation[stack_name]"
+          - "stack_info.cloudformation[stack_name].stack_tags.Stack == stack_name"
+
     - name: get stack details (all_facts)
       cloudformation_info:
         stack_name: "{{ stack_name }}"
         all_facts: yes
       register: stack_info
+
+    - name: assert stack info
+      assert:
+        that:
+          - "'stack_events' in stack_info.cloudformation[stack_name]"
+          - "'stack_policy' in stack_info.cloudformation[stack_name]"
+          - "'stack_resource_list' in stack_info.cloudformation[stack_name]"
+          - "'stack_resources' in stack_info.cloudformation[stack_name]"
+          - "'stack_template' in stack_info.cloudformation[stack_name]"
+
+    - name: get stack details (all_facts) (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        all_facts: yes
+      register: stack_info
+      check_mode: yes
 
     - name: assert stack info
       assert:
@@ -198,6 +232,18 @@
         stack_name: "{{ stack_name }}"
         stack_change_sets: True
       register: stack_info
+
+    - name: assert changesets in info
+      assert:
+        that:
+          - "'stack_change_sets' in stack_info.cloudformation[stack_name]"
+
+    - name: get stack details with changesets (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        stack_change_sets: True
+      register: stack_info
+      check_mode: yes
 
     - name: assert changesets in info
       assert:
@@ -257,6 +303,17 @@
         that:
           - "stack_info.cloudformation[stack_name].stack_description.enable_termination_protection"
 
+    - name: get stack details (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+      check_mode: yes
+
+    - name: assert stack info
+      assert:
+        that:
+          - "stack_info.cloudformation[stack_name].stack_description.enable_termination_protection"
+
     - name: set termination protection to false
       cloudformation:
         stack_name: "{{ stack_name }}"
@@ -281,6 +338,17 @@
       cloudformation_info:
         stack_name: "{{ stack_name }}"
       register: stack_info
+
+    - name: assert stack info
+      assert:
+        that:
+          - "not stack_info.cloudformation[stack_name].stack_description.enable_termination_protection"
+
+    - name: get stack details (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+      check_mode: yes
 
     - name: assert stack info
       assert:
@@ -345,6 +413,17 @@
       cloudformation_info:
         stack_name: "{{ stack_name }}"
       register: stack_info
+
+    - name: assert stack info
+      assert:
+        that:
+          - "not stack_info.cloudformation"
+
+    - name: get stack details (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+      check_mode: yes
 
     - name: assert stack info
       assert:
