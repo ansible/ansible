@@ -18,6 +18,46 @@ Installing collections
 ======================
 
 
+To install a collection with the ``ansible-galaxy collection install`` command, you must first obtain an API token (``--api-key`` in the ``ansible-galaxy`` CLI command or ``token`` in the :file:`ansible.cfg` file under the ``galaxy_server`` section). The API token is a secret token used to protect your content.
+
+To get your API token:
+
+* For Galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API token`.
+* For Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Get API token` from the version dropdown.
+
+Storing or using your API token
+-------------------------------
+
+Once you have retrieved your API token, you have the following options on how you can store or use that token for collections:
+
+* Pass the token to  the ``ansible-galaxy`` command using the ``--api-key``.
+* Specify the token within a Galaxy server list in your :file:`ansible.cfg` file.
+
+Using the ``api-key``
+^^^^^^^^^^^^^^^^^^^^^
+
+You can use the ``--api-key`` argument with the ``ansible-galaxy`` command (in conjunction with the ``--server`` argument or :ref:`GALAXY_SERVER` setting in your :file:`ansible.cfg` file). You cannot use ``apt-key``  with any servers defined in your :ref:`Galaxy server list <galaxy_server_config>`.
+
+.. code-block:: bash
+
+    ansible-galaxy collection install ./geerlingguy-collection-1.2.3.tar.gz --api-key=<key goes here>
+
+
+Specify the token within a Galaxy server list
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+With this option, you configure one or more servers for Galaxy in your :file:`ansible.cfg` file under the ``galaxy_server_list`` section. For each server, you also configure the token.
+
+
+.. code-block:: ini
+
+   [galaxy]
+   server_list = release_galaxy
+
+   [galaxy_server.release_galaxy]
+     url=https://galaxy.ansible.com/
+     token=my_token
+
 Installing collections with ``ansible-galaxy``
 ----------------------------------------------
 
