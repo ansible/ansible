@@ -1,0 +1,96 @@
+---
+- name: Clean up the firewall rules
+  vmware_host_firewall_manager:
+    cluster_name: '{{ ccr1 }}'
+    rules:
+        - name: vvold
+          enabled: False
+        - name: CIMHttpServer
+          enabled: True
+          allowed_hosts:
+            all_ip: True
+        - name: NFC
+          enabled: True
+          allowed_hosts:
+            all_ip: True
+  ignore_errors: yes
+
+- name: Remove the VM prepared by prepare_vmware_tests
+  vmware_guest:
+    name: "{{ item.name }}"
+    force: yes
+    state: absent
+  with_items: '{{ virtual_machines + virtual_machines_in_cluster }}'
+
+- name: Remove the test_vm* VMs
+  vmware_guest:
+    name: "{{ item }}"
+    force: yes
+    state: absent
+  with_items:
+    - test_vm1
+    - test_vm2
+    - test_vm3
+
+- name: Remove the DVS portgroups
+  vmware_dvs_portgroup:
+    switch_name: "{{ dvswitch1 }}"
+    portgroup_name: '{{ item }}'
+    vlan_id: 0
+    num_ports: 32
+    portgroup_type: earlyBinding
+    state: absent
+  loop:
+  - DC0_DVPG0
+  - DVPG/1
+  ignore_errors: yes
+
+- name: Remove the DVSwitch
+  vmware_dvswitch:
+    datacenter_name: '{{ dc1 }}'
+    state: absent
+    switch_name: '{{ item }}'
+  loop:
+    - '{{ dvswitch1 }}'
+    - dvswitch_0001
+    - dvswitch_0002
+  ignore_errors: yes
+
+- name: Remove the vSwitches
+  vmware_vswitch:
+    hostname: '{{ item }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    switch_name: "{{ switch1 }}"
+    state: absent
+  with_items: "{{ esxi_hosts }}"
+  ignore_errors: yes
+
+- name: Remove ESXi Hosts to vCenter
+  vmware_host:
+    datacenter_name: '{{ dc1 }}'
+    cluster_name: ccr1
+    esxi_hostname: '{{ item }}'
+    esxi_username: '{{ esxi_user }}'
+    esxi_password: '{{ esxi_password }}'
+    state: absent
+  with_items: "{{ esxi_hosts }}"
+  ignore_errors: yes
+
+- name: Umount NFS datastores to ESXi (1/2)
+  vmware_host_datastore:
+      hostname: '{{ item }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
+      datastore_name: '{{ ro_datastore }}'
+      state: absent
+  with_items: "{{ esxi_hosts }}"
+
+- name: Umount NFS datastores to ESXi (2/2)
+  vmware_host_datastore:
+      hostname: '{{ item }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
+      datastore_name: '{{ rw_datastore }}'
+      state: absent
+  with_items: "{{ esxi_hosts }}"
