@@ -1,11 +1,10 @@
 
 
-By default, ``ansible-galaxy colleciton install`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the
-:file:`ansible.cfg` file under :ref:`galaxy_server`). You should also set up your API token in your
-:file:`ansible.cfg` file. See :ref:`API token <collections_installing>` for details. You do not need any
+By default, ``ansible-galaxy collection install`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the
+:file:`ansible.cfg` file under :ref:`galaxy_server`). You do not need any
 further configuration.
 
-See :ref:`Configuring the ansible-galaxy client <galaxy_server_config>` if you are using any other Galaxy server, such as Red Hat Automation Hub).
+See :ref:`Configuring the ansible-galaxy client <galaxy_server_config>` if you are using any other Galaxy server, such as Red Hat Automation Hub.
 
 To install a collection hosted in Galaxy:
 

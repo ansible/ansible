@@ -347,9 +347,10 @@ With this option, you configure one or more servers for Galaxy in your :file:`an
    server_list = release_galaxy
 
    [galaxy_server.release_galaxy]
-     url=https://galaxy.ansible.com/
-     token=my_token
+   url=https://galaxy.ansible.com/
+   token=my_token
 
+See :ref:`galaxy_server_config` for complete details.
 
 .. _upload_collection_ansible_galaxy:
 
