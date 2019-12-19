@@ -55,7 +55,7 @@ options:
           description:
             - The namespace of the cloudWatch metric.
           type: str
-        matric_value:
+        metric_value:
           description:
             - The value to publish to the cloudWatch metric when a filter pattern matches a log event.
           type: str
