@@ -297,7 +297,7 @@ def main():
         stack_template=dict(required=False, default=False, type='bool'),
         stack_change_sets=dict(required=False, default=False, type='bool'),
     )
-    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=False)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
     is_old_facts = module._name == 'cloudformation_facts'
     if is_old_facts:
