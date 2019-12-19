@@ -226,6 +226,11 @@ trail:
             returned: success
             type: bool
             sample: true
+        is_organization_trail:
+            description: Whether the trail applies to all accounts in the organization
+            returned: success
+            type: bool
+            sample: true
         has_custom_event_selectors:
             description: Whether any custom event selectors are used for this trail.
             returned: success
