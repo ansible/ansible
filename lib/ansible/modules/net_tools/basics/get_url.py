@@ -365,7 +365,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
-        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), elapsed=elapsed)
+        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
 
     # Exceptions in fetch_url may result in a status -1, the ensures a proper error to the user in all cases
     if info['status'] == -1:
