@@ -986,7 +986,7 @@ class PyVmomi(object):
                                       details="Please see documentation of the vmware_guest module "
                                       "for folder parameter.")
 
-            elif len(vms) > 0 and self.params['folder'] is not None
+            elif len(vms) > 0 and self.params['folder'] is not None:
                 # User provided folder where virtual machine may be found
                 user_folder = self.params['folder']
                 # User defined datacenter
