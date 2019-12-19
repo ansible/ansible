@@ -22,6 +22,7 @@ author:
     - Ansible Core Team
     - Ted Timmons (@tedder)
     - Daniel Shepherd (@shepdelacreme)
+    - Michael Barney (@mbarneyjr)
 requirements:
   - boto3
   - botocore
@@ -65,6 +66,11 @@ options:
     default: false
     type: bool
     version_added: "2.4"
+  is_organization_trail:
+    description:
+      - Specifies whether the trail is created for all accounts in an organization in AWS Organizations.
+    default: false
+    type: bool
   enable_log_file_validation:
     description:
       - Specifies whether log file integrity validation is enabled.
@@ -457,6 +463,7 @@ def main():
         s3_key_prefix=dict(),
         sns_topic_name=dict(),
         is_multi_region_trail=dict(default=False, type='bool'),
+        is_organization_trail=dict(default=False, type='bool'),
         enable_log_file_validation=dict(type='bool', aliases=['log_file_validation_enabled']),
         include_global_events=dict(default=True, type='bool', aliases=['include_global_service_events']),
         cloudwatch_logs_role_arn=dict(),
@@ -485,6 +492,7 @@ def main():
         S3BucketName=module.params['s3_bucket_name'],
         IncludeGlobalServiceEvents=module.params['include_global_events'],
         IsMultiRegionTrail=module.params['is_multi_region_trail'],
+        IsOrganizationTrail=module.params['is_organization_trail'],
     )
 
     if module.params['s3_key_prefix']:
