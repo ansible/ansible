@@ -46,6 +46,8 @@ options:
     - Where run passed queries in a single transaction or commit them one-by-one.
     type: bool
     default: no
+notes:
+- To pass a query containing commas, use YAML list notation with hyphen (see EXAMPLES block).
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: mysql
