@@ -225,8 +225,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list, ansible_dict_to_boto3_tag_list,
-                                      camel_dict_to_snake_dict, get_aws_connection_info,
-                                      boto3_conn, boto3_tag_list_to_ansible_dict, compare_aws_tags, AWSRetry)
+                                      camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict, compare_aws_tags, AWSRetry)
 
 
 def get_subnet_info(subnet):
@@ -587,8 +586,7 @@ def main():
     if not module.botocore_at_least("1.7.0"):
         module.warn("botocore >= 1.7.0 is required to use wait_timeout for custom wait times")
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     state = module.params.get('state')
 

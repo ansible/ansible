@@ -75,9 +75,6 @@ placement_groups:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (connect_to_aws,
-                                      boto3_conn,
-                                      get_aws_connection_info)
 try:
     from botocore.exceptions import (BotoCoreError, ClientError)
 except ImportError:
@@ -122,12 +119,7 @@ def main():
     if module._module._name == 'ec2_placement_group_facts':
         module._module.deprecate("The 'ec2_placement_group_facts' module has been renamed to 'ec2_placement_group_info'", version='2.13')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(
-        module, boto3=True)
-
-    connection = boto3_conn(module,
-                            resource='ec2', conn_type='client',
-                            region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     placement_groups = get_placement_groups_details(connection, module)
     module.exit_json(changed=False, placement_groups=placement_groups)

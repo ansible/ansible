@@ -134,7 +134,6 @@ key:
 import uuid
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 from ansible.module_utils._text import to_bytes
 
 try:
@@ -253,9 +252,7 @@ def main():
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    ec2_client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+    ec2_client = module.client('ec2')
 
     name = module.params['name']
     state = module.params.get('state')

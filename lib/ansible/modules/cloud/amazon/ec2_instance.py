@@ -814,9 +814,7 @@ from ansible.module_utils.six import text_type, string_types
 from ansible.module_utils.six.moves.urllib import parse as urlparse
 from ansible.module_utils._text import to_bytes, to_native
 import ansible.module_utils.ec2 as ec2_utils
-from ansible.module_utils.ec2 import (boto3_conn,
-                                      get_aws_connection_info,
-                                      AWSRetry,
+from ansible.module_utils.ec2 import (AWSRetry,
                                       ansible_dict_to_boto3_filter_list,
                                       compare_aws_tags,
                                       boto3_tag_list_to_ansible_dict,

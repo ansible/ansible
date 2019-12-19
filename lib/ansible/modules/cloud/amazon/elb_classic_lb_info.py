@@ -149,8 +149,6 @@ import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (
     AWSRetry,
-    boto3_conn,
-    get_aws_connection_info,
     camel_dict_to_snake_dict,
     boto3_tag_list_to_ansible_dict
 )
@@ -207,8 +205,7 @@ def main():
     if module._name == 'elb_classic_lb_facts':
         module.deprecate("The 'elb_classic_lb_facts' module has been renamed to 'elb_classic_lb_info'", version='2.13')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='elb', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('elb')
 
     try:
         elbs = list_elbs(connection, module.params.get('names'))

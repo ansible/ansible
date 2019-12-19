@@ -91,9 +91,7 @@ placement_group:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (AWSRetry,
-                                      boto3_conn,
-                                      get_aws_connection_info)
+from ansible.module_utils.ec2 import AWSRetry
 try:
     from botocore.exceptions import (BotoCoreError, ClientError)
 except ImportError:
@@ -177,12 +175,7 @@ def main():
         supports_check_mode=True
     )
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(
-        module, boto3=True)
-
-    connection = boto3_conn(module,
-                            resource='ec2', conn_type='client',
-                            region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     state = module.params.get("state")
 

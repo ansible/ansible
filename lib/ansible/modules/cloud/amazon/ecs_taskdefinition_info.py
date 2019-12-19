@@ -303,7 +303,7 @@ placement_constraints:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_conn, get_aws_connection_info
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 try:
     import botocore
@@ -320,9 +320,7 @@ def main():
     if module._name == 'ecs_taskdefinition_facts':
         module.deprecate("The 'ecs_taskdefinition_facts' module has been renamed to 'ecs_taskdefinition_info'", version='2.13')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    ecs = boto3_conn(module, conn_type='client', resource='ecs',
-                     region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    ecs = module.client('ecs')
 
     try:
         ecs_td = ecs.describe_task_definition(taskDefinition=module.params['task_definition'])['taskDefinition']

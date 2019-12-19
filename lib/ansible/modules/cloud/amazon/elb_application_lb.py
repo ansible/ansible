@@ -462,8 +462,7 @@ vpc_id:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, camel_dict_to_snake_dict, \
-    boto3_tag_list_to_ansible_dict, compare_aws_tags, HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict, compare_aws_tags
 
 from ansible.module_utils.aws.elbv2 import ApplicationLoadBalancer, ELBListeners, ELBListener, ELBListenerRules, ELBListenerRule
 from ansible.module_utils.aws.elb_utils import get_elb_listener_rules
