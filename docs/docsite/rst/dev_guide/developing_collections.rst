@@ -368,7 +368,7 @@ To upload the collection artifact with the ``ansible-galaxy`` command:
 
 .. note::
 
-	The above command assumes you have retrieved and stored your API token in a file at the default token path or as part of a Galaxy server list. See :ref:`galaxy_get_token` for details.
+	The above command assumes you have retrieved and stored your API token as part of a Galaxy server list. See :ref:`galaxy_get_token` for details.
 
 The ``ansible-galaxy collection publish`` command triggers an import process, just as if you uploaded the collection through the Galaxy website.
 The command waits until the import process completes before reporting the status back. If you wish to continue

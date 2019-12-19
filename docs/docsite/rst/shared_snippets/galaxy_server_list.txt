@@ -16,7 +16,7 @@ To configure a Galaxy server list in ``ansible.cfg``:
 #. Optionally, set the API token for each server name. See :ref:`API token <collections_installing>` for details.
 
 .. note::
-    The ``url`` option for each server name must end with a forward slash ``/``. If you do not set the API token in your Galaxy server list, use the ``--api-key`` argument to pass in the token to  the ``ansible-galaxy collection`` command.
+    The ``url`` option for each server name must end with a forward slash ``/``. If you do not set the API token in your Galaxy server list, use the ``--api-key`` argument to pass in the token to  the ``ansible-galaxy collection publish`` command.
 
 For Automation Hub, you additionally need to:
 
@@ -67,7 +67,7 @@ define the following keys:
 * ``password``: The password to use, in conjuction with ``username``, for basic authentication.
 * ``auth_url``: The URL of a Keycloak server 'token_endpoint' if using SSO authentication (for example, Automation Hub). This is mutually exclusive with ``username``. ``auth_url`` requires ``token``.
 
-As well as defining  these server options in the ``ansible.cfg`` file, you can also define them as environment variables.
+As well as defining these server options in the ``ansible.cfg`` file, you can also define them as environment variables.
 The environment variable is in the form ``ANSIBLE_GALAXY_SERVER_{{ id }}_{{ key }}`` where ``{{ id }}`` is the upper
 case form of the server identifier and ``{{ key }}`` is the key to define. For example I can define ``token`` for
 ``release_galaxy`` by setting ``ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=secret_token``.
