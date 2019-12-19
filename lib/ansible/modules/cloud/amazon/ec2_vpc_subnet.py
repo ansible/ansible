@@ -214,7 +214,6 @@ subnet:
 
 
 import time
-import traceback
 
 try:
     import botocore

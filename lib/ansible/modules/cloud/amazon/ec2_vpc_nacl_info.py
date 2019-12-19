@@ -107,8 +107,6 @@ nacls:
             sample: [[100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]]
 '''
 
-import traceback
-
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
