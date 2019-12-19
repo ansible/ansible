@@ -203,7 +203,7 @@ f_ansible_galaxy_status \
 f_ansible_galaxy_status \
     "ansible-galaxy with an empty server list"
 
-    ANSIBLE_GALAXY_SERVER_LIST= ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install --force "$@" | tee out.txt
+    ANSIBLE_GALAXY_SERVER_LIST='' ansible-galaxy collection install "ansible_test-my_collection-1.0.0.tar.gz" -p ./install --force "$@" | tee out.txt
 
     [[ -f "${galaxy_testdir}/install/ansible_collections/ansible_test/my_collection/MANIFEST.json" ]]
     grep "Installing 'ansible_test.my_collection:1.0.0' to .*" out.txt
