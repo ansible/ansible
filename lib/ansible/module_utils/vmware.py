@@ -976,19 +976,18 @@ class PyVmomi(object):
                         temp_vm_object.propSet[0].val == self.params['name']):
                     vms.append(temp_vm_object.obj)
 
-            # get_managed_objects_properties may return multiple virtual machine,
-            # following code tries to find user desired one depending upon the folder specified.
-            if len(vms) > 1:
+            # get_managed_objects_properties may return multiple virtual machines,
+            # following code tries to find a virtual machine in the folder specified.
+            if len(vms) > 1 and self.params['folder'] is None:
                 # We have found multiple virtual machines, decide depending upon folder value
-                if self.params['folder'] is None:
-                    self.module.fail_json(msg="Multiple virtual machines with same name [%s] found, "
-                                          "Folder value is a required parameter to find uniqueness "
-                                          "of the virtual machine" % self.params['name'],
-                                          details="Please see documentation of the vmware_guest module "
-                                          "for folder parameter.")
+                self.module.fail_json(msg="Multiple virtual machines with same name [%s] found, "
+                                      "Folder value is a required parameter to find uniqueness "
+                                      "of the virtual machine" % self.params['name'],
+                                      details="Please see documentation of the vmware_guest module "
+                                      "for folder parameter.")
 
-                # Get folder path where virtual machine is located
-                # User provided folder where user thinks virtual machine is present
+            elif len(vms) > 0 and self.params['folder'] is not None
+                # User provided folder where virtual machine may be found
                 user_folder = self.params['folder']
                 # User defined datacenter
                 user_defined_dc = self.params['datacenter']
@@ -1004,7 +1003,7 @@ class PyVmomi(object):
                 if user_folder in [None, '', '/']:
                     # User provided blank value or
                     # User provided only root value, we fail
-                    self.module.fail_json(msg="vmware_guest found multiple virtual machines with same "
+                    self.module.fail_json(msg="vmware_guest found virtual machine(s) with "
                                           "name [%s], please specify folder path other than blank "
                                           "or '/'" % self.params['name'])
                 elif user_folder.startswith('/vm/'):
@@ -1027,8 +1026,9 @@ class PyVmomi(object):
                     if user_desired_path in actual_vm_folder_path:
                         vm_obj = vm
                         break
-            elif vms:
-                # Unique virtual machine found.
+                        
+            elif len(vms) == 1:
+                # Unique virtual machine found. No folder specified.
                 vm_obj = vms[0]
         elif 'moid' in self.params and self.params['moid']:
             vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.params['moid'], self.si._stub)
