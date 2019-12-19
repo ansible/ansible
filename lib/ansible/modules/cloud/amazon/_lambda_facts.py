@@ -100,7 +100,7 @@ import re
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass  # protected by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def fix_return(node):

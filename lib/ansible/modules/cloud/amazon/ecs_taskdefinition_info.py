@@ -308,7 +308,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 try:
     import botocore
 except ImportError:
-    pass  # will be detected by imported AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def main():

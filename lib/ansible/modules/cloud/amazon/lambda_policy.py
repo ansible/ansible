@@ -148,7 +148,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 try:
     from botocore.exceptions import ClientError
 except Exception:
-    pass  # will be protected by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def pc(key):

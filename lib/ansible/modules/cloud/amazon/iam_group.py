@@ -187,7 +187,7 @@ from ansible.module_utils.ec2 import AWSRetry
 try:
     from botocore.exceptions import BotoCoreError, ClientError, ParamValidationError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def compare_attached_group_policies(current_attached_policies, new_attached_policies):

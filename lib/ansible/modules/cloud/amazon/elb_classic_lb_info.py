@@ -156,7 +156,7 @@ from ansible.module_utils.ec2 import (
 try:
     import botocore
 except ImportError:
-    pass
+    pass  # caught by AnsibleAWSModule
 
 
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)

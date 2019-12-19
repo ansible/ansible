@@ -177,7 +177,7 @@ from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, AWSRet
 try:
     from botocore.exceptions import BotoCoreError, ClientError, EndpointConnectionError, WaiterError
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def create_or_update_bucket(s3_client, module, location):

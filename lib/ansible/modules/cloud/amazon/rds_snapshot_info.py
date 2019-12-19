@@ -302,7 +302,7 @@ from ansible.module_utils.ec2 import AWSRetry, boto3_tag_list_to_ansible_dict, c
 try:
     import botocore
 except Exception:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def common_snapshot_info(module, conn, method, prefix, params):

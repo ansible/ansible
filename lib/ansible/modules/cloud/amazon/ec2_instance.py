@@ -808,7 +808,7 @@ try:
     import boto3
     import botocore.exceptions
 except ImportError:
-    pass
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.six import text_type, string_types
 from ansible.module_utils.six.moves.urllib import parse as urlparse

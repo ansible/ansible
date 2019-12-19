@@ -233,7 +233,7 @@ from ansible.module_utils.ec2 import get_aws_connection_info, camel_dict_to_snak
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 @AWSRetry.exponential_backoff()

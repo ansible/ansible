@@ -67,7 +67,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 try:
     import botocore
 except ImportError:
-    pass  # will be picked up by HAS_BOTO3 in AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def delete_eigw(module, conn, eigw_id):

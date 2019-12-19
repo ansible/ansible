@@ -226,7 +226,7 @@ from ansible.module_utils.ec2 import get_ec2_security_group_ids_from_names, ansi
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 class EcsExecManager:

@@ -218,9 +218,8 @@ taskdefinition:
 
 try:
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
@@ -344,9 +343,6 @@ def main():
                               supports_check_mode=True,
                               required_if=[('launch_type', 'FARGATE', ['cpu', 'memory'])]
                               )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
 
     task_to_describe = None
     task_mgr = EcsTaskManager(module)

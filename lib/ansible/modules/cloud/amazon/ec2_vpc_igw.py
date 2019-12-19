@@ -88,7 +88,7 @@ vpc_id:
 try:
     import botocore
 except ImportError:
-    pass  # Handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import (

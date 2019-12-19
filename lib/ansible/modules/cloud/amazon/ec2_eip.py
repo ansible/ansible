@@ -233,7 +233,7 @@ public_ip:
 try:
     import botocore.exceptions
 except ImportError:
-    pass  # Taken care of by ec2.HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils.ec2 import AWSRetry, ansible_dict_to_boto3_filter_list

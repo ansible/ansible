@@ -130,7 +130,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def find_zones(module, client, zone_in, private_zone):

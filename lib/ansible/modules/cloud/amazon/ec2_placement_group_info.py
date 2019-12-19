@@ -78,7 +78,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 try:
     from botocore.exceptions import (BotoCoreError, ClientError)
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def get_placement_groups_details(connection, module):

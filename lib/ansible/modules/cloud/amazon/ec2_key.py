@@ -139,7 +139,7 @@ from ansible.module_utils._text import to_bytes
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass
+    pass  # caught by AnsibleAWSModule
 
 
 def extract_key_data(key):

@@ -490,7 +490,7 @@ from ansible.module_utils.ec2 import snake_dict_to_camel_dict, map_complex_type,
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 class EcsServiceManager:

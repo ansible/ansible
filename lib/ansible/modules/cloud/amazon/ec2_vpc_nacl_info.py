@@ -112,7 +112,7 @@ import traceback
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils._text import to_native
