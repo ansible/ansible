@@ -1325,6 +1325,9 @@ class NTTMCPClient():
                 temp_prop['set']['schema']['userConfigurable'] = prop.get('configurable')
             if prop.get('default_value') is not None:
                 temp_prop['set']['schema']['defaultValue'] = prop.get('default_value')
+            else:
+                if 'string' in prop.get('type'):
+                    temp_prop['set']['schema']['defaultValue'] = ""
             params['vAppProperty'].append(temp_prop)
 
         url = self.base_url + 'server/setVAppProperties'

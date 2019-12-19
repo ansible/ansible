@@ -120,7 +120,7 @@ options:
                     - below and to Introduction to vApp Properties "https://docs.mcp-services.net/x/qIAkAQ"
                     - When using some types e.g. ip it is best to set a default_value if an actual value is not set
                     - even if its 0.0.0.0
-            userConfigurable:
+            configurable:
                 description:
                     - Boolean defining whether or not the property can have a user defined value
                 required: false
@@ -474,7 +474,7 @@ def disable_vapp(module, client, server_id):
         client.disable_vapp(server_id)
         if module.params.get('wait'):
             wait_for_server(module, client, server_id)
-        module.exit_json(msg='vApp has been successfully disabled on the server with ID {0}'.format(server_id))
+        module.exit_json(changed=True, msg='vApp has been successfully disabled on the server with ID {0}'.format(server_id))
     except (KeyError, IndexError, AttributeError, NTTMCPAPIException) as e:
         module.fail_json(msg='Could remove the server monitoring - {0}'.format(e))
 

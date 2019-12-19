@@ -352,9 +352,10 @@ EXAMPLES = '''
         - controller_type: scsi
           controller_number: 0
           disk_number: 0
-          id: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
           speed: STANDARD
-        - id: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
+        - controller_type: scsi
+          controller_number: 0
+          disk_number: 1
           speed: PROVISIONEDIOPS
           iops: 50
       cpu:
@@ -822,6 +823,7 @@ def get_disks(module, image):
                 new_disk['iops'] = disk.get('iops')
             new_disks.append(new_disk)
     except (KeyError, IndexError, AttributeError, TypeError) as e:
+        disk = dict() if not disk else disk
         module.fail_json(msg='Failed to find disk {0} on the {1} controller number {2}: {3}'.format(disk.get('disk_number'),
                                                                                                     controller_type,
                                                                                                     disk.get('controller_number'),
@@ -859,18 +861,19 @@ def create_server(module, client):
         module.fail_json(msg='Failed to find the Image {0} - {1}'.format(image_name, e))
 
     # Check disk configurations
-    disks = get_disks(module, image)
-    if disks:
-        params['disk'] = list()
-        for disk in disks:
-            if 'id' in disk:
-                if 'speed' not in disk:
-                    module.fail_json(msg='Disk speed is required.')
-                elif ('iops' in disk and disk.get('speed') not in VARIABLE_IOPS):
-                    module.fail_json(msg='Disk IOPS are required when disk_speed is: {0}.'.format(disk.get('speed')))
-                params['disk'].append(disk)
-            else:
-                module.fail_json(msg='Disks IDs are required.')
+    if module.params.get('disks'):
+        disks = get_disks(module, image)
+        if disks:
+            params['disk'] = list()
+            for disk in disks:
+                if 'id' in disk:
+                    if 'speed' not in disk:
+                        module.fail_json(msg='Disk speed is required.')
+                    elif ('iops' in disk and disk.get('speed') not in VARIABLE_IOPS):
+                        module.fail_json(msg='Disk IOPS are required when disk_speed is: {0}.'.format(disk.get('speed')))
+                    params['disk'].append(disk)
+                else:
+                    module.fail_json(msg='Disks IDs are required.')
 
     # Check and load the network configuration for the server
     params['networkInfo'] = {}
