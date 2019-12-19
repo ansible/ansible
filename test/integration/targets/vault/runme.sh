@@ -106,6 +106,14 @@ if [ -x "$(command -v setsid)" ]; then
     setsid sh -c 'tty; echo test-vault-password|ansible-vault view --ask-vault-pass -vvvvv vaulted.inventory' < /dev/null > log 2>&1
     echo $?
     cat log
+
+    # test using --ask-vault-password option
+    CMD='ansible-playbook -i ../../inventory -vvvvv --ask-vault-password test_vault.yml'
+    setsid sh -c "echo test-vault-password|${CMD}" < /dev/null > log 2>&1 && :
+    WRONG_RC=$?
+    cat log
+    echo "rc was $WRONG_RC (0 is expected)"
+    [ $WRONG_RC -eq 0 ]
 fi
 
 ansible-vault view "$@" --vault-password-file vault-password-wrong format_1_1_AES256.yml && :
@@ -410,6 +418,8 @@ ansible-playbook test_vault_embedded.yml -i ../../inventory -v "$@" --vault-pass
 ansible-playbook test_vaulted_inventory.yml -i vaulted.inventory -v "$@" --vault-password-file vault-password
 ansible-playbook test_vaulted_template.yml -i ../../inventory -v "$@" --vault-password-file vault-password
 
+# test using --vault-pass-file option
+ansible-playbook test_vault.yml          -i ../../inventory -v "$@" --vault-pass-file vault-password
 
 # install TOML for parse toml inventory
 # test playbooks using vaulted files(toml)
