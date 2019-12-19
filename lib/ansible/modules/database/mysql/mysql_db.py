@@ -280,7 +280,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port,
         cmd += " --single-transaction=true"
     if quick:
         cmd += " --quick"
-    if create_new:
+    if no_create_db:
         cmd += " --no-create-db"
     if ignore_tables:
         for an_ignored_table in ignore_tables:
