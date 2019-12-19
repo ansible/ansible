@@ -108,6 +108,7 @@ def _wrap_sequence(v):
     v_type = type(v)
     return v_type(wrap_var(item) for item in v)
 
+
 def _wrap_tuple(v):
     return tuple(wrap_var(item) for item in v)
 
