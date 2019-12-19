@@ -71,7 +71,7 @@ options:
         required: false
         type: bool
         default: true
-    vapp_properties:
+    vapp:
         description:
             - List of vApp property objects
         required: false
@@ -80,7 +80,7 @@ options:
             key:
                 description:
                     - Integer used for identifying a target property for update by set or for deletion by delete
-                    - IMPORTANT: key is not directly retrievable within the Guest OS. Instead guestKey can be retrieved
+                    - IMPORTANT key is not directly retrievable within the Guest OS. Instead guestKey can be retrieved
                 required: false
                 type: int
             class_id:
@@ -138,19 +138,6 @@ options:
                     - String default value for the property if no value is specified
                 required: false
                 type: str
-    stop:
-        description:
-            - Should the server be stopped if it is running
-            - Disk operations can only be performed while the server is stopped
-        required: false
-        type: bool
-        default: true
-    start:
-        description:
-            - Should the server be started after the NIC operations have completed
-        required: false
-        type: bool
-        default: true
     wait:
         description:
             - Should Ansible wait for the task to complete before continuing
@@ -161,13 +148,13 @@ options:
         description: The maximum time the Ansible should wait for the task to complete in seconds
         required: false
         type: int
-        default: 1200
+        default: 600
     wait_poll_interval:
         description:
             - The time in between checking the status of the task in seconds
         required: false
         type: int
-        default: 30
+        default: 5
     state:
         description:
             - The action to be performed
@@ -232,7 +219,7 @@ EXAMPLES = '''
           category: System_Properties
           label: "Initial system password"
           description: "Initial system password - new description"
-          type: "password(8..20)""
+          type: "password(8..20)"
           value: new_cool_password
 
   - name: Delete a property
@@ -258,7 +245,7 @@ RETURN = '''
 msg:
     description: A helpful message
     returned: failure and on no change
-    type: string
+    type: str
     sample: No update required
 data:
     description: Server objects
@@ -271,7 +258,7 @@ data:
             contains:
                 value:
                     description: The property value. This is used inside the guest OS
-                    type: string
+                    type: str
                     sample: 10.0.0.11
                 key:
                     description: The unique key identifier
@@ -283,38 +270,38 @@ data:
                     contains:
                         category:
                             description: User defined property category
-                            type: string
+                            type: str
                             sample: Network_Properties
                         classId:
                             description: User defined Class ID
-                            type: string
+                            type: str
                             sample: my_vapp
                         description:
                             description: The vApp property description
-                            type: string
+                            type: str
                             sample: vApp Management IPv4 Address2
                         instanceId:
                             description: User defined instance ID
-                            type: string
+                            type: str
                             sample: 1
                         defaultValue:
                             description: The default value for the vApp property
-                            type: string
+                            type: str
                             sample: 0.0.0.0
                         userConfigurable:
                             description: Can the user configure this vApp property
                             type: bool
                         label:
                             description: User defined optional label
-                            type: string
+                            type: str
                             sample: Management IPv4 Address2
                         type:
                             description: The vApp property type
-                            type: string
+                            type: str
                             sample: ip
                         id:
                             description: The string ID of the property. This is used inside the guest OS
-                            type: string
+                            type: str
                             sample: ipv4_address2
         vmwareTransport:
             description: Enable VMWare Tools/Open-VM-Tools transport for vApp properties
