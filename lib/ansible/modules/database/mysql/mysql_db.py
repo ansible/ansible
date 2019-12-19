@@ -62,7 +62,7 @@ options:
       - Option used to exclude CREATE DATABASE and USE commands
     type: bool
     default: 'no'
-    version_added: "2.X"
+    version_added: '2.10'
   ignore_tables:
     description:
       - A list of table names that will be ignored in the dump of the form database_name.table_name
