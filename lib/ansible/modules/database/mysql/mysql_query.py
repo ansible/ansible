@@ -25,8 +25,8 @@ version_added: '2.10'
 options:
   query:
     description:
-    - SQL query to run.
-    type: str
+    - SQL query to run. Multiple queries can be passed using YAML list syntax.
+    type: list
   positional_args:
     description:
     - List of values to be passed as positional arguments to the query.
@@ -68,29 +68,32 @@ EXAMPLES = r'''
       id_val: 1
       story_val: test
 
-- name: Insert query to test_table in db test_db
+- name: Run several insert queries against db test_db
   mysql_query:
     login_db: test_db
-    query: INSERT INTO test_table (id, story) VALUES (2, 'my_long_story')
+    query:
+    - INSERT INTO articles (id, story) VALUES (2, 'my_long_story')
+    - INSERT INTO prices (id, price) VALUES (123, '100.00')
 '''
 
 RETURN = r'''
-query:
-    description: Executed query.
+executed_queries:
+    description: List of executed queries.
     returned: always
-    type: str
-    sample: 'SELECT * FROM bar'
+    type: list
+    sample: ['SELECT * FROM bar', 'UPDATE bar SET id = 1 WHERE id = 2']
 query_result:
     description:
-    - List of dictionaries in column:value form representing returned rows.
+    - List of lists (sublist for each query) containing dictionaries
+      in column:value form representing returned rows.
     returned: changed
     type: list
-    sample: [{"Column": "Value1"},{"Column": "Value2"}]
+    sample: [[{"Column": "Value1"},{"Column": "Value2"}], [{"ID": 1}, {"ID": 2}]]
 rowcount:
-    description: Number of affected rows.
+    description: Number of affected rows for each subquery.
     returned: changed
-    type: int
-    sample: 5
+    type: list
+    sample: [5, 1]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -114,7 +117,7 @@ DDL_QUERY_KEYWORDS = ('CREATE', 'DROP', 'ALTER', 'RENAME', 'TRUNCATE')
 def main():
     argument_spec = mysql_common_argument_spec()
     argument_spec.update(
-        query=dict(type='str'),
+        query=dict(type='list'),
         login_db=dict(type='str'),
         positional_args=dict(type='list'),
         named_args=dict(type='dict'),
@@ -167,34 +170,41 @@ def main():
     changed = False
 
     # Execute query:
-    try:
-        cursor.execute(query, arguments)
+    query_result = []
+    executed_queries = []
+    rowcount = []
+    for q in query:
+        try:
+            cursor.execute(q, arguments)
 
-    except Exception as e:
-        cursor.close()
-        module.fail_json(msg="Cannot execute SQL '%s' args [%s]: %s" % (query, arguments, to_native(e)))
+        except Exception as e:
+            cursor.close()
+            module.fail_json(msg="Cannot execute SQL '%s' args [%s]: %s" % (q, arguments, to_native(e)))
 
-    try:
-        query_result = [dict(row) for row in cursor.fetchall()]
+        try:
+            query_result.append([dict(row) for row in cursor.fetchall()])
 
-    except Exception as e:
-        module.fail_json(msg="Cannot fetch rows from cursor: %s" % to_native(e))
+        except Exception as e:
+            module.fail_json(msg="Cannot fetch rows from cursor: %s" % to_native(e))
 
-    # Check DML or DDL keywords in query and set changed accordingly:
-    for keyword in DML_QUERY_KEYWORDS:
-        if keyword in query.upper() and cursor.rowcount > 0:
-            changed = True
+        # Check DML or DDL keywords in query and set changed accordingly:
+        for keyword in DML_QUERY_KEYWORDS:
+            if keyword in q.upper() and cursor.rowcount > 0:
+                changed = True
 
-    for keyword in DDL_QUERY_KEYWORDS:
-        if keyword in query.upper():
-            changed = True
+        for keyword in DDL_QUERY_KEYWORDS:
+            if keyword in q.upper():
+                changed = True
+
+        executed_queries.append(cursor._last_executed)
+        rowcount.append(cursor.rowcount)
 
     # Create dict with returned values:
     kw = {
         'changed': changed,
-        'query': cursor._last_executed,
+        'executed_queries': executed_queries,
         'query_result': query_result,
-        'rowcount': cursor.rowcount,
+        'rowcount': rowcount,
     }
 
     # Exit:
