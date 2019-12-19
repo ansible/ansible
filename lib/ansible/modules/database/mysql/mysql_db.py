@@ -57,7 +57,7 @@ options:
     type: bool
     default: 'yes'
     version_added: "2.1"
-  create_new:
+  no_create_db:
     description:
       - Option used to exclude CREATE DATABASE and USE commands
     type: bool
