@@ -26,7 +26,6 @@ options:
   query:
     description:
     - SQL query to run.
-    - Mutually exclusive with I(path_to_script).
     type: str
   positional_args:
     description:
@@ -38,12 +37,6 @@ options:
     - Dictionary of key-value arguments to pass to the query.
     - Mutually exclusive with I(positional_args).
     type: dict
-  path_to_script:
-    description:
-    - Path to SQL script on the remote host.
-    - Returns result of the last query in the script.
-    - Mutually exclusive with I(query).
-    type: path
   login_db:
     description:
     - Name of database to connect to and run queries against.
@@ -79,11 +72,6 @@ EXAMPLES = r'''
   mysql_query:
     login_db: test_db
     query: INSERT INTO test_table (id, story) VALUES (2, 'my_long_story')
-
-- name: Run queries from SQL script
-  mysql_query:
-    login_db: test_db
-    path_to_script: /tmp/test.sql
 '''
 
 RETURN = r'''
@@ -130,14 +118,12 @@ def main():
         login_db=dict(type='str'),
         positional_args=dict(type='list'),
         named_args=dict(type='dict'),
-        path_to_script=dict(type='path'),
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=(
             ('positional_args', 'named_args'),
-            ('query', 'path_to_script'),
         ),
     )
 
@@ -152,20 +138,9 @@ def main():
     query = module.params["query"]
     positional_args = module.params["positional_args"]
     named_args = module.params["named_args"]
-    path_to_script = module.params["path_to_script"]
 
     if positional_args and named_args:
         module.fail_json(msg="positional_args and named_args params are mutually exclusive")
-
-    if path_to_script and query:
-        module.fail_json(msg="path_to_script is mutually exclusive with query")
-
-    if path_to_script:
-        try:
-            query = to_native(open(path_to_script, 'rb').read())
-            query = query.replace('\n', ' ')
-        except Exception as e:
-            module.fail_json(msg="Cannot read file '%s' : %s" % (path_to_script, to_native(e)))
 
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)

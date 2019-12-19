@@ -2,35 +2,6 @@
 # Copyright: (c) 2020, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-###################
-# Prepare for tests
-#
-
-# Prepare SQL script:
-- name: Remove SQL script if exists
-  become: yes
-  file:
-    path: '{{ test_script_path }}'
-    state: absent
-  ignore_errors: yes
-
-- name: Create test sql script
-  become: yes
-  file:
-    path: '{{ test_script_path }}'
-    state: touch
-    mode: 0644
-
-- name: Prepare SQL script
-  become: yes
-  shell: 'echo "{{ item }}" >> {{ test_script_path }}'
-  ignore_errors: yes
-  loop:
-  - 'INSERT INTO {{ test_table1 }} (id) VALUES (1), (2), (3);'
-
-###############
-# Do tests
-
 - name: Create db {{ test_db }}
   mysql_query:
     login_unix_socket: '{{ mysql_socket }}'
@@ -58,13 +29,13 @@
     - result is changed
     - result.query == "CREATE TABLE {{ test_table1 }} (id int)"
 
-- name: Run queries from sql script file
+- name: Insert test data
   mysql_query:
     login_unix_socket: '{{ mysql_socket }}'
     login_user: '{{ root_user }}'
     login_password: '{{ root_pass }}'
     login_db: '{{ test_db }}'
-    path_to_script: '{{ test_script_path }}'
+    query: 'INSERT INTO {{ test_table }} VALUES (1), (2), (3)'
   register: result
 
 - assert:
@@ -323,10 +294,3 @@
     that:
     - result is changed
     - result.query == "DROP DATABASE {{ test_db }}"
-
-# Clean up:
-- name: Remove test sql script
-  become: yes
-  file:
-    path: '{{ test_script_path }}'
-    state: absent
