@@ -71,6 +71,7 @@ options:
       - Specifies whether the trail is created for all accounts in an organization in AWS Organizations.
     default: false
     type: bool
+    version_added: "2.10"
   enable_log_file_validation:
     description:
       - Specifies whether log file integrity validation is enabled.
