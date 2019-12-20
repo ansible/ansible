@@ -1,0 +1,2 @@
+bugfixes:
+  - Vmware Fix for Create overwrites a VM of same name even when the folder is different(https://github.com/ansible/ansible/issues/43161)
