@@ -59,7 +59,7 @@ options:
     version_added: "2.1"
   no_create_db:
     description:
-      - Option used to exclude CREATE DATABASE and USE commands
+      - Option used to exclude CREATE DATABASE and USE commands. Used only with I(state=export).
     type: bool
     default: 'no'
     version_added: '2.10'
