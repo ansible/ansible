@@ -1034,10 +1034,6 @@ class GalaxyCLI(CLI):
                 version = "(unknown version)"
             display.display("- %s, %s" % (gr.name, version))
 
-        from pprint import pprint
-        with open('/tmp/out', 'a') as f:
-            pprint(context.CLIARGS, stream=f)
-
         path_found = False
         warnings = []
         galaxy_type = context.CLIARGS['type']
