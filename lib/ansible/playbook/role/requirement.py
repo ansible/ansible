@@ -149,7 +149,7 @@ class RoleRequirement(RoleDefinition):
                 display.debug("\tstderr: " + stderr)
                 raise AnsibleError("when executing %s: %s" % (ran, to_native(e)))
             if popen.returncode != 0:
-                raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(cmd), tempdir, popen.returncode))
+                raise AnsibleError("- command %s failed in directory %s (rc=%s) - %s" % (' '.join(cmd), tempdir, popen.returncode, to_text(stderr)))
 
         if scm not in ['hg', 'git']:
             raise AnsibleError("- scm %s is not currently supported" % scm)
