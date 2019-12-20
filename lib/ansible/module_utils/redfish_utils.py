@@ -45,7 +45,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False, timeout=self.timeout)
+                            use_proxy=True, timeout=self.timeout)
             data = json.loads(resp.read())
             headers = dict((k.lower(), v) for (k, v) in resp.info().items())
         except HTTPError as e:
@@ -71,7 +71,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False, timeout=self.timeout)
+                            use_proxy=True, timeout=self.timeout)
         except HTTPError as e:
             msg = self._get_extended_message(e)
             return {'ret': False,
@@ -106,7 +106,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False, timeout=self.timeout)
+                            use_proxy=True, timeout=self.timeout)
         except HTTPError as e:
             msg = self._get_extended_message(e)
             return {'ret': False,
@@ -131,7 +131,7 @@ class RedfishUtils(object):
                             url_password=self.creds['pswd'],
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
-                            use_proxy=False, timeout=self.timeout)
+                            use_proxy=True, timeout=self.timeout)
         except HTTPError as e:
             msg = self._get_extended_message(e)
             return {'ret': False,
