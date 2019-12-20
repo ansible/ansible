@@ -204,14 +204,6 @@ except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompat
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
-NETWORK_OS_DEVICE_PARAM_MAP = {
-    "nxos": "nexus",
-    "ios": "default",
-    "dellos10": "default",
-    "sros": "alu",
-    "ce": "huawei"
-}
-
 
 class Connection(NetworkConnectionBase):
     """NetConf connections"""
@@ -226,17 +218,17 @@ class Connection(NetworkConnectionBase):
         # This will be used to trigger the the use of guess_network_os when connecting.
         self._network_os = self._network_os or 'auto'
 
-        netconf = netconf_loader.get(self._network_os, self)
-        if netconf:
-            self._sub_plugin = {'type': 'netconf', 'name': netconf._load_name, 'obj': netconf}
+        self.netconf = netconf_loader.get(self._network_os, self)
+        if self.netconf:
+            self._sub_plugin = {'type': 'netconf', 'name': self.netconf._load_name, 'obj': self.netconf}
             self.queue_message('vvvv', 'loaded netconf plugin %s from path %s for network_os %s' %
-                               (netconf._load_name, netconf._original_path, self._network_os))
+                               (self.netconf._load_name, self.netconf._original_path, self._network_os))
         else:
-            netconf = netconf_loader.get("default", self)
-            self._sub_plugin = {'type': 'netconf', 'name': 'default', 'obj': netconf}
+            self.netconf = netconf_loader.get("default", self)
+            self._sub_plugin = {'type': 'netconf', 'name': 'default', 'obj': self.netconf}
             self.queue_message('display', 'unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
-        self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
+        self.queue_message('log', 'network_os is set to %s' % self._network_os)
         self._manager = None
         self.key_filename = None
         self._ssh_config = None
@@ -305,8 +297,12 @@ class Connection(NetworkConnectionBase):
             # Network os not discovered. Set it to default
             self.queue_message('vvv', 'Unable to discover network_os. Falling back to default.')
             self._network_os = 'default'
-
-        device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
+        try:
+            ncclient_device_handler = self.netconf.get_option('ncclient_device_handler')
+        except KeyError:
+            ncclient_device_handler = 'default'
+        self.queue_message('vvv', 'identified ncclient device handler: %s.' % ncclient_device_handler)
+        device_params = {'name': ncclient_device_handler}
 
         try:
             port = self._play_context.port or 830

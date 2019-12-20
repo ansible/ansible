@@ -22,6 +22,7 @@ This section covers the various types of plugins that are included with Ansible:
    httpapi
    inventory
    lookup
+   netconf
    shell
    strategy
    vars

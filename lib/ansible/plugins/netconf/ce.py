@@ -19,6 +19,23 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+netconf: ce
+short_description: Use ce netconf plugin to run netconf commands on Huawei Cloudengine platform
+description:
+  - This ce plugin provides low level abstraction apis for
+    sending and receiving netconf commands from Huawei Cloudengine network devices.
+version_added: "2.9"
+options:
+  ncclient_device_handler:
+    type: str
+    default: huawei
+    description:
+      - Specifies the ncclient device handler name for Huawei Cloudengine.
+        To identify the ncclient device handler name refer ncclient library documentation.
+"""
+
 import json
 import re
 
@@ -101,9 +118,8 @@ class Netconf(NetconfBase):
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'validate', 'lock', 'unlock', 'copy_copy',
-                                               'execute_rpc', 'load_configuration', 'get_configuration', 'command',
-                                               'reboot', 'halt']
+        result['rpc'] = self.get_base_rpc() + ['execute_rpc', 'load_configuration', 'get_configuration', 'compare_configuration',
+                                               'execute_action', 'halt', 'reboot', 'execute_nc_cli', 'dispatch_rpc']
         result['network_api'] = 'netconf'
         result['device_info'] = self.get_device_info()
         result['server_capabilities'] = [c for c in self.m.server_capabilities]

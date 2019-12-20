@@ -19,6 +19,24 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+netconf: junos
+short_description: Use junos netconf plugin to run netconf commands on Juniper JUNOS platform
+description:
+  - This junos plugin provides low level abstraction apis for
+    sending and receiving netconf commands from Juniper JUNOS network devices.
+version_added: "2.9"
+options:
+  ncclient_device_handler:
+    type: str
+    default: junos
+    description:
+      - Specifies the ncclient device handler name for Juniper junos network os. To
+        identify the ncclient device handler name refer ncclient library documentation.
+"""
+
 import json
 import re
 
