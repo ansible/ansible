@@ -102,9 +102,11 @@ class NetconfBase(AnsiblePlugin):
             conn.load_configuration(config=[''set system ntp server 1.1.1.1''], action='set', format='text')
     """
 
-    __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get']
+    __rpc__ = ['rpc', 'get_config', 'get', 'edit_config', 'validate', 'copy_config', 'dispatch', 'lock', 'unlock',
+               'discard_changes', 'commit', 'get_schema', 'delete_config', 'get_device_operations']
 
     def __init__(self, connection):
+        super(NetconfBase, self).__init__()
         self._connection = connection
 
     @property
