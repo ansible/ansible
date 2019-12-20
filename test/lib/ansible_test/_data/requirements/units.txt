@@ -4,7 +4,7 @@ mock
 pytest
 pytest-mock
 pytest-xdist
-git+https://github.com/yaml/pyyaml.git@release/5.3
+pyyaml
 
 # requirement for maven_artifact
 semantic_version
