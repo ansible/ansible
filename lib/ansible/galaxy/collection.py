@@ -658,6 +658,7 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
                         continue
 
                     if b_link_target in resolved_dirs:
+                        display.vvv("Skipping '%s' for collection build" % to_text(b_abs_path))
                         continue
 
                     resolved_dirs.add(b_link_target)
