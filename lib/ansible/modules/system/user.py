@@ -2796,15 +2796,14 @@ class BusyBox(User):
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # Manage password
-        if self.password is not None:
-            if info[1] != self.password:
-                cmd = [self.module.get_bin_path('chpasswd', True)]
-                cmd.append('--encrypted')
-                data = '{name}:{password}'.format(name=self.name, password=self.password)
-                rc, out, err = self.execute_command(cmd, data=data)
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            cmd = [self.module.get_bin_path('chpasswd', True)]
+            cmd.append('--encrypted')
+            data = '{name}:{password}'.format(name=self.name, password=self.password)
+            rc, out, err = self.execute_command(cmd, data=data)
 
-                if rc is not None and rc != 0:
-                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         return rc, out, err
 

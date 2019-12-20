@@ -95,6 +95,32 @@
   assert:
     that: "'warnings' not in test_user_encrypt0"
 
+# https://github.com/ansible/ansible/issues/65711
+- name: Test updating password only on creation
+  user:
+    name: ansibulluser
+    password: '*'
+    update_password: on_create
+  register: test_user_update_password
+
+- name: Ensure password was not changed
+  assert:
+    that:
+      - test_user_update_password is not changed
+
+- name: Verify password hash for Linux
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  block:
+    - name: LINUX | Get shadow entry for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure password hash was not removed
+      assert:
+        that:
+          - getent_shadow['ansibulluser'][1] != '*'
+
 - block:
     - name: add an plaintext password for user
       user:
