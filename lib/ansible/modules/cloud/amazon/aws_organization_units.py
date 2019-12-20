@@ -25,8 +25,15 @@ options:
     description:
       - Name of the organizational unit
         This can be full OU path such as "Prod/IT/Service_Desk".
-        The parent OUs will be recursively dereferenced.
         The lookup always starts from the root node, as the names are not unique within the organization tree.
+      - Mutually exclusive with c(arn)
+    required: true
+    type: str
+  arn:
+    description:
+      - ARN of the organizational unit
+      - ARN can be used to delete OU but not create
+      - Mutually exclusive with c(name)
     required: true
     type: str
   state:
@@ -65,6 +72,13 @@ name:
   returned: always
   type: str
   sample: Prod
+arn:
+  description:
+    - ARN of the organizational unit.
+      If the parent OU does not exist the module will fail with warning message.
+  returned: always
+  type: str
+  sample: Prod
 state:
   description: State of the organization unit.
   returned: always
@@ -93,154 +107,115 @@ from ansible.module_utils.ec2 import AWSRetry, boto3_tag_list_to_ansible_dict, a
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 from ansible.module_utils._text import to_native
 
+class ParameterValidationException(Exception):
+    pass
 
-class AwsOrganizations():
-    def __init__(self, module):
-        self.module = module
-        try:
-            self.client = self.module.client('organizations')
-        except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg="Failed to connect to AWS")
-        self.aws_org_root = self.get_root()
+class UnknownConditionException(Exception):
+    pass
 
-    def get_children_ous(self, parent_id, recursive=False):
-        paginator = self.client.get_paginator('list_organizational_units_for_parent')
-        children_ous = []
-        for page in paginator.paginate(ParentId=parent_id):
-            if recursive:
-                for ou in page['OrganizationalUnits']:
-                    children_ous.append(dict(
-                        ou,
-                        OrganizationalUnits=self.get_children_ous(ou['Id'], recursive=True),
-                        Accounts=self.get_child_accounts(ou['Id'])
-                    ))
-            else:
-                children_ous += page['OrganizationalUnits']
-        return children_ous
+class OrganizationalUnitDependencyException(Exception):
+    pass
 
-    def get_child_accounts(self, parent_id):
-        paginator = self.client.get_paginator('list_accounts_for_parent')
-        children_accounts = []
-        for page in paginator.paginate(ParentId=parent_id):
-            children_accounts += page['Accounts']
-        return children_accounts
-
-    def get_ou_by_id(self, ou_id):
-        try:
-            ou = self.client.describe_organizational_unit(OrganizationalUnitId=ou_id)
-        except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg="Failed to describe organizational unit")
+class AwsOrganizationalUnit():
+    def __init__(self, name=None, arn=None):
+        self.arn = arn
+        self.client = boto3.client("organizations")
+        self.root = self.get_aws_organization_root()
+        if arn:
+            self.name = name
+            self.ou = self.get_aws_organizational_unit_by_arn(self.arn)
+        elif name:
+            self.name = name.strip("/")
+            self.ou = self.get_aws_organizational_unit_by_name(self.name)
         else:
-            if ou is None:
-                self.module.fail_json(msg="Organizational unit does not exist")
-            else:
-                return ou['OrganizationalUnit']
+            raise ParameterValidationException
 
-    def get_ou_id(self, name):
-        ou = self.get_ou(name)
-        if ou is None:
-            self.module.fail_json(msg="Organizational unit does not exist")
-        else:
-            return ou['Id']
+    def get_aws_organization_root(self):
+        roots = self.client.list_roots()
+        if len(roots.get("Roots")) != 1:
+            raise UnknownConditionException
+        return roots.get("Roots")[0]
 
-    def get_parent_tree(self, parent_name):
-        parent_ou = self.get_ou(parent_name)
-        if parent_ou is None:
-            self.module.fail_json(msg="Organizational unit does not exist")
-        org_tree = dict(
-            parent_ou,
-            OrganizationalUnits=self.get_children_ous(parent_ou['Id'], recursive=True),
-            Accounts=self.get_child_accounts(parent_ou['Id'])
-        )
-        return org_tree
-
-    def get_org_tree(self):
-        org_tree = dict(
-            self.aws_org_root,
-            OrganizationalUnits=self.get_children_ous(self.aws_org_root['Id'], recursive=True),
-            Accounts=self.get_child_accounts(self.aws_org_root['Id'])
-        )
-        return org_tree
-
-    def get_root(self):
-        try:
-            root_ids = self.client.list_roots().get('Roots')
-        except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg="Failed to list roots")
-        if len(root_ids) > 1:
-            self.module.fail_json(msg="Multiple roots not supported")
-        return root_ids[0]
-
-    def get_root_id(self):
-        return self.aws_org_root['Id']
-
-    def _get_ou(self, name, parent):
+    def get_aws_organizational_unit_for_parent(self, ou_name, parent_id):
         paginator = self.client.get_paginator("list_organizational_units_for_parent")
-        children_ous = []
-        for page in paginator.paginate(ParentId=parent):
-            children_ous += page['OrganizationalUnits']
-        ou = list(filter(lambda f: f['Name'] == name, children_ous))
-        if len(ou) == 1:
-            return ou[0]
-        elif len(ou) == 0:
-            return None
-        else:
-            self.module.fail_json(msg="None unique organizational unit names within a parent are not supported")
+        for page in paginator.paginate(ParentId=parent_id):
+            for child_ou in page["OrganizationalUnits"]:
+                if child_ou["Name"] == ou_name:
+                    return child_ou
+        return None
 
-    def get_ou(self, name):
-        ou_name = name.rstrip('/').lstrip('/')
-        ou_path = ou_name.split('/')
-        ou_parent = self.get_root_id()
-        for n in ou_path:
-            ou = self._get_ou(n, ou_parent)
-            if ou is None:
-                return ou
-            ou_parent = ou['Id']
-        return dict(ou)
-
-    def _create_ou(self, name, parent_id):
-        try:
-            ou = self.client.create_organizational_unit(ParentId=parent_id, Name=name)
-        except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg="Failed to create organizational unit")
-        else:
-            return ou['OrganizationalUnit']
-
-    def create_ou(self, name):
-        ou_name = name.rstrip('/').lstrip('/')
-        ou_path = ou_name.split('/')
-        if len(ou_path) == 1:
-            parent_id = self.get_root_id()
-        else:
-            ou_parent_path = ou_path[:-1]
-            parent_ou = self.get_ou('/'.join(ou_parent_path))
+    def get_aws_organizational_unit_by_name(self, name):
+        parent_ou_id = self.root["Id"]
+        for ou in name.split("/"):
+            parent_ou = self.get_aws_organizational_unit_for_parent(ou, parent_ou_id)
             if parent_ou is None:
-                self.module.fail_json(msg="Parent organizational unit does not exist")
-            else:
-                parent_id = parent_ou['Id']
-        return self._create_ou(ou_path[-1], parent_id)
+                return None
+            parent_ou_id = parent_ou["Id"]
+        return parent_ou
 
-    def delete_ou(self, ou_id):
-        try:
-            self.client.delete_organizational_unit(OrganizationalUnitId=ou_id)
-        except (BotoCoreError, ClientError) as e:
-            self.module.fail_json_aws(e, msg="Failed to delete organizational unit")
+    def get_aws_organizational_unit_by_arn(self, arn):
+        if arn.startswith("arn:aws:organizations::"):
+            ou_id = arn.split("/")[-1]
         else:
+            raise ParameterValidationException
+        try:
+            parent_ou = self.client.describe_organizational_unit(OrganizationalUnitId=ou_id)
+        except ClientError as e:
+            if "OrganizationalUnitNotFoundException" in e.response["Error"]["Message"]:
+                return None
+            else:
+                raise e
+        return parent_ou["OrganizationalUnit"]
+
+    def has_children(self):
+        if self.ou is None:
+            return False
+        paginator = self.client.get_paginator("list_children")
+        for child_type in ["ACCOUNT", "ORGANIZATIONAL_UNIT"]:
+            for page in paginator.paginate(ParentId=self.ou["Id"], ChildType=child_type):
+                if len(page["Children"]) > 0:
+                    return True
+        return False
+
+    def delete_aws_organizational_unit(self):
+        if self.ou is None:
             return True
+        if self.has_children():
+            raise OrganizationalUnitDependencyException
+        self.client.delete_organizational_unit(OrganizationalUnitId=self.ou["Id"])
+        return True
+
+    def create_aws_organizational_unit(self):
+        if self.ou is not None:
+            return True
+        if self.name is None:
+            raise ParameterValidationException
+        parent_name = self.name.rsplit("/", 1)[0]
+        ou_name = self.name.split("/")[-1]
+        if parent_name != ou_name:
+            parent_ou = self.get_aws_organizational_unit_by_name(parent_name)
+            if parent_ou is None:
+                raise ParentOrganizationalUnitDoesNotExist
+            parent_id = parent_ou["Id"]
+        else:
+            parent_id = self.root["Id"]
+        self.ou = self.client.create_organizational_unit(ParentId=parent_id, Name=ou_name)
+        return self.ou
 
 
 def main():
     argument_spec = dict(
-        name=dict(type='str', required=True),
+        name=dict(type='str'),
+        arn=dict(type='str'),
         state=dict(default='present', choices=['absent', 'present']),
     )
 
     module = AnsibleAWSModule(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        mutually_exclusive=[['name', 'arn']],
+        required_one_of=[['name', 'arn']]
     )
-
-    client = AwsOrganizations(module)
 
     result = dict(
         name=module.params.get('name'),
@@ -250,33 +225,44 @@ def main():
     )
 
     ou_name = module.params.get('name')
+    ou_arn = module.params.get('arn')
     ou_state = module.params.get('state')
 
-    ou = client.get_ou(ou_name)
-    if ou is None:
+    if ou_arn:
+        try:
+            client = AwsOrganizationalUnit(arn=ou_arn)
+        except ParameterValidationException as e:
+            module.fail_json(msg="Invalid ARN format")
+        except (BotoCoreError, ClientError) as e:
+            module.fail_json(msg="Boto failure")
+    else:
+        client = AwsOrganizationalUnit(name=ou_name)
+
+    if client.ou is None:
         result['state'] = 'absent'
     else:
         result['state'] = 'present'
-        result['ou'] = ou
+        result['ou'] = client.ou
 
     if ou_state == 'absent':
-        if ou is None:
+        if client.ou is None:
             result['changed'] = False
         else:
             result['changed'] = True
             if not module.check_mode:
-                if client.delete_ou(ou['Id']):
-                    result['state'] = 'absent'
+                try:
+                    if client.delete_aws_organizational_unit():
+                        result['state'] = 'absent'
+                except (BotoCoreError, ClientError, OrganizationalUnitDependencyException) as e:
+                    module.fail_json(msg="Failed to delete organizational unit")
     elif ou_state == 'present':
-        if ou is None:
+        if client.ou is None:
             result['changed'] = True
             if not module.check_mode:
-                ou = client.create_ou(ou_name)
-                if ou is not None:
-                    result['ou'] = ou
-                else:
+                try:
+                    result['ou'] = client.create_aws_organizational_unit()
+                except (BotoCoreError, ClientError, ParentOrganizationalUnitDoesNotExist) as e:
                     module.fail_json(msg="Failed to create organizational unit")
-
     module.exit_json(**result)
 
 

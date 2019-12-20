@@ -1,0 +1,28 @@
+inputs:
+    - parent
+    - /parent
+    - /parent/ou
+    - parent/ou
+    - parent/child/ou
+    - /parent/child/ou
+
+
+algorithm:
+
+does the ou exist
+    is the ou friendly name or ARN
+        if ARN then
+            get ou by ARN
+        else
+            is the ou a direct name or absolute path
+                if name
+                    get ou by name
+                else
+                    recursevily look up ou name
+                        if parent exists
+                            continue lookup
+                        else ou does not exist and
+                            if current lookup is not the final ou name then
+                                the module fails because the parent does not exist
+
+        
