@@ -300,8 +300,7 @@ def ensure_connect(func):
     def wrapped(self, *args, **kwargs):
         if not self._connected:
             self._connect()
-        if self._check_prompt:
-            self.update_cli_prompt_context()
+        self.update_cli_prompt_context()
         return func(self, *args, **kwargs)
     return wrapped
 
@@ -430,8 +429,8 @@ class Connection(NetworkConnectionBase):
     def update_cli_prompt_context(self):
         # set cli prompt context at the start of new task run only
         if self._check_prompt and self._task_uuid != self._check_prompt:
-            self.set_cli_prompt_context()
             self._task_uuid, self._check_prompt = self._check_prompt, False
+            self.set_cli_prompt_context()
 
     def _connect(self):
         '''
