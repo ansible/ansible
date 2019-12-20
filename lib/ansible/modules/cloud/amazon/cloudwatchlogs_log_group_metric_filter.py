@@ -150,10 +150,10 @@ def main():
         filter_name=dict(type='str', required=True),
         filter_pattern=dict(type='str'),
         metric_transformation=dict(type='dict', options=dict(
-          metric_name=dict(type='str'),
-          metric_namespace=dict(type='str'),
-          metric_value=dict(type='str'),
-          default_value=dict(type='float')
+            metric_name=dict(type='str'),
+            metric_namespace=dict(type='str'),
+            metric_value=dict(type='str'),
+            default_value=dict(type='float')
         )),
     )
 
