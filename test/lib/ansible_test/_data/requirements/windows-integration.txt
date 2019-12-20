@@ -7,4 +7,4 @@ requests-ntlm
 requests-credssp
 pypsrp
 pywinrm[credssp]
-pyyaml
+git+https://github.com/yaml/pyyaml.git@release/5.3
