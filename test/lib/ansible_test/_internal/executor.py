@@ -221,6 +221,9 @@ def install_command_requirements(args, python_version=None):
         for cloud_platform in get_cloud_platforms(args):
             commands.append(generate_pip_install(pip, '%s.cloud.%s' % (args.command, cloud_platform)))
 
+    if python_version != '2.6':
+        commands.append(generate_pip_install(pip, 'hack', packages=['git+git://github.com/yaml/pyyaml@release/5.3']))
+
     commands = [cmd for cmd in commands if cmd]
 
     # only look for changes when more than one requirements file is needed
