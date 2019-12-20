@@ -80,7 +80,7 @@ You can use the -vvv flag to display additional verbosity, such as the version a
    Remote collection found at 'https://galaxy.ansible.com/download/my_namespace-my_collection-1.0.0.tar.gz'
    Successfully verified that checksums for 'my_namespace.my_collection:1.0.0' match the remote collection
 
-If you have a pre-release or non-latest version of a collection installed you should include the specific version to verify. If the version is omitted, the installed collection is verified against the lastest version available on the server.
+If you have a pre-release or non-latest version of a collection installed you should include the specific version to verify. If the version is omitted, the installed collection is verified against the latest version available on the server.
 
 .. code-block:: bash
 
