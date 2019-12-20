@@ -157,21 +157,82 @@ class InventoryData(object):
             if group.name not in original_group_names:
                 original.groups.append(group)
 
-    def update_group(self, original, updated):
-        # This must only perform additive updates on the original object
+    def transfer_new_host_group_objects(self, host):
+        # Hosts in a new source create new groups to prevent cross-contamination
+        # Set the finalized groups to the original objects in inventory when they exist
 
+        finalized_groups = []
+
+        for group in host.groups:
+            if group.name in self._groups and id(group) != id(self._groups[group.name]):
+                finalized_groups.append(self._groups[group.name])
+            else:
+                finalized_groups.append(group)
+
+        host.groups = finalized_groups
+
+        return host
+
+    def transfer_new_group_objects(self, group):
+        # Groups in a new source create new group/host objects to prevent cross-contamination of relationships
+        # Set the finalized objects to the original object in inventory if they exist
+
+        finalized_hosts = []
+        finalized_child_groups = []
+        finalized_parent_groups = []
+
+        for host in group.hosts:
+            if host.name in self._hosts and id(host) != id(self._hosts[host.name]):
+                self.update_host(self._hosts[host.name], host)
+                finalized_hosts.append(self._hosts[host.name])
+            else:
+                finalized_hosts.append(host)
+
+        for g in group.child_groups:
+            if g.name in self._groups and id(g) != id(self._groups[g.name]):
+                finalized_child_groups.append(self._groups[g.name])
+            else:
+                finalized_child_groups.append(g)
+
+        for g in group.parent_groups:
+            if g.name in self._groups and id(g) != id(self._groups[g.name]):
+                self.update_group(self._groups[g.name], g)
+                finalized_parent_groups.append(self._groups[g.name])
+            else:
+                finalized_parent_groups.append(g)
+
+        group.hosts = finalized_hosts
+        group.child_groups = finalized_child_groups
+        group.parent_groups = finalized_parent_groups
+
+        return group
+
+    def update_group(self, original, updated, p=True, c=True):
+        # This must only perform additive updates on the original object
         original.vars.update(updated.vars)
 
         original_host_names = [h.name for h in original.hosts]
         original.hosts += [h for h in updated.hosts if h.name not in original_host_names]
+        cache_invalid = len(original_host_names) == len(original.hosts)
 
-        original_parent_groups = dict((g.name, g) for g in original.parent_groups)
-        updated_parent_groups = dict((g.name, g) for g in updated.parent_groups)
-        for parent_group in updated_parent_groups:
-            if parent_group in original_parent_groups:
-                self.update_group(original_parent_groups[parent_group], updated_parent_groups[parent_group])
-            else:
-                original.parent_groups.append(updated_parent_groups[parent_group])
+        if p:
+            original_parent_groups = dict((g.name, g) for g in original.parent_groups)
+            updated_parent_groups = dict((g.name, g) for g in updated.parent_groups)
+            for parent_group in updated_parent_groups:
+                if parent_group in original_parent_groups:
+                    self.update_group(original_parent_groups[parent_group], updated_parent_groups[parent_group], c=False)
+                else:
+                    original.parent_groups.append(self.transfer_new_group_objects(updated_parent_groups[parent_group]))
+
+        if c:
+            original_child_groups = dict((g.name, g) for g in original.child_groups)
+            updated_child_groups = dict((g.name, g) for g in updated.child_groups)
+            final_child_groups = []
+            for child_group in updated_child_groups:
+                if child_group not in original_child_groups:
+                    original.child_groups.append(updated_child_groups[child_group])
+                else:
+                    self.update_group(original_child_groups[child_group], updated_child_groups[child_group], p=False)
 
     def end_transaction(self):
         updated_groups = list(self._temp_groups.store.keys())
@@ -179,14 +240,14 @@ class InventoryData(object):
 
         for group_name in updated_groups:
             if group_name not in self._groups:
-                self._groups[group_name] = self._temp_groups.pop(group_name)
+                self._groups[group_name] = self.transfer_new_group_objects(self._temp_groups.pop(group_name))
             else:
-                self.update_group(self._groups[group_name], self._temp_groups.pop(group_name))
+                self.update_group(self._groups[group_name], self.transfer_new_group_objects(self._temp_groups.pop(group_name)))
         for host_name in updated_hosts:
             if host_name not in self._hosts:
-                self._hosts[host_name] = self._temp_hosts.pop(host_name)
+                self._hosts[host_name] = self.transfer_new_host_group_objects(self._temp_hosts.pop(host_name))
             else:
-                self.update_host(self._hosts[host_name], self._temp_hosts.pop(host_name))
+                self.update_host(self._hosts[host_name], self.transfer_new_host_group_objects(self._temp_hosts.pop(host_name)))
 
         self.in_transaction = False
         self.initialize_pending_inventory()
