@@ -23,7 +23,9 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import (
+    _find_existing_collections,
     build_collection,
+    CollectionRequirement,
     install_collections,
     publish_collection,
     validate_collection_name,
@@ -1019,6 +1021,10 @@ class GalaxyCLI(CLI):
         lists the roles or collections installed on the local system or matches a single role or collection passed as an argument.
         """
 
+        def _display_collection(collection):
+            fqcn = '%s.%s' % (collection.namespace, collection.name)
+            display.display('- {fqcn} ({version})'.format(fqcn=fqcn, version=collection.latest_version))
+
         def _display_role(gr):
             install_info = gr.install_info
             version = None
@@ -1065,8 +1071,73 @@ class GalaxyCLI(CLI):
                             _display_role(gr)
 
         elif context.CLIARGS['type'] == 'collection':
-            if context.CLIARGS['collection']:
-                pass
+            collections_search_paths = context.CLIARGS['collections_path']
+            collection_name = context.CLIARGS['collection']
+
+            # TODO: Should we support listing all collections in a given namespace?
+
+            # list a specific collection
+            if collection_name:
+                for path in collections_search_paths:
+                    collection_path = GalaxyCLI._resolve_path(path)
+                    if not os.path.exists(path):
+                        if path in C.COLLECTIONS_PATHS:
+                            # don't warn for missing default dirs
+                            continue
+                        warnings.append("- the configured path {0} does not exist.".format(collection_path))
+                        continue
+                    elif not os.path.isdir(collection_path):
+                        warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
+                        continue
+
+                    path_found = True
+                    display.display("# {0}".format(path))
+
+                    # Make sure we look inside the 'ansible_collections' dir
+                    if os.path.split(collection_path)[1] != 'ansible_collections':
+                        collection_path = os.path.join(collection_path, 'ansible_collections')
+
+                    try:
+                        namespace, collection = collection_name.split('.')
+                    except ValueError:
+                        raise AnsibleOptionsError("Incorrect value for collection name. Must be 'namespace.collection' got '%s'" % collection_name)
+
+                    b_collection_path = to_bytes(os.path.join(collection_path, namespace, collection), errors='surrogate_or_strict')
+
+                    if not os.path.exists(b_collection_path):
+                        warnings.append("- unable to find {0} in collection paths".format(collection_name))
+                        continue
+
+                    collection = CollectionRequirement.from_path(b_collection_path, False)
+                    _display_collection(collection)
+
+            else:
+                # list all collections
+                for path in collections_search_paths:
+                    collection_path = GalaxyCLI._resolve_path(path)
+                    if not os.path.exists(path):
+                        if path in C.COLLECTIONS_PATHS:
+                            # don't warn for missing default dirs
+                            continue
+                        warnings.append("- the configured path {0} does not exist.".format(collection_path))
+                        continue
+                    elif not os.path.isdir(collection_path):
+                        warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
+                        continue
+
+                    display.display("# {0}".format(path))
+
+                    # Make sure we look inside the 'ansible_collections' dir
+                    if os.path.split(path)[1] != 'ansible_collections':
+                        path = os.path.join(path, 'ansible_collections')
+
+                    collections = _find_existing_collections(path)
+                    # Sort collections by the namespace and name
+                    collections.sort(key=lambda x: '%s.%s' % (x.namespace, x.name))
+                    for collection in collections:
+                        _display_collection(collection)
+
+                path_found = True
 
         for w in warnings:
             display.warning(w)
