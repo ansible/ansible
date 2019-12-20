@@ -189,7 +189,7 @@
     - name: lambda_info | Gather all infos for given lambda function
       lambda_info:
         name: "{{ lambda_function_name }}"
-        guery: all
+        query: all
       register: lambda_infos_all
 
     - name: lambda_info | Assert successfull retrieval of all information
