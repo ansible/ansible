@@ -1,0 +1,31 @@
+---
+- debug:
+      msg: "START vyos_firewall_rules gathered integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate.yaml
+
+- block:
+  - name: Merge the provided configuration with the exisiting running configuration
+    vyos_firewall_rules: &gathered
+      config:
+      state: gathered
+    register: result
+
+  - name: Assert that gathered dicts was correctly generated
+    assert:
+        that:
+            - "{{ populate | symmetric_difference(result['gathered']) |length == 0 }}"
+
+  - name: Gather the existing running configuration (IDEMPOTENT)
+    vyos_firewall_rules: *gathered
+    register: result
+
+  - name: Assert that the previous task was idempotent
+    assert:
+        that:
+            - "result['changed'] == false"
+
+  always:
+  - include_tasks: _remove_config.yaml
