@@ -16,13 +16,11 @@
   nxos_rollback:
     checkpoint_file: backup.cfg
     provider: "{{ connection }}"
-    timeout: 300
 
 - name: rollback to the previously created checkpoint file
   nxos_rollback:
     rollback_to: backup.cfg
     provider: "{{ connection }}"
-    timeout: 300
 
 - name: cleanup checkpoint file
   nxos_config: *delete

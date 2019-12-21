@@ -55,6 +55,7 @@
     - (install_actual_info.stdout|from_json).force_x86 == False
     - (install_actual_info.stdout|from_json).ignore_checksums == False
     - (install_actual_info.stdout|from_json).install_args == None
+    - (install_actual_info.stdout|from_json).override_args == False
     - (install_actual_info.stdout|from_json).package_params == {}
     - (install_actual_info.stdout|from_json).proxy_url == None
     - (install_actual_info.stdout|from_json).source == "normal"
@@ -151,6 +152,7 @@
     - (install_multiple_package1.stdout|from_json).force_x86 == False
     - (install_multiple_package1.stdout|from_json).ignore_checksums == False
     - (install_multiple_package1.stdout|from_json).install_args == None
+    - (install_multiple_package1.stdout|from_json).override_args == False
     - (install_multiple_package1.stdout|from_json).package_params == {}
     - (install_multiple_package1.stdout|from_json).proxy_url == None
     - (install_multiple_package1.stdout|from_json).source == "normal"
@@ -160,6 +162,7 @@
     - (install_multiple_package2.stdout|from_json).force_x86 == False
     - (install_multiple_package2.stdout|from_json).ignore_checksums == False
     - (install_multiple_package2.stdout|from_json).install_args == None
+    - (install_multiple_package2.stdout|from_json).override_args == False
     - (install_multiple_package2.stdout|from_json).package_params == {}
     - (install_multiple_package2.stdout|from_json).proxy_url == None
     - (install_multiple_package2.stdout|from_json).source == "normal"
@@ -221,6 +224,7 @@
     name: '{{ test_choco_package1 }}'
     state: present
     install_args: /install_arg 1 /install_arg 2
+    override_args: yes
     package_params: /param1 /param2:value
     allow_empty_checksums: yes
     architecture: x86
@@ -248,6 +252,7 @@
     - (install_params_info.stdout|from_json).force_x86 == True
     - (install_params_info.stdout|from_json).ignore_checksums == True
     - (install_params_info.stdout|from_json).install_args == "/install_arg 1 /install_arg 2"
+    - (install_params_info.stdout|from_json).override_args == True
     - (install_params_info.stdout|from_json).package_params.keys()|count == 2
     - (install_params_info.stdout|from_json).package_params.param1 == True
     - (install_params_info.stdout|from_json).package_params.param2 == "value"

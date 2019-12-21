@@ -29,7 +29,6 @@ description:
     - Running in check mode will perform the authentication without updating the config file.
 options:
   registry_url:
-    required: False
     description:
       - The registry URL.
     type: str
@@ -39,16 +38,15 @@ options:
       - url
   username:
     description:
-      - The username for the registry account
+      - The username for the registry account.
+      - Required when I(state) is C(present).
     type: str
-    required: yes
   password:
     description:
-      - The plaintext password for the registry account
+      - The plaintext password for the registry account.
+      - Required when I(state) is C(present).
     type: str
-    required: yes
   email:
-    required: False
     description:
       - Does nothing, do not use.
       - Will be removed in Ansible 2.14.

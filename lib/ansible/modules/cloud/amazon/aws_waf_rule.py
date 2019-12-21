@@ -12,10 +12,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: aws_waf_rule
-short_description: create and delete WAF Rules
+short_description: Create and delete WAF Rules
 description:
   - Read the AWS documentation for WAF
-    U(https://aws.amazon.com/documentation/waf/)
+    U(https://aws.amazon.com/documentation/waf/).
 version_added: "2.5"
 
 author:
@@ -26,18 +26,18 @@ extends_documentation_fragment:
   - ec2
 options:
     name:
-        description: Name of the Web Application Firewall rule
+        description: Name of the Web Application Firewall rule.
         required: yes
         type: str
     metric_name:
         description:
-        - A friendly name or description for the metrics for the rule
+        - A friendly name or description for the metrics for the rule.
         - The name can contain only alphanumeric characters (A-Z, a-z, 0-9); the name can't contain whitespace.
-        - You can't change metric_name after you create the rule
-        - Defaults to the same as name with disallowed characters removed
+        - You can't change I(metric_name) after you create the rule.
+        - Defaults to the same as I(name) with disallowed characters removed.
         type: str
     state:
-        description: whether the rule should be present or absent
+        description: Whether the rule should be present or absent.
         choices:
         - present
         - absent
@@ -45,8 +45,8 @@ options:
         type: str
     conditions:
         description: >
-          list of conditions used in the rule.  M(aws_waf_condition) can be used to
-          create new conditions
+          List of conditions used in the rule.  M(aws_waf_condition) can be used to
+          create new conditions.
         type: list
         elements: dict
         suboptions:
@@ -69,9 +69,9 @@ options:
         default: false
         type: bool
     waf_regional:
-        description: Whether to use waf_regional module. Defaults to false
+        description: Whether to use waf-regional module.
         default: false
-        required: no
+        required: false
         type: bool
         version_added: "2.9"
 '''
@@ -106,37 +106,37 @@ rule:
   type: complex
   contains:
     metric_name:
-      description: Metric name for the rule
+      description: Metric name for the rule.
       returned: always
       type: str
       sample: ansibletest1234rule
     name:
-      description: Friendly name for the rule
+      description: Friendly name for the rule.
       returned: always
       type: str
       sample: ansible-test-1234_rule
     predicates:
-      description: List of conditions used in the rule
+      description: List of conditions used in the rule.
       returned: always
       type: complex
       contains:
         data_id:
-          description: ID of the condition
+          description: ID of the condition.
           returned: always
           type: str
           sample: 8251acdb-526c-42a8-92bc-d3d13e584166
         negated:
-          description: Whether the sense of the condition is negated
+          description: Whether the sense of the condition is negated.
           returned: always
           type: bool
           sample: false
         type:
-          description: type of the condition
+          description: type of the condition.
           returned: always
           type: str
           sample: ByteMatch
     rule_id:
-      description: ID of the WAF rule
+      description: ID of the WAF rule.
       returned: always
       type: str
       sample: 15de0cbc-9204-4e1f-90e6-69b2f415c261
@@ -150,7 +150,6 @@ except ImportError:
     pass  # handled by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, list_rules_with_backoff, list_regional_rules_with_backoff, MATCH_LOOKUP
 from ansible.module_utils.aws.waf import get_web_acl_with_backoff, list_web_acls_with_backoff, list_regional_web_acls_with_backoff
@@ -331,23 +330,19 @@ def ensure_rule_absent(client, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            metric_name=dict(),
-            state=dict(default='present', choices=['present', 'absent']),
-            conditions=dict(type='list'),
-            purge_conditions=dict(type='bool', default=False),
-            waf_regional=dict(type='bool', default=False),
-        ),
+    argument_spec = dict(
+        name=dict(required=True),
+        metric_name=dict(),
+        state=dict(default='present', choices=['present', 'absent']),
+        conditions=dict(type='list'),
+        purge_conditions=dict(type='bool', default=False),
+        waf_regional=dict(type='bool', default=False),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec)
     state = module.params.get('state')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     resource = 'waf' if not module.params['waf_regional'] else 'waf-regional'
-    client = boto3_conn(module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client(resource)
     if state == 'present':
         (changed, results) = ensure_rule_present(client, module)
     else:

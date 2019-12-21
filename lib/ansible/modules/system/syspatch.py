@@ -52,6 +52,16 @@ EXAMPLES = '''
 - name: Revert all patches
   syspatch:
     revert: all
+
+# NOTE: You can reboot automatically if a patch requires it:
+- name: Apply all patches and store result
+  syspatch:
+    apply: true
+  register: syspatch
+
+- name: Reboot if patch requires it
+  reboot:
+  when: syspatch.reboot_needed
 '''
 
 RETURN = r'''
@@ -82,7 +92,7 @@ from ansible.module_utils.basic import AnsibleModule
 def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
-        apply=dict(type='bool', default=False),
+        apply=dict(type='bool'),
         revert=dict(type='str', choices=['all', 'one'])
     )
 
@@ -98,12 +108,14 @@ def run_module():
 
 
 def syspatch_run(module):
-    cmd = ['/usr/sbin/syspatch']
+    cmd = module.get_bin_path('syspatch', True)
     changed = False
     reboot_needed = False
     warnings = []
 
-    # Setup command flags
+    # Set safe defaults for run_flag and check_flag
+    run_flag = ['-c']
+    check_flag = ['-c']
     if module.params['revert']:
         check_flag = ['-l']
 
@@ -116,7 +128,7 @@ def syspatch_run(module):
         run_flag = []
 
     # Run check command
-    rc, out, err = module.run_command(cmd + check_flag)
+    rc, out, err = module.run_command([cmd] + check_flag)
 
     if rc != 0:
         module.fail_json(msg="Command %s failed rc=%d, out=%s, err=%s" % (cmd, rc, out, err))
@@ -131,21 +143,21 @@ def syspatch_run(module):
     if module.check_mode:
         changed = change_pending
     elif change_pending:
-        rc, out, err = module.run_command(cmd + run_flag)
+        rc, out, err = module.run_command([cmd] + run_flag)
 
         # Workaround syspatch ln bug:
         # http://openbsd-archive.7691.n7.nabble.com/Warning-applying-latest-syspatch-td354250.html
         if rc != 0 and err != 'ln: /usr/X11R6/bin/X: No such file or directory\n':
             module.fail_json(msg="Command %s failed rc=%d, out=%s, err=%s" % (cmd, rc, out, err))
-        elif out.lower().find('create unique kernel'):
+        elif out.lower().find('create unique kernel') > 0:
             # Kernel update applied
             reboot_needed = True
-        elif out.lower().find('syspatch updated itself'):
-            warnings.append['Syspatch was updated. Please run syspatch again.']
+        elif out.lower().find('syspatch updated itself') > 0:
+            warnings.append('Syspatch was updated. Please run syspatch again.')
 
         # If no stdout, then warn user
-        if len(out) > 0:
-            warnings.append['syspatch had suggested changes, but stdout was empty.']
+        if len(out) == 0:
+            warnings.append('syspatch had suggested changes, but stdout was empty.')
 
         changed = True
     else:

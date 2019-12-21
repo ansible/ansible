@@ -122,7 +122,7 @@ options:
   es_version:
     description:
       - Elasticsearch version (for C(ds_type = elasticsearch) only)
-      - Version 56 is for elasticsearch 5.6+ where tou can specify the C(max_concurrent_shard_requests) option.
+      - Version 56 is for elasticsearch 5.6+ where you can specify the C(max_concurrent_shard_requests) option.
     choices: [ 2, 5, 56 ]
     default: 5
   max_concurrent_shard_requests:

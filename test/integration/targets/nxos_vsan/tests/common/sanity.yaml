@@ -1,0 +1,50 @@
+---
+- debug: msg="START nxos_vsan sanity test with connection={{ ansible_connection }} "
+- debug: msg="Using vsans {{ vsan1 }}, {{ vsan2 }} for running this sanity test, please make sure these are not used in the setup, these will be deleted after the tests"
+
+
+- block:
+    - name: Setup - Remove vsan if configured
+      nxos_vsan: &remove
+        vsan:
+          - { id: "{{ vsan1 | int }}", remove: True}
+          - { id: "{{ vsan2 | int }}", remove: True}
+      ignore_errors: yes
+
+    - name: Configure vsan
+      nxos_vsan: &config
+        vsan:
+          - id: "{{ vsan1 | int }}"
+            name: vsan-SAN-A
+            suspend: True
+            interface:
+              - "{{intA1}}"
+            remove: False
+          - id: "{{ vsan2 | int }}"
+            name: vsan-SAN-B
+            interface:
+              - "{{intB1}}"
+            remove: False
+      register: result
+
+    - assert: &true
+        that:
+          - result.changed == true
+    - assert:
+        that: 
+          - result.commands == ["terminal dont-ask", "vsan database", "vsan 922", "vsan 922 name vsan-SAN-A", "vsan 922 suspend", "vsan 922 interface fc1/1", "vsan 923", "vsan 923 name vsan-SAN-B", "no vsan 923 suspend", "vsan 923 interface fc1/2", "no terminal dont-ask"]
+    
+    - name: Idempotence Check
+      nxos_vsan: *config
+      register: result
+
+    - assert: &false
+        that:
+          - result.changed == false
+    - assert:
+        that: 
+          - result.commands == []
+
+  always:
+    - name: Remove vsan config
+      nxos_vsan: *remove

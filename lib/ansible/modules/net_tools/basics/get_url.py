@@ -78,7 +78,8 @@ options:
       - If a SHA-256 checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        This option is deprecated. Use C(checksum) instead.
+        This option is deprecated and will be removed in version 2.14. Use
+        option C(checksum) instead.
     default: ''
     version_added: "1.3"
   checksum:
@@ -364,7 +365,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
-        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), elapsed=elapsed)
+        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
 
     # Exceptions in fetch_url may result in a status -1, the ensures a proper error to the user in all cases
     if info['status'] == -1:
@@ -449,6 +450,9 @@ def main():
 
     if module.params.get('thirsty'):
         module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
+
+    if module.params.get('sha256sum'):
+        module.deprecate('The parameter "sha256sum" has been deprecated and will be removed, use "checksum" instead', version='2.14')
 
     url = module.params['url']
     dest = module.params['dest']

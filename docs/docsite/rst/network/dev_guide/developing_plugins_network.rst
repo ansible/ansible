@@ -116,3 +116,67 @@ The ``handle_httperror(self, exception)`` method can deal with status codes retu
 * A value of ``false`` means that the plugin is unable to recover from this response. The status code will be returned to the calling module as an exception. Any other value will be taken as a nonfatal response from the request. This may be useful if the server returns error messages in the body of the response. Returning the original exception is usually sufficient in this case, as HTTPError objects have the same interface as a successful response.
 
 For example httpapi plugins, see the `source code for the httpapi plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/httpapi>`_ included with Ansible Core.
+
+
+
+Developing NETCONF plugins
+==========================
+
+The :ref:`netconf <netconf_connection>` connection plugin provides a connection to remote devices over the ``SSH NETCONF`` subsystem. Network devices typically use this connection plugin to send and receive ``RPC`` calls over ``NETCONF``.
+
+The ``netconf`` connection plugin uses the ``ncclient`` Python library under the hood to initiate a NETCONF session with a NETCONF-enabled remote network device. ``ncclient`` also executes NETCONF RPC requests and receives responses. You must install the ``ncclient`` on the local Ansible controller.
+
+To use the ``netconf`` connection plugin for network devices that support standard NETCONF (:RFC:`6241`) operations such as ``get``, ``get-config``, ``edit-config``, set ``ansible_network_os=default``.
+You can use :ref:`netconf_get <netconf_get_module>`, :ref:`netconf_config <netconf_config_module>` and :ref:`netconf_rpc <netconf_rpc_module>` modules to talk to a NETCONF enabled remote host.
+
+As a contributor and user, you should be able to use all the methods under the ``NetconfBase`` class if your device supports standard NETCONF. You can contribute a new plugin if the device you are working with has a vendor specific NETCONF RPC.
+To support a vendor specific NETCONF RPC, add the implementation in the network OS specific NETCONF plugin.
+
+For Junos for example:
+
+* See the vendor-specific Junos RPC methods implemented in ``plugins/netconf/junos.py``.
+* Set the value of ``ansible_network_os`` to the name of the netconf plugin file, that is ``junos`` in this case.
+
+.. _developing_plugins_network_cli:
+
+Developing network_cli plugins
+==============================
+
+The :ref:`network_cli <network_cli_connection>` connection type uses ``paramiko_ssh`` under the hood which creates a pseudo terminal to send commands and receive responses.
+``network_cli`` loads two platform specific plugins based on the value of ``ansible_network_os``:
+
+* Terminal plugin (for example ``plugins/terminal/ios.py``) - Controls the parameters related to terminal, such as setting terminal length and width, page disabling and privilege escalation. Also defines regex to identify the command prompt and error prompts.
+
+* :ref:`cliconf_plugins` (for example, :ref:`ios cliconf <ios_cliconf>`) - Provides an abstraction layer for low level send and receive operations. For example, the ``edit_config()`` method ensures that the prompt is in ``config`` mode before executing configuration commands.
+
+To contribute a new network operating system to work with the ``network_cli`` connection, implement the ``cliconf`` and ``terminal`` plugins for that network OS.
+
+The plugins can reside in:
+
+* Adjacent to playbook in folders
+
+  .. code-block:: bash
+
+    cliconf_plugins/
+    terminal_plugins/
+
+* Roles
+
+  .. code-block:: bash
+
+     myrole/cliconf_plugins/
+     myrole/terminal_plugins/
+
+* Collections
+
+  .. code-block:: bash
+
+    myorg/mycollection/plugins/terminal/
+    myorg/mycollection/plugins/cliconf/
+
+The user can also set the :ref:`DEFAULT_CLICONF_PLUGIN_PATH`  to configure the ``cliconf`` plugin path.
+
+After adding the ``cliconf`` and ``terminal`` plugins in the expected locations, users can:
+
+* Use the :ref:`cli_command <cli_command_module>` to run an arbitrary command on the network device.
+* Use the :ref:`cli_config <cli_config_module>` to  implement configuration changes on the remote hosts without platform-specific modules.

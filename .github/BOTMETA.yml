@@ -27,7 +27,7 @@
 #           ignored - these people should never be notified
 #           deprecated - this file is deprecated but probably not yet renamed
 #           keywords - used to identify this file based on the issue description
-#           migrated_to - Location on Galaxy,
+#           migrated_to - If this has been migrated to Galaxy, in the form collection.namespace
 #                         see https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html
 #           support - used for files without internal ANSIBLE_METADATA, see
 #                     https://github.com/ansible/ansible/labels?q=support for full list
@@ -97,7 +97,7 @@ files:
     support: community
   $modules/cloud/dimensiondata/dimensiondata_network.py: tintoy
   $modules/cloud/docker/: &docker
-    ignored: ThomasSteinbach
+    ignored: ThomasSteinbach cove
     labels: [ cloud, docker ]
     maintainers: $team_docker
     supershipit: felixfontein
@@ -260,7 +260,9 @@ files:
   $modules/monitoring/monit.py: brian-brazil
   $modules/monitoring/pagerduty.py:
     ignored: bpennypacker
-  $modules/monitoring/zabbix/: eikef D3DeFi rubentsirunyan
+  $modules/monitoring/zabbix/:
+    maintainers: $team_zabbix
+    ignored: cove
   $modules/net_tools/basics/get_url.py: ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py:
@@ -1538,8 +1540,8 @@ files:
   test/integration/targets/setup_docker: *docker
   test/integration/targets/setup_openssl: *crypto
   test/integration/targets/setup_mysql_db: *mysql
-  test/integration/targets/setup_zabbix:
-    maintainers: eikef D3DeFi rubentsirunyan
+  test/integration/targets/setup_zabbix: $team_zabbix
+  test/integration/targets/zabbix_: $team_zabbix
   test/integration/targets/ucs_: *ucs
   test/integration/targets/vultr: *vultr
   test/legacy/:
@@ -1549,6 +1551,8 @@ files:
   test/lib/ansible_test/_internal/cloud/acme.py: *crypto
   test/sanity/:
     notified: mattclay
+  test/sanity/ignore.txt:
+    notified: tremble
   test/units/module_utils/docker/:
     <<: *docker
     support: community
@@ -1598,7 +1602,7 @@ macros:
   team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
-  team_azure: haroldwongms nitzmahone yuwzho yungezz zikalino
+  team_azure: haroldwongms nitzmahone yuwzho yungezz zikalino haiyuazhang gavinfish
   team_bsd: bcoca dagwieers dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: dpassante rhtyd
@@ -1658,3 +1662,4 @@ macros:
   team_vultr: resmo Spredzy
   team_windows: jborean93 jhawkesworth nitzmahone ShachafGoldstein
   team_windows_core: nitzmahone jborean93
+  team_zabbix: D3DeFi rubentsirunyan sky-joker

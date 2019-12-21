@@ -295,7 +295,7 @@ class NetAppESeriesVolume(NetAppESeriesModule):
             write_cache_enable=dict(type="bool", default=True),
             cache_without_batteries=dict(type="bool", default=False),
             workload_name=dict(type="str", required=False),
-            metadata=dict(type="dict", require=False),
+            metadata=dict(type="dict", required=False),
             wait_for_initialization=dict(type="bool", default=False),
             initialization_timeout=dict(type="int", required=False))
 

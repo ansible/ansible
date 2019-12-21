@@ -139,7 +139,7 @@ def find_object_by_name(content, name, obj_type, folder=None, recurse=True):
 
 def find_cluster_by_name(content, cluster_name, datacenter=None):
 
-    if datacenter:
+    if datacenter and hasattr(datacenter, 'hostFolder'):
         folder = datacenter.hostFolder
     else:
         folder = content.rootFolder
@@ -166,8 +166,8 @@ def get_parent_datacenter(obj):
     return datacenter
 
 
-def find_datastore_by_name(content, datastore_name):
-    return find_object_by_name(content, datastore_name, [vim.Datastore])
+def find_datastore_by_name(content, datastore_name, datacenter_name=None):
+    return find_object_by_name(content, datastore_name, [vim.Datastore], datacenter_name)
 
 
 def find_dvs_by_name(content, switch_name, folder=None):
@@ -739,6 +739,7 @@ def set_vm_power_state(content, vm, state, force, timeout=0):
     if not force and current_state not in ['poweredon', 'poweredoff']:
         result['failed'] = True
         result['msg'] = "Virtual Machine is in %s power state. Force is required!" % current_state
+        result['instance'] = gather_vm_facts(content, vm)
         return result
 
     # State is not already true
@@ -838,6 +839,30 @@ def is_truthy(value):
     if str(value).lower() in ['true', 'on', 'yes']:
         return True
     return False
+
+
+# options is the dict as defined in the module parameters, current_options is
+# the list of the currently set options as returned by the vSphere API.
+def option_diff(options, current_options):
+    current_options_dict = {}
+    for option in current_options:
+        current_options_dict[option.key] = option.value
+
+    change_option_list = []
+    for option_key, option_value in options.items():
+        if is_boolean(option_value):
+            option_value = VmomiSupport.vmodlTypes['bool'](is_truthy(option_value))
+        elif isinstance(option_value, int):
+            option_value = VmomiSupport.vmodlTypes['int'](option_value)
+        elif isinstance(option_value, float):
+            option_value = VmomiSupport.vmodlTypes['float'](option_value)
+        elif isinstance(option_value, str):
+            option_value = VmomiSupport.vmodlTypes['string'](option_value)
+
+        if option_key not in current_options_dict or current_options_dict[option_key] != option_value:
+            change_option_list.append(vim.option.OptionValue(key=option_key, value=option_value))
+
+    return change_option_list
 
 
 def quote_obj_name(object_name=None):
@@ -1028,7 +1053,11 @@ class PyVmomi(object):
                         break
             elif vms:
                 # Unique virtual machine found.
-                vm_obj = vms[0]
+                actual_vm_folder_path = self.get_vm_path(content=self.content, vm_name=vms[0])
+                if self.params.get('folder') is None:
+                    vm_obj = vms[0]
+                elif self.params['folder'] in actual_vm_folder_path:
+                    vm_obj = vms[0]
         elif 'moid' in self.params and self.params['moid']:
             vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.params['moid'], self.si._stub)
 
@@ -1311,16 +1340,18 @@ class PyVmomi(object):
             return False
         return True
 
-    def find_datastore_by_name(self, datastore_name):
+    def find_datastore_by_name(self, datastore_name, datacenter_name=None):
         """
         Get datastore managed object by name
         Args:
             datastore_name: Name of datastore
+            datacenter_name: Name of datacenter where the datastore resides.  This is needed because Datastores can be
+            shared across Datacenters, so we need to specify the datacenter to assure we get the correct Managed Object Reference
 
         Returns: datastore managed object if found else None
 
         """
-        return find_datastore_by_name(self.content, datastore_name=datastore_name)
+        return find_datastore_by_name(self.content, datastore_name=datastore_name, datacenter_name=datacenter_name)
 
     # Datastore cluster
     def find_datastore_cluster_by_name(self, datastore_cluster_name):

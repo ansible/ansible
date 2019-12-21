@@ -19,6 +19,23 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+netconf: ce
+short_description: Use ce netconf plugin to run netconf commands on Huawei Cloudengine platform
+description:
+  - This ce plugin provides low level abstraction apis for
+    sending and receiving netconf commands from Huawei Cloudengine network devices.
+version_added: "2.9"
+options:
+  ncclient_device_handler:
+    type: str
+    default: huawei
+    description:
+      - Specifies the ncclient device handler name for Huawei Cloudengine.
+        To identify the ncclient device handler name refer ncclient library documentation.
+"""
+
 import json
 import re
 
@@ -54,14 +71,26 @@ class Netconf(NetconfBase):
     def get_device_info(self):
         device_info = dict()
         device_info['network_os'] = 'ce'
-        ele = new_ele('get-software-information')
-        data = self.execute_rpc(to_xml(ele))
-        reply = to_ele(to_bytes(data, errors='surrogate_or_strict'))
-        sw_info = reply.find('.//software-information')
+        filter_xml = '''<filter type="subtree">
+                          <system xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                            <systemInfo>
+                              <sysName></sysName>
+                              <sysContact></sysContact>
+                              <productVer></productVer>
+                              <platformVer></platformVer>
+                              <productName></productName>
+                            </systemInfo>
+                          </system>
+                        </filter>'''
+        data = self.get(filter_xml)
+        data = re.sub(r'xmlns=".+?"', r'', data)
+        reply = fromstring(to_bytes(data, errors='surrogate_or_strict'))
+        sw_info = reply.find('.//systemInfo')
 
-        device_info['network_os_version'] = self.get_text(sw_info, 'ce-version')
-        device_info['network_os_hostname'] = self.get_text(sw_info, 'host-name')
-        device_info['network_os_model'] = self.get_text(sw_info, 'product-model')
+        device_info['network_os_version'] = self.get_text(sw_info, 'productVer')
+        device_info['network_os_hostname'] = self.get_text(sw_info, 'sysName')
+        device_info['network_os_platform_version'] = self.get_text(sw_info, 'platformVer')
+        device_info['network_os_platform'] = self.get_text(sw_info, 'productName')
 
         return device_info
 
@@ -89,9 +118,8 @@ class Netconf(NetconfBase):
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'validate', 'lock', 'unlock', 'copy_copy',
-                                               'execute_rpc', 'load_configuration', 'get_configuration', 'command',
-                                               'reboot', 'halt']
+        result['rpc'] = self.get_base_rpc() + ['execute_rpc', 'load_configuration', 'get_configuration', 'compare_configuration',
+                                               'execute_action', 'halt', 'reboot', 'execute_nc_cli', 'dispatch_rpc']
         result['network_api'] = 'netconf'
         result['device_info'] = self.get_device_info()
         result['server_capabilities'] = [c for c in self.m.server_capabilities]

@@ -52,7 +52,7 @@ EXAMPLES = r'''
     ansible_host: vcenter.my.domain
     ansible_user: administrator@vsphere.local
     ansible_httpapi_password: "SomePassword"
-    ansbile_httpapi_use_ssl: yes
+    ansible_httpapi_use_ssl: yes
     ansible_httpapi_validate_certs: false
   tasks:
 

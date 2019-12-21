@@ -272,5 +272,28 @@ try {
 }
 Assert-Equals -actual $failed -expected $true
 
+$arch_class = @'
+using System;
+
+namespace Namespace11
+{
+    public class Class11
+    {
+        public static int GetIntPtrSize()
+        {
+#if X86
+            return 4;
+#elif AMD64
+            return 8;
+#else
+            return 0;
+#endif
+        }
+    }
+}
+'@
+Add-CSharpType -Reference $arch_class
+Assert-Equals -actual ([Namespace11.Class11]::GetIntPtrSize()) -expected ([System.IntPtr]::Size)
+
 $result.res = "success"
 Exit-Json -obj $result

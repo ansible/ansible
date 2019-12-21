@@ -19,7 +19,9 @@ module: vmware_content_deploy_template
 short_description: Deploy Virtual Machine from template stored in content library.
 description:
 - Module to deploy virtual machine from template in content library.
-- Content Library feature is introduced in vSphere 6.0 version, so this module is not supported in the earlier versions of vSphere.
+- Content Library feature is introduced in vSphere 6.0 version.
+- vmtx templates feature is introduced in vSphere 67U1 and APIs for clone template from content library in 67U2.
+- This module does not work with vSphere version older than 67U2.
 - All variables and VMware object names are case sensitive.
 version_added: '2.9'
 author:
@@ -188,7 +190,7 @@ class VmwareContentDeployTemplate(VmwareRestClient):
         # Find the Cluster by the given Cluster name
         self.cluster_id = None
         if self.cluster:
-            self.cluster_id = self.get_resource_pool_by_name(self.datacenter, self.resourcepool)
+            self.cluster_id = self.get_cluster_by_name(self.datacenter, self.cluster)
             if not self.cluster_id:
                 self.module.fail_json(msg="Failed to find the Cluster %s" % self.cluster)
         # Create VM placement specs

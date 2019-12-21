@@ -94,6 +94,19 @@ options:
       - The ID of the System, Manager or Chassis to modify
     type: str
     version_added: "2.10"
+  nic_addr:
+    required: false
+    description:
+      - EthernetInterface Address string on OOB controller
+    default: 'null'
+    type: str
+    version_added: '2.10'
+  nic_config:
+    required: false
+    description:
+      - setting dict of EthernetInterface on OOB controller
+    type: dict
+    version_added: '2.10'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -180,6 +193,21 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+
+  - name: Set Manager NIC
+    redfish_config:
+      category: Manager
+      command: SetManagerNic
+      nic_config:
+        DHCPv4:
+          DHCPEnabled: False
+        IPv4StaticAddresses:
+          Address: 192.168.1.3
+          Gateway: 192.168.1.1
+          SubnetMask: 255.255.255.0
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -199,7 +227,7 @@ from ansible.module_utils._text import to_native
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes", "SetBootOrder",
                 "SetDefaultBootOrder"],
-    "Manager": ["SetNetworkProtocols"]
+    "Manager": ["SetNetworkProtocols", "SetManagerNic"]
 }
 
 
@@ -221,7 +249,12 @@ def main():
                 type='dict',
                 default={}
             ),
-            resource_id=dict()
+            resource_id=dict(),
+            nic_addr=dict(default='null'),
+            nic_config=dict(
+                type='dict',
+                default={}
+            )
         ),
         supports_check_mode=False
     )
@@ -243,13 +276,17 @@ def main():
             'bios_attribute_value']
         module.deprecate(msg='The bios_attribute_name/bios_attribute_value '
                          'options are deprecated. Use bios_attributes instead',
-                         version='2.10')
+                         version='2.14')
 
     # boot order
     boot_order = module.params['boot_order']
 
     # System, Manager or Chassis ID to modify
     resource_id = module.params['resource_id']
+
+    # manager nic
+    nic_addr = module.params['nic_addr']
+    nic_config = module.params['nic_config']
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
@@ -292,6 +329,8 @@ def main():
         for command in command_list:
             if command == "SetNetworkProtocols":
                 result = rf_utils.set_network_protocols(module.params['network_protocols'])
+            elif command == "SetManagerNic":
+                result = rf_utils.set_manager_nic(nic_addr, nic_config)
 
     # Return data back or fail with proper message
     if result['ret'] is True:

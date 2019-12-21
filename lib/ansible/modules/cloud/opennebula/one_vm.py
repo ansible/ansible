@@ -1303,7 +1303,8 @@ def get_connection_info(module):
             if authfile is None:
                 authfile = os.path.join(os.environ.get("HOME"), ".one", "one_auth")
             try:
-                authstring = open(authfile, "r").read().rstrip()
+                with open(authfile, "r") as fp:
+                    authstring = fp.read().rstrip()
                 username = authstring.split(":")[0]
                 password = authstring.split(":")[1]
             except (OSError, IOError):
@@ -1445,7 +1446,7 @@ def main():
         datastore_id = get_datastore_id(module, one_client, requested_datastore_id, requested_datastore_name)
         if datastore_id is None:
             if requested_datastore_id:
-                module.fail_json(msg='There is no datastore with template_id: ' + str(requested_datastore_id))
+                module.fail_json(msg='There is no datastore with datastore_id: ' + str(requested_datastore_id))
             elif requested_datastore_name:
                 module.fail_json(msg="There is no datastore with name: " + requested_datastore_name)
         else:

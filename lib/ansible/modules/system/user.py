@@ -420,7 +420,7 @@ import subprocess
 import time
 
 from ansible.module_utils import distro
-from ansible.module_utils._text import to_native, to_bytes
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.sys_info import get_platform_subclass
 
@@ -2305,7 +2305,7 @@ class DarwinUser(User):
         for field in self.fields:
             if field[0] in self.__dict__ and self.__dict__[field[0]]:
                 current = self._get_user_property(field[1])
-                if current is None or current != self.__dict__[field[0]]:
+                if current is None or current != to_text(self.__dict__[field[0]]):
                     cmd = self._get_dscl()
                     cmd += ['-create', '/Users/%s' % self.name, field[1], self.__dict__[field[0]]]
                     (rc, _err, _out) = self.execute_command(cmd)
@@ -2796,15 +2796,14 @@ class BusyBox(User):
                             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         # Manage password
-        if self.password is not None:
-            if info[1] != self.password:
-                cmd = [self.module.get_bin_path('chpasswd', True)]
-                cmd.append('--encrypted')
-                data = '{name}:{password}'.format(name=self.name, password=self.password)
-                rc, out, err = self.execute_command(cmd, data=data)
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            cmd = [self.module.get_bin_path('chpasswd', True)]
+            cmd.append('--encrypted')
+            data = '{name}:{password}'.format(name=self.name, password=self.password)
+            rc, out, err = self.execute_command(cmd, data=data)
 
-                if rc is not None and rc != 0:
-                    self.module.fail_json(name=self.name, msg=err, rc=rc)
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
 
         return rc, out, err
 

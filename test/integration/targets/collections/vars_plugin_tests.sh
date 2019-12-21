@@ -63,14 +63,6 @@ grep -v '"collection": "adjacent"' out.txt
 grep -v '"collection": "collection_root_user"' out.txt
 grep -v '"adj_var": "value"' out.txt
 
-# Test vars plugins that support the stage setting run for inventory when stage is set to 'inventory'
-ANSIBLE_VARS_PLUGIN_STAGE=inventory ansible-inventory -i a.statichost.yml --list --playbook-dir=./ | tee out.txt
-
-grep -v '"v1_vars_plugin": true' out.txt
-grep -v '"vars_req_whitelist": true' out.txt
-grep '"v2_vars_plugin": true' out.txt
-grep '"name": "v2_vars_plugin"' out.txt
-
 # Test that the global setting allows v1 and v2 plugins to run after importing inventory
 ANSIBLE_RUN_VARS_PLUGINS=start ansible-inventory -i a.statichost.yml --list --playbook-dir=./ | tee out.txt
 

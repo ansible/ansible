@@ -23,7 +23,7 @@ description:
      - The given command will be executed on all selected nodes.
      - The command(s) will not be
        processed through the shell, so variables like C($HOME) and operations
-       like C("<"), C(">"), C("|"), C(";") and C("&") will not work.
+       like C("*"), C("<"), C(">"), C("|"), C(";") and C("&") will not work.
        Use the M(shell) module if you need these features.
      - To create C(command) tasks that are easier to read than the ones using space-delimited
        arguments, pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task)
@@ -33,7 +33,7 @@ description:
 options:
   free_form:
     description:
-      - The command module takes a free form command to run.
+      - The command module takes a free form string as a command to run.
       - There is no actual parameter named 'free form'.
   cmd:
     type: str
@@ -44,8 +44,7 @@ options:
     description:
       - Passes the command as a list rather than a string.
       - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
-      - Only the string or the list form can be
-        provided, not both.  One or the other must be provided.
+      - Only the string (free form) or the list (argv) form can be provided, not both.  One or the other must be provided.
     version_added: "2.6"
   creates:
     type: path
@@ -109,9 +108,11 @@ EXAMPLES = r'''
   command: cat /etc/motd
   register: mymotd
 
-- name: Run command if /path/to/database does not exist (without 'args' keyword).
+# free-form (string) arguments, all arguments on one line
+- name: Run command if /path/to/database does not exist (without 'args').
   command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
 
+# free-form (string) arguments, some arguments on separate lines with the 'args' keyword
 # 'args' is a task keyword, passed at the same level as the module
 - name: Run command if /path/to/database does not exist (with 'args' keyword).
   command: /usr/bin/make_database.sh db_user db_name
@@ -132,6 +133,7 @@ EXAMPLES = r'''
     chdir: somedir/
     creates: /path/to/database
 
+# argv (list) arguments, each argument on a separate line, 'args' keyword not necessary
 # 'argv' is a parameter, indented one level from the module
 - name: Use 'argv' to send a command as a list - leave 'command' empty
   command:
@@ -139,6 +141,7 @@ EXAMPLES = r'''
       - /usr/bin/make_database.sh
       - Username with whitespace
       - dbname with whitespace
+    creates: /path/to/database
 
 - name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}

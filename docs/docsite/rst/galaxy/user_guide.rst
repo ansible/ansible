@@ -43,7 +43,7 @@ Installing a collection from Galaxy
 Downloading a collection from Automation Hub
 ----------------------------------------------------
 
-To download a collection from Automation Hub with the ``ansible-galaxy`` command:
+You can download collections from Automation Hub at the command line. Automation Hub content is available to subscribers only, so you must download an API token and configure your local environment to provide it before you can you download collections. To download a collection from Automation Hub with the ``ansible-galaxy`` command:
 
 1. Get your Automation Hub API token. Go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Get API token` from the version dropdown to copy your API token.
 2. Configure Red Hat Automation Hub server in the ``server_list``  option under the ``[galaxy]`` section in your :file:`ansible.cfg` file.
@@ -287,6 +287,29 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
+Installing roles and collections from the same requirements.yml file
+---------------------------------------------------------------------
+
+You can install roles and collections from the same requirements files, with some caveats.
+
+.. code-block:: yaml
+
+    ---
+    roles:
+      # Install a role from Ansible Galaxy.
+      - src: geerlingguy.java
+        version: 1.9.6
+
+    collections:
+      # Install a collection from Ansible Galaxy.
+      - name: geerlingguy.php_roles
+        version: 0.9.3
+        source: https://galaxy.ansible.com
+
+.. note::
+   While both roles and collections can be specified in one requirements file, they need to be installed separately.
+   The ``ansible-galaxy role install -r requirements.yml`` will only install roles and  ``ansible-galaxy collection install -r requirements.yml -p ./`` will only install collections.
+
 Installing multiple roles from multiple files
 ---------------------------------------------
 
@@ -419,7 +442,7 @@ Use ``remove`` to delete a role from *roles_path*:
 
 
 .. seealso::
-  `collections <collections>`_
+  :ref:`collections`
     Sharable collections of modules, playbooks and roles
-  `roles <playbooks_reuse_roles>`_
+  :ref:`playbooks_reuse_roles`
     Reusable tasks, handlers, and other files in a known directory structure

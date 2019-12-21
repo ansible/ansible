@@ -61,7 +61,7 @@
   - assert:
       that:
       - result is changed
-      - result.queries == ['CREATE LANGUAGE "{{ test_lang }}"', 'ALTER LANGUAGE {{ test_lang }} OWNER TO {{ test_user1 }}']
+      - result.queries == ['CREATE LANGUAGE "{{ test_lang }}"', 'ALTER LANGUAGE "{{ test_lang }}" OWNER TO {{ test_user1 }}']
 
   - name: Check
     <<: *task_parameters
@@ -88,7 +88,7 @@
   - assert:
       that:
       - result is changed
-      - result.queries == ["ALTER LANGUAGE {{ test_lang }} OWNER TO {{ test_user2 }}"]
+      - result.queries == ['ALTER LANGUAGE "{{ test_lang }}" OWNER TO {{ test_user2 }}']
 
   - name: Check that nothing was actually changed
     <<: *task_parameters
@@ -116,7 +116,7 @@
       - result is changed
       # TODO: the first elem of the returned list below
       # looks like a bug, not related with the option owner, needs to be checked
-      - result.queries == ["UPDATE pg_language SET lanpltrusted = 'False' WHERE lanname = '{{ test_lang }}'", "ALTER LANGUAGE {{ test_lang }} OWNER TO {{ test_user2 }}"]
+      - result.queries == ["UPDATE pg_language SET lanpltrusted = false WHERE lanname = '{{ test_lang }}'", 'ALTER LANGUAGE "{{ test_lang }}" OWNER TO {{ test_user2 }}']
 
   - name: Check
     <<: *task_parameters

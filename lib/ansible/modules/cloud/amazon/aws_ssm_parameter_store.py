@@ -19,12 +19,12 @@ version_added: "2.5"
 options:
   name:
     description:
-      - parameter key name.
+      - Parameter key name.
     required: true
     type: str
   description:
     description:
-      - parameter key description.
+      - Parameter key description.
     required: false
     type: str
   value:
@@ -34,15 +34,15 @@ options:
     type: str
   state:
     description:
-      - Creates or modifies an existing parameter
-      - Deletes a parameter
+      - Creates or modifies an existing parameter.
+      - Deletes a parameter.
     required: false
     choices: ['present', 'absent']
     default: present
     type: str
   string_type:
     description:
-      - Parameter String type
+      - Parameter String type.
     required: false
     choices: ['String', 'StringList', 'SecureString']
     default: String
@@ -130,12 +130,11 @@ delete_parameter:
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
 
 try:
     from botocore.exceptions import ClientError
 except ImportError:
-    pass  # will be captured by imported HAS_BOTO3
+    pass  # Handled by AnsibleAWSModule
 
 
 def update_parameter(client, module, args):
@@ -225,8 +224,7 @@ def delete_parameter(client, module):
 
 
 def setup_client(module):
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='ssm', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ssm')
     return connection
 
 

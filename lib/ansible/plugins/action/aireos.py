@@ -36,7 +36,8 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        self._config_module = True if self._task.action == 'aireos_config' else False
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'aireos_config' else False
 
         if self._play_context.connection != 'local':
             return dict(
@@ -57,7 +58,7 @@ class ActionModule(ActionNetworkModule):
         command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
         display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-        connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+        connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
         connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
         socket_path = connection.run()

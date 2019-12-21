@@ -123,14 +123,14 @@ def check_pyyaml(args, version):
     :type args: EnvironmentConfig
     :type version: str
     """
-    if version in CHECK_YAML_VERSIONS:
-        return
+    try:
+        return CHECK_YAML_VERSIONS[version]
+    except KeyError:
+        pass
 
     python = find_python(version)
-    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'yamlcheck.py')], capture=True)
-
-    if args.explain:
-        return
+    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'yamlcheck.py')],
+                                 capture=True, always=True)
 
     CHECK_YAML_VERSIONS[version] = result = json.loads(stdout)
 
@@ -141,3 +141,5 @@ def check_pyyaml(args, version):
         display.warning('PyYAML is not installed for interpreter: %s' % python)
     elif not cloader:
         display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python)
+
+    return result
