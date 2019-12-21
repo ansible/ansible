@@ -259,9 +259,7 @@ def remove_policies(connection, module, policies_to_remove, params):
         try:
             if not module.check_mode:
                 connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy)
-        except ClientError as e:
-            module.fail_json_aws(e, msg="Unable to detach policy {0} from {1}".format(policy, params['RoleName']))
-        except BotoCoreError as e:
+        except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Unable to detach policy {0} from {1}".format(policy, params['RoleName']))
         changed = True
     return changed
@@ -303,9 +301,7 @@ def create_or_update_role(connection, module):
                 role = {'MadeInCheckMode': True}
                 role['AssumeRolePolicyDocument'] = json.loads(params['AssumeRolePolicyDocument'])
             changed = True
-        except ClientError as e:
-            module.fail_json_aws(e, msg="Unable to create role")
-        except BotoCoreError as e:
+        except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Unable to create role")
     else:
         # Check Assumed Policy document
@@ -314,9 +310,7 @@ def create_or_update_role(connection, module):
                 if not module.check_mode:
                     connection.update_assume_role_policy(RoleName=params['RoleName'], PolicyDocument=json.dumps(json.loads(params['AssumeRolePolicyDocument'])))
                 changed = True
-            except ClientError as e:
-                module.fail_json_aws(e, msg="Unable to update assume role policy for role {0}".format(params['RoleName']))
-            except BotoCoreError as e:
+            except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg="Unable to update assume role policy for role {0}".format(params['RoleName']))
 
     if managed_policies is not None:
@@ -343,9 +337,7 @@ def create_or_update_role(connection, module):
                 try:
                     if not module.check_mode:
                         connection.attach_role_policy(RoleName=params['RoleName'], PolicyArn=policy_arn)
-                except ClientError as e:
-                    module.fail_json_aws(e, msg="Unable to attach policy {0} to role {1}".format(policy_arn, params['RoleName']))
-                except BotoCoreError as e:
+                except (BotoCoreError, ClientError) as e:
                     module.fail_json_aws(e, msg="Unable to attach policy {0} to role {1}".format(policy_arn, params['RoleName']))
                 changed = True
 
@@ -353,9 +345,7 @@ def create_or_update_role(connection, module):
     if create_instance_profile and not role.get('MadeInCheckMode', False):
         try:
             instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'])['InstanceProfiles']
-        except ClientError as e:
-            module.fail_json_aws(e, msg="Unable to list instance profiles for role {0}".format(params['RoleName']))
-        except BotoCoreError as e:
+        except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Unable to list instance profiles for role {0}".format(params['RoleName']))
         if not any(p['InstanceProfileName'] == params['RoleName'] for p in instance_profiles):
             # Make sure an instance profile is attached
@@ -442,9 +432,7 @@ def destroy_role(connection, module):
         # We need to remove any instance profiles from the role before we delete it
         try:
             instance_profiles = connection.list_instance_profiles_for_role(RoleName=params['RoleName'])['InstanceProfiles']
-        except ClientError as e:
-            module.fail_json_aws(e, msg="Unable to list instance profiles for role {0}".format(params['RoleName']))
-        except BotoCoreError as e:
+        except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Unable to list instance profiles for role {0}".format(params['RoleName']))
 
         if role.get('PermissionsBoundary') is not None:
@@ -464,10 +452,7 @@ def destroy_role(connection, module):
                                 connection.delete_instance_profile(InstanceProfileName=profile['InstanceProfileName'])
                             except ClientError as e:
                                 module.fail_json_aws(e, msg="Unable to remove instance profile {0}".format(profile['InstanceProfileName']))
-            except ClientError as e:
-                module.fail_json_aws(e, msg="Unable to remove role {0} from instance profile {1}".format(
-                                     params['RoleName'], profile['InstanceProfileName']))
-            except BotoCoreError as e:
+            except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg="Unable to remove role {0} from instance profile {1}".format(
                                      params['RoleName'], profile['InstanceProfileName']))
 
@@ -476,17 +461,13 @@ def destroy_role(connection, module):
             for policy in get_attached_policy_list(connection, module, params['RoleName']):
                 if not module.check_mode:
                     connection.detach_role_policy(RoleName=params['RoleName'], PolicyArn=policy['PolicyArn'])
-        except ClientError as e:
-            module.fail_json_aws(e, msg="Unable to detach policy {0} from role {1}".format(policy['PolicyArn'], params['RoleName']))
-        except BotoCoreError as e:
+        except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Unable to detach policy {0} from role {1}".format(policy['PolicyArn'], params['RoleName']))
 
         try:
             if not module.check_mode:
                 connection.delete_role(**params)
-        except ClientError as e:
-            module.fail_json_aws(e, msg="Unable to delete role")
-        except BotoCoreError as e:
+        except (BotoCoreError, ClientError) as e:
             module.fail_json_aws(e, msg="Unable to delete role")
     else:
         module.exit_json(changed=False)
