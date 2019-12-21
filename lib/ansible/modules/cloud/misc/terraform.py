@@ -350,7 +350,7 @@ def main():
     if state == 'absent':
         command.extend(variables_args)
     elif state == 'present' and plan_file:
-        if os.path.exists(project_path + "/" + plan_file):
+        if any([os.path.isfile(project_path + "/" + plan_file), os.path.isfile(plan_file)]):
             command.append(plan_file)
         else:
             module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
