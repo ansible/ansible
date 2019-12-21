@@ -70,7 +70,7 @@ options:
 '''
 
 EXAMPLES = '''
-    - name: Ensure a text Record Exists
+    - name: Create a text record
       nios_txt_record:
         name: fqdn.txt.record.com
         text: mytext
@@ -81,7 +81,18 @@ EXAMPLES = '''
           username: admin
           password: admin
 
-    - name: Ensure a text Record does not exist
+    - name: update text of TXT record
+      nios_txt_record:
+        name: fqdn.txt.record.com
+        text: {new_text: newtext, old_text: mytext}
+        state: present
+        view: External
+        provider:
+          host: "{{ inventory_hostname_short }}"
+          username: admin
+          password: admin
+
+    - name: Delete a text record
       nios_txt_record:
         name: fqdn.txt.record.com
         text: mytext

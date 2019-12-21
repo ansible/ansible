@@ -358,6 +358,24 @@ class WapiModule(WapiBase):
                     # popping 'view' key as update of 'view' is not supported with respect to a:record/aaaa:record/srv:record/ptr:record
                     proposed_object = self.on_update(proposed_object, ib_spec)
                     del proposed_object['view']
+                    if (ib_obj_type == NIOS_A_RECORD):
+                        # resolves issue where multiple a_records with same name and different IP address
+                        try:
+                            ipaddr_obj = self.module._check_type_dict(proposed_object['ipv4addr'])
+                            ipaddr = ipaddr_obj['new_ipv4addr']
+                        except TypeError:
+                            ipaddr = proposed_object['ipv4addr']
+                        proposed_object['ipv4addr'] = ipaddr
+                    res = self.update_object(ref, proposed_object)
+                    result['changed'] = True
+                elif (ib_obj_type == NIOS_TXT_RECORD):
+                    # resolves issue where multiple txt_records with same name and different text
+                    try:
+                        text_obj = self.module._check_type_dict(proposed_object['text'])
+                        txt = text_obj['new_text']
+                    except TypeError:
+                        txt = proposed_object['text']
+                    proposed_object['text'] = txt
                     res = self.update_object(ref, proposed_object)
                     result['changed'] = True
                 elif 'network_view' in proposed_object:
@@ -584,7 +602,7 @@ class WapiModule(WapiBase):
         return ib_obj, update, new_name
 
     def on_update(self, proposed_object, ib_spec):
-        ''' Event called before the update is sent to the API endpoing
+        ''' Event called before the update is sent to the API endpoint
         This method will allow the final proposed object to be changed
         and/or keys filtered before it is sent to the API endpoint to
         be processed.
