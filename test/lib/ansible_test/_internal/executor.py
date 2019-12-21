@@ -222,7 +222,7 @@ def install_command_requirements(args, python_version=None):
             commands.append(generate_pip_install(pip, '%s.cloud.%s' % (args.command, cloud_platform)))
 
     if python_version != '2.6':
-        commands.append(generate_pip_install(pip, 'hack', packages=['git+git://github.com/yaml/pyyaml@release/5.3']))
+        commands.append(generate_pip_install(pip, 'hack', packages=['pyyaml==5.3b1']))
 
     commands = [cmd for cmd in commands if cmd]
 
