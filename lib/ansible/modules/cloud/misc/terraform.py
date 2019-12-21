@@ -209,7 +209,7 @@ def get_workspace_context(bin_path, project_path):
     command = [bin_path, 'workspace', 'list', '-no-color']
     rc, out, err = module.run_command(command, cwd=project_path)
     if rc != 0:
-        module.fail_json(msg="Failed to list Terraform workspaces:\r\n{0}".format(err))
+        module.warn("Failed to list Terraform workspaces:\r\n{0}".format(err))
     for item in out.split('\n'):
         stripped_item = item.strip()
         if not stripped_item:
