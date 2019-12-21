@@ -1,0 +1,2 @@
+deprecated_features:
+  - "clc_aa_policy - The ``wait`` option had no effect and will be removed in Ansible 2.14"
