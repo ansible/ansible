@@ -50,7 +50,6 @@ options:
     description:
       - A dictionary of tags to add or remove from the resource.
       - If the value provided for a tag is null and C(state) is I(absent), the tag will be removed regardless of its current value.
-    required: true
     type: dict
   purge_tags:
     description:
@@ -142,7 +141,7 @@ def main():
     argument_spec = dict(
         cluster_name=dict(required=True),
         resource=dict(required=False),
-        tags=dict(type='dict', required=True),
+        tags=dict(type='dict'),
         purge_tags=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent', 'list']),
         resource_type=dict(default='cluster', choices=['cluster', 'task', 'service', 'task_definition', 'container'])
@@ -216,7 +215,7 @@ def main():
         result['removed_tags'] = remove_tags
         if not module.check_mode:
             try:
-                ecs.untag_resource(resourceArn=resource_arn, tagKeys=remove_tags.keys())
+                ecs.untag_resource(resourceArn=resource_arn, tagKeys=list(remove_tags.keys()))
             except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg='Failed to remove tags {0} from resource {1}'.format(remove_tags, resource))
 
