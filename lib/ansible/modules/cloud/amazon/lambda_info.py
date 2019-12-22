@@ -377,7 +377,7 @@ def main():
         versions='version_details',
     )
 
-    this_module_function = getattr(this_module, invocations[module.params['query']])
+    this_module_function = globals()[invocations[module.params['query']]]
     all_facts = fix_return(this_module_function(client, module))
 
     results = dict(function=all_facts, changed=False)
