@@ -1,0 +1,6 @@
+---
+  mock_mac: '00:23:54:84:d1:7a'
+  mock_broadcast: 'fe:fe:fe:fe:fe:fe'
+  mock_group: '9919'
+  mock_txqlen: 981
+  mock_mtu: 1337
