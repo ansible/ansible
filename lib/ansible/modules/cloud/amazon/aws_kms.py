@@ -818,7 +818,7 @@ def do_policy_grant(module, kms, keyarn, role_arn, granttypes, mode='grant', dry
     policy = json.loads(keyret['Policy'])
 
     changes_needed = {}
-    assert_policy_shape(policy)
+    assert_policy_shape(module, policy)
     had_invalid_entries = False
     for statement in policy['Statement']:
         for granttype in ['role', 'role grant', 'admin']:
@@ -883,7 +883,7 @@ def do_policy_grant(module, kms, keyarn, role_arn, granttypes, mode='grant', dry
     return ret
 
 
-def assert_policy_shape(policy):
+def assert_policy_shape(module, policy):
     '''Since the policy seems a little, uh, fragile, make sure we know approximately what we're looking at.'''
     errors = []
     if policy['Version'] != "2012-10-17":
@@ -895,13 +895,12 @@ def assert_policy_shape(policy):
             if statement['Sid'] == sidlabel:
                 found_statement_type[label] = True
 
-    for statementtype in statement_label.keys():
+    for statementtype in statement_label:
         if not found_statement_type.get(statementtype):
             errors.append('Policy is missing {0}.'.format(statementtype))
 
-    if len(errors):
-        raise Exception('Problems asserting policy shape. Cowardly refusing to modify it: {0}'.format(' '.join(errors)) + "\n" + str(policy))
-    return None
+    if errors:
+        module.fail_json(msg='Problems asserting policy shape. Cowardly refusing to modify it', errors=errors, policy=policy)
 
 
 def main():
