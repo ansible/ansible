@@ -1,3 +1,7 @@
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import pytest
 from units.compat.mock import patch
 from ansible.modules.notification import campfire
@@ -65,7 +69,7 @@ class TestCampfireModule(ModuleTestCase):
             data = notify_call[2]['data']
 
             assert url == 'https://test.campfirenow.com/room/test/speak.xml'
-            assert data ==  '<message><type>SoundMessage</type><body>bell</body></message>'
+            assert data == '<message><type>SoundMessage</type><body>bell</body></message>'
 
             message_call = fetch_url_mock.mock_calls[1]
             url = message_call[1][1]
