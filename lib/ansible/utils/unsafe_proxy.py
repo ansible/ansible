@@ -54,7 +54,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.common._collections_compat import Mapping, Set
+from ansible.module_utils.common._collections_compat import Mapping, Set, MutableSequence
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import string_types, binary_type, text_type
 
@@ -98,7 +98,7 @@ class UnsafeProxy(object):
 
 
 def _wrap_dict(v):
-    return dict((k, wrap_var(item)) for k, item in v.items())
+    return dict((wrap_var(k), wrap_var(item)) for k, item in v.items())
 
 
 def _wrap_sequence(v):
@@ -107,10 +107,6 @@ def _wrap_sequence(v):
     """
     v_type = type(v)
     return v_type(wrap_var(item) for item in v)
-
-
-def _wrap_tuple(v):
-    return tuple(wrap_var(item) for item in v)
 
 
 def _wrap_set(v):
