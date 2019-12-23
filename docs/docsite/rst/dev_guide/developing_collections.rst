@@ -171,8 +171,16 @@ TBD.
 tests directory
 ----------------
 
-TBD. Expect tests for the collection itself to reside here.
+Executing sanity, integration, and unit tests is largely identical to performing these tests within Ansible's mainline code. ``ansible-test``'s targets must execute from a directory path with the following format: ``collections/<namespace>/<collection>``. For example, ``ansible-test`` may be executed against IOS modules from the default collection location of ``~/.ansible/collections/cisco/ios/``. Tests may also be executed while in a custom directory, such as ``~/work/ansible/collections/cisco/ios/``, as long as it is the current path.
 
+Sanity tests are executed using ``ansible-test sanity`` syntax. Refer to :ref:`_testing_sanity` for details.
+
+Integration tests are executed using ``ansible-test integration`` syntax. Network integration tests are executed using ``ansible-test network-integration`` syntax. Refer to :ref:`_testing_integration` for details.
+
+.. note::
+    The collection name must be in ``tests/integration/target-prefixes.network`` for network-integration tests to recognize the targets.
+
+Unit tests are executed using ``ansible-test unit`` syntax. Refer to :ref:`_testing_units` for details.
 
 .. _creating_collections:
 
