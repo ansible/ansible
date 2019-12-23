@@ -120,7 +120,7 @@ class Host(object):
         if exact_match:
             search_key = 'filter'
         host_list = self._zapi.host.get({'output': 'extend', 'selectParentTemplates': ['name'], search_key: {'host': [host_name]},
-                                         'selectInventory': host_inventory})
+                                         'selectInventory': host_inventory, 'selectGroups': 'extend'})
         if len(host_list) < 1:
             self._module.fail_json(msg="Host not found: %s" % host_name)
         else:
