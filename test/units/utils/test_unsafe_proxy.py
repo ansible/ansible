@@ -83,6 +83,25 @@ def test_wrap_var_unsafe_bytes():
     assert isinstance(wrap_var(AnsibleUnsafeBytes(b'foo')), AnsibleUnsafeBytes)
 
 
+def test_wrap_var_no_ref():
+    thing = {
+        'foo': {
+            'bar': 'baz'
+        },
+        'bar': ['baz', 'qux'],
+        'baz': ('qux',),
+        'none': None,
+        'text': 'text',
+    }
+    wrapped_thing = wrap_var(thing)
+    thing is not wrapped_thing
+    thing['foo'] is not wrapped_thing['foo']
+    thing['bar'][0] is not wrapped_thing['bar'][0]
+    thing['baz'][0] is not wrapped_thing['baz'][0]
+    thing['none'] is not wrapped_thing['none']
+    thing['text'] is not wrapped_thing['text']
+
+
 def test_AnsibleUnsafeText():
     assert isinstance(AnsibleUnsafeText(u'foo'), AnsibleUnsafe)
 
