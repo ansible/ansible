@@ -32,7 +32,8 @@ options:
     type: str
   key_id:
     description:
-    - Key ID or ARN of the key. One of C(alias) or C(key_id) are required.
+    - Key ID or ARN of the key.
+    - One of I(alias) or I(key_id) are required.
     required: false
     aliases:
       - key_arn
@@ -50,7 +51,8 @@ options:
     type: str
   policy_role_name:
     description:
-    - (deprecated) Role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
+    - (deprecated) Role to allow/deny access.
+    - One of I(policy_role_name) or I(policy_role_arn) are required.
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
     - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
@@ -60,7 +62,8 @@ options:
     type: str
   policy_role_arn:
     description:
-    - (deprecated) ARN of role to allow/deny access. One of C(policy_role_name) or C(policy_role_arn) are required.
+    - (deprecated) ARN of role to allow/deny access.
+    - One of I(policy_role_name) or I(policy_role_arn) are required.
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
     - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
@@ -70,7 +73,8 @@ options:
     - role_arn
   policy_grant_types:
     description:
-    - (deprecated) List of grants to give to user/role. Likely "role,role grant" or "role,role grant,admin". Required when C(policy_mode=grant).
+    - (deprecated) List of grants to give to user/role. Likely "role,role grant" or "role,role grant,admin".
+    - Required when I(policy_mode=grant).
     - Used for modifying the Key Policy rather than modifying a grant and only
       works on the default policy created through the AWS Console.
     - This option has been deprecated, and will be removed in 2.13. Use I(policy) instead.
