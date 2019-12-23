@@ -158,38 +158,22 @@ import re
 from ansible.module_utils.basic import AnsibleModule
 
 
-def get_version(pacman_output, from_sync=False):
+def get_version(pacman_output):
     """Take pacman -Qi or pacman -Si output and get the Version"""
     lines = pacman_output.split('\n')
-    # Version information is always printed out on the 2nd line of a
-    # query output (-Q/--query) and on the 3rd line of a sync output
-    # (-S/--sync). Obviously lines index begin at 0.
-    # See: https://git.archlinux.org/pacman.git/tree/src/pacman/package.c#n260
-    index = 1
-    if from_sync:
-        index = 2
-    try:
-        version = lines[index].split(':')[1].strip()
-    except IndexError:
-        version = None
-    return version
+    for line in lines:
+        if line.startswith('Version '):
+            return line.split(':')[1].strip()
+    return None
 
 
-def get_name(module, pacman_output, from_sync=False):
+def get_name(module, pacman_output):
     """Take pacman -Qi or pacman -Si output and get the package name"""
     lines = pacman_output.split('\n')
-    # Package name is always printed out on the 1st line of a
-    # query output (-Q/--query) and on the 2nd line of a sync output
-    # (-S/--sync). Obviously lines index begin at 0.
-    # See: https://git.archlinux.org/pacman.git/tree/src/pacman/package.c#n260
-    index = 0
-    if from_sync:
-        index = 1
-    try:
-        name = lines[index].split(':')[1].strip()
-    except IndexError:
-        module.fail_json(msg="get_name: fail to retrieve package name from pacman output")
-    return name
+    for line in lines:
+        if line.startswith('Name '):
+            return line.split(':')[1].strip()
+    module.fail_json(msg="get_name: fail to retrieve package name from pacman output")
 
 
 def query_package(module, pacman_path, name, state="present"):
@@ -206,10 +190,6 @@ def query_package(module, pacman_path, name, state="present"):
             # a non-zero exit code doesn't always mean the package is installed
             # for example, if the package name queried is "provided" by another package
             installed_name = get_name(module, lstdout)
-            # If something goes weird and the first line of the output
-            # does not contain a name, but an error message for exemple,
-            # it's not that serious, because the following test will
-            # exit us sooner.
             if installed_name != name:
                 return False, False, False
 
@@ -219,7 +199,7 @@ def query_package(module, pacman_path, name, state="present"):
         rcmd = "%s --sync --info %s" % (pacman_path, name)
         rrc, rstdout, rstderr = module.run_command(rcmd, check_rc=False)
         # get the version in the repository
-        rversion = get_version(rstdout, True)
+        rversion = get_version(rstdout)
 
         if rrc == 0:
             # Return True to indicate that the package is installed locally, and the result of the version number comparison
