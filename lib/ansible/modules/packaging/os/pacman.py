@@ -443,6 +443,7 @@ def main():
     )
 
     pacman_path = module.get_bin_path('pacman', True)
+    module.run_command_environ_update = dict(LC_ALL='C')
 
     p = module.params
 
