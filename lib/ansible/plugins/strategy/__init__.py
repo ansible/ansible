@@ -55,6 +55,8 @@ display = Display()
 
 __all__ = ['StrategyBase']
 
+# This list can be an exact match, or start of string bound
+# does not accept regex
 ALWAYS_DELEGATE_FACTS = frozenset((
     'discovered_interpreter_',
 ))
@@ -389,6 +391,32 @@ class StrategyBase:
         host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
         return [host_name or task.delegate_to]
 
+    def _set_always_delegated_facts(self, result, task):
+        """Sets host facts for ``delegate_to`` hosts for facts that should
+        always be delegated
+
+        See ``ALWAYS_DELEGATE_FACTS``
+        """
+        if task.delegate_to is None:
+            return
+
+        facts = result['ansible_facts']
+        always_keys = set()
+        _add = always_keys.add
+        for fact_key in facts:
+            for always_key in ALWAYS_DELEGATE_FACTS:
+                if fact_key.startswith(always_key):
+                    _add(fact_key)
+        if always_keys:
+            _pop = facts.pop
+            always_facts = {
+                'ansible_facts': dict((k, _pop(k)) for k in list(facts) if k in always_keys)
+            }
+            host_list = self.get_delegated_hosts(result, task)
+            _set_host_facts = self._variable_manager.set_host_facts
+            for target_host in host_list:
+                _set_host_facts(target_host, always_facts)
+
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
         '''
@@ -606,21 +634,8 @@ class StrategyBase:
                         self._add_group(original_host, result_item)
 
                     if 'ansible_facts' in result_item:
-                        # Ensure we always set the discovered interpreter to the delegated host
-                        facts = result_item['ansible_facts']
-                        always_keys = set()
-                        for fact_key in facts:
-                            for always_key in ALWAYS_DELEGATE_FACTS:
-                                match_len = len(always_key)
-                                if fact_key[:match_len] == always_key:
-                                    always_keys.add(fact_key)
-                        if always_keys and original_task.delegate_to is not None:
-                            interp_facts = {
-                                'ansible_facts': dict((k, facts.pop(k)) for k in list(facts) if k in always_keys)
-                            }
-                            host_list = self.get_delegated_hosts(result_item, original_task)
-                            for target_host in host_list:
-                                self._variable_manager.set_host_facts(target_host, interp_facts)
+                        # Set facts that should always be on the delegated hosts
+                        self._set_always_delegated_facts(result_item, original_task)
 
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
