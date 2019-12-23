@@ -2,7 +2,7 @@
   <script>
     // Create a banner if we're not on the official docs site
     if (location.host == "docs.testing.ansible.com") {
-      document.write('<div id="testing_banner_id" class="admonition danger">');
+      document.write('<div id="testing_banner_id" class="admonition important">');
       para = document.createElement('p');
       banner_text=document.createTextNode("This is a testing site. For the official docs go to https://docs.ansible.com/");
       para.appendChild(banner_text);
