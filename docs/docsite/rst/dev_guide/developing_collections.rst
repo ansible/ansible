@@ -254,6 +254,14 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
        ansible.module_utils.old_utility:
          redirect: ansible_collections.namespace_name.collection_name.plugins.module_utils.new_location
 
+Sanity tests are executed using ``ansible-test sanity`` syntax. Refer to :ref:`_testing_sanity` for details.
+
+Integration tests are executed using ``ansible-test integration`` syntax. Network integration tests are executed using ``ansible-test network-integration`` syntax. Refer to :ref:`_testing_integration` for details.
+
+.. note::
+    The collection name must be in ``tests/integration/target-prefixes.network`` for network-integration tests to recognize the targets.
+
+Unit tests are executed using ``ansible-test unit`` syntax. Refer to :ref:`_testing_units` for details.
 
 .. _creating_collections_skeleton:
 
