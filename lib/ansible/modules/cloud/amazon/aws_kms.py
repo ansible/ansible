@@ -502,26 +502,6 @@ def get_kms_policies(connection, module, key_id):
         module.fail_json_aws(e, msg="Failed to obtain key policies")
 
 
-def key_matches_filter(key, filtr):
-    if filtr[0] == 'key-id':
-        return filtr[1] == key['key_id']
-    if filtr[0] == 'tag-key':
-        return filtr[1] in key['tags']
-    if filtr[0] == 'tag-value':
-        return filtr[1] in key['tags'].values()
-    if filtr[0] == 'alias':
-        return filtr[1] in key['aliases']
-    if filtr[0].startswith('tag:'):
-        return key['Tags'][filtr[0][4:]] == filtr[1]
-
-
-def key_matches_filters(key, filters):
-    if not filters:
-        return True
-    else:
-        return all([key_matches_filter(key, filtr) for filtr in filters.items()])
-
-
 def camel_to_snake_grant(grant):
     ''' camel_to_snake_grant snakifies everything except the encryption context '''
     constraints = grant.get('Constraints', {})
