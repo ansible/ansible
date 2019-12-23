@@ -55,6 +55,10 @@ display = Display()
 
 __all__ = ['StrategyBase']
 
+ALWAYS_DELEGATE_FACTS = frozenset((
+    'discovered_interpreter_',
+))
+
 
 class StrategySentinel:
     pass
@@ -603,11 +607,16 @@ class StrategyBase:
 
                     if 'ansible_facts' in result_item:
                         # Ensure we always set the discovered interpreter to the delegated host
-                        _af = result_item['ansible_facts']
-                        interps = set(key for key in _af if key[:23] == 'discovered_interpreter_')
-                        if interps and original_task.delegate_to is not None:
+                        facts = result_item['ansible_facts']
+                        always_keys = set()
+                        for fact_key in facts:
+                            for always_key in ALWAYS_DELEGATE_FACTS:
+                                match_len = len(always_key)
+                                if fact_key[:match_len] == always_key:
+                                    always_keys.add(fact_key)
+                        if always_keys and original_task.delegate_to is not None:
                             interp_facts = {
-                                'ansible_facts': dict((k, _af.pop(k)) for k in list(_af) if k in interps)
+                                'ansible_facts': dict((k, facts.pop(k)) for k in list(facts) if k in always_keys)
                             }
                             host_list = self.get_delegated_hosts(result_item, original_task)
                             for target_host in host_list:
