@@ -270,11 +270,11 @@ class AnsibleContext(Context):
         a key or value which contains jinja2 syntax and would otherwise
         lose the AnsibleUnsafe value.
         '''
-        if isinstance(val, Mapping):
+        if isinstance(val, dict):
             for key in val.keys():
                 if self._is_unsafe(val[key]):
                     return True
-        elif is_sequence(val):
+        elif isinstance(val, list):
             for item in val:
                 if self._is_unsafe(item):
                     return True
@@ -670,11 +670,11 @@ class Templar:
         '''lets us know if data has a template'''
         if isinstance(data, string_types):
             return is_template(data, self.environment)
-        elif is_sequence(data):
+        elif isinstance(data, (list, tuple)):
             for v in data:
                 if self.is_template(v):
                     return True
-        elif isinstance(data, Mapping):
+        elif isinstance(data, dict):
             for k in data:
                 if self.is_template(k) or self.is_template(data[k]):
                     return True
