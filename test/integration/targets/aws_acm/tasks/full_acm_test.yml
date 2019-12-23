@@ -9,6 +9,9 @@
         security_token: "{{ security_token }}"
       no_log: True
         
+  - debug:
+      msg: "Running AWS ACM integration tests with UUID {{ aws_acm_test_uuid }}"
+        
   # just check this task doesn't fail
   # I'm not sure if I can assume there aren't already other certs in this account
   - name: list certs
