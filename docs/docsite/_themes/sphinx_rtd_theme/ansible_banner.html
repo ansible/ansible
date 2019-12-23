@@ -1,6 +1,17 @@
 <!--- Based on sphinx versionwarning extension. Extension currently only works on READTHEDOCS -->
-{# Creates a banner at the top of the page for any version not latest. #}
   <script>
+    // Create a banner if we're not on the official docs site
+    if (location.host == "docs.testing.ansible.com") {
+      document.write('<div id="testing_banner_id" class="admonition important">');
+      para = document.createElement('p');
+      banner_text=document.createTextNode("This is a testing site. For the official docs go to https://docs.ansible.com/");
+      para.appendChild(banner_text);
+      element = document.getElementById('testing_banner_id');
+      element.appendChild(para);
+      document.write('</div>');
+    }
+
+    // Create a banner if we're not the latest version
     current_url = window.location.href;
     if ((current_url.search("latest") > -1) || (current_url.search("/{{ latest_version }}/") > -1)) {
      // no banner for latest release
