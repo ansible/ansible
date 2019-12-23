@@ -2,8 +2,17 @@
 - debug: msg="START connection={{ ansible_connection }} nxos_gir sanity test"
 - set_fact: gir_run='{{ true if (platform is not search("N35")) else false }}'
 
-- name: "Setup"
-  nxos_gir: &setup
+- name: Setup0
+  nxos_config: &cleanup0
+    lines:
+      - no system mode maintenance timeout 30
+      - no configure maintenance profile normal-mode
+      - no configure maintenance profile maintenance-mode
+    match: none
+  ignore_errors: yes
+
+- name: Setup1
+  nxos_gir:
     system_mode_maintenance: false
   ignore_errors: yes
 
@@ -86,16 +95,8 @@
       action: delete_all
     ignore_errors: yes
 
-  - name: "Remove other config1"
-    nxos_config:
-      lines: no configure maintenance profile normal-mode
-      match: none
-    ignore_errors: yes
-
-  - name: "Remove other config2"
-    nxos_config:
-      lines: no configure maintenance profile maintenance-mode
-      match: none
+  - name: Teardown0
+    nxos_config: *cleanup0
     ignore_errors: yes
 
   - name: "Put system back in normal mode"
