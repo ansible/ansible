@@ -307,7 +307,7 @@ options:
       elements: dict
       description:
         - A list of dictionaries describing the cache behaviors for the distribution.
-        - The order of the list is preserved across runs unless I(purge_cache_behavior) is enabled.
+        - The order of the list is preserved across runs unless I(purge_cache_behaviors) is enabled.
       suboptions:
         path_pattern:
           description:
