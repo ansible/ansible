@@ -71,58 +71,70 @@ options:
         description:
             - List of dictionaries of conditions to evaluate.
             - For more information about suboptions of this option please
-              check out Zabbix API documentation U(https://www.zabbix.com/documentation/3.4/manual/api/reference/action/object#action_filter_condition)
+              check out Zabbix API documentation U(https://www.zabbix.com/documentation/4.0/manual/api/reference/action/object#action_filter_condition)
         suboptions:
             type:
-                description: Type (label) of the condition.
-                choices:
-                    # trigger
-                    - host_group
-                    - host
-                    - trigger
-                    - trigger_name
-                    - trigger_severity
-                    - time_period
-                    - host_template
-                    - application
-                    - maintenance_status
-                    - event_tag
-                    - event_tag_value
-                    # discovery
-                    - host_IP
-                    - discovered_service_type
-                    - discovered_service_port
-                    - discovery_status
-                    - uptime_or_downtime_duration
-                    - received_value
-                    - discovery_rule
-                    - discovery_check
-                    - proxy
-                    - discovery_object
-                    # auto_registration
-                    - proxy
-                    - host_name
-                    - host_metadata
-                    # internal
-                    - host_group
-                    - host
-                    - host_template
-                    - application
-                    - event_type
+                description:
+                    - Type (label) of the condition.
+                    - 'Possible values when I(event_source=trigger):'
+                    - ' - C(host_group)'
+                    - ' - C(host)'
+                    - ' - C(trigger)'
+                    - ' - C(trigger_name)'
+                    - ' - C(trigger_severity)'
+                    - ' - C(time_period)'
+                    - ' - C(host_template)'
+                    - ' - C(application)'
+                    - ' - C(maintenance_status)'
+                    - ' - C(event_tag)'
+                    - ' - C(event_tag_value)'
+                    - 'Possible values when I(event_source=discovery):'
+                    - ' - C(host_IP)'
+                    - ' - C(discovered_service_type)'
+                    - ' - C(discovered_service_port)'
+                    - ' - C(discovery_status)'
+                    - ' - C(uptime_or_downtime_duration)'
+                    - ' - C(received_value)'
+                    - ' - C(discovery_rule)'
+                    - ' - C(discovery_check)'
+                    - ' - C(proxy)'
+                    - ' - C(discovery_object)'
+                    - 'Possible values when I(event_source=auto_registration):'
+                    - ' - C(proxy)'
+                    - ' - C(host_name)'
+                    - ' - C(host_metadata)'
+                    - 'Possible values when I(event_source=internal):'
+                    - ' - C(host_group)'
+                    - ' - C(host)'
+                    - ' - C(host_template)'
+                    - ' - C(application)'
+                    - ' - C(event_type)'
             value:
                 description:
                     - Value to compare with.
-                    - When I(type) is set to C(discovery_status), the choices
-                      are C(up), C(down), C(discovered), C(lost).
-                    - When I(type) is set to C(discovery_object), the choices
-                      are C(host), C(service).
-                    - When I(type) is set to C(event_type), the choices
-                      are C(item in not supported state), C(item in normal state),
-                      C(LLD rule in not supported state),
-                      C(LLD rule in normal state), C(trigger in unknown state), C(trigger in normal state).
-                    - When I(type) is set to C(trigger_severity), the choices
-                      are (case-insensitive) C(not classified), C(information), C(warning), C(average), C(high), C(disaster)
-                      irrespective of user-visible names being changed in Zabbix. Defaults to C(not classified) if omitted.
+                    - 'When I(type=discovery_status), the choices are:'
+                    - ' - C(up)'
+                    - ' - C(down)'
+                    - ' - C(discovered)'
+                    - ' - C(lost)'
+                    - 'When I(type=discovery_object), the choices are:'
+                    - ' - C(host)'
+                    - ' - C(service)'
+                    - 'When I(type=event_type), the choices are:'
+                    - ' - C(item in not supported state)'
+                    - ' - C(item in normal state)'
+                    - ' - C(LLD rule in not supported state)'
+                    - ' - C(LLD rule in normal state)'
+                    - ' - C(trigger in unknown state)'
+                    - ' - C(trigger in normal state)'
+                    - 'When I(type=trigger_severity), the choices are (case-insensitive):'
+                    - ' - C(not classified)'
+                    - ' - C(information)'
+                    - ' - C(warning)'
+                    - ' - C(average)'
+                    - ' - C(high)'
+                    - ' - C(disaster)'
+                    - Irrespective of user-visible names being changed in Zabbix. Defaults to C(not classified) if omitted.
                     - Besides the above options, this is usually either the name
                       of the object or a string to compare with.
             operator:
