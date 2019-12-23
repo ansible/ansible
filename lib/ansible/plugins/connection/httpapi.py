@@ -265,7 +265,8 @@ class Connection(NetworkConnectionBase):
         Sends the command to the device over api
         '''
         url_kwargs = dict(
-            timeout=self.get_option('timeout'), validate_certs=self.get_option('validate_certs'),
+            timeout=self.get_option('persistent_command_timeout'),
+            validate_certs=self.get_option('validate_certs'),
             use_proxy=self.get_option("use_proxy"),
             headers={},
         )

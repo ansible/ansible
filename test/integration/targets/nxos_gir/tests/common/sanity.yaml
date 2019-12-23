@@ -1,13 +1,11 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_gir sanity test"
+- set_fact: gir_run='{{ true if (platform is not search("N35")) else false }}'
 
-- set_fact: gir_run="true"
-- set_fact: gir_run="false"
-  when: platform is search("N35")
-#- name: "Setup"
-#  nxos_gir: &setup
-#    system_mode_maintenance: false
-#  ignore_errors: yes
+- name: "Setup"
+  nxos_gir: &setup
+    system_mode_maintenance: false
+  ignore_errors: yes
 
 - block:
   - name: "Put system in maintenance mode with reload reset reason"
@@ -68,12 +66,12 @@
 
   - assert: *false
 
-#  - name: "Put system in maintenance mode"
-#    nxos_gir: &configure_system_mode_maintenance
-#      system_mode_maintenance: true
-#    register: result
-#
-#  - assert: *true
+  - name: "Put system in maintenance mode"
+    nxos_gir: &configure_system_mode_maintenance
+      system_mode_maintenance: true
+    register: result
+
+  - assert: *true
 
   when: gir_run
 
@@ -100,9 +98,14 @@
       match: none
     ignore_errors: yes
 
-#  - name: "Put system back in normal mode"
-#    nxos_gir: *setup
-#    register: result
-#    ignore_errors: yes
+  - name: "Put system back in normal mode"
+    nxos_gir:
+      system_mode_maintenance: false
+    # Try again if cli is blocking while changing modes
+    retries: 3
+    delay: 30
+    register: result
+    until: result is not failed
+    ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_gir sanity test"

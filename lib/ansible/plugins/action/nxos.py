@@ -80,6 +80,9 @@ class ActionModule(ActionNetworkModule):
                 display.warning('transport is unnecessary when using %s and will be ignored' % self._play_context.connection)
                 del self._task.args['transport']
 
+            if persistent_connection == 'httpapi':
+                self._connection.set_options(direct={'persistent_command_timeout': C.PERSISTENT_COMMAND_TIMEOUT})
+
         elif self._play_context.connection == 'local':
             provider = load_provider(nxos_provider_spec, self._task.args)
             transport = provider['transport'] or 'cli'
