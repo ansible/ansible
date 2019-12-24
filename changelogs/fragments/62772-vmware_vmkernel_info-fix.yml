@@ -1,0 +1,2 @@
+bugfixes:
+- Check for virtualNicManager in Esxi host system before accessing properties in vmware_vmkernel_info (https://github.com/ansible/ansible/issues/62772).
