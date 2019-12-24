@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix issue where nxos_l3_interfaces was not rendering 'dhcp' in facts (https://github.com/ansible/ansible/pull/66049)
