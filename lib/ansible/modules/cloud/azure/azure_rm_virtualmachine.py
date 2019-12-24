@@ -1127,7 +1127,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     powerstate_change = 'generalized'
 
                 vm_dict['zones'] = [int(i) for i in vm_dict['zones']] if 'zones' in vm_dict and vm_dict['zones'] else None
-                if self.zones != vm_dict['zones']:
+                if self.zones and self.zones != vm_dict['zones']:
                     self.log("CHANGED: virtual machine {0} zones".format(self.name))
                     differences.append('Zones')
                     changed = True
