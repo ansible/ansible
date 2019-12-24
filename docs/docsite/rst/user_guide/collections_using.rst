@@ -59,7 +59,7 @@ Once installed, you can verify that the content of the installed collection matc
 
    ansible-galaxy collection verify my_namespace.my_collection
 
-The output of the `ansible-galaxy collection verify` command is quiet if it is successful. If a collection has been modified, the altered files are listed under the collection name.
+The output of the ``ansible-galaxy collection verify`` command is quiet if it is successful. If a collection has been modified, the altered files are listed under the collection name.
 
 .. code-block:: bash
 
@@ -69,7 +69,7 @@ The output of the `ansible-galaxy collection verify` command is quiet if it is s
         plugins/inventory/my_inventory.py
         plugins/modules/my_module.py
 
-You can use the -vvv flag to display additional verbosity, such as the version and path of the installed collection, the URL of the remote collection used for validation, and successful verification output.
+You can use the ``-vvv`` flag to display additional information, such as the version and path of the installed collection, the URL of the remote collection used for validation, and successful verification output.
 
 .. code-block:: bash
 
@@ -86,7 +86,7 @@ If you have a pre-release or non-latest version of a collection installed you sh
 
    ansible-galaxy collection verify my_namespace.my_collection:1.0.0
 
-In addition to the my_namespace.collection_name:version format, you can provide the collection to verify as a path or URL to a tar.gz file, a directory to an installed collection, or in a requirements.yml file. Dependencies listed in requirements.yml are not included in the verify process and should be verified separately.
+In addition to the my_namespace.collection_name:version format, you can provide the collection to verify as a path or URL to a tar.gz file, a directory to an installed collection, or in a ``requirements.yml`` file. Dependencies listed in ``requirements.yml`` are not included in the verify process and should be verified separately.
 
 .. code-block:: bash
 
