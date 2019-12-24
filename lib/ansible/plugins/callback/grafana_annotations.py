@@ -211,7 +211,7 @@ class CallbackModule(CallbackBase):
         data = {
             'time': to_millis(self.start_time),
             'text': text,
-            'tags': ['ansible', 'ansible_event_start', self.playbook]
+            'tags': ['ansible', 'ansible_event_start', self.playbook, self.hostname]
         }
         self._send_annotation(data)
 
@@ -236,7 +236,7 @@ class CallbackModule(CallbackBase):
             'timeEnd': to_millis(end_time),
             'isRegion': True,
             'text': text,
-            'tags': ['ansible', 'ansible_report', self.playbook]
+            'tags': ['ansible', 'ansible_report', self.playbook, self.hostname]
         }
         self._send_annotations(data)
 
@@ -247,7 +247,7 @@ class CallbackModule(CallbackBase):
         data = {
             'time': to_millis(datetime.now()),
             'text': text,
-            'tags': ['ansible', 'ansible_event_failure', self.playbook]
+            'tags': ['ansible', 'ansible_event_failure', self.playbook, self.hostname]
         }
         self.errors += 1
         self._send_annotations(data)
