@@ -242,7 +242,8 @@ class BaseInventoryPlugin(AnsiblePlugin):
 
         for k in self._options:
             if k in data:
-                self._options[k] = data.pop(k)
+                # Parse templates in options
+                self._options[k] = self.templar.template(data.pop(k))
 
     def _expand_hostpattern(self, hostpattern):
         '''
