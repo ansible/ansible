@@ -620,6 +620,24 @@ EXAMPLES = r'''
       num_cpus: 2
       scsi: paravirtual
   delegate_to: localhost
+
+- name: Create a diskless VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    cluster: "{{ ccr1 }}"
+    name: diskless_vm
+    folder: /Asia-Datacenter1/vm
+    guest_id: centos64Guest
+    datastore: "{{ ds1 }}"
+    hardware:
+        memory_mb: 1024
+        num_cpus: 2
+        num_cpu_cores_per_socket: 1
 '''
 
 RETURN = r'''
