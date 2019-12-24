@@ -42,13 +42,3 @@
 
     - name: include_tasks + action
       action: include_tasks tasks1.yml
-
-    - name: test fail as expected without file
-      include_tasks:
-      ignore_errors: yes
-      register: res
-
-    - name: verify fail as expected without file
-      assert:
-        that:
-          - res.msg == 'No include file was specified to the include'
