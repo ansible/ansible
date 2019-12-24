@@ -452,7 +452,8 @@ def main():
         # mask/unmask the service, if requested, can operate on services before they are installed
         if module.params['masked'] is not None:
             # state is not masked unless systemd affirms otherwise
-            masked = ('LoadState' in result['status'] and result['status']['LoadState'] == 'masked')
+            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+            masked = out.strip() == "masked"
 
             if masked != module.params['masked']:
                 result['changed'] = True
