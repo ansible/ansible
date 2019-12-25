@@ -27,9 +27,8 @@ RETURN = """
       - values from the environment variables.
     type: list
 """
-import os
-
 from ansible.plugins.lookup import LookupBase
+from ansible.utils import py3compat
 
 
 class LookupModule(LookupBase):
@@ -39,6 +38,6 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             var = term.split()[0]
-            ret.append(os.getenv(var, ''))
+            ret.append(py3compat.environ.get(var, ''))
 
         return ret
