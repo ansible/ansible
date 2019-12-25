@@ -879,6 +879,10 @@ def main():
         state = 'absent'
 
     update_homebrew = p['update_homebrew']
+    if not update_homebrew:
+        module.run_command_environ_update.update(
+            dict(HOMEBREW_NO_AUTO_UPDATE=1)
+        )
     upgrade_all = p['upgrade_all']
     p['install_options'] = p['install_options'] or []
     install_options = ['--{0}'.format(install_option)

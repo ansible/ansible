@@ -1,0 +1,2 @@
+minor_changes:
+- Added environment variable to honor update_homebrew setting (https://github.com/ansible/ansible/issues/56650).
