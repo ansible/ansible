@@ -1,0 +1,2 @@
+minor_changes:
+- Added upgrade_options in homebrew module to handle upgrade related options (https://github.com/ansible/ansible/issues/54541).

@@ -67,6 +67,10 @@ options:
             - options flags to install a package
         aliases: ['options']
         version_added: "1.4"
+    upgrade_options:
+        description:
+        - Option flags to upgrade.
+        version_added: "2.10"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -121,6 +125,11 @@ EXAMPLES = '''
     name: foo
     state: present
     install_options: with-baz,enable-debug
+
+- name: Use ignored-pinned option while upgrading all
+  homebrew:
+    upgrade_all: yes
+    upgrade_options: ignored-pinned
 '''
 
 import os.path
@@ -357,14 +366,15 @@ class Homebrew(object):
 
     def __init__(self, module, path, packages=None, state=None,
                  update_homebrew=False, upgrade_all=False,
-                 install_options=None):
+                 install_options=None, upgrade_options=None):
         if not install_options:
             install_options = list()
         self._setup_status_vars()
         self._setup_instance_vars(module=module, path=path, packages=packages,
                                   state=state, update_homebrew=update_homebrew,
                                   upgrade_all=upgrade_all,
-                                  install_options=install_options, )
+                                  install_options=install_options,
+                                  upgrade_options=upgrade_options)
 
         self._prep()
 
@@ -526,18 +536,19 @@ class Homebrew(object):
 
     # _upgrade_all --------------------------- {{{
     def _upgrade_all(self):
-        rc, out, err = self.module.run_command([
-            self.brew_path,
-            'upgrade',
-        ])
+        opts = (
+            [self.brew_path, 'upgrade']
+            + self.upgrade_options
+        )
+        cmd = [opt for opt in opts if opt]
+        self.module.fail_json(msg=" ".join(cmd))
+        rc, out, err = self.module.run_command(cmd)
         if rc == 0:
             if not out:
                 self.message = 'Homebrew packages already upgraded.'
-
             else:
                 self.changed = True
                 self.message = 'Homebrew upgraded.'
-
             return True
         else:
             self.failed = True
@@ -846,6 +857,10 @@ def main():
                 default=None,
                 aliases=['options'],
                 type='list',
+            ),
+            upgrade_options=dict(
+                default=None,
+                type="list",
             )
         ),
         supports_check_mode=True,
@@ -884,9 +899,14 @@ def main():
     install_options = ['--{0}'.format(install_option)
                        for install_option in p['install_options']]
 
+    p['upgrade_options'] = p['upgrade_options'] or []
+    upgrade_options = ['--{0}'.format(upgrade_option)
+                       for upgrade_option in p['upgrade_options']]
+
     brew = Homebrew(module=module, path=path, packages=packages,
                     state=state, update_homebrew=update_homebrew,
-                    upgrade_all=upgrade_all, install_options=install_options)
+                    upgrade_all=upgrade_all, install_options=install_options,
+                    upgrade_options=upgrade_options)
     (failed, changed, message) = brew.run()
     if failed:
         module.fail_json(msg=message)
