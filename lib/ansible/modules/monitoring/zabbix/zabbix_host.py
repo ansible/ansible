@@ -447,13 +447,12 @@ class Host(object):
 
     # get group ids by group names
     def get_group_ids_by_group_names(self, group_names):
-        group_ids = []
         if self.check_host_group_exist(group_names):
-            group_list = self._zapi.hostgroup.get({'output': 'extend', 'filter': {'name': group_names}})
-            for group in group_list:
-                group_id = group['groupid']
-                group_ids.append({'groupid': group_id})
-        return group_ids
+            return self._zapi.hostgroup.get({'output': 'groupid', 'filter': {'name': group_names}})
+
+    # get host groups ids by host id
+    def get_group_ids_by_host_id(self, host_id):
+        return self._zapi.hostgroup.get({'output': 'groupid', 'hostids': host_id})
 
     # get host templates by host id
     def get_host_templates_by_host_id(self, host_id):
@@ -462,16 +461,6 @@ class Host(object):
         for template in template_list:
             template_ids.append(template['templateid'])
         return template_ids
-
-    # get host groups by host id
-    def get_host_groups_by_host_id(self, host_id):
-        exist_host_groups = []
-        host_groups_list = self._zapi.hostgroup.get({'output': 'extend', 'hostids': host_id})
-
-        if len(host_groups_list) >= 1:
-            for host_groups_name in host_groups_list:
-                exist_host_groups.append(host_groups_name['name'])
-        return exist_host_groups
 
     # check the exist_interfaces whether it equals the interfaces or not
     def check_interface_properties(self, exist_interface_list, interfaces):
@@ -506,14 +495,14 @@ class Host(object):
         return host['status']
 
     # check all the properties before link or clear template
-    def check_all_properties(self, host_id, host_groups, status, interfaces, template_ids,
+    def check_all_properties(self, host_id, group_ids, status, interfaces, template_ids,
                              exist_interfaces, host, proxy_id, visible_name, description, host_name,
                              inventory_mode, inventory_zabbix, tls_accept, tls_psk_identity, tls_psk,
                              tls_issuer, tls_subject, tls_connect, ipmi_authtype, ipmi_privilege,
                              ipmi_username, ipmi_password):
         # get the existing host's groups
-        exist_host_groups = self.get_host_groups_by_host_id(host_id)
-        if set(host_groups) != set(exist_host_groups):
+        exist_host_groups = sorted(self.get_group_ids_by_host_id(host_id), key=lambda k: k['groupid'])
+        if sorted(group_ids, key=lambda k: k['groupid']) != exist_host_groups:
             return True
 
         # get the existing status
@@ -830,8 +819,7 @@ def main():
             if not host_groups:
                 # if host_groups have not been specified when updating an existing host, just
                 # get the group_ids from the existing host without updating them.
-                host_groups = host.get_host_groups_by_host_id(host_id)
-                group_ids = host.get_group_ids_by_group_names(host_groups)
+                group_ids = host.get_group_ids_by_host_id(host_id)
 
             # get existing host's interfaces
             exist_interfaces = host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id})
@@ -861,12 +849,12 @@ def main():
                 template_ids = list(set(template_ids + host.get_host_templates_by_host_id(host_id)))
 
             if not force:
-                for group_id in host.get_group_ids_by_group_names(host.get_host_groups_by_host_id(host_id)):
+                for group_id in host.get_group_ids_by_host_id(host_id):
                     if group_id not in group_ids:
                         group_ids.append(group_id)
 
             # update host
-            if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
+            if host.check_all_properties(host_id, group_ids, status, interfaces, template_ids,
                                          exist_interfaces, zabbix_host_obj, proxy_id, visible_name,
                                          description, host_name, inventory_mode, inventory_zabbix,
                                          tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, tls_connect,
