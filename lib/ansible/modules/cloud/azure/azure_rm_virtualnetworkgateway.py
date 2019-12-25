@@ -101,7 +101,7 @@ options:
             - VpnGw1
             - VpnGw2
             - VpnGw3
-            - Standard 
+            - Standard
             - Basic
             - HighPerformance
     bgp_settings:
