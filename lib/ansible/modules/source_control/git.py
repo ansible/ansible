@@ -166,7 +166,7 @@ options:
     archive_prefix:
         description:
             - Specify a prefix to add to each file path in archive.
-        version_added: "2.9"
+        version_added: "2.10"
 
     separate_git_dir:
         description:
