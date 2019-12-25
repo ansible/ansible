@@ -1,0 +1,2 @@
+minor_changes:
+- Return list of unchanged and changed package list in module return (https://github.com/ansible/ansible/issues/59376).

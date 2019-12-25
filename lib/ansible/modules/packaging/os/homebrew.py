@@ -71,6 +71,7 @@ notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
 '''
+
 EXAMPLES = '''
 # Install formula foo with 'brew' in default path (C(/usr/local/bin))
 - homebrew:
@@ -121,6 +122,28 @@ EXAMPLES = '''
     name: foo
     state: present
     install_options: with-baz,enable-debug
+'''
+
+RETURN = '''
+msg:
+    description: if the cache was updated or not
+    returned: always
+    type: str
+    sample: "Changed: 0, Unchanged: 2"
+unchanged_pkgs:
+    description:
+    - List of package names which are unchanged after module run
+    - "Added in version 2.10"
+    returned: success
+    type: list
+    sample: ["awscli", "ag"]
+changed_pkgs:
+    description:
+    - List of package names which are changed after module run
+    - "Added in version 2.10"
+    returned: success
+    type: list
+    sample: ['git', 'git-cola']
 '''
 
 import os.path
@@ -374,6 +397,8 @@ class Homebrew(object):
         self.changed = False
         self.changed_count = 0
         self.unchanged_count = 0
+        self.changed_pkgs = []
+        self.unchanged_pkgs = []
         self.message = ''
 
     def _setup_instance_vars(self, **kwargs):
@@ -554,6 +579,7 @@ class Homebrew(object):
 
         if self._current_package_is_installed():
             self.unchanged_count += 1
+            self.unchanged_pkgs.append(self.current_package)
             self.message = 'Package already installed: {0}'.format(
                 self.current_package,
             )
@@ -581,6 +607,7 @@ class Homebrew(object):
 
         if self._current_package_is_installed():
             self.changed_count += 1
+            self.changed_pkgs.append(self.current_package)
             self.changed = True
             self.message = 'Package installed: {0}'.format(self.current_package)
             return True
@@ -614,6 +641,7 @@ class Homebrew(object):
                 self.current_package,
             )
             self.unchanged_count += 1
+            self.unchanged_pkgs.append(self.current_package)
             return True
 
         if self.module.check_mode:
@@ -633,6 +661,7 @@ class Homebrew(object):
 
         if self._current_package_is_installed() and not self._current_package_is_outdated():
             self.changed_count += 1
+            self.changed_pkgs.append(self.current_package)
             self.changed = True
             self.message = 'Package upgraded: {0}'.format(self.current_package)
             return True
@@ -677,6 +706,7 @@ class Homebrew(object):
 
         if not self._current_package_is_installed():
             self.unchanged_count += 1
+            self.unchanged_pkgs.append(self.current_package)
             self.message = 'Package already uninstalled: {0}'.format(
                 self.current_package,
             )
@@ -699,6 +729,7 @@ class Homebrew(object):
 
         if not self._current_package_is_installed():
             self.changed_count += 1
+            self.changed_pkgs.append(self.current_package)
             self.changed = True
             self.message = 'Package uninstalled: {0}'.format(self.current_package)
             return True
@@ -744,6 +775,7 @@ class Homebrew(object):
 
         if rc == 0:
             self.changed_count += 1
+            self.changed_pkgs.append(self.current_package)
             self.changed = True
             self.message = 'Package linked: {0}'.format(self.current_package)
 
@@ -790,6 +822,7 @@ class Homebrew(object):
 
         if rc == 0:
             self.changed_count += 1
+            self.changed_pkgs.append(self.current_package)
             self.changed = True
             self.message = 'Package unlinked: {0}'.format(self.current_package)
 
@@ -888,10 +921,17 @@ def main():
                     state=state, update_homebrew=update_homebrew,
                     upgrade_all=upgrade_all, install_options=install_options)
     (failed, changed, message) = brew.run()
+    changed_pkgs = brew.changed_pkgs
+    unchanged_pkgs = brew.unchanged_pkgs
+
     if failed:
         module.fail_json(msg=message)
-    else:
-        module.exit_json(changed=changed, msg=message)
+    module.exit_json(
+        changed=changed,
+        msg=message,
+        unchanged_pkgs=unchanged_pkgs,
+        changed_pkgs=changed_pkgs
+    )
 
 
 if __name__ == '__main__':
