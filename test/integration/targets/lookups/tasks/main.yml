@@ -154,6 +154,25 @@
     that:
         - "test_val == home_var_value.stdout"
 
+# UNICODE LOOKUP
+
+# https://github.com/ansible/ansible/issues/65297
+- name: get UNICODE_VAR environment var value
+  shell: "echo $UNICODE_VAR"
+  register: unicode_var_value
+
+- name: use env lookup to get UNICODE_VAR value
+  set_fact:
+    test_unicode_val: "{{ lookup('env', 'UNICODE_VAR') }}"
+
+- debug: var=unicode_var_value
+- debug: var=test_unicode_val
+
+- name: compare unicode values
+  assert:
+    that:
+      - "test_unicode_val == unicode_var_value.stdout"
+
 
 # PIPE LOOKUP
 
