@@ -148,7 +148,8 @@ import_organizational_units_as_inventory_groups: no
 """
 
 from re import sub, match
-from datetime import datetime, timezone
+from datetime import datetime
+from pytz import utc
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
@@ -442,7 +443,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             "lastLogonTimestamp" in entry["attributes"]
             and abs(
                 (
-                    datetime.now(timezone.utc)
+                    utc.localize(datetime.utcnow())
                     - entry["attributes"]["lastLogonTimestamp"]
                 ).days
             )

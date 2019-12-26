@@ -7,7 +7,8 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import pytest
-import datetime
+from datetime import datetime, timezone
+import pytz
 
 from ansible.plugins.inventory.active_directory import InventoryModule
 from ansible.errors import AnsibleError
@@ -31,7 +32,7 @@ config_data = {
         "OU=Servers,DC=ansible,DC=local",
         "OU=Desktops,DC=ansible,DC=local",
     ],
-    "last_activity": 30,
+    "last_activity": 10,
 }
 
 
@@ -115,7 +116,7 @@ def test_loading_computer_objects_from_domain_controllers_organizational_unit(
         == "CN=DC,OU=Domain Controllers,DC=ansible,DC=local"
     )
     assert isinstance(
-        domain_controller_computer_object.lastLogonTimestamp.value, datetime.datetime
+        domain_controller_computer_object.lastLogonTimestamp.value, datetime
     )
     assert (
         domain_controller_computer_object.operatingSystem
@@ -289,3 +290,17 @@ def test_get_inventory_group_names_from_computer_security_groups_multiple_group(
     assert len(inventory_groups) == 2
     assert inventory_groups[0] == "Pre-Windows 2000 Compatible Access"
     assert inventory_groups[1] == "Cert Publishers"
+
+
+def test_computer_object_last_logon_timestamp_value(inventory, connection):
+    ou = "OU=Domain Controllers,DC=ansible,DC=local"
+    dc_entries = inventory._query(connection, ou)
+    all_dcs = []
+    for entry in dc_entries:
+        assert (
+            abs(
+                pytz.utc.localize(datetime.utcnow())
+                - entry["attributes"]["lastLogonTimestamp"]
+            ).days
+            >= 10
+        )
