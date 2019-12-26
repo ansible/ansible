@@ -227,10 +227,10 @@ if ($type -eq "element") {
                     $changed = $true
                 }
             } else { # assume NodeType is Element
+                if (!$node.HasAttribute($attribute)) { # add attribute to Element if missing
+                    $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
+                }
                 if ($node.$attribute -ne $fragment) {
-                    if (!$node.HasAttribute($attribute)) { # add attribute to Element if missing
-                        $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
-                    }
                     #set the attribute into the element
                     $node.SetAttribute($attribute, $fragment)
                     $changed = $true
