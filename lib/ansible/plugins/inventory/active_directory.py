@@ -290,7 +290,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 paged_size=self.query_page_size,
             )
         except LDAPException as err:
-            raise AnsibleError("could not retrieve computer objects %s", err)
+            raise AnsibleError("could not retrieve computer objects %s" % err)
 
         for entry in entry_generator:
             display.debug("processing entry for yield " + str(entry))
