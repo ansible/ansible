@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime
 import pytz
 
 from ansible.plugins.inventory.active_directory import InventoryModule
