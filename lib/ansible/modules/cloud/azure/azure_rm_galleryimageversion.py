@@ -300,6 +300,12 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
                 disposition='galleryImageVersionName',
                 required=True
             ),
+            tags=dict(
+                type='dict',
+                updatable=False,
+                disposition='tags',
+                comparison='tags'
+            ),
             location=dict(
                 type='str',
                 updatable=False,
@@ -439,6 +445,7 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
         self.gallery_image_name = None
         self.name = None
         self.gallery_image_version = None
+        self.tags = None
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -461,6 +468,8 @@ class AzureRMGalleryImageVersions(AzureRMModuleBaseExt):
         for key in list(self.module_arg_spec.keys()):
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
+                if key == 'tags':
+                    self.body[key] = kwargs[key]
             elif kwargs[key] is not None:
                 self.body[key] = kwargs[key]
 
