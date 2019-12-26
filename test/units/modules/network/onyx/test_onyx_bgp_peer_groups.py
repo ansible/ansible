@@ -49,16 +49,29 @@ class TestOnyxBgpPeerGroupsModule(TestOnyxModule):
         self.execute_module(changed=True, commands=commands)
 
     def test_bgp_neighbor_assignment_no_change(self):
-        set_module_args(dict(peer_groups=[dict(group_name='group1',
-                                               router_bgp=1,
-                                               ip_address='1.1.1.0')]))
+        set_module_args(dict(neighbors=[dict(group_name='group1',
+                                             router_bgp=1,
+                                             ip_address='1.1.1.1')]))
         self.execute_module(changed=False)
 
     def test_bgp_neighbor_assignment_with_change(self):
-        set_module_args(dict(peer_groups=[dict(group_name='group1',
-                                               router_bgp=1,
-                                               ip_address='1.1.1.0')]))
-        commands = ['router bgp 1 neighbor 1.1.1.0 peer-group group1']
+        set_module_args(dict(neighbors=[dict(group_name='group2',
+                                             router_bgp=1,
+                                             ip_address='1.1.1.1')]))
+        commands = ['router bgp 1 neighbor 1.1.1.0 peer-group group2']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_bgp_next_hop_peer_no_change(self):
+        set_module_args(dict(peer_groups=[dict(name='group1',
+                                               router_bgp = 1,
+                                               next_hop_peer_enabled = False)]))
+        self.execute_module(changed=False)
+
+    def test_bgp_next_hop_peer_with_change(self):
+        set_module_args(dict(peer_groups=[dict(name='group1',
+                                               router_bgp = 1,
+                                               next_hop_peer_enabled = True)]))
+        commands = ['router bgp 1 neighbor group1 next-hop-peer']
         self.execute_module(changed=True, commands=commands)
 
 

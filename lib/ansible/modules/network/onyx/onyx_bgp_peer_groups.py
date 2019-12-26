@@ -259,10 +259,10 @@ class OnyxBgpPeerGroupsModule(BaseOnyxModule):
                 if next_hop_peer_enabled is not None:
                     if next_hop_peer_enabled is True:
                         if ('router bgp {0} vrf default neighbor {1} next-hop-peer' .format(router_bgp, group_name)) not in curr_config_arr:
-                            self._commands.append('router bgp {0} vrf default neighbor {1} next-hop-peer' .format(router_bgp, group_name))
+                            self._commands.append('router bgp {0} neighbor {1} next-hop-peer' .format(router_bgp, group_name))
                     else:
                         if ('router bgp {0} vrf default neighbor {1} next-hop-peer disable' .format(router_bgp, group_name)) not in curr_config_arr:
-                            self._commands.append('router bgp {0} vrf default neighbor {1} next-hop-peer disable' .format(router_bgp, group_name))
+                            self._commands.append('router bgp {0} neighbor {1} next-hop-peer disable' .format(router_bgp, group_name))
 
                 if listen_range is not None:
                     if listen_range_state is not None:
@@ -308,10 +308,10 @@ class OnyxBgpPeerGroupsModule(BaseOnyxModule):
                 if next_hop_peer_enabled is not None:
                     if next_hop_peer_enabled is True:
                         if ('router bgp {0} vrf default neighbor {1} next-hop-peer' .format(router_bgp, address)) not in curr_config_arr:
-                            self._commands.append('router bgp {0} vrf default neighbor {1} next-hop-peer' .format(router_bgp, address))
+                            self._commands.append('router bgp {0} neighbor {1} next-hop-peer' .format(router_bgp, address))
                     else:
                         if ('router bgp {0} vrf default neighbor {1} next-hop-peer disable' .format(router_bgp, address)) not in curr_config_arr:
-                            self._commands.append('router bgp {0} vrf default neighbor {1} next-hop-peer disable' .format(router_bgp, address))
+                            self._commands.append('router bgp {0} neighbor {1} next-hop-peer disable' .format(router_bgp, address))
 
 
 def main():
