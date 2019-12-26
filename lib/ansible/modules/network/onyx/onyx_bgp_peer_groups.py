@@ -130,7 +130,6 @@ EXAMPLES = """
      peer_groups:
         - name: group1
           router_bgp: 1
-          router_bgp: 1
           state: present
           mask_length: 24
           remote_as: 3
@@ -267,7 +266,7 @@ class OnyxBgpPeerGroupsModule(BaseOnyxModule):
 
                 if listen_range is not None:
                     if listen_range_state is not None:
-                        if listen_range_state is "absent":
+                        if listen_range_state == "absent":
                             if ('router bgp {0} vrf default bgp listen range {1} /{2} peer-group {3} remote-as {4}' .format(router_bgp, listen_range,
                                                                                                                             mask_length, group_name,
                                                                                                                             remote_as)) in curr_config_arr:
