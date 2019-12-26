@@ -37,22 +37,25 @@ options:
         required: true
       state:
         description:
-          - Indicates if the peer group should be created or should be deleted
+          - Indicates if the peer group should be created or should be deleted.
         choices: ['present', 'absent']
         type: str
       next_hop_peer_enabled:
         description:
-          - Used to decide if we want to List the peer address as next hop in routes
+          - Used to decide if we want to List the peer address as next hop in routes.
         type: bool
       remote_as:
         description:
-          -  Specifys remote AS for dynamic peers in this IP range
+          -  Specifys remote AS for dynamic peers in this IP range.
+        type: str
       listen_range_ip_prefix:
         description:
-          -  Specifys range of IP addresses to accept dynamic peering requests from
+          -  Specifys range of IP addresses to accept dynamic peering requests from.
+        type: str
       mask_length:
         description:
           -  IP mask length.
+        type: str
       listen_range_state:
         description:
           - Indicates if the peer group should be created or should be deleted.
@@ -77,6 +80,7 @@ options:
       group_name:
         description:
           - Bgp peer group name.
+        type: str
       state:
         description:
           - Indicates if the neighbor should be assigned or unassigned form the specified peer group.
