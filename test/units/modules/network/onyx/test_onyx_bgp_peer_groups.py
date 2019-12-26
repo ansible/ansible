@@ -17,7 +17,6 @@ class TestOnyxBgpPeerGroupsModule(TestOnyxModule):
     module = onyx_bgp_peer_groups
 
     def setUp(self):
-        self.enabled = False
         super(TestOnyxBgpPeerGroupsModule, self).setUp()
         self.mock_get_config = patch.object(
             onyx_bgp_peer_groups.OnyxBgpPeerGroupsModule, "_show_bgp_config")
