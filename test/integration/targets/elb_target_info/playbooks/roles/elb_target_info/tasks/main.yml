@@ -264,7 +264,7 @@
         target_id: "{{ ec2.instances[0].private_ip }}"
         state: present
         target_status: "healthy"
-        target_status_timeout: 300
+        target_status_timeout: 400
 
     - name: gather facts
       elb_target_info:
