@@ -36,3 +36,29 @@ class TestOnyxBgpPeerGroupsModule(TestOnyxModule):
         data = load_fixture(config_file)
         self.get_config.return_value = data
         self.load_config.return_value = None
+
+    def test_bgp_group_creation_no_change(self):
+        set_module_args(dict(peer_groups=[dict(name='group1',
+                                               router_bgp=1)]))
+        self.execute_module(changed=False)
+
+    def test_bgp_group_creation_with_change(self):
+        set_module_args(dict(peer_groups=[dict(name='group2',
+                                               router_bgp=1)]))
+        commands = ['router bgp 1 neighbor group2 peer-group']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_bgp_neighbor_assignment_no_change(self):
+        set_module_args(dict(peer_groups=[dict(group_name='group1',
+                                               router_bgp=1,
+                                               ip_address='1.1.1.0')]))
+        self.execute_module(changed=False)
+
+    def test_bgp_neighbor_assignment_with_change(self):
+        set_module_args(dict(peer_groups=[dict(group_name='group1',
+                                               router_bgp=1,
+                                               ip_address='1.1.1.0')]))
+        commands = ['router bgp 1 neighbor 1.1.1.0 peer-group group1']
+        self.execute_module(changed=True, commands=commands)
+
+
