@@ -24,13 +24,16 @@ DOCUMENTATION = """
           type: string
           required: True
         password:
-          description: 
+          description:
             - The active directory user's password used for querying computer objects
             - It is recommended to use ansible vault to keep the password secret since ansible-inventory command supports ansible vault
           type: string
           required: True
-        use_ssl: 
-          description: The LDAP connection to active directory domain controllers uses SSL by default. If you have a need to disable SSL for troubleshooting purposes you can disable it by setting this parameter to no. It is highly recommended to use SSL to protect your credential over the wire.
+        use_ssl:
+          description:
+            - The LDAP connection to active directory domain controllers uses SSL by default
+            - If you have a need to disable SSL for troubleshooting purposes you can disable it by setting this parameter to no
+            - It is highly recommended to use SSL to protect your credential over the wire
           type: boolean
           default: yes
         domain_controllers:
@@ -58,10 +61,11 @@ DOCUMENTATION = """
           type: boolean
           default: no
         import_organizational_units_as_inventory_groups:
-          description: 
+          description:
             - Imports organizational units as inventory groups
             - based on the organizational_units list specified, it creates the top level OU as the top level inventory group
-            - e.g. if the organizational_units list contains "OU=Devices,DC=ansible,DC=local" there would be an inventory group "Devices" containing all the computer objects.
+            - e.g. if the organizational_units list contains "OU=Devices,DC=ansible,DC=local"
+            - there would be an inventory group "Devices" containing all the computer objects
             - Nested OU's are supported and will be created as nested inventory groups
           type: boolean
           default: yes
@@ -186,44 +190,44 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         """
         try:
             self.user_name = self.get_option("username")
-        except:
+        except BaseException:
             raise AnsibleError("insufficient credentials found")
 
         try:
             self.user_password = self.get_option("password")
-        except:
+        except BaseException:
             raise AnsibleError("insufficient credentials found")
 
         try:
             self.domain_controllers = self.get_option("domain_controllers")
-        except:
+        except BaseException:
             raise AnsibleError("domain controllers list is empty")
 
         try:
             self.use_ssl = self.get_option("use_ssl")
-        except:
+        except BaseException:
             pass
 
         try:
             self.import_organizational_units_as_inventory_groups = self.get_option(
                 "import_organizational_units_as_inventory_groups"
             )
-        except:
+        except BaseException:
             pass
 
         try:
             self.last_activity = self.get_option("last_activity")
-        except:
+        except BaseException:
             pass
 
         try:
             self.import_disabled = self.get_option("import_disabled")
-        except:
+        except BaseException:
             pass
 
         try:
             self.import_computer_groups = self.get_option("import_computer_groups")
-        except:
+        except BaseException:
             pass
 
         display.verbose("credentials: username - " + self.user_name)
@@ -233,7 +237,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         establishes an ldap connection and returns the connection object
         """
         display.verbose("initializing ldap connection")
-        if self.user_name == None or self.user_password == None:
+        if self.user_name is None or self.user_password is None:
             raise AnsibleError("insufficient credentials found")
 
         if len(self.domain_controllers) > 1:
@@ -249,7 +253,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             )
             try:
                 server = Server(host=self.domain_controllers[0], use_ssl=self.use_ssl)
-            except:
+            except BaseException:
                 raise AnsibleError(
                     "could not establish connection to domain controller"
                 )
@@ -317,7 +321,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             try:
                 hostname = entry["attributes"][preference]
                 break
-            except:
+            except BaseException:
                 pass
 
         return to_text(hostname.lower())
@@ -430,7 +434,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if (
             "userAccountControl" in entry["attributes"]
             and entry["attributes"]["userAccountControl"] in [4098, 532482]
-            and self.import_disabled == False
+            and self.import_disabled is False
         ):
             display.vvvv("Ignoring %s as it is currently disabled" % (hostname))
             return_state = "ignore_disabled"
@@ -469,7 +473,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     self.inventory.add_child("all", parent_group_name)
                     new_group_name = parent_group_name
                     if (
-                        self.import_organizational_units_as_inventory_groups == False
+                        self.import_organizational_units_as_inventory_groups is False
                         or len(organizational_unit_groups) == 1
                     ):
                         self.inventory.add_host(hostname, group=new_group_name)
@@ -479,7 +483,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         )
                         return_state = "added"
                 else:
-                    if self.import_organizational_units_as_inventory_groups == True:
+                    if self.import_organizational_units_as_inventory_groups is True:
                         parent_group_name = self._get_safe_group_name(
                             "-".join(organizational_unit_groups[0:count])
                         )
@@ -504,7 +508,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             if (
                 "primaryGroupID" in entry["attributes"]
-                and self.import_computer_groups == True
+                and self.import_computer_groups is True
             ):
                 primary_group = self._get_primary_group_name_from_id(
                     entry["attributes"]["primaryGroupID"]
@@ -519,7 +523,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             if (
                 "memberOf" in entry["attributes"]
-                and self.import_computer_groups == True
+                and self.import_computer_groups is True
             ):
                 display.debug(
                     "processing computer groups %s" % entry["attributes"]["memberOf"]
