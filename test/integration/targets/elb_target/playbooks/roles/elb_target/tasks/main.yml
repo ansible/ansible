@@ -227,7 +227,7 @@
         target_id: "{{ ec2.instance_ids[0] }}"
         state: present
         target_status: healthy
-        target_status_timeout: 200
+        target_status_timeout: 400
       register: result
 
     - name: target is registered
@@ -276,7 +276,7 @@
         target_id: "{{ ec2.instance_ids[0] }}"
         state: present
         target_status: healthy
-        target_status_timeout: 200
+        target_status_timeout: 400
       register: result
 
     - name: target is registered
@@ -351,7 +351,7 @@
         tags:
           Description: "Created by {{ resource_prefix }}"
         wait: true
-        wait_timeout: 200
+        wait_timeout: 400
       register: removed
       retries: 10
       until: removed is not failed
@@ -372,7 +372,7 @@
           Description: "Created by {{ resource_prefix }}"
           Protocol: "UDP"
         wait: true
-        wait_timeout: 200
+        wait_timeout: 400
       register: removed
       retries: 10
       until: removed is not failed
@@ -396,7 +396,7 @@
                 TargetGroupName: "{{ tg_name }}-used"
         state: absent
         wait: true
-        wait_timeout: 200
+        wait_timeout: 400
       register: removed
       retries: 10
       until: removed is not failed
