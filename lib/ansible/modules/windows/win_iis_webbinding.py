@@ -32,7 +32,7 @@ options:
     default: present
   port:
     description:
-      - The port to bind to / use for the new site.  Can include standard port (i.e. 80,8080) or can contain Binding Information for non-HTTP protocols (i.e. 830:*)
+      - The port to bind to / use for the new site.  Can include ports (i.e. 80,8080 or non-HTTP ports 830:*)
     type: str
     default: 80
   ip:
@@ -47,7 +47,9 @@ options:
     type: str
   protocol:
     description:
-      - 'The protocol to be used for the Web binding ((HTTP) HTTP, HTTPS, FTP, (NON-HTTP) net.tcp,net.msmq,msmq.formatname,net.pipe). For others the port should be non-http protocol (i.e. 830:*)'
+      - 'The protocol to be used for the Web binding usually (HTTP, HTTPS, FTP)'
+      - '(support for non-http protocols) net.tcp,net.msmq,msmq.formatname,net.pipe'
+      - '  Note: for non-http protocol the port can be in this format (i.e. 830:*)'
     type: str
     default: http
     version_added: "2.7"

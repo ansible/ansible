@@ -58,28 +58,25 @@ function Create-BindingInfo {
 
     Return $ht
 }
-
 # Used instead of get-webbinding to ensure we always return a single binding
 # We can't filter properly with get-webbinding...ex get-webbinding ip * returns all bindings
 # pass it $binding_parameters hashtable
-function Get-SingleWebBinding 
+function Get-SingleWebBinding
 {
     param($bparams)
-    
     if($script:OtherProto -contains $bparams.protocol)
     {
         try {
-            #NON-HTTP binding        
+            #NON-HTTP binding
             $NonHttpBinds = (get-ItemProperty IIS:\Sites\"$($bparams.name)" -Name bindings).Collection |Where-Object{$_.Protocol -eq $bparams.protocol -and $_.bindingInformation -eq "$($bparams.port)" }
-            return ($NonHttpBinds |select Protocol, bindingInformation) #NOTE: Must return selective properties, otherwise you endup with memory leak on the remote machine.    
+            return ($NonHttpBinds |Select-Object Protocol, bindingInformation) #NOTE: Must return selective properties, otherwise you endup with memory leak on the remote machine.
         }
         catch {
             #Something Went wrong, show exec command line for easy troubleshooting
             Throw  "Failed trying to execute ((get-ItemProperty IIS:\Sites\$($bparams.name) -Name bindings).Collection |Where-Object{$_.Protocol -eq $bparams.protocol -and $_.bindingInformation -eq $($bparams.port))  Error: $($_.Exception.Message)"
         }
-        
     }
-    else 
+    else
     {
         #HTTP Binds
         Try {
@@ -93,7 +90,6 @@ function Get-SingleWebBinding
             }
             Else { return }
         }
-
         Foreach ($binding in $site_bindings)
         {
             $splits = $binding.bindingInformation -split ':'
@@ -107,10 +103,8 @@ function Get-SingleWebBinding
             {
                 Return $binding
             }
-        }    
+        }
     }
-    
-    
 }
 
 
@@ -240,7 +234,7 @@ Catch {
 if($OtherProto -contains $protocol)
 {
     #####################
-    # (Non-HTTP) BINDING 
+    # (Non-HTTP) BINDING
     ######################
     try {
         $result.changed = $false
@@ -250,7 +244,7 @@ if($OtherProto -contains $protocol)
         {
             if($bind.protocol -eq $protocol -and $bind.bindingInformation -eq "$port")
             {
-                #Existing binding found  
+                #Existing binding found
                 $result.operation_type = 'matched'
                 $bindfound=$true
                 break;
@@ -268,7 +262,7 @@ if($OtherProto -contains $protocol)
                 $result.operation_type = 'added'
             }
             catch {
-                Fail-Json -obj $result -message "Failed trying to add non-http bind $($protocol) - $($_.Exception.Message)"        
+                Fail-Json -obj $result -message "Failed trying to add non-http bind $($protocol) - $($_.Exception.Message)"
             }
         }
         elseif($bindfound -and $state -eq "absent")
@@ -277,41 +271,39 @@ if($OtherProto -contains $protocol)
             try {
                 Remove-ItemProperty IIS:\Sites\$name -Name bindings -AtElement @{protocol="$($protocol)";bindingInformation="$($port)"}
                 $result.changed = $true
-                $result.operation_type = 'removed'    
+                $result.operation_type = 'removed'
             }
             catch {
                 Fail-Json -obj $result -message "Failed trying to remove non-http bind $($protocol) - $($_.Exception.Message)"
             }
-        }    
+        }
 
         if($state -eq "present")  #Regardless if bindfound if state is present ensure non-http protocol is enabled
         {
             try {
                 #Ensure non-http Protocol is enabled at the site level -> Advanced Settings
                 $EnabledProto = (Get-ItemProperty IIS:\sites\"$name" -name EnabledProtocols).EnabledProtocols
-                if(!$EnabledProto -or $EnabledProto.split(",") -notcontains $protocol)                
+                if(!$EnabledProto -or $EnabledProto.split(",") -notcontains $protocol)
                 {
-                    #NOTE: 
-                        #it's safe to leave the non-http protocol in the enabled state even after all the bindings have been removed. 
+                    #NOTE:
+                        #it's safe to leave the non-http protocol in the enabled state even after all the bindings have been removed.
                         #Enabled Protocol name must be in lowercase.
                         #Append to existing list of Enabled protocols.
                     Set-ItemProperty IIS:\sites\"$name" -name EnabledProtocols -Value "$($EnabledProto.ToLower()),$($protocol.ToLower())"
-                    $EnabledProto = (Get-ItemProperty IIS:\sites\"$name" -name EnabledProtocols).EnabledProtocols #Requery for return results 
+                    $EnabledProto = (Get-ItemProperty IIS:\sites\"$name" -name EnabledProtocols).EnabledProtocols #Requery for return results
                     $result.changed = $true
                 }
                 $result.EnabledProtocols = $EnabledProto
             }
             catch {
-                    Fail-Json -obj $result -message "Something went when trying to Enable Protocol $($protocol) in the Site $($name)  - $($_.Exception.Message)"        
+                    Fail-Json -obj $result -message "Something went when trying to Enable Protocol $($protocol) in the Site $($name)  - $($_.Exception.Message)"
             }
-            
         }
-        
     }
     catch {
         Fail-Json -obj $result -message "Something went wrong during non-http binding process $($protocol) - $($_.Exception.Message)"
     }
-    
+
 
     $result.binding_info = Get-SingleWebBinding -bparams $binding_parameters
     Exit-Json -obj $result #exit
@@ -320,7 +312,6 @@ if($OtherProto -contains $protocol)
 }#NON-HTTP BINDING
 ELSE
 {
-    
     #####################
     # HTTP/HTTPS BINDING
     ######################
@@ -495,7 +486,6 @@ ELSE
         }
         Exit-Json $result
     }
-    
 } #HTTP/HTTPS BINDING
 
 
