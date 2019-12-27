@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2019, Harry Saryan  <hs-hub-world@github>
 # Copyright: (c) 2017, Noah Sparks <nsparks@outlook.com>
 # Copyright: (c) 2017, Henrik Wallström <henrik@wallstroms.nu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
+ANSIBLE_METADATA = {'metadata_version': '1.2',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -31,7 +32,7 @@ options:
     default: present
   port:
     description:
-      - The port to bind to / use for the new site.
+      - The port to bind to / use for the new site.  Can include standard port (i.e. 80,8080) or can contain Binding Information for non-HTTP protocols (i.e. 830:*)
     type: str
     default: 80
   ip:
@@ -46,9 +47,10 @@ options:
     type: str
   protocol:
     description:
-      - The protocol to be used for the Web binding (usually HTTP, HTTPS, or FTP).
+      - 'The protocol to be used for the Web binding ((HTTP) HTTP, HTTPS, FTP, (NON-HTTP) net.tcp,net.msmq,msmq.formatname,net.pipe). For others the port should be non-http protocol (i.e. 830:*)'
     type: str
     default: http
+    version_added: "2.7"
   certificate_hash:
     description:
       - Certificate hash (thumbprint) for the SSL binding. The certificate hash is the unique identifier for the certificate.
@@ -65,7 +67,7 @@ options:
       - Set to C(0) to disable SNI.
       - Set to C(1) to enable SNI.
     type: str
-    version_added: "2.5"
+    version_added: "2.0"
 seealso:
 - module: win_iis_virtualdirectory
 - module: win_iis_webapplication
@@ -74,6 +76,7 @@ seealso:
 author:
   - Noah Sparks (@nwsparks)
   - Henrik Wallström (@henrikwallstrom)
+  - Harry Saryan (@hs-hub-world)
 '''
 
 EXAMPLES = r'''
@@ -114,6 +117,20 @@ EXAMPLES = r'''
     ssl_flags: 1
     certificate_hash: D1A3AF8988FD32D1A3AF8988FD323792DA73F4C
     state: present
+
+- name: 'Add binding with protocol net.tcp on port 830:*'
+  win_iis_webbinding:
+    name: Default Web Site
+    protocol: net.tcp
+    port: '830:*'
+    state: present
+
+- name: 'Remove binding for net.tcp protocol with port 830:*'
+  win_iis_webbinding:
+    name: Default Web Site
+    protocol: net.tcp
+    port: '830:*'
+    state: absent
 '''
 
 RETURN = r'''
@@ -125,7 +142,7 @@ website_state:
   returned: always
   type: str
   sample: "Started"
-  version_added: "2.5"
+  version_added: "2.0"
 operation_type:
   description:
     - The type of operation performed
@@ -133,7 +150,7 @@ operation_type:
   returned: on success
   type: str
   sample: "removed"
-  version_added: "2.5"
+  version_added: "2.0"
 binding_info:
   description:
     - Information on the binding being manipulated
@@ -150,5 +167,5 @@ binding_info:
       "protocol": "https",
       "sslFlags": "not supported"
     }
-  version_added: "2.5"
+  version_added: "2.0"
 '''

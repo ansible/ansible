@@ -1,5 +1,6 @@
 #!powershell
 
+# Copyright: (c) 2019, Harry Saryan  <hs-hub-world@github>
 # Copyright: (c) 2017, Noah Sparks <nsparks@outlook.com>
 # Copyright: (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -9,15 +10,21 @@
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
-$name = Get-AnsibleParam $params -name "name" -type str -failifempty $true -aliases 'website'
-$state = Get-AnsibleParam $params "state" -default "present" -validateSet "present","absent"
-$host_header = Get-AnsibleParam $params -name "host_header" -type str
-$protocol = Get-AnsibleParam $params -name "protocol" -type str -default 'http'
-$port = Get-AnsibleParam $params -name "port" -default '80'
-$ip = Get-AnsibleParam $params -name "ip" -default '*'
-$certificateHash = Get-AnsibleParam $params -name "certificate_hash" -type str -default ([string]::Empty)
-$certificateStoreName = Get-AnsibleParam $params -name "certificate_store_name" -type str -default ([string]::Empty)
-$sslFlags = Get-AnsibleParam $params -name "ssl_flags" -default '0' -ValidateSet '0','1','2','3'
+$name                   = Get-AnsibleParam $params -name "name" -type str -failifempty $true -aliases 'website'
+$state                  = Get-AnsibleParam $params "state" -default "present" -validateSet "present","absent"
+$host_header            = Get-AnsibleParam $params -name "host_header" -type str
+$protocol               = Get-AnsibleParam $params -name "protocol" -type str -default 'http'
+$port                   = Get-AnsibleParam $params -name "port" -default '80'
+$ip                     = Get-AnsibleParam $params -name "ip" -type str -default '*'
+$certificateHash        = Get-AnsibleParam $params -name "certificate_hash" -type str -default ([string]::Empty)
+$certificateStoreName   = Get-AnsibleParam $params -name "certificate_store_name" -type str -default ([string]::Empty)
+$sslFlags               = Get-AnsibleParam $params -name "ssl_flags" -default '0' -ValidateSet '0','1','2','3'
+
+#Other supported protocols (other than http);
+#We'll use $Protocol in conjunction with $Port to assign BindingInformation
+#Example $port="net.tcp"  $protocol="6202:*"
+$OtherProto = @('net.tcp','net.msmq','msmq.formatname','net.pipe')
+$protocol = $protocol.ToLower(); #Ensure all protocol values are in lower case
 
 $result = @{
   changed = $false
@@ -54,35 +61,51 @@ function Create-BindingInfo {
 # Used instead of get-webbinding to ensure we always return a single binding
 # We can't filter properly with get-webbinding...ex get-webbinding ip * returns all bindings
 # pass it $binding_parameters hashtable
-function Get-SingleWebBinding {
-
-    Try {
-        $site_bindings = get-webbinding -name $args[0].name
-    }
-    Catch {
-        # 2k8r2 throws this error when you run get-webbinding with no bindings in iis
-        If (-not $_.Exception.Message.CompareTo('Cannot process argument because the value of argument "obj" is null. Change the value of argument "obj" to a non-null value'))
-        {
-            Throw $_.Exception.Message
-        }
-        Else { return }
-    }
-
-    Foreach ($binding in $site_bindings)
+function Get-SingleWebBinding 
+{
+    param($bparams)
+    
+    if($script:OtherProto -contains $bparams.protocol)
     {
-        $splits = $binding.bindingInformation -split ':'
-
-        if (
-            $args[0].protocol -eq $binding.protocol -and
-            $args[0].ipaddress -eq $splits[0] -and
-            $args[0].port -eq $splits[1] -and
-            $args[0].hostheader -eq $splits[2]
-        )
-        {
-            Return $binding
-        }
+        #NON-HTTP binding        
+        $NonHttpBinds = (get-ItemProperty IIS:\Sites\"$($bparams.name)" -Name bindings).Collection |Where-Object{$_.Protocol -eq $bparams.protocol -and $_.bindingInformation -eq "$($bparams.port)" }
+        return ($NonHttpBinds |select Protocol, bindingInformation) #NOTE: Must return selective properties, otherwise you endup with memory leak on the remote machine.
     }
+    else 
+    {
+        #HTTP Binds
+        Try {
+            $site_bindings = get-webbinding -name $bparams.name
+        }
+        Catch {
+            # 2k8r2 throws this error when you run get-webbinding with no bindings in iis
+            If (-not $_.Exception.Message.CompareTo('Cannot process argument because the value of argument "obj" is null. Change the value of argument "obj" to a non-null value'))
+            {
+                Throw $_.Exception.Message
+            }
+            Else { return }
+        }
+
+        Foreach ($binding in $site_bindings)
+        {
+            $splits = $binding.bindingInformation -split ':'
+
+            if (
+                $bparams.protocol   -eq $binding.protocol -and
+                $bparams.ipaddress  -eq $splits[0] -and
+                $bparams.port       -eq $splits[1] -and
+                $bparams.hostheader -eq $splits[2]
+            )
+            {
+                Return $binding
+            }
+        }    
+    }
+    
+    
 }
+
+
 
 
 #############################
@@ -174,16 +197,18 @@ If ($host_header -eq '*')
     Fail-Json -obj $result -message "To make or remove a catch-all binding, please omit the host_header parameter entirely rather than specify host_header *"
 }
 
+
+
 ##########################
 ### start action items ###
 ##########################
 
 # create binding search splat
 $binding_parameters = @{
-  Name = $name
-  Protocol = $protocol
-  Port = $port
-  IPAddress = $ip
+  Name        = $name
+  Protocol    = $protocol
+  Port        = $port
+  IPAddress   = $ip
 }
 
 # insert host header to search if specified, otherwise it will return * (all bindings matching protocol/ip)
@@ -198,180 +223,265 @@ Else
 
 # Get bindings matching parameters
 Try {
-    $current_bindings = Get-SingleWebBinding $binding_parameters
+    $current_bindings = Get-SingleWebBinding -bparams $binding_parameters
 }
 Catch {
     Fail-Json -obj $result -message "Failed to retrieve bindings with Get-SingleWebBinding - $($_.Exception.Message)"
 }
 
-################################################
-### Remove binding or exit if already absent ###
-################################################
-If ($current_bindings -and $state -eq 'absent')
+if($OtherProto -contains $protocol)
 {
-    Try {
-        #there is a bug in this method that will result in all bindings being removed if the IP in $current_bindings is a *
-        #$current_bindings | Remove-WebBinding -verbose -WhatIf:$check_mode
-
-        #another method that did not work. It kept failing to match on element and removed everything.
-        #$element = @{protocol="$protocol";bindingInformation="$ip`:$port`:$host_header"}
-        #Remove-WebconfigurationProperty -filter $current_bindings.ItemXPath -Name Bindings.collection -AtElement $element -WhatIf #:$check_mode
-
-        #this method works
-        [array]$bindings = Get-WebconfigurationProperty -filter $current_bindings.ItemXPath -Name Bindings.collection
-
-        $index = Foreach ($item in $bindings) {
-            If ( $protocol -eq $item.protocol -and $current_bindings.bindingInformation -eq $item.bindingInformation ) {
-                $bindings.indexof($item)
-                break
+    #####################
+    # (Non-HTTP) BINDING 
+    ######################
+    try {
+        $result.changed = $false
+        $bindfound=$false
+        $Bindings=(get-ItemProperty IIS:\Sites\$name -Name bindings).Collection |Where-Object{$_.Protocol -eq "$protocol"}  #NOTE: there may be multiple binding of the same protocol with a different bindinginformation
+        foreach($bind in $Bindings)
+        {
+            if($bind.protocol -eq $protocol -and $bind.bindingInformation -eq "$port")
+            {
+                #Existing binding found  
+                $result.operation_type = 'matched'
+                $bindfound=$true
+                break;
             }
         }
 
-        Remove-WebconfigurationProperty -filter $current_bindings.ItemXPath -Name Bindings.collection -AtIndex $index -WhatIf:$check_mode
-        $result.changed = $true
-    }
-
-    Catch {
-        Fail-Json -obj $result -message "Failed to remove the binding from IIS - $($_.Exception.Message)"
-    }
-
-    # removing bindings from iis may not also remove them from iis:\sslbindings
-
-    $result.operation_type = 'removed'
-    $result.binding_info = $current_bindings | ForEach-Object {Create-BindingInfo $_}
-    Exit-Json -obj $result
-}
-ElseIf (-Not $current_bindings -and $state -eq 'absent')
-{
-    # exit changed: false since it's already gone
-    Exit-Json -obj $result
-}
-
-
-################################
-### Modify existing bindings ###
-################################
-<#
-since we have already have the parameters available to get-webbinding,
-we just need to check here for the ones that are not available which are the
-ssl settings (hash, store, sslflags). If they aren't set we update here, or
-exit with changed: false
-#>
-ElseIf ($current_bindings)
-{
-    #ran into a strange edge case in testing where I was able to retrieve bindings but not expand all the properties
-    #when adding a self-signed wildcard cert to a binding. it seemed to permanently break the binding. only removing it
-    #would cause the error to stop.
-    Try {
-        $null = $current_bindings |  Select-Object *
-    }
-    Catch {
-        Fail-Json -obj $result -message "Found a matching binding, but failed to expand it's properties (get-binding | FL *). In testing, this was caused by using a self-signed wildcard certificate. $($_.Exception.Message)"
-    }
-
-    # check if there is a match on the ssl parameters
-    If ( ($current_bindings.sslFlags -ne $sslFlags -and $sni_support) -or
-        $current_bindings.certificateHash -ne $certificateHash -or
-        $current_bindings.certificateStoreName -ne $certificateStoreName)
-    {
-        # match/update SNI
-        If ($current_bindings.sslFlags -ne $sslFlags -and $sni_support)
+        if(!$bindfound -and $state -eq "present")
         {
-            Try {
-                Set-WebBinding -Name $name -IPAddress $ip -Port $port -HostHeader $host_header -PropertyName sslFlags -value $sslFlags -whatif:$check_mode
+            #Add NON-HTTP Binding
+            try {
+
+                #Add the Binding
+                New-ItemProperty IIS:\Sites\"$name" -Name bindings -Value @{protocol="$($protocol)";bindingInformation="$($port)"}
+                $result.changed = $true
+                $result.operation_type = 'added'
+            }
+            catch {
+                Fail-Json -obj $result -message "Failed trying to add non-http bind $($protocol) - $($_.Exception.Message)"        
+            }
+        }
+        elseif($bindfound -and $state -eq "absent")
+        {
+            #Remove NON-HTTP Binding
+            try {
+                Remove-ItemProperty IIS:\Sites\$name -Name bindings -AtElement @{protocol="$($protocol)";bindingInformation="$($port)"}
+                $result.changed = $true
+                $result.operation_type = 'removed'    
+            }
+            catch {
+                Fail-Json -obj $result -message "Failed trying to remove non-http bind $($protocol) - $($_.Exception.Message)"
+            }
+        }    
+
+        if($state -eq "present")  #Regardless if bindfound if state is present ensure non-http protocol is enabled
+        {
+            #Ensure non-http Protocol is enabled at the site level -> Advanced Settings
+            $EnabledProto = (Get-ItemProperty IIS:\sites\"$name" -name EnabledProtocols).EnabledProtocols
+            if(!$EnabledProto -or $EnabledProto.split(",") -notcontains $protocol)                
+            {
+                #NOTE: 
+                    #it's safe to leave the non-http protocol in the enabled state even after all the bindings have been removed. 
+                    #Enabled Protocol name must be in lowercase.
+                    #Append to existing list of Enabled protocols.
+                Set-ItemProperty IIS:\sites\"$name" -name EnabledProtocols -Value "$($EnabledProto.ToLower()),$($protocol.ToLower())"
+                $EnabledProto = (Get-ItemProperty IIS:\sites\"$name" -name EnabledProtocols).EnabledProtocols #Requery for return results 
                 $result.changed = $true
             }
-            Catch {
-                Fail-Json -obj $result -message "Failed to update sslFlags on binding - $($_.Exception.Message)"
-            }
-
-            # Refresh the binding object since it has been changed
-            Try {
-                $current_bindings = Get-SingleWebBinding $binding_parameters
-            }
-            Catch {
-                Fail-Json -obj $result -message "Failed to refresh bindings after setting sslFlags - $($_.Exception.Message)"
-            }
+            $result.EnabledProtocols = $EnabledProto
         }
-        # match/update certificate
-        If ($current_bindings.certificateHash -ne $certificateHash -or $current_bindings.certificateStoreName -ne $certificateStoreName)
-        {
-            If (-Not $check_mode)
-            {
-                Try {
-                    $current_bindings.AddSslCertificate($certificateHash,$certificateStoreName)
-                }
-                Catch {
-                    Fail-Json -obj $result -message "Failed to set new SSL certificate - $($_.Exception.Message)"
-                }
-            }
-        }
-        $result.changed = $true
-        $result.operation_type = 'updated'
-        $result.website_state = (Get-Website | Where-Object {$_.Name -eq $Name}).State
-        $result.binding_info = Create-BindingInfo (Get-SingleWebBinding $binding_parameters)
-        Exit-Json -obj $result #exit changed true
+        
     }
-    Else
-    {
-        $result.operation_type = 'matched'
-        $result.website_state = (Get-Website | Where-Object {$_.Name -eq $Name}).State
-        $result.binding_info = Create-BindingInfo (Get-SingleWebBinding $binding_parameters)
-        Exit-Json -obj $result #exit changed false
+    catch {
+        Fail-Json -obj $result -message "Something went wrong during non-http binding process $($protocol) - $($_.Exception.Message)"
     }
-}
+    
 
-########################
-### Add new bindings ###
-########################
-ElseIf (-not $current_bindings -and $state -eq 'present')
+    $result.binding_info = Get-SingleWebBinding -bparams $binding_parameters
+    Exit-Json -obj $result #exit
+
+
+}#NON-HTTP BINDING
+ELSE
 {
-    # add binding. this creates the binding, but does not apply a certificate to it.
-    Try
-    {
-        If (-not $check_mode)
-        {
-            If ($sni_support)
-            {
-                New-WebBinding @binding_parameters -SslFlags $sslFlags -Force
-            }
-            Else
-            {
-                New-WebBinding @binding_parameters -Force
-            }
-        }
-        $result.changed = $true
-    }
-    Catch
-    {
-        $result.website_state = (Get-Website | Where-Object {$_.Name -eq $Name}).State
-        Fail-Json -obj $result -message "Failed at creating new binding (note: creating binding and adding ssl are separate steps) - $($_.Exception.Message)"
-    }
+    
+    #####################
+    # HTTP/HTTPS BINDING
+    ######################
 
-    # add certificate to binding
-    If ($certificateHash -and -not $check_mode)
+    ################################################
+    ### Remove binding or exit if already absent ###
+    ################################################
+    If ($current_bindings -and $state -eq 'absent')
     {
         Try {
-            #$new_binding = get-webbinding -Name $name -IPAddress $ip -port $port -Protocol $protocol -hostheader $host_header
-            $new_binding = Get-SingleWebBinding $binding_parameters
-            $new_binding.addsslcertificate($certificateHash,$certificateStoreName)
+            #there is a bug in this method that will result in all bindings being removed if the IP in $current_bindings is a *
+            #$current_bindings | Remove-WebBinding -verbose -WhatIf:$check_mode
+
+            #another method that did not work. It kept failing to match on element and removed everything.
+            #$element = @{protocol="$protocol";bindingInformation="$ip`:$port`:$host_header"}
+            #Remove-WebconfigurationProperty -filter $current_bindings.ItemXPath -Name Bindings.collection -AtElement $element -WhatIf #:$check_mode
+
+            #this method works
+            [array]$bindings = Get-WebconfigurationProperty -filter $current_bindings.ItemXPath -Name Bindings.collection
+            $index = Foreach ($item in $bindings) {
+                If ( $protocol -eq $item.protocol -and $current_bindings.bindingInformation -eq $item.bindingInformation ) {
+                    $bindings.indexof($item)
+                    break
+                }
+            }
+
+            Remove-WebconfigurationProperty -filter $current_bindings.ItemXPath -Name Bindings.collection -AtIndex $index -WhatIf:$check_mode
+            $result.changed = $true
+        }
+
+        Catch {
+            Fail-Json -obj $result -message "Failed to remove the binding from IIS - $($_.Exception.Message)"
+        }
+
+        # removing bindings from iis may not also remove them from iis:\sslbindings
+
+        $result.operation_type = 'removed'
+        $result.binding_info = $current_bindings | ForEach-Object {Create-BindingInfo $_}
+        Exit-Json -obj $result
+    }
+    ElseIf (-Not $current_bindings -and $state -eq 'absent')
+    {
+        # exit changed: false since it's already gone
+        Exit-Json -obj $result
+    }
+
+
+    ################################
+    ### Modify existing bindings ###
+    ################################
+    <#
+    since we have already have the parameters available to get-webbinding,
+    we just need to check here for the ones that are not available which are the
+    ssl settings (hash, store, sslflags). If they aren't set we update here, or
+    exit with changed: false
+    #>
+    ElseIf ($current_bindings)
+    {
+        #ran into a strange edge case in testing where I was able to retrieve bindings but not expand all the properties
+        #when adding a self-signed wildcard cert to a binding. it seemed to permanently break the binding. only removing it
+        #would cause the error to stop.
+        Try {
+            $null = $current_bindings |  Select-Object *
         }
         Catch {
+            Fail-Json -obj $result -message "Found a matching binding, but failed to expand it's properties (get-binding | FL *). In testing, this was caused by using a self-signed wildcard certificate. $($_.Exception.Message)"
+        }
+
+        # check if there is a match on the ssl parameters
+        If ( ($current_bindings.sslFlags -ne $sslFlags -and $sni_support) -or
+            $current_bindings.certificateHash -ne $certificateHash -or
+            $current_bindings.certificateStoreName -ne $certificateStoreName)
+        {
+            # match/update SNI
+            If ($current_bindings.sslFlags -ne $sslFlags -and $sni_support)
+            {
+                Try {
+                    Set-WebBinding -Name $name -IPAddress $ip -Port $port -HostHeader $host_header -PropertyName sslFlags -value $sslFlags -whatif:$check_mode
+                    $result.changed = $true
+                }
+                Catch {
+                    Fail-Json -obj $result -message "Failed to update sslFlags on binding - $($_.Exception.Message)"
+                }
+
+                # Refresh the binding object since it has been changed
+                Try {
+                    $current_bindings = Get-SingleWebBinding -bparams $binding_parameters
+                }
+                Catch {
+                    Fail-Json -obj $result -message "Failed to refresh bindings after setting sslFlags - $($_.Exception.Message)"
+                }
+            }
+            # match/update certificate
+            If ($current_bindings.certificateHash -ne $certificateHash -or $current_bindings.certificateStoreName -ne $certificateStoreName)
+            {
+                If (-Not $check_mode)
+                {
+                    Try {
+                        $current_bindings.AddSslCertificate($certificateHash,$certificateStoreName)
+                    }
+                    Catch {
+                        Fail-Json -obj $result -message "Failed to set new SSL certificate - $($_.Exception.Message)"
+                    }
+                }
+            }
+            $result.changed = $true
+            $result.operation_type = 'updated'
             $result.website_state = (Get-Website | Where-Object {$_.Name -eq $Name}).State
-            Fail-Json -obj $result -message "Failed to set new SSL certificate - $($_.Exception.Message)"
+            $result.binding_info = Create-BindingInfo (Get-SingleWebBinding -bparams $binding_parameters)
+            Exit-Json -obj $result #exit changed true
+        }
+        Else
+        {
+            $result.operation_type = 'matched'
+            $result.website_state = (Get-Website | Where-Object {$_.Name -eq $Name}).State
+            $result.binding_info = Create-BindingInfo (Get-SingleWebBinding -bparams $binding_parameters)
+            Exit-Json -obj $result #exit changed false
         }
     }
 
-    $result.changed = $true
-    $result.operation_type = 'added'
-    $result.website_state = (Get-Website | Where-Object {$_.Name -eq $Name}).State
+    ########################
+    ### Add new bindings ###
+    ########################
+    ElseIf (-not $current_bindings -and $state -eq 'present')
+    {
+        # add binding. this creates the binding, but does not apply a certificate to it.
+        Try
+        {
+            If (-not $check_mode)
+            {
+                If ($sni_support)
+                {
+                    New-WebBinding @binding_parameters -SslFlags $sslFlags -Force
+                }
+                Else
+                {
+                    New-WebBinding @binding_parameters -Force
+                }
+            }
+            $result.changed = $true
+        }
+        Catch
+        {
+            $result.website_state = (Get-Website | Where-Object {$_.Name -eq $Name}).State
+            Fail-Json -obj $result -message "Failed at creating new binding (note: creating binding and adding ssl are separate steps) - $($_.Exception.Message)"
+        }
 
-    # incase there are no bindings we do a check before calling Create-BindingInfo
-    $web_binding = Get-SingleWebBinding $binding_parameters
-    if ($web_binding) {
-        $result.binding_info = Create-BindingInfo $web_binding
-    } else {
-        $result.binding_info = $null
+        # add certificate to binding
+        If ($certificateHash -and -not $check_mode)
+        {
+            Try {
+                #$new_binding = get-webbinding -Name $name -IPAddress $ip -port $port -Protocol $protocol -hostheader $host_header
+                $new_binding = Get-SingleWebBinding -bparams $binding_parameters
+                $new_binding.addsslcertificate($certificateHash,$certificateStoreName)
+            }
+            Catch {
+                $result.website_state = (Get-Website | Where-Object {$_.Name -eq $Name}).State
+                Fail-Json -obj $result -message "Failed to set new SSL certificate - $($_.Exception.Message)"
+            }
+        }
+
+        $result.changed = $true
+        $result.operation_type = 'added'
+        $result.website_state = (Get-Website | Where-Object {$_.Name -eq $Name}).State
+
+        # incase there are no bindings we do a check before calling Create-BindingInfo
+        $web_binding = Get-SingleWebBinding -bparams $binding_parameters
+        if ($web_binding) {
+            $result.binding_info = Create-BindingInfo $web_binding
+        } else {
+            $result.binding_info = $null
+        }
+        Exit-Json $result
     }
-    Exit-Json $result
-}
+    
+} #HTTP/HTTPS BINDING
+
+
