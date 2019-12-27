@@ -5,7 +5,7 @@
             "CN=Configuration,DC=ansible,DC=local"
         ],
         "currentTime": [
-            "20191125173936.0Z"
+            "20191227113300.0Z"
         ],
         "defaultNamingContext": [
             "DC=ansible,DC=local"
@@ -26,7 +26,7 @@
             "7"
         ],
         "highestCommittedUSN": [
-            "20650"
+            "29664"
         ],
         "isGlobalCatalogReady": [
             "TRUE"

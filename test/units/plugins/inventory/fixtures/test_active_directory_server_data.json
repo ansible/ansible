@@ -3,7 +3,7 @@
         {
             "attributes": {
                 "auditingPolicy": "\u0000\u0001",
-                "creationTime": "2019-11-25 09:23:05.690752+00:00",
+                "creationTime": "2019-12-02 14:03:49.836012+00:00",
                 "dSASignature": {
                     "encoded": "AQAAACgAAAAAAAAAAAAAAAAAAAAAAAAAF9E8viwXJEmNvoujH6S0BQ==",
                     "encoding": "base64"
@@ -68,7 +68,7 @@
                 ],
                 "systemFlags": -1946157056,
                 "uASCompat": 1,
-                "uSNChanged": 20486,
+                "uSNChanged": 28680,
                 "uSNCreated": 4099,
                 "wellKnownObjects": [
                     "B:32:6227F0AF1FC2410D8E3BB10615BB5B0F:CN=NTDS Quotas,DC=ansible,DC=local",
@@ -83,7 +83,7 @@
                     "B:32:AA312825768811D1ADED00C04FD8D5CD:CN=Computers,DC=ansible,DC=local",
                     "B:32:A9D1CA15768811D1ADED00C04FD8D5CD:CN=Users,DC=ansible,DC=local"
                 ],
-                "whenChanged": "2019-11-25 09:23:05+00:00",
+                "whenChanged": "2019-12-02 14:03:49+00:00",
                 "whenCreated": "2019-11-22 12:47:25+00:00"
             },
             "dn": "DC=ansible,DC=local",
@@ -92,7 +92,7 @@
                     "\u0000\u0001"
                 ],
                 "creationTime": [
-                    "132191473856907528"
+                    "132197690298360108"
                 ],
                 "dSASignature": [
                     {
@@ -235,7 +235,7 @@
                     "1"
                 ],
                 "uSNChanged": [
-                    "20486"
+                    "28680"
                 ],
                 "uSNCreated": [
                     "4099"
@@ -254,7 +254,7 @@
                     "B:32:A9D1CA15768811D1ADED00C04FD8D5CD:CN=Users,DC=ansible,DC=local"
                 ],
                 "whenChanged": [
-                    "20191125092305.0Z"
+                    "20191202140349.0Z"
                 ],
                 "whenCreated": [
                     "20191122124725.0Z"
@@ -5233,10 +5233,10 @@
             "attributes": {
                 "cn": "AdminSDHolder",
                 "dSCorePropagationData": [
-                    "2019-11-25 16:38:15+00:00",
-                    "2019-11-25 15:38:15+00:00",
-                    "2019-11-25 14:38:20+00:00",
-                    "2019-11-22 23:54:47+00:00",
+                    "2019-12-27 04:12:39+00:00",
+                    "2019-12-26 22:53:13+00:00",
+                    "2019-12-26 21:53:13+00:00",
+                    "2019-12-26 20:53:13+00:00",
                     "1601-01-01 00:00:00+00:00"
                 ],
                 "distinguishedName": "CN=AdminSDHolder,CN=System,DC=ansible,DC=local",
@@ -5262,10 +5262,10 @@
                     "AdminSDHolder"
                 ],
                 "dSCorePropagationData": [
-                    "20191125163815.0Z",
-                    "20191125153815.0Z",
-                    "20191125143820.0Z",
-                    "20191122235447.0Z",
+                    "20191227041239.0Z",
+                    "20191226225313.0Z",
+                    "20191226215313.0Z",
+                    "20191226205313.0Z",
                     "16010101000000.0Z"
                 ],
                 "distinguishedName": [
@@ -12742,9 +12742,9 @@
                 "distinguishedName": "CN=vagrant,CN=Users,DC=ansible,DC=local",
                 "instanceType": 4,
                 "lastLogoff": "1601-01-01 00:00:00+00:00",
-                "lastLogon": "2019-11-25 15:26:44.482433+00:00",
-                "lastLogonTimestamp": "2019-11-22 12:48:40.176342+00:00",
-                "logonCount": 61,
+                "lastLogon": "2019-12-03 17:40:31.466026+00:00",
+                "lastLogonTimestamp": "2019-12-03 17:40:31.466026+00:00",
+                "logonCount": 63,
                 "logonHours": {
                     "encoded": "////////////////////////////",
                     "encoding": "base64"
@@ -12771,10 +12771,10 @@
                 "pwdLastSet": "2019-11-22 06:42:39.500025+00:00",
                 "sAMAccountName": "vagrant",
                 "sAMAccountType": 805306368,
-                "uSNChanged": 12787,
+                "uSNChanged": 28820,
                 "uSNCreated": 8199,
                 "userAccountControl": 66048,
-                "whenChanged": "2019-11-22 13:03:09+00:00",
+                "whenChanged": "2019-12-03 17:40:31+00:00",
                 "whenCreated": "2019-11-22 12:47:32+00:00"
             },
             "dn": "CN=vagrant,CN=Users,DC=ansible,DC=local",
@@ -12818,13 +12818,13 @@
                     "0"
                 ],
                 "lastLogon": [
-                    "132191692044824340"
+                    "132198684314660262"
                 ],
                 "lastLogonTimestamp": [
-                    "132189005201763430"
+                    "132198684314660262"
                 ],
                 "logonCount": [
-                    "61"
+                    "63"
                 ],
                 "logonHours": [
                     {
@@ -12877,7 +12877,7 @@
                     "805306368"
                 ],
                 "uSNChanged": [
-                    "12787"
+                    "28820"
                 ],
                 "uSNCreated": [
                     "8199"
@@ -12886,7 +12886,7 @@
                     "66048"
                 ],
                 "whenChanged": [
-                    "20191122130309.0Z"
+                    "20191203174031.0Z"
                 ],
                 "whenCreated": [
                     "20191122124732.0Z"
@@ -15660,7 +15660,7 @@
         {
             "attributes": {
                 "accountExpires": "9999-12-31 23:59:59.999999+00:00",
-                "badPasswordTime": "1601-01-01 00:00:00+00:00",
+                "badPasswordTime": "2019-12-24 16:31:06.253298+00:00",
                 "badPwdCount": 0,
                 "cn": "DC",
                 "codePage": 0,
@@ -15674,10 +15674,10 @@
                 "instanceType": 4,
                 "isCriticalSystemObject": true,
                 "lastLogoff": "1601-01-01 00:00:00+00:00",
-                "lastLogon": "2019-11-25 17:23:18.977587+00:00",
-                "lastLogonTimestamp": "2019-11-22 12:48:39.129454+00:00",
+                "lastLogon": "2019-12-27 06:23:13.291609+00:00",
+                "lastLogonTimestamp": "2019-12-24 16:31:06.175171+00:00",
                 "localPolicyFlags": 0,
-                "logonCount": 80,
+                "logonCount": 300,
                 "memberOf": [
                     "CN=Pre-Windows 2000 Compatible Access,CN=Builtin,DC=ansible,DC=local",
                     "CN=Cert Publishers,CN=Users,DC=ansible,DC=local"
@@ -15700,7 +15700,7 @@
                 "operatingSystem": "Windows Server 2016 Standard Evaluation",
                 "operatingSystemVersion": "10.0 (14393)",
                 "primaryGroupID": 516,
-                "pwdLastSet": "2019-11-22 06:48:15.267273+00:00",
+                "pwdLastSet": "2019-12-24 16:31:06.284552+00:00",
                 "rIDSetReferences": [
                     "CN=RID Set,CN=DC,OU=Domain Controllers,DC=ansible,DC=local"
                 ],
@@ -15733,7 +15733,7 @@
                     "ldap/dc.ansible.local",
                     "ldap/dc.ansible.local/ansible.local"
                 ],
-                "uSNChanged": 20509,
+                "uSNChanged": 29387,
                 "uSNCreated": 12293,
                 "userAccountControl": 532480,
                 "userCertificate": [
@@ -15742,7 +15742,7 @@
                         "encoding": "base64"
                     }
                 ],
-                "whenChanged": "2019-11-25 15:23:55+00:00",
+                "whenChanged": "2019-12-24 16:31:06+00:00",
                 "whenCreated": "2019-11-22 06:47:59+00:00"
             },
             "dn": "CN=DC,OU=Domain Controllers,DC=ansible,DC=local",
@@ -15751,7 +15751,7 @@
                     "9223372036854775807"
                 ],
                 "badPasswordTime": [
-                    "0"
+                    "132216786662532974"
                 ],
                 "badPwdCount": [
                     "0"
@@ -15785,16 +15785,16 @@
                     "0"
                 ],
                 "lastLogon": [
-                    "132191761989775878"
+                    "132219013932916098"
                 ],
                 "lastLogonTimestamp": [
-                    "132189005191294533"
+                    "132216786661751707"
                 ],
                 "localPolicyFlags": [
                     "0"
                 ],
                 "logonCount": [
-                    "80"
+                    "300"
                 ],
                 "memberOf": [
                     "CN=Pre-Windows 2000 Compatible Access,CN=Builtin,DC=ansible,DC=local",
@@ -15841,7 +15841,7 @@
                     "516"
                 ],
                 "pwdLastSet": [
-                    "132188788952672720"
+                    "132216786662845513"
                 ],
                 "rIDSetReferences": [
                     "CN=RID Set,CN=DC,OU=Domain Controllers,DC=ansible,DC=local"
@@ -15880,7 +15880,7 @@
                     "ldap/dc.ansible.local/ansible.local"
                 ],
                 "uSNChanged": [
-                    "20509"
+                    "29387"
                 ],
                 "uSNCreated": [
                     "12293"
@@ -15895,7 +15895,7 @@
                     }
                 ],
                 "whenChanged": [
-                    "20191125152355.0Z"
+                    "20191224163106.0Z"
                 ],
                 "whenCreated": [
                     "20191122064759.0Z"
@@ -22443,10 +22443,10 @@
                 "pwdLastSet": "2019-11-22 22:48:36.951410+00:00",
                 "sAMAccountName": "server-001$",
                 "sAMAccountType": 805306369,
-                "uSNChanged": 12956,
+                "uSNChanged": 20820,
                 "uSNCreated": 12952,
-                "userAccountControl": 4096,
-                "whenChanged": "2019-11-22 22:48:36+00:00",
+                "userAccountControl": 4098,
+                "whenChanged": "2019-11-26 14:20:53+00:00",
                 "whenCreated": "2019-11-22 22:48:36+00:00"
             },
             "dn": "CN=server-001,OU=servers-ou-1,OU=Servers,OU=Devices,DC=ansible,DC=local",
@@ -22534,16 +22534,16 @@
                     "805306369"
                 ],
                 "uSNChanged": [
-                    "12956"
+                    "20820"
                 ],
                 "uSNCreated": [
                     "12952"
                 ],
                 "userAccountControl": [
-                    "4096"
+                    "4098"
                 ],
                 "whenChanged": [
-                    "20191122224836.0Z"
+                    "20191126142053.0Z"
                 ],
                 "whenCreated": [
                     "20191122224836.0Z"
@@ -23158,10 +23158,10 @@
                 "pwdLastSet": "2019-11-22 22:48:37.304407+00:00",
                 "sAMAccountName": "server-006$",
                 "sAMAccountType": 805306369,
-                "uSNChanged": 12986,
+                "uSNChanged": 20821,
                 "uSNCreated": 12982,
-                "userAccountControl": 4096,
-                "whenChanged": "2019-11-22 22:48:37+00:00",
+                "userAccountControl": 4098,
+                "whenChanged": "2019-11-26 14:20:53+00:00",
                 "whenCreated": "2019-11-22 22:48:37+00:00"
             },
             "dn": "CN=server-006,OU=servers-ou-2,OU=Servers,OU=Devices,DC=ansible,DC=local",
@@ -23249,16 +23249,16 @@
                     "805306369"
                 ],
                 "uSNChanged": [
-                    "12986"
+                    "20821"
                 ],
                 "uSNCreated": [
                     "12982"
                 ],
                 "userAccountControl": [
-                    "4096"
+                    "4098"
                 ],
                 "whenChanged": [
-                    "20191122224837.0Z"
+                    "20191126142053.0Z"
                 ],
                 "whenCreated": [
                     "20191122224837.0Z"
@@ -23864,10 +23864,10 @@
                 "pwdLastSet": "2019-11-22 22:48:37.697409+00:00",
                 "sAMAccountName": "server-011$",
                 "sAMAccountType": 805306369,
-                "uSNChanged": 13016,
+                "uSNChanged": 20822,
                 "uSNCreated": 13012,
-                "userAccountControl": 4096,
-                "whenChanged": "2019-11-22 22:48:37+00:00",
+                "userAccountControl": 4098,
+                "whenChanged": "2019-11-26 14:20:53+00:00",
                 "whenCreated": "2019-11-22 22:48:37+00:00"
             },
             "dn": "CN=server-011,OU=servers-ou-3,OU=Servers,OU=Devices,DC=ansible,DC=local",
@@ -23952,16 +23952,16 @@
                     "805306369"
                 ],
                 "uSNChanged": [
-                    "13016"
+                    "20822"
                 ],
                 "uSNCreated": [
                     "13012"
                 ],
                 "userAccountControl": [
-                    "4096"
+                    "4098"
                 ],
                 "whenChanged": [
-                    "20191122224837.0Z"
+                    "20191126142053.0Z"
                 ],
                 "whenCreated": [
                     "20191122224837.0Z"
@@ -24549,10 +24549,10 @@
                 "pwdLastSet": "2019-11-22 22:48:38.120407+00:00",
                 "sAMAccountName": "server-016$",
                 "sAMAccountType": 805306369,
-                "uSNChanged": 13046,
+                "uSNChanged": 20823,
                 "uSNCreated": 13042,
-                "userAccountControl": 4096,
-                "whenChanged": "2019-11-22 22:48:38+00:00",
+                "userAccountControl": 4098,
+                "whenChanged": "2019-11-26 14:20:53+00:00",
                 "whenCreated": "2019-11-22 22:48:38+00:00"
             },
             "dn": "CN=server-016,OU=servers-ou-4,OU=Servers,OU=Devices,DC=ansible,DC=local",
@@ -24637,16 +24637,16 @@
                     "805306369"
                 ],
                 "uSNChanged": [
-                    "13046"
+                    "20823"
                 ],
                 "uSNCreated": [
                     "13042"
                 ],
                 "userAccountControl": [
-                    "4096"
+                    "4098"
                 ],
                 "whenChanged": [
-                    "20191122224838.0Z"
+                    "20191126142053.0Z"
                 ],
                 "whenCreated": [
                     "20191122224838.0Z"
@@ -25234,10 +25234,10 @@
                 "pwdLastSet": "2019-11-22 22:48:38.464409+00:00",
                 "sAMAccountName": "server-021$",
                 "sAMAccountType": 805306369,
-                "uSNChanged": 13076,
+                "uSNChanged": 20824,
                 "uSNCreated": 13072,
-                "userAccountControl": 4096,
-                "whenChanged": "2019-11-22 22:48:38+00:00",
+                "userAccountControl": 4098,
+                "whenChanged": "2019-11-26 14:20:53+00:00",
                 "whenCreated": "2019-11-22 22:48:38+00:00"
             },
             "dn": "CN=server-021,OU=servers-ou-5,OU=Servers,OU=Devices,DC=ansible,DC=local",
@@ -25322,16 +25322,16 @@
                     "805306369"
                 ],
                 "uSNChanged": [
-                    "13076"
+                    "20824"
                 ],
                 "uSNCreated": [
                     "13072"
                 ],
                 "userAccountControl": [
-                    "4096"
+                    "4098"
                 ],
                 "whenChanged": [
-                    "20191122224838.0Z"
+                    "20191126142053.0Z"
                 ],
                 "whenCreated": [
                     "20191122224838.0Z"
@@ -29344,10 +29344,10 @@
                 "pwdLastSet": "2019-11-25 16:49:42.902359+00:00",
                 "sAMAccountName": "computer-001$",
                 "sAMAccountType": 805306369,
-                "uSNChanged": 20542,
+                "uSNChanged": 20825,
                 "uSNCreated": 20538,
-                "userAccountControl": 4096,
-                "whenChanged": "2019-11-25 16:49:42+00:00",
+                "userAccountControl": 4098,
+                "whenChanged": "2019-11-26 14:20:53+00:00",
                 "whenCreated": "2019-11-25 16:49:42+00:00"
             },
             "dn": "CN=computer-001,CN=Computers,DC=ansible,DC=local",
@@ -29432,16 +29432,16 @@
                     "805306369"
                 ],
                 "uSNChanged": [
-                    "20542"
+                    "20825"
                 ],
                 "uSNCreated": [
                     "20538"
                 ],
                 "userAccountControl": [
-                    "4096"
+                    "4098"
                 ],
                 "whenChanged": [
-                    "20191125164942.0Z"
+                    "20191126142053.0Z"
                 ],
                 "whenCreated": [
                     "20191125164942.0Z"

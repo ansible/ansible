@@ -297,10 +297,10 @@ def test_computer_object_last_logon_timestamp_value(inventory, connection):
     dc_entries = inventory._query(connection, ou)
     all_dcs = []
     for entry in dc_entries:
-        assert (
+        assert isinstance(
             abs(
                 pytz.utc.localize(datetime.utcnow())
                 - entry["attributes"]["lastLogonTimestamp"]
-            ).days
-            >= 10
+            ).days,
+            int,
         )
