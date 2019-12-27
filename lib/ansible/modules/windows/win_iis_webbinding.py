@@ -6,7 +6,7 @@
 # Copyright: (c) 2017, Henrik Wallström <henrik@wallstroms.nu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-ANSIBLE_METADATA = {'metadata_version': '1.2',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -52,7 +52,6 @@ options:
       - '  Note: for non-http protocol the port can be in this format (i.e. 830:*)'
     type: str
     default: http
-    version_added: "2.7"
   certificate_hash:
     description:
       - Certificate hash (thumbprint) for the SSL binding. The certificate hash is the unique identifier for the certificate.
@@ -69,7 +68,7 @@ options:
       - Set to C(0) to disable SNI.
       - Set to C(1) to enable SNI.
     type: str
-    version_added: "2.0"
+    version_added: "2.5"
 seealso:
 - module: win_iis_virtualdirectory
 - module: win_iis_webapplication
