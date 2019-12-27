@@ -27,6 +27,8 @@ options:
     description:
     - SQL query to run. Multiple queries can be passed using YAML list syntax.
     type: list
+    elements: str
+    required: yes
   positional_args:
     description:
     - List of values to be passed as positional arguments to the query.
@@ -43,7 +45,7 @@ options:
     type: str
   single_transaction:
     description:
-    - Where run passed queries in a single transaction or commit them one-by-one.
+    - Where passed queries run in a single transaction (C(yes)) or commit them one-by-one (C(no)).
     type: bool
     default: no
 notes:
@@ -125,7 +127,7 @@ DDL_QUERY_KEYWORDS = ('CREATE', 'DROP', 'ALTER', 'RENAME', 'TRUNCATE')
 def main():
     argument_spec = mysql_common_argument_spec()
     argument_spec.update(
-        query=dict(type='list'),
+        query=dict(type='list', elements='str', required=True),
         login_db=dict(type='str'),
         positional_args=dict(type='list'),
         named_args=dict(type='dict'),
@@ -148,15 +150,17 @@ def main():
     ssl_ca = module.params['ca_cert']
     config_file = module.params['config_file']
     query = module.params["query"]
-    positional_args = module.params["positional_args"]
-    named_args = module.params["named_args"]
     if module.params["single_transaction"]:
         autocommit = False
     else:
         autocommit = True
-
-    if positional_args and named_args:
-        module.fail_json(msg="positional_args and named_args params are mutually exclusive")
+    # Prepare args:
+    if module.params.get("positional_args"):
+        arguments = module.params["positional_args"]
+    elif module.params.get("named_args"):
+        arguments = module.params["named_args"]
+    else:
+        arguments = None
 
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
@@ -171,14 +175,6 @@ def main():
         module.fail_json(msg="unable to connect to database, check login_user and "
                              "login_password are correct or %s has the credentials. "
                              "Exception message: %s" % (config_file, to_native(e)))
-    # Prepare args:
-    if module.params.get("positional_args"):
-        arguments = module.params["positional_args"]
-    elif module.params.get("named_args"):
-        arguments = module.params["named_args"]
-    else:
-        arguments = None
-
     # Set defaults:
     changed = False
 
@@ -191,6 +187,9 @@ def main():
             cursor.execute(q, arguments)
 
         except Exception as e:
+            if not autocommit:
+                db_connection.rollback()
+
             cursor.close()
             module.fail_json(msg="Cannot execute SQL '%s' args [%s]: %s" % (q, arguments, to_native(e)))
 
@@ -198,6 +197,9 @@ def main():
             query_result.append([dict(row) for row in cursor.fetchall()])
 
         except Exception as e:
+            if not autocommit:
+                db_connection.rollback()
+
             module.fail_json(msg="Cannot fetch rows from cursor: %s" % to_native(e))
 
         # Check DML or DDL keywords in query and set changed accordingly:
