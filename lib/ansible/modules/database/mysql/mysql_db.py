@@ -29,7 +29,7 @@ options:
     required: true
     type: list
     elements: str
-    aliases: [ db ]
+    aliases: [db]
   state:
     description:
     - The database state
@@ -41,11 +41,13 @@ options:
     - Collation mode (sorting). This only applies to new table/databases and
       does not update existing ones, this is a limitation of MySQL.
     type: str
+    default: ''
   encoding:
     description:
     - Encoding mode to use, examples include C(utf8) or C(latin1_swedish_ci),
       at creation of database, dump or importation of sql script.
-  type: str
+    type: str
+    default: ''
   target:
     description:
     - Location, on the remote host, of the dump file to read from or write to.
@@ -70,14 +72,14 @@ options:
       of the form database_name.table_name.
     type: list
     elements: str
-    required: false
+    required: no
     default: []
     version_added: '2.7'
   hex_blob:
     description:
     - Dump binary columns using hexadecimal notation.
-    required: false
-    default: false
+    required: no
+    default: no
     type: bool
     version_added: '2.10'
   force:
