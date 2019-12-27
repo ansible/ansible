@@ -26,17 +26,18 @@ author:
 - "Enric Lluelles (@enriclluelles)"
 requirements:
 - "python >= 2.6"
-short_description: Install and uninstall homebrew casks.
+short_description: Install and uninstall homebrew casks
 description:
 - Manages Homebrew casks.
-version_added: "1.6"
+version_added: '1.6'
 options:
   name:
     description:
     - Name of cask to install or remove.
     required: true
-    aliases: ['pkg', 'package', 'cask']
+    aliases: [ 'cask', 'package', 'pkg' ]
     type: list
+    elements: str
   path:
     description:
     - "':' separated list of paths to search for 'brew' executable."
@@ -45,51 +46,52 @@ options:
   state:
     description:
     - State of the cask.
-    choices: [ 'present', 'absent', 'upgraded' ]
+    choices: [ 'absent', 'present', 'upgraded' ]
     default: present
     type: str
   sudo_password:
     description:
     - The sudo password to be passed to SUDO_ASKPASS.
     required: false
-    version_added: 2.8
+    version_added: '2.8'
     type: str
   update_homebrew:
     description:
     - Update homebrew itself first.
     - Note that C(brew cask update) is a synonym for C(brew update).
     type: bool
-    default: 'no'
-    aliases: ['update-brew']
-    version_added: "2.2"
+    default: no
+    aliases: [ 'update-brew' ]
+    version_added: '2.2'
   install_options:
     description:
     - Options flags to install a package.
-    aliases: ['options']
-    version_added: "2.2"
+    aliases: [ 'options' ]
+    version_added: '2.2'
     type: list
+    elements: str
   accept_external_apps:
     description:
     - Allow external apps.
     type: bool
-    default: 'no'
-    version_added: "2.5.0"
+    default: no
+    version_added: '2.5.0'
   upgrade_all:
     description:
     - Upgrade all casks.
     - Mutually exclusive with C(upgraded) state.
     type: bool
-    default: 'no'
-    version_added: "2.5.0"
-    aliases: ['upgrade']
+    default: no
+    version_added: '2.5.0'
+    aliases: [ 'upgrade' ]
   greedy:
     description:
     - Upgrade casks that auto update.
     - Passes --greedy to brew cask outdated when checking
       if an installed cask has a newer version available.
     type: bool
-    default: 'no'
-    version_added: "2.7.0"
+    default: no
+    version_added: '2.7.0'
 '''
 EXAMPLES = '''
 - name: Install cask
