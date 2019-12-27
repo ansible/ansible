@@ -5,6 +5,7 @@
 # Copyright: (c) 2015, Henrik Wallström <henrik@wallstroms.nu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+
 #Requires -Module Ansible.ModuleUtils.Legacy
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
@@ -67,9 +68,16 @@ function Get-SingleWebBinding
     
     if($script:OtherProto -contains $bparams.protocol)
     {
-        #NON-HTTP binding        
-        $NonHttpBinds = (get-ItemProperty IIS:\Sites\"$($bparams.name)" -Name bindings).Collection |Where-Object{$_.Protocol -eq $bparams.protocol -and $_.bindingInformation -eq "$($bparams.port)" }
-        return ($NonHttpBinds |select Protocol, bindingInformation) #NOTE: Must return selective properties, otherwise you endup with memory leak on the remote machine.
+        try {
+            #NON-HTTP binding        
+            $NonHttpBinds = (get-ItemProperty IIS:\Sites\"$($bparams.name)" -Name bindings).Collection |Where-Object{$_.Protocol -eq $bparams.protocol -and $_.bindingInformation -eq "$($bparams.port)" }
+            return ($NonHttpBinds |select Protocol, bindingInformation) #NOTE: Must return selective properties, otherwise you endup with memory leak on the remote machine.    
+        }
+        catch {
+            #Something Went wrong, show exec command line for easy troubleshooting
+            Throw  "Failed trying to execute ((get-ItemProperty IIS:\Sites\$($bparams.name) -Name bindings).Collection |Where-Object{$_.Protocol -eq $bparams.protocol -and $_.bindingInformation -eq $($bparams.port))  Error: $($_.Exception.Message)"
+        }
+        
     }
     else 
     {
@@ -278,19 +286,25 @@ if($OtherProto -contains $protocol)
 
         if($state -eq "present")  #Regardless if bindfound if state is present ensure non-http protocol is enabled
         {
-            #Ensure non-http Protocol is enabled at the site level -> Advanced Settings
-            $EnabledProto = (Get-ItemProperty IIS:\sites\"$name" -name EnabledProtocols).EnabledProtocols
-            if(!$EnabledProto -or $EnabledProto.split(",") -notcontains $protocol)                
-            {
-                #NOTE: 
-                    #it's safe to leave the non-http protocol in the enabled state even after all the bindings have been removed. 
-                    #Enabled Protocol name must be in lowercase.
-                    #Append to existing list of Enabled protocols.
-                Set-ItemProperty IIS:\sites\"$name" -name EnabledProtocols -Value "$($EnabledProto.ToLower()),$($protocol.ToLower())"
-                $EnabledProto = (Get-ItemProperty IIS:\sites\"$name" -name EnabledProtocols).EnabledProtocols #Requery for return results 
-                $result.changed = $true
+            try {
+                #Ensure non-http Protocol is enabled at the site level -> Advanced Settings
+                $EnabledProto = (Get-ItemProperty IIS:\sites\"$name" -name EnabledProtocols).EnabledProtocols
+                if(!$EnabledProto -or $EnabledProto.split(",") -notcontains $protocol)                
+                {
+                    #NOTE: 
+                        #it's safe to leave the non-http protocol in the enabled state even after all the bindings have been removed. 
+                        #Enabled Protocol name must be in lowercase.
+                        #Append to existing list of Enabled protocols.
+                    Set-ItemProperty IIS:\sites\"$name" -name EnabledProtocols -Value "$($EnabledProto.ToLower()),$($protocol.ToLower())"
+                    $EnabledProto = (Get-ItemProperty IIS:\sites\"$name" -name EnabledProtocols).EnabledProtocols #Requery for return results 
+                    $result.changed = $true
+                }
+                $result.EnabledProtocols = $EnabledProto
             }
-            $result.EnabledProtocols = $EnabledProto
+            catch {
+                    Fail-Json -obj $result -message "Something went when trying to Enable Protocol $($protocol) in the Site $($name)  - $($_.Exception.Message)"        
+            }
+            
         }
         
     }
