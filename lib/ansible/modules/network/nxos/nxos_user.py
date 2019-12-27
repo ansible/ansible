@@ -177,12 +177,30 @@ def map_obj_to_commands(updates, module):
         def remove(x):
             return commands.append('no username %s %s' % (want['name'], x))
 
+        def configure_roles():
+            if want['roles']:
+                if have:
+                    for item in set(have['roles']).difference(want['roles']):
+                        remove('role %s' % item)
+
+                    for item in set(want['roles']).difference(have['roles']):
+                        add('role %s' % item)
+                else:
+                    for item in want['roles']:
+                        add('role %s' % item)
+
+                return True
+            return False
+
         if want['state'] == 'absent':
             commands.append('no username %s' % want['name'])
             continue
 
+        roles_configured = False
         if want['state'] == 'present' and not have:
-            commands.append('username %s' % want['name'])
+            roles_configured = configure_roles()
+            if not roles_configured:
+                commands.append('username %s' % want['name'])
 
         if needs_update('configured_password'):
             if update_password == 'always' or not have:
@@ -191,16 +209,8 @@ def map_obj_to_commands(updates, module):
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
 
-        if want['roles']:
-            if have:
-                for item in set(have['roles']).difference(want['roles']):
-                    remove('role %s' % item)
-
-                for item in set(want['roles']).difference(have['roles']):
-                    add('role %s' % item)
-            else:
-                for item in want['roles']:
-                    add('role %s' % item)
+        if not roles_configured:
+            configure_roles()
 
     return commands
 
