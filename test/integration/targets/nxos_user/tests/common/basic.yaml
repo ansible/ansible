@@ -21,11 +21,13 @@
     state: present
   register: result
 
+- debug: msg="{{result}}"
+
 - assert:
     that:
       - 'result.changed == true'
       - '"username" in result.commands[0]'
-      - '"role network-operator" in result.commands[1]'
+      - '"role network-operator" in result.commands[0]'
 
 - name: Collection of users
   nxos_user:
