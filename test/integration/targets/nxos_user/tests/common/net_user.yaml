@@ -25,7 +25,7 @@
     that:
       - 'result.changed == true'
       - '"username" in result.commands[0]'
-      - '"role network-operator" in result.commands[1]'
+      - '"role network-operator" in result.commands[0]'
 
 - name: teardown
   net_user:
