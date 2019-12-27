@@ -187,7 +187,7 @@
         that:
           - result.changed
           - result.target_group_arn
-          - "'{{ result.target_health_descriptions.target.id }}' == '{{ ec2.instance_ids[0] }}'"
+          - result.target_health_descriptions.target.id == ec2.instance_ids[0]
 
     # ============================================================
 
@@ -235,8 +235,8 @@
         that:
           - result.changed
           - result.target_group_arn
-          - "'{{ result.target_health_descriptions.target.id }}' == '{{ ec2.instance_ids[0] }}'"
-          - "{{ result.target_health_descriptions.target_health }} == {'state': 'healthy'}"
+          - result.target_health_descriptions.target.id == ec2.instance_ids[0]
+          - result.target_health_descriptions.target_health == healthy_state
 
     # ============================================================
 
@@ -284,8 +284,8 @@
         that:
           - result.changed
           - result.target_group_arn
-          - "'{{ result.target_health_descriptions.target.id }}' == '{{ ec2.instance_ids[0] }}'"
-          - "{{ result.target_health_descriptions.target_health }} == {'state': 'healthy'}"
+          - result.target_health_descriptions.target.id == ec2.instance_ids[0]
+          - result.target_health_descriptions.target_health == healthy_state
 
     - name: start deregisteration but don't wait
       elb_target:

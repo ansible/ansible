@@ -5,3 +5,6 @@ resource_shortprefix: 'ansible-test-{{ resource_prefix | regex_search("([0-9]+)$
 tg_name: "{{ resource_shortprefix }}-tg"
 tg_tcpudp_name: "{{ resource_shortprefix }}-tgtcpudp"
 lb_name: "{{ resource_shortprefix }}-lb"
+
+healthy_state:
+   state: 'healthy'
