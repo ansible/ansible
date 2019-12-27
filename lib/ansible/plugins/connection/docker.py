@@ -57,6 +57,50 @@ from ansible.utils.display import Display
 display = Display()
 
 
+def _sanitize_version(version):
+    return re.sub(u'[^0-9a-zA-Z.]', u'', version)
+
+def _old_docker_cli_version(docker_cmd, play_context):
+    cmd_args = []
+    if play_context.docker_extra_args:
+        cmd_args += play_context.docker_extra_args.split(' ')
+
+    old_version_subcommand = ['version']
+
+    old_docker_cmd = [docker_cmd] + cmd_args + old_version_subcommand
+    p = subprocess.Popen(old_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd_output, err = p.communicate()
+
+    return old_docker_cmd, to_native(cmd_output), err, p.returncode
+
+def _new_docker_cli_version(docker_cmd, play_context):
+    # no result yet, must be newer Docker version
+    cmd_args = []
+    if play_context.docker_extra_args:
+        cmd_args += play_context.docker_extra_args.split(' ')
+
+    new_version_subcommand = ['version', '--format', "'{{.Server.Version}}'"]
+
+    new_docker_cmd = [docker_cmd] + cmd_args + new_version_subcommand
+    p = subprocess.Popen(new_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd_output, err = p.communicate()
+    return new_docker_cmd, to_native(cmd_output), err, p.returncode
+
+def get_docker_cli_version(docker_cmd, play_context):
+
+    cmd, cmd_output, err, returncode = _old_docker_cli_version(docker_cmd, play_context)
+    if returncode == 0:
+        for line in to_text(cmd_output, errors='surrogate_or_strict').split(u'\n'):
+            if line.startswith(u'Server version:'):  # old docker versions
+                return _sanitize_version(line.split()[2])
+
+    cmd, cmd_output, err, returncode = _new_docker_cli_version(docker_cmd, play_context)
+    if returncode:
+        raise AnsibleError('Docker version check (%s) failed: %s' % (to_native(cmd), to_native(err)))
+
+    return _sanitize_version(to_text(cmd_output, errors='surrogate_or_strict'))
+
+
 class Connection(ConnectionBase):
     ''' Local docker based connections '''
 
@@ -142,10 +186,10 @@ class CLIDriver:
             if not self.docker_cmd:
                 raise AnsibleError("docker command not found in PATH")
 
-        docker_version = self._get_docker_version(play_context)
-        if docker_version == u'dev':
+        docker_cli_version = get_docker_cli_version(self.docker_cmd, play_context)
+        if docker_cli_version == u'dev':
             display.warning(u'Docker version number is "dev". Will assume latest version.')
-        if docker_version != u'dev' and LooseVersion(docker_version) < LooseVersion(u'1.3'):
+        if docker_cli_version != u'dev' and LooseVersion(docker_cli_version) < LooseVersion(u'1.3'):
             raise AnsibleError('docker connection type requires docker 1.3 or higher')
 
         # The remote user we will request from docker (if supported)
@@ -154,7 +198,7 @@ class CLIDriver:
         self.actual_user = None
 
         if play_context.remote_user is not None:
-            if docker_version == u'dev' or LooseVersion(docker_version) >= LooseVersion(u'1.7'):
+            if docker_cli_version == u'dev' or LooseVersion(docker_cli_version) >= LooseVersion(u'1.7'):
                 # Support for specifying the exec user was added in docker 1.7
                 self.remote_user = play_context.remote_user
                 self.actual_user = self.remote_user
@@ -162,57 +206,13 @@ class CLIDriver:
                 self.actual_user = self._get_docker_remote_user()
 
                 if self.actual_user != play_context.remote_user:
-                    display.warning(u'docker {0} does not support remote_user, using container default: {1}'
-                                    .format(docker_version, self.actual_user or u'?'))
+                    display.warning(u'docker CLI {0} does not support remote_user, using container default: {1}'
+                                    .format(docker_cli_version, self.actual_user or u'?'))
         elif connection_display.verbosity > 2:
             # Since we're not setting the actual_user, look it up so we have it for logging later
             # Only do this if display verbosity is high enough that we'll need the value
             # This saves overhead from calling into docker when we don't need to
             self.actual_user = self._get_docker_remote_user(play_context)
-
-    @staticmethod
-    def _sanitize_version(version):
-        return re.sub(u'[^0-9a-zA-Z.]', u'', version)
-
-    def _old_docker_version(self, play_context):
-        cmd_args = []
-        if play_context.docker_extra_args:
-            cmd_args += play_context.docker_extra_args.split(' ')
-
-        old_version_subcommand = ['version']
-
-        old_docker_cmd = [self.docker_cmd] + cmd_args + old_version_subcommand
-        p = subprocess.Popen(old_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        cmd_output, err = p.communicate()
-
-        return old_docker_cmd, to_native(cmd_output), err, p.returncode
-
-    def _new_docker_version(self, play_context):
-        # no result yet, must be newer Docker version
-        cmd_args = []
-        if play_context.docker_extra_args:
-            cmd_args += play_context.docker_extra_args.split(' ')
-
-        new_version_subcommand = ['version', '--format', "'{{.Server.Version}}'"]
-
-        new_docker_cmd = [self.docker_cmd] + cmd_args + new_version_subcommand
-        p = subprocess.Popen(new_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        cmd_output, err = p.communicate()
-        return new_docker_cmd, to_native(cmd_output), err, p.returncode
-
-    def _get_docker_version(self, play_context):
-
-        cmd, cmd_output, err, returncode = self._old_docker_version(play_context)
-        if returncode == 0:
-            for line in to_text(cmd_output, errors='surrogate_or_strict').split(u'\n'):
-                if line.startswith(u'Server version:'):  # old docker versions
-                    return self._sanitize_version(line.split()[2])
-
-        cmd, cmd_output, err, returncode = self._new_docker_version(play_context)
-        if returncode:
-            raise AnsibleError('Docker version check (%s) failed: %s' % (to_native(cmd), to_native(err)))
-
-        return self._sanitize_version(to_text(cmd_output, errors='surrogate_or_strict'))
 
     def _get_docker_remote_user(self, play_context):
         """ Get the default user configured in the docker container """
