@@ -3,6 +3,7 @@
 # (c) 2014, Lorin Hochstein
 # (c) 2015, Leendert Brouwer (https://github.com/objectified)
 # (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
+# (c) 2019, Felix Fontein <felix@fontein.de>
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -13,6 +14,7 @@ DOCUMENTATION = """
     author:
         - Lorin Hochestein
         - Leendert Brouwer
+        - Felix Fontein (@felixfontein)
     connection: docker
     short_description: Run tasks in docker containers
     description:
