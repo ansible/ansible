@@ -55,7 +55,7 @@ options:
       - Whether unspecified tags should be removed from the resource.
       - "Note that when combined with C(state: absent), specified tags with non-matching values are not purged."
     type: bool
-    default: no
+    default: false
 extends_documentation_fragment:
     - aws
     - ec2
