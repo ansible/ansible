@@ -19,12 +19,12 @@ module: exo_rdns_record
 short_description: Manages reverse DNS records for Exoscale compute instances.
 description:
     - Set and unset reverse DNS record on Exoscale instance.
-version_added: "2.9"
+version_added: "2.10"
 author: "Lorenz Schori (@znerol)"
 options:
   name:
     description:
-      - Name of cs instance.
+      - Name of the compute instance
     required: true
     type: str
   content:
@@ -77,8 +77,6 @@ class ExoRdnsRecord(AnsibleCloudStack):
 
         self.name = self.module.params.get('name')
         self.content = self.module.params.get('content')
-        if self.content[-1] != ".":
-            self.content += "."
 
         self.returns = {
             'domain': 'domain'
