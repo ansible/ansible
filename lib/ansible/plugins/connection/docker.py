@@ -40,10 +40,13 @@ DOCUMENTATION = """
 
 import distutils.spawn
 import fcntl
+import io
 import os
 import os.path
-import subprocess
 import re
+import subprocess
+import tarfile
+import traceback
 
 from distutils.version import LooseVersion
 
@@ -54,7 +57,24 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.display import Display
 
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClientBase,
+    RequestException,
+)
+
+try:
+    from ansible.module_utils.docker.common import docker_version
+    from docker.errors import DockerException, APIError, NotFound
+    from docker.utils import socket as docker_socket
+except Exception:
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
+    docker_version = None
+
 display = Display()
+
+
+MIN_DOCKER_PY = '1.7.0'
+MIN_DOCKER_API = None
 
 
 def _sanitize_version(version):
@@ -110,7 +130,32 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self.driver = CLIDriver(self._display, play_context, kwargs)
+        driver = 'auto'
+        if kwargs.get('docker_command') is not None or play_context.docker_extra_args:
+            driver = 'cli'
+
+        docker_cli_version = None
+        if driver == 'auto':
+            # If a new enough Docker SDK for Python is around, use it
+            if docker_version is not None and LooseVersion(docker_version) >= LooseVersion(MIN_DOCKER_PY):
+                driver = 'docker-py'
+
+            # If that didn't work, detect 'docker' CLI command
+            if driver == 'auto':
+                docker_cmd = distutils.spawn.find_executable('docker')
+                if docker_cmd:
+                    docker_cli_version = get_docker_cli_version(docker_cmd, play_context)
+                    if docker_cli_version == u'dev' or LooseVersion(docker_cli_version) >= LooseVersion(u'1.3'):
+                        driver = 'cli'
+
+            # If auto-detection failed, fail
+            if driver == 'auto':
+                raise AnsibleError("Cannot find either Docker SDK for Python (>= {0}) or docker CLI command (>= 1.3)".format(MIN_DOCKER_PY))
+
+        if driver == 'cli':
+            self.driver = CLIDriver(self._display, play_context, docker_cli_version, kwargs)
+        if driver == 'docker-py':
+            self.driver = DockerPyDriver(self._display, play_context, kwargs)
 
     def _connect(self, port=None):
         """ Connect to the container. Nothing to do """
@@ -169,7 +214,7 @@ class Connection(ConnectionBase):
 
 
 class CLIDriver:
-    def __init__(self, connection_display, play_context, kwargs):
+    def __init__(self, connection_display, play_context, docker_cli_version, kwargs):
         # Note: docker supports running as non-root in some configurations.
         # (For instance, setting the UNIX socket file to be readable and
         # writable by a specific UNIX group and then putting users into that
@@ -186,7 +231,8 @@ class CLIDriver:
             if not self.docker_cmd:
                 raise AnsibleError("docker command not found in PATH")
 
-        docker_cli_version = get_docker_cli_version(self.docker_cmd, play_context)
+        if docker_cli_version is None:
+            docker_cli_version = get_docker_cli_version(self.docker_cmd, play_context)
         if docker_cli_version == u'dev':
             display.warning(u'Docker version number is "dev". Will assume latest version.')
         if docker_cli_version != u'dev' and LooseVersion(docker_cli_version) < LooseVersion(u'1.3'):
@@ -368,3 +414,198 @@ class CLIDriver:
         # Rename if needed
         if actual_out_path != out_path:
             os.rename(to_bytes(actual_out_path, errors='strict'), to_bytes(out_path, errors='strict'))
+
+
+class AnsibleDockerClient(AnsibleDockerClientBase):
+    def __init__(self, args):
+        self.args = args
+        super(AnsibleDockerClient, self).__init__(min_docker_version=MIN_DOCKER_PY, min_docker_api_version=MIN_DOCKER_API)
+
+    def fail(self, msg, **kwargs):
+        if kwargs:
+            import json
+            msg += '\nContext: ' + json.dumps(kwargs)
+        raise AnsibleError(msg)
+
+    def _get_params(self):
+        return self.args
+
+
+class DockerPyDriver:
+    def _call_client(self, play_context, callable, not_found_can_be_resource=False):
+        try:
+            return callable()
+        except NotFound as e:
+            if not_found_can_be_resource:
+                raise AnsibleError('Could not find container "{1}" or resource in it ({0})'.format(e, play_context.remote_addr))
+            else:
+                raise AnsibleError('Could not find container "{1}" ({0})'.format(e, play_context.remote_addr))
+        except APIError as e:
+            if e.response and e.response.status_code == 409:
+                raise AnsibleError('The container "{1}" has been paused ({0})'.format(e, play_context.remote_addr))
+            self.client.fail(
+                'An unexpected docker error occurred for container "{1}": {0}'.format(e, play_context.remote_addr),
+                exception=traceback.format_exc()
+            )
+        except DockerException as e:
+            self.client.fail(
+                'An unexpected docker error occurred for container "{1}": {0}'.format(e, play_context.remote_addr),
+                exception=traceback.format_exc()
+            )
+        except RequestException as e:
+            self.client.fail(
+                'An unexpected requests error occurred for container "{1}" when docker-py tried to talk to the docker daemon: {0}'.format(e, play_context.remote_addr),
+                exception=traceback.format_exc()
+            )
+
+    def __init__(self, connection_display, play_context, kwargs):
+        # Note: docker supports running as non-root in some configurations.
+        # (For instance, setting the UNIX socket file to be readable and
+        # writable by a specific UNIX group and then putting users into that
+        # group).  Therefore we don't check that the user is root when using
+        # this connection.  But if the user is getting a permission denied
+        # error it probably means that docker on their system is only
+        # configured to be connected to by root and they are not running as
+        # root.
+
+        self.client = AnsibleDockerClient(kwargs)
+
+        self.actual_user = play_context.remote_user
+
+        if self.actual_user is None and connection_display.verbosity > 2:
+            # Since we're not setting the actual_user, look it up so we have it for logging later
+            # Only do this if display verbosity is high enough that we'll need the value
+            # This saves overhead from calling into docker when we don't need to
+            result = self._call_client(play_context, lambda: self.client.inspect_container(play_context.remote_addr))
+            if result.get('Config'):
+                self.actual_user = result['Config'].get('User')
+
+    def exec_command(self, play_context, become, cmd, in_data=None, sudoable=False):
+        """ Run a command on the docker host """
+
+        command = [play_context.executable, '-c', cmd]
+
+        display.vvv(u"EXEC {0}".format(to_text(command)), host=play_context.remote_addr)
+
+        need_stdin = (in_data is not None) or (become and become.expect_prompt() and sudoable)
+
+        exec_data = self._call_client(play_context, lambda: self.client.exec_create(
+            play_context.remote_addr,
+            command,
+            stdout=True,
+            stderr=True,
+            stdin=need_stdin,
+            user=play_context.remote_user or '',
+            workdir=None,
+        ))
+        exec_id = exec_data['Id']
+
+        if need_stdin:
+            exec_socket = self._call_client(play_context, lambda: self.client.exec_start(
+                exec_id,
+                detach=False,
+                socket=True,
+            ))
+
+            # TODO: implement!
+
+            # docker_socket.frames_iter()
+
+            if become and become.expect_prompt() and sudoable:
+                ...
+
+            if in_data is not None:
+                ...
+
+        else:
+            stdout, stderr = self._call_client(play_context, lambda: self.client.exec_start(
+                exec_id,
+                detach=False,
+                stream=False,
+                socket=False,
+                demux=True,
+            ))
+
+        result = self._call_client(play_context, lambda: self.client.exec_inspect(exec_id))
+
+        return result.get('ExitCode') or 0, stdout or b'', stderr or b''
+
+    def put_file(self, play_context, in_path, out_path):
+        """ Transfer a file from local to docker container """
+
+        b_in_path = to_bytes(in_path, errors='surrogate_or_strict')
+
+        out_dir, out_file = os.path.split(out_path)
+
+        bio = io.BytesIO()
+        with tarfile.open(fileobj=bio, mode='w|') as tar:
+            tarinfo = tar.gettarinfo(in_path)
+            tarinfo.name = out_file
+            tarinfo.uid = 0
+            tarinfo.uname = ''
+            if self.actual_user:
+                tarinfo.uname = self.actual_user
+            tarinfo.gid = 0
+            tarinfo.gname = ''
+            tarinfo.mode &= 0o700
+            with open(b_in_path, 'rb') as f:
+                tar.addfile(tarinfo, fileobj=f)
+        data = bio.getvalue()
+
+        ok = self._call_client(play_context, lambda: self.client.put_archive(
+            play_context.remote_addr,
+            out_dir,
+            data,  # can also be file object for streaming; this is only clear from the
+                   # implementation of put_archive(), which uses requests's put().
+                   # See https://2.python-requests.org/en/master/user/advanced/#streaming-uploads
+        ), not_found_can_be_resource=True)
+        if not ok:
+            raise AnsibleError(
+                'Unknown error while creating file "{0}" in container "{1}".'.format(out_path, play_context.remote_addr)
+            )
+
+    def fetch_file(self, play_context, in_path, out_path):
+        """ Fetch a file from container to local. """
+
+        considered_in_paths = set()
+
+        while True:
+            if in_path in considered_in_paths:
+                raise AnsibleError('Found infinite symbolic link loop when trying to fetch "{0}"'.format(in_path))
+            considered_in_paths.add(in_path)
+
+            out_dir, out_file = os.path.split(out_path)
+
+            display.vvvv('FETCH: Fetching "{0}"'.format(in_path), host=play_context.remote_addr)
+            stream, stats = self._call_client(play_context, lambda: self.client.get_archive(
+                play_context.remote_addr,
+                in_path,
+            ), not_found_can_be_resource=True)
+
+            bio = io.BytesIO()
+            for chunk in stream:
+                bio.write(chunk)
+            bio.seek(0)
+
+            with tarfile.open(fileobj=bio, mode='r|') as tar:
+                symlink_member = None
+                first = True
+                for member in tar:
+                    if not first:
+                        raise AnsibleError('Received tarfile contains more than one file!')
+                    first = False
+                    if member.issym():
+                        symlink_member = member
+                        continue
+                    if not member.isfile():
+                        raise AnsibleError('Remote file "{0}" is not a regular file or a symbolic link'.format(in_path))
+                    member.name = out_file
+                    tar.extract(member, path=out_dir, set_attrs=False)
+                if first:
+                    raise AnsibleError('Received tarfile is empty!')
+                # If the only member was a file, it's already extracted. If it is a symlink, process it now.
+                if symlink_member is not None:
+                    in_path = os.path.join(os.path.split(in_path)[0], symlink_member.linkname)
+                    display.vvvv('FETCH: Following symbolic link to "{0}"'.format(in_path), host=play_context.remote_addr)
+                    continue
+                return
