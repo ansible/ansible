@@ -16,7 +16,7 @@ notes:
     - none
 description:
     - Creates, removes and lists tags for Amazon ECS resources.
-     - Resources are referenced by their cluster name.
+    - Resources are referenced by their cluster name.
 version_added: '2.10'
 author:
   - Lester Wade (@lwade)
