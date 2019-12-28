@@ -35,7 +35,7 @@ options:
     type: str
   resource_type:
     description:
-      - The type of resource
+      - The type of resource.
     default: cluster
     choices: ['cluster', 'task', 'service', 'task_definition', 'container']
     type: str
