@@ -26,7 +26,7 @@ requirements: [ boto3, botocore ]
 options:
   cluster_name:
     description:
-      - The name of the cluster who's resources we are tagging
+      - The name of the cluster who's resources we are tagging.
     required: true
     type: str
   resource:
