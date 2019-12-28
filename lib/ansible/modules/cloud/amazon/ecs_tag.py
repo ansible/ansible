@@ -31,7 +31,8 @@ options:
     type: str
   resource:
     description:
-      - The ecs resource name. Can be none only if resource_type is cluster.
+      - The ECS resource name.
+      - Required unless I(resource_type=cluster).
     type: str
   resource_type:
     description:
