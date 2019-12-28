@@ -15,7 +15,7 @@ short_description: create and remove tags on Amazon ECS resources
 notes:
     - none
 description:
-    - Creates, removes and lists tags for an ecs_cluster.
+    - Creates, removes and lists tags for Amazon ECS resources.
      - Resources are referenced by their cluster name.
 version_added: '2.10'
 author:
