@@ -275,7 +275,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port,
         cmd += " --host=%s --port=%i" % (shlex_quote(host), port)
     if all_databases:
         cmd += " --all-databases"
-    elif only_tables and len(db_name) == 1:
+    elif only_tables:
         cmd += " %s" % db_name[0]
     else:
         cmd += " --databases {0} --skip-lock-tables".format(' '.join(db_name))
