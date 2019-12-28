@@ -32,7 +32,6 @@ options:
   resource:
     description:
       - The ecs resource name. Can be none only if resource_type is cluster.
-    required: false
     type: str
   resource_type:
     description:
