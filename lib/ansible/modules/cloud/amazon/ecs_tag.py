@@ -41,7 +41,8 @@ options:
     type: str
   state:
     description:
-      - Whether the tags should be present or absent on the resource. Use list to interrogate the tags of a ecs resource.
+      - Whether the tags should be present or absent on the resource.
+      - Use C(list) to interrogate the tags of an ECS resource.
     default: present
     choices: ['present', 'absent', 'list']
     type: str
