@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
+import abc
 import os
 import platform
 import re
@@ -286,40 +287,9 @@ DOCKERPYUPGRADE_RECOMMEND_DOCKER = ("Use `pip install --upgrade docker-py` to up
                                     "`pip uninstall docker-py` instead, followed by `pip install docker`.")
 
 
-class AnsibleDockerClient(Client):
+class AnsibleDockerClientBase(Client):
 
-    def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
-                 required_together=None, required_if=None, min_docker_version=MIN_DOCKER_VERSION,
-                 min_docker_api_version=None, option_minimal_versions=None,
-                 option_minimal_versions_ignore_params=None, fail_results=None):
-
-        # Modules can put information in here which will always be returned
-        # in case client.fail() is called.
-        self.fail_results = fail_results or {}
-
-        merged_arg_spec = dict()
-        merged_arg_spec.update(DOCKER_COMMON_ARGS)
-        if argument_spec:
-            merged_arg_spec.update(argument_spec)
-            self.arg_spec = merged_arg_spec
-
-        mutually_exclusive_params = []
-        mutually_exclusive_params += DOCKER_MUTUALLY_EXCLUSIVE
-        if mutually_exclusive:
-            mutually_exclusive_params += mutually_exclusive
-
-        required_together_params = []
-        required_together_params += DOCKER_REQUIRED_TOGETHER
-        if required_together:
-            required_together_params += required_together
-
-        self.module = AnsibleModule(
-            argument_spec=merged_arg_spec,
-            supports_check_mode=supports_check_mode,
-            mutually_exclusive=mutually_exclusive_params,
-            required_together=required_together_params,
-            required_if=required_if)
-
+    def __init__(self, min_docker_version=MIN_DOCKER_VERSION, min_docker_api_version=None):
         NEEDS_DOCKER_PY2 = (LooseVersion(min_docker_version) >= LooseVersion('2.0.0'))
 
         self.docker_py_version = LooseVersion(docker_version)
@@ -353,12 +323,10 @@ class AnsibleDockerClient(Client):
                 msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
             self.fail(msg % (docker_version, platform.node(), sys.executable, min_docker_version))
 
-        self.debug = self.module.params.get('debug')
-        self.check_mode = self.module.check_mode
         self._connect_params = get_connect_params(self.auth_params, fail_function=self.fail)
 
         try:
-            super(AnsibleDockerClient, self).__init__(**self._connect_params)
+            super(AnsibleDockerClientBase, self).__init__(**self._connect_params)
             self.docker_api_version_str = self.version()['ApiVersion']
         except APIError as exc:
             self.fail("Docker API error: %s" % exc)
@@ -370,9 +338,6 @@ class AnsibleDockerClient(Client):
             if self.docker_api_version < LooseVersion(min_docker_api_version):
                 self.fail('Docker API version is %s. Minimum version required is %s.' % (self.docker_api_version_str, min_docker_api_version))
 
-        if option_minimal_versions is not None:
-            self._get_minimal_versions(option_minimal_versions, option_minimal_versions_ignore_params)
-
     def log(self, msg, pretty_print=False):
         pass
         # if self.debug:
@@ -383,9 +348,9 @@ class AnsibleDockerClient(Client):
         #     else:
         #         log_file.write(msg + u'\n')
 
+    @abc.abstractmethod
     def fail(self, msg, **kwargs):
-        self.fail_results.update(kwargs)
-        self.module.fail_json(msg=msg, **sanitize_result(self.fail_results))
+        pass
 
     @staticmethod
     def _get_value(param_name, param_value, env_variable, default_value):
@@ -416,24 +381,22 @@ class AnsibleDockerClient(Client):
         # take the default
         return default_value
 
+    @abc.abstractmethod
+    def _get_params(self):
+        pass
+
     @property
     def auth_params(self):
         # Get authentication credentials.
-        # Precedence: module parameters-> environment variables-> defaults.
+        # Precedence: parameters -> environment variables -> defaults.
 
         self.log('Getting credentials')
 
+        client_params = self._get_params()
+
         params = dict()
         for key in DOCKER_COMMON_ARGS:
-            params[key] = self.module.params.get(key)
-
-        if self.module.params.get('use_tls'):
-            # support use_tls option in docker_image.py. This will be deprecated.
-            use_tls = self.module.params.get('use_tls')
-            if use_tls == 'encrypt':
-                params['tls'] = True
-            if use_tls == 'verify':
-                params['validate_certs'] = True
+            params[key] = client_params.get(key)
 
         result = dict(
             docker_host=self._get_value('docker_host', params['docker_host'], 'DOCKER_HOST',
@@ -466,56 +429,6 @@ class AnsibleDockerClient(Client):
                       "setting the `tls` parameter to true."
                       % (self.auth_params['tls_hostname'], match.group(1), match.group(1)))
         self.fail("SSL Exception: %s" % (error))
-
-    def _get_minimal_versions(self, option_minimal_versions, ignore_params=None):
-        self.option_minimal_versions = dict()
-        for option in self.module.argument_spec:
-            if ignore_params is not None:
-                if option in ignore_params:
-                    continue
-            self.option_minimal_versions[option] = dict()
-        self.option_minimal_versions.update(option_minimal_versions)
-
-        for option, data in self.option_minimal_versions.items():
-            # Test whether option is supported, and store result
-            support_docker_py = True
-            support_docker_api = True
-            if 'docker_py_version' in data:
-                support_docker_py = self.docker_py_version >= LooseVersion(data['docker_py_version'])
-            if 'docker_api_version' in data:
-                support_docker_api = self.docker_api_version >= LooseVersion(data['docker_api_version'])
-            data['supported'] = support_docker_py and support_docker_api
-            # Fail if option is not supported but used
-            if not data['supported']:
-                # Test whether option is specified
-                if 'detect_usage' in data:
-                    used = data['detect_usage'](self)
-                else:
-                    used = self.module.params.get(option) is not None
-                    if used and 'default' in self.module.argument_spec[option]:
-                        used = self.module.params[option] != self.module.argument_spec[option]['default']
-                if used:
-                    # If the option is used, compose error message.
-                    if 'usage_msg' in data:
-                        usg = data['usage_msg']
-                    else:
-                        usg = 'set %s option' % (option, )
-                    if not support_docker_api:
-                        msg = 'Docker API version is %s. Minimum version required is %s to %s.'
-                        msg = msg % (self.docker_api_version_str, data['docker_api_version'], usg)
-                    elif not support_docker_py:
-                        msg = "Docker SDK for Python version is %s (%s's Python %s). Minimum version required is %s to %s. "
-                        if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
-                            msg += DOCKERPYUPGRADE_RECOMMEND_DOCKER
-                        elif self.docker_py_version < LooseVersion('2.0.0'):
-                            msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
-                        else:
-                            msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
-                        msg = msg % (docker_version, platform.node(), sys.executable, data['docker_py_version'], usg)
-                    else:
-                        # should not happen
-                        msg = 'Cannot %s with your configuration.' % (usg, )
-                    self.fail(msg)
 
     def get_container_by_id(self, container_id):
         try:
@@ -704,6 +617,133 @@ class AnsibleDockerClient(Client):
 
         return new_tag, old_tag == new_tag
 
+    def inspect_distribution(self, image, **kwargs):
+        '''
+        Get image digest by directly calling the Docker API when running Docker SDK < 4.0.0
+        since prior versions did not support accessing private repositories.
+        '''
+        if self.docker_py_version < LooseVersion('4.0.0'):
+            registry = auth.resolve_repository_name(image)[0]
+            header = auth.get_config_header(self, registry)
+            if header:
+                return self._result(self._get(
+                    self._url('/distribution/{0}/json', image),
+                    headers={'X-Registry-Auth': header}
+                ), json=True)
+        return super(AnsibleDockerClientBase, self).inspect_distribution(image, **kwargs)
+
+
+class AnsibleDockerClient(AnsibleDockerClientBase):
+
+    def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
+                 required_together=None, required_if=None, min_docker_version=MIN_DOCKER_VERSION,
+                 min_docker_api_version=None, option_minimal_versions=None,
+                 option_minimal_versions_ignore_params=None, fail_results=None):
+
+        # Modules can put information in here which will always be returned
+        # in case client.fail() is called.
+        self.fail_results = fail_results or {}
+
+        merged_arg_spec = dict()
+        merged_arg_spec.update(DOCKER_COMMON_ARGS)
+        if argument_spec:
+            merged_arg_spec.update(argument_spec)
+            self.arg_spec = merged_arg_spec
+
+        mutually_exclusive_params = []
+        mutually_exclusive_params += DOCKER_MUTUALLY_EXCLUSIVE
+        if mutually_exclusive:
+            mutually_exclusive_params += mutually_exclusive
+
+        required_together_params = []
+        required_together_params += DOCKER_REQUIRED_TOGETHER
+        if required_together:
+            required_together_params += required_together
+
+        self.module = AnsibleModule(
+            argument_spec=merged_arg_spec,
+            supports_check_mode=supports_check_mode,
+            mutually_exclusive=mutually_exclusive_params,
+            required_together=required_together_params,
+            required_if=required_if)
+
+        self.debug = self.module.params.get('debug')
+        self.check_mode = self.module.check_mode
+        self._connect_params = get_connect_params(self.auth_params, fail_function=self.fail)
+
+        use_tls = self.module.params.get('use_tls')
+        if use_tls:
+            # support use_tls option in docker_image.py. This will be deprecated.
+            if use_tls == 'encrypt':
+                self.module.params['tls'] = True
+            if use_tls == 'verify':
+                self.module.params['validate_certs'] = True
+
+        super(AnsibleDockerClient, self).__init__(
+            min_docker_version=min_docker_version,
+            min_docker_api_version=min_docker_api_version
+        )
+
+        if option_minimal_versions is not None:
+            self._get_minimal_versions(option_minimal_versions, option_minimal_versions_ignore_params)
+
+    def fail(self, msg, **kwargs):
+        self.fail_results.update(kwargs)
+        self.module.fail_json(msg=msg, **sanitize_result(self.fail_results))
+
+    def _get_params(self):
+        return self.module.params
+
+    def _get_minimal_versions(self, option_minimal_versions, ignore_params=None):
+        self.option_minimal_versions = dict()
+        for option in self.module.argument_spec:
+            if ignore_params is not None:
+                if option in ignore_params:
+                    continue
+            self.option_minimal_versions[option] = dict()
+        self.option_minimal_versions.update(option_minimal_versions)
+
+        for option, data in self.option_minimal_versions.items():
+            # Test whether option is supported, and store result
+            support_docker_py = True
+            support_docker_api = True
+            if 'docker_py_version' in data:
+                support_docker_py = self.docker_py_version >= LooseVersion(data['docker_py_version'])
+            if 'docker_api_version' in data:
+                support_docker_api = self.docker_api_version >= LooseVersion(data['docker_api_version'])
+            data['supported'] = support_docker_py and support_docker_api
+            # Fail if option is not supported but used
+            if not data['supported']:
+                # Test whether option is specified
+                if 'detect_usage' in data:
+                    used = data['detect_usage'](self)
+                else:
+                    used = self.module.params.get(option) is not None
+                    if used and 'default' in self.module.argument_spec[option]:
+                        used = self.module.params[option] != self.module.argument_spec[option]['default']
+                if used:
+                    # If the option is used, compose error message.
+                    if 'usage_msg' in data:
+                        usg = data['usage_msg']
+                    else:
+                        usg = 'set %s option' % (option, )
+                    if not support_docker_api:
+                        msg = 'Docker API version is %s. Minimum version required is %s to %s.'
+                        msg = msg % (self.docker_api_version_str, data['docker_api_version'], usg)
+                    elif not support_docker_py:
+                        msg = "Docker SDK for Python version is %s (%s's Python %s). Minimum version required is %s to %s. "
+                        if LooseVersion(data['docker_py_version']) < LooseVersion('2.0.0'):
+                            msg += DOCKERPYUPGRADE_RECOMMEND_DOCKER
+                        elif self.docker_py_version < LooseVersion('2.0.0'):
+                            msg += DOCKERPYUPGRADE_SWITCH_TO_DOCKER
+                        else:
+                            msg += DOCKERPYUPGRADE_UPGRADE_DOCKER
+                        msg = msg % (docker_version, platform.node(), sys.executable, data['docker_py_version'], usg)
+                    else:
+                        # should not happen
+                        msg = 'Cannot %s with your configuration.' % (usg, )
+                    self.fail(msg)
+
     def report_warnings(self, result, warnings_key=None):
         '''
         Checks result of client operation for warnings, and if present, outputs them.
@@ -728,21 +768,6 @@ class AnsibleDockerClient(Client):
                 self.module.warn('Docker warning: {0}'.format(warning))
         elif isinstance(result, string_types) and result:
             self.module.warn('Docker warning: {0}'.format(result))
-
-    def inspect_distribution(self, image, **kwargs):
-        '''
-        Get image digest by directly calling the Docker API when running Docker SDK < 4.0.0
-        since prior versions did not support accessing private repositories.
-        '''
-        if self.docker_py_version < LooseVersion('4.0.0'):
-            registry = auth.resolve_repository_name(image)[0]
-            header = auth.get_config_header(self, registry)
-            if header:
-                return self._result(self._get(
-                    self._url('/distribution/{0}/json', image),
-                    headers={'X-Registry-Auth': header}
-                ), json=True)
-        return super(AnsibleDockerClient, self).inspect_distribution(image, **kwargs)
 
 
 def compare_dict_allow_more_present(av, bv):
