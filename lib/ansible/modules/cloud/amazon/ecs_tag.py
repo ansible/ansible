@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: ecs_tag
-short_description: create and remove tags on ecs clusters.
+short_description: create and remove tags on Amazon ECS resources
 notes:
     - none
 description:
