@@ -72,7 +72,9 @@ options:
     version_added: "2.10"
   only_tables:
     description:
-      - dump only tabels of exactly one database, without use database inside the dump
+      - Dump only tabels of exactly one database, without use database inside the dump.
+      - Can be used only when I(state=dump).
+      - Mutually exclusive with ....
     required: false
     default: false
     type: bool
