@@ -22,22 +22,44 @@ DOCUMENTATION = """
     version_added: "2.0"
     options:
       remote_user:
+        type: str
         description:
             - The user to execute as inside the container
         vars:
             - name: ansible_user
             - name: ansible_docker_user
+      docker_command:
+        type: str
+        description:
+            - Docker CLI command to use instead of trying to find C(docker) in the path.
+            - Note that this is ignored by the Docker SDK for Python driver.
       docker_extra_args:
+        type: str
         description:
             - Extra arguments to pass to the docker command line
+            - Note that this is ignored by the Docker SDK for Python driver.
         default: ''
       remote_addr:
+        type: str
         description:
             - The name of the container you want to access.
         default: inventory_hostname
         vars:
             - name: ansible_host
             - name: ansible_docker_host
+      docker_driver:
+        type: str
+        description:
+            - Which internal driver to use to talk to the docker daemon.
+            - Allowed values are C(auto) for autodetection, C(cli) for using the C(docker) CLI program,
+              and C(docker-py) for using the Docker SDK for Python.
+            - C(auto) tries to decide which driver to use. If I(docker_command) or I(docker_extra_args)
+              are specified, the CLI driver will be used. Otherwise, it will check whether the Docker
+              SDK for Python is installed; if a new enough version (1.7.0 or higher) is there, it will
+              be used. Otherwise, it will check whether C(docker) can be found in the path. If it is
+              found with a new enough version (1.3 or higher), it will be used.
+        default: auto
+        choices: [auto, cli, docker-py]
 """
 
 import distutils.spawn
@@ -132,9 +154,13 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        driver = 'auto'
+        driver = kwargs.get('docker_driver') or 'auto'
+        orig_driver = driver
         if kwargs.get('docker_command') is not None or play_context.docker_extra_args:
-            driver = 'cli'
+            if driver == 'auto':
+                driver = 'cli'
+            elif driver == 'docker-py':
+                raise AnsibleError('docker_command or docker_extra_args must not be specified for docker-py driver')
 
         docker_cli_version = None
         if driver == 'auto':
@@ -142,17 +168,25 @@ class Connection(ConnectionBase):
             if docker_version is not None and LooseVersion(docker_version) >= LooseVersion(MIN_DOCKER_PY):
                 driver = 'docker-py'
 
-            # If that didn't work, detect 'docker' CLI command
+            # If that wasn't the case, detect 'docker' CLI command
             if driver == 'auto':
                 docker_cmd = distutils.spawn.find_executable('docker')
                 if docker_cmd:
                     docker_cli_version = get_docker_cli_version(docker_cmd, play_context)
                     if docker_cli_version == u'dev' or LooseVersion(docker_cli_version) >= LooseVersion(u'1.3'):
                         driver = 'cli'
+                        kwargs['docker_command'] = docker_cmd
 
             # If auto-detection failed, fail
             if driver == 'auto':
-                raise AnsibleError("Cannot find either Docker SDK for Python (>= {0}) or docker CLI command (>= 1.3)".format(MIN_DOCKER_PY))
+                raise AnsibleError(
+                    'Cannot find either Docker SDK for Python (>= {0}) or docker CLI command (>= 1.3)'.format(MIN_DOCKER_PY)
+                )
+
+        display.vvv(
+            'User asked for docker connection driver "{0}", and gets "{1}"'.format(orig_driver, driver),
+            host=self._play_context.remote_addr
+        )
 
         if driver == 'cli':
             self.driver = CLIDriver(self._display, play_context, docker_cli_version, kwargs)
