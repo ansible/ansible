@@ -1,0 +1,3 @@
+bugfixes:
+- "docker_network - fix idempotency for multiple IPAM configs of the same IP version (https://github.com/ansible/ansible/issues/65815)."
+- "docker_network - validate IPAM config subnet CIDR notation on module setup and not during idempotence checking."
