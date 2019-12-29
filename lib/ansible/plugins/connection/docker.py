@@ -78,7 +78,7 @@ import traceback
 from distutils.version import LooseVersion
 
 from ansible.compat import selectors
-from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
@@ -375,7 +375,7 @@ class CLIDriver:
                     events = selector.select(play_context.timeout)
                     if not events:
                         stdout, stderr = p.communicate()
-                        raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output))
+                        raise AnsibleConnectionFailure('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output))
 
                     for key, event in events:
                         if key.fileobj == p.stdout:
@@ -385,7 +385,7 @@ class CLIDriver:
 
                     if not chunk:
                         stdout, stderr = p.communicate()
-                        raise AnsibleError('privilege output closed while waiting for password prompt:\n' + to_native(become_output))
+                        raise AnsibleConnectionFailure('privilege output closed while waiting for password prompt:\n' + to_native(become_output))
                     become_output += chunk
             finally:
                 selector.close()
@@ -421,12 +421,12 @@ class CLIDriver:
                 p = subprocess.Popen(args, stdin=in_file,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             except OSError:
-                raise AnsibleError("docker connection requires dd command in the container to put files")
+                raise AnsibleConnectionFailure("docker connection requires dd command in the container to put files")
             stdout, stderr = p.communicate()
 
             if p.returncode != 0:
-                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" %
-                                   (to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
+                raise AnsibleConnectionFailure("failed to transfer file %s to %s:\n%s\n%s" %
+                                               (to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
 
     def fetch_file(self, play_context, in_path, out_path):
         """ Fetch a file from container to local. """
@@ -453,11 +453,11 @@ class CLIDriver:
                     p = subprocess.Popen(args, stdin=subprocess.PIPE,
                                          stdout=out_file, stderr=subprocess.PIPE)
                 except OSError:
-                    raise AnsibleError("docker connection requires dd command in the container to put files")
+                    raise AnsibleConnectionFailure("docker connection requires dd command in the container to put files")
                 stdout, stderr = p.communicate()
 
                 if p.returncode != 0:
-                    raise AnsibleError("failed to fetch file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                    raise AnsibleConnectionFailure("failed to fetch file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
 
         # Rename if needed
         if actual_out_path != out_path:
@@ -472,7 +472,7 @@ class AnsibleDockerClient(AnsibleDockerClientBase):
     def fail(self, msg, **kwargs):
         if kwargs:
             msg += '\nContext: ' + repr(kwargs)
-        raise AnsibleError(msg)
+        raise AnsibleConnectionFailure(msg)
 
     def _get_params(self):
         # TODO: use self.connection_plugin.get_option(...)
@@ -614,12 +614,12 @@ class DockerPyDriver:
             return callable()
         except NotFound as e:
             if not_found_can_be_resource:
-                raise AnsibleError('Could not find container "{1}" or resource in it ({0})'.format(e, play_context.remote_addr))
+                raise AnsibleConnectionFailure('Could not find container "{1}" or resource in it ({0})'.format(e, play_context.remote_addr))
             else:
-                raise AnsibleError('Could not find container "{1}" ({0})'.format(e, play_context.remote_addr))
+                raise AnsibleConnectionFailure('Could not find container "{1}" ({0})'.format(e, play_context.remote_addr))
         except APIError as e:
             if e.response and e.response.status_code == 409:
-                raise AnsibleError('The container "{1}" has been paused ({0})'.format(e, play_context.remote_addr))
+                raise AnsibleConnectionFailure('The container "{1}" has been paused ({0})'.format(e, play_context.remote_addr))
             self.client.fail(
                 'An unexpected docker error occurred for container "{1}": {0}'.format(e, play_context.remote_addr),
                 exception=traceback.format_exc()
@@ -707,10 +707,10 @@ class DockerPyDriver:
                         while not become.check_success(become_output[0]) and not become.check_password_prompt(become_output[0]):
                             if not exec_socket_handler.select(play_context.timeout):
                                 stdout, stderr = exec_socket_handler.consume()
-                                raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output[0]))
+                                raise AnsibleConnectionFailure('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output[0]))
 
                             if exec_socket_handler.is_eof():
-                                raise AnsibleError('privilege output closed while waiting for password prompt:\n' + to_native(become_output[0]))
+                                raise AnsibleConnectionFailure('privilege output closed while waiting for password prompt:\n' + to_native(become_output[0]))
 
                         if not become.check_success(become_output[0]):
                             become_pass = become.get_option('become_pass', playcontext=play_context)
@@ -750,7 +750,7 @@ class DockerPyDriver:
                     host=play_context.remote_addr
                 )
             except Exception as e:
-                raise AnsibleError(
+                raise AnsibleConnectionFailure(
                     'Error while determining user and group ID of current user in container "{1}": {0}'
                     .format(e, play_context.remote_addr)
                 )
@@ -785,7 +785,7 @@ class DockerPyDriver:
                    # See https://2.python-requests.org/en/master/user/advanced/#streaming-uploads
         ), not_found_can_be_resource=True)
         if not ok:
-            raise AnsibleError(
+            raise AnsibleConnectionFailure(
                 'Unknown error while creating file "{0}" in container "{1}".'
                 .format(out_path, play_context.remote_addr)
             )
@@ -797,7 +797,7 @@ class DockerPyDriver:
 
         while True:
             if in_path in considered_in_paths:
-                raise AnsibleError('Found infinite symbolic link loop when trying to fetch "{0}"'.format(in_path))
+                raise AnsibleConnectionFailure('Found infinite symbolic link loop when trying to fetch "{0}"'.format(in_path))
             considered_in_paths.add(in_path)
 
             out_dir, out_file = os.path.split(out_path)
@@ -820,17 +820,17 @@ class DockerPyDriver:
                 first = True
                 for member in tar:
                     if not first:
-                        raise AnsibleError('Received tarfile contains more than one file!')
+                        raise AnsibleConnectionFailure('Received tarfile contains more than one file!')
                     first = False
                     if member.issym():
                         symlink_member = member
                         continue
                     if not member.isfile():
-                        raise AnsibleError('Remote file "{0}" is not a regular file or a symbolic link'.format(in_path))
+                        raise AnsibleConnectionFailure('Remote file "{0}" is not a regular file or a symbolic link'.format(in_path))
                     member.name = out_file
                     tar.extract(member, path=out_dir, set_attrs=False)
                 if first:
-                    raise AnsibleError('Received tarfile is empty!')
+                    raise AnsibleConnectionFailure('Received tarfile is empty!')
                 # If the only member was a file, it's already extracted. If it is a symlink, process it now.
                 if symlink_member is not None:
                     in_path = os.path.join(os.path.split(in_path)[0], symlink_member.linkname)
