@@ -74,6 +74,21 @@ class TestOnyxBgpPeerGroupsModule(TestOnyxModule):
         commands = ['router bgp 1 neighbor group1 next-hop-peer']
         self.execute_module(changed=True, commands=commands)
 
+    def test_bgp_listen_range_peer_no_change(self):
+        set_module_args(dict(peer_groups=[dict(name='group1',
+                                               router_bgp=1,
+                                               listen_range_ip_prefix='1.1.2.3',
+                                               remote_as='3',
+                                               mask_length='24')]))
+        self.execute_module(changed=False)
+
+    def test_bgp_listen_range_peer_with_change(self):
+        set_module_args(dict(peer_groups=[dict(name='group1',
+                                               router_bgp=1,
+                                               next_hop_peer_enabled=True)]))
+        commands = ['router bgp 1 neighbor group1 next-hop-peer']
+        self.execute_module(changed=True, commands=commands)
+
     def test_bgp_delete_group_with_change(self):
         set_module_args(dict(peer_groups=[dict(name='group1',
                                                router_bgp=1,
@@ -84,6 +99,7 @@ class TestOnyxBgpPeerGroupsModule(TestOnyxModule):
     def test_bgp_delete_neighbor_with_change(self):
         set_module_args(dict(neighbors=[dict(group_name='group1',
                                              router_bgp=1,
-                                             ip_address='1.1.1.1')]))
+                                             ip_address='1.1.1.1',
+                                             state='absent')]))
         commands = ['no router bgp 1 neighbor 1.1.1.1 peer-group group1']
         self.execute_module(changed=True, commands=commands)
