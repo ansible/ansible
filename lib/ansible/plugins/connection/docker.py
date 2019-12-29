@@ -507,6 +507,8 @@ class DockerPyDriver:
 
         self.actual_user = play_context.remote_user
 
+        self.ids = dict()
+
         if self.actual_user is None and connection_display.verbosity > 2:
             # Since we're not setting the actual_user, look it up so we have it for logging later
             # Only do this if display verbosity is high enough that we'll need the value
@@ -575,6 +577,21 @@ class DockerPyDriver:
     def put_file(self, play_context, in_path, out_path):
         """ Transfer a file from local to docker container """
 
+        if self.actual_user not in self.ids:
+            dummy, ids, dummy = self.exec_command(play_context, None, b'id -u && id -g')
+            try:
+                user_id, group_id = ids.splitlines()
+                self.ids[self.actual_user] = int(user_id), int(group_id)
+                display.vvvv(
+                    'PUT: Determined uid={0} and gid={1} for user "{2}"'.format(user_id, group_id, self.actual_user),
+                    host=play_context.remote_addr
+                )
+            except Exception as e:
+                raise AnsibleError(
+                    'Error while determining user and group ID of current user in container "{1}": {0}'
+                    .format(e, play_context.remote_addr)
+                )
+
         b_in_path = to_bytes(in_path, errors='surrogate_or_strict')
 
         out_dir, out_file = os.path.split(out_path)
@@ -583,11 +600,12 @@ class DockerPyDriver:
         with tarfile.open(fileobj=bio, mode='w|') as tar:
             tarinfo = tar.gettarinfo(in_path)
             tarinfo.name = out_file
-            tarinfo.uid = 0
+            user_id, group_id = self.ids[self.actual_user]
+            tarinfo.uid = user_id
             tarinfo.uname = ''
             if self.actual_user:
                 tarinfo.uname = self.actual_user
-            tarinfo.gid = 0
+            tarinfo.gid = group_id
             tarinfo.gname = ''
             tarinfo.mode &= 0o700
             with open(b_in_path, 'rb') as f:
@@ -603,7 +621,8 @@ class DockerPyDriver:
         ), not_found_can_be_resource=True)
         if not ok:
             raise AnsibleError(
-                'Unknown error while creating file "{0}" in container "{1}".'.format(out_path, play_context.remote_addr)
+                'Unknown error while creating file "{0}" in container "{1}".'
+                .format(out_path, play_context.remote_addr)
             )
 
     def fetch_file(self, play_context, in_path, out_path):
