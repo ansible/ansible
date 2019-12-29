@@ -172,7 +172,7 @@ class ActionModule(ActionBase):
         # Handle docker connection options
         if self._remote_transport == 'docker':
             self._docker_cmd = self._connection.docker_cmd
-            if self._play_context.docker_extra_args:
+            if self._docker_cmd is not None and self._play_context.docker_extra_args:
                 self._docker_cmd = "%s %s" % (self._docker_cmd, self._play_context.docker_extra_args)
 
         # self._connection accounts for delegate_to so
@@ -405,6 +405,13 @@ class ActionModule(ActionBase):
                 _tmp_args['rsync_opts'].append('--blocking-io')
 
             if self._remote_transport in ['docker']:
+                if self._docker_cmd:
+                    result['failed'] = True
+                    result['msg'] = (
+                        "synchronize uses rsync to function. rsync needs to connect to the remote "
+                        "host (container) via docker client. This container is being accessed via "
+                        "Docker SDK for Python instead so it cannot work.")
+                    return result
                 if become and self._play_context.become_user:
                     _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, self._play_context.become_user))
                 elif user is not None:
