@@ -1107,6 +1107,7 @@ import re
 import shlex
 import traceback
 from distutils.version import LooseVersion
+from time import sleep
 
 from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils.docker.common import (
@@ -2002,6 +2003,12 @@ class Container(DockerBaseClass):
         return True if self.container else False
 
     @property
+    def removing(self):
+        if self.container and self.container.get('State'):
+            return self.container['State'].get('Status') == 'removing'
+        return False
+
+    @property
     def running(self):
         if self.container and self.container.get('State'):
             if self.container['State'].get('Running') and not self.container['State'].get('Ghost', False):
@@ -2603,6 +2610,31 @@ class ContainerManager(DockerBaseClass):
             self.results['ansible_facts'] = {'docker_container': self.facts}
             self.results['container'] = self.facts
 
+    def wait_for_state(self, container_id, complete_states=None, wait_states=None, accept_removal=False):
+        delay = 1.0
+        while True:
+            # Inspect container
+            result = self.client.get_container_by_id(container_id)
+            if result is None:
+                if accept_removal:
+                    return
+                msg = 'Encontered vanished container while waiting for container {0}'
+                self.fail(msg.format(container_id))
+            # Check container state
+            state = result.get('State', {}).get('Status')
+            if complete_states is not None and state in complete_states:
+                return
+            if wait_states is not None and state not in wait_states:
+                msg = 'Encontered unexpected state "{1}" while waiting for container {0}'
+                self.fail(msg.format(container_id, state))
+            # Wait
+            sleep(delay)
+            # Exponential backoff, but never wait longer than 10 seconds
+            # (1.1**24 < 10, 1.1**25 > 10, so it will take 25 iterations
+            #  until the maximal 10 seconds delay is reached. By then, the
+            #  code will have slept for ~1.5 minutes.)
+            delay = min(delay * 1.1, 10)
+
     def present(self, state):
         container = self._get_container(self.parameters.name)
         was_running = container.running
@@ -2616,12 +2648,18 @@ class ContainerManager(DockerBaseClass):
         # image ID.
         image = self._get_image()
         self.log(image, pretty_print=True)
-        if not container.exists:
+        if not container.exists or container.removing:
             # New container
-            self.log('No container found')
+            if container.removing:
+                self.log('Found container in removal phase')
+            else:
+                self.log('No container found')
             if not self.parameters.image:
                 self.fail('Cannot create container when image is not specified!')
             self.diff_tracker.add('exists', parameter=True, active=False)
+            if container.removing:
+                # Wait for container to be removed before trying to create it
+                self.wait_for_state(container.Id, wait_states=['removing'], accept_removal=True)
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
@@ -2647,6 +2685,7 @@ class ContainerManager(DockerBaseClass):
                 if container.running:
                     self.container_stop(container.Id)
                 self.container_remove(container.Id)
+                self.wait_for_state(container.Id, wait_states=['removing'], accept_removal=True)
                 new_container = self.container_create(image_to_use, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
