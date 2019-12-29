@@ -209,12 +209,12 @@ options:
         type: float
       memory:
         description:
-          - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
+          - "Service memory limit in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
-          - C(0) equals no reservation.
+          - C(0) equals no limit.
           - Omitting the unit defaults to bytes.
-          - Corresponds to the C(--reserve-memory) option of C(docker service create).
+          - Corresponds to the C(--limit-memory) option of C(docker service create).
         type: str
     type: dict
     version_added: "2.8"
