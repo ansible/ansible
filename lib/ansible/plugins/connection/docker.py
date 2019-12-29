@@ -459,8 +459,7 @@ class AnsibleDockerClient(AnsibleDockerClientBase):
 
     def fail(self, msg, **kwargs):
         if kwargs:
-            import json
-            msg += '\nContext: ' + json.dumps(kwargs)
+            msg += '\nContext: ' + repr(kwargs)
         raise AnsibleError(msg)
 
     def _get_params(self):
@@ -519,9 +518,16 @@ class DockerPyDriver:
     def exec_command(self, play_context, become, cmd, in_data=None, sudoable=False):
         """ Run a command on the docker host """
 
-        command = [play_context.executable, '-c', cmd]
+        command = [play_context.executable, '-c', to_text(cmd)]
 
-        display.vvv(u"EXEC {0}".format(to_text(command)), host=play_context.remote_addr)
+        display.vvv(
+            u"EXEC {0}{1}{2}".format(
+                to_text(command),
+                ', with stdin ({0} bytes)'.format(len(in_data)) if in_data is not None else '',
+                ', with become prompt' if become and become.expect_prompt() and sudoable else '',
+            ),
+            host=play_context.remote_addr
+        )
 
         need_stdin = (in_data is not None) or (become and become.expect_prompt() and sudoable)
 
