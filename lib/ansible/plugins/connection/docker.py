@@ -60,6 +60,9 @@ DOCUMENTATION = """
               found with a new enough version (1.3 or higher), it will be used.
         default: auto
         choices: [auto, cli, docker-py]
+        vars:
+            - name: docker_driver
+        version_added: '2.10'
 """
 
 import distutils.spawn
@@ -153,50 +156,58 @@ class Connection(ConnectionBase):
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
+        self.kwargs = kwargs
 
-        driver = kwargs.get('docker_driver') or 'auto'
-        orig_driver = driver
-        if kwargs.get('docker_command') is not None or play_context.docker_extra_args:
-            if driver == 'auto':
-                driver = 'cli'
-            elif driver == 'docker-py':
-                raise AnsibleError('docker_command or docker_extra_args must not be specified for docker-py driver')
-
-        docker_cli_version = None
-        if driver == 'auto':
-            # If a new enough Docker SDK for Python is around, use it
-            if docker_version is not None and LooseVersion(docker_version) >= LooseVersion(MIN_DOCKER_PY):
-                driver = 'docker-py'
-
-            # If that wasn't the case, detect 'docker' CLI command
-            if driver == 'auto':
-                docker_cmd = distutils.spawn.find_executable('docker')
-                if docker_cmd:
-                    docker_cli_version = get_docker_cli_version(docker_cmd, play_context)
-                    if docker_cli_version == u'dev' or LooseVersion(docker_cli_version) >= LooseVersion(u'1.3'):
-                        driver = 'cli'
-                        kwargs['docker_command'] = docker_cmd
-
-            # If auto-detection failed, fail
-            if driver == 'auto':
-                raise AnsibleError(
-                    'Cannot find either Docker SDK for Python (>= {0}) or docker CLI command (>= 1.3)'.format(MIN_DOCKER_PY)
-                )
-
-        display.vvv(
-            'User asked for docker connection driver "{0}", and gets "{1}"'.format(orig_driver, driver),
-            host=self._play_context.remote_addr
-        )
-
-        if driver == 'cli':
-            self.driver = CLIDriver(self._display, play_context, docker_cli_version, kwargs)
-        if driver == 'docker-py':
-            self.driver = DockerPyDriver(self._display, play_context, kwargs)
+        self.driver = None
+        self.docker_cmd = None
 
     def _connect(self, port=None):
         """ Connect to the container. Nothing to do """
         super(Connection, self)._connect()
         if not self._connected:
+            # Driver selection
+            orig_driver = driver = self.get_option('docker_driver')
+            if self.kwargs.get('docker_command') is not None or self._play_context.docker_extra_args:
+                if driver == 'auto':
+                    driver = 'cli'
+                elif driver == 'docker-py':
+                    raise AnsibleError('docker_command or docker_extra_args must not be specified for docker-py driver')
+
+            docker_cli_version = None
+            if driver == 'auto':
+                # If a new enough Docker SDK for Python is around, use it
+                if docker_version is not None and LooseVersion(docker_version) >= LooseVersion(MIN_DOCKER_PY):
+                    driver = 'docker-py'
+
+                # If that wasn't the case, detect 'docker' CLI command
+                if driver == 'auto':
+                    docker_cmd = distutils.spawn.find_executable('docker')
+                    if docker_cmd:
+                        docker_cli_version = get_docker_cli_version(docker_cmd, self._play_context)
+                        if docker_cli_version == u'dev' or LooseVersion(docker_cli_version) >= LooseVersion(u'1.3'):
+                            driver = 'cli'
+                            self.kwargs['docker_command'] = docker_cmd
+
+                # If auto-detection failed, fail
+                if driver == 'auto':
+                    raise AnsibleError(
+                        'Cannot find either Docker SDK for Python (>= {0}) or docker CLI command (>= 1.3)'.format(MIN_DOCKER_PY)
+                    )
+
+            display.vvv(
+                'User asked for docker connection driver "{0}", and gets "{1}"'.format(orig_driver, driver),
+                host=self._play_context.remote_addr
+            )
+
+            # Instantiate driver
+            self.docker_cmd = None
+            if driver == 'cli':
+                self.driver = CLIDriver(self._display, self._play_context, docker_cli_version, self.kwargs)
+                self.docker_cmd = self.driver.docker_cmd
+            if driver == 'docker-py':
+                self.driver = DockerPyDriver(self._display, self._play_context, self)
+
+            # Log result
             display.vvv(u"ESTABLISH DOCKER CONNECTION FOR USER: {0}".format(
                 self.driver.actual_user or u'?'), host=self._play_context.remote_addr
             )
@@ -453,8 +464,8 @@ class CLIDriver:
 
 
 class AnsibleDockerClient(AnsibleDockerClientBase):
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, connection_plugin):
+        self.connection_plugin = connection_plugin
         super(AnsibleDockerClient, self).__init__(min_docker_version=MIN_DOCKER_PY, min_docker_api_version=MIN_DOCKER_API)
 
     def fail(self, msg, **kwargs):
@@ -463,7 +474,8 @@ class AnsibleDockerClient(AnsibleDockerClientBase):
         raise AnsibleError(msg)
 
     def _get_params(self):
-        return self.args
+        # TODO: use self.connection_plugin.get_option(...)
+        return {}
 
 
 class DockerPyDriver:
@@ -493,7 +505,7 @@ class DockerPyDriver:
                 exception=traceback.format_exc()
             )
 
-    def __init__(self, connection_display, play_context, kwargs):
+    def __init__(self, connection_display, play_context, connection_plugin):
         # Note: docker supports running as non-root in some configurations.
         # (For instance, setting the UNIX socket file to be readable and
         # writable by a specific UNIX group and then putting users into that
@@ -503,7 +515,7 @@ class DockerPyDriver:
         # configured to be connected to by root and they are not running as
         # root.
 
-        self.client = AnsibleDockerClient(kwargs)
+        self.client = AnsibleDockerClient(connection_plugin)
 
         self.actual_user = play_context.remote_user
 
