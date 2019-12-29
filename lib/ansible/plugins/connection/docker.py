@@ -93,6 +93,7 @@ try:
     from ansible.module_utils.docker.common import docker_version
     from docker.errors import DockerException, APIError, NotFound
     from docker.utils import socket as docker_socket
+    import struct
 except Exception:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     docker_version = None
@@ -478,6 +479,135 @@ class AnsibleDockerClient(AnsibleDockerClientBase):
         return {}
 
 
+class DockerSocketHandler:
+    def __init__(self, sock):
+        # Unfortunately necessary; see https://github.com/docker/docker-py/issues/983#issuecomment-492513718
+        sock._writing = True
+        sock._sock.setblocking(0)
+
+        self._sock = sock
+        self._block_done_callback = None
+        self._block_buffer = []
+        self._eof = False
+        self._read_buffer = b''
+        self._write_buffer = b''
+        self._are_done_writing = False
+
+        self._current_stream = None
+        self._current_missing = 0
+        self._current_buffer = b''
+
+        self._selector = selectors.DefaultSelector()
+        self._selector.register(self._sock, selectors.EVENT_READ | selectors.EVENT_WRITE)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, tb):
+        self._selector.close()
+
+    def set_block_done_callback(self, block_done_callback):
+        self._block_done_callback = block_done_callback
+        if self._block_done_callback is not None:
+            while self._block_buffer:
+                elt = self._block_buffer.remove(0)
+                self._block_done_callback(*elt)
+
+    def _add_block(self, stream_id, data):
+        if self._block_done_callback is not None:
+            self._block_done_callback(stream_id, data)
+        else:
+            self._block_buffer.append((stream_id, data))
+
+    def _read(self):
+        if self._eof:
+            return
+        data = self._sock.read()
+        if data is None:
+            # no data available
+            return
+        display.vvv('read {0} bytes'.format(len(data)))
+        if len(data) == 0:
+            # Stream EOF
+            self._eof = True
+            return
+        self._read_buffer += data
+        while len(self._read_buffer) > 0:
+            if self._current_missing > 0:
+                n = min(len(self._read_buffer), self._current_missing)
+                self._current_buffer += self._read_buffer[:n]
+                self._read_buffer = self._read_buffer[n:]
+                self._current_missing -= n
+                if self._current_missing == 0:
+                    self._add_block(self._current_stream, self._current_buffer)
+                    self._current_buffer = b''
+            if len(self._read_buffer) < 8:
+                break
+            self._current_stream, self._current_missing = struct.unpack('>BxxxL', self._read_buffer[:8])
+            self._read_buffer = self._read_buffer[8:]
+            if self._current_missing < 0:
+                # Stream EOF (as reported by docker daemon)
+                self._eof = True
+                break
+
+    def _done_writing(self):
+        display.vvvv('Done writing')
+        self._selector.unregister(self._sock)
+        self._selector.register(self._sock, selectors.EVENT_READ)
+        self._read()
+
+    def _write(self):
+        if len(self._write_buffer) > 0:
+            written = self._sock.write(self._write_buffer)
+            self._write_buffer = self._write_buffer[written:]
+            display.vvv('wrote {0} bytes, {1} are left'.format(written, len(self._write_buffer)))
+        if len(self._write_buffer) == 0:
+            self._sock.flush()
+            if self._are_done_writing:
+                self._done_writing()
+
+    def select(self, timeout=None):
+        events = self._selector.select(timeout)
+        for key, event in events:
+            if key.fileobj == self._sock:
+                display.vvvv('{0} read:{1} write:{2}'.format(event, event & selectors.EVENT_READ != 0, event & selectors.EVENT_WRITE != 0))
+                if event & selectors.EVENT_READ != 0:
+                    self._read()
+                if event & selectors.EVENT_WRITE != 0:
+                    self._write()
+        return len(events) > 0
+
+    def is_eof(self):
+        return self._eof
+
+    def consume(self):
+        stdout = []
+        stderr = []
+
+        def append_block(stream_id, data):
+            if stream_id == docker_socket.STDOUT:
+                stdout.append(data)
+            elif stream_id == docker_socket.STDERR:
+                stderr.append(data)
+            else:
+                raise ValueError('{0} is not a valid stream ID'.format(stream_id))
+
+        self.set_block_done_callback(append_block)
+        while not self._eof:
+            self.select()
+        return b''.join(stdout), b''.join(stderr)
+
+    def write(self, str):
+        self._write_buffer += str
+        if len(self._write_buffer) == len(str):
+            self._write()
+
+    def done_writing(self):
+        self._are_done_writing = True
+        if len(self._write_buffer) == 0:
+            self._done_writing()
+
+
 class DockerPyDriver:
     def _call_client(self, play_context, callable, not_found_can_be_resource=False):
         try:
@@ -534,16 +664,18 @@ class DockerPyDriver:
 
         command = [play_context.executable, '-c', to_text(cmd)]
 
+        do_become = become and become.expect_prompt() and sudoable
+
         display.vvv(
             u"EXEC {0}{1}{2}".format(
                 to_text(command),
                 ', with stdin ({0} bytes)'.format(len(in_data)) if in_data is not None else '',
-                ', with become prompt' if become and become.expect_prompt() and sudoable else '',
+                ', with become prompt' if do_become else '',
             ),
             host=play_context.remote_addr
         )
 
-        need_stdin = (in_data is not None) or (become and become.expect_prompt() and sudoable)
+        need_stdin = True if (in_data is not None) or do_become else False
 
         exec_data = self._call_client(play_context, lambda: self.client.exec_create(
             play_context.remote_addr,
@@ -562,17 +694,36 @@ class DockerPyDriver:
                 detach=False,
                 socket=True,
             ))
+            try:
+                with DockerSocketHandler(exec_socket) as exec_socket_handler:
+                    if do_become:
+                        become_output = [b'']
 
-            # TODO: implement!
+                        def append_become_output(stream_id, data):
+                            become_output[0] += data
 
-            # docker_socket.frames_iter()
+                        exec_socket_handler.set_block_done_callback(append_become_output)
 
-            if become and become.expect_prompt() and sudoable:
-                ...
+                        while not become.check_success(become_output[0]) and not become.check_password_prompt(become_output[0]):
+                            if not exec_socket_handler.select(play_context.timeout):
+                                stdout, stderr = exec_socket_handler.consume()
+                                raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output[0]))
 
-            if in_data is not None:
-                ...
+                            if exec_socket_handler.is_eof():
+                                raise AnsibleError('privilege output closed while waiting for password prompt:\n' + to_native(become_output[0]))
 
+                        if not become.check_success(become_output[0]):
+                            become_pass = become.get_option('become_pass', playcontext=play_context)
+                            exec_socket_handler.write(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
+
+                    if in_data is not None:
+                        exec_socket_handler.write(in_data)
+
+                    exec_socket_handler.done_writing()
+
+                    stdout, stderr = exec_socket_handler.consume()
+            finally:
+                exec_socket.close()
         else:
             stdout, stderr = self._call_client(play_context, lambda: self.client.exec_start(
                 exec_id,
@@ -607,6 +758,8 @@ class DockerPyDriver:
         b_in_path = to_bytes(in_path, errors='surrogate_or_strict')
 
         out_dir, out_file = os.path.split(out_path)
+
+        # TODO: stream tar file, instead of creating it in-memory into a BytesIO
 
         bio = io.BytesIO()
         with tarfile.open(fileobj=bio, mode='w|') as tar:
@@ -654,6 +807,8 @@ class DockerPyDriver:
                 play_context.remote_addr,
                 in_path,
             ), not_found_can_be_resource=True)
+
+            # TODO: stream tar file instead of downloading it into a BytesIO
 
             bio = io.BytesIO()
             for chunk in stream:
