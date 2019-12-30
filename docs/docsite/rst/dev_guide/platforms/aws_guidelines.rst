@@ -649,7 +649,7 @@ for every call, it's preferable to use :ref:`module_defaults <module_defaults>`.
        group/aws:
          aws_access_key: "{{ aws_access_key }}"
          aws_secret_key: "{{ aws_secret_key }}"
-         security_token: "{{ security_token }}"
+         security_token: "{{ security_token | default(omit) }}"
          region: "{{ aws_region }}"
 
      block:
