@@ -60,6 +60,11 @@ options:
   parameters:
     description:
       - Custom site Parameters from string where properties are separated by a pipe and property name/values by colon Ex. "foo:1|bar:2"
+      - IIS Custom Parameters:
+          - logfile.directory - Physical Path to store Logs (ex: D:\IIS-LOGs\)
+          - logfile.period - Log File Rollover Schedule accepting these values: Hourly | Dialy | Weekly | Montly. How frequently the log file should be rolled-over.
+          - logfile.LogFormat - Log File format, by default IIS uses w3C
+          - logFile.truncateSize -  the size at which the log file contents will be truncated expressed in bytes (20971520 bytes = 20 megabytes)
     type: str
 seealso:
 - module: win_iis_virtualdirectory
@@ -91,6 +96,23 @@ EXAMPLES = r'''
   win_iis_website:
     name: "Default Web Site"
     state: absent
+
+# Create a WebSite with custom Logging configuration (Logs Location, Format and Rolling Over).
+
+- name: Creating WebSite with Custom Log location, Format 3WC and rolling over every hour.
+      win_iis_website:
+       name: "MyCustom_Web_Shop_Site"
+       state: started
+       port: 80
+       ip: '*'
+       hostname: '*'
+       physical_path: D:\wwwroot\websites\my-shop-site
+       parameters: logfile.directory:D:\IIS-LOGS\websites\my-shop-site|logfile.period:Hourly|logFile.logFormat:W3C
+       application_pool: my-shop-site
+      register: dsc_state_is
+    - debug: var=dsc_state_is
+
+
 
 # Some commandline examples:
 
