@@ -389,6 +389,7 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
                 update_tags, newtags = self.update_tags(old_response.get('tags', dict()))
                 if update_tags:
                     self.tags = newtags
+                    self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the SQL Database instance")
