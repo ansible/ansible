@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix bandwidth calculation in nxos_ospf_vrf for Python 3 (https://github.com/ansible/ansible/pull/66095)
