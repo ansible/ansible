@@ -1,5 +1,4 @@
 #!/usr/bin/python
-<<<<<<< HEAD
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2019, Michael Pechner <mikey@mikey.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -20,8 +19,6 @@ description:
     - Resources are referenced by their cluster name.
 version_added: '2.10'
 author:
-  - Lester Wade (@lwade)
-  - Paul Arthur (@flowerysong)
   - Michael Pechner (@mpechner)
 requirements: [ boto3, botocore ]
 options:
@@ -67,76 +64,6 @@ extends_documentation_fragment:
 EXAMPLES = r'''
 - name: Ensure tags are present on a resource
   ecs_tag:
-=======
-# Copyright: Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
-
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['stableinterface'],
-                    'supported_by': 'community'}
-
-
-DOCUMENTATION = '''
----
-module: ecs_cluster_tag
-short_description: create and remove tags on ecs clusters.
-description:
-    - Creates, removes and lists tags for an ecs_cluster.  The resource is referenced by its cluster name.
-      It is designed to be used with complex args (tags), see the examples.
-version_added: "2.8"
-requirements: [ "boto3", "botocore" ]
-options:
-  cluster_name:
-    description:
-      - The name of the cluster who's resources we are tagging
-    required: true
-  resource:
-    description:
-      - The ecs resource name. Can be none only if resource_type is cluster.
-    required: false
-  resource_type:
-    description:
-      - The type of resource
-      default: cluster
-      choices: ['cluster', 'task', 'service', task_definition', 'container']
-  state:
-    description:
-      - Whether the tags should be present or absent on the resource. Use 
-        list to interrogate the tags of a ecs resource.
-    default: present
-    choices: ['present', 'absent', 'list']
-  tags:
-    description:
-      - A dictionary of tags to add or remove from the resource.
-      - If the value provided for a tag is null and C(state) is I(absent), the 
-        tag will be removed regardless of its current value.
-    required: true
-  purge_tags:
-    description:
-      - Whether unspecified tags should be removed from the resource.
-      - "Note that when combined with C(state: absent), specified tags with non-matching values are not purged."
-    type: bool
-    default: no
-    version_added: '2.8'
-
-author:
-  - Lester Wade (@lwade)
-  - Paul Arthur (@flowerysong)
-  - Michael Pechner (@mpechner)
-extends_documentation_fragment:
-    - aws
-    - ecs
-'''
-
-EXAMPLES = '''
-- name: Ensure tags are present on a resource
-  ecs_cluster_tag:
-    region: eu-west-1
->>>>>>> Wrapper around boto3 ecs tag_resource() and untag_resource()
     cluster_name: mycluster
     resource_type: cluster
     state: present
@@ -145,7 +72,6 @@ EXAMPLES = '''
       env: prod
 
 - name: Retrieve all tags on a cluster
-<<<<<<< HEAD
   ecs_tag:
     cluster_name: mycluster
     resource: http_task
@@ -154,19 +80,6 @@ EXAMPLES = '''
 
 - name: Remove the Env tag
   ecs_tag:
-=======
-  ecs_cluster_tag:
-    region: eu-west-1
-    cluster_name: mycluster
-    resource: http_task
-    resource_type: task 
-    state: list
-  register: ecs_cluster_tags
-
-- name: Remove the Env tag
-  ecs_cluster_tag:
-    region: eu-west-1
->>>>>>> Wrapper around boto3 ecs tag_resource() and untag_resource()
     cluster_name: mycluster
     resource_type: cluster
     tags:
@@ -174,12 +87,7 @@ EXAMPLES = '''
     state: absent
 
 - name: Remove the Env tag if it's currently 'development'
-<<<<<<< HEAD
   ecs_tag:
-=======
-  ecs_cluster_tag:
-    region: eu-west-1
->>>>>>> Wrapper around boto3 ecs tag_resource() and untag_resource()
     cluster_name: mycluster
     resource_type: cluster
     tags:
@@ -187,29 +95,16 @@ EXAMPLES = '''
     state: absent
 
 - name: Remove all tags except for Name from a cluster
-<<<<<<< HEAD
   ecs_tag:
     cluster_name: mycluster
     resource_type: cluster:27
     tags:
         Name: foo
-=======
-  ecs_cluster_tag:
-    region: eu-west-1
-    cluster_name: mycluster
-    resource_type: cluster
-    tags:
-        Name: ''
->>>>>>> Wrapper around boto3 ecs tag_resource() and untag_resource()
     state: absent
     purge_tags: true
 '''
 
-<<<<<<< HEAD
 RETURN = r'''
-=======
-RETURN = '''
->>>>>>> Wrapper around boto3 ecs tag_resource() and untag_resource()
 tags:
   description: A dict containing the tags on the resource
   returned: always
@@ -229,14 +124,9 @@ from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dic
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
-<<<<<<< HEAD
 except ImportError:
     pass    # Handled by AnsibleAWSModule
 __metaclass__ = type
-=======
-except Exception:
-    pass    # Handled by AnsibleAWSModule
->>>>>>> Wrapper around boto3 ecs tag_resource() and untag_resource()
 
 
 def get_tags(ecs, module, resource):
@@ -254,10 +144,6 @@ def main():
         purge_tags=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent', 'list']),
         resource_type=dict(default='cluster', choices=['cluster', 'task', 'service', 'task_definition', 'container'])
-<<<<<<< HEAD
-
-=======
->>>>>>> Wrapper around boto3 ecs tag_resource() and untag_resource()
     )
     required_if = [('state', 'present', ['tags']), ('state', 'absent', ['tags'])]
 
@@ -327,11 +213,7 @@ def main():
         result['removed_tags'] = remove_tags
         if not module.check_mode:
             try:
-<<<<<<< HEAD
                 ecs.untag_resource(resourceArn=resource_arn, tagKeys=list(remove_tags.keys()))
-=======
-                ecs.untag_resource(resourceArn=resource_arn, tagKeys=remove_tags.keys())
->>>>>>> Wrapper around boto3 ecs tag_resource() and untag_resource()
             except (BotoCoreError, ClientError) as e:
                 module.fail_json_aws(e, msg='Failed to remove tags {0} from resource {1}'.format(remove_tags, resource))
 
