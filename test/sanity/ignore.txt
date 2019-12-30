@@ -1737,7 +1737,6 @@ lib/ansible/modules/database/mongodb/mongodb_user.py validate-modules:parameter-
 lib/ansible/modules/database/mongodb/mongodb_user.py validate-modules:undocumented-parameter
 lib/ansible/modules/database/mssql/mssql_db.py validate-modules:doc-missing-type
 lib/ansible/modules/database/mssql/mssql_db.py validate-modules:doc-required-mismatch
-lib/ansible/modules/database/mysql/mysql_db.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/database/mysql/mysql_db.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/database/mysql/mysql_user.py validate-modules:undocumented-parameter
 lib/ansible/modules/database/mysql/mysql_variables.py validate-modules:doc-required-mismatch
