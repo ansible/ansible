@@ -73,6 +73,12 @@ To access the configuration settings in your plugin, use ``self.get_option(<opti
 
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must include well-formed doc strings to be considered for merge into the Ansible repo. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
+Plugins also support 2 additional options not documented in the `options` section in modules.
+ - env - Used for defining an environment variable the plugin should also look at to find the needed value
+ - ini - Used for defining a section and key in the `ansible.cfg` that the value is stored
+
+By defining either the env, ini, or both, the plugin will check those places in addition to the YAML file where the plugin is called.
+
 Developing particular plugin types
 ==================================
 
