@@ -28,11 +28,11 @@ DOCUMENTATION = """
         vars:
             - name: ansible_user
             - name: ansible_docker_user
-      docker_command:
-        type: str
-        description:
-            - Docker CLI command to use instead of trying to find C(docker) in the path.
-            - Note that this is ignored by the Docker SDK for Python driver.
+      #docker_command:
+      #  type: str
+      #  description:
+      #      - Docker CLI command to use instead of trying to find C(docker) in the path.
+      #      - Note that this is ignored by the Docker SDK for Python driver.
       docker_extra_args:
         type: str
         description:
@@ -53,8 +53,8 @@ DOCUMENTATION = """
             - Which internal driver to use to talk to the docker daemon.
             - Allowed values are C(auto) for autodetection, C(cli) for using the C(docker) CLI program,
               and C(docker-py) for using the Docker SDK for Python.
-            - C(auto) tries to decide which driver to use. If I(docker_command) or I(docker_extra_args)
-              are specified, the CLI driver will be used. Otherwise, it will check whether the Docker
+            - C(auto) tries to decide which driver to use. If I(docker_extra_args)
+              is specified, the CLI driver will be used. Otherwise, it will check whether the Docker
               SDK for Python is installed; if a new enough version (1.7.0 or higher) is there, it will
               be used. Otherwise, it will check whether C(docker) can be found in the path. If it is
               found with a new enough version (1.3 or higher), it will be used.
@@ -175,7 +175,7 @@ class Connection(ConnectionBase):
                 if driver == 'auto':
                     driver = 'cli'
                 elif driver == 'docker-py':
-                    raise AnsibleError('docker_command or docker_extra_args must not be specified for docker-py driver')
+                    raise AnsibleError('docker_extra_args must not be specified for docker-py driver')
 
             docker_cli_version = None
             if driver == 'auto':
