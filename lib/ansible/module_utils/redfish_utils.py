@@ -1991,7 +1991,7 @@ class RedfishUtils(object):
             if serial_interface_id in ['null', '']:
                 target_serial_interface_uri = uri
                 break
-            
+
             # If serial_interface_id is specified, find the interface whose id match with serial_interface_id
             response = self.get_request(self.root_uri + uri)
             if response['ret'] is False:

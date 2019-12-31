@@ -110,7 +110,7 @@ options:
   serial_interface_id:
     required: false
     description:
-      - Instance id of SerialInterface which will be updated 
+      - Instance id of SerialInterface which will be updated
     default: 'null'
     type: str
     version_added: '2.10'
