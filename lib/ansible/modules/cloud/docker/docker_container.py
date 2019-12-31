@@ -685,6 +685,16 @@ options:
       - Use with present and started states to force the re-creation of an existing container.
     type: bool
     default: no
+  removal_wait_timeout:
+    description:
+      - When removing an existing container, the docker daemon API call exists after the container
+        is scheduled for removal. Removal usually is very fast, but it can happen that during high I/O
+        load, removal can take longer. By default, the module will wait until the container has been
+        removed before trying to (re-)create it, however long this takes.
+      - By setting this option, the module will wait at most this many seconds for the container to be
+        removed. If the container is still in the removal phase after this many seconds, the module will
+        fail.
+    type: float
   restart:
     description:
       - Use with started state to force a matching container to be stopped and restarted.
@@ -1281,6 +1291,7 @@ class TaskParameters(DockerBaseClass):
         self.pull = None
         self.read_only = None
         self.recreate = None
+        self.removal_wait_timeout = None
         self.restart = None
         self.restart_retries = None
         self.restart_policy = None
@@ -2667,7 +2678,8 @@ class ContainerManager(DockerBaseClass):
             self.diff_tracker.add('exists', parameter=True, active=False)
             if container.removing and not self.check_mode:
                 # Wait for container to be removed before trying to create it
-                self.wait_for_state(container.Id, wait_states=['removing'], accept_removal=True)
+                self.wait_for_state(
+                    container.Id, wait_states=['removing'], accept_removal=True, max_wait=self.parameters.removal_wait_timeout)
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
@@ -2694,7 +2706,8 @@ class ContainerManager(DockerBaseClass):
                     self.container_stop(container.Id)
                 self.container_remove(container.Id)
                 if not self.check_mode:
-                    self.wait_for_state(container.Id, wait_states=['removing'], accept_removal=True)
+                    self.wait_for_state(
+                        container.Id, wait_states=['removing'], accept_removal=True, max_wait=self.parameters.removal_wait_timeout)
                 new_container = self.container_create(image_to_use, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
@@ -3063,7 +3076,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
     __NON_CONTAINER_PROPERTY_OPTIONS = tuple([
         'env_file', 'force_kill', 'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks',
         'recreate', 'restart', 'state', 'trust_image_content', 'networks', 'cleanup', 'kill_signal',
-        'output_logs', 'paused'
+        'output_logs', 'paused', 'removal_wait_timeout'
     ] + list(DOCKER_COMMON_ARGS.keys()))
 
     def _parse_comparisons(self):
@@ -3376,6 +3389,7 @@ def main():
         purge_networks=dict(type='bool', default=False),
         read_only=dict(type='bool'),
         recreate=dict(type='bool', default=False),
+        removal_wait_timeout=dict(type='float'),
         restart=dict(type='bool', default=False),
         restart_policy=dict(type='str', choices=['no', 'on-failure', 'always', 'unless-stopped']),
         restart_retries=dict(type='int'),
