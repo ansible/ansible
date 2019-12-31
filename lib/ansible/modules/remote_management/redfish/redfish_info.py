@@ -295,8 +295,8 @@ CATEGORY_COMMANDS_ALL = {
     "Accounts": ["ListUsers"],
     "Sessions": ["GetSessions"],
     "Update": ["GetFirmwareInventory", "GetFirmwareUpdateCapabilities", "GetSoftwareInventory"],
-    "Manager": ["GetManagerNicInventory", "GetSerialInterfaces", "GetVirtualMedia", "GetLogs", "GetNetworkProtocols",
-                "GetHealthReport"],
+    "Manager": ["GetManagerNicInventory", "GetSerialInterfaces", "GetVirtualMedia", "GetLogs",
+                "GetNetworkProtocols", "GetHealthReport"],
 }
 
 CATEGORY_COMMANDS_DEFAULT = {

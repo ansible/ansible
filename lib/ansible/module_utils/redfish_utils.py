@@ -1966,6 +1966,76 @@ class RedfishUtils(object):
                                serialinterfaces['entries']))
         return dict(ret=ret, entries=entries)
 
+    def set_serial_interface(self, serial_interface_id, serial_interface_config):
+        # Get SerialInterfaces collection
+        response = self.get_request(self.root_uri + self.manager_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        if 'SerialInterfaces' not in data:
+            return {'ret': False, 'msg': "SerialInterfaces resource not found"}
+        serial_interfaces_uri = data["SerialInterfaces"]["@odata.id"]
+        response = self.get_request(self.root_uri + serial_interfaces_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        serial_interface_uris = []
+        for serial_interface in data[u'Members']:
+            serial_interface_uris.append(serial_interface[u'@odata.id'])
+
+        # Find target Serial Interface
+        target_serial_interface_uri = None
+        target_serial_interface_current_setting = None
+        for uri in serial_interface_uris:
+            # If serial_interface_id is not specified, set first interface
+            if serial_interface_id in ['null', '']:
+                target_serial_interface_uri = uri
+                break
+            
+            # If serial_interface_id is specified, find the interface whose id match with serial_interface_id
+            response = self.get_request(self.root_uri + uri)
+            if response['ret'] is False:
+                return response
+            data = response['data']
+            if data['Id'] == serial_interface_id:
+                target_serial_interface_uri = uri
+                target_serial_interface_current_setting = data
+                break
+        if target_serial_interface_uri is None:
+            return {'ret': False, 'msg': "No matched SerialInterface found under Manager"}
+
+        # Convert input to payload and check validity
+        payload = {}
+        for property in serial_interface_config.keys():
+            if property not in target_serial_interface_current_setting:
+                return {'ret': False, 'msg': "Property %s in serial_interface_config is invalid" % property}
+            value = serial_interface_config[property]
+            if property == "InterfaceEnabled":
+                if value in ['true', 'True', True, 1]:
+                    payload[property] = True
+                elif value in ['false', 'False', False, 0]:
+                    payload[property] = False
+                else:
+                    return {'ret': False, 'msg': "Value of property %s is invalid" % property}
+            else:
+                payload[property] = str(value)
+
+        # If no need change, nothing to do. If error detected, report it
+        need_change = False
+        for property in payload.keys():
+            set_value = payload[property]
+            cur_value = target_serial_interface_current_setting[property]
+            if set_value != cur_value:
+                need_change = True
+
+        if not need_change:
+            return {'ret': True, 'changed': False, 'msg': "Serial Interface already set"}
+
+        response = self.patch_request(self.root_uri + target_serial_interface_uri, payload)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True, 'msg': "Modified Serial Interface"}
+
     def get_virtualmedia(self, resource_uri):
         result = {}
         virtualmedia_list = []

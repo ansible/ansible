@@ -107,6 +107,19 @@ options:
       - setting dict of EthernetInterface on OOB controller
     type: dict
     version_added: '2.10'
+  serial_interface_id:
+    required: false
+    description:
+      - Instance id of SerialInterface which will be updated 
+    default: 'null'
+    type: str
+    version_added: '2.10'
+  serial_interface_config:
+    required: false
+    description:
+      - setting dict of SerialInterface on OOB controller
+    type: dict
+    version_added: '2.10'
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -208,6 +221,18 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
+
+  - name: Set Manager Serial Interface
+    redfish_config:
+      category: Manager
+      command: SetSerialInterface
+      serial_interface_id: 1
+      serial_interface_config:
+        InterfaceEnabled: False
+        BitRate: 115200
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -227,7 +252,7 @@ from ansible.module_utils._text import to_native
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes", "SetBootOrder",
                 "SetDefaultBootOrder"],
-    "Manager": ["SetNetworkProtocols", "SetManagerNic"]
+    "Manager": ["SetNetworkProtocols", "SetManagerNic", "SetSerialInterface"]
 }
 
 
@@ -254,7 +279,9 @@ def main():
             nic_config=dict(
                 type='dict',
                 default={}
-            )
+            ),
+            serial_interface_id=dict(default='null'),
+            serial_interface_config=dict(type='dict', default={})
         ),
         supports_check_mode=False
     )
@@ -287,6 +314,10 @@ def main():
     # manager nic
     nic_addr = module.params['nic_addr']
     nic_config = module.params['nic_config']
+
+    # set serial interface
+    serial_interface_id = module.params['serial_interface_id']
+    serial_interface_config = module.params['serial_interface_config']
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
@@ -331,6 +362,8 @@ def main():
                 result = rf_utils.set_network_protocols(module.params['network_protocols'])
             elif command == "SetManagerNic":
                 result = rf_utils.set_manager_nic(nic_addr, nic_config)
+            elif command == "SetSerialInterface":
+                result = rf_utils.set_serial_interface(serial_interface_id, serial_interface_config)
 
     # Return data back or fail with proper message
     if result['ret'] is True:
