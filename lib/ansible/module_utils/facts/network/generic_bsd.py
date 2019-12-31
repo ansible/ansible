@@ -136,6 +136,8 @@ class GenericBsdIfconfigNetwork(Network):
                     self.parse_nd6_line(words, current_if, ips)
                 elif words[0] == 'ether':
                     self.parse_ether_line(words, current_if, ips)
+                elif words[0] == 'address:':
+                    self.parse_address_line(words, current_if, ips)
                 elif words[0] == 'media:':
                     self.parse_media_line(words, current_if, ips)
                 elif words[0] == 'status:':
@@ -180,6 +182,10 @@ class GenericBsdIfconfigNetwork(Network):
     def parse_ether_line(self, words, current_if, ips):
         current_if['macaddress'] = words[1]
         current_if['type'] = 'ether'
+
+
+    def parse_address_line(self, words, current_if, ips):
+        current_if['macaddress'] = words[1]
 
     def parse_media_line(self, words, current_if, ips):
         # not sure if this is useful - we also drop information
