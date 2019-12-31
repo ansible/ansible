@@ -2610,25 +2610,33 @@ class ContainerManager(DockerBaseClass):
             self.results['ansible_facts'] = {'docker_container': self.facts}
             self.results['container'] = self.facts
 
-    def wait_for_state(self, container_id, complete_states=None, wait_states=None, accept_removal=False):
+    def wait_for_state(self, container_id, complete_states=None, wait_states=None, accept_removal=False, max_wait=None):
         delay = 1.0
+        total_wait = 0
         while True:
             # Inspect container
             result = self.client.get_container_by_id(container_id)
             if result is None:
                 if accept_removal:
                     return
-                msg = 'Encontered vanished container while waiting for container {0}'
+                msg = 'Encontered vanished container while waiting for container "{0}"'
                 self.fail(msg.format(container_id))
             # Check container state
             state = result.get('State', {}).get('Status')
             if complete_states is not None and state in complete_states:
                 return
             if wait_states is not None and state not in wait_states:
-                msg = 'Encontered unexpected state "{1}" while waiting for container {0}'
+                msg = 'Encontered unexpected state "{1}" while waiting for container "{0}"'
                 self.fail(msg.format(container_id, state))
             # Wait
+            if max_wait is not None:
+                if total_wait > max_wait:
+                    msg = 'Timeout of {1} seconds exceeded while waiting for container "{0}"'
+                    self.fail(msg.format(container_id, max_wait))
+                if total_wait + delay > max_wait:
+                    delay = max_wait - total_wait
             sleep(delay)
+            total_wait += delay
             # Exponential backoff, but never wait longer than 10 seconds
             # (1.1**24 < 10, 1.1**25 > 10, so it will take 25 iterations
             #  until the maximal 10 seconds delay is reached. By then, the
