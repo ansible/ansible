@@ -56,11 +56,13 @@ class NetBSDHardware(Hardware):
             pass
 
         dmi_facts = self.get_dmi_facts()
+        device_facts = self.get_device_facts()
 
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
         hardware_facts.update(mount_facts)
         hardware_facts.update(dmi_facts)
+        hardware_facts.update(device_facts)
 
         return hardware_facts
 
@@ -155,6 +157,58 @@ class NetBSDHardware(Hardware):
                 dmi_facts[sysctl_to_dmi[mib]] = self.sysctl[mib]
 
         return dmi_facts
+
+    def get_device_facts(self):
+        device_facts = {}
+        device_facts['devices'] = {}
+        drives = re.compile(r'(^ld?\d+|^sd\d+|^wd\d+)')
+        dmesgboot = get_file_content('/var/run/dmesg.boot')
+        if not dmesgboot:
+            return device_facts
+        for line in dmesgboot.splitlines():
+            if line:
+                words = line.strip().split()
+                if drives.match(line):
+                    disk = words[0].strip(":")
+                    if words[1] == "at":
+                        if disk not in device_facts['devices']:
+                            device_facts['devices'][disk] = {}
+                        if "host" not in device_facts['devices'][disk]:
+                            device_facts['devices'][disk]["host"] = words[2]
+                    elif words[1].startswith("<") and words[-1].endswith(">"):
+                        if disk not in device_facts['devices']:
+                            device_facts['devices'][disk] = {}
+                        device_facts['devices'][disk]["model"] = " ".join(words[1:]).strip("<").strip(">")
+                    elif words[-1] == "sectors":
+                        if disk not in device_facts['devices']:
+                            device_facts['devices'][disk] = {}
+                        device_facts['devices'][disk]["size"] = words[1] + " " + words[2].strip(",")
+                        device_facts['devices'][disk]["vendor"] = ""
+                        if "host" not in device_facts['devices'][disk]:
+                            device_facts['devices'][disk]["host"] = ""
+                        if "model" not in device_facts['devices'][disk]:
+                            device_facts['devices'][disk]["model"] = ""
+                        device_facts['devices'][disk]["sectors"] = words[12]
+                        device_facts['devices'][disk]["sectorsize"] = int(words[9])
+                        device_facts['devices'][disk]["partitions"] = {}
+                        rc, out, err = self.module.run_command(["/sbin/disklabel", "-A", disk])
+                        for pline in out.splitlines():
+                            if pline:
+                                pwords = pline.strip().split()
+                                if pwords[0] == "bytes/sector:":
+                                    device_facts['devices'][disk]["sectorsize"] = int(pwords[-1])
+                                elif pwords[0] == "total" and pwords[1] == "sectors:":
+                                    device_facts['devices'][disk]["sectors"] = pwords[-1]
+                                    device_facts['devices'][disk]["size"] = str(int(int(pwords[-1]) * int(device_facts['devices'][disk]["sectorsize"]) / 1024 / 1024)) + " MB"
+                                elif pline[0] == " ":
+                                    partition = disk + pwords[0].strip(":")
+                                    device_facts['devices'][disk]["partitions"][partition] = {}
+                                    device_facts['devices'][disk]["partitions"][partition]["sectors"] = pwords[1]
+                                    device_facts['devices'][disk]["partitions"][partition]["sectorsize"] = device_facts['devices'][disk]["sectorsize"]
+                                    device_facts['devices'][disk]["partitions"][partition]["size"] = pwords[1]
+                                    device_facts['devices'][disk]["partitions"][partition]["start"] = pwords[2]
+                                    device_facts['devices'][disk]["partitions"][partition]["fstype"] = pwords[3]
+        return device_facts
 
 
 class NetBSDHardwareCollector(HardwareCollector):
