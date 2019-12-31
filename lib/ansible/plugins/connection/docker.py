@@ -108,6 +108,7 @@ MIN_DOCKER_API = None
 def _sanitize_version(version):
     return re.sub(u'[^0-9a-zA-Z.]', u'', version)
 
+
 def _old_docker_cli_version(docker_cmd, play_context):
     cmd_args = []
     if play_context.docker_extra_args:
@@ -121,6 +122,7 @@ def _old_docker_cli_version(docker_cmd, play_context):
 
     return old_docker_cmd, to_native(cmd_output), err, p.returncode
 
+
 def _new_docker_cli_version(docker_cmd, play_context):
     # no result yet, must be newer Docker version
     cmd_args = []
@@ -133,6 +135,7 @@ def _new_docker_cli_version(docker_cmd, play_context):
     p = subprocess.Popen(new_docker_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     cmd_output, err = p.communicate()
     return new_docker_cmd, to_native(cmd_output), err, p.returncode
+
 
 def get_docker_cli_version(docker_cmd, play_context):
 
@@ -631,7 +634,8 @@ class DockerPyDriver:
             )
         except RequestException as e:
             self.client.fail(
-                'An unexpected requests error occurred for container "{1}" when docker-py tried to talk to the docker daemon: {0}'.format(e, play_context.remote_addr),
+                'An unexpected requests error occurred for container "{1}" when docker-py tried to talk to the docker daemon: {0}'
+                .format(e, play_context.remote_addr),
                 exception=traceback.format_exc()
             )
 
