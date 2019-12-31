@@ -146,21 +146,22 @@ class TestConnectionBaseClass(unittest.TestCase):
     @mock.patch('ansible.plugins.connection.docker._old_docker_cli_version', return_value=('false', 'garbage', '', 1))
     @mock.patch('ansible.plugins.connection.docker._new_docker_cli_version', return_value=('docker version', '1.2.3', '', 0))
     def test_docker_connection_module_too_old(self, mock_new_docker_verison, mock_old_docker_version):
-        self.assertRaisesRegexp(AnsibleError, '^docker connection type requires docker 1.3 or higher$',
-                                DockerConnection, self.play_context, self.in_stream, docker_command='/fake/docker')
+        instance = DockerConnection(self.play_context, self.in_stream, docker_command='/fake/docker')
+        self.assertRaisesRegexp(AnsibleError, '^docker connection type requires docker 1.3 or higher$', instance._connect)
 
     @mock.patch('ansible.plugins.connection.docker._old_docker_cli_version', return_value=('false', 'garbage', '', 1))
     @mock.patch('ansible.plugins.connection.docker._new_docker_cli_version', return_value=('docker version', '1.3.4', '', 0))
     def test_docker_connection_module(self, mock_new_docker_verison, mock_old_docker_version):
-        self.assertIsInstance(DockerConnection(self.play_context, self.in_stream, docker_command='/fake/docker'),
-                              DockerConnection)
+        instance = DockerConnection(self.play_context, self.in_stream, docker_command='/fake/docker')
+        self.assertIsInstance(instance, DockerConnection)
+        instance._connect()
 
     # old version and new version fail
     @mock.patch('ansible.plugins.connection.docker._old_docker_cli_version', return_value=('false', 'garbage', '', 1))
     @mock.patch('ansible.plugins.connection.docker._new_docker_cli_version', return_value=('false', 'garbage', '', 1))
     def test_docker_connection_module_wrong_cmd(self, mock_new_docker_version, mock_old_docker_version):
-        self.assertRaisesRegexp(AnsibleError, '^Docker version check (.*?) failed: ',
-                                DockerConnection, self.play_context, self.in_stream, docker_command='/fake/docker')
+        instance = DockerConnection(self.play_context, self.in_stream, docker_command='/fake/docker')
+        self.assertRaisesRegexp(AnsibleError, '^Docker version check (.*?) failed: ', instance._connect)
 
 #    def test_winrm_connection_module(self):
 #        self.assertIsInstance(WinRmConnection(), WinRmConnection)
