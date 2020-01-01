@@ -695,6 +695,7 @@ options:
         removed. If the container is still in the removal phase after this many seconds, the module will
         fail.
     type: float
+    version_added: "2.10"
   restart:
     description:
       - Use with started state to force a matching container to be stopped and restarted.
