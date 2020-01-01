@@ -18,7 +18,7 @@ module: keycloak_user
 
 short_description: Allows administration of Keycloak users via Keycloak API
 
-version_added: "2.10"
+version_added: "2.11"
 
 description:
     - This module allows the administration of Keycloak clients via the Keycloak REST API. It
@@ -116,11 +116,11 @@ options:
             - the user last name
         aliases: [ lastName ]
         type: str
-
-    credentials:
+    
+    user_password:
         description:
-            - a dictionary setting the user password.
-        type: dict
+            - the password set to the user
+        type: str
 
 extends_documentation_fragment:
     - keycloak
@@ -203,6 +203,8 @@ end_state:
     }
 '''
 
+import copy
+
 from ansible.module_utils.identity.keycloak.keycloak import KeycloakAPI, camel, keycloak_argument_spec, get_token
 from ansible.module_utils.basic import AnsibleModule
 
@@ -220,11 +222,12 @@ def sanitize_user_representation(user_representation):
     :return: sanitized userrep dict
     """
     result = user_representation.copy()
-    if 'credentials' in result:
-        # check if this value are to sanitize
-        for credential_key in ['hashedSaltedValue', 'salt', 'value']:
-            if credential_key in result['credentials']:
-                result['credentials'][credential_key] = 'no_log'
+    if 'user_password' in result or 'userPassword' in result:
+        if 'user_password' in result:
+            password_key = 'user_password'
+        else:
+            password_key = 'userPassword'
+        result[password_key] = 'no_log'
     return result
 
 
@@ -245,7 +248,7 @@ def run_module():
         last_name=dict(type='str', aliases=['lastName']),
         required_actions=dict(type='list', aliases=['requiredActions'],
                               choices=AUTHORIZED_REQUIRED_ACTIONS),
-        credentials=dict(type='dict'),
+        user_password=dict(type='str', aliases=['userPassword']),
     )
 
     argument_spec.update(meta_args)
@@ -370,9 +373,36 @@ def do_nothing_and_exit(kc, result):
     module.exit_json(**result)
 
 
+def create_payload(dict_from_argument):
+    if 'user_password' in dict_from_argument:
+        password_key = 'user_password'
+    elif 'userPassword' in dict_from_argument:
+        password_key = 'userPassword'
+    try:
+        user_password = dict_from_argument.pop(password_key)
+    except NameError:
+        pass
+    else:
+        dict_from_argument.update(
+            {'credentials': {'type': 'password', 'value': user_password, 'temporary': False}}
+        )
+    return dict_from_argument
+
+
+def existing_payload_to_args(existing_user):
+    try:
+        credentials = existing_user.pop('credentials')
+    except KeyError:
+        pass
+    else:
+        if credentials['type'] == 'password':
+            existing_user['user_password'] = credentials['value']
+    return existing_user
+
+
 def create_user(kc, result, realm, given_user_id):
     module = kc.module
-    user_to_create = result['proposed']
+    user_to_create = copy.deepcopy(result['proposed'])
     result['changed'] = True
 
     if module._diff:
@@ -381,16 +411,20 @@ def create_user(kc, result, realm, given_user_id):
     if module.check_mode:
         module.exit_json(**result)
 
+    user_to_create = create_payload(user_to_create)
     response = kc.create_user(user_to_create, realm=realm)
     after_user = kc.get_json_from_url(response.headers.get('Location'))
-    result['end_state'] = sanitize_user_representation(after_user)
+
+    result['end_state'] = sanitize_user_representation(
+        existing_payload_to_args(after_user)
+    )
     result['msg'] = 'User %s has been created.' % given_user_id['name']
     module.exit_json(**result)
 
 
 def updating_user(kc, result, realm, given_user_id):
     module = kc.module
-    changeset = result['proposed']
+    changeset = copy.deepcopy(result['proposed'])
     before_user = result['existing']
     updated_user = before_user.copy()
     updated_user.update(changeset)
@@ -405,12 +439,14 @@ def updating_user(kc, result, realm, given_user_id):
         result['changed'] = (before_user != updated_user)
         module.exit_json(**result)
 
+    changeset = create_payload(changeset)
+
     if 'name' in given_user_id.keys():
         asked_id = kc.get_user_id(given_user_id['name'], realm=realm)
     else:
         asked_id = given_user_id['id']
     kc.update_user(asked_id, changeset, realm=realm)
-    after_user = kc.get_user_by_id(asked_id, realm=realm)
+    after_user = existing_payload_to_args(kc.get_user_by_id(asked_id, realm=realm))
     if before_user == after_user:
         result['changed'] = False
 

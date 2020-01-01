@@ -331,7 +331,7 @@ def test_state_present_should_update_existing_user(monkeypatch, dynamic_url_for_
         'auth_realm': 'master',
         'state': 'present',
         'email': 'user1@domain.net',
-        'credentials': {'type': 'password', 'value': 'user1_secret'}
+        'user_password': 'user1_secret',
     }
     arguments.update(user_to_update)
     set_module_args(arguments)
@@ -340,7 +340,11 @@ def test_state_present_should_update_existing_user(monkeypatch, dynamic_url_for_
     ansible_exit_json = exec_error.value.args[0]
     assert ansible_exit_json['msg'] == ('User %s has been updated.' % list(user_to_update.values())[0].lower())
     assert ansible_exit_json['end_state'] == json.loads(UPDATED_USER)
-    assert ansible_exit_json['proposed']['credentials']['value'] == 'no_log'
+    try:
+        user_password = ansible_exit_json['proposed']['userPassword']
+    except KeyError:
+        user_password = ansible_exit_json['proposed']['user_password']
+    assert user_password == 'no_log'
 
 
 @pytest.mark.parametrize('wrong_attributes', [
