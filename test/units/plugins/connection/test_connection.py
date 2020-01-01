@@ -40,7 +40,7 @@ from ansible.plugins.connection.lxc import Connection as LxcConnection
 from ansible.plugins.connection.local import Connection as LocalConnection
 from ansible.plugins.connection.paramiko_ssh import Connection as ParamikoConnection
 from ansible.plugins.connection.ssh import Connection as SSHConnection
-from ansible.plugins.connection.docker import Connection as DockerConnection
+from ansible.plugins.connection import docker as docker_connection
 # from ansible.plugins.connection.winrm import Connection as WinRmConnection
 from ansible.plugins.connection.network_cli import Connection as NetworkCliConnection
 from ansible.plugins.connection.httpapi import Connection as HttpapiConnection
@@ -146,22 +146,28 @@ class TestConnectionBaseClass(unittest.TestCase):
     @mock.patch('ansible.plugins.connection.docker._old_docker_cli_version', return_value=('false', 'garbage', '', 1))
     @mock.patch('ansible.plugins.connection.docker._new_docker_cli_version', return_value=('docker version', '1.2.3', '', 0))
     def test_docker_connection_module_too_old(self, mock_new_docker_verison, mock_old_docker_version):
-        instance = DockerConnection(self.play_context, self.in_stream, docker_command='/fake/docker')
-        self.assertRaisesRegexp(AnsibleError, '^docker connection type requires docker 1.3 or higher$', instance._connect)
+        display = MagicMock()
+        display.verbosity = 0
+        self.assertRaisesRegexp(AnsibleError, '^docker connection type requires docker 1.3 or higher$',
+                                docker_connection.CLIDriver, display, self.play_context, None, dict(docker_command='/fake/docker'))
 
     @mock.patch('ansible.plugins.connection.docker._old_docker_cli_version', return_value=('false', 'garbage', '', 1))
     @mock.patch('ansible.plugins.connection.docker._new_docker_cli_version', return_value=('docker version', '1.3.4', '', 0))
     def test_docker_connection_module(self, mock_new_docker_verison, mock_old_docker_version):
-        instance = DockerConnection(self.play_context, self.in_stream, docker_command='/fake/docker')
-        self.assertIsInstance(instance, DockerConnection)
-        instance._connect()
+        display = MagicMock()
+        display.verbosity = 0
+        self.assertIsInstance(
+            docker_connection.CLIDriver(display, self.play_context, None, dict(docker_command='/fake/docker')),
+            docker_connection.CLIDriver)
 
     # old version and new version fail
     @mock.patch('ansible.plugins.connection.docker._old_docker_cli_version', return_value=('false', 'garbage', '', 1))
     @mock.patch('ansible.plugins.connection.docker._new_docker_cli_version', return_value=('false', 'garbage', '', 1))
     def test_docker_connection_module_wrong_cmd(self, mock_new_docker_version, mock_old_docker_version):
-        instance = DockerConnection(self.play_context, self.in_stream, docker_command='/fake/docker')
-        self.assertRaisesRegexp(AnsibleError, '^Docker version check (.*?) failed: ', instance._connect)
+        display = MagicMock()
+        display.verbosity = 0
+        self.assertRaisesRegexp(AnsibleError, '^Docker version check (.*?) failed: ',
+                                docker_connection.CLIDriver, display, self.play_context, None, dict(docker_command='/fake/docker'))
 
 #    def test_winrm_connection_module(self):
 #        self.assertIsInstance(WinRmConnection(), WinRmConnection)
