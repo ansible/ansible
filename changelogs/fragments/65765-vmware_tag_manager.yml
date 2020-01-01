@@ -1,0 +1,2 @@
+bugfixes:
+- Added support to vmware_tag_manager module for specifying tag and category as dict if any of the name contains colon (https://github.com/ansible/ansible/issues/65765).
