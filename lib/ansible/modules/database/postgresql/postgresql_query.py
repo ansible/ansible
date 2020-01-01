@@ -27,7 +27,8 @@ version_added: '2.8'
 options:
   query:
     description:
-    - SQL query to run. Variables can be escaped with psycopg2 syntax U(http://initd.org/psycopg/docs/usage.html).
+    - SQL query to run. Variables can be escaped with psycopg2 syntax
+      U(http://initd.org/psycopg/docs/usage.html).
     type: str
   positional_args:
     description:
@@ -256,9 +257,6 @@ def main():
     if autocommit and module.check_mode:
         module.fail_json(msg="Using autocommit is mutually exclusive with check_mode")
 
-    if positional_args and named_args:
-        module.fail_json(msg="positional_args and named_args params are mutually exclusive")
-
     if path_to_script and query:
         module.fail_json(msg="path_to_script is mutually exclusive with query")
 
@@ -294,6 +292,9 @@ def main():
     try:
         cursor.execute(query, arguments)
     except Exception as e:
+        if not autocommit:
+            db_connection.rollback()
+
         cursor.close()
         db_connection.close()
         module.fail_json(msg="Cannot execute SQL '%s' %s: %s" % (query, arguments, to_native(e)))
