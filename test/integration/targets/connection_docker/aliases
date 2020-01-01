@@ -1,2 +1,5 @@
-non_local
-unsupported
+shippable/posix/group4
+skip/osx
+skip/freebsd
+needs/root
+destructive

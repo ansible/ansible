@@ -1,6 +1,10 @@
 [docker]
-docker-pipelining    ansible_ssh_pipelining=true
-docker-no-pipelining ansible_ssh_pipelining=false
+docker-cli-pipelining         ansible_pipelining=true  docker_driver=cli
+docker-cli-no-pipelining      ansible_pipelining=false docker_driver=cli
+docker-dockerpy-pipelining    ansible_pipelining=true  docker_driver=docker-py
+docker-dockerpy-no-pipelining ansible_pipelining=false docker_driver=docker-py
+docker-auto                   docker_driver=auto
+
 [docker:vars]
-ansible_host=ubuntu-latest
+ansible_host=docker-connection-test-container
 ansible_connection=docker
