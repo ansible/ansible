@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Setup docker
+      import_role:
+        name: setup_docker
