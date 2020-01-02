@@ -483,10 +483,12 @@ class AnsibleDockerClient(AnsibleDockerClientBase):
 
 
 class DockerSocketHandler:
-    def __init__(self, sock):
+    def __init__(self, sock, container=None):
         # Unfortunately necessary; see https://github.com/docker/docker-py/issues/983#issuecomment-492513718
         sock._writing = True
         sock._sock.setblocking(0)
+
+        self._container = container
 
         self._sock = sock
         self._block_done_callback = None
@@ -529,7 +531,7 @@ class DockerSocketHandler:
         if data is None:
             # no data available
             return
-        display.vvv('read {0} bytes'.format(len(data)))
+        display.vvv('read {0} bytes'.format(len(data)), host=self._container)
         if len(data) == 0:
             # Stream EOF
             self._eof = True
@@ -554,7 +556,8 @@ class DockerSocketHandler:
                 break
 
     def _done_writing(self):
-        display.vvvv('Done writing')
+        display.vvvv('Done writing', host=self._container)
+        self._sock.flush()
         self._selector.unregister(self._sock)
         self._selector.register(self._sock, selectors.EVENT_READ)
         self._read()
@@ -563,7 +566,7 @@ class DockerSocketHandler:
         if len(self._write_buffer) > 0:
             written = self._sock.write(self._write_buffer)
             self._write_buffer = self._write_buffer[written:]
-            display.vvv('wrote {0} bytes, {1} are left'.format(written, len(self._write_buffer)))
+            display.vvv('wrote {0} bytes, {1} are left'.format(written, len(self._write_buffer)), host=self._container)
         if len(self._write_buffer) == 0:
             self._sock.flush()
             if self._are_done_writing:
@@ -573,7 +576,9 @@ class DockerSocketHandler:
         events = self._selector.select(timeout)
         for key, event in events:
             if key.fileobj == self._sock:
-                display.vvvv('{0} read:{1} write:{2}'.format(event, event & selectors.EVENT_READ != 0, event & selectors.EVENT_WRITE != 0))
+                display.vvvv(
+                    '{0} read:{1} write:{2}'.format(event, event & selectors.EVENT_READ != 0, event & selectors.EVENT_WRITE != 0),
+                    host=self._container)
                 if event & selectors.EVENT_READ != 0:
                     self._read()
                 if event & selectors.EVENT_WRITE != 0:
@@ -699,7 +704,7 @@ class DockerPyDriver:
                 socket=True,
             ))
             try:
-                with DockerSocketHandler(exec_socket) as exec_socket_handler:
+                with DockerSocketHandler(exec_socket, container=play_context.remote_addr) as exec_socket_handler:
                     if do_become:
                         become_output = [b'']
 
