@@ -1,4 +1,6 @@
+--extra-index-url https://sivel.eng.ansible.com/
 cryptography
+jinja ; python_version >= '2.7'
 jinja2
 junit-xml
 ntlm-auth
