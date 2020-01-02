@@ -497,6 +497,7 @@ class DockerSocketHandler:
         self._eof = False
         self._read_buffer = b''
         self._write_buffer = b''
+        self._end_of_writing = False
 
         self._current_stream = None
         self._current_missing = 0
@@ -560,6 +561,17 @@ class DockerSocketHandler:
                 self._eof = True
                 break
 
+    def _handle_end_of_writing(self):
+        if self._end_of_writing and len(self._write_buffer) == 0:
+            self._end_of_writing = False
+            display.vvvv('Shutting socket down for writing', host=self._container)
+            if hasattr(self._sock, 'shutdown'):
+                self._sock.shutdown(pysocket.SHUT_WR)
+            elif PY3 and isinstance(self._sock, getattr(pysocket, 'SocketIO')):
+                self._sock._sock.shutdown(pysocket.SHUT_WR)
+            else:
+                display.warning('No idea how to signal end of writing', host=self._container)
+
     def _write(self):
         if len(self._write_buffer) > 0:
             if hasattr(self._sock, 'send'):
@@ -571,8 +583,8 @@ class DockerSocketHandler:
             if len(self._write_buffer) > 0:
                 self._selector.modify(self._sock, selectors.EVENT_READ | selectors.EVENT_WRITE)
             else:
-                self._sock.flush()
                 self._selector.modify(self._sock, selectors.EVENT_READ)
+            self._handle_end_of_writing()
 
     def select(self, timeout=None):
         events = self._selector.select(timeout)
@@ -590,6 +602,10 @@ class DockerSocketHandler:
     def is_eof(self):
         return self._eof
 
+    def end_of_writing(self):
+        self._end_of_writing = True
+        self._handle_end_of_writing()
+
     def consume(self):
         stdout = []
         stderr = []
@@ -601,6 +617,8 @@ class DockerSocketHandler:
                 stderr.append(data)
             else:
                 raise ValueError('{0} is not a valid stream ID'.format(stream_id))
+
+        self.end_of_writing()
 
         self.set_block_done_callback(append_block)
         while not self._eof:
