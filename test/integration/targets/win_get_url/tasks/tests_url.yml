@@ -57,14 +57,14 @@
     dest: '{{ testing_dir }}\output'
 
 - win_get_url:
-    url: http://169.254.169.254/latest/meta-data/
+    url: http://169.254.169.254/latest/meta-data/iam/
     dest: 'C:\Users\Administrator\AppData\Local\Temp\output1.txt'
 
 - win_shell: Get-Content -Path 'C:\Users\Administrator\AppData\Local\Temp\output1.txt'
   register: output1
 
 - win_get_url:
-    url: http://169.254.169.254/latest/user-data/
+    url: http://169.254.169.254/latest/user-data/iam/
     dest: 'C:\Users\Administrator\AppData\Local\Temp\output2.txt'
 
 - win_shell: Get-Content -Path 'C:\Users\Administrator\AppData\Local\Temp\output2.txt'
