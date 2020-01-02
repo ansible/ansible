@@ -94,6 +94,12 @@ options:
     - Mutually exclusive with I(cascade=yes).
     type: bool
     default: yes
+  unique:
+    description:
+    - Enable unique index.
+    - Mutually exclusive with I(state=absent).
+    type: bool
+    default: no 
   tablespace:
     description:
     - Set a tablespace for the index.
@@ -205,6 +211,13 @@ EXAMPLES = r'''
     db: mydb
     idxname: test_idx
     state: stat
+    
+- name: Create unique btree index if not exists test_unique_idx on column name of table products
+  postgresql_idx:
+    db: acme
+    table: products
+    columns: name
+    name: test_unique_idx
 '''
 
 RETURN = r'''
@@ -376,7 +389,7 @@ class Index(object):
             self.exists = False
             return False
 
-    def create(self, tblname, idxtype, columns, cond, tblspace, storage_params, concurrent=True):
+    def create(self, tblname, idxtype, columns, cond, tblspace, storage_params, concurrent=True, unique=False):
         """Create PostgreSQL index.
 
         Return True if success, otherwise, return False.
@@ -397,8 +410,13 @@ class Index(object):
         if idxtype is None:
             idxtype = "BTREE"
 
-        query = 'CREATE INDEX'
-
+        query = 'CREATE'
+        
+        if unique:
+            query += ' UNIQUE'
+        
+        query += ' INDEX
+        
         if concurrent:
             query += ' CONCURRENTLY'
 
@@ -476,6 +494,7 @@ def main():
         db=dict(type='str', aliases=['login_db']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'stat']),
         concurrent=dict(type='bool', default=True),
+        unique=dict(type='bool', default=False),
         table=dict(type='str'),
         idxtype=dict(type='str', aliases=['type']),
         columns=dict(type='list', aliases=['column']),
@@ -494,6 +513,7 @@ def main():
     idxname = module.params["idxname"]
     state = module.params["state"]
     concurrent = module.params["concurrent"]
+    unique = module.params["unique"]
     table = module.params["table"]
     idxtype = module.params["idxtype"]
     columns = module.params["columns"]
@@ -576,7 +596,7 @@ def main():
         if storage_params:
             storage_params = ','.join(storage_params)
 
-        changed = index.create(table, idxtype, columns, cond, tablespace, storage_params, concurrent)
+        changed = index.create(table, idxtype, columns, cond, tablespace, storage_params, concurrent, unique)
 
         if changed:
             kw = index.get_info()
