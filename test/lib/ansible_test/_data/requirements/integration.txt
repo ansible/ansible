@@ -1,5 +1,6 @@
 cryptography
-https://github.com/pallets/jinja/tarball/the-great-rename
+https://github.com/pallets/jinja/tarball/the-great-rename ; python_version >= '2.7'
+jinja2 ; python_version < '2.7'
 junit-xml
 ordereddict ; python_version < '2.7'
 pyyaml
