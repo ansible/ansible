@@ -1,13 +1,24 @@
 #!/usr/bin/env bash
 
+# Setup phase
+
+echo "Setup"
+ANSIBLE_ROLES_PATH=.. ansible-playbook setup.yml
+
+# If docker wasn't installed, don't run the tests
+if [ "$(command -v docker)" == "" ]; then
+    exit
+fi
+
+
+# Test phase
+
+
 DOCKER_CONTAINERS="docker-connection-test-container"
 
 [[ -n "$DEBUG" || -n "$ANSIBLE_DEBUG" ]] && set -x
 
 set -euo pipefail
-
-echo "Setup"
-ANSIBLE_ROLES_PATH=.. ansible-playbook setup.yml
 
 cleanup() {
     echo "Cleanup"
@@ -27,7 +38,7 @@ for CONTAINER in ${DOCKER_CONTAINERS}; do
 done
 
 echo "Run autodetection test"
-ansible-playbook -vvv -i test_connection.inventory test-auto.yml
+ansible-playbook -vvvv -i test_connection.inventory test-auto.yml
 
 echo "Run tests"
 ./runme-connection.sh
