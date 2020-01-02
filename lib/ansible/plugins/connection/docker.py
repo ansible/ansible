@@ -498,14 +498,13 @@ class DockerSocketHandler:
         self._eof = False
         self._read_buffer = b''
         self._write_buffer = b''
-        self._are_done_writing = False
 
         self._current_stream = None
         self._current_missing = 0
         self._current_buffer = b''
 
         self._selector = selectors.DefaultSelector()
-        self._selector.register(self._sock, selectors.EVENT_READ | selectors.EVENT_WRITE)
+        self._selector.register(self._sock, selectors.EVENT_READ)
 
     def __enter__(self):
         return self
@@ -562,13 +561,6 @@ class DockerSocketHandler:
                 self._eof = True
                 break
 
-    def _done_writing(self):
-        display.vvvv('Done writing', host=self._container)
-        self._sock.flush()
-        self._selector.unregister(self._sock)
-        self._selector.register(self._sock, selectors.EVENT_READ)
-        self._read()
-
     def _write(self):
         if len(self._write_buffer) > 0:
             if hasattr(self._sock, 'send'):
@@ -577,10 +569,11 @@ class DockerSocketHandler:
                 written = os.write(self._sock.fileno(), self._write_buffer)
             self._write_buffer = self._write_buffer[written:]
             display.vvv('wrote {0} bytes, {1} are left'.format(written, len(self._write_buffer)), host=self._container)
-        if len(self._write_buffer) == 0:
-            self._sock.flush()
-            if self._are_done_writing:
-                self._done_writing()
+            if len(self._write_buffer) > 0:
+                self._selector.modify(self._sock, selectors.EVENT_READ | selectors.EVENT_WRITE)
+            else:
+                self._sock.flush()
+                self._selector.modify(self._sock, selectors.EVENT_READ)
 
     def select(self, timeout=None):
         events = self._selector.select(timeout)
@@ -619,11 +612,6 @@ class DockerSocketHandler:
         self._write_buffer += str
         if len(self._write_buffer) == len(str):
             self._write()
-
-    def done_writing(self):
-        self._are_done_writing = True
-        if len(self._write_buffer) == 0:
-            self._done_writing()
 
 
 class DockerPyDriver:
@@ -737,8 +725,6 @@ class DockerPyDriver:
 
                     if in_data is not None:
                         exec_socket_handler.write(in_data)
-
-                    exec_socket_handler.done_writing()
 
                     stdout, stderr = exec_socket_handler.consume()
             finally:
