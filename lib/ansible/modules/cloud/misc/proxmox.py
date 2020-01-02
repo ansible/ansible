@@ -107,6 +107,11 @@ options:
     description:
       - CPU weight for a VM
     default: 1000
+  features:
+    description:
+      - Extra features of a VM
+      - Values can be a combination of [fuse=<1|0>] [,keyctl=<1|0>] [,mount=<fstype;fstype;...>] [,nesting=<1|0>].
+      - Warning: This option only works if api_user is root@pam!
   nameserver:
     description:
       - sets DNS server IP address for a container
@@ -446,6 +451,7 @@ def main():
             onboot=dict(type='bool', default='no'),
             storage=dict(default='local'),
             cpuunits=dict(type='int', default=1000),
+            features=dict(type='str', default=None),
             nameserver=dict(),
             searchdomain=dict(),
             timeout=dict(type='int', default=30),
@@ -529,6 +535,7 @@ def main():
                             ip_address=module.params['ip_address'],
                             onboot=int(module.params['onboot']),
                             cpuunits=module.params['cpuunits'],
+                            features=module.params['features'],
                             nameserver=module.params['nameserver'],
                             searchdomain=module.params['searchdomain'],
                             force=int(module.params['force']),
