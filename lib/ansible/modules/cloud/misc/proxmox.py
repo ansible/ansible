@@ -108,10 +108,11 @@ options:
       - CPU weight for a VM
     default: 1000
   features:
+    version_added: "2.10"
     description:
       - Extra features of a VM
       - Values can be a combination of [fuse=<1|0>] [,keyctl=<1|0>] [,mount=<fstype;fstype;...>] [,nesting=<1|0>].
-      - Warning: This option only works if api_user is root@pam!
+      - This option only works if api_user is root@pam!
   nameserver:
     description:
       - sets DNS server IP address for a container
