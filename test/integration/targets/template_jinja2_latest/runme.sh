@@ -4,8 +4,7 @@ set -eux
 
 source virtualenv.sh
 
-pip install -U https://github.com/pallets/jinja/tarball/the-great-rename
-pip install -U 'https://github.com/pallets/jinja/tarball/the-great-rename#egg=jinja2&subdirectory=jinja2-compat'
+pip install jinja2==2.11.0 jinja==2.11.0.dev0 --extra-index-url https://sivel.eng.ansible.com
 
 ANSIBLE_ROLES_PATH=../
 export ANSIBLE_ROLES_PATH

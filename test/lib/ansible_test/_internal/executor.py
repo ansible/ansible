@@ -326,7 +326,7 @@ def generate_pip_install(pip, command, packages=None):
     constraints = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
     requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % command)
 
-    options = ['-U', '--no-binary', 'jinja,jinja2']
+    options = []
 
     if os.path.exists(requirements) and os.path.getsize(requirements):
         options += ['-r', requirements]

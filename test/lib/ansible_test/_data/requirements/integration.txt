@@ -1,6 +1,7 @@
+--extra-index-url https://sivel.eng.ansible.com/
+jinja2==2.11.0 ; python_version >= '2.7' --no-binary jinja,jinja2
+jinja==2.11.0.dev0 ; python_version >= '2.7' --no-binary jinja,jinja2
 cryptography
-https://github.com/pallets/jinja/tarball/the-great-rename ; python_version >= '2.7'
-https://github.com/pallets/jinja/tarball/the-great-rename#egg=jinja2&subdirectory=jinja2-compat ; python_version >= '2.7'
 jinja2 ; python_version < '2.7'
 junit-xml
 ordereddict ; python_version < '2.7'
