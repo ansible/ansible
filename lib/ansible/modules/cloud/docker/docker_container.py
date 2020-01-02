@@ -2657,7 +2657,7 @@ class ContainerManager(DockerBaseClass):
             if not self.parameters.image:
                 self.fail('Cannot create container when image is not specified!')
             self.diff_tracker.add('exists', parameter=True, active=False)
-            if container.removing:
+            if container.removing and not self.check_mode:
                 # Wait for container to be removed before trying to create it
                 self.wait_for_state(container.Id, wait_states=['removing'], accept_removal=True)
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
@@ -2685,7 +2685,8 @@ class ContainerManager(DockerBaseClass):
                 if container.running:
                     self.container_stop(container.Id)
                 self.container_remove(container.Id)
-                self.wait_for_state(container.Id, wait_states=['removing'], accept_removal=True)
+                if not self.check_mode:
+                    self.wait_for_state(container.Id, wait_states=['removing'], accept_removal=True)
                 new_container = self.container_create(image_to_use, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
