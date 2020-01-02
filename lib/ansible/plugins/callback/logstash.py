@@ -119,9 +119,6 @@ class CallbackModule(CallbackBase):
         self.hostname = socket.gethostname()
         self.session = str(uuid.uuid1())
         self.errors = 0
-        print(self.get_option('server'))
-        print(self.logstash_port)
-        print(self.logstash_type)
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook._file_name
