@@ -194,11 +194,11 @@ class CloneManager(PyVmomi):
         task = self.vm_obj.Clone(folder=vm_folder, name=vm_name, spec=self.clone_spec)
         wait_for_task(task)
         if task.info.state == 'error':
-            results = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
+            result = {'changed': False, 'failed': True, 'msg': task.info.error.msg}
         else:
             vm_info = self.get_new_vm_info(vm_name)
-            results = {'changed': True, 'failed': False, 'vm_info': vm_info}
-        return results
+            result = {'changed': True, 'failed': False, 'vm_info': vm_info}
+        return result
 
     def sanitize_params(self):
         '''
@@ -267,7 +267,6 @@ def main():
         destination_vm_folder=dict(type='str'),
         power_on=dict(type='bool', default=False)
     )
-    result = {'failed': False, 'changed': False}
 
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -286,10 +285,7 @@ def main():
     clone_manager.populate_specs()
     result = clone_manager.clone()
 
-    if result['failed']:
-        module.fail_json(**result)
-    else:
-        module.exit_json(**result)
+    module.fail_json(**result)
 
 
 if __name__ == '__main__':
