@@ -4,7 +4,7 @@ set -eux
 
 source virtualenv.sh
 
-pip install jinja2==2.11.0 jinja==2.11.0.dev0 --extra-index-url https://sivel.eng.ansible.com/pypi/
+pip install --extra-index-url https://sivel.eng.ansible.com/pypi/ --no-binary jinja,jinja2 jinja2==2.11.0 jinja==2.11.0.dev0
 
 ANSIBLE_ROLES_PATH=../
 export ANSIBLE_ROLES_PATH
