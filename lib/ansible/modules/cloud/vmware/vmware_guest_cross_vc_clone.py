@@ -183,7 +183,7 @@ class CloneManager(PyVmomi):
             info['vcenter'] = self.destination_vcenter
             info['host'] = vm_facts['hw_esxi_host']
             info['datastore'] = vm_facts['hw_datastores']
-            info['vm_fodler'] = vm_facts['hw_folder']
+            info['vm_folder'] = vm_facts['hw_folder']
             info['power_on'] = vm_facts['hw_power_status']
         return info
 
