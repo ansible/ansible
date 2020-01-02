@@ -4,7 +4,7 @@ set -eux
 
 source virtualenv.sh
 
-pip install -U jinja2
+pip install -U git+https://github.com/pallets/jinja.git@the-great-rename
 
 ANSIBLE_ROLES_PATH=../
 export ANSIBLE_ROLES_PATH
