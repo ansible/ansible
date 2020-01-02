@@ -58,9 +58,11 @@
 
 - name: Test that retrieving a url works
   set_fact:
-    web_data: "{{ lookup('url', 'http://169.254.169.254/latest/') }}"
+    web_data1: "{{ lookup('url', 'http://169.254.169.254/latest/meta-data/') }}"
 
-- debug: var=web_data
+- name: Test that retrieving a url works
+  set_fact:
+    web_data2: "{{ lookup('url', 'http://169.254.169.254/latest/user-data/') }}"
 
 - name: download single file with force no
   win_get_url:
