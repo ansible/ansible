@@ -1,7 +1,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleLookupError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
 
 try:
