@@ -58,7 +58,7 @@
 
 - name: Test that retrieving a url works
   set_fact:
-    web_data: "{{ lookup('url', 'http://169.254.169.254') }}"
+    web_data: "{{ lookup('url', 'http://169.254.169.254/latest/') }}"
 
 - debug: var=web_data
 
