@@ -536,7 +536,7 @@ class DockerSocketHandler:
         if data is None:
             # no data available
             return
-        display.vvv('read {0} bytes'.format(len(data)), host=self._container)
+        display.vvvv('read {0} bytes'.format(len(data)), host=self._container)
         if len(data) == 0:
             # Stream EOF
             self._eof = True
@@ -567,7 +567,7 @@ class DockerSocketHandler:
             else:
                 written = os.write(self._sock.fileno(), self._write_buffer)
             self._write_buffer = self._write_buffer[written:]
-            display.vvv('wrote {0} bytes, {1} are left'.format(written, len(self._write_buffer)), host=self._container)
+            display.vvvv('wrote {0} bytes, {1} are left'.format(written, len(self._write_buffer)), host=self._container)
             if len(self._write_buffer) > 0:
                 self._selector.modify(self._sock, selectors.EVENT_READ | selectors.EVENT_WRITE)
             else:
