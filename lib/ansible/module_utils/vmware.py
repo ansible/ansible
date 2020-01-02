@@ -170,6 +170,10 @@ def find_datastore_by_name(content, datastore_name, datacenter_name=None):
     return find_object_by_name(content, datastore_name, [vim.Datastore], datacenter_name)
 
 
+def find_folder_by_name(content, folder_name):
+    return find_object_by_name(content, folder_name, [vim.Folder])
+
+
 def find_dvs_by_name(content, switch_name, folder=None):
     return find_object_by_name(content, switch_name, [vim.DistributedVirtualSwitch], folder=folder)
 
@@ -500,12 +504,12 @@ def vmware_argument_spec():
     )
 
 
-def connect_to_api(module, disconnect_atexit=True, return_si=False):
-    hostname = module.params['hostname']
-    username = module.params['username']
-    password = module.params['password']
-    port = module.params.get('port', 443)
-    validate_certs = module.params['validate_certs']
+def connect_to_api(module, disconnect_atexit=True, return_si=False, hostname=None, username=None, password=None, port=None, validate_certs=None):
+    hostname = hostname if hostname else module.params['hostname']
+    username = username if username else module.params['username']
+    password = password if password else module.params['password']
+    port = port if port else module.params.get('port', 443)
+    validate_certs = validate_certs if validate_certs else module.params['validate_certs']
 
     if not hostname:
         module.fail_json(msg="Hostname parameter is missing."
