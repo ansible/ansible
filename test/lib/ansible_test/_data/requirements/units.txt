@@ -1,5 +1,5 @@
 cryptography
-jinja2
+git+https://github.com/pallets/jinja.git@the-great-rename
 mock
 pytest
 pytest-mock

@@ -1,5 +1,5 @@
 cryptography
-jinja2
+git+https://github.com/pallets/jinja.git@the-great-rename
 junit-xml
 ordereddict ; python_version < '2.7'
 pyyaml
