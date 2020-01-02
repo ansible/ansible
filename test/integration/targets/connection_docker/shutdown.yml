@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    docker_skip_cleanup: yes
+
+  tasks:
+    - name: Remove docker packages
+      action: "{{ ansible_facts.pkg_mgr }}"
+      args:
+        name:
+          - docker
+          - docker-ce
+          - docker-ce-cli
+        state: absent

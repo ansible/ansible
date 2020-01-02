@@ -1,6 +1,8 @@
 ---
 - hosts: localhost
   connection: local
+  vars:
+    docker_skip_cleanup: yes
 
   tasks:
     - name: Setup docker

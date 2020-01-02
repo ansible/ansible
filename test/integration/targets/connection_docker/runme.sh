@@ -12,6 +12,8 @@ ANSIBLE_ROLES_PATH=.. ansible-playbook setup.yml
 cleanup() {
     echo "Cleanup"
     docker rm -f ${DOCKER_CONTAINERS}
+    echo "Shutdown"
+    ANSIBLE_ROLES_PATH=.. ansible-playbook shutdown.yml
     echo "Done"
     exit 0
 }
