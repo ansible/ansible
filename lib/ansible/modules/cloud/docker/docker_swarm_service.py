@@ -2270,10 +2270,16 @@ class DockerServiceManager(object):
 
         healthcheck_data = task_template_data['ContainerSpec'].get('Healthcheck')
         if healthcheck_data:
-            options = ['test', 'interval', 'timeout', 'start_period', 'retries']
+            options = {
+                'Test': 'test',
+                'Interval': 'interval',
+                'Timeout': 'timeout',
+                'StartPeriod': 'start_period',
+                'Retries': 'retries'
+            }
             healthcheck = dict(
-                (key.lower(), value) for key, value in healthcheck_data.items()
-                if value is not None and key.lower() in options
+                (options[key], value) for key, value in healthcheck_data.items()
+                if value is not None and key in options
             )
             ds.healthcheck = healthcheck
 
@@ -2882,8 +2888,8 @@ def main():
             usage_msg='set publish.mode'
         ),
         healthcheck_start_period=dict(
-            docker_py_version='2.4.0',
-            docker_api_version='1.25',
+            docker_py_version='2.6.0',
+            docker_api_version='1.29',
             detect_usage=_detect_healthcheck_start_period,
             usage_msg='set healthcheck.start_period'
         ),
