@@ -47,3 +47,7 @@ pylint == 2.3.1
 typed-ast == 1.4.0  # 1.4.0 is required to compile on Python 3.8
 wrapt == 1.11.1
 semantic_version == 2.6.0 # newer versions are not supported on Python 2.6
+
+# jinja
+jinja2 == 2.11.0 ; python_version >= '2.7' --no-binary jinja,jinja2
+jinja == 2.11.0.dev0 ; python_version >= '2.7' --no-binary jinja,jinja2

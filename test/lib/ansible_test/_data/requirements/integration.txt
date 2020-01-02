@@ -1,8 +1,7 @@
 --extra-index-url https://sivel.eng.ansible.com/
-jinja2==2.11.0 ; python_version >= '2.7' --no-binary jinja,jinja2
-jinja==2.11.0.dev0 ; python_version >= '2.7' --no-binary jinja,jinja2
 cryptography
-jinja2 ; python_version < '2.7'
+jinja ; python_version >= '2.7'
+jinja2
 junit-xml
 ordereddict ; python_version < '2.7'
 pyyaml
