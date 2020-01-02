@@ -58,16 +58,16 @@
 
 - win_get_url:
     url: http://169.254.169.254/latest/meta-data/
-    dest: '{{ testing_dir }}\output1.txt'
+    dest: 'C:\Users\Administrator\AppData\Local\Temp\output1.txt'
 
-- win_shell: Get-Content -Path '{{ testing_dir }}\output1.txt'
+- win_shell: Get-Content -Path 'C:\Users\Administrator\AppData\Local\Temp\output1.txt'
   register: output1
 
 - win_get_url:
     url: http://169.254.169.254/latest/user-data/
-    dest: '{{ testing_dir }}\output2.txt'
+    dest: 'C:\Users\Administrator\AppData\Local\Temp\output2.txt'
 
-- win_shell: Get-Content -Path '{{ testing_dir }}\output2.txt'
+- win_shell: Get-Content -Path 'C:\Users\Administrator\AppData\Local\Temp\output2.txt'
   register: output2
 
 - name: download single file with force no
