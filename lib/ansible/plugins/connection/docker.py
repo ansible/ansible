@@ -71,6 +71,7 @@ import io
 import os
 import os.path
 import re
+import socket as pysocket
 import subprocess
 import tarfile
 import traceback
@@ -79,6 +80,7 @@ from distutils.version import LooseVersion
 
 from ansible.compat import selectors
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
@@ -527,7 +529,12 @@ class DockerSocketHandler:
     def _read(self):
         if self._eof:
             return
-        data = self._sock.read()
+        if hasattr(self._sock, 'recv'):
+            data = self._sock.recv(4096)
+        elif PY3 and isinstance(self._sock, getattr(pysocket, 'SocketIO')):
+            data = self._sock.read()
+        else:
+            data = os.read(self._sock.fileno())
         if data is None:
             # no data available
             return
@@ -564,7 +571,10 @@ class DockerSocketHandler:
 
     def _write(self):
         if len(self._write_buffer) > 0:
-            written = self._sock.write(self._write_buffer)
+            if hasattr(self._sock, 'send'):
+                written = self._sock.send(self._write_buffer)
+            else:
+                written = os.write(self._sock.fileno(), self._write_buffer)
             self._write_buffer = self._write_buffer[written:]
             display.vvv('wrote {0} bytes, {1} are left'.format(written, len(self._write_buffer)), host=self._container)
         if len(self._write_buffer) == 0:
