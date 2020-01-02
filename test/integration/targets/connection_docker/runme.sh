@@ -33,7 +33,7 @@ trap cleanup INT TERM EXIT
 
 echo "Start containers"
 for CONTAINER in ${DOCKER_CONTAINERS}; do
-    docker run --rm --name ${CONTAINER} --detach python:3 /bin/sh -c 'sleep 10m'
+    docker run --rm --name ${CONTAINER} --detach python:3-alpine /bin/sh -c 'sleep 10m'
     echo ${CONTAINER}
 done
 
