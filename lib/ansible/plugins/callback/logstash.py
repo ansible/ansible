@@ -20,16 +20,25 @@ DOCUMENTATION = '''
         description: Address of the Logstash server
         env:
           - name: LOGSTASH_SERVER
+        ini:
+          - section: callback_logstash
+            key: server
         default: localhost
       port:
         description: Port on which logstash is listening
         env:
             - name: LOGSTASH_PORT
+        ini:
+          - section: callback_logstash
+            key: port
         default: 5000
       type:
         description: Message type
         env:
           - name: LOGSTASH_TYPE
+        ini:
+          - section: callback_logstash
+            key: type
         default: ansible
 '''
 
@@ -69,7 +78,7 @@ class CallbackModule(CallbackBase):
     Requires:
         python-logstash
 
-    This plugin makes use of the following environment variables:
+    This plugin makes use of the following environment variables or ini config:
         LOGSTASH_SERVER   (optional): defaults to localhost
         LOGSTASH_PORT     (optional): defaults to 5000
         LOGSTASH_TYPE     (optional): defaults to ansible
@@ -80,29 +89,39 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'logstash'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def __init__(self):
-        super(CallbackModule, self).__init__()
+    def __init__(self, display=None):
+        super(CallbackModule, self).__init__(display=display)
 
         if not HAS_LOGSTASH:
             self.disabled = True
             self._display.warning("The required python-logstash is not installed. "
                                   "pip install python-logstash")
-        else:
-            self.logger = logging.getLogger('python-logstash-logger')
-            self.logger.setLevel(logging.DEBUG)
 
-            self.handler = logstash.TCPLogstashHandler(
-                os.getenv('LOGSTASH_SERVER', 'localhost'),
-                int(os.getenv('LOGSTASH_PORT', 5000)),
-                version=1,
-                message_type=os.getenv('LOGSTASH_TYPE', 'ansible')
-            )
-
-            self.logger.addHandler(self.handler)
-            self.hostname = socket.gethostname()
-            self.session = str(uuid.uuid1())
-            self.errors = 0
         self.start_time = datetime.utcnow()
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        self.logger = logging.getLogger('python-logstash-logger')
+        self.logger.setLevel(logging.DEBUG)
+
+        self.logstash_server = self.get_option('server')
+        self.logstash_port = self.get_option('port')
+        self.logstash_type = self.get_option('type')
+        self.handler = logstash.TCPLogstashHandler(
+            self.logstash_server,
+            int(self.logstash_port),
+            version=1,
+            message_type=self.logstash_type
+        )
+        self.logger.addHandler(self.handler)
+        self.hostname = socket.gethostname()
+        self.session = str(uuid.uuid1())
+        self.errors = 0
+        print(self.get_option('server'))
+        print(self.logstash_port)
+        print(self.logstash_type)
 
     def v2_playbook_on_start(self, playbook):
         self.playbook = playbook._file_name
