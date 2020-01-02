@@ -218,6 +218,7 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     recreate: yes
+    removal_wait_timeout: 10
     state: started
     force_kill: yes
   register: recreate_5
@@ -229,6 +230,7 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     recreate: yes
+    removal_wait_timeout: 10
     state: started
     force_kill: yes
   register: recreate_6
