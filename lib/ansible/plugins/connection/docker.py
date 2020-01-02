@@ -74,7 +74,6 @@ import re
 import socket as pysocket
 import subprocess
 import tarfile
-import traceback
 
 from distutils.version import LooseVersion
 
@@ -627,19 +626,16 @@ class DockerPyDriver:
             if e.response and e.response.status_code == 409:
                 raise AnsibleConnectionFailure('The container "{1}" has been paused ({0})'.format(e, play_context.remote_addr))
             self.client.fail(
-                'An unexpected docker error occurred for container "{1}": {0}'.format(e, play_context.remote_addr),
-                exception=traceback.format_exc()
+                'An unexpected docker error occurred for container "{1}": {0}'.format(e, play_context.remote_addr)
             )
         except DockerException as e:
             self.client.fail(
-                'An unexpected docker error occurred for container "{1}": {0}'.format(e, play_context.remote_addr),
-                exception=traceback.format_exc()
+                'An unexpected docker error occurred for container "{1}": {0}'.format(e, play_context.remote_addr)
             )
         except RequestException as e:
             self.client.fail(
                 'An unexpected requests error occurred for container "{1}" when docker-py tried to talk to the docker daemon: {0}'
-                .format(e, play_context.remote_addr),
-                exception=traceback.format_exc()
+                .format(e, play_context.remote_addr)
             )
 
     def __init__(self, connection_display, play_context, connection_plugin):
