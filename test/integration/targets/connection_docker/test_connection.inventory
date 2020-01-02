@@ -29,3 +29,4 @@ docker_driver=auto
 [docker_all:vars]
 ansible_host=docker-connection-test-container
 ansible_connection=docker
+ansible_python_interpreter=/usr/bin/python3
