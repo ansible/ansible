@@ -1,0 +1,5 @@
+---
+- hosts: docker_auto
+  gather_facts: no
+  tasks:
+    - command: ls

@@ -24,5 +24,8 @@ for CONTAINER in ${DOCKER_CONTAINERS}; do
     echo ${CONTAINER}
 done
 
+echo "Run autodetection test"
+ansible-playbook -vvv -i test_connection.inventory test-auto.yml
+
 echo "Run tests"
 ./runme-connection.sh
