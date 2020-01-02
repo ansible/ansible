@@ -1,4 +1,4 @@
---extra-index-url https://sivel.eng.ansible.com/
+--extra-index-url https://sivel.eng.ansible.com/pypi/
 cryptography
 jinja ; python_version >= '2.7'
 jinja2
