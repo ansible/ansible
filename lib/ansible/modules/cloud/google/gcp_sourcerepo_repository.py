@@ -166,7 +166,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module))
+                update(module, self_link(module), fetch)
                 fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
@@ -190,9 +190,17 @@ def create(module, link):
     return return_if_object(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link):
-    delete(module, self_link(module))
-    create(module, collection(module))
+def update(module, link, fetch):
+    auth = GcpSession(module, 'sourcerepo')
+    params = {'updateMask': updateMask(resource_to_request(module), response_to_hash(module, fetch))}
+    request = resource_to_request(module)
+    del request['name']
+    return return_if_object(module, auth.patch(link, request, params=params))
+
+
+def updateMask(request, response):
+    update_mask = []
+    return ','.join(update_mask)
 
 
 def delete(module, link):

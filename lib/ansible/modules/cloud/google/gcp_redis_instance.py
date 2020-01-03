@@ -89,7 +89,7 @@ options:
     type: str
   name:
     description:
-    - The ID of the instance or a fully qualified identifier for the instance. .
+    - The ID of the instance or a fully qualified identifier for the instance.
     required: true
     type: str
   memory_size_gb:
@@ -267,7 +267,7 @@ locationId:
   type: str
 name:
   description:
-  - The ID of the instance or a fully qualified identifier for the instance. .
+  - The ID of the instance or a fully qualified identifier for the instance.
   returned: success
   type: str
 memorySizeGb:
