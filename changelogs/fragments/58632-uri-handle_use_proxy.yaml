@@ -1,0 +1,2 @@
+bugfixes:
+  - uri - properly honor use_proxy parameter
