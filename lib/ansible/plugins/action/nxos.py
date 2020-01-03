@@ -41,7 +41,8 @@ class ActionModule(ActionNetworkModule):
         self._config_module = True if module_name == 'nxos_config' else False
         persistent_connection = self._play_context.connection.split('.')[-1]
 
-        if self._play_context.connection in ('httpapi', 'local') and module_name in ('nxos_file_copy', 'nxos_nxapi'):
+        if (self._play_context.connection in ('httpapi', 'local') or self._task.args.get('provider', {}).get('transport') == 'nxapi') \
+                and module_name in ('nxos_file_copy', 'nxos_nxapi'):
             return {'failed': True, 'msg': "Transport type 'nxapi' is not valid for '%s' module." % (module_name)}
 
         if module_name == 'nxos_file_copy':
