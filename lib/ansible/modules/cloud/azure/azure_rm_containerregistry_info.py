@@ -159,9 +159,6 @@ class AzureRMContainerRegistryInfo(AzureRMModuleBase):
             name=dict(
                 type='str'
             ),
-            tags=dict(
-                type='list'
-            ),
             retrieve_credentials=dict(
                 type='bool',
                 default=False
@@ -175,7 +172,7 @@ class AzureRMContainerRegistryInfo(AzureRMModuleBase):
         self.name = None
         self.retrieve_credentials = False
 
-        super(AzureRMContainerRegistryInfo, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMContainerRegistryFacts, self).__init__(self.module_arg_spec, supports_tags=True, facts_module=True)
 
     def exec_module(self, **kwargs):
 
@@ -183,7 +180,7 @@ class AzureRMContainerRegistryInfo(AzureRMModuleBase):
         if is_old_facts:
             self.module.deprecate("The 'azure_rm_containerregistry_facts' module has been renamed to 'azure_rm_containerregistry_info'", version='2.13')
 
-        for key in self.module_arg_spec:
+        for key in list(self.module_arg_spec) + ['tags']:
             setattr(self, key, kwargs[key])
 
         if self.name:
