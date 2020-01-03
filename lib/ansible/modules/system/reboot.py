@@ -79,6 +79,11 @@ EXAMPLES = r'''
 - name: Reboot a slow machine that might have lots of updates to apply
   reboot:
     reboot_timeout: 3600
+
+- name: Reboot a machine with shutdown command in unusual place
+  reboot:
+    search_paths:
+     - '/lib/molly-guard'
 '''
 
 RETURN = r'''
