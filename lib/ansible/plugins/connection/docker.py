@@ -485,9 +485,10 @@ class AnsibleDockerClient(AnsibleDockerClientBase):
 
 class DockerSocketHandler:
     def __init__(self, sock, container=None):
-        # Unfortunately necessary; see https://github.com/docker/docker-py/issues/983#issuecomment-492513718
-        sock._writing = True
-        sock._sock.setblocking(0)
+        if hasattr(sock, '_sock'):
+            sock._sock.setblocking(0)
+        else:
+            fcntl.fcntl(sock.fileno(), fcntl.F_SETFL, fcntl.fcntl(sock.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
 
         self._container = container
 
@@ -566,11 +567,15 @@ class DockerSocketHandler:
             self._end_of_writing = False
             display.vvvv('Shutting socket down for writing', host=self._container)
             if hasattr(self._sock, 'shutdown'):
-                self._sock.shutdown(pysocket.SHUT_WR)
+                try:
+                    self._sock.shutdown(pysocket.SHUT_WR)
+                except TypeError as e:
+                    # TypeError: shutdown() takes 1 positional argument but 2 were given
+                    display.vvvv('No idea how to signal end of writing: {0}'.format(e), host=self._container)
             elif PY3 and isinstance(self._sock, getattr(pysocket, 'SocketIO')):
                 self._sock._sock.shutdown(pysocket.SHUT_WR)
             else:
-                display.warning('No idea how to signal end of writing', host=self._container)
+                display.vvvv('No idea how to signal end of writing', host=self._container)
 
     def _write(self):
         if len(self._write_buffer) > 0:

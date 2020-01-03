@@ -1,10 +1,10 @@
 [docker_cli]
-docker-cli-pipelining         ansible_pipelining=true
 docker-cli-no-pipelining      ansible_pipelining=false
+docker-cli-pipelining         ansible_pipelining=true
 
 [docker_dockerpy]
-docker-dockerpy-pipelining    ansible_pipelining=true
 docker-dockerpy-no-pipelining ansible_pipelining=false
+docker-dockerpy-pipelining    ansible_pipelining=true
 
 [docker_auto]
 docker-auto
