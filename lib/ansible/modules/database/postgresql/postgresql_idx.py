@@ -528,7 +528,7 @@ def main():
     schema = module.params["schema"]
 
     if concurrent and cascade:
-        module.fail_json(msg="Cuncurrent mode and cascade parameters are mutually exclusive")
+         module.fail_json(msg="Concurrent mode and cascade parameters are mutually exclusive")
 
     if concurrent and unique:
         module.fail_json(msg="Cuncurrent mode and unique parameters are mutually exclusive")
