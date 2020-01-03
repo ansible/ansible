@@ -100,6 +100,7 @@ options:
     - Mutually exclusive with I(state=absent).
     type: bool
     default: no
+    version_added: '2.10'
   tablespace:
     description:
     - Set a tablespace for the index.
