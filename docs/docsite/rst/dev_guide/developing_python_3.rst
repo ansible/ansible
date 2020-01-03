@@ -306,10 +306,10 @@ We do not prefix the text strings instead because we only operate
 on byte strings at the borders, so there are fewer variables that need bytes
 than text.
 
-Import Ansible's bundled ``python-six`` library
+Import Ansible's bundled Python ``six`` library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The third-party `python-six <https://pythonhosted.org/six/>`_ library exists
+The third-party Python `six <https://pypi.org/project/six/>`_ library exists
 to help projects create code that runs on both Python 2 and Python 3.  Ansible
 includes a version of the library in module_utils so that other modules can use it
 without requiring that it is installed on the remote system.  To make use of
