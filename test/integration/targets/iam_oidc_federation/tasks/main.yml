@@ -1,0 +1,169 @@
+- module_defaults:
+    group/aws:
+      region: "{{ aws_region }}"
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+  block:
+    - name: Set facts for tests
+      set_fact:
+        url: oidc.eks.us-east-1.amazonaws.com/id/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        thumbprints:
+          - beaa37307e5f6d89a7f803982ccde2da50063438
+          - 83436005ad2edcc289308f7a98d6f5e70373aaeb
+        client_ids:
+          - sts.amazonaws.com
+          - sts.example.org
+    # ============================================================
+    #   TESTS
+    - name: Create the identity provider
+      iam_oidc_federation:
+        url: "https://{{ url }}"
+        state: present
+        thumbprints:
+          - "{{ thumbprints[0] }}"
+        client_ids:
+          - "{{ client_ids[0] }}"
+      register: create_result
+
+    - name: Assert IdP was created
+      assert:
+        that:
+          - create_result is changed
+
+    - name: Assert url is correct
+      assert:
+        that:
+          - "create_result.oidc_provider.url == {{ url }}"
+
+    - name: Assert thumbprints are correct
+      assert:
+        that:
+          - "create_result.oidc_provider.thumbprint_list == ['{{ thumbprints[0] }}']"
+
+    - name: Assert client_ids are correct
+      assert:
+        that:
+          - "create_result.oidc_provider.client_id_list == ['{{ client_ids[0] }}']"
+
+    - name: Test that nothing changes when we retry
+      iam_oidc_federation:
+        url: "https://{{ url }}"
+        state: present
+        thumbprints:
+          - "{{ thumbprints[0] }}"
+        client_ids:
+          - "{{ client_ids[0] }}"
+      register: create_result
+
+    - name: Assert that the IdP doesn't change when we retry
+      assert:
+        that:
+          - create_result is not changed
+
+    - name: Test support for adding multiple thumbprints and client_ids
+      iam_oidc_federation:
+        url: "https://{{ url }}"
+        state: present
+        thumbprints: thumbprints
+        client_ids: client_ids
+      register: change_result
+
+    - name: Assert IdP has been changed
+      assert:
+        that:
+          - change_result is changed
+
+    - name: Assert new thumbprints are correct
+      assert:
+        that:
+          - "(create_result.oidc_provider.thumbprint_list|sort) == (thumbprints|sort)"
+
+    - name: Assert new client_ids are correct
+      assert:
+        that:
+          - "(create_result.oidc_provider.client_id_list|sort) == (client_ids|sort)"
+
+    - name: Test that nothing changes when we retry
+      iam_oidc_federation:
+        url: "https://{{ url }}"
+        state: present
+        thumbprints: thumbprints
+        client_ids: client_ids
+      register: change_result
+
+    - name: Assert that the IdP doesn't change when we retry
+      assert:
+        that:
+          - create_result is not changed
+
+    - name: Test support for removing IdP thumbprint and client_id
+      iam_oidc_federation:
+        url: "https://{{ url }}"
+        state: present
+        thumbprints:
+          - "{{ thumbprints[1] }}"
+        client_ids:
+          - "{{ client_ids[1] }}"
+      register: change_result
+
+    - name: Assert IdP has been changed
+      assert:
+        that:
+          - change_result is changed
+
+    - name: Assert new thumbprints are correct
+      assert:
+        that:
+          - "create_result.oidc_provider.thumbprint_list == ['{{ thumbprints[1] }}']"
+
+    - name: Assert new client_ids are correct
+      assert:
+        that:
+          - "create_result.oidc_provider.client_id_list == ['{{ client_ids[1] }}']"
+
+    - name: Test that nothing changes when we retry
+      iam_oidc_federation:
+        url: "https://{{ url }}"
+        state: present
+        thumbprints:
+          - "{{ thumbprints[1] }}"
+        client_ids:
+          - "{{ client_ids[1] }}"
+      register: change_result
+
+    - name: Assert the IdP doesn't change when we retry
+      assert:
+        that:
+          - change_result is not changed
+
+    - name: Delete the identity provider
+      iam_oidc_federation:
+        url: https://oidc.eks.us-east-1.amazonaws.com/id/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        state: absent
+      register: destroy_result
+
+    - name: Assert IdP is deleted
+      assert:
+        that:
+          - destroy_result is changed
+
+    - name: Attempt to re-delete the identity provider
+      iam_oidc_federation:
+        url: https://oidc.eks.us-east-1.amazonaws.com/id/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        state: absent
+      register: destroy_result
+
+    - name: Assert IdP was already deleted
+      assert:
+        that:
+          - destroy_result is not changed
+
+  always:
+    # ============================================================
+    #   CLEAN-UP
+    - name: Finish by deleting the identity provider
+      iam_oidc_federation:
+        url: "https://{{ url }}"
+        state: absent
+      register: destroy_result
