@@ -87,7 +87,6 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, get_aws_connection_info, boto3_conn
 import json
 import datetime
-import sys
 import re
 
 
@@ -365,8 +364,6 @@ def main():
         client = boto3_conn(module, **aws_connect_kwargs)
     except ClientError as e:
         module.fail_json_aws(e, "trying to set up boto connection")
-
-    this_module = sys.modules[__name__]
 
     invocations = dict(
         aliases='alias_details',
