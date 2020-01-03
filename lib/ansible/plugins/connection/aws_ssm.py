@@ -439,7 +439,7 @@ class Connection(ConnectionBase):
 
     def _filter_ansi(self, line):
         ''' remove any ANSI terminal control codes '''
-        line = line.decode('utf-8')
+        line = to_text(line)
 
         if self.is_windows:
             ansi_filter = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]')
