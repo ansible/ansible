@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_monitordiagnosticsettings_facts
-version_added: "2.9"
+version_added: "2.10"
 short_description: Get information of Azure monitor diagnostic setting
 description:
     - Get information of Azure monitor diagnostic setting.
@@ -29,6 +29,7 @@ options:
             - The target which is the diagnostic settings used for.
             - The identifier of the resource.
             - It can also be a dict contains I(name), I(namespace), I(types), I(resource_group) and optional I(subscription_id).
+        required: true
         type: raw
     show_category:
         description:

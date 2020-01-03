@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_monitordiagnosticsettings
-version_added: "2.9"
+version_added: "2.10"
 short_description: Manage Azure monitor diagnostic setting
 description:
     - Create, updata and delete an Azure monitor diagnostic setting.
@@ -24,12 +24,14 @@ options:
     name:
         description:
             - The name of the diagnostic setting.
+        required: true
         type: str
     resource_id:
         description:
             - The target which is the diagnostic settings used for.
             - The identifier of the resource.
             - It can also be a dict contains I(name), I(namespace), I(types), I(resource_group) and optional I(subscription_id).
+        required: true
         type: raw
     state:
         default: present
