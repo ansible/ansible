@@ -353,7 +353,7 @@ class AzureRMManagedDisk(AzureRMModuleBase):
     def attach(self, vm_name, disk):
         vm = self._get_vm(vm_name)
         # find the lun
-        if self.lun == 0 or self.lun:
+        if self.lun:
             lun = self.lun
         else:
             luns = ([d.lun for d in vm.storage_profile.data_disks]
