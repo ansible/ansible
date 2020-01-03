@@ -121,6 +121,29 @@ EXAMPLES = '''
     last_snapshot_min_age: 60
 '''
 
+RETURN = '''
+snapshot_id:
+    description: The ID of the snapshot. Each snapshot receives a unique identifier when it is created.
+    type: str
+    returned: always
+    sample: snap-01234567
+tags:
+    description: Any tags assigned to the snapshot.
+    type: dict
+    returned: always
+    sample: "{ 'Name': 'instance-name' }"
+volume_id:
+    description: The ID of the volume that was used to create the snapshot.
+    type: str
+    returned: always
+    sample: vol-01234567
+volume_size:
+    description: The size of the volume, in GiB.
+    type: int
+    returned: always
+    sample: 8
+'''
+
 import time
 import datetime
 

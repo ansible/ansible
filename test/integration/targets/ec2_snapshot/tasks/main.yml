@@ -77,6 +77,9 @@
           - result is changed
           - info_result.snapshots| length == 1
           - info_result.snapshots[0].snapshot_id == result.snapshot_id
+          - info_result.snapshots[0].volume_id == result.volume_id
+          - info_result.snapshots[0].volume_size == result.volume_size
+          - info_result.snapshots[0].tags == result.tags
 
 #    JR: Check mode not supported
 #    - name: Take snapshot if most recent >1hr (False) (check mode)
@@ -164,7 +167,7 @@
         volume_id: '{{ volume_id }}'
         snapshot_tags:
           MyTag: '{{ resource_prefix }}'
-      register: result
+      register: tagged_result
 
     - name: Get info about snapshots by tag
       ec2_snapshot_info:
@@ -172,13 +175,16 @@
           "tag:MyTag": '{{ resource_prefix }}'
       register: tag_info_result
 
+    - set_fact:
+        tagged_snapshot_id: '{{ tag_info_result.snapshots[0].snapshot_id }}'
+
     - assert:
         that:
-          - result is changed
-          - result.tags| length == 2
+          - tagged_result is changed
+          - tagged_result.tags| length == 2
           - tag_info_result.snapshots| length == 1
-          - result.tags.MyTag == "{{ resource_prefix }}"
-          - '"{{ result.snapshot_id }}" in "{{ tag_info_result| json_query("snapshots[].snapshot_id") }}"'
+          - tagged_result.tags.MyTag == "{{ resource_prefix }}"
+          - '"{{ tagged_result.snapshot_id }}" == "{{ tagged_snapshot_id }}"'
 
     - name: Get info about all snapshots for this test
       ec2_snapshot_info:
@@ -193,7 +199,7 @@
     - name: Delete the tagged snapshot
       ec2_snapshot:
         state: absent
-        snapshot_id: '{{ tag_info_result.snapshots[0].snapshot_id }}'
+        snapshot_id: '{{ tagged_snapshot_id }}'
 
     - name: Get info about all snapshots for this test
       ec2_snapshot_info:
@@ -204,7 +210,7 @@
     - assert:
         that:
           - info_result.snapshots| length == 2
-          - '"{{ tag_info_result.snapshots[0].snapshot_id }}" not in "{{ info_result| json_query("snapshots[].snapshot_id") }}"'
+          - '"{{ tagged_snapshot_id }}" not in "{{ info_result| json_query("snapshots[].snapshot_id") }}"'
 
     - name: Delete snapshots
       ec2_snapshot:
