@@ -61,7 +61,7 @@ EXAMPLES = '''
 - name: Searching all EFS instances with tag Name = 'myTestNameTag', in subnet 'subnet-1a2b3c4d' and with security group 'sg-4d3c2b1a'
   efs_info:
     tags:
-        name: myTestNameTag
+        Name: myTestNameTag
     targets:
         - subnet-1a2b3c4d
         - sg-4d3c2b1a
