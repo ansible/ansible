@@ -530,7 +530,7 @@ def main():
         module.fail_json(msg="Concurrent mode and cascade parameters are mutually exclusive")
 
     if unique and (idxtype and idxtype != 'btree'):
-        module.fail_json(msg="Only btree currently supports unique indexes.")
+        module.fail_json(msg="Only btree currently supports unique indexes")
 
     if state == 'present':
         if not table:

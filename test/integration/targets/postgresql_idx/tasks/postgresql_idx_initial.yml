@@ -296,7 +296,7 @@
 - assert:
     that:
     - result is not changed
-    - result.msg == 'Only btree currently supports unique indexes.'
+    - result.msg == 'Only btree currently supports unique indexes'
 
 # Get idx stat in check mode
 - name: postgresql_idx - test state stat in check_mode
