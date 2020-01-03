@@ -185,6 +185,16 @@ resources:
       - URL to a Network that should handle matching packets.
       returned: success
       type: str
+    nextHopIlb:
+      description:
+      - The URL to a forwarding rule of type loadBalancingScheme=INTERNAL that should
+        handle matching packets.
+      - 'You can only specify the forwarding rule as a partial or full URL. For example,
+        the following are all valid URLs: U(https://www.googleapis.com/compute/v1/projects/project/regions/region/forwardingRules/forwardingRule)
+        regions/region/forwardingRules/forwardingRule Note that this can only be used
+        when the destinationRange is a public (non-RFC 1918) IP CIDR range.'
+      returned: success
+      type: dict
 '''
 
 ################################################################################
