@@ -99,7 +99,7 @@ options:
     - Enable unique index.
     - Mutually exclusive with I(state=absent).
     type: bool
-    default: no 
+    default: no
   tablespace:
     description:
     - Set a tablespace for the index.
@@ -211,7 +211,7 @@ EXAMPLES = r'''
     db: mydb
     idxname: test_idx
     state: stat
-    
+
 - name: Create unique btree index if not exists test_unique_idx on column name of table products
   postgresql_idx:
     db: acme
@@ -411,12 +411,12 @@ class Index(object):
             idxtype = "BTREE"
 
         query = 'CREATE'
-        
+
         if unique:
             query += ' UNIQUE'
-        
-        query += ' INDEX
-        
+
+        query += ' INDEX'
+
         if concurrent:
             query += ' CONCURRENTLY'
 
