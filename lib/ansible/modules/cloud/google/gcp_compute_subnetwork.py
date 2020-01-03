@@ -257,12 +257,6 @@ network:
   - Only networks that are in the distributed mode can have subnetworks.
   returned: success
   type: dict
-fingerprint:
-  description:
-  - Fingerprint of this resource. This field is used internally during updates of
-    this resource.
-  returned: success
-  type: str
 secondaryIpRanges:
   description:
   - An array of configurations for secondary IP ranges for VM instances contained
@@ -375,7 +369,7 @@ def update_fields(module, request, response):
     if response.get('ipCidrRange') != request.get('ipCidrRange'):
         ip_cidr_range_update(module, request, response)
     if response.get('secondaryIpRanges') != request.get('secondaryIpRanges'):
-        fingerprint_update(module, request, response)
+        secondary_ip_ranges_update(module, request, response)
     if response.get('privateIpGoogleAccess') != request.get('privateIpGoogleAccess'):
         private_ip_google_access_update(module, request, response)
 
@@ -388,14 +382,11 @@ def ip_cidr_range_update(module, request, response):
     )
 
 
-def fingerprint_update(module, request, response):
+def secondary_ip_ranges_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.patch(
         ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/regions/{region}/subnetworks/{name}"]).format(**module.params),
-        {
-            u'fingerprint': response.get('fingerprint'),
-            u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(module.params.get('secondary_ip_ranges', []), module).to_request(),
-        },
+        {u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(module.params.get('secondary_ip_ranges', []), module).to_request()},
     )
 
 
@@ -496,7 +487,6 @@ def response_to_hash(module, response):
         u'ipCidrRange': response.get(u'ipCidrRange'),
         u'name': response.get(u'name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
-        u'fingerprint': response.get(u'fingerprint'),
         u'secondaryIpRanges': SubnetworkSecondaryiprangesArray(response.get(u'secondaryIpRanges', []), module).from_response(),
         u'privateIpGoogleAccess': response.get(u'privateIpGoogleAccess'),
         u'region': module.params.get('region'),
