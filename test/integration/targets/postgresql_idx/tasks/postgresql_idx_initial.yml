@@ -263,7 +263,6 @@
     columns: story
     idxname: test_unique0_idx
     unique: yes
-    concurrent: no
   register: result
   ignore_errors: yes
 
@@ -277,25 +276,7 @@
     - result.tblspace == ''
     - result.storage_params == []
     - result.schema == 'public'
-    - result.query == 'CREATE UNIQUE INDEX test_unique0_idx ON public.test_table USING BTREE (story)'
-
-- name: postgresql_idx - check the mutuality of concurrent and unique params
-  become_user: "{{ pg_user }}"
-  become: yes
-  postgresql_idx:
-    db: postgres
-    login_user: "{{ pg_user }}"
-    table: test_table
-    columns: story
-    idxname: test_unique0_idx
-    unique: yes
-  register: result
-  ignore_errors: yes
-
-- assert:
-    that:
-    - result is not changed
-    - result.msg == 'Cuncurrent mode and unique parameters are mutually exclusive'
+    - result.query == 'CREATE UNIQUE INDEX CONCURRENTLY test_unique0_idx ON public.test_table USING BTREE (story)'
 
 - name: postgresql_idx - avoid unique index with type different of btree
   become_user: "{{ pg_user }}"
