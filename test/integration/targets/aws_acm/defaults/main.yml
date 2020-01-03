@@ -7,20 +7,20 @@ local_certs:
   - priv_key: "{{ remote_tmp_dir }}/private-1.pem"
     cert: "{{ remote_tmp_dir }}/public-1.pem"
     csr: "{{ remote_tmp_dir }}/csr-1.csr"
-    domain: acm1.ansible.com
-    name: "{{ resource_prefix }}_1"
+    domain: "acm1.{{ aws_acm_test_uuid }}.ansible.com"
+    name: "{{ resource_prefix }}_{{ aws_acm_test_uuid }}_1"
     
   - priv_key: "{{ remote_tmp_dir }}/private-2.pem"
     cert: "{{ remote_tmp_dir }}/public-2.pem"
     csr: "{{ remote_tmp_dir }}/csr-2.csr"
-    domain: acm2.ansible.com
-    name: "{{ resource_prefix }}_2"
+    domain: "acm2.{{ aws_acm_test_uuid }}.ansible.com"
+    name: "{{ resource_prefix }}_{{ aws_acm_test_uuid }}_2"
     
   - priv_key: "{{ remote_tmp_dir }}/private-3.pem"
     cert: "{{ remote_tmp_dir }}/public-3.pem"
     csr: "{{ remote_tmp_dir }}/csr-3.csr"
-    domain: acm3.ansible.com
-    name: "{{ resource_prefix }}_3"
+    domain: "acm3.{{ aws_acm_test_uuid }}.ansible.com"
+    name: "{{ resource_prefix }}_{{ aws_acm_test_uuid }}_3"
     
 # we'll have one private key
 # make 2 chains using it
@@ -28,8 +28,8 @@ local_certs:
 # not the domain or key
 chained_cert:
     priv_key: "{{ remote_tmp_dir }}/private-ch-0.pem"
-    domain: acm-ch.ansible.com
-    name: "{{ resource_prefix }}_4"
+    domain: "acm-ch.{{ aws_acm_test_uuid }}.ansible.com"
+    name: "{{ resource_prefix }}_{{ aws_acm_test_uuid }}_4"
     chains:
      - cert: "{{ remote_tmp_dir }}/public-ch-0.pem"
        csr: "{{ remote_tmp_dir }}/csr-ch-0.csr"

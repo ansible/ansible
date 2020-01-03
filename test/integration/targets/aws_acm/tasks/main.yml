@@ -7,6 +7,12 @@
   - set_fact:
       virtualenv_interpreter: "{{ virtualenv }}/bin/python"
   
+  # The CI runs many of these tests in parallel
+  # Use this random ID to differentiate which resources
+  # are from which test
+  - set_fact:
+      aws_acm_test_uuid: "{{ (10**9) | random }}"
+  
   - pip:
       name: virtualenv
   
