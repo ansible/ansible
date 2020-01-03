@@ -549,9 +549,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         :param path: the path to the inventory config file
         :return the contents of the config file
         """
-        if super(InventoryModule, self).verify_file(path):
-            if path.endswith(("active_directory.yml", "active_directory.yaml")):
-                return True
+        if super(InventoryModule, self).verify_file(path) and path.endswith(
+            ("active_directory.yml", "active_directory.yaml")
+        ):
+            return True
         display.verbose(
             "active_directory inventory filename must end with 'active_directory.yml' or 'active_directory.yaml'"
         )
@@ -586,44 +587,42 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 # if cache expires or cache file doesn't exist
                 cache_needs_update = True
 
-        if not cache or cache_needs_update:
-            if isinstance(organizational_units_to_search, list):
-                display.debug("creating all inventory group")
-                self.inventory.add_group("all")
-                for organizational_unit in organizational_units_to_search:
-                    ou_stats = {
-                        "added": 0,
-                        "ignore_disabled": 0,
-                        "ignore_stale": 0,
-                        "unknown": 0,
-                    }
-                    count = 0
-                    for entry in self._query(connection, organizational_unit):
-                        return_state = self._populate(entry, organizational_unit)
-                        if return_state == "added":
-                            ou_stats["added"] = ou_stats["added"] + 1
-                        elif return_state == "ignore_disabled":
-                            ou_stats["ignore_disabled"] = (
-                                ou_stats["ignore_disabled"] + 1
-                            )
-                        elif return_state == "ignore_stale":
-                            ou_stats["ignore_stale"] = ou_stats["ignore_stale"] + 1
-                        else:
-                            ou_stats["unknown"] = ou_stats["unknown"] + 1
-                    stats[organizational_unit] = ou_stats
+        if (not cache or cache_needs_update) and isinstance(
+            organizational_units_to_search, list
+        ):
+            display.debug("creating all inventory group")
+            self.inventory.add_group("all")
+            for organizational_unit in organizational_units_to_search:
+                ou_stats = {
+                    "added": 0,
+                    "ignore_disabled": 0,
+                    "ignore_stale": 0,
+                    "unknown": 0,
+                }
+                for entry in self._query(connection, organizational_unit):
+                    return_state = self._populate(entry, organizational_unit)
+                    if return_state == "added":
+                        ou_stats["added"] = ou_stats["added"] + 1
+                    elif return_state == "ignore_disabled":
+                        ou_stats["ignore_disabled"] = ou_stats["ignore_disabled"] + 1
+                    elif return_state == "ignore_stale":
+                        ou_stats["ignore_stale"] = ou_stats["ignore_stale"] + 1
+                    else:
+                        ou_stats["unknown"] = ou_stats["unknown"] + 1
+                stats[organizational_unit] = ou_stats
 
-                display.vvvv("inventory host change statistics:")
-                for organizational_unit in organizational_units_to_search:
-                    display.vvvv(
-                        "OU: "
-                        + organizational_unit
-                        + " add: "
-                        + str(stats[organizational_unit]["added"])
-                        + " ignore-disabled: "
-                        + str(stats[organizational_unit]["ignore_disabled"])
-                        + " ignore-stale: "
-                        + str(stats[organizational_unit]["ignore_stale"])
-                    )
+            display.vvvv("inventory host change statistics:")
+            for organizational_unit in organizational_units_to_search:
+                display.vvvv(
+                    "OU: "
+                    + organizational_unit
+                    + " add: "
+                    + str(stats[organizational_unit]["added"])
+                    + " ignore-disabled: "
+                    + str(stats[organizational_unit]["ignore_disabled"])
+                    + " ignore-stale: "
+                    + str(stats[organizational_unit]["ignore_stale"])
+                )
         # If the cache has expired/doesn't exist or if refresh_inventory/flush cache is used
         # when the user is using caching, update the cached inventory
         if cache_needs_update or (not cache and self.get_option("cache")):
