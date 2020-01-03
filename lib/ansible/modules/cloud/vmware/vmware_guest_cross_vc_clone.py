@@ -20,7 +20,7 @@ short_description: Cross-vCenter VM/template clone
 version_added: '2.10'
 
 description:
-  - 'This module can be used to for Cross-vCenter vm/template clone'
+  - 'This module can be used for Cross-vCenter vm/template clone'
 
 options:
   name:
@@ -30,12 +30,12 @@ options:
     type: str
   uuid:
     description:
-      - UUID of the instance to clone from, this is VMware's unique identifier.
+      - UUID of the vm/template instance to clone from, this is VMware's unique identifier.
       - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
     type: str
   moid:
     description:
-      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+      - Managed Object ID of the vm/template instance to manage if known, this is a unique identifier only within a single vCenter instance.
       - This is required if C(name) or C(uuid) is not supplied.
     type: str
   use_instance_uuid:
@@ -46,38 +46,38 @@ options:
   destination_vm_name:
     description:
       - The name of the cloned VM.
-      - This is a required parameter.
     type: str
+    required: True
   destination_vcenter:
     description:
       - The hostname or IP address of the destination VCenter.
-      - This is a required parameter.
     type: str
+    required: True
   destination_vcenter_username:
     description:
       - The username of the destination VCenter.
-      - This is a required parameter.
     type: str
+    required: True
   destination_vcenter_password:
     description:
       - The password of the destination VCenter.
-      - This is a required parameter.
     type: str
+    required: True
   destination_host:
     description:
       - The name of the destination host.
-      - This is a required parameter.
     type: str
+    required: True
   destination_datastore:
     description:
       - The name of the destination datastore.
-      - This is a required parameter.
     type: str
+    required: True
   destination_vm_folder:
     description:
       - The name of the destination folder where the VM will be cloned.
-      - This is a required parameter.
     type: str
+    required: True
   power_on:
     description:
       - Whether to power on the VM after cloning
@@ -157,9 +157,9 @@ except ImportError:
     pass
 
 
-class CloneManager(PyVmomi):
+class CrossVCCloneManager(PyVmomi):
     def __init__(self, module):
-        super(CloneManager, self).__init__(module)
+        super(CrossVCCloneManager, self).__init__(module)
         self.config_spec = vim.vm.ConfigSpec()
         self.clone_spec = vim.vm.CloneSpec()
         self.relocate_spec = vim.vm.RelocateSpec()
@@ -176,7 +176,7 @@ class CloneManager(PyVmomi):
         info = {}
         vm_obj = find_vm_by_name(content=self.destination_content, vm_name=vm)
         if vm_obj is None:
-            module.fail_json(msg="Newly cloned VM is not found in the destination VCenter")
+            self.module.fail_json(msg="Newly cloned VM is not found in the destination VCenter")
         else:
             vm_facts = gather_vm_facts(self.destination_content, vm_obj)
             info['vm_name'] = vm
@@ -215,13 +215,19 @@ class CloneManager(PyVmomi):
             hostname=self.destination_vcenter,
             username=self.destination_vcenter_username,
             password=self.destination_vcenter_password)
-        self.destination_datastore = find_datastore_by_name(content=self.destination_content, datastore_name=self.params['destination_datastore'])
-        if self.destination_datastore is None:
-            self.module.fail_json(msg="Destination datastore not specified by the user.")
+        if self.params['destination_datastore']:
+          self.destination_datastore = find_datastore_by_name(content=self.destination_content, datastore_name=self.params['destination_datastore'])
+          if self.destination_datastore is None:
+            self.module.fail_json(msg="Destination datastore not found.")
+        else:
+          self.module.fail_json(msg="Destination datastore not specified by the user.")
 
-        self.destination_host = find_hostsystem_by_name(content=self.destination_content, hostname=self.params['destination_host'])
-        if self.destination_host is None:
-            self.module.fail_json(msg="Destination host not specified by the user.")
+        if self.params['destination_host']:
+          self.destination_host = find_hostsystem_by_name(content=self.destination_content, hostname=self.params['destination_host'])
+          if self.destination_host is None:
+            self.module.fail_json(msg="Destination host not found.")
+        else:
+          self.module.fail_json(msg="Destination host not specified by the user.")
 
     def populate_specs(self):
         # populate service locator
@@ -258,13 +264,13 @@ def main():
         uuid=dict(type='str'),
         moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
-        destination_vm_name=dict(type='str'),
-        destination_datastore=dict(type='str'),
-        destination_host=dict(type='str'),
-        destination_vcenter=dict(type='str'),
-        destination_vcenter_username=dict(type='str'),
-        destination_vcenter_password=dict(type='str'),
-        destination_vm_folder=dict(type='str'),
+        destination_vm_name=dict(type='str', required=True),
+        destination_datastore=dict(type='str', required=True),
+        destination_host=dict(type='str', required=True),
+        destination_vcenter=dict(type='str', required=True),
+        destination_vcenter_username=dict(type='str', required=True),
+        destination_vcenter_password=dict(type='str', required=True),
+        destination_vm_folder=dict(type='str', required=True),
         power_on=dict(type='bool', default=False)
     )
 
@@ -280,12 +286,15 @@ def main():
     )
     result = {'failed': False, 'changed': False}
 
-    clone_manager = CloneManager(module)
+    clone_manager = CrossVCCloneManager(module)
     clone_manager.sanitize_params()
     clone_manager.populate_specs()
     result = clone_manager.clone()
 
-    module.fail_json(**result)
+    if result['failed']:
+        module.fail_json(**result)
+    else:
+        module.exit_json(**result)
 
 
 if __name__ == '__main__':

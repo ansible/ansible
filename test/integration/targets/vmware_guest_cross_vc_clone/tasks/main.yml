@@ -1,4 +1,4 @@
-# Test code for the vmware_guest_serial_port Operations.
+# Test code for the vmware_guest_cross_vc_clone Operations.
 # Copyright: (c) 2020, Anusha Hegde <anushah@vmware.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
