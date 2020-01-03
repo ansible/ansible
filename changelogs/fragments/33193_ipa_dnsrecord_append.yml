@@ -1,0 +1,2 @@
+bugfixes:
+- Added 'append' state to append IPA dnsrecord entry (https://github.com/ansible/ansible/issues/33193).

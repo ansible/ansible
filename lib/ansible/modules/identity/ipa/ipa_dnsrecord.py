@@ -59,10 +59,12 @@ options:
     version_added: "2.7"
     required: false
   state:
-    description: State to ensure
+    description:
+    - State to ensure.
+    - State C(append) is added in version 2.10.
     required: false
     default: present
-    choices: ["present", "absent"]
+    choices: ["absent", "append", "present"]
 extends_documentation_fragment: ipa.documentation
 version_added: "2.4"
 '''
@@ -139,6 +141,25 @@ EXAMPLES = '''
     ipa_user: admin
     ipa_pass: topsecret
     state: absent
+
+- name: Append SRV records
+  ipa_dnsrecord:
+    ipa_host: server.ipademo.local
+    ipa_user: admin
+    ipa_pass: Secret123
+    validate_certs: no
+    zone_name: "{{ zone_fwd }}"
+    record_value: "{{ item.key }}.{{ zone_fwd }}"
+    record_type: 'SRV'
+    record_name: "{{ item.value }}"
+    state: append
+    loop: "{{ lookup('dict', dns_srv_records) }}"
+  vars:
+    zone_fwd: "example.com"
+    dns_srv_records:
+      "0 10 2380 etcd-0": _etcd-server-ssl._tcp
+      "0 10 2380 etcd-1": _etcd-server-ssl._tcp
+      "0 10 2380 etcd-2": _etcd-server-ssl._tcp
 '''
 
 RETURN = '''
@@ -270,6 +291,16 @@ def ensure(module, client):
                     client.dnsrecord_mod(zone_name=zone_name,
                                          record_name=record_name,
                                          details=module_dnsrecord)
+    elif state == 'append':
+        if not ipa_dnsrecord:
+            module.fail_json(msg="Unable to find record name %s" % module.params['record_name'])
+        changed = True
+        if not module.check_mode:
+            client.dnsrecord_add(
+                zone_name=zone_name,
+                record_name=record_name,
+                details=module_dnsrecord
+            )
     else:
         if ipa_dnsrecord:
             changed = True
@@ -289,7 +320,7 @@ def main():
         record_name=dict(type='str', aliases=['name'], required=True),
         record_type=dict(type='str', default='A', choices=record_types),
         record_value=dict(type='str', required=True),
-        state=dict(type='str', default='present', choices=['present', 'absent']),
+        state=dict(type='str', default='present', choices=['present', 'absent', 'append']),
         record_ttl=dict(type='int', required=False),
     )
 
