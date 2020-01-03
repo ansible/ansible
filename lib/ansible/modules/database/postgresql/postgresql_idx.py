@@ -91,13 +91,14 @@ options:
       For more information about the lock levels see U(https://www.postgresql.org/docs/current/explicit-locking.html).
     - If the building process was interrupted for any reason when I(cuncurrent=yes), the index becomes invalid.
       In this case it should be dropped and created again.
-    - Mutually exclusive with I(cascade=yes).
+    - Mutually exclusive with I(cascade=yes) and I(unique=yes).
     type: bool
     default: yes
   unique:
     description:
     - Enable unique index.
-    - Mutually exclusive with I(state=absent).
+    - Only btree currently supports unique indexes.
+    - Mutually exclusive with I(concurrent=yes).
     type: bool
     default: no
     version_added: '2.10'
@@ -219,6 +220,8 @@ EXAMPLES = r'''
     table: products
     columns: name
     name: test_unique_idx
+    unique: yes
+    concurrent: no
 '''
 
 RETURN = r'''
@@ -526,6 +529,12 @@ def main():
 
     if concurrent and cascade:
         module.fail_json(msg="Cuncurrent mode and cascade parameters are mutually exclusive")
+
+    if concurrent and unique:
+        module.fail_json(msg="Cuncurrent mode and unique parameters are mutually exclusive")
+
+    if unique and (idxtype and idxtype != 'btree'):
+        module.fail_json(msg="Only btree currently supports unique indexes.")
 
     if state == 'present':
         if not table:
