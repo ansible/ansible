@@ -1,0 +1,4 @@
+bugfixes:
+- postgresql_table - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65862).
+- postgresql_tablespace - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65862).
+- postgresql_user - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65862).
