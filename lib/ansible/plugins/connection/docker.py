@@ -530,7 +530,7 @@ class DockerSocketHandler:
         if self._eof:
             return
         if hasattr(self._sock, 'recv'):
-            data = self._sock.recv(4096)
+            data = self._sock.recv(262144)
         elif PY3 and isinstance(self._sock, getattr(pysocket, 'SocketIO')):
             data = self._sock.read()
         else:
@@ -566,7 +566,9 @@ class DockerSocketHandler:
         if self._end_of_writing and len(self._write_buffer) == 0:
             self._end_of_writing = False
             display.vvvv('Shutting socket down for writing', host=self._container)
-            if hasattr(self._sock, 'shutdown'):
+            if hasattr(self._sock, 'shutdown_write'):
+                self._sock.shutdown_write()
+            elif hasattr(self._sock, 'shutdown'):
                 try:
                     self._sock.shutdown(pysocket.SHUT_WR)
                 except TypeError as e:
@@ -579,7 +581,11 @@ class DockerSocketHandler:
 
     def _write(self):
         if len(self._write_buffer) > 0:
-            if hasattr(self._sock, 'send'):
+            if hasattr(self._sock, '_send_until_done'):
+                # WrappedSocket (urllib3/contrib/pyopenssl) doesn't have `send`, but
+                # only `sendall`, which uses `_send_until_done` under the hood.
+                written = self._sock._send_until_done(self._write_buffer)
+            elif hasattr(self._sock, 'send'):
                 written = self._sock.send(self._write_buffer)
             else:
                 written = os.write(self._sock.fileno(), self._write_buffer)
