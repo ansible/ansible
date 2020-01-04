@@ -1,0 +1,2 @@
+minor_changes:
+- mysql_db - add ``master_data`` parameter (https://github.com/ansible/ansible/pull/66048).

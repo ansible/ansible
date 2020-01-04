@@ -65,12 +65,14 @@
         - "{{ db_name }}.department"
     login_unix_socket: '{{ mysql_socket }}'
     force: yes
+    master_data: 1
   register: result
 
 - name: assert successful completion of dump operation
   assert:
     that:
-       - "result.changed == true"
+    - result is changed
+    - result.executed_commands[0] is search("mysqldump --force --socket={{ mysql_socket }} --databases {{ db_name }} --skip-lock-tables --quick --ignore-table={{ db_name }}.department --master-data=1")
 
 - name: state dump/import - file name should exist
   file: name={{ db_file_name }} state=file
