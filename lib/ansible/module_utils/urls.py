@@ -71,6 +71,7 @@ except ImportError:
     import urllib2 as urllib_request
     from urllib2 import AbstractHTTPHandler
     import urlparse as urllib_parse
+    import urllib as urllib_quote
 
 urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
 
@@ -1085,12 +1086,18 @@ class Request:
 
     def _url_encode(self, url):
         protocol, domain, path, params, query, fragment = urllib_parse.urlparse(url)
-        domain = domain.encode('idna')
-        path = urllib_parse.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=')
-        params = urllib_parse.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=')
-        query = urllib_parse.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=')
-        fragment = urllib_parse.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=')
-        url = urllib_parse.urlunparse(protocol, domain, path, params, query, fragment)
+        try:
+            path = urllib_parse.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=') if path != None else ''
+            params = urllib_parse.quote_plus(params, safe='<>%-_.!*():?#/@&+,;=') if params != None else ''
+            query = urllib_parse.quote_plus(query, safe='<>%-_.!*():?#/@&+,;=') if query != None else ''
+            fragment= urllib_parse.quote_plus(fragment, safe='<>%-_.!*():?#/@&+,;=') if fragment != None else ''
+        except AttributeError:
+            # Python2
+            path = urllib_quote.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=') if path != None else ''
+            params = urllib_quote.quote_plus(params, safe='<>%-_.!*():?#/@&+,;=') if params != None else ''
+            query = urllib_quote.quote_plus(query, safe='<>%-_.!*():?#/@&+,;=') if query != None else ''
+            fragment= urllib_quote.quote_plus(fragment, safe='<>%-_.!*():?#/@&+,;=') if fragment != None else ''
+        url = urllib_parse.urlunparse([protocol, domain, path, params, query, fragment])
         return url
 
     def open(self, method, url, data=None, headers=None, use_proxy=None,
@@ -1163,7 +1170,7 @@ class Request:
         cookies = self._fallback(cookies, self.cookies)
         unix_socket = self._fallback(unix_socket, self.unix_socket)
         ca_path = self._fallback(ca_path, self.ca_path)
-        encode_url = self._fallback(ca_path, self.encode_url)
+        encode_url = self._fallback(encode_url, self.encode_url)
 
         handlers = []
 
@@ -1178,7 +1185,7 @@ class Request:
 
         # Encode url into IDNA format
         if encode_url:
-            url = url_encode(url)
+            url = self._url_encode(url)
 
         parsed = generic_urlparse(urlparse(url))
         if parsed.scheme != 'ftp':
