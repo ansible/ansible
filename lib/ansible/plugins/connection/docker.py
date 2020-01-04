@@ -536,7 +536,17 @@ class DockerSocketHandler:
         if self._eof:
             return
         if hasattr(self._sock, 'recv'):
-            data = self._sock.recv(262144)
+            try:
+                data = self._sock.recv(262144)
+            except Exception as e:
+                # After calling self._sock.shutdown(), OpenSSL's/urllib3's
+                # WrappedSocket seems to eventually raise ZeroReturnError in
+                # case of EOF
+                if 'OpenSSL.SSL.ZeroReturnError' in str(type(e)):
+                    self._eof = True
+                    return
+                else:
+                    raise
         elif PY3 and isinstance(self._sock, getattr(pysocket, 'SocketIO')):
             data = self._sock.read()
         else:
@@ -578,8 +588,9 @@ class DockerSocketHandler:
                 try:
                     self._sock.shutdown(pysocket.SHUT_WR)
                 except TypeError as e:
-                    # TypeError: shutdown() takes 1 positional argument but 2 were given
-                    display.vvvv('No idea how to signal end of writing: {0}'.format(e), host=self._container)
+                    # probably: "TypeError: shutdown() takes 1 positional argument but 2 were given"
+                    display.vvvv('Shutting down for writing not possible; trying shutdown instead: {0}'.format(e), host=self._container)
+                    self._sock.shutdown()
             elif PY3 and isinstance(self._sock, getattr(pysocket, 'SocketIO')):
                 self._sock._sock.shutdown(pysocket.SHUT_WR)
             else:
