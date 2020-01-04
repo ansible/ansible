@@ -170,7 +170,7 @@ options:
     default: ansible-httpget
   encode_url:
     description:
-      - Encode URL into IDNA format.
+      - Encode URL into persent encoding.
     type: bool
     default: no
 # informational: requirements for nodes

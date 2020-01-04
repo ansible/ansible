@@ -1144,7 +1144,7 @@ class Request:
             connection to the provided url
         :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
         :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
-        :kwarg encode_url: (optional) Encode URL into IDNA format.
+        :kwarg encode_url: (optional) Encode URL into persent encoding
         :returns: HTTPResponse. Added in Ansible 2.9
         """
 
@@ -1183,7 +1183,7 @@ class Request:
         if HAS_GSSAPI and use_gssapi:
             handlers.append(urllib_gssapi.HTTPSPNEGOAuthHandler())
 
-        # Encode url into IDNA format
+        # Encode url into persent encoding
         if encode_url:
             url = self._url_encode(url)
 
@@ -1459,7 +1459,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
         connection to the provided url
     :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
-    :kwarg encode_url: (optional) Encode URL into IDNA format.
+    :kwarg encode_url: (optional) Encode URL into persent encoding.
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
