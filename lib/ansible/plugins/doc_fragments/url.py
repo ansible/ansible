@@ -61,4 +61,8 @@ options:
       - PEM formatted file that contains your private key to be used for SSL client authentication.
       - If C(client_cert) contains both the certificate and key, this option is not required.
     type: path
+  encode_url:
+    description:
+      - If C(yes), URL specified with I(url) will be encoded into persent encoding.
+    type: bool
 '''

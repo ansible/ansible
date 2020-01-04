@@ -1,0 +1,2 @@
+bugfix:
+    Added URL encoding option for get_url module.

@@ -170,7 +170,7 @@ options:
     default: ansible-httpget
   encode_url:
     description:
-      - Encode URL into persent encoding.
+      - If C(yes), URL specified with I(url) will be encoded into persent encoding.
     type: bool
     default: no
 # informational: requirements for nodes
