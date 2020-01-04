@@ -787,7 +787,7 @@ class DockerPyDriver:
 
         bio = io.BytesIO()
         with tarfile.open(fileobj=bio, mode='w|') as tar:
-            tarinfo = tar.gettarinfo(in_path)
+            tarinfo = tar.gettarinfo(b_in_path)
             tarinfo.name = out_file
             user_id, group_id = self.ids[self.actual_user]
             tarinfo.uid = user_id
@@ -826,7 +826,7 @@ class DockerPyDriver:
 
             out_dir, out_file = os.path.split(out_path)
 
-            display.vvvv('FETCH: Fetching "{0}"'.format(in_path), host=play_context.remote_addr)
+            display.vvvv('FETCH: Fetching "%s"' % in_path, host=play_context.remote_addr)
             stream, stats = self._call_client(play_context, lambda: self.client.get_archive(
                 play_context.remote_addr,
                 in_path,
@@ -850,14 +850,17 @@ class DockerPyDriver:
                         symlink_member = member
                         continue
                     if not member.isfile():
-                        raise AnsibleConnectionFailure('Remote file "{0}" is not a regular file or a symbolic link'.format(in_path))
-                    member.name = out_file
-                    tar.extract(member, path=out_dir, set_attrs=False)
+                        raise AnsibleConnectionFailure('Remote file "%s" is not a regular file or a symbolic link' % in_path)
+                    member.name = to_bytes(out_file, errors='surrogate_or_strict')
+                    if PY3:
+                        tar.extract(member, path=out_dir, set_attrs=False)
+                    else:
+                        tar.extract(member, path=to_bytes(out_dir, errors='surrogate_or_strict'))
                 if first:
                     raise AnsibleConnectionFailure('Received tarfile is empty!')
                 # If the only member was a file, it's already extracted. If it is a symlink, process it now.
                 if symlink_member is not None:
                     in_path = os.path.join(os.path.split(in_path)[0], symlink_member.linkname)
-                    display.vvvv('FETCH: Following symbolic link to "{0}"'.format(in_path), host=play_context.remote_addr)
+                    display.vvvv('FETCH: Following symbolic link to "%s"' % in_path, host=play_context.remote_addr)
                     continue
                 return
