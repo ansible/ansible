@@ -206,7 +206,7 @@ options:
     local:
         description:
             - Forces the use of "local" command alternatives on platforms that implement it.
-            - This is useful in environments that use centralized authentification when you want to manipulate the local users
+            - This is useful in environments that use centralized authentication when you want to manipulate the local users
               (i.e. it uses C(luseradd) instead of C(useradd)).
             - This will check C(/etc/passwd) for an existing account before invoking commands. If the local account database
               exists somewhere other than C(/etc/passwd), this setting will not work properly.

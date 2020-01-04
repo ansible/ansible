@@ -89,7 +89,7 @@ EXAMPLES = '''
 # The following host variables are always available:
 # public_ipv4_addresses: all public IP addresses, with the primary IP config from the primary NIC first
 # public_dns_hostnames: all public DNS hostnames, with the primary IP config from the primary NIC first
-# private_ipv4_addresses: all private IP addressses, with the primary IP config from the primary NIC first
+# private_ipv4_addresses: all private IP addresses, with the primary IP config from the primary NIC first
 # id: the VM's Azure resource ID, eg /subscriptions/00000000-0000-0000-1111-1111aaaabb/resourceGroups/my_rg/providers/Microsoft.Compute/virtualMachines/my_vm
 # location: the VM's Azure location, eg 'westus', 'eastus'
 # name: the VM's resource name, eg 'myvm'

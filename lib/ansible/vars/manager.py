@@ -229,7 +229,7 @@ class VariableManager:
                             raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
                 return data
 
-            # internal fuctions that actually do the work
+            # internal functions that actually do the work
             def _plugins_inventory(entities):
                 ''' merges all entities by inventory source '''
                 return get_vars_from_inventory_sources(self._loader, self._inventory._sources, entities, stage)
@@ -241,7 +241,7 @@ class VariableManager:
                     data = combine_vars(data, get_vars_from_path(self._loader, path, entities, stage))
                 return data
 
-            # configurable functions that are sortable via config, rememer to add to _ALLOWED if expanding this list
+            # configurable functions that are sortable via config, remember to add to _ALLOWED if expanding this list
             def all_inventory():
                 return all_group.get_vars()
 
@@ -480,7 +480,7 @@ class VariableManager:
                 # however this would take work in the templating engine, so for now we'll add both
                 variables['play_hosts'] = variables['ansible_play_batch']
 
-        # the 'omit' value alows params to be left out if the variable they are based on is undefined
+        # the 'omit' value allows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token
         # Set options vars
         for option, option_value in iteritems(self._options_vars):

@@ -328,11 +328,11 @@ class ActionModule(ActionBase):
                 # The before property will contain all text up to the expected string pattern.
                 # The after string will contain the text that was matched by the expected pattern.
                 outcome['expect_timeout'] = True
-                outcome['error_data'] = 'Expect Timeout error occured: BEFORE {0} AFTER {1}'.format(session.before, session.after)
+                outcome['error_data'] = 'Expect Timeout error occurred: BEFORE {0} AFTER {1}'.format(session.before, session.after)
                 return outcome
             else:
                 outcome['error'] = True
-                outcome['error_data'] = 'Unrecognized error occured: BEFORE {0} AFTER {1}'.format(session.before, session.after)
+                outcome['error_data'] = 'Unrecognized error occurred: BEFORE {0} AFTER {1}'.format(session.before, session.after)
                 return outcome
 
             return outcome

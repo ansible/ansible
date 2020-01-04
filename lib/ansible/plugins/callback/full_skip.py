@@ -11,7 +11,7 @@ DOCUMENTATION = '''
     type: stdout
     short_description: suppresses tasks if all hosts skipped
     description:
-      - Use this plugin when you dont care about any output for tasks that were completly skipped
+      - Use this plugin when you do not care about any output for tasks that were completely skipped
     version_added: "2.4"
     deprecated:
         why: The 'default' callback plugin now supports this functionality
@@ -20,7 +20,7 @@ DOCUMENTATION = '''
     extends_documentation_fragment:
       - default_callback
     requirements:
-      - set as stdout in configuation
+      - set as stdout in configuration
 '''
 
 from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
