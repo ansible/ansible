@@ -19,7 +19,8 @@ module: ipa_pwpolicy
 author: Damian Bicz (@b1czu)
 short_description: Manage FreeIPA Password Policies
 description:
-- Add, delete and modify an IPA Password Policies using IPA API. Ommited values are not changed during module execution.
+- Add, delete and modify an IPA Password Policies using IPA API.
+- Omitted values are not changed during module execution.
 options:
   cn:
     description: Policy name.
@@ -27,12 +28,14 @@ options:
     type: str
     aliases: ["group"]
   cospriority:
-    description: Priority of the policy (higher number means lower priority). Ignored if group=global_policy
+    description:
+    - The priority of the policy (higher number means lower priority).
+    - Ignored if C(group=global_policy).
     required: true
     type: int
     aliases: ["priority"]
   state:
-    description: State to ensure
+    description: State to ensure.
     required: false
     type: str
     default: present
@@ -123,6 +126,52 @@ pwpolicy:
   description: Password policy as returned by IPA API
   returned: always
   type: dict
+  sample:
+        {
+            "result": {
+                "result": {
+                    "dn": "cn=global_policy,cn=EXAMPLE.COM,cn=kerberos,dc=example,dc=com",
+                    "krbminpwdlife": [
+                        "168"
+                    ],
+                    "krbpwdminlength": [
+                        "8"
+                    ],
+                    "objectclass": [
+                        "top",
+                        "nsContainer",
+                        "krbPwdPolicy"
+                    ],
+                    "krbpwdmindiffchars": [
+                        "3"
+                    ],
+                    "krbpwdhistorylength": [
+                        "5"
+                    ],
+                    "krbpwdlockoutduration": [
+                        "600"
+                    ],
+                    "krbpwdmaxfailure": [
+                        "5"
+                    ],
+                    "krbmaxpwdlife": [
+                        "180"
+                    ],
+                    "krbpwdfailurecountinterval": [
+                        "60"
+                    ],
+                    "cn": [
+                        "global_policy"
+                    ]
+                },
+                "value": "global_policy",
+                "summary": null
+            },
+            "version": "4.6.5",
+            "error": null,
+            "id": 0,
+            "principal": "admin@EXAMPLE.COM"
+        }
 '''
 
 import traceback
