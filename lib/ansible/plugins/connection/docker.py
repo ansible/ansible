@@ -807,6 +807,7 @@ class DockerPyDriver:
             data,  # can also be file object for streaming; this is only clear from the
                    # implementation of put_archive(), which uses requests's put().
                    # See https://2.python-requests.org/en/master/user/advanced/#streaming-uploads
+                   # WARNING: might not work with all transports!
         ), not_found_can_be_resource=True)
         if not ok:
             raise AnsibleConnectionFailure(
