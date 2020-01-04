@@ -65,10 +65,12 @@ try:
     # python3
     import urllib.request as urllib_request
     from urllib.request import AbstractHTTPHandler
+    import urllib.parse as urllib_parse
 except ImportError:
     # python2
     import urllib2 as urllib_request
     from urllib2 import AbstractHTTPHandler
+    import urlparse as urllib_parse
 
 urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
 
@@ -1035,7 +1037,7 @@ class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
                  follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
-                 ca_path=None):
+                 ca_path=None, encode_url=False):
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that an be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -1070,6 +1072,7 @@ class Request:
         self.client_key = client_key
         self.unix_socket = unix_socket
         self.ca_path = ca_path
+        self.encode_url = encode_url
         if isinstance(cookies, cookiejar.CookieJar):
             self.cookies = cookies
         else:
@@ -1080,12 +1083,22 @@ class Request:
             return fallback
         return value
 
+    def _url_encode(self, url):
+        protocol, domain, path, params, query, fragment = urllib_parse.urlparse(url)
+        domain = domain.encode('idna')
+        path = urllib_parse.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=')
+        params = urllib_parse.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=')
+        query = urllib_parse.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=')
+        fragment = urllib_parse.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=')
+        url = urllib_parse.urlunparse(protocol, domain, path, params, query, fragment)
+        return url
+
     def open(self, method, url, data=None, headers=None, use_proxy=None,
              force=None, last_mod_time=None, timeout=None, validate_certs=None,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
              client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-             unix_socket=None, ca_path=None, unredirected_headers=None):
+             unix_socket=None, ca_path=None, unredirected_headers=None, encode_url=False):
         """
         Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1124,6 +1137,7 @@ class Request:
             connection to the provided url
         :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
         :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
+        :kwarg encode_url: (optional) Encode URL into IDNA format.
         :returns: HTTPResponse. Added in Ansible 2.9
         """
 
@@ -1149,6 +1163,7 @@ class Request:
         cookies = self._fallback(cookies, self.cookies)
         unix_socket = self._fallback(unix_socket, self.unix_socket)
         ca_path = self._fallback(ca_path, self.ca_path)
+        encode_url = self._fallback(ca_path, self.encode_url)
 
         handlers = []
 
@@ -1160,6 +1175,10 @@ class Request:
             handlers.append(ssl_handler)
         if HAS_GSSAPI and use_gssapi:
             handlers.append(urllib_gssapi.HTTPSPNEGOAuthHandler())
+
+        # Encode url into IDNA format
+        if encode_url:
+            url = url_encode(url)
 
         parsed = generic_urlparse(urlparse(url))
         if parsed.scheme != 'ftp':
@@ -1367,7 +1386,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
              use_gssapi=False, unix_socket=None, ca_path=None,
-             unredirected_headers=None):
+             unredirected_headers=None, encode_url=False):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1380,7 +1399,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
                           use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
-                          unredirected_headers=unredirected_headers)
+                          unredirected_headers=unredirected_headers, encode_url=encode_url)
 
 
 #
@@ -1416,7 +1435,7 @@ def url_argument_spec():
 
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10,
-              use_gssapi=False, unix_socket=None, ca_path=None, cookies=None):
+              use_gssapi=False, unix_socket=None, ca_path=None, cookies=None, encode_url=False):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1433,6 +1452,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
         connection to the provided url
     :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
+    :kwarg encode_url: (optional) Encode URL into IDNA format.
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
@@ -1484,7 +1504,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
-                     unix_socket=unix_socket, ca_path=ca_path)
+                     unix_socket=unix_socket, ca_path=ca_path, encode_url=encode_url)
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
