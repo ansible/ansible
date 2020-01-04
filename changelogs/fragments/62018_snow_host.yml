@@ -1,0 +1,2 @@
+bugfixes:
+- Add new parameter host to specify custom service now domain name while using snow_* module (https://github.com/ansible/ansible/issues/62018).

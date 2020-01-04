@@ -15,8 +15,19 @@ options:
       - The ServiceNow instance name, without the domain, service-now.com.
       - If the value is not specified in the task, the value of environment variable C(SN_INSTANCE) will be used instead.
       - Environment variable support added in Ansible 2.9.
+      - Mutually exclusive with C(host).
       required: false
       type: str
+    host:
+      description:
+      - The ServiceNow hostname.
+      - This value is FQDN for ServiceNow host.
+      - If the value is not specified in the task, the value of environment variable C(SN_HOST) will be used instead.
+      - Mutually exclusive with C(instance).
+      - Environment variable support added in Ansible 2.10.
+      required: false
+      type: str
+      version_added: '2.10'
     username:
       description:
       - Name of user for connection to ServiceNow.

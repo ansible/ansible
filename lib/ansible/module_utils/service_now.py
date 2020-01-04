@@ -34,6 +34,7 @@ class ServiceNowClient(object):
         self.username = self.params['username']
         self.password = self.params['password']
         self.instance = self.params['instance']
+        self.host = self.params['host']
         self.session = {'token': None}
         self.conn = None
 
@@ -47,7 +48,8 @@ class ServiceNowClient(object):
                 self.conn = pysnow.OAuthClient(client_id=self.client_id,
                                                client_secret=self.client_secret,
                                                token_updater=self.updater,
-                                               instance=self.instance)
+                                               instance=self.instance,
+                                               host=self.host)
             except Exception as detail:
                 self.module.fail_json(msg='Could not connect to ServiceNow: {0}'.format(str(detail)), **result)
             if not self.session['token']:
@@ -61,6 +63,7 @@ class ServiceNowClient(object):
         elif self.username is not None:
             try:
                 self.conn = pysnow.Client(instance=self.instance,
+                                          host=self.host,
                                           user=self.username,
                                           password=self.password)
             except Exception as detail:
@@ -74,7 +77,8 @@ class ServiceNowClient(object):
         self.conn = pysnow.OAuthClient(client_id=self.client_id,
                                        client_secret=self.client_secret,
                                        token_updater=self.updater,
-                                       instance=self.instance)
+                                       instance=self.instance,
+                                       host=self.host)
         try:
             self.conn.set_token(self.session['token'])
         except pysnow.exceptions.MissingToken:
@@ -87,6 +91,7 @@ class ServiceNowClient(object):
     def snow_argument_spec():
         return dict(
             instance=dict(type='str', required=False, fallback=(env_fallback, ['SN_INSTANCE'])),
+            host=dict(type='str', required=False, fallback=(env_fallback, ['SN_HOST'])),
             username=dict(type='str', required=False, fallback=(env_fallback, ['SN_USERNAME'])),
             password=dict(type='str', required=False, no_log=True, fallback=(env_fallback, ['SN_PASSWORD'])),
             client_id=dict(type='str', no_log=True),

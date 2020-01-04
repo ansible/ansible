@@ -99,6 +99,16 @@ EXAMPLES = '''
       priority: 2
   register: new_incident
 
+- name: Create an incident using host instead of instance
+  snow_record:
+    username: ansible_test
+    password: my_password
+    host: dev99999.mycustom.domain.com
+    state: present
+    data:
+      short_description: "This is a test incident opened by Ansible"
+      priority: 2
+
 - name: Delete the record we just made
   snow_record:
     username: admin
@@ -181,11 +191,21 @@ def run_module():
         ['state', 'absent', ['number']],
     ]
 
+    module_mutually_exclusive = [
+        ['host', 'instance'],
+    ]
+
+    module_required_one_of = [
+        ['host', 'instance'],
+    ]
+
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True,
         required_together=module_required_together,
-        required_if=module_required_if
+        required_if=module_required_if,
+        required_one_of=module_required_one_of,
+        mutually_exclusive=module_mutually_exclusive,
     )
 
     # Connect to ServiceNow
@@ -195,6 +215,7 @@ def run_module():
 
     params = module.params
     instance = params['instance']
+    host = params['host']
     table = params['table']
     state = params['state']
     number = params['number']
@@ -204,6 +225,7 @@ def run_module():
     result = dict(
         changed=False,
         instance=instance,
+        host=host,
         table=table,
         number=number,
         lookup_field=lookup_field
