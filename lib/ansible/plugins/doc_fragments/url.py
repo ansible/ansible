@@ -63,6 +63,6 @@ options:
     type: path
   encode_url:
     description:
-      - If C(yes), URL specified with I(url) will be encoded into persent encoding.
+      - If C(yes), URL specified with C(url) will be encoded into percent encoding.
     type: bool
 '''

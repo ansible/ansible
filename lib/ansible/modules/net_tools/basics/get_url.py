@@ -170,7 +170,8 @@ options:
     default: ansible-httpget
   encode_url:
     description:
-      - If C(yes), URL specified with I(url) will be encoded into persent encoding.
+      - If C(yes), URL specified with C(url) will be encoded into percent encoding.
+      - If checksum URL is specified with C(checksum), it will also be encoded.
     type: bool
     default: no
 # informational: requirements for nodes
