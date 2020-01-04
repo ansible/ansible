@@ -787,7 +787,7 @@ class DockerPyDriver:
 
         bio = io.BytesIO()
         with tarfile.open(fileobj=bio, mode='w|') as tar:
-            tarinfo = tar.gettarinfo(b_in_path)
+            tarinfo = tar.gettarinfo(in_path if PY3 else b_in_path)
             tarinfo.name = out_file
             user_id, group_id = self.ids[self.actual_user]
             tarinfo.uid = user_id
@@ -826,6 +826,8 @@ class DockerPyDriver:
             considered_in_paths.add(in_path)
 
             out_dir, out_file = os.path.split(out_path)
+            b_out_file = to_bytes(out_file, errors='surrogate_or_strict')
+            b_out_dir = to_bytes(out_dir, errors='surrogate_or_strict')
 
             display.vvvv('FETCH: Fetching "%s"' % in_path, host=play_context.remote_addr)
             stream, stats = self._call_client(play_context, lambda: self.client.get_archive(
@@ -852,11 +854,12 @@ class DockerPyDriver:
                         continue
                     if not member.isfile():
                         raise AnsibleConnectionFailure('Remote file "%s" is not a regular file or a symbolic link' % in_path)
-                    member.name = to_bytes(out_file, errors='surrogate_or_strict')
                     if PY3:
-                        tar.extract(member, path=out_dir, set_attrs=False)
+                        member.name = out_file
+                        tar.extract(member, out_dir, set_attrs=False)
                     else:
-                        tar.extract(member, path=to_bytes(out_dir, errors='surrogate_or_strict'))
+                        member.name = b_out_file
+                        tar.extract(member, b_out_dir)
                 if first:
                     raise AnsibleConnectionFailure('Received tarfile is empty!')
                 # If the only member was a file, it's already extracted. If it is a symlink, process it now.
