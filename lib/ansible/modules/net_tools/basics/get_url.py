@@ -343,7 +343,6 @@ from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
-
 # ==============================================================
 # url handling
 
@@ -509,7 +508,6 @@ def main():
 
         if checksum.startswith('http://') or checksum.startswith('https://') or checksum.startswith('ftp://'):
             checksum_url = checksum
-
             # download checksum file to checksum_tmpsrc
             checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, encode_url)
             with open(checksum_tmpsrc) as f:
