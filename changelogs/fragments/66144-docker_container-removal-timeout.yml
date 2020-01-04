@@ -1,0 +1,2 @@
+minor_changes:
+- "docker_container - allow to configure timeout when the module waits for a container's removal."

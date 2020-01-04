@@ -685,6 +685,17 @@ options:
       - Use with present and started states to force the re-creation of an existing container.
     type: bool
     default: no
+  removal_wait_timeout:
+    description:
+      - When removing an existing container, the docker daemon API call exists after the container
+        is scheduled for removal. Removal usually is very fast, but it can happen that during high I/O
+        load, removal can take longer. By default, the module will wait until the container has been
+        removed before trying to (re-)create it, however long this takes.
+      - By setting this option, the module will wait at most this many seconds for the container to be
+        removed. If the container is still in the removal phase after this many seconds, the module will
+        fail.
+    type: float
+    version_added: "2.10"
   restart:
     description:
       - Use with started state to force a matching container to be stopped and restarted.
@@ -1281,6 +1292,7 @@ class TaskParameters(DockerBaseClass):
         self.pull = None
         self.read_only = None
         self.recreate = None
+        self.removal_wait_timeout = None
         self.restart = None
         self.restart_retries = None
         self.restart_policy = None
@@ -2610,25 +2622,33 @@ class ContainerManager(DockerBaseClass):
             self.results['ansible_facts'] = {'docker_container': self.facts}
             self.results['container'] = self.facts
 
-    def wait_for_state(self, container_id, complete_states=None, wait_states=None, accept_removal=False):
+    def wait_for_state(self, container_id, complete_states=None, wait_states=None, accept_removal=False, max_wait=None):
         delay = 1.0
+        total_wait = 0
         while True:
             # Inspect container
             result = self.client.get_container_by_id(container_id)
             if result is None:
                 if accept_removal:
                     return
-                msg = 'Encontered vanished container while waiting for container {0}'
+                msg = 'Encontered vanished container while waiting for container "{0}"'
                 self.fail(msg.format(container_id))
             # Check container state
             state = result.get('State', {}).get('Status')
             if complete_states is not None and state in complete_states:
                 return
             if wait_states is not None and state not in wait_states:
-                msg = 'Encontered unexpected state "{1}" while waiting for container {0}'
+                msg = 'Encontered unexpected state "{1}" while waiting for container "{0}"'
                 self.fail(msg.format(container_id, state))
             # Wait
+            if max_wait is not None:
+                if total_wait > max_wait:
+                    msg = 'Timeout of {1} seconds exceeded while waiting for container "{0}"'
+                    self.fail(msg.format(container_id, max_wait))
+                if total_wait + delay > max_wait:
+                    delay = max_wait - total_wait
             sleep(delay)
+            total_wait += delay
             # Exponential backoff, but never wait longer than 10 seconds
             # (1.1**24 < 10, 1.1**25 > 10, so it will take 25 iterations
             #  until the maximal 10 seconds delay is reached. By then, the
@@ -2659,7 +2679,8 @@ class ContainerManager(DockerBaseClass):
             self.diff_tracker.add('exists', parameter=True, active=False)
             if container.removing and not self.check_mode:
                 # Wait for container to be removed before trying to create it
-                self.wait_for_state(container.Id, wait_states=['removing'], accept_removal=True)
+                self.wait_for_state(
+                    container.Id, wait_states=['removing'], accept_removal=True, max_wait=self.parameters.removal_wait_timeout)
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
@@ -2686,7 +2707,8 @@ class ContainerManager(DockerBaseClass):
                     self.container_stop(container.Id)
                 self.container_remove(container.Id)
                 if not self.check_mode:
-                    self.wait_for_state(container.Id, wait_states=['removing'], accept_removal=True)
+                    self.wait_for_state(
+                        container.Id, wait_states=['removing'], accept_removal=True, max_wait=self.parameters.removal_wait_timeout)
                 new_container = self.container_create(image_to_use, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
@@ -3055,7 +3077,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
     __NON_CONTAINER_PROPERTY_OPTIONS = tuple([
         'env_file', 'force_kill', 'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks',
         'recreate', 'restart', 'state', 'trust_image_content', 'networks', 'cleanup', 'kill_signal',
-        'output_logs', 'paused'
+        'output_logs', 'paused', 'removal_wait_timeout'
     ] + list(DOCKER_COMMON_ARGS.keys()))
 
     def _parse_comparisons(self):
@@ -3368,6 +3390,7 @@ def main():
         purge_networks=dict(type='bool', default=False),
         read_only=dict(type='bool'),
         recreate=dict(type='bool', default=False),
+        removal_wait_timeout=dict(type='float'),
         restart=dict(type='bool', default=False),
         restart_policy=dict(type='str', choices=['no', 'on-failure', 'always', 'unless-stopped']),
         restart_retries=dict(type='int'),
