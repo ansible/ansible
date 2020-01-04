@@ -105,6 +105,8 @@ display = Display()
 MIN_DOCKER_PY = '1.7.0'
 MIN_DOCKER_API = None
 
+PARAMIKO_POLL_TIMEOUT = 0.01  # 10 milliseconds
+
 
 def _sanitize_version(version):
     return re.sub(u'[^0-9a-zA-Z.]', u'', version)
@@ -487,8 +489,12 @@ class DockerSocketHandler:
     def __init__(self, sock, container=None):
         if hasattr(sock, '_sock'):
             sock._sock.setblocking(0)
+        elif hasattr(sock, 'setblocking'):
+            sock.setblocking(0)
         else:
             fcntl.fcntl(sock.fileno(), fcntl.F_SETFL, fcntl.fcntl(sock.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
+
+        self._paramiko_read_workaround = hasattr(sock, 'send_ready') and 'paramiko' in str(type(sock))
 
         self._container = container
 
@@ -597,18 +603,40 @@ class DockerSocketHandler:
                 self._selector.modify(self._sock, selectors.EVENT_READ)
             self._handle_end_of_writing()
 
-    def select(self, timeout=None):
+    def select(self, timeout=None, _internal_recursion=False):
+        if not _internal_recursion and self._paramiko_read_workaround and len(self._write_buffer) > 0:
+            # When the SSH transport is used, docker-py internally uses Paramiko, whose
+            # Channel object supports select(), but only for reading
+            # (https://github.com/paramiko/paramiko/issues/695).
+            if self._sock.send_ready():
+                self._write()
+                return True
+            while timeout is None or timeout > PARAMIKO_POLL_TIMEOUT:
+                result = self.select(PARAMIKO_POLL_TIMEOUT, _internal_recursion=True)
+                if self._sock.send_ready():
+                    self._read()
+                    result += 1
+                if result > 0:
+                    return True
+                if timeout is not None:
+                    timeout -= PARAMIKO_POLL_TIMEOUT
+        display.vvvv('select... ({0})'.format(timeout), host=self._container)
         events = self._selector.select(timeout)
         for key, event in events:
             if key.fileobj == self._sock:
                 display.vvvv(
-                    '{0} read:{1} write:{2}'.format(event, event & selectors.EVENT_READ != 0, event & selectors.EVENT_WRITE != 0),
+                    'select event read:{0} write:{1}'.format(event & selectors.EVENT_READ != 0, event & selectors.EVENT_WRITE != 0),
                     host=self._container)
                 if event & selectors.EVENT_READ != 0:
                     self._read()
                 if event & selectors.EVENT_WRITE != 0:
                     self._write()
-        return len(events) > 0
+        result = len(events)
+        if self._paramiko_read_workaround and len(self._write_buffer) > 0:
+            if self._sock.send_ready():
+                self._write()
+                result += 1
+        return result > 0
 
     def is_eof(self):
         return self._eof
