@@ -168,6 +168,11 @@ options:
       - Header to identify as, generally appears in web server logs.
     type: str
     default: ansible-httpget
+  encode_url:
+    description:
+      - Encode URL into IDNA format.
+    type: bool
+    default: no
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files
@@ -338,6 +343,7 @@ from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
+
 # ==============================================================
 # url handling
 
@@ -349,7 +355,7 @@ def url_filename(url):
     return fn
 
 
-def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest=''):
+def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', encode_url=False):
     """
     Download data from the url and store in a temporary file.
 
@@ -361,7 +367,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
         method = 'GET'
 
     start = datetime.datetime.utcnow()
-    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method)
+    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method, encode_url=encode_url)
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
@@ -438,6 +444,7 @@ def main():
         timeout=dict(type='int', default=10),
         headers=dict(type='raw'),
         tmp_dest=dict(type='path'),
+        encode_url=dict(type='bool'),
     )
 
     module = AnsibleModule(
@@ -463,6 +470,7 @@ def main():
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
     tmp_dest = module.params['tmp_dest']
+    encode_url = module.params['encode_url']
 
     result = dict(
         changed=False,
@@ -501,8 +509,9 @@ def main():
 
         if checksum.startswith('http://') or checksum.startswith('https://') or checksum.startswith('ftp://'):
             checksum_url = checksum
+
             # download checksum file to checksum_tmpsrc
-            checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
+            checksum_tmpsrc, checksum_info = url_get(module, checksum_url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, encode_url)
             with open(checksum_tmpsrc) as f:
                 lines = [line.rstrip('\n') for line in f]
             os.remove(checksum_tmpsrc)
@@ -567,7 +576,7 @@ def main():
 
     # download to tmpsrc
     start = datetime.datetime.utcnow()
-    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
+    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, encode_url)
     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     result['src'] = tmpsrc
 
