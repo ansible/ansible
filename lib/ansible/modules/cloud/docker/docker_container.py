@@ -1426,12 +1426,17 @@ class TaskParameters(DockerBaseClass):
             mem_reservation='memory_reservation',
             memswap_limit='memory_swap',
             kernel_memory='kernel_memory',
+            restart_policy='restart_policy',
         )
 
         result = dict()
         for key, value in update_parameters.items():
             if getattr(self, value, None) is not None:
-                if self.client.option_minimal_versions[value]['supported']:
+                if key == 'restart_policy' and self.client.option_minimal_versions[value]['supported']:
+                    restart_policy = dict(Name=self.restart_policy,
+                                                    MaximumRetryCount=self.restart_retries)
+                    result[key] = restart_policy
+                elif self.client.option_minimal_versions[value]['supported']:
                     result[key] = getattr(self, value)
         return result
 
@@ -1595,9 +1600,10 @@ class TaskParameters(DockerBaseClass):
                 if self.client.option_minimal_versions[value]['supported']:
                     params[key] = getattr(self, value)
 
-        if self.restart_policy:
-            params['restart_policy'] = dict(Name=self.restart_policy,
-                                            MaximumRetryCount=self.restart_retries)
+        if self.client.docker_api_version < LooseVersion('1.22'):
+            if self.restart_policy:
+                params['restart_policy'] = dict(Name=self.restart_policy,
+                                                MaximumRetryCount=self.restart_retries)
 
         if 'mounts' in params:
             params['mounts'] = self.mounts_opt
@@ -2089,9 +2095,11 @@ class Container(DockerBaseClass):
 
         host_config = self.container['HostConfig']
         log_config = host_config.get('LogConfig', dict())
-        restart_policy = host_config.get('RestartPolicy', dict())
         config = self.container['Config']
         network = self.container['NetworkSettings']
+
+        if self.parameters.client.docker_api_version < LooseVersion('1.22'):
+            restart_policy = host_config.get('RestartPolicy', dict())
 
         # The previous version of the docker module ignored the detach state by
         # assuming if the container was running, it must have been detached.
@@ -2136,7 +2144,6 @@ class Container(DockerBaseClass):
             privileged=host_config.get('Privileged'),
             expected_ports=host_config.get('PortBindings'),
             read_only=host_config.get('ReadonlyRootfs'),
-            restart_policy=restart_policy.get('Name'),
             runtime=host_config.get('Runtime'),
             shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
@@ -2167,7 +2174,7 @@ class Container(DockerBaseClass):
             cpus=host_config.get('NanoCpus'),
         )
         # Options which don't make sense without their accompanying option
-        if self.parameters.restart_policy:
+        if self.parameters.restart_policy and self.parameters.client.docker_api_version < LooseVersion('1.22'):
             config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
         if self.parameters.log_driver:
             config_mapping['log_driver'] = log_config.get('Type')
@@ -2201,6 +2208,7 @@ class Container(DockerBaseClass):
                 memory=host_config.get('Memory'),
                 memory_reservation=host_config.get('MemoryReservation'),
                 memory_swap=host_config.get('MemorySwap'),
+                restart_policy=restart_policy.get('Name')
             ))
 
         differences = DifferenceTracker()
@@ -2265,7 +2273,13 @@ class Container(DockerBaseClass):
             memory=host_config.get('Memory'),
             memory_reservation=host_config.get('MemoryReservation'),
             memory_swap=host_config.get('MemorySwap'),
+            restart_policy=host_config.get('RestartPolicy')
         )
+
+        # Options which don't make sense without their accompanying option
+        if self.parameters.restart_policy:
+            restart_policy = host_config.get('RestartPolicy', dict())
+            config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
 
         differences = DifferenceTracker()
         for key, value in config_mapping.items():
