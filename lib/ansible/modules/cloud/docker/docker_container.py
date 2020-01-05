@@ -2097,9 +2097,6 @@ class Container(DockerBaseClass):
         config = self.container['Config']
         network = self.container['NetworkSettings']
 
-        if self.parameters.client.docker_api_version < LooseVersion('1.22'):
-            restart_policy = host_config.get('RestartPolicy', dict())
-
         # The previous version of the docker module ignored the detach state by
         # assuming if the container was running, it must have been detached.
         detach = not (config.get('AttachStderr') and config.get('AttachStdout'))
@@ -2173,8 +2170,6 @@ class Container(DockerBaseClass):
             cpus=host_config.get('NanoCpus'),
         )
         # Options which don't make sense without their accompanying option
-        if self.parameters.restart_policy and self.parameters.client.docker_api_version < LooseVersion('1.22'):
-            config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
         if self.parameters.log_driver:
             config_mapping['log_driver'] = log_config.get('Type')
             config_mapping['log_options'] = log_config.get('Config')
@@ -2196,6 +2191,12 @@ class Container(DockerBaseClass):
             # we need to handle all limits which are usually handled by
             # update_container() as configuration changes which require a container
             # restart.
+            restart_policy = host_config.get('RestartPolicy', dict())
+
+            # Options which don't make sense without their accompanying option
+            if self.parameters.restart_policy:
+                config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
+
             config_mapping.update(dict(
                 blkio_weight=host_config.get('BlkioWeight'),
                 cpu_period=host_config.get('CpuPeriod'),
@@ -2261,6 +2262,8 @@ class Container(DockerBaseClass):
 
         host_config = self.container['HostConfig']
 
+        restart_policy_config_value = host_config.get('RestartPolicy') or dict()
+
         config_mapping = dict(
             blkio_weight=host_config.get('BlkioWeight'),
             cpu_period=host_config.get('CpuPeriod'),
@@ -2272,12 +2275,12 @@ class Container(DockerBaseClass):
             memory=host_config.get('Memory'),
             memory_reservation=host_config.get('MemoryReservation'),
             memory_swap=host_config.get('MemorySwap'),
-            restart_policy=host_config.get('RestartPolicy')
+            restart_policy=restart_policy_config_value
         )
 
         # Options which don't make sense without their accompanying option
         if self.parameters.restart_policy:
-            restart_policy = host_config.get('RestartPolicy', dict())
+            restart_policy = restart_policy_config_value
             config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
 
         differences = DifferenceTracker()
