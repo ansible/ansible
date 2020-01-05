@@ -1434,7 +1434,7 @@ class TaskParameters(DockerBaseClass):
             if getattr(self, value, None) is not None:
                 if key == 'restart_policy' and self.client.option_minimal_versions[value]['supported']:
                     restart_policy = dict(Name=self.restart_policy,
-                                                    MaximumRetryCount=self.restart_retries)
+                                          MaximumRetryCount=self.restart_retries)
                     result[key] = restart_policy
                 elif self.client.option_minimal_versions[value]['supported']:
                     result[key] = getattr(self, value)
@@ -1600,10 +1600,9 @@ class TaskParameters(DockerBaseClass):
                 if self.client.option_minimal_versions[value]['supported']:
                     params[key] = getattr(self, value)
 
-        if self.client.docker_api_version < LooseVersion('1.22'):
-            if self.restart_policy:
-                params['restart_policy'] = dict(Name=self.restart_policy,
-                                                MaximumRetryCount=self.restart_retries)
+        if self.restart_policy:
+            params['restart_policy'] = dict(Name=self.restart_policy,
+                                            MaximumRetryCount=self.restart_retries)
 
         if 'mounts' in params:
             params['mounts'] = self.mounts_opt
