@@ -329,6 +329,8 @@ def install_packages(module, pacman_path, state, packages, package_files):
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
 
+        # As we pass `--needed` to pacman returns a single line of ` there is nothing to do` if no change is performed.
+        # The check for > 3 is here because we pick the 4th line in normal operation.
         if len(stdout.split('\n')) > 3:
             data = stdout.split('\n')[3].split(' ')[2:]
             data = [i for i in data if i != '']
@@ -346,6 +348,8 @@ def install_packages(module, pacman_path, state, packages, package_files):
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
 
+        # As we pass `--needed` to pacman returns a single line of ` there is nothing to do` if no change is performed.
+        # The check for > 3 is here because we pick the 4th line in normal operation.
         if len(stdout.split('\n')) > 3:
             data = stdout.split('\n')[3].split(' ')[2:]
             data = [i for i in data if i != '']
