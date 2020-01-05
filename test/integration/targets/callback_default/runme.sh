@@ -28,7 +28,9 @@ run_test() {
 
 	# Printing task path includes absolute paths specific to the machine
 	# Replace any occurences of test folder path with TEST_FOLDER_PATH palceholder
-	sed -i -e "s#${TEST_FOLDER_PATH}#TEST_FOLDER_PATH#g" "${OUTFILE}.${testname}.stdout"
+    if [[ $testname == "display_failed_path" ]]; then
+	  sed -i -e "s#${TEST_FOLDER_PATH}#TEST_FOLDER_PATH#g" "${OUTFILE}.${testname}.stdout"
+    fi
 
 
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
