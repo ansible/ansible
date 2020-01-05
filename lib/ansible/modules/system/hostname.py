@@ -796,6 +796,12 @@ class NeonHostname(Hostname):
     strategy_class = DebianStrategy
 
 
+class OsmcHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Osmc'
+    strategy_class = SystemdStrategy
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
