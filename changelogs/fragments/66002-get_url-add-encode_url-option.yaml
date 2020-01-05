@@ -1,2 +1,2 @@
-bugfix:
-    Added URL encoding option for get_url module.
+minor_changes:
+  - Added URL encoding option for get_url module.

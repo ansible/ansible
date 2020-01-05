@@ -174,6 +174,7 @@ options:
       - If checksum URL is specified with C(checksum), it will also be encoded.
     type: bool
     default: no
+    version_added: '2.10'
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files
@@ -367,7 +368,8 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
         method = 'GET'
 
     start = datetime.datetime.utcnow()
-    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method, encode_url=encode_url)
+    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
+                          encode_url=encode_url)
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:

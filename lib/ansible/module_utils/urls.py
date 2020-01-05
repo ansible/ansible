@@ -1087,16 +1087,16 @@ class Request:
     def _url_encode(self, url):
         protocol, domain, path, params, query, fragment = urllib_parse.urlparse(url)
         try:
-            path = urllib_parse.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=') if path != None else ''
-            params = urllib_parse.quote_plus(params, safe='<>%-_.!*():?#/@&+,;=') if params != None else ''
-            query = urllib_parse.quote_plus(query, safe='<>%-_.!*():?#/@&+,;=') if query != None else ''
-            fragment= urllib_parse.quote_plus(fragment, safe='<>%-_.!*():?#/@&+,;=') if fragment != None else ''
+            path = urllib_parse.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=') if path is not None else ''
+            params = urllib_parse.quote_plus(params, safe='<>%-_.!*():?#/@&+,;=') if params is not None else ''
+            query = urllib_parse.quote_plus(query, safe='<>%-_.!*():?#/@&+,;=') if query is not None else ''
+            fragment = urllib_parse.quote_plus(fragment, safe='<>%-_.!*():?#/@&+,;=') if fragment is not None else ''
         except AttributeError:
             # Python2
-            path = urllib_quote.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=') if path != None else ''
-            params = urllib_quote.quote_plus(params, safe='<>%-_.!*():?#/@&+,;=') if params != None else ''
-            query = urllib_quote.quote_plus(query, safe='<>%-_.!*():?#/@&+,;=') if query != None else ''
-            fragment= urllib_quote.quote_plus(fragment, safe='<>%-_.!*():?#/@&+,;=') if fragment != None else ''
+            path = urllib_quote.quote_plus(path, safe='<>%-_.!*():?#/@&+,;=') if path is not None else ''
+            params = urllib_quote.quote_plus(params, safe='<>%-_.!*():?#/@&+,;=') if params is not None else ''
+            query = urllib_quote.quote_plus(query, safe='<>%-_.!*():?#/@&+,;=') if query is not None else ''
+            fragment = urllib_quote.quote_plus(fragment, safe='<>%-_.!*():?#/@&+,;=') if fragment is not None else ''
         url = urllib_parse.urlunparse([protocol, domain, path, params, query, fragment])
         return url
 
@@ -1437,6 +1437,7 @@ def url_argument_spec():
         force_basic_auth=dict(type='bool', default=False),
         client_cert=dict(type='path'),
         client_key=dict(type='path'),
+        encode_url=dict(type='bool', default=False),
     )
 
 
