@@ -1,2 +1,2 @@
 minor_changes:
-  - callback - When a task fails, display the path to the task file and the line number of the task.
+  - default callback - add ``dispaly_failed_path`` option to display the path to the task file and the line number of the task when a task fails
