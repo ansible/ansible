@@ -89,7 +89,7 @@ def main():
     argument_spec = openstack_full_argument_spec(
         server=dict(required=True),
         state=dict(default='present', choices=['absent', 'present']),
-        tags=dict(default=[], type='list'),
+        tags=dict(required=True, default=[], type='list'),
     )
 
     module_kwargs = openstack_module_kwargs()
