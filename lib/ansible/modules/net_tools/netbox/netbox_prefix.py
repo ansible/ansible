@@ -404,13 +404,14 @@ def get_or_create_prefix(nb_endpoint, data):
             module.fail_json(
                 msg="Request failed, couldn't update prefix: %s" % (data["prefix"])
             )
-        if diff:
+
+        if not diff or (len(diff['after']) == 0 and len(diff['before']) == 0):
+            msg = "Prefix %s already exists" % (data["prefix"])
+            changed = False
+        else:
             msg = "Prefix %s updated" % (data["prefix"])
             changed = True
             result["diff"] = diff
-        else:
-            msg = "Prefix %s already exists" % (data["prefix"])
-            changed = False
 
     result.update({"prefix": prefix, "msg": msg, "changed": changed})
     return result
