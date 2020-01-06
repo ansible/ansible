@@ -35,6 +35,7 @@ from ansible import context
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_text
 
+
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
 _PY3_MIN = sys.version_info[:2] >= (3, 5)
