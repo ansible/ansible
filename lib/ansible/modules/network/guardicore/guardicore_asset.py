@@ -47,7 +47,7 @@ options:
   ssl_address:
     description:
       - the ssl address to configure the asset in front of.
-    required: True
+    required: False
     type: str
   ssl_port:
     description:
@@ -76,15 +76,15 @@ options:
     description:
       - The bios uuid of the asset.
       - If not set, the bios uuid from the machine will be retrieve automatically.
-      - For Linux, use this file content: C('/sys/class/dmi/id/product_uuid').
+      - For Linux, use this file content C('/sys/class/dmi/id/product_uuid').
       - Please refer to Guardicore Admin Guides for more information.
     required: False
     type: str
   asset_id:
     description:
-      - A unique ID of the asset. for ex: C('422F81AE-781B-4823-F1FD-7E51093BF316').
+      - A unique ID of the asset. for example C('422F81AE-781B-4823-F1FD-7E51093BF316').
       - If not set, the bios uuid will be configured as the asset id.
-      - Note: This unique ID must be created by the customer automation, and must be reused when reporting the same asset on subsequent calls.
+      - Note, This unique ID must be created by the customer automation, and must be reused when reporting the same asset on subsequent calls.
     required: False
     type: str
   aws_instance:
@@ -98,10 +98,10 @@ options:
       - Set a list of metadata in the form of C('key1:value1,key2:value2') to add metadata to the asset.
       - Optional parameters which will be attached to the asset and reported to the management console.
     required: False
-    type: list
+    type: str
   inventory_api_version:
     description:
-      - the version of the Guardicore Centra inventory API for ex: v2.0.
+      - the version of the Guardicore Centra inventory API for ex, v2.0.
     required: False
     type: str
     default: v2.0
@@ -313,7 +313,7 @@ def _get_aws_instance_id():
         if response_content:
             if response_content.startswith('i-'):
                 return response_content
-    except:
+    except Exception:
         return None
 
 
@@ -382,8 +382,8 @@ def _get_asset_mac_addresses(interfaces_dict, interface_name, params, ansible_fa
     if interface_name not in interfaces_dict:
         interfaces_dict[interface_name] = {}
     if 'mac_address' not in interfaces_dict[interface_name]:
-        interfaces_dict[interface_name]['mac_address'] = \
-        params['ansible_facts'][ansible_facts_interface_name]['macaddress']
+        interfaces_dict[interface_name]['mac_address'] = params['ansible_facts'][ansible_facts_interface_name][
+            'macaddress']
 
     return interfaces_dict
 
@@ -468,7 +468,7 @@ def main():
         ssl_port=dict(type='str', required=False, default='443'),
         labels=dict(type='str', required=False),
         state=dict(type='str', default='present'),
-        asset_name=dict(type='str', required=False),
+        asset_name=dict(type='str', required=True),
         bios_uuid=dict(type='str', required=False),
         asset_id=dict(type='str', required=False),
         aws_instance=dict(type='bool', required=False, default=False),
