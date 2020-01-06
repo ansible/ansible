@@ -1,8 +1,8 @@
 .. _resource_modules:
 
-*******************************
-Using network resource modules
-*******************************
+************************
+Network resource modules
+************************
 
 Ansible 2.9 introduced network resource modules to simplify and standardize how you manage different network devices.
 
