@@ -517,25 +517,23 @@ class Connection(ConnectionBase):
         path = os.path.expanduser("~/.ssh")
         makedirs_safe(path)
 
-        f = open(filename, 'w')
+        with open(filename, 'w') as f:
 
-        for hostname, keys in iteritems(self.ssh._host_keys):
+            for hostname, keys in iteritems(self.ssh._host_keys):
 
-            for keytype, key in iteritems(keys):
+                for keytype, key in iteritems(keys):
 
-                # was f.write
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
-                if not added_this_time:
-                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+                    # was f.write
+                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    if not added_this_time:
+                        f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
-        for hostname, keys in iteritems(self.ssh._host_keys):
+            for hostname, keys in iteritems(self.ssh._host_keys):
 
-            for keytype, key in iteritems(keys):
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
-                if added_this_time:
-                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
-
-        f.close()
+                for keytype, key in iteritems(keys):
+                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    if added_this_time:
+                        f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
     def reset(self):
         self.close()
