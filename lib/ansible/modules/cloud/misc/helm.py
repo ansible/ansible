@@ -103,7 +103,7 @@ EXAMPLES = '''
     state: present
     name: my-memcached
     namespace: default
-    values: {{ lookup('file', '/path/to/file/values.yaml') | from_yaml }}"
+    values: "{{ lookup('file', '/path/to/file/values.yaml') | from_yaml }}"
 '''
 
 import traceback
