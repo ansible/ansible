@@ -92,6 +92,7 @@ EXAMPLES = '''
     namespace: default
     values:
       foo: "bar"
+
 - name: Install helm chart from a git repo specifying path
   helm:
     host: localhost
