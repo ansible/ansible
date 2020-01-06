@@ -56,7 +56,7 @@ _LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
 _LIBC.wcwidth.argtypes = (ctypes.c_wchar,)
 _LIBC.wcswidth.argtypes = (ctypes.c_wchar_p, ctypes.c_int)
 # Max for c_int
-_MAX_INT =  2 ** (ctypes.sizeof(ctypes.c_int) * 8 - 1) - 1
+_MAX_INT = 2 ** (ctypes.sizeof(ctypes.c_int) * 8 - 1) - 1
 
 
 def get_text_width(text):

@@ -5,9 +5,14 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import locale
+
 import pytest
 
 from ansible.utils.display import get_text_width
+
+# Set the locale to the users default setting
+locale.setlocale(locale.LC_ALL, '')
 
 
 def test_get_text_width():
