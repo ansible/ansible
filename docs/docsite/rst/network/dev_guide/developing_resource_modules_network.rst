@@ -431,10 +431,10 @@ You can mock the device connection and output from the device as follows:
 The facts file of the module now includes a new method, ``get_device_data``. Call ``get_device_data`` here to emulate the device output.
 
 
-Mocking out device data
+Mocking device data
 -----------------------
 
-To mock out fetching results from devices or provide other complex datastructures that
+To mock fetching results from devices or provide other complex data structures that
 come from external libraries, you can use ``fixtures`` to read in pre-generated data. The text files for this pre-generated data live in ``test/units/modules/network/PLATFORM/fixtures/``. See for example the `eos_l2_interfaces.cfg file <https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg>`_.
 
 Load data using the ``load_fixture`` method and set this data as the return value of the
