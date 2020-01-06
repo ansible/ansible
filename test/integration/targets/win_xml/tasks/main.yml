@@ -193,6 +193,51 @@
       - logger_level_value_attrs_again.changed == false
       - logger_level_value_attrs_again.msg == 'The supplied xpath did not match any nodes.  If this is unexpected, check your xpath is valid for the xml file at supplied path.'
 
+# features added ansible 2.10
+# attribute adding
+
+- name: add a name to log level
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: '/log4j:configuration/logger[@name="org.apache.commons.digester"]/level'
+    type: attribute
+    attribute: name1
+    fragment: information
+  register: attribute_add_name1
+
+- name: verify that the attribute was added
+  assert:
+    that:
+      - attribute_add_name1 is changed
+
+- name: add a 2nd name to log level
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: '/log4j:configuration/logger[@name="org.apache.commons.digester"]/level'
+    type: attribute
+    attribute: name2
+    fragment: "It's just an overview"
+  register: attribute_add_name2
+
+- name: verify that the attribute was added
+  assert:
+    that:
+      - attribute_add_name2 is changed
+
+- name: add a name to log level (idempotency test)
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: '/log4j:configuration/logger[@name="org.apache.commons.digester"]/level'
+    type: attribute
+    attribute: name1
+    fragment: information
+  register: attribute_add_name1
+
+- name: verify that the attribute isn't changed as it already exists
+  assert:
+    that:
+      - attribute_add_name1 is not changed
+
 # multiple text nodes
 - name: ensure test books.xml is present
   win_copy:
