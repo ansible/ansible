@@ -355,9 +355,9 @@ def _check_and_adapt_data(nb, data):
 
 def _search_prefix(nb_endpoint, data):
     if data.get("prefix"):
-        prefix = ipaddress.ip_network(data["prefix"])
+        prefix = ipaddress.ip_network(unicode(data["prefix"]))
     elif data.get("parent"):
-        prefix = ipaddress.ip_network(data["parent"])
+        prefix = ipaddress.ip_network(unicode(data["parent"]))
 
     network = to_text(prefix.network_address)
     mask = prefix.prefixlen
