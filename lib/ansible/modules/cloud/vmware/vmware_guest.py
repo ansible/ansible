@@ -2432,7 +2432,7 @@ class PyVmomiHelper(PyVmomi):
                 if key == 'type' and nw['type'] == 'dhcp':
                     network_changes = True
                     break
-                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
+                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected', 'dvswitch_name'):
                     network_changes = True
                     break
 
@@ -2701,7 +2701,7 @@ class PyVmomiHelper(PyVmomi):
         for nw in self.params['networks']:
             for key in nw:
                 # We don't need customizations for these keys
-                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
+                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected', 'dvswitch_name'):
                     network_changes = True
                     break
         if len(self.params['customization']) > 1 or network_changes or self.params.get('customization_spec'):
