@@ -417,11 +417,6 @@ class Connection(ConnectionBase):
                 returncode = 0
                 stdout = stdout[:success]
             elif fail > success:
-                try:
-                    # test using: ansible -m raw -a 'cmd /c exit 99'
-                    returncode = int(stdout[fail:].split()[1])
-                except (IndexError, ValueError):
-                    returncode = -1
                 stdout = stdout[:fail]
             else:
                 returncode = -51
