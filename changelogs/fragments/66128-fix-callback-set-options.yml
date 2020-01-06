@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "Fix issue with callbacks ``set_options`` method that was not called with collections"
