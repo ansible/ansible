@@ -1,0 +1,2 @@
+bugfixes:
+  - paramiko_ssh - optimized file handling by using a context manager.
