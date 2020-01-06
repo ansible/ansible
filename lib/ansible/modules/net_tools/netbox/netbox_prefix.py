@@ -229,6 +229,7 @@ msg:
 import json
 import traceback
 import re
+import sys
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.net_tools.netbox.netbox_utils import (
@@ -250,6 +251,10 @@ try:
 except ImportError:
     PYNETBOX_IMP_ERR = traceback.format_exc()
     HAS_PYNETBOX = False
+
+
+class NetboxPrefixException(Exception):
+    pass
 
 
 def main():
@@ -306,7 +311,7 @@ def main():
             )
     except pynetbox.RequestError as e:
         return module.fail_json(msg=json.loads(e.error))
-    except ValueError as e:
+    except NetboxPrefixException as e:
         return module.fail_json(msg=str(e))
     except AttributeError as e:
         return module.fail_json(msg=str(e))
@@ -324,12 +329,12 @@ def ensure_prefix_present(nb, nb_endpoint, data, first_available=False):
     if first_available:
         for k in ("parent", "prefix_length"):
             if k not in data:
-                raise ValueError("'%s' is required with first_available" % k)
+                raise NetboxPrefixException("'%s' is required with first_available" % k)
 
         return get_new_available_prefix(nb_endpoint, data)
     else:
         if "prefix" not in data:
-            raise ValueError("'prefix' is required without first_available")
+            raise NetboxPrefixException("'prefix' is required without first_available")
 
         return get_or_create_prefix(nb_endpoint, data)
 
@@ -338,7 +343,7 @@ def _check_and_adapt_data(nb, data):
     data = find_ids(nb, data)
 
     if data.get("vrf") and not isinstance(data["vrf"], int):
-        raise ValueError(
+        raise NetboxPrefixException(
             "%s does not exist - Please create VRF" % (data["vrf"])
         )
 
@@ -359,7 +364,7 @@ def _search_prefix(nb_endpoint, data):
 
     if data.get("vrf"):
         if not isinstance(data["vrf"], int):
-            raise ValueError("%s does not exist - Please create VRF" % (data["vrf"]))
+            raise NetboxPrefixException("%s does not exist - Please create VRF" % (data["vrf"]))
         else:
             prefix = nb_endpoint.get(q=network, mask_length=mask, vrf_id=data["vrf"])
     else:
@@ -383,7 +388,8 @@ def _error_multiple_prefix_results(data):
 def get_or_create_prefix(nb_endpoint, data):
     try:
         nb_prefix = _search_prefix(nb_endpoint, data)
-    except ValueError:
+    except NetboxPrefixException as e:
+        sys.stderr.write("WARNING: %s\n" % e)
         return _error_multiple_prefix_results(data)
 
     result = dict()
@@ -413,7 +419,7 @@ def get_or_create_prefix(nb_endpoint, data):
 def get_new_available_prefix(nb_endpoint, data):
     try:
         parent_prefix = _search_prefix(nb_endpoint, data)
-    except ValueError:
+    except NetboxPrefixException:
         return _error_multiple_prefix_results(data)
 
     result = dict()
@@ -440,7 +446,7 @@ def ensure_prefix_absent(nb, nb_endpoint, data):
     """
     try:
         nb_prefix = _search_prefix(nb_endpoint, data)
-    except ValueError:
+    except NetboxPrefixException:
         return _error_multiple_prefix_results(data)
 
     result = dict()
