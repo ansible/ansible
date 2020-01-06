@@ -151,8 +151,6 @@ b_COW_PATHS = (
 )
 
 
-
-
 class Display(with_metaclass(Singleton, object)):
 
     def __init__(self, verbosity=0):
