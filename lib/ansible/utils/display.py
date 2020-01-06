@@ -49,6 +49,8 @@ except NameError:
     # Python 3, we already have raw_input
     pass
 
+# Set the locale to the users default setting
+locale.setlocale(locale.LC_ALL, '')
 
 _LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
 # Set argtypes, to avoid segfault if the wrong type is provided,

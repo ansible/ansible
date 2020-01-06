@@ -5,14 +5,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import locale
-
 import pytest
 
 from ansible.utils.display import get_text_width
-
-# Set the locale to the users default setting
-locale.setlocale(locale.LC_ALL, '')
 
 
 def test_get_text_width():
@@ -23,5 +18,5 @@ def test_get_text_width():
     assert get_text_width(1) == 1
     assert get_text_width(b'four') == 4
     assert get_text_width(u'\u001B') == 0
-    assert get_text_width(u'a\u0000b') == 2
-    assert get_text_width(u'a\u0000bコ') == 4
+    assert get_text_width(u'ab\u0000') == 2
+    assert get_text_width(u'abコ\u0000') == 4
