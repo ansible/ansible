@@ -90,6 +90,8 @@ EXAMPLES = '''
     state: present
     name: my-example
     namespace: default
+    values:
+      foo: "bar"
 
 - name: Install helm chart from a git repo specifying path
   helm:
@@ -102,6 +104,7 @@ EXAMPLES = '''
     state: present
     name: my-memcached
     namespace: default
+    values: "{{ lookup('file', '/path/to/file/values.yaml') | from_yaml }}"
 '''
 
 import traceback
