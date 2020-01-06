@@ -20,3 +20,4 @@ def test_get_text_width():
     assert get_text_width(u'\u001B') == 0
     assert get_text_width(u'ab\u0000') == 2
     assert get_text_width(u'abコ\u0000') == 4
+    assert get_text_width(u'🚀🐮') == 4
