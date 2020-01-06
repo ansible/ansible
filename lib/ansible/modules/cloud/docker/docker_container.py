@@ -2262,7 +2262,7 @@ class Container(DockerBaseClass):
 
         host_config = self.container['HostConfig']
 
-        restart_policy_config_value = host_config.get('RestartPolicy') or dict()
+        restart_policy = host_config.get('RestartPolicy') or dict()
 
         config_mapping = dict(
             blkio_weight=host_config.get('BlkioWeight'),
@@ -2275,12 +2275,11 @@ class Container(DockerBaseClass):
             memory=host_config.get('Memory'),
             memory_reservation=host_config.get('MemoryReservation'),
             memory_swap=host_config.get('MemorySwap'),
-            restart_policy=restart_policy_config_value
+            restart_policy=restart_policy.get('Name')
         )
 
         # Options which don't make sense without their accompanying option
         if self.parameters.restart_policy:
-            restart_policy = restart_policy_config_value
             config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
 
         differences = DifferenceTracker()
