@@ -430,7 +430,7 @@ class DnfModule(YumDnf):
             rpm_nevr_match = rpm_nevr_re.match(packagename)
             if rpm_nevr_match:
                 name, epoch, version, release = rpm_nevr_re.match(packagename).groups()
-                if not version or not version.split('.')[0].isdigit():
+                if not version:
                     return None
             else:
                 return None
