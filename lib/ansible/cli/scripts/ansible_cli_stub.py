@@ -26,6 +26,7 @@ __requires__ = ['ansible_base']
 
 
 import errno
+import locale
 import os
 import shutil
 import sys
@@ -35,6 +36,8 @@ from ansible import context
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_text
 
+# Set the locale to the users default setting
+locale.setlocale(locale.LC_ALL, '')
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions

@@ -18,6 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ctypes.util
 import errno
 import fcntl
 import getpass
@@ -47,6 +48,48 @@ try:
 except NameError:
     # Python 3, we already have raw_input
     pass
+
+
+_LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
+# Set argtypes, to avoid segfault if the wrong type is provided,
+# restype is assumed to be c_int
+_LIBC.wcwidth.argtypes = (ctypes.c_wchar,)
+_LIBC.wcswidth.argtypes = (ctypes.c_wchar_p, ctypes.c_int)
+# Max for c_int
+_MAX_INT =  2 ** (ctypes.sizeof(ctypes.c_int) * 8 - 1) - 1
+
+
+def get_text_width(text):
+    """Function that utilizes ``wcswidth`` or ``wcwidth`` to determine the
+    number of columns used to display a text string.
+
+    We try first with ``wcswidth``, and fallback to iterating each
+    character and using wcwidth individually, falling back to a value of 0
+    for non-printable wide characters
+
+    On Py2, this depends on ``locale.setlocale(locale.LC_ALL, '')``,
+    that in the case of Ansible is done in ``bin/ansible``
+    """
+    text = to_text(text)
+    try:
+        width = _LIBC.wcswidth(text, _MAX_INT)
+    except ctypes.ArgumentError:
+        width = -1
+    if width != -1:
+        return width
+
+    width = 0
+    for c in text:
+        try:
+            w = _LIBC.wcwidth(c)
+        except ctypes.ArgumentError:
+            w = -1
+        if w == -1:
+            # -1 signifies a non-printable character
+            # use 0 here as a best effort
+            w = 0
+        width += w
+    return width
 
 
 class FilterBlackList(logging.Filter):
@@ -106,6 +149,8 @@ b_COW_PATHS = (
     b"/usr/local/bin/cowsay",  # BSD path for cowsay
     b"/opt/local/bin/cowsay",  # MacPorts path for cowsay
 )
+
+
 
 
 class Display(with_metaclass(Singleton, object)):
@@ -329,7 +374,7 @@ class Display(with_metaclass(Singleton, object)):
                 self.warning("somebody cleverly deleted cowsay or something during the PB run.  heh.")
 
         msg = msg.strip()
-        star_len = self.columns - len(msg)
+        star_len = self.columns - get_text_width(msg)
         if star_len <= 3:
             star_len = 3
         stars = u"*" * star_len
