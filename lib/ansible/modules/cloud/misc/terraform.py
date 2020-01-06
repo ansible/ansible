@@ -104,6 +104,12 @@ options:
       - A group of key-values to provide at init stage to the -backend-config parameter.
     required: false
     version_added: 2.7
+  init_extra_args:
+    description:
+      - Allow extra options to be given to terraform init command.
+    required: false
+    type: list
+    version_added: 2.10
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
@@ -191,8 +197,10 @@ def _state_args(state_file):
     return []
 
 
-def init_plugins(bin_path, project_path, backend_config):
+def init_plugins(bin_path, project_path, backend_config, init_extra_args):
     command = [bin_path, 'init', '-input=false']
+    if init_extra_args:
+        command.extend(init_extra_args)
     if backend_config:
         for key, val in backend_config.items():
             command.extend([
@@ -285,6 +293,7 @@ def main():
             lock_timeout=dict(type='int',),
             force_init=dict(type='bool', default=False),
             backend_config=dict(type='dict', default=None),
+            init_extra_args=dict(required=False, type='list', default=[]),
         ),
         required_if=[('state', 'planned', ['plan_file'])],
         supports_check_mode=True,
@@ -301,6 +310,7 @@ def main():
     state_file = module.params.get('state_file')
     force_init = module.params.get('force_init')
     backend_config = module.params.get('backend_config')
+    init_extra_args = module.params.get('init_extra_args')
 
     if bin_path is not None:
         command = [bin_path]
@@ -308,7 +318,7 @@ def main():
         command = [module.get_bin_path('terraform', required=True)]
 
     if force_init:
-        init_plugins(command[0], project_path, backend_config)
+        init_plugins(command[0], project_path, backend_config, init_extra_args)
 
     workspace_ctx = get_workspace_context(command[0], project_path)
     if workspace_ctx["current"] != workspace:
