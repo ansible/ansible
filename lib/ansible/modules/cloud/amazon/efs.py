@@ -121,7 +121,7 @@ EXAMPLES = '''
     state: present
     name: myTestEFS
     tags:
-        name: myTestNameTag
+        Name: myTestNameTag
         purpose: file-storage
     targets:
         - subnet_id: subnet-748c5d03
