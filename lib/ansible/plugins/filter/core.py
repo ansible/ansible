@@ -581,6 +581,17 @@ def random_mac(value, seed=None):
     return value + re.sub(r'(..)', r':\1', rnd)
 
 
+def path_join(paths):
+    ''' takes a sequence or a string, and return a concatenation
+        of the different members '''
+    if isinstance(paths, string_types):
+        return os.path.join(paths)
+    elif is_sequence(paths):
+        return os.path.join(*paths)
+    else:
+        raise AnsibleFilterError("|path_join expects string or sequence, got %s instead." % type(paths))
+
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -612,6 +623,7 @@ class FilterModule(object):
             'dirname': partial(unicode_wrap, os.path.dirname),
             'expanduser': partial(unicode_wrap, os.path.expanduser),
             'expandvars': partial(unicode_wrap, os.path.expandvars),
+            'path_join': path_join,
             'realpath': partial(unicode_wrap, os.path.realpath),
             'relpath': partial(unicode_wrap, os.path.relpath),
             'splitext': partial(unicode_wrap, os.path.splitext),

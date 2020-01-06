@@ -52,6 +52,10 @@ files to exist and are passthrus to the python os.path functions
 /etc/motd with basename = motd
 /etc/motd with dirname  = /etc
 
+path_join_simple = /etc/subdir/test
+path_join_with_slash = /test
+path_join_relative = etc/subdir/test
+
 TODO: realpath follows symlinks.  There isn't a test for this just now.
 
 TODO: add tests for set theory operations like union
