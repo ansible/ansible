@@ -48,17 +48,22 @@ class TestNxosL3InterfacesModule(TestNxosModule):
         self.mock_edit_config = patch('ansible.module_utils.network.nxos.config.l3_interfaces.l3_interfaces.L3_interfaces.edit_config')
         self.edit_config = self.mock_edit_config.start()
 
+        self.mock_get_platform_type = patch('ansible.module_utils.network.nxos.config.l3_interfaces.l3_interfaces.L3_interfaces.get_platform_type')
+        self.get_platform_type = self.mock_get_platform_type.start()
+
     def tearDown(self):
         super(TestNxosL3InterfacesModule, self).tearDown()
         self.mock_FACT_LEGACY_SUBSETS.stop()
         self.mock_get_resource_connection_config.stop()
         self.mock_get_resource_connection_facts.stop()
         self.mock_edit_config.stop()
+        self.mock_get_platform_type.stop()
 
-    def load_fixtures(self, commands=None, device=''):
+    def load_fixtures(self, commands=None, device='N9K'):
         self.mock_FACT_LEGACY_SUBSETS.return_value = dict()
         self.get_resource_connection_config.return_value = None
         self.edit_config.return_value = None
+        self.get_platform_type.return_value = device
 
     # ---------------------------
     # L3_interfaces Test Cases
@@ -110,9 +115,9 @@ class TestNxosL3InterfacesModule(TestNxosModule):
         deleted = ['interface Ethernet1/1', 'no ip address',
                    'interface Ethernet1/2', 'no ip address']
         replaced = ['interface Ethernet1/1', 'ip address 192.168.1.1/24',
-                    'interface Ethernet1/2', 'no ip address 10.1.2.1/24']
+                    'interface Ethernet1/2', 'no ip address']
         overridden = ['interface Ethernet1/1', 'ip address 192.168.1.1/24',
-                      'interface Ethernet1/2', 'no ip address 10.1.2.1/24',
+                      'interface Ethernet1/2', 'no ip address',
                       'interface Ethernet1/3', 'no ip address']
 
         playbook['state'] = 'merged'
@@ -201,6 +206,7 @@ class TestNxosL3InterfacesModule(TestNxosModule):
           interface mgmt0
             ip address 10.0.0.254/24
           interface Ethernet1/1
+            no ip redirects
             ip address 10.1.1.1/24 tag 11
             ip address 10.2.2.2/24 secondary tag 12
             ip address 10.3.3.3/24 secondary
@@ -211,6 +217,10 @@ class TestNxosL3InterfacesModule(TestNxosModule):
             ip address 10.12.12.12/24
           interface Ethernet1/3
             ip address 10.13.13.13/24
+          interface Ethernet1/5
+            no ip redirects
+            ip address 10.15.15.15/24
+            ip address 10.25.25.25/24 secondary
         ''')
         self.get_resource_connection_facts.return_value = {self.SHOW_CMD: existing}
         playbook = dict(config=[
@@ -225,6 +235,7 @@ class TestNxosL3InterfacesModule(TestNxosModule):
             dict(name='Ethernet1/4',
                  ipv4=[{'address': '10.40.40.40/24'},
                        {'address': '10.41.41.41/24', 'secondary': True}]),
+            dict(name='Ethernet1/5'),
         ])
         # Expected result commands for each 'state'
         merged = [
@@ -243,7 +254,8 @@ class TestNxosL3InterfacesModule(TestNxosModule):
         ]
         deleted = [
             'interface Ethernet1/1', 'no ip address',
-            'interface Ethernet1/2', 'no ip address'
+            'interface Ethernet1/2', 'no ip address',
+            'interface Ethernet1/5', 'no ip address'
         ]
         replaced = [
             'interface Ethernet1/1',
@@ -256,10 +268,12 @@ class TestNxosL3InterfacesModule(TestNxosModule):
             'ip address 10.7.7.7/24 secondary tag 77',
             'ip address 10.5.5.5/24 secondary tag 55',
             'interface Ethernet1/2',
-            'no ip address 10.12.12.12/24',
+            'no ip address',
             'interface Ethernet1/4',
             'ip address 10.40.40.40/24',
-            'ip address 10.41.41.41/24 secondary'
+            'ip address 10.41.41.41/24 secondary',
+            'interface Ethernet1/5',
+            'no ip address'
         ]
         overridden = [
             'interface Ethernet1/1',
@@ -273,12 +287,14 @@ class TestNxosL3InterfacesModule(TestNxosModule):
             'ip address 10.7.7.7/24 secondary tag 77',
             'ip address 10.5.5.5/24 secondary tag 55',
             'interface Ethernet1/2',
-            'no ip address 10.12.12.12/24',
+            'no ip address',
             'interface Ethernet1/3',
             'no ip address',
             'interface Ethernet1/4',
             'ip address 10.40.40.40/24',
-            'ip address 10.41.41.41/24 secondary'
+            'ip address 10.41.41.41/24 secondary',
+            'interface Ethernet1/5',
+            'no ip address',
         ]
 
         playbook['state'] = 'merged'
@@ -292,7 +308,7 @@ class TestNxosL3InterfacesModule(TestNxosModule):
         playbook['state'] = 'replaced'
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=replaced)
-        #
+
         playbook['state'] = 'overridden'
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=overridden)
@@ -513,3 +529,52 @@ class TestNxosL3InterfacesModule(TestNxosModule):
         playbook['state'] = 'deleted'
         set_module_args(playbook, ignore_provider_arg)
         self.execute_module(changed=True, commands=deleted)
+
+    def test_9(self):
+        # Platform specific checks
+        # 'ip redirects' has platform-specific behaviors
+        existing = dedent('''\
+          interface mgmt0
+            ip address 10.0.0.254/24
+          interface Ethernet1/3
+            ip address 10.13.13.13/24
+          interface Ethernet1/5
+            no ip redirects
+            ip address 10.15.15.15/24
+            ip address 10.25.25.25/24 secondary
+        ''')
+        self.get_resource_connection_facts.return_value = {self.SHOW_CMD: existing}
+        playbook = dict(config=[
+            dict(name='Ethernet1/3'),
+            dict(name='Ethernet1/5'),
+        ])
+        # Expected result commands for each 'state'
+        deleted = [
+            'interface Ethernet1/3', 'no ip address',
+            'interface Ethernet1/5', 'no ip address', 'ip redirects'
+        ]
+        replaced = [
+            'interface Ethernet1/3', 'no ip address',
+            'interface Ethernet1/5', 'no ip address', 'ip redirects'
+        ]
+        overridden = [
+            'interface Ethernet1/3', 'no ip address',
+            'interface Ethernet1/5', 'no ip address', 'ip redirects'
+        ]
+        platform = 'N3K'
+
+        playbook['state'] = 'merged'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=False, device=platform)
+
+        playbook['state'] = 'deleted'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=deleted, device=platform)
+
+        playbook['state'] = 'replaced'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=replaced, device=platform)
+
+        playbook['state'] = 'overridden'
+        set_module_args(playbook, ignore_provider_arg)
+        self.execute_module(changed=True, commands=overridden, device=platform)

@@ -14,6 +14,8 @@ created
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import re
+
 from copy import deepcopy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, remove_empties
@@ -50,10 +52,15 @@ class L3_interfaces(ConfigBase):
         """
         facts, _warnings = Facts(self._module).get_facts(self.gather_subset, self.gather_network_resources)
         l3_interfaces_facts = facts['ansible_network_resources'].get('l3_interfaces')
-
         if not l3_interfaces_facts:
             return []
+
+        self.platform = self.get_platform_type()
         return remove_rsvd_interfaces(l3_interfaces_facts)
+
+    def get_platform_type(self):
+        default, _warnings = Facts(self._module).get_facts(legacy_facts_type=['default'])
+        return default.get('ansible_net_platform', '')
 
     def edit_config(self, commands):
         return self._connection.edit_config(commands)
@@ -102,6 +109,7 @@ class L3_interfaces(ConfigBase):
                     self._module.fail_json(msg="The 'management' interface is not allowed to be managed by this module")
                 want.append(remove_empties(w))
         have = deepcopy(existing_l3_interfaces_facts)
+        self.init_check_existing(have)
         resp = self.set_state(want, have)
         return to_list(resp)
 
@@ -140,6 +148,7 @@ class L3_interfaces(ConfigBase):
                   to the desired configuration
         """
         cmds = []
+        name = want['name']
         obj_in_have = search_obj_in_list(want['name'], have, 'name')
 
         have_v4 = obj_in_have.pop('ipv4', []) if obj_in_have else []
@@ -153,7 +162,7 @@ class L3_interfaces(ConfigBase):
         if obj_in_have:
             # Find 'want' changes first
             diff = self.diff_of_dicts(want, obj_in_have)
-            rmv = {}
+            rmv = {'name': name}
             haves_not_in_want = set(obj_in_have.keys()) - set(want.keys()) - set(diff.keys())
             for i in haves_not_in_want:
                 rmv[i] = obj_in_have[i]
@@ -161,11 +170,10 @@ class L3_interfaces(ConfigBase):
         else:
             diff = want
 
-        cmds.extend(self.add_commands(diff, obj_in_have=obj_in_have))
+        cmds.extend(self.add_commands(diff, name=name))
         cmds.extend(v4_cmds)
         cmds.extend(v6_cmds)
-        if cmds:
-            cmds.insert(0, 'interface ' + want['name'])
+        self.cmd_order_fixup(cmds, name)
         return cmds
 
     def _state_overridden(self, want, have):
@@ -186,13 +194,12 @@ class L3_interfaces(ConfigBase):
                     v4_cmds = self._v4_cmds(obj_in_want.pop('ipv4', []), i.pop('ipv4', []), state='overridden')
                     replaced_cmds = self._state_replaced(obj_in_want, [i])
                     replaced_cmds.extend(v4_cmds)
-                    if replaced_cmds:
-                        if not [i for i in replaced_cmds if i.startswith('interface')]:
-                            replaced_cmds.insert(0, 'interface %s' % obj_in_want['name'])
-                        cmds.extend(replaced_cmds)
+                    self.cmd_order_fixup(replaced_cmds, obj_in_want['name'])
+                    cmds.extend(replaced_cmds)
             else:
-                cmds.append('interface ' + i['name'])
-                cmds.extend(self.generate_delete_commands(i))
+                deleted_cmds = self.generate_delete_commands(i)
+                self.cmd_order_fixup(deleted_cmds, i['name'])
+                cmds.extend(deleted_cmds)
 
         for i in want:
             if [item for item in have if i['name'] == item['name']]:
@@ -243,6 +250,11 @@ class L3_interfaces(ConfigBase):
         pri_h = pri_h[0] if pri_h else {}
         cmds = []
 
+        # Remove all addrs when no primary is specified in want (pri_w)
+        if pri_h and not pri_w and (replaced or overridden):
+            cmds.append('no ip address')
+            return cmds
+
         # 1. Determine which secondaries are changing and remove them. Need a have/want
         # diff instead of want/have because a have sec addr may be changing to a pri.
         sec_to_rmv = []
@@ -267,8 +279,6 @@ class L3_interfaces(ConfigBase):
                 tag = diff.get('tag')
                 cmd += ' tag %s' % tag if tag else ''
                 cmds.append(cmd)
-        elif pri_h and not merged:
-            cmds.append('no ip address %s' % pri_h['address'])
 
         # 3. process remaining secondaries last
         sec_w_to_chg = self.diff_list_of_dicts(sec_w, sec_h)
@@ -340,17 +350,22 @@ class L3_interfaces(ConfigBase):
         if not obj or len(obj.keys()) == 1:
             return commands
         commands = self.generate_delete_commands(obj)
-        if commands:
-            commands.insert(0, 'interface ' + obj['name'])
+        self.cmd_order_fixup(commands, obj['name'])
         return commands
 
     def generate_delete_commands(self, obj):
+        """Generate CLI commands to remove non-default settings.
+        obj: dict of attrs to remove
+        """
         commands = []
+        name = obj.get('name')
         if 'dot1q' in obj:
             commands.append('no encapsulation dot1q')
         if 'redirects' in obj:
-            # Note: device will auto-disable redirects when secondaries are present
-            commands.append('ip redirects')
+            if not self.check_existing(name, 'has_secondary') or re.match('N[3567]', self.platform):
+                # device auto-enables redirects when secondaries are removed;
+                # auto-enable may fail on legacy platforms so always do explicit enable
+                commands.append('ip redirects')
         if 'unreachables' in obj:
             commands.append('no ip unreachables')
         if 'ipv4' in obj:
@@ -358,6 +373,33 @@ class L3_interfaces(ConfigBase):
         if 'ipv6' in obj:
             commands.append('no ipv6 address')
         return commands
+
+    def init_check_existing(self, have):
+        """Creates a class var dict for easier access to existing states
+        """
+        self.existing_facts = dict()
+        have_copy = deepcopy(have)
+        for intf in have_copy:
+            name = intf['name']
+            self.existing_facts[name] = intf
+            # Check for presence of secondaries; used for ip redirects logic
+            if [i for i in intf.get('ipv4', []) if i.get('secondary')]:
+                self.existing_facts[name]['has_secondary'] = True
+
+    def check_existing(self, name, query):
+        """Helper method to lookup existing states on an interface.
+        This is needed for attribute changes that have additional dependencies;
+        e.g. 'ip redirects' may auto-enable when all secondary ip addrs are removed.
+        """
+        if name:
+            have = self.existing_facts.get(name, {})
+            if 'has_secondary' in query:
+                return have.get('has_secondary', False)
+            if 'redirects' in query:
+                return have.get('redirects', True)
+            if 'unreachables' in query:
+                return have.get('unreachables', False)
+        return None
 
     def diff_of_dicts(self, w, obj):
         diff = set(w.items()) - set(obj.items())
@@ -375,56 +417,48 @@ class L3_interfaces(ConfigBase):
             diff.append(dict((x, y) for x, y in element))
         return diff
 
-    def add_commands(self, diff, obj_in_have=None, name=''):
+    def add_commands(self, diff, name=''):
         commands = []
         if not diff:
             return commands
-        if obj_in_have is None:
-            obj_in_have = {}
         if 'dot1q' in diff:
             commands.append('encapsulation dot1q ' + str(diff['dot1q']))
         if 'redirects' in diff:
             # Note: device will auto-disable redirects when secondaries are present
-            if diff['redirects'] != obj_in_have.get('redirects', True):
+            if diff['redirects'] != self.check_existing(name, 'redirects'):
                 no_cmd = 'no ' if diff['redirects'] is False else ''
                 commands.append(no_cmd + 'ip redirects')
+                self.cmd_order_fixup(commands, name)
         if 'unreachables' in diff:
-            if diff['unreachables'] != obj_in_have.get('unreachables', False):
+            if diff['unreachables'] != self.check_existing(name, 'unreachables'):
                 no_cmd = 'no ' if diff['unreachables'] is False else ''
                 commands.append(no_cmd + 'ip unreachables')
         if 'ipv4' in diff:
-            commands.extend(self.generate_commands(diff['ipv4'], flag='ipv4'))
+            commands.extend(self.generate_afi_commands(diff['ipv4']))
         if 'ipv6' in diff:
-            commands.extend(self.generate_commands(diff['ipv6'], flag='ipv6'))
-        if commands and name:
-            commands.insert(0, 'interface ' + name)
+            commands.extend(self.generate_afi_commands(diff['ipv6']))
+        self.cmd_order_fixup(commands, name)
+
         return commands
 
-    def generate_commands(self, d, flag=None):
-        commands = []
-
-        for i in d:
-            cmd = ''
-            if flag == 'ipv4':
-                cmd = 'ip address '
-            elif flag == 'ipv6':
-                cmd = 'ipv6 address '
-
+    def generate_afi_commands(self, diff):
+        cmds = []
+        for i in diff:
+            cmd = 'ipv6 address ' if re.search('::', i['address']) else 'ip address '
             cmd += i['address']
-            if 'secondary' in i and i['secondary'] is True:
-                cmd += ' ' + 'secondary'
-                if 'tag' in i:
-                    cmd += ' ' + 'tag ' + str(i['tag'])
-            elif 'tag' in i:
-                cmd += ' ' + 'tag ' + str(i['tag'])
-            commands.append(cmd)
-        return commands
+            if i.get('secondary'):
+                cmd += ' secondary'
+            if i.get('tag'):
+                cmd += ' tag ' + str(i['tag'])
+            cmds.append(cmd)
+        return cmds
 
     def set_commands(self, w, have):
         commands = []
-        obj_in_have = search_obj_in_list(w['name'], have, 'name')
+        name = w['name']
+        obj_in_have = search_obj_in_list(name, have, 'name')
         if not obj_in_have:
-            commands = self.add_commands(w, name=w['name'])
+            commands = self.add_commands(w, name=name)
         else:
             # lists of dicts must be processed separately from non-list attrs
             v4_cmds = self._v4_cmds(w.pop('ipv4', []), obj_in_have.pop('ipv4', []), state='merged')
@@ -432,10 +466,23 @@ class L3_interfaces(ConfigBase):
 
             # diff remaining attrs
             diff = self.diff_of_dicts(w, obj_in_have)
-            commands = self.add_commands(diff, obj_in_have=obj_in_have)
+            commands = self.add_commands(diff, name=name)
             commands.extend(v4_cmds)
             commands.extend(v6_cmds)
-            if commands:
-                commands.insert(0, 'interface ' + w['name'])
 
+        self.cmd_order_fixup(commands, name)
         return commands
+
+    def cmd_order_fixup(self, cmds, name):
+        """Inserts 'interface <name>' config at the beginning of populated command list; reorders dependent commands that must process after others.
+        """
+        if cmds:
+            if name and not [item for item in cmds if item.startswith('interface')]:
+                cmds.insert(0, 'interface ' + name)
+
+            redirects = [item for item in cmds if re.match('(no )*ip redirects', item)]
+            if redirects:
+                # redirects should occur after ipv4 commands, just move to end of list
+                redirects = redirects.pop()
+                cmds.remove(redirects)
+                cmds.append(redirects)
