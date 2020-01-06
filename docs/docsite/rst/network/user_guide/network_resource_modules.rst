@@ -94,7 +94,36 @@ Network resource modules return the following details:
 * The *after* state - the new resource configuration that exists on the network device after the task was executed.
 * Commands - any commands configured on the device.
 
+.. code-block:: yaml
 
+   ok: [nxos101] =>
+     result:
+       after:
+         contact: IT Support
+         location: Room E, Building 6, Seattle, WA 98134
+         users:
+         - algorithm: md5
+           group: network-admin
+           localized_key: true
+           password: '0x73fd9a2cc8c53ed3dd4ed8f4ff157e69'
+           privacy_password: '0x73fd9a2cc8c53ed3dd4ed8f4ff157e69'
+           username: admin
+       before:
+         contact: IT Support
+         location: Room E, Building 5, Seattle HQ
+         users:
+         - algorithm: md5
+           group: network-admin
+           localized_key: true
+           password: '0x73fd9a2cc8c53ed3dd4ed8f4ff157e69'
+           privacy_password: '0x73fd9a2cc8c53ed3dd4ed8f4ff157e69'
+           username: admin
+       changed: true
+       commands:
+       - snmp-server location Room E, Building 6, Seattle, WA 98134
+       failed: false
+
+      
 Example: Verifying the network device configuration has not changed
 ====================================================================
 
