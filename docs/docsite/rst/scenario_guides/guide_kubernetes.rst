@@ -8,7 +8,7 @@ Requirements
 
 To use the modules, you'll need the following:
 
-- Run Ansible from source. For assistance, view `running from source <./intro_installation.html/#running-from-source>`_
+- Run Ansible from source. For assistance, view :ref:`from_source`.
 - `OpenShift Rest Client <https://github.com/openshift/openshift-restclient-python>`_ installed on the host that will execute the modules
 
 

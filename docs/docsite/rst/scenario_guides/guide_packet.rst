@@ -31,7 +31,7 @@ To use the modules and inventory script you'll need a Packet API token. You can 
 
 If you're not comfortable exporting your API token, you can pass it as a parameter to the modules.
 
-On Packet, devices and reserved IP addresses belong to `projects <https://www.packet.net/developers/api/projects/>`_. In order to use the packet_device module, you need to specify the UUID of the project in which you want to create or manage devices. You can find a project's UUID in the Packet portal `here <https://app.packet.net/portal#/projects/list/table/>`_ (it's just under the project table) or via one of the available `CLIs <https://www.packet.net/developers/integrations/>`_.
+On Packet, devices and reserved IP addresses belong to `projects <https://www.packet.com/developers/api/#projects>`_. In order to use the packet_device module, you need to specify the UUID of the project in which you want to create or manage devices. You can find a project's UUID in the Packet portal `here <https://app.packet.net/portal#/projects/list/table/>`_ (it's just under the project table) or via one of the available `CLIs <https://www.packet.net/developers/integrations/>`_.
 
 
 If you want to use a new SSH keypair in this tutorial, you can generate it to ``./id_rsa`` and ``./id_rsa.pub`` as:
@@ -46,7 +46,7 @@ If you want to use an existing keypair, just copy the private and public key ove
 Device Creation
 ===============
 
-The following code block is a simple playbook that creates one `Type 0 <https://www.packet.net/bare-metal/servers/type-0/>`_ server (the 'plan' parameter). You have to supply 'plan' and 'operating_system'. 'location' defaults to 'ewr1' (Parsippany, NJ). You can find all the possible values for the parameters via a `CLI client <https://www.packet.net/developers/integrations/>`_.
+The following code block is a simple playbook that creates one `Type 0 <https://www.packet.com/cloud/servers/t1-small/>`_ server (the 'plan' parameter). You have to supply 'plan' and 'operating_system'. 'location' defaults to 'ewr1' (Parsippany, NJ). You can find all the possible values for the parameters via a `CLI client <https://www.packet.net/developers/integrations/>`_.
 
 .. code-block:: yaml
 
