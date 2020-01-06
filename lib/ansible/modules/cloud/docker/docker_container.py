@@ -1367,12 +1367,17 @@ class TaskParameters(DockerBaseClass):
             mem_reservation='memory_reservation',
             memswap_limit='memory_swap',
             kernel_memory='kernel_memory',
+            restart_policy='restart_policy',
         )
 
         result = dict()
         for key, value in update_parameters.items():
             if getattr(self, value, None) is not None:
-                if self.client.option_minimal_versions[value]['supported']:
+                if key == 'restart_policy' and self.client.option_minimal_versions[value]['supported']:
+                    restart_policy = dict(Name=self.restart_policy,
+                                          MaximumRetryCount=self.restart_retries)
+                    result[key] = restart_policy
+                elif self.client.option_minimal_versions[value]['supported']:
                     result[key] = getattr(self, value)
         return result
 
@@ -2029,7 +2034,6 @@ class Container(DockerBaseClass):
 
         host_config = self.container['HostConfig']
         log_config = host_config.get('LogConfig', dict())
-        restart_policy = host_config.get('RestartPolicy', dict())
         config = self.container['Config']
         network = self.container['NetworkSettings']
 
@@ -2076,7 +2080,6 @@ class Container(DockerBaseClass):
             privileged=host_config.get('Privileged'),
             expected_ports=host_config.get('PortBindings'),
             read_only=host_config.get('ReadonlyRootfs'),
-            restart_policy=restart_policy.get('Name'),
             runtime=host_config.get('Runtime'),
             shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
@@ -2106,8 +2109,6 @@ class Container(DockerBaseClass):
             expected_mounts=self._decode_mounts(host_config.get('Mounts')),
         )
         # Options which don't make sense without their accompanying option
-        if self.parameters.restart_policy:
-            config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
         if self.parameters.log_driver:
             config_mapping['log_driver'] = log_config.get('Type')
             config_mapping['log_options'] = log_config.get('Config')
@@ -2129,6 +2130,12 @@ class Container(DockerBaseClass):
             # we need to handle all limits which are usually handled by
             # update_container() as configuration changes which require a container
             # restart.
+            restart_policy = host_config.get('RestartPolicy', dict())
+
+            # Options which don't make sense without their accompanying option
+            if self.parameters.restart_policy:
+                config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
+
             config_mapping.update(dict(
                 blkio_weight=host_config.get('BlkioWeight'),
                 cpu_period=host_config.get('CpuPeriod'),
@@ -2140,6 +2147,7 @@ class Container(DockerBaseClass):
                 memory=host_config.get('Memory'),
                 memory_reservation=host_config.get('MemoryReservation'),
                 memory_swap=host_config.get('MemorySwap'),
+                restart_policy=restart_policy.get('Name')
             ))
 
         differences = DifferenceTracker()
@@ -2193,6 +2201,8 @@ class Container(DockerBaseClass):
 
         host_config = self.container['HostConfig']
 
+        restart_policy = host_config.get('RestartPolicy') or dict()
+
         config_mapping = dict(
             blkio_weight=host_config.get('BlkioWeight'),
             cpu_period=host_config.get('CpuPeriod'),
@@ -2204,7 +2214,12 @@ class Container(DockerBaseClass):
             memory=host_config.get('Memory'),
             memory_reservation=host_config.get('MemoryReservation'),
             memory_swap=host_config.get('MemorySwap'),
+            restart_policy=restart_policy.get('Name')
         )
+
+        # Options which don't make sense without their accompanying option
+        if self.parameters.restart_policy:
+            config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
 
         differences = DifferenceTracker()
         for key, value in config_mapping.items():
