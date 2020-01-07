@@ -26,6 +26,8 @@ import argparse
 import json
 import os
 import re
+import sys
+
 import requests
 
 try:
@@ -36,6 +38,12 @@ except ImportError:
 
 def main():
     """Main program body."""
+    args = parse_args()
+    download_run(args)
+
+
+def parse_args():
+    """Parse and return args."""
     api_key = get_api_key()
 
     parser = argparse.ArgumentParser(description='Download results from a Shippable run.')
@@ -118,6 +126,11 @@ def main():
     if not any(selections):
         parser.error('At least one download option is required.')
 
+    return args
+
+
+def download_run(args):
+    """Download a Shippable run."""
     headers = dict(
         Authorization='apiToken %s' % args.api_key,
     )
@@ -137,7 +150,7 @@ def main():
 
         if job_number:
             if args.job_number:
-                exit('ERROR: job number found in url and specified with --job-number')
+                sys.exit('ERROR: job number found in url and specified with --job-number')
 
             args.job_number = [job_number]
 
@@ -173,7 +186,7 @@ def main():
         project = run['projectName']
         run_number = run['runNumber']
     else:
-        exit('ERROR: invalid run: %s' % args.run_id)
+        sys.exit('ERROR: invalid run: %s' % args.run_id)
 
     output_dir = '%s/%s/%s' % (account, project, run_number)
 
@@ -199,6 +212,11 @@ def main():
             with open(path, 'w') as metadata_fd:
                 metadata_fd.write(contents)
 
+    download_jobs(args, jobs, headers, output_dir)
+
+
+def download_jobs(args, jobs, headers, output_dir):
+    """Download Shippable jobs."""
     for j in jobs:
         job_id = j['id']
         job_number = j['jobNumber']
