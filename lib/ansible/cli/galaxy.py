@@ -1129,7 +1129,7 @@ class GalaxyCLI(CLI):
 
                     collections = _find_existing_collections(path)
                     # Sort collections by the namespace and name
-                    collections.sort(key=lambda x: '%s.%s' % (x.namespace, x.name))
+                    collections.sort(key=to_text)
                     for collection in collections:
                         _display_collection(collection)
 
