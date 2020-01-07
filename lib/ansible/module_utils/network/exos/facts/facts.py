@@ -18,6 +18,7 @@ from ansible.module_utils.network.exos.facts.vlans.vlans import VlansFacts
 from ansible.module_utils.network.exos.facts.legacy.base import Default, Hardware, Interfaces, Config
 from ansible.module_utils.network.exos.facts.lldp_interfaces.lldp_interfaces import Lldp_interfacesFacts
 from ansible.module_utils.network.exos.facts.l2_interfaces.l2_interfaces import L2_interfacesFacts
+from ansible.module_utils.network.exos.facts.guest_virtual_machines.guest_virtual_machines import Guest_virtual_machinesFacts
 
 FACT_LEGACY_SUBSETS = dict(
     default=Default,
@@ -30,6 +31,7 @@ FACT_RESOURCE_SUBSETS = dict(
     vlans=VlansFacts,
     lldp_interfaces=Lldp_interfacesFacts,
     l2_interfaces=L2_interfacesFacts,
+    guest_virtual_machines=Guest_virtual_machinesFacts,
 )
 
 
