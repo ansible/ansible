@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix nxos_vxlan_vtep_vni rendering duplicate peer-ip commands (https://github.com/ansible/ansible/pull/66088)
