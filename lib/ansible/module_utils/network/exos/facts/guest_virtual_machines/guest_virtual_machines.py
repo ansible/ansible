@@ -9,6 +9,9 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import re
 from copy import deepcopy
 
@@ -46,14 +49,14 @@ class Guest_virtual_machinesFacts(object):
 
         if not data:
             requests = [
-                    {
-                        "path": "/rest/restconf/data/extreme-virtual-service:virtual-services-config/",
-                        "method": "GET"
-                    },
-                    {
-                        "path": "/rest/restconf/data/extreme-virtual-service:virtual-services-state/",
-                        "method": "GET"
-                    }
+                {
+                    "path": "/rest/restconf/data/extreme-virtual-service:virtual-services-config/",
+                    "method": "GET"
+                },
+                {
+                    "path": "/rest/restconf/data/extreme-virtual-service:virtual-services-state/",
+                    "method": "GET"
+                }
             ]
 
             data = send_requests(self._module, requests=requests)

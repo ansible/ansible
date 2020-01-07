@@ -10,6 +10,9 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import json
 from copy import deepcopy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
@@ -36,7 +39,7 @@ class Guest_virtual_machines(ConfigBase):
     VM_POST = {
         "data": {"extreme-virtual-service:input": {}},
         "method": "POST",
-        "path": None 
+        "path": None
     }
 
     VM_PATCH = {
@@ -136,7 +139,7 @@ class Guest_virtual_machines(ConfigBase):
         elif state == 'replaced':
             requests = self._state_replaced(want, have)
         return requests
-    
+
     def _state_replaced(self, want, have):
         """ The request generator when state is replaced
 
@@ -210,7 +213,7 @@ class Guest_virtual_machines(ConfigBase):
 
         for h in have:
             if h not in have_copy:
-                if h['operational_state']=='started':
+                if h['operational_state'] == 'started':
                     request_stop = self._update_stop_request(h)
                     request_stop["data"] = json.dumps(request_stop["data"])
                     requests.append(request_stop)
@@ -261,14 +264,14 @@ class Guest_virtual_machines(ConfigBase):
                   of the provided objects
         """
         requests = []
-        
+
         if want:
             for w in want:
                 if w.get('name'):
                     for h in have:
                         if w["name"] == h["name"]:
-                            if h['operational_state']=='started':
-                                request_stop = self._update_stop_request(h)                                
+                            if h['operational_state'] == 'started':
+                                request_stop = self._update_stop_request(h)
                                 request_stop["data"]["extreme-virtual-service:input"]["forceful"] = str(True).lower()
                                 request_stop["data"] = json.dumps(request_stop["data"])
                                 requests.append(request_stop)
@@ -280,7 +283,7 @@ class Guest_virtual_machines(ConfigBase):
             if not have:
                 return requests
             for h in have:
-                if h['operational_state']=='started':
+                if h['operational_state'] == 'started':
                     request_stop = self._update_stop_request(h)
                     request_stop["data"]["extreme-virtual-service:input"]["forceful"] = str(True).lower()
                     request_stop["data"] = json.dumps(request_stop["data"])
@@ -295,7 +298,7 @@ class Guest_virtual_machines(ConfigBase):
         request_install = deepcopy(self.VM_POST)
         request_install["data"]["extreme-virtual-service:input"]["name"] = want["name"]
         request_install["data"]["extreme-virtual-service:input"]["package"] = want["image"]
-        request_install["path"] = self.POST_PATH + "install"        
+        request_install["path"] = self.POST_PATH + "install"
 
         return request_install
 
@@ -309,7 +312,7 @@ class Guest_virtual_machines(ConfigBase):
     def _update_start_request(self, want):
         request_start = deepcopy(self.VM_POST)
         request_start["data"]["extreme-virtual-service:input"]["name"] = want["name"]
-        request_start["path"] = self.POST_PATH + "start"        
+        request_start["path"] = self.POST_PATH + "start"
 
         return request_start
 
@@ -325,7 +328,7 @@ class Guest_virtual_machines(ConfigBase):
     def _update_restart_request(self, want):
         request_restart = deepcopy(self.VM_POST)
         request_restart["data"]["extreme-virtual-service:input"]["name"] = want["name"]
-        if want.get("forceful"):        
+        if want.get("forceful"):
             request_restart["data"]["extreme-virtual-service:input"]["forceful"] = str(True).lower()
         request_restart["path"] = self.POST_PATH + "restart"
 
@@ -339,7 +342,7 @@ class Guest_virtual_machines(ConfigBase):
                 self._module.fail_json(msg="Requested CPU allocation exceeds node limit of 2")
             request_patch["data"]["extreme-virtual-service:virtual-service-config"][0]["num-cores"] = diff["num_cores"]
         if diff.get("memory_size"):
-            if diff["memory_size"] > 9750: 
+            if diff["memory_size"] > 9750:
                 self._module.fail_json(msg="Requested memory allocation exceeds limit of 9750 MB")
             request_patch["data"]["extreme-virtual-service:virtual-service-config"][0]["memory-size"] = diff["memory_size"]
         if diff.get("vnc"):
@@ -353,7 +356,7 @@ class Guest_virtual_machines(ConfigBase):
                 request_patch["data"]["extreme-virtual-service:virtual-service-config"][0]["vnc-port"] = diff["vnc"]["port"]
             else:
                 request_patch["data"]["extreme-virtual-service:virtual-service-config"][0]["vnc-port"] = 0
-        if diff.get("auto_start") == True or diff.get("auto_start") == False:
+        if diff.get("auto_start") or not diff.get("auto_start"):
             request_patch["data"]["extreme-virtual-service:virtual-service-config"][0]["enable"] = str(diff["auto_start"]).lower()
 
         return request_patch
@@ -402,7 +405,7 @@ class Guest_virtual_machines(ConfigBase):
         for h in have:
             if h.get("virtual_ports"):
                 for vport in h["virtual_ports"]:
-                    if vport["type"]=="vtd":
+                    if vport["type"] == "vtd":
                         if (wvport["type"] == "vtd" and str(wvport["name"]) == str(vport["port"])) or (wvport["type"] == "sriov" and str(wvport["port"]) == str(vport["port"])):
                             self._module.fail_json(msg="Port %s is currently in use by a VM as a dedicated port" % str(vport["port"]))
                     elif vport["type"] == "sriov":
@@ -411,37 +414,37 @@ class Guest_virtual_machines(ConfigBase):
 
     def _create_vm(self, w, have):
         requests = []
-        
+
         request_post = self._update_post_request(w)
         request_post["data"] = json.dumps(request_post["data"])
         requests.append(request_post)
-        
+
         if w.get("virtual_ports"):
             for vport in w["virtual_ports"]:
                 self._compare_dedicated_ports(vport, have)
                 request_post_vport = self._update_vport_request(vport, w["name"], have)
                 request_post_vport["data"] = json.dumps(request_post_vport["data"])
                 requests.append(request_post_vport)
-        
+
         request_patch = self._update_patch_request(w, w, have)
         if request_patch["data"]["extreme-virtual-service:virtual-service-config"][0]:
             request_patch["data"] = json.dumps(request_patch["data"])
             requests.append(request_patch)
-        if w.get("operational_state") == "started" and w.get("auto_start") == False:
+        if w.get("operational_state") == "started" and not w.get("auto_start"):
             request_start = self._update_start_request(w)
             request_start["data"] = json.dumps(request_start["data"])
             requests.append(request_start)
-        if w.get("operational_state") == "stopped" and w.get("auto_start") == True:
+        if w.get("operational_state") == "stopped" and w.get("auto_start"):
             request_stop = self._update_stop_request(w)
             request_stop["data"] = json.dumps(request_stop["data"])
             requests.append(request_stop)
 
         return requests
-    
+
     def _update_existing_config(self, diff, h, w, have):
         requests = []
 
-        if h["operational_state"] == "started" and diff.get("auto_start") == True:
+        if h["operational_state"] == "started" and diff.get("auto_start"):
             del diff["auto_start"]
         request_patch = self._update_patch_request(diff, w, have)
         if request_patch["data"]["extreme-virtual-service:virtual-service-config"][0]:
@@ -450,14 +453,14 @@ class Guest_virtual_machines(ConfigBase):
 
         if diff.get("operational_state"):
             if diff["operational_state"] == "stopped" and h["operational_state"] == "started":
-                if diff.get("auto_start") == False:
+                if not diff.get("auto_start"):
                     return requests
                 else:
                     request_stop = self._update_stop_request(w)
                     request_stop["data"] = json.dumps(request_stop["data"])
                     requests.append(request_stop)
             elif diff["operational_state"] == "started" and h["operational_state"] == "stopped":
-                if diff.get("auto_start") == True:
+                if diff.get("auto_start"):
                     return requests
                 else:
                     request_start = self._update_start_request(w)
@@ -465,7 +468,7 @@ class Guest_virtual_machines(ConfigBase):
                     requests.append(request_start)
             elif diff["operational_state"] == "restarted":
                 if h["operational_state"] == "stopped":
-                    if diff.get("auto_start") == True:
+                    if diff.get("auto_start"):
                         request_restart = self._update_restart_request(w)
                         request_restart["data"] = json.dumps(request_restart["data"])
                         requests.append(request_restart)
@@ -474,7 +477,7 @@ class Guest_virtual_machines(ConfigBase):
                         request_start["data"] = json.dumps(request_start["data"])
                         requests.append(request_start)
                 elif h["operational_state"] == "started":
-                    if diff.get("auto_start") == False:
+                    if not diff.get("auto_start"):
                         request_start = self._update_start_request(w)
                         request_start["data"] = json.dumps(request_start["data"])
                         requests.append(request_start)

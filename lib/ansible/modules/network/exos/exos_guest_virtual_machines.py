@@ -40,7 +40,7 @@ DOCUMENTATION = """
 module: exos_guest_virtual_machines
 version_added: "2.10"
 short_description:  Manage guest virtual machines on EXOS devices.
-description: This module can be used to create guest Virtual machines on EXOS network devices, 
+description: This module can be used to create guest Virtual machines on EXOS network devices,
              manage operational state such as start, stop, restart,
              update its components such as CPUs, memory, virtual ports, disks etc. and
              delete a guest virtual machine with all its associated components.
@@ -73,10 +73,10 @@ options:
         type: int
       virtual_ports:
         description:
-          - Virtual port to be used by the virtual machine. 
+          - Virtual port to be used by the virtual machine.
           - Only local Insight ports can be assigned as a dedicated port (type: vtd) or a virtual interface (type: sriov).
           - An Insight port assigned as a dedicated port to a VM cannot be used to define a virtual interface for any VM or vice versa.
-          - An Insight port can have maximum of 16 active virtual interfaces associated with it at a time. 
+          - An Insight port can have maximum of 16 active virtual interfaces associated with it at a time.
         type: dict
         suboptions:
           name:
@@ -207,7 +207,7 @@ EXAMPLES = """
 #         "vnc": {
 #             "enabled": true,
 #             "port": 5901
-#         },    
+#         },
 #         "virtual_ports": [
 #             {
 #                 "type": "BRIDGE",
@@ -267,7 +267,7 @@ EXAMPLES = """
 #         "vnc": {
 #             "enabled": true,
 #             "port": 5901
-#         },    
+#         },
 #         "virtual_ports": [
 #             {
 #                 "type": "BRIDGE",
@@ -1066,9 +1066,9 @@ EXAMPLES = """
 #          "extreme-virtual-service:virtual-service-config": [
 #              {
 #                "memory-size": 2048,
-#                "num-cores": 2,  
+#                "num-cores": 2,
 #                "vnc-port": 5903
-#              } 
+#              }
 #          ]
 #        }
 #        "method": "PATCH"
@@ -1079,7 +1079,7 @@ EXAMPLES = """
 #          "extreme-virtual-service:vports": [
 #              {
 #                "name": "VF2-58",
-#                "port": 58,  
+#                "port": 58,
 #                "type": "SRIOV"
 #              }
 #          ]

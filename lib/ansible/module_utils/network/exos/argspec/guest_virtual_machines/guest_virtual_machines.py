@@ -25,6 +25,8 @@
 """
 The arg spec for the exos_guest_virtual_machines module
 """
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 
 class Guest_virtual_machinesArgs(object):  # pylint: disable=R0903
