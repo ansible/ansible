@@ -108,6 +108,7 @@ options:
     description:
       - Provide additional arguments for mysqldump
     required: false
+    type: str
     default: ''
     version_added: '2.10'
 seealso:
