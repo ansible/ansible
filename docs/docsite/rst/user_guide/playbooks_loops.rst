@@ -121,18 +121,16 @@ To loop over a dict, use the  :ref:`dict2items <dict_filter>`:
 
 .. code-block:: yaml
 
-    - name: create a tag dictionary of non-empty tags
-      set_fact:
-        tags_dict: "{{ (tags_dict|default({}))|combine({item.key: item.value}) }}"
-      loop: "{{ tags|dict2items }}"
+    - name: Using dict2items
+      debug:
+        msg: "{{ item.key }} - {{ item.value }}"
+      loop: "{{ tag_data | dict2items }}"
       vars:
-        tags:
+        tag_data:
           Environment: dev
           Application: payment
-          Another: "{{ doesnotexist|default() }}"
-      when: item.value != ""
 
-Here, we don't want to set empty tags, so we create a dictionary containing only non-empty tags.
+Here, we are iterating over `tag_data` and printing the key and the value from it.
 
 Registering variables with a loop
 =================================
