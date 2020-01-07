@@ -55,6 +55,11 @@ options:
         default:
         version_added: "2.8"
 
+    bin:
+        description:
+            - Name of pacman binary or AUR helper that shares the same interface as pacman.
+        default: pacman
+
     update_cache:
         description:
             - Whether or not to refresh the master package lists.
@@ -113,6 +118,13 @@ EXAMPLES = '''
       - foo
       - ~/bar-1.0-1-any.pkg.tar.xz
     state: present
+
+- name: Install package from AUR (need to be run as non-root user with permissions to install packages)
+  pacman:
+    name: foo
+    state: present
+    bin: yay
+    extra_args: --noconfirm --builddir /tmp/yay-build
 
 - name: Upgrade package foo
   pacman:
@@ -422,6 +434,7 @@ def main():
             state=dict(type='str', default='present', choices=['present', 'installed', 'latest', 'absent', 'removed']),
             force=dict(type='bool', default=False),
             extra_args=dict(type='str', default=''),
+            bin=dict(type='str', default='pacman'),
             upgrade=dict(type='bool', default=False),
             upgrade_extra_args=dict(type='str', default=''),
             update_cache=dict(type='bool', default=False, aliases=['update-cache']),
@@ -432,10 +445,12 @@ def main():
         supports_check_mode=True,
     )
 
-    pacman_path = module.get_bin_path('pacman', True)
     module.run_command_environ_update = dict(LC_ALL='C')
 
     p = module.params
+
+    # find pacman or alternative binary
+    pacman_path = module.get_bin_path(p['bin'], True)
 
     # normalize the state parameter
     if p['state'] in ['present', 'installed']:
@@ -443,7 +458,7 @@ def main():
     elif p['state'] in ['absent', 'removed']:
         p['state'] = 'absent'
 
-    if p["update_cache"] and not module.check_mode:
+    if p['update_cache'] and not module.check_mode:
         update_package_db(module, pacman_path)
         if not (p['name'] or p['upgrade']):
             module.exit_json(changed=True, msg='Updated the package master lists')
