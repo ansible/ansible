@@ -59,6 +59,7 @@ options:
         description:
             - Name of pacman binary or AUR helper that shares the same interface as pacman.
         default: pacman
+        version_added: "2.10"
 
     update_cache:
         description:

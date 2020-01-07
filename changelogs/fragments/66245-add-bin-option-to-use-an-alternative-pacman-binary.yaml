@@ -1,0 +1,2 @@
+minor_changes:
+  - pacman - add 'bin' option to use an AUR helper instead that shares the same interface as Pacman
