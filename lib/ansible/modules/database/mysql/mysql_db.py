@@ -104,6 +104,12 @@ options:
     choices: [0, 1, 2]
     default: 0
     version_added: '2.10'
+  args:
+    description:
+      - Provide additional arguments for mysqldump
+    required: false
+    default: ''
+    version_added: '2.10'
 seealso:
 - module: mysql_info
 - module: mysql_variables
@@ -281,7 +287,7 @@ def db_delete(cursor, db):
 def db_dump(module, host, user, password, db_name, target, all_databases, port,
             config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
             single_transaction=None, quick=None, ignore_tables=None, hex_blob=None,
-            encoding=None, force=False, master_data=0):
+            encoding=None, force=False, master_data=0, args=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -319,6 +325,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port,
         cmd += " --hex-blob"
     if master_data:
         cmd += " --master-data=%s" % master_data
+    if args:
+        cmd += " " + args
 
     path = None
     if os.path.splitext(target)[-1] == '.gz':
@@ -449,6 +457,7 @@ def main():
             hex_blob=dict(default=False, type='bool'),
             force=dict(type='bool', default=False),
             master_data=dict(type='int', default=0, choices=[0, 1, 2]),
+            args=dict(type='str', default=''),
         ),
         supports_check_mode=True,
     )
@@ -486,6 +495,7 @@ def main():
     hex_blob = module.params["hex_blob"]
     force = module.params["force"]
     master_data = module.params["master_data"]
+    args = module.params["args"]
 
     if len(db) > 1 and state == 'import':
         module.fail_json(msg="Multiple databases are not supported with state=import")
@@ -552,7 +562,7 @@ def main():
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
                                      ssl_ca, single_transaction, quick, ignore_tables,
-                                     hex_blob, encoding, force, master_data)
+                                     hex_blob, encoding, force, master_data, args)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout,
