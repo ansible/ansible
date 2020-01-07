@@ -28,7 +28,7 @@ replaced
   Ansible replaces the on-device configuration subsection with the provided configuration subsection in the task.
 
 overridden
-  Ansible overrides the entire on-device configuration with the provided configuration in the task. Use caution with this state as you could remove your access to the device (for example, by overriding the management interface configuration).
+  Ansible overrides the on-device configuration for the resource with the provided configuration in the task. Use caution with this state as you could remove your access to the device (for example, by overriding the management interface configuration).
 
 deleted
   Ansible deletes the on-device configuration subsection and restores any default settings.
@@ -123,7 +123,7 @@ Network resource modules return the following details:
        - snmp-server location Room E, Building 6, Seattle, WA 98134
        failed: false
 
-      
+
 Example: Verifying the network device configuration has not changed
 ====================================================================
 
