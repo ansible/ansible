@@ -185,8 +185,10 @@ def find_hostsystem_by_name(content, hostname):
 def find_resource_pool_by_name(content, resource_pool_name):
     return find_object_by_name(content, resource_pool_name, [vim.ResourcePool])
 
+
 def find_resource_pool_by_cluster(content, resource_pool_name='Resources', cluster=None):
     return find_object_by_name(content, resource_pool_name, [vim.ResourcePool], folder=cluster)
+
 
 def find_network_by_name(content, network_name):
     return find_object_by_name(content, quote_obj_name(network_name), [vim.Network])
