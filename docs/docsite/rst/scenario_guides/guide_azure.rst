@@ -257,14 +257,14 @@ virtual network already with an existing subnet, you can run the following to cr
         version: latest
 
 
-Distribute Virtual Machines in Availability Zones
+Creating a Virtual Machine in Availability Zones
 ..................................................
 
-If you want to distribute Virtual Machines in Availability Zones,
+If you want to create a Virtual Machines in Availability Zones,
 Note the following:
 
 * Both OS disk and data disk must be a 'Managed Disk', not 'Unmanaged Disk',
-  to place Virtual Machine in the availability zones.
+  to create a Virtual Machine in Availability Zones.
 * When creating a Virtual Machine with the azure_rm_virtualmachine,
   you need to specify explicitly managed_disk_type
   to change OS disk to 'Managed Disk'.
@@ -279,7 +279,7 @@ Note the following:
   an unnecessary 'Storage container' named "vhds" is automatically created.
 * When creating an IP address with azure_rm_publicipaddress,
   it is necessary to specify 'standard' in the 'sku' property.
-  Otherwise, the IP address cannot be used in the availability zones.
+  Otherwise, the IP address cannot be used in Availability Zones.
 
 
 Dynamic Inventory Script
