@@ -1,0 +1,6 @@
+minor_changes:
+- Move cli prompt check logic from action to cliconf plugin (https://github.com/ansible/ansible/pull/63945)
+- Add test for reboot & wait_for_connection on EOS & IOS (https://github.com/ansible/ansible/pull/63014)
+
+bugfixes:
+- Fix cli context check for network_cli connection (https://github.com/ansible/ansible/pull/64697)
