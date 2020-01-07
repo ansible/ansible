@@ -73,7 +73,7 @@ options:
     advanced_settings:
       version_added: "2.10"
       description:
-      - A dictionary of advanced HA settings.
+      - A dictionary of advanced DRS settings.
       default: {}
       type: dict
 extends_documentation_fragment: vmware.documentation
@@ -88,6 +88,18 @@ EXAMPLES = r"""
     datacenter_name: datacenter
     cluster_name: cluster
     enable_drs: yes
+  delegate_to: localhost
+
+- name: Enable DRS and distribute a more even number of virtual machines across hosts for availability
+  vmware_cluster_drs:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: datacenter
+    cluster_name: cluster
+    enable_drs: yes
+    advanced_settings:
+      'TryBalanceVmsPerHost': '1'
   delegate_to: localhost
 
 - name: Enable DRS and set default VM behavior to partially automated
