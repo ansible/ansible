@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix ordering of the commands sent in nxos_snmp_community (https://github.com/ansible/ansible/pull/66094).
