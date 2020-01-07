@@ -44,7 +44,7 @@ options:
   FilesToInclude:
     description:
       - optional - list of file names to include for generating and detecting hash changes.
-      - note, this takes precendece over FilestoExclude.
+      - note this takes precendece over FilestoExclude.
     type: list
     required: no
   reset:
@@ -100,7 +100,7 @@ FilestoExclude:
   description:
     - Shows list of excluded files defined in the yml file
   type: list
-  sample: "[web.config, packages.config]"
+  sample: '[web.config, packages.config]'
 path:
   returned: always
   description:
@@ -117,25 +117,25 @@ FilesToInclude:
   returned: always
   description:
     - Shows list of included files being monitored defined in the yml file.
-    - Note, FilesToInclude takes precedence over FilestoExclude.
-  type: list,
+    - Note FilesToInclude takes precedence over FilestoExclude.
+  type: list
   sample: "[myapp.dll]"
 NewHashGenerated:
   returned: always
   description:
     - Will return true if a new Hash file was generated.
     - If a new hash file is generated that means no change will be detect until next run
-    - Value=True (initial run, establish baseline)
-    - Value=False (subsequent runs, compare files against baseline.)
+    - 'Value=True (initial run, establish baseline)'
+    - 'Value=False (subsequent runs, compare files against baseline.)'
   type: bool
   sample: "True"
 ChangedFiles:
   returned: always
   description:
     - Will return list of changed files.
-    - Includes deleted, renamed, content modified Files.
+    - 'Includes deleted, renamed, content modified Files.'
   type: list
-  sample: "[log4net.dll, web.config]"
+  sample: '[log4net.dll, web.config]'
 hashfilepath:
   returned: always
   description:
@@ -164,7 +164,7 @@ message:
   description:
     - Returns execution steps for easier troubleshooting.
   type: str
-  sample: "Doing Reset. Hash not found, generating new hash file"
+  sample: 'Doing Reset. Hash not found, generating new hash file'
 pathmissing:
   returned: always
   description:
