@@ -302,8 +302,9 @@ def main():
                 pc_data = to_text(init_data)
                 try:
                     conn.update_play_context(pc_data)
+                    conn.set_check_prompt(task_uuid)
                 except Exception as exc:
-                    # Only network_cli has update_play context, so missing this is
+                    # Only network_cli has update_play context and set_check_prompt, so missing this is
                     # not fatal e.g. netconf
                     if isinstance(exc, ConnectionError) and getattr(exc, 'code', None) == -32601:
                         pass
