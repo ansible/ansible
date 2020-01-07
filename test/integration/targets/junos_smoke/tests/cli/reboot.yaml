@@ -1,0 +1,14 @@
+---
+- cli_command:
+    command: request system reboot
+    prompt:
+      - Reboot the system?
+    answer:
+     - y
+
+- wait_for_connection:
+    delay: 20
+    sleep: 10
+
+- cli_command:
+    command: show version

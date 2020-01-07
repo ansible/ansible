@@ -273,6 +273,7 @@ options:
         - name: ansible_network_cli_retries
 """
 
+from functools import wraps
 import getpass
 import json
 import logging
@@ -290,8 +291,18 @@ from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.connection import NetworkConnectionBase, ensure_connect
+from ansible.plugins.connection import NetworkConnectionBase
 from ansible.plugins.loader import cliconf_loader, terminal_loader, connection_loader
+
+
+def ensure_connect(func):
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        if not self._connected:
+            self._connect()
+        self.update_cli_prompt_context()
+        return func(self, *args, **kwargs)
+    return wrapped
 
 
 class AnsibleCmdRespRecv(Exception):
@@ -319,6 +330,9 @@ class Connection(NetworkConnectionBase):
         self._terminal = None
         self.cliconf = None
         self._paramiko_conn = None
+
+        # Managing prompt context
+        self._check_prompt = False
         self._task_uuid = to_text(kwargs.get('task_uuid', ''))
 
         if self._play_context.verbosity > 3:
@@ -409,11 +423,14 @@ class Connection(NetworkConnectionBase):
         if hasattr(self, 'disable_response_logging'):
             self.disable_response_logging()
 
-    def update_cli_prompt_context(self, task_uuid):
+    def set_check_prompt(self, task_uuid):
+        self._check_prompt = task_uuid
+
+    def update_cli_prompt_context(self):
         # set cli prompt context at the start of new task run only
-        if self._task_uuid != task_uuid:
+        if self._check_prompt and self._task_uuid != self._check_prompt:
+            self._task_uuid, self._check_prompt = self._check_prompt, False
             self.set_cli_prompt_context()
-            self._task_uuid = task_uuid
 
     def _connect(self):
         '''
