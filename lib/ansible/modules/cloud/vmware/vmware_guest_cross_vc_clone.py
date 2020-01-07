@@ -75,7 +75,12 @@ options:
     required: True
   destination_vm_folder:
     description:
-      - The name of the destination folder where the VM will be cloned.
+      - Destination folder, absolute path to deploy the cloned vm.
+      - This parameter is case sensitive.
+      - 'Examples:'
+      - '   folder: vm'
+      - '   folder: ha-datacenter/vm'
+      - '   folder: /datacenter1/vm'
     type: str
     required: True
   power_on:
@@ -126,6 +131,23 @@ EXAMPLES = '''
     destination_vm_folder: '{{ destination_vm_folder }}'
     power_on: yes
   register: cross_vc_clone_from_vm
+
+- name: check_mode support
+  vmware_guest_cross_vc_clone:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "test_vm1"
+    destination_vm_name: "cloned_vm_from_vm"
+    destination_vcenter: '{{ destination_vcenter_hostname }}'
+    destination_vcenter_username: '{{ destination_vcenter_username }}'
+    destination_vcenter_password: '{{ destination_vcenter_password }}'
+    destination_host: '{{ destination_esxi }}'
+    destination_datastore: '{{ destination_datastore }}'
+    destination_vm_folder: '{{ destination_vm_folder }}'
+    power_on: yes
+  check_mode: yes
 '''
 
 RETURN = r'''
@@ -145,7 +167,7 @@ vm_info:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import (PyVmomi, find_hostsystem_by_name,
-                                         find_vm_by_id, find_datastore_by_name,
+                                         find_datastore_by_name,
                                          find_folder_by_name, find_vm_by_name,
                                          connect_to_api, vmware_argument_spec,
                                          gather_vm_facts,
@@ -215,19 +237,19 @@ class CrossVCCloneManager(PyVmomi):
             hostname=self.destination_vcenter,
             username=self.destination_vcenter_username,
             password=self.destination_vcenter_password)
-        if self.params['destination_datastore']:
-          self.destination_datastore = find_datastore_by_name(content=self.destination_content, datastore_name=self.params['destination_datastore'])
-          if self.destination_datastore is None:
-            self.module.fail_json(msg="Destination datastore not found.")
-        else:
-          self.module.fail_json(msg="Destination datastore not specified by the user.")
 
-        if self.params['destination_host']:
-          self.destination_host = find_hostsystem_by_name(content=self.destination_content, hostname=self.params['destination_host'])
-          if self.destination_host is None:
+        # Check if vm name already exists in the destination VC
+        vm = find_vm_by_name(content=self.destination_content, vm_name=self.params['destination_vm_name'])
+        if vm:
+            self.module.fail_json(msg="A VM with the given name already exists")
+
+        self.destination_datastore = find_datastore_by_name(content=self.destination_content, datastore_name=self.params['destination_datastore'])
+        if self.destination_datastore is None:
+            self.module.fail_json(msg="Destination datastore not found.")
+
+        self.destination_host = find_hostsystem_by_name(content=self.destination_content, hostname=self.params['destination_host'])
+        if self.destination_host is None:
             self.module.fail_json(msg="Destination host not found.")
-        else:
-          self.module.fail_json(msg="Destination host not specified by the user.")
 
     def populate_specs(self):
         # populate service locator
@@ -243,10 +265,6 @@ class CrossVCCloneManager(PyVmomi):
         self.relocate_spec.pool = self.destination_host.parent.resourcePool
         self.relocate_spec.service = self.service_locator
         self.relocate_spec.host = self.destination_host
-
-        # populate config spec
-        self.config_spec.numCPUs = 1
-        self.config_spec.memoryMB = 1024
 
         # populate clone spec
         self.clone_spec.config = self.config_spec
@@ -285,6 +303,17 @@ def main():
         ],
     )
     result = {'failed': False, 'changed': False}
+    if module.check_mode:
+        result.update(
+            vm_name=module.params['destination_vm_name'],
+            vcenter=module.params['destination_vcenter'],
+            host=module.params['destination_host'],
+            datastore=module.params['destination_datastore'],
+            vm_folder=module.params['destination_vm_folder'],
+            power_on=module.params['power_on'],
+            changed=True
+        )
+        module.exit_json(**result)
 
     clone_manager = CrossVCCloneManager(module)
     clone_manager.sanitize_params()
