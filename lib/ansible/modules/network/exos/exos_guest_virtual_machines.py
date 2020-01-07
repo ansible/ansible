@@ -40,10 +40,11 @@ DOCUMENTATION = """
 module: exos_guest_virtual_machines
 version_added: "2.10"
 short_description:  Manage guest virtual machines on EXOS devices.
-description: This module can be used to create guest Virtual machines on EXOS network devices,
-             manage operational state such as start, stop, restart,
-             update its components such as CPUs, memory, virtual ports, disks etc. and
-             delete a guest virtual machine with all its associated components.
+description: 
+  - This module can be used to create guest Virtual machines on EXOS network devices
+  - Manages operational state such as start, stop and restart
+  - Updates its components such as CPUs, memory, virtual ports, disks etc. 
+  - Deletes a guest virtual machine with all its associated components.
 author: Jayalakshmi Viswanathan (@jayalakshmiV)
 notes:
   - Tested against EXOS 30.5
@@ -74,7 +75,7 @@ options:
       virtual_ports:
         description:
           - Virtual port to be used by the virtual machine.
-          - Only local Insight ports can be assigned as a dedicated port (type: vtd) or a virtual interface (type: sriov).
+          - Only local Insight ports can be assigned as a dedicated port (type - vtd) or a virtual interface (type - sriov).
           - An Insight port assigned as a dedicated port to a VM cannot be used to define a virtual interface for any VM or vice versa.
           - An Insight port can have maximum of 16 active virtual interfaces associated with it at a time.
         type: dict
@@ -130,13 +131,13 @@ options:
         type: bool
   state:
     description:
-    - The state the configuration should be left in
+      - The state the configuration should be left in
     type: str
     choices:
-    - merged
-    - replaced
-    - overridden
-    - deleted
+      - merged
+      - replaced
+      - overridden
+      - deleted
     default: merged
 """
 EXAMPLES = """
