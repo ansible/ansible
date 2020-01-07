@@ -47,7 +47,7 @@ class MockLPass(LPass):
             if key == entry['id'] or key == entry['name']:
                 return entry
 
-    def _run(self, args, stdin=None, expected_rc=0):
+    def _run(self, args, stdin=None, expected_rc=[0]):
         # Mock behavior of lpass executable
         base_options = ArgumentParser(add_help=False)
         base_options.add_argument('--color', default="auto", choices=['auto', 'always', 'never'])
@@ -57,6 +57,7 @@ class MockLPass(LPass):
 
         logout_p = sp.add_parser('logout', parents=[base_options], help='logout')
         show_p = sp.add_parser('show', parents=[base_options], help='show entry details')
+        status_p = sp.add_parser('status', parents=[base_options], help='show logged in state')
 
         field_group = show_p.add_mutually_exclusive_group(required=True)
         for field in MOCK_ENTRIES[0].keys():
@@ -67,7 +68,7 @@ class MockLPass(LPass):
         args = p.parse_args(args)
 
         def mock_exit(output='', error='', rc=0):
-            if rc != expected_rc:
+            if rc not in expected_rc:
                 raise LPassException(error)
             return output, error
 
@@ -85,6 +86,12 @@ class MockLPass(LPass):
                 return mock_exit(output='Log out: complete.', error=logged_in_error, rc=0)
             else:
                 return mock_exit(error='Error: aborted response', rc=1)
+
+        if args.subparser_name == 'status':
+            if self._mock_logged_out:
+                return mock_exit(output='Not logged in.', rc=1)
+            else:
+                return mock_exit(output='Logged in as user@example.com.', rc=0)
 
         if args.subparser_name == 'show':
             if self._mock_logged_out:
@@ -133,6 +140,10 @@ class TestLPass(unittest.TestCase):
     def test_lastpass_build_args_logout(self):
         lp = MockLPass()
         self.assertEqual(['logout', '--color=never'], lp._build_args("logout"))
+
+    def test_lastpass_build_args_status(self):
+        lp = MockLPass()
+        self.assertEqual(['status', '--color=never'], lp._build_args("status"))
 
     def test_lastpass_logged_in_true(self):
         lp = MockLPass()

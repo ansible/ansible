@@ -57,14 +57,17 @@ class LPass(object):
 
     @property
     def logged_in(self):
-        out, err = self._run(self._build_args("logout"), stdin="n\n", expected_rc=1)
-        return err.startswith("Are you sure you would like to log out?")
+        # logged in returns 0
+        # logged out returns 1
+        # both report on stdout
+        out, err = self._run(self._build_args("status"), expected_rc=[0,1])
+        return out.startswith("Logged in as")
 
-    def _run(self, args, stdin=None, expected_rc=0):
+    def _run(self, args, stdin=None, expected_rc=[0]):
         p = Popen([self.cli_path] + args, stdout=PIPE, stderr=PIPE, stdin=PIPE)
         out, err = p.communicate(to_bytes(stdin))
         rc = p.wait()
-        if rc != expected_rc:
+        if rc not in expected_rc:
             raise LPassException(err)
         return to_text(out, errors='surrogate_or_strict'), to_text(err, errors='surrogate_or_strict')
 
