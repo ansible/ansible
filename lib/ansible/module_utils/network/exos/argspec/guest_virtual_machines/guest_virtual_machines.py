@@ -36,29 +36,38 @@ class Guest_virtual_machinesArgs(object):  # pylint: disable=R0903
     def __init__(self, **kwargs):
         pass
 
-    argument_spec = {'config': {'elements': 'dict',
-            'options': {'auto_start': {'type': 'bool'},
-                        'forceful': {'type': 'bool'},
-                        'image': {'type': 'str'},
-                        'memory_size': {'type': 'int'},
-                        'name': {'type': 'str'},
-                        'num_cores': {'type': 'int'},
-                        'operational_state': {'choices': ['started',
-                                                          'stopped',
-                                                          'restarted'],
-                                              'type': 'str'},
-                        'virtual_ports': {'options': {'name': {'type': 'str'},
-                                                      'port': {'type': 'str'},
-                                                      'type': {'choices': ['vtd',
-                                                                           'sriov',
-                                                                           'bridge'],
-                                                               'type': 'str'},
-                                                      'vlan': {'type': 'int'}},
-                                          'type': 'list'},
-                        'vnc': {'options': {'enabled': {'type': 'bool'},
-                                            'port': {'type': 'int'}},
-                                'type': 'dict'}},
-            'type': 'list'},
- 'state': {'choices': ['merged', 'replaced', 'overridden', 'deleted'],
-           'default': 'merged',
-           'type': 'str'}}  # pylint: disable=C0301
+    argument_spec = {
+            'config': {
+                'elements': 'dict',
+                'options': {
+                    'auto_start': {'type': 'bool'},
+                    'forceful': {'type': 'bool'},
+                    'image': {'type': 'str'},
+                    'memory_size': {'type': 'int'},
+                    'name': {'type': 'str'},
+                    'num_cores': {'type': 'int'},
+                    'operational_state': {
+                        'choices': ['started',
+                                    'stopped',
+                                    'restarted'],
+                        'type': 'str'},
+                    'virtual_ports': {
+                        'options': {
+                            'name': {'type': 'str'},
+                            'port': {'type': 'str'},
+                            'type': {'choices': ['vtd',
+                                                 'sriov',
+                                                 'bridge'],
+                                     'type': 'str'},
+                            'vlan': {'type': 'int'}},
+                        'type': 'dict'},
+                    'vnc': {
+                        'options': {
+                            'enabled': {'type': 'bool'},
+                            'port': {'type': 'int'}},
+                        'type': 'dict'}},
+                'type': 'list'},
+ 'state': {
+     'choices': ['merged', 'replaced', 'overridden', 'deleted'],
+     'default': 'merged',
+     'type': 'str'}}  # pylint: disable=C0301

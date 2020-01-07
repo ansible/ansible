@@ -40,10 +40,10 @@ DOCUMENTATION = """
 module: exos_guest_virtual_machines
 version_added: "2.10"
 short_description:  Manage guest virtual machines on EXOS devices.
-description: 
+description:
   - This module can be used to create guest Virtual machines on EXOS network devices
   - Manages operational state such as start, stop and restart
-  - Updates its components such as CPUs, memory, virtual ports, disks etc. 
+  - Updates its components such as CPUs, memory, virtual ports, disks etc.
   - Deletes a guest virtual machine with all its associated components.
 author: Jayalakshmi Viswanathan (@jayalakshmiV)
 notes:
@@ -1181,12 +1181,14 @@ before:
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
+  type: list
 after:
   description: The resulting configuration model invocation.
   returned: when changed
   sample: >
     The configuration returned will always be in the same format
      of the parameters above.
+  type: list
 requests:
   description: The set of requests pushed to the remote device.
   returned: always
