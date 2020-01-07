@@ -85,7 +85,7 @@ options:
         description:
             - Set MTU value for interface.
             - Default value is defined by the kernel and it is 1500.
-            - This is L3 mtu (limit on size of IP packets).
+            - This is the L3 MTU (limit on size of IP packets).
 
     address:
         type: str
@@ -112,7 +112,7 @@ options:
               will try to move interface from namespace I(namespace)
               into namespace I(netns).
             - Note, when the interface changes namespace it loses
-              most of properties (group, state, etc).
+              many of its properties (group, state, etc).
             - This option should not be mixed up with I(namespace).
 
     alias:
@@ -129,8 +129,8 @@ options:
             - Interfaces in the same group can be addressed by
               I(group_id) parameter.
             - Group is a number or a name from /etc/iproute2/groups.
-            - You can not change group for a group
-              (I(group) and I(group_id) should not be used together).
+            - You can not change a group for a pre-existing group of interfaces
+              (the I(group) and I(group_id) options are mutually exclusive).
 """
 
 EXAMPLES = """
@@ -215,7 +215,7 @@ EXAMPLES = """
 
 RETURN = """
 interfaces:
-    description: List of all interfaces matching the I(group_id)
+    description: A list of all interfaces matching the I(group_id)
                  (or a list with a single interface for I(name))
     returned: success
     type: complex
@@ -240,18 +240,18 @@ interfaces:
         description: State of promisc mode for the interface.
         type: bool
       txqueuelen:
-        description: Length of TX queue.
+        description: Length of the TX queue.
         type: int
       state:
-        description: Adminitstrative state for interface, up or down.
+        description: Administrative state for interface, C(up) or C(down).
         type: str
       address:
         description: L2 address fof the interface
-                     (may be C(None), if interface can not have one).
+                     (may be C(None), if the interface can not have one).
         type: str
       broadcast:
-        description: Broadcast L2 address for the interface
-                     (may be C(None), if interface can not have one).
+        description: L2 broadcast address for the interface
+                     (may be C(None), if the interface can not have one).
         type: str
       alias:
         description: Alias for the interface (C(None) if not present).
