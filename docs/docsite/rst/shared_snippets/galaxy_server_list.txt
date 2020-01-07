@@ -56,23 +56,23 @@ The following example shows how to configure multiple servers:
 **Galaxy server list configuration options**
 
 The :ref:`galaxy_server_list` option is a list of server identifiers in a prioritized order. When searching for a
-collection, the install process will search in that order,. for example, ``automation_hub`` first, then ``my_org_hub``, ``release_galaxy``, and
+collection, the install process will search in that order, for example, ``automation_hub`` first, then ``my_org_hub``, ``release_galaxy``, and
 finally ``test_galaxy`` until the collection is found. The actual Galaxy instance is then defined under the section
 ``[galaxy_server.{{ id }}]`` where ``{{ id }}`` is the server identifier defined in the list. This section can then
 define the following keys:
 
-* ``url``: The URL of the galaxy instance to connect to. This key is required.
-* ``token``: An API token key to use for authentication against the Galaxy instance, this is mutually exclusive with ``username``.
-* ``username``: The username to use for basic authentication against the Galaxy instance, this is mutually exclusive with ``token``.
+* ``url``: The URL of the Galaxy instance to connect to. Required.
+* ``token``: An API token key to use for authentication against the Galaxy instance. Mutually exclusive with ``username``.
+* ``username``: The username to use for basic authentication against the Galaxy instance. Mutually exclusive with ``token``.
 * ``password``: The password to use, in conjuction with ``username``, for basic authentication.
-* ``auth_url``: The URL of a Keycloak server 'token_endpoint' if using SSO authentication (for example, Automation Hub). This is mutually exclusive with ``username``. ``auth_url`` requires ``token``.
+* ``auth_url``: The URL of a Keycloak server 'token_endpoint' if using SSO authentication (for example, Automation Hub). Mutually exclusive with ``username``. Requires ``token``.
 
 As well as defining these server options in the ``ansible.cfg`` file, you can also define them as environment variables.
 The environment variable is in the form ``ANSIBLE_GALAXY_SERVER_{{ id }}_{{ key }}`` where ``{{ id }}`` is the upper
 case form of the server identifier and ``{{ key }}`` is the key to define. For example I can define ``token`` for
 ``release_galaxy`` by setting ``ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=secret_token``.
 
-For operations that use only one Galaxy server(for example, the ``publish``, ``info``, or ``install`` commands) then the ``ansible-galaxy collection`` command uses the first entry in the
+For operations that use only one Galaxy server (for example, the ``publish``, ``info``, or ``install`` commands). the ``ansible-galaxy collection`` command uses the first entry in the
 ``server_list``, unless you pass in an explicit server with the ``--server`` argument.
 
 .. note::

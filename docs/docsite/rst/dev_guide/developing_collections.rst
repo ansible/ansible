@@ -320,7 +320,7 @@ To get your API token:
 Storing or using your API token
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once you have retrieved your API token, you have the following options on how you can store or use that token for collections:
+Once you have retrieved your API token, you can store or use the token for collections in two ways:
 
 * Pass the token to  the ``ansible-galaxy`` command using the ``--api-key``.
 * Specify the token within a Galaxy server list in your :file:`ansible.cfg` file.
