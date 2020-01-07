@@ -150,12 +150,13 @@ class AnsibleHcloudServerInfo(Hcloud):
 
         for server in self.hcloud_server_info:
             if server is not None:
+                image = None if server.image is None else to_native(server.image.name)
                 tmp.append({
                     "id": to_native(server.id),
                     "name": to_native(server.name),
                     "ipv4_address": to_native(server.public_net.ipv4.ip),
                     "ipv6": to_native(server.public_net.ipv6.ip),
-                    "image": to_native(server.image.name),
+                    "image": image,
                     "server_type": to_native(server.server_type.name),
                     "datacenter": to_native(server.datacenter.name),
                     "location": to_native(server.datacenter.location.name),
