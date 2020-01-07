@@ -79,7 +79,7 @@ def checkID(module, params):
     data = urlencode(params)
     full_uri = API_BASE + API_ACTIONS['status'] + data
     req, info = fetch_url(module, full_uri)
-    result = req.read()
+    result = req.read().decode("utf-8")
     jsonresult = json.loads(result)
     req.close()
     return jsonresult
@@ -91,7 +91,7 @@ def startMonitor(module, params):
     data = urlencode(params)
     full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
     req, info = fetch_url(module, full_uri)
-    result = req.read()
+    result = req.read().decode("utf-8")
     jsonresult = json.loads(result)
     req.close()
     return jsonresult['stat']
@@ -103,7 +103,7 @@ def pauseMonitor(module, params):
     data = urlencode(params)
     full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
     req, info = fetch_url(module, full_uri)
-    result = req.read()
+    result = req.read().decode("utf-8")
     jsonresult = json.loads(result)
     req.close()
     return jsonresult['stat']
