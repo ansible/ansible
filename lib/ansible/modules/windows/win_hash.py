@@ -17,7 +17,7 @@ description:
      - Generate a hash file by parsing folder content.
      - Detect file hash changes in the folder.
      - Exclude or Include specific files.
-     - Can be used to detect and trigger repair/reinstall of packaged items (i.e. choco)     
+     - Can be used to detect and trigger repair/reinstall of packaged items (i.e. choco)
 options:
   path:
     description:
@@ -31,7 +31,7 @@ options:
     required: no
   hashfilename:
     description:
-      - optional - the file name you generate and store hash strings 
+      - optional - the file name you generate and store hash strings
       - default hash file name is '.ans_hash'
     type: str
     required: no
@@ -78,7 +78,7 @@ EXAMPLES = r'''
     path: 'c:\\My_App'
     reset: true
   when: choco_myapp.changed == true
-  
+
 - name: 'Generate folder hash with exclusion list c:\\My_App'
   win_hash:
     path: 'c:\\My_App'
@@ -90,7 +90,7 @@ EXAMPLES = r'''
 RETURN = r'''
 hashfileexists:
   description:
-    - Shows if the previously generated hash file already exists. 
+    - Shows if the previously generated hash file already exists.
     - if not exist that means new one will be generated.
   returned: always
   type: bool
@@ -106,8 +106,8 @@ path:
   description:
     - Shows the main src path where all file hashes are compared.
   type: str
-  sample: "c:\\My_App"
-hashmatches: 
+  sample: 'c:\\My_App'
+hashmatches:
   returned: always
   description:
     - returns True if all HASHES matches. Similar to (changed=false)
@@ -125,7 +125,7 @@ NewHashGenerated:
   description:
     - Will return true if a new Hash file was generated.
     - If a new hash file is generated that means no change will be detect until next run
-    - Value=True (initial run, establish baseline)  
+    - Value=True (initial run, establish baseline)
     - Value=False (subsequent runs, compare files against baseline.)
   type: bool
   sample: "True"
@@ -143,7 +143,7 @@ hashfilepath:
     - This file is generated during first run or when reset=true option is used.
     - This file holds the list of  hashes which are compares against current files in the dir.
   type: str
-  sample: "c:\\My_App\.ans_hash"
+  sample: 'c:\\My_App\.ans_hash'
 changed:
   returned: always
   description:
