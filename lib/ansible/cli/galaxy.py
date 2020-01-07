@@ -36,6 +36,7 @@ from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
+from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils import six
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -1021,11 +1022,38 @@ class GalaxyCLI(CLI):
         lists the roles or collections installed on the local system or matches a single role or collection passed as an argument.
         """
 
-        def _display_collection(collection):
-            fqcn = '%s.%s' % (collection.namespace, collection.name)
-            display.display('- {fqcn} ({version})'.format(fqcn=fqcn, version=collection.latest_version))
+        def _display_header(path, h1, h2, w1=42, w2=22):
+            display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
+                path,
+                h1,
+                h2,
+                '-' * max([len(h1), w1]),  # Make sure that the number of dashes is at least the width of the header
+                '-' * max([len(h2), w2]),
+                cwidth=w1,
+                vwidth=w2,
+            ))
 
         def _display_role(gr):
+        def _get_collection_widths(collections):
+            if is_iterable(collections):
+                fqcn_set = set(to_text(c) for c in collections)
+                version_set = set(to_text(c.latest_version) for c in collections)
+            else:
+                fqcn_set = set([to_text(collections)])
+                version_set = set([collections.latest_version])
+
+            fqcn_length = len(max(fqcn_set, key=len))
+            version_length = len(max(version_set, key=len))
+
+            return fqcn_length, version_length
+
+        def _display_collection(collection, cwidth=42, vwidth=22):
+            display.display('{fqcn:{cwidth}} {version:{vwidth}}'.format(
+                fqcn=to_text(collection),
+                version=collection.latest_version,
+                cwidth=cwidth,
+                vwidth=vwidth)
+            )
             install_info = gr.install_info
             version = None
             if install_info:
@@ -1105,7 +1133,10 @@ class GalaxyCLI(CLI):
                         continue
 
                     collection = CollectionRequirement.from_path(b_collection_path, False)
-                    _display_collection(collection)
+                    fqcn_width, version_width = _get_collection_widths(collection)
+                    print(fqcn_width, version_width)
+                    _display_header(path, 'Collection', 'Version', fqcn_width, version_width)
+                    _display_collection(collection, fqcn_width, version_width)
 
             else:
                 # list all collections
@@ -1121,17 +1152,20 @@ class GalaxyCLI(CLI):
                         warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
                         continue
 
-                    display.display("# {0}".format(path))
-
                     # Make sure we look inside the 'ansible_collections' dir
                     if os.path.split(path)[1] != 'ansible_collections':
                         path = os.path.join(path, 'ansible_collections')
 
                     collections = _find_existing_collections(path)
+
+                    # Display header
+                    fqcn_width, version_width = _get_collection_widths(collections)
+                    _display_header(path, 'Collection', 'Version', fqcn_width, version_width)
+
                     # Sort collections by the namespace and name
                     collections.sort(key=to_text)
                     for collection in collections:
-                        _display_collection(collection)
+                        _display_collection(collection, fqcn_width, version_width)
 
                 path_found = True
 
