@@ -109,7 +109,7 @@ options:
       - Allow extra options to be given to terraform init command.
     required: false
     type: list
-    version_added: 2.10
+    version_added: "2.10"
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
