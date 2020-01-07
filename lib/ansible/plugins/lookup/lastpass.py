@@ -10,7 +10,7 @@ DOCUMENTATION = """
       -  Andrew Zenk <azenk@umn.edu>
     version_added: "2.3"
     requirements:
-      - lpass (command line utility)
+      - lpass (command line utility) >= 1.0.0
       - must have already logged into lastpass
     short_description: fetch data from lastpass
     description:
