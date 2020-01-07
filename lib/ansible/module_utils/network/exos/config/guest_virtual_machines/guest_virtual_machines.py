@@ -406,8 +406,8 @@ class Guest_virtual_machines(ConfigBase):
             if h.get("virtual_ports"):
                 for vport in h["virtual_ports"]:
                     if vport["type"] == "vtd":
-                        if (wvport["type"] == "vtd" and str(wvport["name"]) == str(vport["port"])) or
-                        (wvport["type"] == "sriov" and str(wvport["port"]) == str(vport["port"])):
+                        if ((wvport["type"] == "vtd" and str(wvport["name"]) == str(vport["port"])) or 
+                                (wvport["type"] == "sriov" and str(wvport["port"]) == str(vport["port"]))):
                             self._module.fail_json(msg="Port %s is currently in use by a VM as a dedicated port" % str(vport["port"]))
                     elif vport["type"] == "sriov":
                         if wvport["type"] == "vtd" and str(wvport["name"]) == str(vport["port"]):
