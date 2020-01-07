@@ -332,7 +332,11 @@ class Connection(ConnectionBase):
 
         session = self._session
 
-        mark_start = "".join([random.choice(string.ascii_letters) for i in xrange(self.MARK_LENGTH)])
+        mark_begin = "".join([random.choice(string.ascii_letters) for i in xrange(self.MARK_LENGTH)])
+        if self.is_windows:
+            mark_start = mark_begin + " $LASTEXITCODE"
+        else:
+            mark_start = mark_begin
         mark_end = "".join([random.choice(string.ascii_letters) for i in xrange(self.MARK_LENGTH)])
 
         # Wrap command in markers accordingly for the shell used
@@ -340,12 +344,12 @@ class Connection(ConnectionBase):
 
         self._flush_stderr(session)
 
-        # Handle the back-end throttling
         for chunk in chunks(cmd, 1024):
             session.stdin.write(to_bytes(chunk, errors='surrogate_or_strict'))
 
         # Read stdout between the markers
         stdout = ''
+        win_line = ''
         begin = False
         stop_time = int(round(time.time())) + self.get_option('timeout')
         while session.poll() is None:
@@ -362,6 +366,10 @@ class Connection(ConnectionBase):
                 display.vvvv(u"EXEC remaining: {0}".format(remaining), host=self.host)
                 continue
 
+            if not begin and self.is_windows:
+                win_line = win_line + line
+                line = win_line
+
             if mark_start in line:
                 begin = True
                 if not line.startswith(mark_start):
@@ -369,9 +377,8 @@ class Connection(ConnectionBase):
                 continue
             if begin:
                 if mark_end in line:
-                    for line in stdout.splitlines():
-                        display.vvvvv(u"POST_PROCESS: {0}".format(to_text(line)), host=self.host)
-                    returncode, stdout = self._post_process(stdout)
+                    display.vvvv(u"POST_PROCESS: {0}".format(to_text(stdout)), host=self.host)
+                    returncode, stdout = self._post_process(stdout, mark_begin)
                     break
                 else:
                     stdout = stdout + line
@@ -394,7 +401,7 @@ class Connection(ConnectionBase):
         if self.is_windows:
             if not cmd.startswith(" ".join(_common_args) + " -EncodedCommand"):
                 cmd = self._shell._encode_script(cmd, preserve_rc=True)
-            cmd = cmd + "; echo " + mark_start + " $LASTEXITCODE\necho " + mark_end + "\n"
+            cmd = cmd + "; echo " + mark_start + "\necho " + mark_end + "\n"
         else:
             if sudoable:
                 cmd = "sudo " + cmd
@@ -403,21 +410,23 @@ class Connection(ConnectionBase):
         display.vvvv(u"_wrap_command: '{0}'".format(to_text(cmd)), host=self.host)
         return cmd
 
-    def _post_process(self, stdout):
+    def _post_process(self, stdout, mark_begin):
         ''' extract command status and strip unwanted lines '''
 
         if self.is_windows:
-            display.vvvv(u"_post_process: '{0}'".format(to_text(stdout)), host=self.host)
-            stdout = stdout[:stdout.rfind('\n')]
-            if stdout.splitlines()[-1].isdigit():
-                returncode = int(stdout.splitlines()[-1])
-                stdout = stdout[:stdout.rfind('\n') + 1]
-                stdout = stdout.replace('\r\n', '')
-                if stdout.endswith('\n0'):
-                    stdout = stdout[:-2]
-                stdout = stdout.replace('\n', '')
+            # Value of $LASTEXITCODE will be the line after the mark
+            trailer = stdout[stdout.rfind(mark_begin):]
+            last_exit_code = trailer.splitlines()[1]
+            if last_exit_code.isdigit:
+                returncode = int(last_exit_code)
             else:
-                returncode = -51
+                returncode = -1
+            # output to keep will be before the mark
+            stdout = stdout[:stdout.rfind(mark_begin)]
+
+            # If it looks like JSON remove any newlines
+            if stdout.startswith('{'):
+                stdout = stdout.replace('\n', '')
 
             return (returncode, stdout)
         else:
