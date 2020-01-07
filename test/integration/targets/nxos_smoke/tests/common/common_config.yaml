@@ -5,6 +5,8 @@
 # hit NetworkConfig
 # Select interface for test
 - debug: msg="START connection={{ ansible_connection }} common/common_config.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 - set_fact: intname="{{ nxos_int1 }}"
 
@@ -16,6 +18,7 @@
     parents:
       - "interface {{ intname }}"
     match: none
+    provider: "{{ connection }}"
 
 - name: collect any backup files
   find: &backups
@@ -38,6 +41,7 @@
     parents:
       - "interface {{ intname }}"
     backup: yes
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -58,6 +62,7 @@
 - name: setup
   nxos_config: &clear
     lines: no ip access-list test
+    provider: "{{ connection }}"
     match: none
   ignore_errors: yes
 
@@ -71,6 +76,7 @@
       - 40 permit ip 192.0.2.4/32 any log
     parents: ip access-list test
     replace: block
+    provider: "{{ connection }}"
     match: exact
   register: result
 
@@ -93,6 +99,7 @@
       - 40 permit ip 192.0.2.4/32 any log
     parents: ip access-list test
     replace: block
+    provider: "{{ connection }}"
     match: strict
   register: result
 
@@ -109,6 +116,7 @@
       pref: 100
       tag: 5500
       vrf: testing
+      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -124,6 +132,7 @@
       tag: 5500
       vrf: testing
       state: absent
+      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -138,6 +147,7 @@
       tag: 5500
       vrf: testing
       state: absent
+      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: remove static route aggregate
@@ -146,4 +156,5 @@
         - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
         - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
       state: absent
+      provider: "{{ connection }}"
     ignore_errors: yes

@@ -4,22 +4,27 @@
 # nxos_interface -> conditional, remove_default_spec
 
 - debug: msg="START connection={{ ansible_connection }} common/common_utils.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
 
 # hit ComplexList
 - name: test contains operator
   nxos_command:
     commands:
       - show version
+    provider: "{{ connection }}"
 
 # hit to_list()
 - name: setup
   nxos_config:
     lines: hostname switch
+    provider: "{{ connection }}"
     match: none
 
 - name: configure top level command
   nxos_config:
     lines: hostname foo
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -30,6 +35,7 @@
 - name: setup
   nxos_config:
     lines: hostname switch
+    provider: "{{ connection }}"
     match: none
 
 # hit conditional()
@@ -41,6 +47,7 @@
     lines:
       - "default interface {{ testint1 }}"
       - "default interface {{ testint2 }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
 
   register: result
@@ -51,6 +58,7 @@
     admin_state: up
     tx_rate: ge(0)
     rx_rate: ge(0)
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -63,6 +71,7 @@
     admin_state: down
     tx_rate: gt(0)
     rx_rate: lt(0)
+    provider: "{{ connection }}"
   ignore_errors: yes
   register: result
 
@@ -77,6 +86,7 @@
     aggregate:
       - { name: "{{ testint1 }}", description: "Test aggregation on first interface" }
       - { name: "{{ testint2 }}", mode: layer3 }
+    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -88,4 +98,5 @@
     lines:
       - "default interface {{ testint1 }}"
       - "default interface {{ testint2 }}"
+    provider: "{{ connection }}"
   ignore_errors: yes
