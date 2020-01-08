@@ -1,19 +1,15 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_snmp_traps sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: Setup - Remove snmp_traps if configured
   nxos_snmp_traps: &remove
     group: all
-    provider: "{{ connection }}"
     state: disabled
 
 - block:
   - name: Configure one snmp trap group
     nxos_snmp_traps: &config
       group: bridge
-      provider: "{{ connection }}"
       state: enabled
     register: result
 
@@ -32,7 +28,6 @@
   - name: Remove snmp trap group
     nxos_snmp_traps: &rem1
       group: bridge
-      provider: "{{ connection }}"
       state: disabled
     register: result
 
@@ -47,7 +42,6 @@
   - name: Configure all snmp trap groups
     nxos_snmp_traps: &config1
       group: all
-      provider: "{{ connection }}"
       state: enabled
     register: result
 

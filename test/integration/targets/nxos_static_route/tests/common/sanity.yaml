@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_static_route sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 # Flag used to test the track feature.  Some platforms
 # don't support it so this flag will be toggled accordingly.
@@ -11,7 +9,6 @@
   nxos_config:
     lines:
       - track 1 ip sla 1
-    provider: "{{ connection }}"
   register: cmd_result
   ignore_errors: yes
 
@@ -30,7 +27,6 @@
       - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
       - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
     vrf: "{{ item }}"
-    provider: "{{ connection }}"
     state: absent
   with_items: "{{ vrfs }}"
   ignore_errors: yes
@@ -40,7 +36,6 @@
     prefix: "192.168.1.164/32"
     next_hop: "192.0.2.3"
     vrf: "{{ item }}"
-    provider: "{{ connection }}"
     state: present
   with_items: "{{ vrfs }}"
 
@@ -53,7 +48,6 @@
       pref: 100
       tag: 5500
       vrf: "{{ item }}"
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -78,7 +72,6 @@
       pref: 10
       tag: default
       vrf: "{{ item }}"
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -100,7 +93,6 @@
       tag: default
       track: 1
       vrf: "{{ item }}"
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
     when: test_track_feature
@@ -126,7 +118,6 @@
       tag: default
       track: 2
       vrf: "{{ item }}"
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
     ignore_errors: yes
@@ -144,7 +135,6 @@
       route_name: testing
       pref: 100
       vrf: "{{ item }}"
-      provider: "{{ connection }}"
       state: absent
     with_items: "{{ vrfs }}"
     register: result
@@ -163,7 +153,6 @@
       aggregate:
         - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
         - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -179,7 +168,6 @@
       aggregate:
         - { prefix: "192.168.22.64/24", next_hop: "192.0.2.3" }
         - { prefix: "192.168.24.64/24", next_hop: "192.0.2.3" }
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -196,7 +184,6 @@
     nxos_config:
       lines:
         - no track 1
-      provider: "{{ connection }}"
     ignore_errors: yes
     when: test_track_feature
 

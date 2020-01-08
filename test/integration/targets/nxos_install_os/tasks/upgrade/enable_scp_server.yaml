@@ -3,4 +3,3 @@
   nxos_feature:
     feature: scp-server
     state: enabled
-    provider: "{{ connection }}"
