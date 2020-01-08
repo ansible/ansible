@@ -55,7 +55,6 @@ class MockLPass(LPass):
         p = ArgumentParser()
         sp = p.add_subparsers(help='command', dest='subparser_name')
 
-        logout_p = sp.add_parser('logout', parents=[base_options], help='logout')
         show_p = sp.add_parser('show', parents=[base_options], help='show entry details')
         status_p = sp.add_parser('status', parents=[base_options], help='show logged in state')
 
@@ -74,18 +73,6 @@ class MockLPass(LPass):
 
         if args.color != 'never':
             return mock_exit(error='Error: Mock only supports --color=never', rc=1)
-
-        if args.subparser_name == 'logout':
-            if self._mock_logged_out:
-                return mock_exit(error='Error: Not currently logged in', rc=1)
-
-            logged_in_error = 'Are you sure you would like to log out? [Y/n]'
-            if stdin and stdin.lower() == 'n\n':
-                return mock_exit(output='Log out: aborted.', error=logged_in_error, rc=1)
-            elif stdin and stdin.lower() == 'y\n':
-                return mock_exit(output='Log out: complete.', error=logged_in_error, rc=0)
-            else:
-                return mock_exit(error='Error: aborted response', rc=1)
 
         if args.subparser_name == 'status':
             if self._mock_logged_out:
@@ -136,10 +123,6 @@ class TestLPass(unittest.TestCase):
     def test_lastpass_cli_path(self):
         lp = MockLPass(path='/dev/null')
         self.assertEqual('/dev/null', lp.cli_path)
-
-    def test_lastpass_build_args_logout(self):
-        lp = MockLPass()
-        self.assertEqual(['logout', '--color=never'], lp._build_args("logout"))
 
     def test_lastpass_build_args_status(self):
         lp = MockLPass()
