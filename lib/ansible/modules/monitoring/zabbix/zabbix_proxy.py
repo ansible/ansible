@@ -42,6 +42,13 @@ options:
         description:
             - Name of the proxy in Zabbix.
         required: true
+    proxy_address:
+        description:
+            - Comma-delimited list of IP/CIDR addresses or DNS names to accept active proxy requests from.
+            - Requires I(status=active).
+            - Works only with >= Zabbix 4.0. ( remove option for <= 4.0 )
+        required: false
+        version_added: '2.10'
     description:
         description:
             - Description of the proxy.
@@ -113,6 +120,7 @@ EXAMPLES = '''
     description: ExampleProxy
     status: active
     state: present
+    proxy_address: ExampleProxy.local
     interface:
         type: 0
         main: 1
@@ -165,6 +173,12 @@ class Proxy(object):
                 if data[item]:
                     parameters[item] = data[item]
 
+            if 'proxy_address' in data and data['status'] != '5':
+                parameters.pop('proxy_address', False)
+
+            if 'interface' in data and data['status'] != '6':
+                parameters.pop('interface', False)
+
             proxy_ids_list = self._zapi.proxy.create(parameters)
             self._module.exit_json(changed=True,
                                    result="Successfully added proxy %s (%s)" %
@@ -216,6 +230,12 @@ class Proxy(object):
             if 'interface' in parameters:
                 parameters.pop('interface')
 
+            if 'proxy_address' in data and data['status'] != '5':
+                parameters.pop('proxy_address', False)
+
+            if 'interface' in data and data['status'] != '6':
+                parameters.pop('interface', False)
+
             if 'interface' in data and data['status'] == '6':
                 new_interface = self.compile_interface_params(data['interface'])
                 if len(new_interface) > 0:
@@ -242,6 +262,7 @@ def main():
             login_user=dict(type='str', required=True),
             login_password=dict(type='str', required=True, no_log=True),
             proxy_name=dict(type='str', required=True),
+            proxy_address=dict(type='str', required=False),
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False,
                                      default=None, no_log=True),
@@ -273,6 +294,7 @@ def main():
     http_login_password = module.params['http_login_password']
     validate_certs = module.params['validate_certs']
     proxy_name = module.params['proxy_name']
+    proxy_address = module.params['proxy_address']
     description = module.params['description']
     status = module.params['status']
     tls_connect = module.params['tls_connect']
@@ -334,7 +356,8 @@ def main():
                 'tls_subject': tls_subject,
                 'tls_psk_identity': tls_psk_identity,
                 'tls_psk': tls_psk,
-                'interface': interface
+                'interface': interface,
+                'proxy_address': proxy_address
             })
     else:
         if state == "absent":
@@ -351,7 +374,8 @@ def main():
             'tls_subject': tls_subject,
             'tls_psk_identity': tls_psk_identity,
             'tls_psk': tls_psk,
-            'interface': interface
+            'interface': interface,
+            'proxy_address': proxy_address
         })
 
 
