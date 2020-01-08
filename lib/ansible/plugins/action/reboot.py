@@ -191,10 +191,10 @@ class ActionModule(ActionBase):
         if self._task.args.get('boot_time_command'):
             boot_time_command = self._task.args.get('boot_time_command')
 
-        try:
-            check_type_str(boot_time_command, allow_conversion=False)
-        except TypeError as e:
-            raise AnsibleError("Invalid value given for 'boot_time_command': %s." % to_native(e))
+            try:
+                check_type_str(boot_time_command, allow_conversion=False)
+            except TypeError as e:
+                raise AnsibleError("Invalid value given for 'boot_time_command': %s." % to_native(e))
 
         display.debug("{action}: getting boot time with command: '{command}'".format(action=self._task.action, command=boot_time_command))
         command_result = self._low_level_execute_command(boot_time_command, sudoable=self.DEFAULT_SUDOABLE)
