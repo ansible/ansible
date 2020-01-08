@@ -63,7 +63,10 @@ class LPass(object):
         out, err = self._run(self._build_args("status"), expected_rc=[0, 1])
         return out.startswith("Logged in as")
 
-    def _run(self, args, stdin=None, expected_rc=[0]):
+    def _run(self, args, stdin=None, expected_rc=None):
+        if expected_rc is None:
+            expected_rc = [0]
+
         p = Popen([self.cli_path] + args, stdout=PIPE, stderr=PIPE, stdin=PIPE)
         out, err = p.communicate(to_bytes(stdin))
         rc = p.wait()
