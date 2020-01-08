@@ -237,7 +237,7 @@ def map_obj_to_commands(updates, module):
         admin_state = w['admin_state']
         vni = w['vni']
         interfaces = w.get('interfaces') or []
-        if purge :
+        if purge:
             state = "absent"
         else:
             state = w['state']
