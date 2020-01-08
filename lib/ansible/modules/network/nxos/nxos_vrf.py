@@ -237,11 +237,13 @@ def map_obj_to_commands(updates, module):
         admin_state = w['admin_state']
         vni = w['vni']
         interfaces = w.get('interfaces') or []
-        state = w['state']
+        if purge :
+            state = "absent"
+        else:
+            state = w['state']
         del w['state']
 
         obj_in_have = search_obj_in_list(name, have)
-
         if state == 'absent' and obj_in_have:
             commands.append('no vrf context {0}'.format(name))
 
@@ -345,6 +347,7 @@ def map_obj_to_commands(updates, module):
 
 def validate_vrf(name, module):
     if name:
+        name = name.strip()
         if name == 'default':
             module.fail_json(msg='cannot use default as name of a VRF')
         elif len(name) > 32:
