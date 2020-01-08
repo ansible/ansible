@@ -1,18 +1,10 @@
 /*! minified with http://css-minify.online-domain-tools.com/ - all comments
  * must have ! to preserve during minifying with that tool *//*! Fix for read the docs theme:
  * https://rackerlabs.github.io/docs-rackspace/tools/rtd-tables.html
- *//*! override table width restrictions */@media screen and (min-width:767px) {
-    /*! If we ever publish to read the docs, we need to use !important for these
+ *//*! override table width restrictions */@media screen and (min-width:767px){/*! If we ever publish to read the docs, we need to use !important for these
    * two styles as read the docs itself loads their theme in a way that we
    * can't otherwise override it.
-   */.wy-table-responsive table td {
-    white-space: normal;
-}
-.wy-table-responsive {
-    overflow: visible;
-}
-}
-/*!
+   */.wy-table-responsive table td{white-space:normal}.wy-table-responsive{overflow:visible}}/*!
  * We use the class documentation-table for attribute tables where the first
  * column is the name of an attribute and the second column is the description.
  *//*! These tables look like this:
@@ -30,18 +22,7 @@
  * / is given the class .value-separator
  * required is given the class .value-required
  * added in x.y is given the class .value-added-in
- *//*! The extra .rst-content is so this will override rtd theme */.rst-content table.documentation-table td {
-    vertical-align: top;
-}
-table.documentation-table td:first-child {
-    white-space: nowrap;
-    vertical-align: top;
-}
-table.documentation-table td:first-child p:first-child {
-    font-weight: 700;
-    display: inline;
-}
-/*! This is now redundant with above position-based styling *//*!
+ *//*! The extra .rst-content is so this will override rtd theme */.rst-content table.documentation-table td{vertical-align:top}table.documentation-table td:first-child{white-space:nowrap;vertical-align:top}table.documentation-table td:first-child p:first-child{font-weight:700;display:inline}/*! This is now redundant with above position-based styling *//*!
 table.documentation-table .value-name {
     font-weight: bold;
     display: inline;
