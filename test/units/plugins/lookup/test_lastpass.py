@@ -47,7 +47,10 @@ class MockLPass(LPass):
             if key == entry['id'] or key == entry['name']:
                 return entry
 
-    def _run(self, args, stdin=None, expected_rc=[0]):
+    def _run(self, args, stdin=None, expected_rc=None):
+        if expected_rc is None:
+            expected_rc = [0]
+
         # Mock behavior of lpass executable
         base_options = ArgumentParser(add_help=False)
         base_options.add_argument('--color', default="auto", choices=['auto', 'always', 'never'])
