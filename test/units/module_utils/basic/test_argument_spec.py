@@ -594,6 +594,7 @@ class TestLoadFileCommonArguments:
 
         assert res == final_params
 
+
 @pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
 def test_no_log_true(stdin, capfd):
     """Explicitly mask an argument (no_log=True)."""
@@ -606,6 +607,7 @@ def test_no_log_true(stdin, capfd):
     # value in am.no_log_values.
     assert "testing" in am.no_log_values
 
+
 @pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
 def test_no_log_false(stdin, capfd):
     """Explicitly log and display an argument (no_log=False)."""
@@ -614,6 +616,7 @@ def test_no_log_false(stdin, capfd):
     }
     am = basic.AnsibleModule(arg_spec)
     assert "testing" not in am.no_log_values and not am._warnings
+
 
 @pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
 def test_no_log_none(stdin, capfd):
