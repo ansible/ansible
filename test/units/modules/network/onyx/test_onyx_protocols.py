@@ -141,3 +141,12 @@ class TestOnyxProtocolModule(TestOnyxModule):
     def test_nve_disabled(self):
         set_module_args(dict(nve='disabled'))
         self.execute_module(changed=False)
+
+    def test_bfd_enable(self):
+        set_module_args(dict(bfd='enabled'))
+        commands = ['protocol bfd']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_bfd_disabled(self):
+        set_module_args(dict(bfd='disabled'))
+        self.execute_module(changed=False)
