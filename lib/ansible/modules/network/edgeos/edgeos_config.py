@@ -86,6 +86,15 @@ options:
         active configuration is saved.
     type: bool
     default: 'no'
+  delete_unmanaged:
+    description:
+      - The C(delete_unmanaged) argument controls whether or not unmanaged
+        configuration lines are deleted. When set to C(True), the config found
+        on the remote device which is not matched in the passed lines of config
+        will be added to the updates list as delete commands.
+    type: bool
+    default: 'no'
+    version_added: "2.10"
   backup_options:
     description:
       - This is a dict object containing configurable options related to backup
@@ -130,6 +139,7 @@ EXAMPLES = """
 - name: configurable backup path
   edgeos_config:
     src: edgeos.cfg
+    delete_unmanaged: no
     backup: yes
     backup_options:
       filename: backup.cfg
@@ -222,51 +232,78 @@ def get_candidate(module):
 
 def diff_config(commands, config):
     """Diff the candidate commands against current config returning lists for
-    updates
+    updates, unmanaged and invalid.
 
-    :param commands: candidate commands passed through ansible
+    :param commands: commands provided at ansible runtime
     :type commands: list
-    :param config: commands pulled from edgeos device or passed through ansible
+    :param config: [commands pulled from edgeos device]
     :type config: list
     :return: updates: changes to apply to remote device
+    :rtype: list
+    :return: unmanaged_config: config on device without matching candidate
+    commands passed to ansible
+    :rtype: list
+    :return: invalid: commands passed to ansible not starting with 'set' or
+    'delete' and therefore considered invalid
     :rtype: list
     """
     config = [to_native(c).replace("'", '') for c in config.splitlines()]
 
-    updates = list()
-    visited = set()
-    delete_commands = [line for line in commands if line.startswith('delete')]
+    set_commands, delete_commands, invalid_commands = list(), list(), list()
+    updates, unmanaged_config = list(), list()
 
     for line in commands:
-        item = to_native(line).replace("'", '')
+        line = to_native(line).replace("'", '')
+        if line.startswith('delete '):
+            delete_commands.append(line)
+        elif line.startswith('set '):
+            set_commands.append(line)
+        else:
+            invalid_commands.append(line)
 
-        if not item.startswith('set') and not item.startswith('delete'):
-            raise ValueError('line must start with either `set` or `delete`')
+    # Will always run the delete commands first to allow for resets
+    if delete_commands:
+        updates = delete_commands
 
-        elif item.startswith('set'):
+    # Removing all matching commands already in config
+    updates = updates + [line for line in set_commands if line not in config]
 
-            if item not in config:
-                updates.append(line)
+    # Add back changes where a corresponding delete command exists
+    if delete_commands:
+        for line in set_commands:
+            search = re.sub('^set ', 'delete ', line)
+            for dline in delete_commands:
+                if search.startswith(dline):
+                    updates.append(line)
 
-            # If there is a corresponding delete command in the desired config, make sure to append
-            # the set command even though it already exists in the running config
-            else:
-                ditem = re.sub('set', 'delete', item)
-                for line in delete_commands:
-                    if ditem.startswith(line):
-                        updates.append(item)
+    # Unmanaged config (config without matching commands)
+    unmanaged_config = (list(set(config) - set(set_commands)))
+    matches = list()
+    # Remove if actually a change to config
+    for line in unmanaged_config:
+        search = line.rsplit(' ', 1)[0]
+        for update in updates:
+            if update.startswith(search):
+                matches.append(line)
+                break
 
-        elif item.startswith('delete'):
-            if not config:
-                updates.append(line)
-            else:
-                item = re.sub(r'delete', 'set', item)
-                for entry in config:
-                    if entry.startswith(item) and line not in visited:
-                        updates.append(line)
-                        visited.add(line)
+    unmanaged_config = [line for line in unmanaged_config if line not in matches]
 
-    return list(updates)
+    return updates, unmanaged_config, invalid_commands
+
+
+def delete_unmanaged(updates, unmanaged):
+    """Converts the list of unmanged config found on edgeos device to delete
+    commands and adds to the updates list.
+
+    :param updates: list of updates to be made to the edgeos device
+    :type updates: list
+    :param unmanaged: list of unmanged commands found on the edgeos device
+    :type unmanaged: list
+    """
+    for line in unmanaged:
+        nline = re.sub('^set ', 'delete ', line)
+        updates.append(nline)
 
 
 def run(module, result):
@@ -290,18 +327,32 @@ def run(module, result):
     # create the candidate config object from the arguments
     candidate = get_candidate(module)
 
-    # create loadable config that includes only the configuration updates
-    commands = diff_config(candidate, config)
+    # create loadable config from updates, also return unmanaged and invalid
+    # commands
+    updates, unmanaged_config, invalid_commands = diff_config(candidate, config)
 
-    result['commands'] = commands
+    # if delete_unmanaged set, set all all unmanaged commands to delete.
+    if unmanaged_config and module.params['delete_unmanaged']:
+        delete_unmanaged(updates, unmanaged_config)
+
+    result['commands'] = updates
+    result['unmanaged'] = unmanaged_config
+    result['invalid'] = invalid_commands
 
     commit = not module.check_mode
     comment = module.params['comment']
 
-    if commands:
-        load_config(module, commands, commit=commit, comment=comment)
-
+    if result.get('commands'):
+        load_config(module, updates, commit=commit, comment=comment)
         result['changed'] = True
+
+    if result.get('unmanaged'):
+        result['warnings'].append('Some configuration commands were '
+                                  'unmanaged, review unmanaged list')
+
+    if result.get('invalid'):
+        result['warnings'].append('Some configuration commands were '
+                                  'invalid, review invalid list')
 
 
 def main():
@@ -325,6 +376,7 @@ def main():
 
         backup=dict(type='bool', default=False),
         backup_options=dict(type='dict', options=backup_spec),
+        delete_unmanaged=dict(type='bool', default=False),
         save=dict(type='bool', default=False),
     )
 
