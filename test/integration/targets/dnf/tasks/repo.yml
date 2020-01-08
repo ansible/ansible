@@ -294,11 +294,36 @@
       assert:
         that:
           - rpm_result.stdout == '0'
+
+    # ============================================================================
+    # https://github.com/ansible/ansible/issues/64294
+    - name: Install dinginessentail-invalida-nevra
+      dnf:
+        name: dinginessentail-invalid-nevra
+        state: present
+      register: dnf_invalid_nevra_result
+
+    - name: Check dinginessentail-invalid-nevra with rpm
+      shell: rpm -q dinginessentail-invalid-nevra
+      register: rpm_invalid_nevra_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_invalid_nevra_result.changed"
+            - "rpm_invalid_nevra_result.stdout.startswith('dinginessentail-invalid-nevra-ABC')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_invalid_nevra_result"
+    # ============================================================================
   always:
     - name: Clean up
       dnf:
         name:
         - dinginessentail
+        - dinginessentail-invalid-nevra
         - dinginessentail-with-weak-dep
         - dinginessentail-weak-dep
         state: absent

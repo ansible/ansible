@@ -34,6 +34,7 @@ SPECS = [
     RPM('landsidescalping', '1.1', '1', None, None),
     RPM('dinginessentail-with-weak-dep', '1.0', '1', None, ['dinginessentail-weak-dep']),
     RPM('dinginessentail-weak-dep', '1.0', '1', None, None),
+    RPM('dinginessentail-invalid-nevra', 'ABC', '1', None, None),
 ]
 
 
