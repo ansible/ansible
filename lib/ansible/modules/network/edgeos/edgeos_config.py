@@ -25,11 +25,12 @@ description:
     configuration file and state of the active configuration. All
     configuration statements are based on `set` and `delete` commands
     in the device configuration.
-  - "This is a network module and requires the C(connection: network_cli) in order
-    to work properly."
-  - For more information please see the L(Network Guide,../network/getting_started/index.html).
+  - "This is a network module and requires the C(connection: network_cli) in
+    order to work properly."
+  - For more information please see the
+    L(Network Guide,../network/getting_started/index.html).
 notes:
-  - Tested against EdgeOS 1.9.7
+  - Tested against EdgeOS v2.0.8
   - Setting C(ANSIBLE_PERSISTENT_COMMAND_TIMEOUT) to 30 is recommended since
     the save command can take longer than the default of 10 seconds on
     some EdgeOS hardware.
@@ -87,23 +88,27 @@ options:
     default: 'no'
   backup_options:
     description:
-      - This is a dict object containing configurable options related to backup file path.
-        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
-        to I(no) this option will be silently ignored.
+      - This is a dict object containing configurable options related to backup
+        file path. The value of this option is read only when C(backup) is set
+        to I(yes), if C(backup) is set to I(no) this option will be silently
+        ignored.
     suboptions:
       filename:
         description:
-          - The filename to be used to store the backup configuration. If the filename
-            is not given it will be generated based on the hostname, current time and date
-            in format defined by <hostname>_config.<current-date>@<current-time>
+          - The filename to be used to store the backup configuration. If the
+            filename is not given it will be generated based on the hostname,
+            current time and date in format defined by
+            <hostname>_config.<current-date>@<current-time>
       dir_path:
         description:
-          - This option provides the path ending with directory name in which the backup
-            configuration file will be stored. If the directory does not exist it will be first
-            created and the filename is either the value of C(filename) or default filename
-            as described in C(filename) options description. If the path value is not given
-            in that case a I(backup) directory will be created in the current working directory
-            and backup configuration will be copied in C(filename) within I(backup) directory.
+          - This option provides the path ending with directory name in which
+            the backup configuration file will be stored. If the directory does
+            not exist it will be first created and the filename is either the
+            value of C(filename) or default filename as described in
+            C(filename) options description. If the path value is not given in
+            that case a I(backup) directory will be created in the current
+            working directory and backup configuration will be copied in
+            C(filename) within I(backup) directory.
         type: path
     type: dict
     version_added: "2.8"
@@ -137,6 +142,16 @@ commands:
   returned: always
   type: list
   sample: ['...', '...']
+invalid:
+  description: The list of configuration commands removed for being invalid
+  returned: always
+  type: list
+  sample: ['...', '...']
+unmanaged:
+  description: The list of configuration commands on the remote device not matching the list provided
+  returned: always
+  type: list
+  sample: ['...', '...']
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
@@ -156,6 +171,18 @@ DEFAULT_COMMENT = 'configured by edgeos_config'
 
 
 def config_to_commands(config):
+    """Parse config depending on form and returns a list of commands
+
+    Only supports `set` and `delete` verbs
+
+    Supports a list of commands or a bracket based configuration file. When
+    passing a bracket based config it will parse into a list of set commands.
+
+    :param config: current config from the edgeos device
+    :type config: list
+    :return: filtered list of config starting with 'set' or 'delete'
+    :rtype: list
+    """
     set_format = config.startswith('set') or config.startswith('delete')
     candidate = NetworkConfig(indent=4, contents=config)
     if not set_format:
@@ -178,6 +205,13 @@ def config_to_commands(config):
 
 
 def get_candidate(module):
+    """Prepare passed ansible config for diff
+
+    :param module: ansible module for this type (edgeos)
+    :type module: ansible.module
+    :return contents: list of commands as potential updates
+    :rtype: list
+    """
     contents = module.params['src'] or module.params['lines']
 
     if module.params['lines']:
@@ -192,6 +226,8 @@ def check_command(module, command):
     Error on uneven single quote which breaks ansible waiting for further input. Ansible
     will handle even single quote failures correctly.
 
+    :param module: ansible module for this type (edgeos)
+    :type module: ansible.module
     :param command: the command line from current or new config
     :type command: string
     :raises ValueError:
@@ -206,6 +242,18 @@ def check_command(module, command):
 
 
 def diff_config(module, commands, config):
+    """Diff the candidate commands against current config returning a list of
+    updates to be applied to remote edgeos device
+
+    :param module: ansible module for this type (edgeos)
+    :type module: ansible.module
+    :param commands: candidate commands passed through ansible
+    :type commands: list
+    :param config: commands pulled from edgeos device or passed through ansible
+    :type config: list
+    :return: updates: changes to apply to remote device
+    :rtype: list
+    """
     config = [to_native(check_command(module, c)) for c in config.splitlines()]
 
     updates = list()
@@ -245,6 +293,19 @@ def diff_config(module, commands, config):
 
 
 def run(module, result):
+    """compares config against passed configuration to asnible to create an
+    update list and applies to the edgeos device.
+
+    .. warning:: docstring added long after code written, requires verification
+    of Arguments and Returns - please update if you see any errors
+
+    :param module: ansible module for self ref
+    :type module: ansible.module
+    :param result: result dict to be populated
+    process
+    :type result: dict
+    """
+
     # get the current active config from the node or passed in via
     # the config param
     config = module.params['config'] or get_config(module)
@@ -267,6 +328,9 @@ def run(module, result):
 
 
 def main():
+    """Sets up module before running changes, applies save of state if
+    changed.
+    """
 
     backup_spec = dict(
         filename=dict(),
