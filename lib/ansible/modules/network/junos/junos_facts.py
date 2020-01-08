@@ -112,7 +112,10 @@ from ansible.module_utils.network.junos.junos import junos_argument_spec
 
 
 def main():
-    """ Main entry point for AnsibleModule
+    """
+    Main entry point for module execution
+
+    :returns: ansible_facts
     """
     argument_spec = FactsArgs.argument_spec
     argument_spec.update(junos_argument_spec)

@@ -181,7 +181,8 @@ from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 
 def main():
-    """ Main entry point for module execution
+    """
+    Main entry point for module execution
 
     :returns: ansible_facts
     """

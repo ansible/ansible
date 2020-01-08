@@ -216,7 +216,10 @@ from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 
 
 def main():
-    """ Main entry point for AnsibleModule
+    """
+    Main entry point for module execution
+
+    :returns: ansible_facts
     """
     argument_spec = FactsArgs.argument_spec
     argument_spec.update(nxos_argument_spec)
