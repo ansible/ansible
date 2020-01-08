@@ -31,14 +31,9 @@ Ansible also has minimum PowerShell version requirements - please see
 
 .. _windows_faq_server2008:
 
-What is the support for Server 2008, 2008 R2 and Windows 7
-``````````````````````````````````````````````````````````
-The end of life for these versions of Windows is January 14th 2020 which means Ansible is planning on dropping support
-in the 2.11 release. A part of this deprecation process is to stop testing changes for Server 2008 and 2008 R2 in CI
-and any new features will be targeted towards newer Windows versions. While existing features should continue to work
-on these older versions some things may break between now and the 2.11 release. We will still continue to accept PRs
-that are simple fixes for bugs that come up until the 2.11 release.
-
+Are Server 2008, 2008 R2 and Windows 7 supported?
+`````````````````````````````````````````````````
+Microsoft ended Extended Support for these versions of Windows on January 14th, 2020, and Ansible deprecated official support in the 2.10 release. No new feature development will occur targeting these operating systems, and automated testing has ceased. However, existing modules and features will likely continue to work, and simple pull requests to resolve issues with these Windows versions may be accepted.
 
 Can I manage Windows Nano Server with Ansible?
 ``````````````````````````````````````````````
