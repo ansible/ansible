@@ -4,7 +4,6 @@
   nxos_install_os:
     system_image_file: "{{ si }}"
     issu: "{{ issu }}"
-    provider: "{{ connection }}"
   register: result
   when: not force
 
@@ -15,7 +14,6 @@
       - no boot kickstart
       - no boot system
     match: line
-    provider: "{{ connection }}"
   ignore_errors: yes
   when: force
 
@@ -25,7 +23,6 @@
       - "boot nxos bootflash:{{ si }}"
       - copy run start
     match: line
-    provider: "{{ connection }}"
   when: force
 
 - name: "Boot image {{ si }} using reload"
@@ -33,7 +30,6 @@
     lines:
       - 'terminal dont-ask'
       - 'reload'
-    provider: "{{ connection }}"
   ignore_errors: yes
   when: force
 

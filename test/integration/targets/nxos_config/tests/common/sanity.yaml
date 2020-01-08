@@ -5,7 +5,6 @@
   nxos_config:
     lines: ip access-list test
     match: none
-    provider: "{{ connection }}"
 
 - name: "nxos_config sanity test"
   nxos_config:
@@ -18,7 +17,6 @@
     parents: ip access-list test
     before: no ip access-list test
     match: exact
-    provider: "{{ connection }}"
 
 - name: "nxos_config sanity test - replace block"
   nxos_config:
@@ -30,13 +28,11 @@
     parents: ip access-list test
     before: no ip access-list test
     replace: block
-    provider: "{{ connection }}"
 
 - name: teardown
   nxos_config:
     lines: no ip access-list test
     match: none
-    provider: "{{ connection }}"
 
 - debug: msg='Verify https://github.com/ansible/ansible/issues/50635'
 
@@ -44,14 +40,12 @@
   nxos_config:
     lines:
       - "default interface {{ nxos_int1 }}"
-    provider: "{{ connection }}"
 
 - name: MAKE INTERFACE A SWITCHPORT
   nxos_config:
     lines:
       - switchport
     parents: "interface {{ nxos_int1 }}"
-    provider: "{{ connection }}"
 
 - name: CONFIGURE EDGE TRUNK TYPE
   nxos_config: &config
@@ -60,7 +54,6 @@
       - switchport access vlan 3333
       - spanning-tree port type edge
     parents: "interface {{ nxos_int1 }}"
-    provider: "{{ connection }}"
   register: result
 
 - assert:

@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_gir sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: gir_run="true"
 - set_fact: gir_run="false"
@@ -9,14 +7,12 @@
 #- name: "Setup"
 #  nxos_gir: &setup
 #    system_mode_maintenance: false
-#    provider: "{{ connection }}"
 #  ignore_errors: yes
 
 - block:
   - name: "Put system in maintenance mode with reload reset reason"
     nxos_gir: &reset_reason
       system_mode_maintenance_on_reload_reset_reason: manual_reload
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -35,7 +31,6 @@
     nxos_gir: &remove_reason
       system_mode_maintenance_on_reload_reset_reason: manual_reload
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -49,7 +44,6 @@
   - name: "Put system in maintenance mode with timeout"
     nxos_gir: &mtime
       system_mode_maintenance_timeout: 30
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -64,7 +58,6 @@
     nxos_gir: &remove_timeout
       system_mode_maintenance_timeout: 30
       state: absent
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -78,7 +71,6 @@
 #  - name: "Put system in maintenance mode"
 #    nxos_gir: &configure_system_mode_maintenance
 #      system_mode_maintenance: true
-#      provider: "{{ connection }}"
 #    register: result
 #
 #  - assert: *true
@@ -94,21 +86,18 @@
   - name: "Remove snapshots"
     nxos_snapshot:
       action: delete_all
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: "Remove other config1"
     nxos_config:
       lines: no configure maintenance profile normal-mode
       match: none
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: "Remove other config2"
     nxos_config:
       lines: no configure maintenance profile maintenance-mode
       match: none
-      provider: "{{ connection }}"
     ignore_errors: yes
 
 #  - name: "Put system back in normal mode"

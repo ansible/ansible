@@ -1,7 +1,5 @@
 ---
 - debug: msg="START TRANSPORT:CLI nxos_lldp sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: Make sure LLDP is not running before tests
   nxos_feature:

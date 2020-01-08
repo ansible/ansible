@@ -22,13 +22,13 @@
         - show nxapi | json
     register: result
 
-  - include: targets/nxos_nxapi/tasks/platform/n7k/assert_changes_https.yaml
+  - include: tasks/platform/n7k/assert_changes_https.yaml
     when: platform is match('N7K')
 
-  - include: targets/nxos_nxapi/tasks/platform/n5k/assert_changes_https.yaml
+  - include: tasks/platform/n5k/assert_changes_https.yaml
     when: platform is search('N5K|N6K')
 
-  - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_https.yaml
+  - include: tasks/platform/default/assert_changes_https.yaml
     when: platform is not search('N35|N5K|N6K|N7K')
 
   - name: Configure NXAPI HTTPS again
@@ -53,13 +53,13 @@
         - show nxapi | json
     register: result
 
-  - include: targets/nxos_nxapi/tasks/platform/n7k/assert_changes_https_http.yaml
+  - include: tasks/platform/n7k/assert_changes_https_http.yaml
     when: platform is match('N7K')
 
-  - include: targets/nxos_nxapi/tasks/platform/n5k/assert_changes_https_http.yaml
+  - include: tasks/platform/n5k/assert_changes_https_http.yaml
     when: platform is match('N5K')
 
-  - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_https_http.yaml
+  - include: tasks/platform/default/assert_changes_https_http.yaml
     when: platform is not search('N35|N5K|N6K|N7K')
 
   - name: Configure NXAPI HTTPS & HTTP again
@@ -83,13 +83,13 @@
         - show nxapi | json
     register: result
 
-  - include: targets/nxos_nxapi/tasks/platform/n7k/assert_changes_https_http_ports.yaml
+  - include: tasks/platform/n7k/assert_changes_https_http_ports.yaml
     when: platform is match('N7K')
 
-  - include: targets/nxos_nxapi/tasks/platform/n5k/assert_changes_https_http_ports.yaml
+  - include: tasks/platform/n5k/assert_changes_https_http_ports.yaml
     when: platform is match('N5K')
 
-  - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_https_http_ports.yaml
+  - include: tasks/platform/default/assert_changes_https_http_ports.yaml
     when: platform is not search('N35|N5K|N6K|N7K')
 
   - name: Configure different NXAPI HTTPS & HTTP ports again
@@ -111,13 +111,13 @@
         - show nxapi | json
     register: result
 
-  - include: targets/nxos_nxapi/tasks/platform/n7k/assert_changes_http.yaml
+  - include: tasks/platform/n7k/assert_changes_http.yaml
     when: platform is match('N7K')
 
-  - include: targets/nxos_nxapi/tasks/platform/n5k/assert_changes_http.yaml
+  - include: tasks/platform/n5k/assert_changes_http.yaml
     when: platform is match('N5K')
 
-  - include: targets/nxos_nxapi/tasks/platform/default/assert_changes_http.yaml
+  - include: tasks/platform/default/assert_changes_http.yaml
     when: platform is not search('N35|N5K|N6K|N7K')
 
   - name: Configure NXAPI HTTP again

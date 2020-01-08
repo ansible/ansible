@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vrf sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: intname1="{{ nxos_int1 }}"
 - set_fact: intname2="{{ nxos_int2 }}"
@@ -21,7 +19,6 @@
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
-    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -44,7 +41,6 @@
       interfaces:
         - "{{ intname1 }}"
         - "{{ intname2 }}"
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -69,7 +65,6 @@
       vni: "{{vnid|default(omit)}}"
       rd: "{{rdd|default(omit)}}"
       interfaces: default
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -83,7 +78,6 @@
   - name: Ensure ntc VRF does not exist on switch
     nxos_vrf: &remove
       vrf: ntc
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -110,7 +104,6 @@
   - name: "Disable feature BGP"
     nxos_feature:
       feature: bgp
-      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

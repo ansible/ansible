@@ -1,7 +1,5 @@
 ---
 - debug: msg="START TRANSPORT:CLI nxos_l3_interface sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 # Select interface for test
 - set_fact: testint2="{{ nxos_int2 }}"

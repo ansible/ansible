@@ -4,7 +4,6 @@
 - name: Purge logging configuration first
   nxos_logging:
     purge: true
-    provider: "{{ connection }}"
 
 - block:
 
@@ -12,7 +11,6 @@
       nxos_logging: &clog
         dest: console
         dest_level: 0
-        provider: "{{ connection }}"
         state: present
       register: result
 
@@ -24,7 +22,6 @@
     - name: Set up Logging Timestamp
       nxos_logging: &ltms
         timestamp: microseconds
-        provider: "{{ connection }}"
         state: present
       register: result
 
@@ -37,7 +34,6 @@
       nxos_logging: &mlog
         dest: monitor
         dest_level: 3
-        provider: "{{ connection }}"
       register: result
 
     - assert:
@@ -49,7 +45,6 @@
       nxos_logging: &flog
         facility: daemon
         facility_level: 4
-        provider: "{{ connection }}"
       register: result
 
     - assert:
@@ -60,7 +55,6 @@
     - name: Configure logging level virtual-service 7 using nxos_config
       nxos_config:
         lines: logging level virtual-service 7
-        provider: "{{ connection }}"
       register: result
 
     - assert:
@@ -70,7 +64,6 @@
     - name: Purge the outliers
       nxos_logging:
         purge: yes
-        provider: "{{ connection }}"
       register: result
 
     - assert:
@@ -82,7 +75,6 @@
       - name: Purge the outliers (idempotent)
         nxos_logging:
           purge: yes
-          provider: "{{ connection }}"
         register: result
 
       - assert:
@@ -97,7 +89,6 @@
           - { dest: monitor, dest_level: 3 }
           - { timestamp: microseconds }
           - { facility: daemon, facility_level: 4 }
-        provider: "{{ connection }}"
         state: absent
       register: result
 

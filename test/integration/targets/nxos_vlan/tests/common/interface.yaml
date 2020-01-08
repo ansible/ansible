@@ -6,7 +6,6 @@
   nxos_config:
     lines:
       - no vlan 100
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: setup - remove vlan from interfaces used in test(part1)
@@ -15,7 +14,6 @@
       - no switchport access vlan 100
     parents: switchport
     before: "interface {{ testint1 }}"
-    provider: "{{ connection }}"
 
 - name: setup - remove vlan from interfaces used in test(part2)
   nxos_config:
@@ -23,12 +21,10 @@
       - no switchport access vlan 100
     parents: switchport
     before: "interface {{ testint2 }}"
-    provider: "{{ connection }}"
 
 - name: create vlan
   nxos_vlan:
     vlan_id: 100
-    provider: "{{ connection }}"
 
 - name: Add interfaces to vlan and check intent (config + intent)
   nxos_vlan: &interfaces
@@ -39,7 +35,6 @@
     associated_interfaces:
       - "{{ testint1 }}"
       - "{{ testint2 }}"
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -68,7 +63,6 @@
     associated_interfaces:
       - "{{ testint1 }}"
       - "{{ testint2 }}"
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -80,7 +74,6 @@
     vlan_id: 100
     associated_interfaces:
       - test
-    provider: "{{ connection }}"
   register: result
   ignore_errors: yes
 
@@ -93,7 +86,6 @@
     vlan_id: 100
     interfaces:
       - "{{ testint2 }}"
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -116,7 +108,6 @@
   nxos_config:
     lines:
       - no vlan 100
-    provider: "{{ connection }}"
 
 - name: teardown - remove vlan from interfaces used in test(part1)
   nxos_config:
@@ -124,7 +115,6 @@
       - no switchport access vlan 100
     parents: switchport
     before: "interface {{ testint1 }}"
-    provider: "{{ connection }}"
 
 - name: teardown - remove vlan from interfaces used in test(part2)
   nxos_config:
@@ -132,4 +122,3 @@
       - no switchport access vlan 100
     parents: switchport
     before: "interface {{ testint2 }}"
-    provider: "{{ connection }}"

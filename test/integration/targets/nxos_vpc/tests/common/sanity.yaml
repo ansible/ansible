@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_vpc sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - block:
   - set_fact: delay_restore_orphan_port=25
@@ -12,23 +10,19 @@
   - name: disable vpc for initial vpc config cleanup
     nxos_feature:
       feature: vpc
-      provider: "{{ connection }}"
       state: disabled
 
   - name: enable feature vpc
     nxos_feature:
       feature: vpc
-      provider: "{{ connection }}"
       state: enabled
 
   - name: Ensure ntc VRF exists on switch
     nxos_vrf:
       vrf: ntc
-      provider: "{{ connection }}"
 
   - name: Configure vpc
     nxos_vpc: &conf_vpc
-      provider: "{{ connection }}"
       state: present
       domain: 100
       pkl_dest: 192.168.100.4
@@ -50,7 +44,6 @@
 
   - name: Configure vpc1
     nxos_vpc: &conf_vpc1
-      provider: "{{ connection }}"
       state: present
       domain: 100
       role_priority: 500
@@ -78,7 +71,6 @@
 
     - name: auto-recovery from default to non-default
       nxos_vpc: &auto_recovery_1
-        provider: "{{ connection }}"
         domain: 100
         auto_recovery: "{{ not def_auto_recovery }}"
       register: result
@@ -93,7 +85,6 @@
 
     - name: auto-recovery from non-default to default
       nxos_vpc: &auto_recovery_2
-        provider: "{{ connection }}"
         domain: 100
         auto_recovery: "{{ def_auto_recovery }}"
       register: result
@@ -110,7 +101,6 @@
 
   - name: Configure auto-recovery reload-delay
     nxos_vpc: &auto_reload
-      provider: "{{ connection }}"
       domain: 100
       auto_recovery_reload_delay: 242
     register: result
@@ -125,7 +115,6 @@
 
   - name: Configure vpc2
     nxos_vpc: &conf_vpc2
-      provider: "{{ connection }}"
       state: present
       domain: 100
       role_priority: default
@@ -146,7 +135,6 @@
 
   - name: Configure vpc3
     nxos_vpc: &conf_vpc3
-      provider: "{{ connection }}"
       state: present
       domain: 100
       peer_gw: False
@@ -162,7 +150,6 @@
 
   - name: remove vpc
     nxos_vpc: &rem_vpc
-      provider: "{{ connection }}"
       state: absent
       domain: 100
     register: result
@@ -179,14 +166,12 @@
   - name: remove vrf
     nxos_vrf:
       vrf: ntc
-      provider: "{{ connection }}"
       state: absent
     ignore_errors: yes
 
   - name: disable feature vpc
     nxos_feature:
       feature: vpc
-      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

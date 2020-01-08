@@ -5,7 +5,6 @@
     system_image_file: "{{ si }}"
     kickstart_image_file: "{{ ki }}"
     issu: "{{ issu }}"
-    provider: "{{ connection }}"
   register: result
   when: not force
 
@@ -18,13 +17,11 @@
       - "boot system bootflash:{{ si }}"
       - copy run start
     match: line
-    provider: "{{ connection }}"
   when: force
 
 - name: "Boot image {{ si }} using reload"
   nxos_command:
     commands: 'terminal dont-ask ; reload'
-    provider: "{{ connection }}"
   ignore_errors: yes
   when: force
 

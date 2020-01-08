@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bgp_af sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: advertise_l2vpn_evpn="true"
   when: platform is search('N9K')
@@ -9,21 +7,18 @@
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
-    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
 - name: "Enable feature nv overlay"
   nxos_feature:
     feature: nv overlay
-    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
 - name: "Setup"
   nxos_bgp: &remove
     asn: 65535
-    provider: "{{ connection }}"
     state: absent
   ignore_errors: yes
 
@@ -41,7 +36,6 @@
       afi: ipv4
       safi: unicast
       advertise_l2vpn_evpn: "{{advertise_l2vpn_evpn|default(omit)}}"
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -63,7 +57,6 @@
       vrf: testing
       afi: ipv4
       safi: unicast
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -82,7 +75,6 @@
       additional_paths_send: true
       client_to_client: False
       default_information_originate: true
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -109,7 +101,6 @@
       additional_paths_send: False
       client_to_client: True
       default_information_originate: False
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -129,7 +120,6 @@
       vrf: "{{ item }}"
       afi: ipv4
       safi: unicast
-      provider: "{{ connection }}"
       state: absent
     with_items: "{{ vrfs }}"
     register: result
@@ -153,7 +143,6 @@
       suppress_inactive: true
       table_map: RouteMap
       table_map_filter: true
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -184,7 +173,6 @@
       suppress_inactive: False
       table_map: default
       table_map_filter: False
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -219,7 +207,6 @@
       inject_map: [['lax_inject_map', 'lax_exist_map'], ['nyc_inject_map', 'nyc_exist_map', 'copy-attributes'], ['fsd_inject_map', 'fsd_exist_map']]
       networks: [['10.0.0.0/16', 'routemap_LA'], ['192.168.1.1/32', 'Chicago'], ['192.168.2.0/24'], ['192.168.3.0/24', 'routemap_NYC']]
       redistribute: [['direct', 'rm_direct'], ['lisp', 'rm_lisp']]
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -247,7 +234,6 @@
       inject_map: [['fsd_inject_map', 'fsd_exist_map']]
       networks: [['192.168.2.0/24']]
       redistribute: [['lisp', 'rm_lisp']]
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -275,7 +261,6 @@
       inject_map: default
       networks: default
       redistribute: default
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -312,13 +297,11 @@
   - name: "Disable feature bgp"
     nxos_feature: &disable_bgp
       feature: bgp
-      provider: "{{ connection }}"
       state: disabled
 
   - name: "Disable feature nv overlay"
     nxos_feature: &disable_nvoverlay
       feature: nv overlay
-      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

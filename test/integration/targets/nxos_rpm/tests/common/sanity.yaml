@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_rpm sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: smu_run="false"
 - set_fact: smu_run="true"
@@ -40,7 +38,6 @@
   - name: Remove smu RPM
     nxos_rpm: &rsmurpm
       pkg: "nxos.sample-n9k_ALL-1.0.0-7.0.3.I6.1.lib32_n9000.rpm"
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -80,7 +77,6 @@
       aggregate:
           - { pkg: "healthMonitor-1.0-1.5.0.x86_64.rpm" }
           - { pkg: "customCliApp-1.0-1.0.0.x86_64.rpm" }
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -105,7 +101,6 @@
   - name: Wait for device to come back up
     wait_for:
       port: 22
-      provider: "{{ connection }}"
       state: started
       timeout: 600
       delay: 60
@@ -126,7 +121,6 @@
   - name: Remove reload smu RPM
     nxos_rpm: &rrsmurpm
       pkg: "nxos.CSCve91311-n9k_ALL-1.0.0-7.0.3.I6.1.lib32_n9000.rpm"
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -135,7 +129,6 @@
   - name: Wait for device to come back up
     wait_for:
       port: 22
-      provider: "{{ connection }}"
       state: started
       timeout: 600
       delay: 60

@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_pim_rp_address sanity"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - block:
   # platforms do not support bidir
@@ -19,13 +17,11 @@
   - name: "Disable feature PIM"
     nxos_feature: &disable_feature
       feature: pim
-      provider: "{{ connection }}"
       state: disabled
 
   - name: "Enable feature PIM"
     nxos_feature: &enable_feature
       feature: pim
-      provider: "{{ connection }}"
       state: enabled
 
   - name: 1.0 Configure rp_address + group_list
@@ -34,7 +30,6 @@
       rp_address: "10.1.1.1"
       group_list: "224.0.0.0/8"
       bidir: "{{ bidir_true|default(omit) }}"
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -56,7 +51,6 @@
         rp_address: "10.1.1.1"
         group_list: "224.0.0.0/8"
         bidir: false
-        provider: "{{ connection }}"
         state: present
       register: result
 
@@ -72,7 +66,6 @@
       nxos_pim_rp_address: &config12
         rp_address: "10.1.1.1"
         bidir: true
-        provider: "{{ connection }}"
         state: present
       register: result
 
@@ -88,7 +81,6 @@
       nxos_pim_rp_address: &config13
         rp_address: "10.1.1.1"
         bidir: false
-        provider: "{{ connection }}"
         state: present
       register: result
 
@@ -105,7 +97,6 @@
     nxos_pim_rp_address: &config14
       rp_address: "10.1.1.1"
       group_list: "224.0.0.0/8"
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -122,7 +113,6 @@
       rp_address: "10.1.1.2"
       prefix_list: "{{ pim_prefix_list|default(omit) }}"
       bidir: "{{ bidir_true|default(omit) }}"
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -140,7 +130,6 @@
         rp_address: "10.1.1.2"
         prefix_list: "{{ pim_prefix_list|default(omit) }}"
         bidir: "{{ bidir_false|default(omit) }}"
-        provider: "{{ connection }}"
         state: present
       register: result
 
@@ -158,7 +147,6 @@
       rp_address: "10.1.1.2"
       prefix_list: "{{ pim_prefix_list|default(omit)}}"
       bidir: "{{ bidir_false|default(omit)}}"
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -175,7 +163,6 @@
       rp_address: "10.1.1.3"
       route_map: "{{ pim_route_map|default(omit)}}"
       bidir: "{{ bidir_true|default(omit) }}"
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -193,7 +180,6 @@
         rp_address: "10.1.1.3"
         route_map: "{{ pim_route_map|default(omit)}}"
         bidir: "{{ bidir_false|default(omit)}}"
-        provider: "{{ connection }}"
         state: present
       register: result
 
@@ -211,7 +197,6 @@
       rp_address: "10.1.1.3"
       route_map: "{{ pim_route_map|default(omit)}}"
       bidir: "{{ bidir_false|default(omit)}}"
-      provider: "{{ connection }}"
       state: absent
     register: result
 

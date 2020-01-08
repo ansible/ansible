@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bgp parameter test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - debug: msg="This test is not supported on {{ image_version }}"
   when: imagetag is search("D1")
@@ -12,7 +10,6 @@
 - name: "Disable feature BGP"
   nxos_feature:
     feature: bgp
-    provider: "{{ connection }}"
     state: disabled
   ignore_errors: yes
   when: test_helsinki
@@ -20,7 +17,6 @@
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
-    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
   when: test_helsinki
@@ -38,7 +34,6 @@
       reconnect_interval: 55
       timer_bgp_hold: 110
       timer_bgp_keepalive: 45
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
     when: test_helsinki
@@ -70,7 +65,6 @@
       reconnect_interval: default
       timer_bgp_hold: default
       timer_bgp_keepalive: default
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
     when: test_helsinki
@@ -94,7 +88,6 @@
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
-      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
     when: test_helsinki

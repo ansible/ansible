@@ -1,12 +1,9 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_pim sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: "Setup: Disable features"
   nxos_feature: &disable_feature
     feature: "{{ item }}"
-    provider: "{{ connection }}"
     state: disabled
   ignore_errors: yes
   loop:
@@ -16,7 +13,6 @@
 - name: "Setup: Enable features"
   nxos_feature:
     feature: "{{ item }}"
-    provider: "{{ connection }}"
     state: enabled
   loop:
     - pim
@@ -25,7 +21,6 @@
 - name: "Setup: Configure ssm_range none"
   nxos_pim: &none
     ssm_range: "none"
-    provider: "{{ connection }}"
 
 - block:
   - name: Initial config from none
@@ -34,7 +29,6 @@
       ssm_range:
         - "239.128.1.0/24"
         - "224.0.0.0/8"
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -53,7 +47,6 @@
     nxos_pim: &conf_default
       bfd: disable
       ssm_range: "default"
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -81,7 +74,6 @@
   - name: "Teardown: Disable features"
     nxos_feature:
       feature: "{{ item }}"
-      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
     loop:

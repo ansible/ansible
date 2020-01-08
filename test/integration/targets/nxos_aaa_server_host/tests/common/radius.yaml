@@ -1,13 +1,10 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_aaa_server_host radius.yaml sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: "Setup"
   nxos_aaa_server_host: &remove
     server_type: radius
     address: 8.8.8.8
-    provider: "{{ connection }}"
     state: absent
   ignore_errors: yes
 
@@ -16,7 +13,6 @@
     nxos_aaa_server_host: &configure_default_radius
       server_type: radius
       address: 8.8.8.8
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -51,7 +47,6 @@
       host_timeout: 25
       auth_port: 2083
       acct_port: 2084
-      provider: "{{ connection }}"
       state: present
     register: result
  
@@ -70,7 +65,6 @@
       host_timeout: default
       auth_port: 1000
       acct_port: default
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -91,7 +85,6 @@
       acct_port: 2084
       encrypt_type: 0
       key: hello
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -118,7 +111,6 @@
       acct_port: 2084
       encrypt_type: 7
       key: hello
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -139,7 +131,6 @@
       acct_port: 2084
       encrypt_type: 7
       key: helloback
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -163,7 +154,6 @@
       acct_port: default
       encrypt_type: 7
       key: default
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -183,7 +173,6 @@
       auth_port: default
       acct_port: default
       key: default
-      provider: "{{ connection }}"
       state: present
     register: result
 

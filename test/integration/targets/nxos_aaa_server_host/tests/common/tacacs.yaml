@@ -1,19 +1,15 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_aaa_server_host tacacs.yaml sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: "Enable feature tacacs+"
   nxos_feature:
     feature: tacacs+
-    provider: "{{ connection }}"
     state: enabled
 
 - name: "Setup"
   nxos_aaa_server_host: &remove
     server_type: tacacs
     address: 8.8.8.8
-    provider: "{{ connection }}"
     state: absent
   ignore_errors: yes
 
@@ -23,7 +19,6 @@
     nxos_aaa_server_host: &configure_default_tacacs
       server_type: tacacs
       address: 8.8.8.8
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -57,7 +52,6 @@
       address: 8.8.8.8
       host_timeout: 25
       tacacs_port: 89
-      provider: "{{ connection }}"
       state: present
     register: result
  
@@ -75,7 +69,6 @@
       address: 8.8.8.8
       host_timeout: default
       tacacs_port: 100
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -95,7 +88,6 @@
       tacacs_port: default
       encrypt_type: 0
       key: hello
-      provider: "{{ connection }}"
       state: present
     register: result
    
@@ -121,7 +113,6 @@
       tacacs_port: 89
       encrypt_type: 7
       key: hello
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -141,7 +132,6 @@
       tacacs_port: 89
       encrypt_type: 7
       key: helloback
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -164,7 +154,6 @@
       tacacs_port: 89
       encrypt_type: 7
       key: default
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -183,7 +172,6 @@
       host_timeout: default
       tacacs_port: default
       key: default
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -208,7 +196,6 @@
   - name: "Disable feature tacacs+"
     nxos_feature:
       feature: tacacs+
-      provider: "{{ connection }}"
       state: disabled
 
   - debug: msg="END connection={{ ansible_connection }} nxos_aaa_server_host tacacs.yaml sanity test"  
