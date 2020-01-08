@@ -60,7 +60,7 @@ class LPass(object):
         # logged in returns 0
         # logged out returns 1
         # both report on stdout
-        out, err = self._run(self._build_args("status"), expected_rc=[0,1])
+        out, err = self._run(self._build_args("status"), expected_rc=[0, 1])
         return out.startswith("Logged in as")
 
     def _run(self, args, stdin=None, expected_rc=[0]):
