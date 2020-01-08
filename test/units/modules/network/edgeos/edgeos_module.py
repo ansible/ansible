@@ -48,7 +48,7 @@ def load_fixture(name):
 
 class TestEdgeosModule(ModuleTestCase):
 
-    def execute_module(self, failed=False, changed=False, commands=None, filtered=None, sort=True, defaults=False):
+    def execute_module(self, failed=False, changed=False, commands=None, unmanaged=None, invalid=None, sort=True, defaults=False):
         self.load_fixtures(commands)
 
         if failed:
@@ -64,8 +64,11 @@ class TestEdgeosModule(ModuleTestCase):
             else:
                 self.assertEqual(commands, result['commands'], result['commands'])
 
-        if filtered is not None:
-            self.assertEqual(sorted(filtered), sorted(result['filtered']), result['filtered'])
+        if unmanaged is not None:
+            self.assertEqual(sorted(unmanaged), sorted(result['unmanaged']), result['unmanaged'])
+
+        if invalid is not None:
+            self.assertEqual(sorted(invalid), sorted(result['invalid']), result['invalid'])
 
         return result
 

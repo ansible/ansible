@@ -143,7 +143,7 @@ commands:
   type: list
   sample: ['...', '...']
 invalid:
-  description: The list of configuration commands removed for being invalid
+  description: The list of configuration commands not run on the device since they do not begin with ``set`` or ``delete``
   returned: always
   type: list
   sample: ['...', '...']
@@ -223,8 +223,8 @@ def get_candidate(module):
 def check_command(module, command):
     """Tests against a command line to be valid otherwise raise errors
 
-    Error on uneven single quote which breaks ansible waiting for further input. Ansible
-    will handle even single quote failures correctly.
+    Error on uneven single quote which breaks ansible waiting for further input.
+    Ansible will handle even single quote failures correctly.
 
     :param module: ansible module for this type (edgeos)
     :type module: ansible.module
@@ -249,47 +249,60 @@ def diff_config(module, commands, config):
     :type module: ansible.module
     :param commands: candidate commands passed through ansible
     :type commands: list
-    :param config: commands pulled from edgeos device or passed through ansible
+    :param config: [commands pulled from edgeos device]
     :type config: list
     :return: updates: changes to apply to remote device
+    :rtype: list
+    :return: unmanaged_config: config on device without matching candidate
+    commands passed to ansible
+    :rtype: list
+    :return: invalid: commands passed to ansible not starting with 'set' or
+    'delete' and therefore considered invalid
     :rtype: list
     """
     config = [to_native(check_command(module, c)) for c in config.splitlines()]
 
-    updates = list()
-    visited = set()
-    delete_commands = [line for line in commands if line.startswith('delete')]
+    set_commands, delete_commands, invalid_commands = [], [], []
+    updates, unmanaged_config = [], []
 
     for line in commands:
-        item = to_native(check_command(module, line))
+        line = to_native(check_command(module, line))
+        if line.startswith('delete '):
+            delete_commands.append(line)
+        elif line.startswith('set '):
+            set_commands.append(line)
+        else:
+            invalid_commands.append(line)
 
-        if not item.startswith('set') and not item.startswith('delete'):
-            raise ValueError('line must start with either `set` or `delete`')
+    # Will always run the delete commands first to allow for resets
+    if delete_commands:
+        updates = delete_commands
 
-        elif item.startswith('set'):
+    # Removing all matching commands already in config
+    updates.extend(line for line in set_commands if line not in config)
 
-            if item not in config:
-                updates.append(line)
+    # Add back changes where a corresponding delete command exists
+    if delete_commands:
+        for line in set_commands:
+            search = re.sub('^set ', 'delete ', line)
+            for dline in delete_commands:
+                if search.startswith(dline):
+                    updates.append(line)
 
-            # If there is a corresponding delete command in the desired config, make sure to append
-            # the set command even though it already exists in the running config
-            else:
-                ditem = re.sub('set', 'delete', item)
-                for line in delete_commands:
-                    if ditem.startswith(line):
-                        updates.append(item)
+    # Unmanaged config (config without matching commands)
+    unmanaged_config = (list(set(config) - set(set_commands)))
+    matches = list()
+    # Remove if actually a change to config
+    for line in unmanaged_config:
+        search = line.rsplit(' ', 1)[0]
+        for update in updates:
+            if update.startswith(search):
+                matches.append(line)
+                break
 
-        elif item.startswith('delete'):
-            if not config:
-                updates.append(line)
-            else:
-                item = re.sub(r'delete', 'set', item)
-                for entry in config:
-                    if entry.startswith(item) and line not in visited:
-                        updates.append(line)
-                        visited.add(line)
+    unmanaged_config = [line for line in unmanaged_config if line not in matches]
 
-    return list(updates)
+    return updates, unmanaged_config, invalid_commands
 
 
 def run(module, result):
@@ -313,18 +326,26 @@ def run(module, result):
     # create the candidate config object from the arguments
     candidate = get_candidate(module)
 
-    # create loadable config that includes only the configuration updates
-    commands = diff_config(module, candidate, config)
+    # create loadable config from updates, also return unmanaged and invalid
+    # commands
+    updates, unmanaged_config, invalid_commands = diff_config(module, candidate, config)
 
-    result['commands'] = commands
+    result['commands'] = updates
+    result['unmanaged'] = sorted(unmanaged_config)
+    result['invalid'] = sorted(invalid_commands)
 
     commit = not module.check_mode
     comment = module.params['comment']
 
-    if commands:
-        load_config(module, commands, commit=commit, comment=comment)
-
+    if result.get('commands'):
+        load_config(module, updates, commit=commit, comment=comment)
         result['changed'] = True
+
+    if result.get('unmanaged'):
+        result['warnings'].append('Some configuration commands were unmanaged, review unmanaged list')
+
+    if result.get('invalid'):
+        result['warnings'].append('Some configuration commands were invalid, review invalid list')
 
 
 def main():

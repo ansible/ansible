@@ -141,3 +141,50 @@ class TestEdgeosConfigModule(TestEdgeosModule):
         lines = ["set system interfaces ethernet eth0 description 'test's single quotes'"]
         set_module_args(dict(lines=lines))
         self.execute_module(failed=True)
+
+    def test_edgeos_config_unmanaged_lines(self):
+        candidate_config = ["set system host-name 'router'"]
+        set_module_args(dict(lines=candidate_config))
+        result_unmanaged = [
+            "set system domain-name 'acme.com'",
+            "set system domain-search domain 'acme.com'",
+            "set system name-server 208.67.220.220",
+            "set system name-server 208.67.222.222",
+            "set interfaces ethernet eth0 address 1.2.3.4/24",
+            "set interfaces ethernet eth0 description 'Outside'",
+            "set interfaces ethernet eth1 address 10.77.88.1/24",
+            "set interfaces ethernet eth1 description 'Inside'",
+            "set interfaces ethernet eth1 disable"
+        ]
+        self.execute_module(changed=False, unmanaged=result_unmanaged)
+
+    def test_edgeos_config_unmanaged_src(self):
+        candidate_config = load_fixture('edgeos_config_unmanaged_src_brackets.cfg')
+        set_module_args(dict(src=candidate_config))
+        result_unmanaged = [
+            "set system domain-name 'acme.com'",
+            "set system domain-search domain 'acme.com'",
+            "set system name-server 208.67.220.220",
+            "set system name-server 208.67.222.222",
+            "set interfaces ethernet eth0 address 1.2.3.4/24",
+            "set interfaces ethernet eth0 description 'Outside'",
+            "set interfaces ethernet eth1 address 10.77.88.1/24",
+            "set interfaces ethernet eth1 description 'Inside'",
+            "set interfaces ethernet eth1 disable"
+        ]
+        self.execute_module(changed=False, unmanaged=result_unmanaged)
+
+    def test_edgeos_config_invalid(self):
+        candidate_config = [
+            "set system host-name 'router'",
+            "setsystem host-name 'router'",
+            "deletesystem host-name 'router'",
+            "invalid"
+        ]
+        set_module_args(dict(lines=candidate_config))
+        result_invalid = [
+            "invalid",
+            "setsystem host-name 'router'",
+            "deletesystem host-name 'router'"
+        ]
+        self.execute_module(changed=False, invalid=result_invalid)
