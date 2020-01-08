@@ -1,28 +1,32 @@
 - become: true
   block:
+    - name: Check if ip binary is present
+      command: ip -V
+      changed_when: false
+      failed_when: false
+      register: ip_ver
     - name: Ensure iproute2 is present
       become: true
       package: name=iproute2 state=present
-    - name: Integration tests for ip_link_device_attribute
+      when: ip_ver.rc != 0  # faster this way, as we skip python-apt and apt update
+
+
+    # TEST1: Check if we can set options for veth interface
+    # stages:
+    # - create veth
+    # - try check_mode and confirm there were no changes
+    # - run the module for real
+    # - confirm changes
+    # - run the module for the second time with the same parameters
+    # - confirm idempotency
+    # - delete veth
+    - name: TEST1 - set normal attributes
       become: true
       block:
-        - name: Create veth (normal interface)
+        - name: TEST1, preparation, create vethN interface
           command: ip link add dev vethN type veth peer name vethNP
-        - name: Create vcan (interface without mac)
-          command: ip link add dev vcan_example type vcan
-        - name: assign vcan alias
-          command: ip link set dev vcan_example alias foo
-        - name: Create veths (group)
-          command: ip link add dev {{ item }} type veth peer name {{ item }}_peer
-          loop:
-           - gr1
-           - gr2
-        - name: Create namespaces
-          ip_netns: name={{ item }}
-          loop:
-           - ip_net_set_src
-           - ip_net_set_dst
-        - name: Test1 - set paramters for veth
+        - name: TEST1, check_mode support for normal attributes
+          check_mode: true
           ip_link_device_attribute:
               name: vethN
               state: up
@@ -34,22 +38,62 @@
               txqueuelen: '{{ mock_txqlen }}'
               arp: off
               group: '{{ mock_group }}'
-          register: ip_link_device_attribute_res
-        - name: Test1 - check module output
+          register: res
+        - name: TEST1, validate module output after check_mode
           assert:
               that:
-                  - ip_link_device_attribute_res.interfaces|length == 1
-                  - ip_link_device_attribute_res.interfaces[0].name == 'vethN'
-                  - ip_link_device_attribute_res.interfaces[0].alias == 'vethalias'
-                  - ip_link_device_attribute_res.interfaces[0].txqueuelen == mock_txqlen
-                  - ip_link_device_attribute_res.interfaces[0].promisc == true
-                  - ip_link_device_attribute_res.interfaces[0].broadcast == mock_broadcast
-                  - ip_link_device_attribute_res.interfaces[0].state == 'up'
-                  - ip_link_device_attribute_res.interfaces[0].group == mock_group
-        - name: Test1 - gather results
+                  - res.interfaces|length == 1
+                  - res.interfaces[0].name == 'vethN'
+                  - res.interfaces[0].mtu == 1500
+                  - res.interfaces[0].promisc == false
+                  - res.interfaces[0].broadcast == 'ff:ff:ff:ff:ff:ff'
+                  - res.interfaces[0].state == 'down'
+                  - res.interfaces[0].group == 'default'
+                  - res.changed == true
+        - name: TEST1, get actual values from OS for interface
           command: ip link show dev vethN
           register: test1_res
-        - name: Test1 - check results
+          changed_when: false
+        - name: TEST1 - validate OS result
+          assert:
+              that:
+                 - ('UP' not in test1_res.stdout)
+                 - ('mtu 1500' in test1_res.stdout)
+                 - ('alias vethalias' not in test1_res.stdout)
+                 - ('PROMISC' not in test1_res.stdout)
+                 - ('NOARP' not in test1_res.stdout)
+                 - ('brd ff:ff:ff:ff:ff:ff' in test1_res.stdout)
+                 - ('group default' in test1_res.stdout)
+        - name: TEST1, change attributes
+          ip_link_device_attribute:
+              name: vethN
+              state: up
+              mtu: '{{ mock_mtu }}'
+              address: '{{ mock_mac }}'
+              broadcast: '{{ mock_broadcast }}'
+              alias: vethalias
+              promisc: on
+              txqueuelen: '{{ mock_txqlen }}'
+              arp: off
+              group: '{{ mock_group }}'
+          register: res
+        - name: TEST1 - validate module output after change
+          assert:
+              that:
+                  - res.changed == true
+                  - res.interfaces|length == 1
+                  - res.interfaces[0].name == 'vethN'
+                  - res.interfaces[0].alias == 'vethalias'
+                  - res.interfaces[0].txqueuelen == mock_txqlen
+                  - res.interfaces[0].promisc == true
+                  - res.interfaces[0].broadcast == mock_broadcast
+                  - res.interfaces[0].state == 'up'
+                  - res.interfaces[0].group == mock_group
+        - name: TEST1, get actual values from OS for interface
+          command: ip link show dev vethN
+          register: test1_res
+          changed_when: false
+        - name: TEST1, validate OS result
           assert:
               that:
                  - ('UP' in test1_res.stdout)
@@ -61,125 +105,199 @@
                  - ('ether ' +  mock_mac in test1_res.stdout)
                  - ('brd ' + mock_broadcast in test1_res.stdout)
                  - ('group ' + mock_group in test1_res.stdout)
-        - name: Test2 - move veth into namespace
+        - name: TEST1, set attrubutes  second time
           ip_link_device_attribute:
-            name: vethN
-            netns: ip_net_set_src
-            alias: vethalias2
-            state: down
-          register: ip_link_device_attribute_res
-        - name: Test2 - check module output
-          assert:
-              that:
-                - ip_link_device_attribute_res.interfaces|length == 1
-                - ip_link_device_attribute_res.interfaces[0].name == 'vethN'
-                - ip_link_device_attribute_res.interfaces[0].alias == 'vethalias2'
-                - ip_link_device_attribute_res.interfaces[0].txqueuelen == mock_txqlen
-                - ip_link_device_attribute_res.interfaces[0].promisc == true
-                - ip_link_device_attribute_res.interfaces[0].address == mock_mac
-                - ip_link_device_attribute_res.interfaces[0].broadcast == mock_broadcast
-                - ip_link_device_attribute_res.interfaces[0].state == 'down'
-                - ip_link_device_attribute_res.interfaces[0].group == mock_group
-        - name: Test2 - check results
-          # we just check if interface is in namespace
-          command: ip net exec ip_net_set_src ip link show dev vethN
-        - name: Test3 - setup, Move gr1 into src namespace
-          command: ip link set dev gr1 netns ip_net_set_src
-        - name: Test3 - setup, Move gr2 into dst namespace
-          command: ip link set dev gr2 netns ip_net_set_dst
-        - name: Test3 - setup, Restore group membership for gr1
-          command: ip net exec ip_net_set_src ip link set dev gr1 group 42
-        - name: Test3 - setup, Restore group membership for gr2
-          command: ip net exec ip_net_set_dst ip link set dev gr2 group 42
-        - name: Test3 - move group 42 into dst namespace, partial move
-          ip_link_device_attribute:
-            group_id: '42'
-            namespace: ip_net_set_src
-            netns: ip_net_set_dst
-            state: up
-            promisc: true
-          register: ip_link_device_attribute_res
-        - name: Test 3 check module output
-          assert:
-             that:
-               - ip_link_device_attribute_res.interfaces|length == 2
-               - ip_link_device_attribute_res.interfaces[0].state == 'up'
-               - ip_link_device_attribute_res.interfaces[1].state == 'up'
-               - ip_link_device_attribute_res.interfaces[0].promisc == True
-               - ip_link_device_attribute_res.interfaces[1].promisc == True
-        - name: Test3 - check result
-          command: ip net exec ip_net_set_dst ip link show {{ item }}
-          loop: ['gr1', 'gr2']
-        - name: Test4 - non-ethernet interface
-          ip_link_device_attribute:
-              device: vcan_example  # test alias use as well
+              name: vethN
               state: up
-          register: ip_link_device_attribute_res
-        - name: Test4 - check output results
+              mtu: '{{ mock_mtu }}'
+              address: '{{ mock_mac }}'
+              broadcast: '{{ mock_broadcast }}'
+              alias: vethalias
+              promisc: on
+              txqueuelen: '{{ mock_txqlen }}'
+              arp: off
+              group: '{{ mock_group }}'
+          register: res
+        - name: TEST1, assert idempotency
+          assert:
+            that:
+              - res.changed == false
+      always:
+        - name: TEST1, cleanup
+          command: ip link delete vethN
+
+
+    # TEST2: Check if we can change namespace for the interface
+    # and to change it paramters after move
+    # stages:
+    # - create veth
+    # - try check_mode and confirm there were no changes
+    # - run the module for real
+    # - confirm changes
+    # - run the module for the second time with the same parameters
+    # - confirm idempotency
+    # - check for scenario with netns==namespace
+    # - delete veth
+    - name: TEST2 - check if we can move interface into namespace
+      become: true
+      block:
+        - name: TEST2, preparation, create vethM interface
+          command: ip link add dev vethM type veth peer name vethMP
+        - name: TEST2, preparation, create namespace target_namespace
+          ip_netns: name=target_namespace state=present
+        - name: TEST2 - check_mode support for changing namespace
+          check_mode: true
+          ip_link_device_attribute:
+            name: vethM
+            netns: target_namespace
+            alias: vethalias2
+            state: up
+          register: res
+        - name: TEST2, validate module output after check_mode
           assert:
               that:
-                  - ip_link_device_attribute_res.interfaces[0].state == 'up'
-                  - ip_link_device_attribute_res.interfaces[0].alias == 'foo'
-                  - ip_link_device_attribute_res.interfaces[0].name == 'vcan_example'
-        - name: Test5 - check idempotency
+                  - res.interfaces|length == 1
+                  - res.interfaces[0].name == 'vethM'
+                  - res.interfaces[0].state == 'down'
+                  - res.changed == true
+        - name: TEST2, get actual values from OS for interface
+          command: ip link show dev vethM
+          # no need to assert. If ip failed, interface was moved
+        - name: TEST2 - try to move interface into namespace
+          ip_link_device_attribute:
+            name: vethM
+            netns: target_namespace
+            alias: vethalias2
+            state: up
+          register: res
+        - name: TEST2, validate module output
+          assert:
+              that:
+                  - res.interfaces|length == 1
+                  - res.interfaces[0].name == 'vethM'
+                  - res.interfaces[0].state == 'up'
+                  - res.interfaces[0].alias == 'vethalias2'
+                  - res.changed == true
+        - name: TEST2, get actual values from OS for interface
+          command: ip net exec target_namespace ip link show dev vethM
+          # no need to assert. If ip failed, interface was moved
+        - name: TEST2 - try to move interface second time
+          ip_link_device_attribute:
+            name: vethM
+            netns: target_namespace
+            alias: vethalias2
+            state: up
+          register: res
+        - name: TEST2, validate module idempotency
+          assert:
+              that:
+                  - res.changed == false
+                  - res.interfaces|length == 1
+                  - res.interfaces[0].name == 'vethM'
+                  - res.interfaces[0].state == 'up'
+        - name: TEST2, try with netns==namespace
+          ip_link_device_attribute:
+            name: vethM
+            namespace: target_namespace
+            netns: target_namespace
+          register: res
+        - name: TEST2, validate module idempotency when netns==namespace
+          assert:
+              that:
+                  - res.changed == false
+
+      always:
+        - name: TEST2, cleanup interface
+          command: ip link delete vethM
+          failed_when: false # may fail if test successful
+        - name: TEST2, cleanup namespace
+          ip_netns: name=target_namespace state=absent
+
+    # TEST3: Check if module can work with interfaces without mac addresses
+    # stages:
+    # - create vcan
+    # - run the module
+    # - confirm changes  and module output
+    # - delete vcan
+    - name: TEST3 - work with interfaces without MAC addresses
+      become: true
+      block:
+        - name: TEST3, preparation, create vcan_example interface
+          command: ip link add dev vcan_example type vcan
+        - name: TEST3 - non-ethernet interface
           ip_link_device_attribute:
               device: vcan_example
               state: up
-          register: ip_link_device_attribute_res
-        - name: Test5 - run asserts for test
+          register: res
+        - name: TEST3, validate results
           assert:
             that:
-              - ip_link_device_attribute_res is not changed
-        - name: Test6 - check check_mode, prepare
-          command: ip net exec ip_net_set_dst ip link show gr1
-          register: test6_pre
-        - name: Test6  check preparation
-          assert:
-              that:
-                '"UP" in test6_pre.stdout'
-        - name: Test6 - check check_mode, run1
-          check_mode: true
-          ip_link_device_attribute:
-              name: gr1
-              namespace: ip_net_set_dst
-              state: down
-          register: ip_link_device_attribute_res
-        - name: Tes6 - check assertion for run1
-          assert:
-            that:
-              ip_link_device_attribute_res is changed
-        - name: Test6 - check check_mode, run2
-          check_mode: true
-          ip_link_device_attribute:
-              name: gr1
-              namespace: ip_net_set_dst
-              state: down
-          register: ip_link_device_attribute_res
-        - name: Tes6 - check assertions for run2
-          assert:
-            that:
-              ip_link_device_attribute_res is changed
-        - name: Tes6 - get results
-          command: ip net exec ip_net_set_dst ip link show gr1
-          register: test6_res
-        - name: Test6 - check results
-          assert:
-            that:
-              '"UP" in test6_res.stdout'
+              - res.changed == true
+              - res.interfaces|length == 1
+              - res.interfaces[0].name == 'vcan_example'
+              - res.interfaces[0].state == 'up'
+              - res.interfaces[0].address == None
+              - res.interfaces[0].broadcast == None
+              - res.interfaces[0].arp == false
       always:
-          - name: Delete namespaces
-            ip_netns: name={{item}} state=absent
-            with_items:
-              - ip_net_set_src
-              - ip_net_set_dst
-          - name: Delete interfaces
-            command: ip link delete '{{ item }}'
-            # if tests failed we want to cleanup, but if tests passed
-            # those interfaces are removed together with namespaces
-            failed_when: false
-            with_items:
-              - vcan_example
-              - vethN
-              - gr1
-              - gr2
+        - name: TEST3, cleanup interface
+          command: ip link delete vcan_example
+
+    # TEST4: Support for group operations
+    # stages:
+    # - create two interfaces and set their group to the same value
+    # - run the module in check_mode
+    # - validate output
+    # - run the module for real
+    # - validate output
+    # - run module second time
+    # - check of idempotency
+    # - delete interfaces
+    - name: TEST4 - work with groups
+      become: true
+      block:
+        - name: TEST4, preparation, create 2 veths in group 42
+          command: ip link add group 42 dev {{ item }} type veth peer name {{ item }}_peer
+          loop:
+           - gr1
+           - gr2
+        - name: TEST4, run module with check_mode
+          check_mode: true
+          ip_link_device_attribute:
+              group_id: '42'
+              state: up
+          register: res
+        - name: TEST4, assert results for check_mode
+          assert:
+            that:
+              - res.changed == true
+              - res.interfaces|length == 2
+              - res.interfaces[0].state == 'down'
+              - res.interfaces[1].state == 'down'
+        - name: TEST4, run module
+          ip_link_device_attribute:
+              group_id: '42'
+              state: up
+          register: res
+        - name: TEST4, assert results
+          assert:
+            that:
+              - res.changed == true
+              - res.interfaces|length == 2
+              - res.interfaces[0].state == 'up'
+              - res.interfaces[1].state == 'up'
+        - name: TEST4, run module for the second time
+          ip_link_device_attribute:
+              group_id: '42'
+              state: up
+          register: res
+        - name: TEST4, assert idempotency
+          assert:
+            that:
+              - res.changed == false
+              - res.interfaces|length == 2
+      always:
+        - name: TEST4, cleanup interface
+          command: ip link delete group 42
+
   when: ansible_virtualization_type | default('') != 'docker'

@@ -38,14 +38,14 @@ options:
         aliases: [device]
         description:
             - Name of the network device.
-            - Exactly on of I(name) or I(group_id) must be provided.
+            - Exactly one of I(name) or I(group_id) must be provided.
 
     group_id:
         type: str
         description:
             - Id of group of interfaces.
             - Settings are applied for all interfaces in the group.
-            - Exactly on of I(name) or I(group_id) must be provided.
+            - Exactly one of I(name) or I(group_id) must be provided.
 
     namespace:
         type: str
@@ -57,7 +57,7 @@ options:
         type: str
         choices: [up, down]
         description:
-            - controls the state of interface. Up or down.
+            - Controls the state of interface. Up or down.
 
     arp:
         type: bool
@@ -234,7 +234,7 @@ interfaces:
         description: MTU value for the interface.
         type: int
       multicast:
-        description: State of mutlicast for the interface.
+        description: State of multicast for the interface.
         type: bool
       promisc:
         description: State of promisc mode for the interface.
@@ -293,22 +293,6 @@ class Link(object):
             self.knobs[knob] = module.params[knob]
         for param in self.params_list:
             setattr(self, param, module.params[param])
-        if self.name and self.group_id:
-            self.module.fail_json(
-                msg=to_text('Can not use name and group_id together')
-            )
-        if self.knobs['group'] and self.group_id:
-            self.module.fail_json(
-                msg=to_text('Can not group and grop_id together')
-            )
-        if not (self.name or self.group_id):
-            self.module.fail_json(
-                msg=to_text('Either name or group_id should be present')
-            )
-        if self.namespace == self.netns and self.namespace:
-            self.module.fail_json(
-                msg=to_text('namespace and netns should not be the same')
-            )
         if self.name:
             self.id_postfix = ['dev', self.name]
         if self.group_id:
@@ -459,12 +443,13 @@ class Link(object):
             group_id (some of interfaces may be in one namespace
             and some may be moved already).
         """
-
+        if self.namespace == self.netns:
+            return False
         src = self._get_iface_set(self.namespace)
         dst = self._get_iface_set(self.netns)
         if src.intersection(dst):
             self.module.fail_json(
-                msg='Intefaces %s are in both namespaces' %
+                msg='Interfaces %s are in both namespaces' %
                 src.intersection(dst))
         if not src and not dst:
             self.module.fail_json(
