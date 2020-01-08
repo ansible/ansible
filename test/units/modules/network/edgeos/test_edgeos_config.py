@@ -54,44 +54,82 @@ class TestEdgeosConfigModule(TestEdgeosModule):
         self.get_config.return_value = load_fixture(config_file)
         self.load_config.return_value = None
 
-    def test_edgeos_config_unchanged(self):
-        src = load_fixture('edgeos_config_config.cfg')
-        set_module_args(dict(src=src))
-        self.execute_module()
-
-    def test_edgeos_config_src(self):
-        src = load_fixture('edgeos_config_src.cfg')
-        set_module_args(dict(src=src))
-        commands = ['set system host-name er01', 'delete interfaces ethernet eth0 address']
-        self.execute_module(changed=True, commands=commands)
-
-    def test_edgeos_config_src_brackets(self):
-        src = load_fixture('edgeos_config_src_brackets.cfg')
-        set_module_args(dict(src=src))
-        commands = ['set interfaces ethernet eth0 address 10.10.10.10/24', 'set system host-name er01']
-        self.execute_module(changed=True, commands=commands)
-
     def test_edgeos_config_backup(self):
         set_module_args(dict(backup=True))
         result = self.execute_module()
         self.assertIn('__backup__', result)
 
-    def test_edgeos_config_lines(self):
-        commands = ['set system host-name er01']
-        set_module_args(dict(lines=commands))
-        self.execute_module(changed=True, commands=commands)
+    def test_edgeos_config_unchanged_src(self):
+        candidate_config = load_fixture('edgeos_config_config.cfg')
+        set_module_args(dict(src=candidate_config))
+        self.execute_module()
+
+    def test_edgeos_config_unchanged_lines(self):
+        candidate_config = [
+            "set system host-name 'router'",
+            "set system domain-name 'acme.com'",
+            "set system domain-search domain 'acme.com'",
+            "set system name-server 208.67.220.220",
+            "set system name-server 208.67.222.222",
+            "set interfaces ethernet eth0 address 1.2.3.4/24",
+            "set interfaces ethernet eth0 description 'Outside'",
+            "set interfaces ethernet eth1 address 10.77.88.1/24",
+            "set interfaces ethernet eth1 description 'Inside'",
+            "set interfaces ethernet eth1 disable"
+        ]
+        set_module_args(dict(lines=candidate_config))
+        self.execute_module()
+
+    def test_edgeos_config_changed_src(self):
+        candidate_config = load_fixture('edgeos_config_src.cfg')
+        set_module_args(dict(src=candidate_config))
+        result_commands = [
+            "delete interfaces ethernet eth0 address",
+            "set system host-name er01",
+        ]
+        self.execute_module(changed=True, commands=result_commands)
+
+    def test_edgeos_config_changed_src_brackets(self):
+        candidate_config = load_fixture('edgeos_config_src_brackets.cfg')
+        set_module_args(dict(src=candidate_config))
+        result_commands = [
+            "set interfaces ethernet eth0 address 10.10.10.10/24",
+            "set system host-name er01"
+        ]
+        self.execute_module(changed=True, commands=result_commands)
+
+    def test_edgeos_config_changed_lines(self):
+        candidate_config = ["set system host-name test1"]
+        set_module_args(dict(lines=candidate_config))
+        result_updated = ["set system host-name test1"]
+        self.execute_module(changed=True, commands=result_updated)
+
+    def test_edgeos_config_changed_with_delete(self):
+        candidate_config = [
+            "delete interfaces ethernet eth0",
+            "set interfaces ethernet eth0 address 1.2.3.4/24",
+            "set interfaces ethernet eth0 description 'Outside'"
+        ]
+        set_module_args(dict(lines=candidate_config))
+        result_updated = [
+            "delete interfaces ethernet eth0",
+            "set interfaces ethernet eth0 address 1.2.3.4/24",
+            "set interfaces ethernet eth0 description 'Outside'"
+        ]
+        self.execute_module(changed=True, commands=result_updated)
+
+    def test_edgeos_config_changed_delete_only(self):
+        candidate_config = ["delete interfaces ethernet eth0"]
+        set_module_args(dict(lines=candidate_config))
+        result_updated = ["delete interfaces ethernet eth0"]
+        self.execute_module(changed=True, commands=result_updated)
 
     def test_edgeos_config_config(self):
-        config = 'set system host-name localhost'
-        new_config = ['set system host-name er01']
-        set_module_args(dict(lines=new_config, config=config))
-        self.execute_module(changed=True, commands=new_config)
-
-    def test_edgeos_config_match_none(self):
-        lines = ['set system interfaces ethernet eth0 address 1.2.3.4/24',
-                 'set system interfaces ethernet eth0 description Outside']
-        set_module_args(dict(lines=lines, match='none'))
-        self.execute_module(changed=True, commands=lines, sort=False)
+        config = ["set system host-name localhost"]
+        candidate_config = ["set system host-name er01"]
+        set_module_args(dict(lines=candidate_config, config=config))
+        result_commands = ["set system host-name er01"]
+        self.execute_module(changed=True, commands=result_commands)
 
     def test_edgeos_config_single_quote_wrapped_values(self):
         lines = ["set system interfaces ethernet eth0 description 'tests single quotes'"]
