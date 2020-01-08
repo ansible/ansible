@@ -618,7 +618,7 @@ no_log
 ``no_log`` accepts a boolean, either ``True`` or ``False``, that indicates explicitly whether or not the argument value should be masked in logs and output.
 
 .. note::
-   In the absence of ``no_log``, the argument value will only be masked in logs and output if the argument name appears to indicate that the argument value is a password or passphrase (such as "admin_password"). To ensure that an argument value always appears in logs and output, and to disable the warning about ``no_log``, set ``no_log`` explicitly to ``False``.
+   In the absence of ``no_log``, if the parameter name appears to indicate that the argument value is a password or passphrase (such as "admin_password"), a warning will be shown and the value will be masked in logs but **not** output. To disable the warning and masking for parameters that do not contain sensitive information, set ``no_log`` to ``False``.
 
 aliases
 """""""
