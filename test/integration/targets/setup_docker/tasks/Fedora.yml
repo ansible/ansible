@@ -1,12 +1,12 @@
-- name: Install Docker pre-reqs
-  dnf:
-    name: "{{ docker_prereq_packages }}"
-    state: present
-
 - name: Add repository
-  command: dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-  args:
-    warn: no
+  yum_repository:
+    file: docker-ce
+    name: docker-ce-stable
+    description: Docker CE Stable - $basearch
+    baseurl: https://download.docker.com/linux/fedora/$releasever/$basearch/stable
+    enabled: yes
+    gpgcheck: yes
+    gpgkey: https://download.docker.com/linux/fedora/gpg
 
 - name: Update cache
   command: dnf makecache
