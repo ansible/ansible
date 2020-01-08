@@ -1145,7 +1145,6 @@ class GalaxyCLI(CLI):
                         continue
 
                     path_found = True
-                    display.display("# {0}".format(path))
 
                     # Make sure we look inside the 'ansible_collections' dir
                     if os.path.split(collection_path)[1] != 'ansible_collections':
@@ -1164,7 +1163,7 @@ class GalaxyCLI(CLI):
 
                     collection = CollectionRequirement.from_path(b_collection_path, False)
                     fqcn_width, version_width = _get_collection_widths(collection)
-                    print(fqcn_width, version_width)
+
                     _display_header(path, 'Collection', 'Version', fqcn_width, version_width)
                     _display_collection(collection, fqcn_width, version_width)
 
