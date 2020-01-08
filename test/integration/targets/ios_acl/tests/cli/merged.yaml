@@ -1,0 +1,123 @@
+---
+- debug:
+      msg: "START Merged ios_acl state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge provided configuration with device configuration
+      ios_acl: &merged
+        config:
+          - afi: ipv4
+            acls:
+              - name: test_acl
+                acl_type: extended
+                ace:
+                  - grant: deny
+                    protocol_options:
+                      tcp:
+                        fin: true
+                    source:
+                      address: 192.0.2.0
+                      wildcard_bits: 0.0.0.255
+                    destination:
+                      address: 192.0.3.0
+                      wildcard_bits: 0.0.0.255
+                      port_protocol:
+                        eq: www
+                    option:
+                      traceroute: true
+                    ttl:
+                      eq: 10
+              - name: 110
+                ace:
+                  - grant: deny
+                    protocol_options:
+                      icmp:
+                        echo: true
+                    source:
+                      address: 192.0.2.0
+                      wildcard_bits: 0.0.0.255
+                    destination:
+                      address: 192.0.3.0
+                      wildcard_bits: 0.0.0.255
+                    dscp: ef
+                    ttl:
+                      eq: 10
+              - name: 123
+                ace:
+                  - grant: deny
+                    protocol_options:
+                      tcp:
+                        ack: true
+                    source:
+                      address: 198.51.100.0
+                      wildcard_bits: 0.0.0.255
+                    destination:
+                      address: 198.51.101.0
+                      wildcard_bits: 0.0.0.255
+                      port_protocol:
+                        eq: telnet
+                    tos:
+                      service_value: 12
+                  - grant: deny
+                    protocol_options:
+                      tcp:
+                        ack: true
+                    source:
+                      address: 192.0.3.0
+                      wildcard_bits: 0.0.0.255
+                    destination:
+                      address: 192.0.4.0
+                      wildcard_bits: 0.0.0.255
+                      port_protocol:
+                        eq: www
+                    dscp: ef
+                    ttl:
+                      lt: 20
+          - afi: ipv6
+            acls:
+              - name: R1_TRAFFIC
+                ace:
+                  - grant: deny
+                    protocol_options:
+                      tcp:
+                        ack: true
+                    source:
+                      any: true
+                      port_protocol:
+                        eq: www
+                    destination:
+                      any: true
+                      port_protocol:
+                        eq: telnet
+                    dscp: af11
+        state: merged
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ merged['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
+    - name: Merge provided configuration with device configuration (IDEMPOTENT)
+      ios_acl: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
