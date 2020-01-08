@@ -260,9 +260,10 @@ def test_get_iface_set_good(Zlink, module, input, output):
 ])
 def test_netns_need_to_move_good(Zlink, module, src, dst, status):
     module.params['name'] = 'eth0'
+    module.params['netns'] = 'foo'
     link = Zlink(module)
-    with mock.patch.object(link, '_get_iface_set') as mock_info:
-        mock_info.side_effect = [src, dst]
+    with mock.patch.object(link, '_get_iface_set') as mock_iface_set:
+        mock_iface_set.side_effect = [src, dst]
         assert link._netns_need_to_move() is status
 
 
@@ -272,8 +273,9 @@ def test_netns_need_to_move_good(Zlink, module, src, dst, status):
 ])
 def test_netns_need_to_move_bad(Zlink, module, src, dst):
     module.params['name'] = 'eth0'
+    module.params['netns'] = 'foo'
     link = Zlink(module)
-    with mock.patch.object(link, '_get_iface_set') as mock_info:
-        mock_info.side_effect = [src, dst]
+    with mock.patch.object(link, '_get_iface_set') as mock_iface_set:
+        mock_iface_set.side_effect = [src, dst]
         with pytest.raises(FailJsonException):
-            link._netns_need_to_move()
+            raise Exception(link._netns_need_to_move())
