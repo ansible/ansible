@@ -566,7 +566,7 @@ encryption uses the more secure TLS protocol instead. If both transport and
 message encryption is required, set ``ansible_winrm_message_encryption=always``
 in the host vars.
 
-Please note message encryption over HTTP is supported on pywinrm 0.3.0 or higher version.
+.. Note:: Message encryption over HTTP requires pywinrm>=0.3.0
 
 A last resort is to disable the encryption requirement on the Windows host. This
 should only be used for development and debugging purposes, as anything sent
