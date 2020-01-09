@@ -101,7 +101,7 @@
         that:
           - vmware_host_dns_result_0005 is changed
 
-    # Revert to original DNS configuration
+    # Revert to original DNS configuration with a different search_domains
     - name: Revert to original DNS configuration
       vmware_host_dns:
         hostname: '{{ esxi1 }}'
@@ -115,7 +115,7 @@
         search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
 
     # Testcase 0006: Ensure DNS config on the cluster is idempotent for static
-    - name: Ensure static DNS config is idempotent when done on the cluster
+    - name: Apply configuration on a cluster
       vmware_host_dns:
         hostname: '{{ vcenter_hostname }}'
         username: '{{ vcenter_username }}'
@@ -123,15 +123,25 @@
         cluster_name: "{{ ccr1 }}"
         validate_certs: False
         type: 'static'
+        search_domains: "different-search-domain"
+      register: vmware_host_dns_result_0006
+
+    - name: Ensure configuration has changed
+      assert:
+        that:
+          - vmware_host_dns_result_0006 is changed
+
+    - name: Revert to original DNS configuration
+      vmware_host_dns:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        validate_certs: False
+        type: 'static'
+        host_name: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['host_name'] }}"
         domain: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['domain_name'] }}"
         dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
         search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
-      register: vmware_host_dns_result_0006
-
-    - name: Ensure DNS config wasn't changed
-      assert:
-        that:
-          - vmware_host_dns_result_0006 is not changed
 
     # Testcase 0007: Ensure changing the domain on the cluster works
     - name: Ensure changing the domain on the cluster works
