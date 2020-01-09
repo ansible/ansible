@@ -156,15 +156,18 @@ The extended first playbook has four tasks in a single play. Run it with the sam
 Gathering facts from network devices
 ====================================
 
-Ansible 2.9 introduced improved fact gathering for network devices. The network ``*_facts`` modules (such as :ref:`eos_facts <eos_facts_module>`) now gather facts and return them in standardized key/value pairs that you can feed into further tasks to manage the network device. You can also use the new ``gather_network_resources`` parameter in these network ``*_facts`` modules to return just a subset of the device configuration.
+Ansible 2.9 introduced improved fact gathering for network devices. The ``gather_facts`` keyword now supports gathering network device facts in standardized key/value pairs. You can feed these network facts into further tasks to manage the network device.
+
+You can also use the new ``gather_network_resources`` parameter with the network ``*_facts`` modules (such as :ref:`eos_facts <eos_facts_module>`) to return just a subset of the device configuration, as shown below.
 
 .. code-block:: yaml
 
-  - name: collect interface configuration facts
-    eos_facts:
-      gather_subset: min
-      gather_network_resources:
-      - interfaces
+  - hosts: arista
+    gather_facts: True
+    gather_subset: min
+    module_defaults:
+      eos_facts:
+        gather_network_resources: interfaces
 
 The playbook returns the following interface facts:
 
@@ -191,4 +194,6 @@ The playbook returns the following interface facts:
           name: Ethernet1
 
 
-You can now store these facts and use them directly in another task, such as with the :ref:`eos_interfaces <eos_interfaces_module>` resource module.
+Note that this returns a subset of what is returned by just setting ``gather_subset: interfaces``.
+
+You can store these facts and use them directly in another task, such as with the :ref:`eos_interfaces <eos_interfaces_module>` resource module.
