@@ -105,7 +105,8 @@ class NetconfBase(AnsiblePlugin):
     __rpc__ = ['rpc', 'get_config', 'get', 'edit_config', 'validate', 'copy_config', 'dispatch', 'lock', 'unlock',
                'discard_changes', 'commit', 'get_schema', 'delete_config', 'get_device_operations']
 
-    def __init__(self, connection, *args, **kwargs):
+    def __init__(self, connection):
+        super(NetconfBase, self).__init__()
         self._connection = connection
 
     @property

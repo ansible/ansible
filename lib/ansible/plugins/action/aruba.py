@@ -50,7 +50,9 @@ class ActionModule(ActionNetworkModule):
             provider = load_provider(aruba_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'ansible.netcommon.network_cli'
-            pc.network_os = 'aruba'
+            # TODO: Added network os FQCN name as place holder, change the
+            # value based on the collection namespace identified
+            pc.network_os = 'ansible.community.aruba'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
             pc.port = int(provider['port'] or self._play_context.port or 22)
             pc.remote_user = provider['username'] or self._play_context.connection_user
@@ -59,11 +61,12 @@ class ActionModule(ActionNetworkModule):
             command_timeout = int(provider['timeout'] or C.PERSISTENT_COMMAND_TIMEOUT)
 
             connection = self._shared_loader_obj.connection_loader.get('ansible.netcommon.persistent', pc, sys.stdin,
-                                                                       task_uuid=self._task._uuid, collection_list=self._collection_list)
+                                                                       task_uuid=self._task._uuid)
 
             # TODO: Remove below code after ansible minimal is cut out
             if connection is None:
                 pc.connection = 'network_cli'
+                pc.network_os = 'aruba'
                 connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
 
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)

@@ -21,10 +21,13 @@ __metaclass__ = type
 
 import re
 
-from ansible.plugins import AnsiblePlugin
+from abc import ABCMeta, abstractmethod
+
+from ansible.errors import AnsibleConnectionFailure
+from ansible.module_utils.six import with_metaclass
 
 
-class TerminalBase(AnsiblePlugin):
+class TerminalBase(with_metaclass(ABCMeta, object)):
     '''
     A base class for implementing cli connections
 
@@ -58,7 +61,7 @@ class TerminalBase(AnsiblePlugin):
     #: Send newline after prompt match
     terminal_inital_prompt_newline = True
 
-    def __init__(self, connection, *args, **kwargs):
+    def __init__(self, connection):
         self._connection = connection
 
     def _exec_cli_command(self, cmd, check_rc=True):

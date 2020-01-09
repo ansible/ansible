@@ -546,7 +546,7 @@ class PluginLoader:
 
         found_in_cache = True
         class_only = kwargs.pop('class_only', False)
-        collection_list = kwargs.get('collection_list')
+        collection_list = kwargs.pop('collection_list', None)
         if name in self.aliases:
             name = self.aliases[name]
         name, path = self.find_plugin_with_name(name, collection_list=collection_list)

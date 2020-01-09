@@ -10,7 +10,7 @@ from ansible.plugins import AnsiblePlugin
 
 
 class HttpApiBase(AnsiblePlugin):
-    def __init__(self, connection, *args, **kwargs):
+    def __init__(self, connection):
         super(HttpApiBase, self).__init__()
 
         self.connection = connection

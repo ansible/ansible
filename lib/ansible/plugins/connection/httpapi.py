@@ -193,12 +193,13 @@ class Connection(NetworkConnectionBase):
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
-        self._collection_list = kwargs.get('collection_list')
+
         self._url = None
         self._auth = None
 
         if self._network_os:
-            self.httpapi = httpapi_loader.get(self._network_os, self, collection_list=self._collection_list)
+
+            self.httpapi = httpapi_loader.get(self._network_os, self)
             if self.httpapi:
                 self._sub_plugin = {'type': 'httpapi', 'name': self.httpapi._load_name, 'obj': self.httpapi}
                 self.queue_message('vvvv', 'loaded API plugin %s from path %s for network_os %s' %
