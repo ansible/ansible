@@ -42,7 +42,8 @@ options:
       - Text associated with the record. It can contain up to 255 bytes
         per substring, up to a total of 512 bytes. To enter leading,
         trailing, or embedded spaces in the text, add quotes around the
-        text to preserve the spaces.
+        text to preserve the spaces.  User can also update the text as it is possible
+        to pass a dict containing I(new_text), I(old_text). See examples.
     required: true
   ttl:
     description:
