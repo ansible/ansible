@@ -47,7 +47,7 @@ class TerminalModule(TerminalBase):
 
     terminal_stdout_re = [
         re.compile(br"\x1b<"),
-        re.compile(br"\[\w+\@[\w\s\-\.]+\] ?> ?$"),
+        re.compile(br"\[[\w\.]+\@[\w\s\-\.]+\] ?> ?$"),
         re.compile(br"Please press \"Enter\" to continue!"),
         re.compile(br"Do you want to see the software license\? \[Y\/n\]: ?"),
     ]
