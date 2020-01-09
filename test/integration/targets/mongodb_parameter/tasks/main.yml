@@ -123,7 +123,7 @@
       - sd_change.after | int == 59
       - sd_change.changed == False
 
-- name: Set authenticationMechanisms to MONGODB-X509 with auth (will fail)
+- name: Set authenticationMechanisms to MONGODB-X509 with auth (will fail) 
   mongodb_parameter:
     login_port: 3001
     login_user: "{{ mongodb_admin_user }}"
