@@ -456,7 +456,6 @@ class VariableManager:
         variables['ansible_playbook_python_version']['minor'] = sys.version_info.minor
         variables['ansible_playbook_python_version']['micro'] = sys.version_info.micro
 
-
         if play:
             # This is a list of all role names of all dependencies for all roles for this play
             dependency_role_names = list(set([d._role_name for r in play.roles for d in r.get_all_dependencies()]))
