@@ -25,14 +25,14 @@ import hashlib
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection, ConnectionError
-from ansible.plugins.action import ActionBase
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.utils.display import Display
 
 display = Display()
 
 
-class ActionModule(ActionBase):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         socket_path = None
