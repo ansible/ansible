@@ -192,7 +192,7 @@ class AclArgs(object):
                                                 'rst': {'type': 'bool'},
                                                 'syn': {'type': 'bool'},
                                                 'urg': {'type': 'bool'}
-                                                },
+                                            },
                                             'type': 'dict'
                                         },
                                         'udp': {'type': 'bool'}

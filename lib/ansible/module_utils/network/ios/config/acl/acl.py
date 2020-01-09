@@ -62,20 +62,41 @@ class Acl(ConfigBase):
         commands = list()
         warnings = list()
 
-        existing_acl_facts = self.get_acl_facts()
-        commands.extend(self.set_config(existing_acl_facts))
+        if self.state in self.ACTION_STATES:
+            existing_acl_facts = self.get_acl_facts()
+        else:
+            existing_acl_facts = []
 
-        if commands:
+        if self.state in self.ACTION_STATES or self.state == 'rendered':
+            commands.extend(self.set_config(existing_acl_facts))
+
+        if commands and self.state in self.ACTION_STATES:
             if not self._module.check_mode:
                 self._connection.edit_config(commands)
             result['changed'] = True
-        result['commands'] = commands
 
-        changed_acl_facts = self.get_acl_facts()
+        if self.state in self.ACTION_STATES:
+            result['commands'] = commands
 
-        result['before'] = existing_acl_facts
-        if result['changed']:
-            result['after'] = changed_acl_facts
+        if self.state in self.ACTION_STATES or self.state == 'gathered':
+            changed_acl_facts = self.get_acl_facts()
+        elif self.state == 'rendered':
+            result['rendered'] = commands
+        elif self.state == 'parsed':
+            running_config = self._module.params['running_config']
+            if not running_config:
+                self._module.fail_json(msg="Value of running_config parameter must not be empty for state parsed")
+            result['parsed'] = self.get_acl_facts(data=running_config)
+        else:
+            changed_acl_facts = []
+
+        if self.state in self.ACTION_STATES:
+            result['before'] = existing_acl_facts
+            if result['changed']:
+                result['after'] = changed_acl_facts
+        elif self.state == 'gathered':
+            result['gathered'] = changed_acl_facts
+
         result['warnings'] = warnings
 
         return result
