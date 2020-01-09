@@ -451,6 +451,11 @@ class VariableManager:
         variables = {}
         variables['playbook_dir'] = os.path.abspath(self._loader.get_basedir())
         variables['ansible_playbook_python'] = sys.executable
+        variables['ansible_playbook_python_version'] = {}
+        variables['ansible_playbook_python_version']['major'] = sys.version_info.major
+        variables['ansible_playbook_python_version']['minor'] = sys.version_info.minor
+        variables['ansible_playbook_python_version']['micro'] = sys.version_info.micro
+
 
         if play:
             # This is a list of all role names of all dependencies for all roles for this play
