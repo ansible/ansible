@@ -60,7 +60,7 @@ class ActionModule(ActionNetworkModule):
             pc.password = provider['password'] or self._play_context.password
 
             connection = self._shared_loader_obj.connection_loader.get('ansible.netcommon.persistent', pc, sys.stdin,
-                                                                       task_uuid=self._task._uuid, collection_list=self._collection_list)
+                                                                       task_uuid=self._task._uuid)
 
             # TODO: Remove below code after ansible minimal is cut out
             if connection is None:
