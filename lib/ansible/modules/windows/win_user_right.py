@@ -35,6 +35,8 @@ options:
     - For local users/groups it can be in the form user-group, .\user-group,
       SERVERNAME\user-group where SERVERNAME is the name of the remote server.
     - You can also add special local accounts like SYSTEM and others.
+    - Can be set to an empty list with I(action=set) to remove all accounts
+      from the right.
     type: list
     required: yes
   action:
@@ -83,6 +85,11 @@ EXAMPLES = r'''
     - DOMAIN\User
     - group@DOMAIN.COM
     action: remove
+
+- name: Remove all accounts who cannot log on remote interactively
+  win_user_right:
+    name: SeDenyRemoteInteractiveLogonRight
+    users: []
 '''
 
 RETURN = r'''
