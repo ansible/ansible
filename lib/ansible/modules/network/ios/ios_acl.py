@@ -266,7 +266,7 @@ options:
                       description: IGMP Membership Query(0)
                       type: bool
                     mtrace_resp:
-                      description: 	Multicast Traceroute Response(7)
+                      description: Multicast Traceroute Response(7)
                       type: bool
                     mtrace_route:
                       description: Multicast Traceroute(8)
@@ -318,35 +318,35 @@ options:
                   type: str
                 tcp:
                   description: Match TCP packet flags
-                    type: dict
-                    suboptions:
-                      set:
-                        description:
-                        - When TCP flags are not specified and user want to set
-                          TCP only as protocol option.
-                        - Note, not required if flags options are set.
-                        type: bool
-                      ack:
-                        description: Match on the ACK bit
-                        type: bool
-                      established:
-                        description: Match established connections
-                        type: bool
-                      fin:
-                        description: Match on the FIN bit
-                        type: bool
-                      psh:
-                        description: Match on the PSH bit
-                        type: bool
-                      rst:
-                        description: Match on the RST bit
-                        type: bool
-                      syn:
-                        description: Match on the SYN bit
-                        type: bool
-                      urg:
-                        description: Match on the URG bit
-                        type: bool
+                  type: dict
+                  suboptions:
+                    set:
+                      description:
+                      - When TCP flags are not specified and user want to set
+                        TCP only as protocol option.
+                      - Note, not required if flags options are set.
+                      type: bool
+                    ack:
+                      description: Match on the ACK bit
+                      type: bool
+                    established:
+                      description: Match established connections
+                      type: bool
+                    fin:
+                      description: Match on the FIN bit
+                      type: bool
+                    psh:
+                      description: Match on the PSH bit
+                      type: bool
+                    rst:
+                      description: Match on the RST bit
+                      type: bool
+                    syn:
+                      description: Match on the SYN bit
+                      type: bool
+                    urg:
+                      description: Match on the URG bit
+                      type: bool
             source:
               description: Specify the packet source.
               type: dict

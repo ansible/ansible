@@ -67,6 +67,7 @@ def new_dict_to_set(input_dict, temp_list, test_set, count=0):
                         count = 0
                 except TypeError:
                     temp_dict = {}
+
                     def expand_dict(dict_to_expand):
                         temp = dict()
                         for k, v in iteritems(dict_to_expand):
@@ -76,7 +77,7 @@ def new_dict_to_set(input_dict, temp_list, test_set, count=0):
                                 if v is not None:
                                     temp.update({k: v})
                                 temp_dict.update(tuple(iteritems(temp)))
-                    new_dict = {k:v}
+                    new_dict = {k: v}
                     expand_dict(new_dict)
                     if tuple(iteritems(temp_dict)) not in test_set:
                         test_set.add(tuple(iteritems(temp_dict)))

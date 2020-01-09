@@ -316,8 +316,8 @@ class Acl(ConfigBase):
         :returns: commands generated from want n have config diff
         """
         commands = []
-        if want.get('destination') and have.get('destination') or\
-            want.get('source').get('address') and have.get('source'):
+        if want.get('destination') and have.get('destination') or \
+                want.get('source').get('address') and have.get('source'):
             if want.get('destination').get('address') == \
                     have.get('destination').get('address') and \
                     want.get('source').get('address') == \
@@ -420,7 +420,7 @@ class Acl(ConfigBase):
             cmd = cmd + ' {0}'.format('any')
         port_protocol = config.get('port_protocol')
         if port_protocol and (protocol_option.get('tcp') or protocol_option.get('udp')):
-            cmd = cmd + ' {0} {1}'.format(port_protocol.keys()[0], port_protocol.values()[0])
+            cmd = cmd + ' {0} {1}'.format(list(port_protocol)[0], list(port_protocol.values())[0])
         elif port_protocol and not (protocol_option.get('tcp') or protocol_option.get('udp')):
             self._module.fail_json(msg='Port Protocol option is valid only with TCP/UDP Protocol option!')
 
@@ -482,7 +482,7 @@ class Acl(ConfigBase):
             if grant:
                 cmd = cmd + ' {0}'.format(grant)
             if po and isinstance(po, dict):
-                po_key = po.keys()[0]
+                po_key = list(po)[0]
                 cmd = cmd + ' {0}'.format(po_key)
                 if po.get('icmp'):
                     po_val = po.get('icmp')
@@ -495,7 +495,7 @@ class Acl(ConfigBase):
             if destination:
                 cmd = self.source_dest_config(destination, cmd, po)
             if po_val:
-                cmd = cmd + ' {0}'.format(po_val.keys()[0])
+                cmd = cmd + ' {0}'.format(list(po_val)[0])
             if dscp:
                 cmd = cmd + ' dscp {0}'.format(dscp)
             if fragments:
@@ -505,7 +505,7 @@ class Acl(ConfigBase):
             if log_input:
                 cmd = cmd + ' log-input {0}'.format(log_input)
             if option:
-                cmd = cmd + ' option {0}'.format(option.keys()[0])
+                cmd = cmd + ' option {0}'.format(list(option)[0])
             if precedence:
                 cmd = cmd + ' precedence {0}'.format(precedence)
             if time_range:

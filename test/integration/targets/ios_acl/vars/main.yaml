@@ -555,4 +555,3 @@ round_trip:
               eq: www
         name: R1_TRAFFIC
       afi: ipv6
-
