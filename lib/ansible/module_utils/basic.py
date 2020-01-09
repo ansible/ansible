@@ -1447,7 +1447,11 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        self.no_log_values.update(list_no_log_values(spec, param))
+        try:
+            self.no_log_values.update(list_no_log_values(spec, param))
+        except TypeError as te:
+            self.fail_json(msg="Failure when processing no_log parameters. Module invocation will be hidden. "
+                               "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
         self._deprecations.extend(list_deprecations(spec, param))
 
     def _check_arguments(self, check_invalid_arguments, spec=None, param=None, legal_inputs=None):
@@ -1722,7 +1726,6 @@ class AnsibleModule(object):
                     self._set_fallbacks(spec, param)
                     options_aliases = self._handle_aliases(spec, param, option_prefix=new_prefix)
 
-                    self._handle_no_log_values(spec, param)
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
 
                     self._check_arguments(self.check_invalid_arguments, spec, param, options_legal_inputs)
@@ -1937,15 +1940,14 @@ class AnsibleModule(object):
         for param in self.params:
             canon = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
-            no_log = arg_opts.get('no_log', False)
+            no_log = arg_opts.get('no_log', None)
 
-            if self.boolean(no_log):
-                log_args[param] = 'NOT_LOGGING_PARAMETER'
-            # try to capture all passwords/passphrase named fields missed by no_log
-            elif PASSWORD_MATCH.search(param) and arg_opts.get('type', 'str') != 'bool' and not arg_opts.get('choices', False):
-                # skip boolean and enums as they are about 'password' state
+            # try to proactively capture password/passphrase fields
+            if no_log is None and PASSWORD_MATCH.search(param):
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
                 self.warn('Module did not set no_log for %s' % param)
+            elif self.boolean(no_log):
+                log_args[param] = 'NOT_LOGGING_PARAMETER'
             else:
                 param_val = self.params[param]
                 if not isinstance(param_val, (text_type, binary_type)):

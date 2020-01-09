@@ -24,6 +24,11 @@ changed
 ```````
 A boolean indicating if the task had to make changes.
 
+diff
+````
+
+Information on differences between the previous and current state. Often a dictionary with entries ``before`` and ``after``, which will then be formatted by the callback plugin to a diff view.
+
 failed
 ``````
 A boolean that indicates if the task was failed or not.

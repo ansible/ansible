@@ -4,5 +4,5 @@
     config: "{{ lines }}"
   vars:
     lines: |
-      set interfaces bonding bond0 
-      set interfaces bonding bond1 
+      set interfaces bonding bond0
+      set interfaces bonding bond1

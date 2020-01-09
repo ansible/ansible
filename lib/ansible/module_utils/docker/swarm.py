@@ -164,10 +164,9 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
             if exc.status_code == 503:
                 self.fail("Cannot inspect node: To inspect node execute module on Swarm Manager")
             if exc.status_code == 404:
-                if skip_missing is False:
-                    self.fail("Error while reading from Swarm manager: %s" % to_native(exc))
-                else:
+                if skip_missing:
                     return None
+            self.fail("Error while reading from Swarm manager: %s" % to_native(exc))
         except Exception as exc:
             self.fail("Error inspecting swarm node: %s" % exc)
 

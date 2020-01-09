@@ -75,9 +75,16 @@ options:
     type: bool
     default: no
     version_added: "2.4"
+  rule_action:
+    description: Whether to add or set (replace) access control entries.
+    type: str
+    choices: [ set, add ]
+    default: set
+    version_added: "2.10"
 author:
   - Hans-Joachim Kliemeck (@h0nIg)
   - David Baumann (@daBONDi)
+  - Shachaf Goldstein (@Shachaf92)
 '''
 
 EXAMPLES = r'''

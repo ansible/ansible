@@ -284,6 +284,57 @@
       - "'REFERENCES' in result_table2.stdout"
       - "'TRIGGER' in result_table2.stdout"
 
+# Check passing roles with dots
+# https://github.com/ansible/ansible/issues/63204
+- name: Create roles for further tests
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    name: "{{ item }}"
+  loop:
+  - "{{ db_user_with_dots1 }}"
+  - "{{ db_user_with_dots2 }}"
+
+- name: Pass role with dots in its name to roles parameter
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    state: "present"
+    roles: "{{ db_user_with_dots1 }}"
+    privs: "INSERT"
+    objs: "test_table1"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Check that permissions were added (table1)
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    query: "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user_with_dots1 }}' and table_name='test_table1'"
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# We don't need to check anything here, only that nothing failed
+- name: Pass role with dots in its name to target_roles parameter
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+    state: "present"
+    roles: "{{ db_user_with_dots1 }}"
+    privs: "INSERT"
+    objs: TABLES
+    type: default_privs
+    target_roles: "{{ db_user_with_dots2 }}"
+
 #
 # Cleanup
 #
@@ -309,10 +360,16 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_user:
-    name: "{{ db_user1 }}"
+    name: "{{ item }}"
     state: 'absent'
     login_user: "{{ pg_user }}"
     db: postgres
+  loop:
+  - "{{ db_user1 }}"
+  - "{{ db_user2 }}"
+  - "{{ db_user3 }}"
+  - "{{ db_user_with_dots1 }}"
+  - "{{ db_user_with_dots2 }}"
 
 - name: Check that they were removed
   become_user: "{{ pg_user }}"

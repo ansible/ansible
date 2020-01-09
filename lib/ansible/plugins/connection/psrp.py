@@ -21,20 +21,30 @@ options:
     description:
     - The hostname or IP address of the remote host.
     default: inventory_hostname
+    type: str
     vars:
     - name: ansible_host
     - name: ansible_psrp_host
   remote_user:
     description:
     - The user to log in as.
+    type: str
     vars:
     - name: ansible_user
     - name: ansible_psrp_user
+  remote_password:
+    description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+    type: str
+    vars:
+    - name: ansible_password
+    - name: ansible_winrm_pass
+    - name: ansible_winrm_password
   port:
     description:
     - The port for PSRP to connect on the remote target.
     - Default is C(5986) if I(protocol) is not defined or is C(https),
       otherwise the port is C(5985).
+    type: int
     vars:
     - name: ansible_port
     - name: ansible_psrp_port
@@ -45,11 +55,13 @@ options:
     choices:
     - http
     - https
+    type: str
     vars:
     - name: ansible_psrp_protocol
   path:
     description:
     - The URI path to connect to.
+    type: str
     vars:
     - name: ansible_psrp_path
     default: 'wsman'
@@ -58,6 +70,7 @@ options:
     - The authentication protocol to use when authenticating the remote user.
     - The default, C(negotiate), will attempt to use C(Kerberos) if it is
       available and fall back to C(NTLM) if it isn't.
+    type: str
     vars:
     - name: ansible_psrp_auth
     choices:
@@ -78,6 +91,7 @@ options:
     - validate
     - ignore
     default: validate
+    type: str
     vars:
     - name: ansible_psrp_cert_validation
   ca_cert:
@@ -85,6 +99,7 @@ options:
     - The path to a PEM certificate chain to use when validating the server's
       certificate.
     - This value is ignored if I(cert_validation) is set to C(ignore).
+    type: path
     vars:
     - name: ansible_psrp_cert_trust_path
     - name: ansible_psrp_ca_cert
@@ -93,6 +108,7 @@ options:
     description:
     - The connection timeout for making the request to the remote host.
     - This is measured in seconds.
+    type: int
     vars:
     - name: ansible_psrp_connection_timeout
     default: 30
@@ -102,6 +118,7 @@ options:
     - This value must always be greater than I(operation_timeout).
     - This option requires pypsrp >= 0.3.
     - This is measured in seconds.
+    type: int
     vars:
     - name: ansible_psrp_read_timeout
     default: 30
@@ -109,6 +126,7 @@ options:
   reconnection_retries:
     description:
     - The number of retries on connection errors.
+    type: int
     vars:
     - name: ansible_psrp_reconnection_retries
     default: 0
@@ -120,6 +138,7 @@ options:
     - This is measured in seconds.
     - The C(ansible_psrp_reconnection_backoff) variable was added in Ansible
       2.9.
+    type: int
     vars:
     - name: ansible_psrp_connection_backoff
     - name: ansible_psrp_reconnection_backoff
@@ -138,6 +157,7 @@ options:
       even when running over TLS/HTTPS.
     - C(never) disables any encryption checks that are in place when running
       over HTTP and disables any authentication encryption processes.
+    type: str
     vars:
     - name: ansible_psrp_message_encryption
     choices:
@@ -150,6 +170,7 @@ options:
     - Set the proxy URL to use when connecting to the remote host.
     vars:
     - name: ansible_psrp_proxy
+    type: str
   ignore_proxy:
     description:
     - Will disable any environment proxy settings and connect directly to the
@@ -164,11 +185,13 @@ options:
   certificate_key_pem:
     description:
     - The local path to an X509 certificate key to use with certificate auth.
+    type: path
     vars:
     - name: ansible_psrp_certificate_key_pem
   certificate_pem:
     description:
     - The local path to an X509 certificate to use with certificate auth.
+    type: path
     vars:
     - name: ansible_psrp_certificate_pem
   credssp_auth_mechanism:
@@ -176,6 +199,7 @@ options:
     - The sub authentication mechanism to use with CredSSP auth.
     - When C(auto), both Kerberos and NTLM is attempted with kerberos being
       preferred.
+    type: str
     choices:
     - auto
     - kerberos
@@ -208,6 +232,7 @@ options:
     - Only valid when Kerberos was the negotiated auth or was explicitly set as
       the authentication.
     - Ignored when NTLM was the negotiated auth.
+    type: bool
     vars:
     - name: ansible_psrp_negotiate_delegate
   negotiate_hostname_override:
@@ -219,6 +244,7 @@ options:
     - Only valid when Kerberos was the negotiated auth or was explicitly set as
       the authentication.
     - Ignored when NTLM was the negotiated auth.
+    type: str
     vars:
     - name: ansible_psrp_negotiate_hostname_override
   negotiate_send_cbt:
@@ -238,6 +264,7 @@ options:
       the authentication.
     - Ignored when NTLM was the negotiated auth.
     default: WSMAN
+    type: str
     vars:
     - name: ansible_psrp_negotiate_service
 
@@ -247,6 +274,7 @@ options:
     - Sets the WSMan timeout for each operation.
     - This is measured in seconds.
     - This should not exceed the value for C(connection_timeout).
+    type: int
     vars:
     - name: ansible_psrp_operation_timeout
     default: 20
@@ -255,12 +283,14 @@ options:
     - Sets the maximum size of each WSMan message sent to the remote host.
     - This is measured in bytes.
     - Defaults to C(150KiB) for compatibility with older hosts.
+    type: int
     vars:
     - name: ansible_psrp_max_envelope_size
     default: 153600
   configuration_name:
     description:
     - The name of the PowerShell configuration endpoint to connect to.
+    type: str
     vars:
     - name: ansible_psrp_configuration_name
     default: Microsoft.PowerShell
@@ -577,13 +607,9 @@ if ($bytes_read -gt 0) {
         self._connected = False
 
     def _build_kwargs(self):
-        self._become_method = self._play_context.become_method
-        self._become_user = self._play_context.become_user
-        self._become_pass = self._play_context.become_pass
-
         self._psrp_host = self.get_option('remote_addr')
         self._psrp_user = self.get_option('remote_user')
-        self._psrp_pass = self._play_context.password
+        self._psrp_pass = self.get_option('remote_password')
 
         protocol = self.get_option('protocol')
         port = self.get_option('port')

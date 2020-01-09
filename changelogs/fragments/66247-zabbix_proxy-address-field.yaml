@@ -1,0 +1,2 @@
+minor_changes:
+  - zabbix_proxy - added option proxy_address for comma-delimited list of IP/CIDR addresses or DNS names to accept active proxy requests from

@@ -225,10 +225,10 @@ def main():
         ],
     )
 
-    description = module.params['description']
-    pool = module.params['pool']
-    pool_allocation_mode = module.params['pool_allocation_mode']
-    state = module.params['state']
+    description = module.params.get('description')
+    pool = module.params.get('pool')
+    pool_allocation_mode = module.params.get('pool_allocation_mode')
+    state = module.params.get('state')
 
     pool_name = pool
 

@@ -46,7 +46,7 @@ description:
   gateway. Packets that do not match any route in the sending virtual machine's routing
   table will be dropped.
 - A Route resource must have exactly one specification of either nextHopGateway, nextHopInstance,
-  nextHopIp, or nextHopVpnTunnel.
+  nextHopIp, nextHopVpnTunnel, or nextHopIlb.
 short_description: Creates a GCP Route
 version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
@@ -147,6 +147,22 @@ options:
       to "{{ name-of-resource }}"'
     required: false
     type: dict
+  next_hop_ilb:
+    description:
+    - The URL to a forwarding rule of type loadBalancingScheme=INTERNAL that should
+      handle matching packets.
+    - 'You can only specify the forwarding rule as a partial or full URL. For example,
+      the following are all valid URLs: U(https://www.googleapis.com/compute/v1/projects/project/regions/region/forwardingRules/forwardingRule)
+      regions/region/forwardingRules/forwardingRule Note that this can only be used
+      when the destinationRange is a public (non-RFC 1918) IP CIDR range.'
+    - 'This field represents a link to a ForwardingRule resource in GCP. It can be
+      specified in two ways. First, you can place a dictionary with key ''selfLink''
+      and value of your resource''s selfLink Alternatively, you can add `register:
+      name-of-resource` to a gcp_compute_forwarding_rule task and then set this next_hop_ilb
+      field to "{{ name-of-resource }}"'
+    required: false
+    type: dict
+    version_added: '2.10'
   project:
     description:
     - The Google Cloud Platform project to use.
@@ -187,9 +203,9 @@ options:
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/routes)'
 - 'Using Routes: U(https://cloud.google.com/vpc/docs/using-routes)'
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -298,6 +314,16 @@ nextHopNetwork:
   - URL to a Network that should handle matching packets.
   returned: success
   type: str
+nextHopIlb:
+  description:
+  - The URL to a forwarding rule of type loadBalancingScheme=INTERNAL that should
+    handle matching packets.
+  - 'You can only specify the forwarding rule as a partial or full URL. For example,
+    the following are all valid URLs: U(https://www.googleapis.com/compute/v1/projects/project/regions/region/forwardingRules/forwardingRule)
+    regions/region/forwardingRules/forwardingRule Note that this can only be used
+    when the destinationRange is a public (non-RFC 1918) IP CIDR range.'
+  returned: success
+  type: dict
 '''
 
 ################################################################################
@@ -329,6 +355,7 @@ def main():
             next_hop_instance=dict(type='dict'),
             next_hop_ip=dict(type='str'),
             next_hop_vpn_tunnel=dict(type='dict'),
+            next_hop_ilb=dict(type='dict'),
         )
     )
 
@@ -391,6 +418,7 @@ def resource_to_request(module):
         u'nextHopInstance': replace_resource_dict(module.params.get(u'next_hop_instance', {}), 'selfLink'),
         u'nextHopIp': module.params.get('next_hop_ip'),
         u'nextHopVpnTunnel': replace_resource_dict(module.params.get(u'next_hop_vpn_tunnel', {}), 'selfLink'),
+        u'nextHopIlb': replace_resource_dict(module.params.get(u'next_hop_ilb', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -467,6 +495,7 @@ def response_to_hash(module, response):
         u'nextHopIp': module.params.get('next_hop_ip'),
         u'nextHopVpnTunnel': replace_resource_dict(module.params.get(u'next_hop_vpn_tunnel', {}), 'selfLink'),
         u'nextHopNetwork': response.get(u'nextHopNetwork'),
+        u'nextHopIlb': replace_resource_dict(module.params.get(u'next_hop_ilb', {}), 'selfLink'),
     }
 
 

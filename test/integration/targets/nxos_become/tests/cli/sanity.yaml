@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/sanity.yaml"
-- debug: msg="Using provider={{ connection.transport }}/sanity.yaml"
-  when: ansible_connection == "local"
 
 - block:
   - name: update role to priv-14

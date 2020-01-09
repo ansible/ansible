@@ -1,0 +1,17 @@
+[tests]
+# Sorted fastest to slowest
+version_fail_wrapper
+ebs_optimized
+block_devices
+cpu_options
+default_vpc_tests
+external_resource_attach
+instance_no_wait
+iam_instance_role
+termination_protection
+tags_and_vpc_settings
+checkmode_tests
+
+[all:vars]
+ansible_connection=local
+ansible_python_interpreter="{{ ansible_playbook_python }}"

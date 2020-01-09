@@ -95,9 +95,9 @@ options:
 notes:
 - 'API Reference: U(https://cloud.google.com/source-repositories/docs/reference/rest/v1/projects.repos)'
 - 'Official Documentation: U(https://cloud.google.com/source-repositories/)'
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -166,7 +166,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module))
+                update(module, self_link(module), fetch)
                 fetch = fetch_resource(module, self_link(module))
                 changed = True
         else:
@@ -190,9 +190,17 @@ def create(module, link):
     return return_if_object(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link):
-    delete(module, self_link(module))
-    create(module, collection(module))
+def update(module, link, fetch):
+    auth = GcpSession(module, 'sourcerepo')
+    params = {'updateMask': updateMask(resource_to_request(module), response_to_hash(module, fetch))}
+    request = resource_to_request(module)
+    del request['name']
+    return return_if_object(module, auth.patch(link, request, params=params))
+
+
+def updateMask(request, response):
+    update_mask = []
+    return ','.join(update_mask)
 
 
 def delete(module, link):

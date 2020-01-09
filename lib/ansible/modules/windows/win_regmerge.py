@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 ---
 module: win_regmerge
 version_added: "2.1"
-short_description: Merges the contents of a registry file into the windows registry
+short_description: Merges the contents of a registry file into the Windows registry
 description:
     - Wraps the reg.exe command to import the contents of a registry file.
     - Suitable for use with registry files created using M(win_template).

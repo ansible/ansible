@@ -28,31 +28,40 @@ options:
         - absent to remove resource
     default: present
     choices: [ "present", "absent"]
+    type: str
   name:
     description:
         - name of the vgw to be created or deleted
+    type: str
   type:
     description:
         - type of the virtual gateway to be created
     choices: [ "ipsec.1" ]
+    default: "ipsec.1"
+    type: str
   vpn_gateway_id:
     description:
         - vpn gateway id of an existing virtual gateway
+    type: str
   vpc_id:
     description:
         - the vpc-id of a vpc to attach or detach
+    type: str
   asn:
     description:
         - the BGP ASN of the amazon side
     version_added: "2.6"
+    type: int
   wait_timeout:
     description:
         - number of seconds to wait for status during vpc attach and detach
     default: 320
+    type: int
   tags:
     description:
         - dictionary of resource tags
     aliases: [ "resource_tags" ]
+    type: dict
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
   - ec2
@@ -538,7 +547,6 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(default='present', choices=['present', 'absent']),
-        region=dict(required=True),
         name=dict(),
         vpn_gateway_id=dict(),
         vpc_id=dict(),

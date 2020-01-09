@@ -40,9 +40,7 @@ except ImportError:
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
-from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import env_fallback, missing_required_lib
-from ansible.module_utils.urls import generic_urlparse
 
 
 class TaskError(Exception):
@@ -117,7 +115,7 @@ def find_obj(content, vimtype, name, first=True, folder=None):
 
 
 def find_dvspg_by_name(dv_switch, portgroup_name):
-
+    portgroup_name = quote_obj_name(portgroup_name)
     portgroups = dv_switch.portgroup
 
     for pg in portgroups:
@@ -141,7 +139,7 @@ def find_object_by_name(content, name, obj_type, folder=None, recurse=True):
 
 def find_cluster_by_name(content, cluster_name, datacenter=None):
 
-    if datacenter:
+    if datacenter and hasattr(datacenter, 'hostFolder'):
         folder = datacenter.hostFolder
     else:
         folder = content.rootFolder
@@ -168,8 +166,8 @@ def get_parent_datacenter(obj):
     return datacenter
 
 
-def find_datastore_by_name(content, datastore_name):
-    return find_object_by_name(content, datastore_name, [vim.Datastore])
+def find_datastore_by_name(content, datastore_name, datacenter_name=None):
+    return find_object_by_name(content, datastore_name, [vim.Datastore], datacenter_name)
 
 
 def find_dvs_by_name(content, switch_name, folder=None):
@@ -185,7 +183,7 @@ def find_resource_pool_by_name(content, resource_pool_name):
 
 
 def find_network_by_name(content, network_name):
-    return find_object_by_name(content, network_name, [vim.Network])
+    return find_object_by_name(content, quote_obj_name(network_name), [vim.Network])
 
 
 def find_vm_by_id(content, vm_id, vm_id_type="vm_name", datacenter=None,
@@ -741,6 +739,7 @@ def set_vm_power_state(content, vm, state, force, timeout=0):
     if not force and current_state not in ['poweredon', 'poweredoff']:
         result['failed'] = True
         result['msg'] = "Virtual Machine is in %s power state. Force is required!" % current_state
+        result['instance'] = gather_vm_facts(content, vm)
         return result
 
     # State is not already true
@@ -840,6 +839,52 @@ def is_truthy(value):
     if str(value).lower() in ['true', 'on', 'yes']:
         return True
     return False
+
+
+# options is the dict as defined in the module parameters, current_options is
+# the list of the currently set options as returned by the vSphere API.
+def option_diff(options, current_options):
+    current_options_dict = {}
+    for option in current_options:
+        current_options_dict[option.key] = option.value
+
+    change_option_list = []
+    for option_key, option_value in options.items():
+        if is_boolean(option_value):
+            option_value = VmomiSupport.vmodlTypes['bool'](is_truthy(option_value))
+        elif isinstance(option_value, int):
+            option_value = VmomiSupport.vmodlTypes['int'](option_value)
+        elif isinstance(option_value, float):
+            option_value = VmomiSupport.vmodlTypes['float'](option_value)
+        elif isinstance(option_value, str):
+            option_value = VmomiSupport.vmodlTypes['string'](option_value)
+
+        if option_key not in current_options_dict or current_options_dict[option_key] != option_value:
+            change_option_list.append(vim.option.OptionValue(key=option_key, value=option_value))
+
+    return change_option_list
+
+
+def quote_obj_name(object_name=None):
+    """
+    Replace special characters in object name
+    with urllib quote equivalent
+
+    """
+    if not object_name:
+        return None
+
+    from collections import OrderedDict
+    SPECIAL_CHARS = OrderedDict({
+        '%': '%25',
+        '/': '%2f',
+        '\\': '%5c'
+    })
+    for key in SPECIAL_CHARS.keys():
+        if key in object_name:
+            object_name = object_name.replace(key, SPECIAL_CHARS[key])
+
+    return object_name
 
 
 class PyVmomi(object):
@@ -950,12 +995,10 @@ class PyVmomi(object):
             vms = []
 
             for temp_vm_object in objects:
-                if len(temp_vm_object.propSet) != 1:
-                    continue
-                for temp_vm_object_property in temp_vm_object.propSet:
-                    if temp_vm_object_property.val == self.params['name']:
-                        vms.append(temp_vm_object.obj)
-                        break
+                if (
+                        len(temp_vm_object.propSet) == 1 and
+                        temp_vm_object.propSet[0].val == self.params['name']):
+                    vms.append(temp_vm_object.obj)
 
             # get_managed_objects_properties may return multiple virtual machine,
             # following code tries to find user desired one depending upon the folder specified.
@@ -1010,7 +1053,11 @@ class PyVmomi(object):
                         break
             elif vms:
                 # Unique virtual machine found.
-                vm_obj = vms[0]
+                actual_vm_folder_path = self.get_vm_path(content=self.content, vm_name=vms[0])
+                if self.params.get('folder') is None:
+                    vm_obj = vms[0]
+                elif self.params['folder'] in actual_vm_folder_path:
+                    vm_obj = vms[0]
         elif 'moid' in self.params and self.params['moid']:
             vm_obj = VmomiSupport.templateOf('VirtualMachine')(self.params['moid'], self.si._stub)
 
@@ -1293,16 +1340,18 @@ class PyVmomi(object):
             return False
         return True
 
-    def find_datastore_by_name(self, datastore_name):
+    def find_datastore_by_name(self, datastore_name, datacenter_name=None):
         """
         Get datastore managed object by name
         Args:
             datastore_name: Name of datastore
+            datacenter_name: Name of datacenter where the datastore resides.  This is needed because Datastores can be
+            shared across Datacenters, so we need to specify the datacenter to assure we get the correct Managed Object Reference
 
         Returns: datastore managed object if found else None
 
         """
-        return find_datastore_by_name(self.content, datastore_name=datastore_name)
+        return find_datastore_by_name(self.content, datastore_name=datastore_name, datacenter_name=datacenter_name)
 
     # Datastore cluster
     def find_datastore_cluster_by_name(self, datastore_cluster_name):

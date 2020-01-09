@@ -112,6 +112,7 @@
     account_email: "{{ account_email }}"
     data: "{{ challenge_data }}"
     retrieve_all_alternates: "{{ retrieve_all_alternates | default(omit) }}"
+    select_chain: "{{ select_chain | default(omit) if select_crypto_backend == 'cryptography' else omit }}"
   register: certificate_obtain_result
   when: challenge_data is changed
 - name: ({{ certgen_title }}) Deleting HTTP challenges
@@ -134,6 +135,6 @@
   when: "challenge_data is changed and challenge == 'tls-alpn-01'"
 - name: ({{ certgen_title }}) Get root certificate
   get_url:
-    url: "http://{{ acme_host }}:5000/root-certificate-for-ca/0"
+    url: "http://{{ acme_host }}:5000/root-certificate-for-ca/{{ acme_expected_root_number | default(0) if select_crypto_backend == 'cryptography' else 0 }}"
     dest: "{{ output_dir }}/{{ certificate_name }}-root.pem"
 ###############################################################################################

@@ -14,48 +14,64 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: lightsail
-short_description: Create or delete a virtual machine instance in AWS Lightsail
+short_description: Manage instances in AWS Lightsail
 description:
-     - Creates or instances in AWS Lightsail and optionally wait for it to be 'running'.
+     - Manage instances in AWS Lightsail.
+     - Instance tagging is not yet supported in this module.
 version_added: "2.4"
-author: "Nick Ball (@nickball)"
+author:
+    - "Nick Ball (@nickball)"
+    - "Prasad Katti (@prasadkatti)"
 options:
   state:
     description:
       - Indicate desired state of the target.
+      - I(rebooted) and I(restarted) are aliases.
     default: present
-    choices: ['present', 'absent', 'running', 'restarted', 'stopped']
+    choices: ['present', 'absent', 'running', 'restarted', 'rebooted', 'stopped']
+    type: str
   name:
-    description:
-      - Name of the instance
+    description: Name of the instance.
     required: true
+    type: str
   zone:
     description:
-      - AWS availability zone in which to launch the instance. Required when state='present'
+      - AWS availability zone in which to launch the instance.
+      - Required when I(state=present)
+    type: str
   blueprint_id:
     description:
-      - ID of the instance blueprint image. Required when state='present'
+      - ID of the instance blueprint image.
+      - Required when I(state=present)
+    type: str
   bundle_id:
     description:
-      - Bundle of specification info for the instance. Required when state='present'
+      - Bundle of specification info for the instance.
+      - Required when I(state=present).
+    type: str
   user_data:
     description:
-      - Launch script that can configure the instance with additional data
+      - Launch script that can configure the instance with additional data.
+    type: str
   key_pair_name:
     description:
-      - Name of the key pair to use with the instance
+      - Name of the key pair to use with the instance.
+      - If I(state=present) and a key_pair_name is not provided, the default keypair from the region will be used.
+    type: str
   wait:
     description:
-      - Wait for the instance to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned
+      - Wait for the instance to be in state 'running' before returning.
+      - If I(wait=false) an ip_address may not be returned.
+      - Has no effect when I(state=rebooted) or I(state=absent).
     type: bool
-    default: 'yes'
+    default: true
   wait_timeout:
     description:
-      - How long before wait gives up, in seconds.
+      - How long before I(wait) gives up, in seconds.
     default: 300
+    type: int
 
 requirements:
-  - "python >= 2.6"
   - boto3
 
 extends_documentation_fragment:
@@ -65,30 +81,23 @@ extends_documentation_fragment:
 
 
 EXAMPLES = '''
-# Create a new Lightsail instance, register the instance details
+# Create a new Lightsail instance
 - lightsail:
     state: present
-    name: myinstance
+    name: my_instance
     region: us-east-1
     zone: us-east-1a
     blueprint_id: ubuntu_16_04
     bundle_id: nano_1_0
     key_pair_name: id_rsa
     user_data: " echo 'hello world' > /home/ubuntu/test.txt"
-    wait_timeout: 500
   register: my_instance
 
-- debug:
-    msg: "Name is {{ my_instance.instance.name }}"
-
-- debug:
-    msg: "IP is {{ my_instance.instance.public_ip_address }}"
-
-# Delete an instance if present
+# Delete an instance
 - lightsail:
     state: absent
     region: us-east-1
-    name: myinstance
+    name: my_instance
 
 '''
 
@@ -147,317 +156,184 @@ instance:
 '''
 
 import time
-import traceback
 
 try:
     import botocore
-    HAS_BOTOCORE = True
 except ImportError:
-    HAS_BOTOCORE = False
-
-try:
-    import boto3
-except ImportError:
-    # will be caught by imported HAS_BOTO3
+    # will be caught by AnsibleAWSModule
     pass
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (ec2_argument_spec, get_aws_connection_info, boto3_conn,
-                                      HAS_BOTO3, camel_dict_to_snake_dict)
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+
+
+def find_instance_info(module, client, instance_name, fail_if_not_found=False):
+
+    try:
+        res = client.get_instance(instanceName=instance_name)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'NotFoundException' and not fail_if_not_found:
+            return None
+        module.fail_json_aws(e)
+    return res['instance']
+
+
+def wait_for_instance_state(module, client, instance_name, states):
+    """
+    `states` is a list of instance states that we are waiting for.
+    """
+
+    wait_timeout = module.params.get('wait_timeout')
+    wait_max = time.time() + wait_timeout
+    while wait_max > time.time():
+        try:
+            instance = find_instance_info(module, client, instance_name)
+            if instance['state']['name'] in states:
+                break
+            time.sleep(5)
+        except botocore.exceptions.ClientError as e:
+            module.fail_json_aws(e)
+    else:
+        module.fail_json(msg='Timed out waiting for instance "{0}" to get to one of the following states -'
+                             ' {1}'.format(instance_name, states))
 
 
 def create_instance(module, client, instance_name):
-    """
-    Create an instance
 
-    module: Ansible module object
-    client: authenticated lightsail connection object
-    instance_name: name of instance to delete
+    inst = find_instance_info(module, client, instance_name)
+    if inst:
+        module.exit_json(changed=False, instance=camel_dict_to_snake_dict(inst))
+    else:
+        create_params = {'instanceNames': [instance_name],
+                         'availabilityZone': module.params.get('zone'),
+                         'blueprintId': module.params.get('blueprint_id'),
+                         'bundleId': module.params.get('bundle_id'),
+                         'userData': module.params.get('user_data')}
 
-    Returns a dictionary of instance information
-    about the new instance.
+        key_pair_name = module.params.get('key_pair_name')
+        if key_pair_name:
+            create_params['keyPairName'] = key_pair_name
 
-    """
-
-    changed = False
-
-    # Check if instance already exists
-    inst = None
-    try:
-        inst = _find_instance_info(client, instance_name)
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != 'NotFoundException':
-            module.fail_json(msg='Error finding instance {0}, error: {1}'.format(instance_name, e))
-
-    zone = module.params.get('zone')
-    blueprint_id = module.params.get('blueprint_id')
-    bundle_id = module.params.get('bundle_id')
-    key_pair_name = module.params.get('key_pair_name')
-    user_data = module.params.get('user_data')
-    user_data = '' if user_data is None else user_data
-
-    resp = None
-    if inst is None:
         try:
-            resp = client.create_instances(
-                instanceNames=[
-                    instance_name
-                ],
-                availabilityZone=zone,
-                blueprintId=blueprint_id,
-                bundleId=bundle_id,
-                userData=user_data,
-                keyPairName=key_pair_name,
-            )
-            resp = resp['operations'][0]
+            client.create_instances(**create_params)
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg='Unable to create instance {0}, error: {1}'.format(instance_name, e))
-        changed = True
+            module.fail_json_aws(e)
 
-    inst = _find_instance_info(client, instance_name)
+        wait = module.params.get('wait')
+        if wait:
+            desired_states = ['running']
+            wait_for_instance_state(module, client, instance_name, desired_states)
+        inst = find_instance_info(module, client, instance_name, fail_if_not_found=True)
 
-    return (changed, inst)
+        module.exit_json(changed=True, instance=camel_dict_to_snake_dict(inst))
 
 
 def delete_instance(module, client, instance_name):
-    """
-    Terminates an instance
-
-    module: Ansible module object
-    client: authenticated lightsail connection object
-    instance_name: name of instance to delete
-
-    Returns a dictionary of instance information
-    about the instance deleted (pre-deletion).
-
-    If the instance to be deleted is running
-    "changed" will be set to False.
-
-    """
-
-    # It looks like deleting removes the instance immediately, nothing to wait for
-    wait = module.params.get('wait')
-    wait_timeout = int(module.params.get('wait_timeout'))
-    wait_max = time.time() + wait_timeout
 
     changed = False
 
-    inst = None
-    try:
-        inst = _find_instance_info(client, instance_name)
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != 'NotFoundException':
-            module.fail_json(msg='Error finding instance {0}, error: {1}'.format(instance_name, e))
+    inst = find_instance_info(module, client, instance_name)
+    if inst is None:
+        module.exit_json(changed=changed, instance={})
 
     # Wait for instance to exit transition state before deleting
-    if wait:
-        while wait_max > time.time() and inst is not None and inst['state']['name'] in ('pending', 'stopping'):
-            try:
-                time.sleep(5)
-                inst = _find_instance_info(client, instance_name)
-            except botocore.exceptions.ClientError as e:
-                if e.response['ResponseMetadata']['HTTPStatusCode'] == "403":
-                    module.fail_json(msg="Failed to delete instance {0}. Check that you have permissions to perform the operation.".format(instance_name),
-                                     exception=traceback.format_exc())
-                elif e.response['Error']['Code'] == "RequestExpired":
-                    module.fail_json(msg="RequestExpired: Failed to delete instance {0}.".format(instance_name), exception=traceback.format_exc())
-                # sleep and retry
-                time.sleep(10)
+    desired_states = ['running', 'stopped']
+    wait_for_instance_state(module, client, instance_name, desired_states)
 
-    # Attempt to delete
-    if inst is not None:
-        while not changed and ((wait and wait_max > time.time()) or (not wait)):
-            try:
-                client.delete_instance(instanceName=instance_name)
-                changed = True
-            except botocore.exceptions.ClientError as e:
-                module.fail_json(msg='Error deleting instance {0}, error: {1}'.format(instance_name, e))
+    try:
+        client.delete_instance(instanceName=instance_name)
+        changed = True
+    except botocore.exceptions.ClientError as e:
+        module.fail_json_aws(e)
 
-    # Timed out
-    if wait and not changed and wait_max <= time.time():
-        module.fail_json(msg="wait for instance delete timeout at %s" % time.asctime())
-
-    return (changed, inst)
+    module.exit_json(changed=changed, instance=camel_dict_to_snake_dict(inst))
 
 
 def restart_instance(module, client, instance_name):
     """
     Reboot an existing instance
-
-    module: Ansible module object
-    client: authenticated lightsail connection object
-    instance_name: name of instance to reboot
-
-    Returns a dictionary of instance information
-    about the restarted instance
-
-    If the instance was not able to reboot,
-    "changed" will be set to False.
-
     Wait will not apply here as this is an OS-level operation
     """
-    wait = module.params.get('wait')
-    wait_timeout = int(module.params.get('wait_timeout'))
-    wait_max = time.time() + wait_timeout
 
     changed = False
 
-    inst = None
+    inst = find_instance_info(module, client, instance_name, fail_if_not_found=True)
+
     try:
-        inst = _find_instance_info(client, instance_name)
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != 'NotFoundException':
-            module.fail_json(msg='Error finding instance {0}, error: {1}'.format(instance_name, e))
-
-    # Wait for instance to exit transition state before state change
-    if wait:
-        while wait_max > time.time() and inst is not None and inst['state']['name'] in ('pending', 'stopping'):
-            try:
-                time.sleep(5)
-                inst = _find_instance_info(client, instance_name)
-            except botocore.exceptions.ClientError as e:
-                if e.response['ResponseMetadata']['HTTPStatusCode'] == "403":
-                    module.fail_json(msg="Failed to restart instance {0}. Check that you have permissions to perform the operation.".format(instance_name),
-                                     exception=traceback.format_exc())
-                elif e.response['Error']['Code'] == "RequestExpired":
-                    module.fail_json(msg="RequestExpired: Failed to restart instance {0}.".format(instance_name), exception=traceback.format_exc())
-                time.sleep(3)
-
-    # send reboot
-    if inst is not None:
-        try:
-            client.reboot_instance(instanceName=instance_name)
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] != 'NotFoundException':
-                module.fail_json(msg='Unable to reboot instance {0}, error: {1}'.format(instance_name, e))
+        client.reboot_instance(instanceName=instance_name)
         changed = True
+    except botocore.exceptions.ClientError as e:
+        module.fail_json_aws(e)
 
-    return (changed, inst)
+    module.exit_json(changed=changed, instance=camel_dict_to_snake_dict(inst))
 
 
-def startstop_instance(module, client, instance_name, state):
+def start_or_stop_instance(module, client, instance_name, state):
     """
-    Starts or stops an existing instance
-
-    module: Ansible module object
-    client: authenticated lightsail connection object
-    instance_name: name of instance to start/stop
-    state: Target state ("running" or "stopped")
-
-    Returns a dictionary of instance information
-    about the instance started/stopped
-
-    If the instance was not able to state change,
-    "changed" will be set to False.
-
+    Start or stop an existing instance
     """
-    wait = module.params.get('wait')
-    wait_timeout = int(module.params.get('wait_timeout'))
-    wait_max = time.time() + wait_timeout
 
     changed = False
 
-    inst = None
-    try:
-        inst = _find_instance_info(client, instance_name)
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != 'NotFoundException':
-            module.fail_json(msg='Error finding instance {0}, error: {1}'.format(instance_name, e))
+    inst = find_instance_info(module, client, instance_name, fail_if_not_found=True)
 
     # Wait for instance to exit transition state before state change
-    if wait:
-        while wait_max > time.time() and inst is not None and inst['state']['name'] in ('pending', 'stopping'):
-            try:
-                time.sleep(5)
-                inst = _find_instance_info(client, instance_name)
-            except botocore.exceptions.ClientError as e:
-                if e.response['ResponseMetadata']['HTTPStatusCode'] == "403":
-                    module.fail_json(msg="Failed to start/stop instance {0}. Check that you have permissions to perform the operation".format(instance_name),
-                                     exception=traceback.format_exc())
-                elif e.response['Error']['Code'] == "RequestExpired":
-                    module.fail_json(msg="RequestExpired: Failed to start/stop instance {0}.".format(instance_name), exception=traceback.format_exc())
-                time.sleep(1)
+    desired_states = ['running', 'stopped']
+    wait_for_instance_state(module, client, instance_name, desired_states)
 
     # Try state change
-    if inst is not None and inst['state']['name'] != state:
+    if inst and inst['state']['name'] != state:
         try:
             if state == 'running':
                 client.start_instance(instanceName=instance_name)
             else:
                 client.stop_instance(instanceName=instance_name)
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(instance_name, e))
+            module.fail_json_aws(e)
         changed = True
         # Grab current instance info
-        inst = _find_instance_info(client, instance_name)
+        inst = find_instance_info(module, client, instance_name)
 
-    return (changed, inst)
+    wait = module.params.get('wait')
+    if wait:
+        desired_states = [state]
+        wait_for_instance_state(module, client, instance_name, desired_states)
+        inst = find_instance_info(module, client, instance_name, fail_if_not_found=True)
 
-
-def core(module):
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    if not region:
-        module.fail_json(msg='region must be specified')
-
-    client = None
-    try:
-        client = boto3_conn(module, conn_type='client', resource='lightsail',
-                            region=region, endpoint=ec2_url, **aws_connect_kwargs)
-    except (botocore.exceptions.ClientError, botocore.exceptions.ValidationError) as e:
-        module.fail_json(msg='Failed while connecting to the lightsail service: %s' % e, exception=traceback.format_exc())
-
-    changed = False
-    state = module.params['state']
-    name = module.params['name']
-
-    if state == 'absent':
-        changed, instance_dict = delete_instance(module, client, name)
-    elif state in ('running', 'stopped'):
-        changed, instance_dict = startstop_instance(module, client, name, state)
-    elif state == 'restarted':
-        changed, instance_dict = restart_instance(module, client, name)
-    elif state == 'present':
-        changed, instance_dict = create_instance(module, client, name)
-
-    module.exit_json(changed=changed, instance=camel_dict_to_snake_dict(instance_dict))
-
-
-def _find_instance_info(client, instance_name):
-    ''' handle exceptions where this function is called '''
-    inst = None
-    try:
-        inst = client.get_instance(instanceName=instance_name)
-    except botocore.exceptions.ClientError as e:
-        raise
-    return inst['instance']
+    module.exit_json(changed=changed, instance=camel_dict_to_snake_dict(inst))
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+
+    argument_spec = dict(
         name=dict(type='str', required=True),
-        state=dict(type='str', default='present', choices=['present', 'absent', 'stopped', 'running', 'restarted']),
+        state=dict(type='str', default='present', choices=['present', 'absent', 'stopped', 'running', 'restarted',
+                                                           'rebooted']),
         zone=dict(type='str'),
         blueprint_id=dict(type='str'),
         bundle_id=dict(type='str'),
         key_pair_name=dict(type='str'),
-        user_data=dict(type='str'),
+        user_data=dict(type='str', default=''),
         wait=dict(type='bool', default=True),
         wait_timeout=dict(default=300, type='int'),
-    ))
+    )
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleAWSModule(argument_spec=argument_spec,
+                              required_if=[['state', 'present', ('zone', 'blueprint_id', 'bundle_id')]])
 
-    if not HAS_BOTO3:
-        module.fail_json(msg='Python module "boto3" is missing, please install it')
+    client = module.client('lightsail')
 
-    if not HAS_BOTOCORE:
-        module.fail_json(msg='Python module "botocore" is missing, please install it')
+    name = module.params.get('name')
+    state = module.params.get('state')
 
-    try:
-        core(module)
-    except (botocore.exceptions.ClientError, Exception) as e:
-        module.fail_json(msg=str(e), exception=traceback.format_exc())
+    if state == 'present':
+        create_instance(module, client, name)
+    elif state == 'absent':
+        delete_instance(module, client, name)
+    elif state in ('running', 'stopped'):
+        start_or_stop_instance(module, client, name, state)
+    elif state in ('restarted', 'rebooted'):
+        restart_instance(module, client, name)
 
 
 if __name__ == '__main__':

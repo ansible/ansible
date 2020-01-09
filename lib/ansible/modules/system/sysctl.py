@@ -99,10 +99,11 @@ EXAMPLES = '''
 # ==============================================================
 
 import os
+import platform
 import re
 import tempfile
 
-from ansible.module_utils.basic import get_platform, AnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 from ansible.module_utils._text import to_native
@@ -138,7 +139,7 @@ class SysctlModule(object):
 
     def process(self):
 
-        self.platform = get_platform().lower()
+        self.platform = platform.system().lower()
 
         # Whitespace is bad
         self.args['name'] = self.args['name'].strip()

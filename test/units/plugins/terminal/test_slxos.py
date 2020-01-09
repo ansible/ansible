@@ -33,9 +33,6 @@ class TestPluginTerminalSLXOS(unittest.TestCase):
         self._mock_connection = MagicMock()
         self._terminal = slxos.TerminalModule(self._mock_connection)
 
-    def tearDown(self):
-        pass
-
     def test_on_open_shell(self):
         """ Test on_open_shell
         """

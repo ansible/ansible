@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_compute_instance_template_info
 description:
 - Gather info for GCP InstanceTemplate
-- This module was called C(gcp_compute_instance_template_facts) before Ansible 2.9.
-  The usage has not changed.
 short_description: Gather info for GCP InstanceTemplate
 version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
@@ -86,9 +84,9 @@ options:
     - This only alters the User Agent string for any API requests.
     type: str
 notes:
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -387,6 +385,28 @@ resources:
                   - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
                   returned: success
                   type: str
+                setPublicPtr:
+                  description:
+                  - Specifies whether a public DNS PTR record should be created to
+                    map the external IP address of the instance to a DNS domain name.
+                  returned: success
+                  type: bool
+                publicPtrDomainName:
+                  description:
+                  - The DNS domain name for the public PTR record. You can set this
+                    field only if the setPublicPtr field is enabled.
+                  returned: success
+                  type: str
+                networkTier:
+                  description:
+                  - This signifies the networking tier used for configuring this access
+                    configuration. If an AccessConfig is specified without a valid
+                    external IP address, an ephemeral IP will be created with this
+                    networkTier. If an AccessConfig with a valid external IP address
+                    is specified, it must match that of the networkTier associated
+                    with the Address resource owning that IP.
+                  returned: success
+                  type: str
             aliasIpRanges:
               description:
               - An array of alias IP ranges for this network interface. Can only be
@@ -528,9 +548,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
-
-    if module._name == 'gcp_compute_instance_template_facts':
-        module.deprecate("The 'gcp_compute_instance_template_facts' module has been renamed to 'gcp_compute_instance_template_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']

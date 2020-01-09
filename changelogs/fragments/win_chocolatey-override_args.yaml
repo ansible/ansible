@@ -1,0 +1,2 @@
+minor_changes:
+- win_chocolatey - Add ``override_args`` option to allow overriding builtin install arguments for a Chocolatey package

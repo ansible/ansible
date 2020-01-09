@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_compute_subnetwork_info
 description:
 - Gather info for GCP Subnetwork
-- This module was called C(gcp_compute_subnetwork_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP Subnetwork
 version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
@@ -91,9 +89,9 @@ options:
     - This only alters the User Agent string for any API requests.
     type: str
 notes:
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -166,17 +164,6 @@ resources:
       - Only networks that are in the distributed mode can have subnetworks.
       returned: success
       type: dict
-    enableFlowLogs:
-      description:
-      - Whether to enable flow logging for this subnetwork.
-      returned: success
-      type: bool
-    fingerprint:
-      description:
-      - Fingerprint of this resource. This field is used internally during updates
-        of this resource.
-      returned: success
-      type: str
     secondaryIpRanges:
       description:
       - An array of configurations for secondary IP ranges for VM instances contained
@@ -227,9 +214,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str'), region=dict(required=True, type='str')))
-
-    if module._name == 'gcp_compute_subnetwork_facts':
-        module.deprecate("The 'gcp_compute_subnetwork_facts' module has been renamed to 'gcp_compute_subnetwork_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']

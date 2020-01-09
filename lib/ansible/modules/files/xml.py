@@ -441,7 +441,7 @@ def delete_xpath_target(module, tree, xpath, namespaces):
 
 
 def replace_children_of(children, match):
-    for element in match.getchildren():
+    for element in list(match):
         match.remove(element)
     match.extend(children)
 
@@ -458,8 +458,8 @@ def set_target_children_inner(module, tree, xpath, namespaces, children, in_type
     # xpaths always return matches as a list, so....
     for match in matches:
         # Check if elements differ
-        if len(match.getchildren()) == len(children):
-            for idx, element in enumerate(match.getchildren()):
+        if len(list(match)) == len(children):
+            for idx, element in enumerate(list(match)):
                 if etree.tostring(element) != children_as_string[idx]:
                     replace_children_of(children, match)
                     changed = True

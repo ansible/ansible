@@ -76,21 +76,21 @@ purefa_info:
   description: Returns the information collected from the FlashArray
   returned: always
   type: complex
-  contains:
+  sample: {
         "admins": {
             "pureuser": {
                 "role": "array_admin",
                 "type": "local"
             }
-        }
+        },
         "apps": {
             "offload": {
                 "description": "Snapshot offload to NFS or Amazon S3",
                 "status": "healthy",
                 "version": "5.2.1"
             }
-        }
-        "arrays": {}
+        },
+        "arrays": {},
         "capacity": {
             "data_reduction": 11.664774599686346,
             "free_space": 6995782867042,
@@ -102,7 +102,7 @@ purefa_info:
             "total_capacity": 7002920315199,
             "total_reduction": 64.86821472825108,
             "volume_space": 3781932919
-        }
+        },
         "config": {
             "directory_service": {
                 "base_dn": null,
@@ -176,7 +176,7 @@ purefa_info:
             "syslog": [
                 "udp://prod-ntp2.puretec.purestorage.com:333"
             ]
-        }
+        },
         "default": {
             "admins": 1,
             "array_model": "FA-405",
@@ -190,8 +190,8 @@ purefa_info:
             "purity_version": "5.2.1",
             "snapshots": 2,
             "volume_groups": 1
-        }
-        "hgroups": {}
+        },
+        "hgroups": {},
         "hosts": {
             "@offload": {
                 "hgroup": null,
@@ -216,11 +216,11 @@ purefa_info:
                 ],
                 "wwn": []
             }
-        }
+        },
         "interfaces": {
             "CT0.ETH4": "iqn.2010-06.com.purestorage:flasharray.2111b767484e4682",
             "CT1.ETH4": "iqn.2010-06.com.purestorage:flasharray.2111b767484e4682",
-        }
+        },
         "network": {
             "@offload.data0": {
                 "address": "10.21.200.222",
@@ -310,8 +310,8 @@ purefa_info:
                 ],
                 "speed": 1000000000
             }
-        }
-        "nfs_offload": {}
+        },
+        "nfs_offload": {},
         "performance": {
             "input_per_sec": 0,
             "local_queue_usec_per_op": 0,
@@ -328,7 +328,7 @@ purefa_info:
             "usec_per_read_op": 0,
             "usec_per_write_op": 0,
             "writes_per_sec": 0
-        }
+        },
         "pgroups": {
             "test_pg": {
                 "hgroups": null,
@@ -337,7 +337,7 @@ purefa_info:
                 "targets": null,
                 "volumes": null
             }
-        }
+        },
         "pods": {
             "test": {
                 "arrays": [
@@ -350,7 +350,7 @@ purefa_info:
                 ],
                 "source": null
             }
-        }
+        },
         "s3_offload": {
             "s3-offload": {
                 "access_key_id": "AKIAILNVEPWZTV4FGWZQ",
@@ -358,15 +358,15 @@ purefa_info:
                 "protocol": "s3",
                 "status": "connected"
             }
-        }
+        },
         "snapshots": {
             "@offload_boot.1": {
                 "created": "2019-03-14T15:29:20Z",
                 "size": 68719476736,
                 "source": "@offload_boot"
             }
-        }
-        "subnet": {}
+        },
+        "subnet": {},
         "vgroups": {
             "test": {
                 "volumes": [
@@ -374,7 +374,7 @@ purefa_info:
                     "test/test1"
                 ]
             }
-        }
+        },
         "volumes": {
             "@offload_boot": {
                 "bandwidth": null,
@@ -401,6 +401,7 @@ purefa_info:
                 "source": null
             }
         }
+    }
 '''
 
 

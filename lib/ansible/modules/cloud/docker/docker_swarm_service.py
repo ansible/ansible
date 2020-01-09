@@ -55,7 +55,6 @@ options:
         description:
           - Name of the file containing the config. Defaults to the I(config_name) if not specified.
         type: str
-        required: yes
       uid:
         description:
           - UID of the config file's owner.
@@ -194,7 +193,6 @@ options:
       - Service image path and tag.
       - Corresponds to the C(IMAGE) parameter of C(docker service create).
     type: str
-    required: yes
   labels:
     description:
       - Dictionary of key value pairs.
@@ -211,12 +209,12 @@ options:
         type: float
       memory:
         description:
-          - "Service memory reservation in format C(<number>[<unit>]). Number is a positive integer.
+          - "Service memory limit in format C(<number>[<unit>]). Number is a positive integer.
             Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
             C(T) (tebibyte), or C(P) (pebibyte)."
-          - C(0) equals no reservation.
+          - C(0) equals no limit.
           - Omitting the unit defaults to bytes.
-          - Corresponds to the C(--reserve-memory) option of C(docker service create).
+          - Corresponds to the C(--limit-memory) option of C(docker service create).
         type: str
     type: dict
     version_added: "2.8"
@@ -284,8 +282,8 @@ options:
       source:
         description:
           - Mount source (e.g. a volume name or a host path).
+          - Must be specified if I(type) is not C(tmpfs).
         type: str
-        required: yes
       target:
         description:
           - Container path.
@@ -640,7 +638,6 @@ options:
       - C(present) - Asserts the existence of a service matching the name and provided configuration parameters.
         Unspecified configuration parameters will be set to docker defaults.
     type: str
-    required: yes
     default: present
     choices:
       - present
@@ -901,6 +898,7 @@ changes:
   description:
     - List of changed service attributes if a service has been altered, [] otherwise.
   type: list
+  elements: str
   sample: ['container_labels', 'replicas']
 rebuilt:
   returned: always
@@ -1243,23 +1241,92 @@ def has_dict_changed(new_dict, old_dict):
     return False
 
 
-def has_list_changed(new_list, old_list):
+def has_list_changed(new_list, old_list, sort_lists=True, sort_key=None):
     """
-    Check two lists has differences.
+    Check two lists have differences. Sort lists by default.
     """
+
+    def sort_list(unsorted_list):
+        """
+        Sort a given list.
+        The list may contain dictionaries, so use the sort key to handle them.
+        """
+
+        if unsorted_list and isinstance(unsorted_list[0], dict):
+            if not sort_key:
+                raise Exception(
+                    'A sort key was not specified when sorting list'
+                )
+            else:
+                return sorted(unsorted_list, key=lambda k: k[sort_key])
+
+        # Either the list is empty or does not contain dictionaries
+        try:
+            return sorted(unsorted_list)
+        except TypeError:
+            return unsorted_list
+
     if new_list is None:
         return False
     old_list = old_list or []
     if len(new_list) != len(old_list):
         return True
-    for new_item, old_item in zip(new_list, old_list):
+
+    if sort_lists:
+        zip_data = zip(sort_list(new_list), sort_list(old_list))
+    else:
+        zip_data = zip(new_list, old_list)
+    for new_item, old_item in zip_data:
         is_same_type = type(new_item) == type(old_item)
         if not is_same_type:
-            return True
+            if isinstance(new_item, string_types) and isinstance(old_item, string_types):
+                # Even though the types are different between these items,
+                # they are both strings. Try matching on the same string type.
+                try:
+                    new_item_type = type(new_item)
+                    old_item_casted = new_item_type(old_item)
+                    if new_item != old_item_casted:
+                        return True
+                    else:
+                        continue
+                except UnicodeEncodeError:
+                    # Fallback to assuming the strings are different
+                    return True
+            else:
+                return True
         if isinstance(new_item, dict):
             if has_dict_changed(new_item, old_item):
                 return True
         elif new_item != old_item:
+            return True
+
+    return False
+
+
+def have_networks_changed(new_networks, old_networks):
+    """Special case list checking for networks to sort aliases"""
+
+    if new_networks is None:
+        return False
+    old_networks = old_networks or []
+    if len(new_networks) != len(old_networks):
+        return True
+
+    zip_data = zip(
+        sorted(new_networks, key=lambda k: k['id']),
+        sorted(old_networks, key=lambda k: k['id'])
+    )
+
+    for new_item, old_item in zip_data:
+        new_item = dict(new_item)
+        old_item = dict(old_item)
+        # Sort the aliases
+        if 'aliases' in new_item:
+            new_item['aliases'] = sorted(new_item['aliases'] or [])
+        if 'aliases' in old_item:
+            old_item['aliases'] = sorted(old_item['aliases'] or [])
+
+        if has_dict_changed(new_item, old_item):
             return True
 
     return False
@@ -1705,7 +1772,9 @@ class DockerService(DockerBaseClass):
                 service_m = {}
                 service_m['readonly'] = param_m['readonly']
                 service_m['type'] = param_m['type']
-                service_m['source'] = param_m['source']
+                if param_m['source'] is None and param_m['type'] != 'tmpfs':
+                    raise ValueError('Source must be specified for mounts which are not of type tmpfs')
+                service_m['source'] = param_m['source'] or ''
                 service_m['target'] = param_m['target']
                 service_m['labels'] = param_m['labels']
                 service_m['no_copy'] = param_m['no_copy']
@@ -1758,7 +1827,7 @@ class DockerService(DockerBaseClass):
         force_update = False
         if self.endpoint_mode is not None and self.endpoint_mode != os.endpoint_mode:
             differences.add('endpoint_mode', parameter=self.endpoint_mode, active=os.endpoint_mode)
-        if self.env is not None and self.env != (os.env or []):
+        if has_list_changed(self.env, os.env):
             differences.add('env', parameter=self.env, active=os.env)
         if self.log_driver is not None and self.log_driver != os.log_driver:
             differences.add('log_driver', parameter=self.log_driver, active=os.log_driver)
@@ -1767,26 +1836,26 @@ class DockerService(DockerBaseClass):
         if self.mode != os.mode:
             needs_rebuild = True
             differences.add('mode', parameter=self.mode, active=os.mode)
-        if has_list_changed(self.mounts, os.mounts):
+        if has_list_changed(self.mounts, os.mounts, sort_key='target'):
             differences.add('mounts', parameter=self.mounts, active=os.mounts)
-        if has_list_changed(self.configs, os.configs):
+        if has_list_changed(self.configs, os.configs, sort_key='config_name'):
             differences.add('configs', parameter=self.configs, active=os.configs)
-        if has_list_changed(self.secrets, os.secrets):
+        if has_list_changed(self.secrets, os.secrets, sort_key='secret_name'):
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
-        if has_list_changed(self.networks, os.networks):
+        if have_networks_changed(self.networks, os.networks):
             differences.add('networks', parameter=self.networks, active=os.networks)
             needs_rebuild = not self.can_update_networks
         if self.replicas != os.replicas:
             differences.add('replicas', parameter=self.replicas, active=os.replicas)
-        if self.command is not None and self.command != (os.command or []):
+        if has_list_changed(self.command, os.command, sort_lists=False):
             differences.add('command', parameter=self.command, active=os.command)
-        if self.args is not None and self.args != (os.args or []):
+        if has_list_changed(self.args, os.args, sort_lists=False):
             differences.add('args', parameter=self.args, active=os.args)
-        if self.constraints is not None and self.constraints != (os.constraints or []):
+        if has_list_changed(self.constraints, os.constraints):
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
-        if self.placement_preferences is not None and self.placement_preferences != (os.placement_preferences or []):
+        if has_list_changed(self.placement_preferences, os.placement_preferences, sort_lists=False):
             differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
-        if self.groups is not None and self.groups != (os.groups or []):
+        if has_list_changed(self.groups, os.groups):
             differences.add('groups', parameter=self.groups, active=os.groups)
         if self.labels is not None and self.labels != (os.labels or {}):
             differences.add('labels', parameter=self.labels, active=os.labels)
@@ -1835,11 +1904,11 @@ class DockerService(DockerBaseClass):
             differences.add('image', parameter=self.image, active=change)
         if self.user and self.user != os.user:
             differences.add('user', parameter=self.user, active=os.user)
-        if self.dns is not None and self.dns != (os.dns or []):
+        if has_list_changed(self.dns, os.dns, sort_lists=False):
             differences.add('dns', parameter=self.dns, active=os.dns)
-        if self.dns_search is not None and self.dns_search != (os.dns_search or []):
+        if has_list_changed(self.dns_search, os.dns_search, sort_lists=False):
             differences.add('dns_search', parameter=self.dns_search, active=os.dns_search)
-        if self.dns_options is not None and self.dns_options != (os.dns_options or []):
+        if has_list_changed(self.dns_options, os.dns_options):
             differences.add('dns_options', parameter=self.dns_options, active=os.dns_options)
         if self.has_healthcheck_changed(os):
             differences.add('healthcheck', parameter=self.healthcheck, active=os.healthcheck)
@@ -2201,10 +2270,16 @@ class DockerServiceManager(object):
 
         healthcheck_data = task_template_data['ContainerSpec'].get('Healthcheck')
         if healthcheck_data:
-            options = ['test', 'interval', 'timeout', 'start_period', 'retries']
+            options = {
+                'Test': 'test',
+                'Interval': 'interval',
+                'Timeout': 'timeout',
+                'StartPeriod': 'start_period',
+                'Retries': 'retries'
+            }
             healthcheck = dict(
-                (key.lower(), value) for key, value in healthcheck_data.items()
-                if value is not None and key.lower() in options
+                (options[key], value) for key, value in healthcheck_data.items()
+                if value is not None and key in options
             )
             ds.healthcheck = healthcheck
 
@@ -2623,7 +2698,7 @@ def main():
         image=dict(type='str'),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         mounts=dict(type='list', elements='dict', options=dict(
-            source=dict(type='str', required=True),
+            source=dict(type='str'),
             target=dict(type='str', required=True),
             type=dict(
                 type='str',
@@ -2813,8 +2888,8 @@ def main():
             usage_msg='set publish.mode'
         ),
         healthcheck_start_period=dict(
-            docker_py_version='2.4.0',
-            docker_api_version='1.25',
+            docker_py_version='2.6.0',
+            docker_api_version='1.29',
             detect_usage=_detect_healthcheck_start_period,
             usage_msg='set healthcheck.start_period'
         ),

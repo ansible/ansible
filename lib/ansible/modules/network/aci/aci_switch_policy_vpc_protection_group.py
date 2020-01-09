@@ -234,12 +234,12 @@ def main():
         ],
     )
 
-    protection_group = module.params['protection_group']
-    protection_group_id = module.params['protection_group_id']
-    vpc_domain_policy = module.params['vpc_domain_policy']
-    switch_1_id = module.params['switch_1_id']
-    switch_2_id = module.params['switch_2_id']
-    state = module.params['state']
+    protection_group = module.params.get('protection_group')
+    protection_group_id = module.params.get('protection_group_id')
+    vpc_domain_policy = module.params.get('vpc_domain_policy')
+    switch_1_id = module.params.get('switch_1_id')
+    switch_2_id = module.params.get('switch_2_id')
+    state = module.params.get('state')
 
     aci = ACIModule(module)
     aci.construct_url(

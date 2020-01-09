@@ -22,10 +22,12 @@ import copy
 import math
 import time
 
-from ansible.module_utils.k8s.raw import KubernetesRawModule
 from ansible.module_utils.k8s.common import AUTH_ARG_SPEC, COMMON_ARG_SPEC
+from ansible.module_utils.k8s.common import KubernetesAnsibleModule
+from ansible.module_utils.six import string_types
 
 try:
+    import yaml
     from openshift import watch
     from openshift.dynamic.client import ResourceInstance
     from openshift.helper.exceptions import KubernetesException
@@ -39,11 +41,53 @@ SCALE_ARG_SPEC = {
     'current_replicas': {'type': 'int'},
     'resource_version': {},
     'wait': {'type': 'bool', 'default': True},
-    'wait_timeout': {'type': 'int', 'default': 20}
+    'wait_timeout': {'type': 'int', 'default': 20},
 }
 
 
-class KubernetesAnsibleScaleModule(KubernetesRawModule):
+class KubernetesAnsibleScaleModule(KubernetesAnsibleModule):
+
+    def __init__(self, k8s_kind=None, *args, **kwargs):
+        self.client = None
+        self.warnings = []
+
+        mutually_exclusive = [
+            ('resource_definition', 'src'),
+        ]
+
+        KubernetesAnsibleModule.__init__(self, *args,
+                                         mutually_exclusive=mutually_exclusive,
+                                         supports_check_mode=True,
+                                         **kwargs)
+        self.kind = k8s_kind or self.params.get('kind')
+        self.api_version = self.params.get('api_version')
+        self.name = self.params.get('name')
+        self.namespace = self.params.get('namespace')
+        resource_definition = self.params.get('resource_definition')
+
+        if resource_definition:
+            if isinstance(resource_definition, string_types):
+                try:
+                    self.resource_definitions = yaml.safe_load_all(resource_definition)
+                except (IOError, yaml.YAMLError) as exc:
+                    self.fail(msg="Error loading resource_definition: {0}".format(exc))
+            elif isinstance(resource_definition, list):
+                self.resource_definitions = resource_definition
+            else:
+                self.resource_definitions = [resource_definition]
+        src = self.params.get('src')
+        if src:
+            self.resource_definitions = self.load_resource_definitions(src)
+
+        if not resource_definition and not src:
+            implicit_definition = dict(
+                kind=self.kind,
+                apiVersion=self.api_version,
+                metadata=dict(name=self.name)
+            )
+            if self.namespace:
+                implicit_definition['metadata']['namespace'] = self.namespace
+            self.resource_definitions = [implicit_definition]
 
     def execute_module(self):
         definition = self.resource_definitions[0]

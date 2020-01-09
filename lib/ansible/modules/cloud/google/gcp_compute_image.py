@@ -89,7 +89,7 @@ options:
         - The type of supported feature.
         - 'Some valid choices include: "MULTI_IP_SUBNET", "SECURE_BOOT", "UEFI_COMPATIBLE",
           "VIRTIO_SCSI_MULTIQUEUE", "WINDOWS"'
-        required: false
+        required: true
         type: str
   image_encryption_key:
     description:
@@ -231,9 +231,9 @@ options:
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/images)'
 - 'Official Documentation: U(https://cloud.google.com/compute/docs/images)'
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -489,7 +489,7 @@ def main():
             description=dict(type='str'),
             disk_size_gb=dict(type='int'),
             family=dict(type='str'),
-            guest_os_features=dict(type='list', elements='dict', options=dict(type=dict(type='str'))),
+            guest_os_features=dict(type='list', elements='dict', options=dict(type=dict(required=True, type='str'))),
             image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
             labels=dict(type='dict'),
             licenses=dict(type='list', elements='str'),

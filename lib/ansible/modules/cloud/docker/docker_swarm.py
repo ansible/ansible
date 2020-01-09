@@ -76,7 +76,6 @@ options:
         Note that removing requires Docker SDK for Python >= 2.4.0.
       - Set to C(inspect) to display swarm informations.
     type: str
-    required: yes
     default: present
     choices:
       - present
@@ -236,12 +235,12 @@ RETURN = '''
 swarm_facts:
   description: Informations about swarm.
   returned: success
-  type: complex
+  type: dict
   contains:
       JoinTokens:
           description: Tokens to connect to the Swarm.
           returned: success
-          type: complex
+          type: dict
           contains:
               Worker:
                   description: Token to create a new *worker* node
@@ -264,6 +263,7 @@ actions:
   description: Provides the actions done on the swarm.
   returned: when action failed.
   type: list
+  elements: str
   example: "['This cluster is already a swarm cluster']"
 
 '''

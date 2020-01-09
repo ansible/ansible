@@ -413,3 +413,27 @@
       - zypper_result_update_cache is successful
       - zypper_result_update_cache_check is successful
       - zypper_result_update_cache_check is not changed
+
+
+- name: install netcat-openbsd which conflicts with gnu-netcat
+  zypper:
+    name: netcat-openbsd
+    state: present
+
+- name: try installation of gnu-netcat which should fail due to the conflict
+  zypper:
+    name: gnu-netcat
+    state: present
+  ignore_errors: yes
+  register: zypper_pkg_conflict
+
+- assert:
+    that:
+      - zypper_pkg_conflict is failed
+      - "'conflicts with netcat-openbsd provided' in zypper_pkg_conflict.stdout"
+
+- name: retry installation of gnu-netcat with force_resolution set to choose a resolution
+  zypper:
+    name: gnu-netcat
+    state: present
+    force_resolution: True

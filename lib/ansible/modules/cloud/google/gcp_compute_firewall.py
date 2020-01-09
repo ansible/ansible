@@ -136,6 +136,20 @@ options:
     required: false
     type: bool
     version_added: '2.8'
+  log_config:
+    description:
+    - This field denotes whether to enable logging for a particular firewall rule.
+      If logging is enabled, logs will be exported to Stackdriver.
+    required: false
+    type: dict
+    version_added: '2.10'
+    suboptions:
+      enable_logging:
+        description:
+        - This field denotes whether to enable logging for a particular firewall rule.
+          If logging is enabled, logs will be exported to Stackdriver.
+        required: false
+        type: bool
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -269,9 +283,9 @@ options:
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/firewalls)'
 - 'Official Documentation: U(https://cloud.google.com/vpc/docs/firewalls)'
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -380,6 +394,19 @@ disabled:
     rule will be enabled.
   returned: success
   type: bool
+logConfig:
+  description:
+  - This field denotes whether to enable logging for a particular firewall rule. If
+    logging is enabled, logs will be exported to Stackdriver.
+  returned: success
+  type: complex
+  contains:
+    enableLogging:
+      description:
+      - This field denotes whether to enable logging for a particular firewall rule.
+        If logging is enabled, logs will be exported to Stackdriver.
+      returned: success
+      type: bool
 id:
   description:
   - The unique identifier for the resource.
@@ -495,6 +522,7 @@ def main():
             destination_ranges=dict(type='list', elements='str'),
             direction=dict(type='str'),
             disabled=dict(type='bool'),
+            log_config=dict(type='dict', options=dict(enable_logging=dict(type='bool'))),
             name=dict(required=True, type='str'),
             network=dict(default=dict(selfLink='global/networks/default'), type='dict'),
             priority=dict(default=1000, type='int'),
@@ -505,7 +533,6 @@ def main():
             target_tags=dict(type='list', elements='str'),
         ),
         mutually_exclusive=[
-            ['allowed', 'denied'],
             ['destination_ranges', 'source_ranges', 'source_tags'],
             ['destination_ranges', 'source_ranges'],
             ['source_service_accounts', 'source_tags', 'target_tags'],
@@ -570,6 +597,7 @@ def resource_to_request(module):
         u'destinationRanges': module.params.get('destination_ranges'),
         u'direction': module.params.get('direction'),
         u'disabled': module.params.get('disabled'),
+        u'logConfig': FirewallLogconfig(module.params.get('log_config', {}), module).to_request(),
         u'name': module.params.get('name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'priority': module.params.get('priority'),
@@ -651,6 +679,7 @@ def response_to_hash(module, response):
         u'destinationRanges': response.get(u'destinationRanges'),
         u'direction': response.get(u'direction'),
         u'disabled': response.get(u'disabled'),
+        u'logConfig': FirewallLogconfig(response.get(u'logConfig', {}), module).from_response(),
         u'id': response.get(u'id'),
         u'name': module.params.get('name'),
         u'network': response.get(u'network'),
@@ -760,6 +789,21 @@ class FirewallDeniedArray(object):
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({u'IPProtocol': item.get(u'IPProtocol'), u'ports': item.get(u'ports')})
+
+
+class FirewallLogconfig(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'enableLogging': self.request.get('enable_logging')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'enableLogging': self.request.get(u'enableLogging')})
 
 
 if __name__ == '__main__':

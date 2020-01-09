@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_compute_target_tcp_proxy_info
 description:
 - Gather info for GCP TargetTcpProxy
-- This module was called C(gcp_compute_target_tcp_proxy_facts) before Ansible 2.9.
-  The usage has not changed.
 short_description: Gather info for GCP TargetTcpProxy
 version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
@@ -86,9 +84,9 @@ options:
     - This only alters the User Agent string for any API requests.
     type: str
 notes:
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -165,9 +163,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
-
-    if module._name == 'gcp_compute_target_tcp_proxy_facts':
-        module.deprecate("The 'gcp_compute_target_tcp_proxy_facts' module has been renamed to 'gcp_compute_target_tcp_proxy_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']

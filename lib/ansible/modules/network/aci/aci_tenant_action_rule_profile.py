@@ -192,10 +192,10 @@ def main():
         ],
     )
 
-    action_rule = module.params['action_rule']
-    description = module.params['description']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    action_rule = module.params.get('action_rule')
+    description = module.params.get('description')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci = ACIModule(module)
     aci.construct_url(

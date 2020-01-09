@@ -91,12 +91,13 @@ account_uri:
 account:
   description: The account information, as retrieved from the ACME server.
   returned: if account exists
-  type: complex
+  type: dict
   contains:
     contact:
       description: the challenge resource that must be created for validation
       returned: always
       type: list
+      elements: str
       sample: "['mailto:me@example.com', 'tel:00123456789']"
     status:
       description: the account's status
@@ -116,7 +117,7 @@ account:
       description: the public account key as a L(JSON Web Key,https://tools.ietf.org/html/rfc7517).
       returned: always
       type: str
-      sample: https://example.ca/account/1/orders
+      sample: '{"kty":"EC","crv":"P-256","x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4","y":"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM"}'
 
 orders:
   description:
@@ -124,6 +125,7 @@ orders:
     - "If I(retrieve_orders) is C(url_list), this will be a list of URLs."
     - "If I(retrieve_orders) is C(object_list), this will be a list of objects."
   type: list
+  #elements: ... depends on retrieve_orders
   returned: if account exists, I(retrieve_orders) is not C(ignore), and server supports order listing
   contains:
     status:
@@ -146,6 +148,7 @@ orders:
       description:
         - List of identifiers this order is for.
       type: list
+      elements: dict
       contains:
         type:
           description: Type of identifier. C(dns) or C(ip).
@@ -176,12 +179,13 @@ orders:
       description:
         - In case an error occurred during processing, this contains information about the error.
         - The field is structured as a problem document (RFC7807).
-      type: complex
+      type: dict
       returned: when an error occurred
     authorizations:
       description:
         - A list of URLs for authorizations for this order.
       type: list
+      elements: str
     finalize:
       description:
         - A URL used for finalizing an ACME order.

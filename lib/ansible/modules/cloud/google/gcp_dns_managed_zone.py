@@ -162,7 +162,7 @@ options:
       networks:
         description:
         - The list of VPC networks that can see this zone.
-        required: false
+        required: true
         type: list
         suboptions:
           network_url:
@@ -170,7 +170,7 @@ options:
             - The fully qualified URL of the VPC network to bind to.
             - This should be formatted like `U(https://www.googleapis.com/compute/v1/projects/{project}/global/networks/{network}`)
               .
-            required: false
+            required: true
             type: str
   project:
     description:
@@ -212,9 +212,9 @@ options:
 notes:
 - 'API Reference: U(https://cloud.google.com/dns/api/v1/managedZones)'
 - 'Managing Zones: U(https://cloud.google.com/dns/zones/)'
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -405,7 +405,9 @@ def main():
             name_server_set=dict(type='str'),
             labels=dict(type='dict'),
             visibility=dict(default='public', type='str'),
-            private_visibility_config=dict(type='dict', options=dict(networks=dict(type='list', elements='dict', options=dict(network_url=dict(type='str'))))),
+            private_visibility_config=dict(
+                type='dict', options=dict(networks=dict(required=True, type='list', elements='dict', options=dict(network_url=dict(required=True, type='str'))))
+            ),
         )
     )
 

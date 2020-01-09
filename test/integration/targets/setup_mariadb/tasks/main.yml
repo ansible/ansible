@@ -2,4 +2,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - import_tasks: setup_mariadb.yml
-  when: ansible_distribution == 'CentOS' and ansible_distribution_major_version >= '7'
+  when:
+    - ansible_distribution == 'CentOS'
+    - ansible_distribution_major_version is version('7', '>=')

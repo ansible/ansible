@@ -1,14 +1,11 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_interface sub-interface test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: testint="{{ nxos_int1 }}"
 
 - name: Setup - delete sub-interface
   nxos_interface: &rm
     name: "{{ testint }}.20"
-    provider: "{{ connection }}"
     state: absent
   ignore_errors: yes
 
@@ -16,7 +13,6 @@
   nxos_interface:
     name: "{{ testint }}"
     mode: layer3
-    provider: "{{ connection }}"
 
 - name: Create sub-interface
   nxos_interface: &sub_int
@@ -24,7 +20,6 @@
     description: "sub-interface Configured by Ansible"
     admin_state: up
     mtu: 800
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -45,7 +40,6 @@
     description: "sub-interface Configured by Ansible"
     admin_state: down
     mtu: 800
-    provider: "{{ connection }}"
   register: result
 
 - assert:

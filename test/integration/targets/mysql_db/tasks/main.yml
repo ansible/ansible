@@ -38,8 +38,9 @@
 - name: assert output message that database exist
   assert:
     that:
-       - "result.changed == true"
-       - "result.db =='{{ db_name }}'"
+       - result is changed
+       - result.db == '{{ db_name }}'
+       - result.executed_commands == ["CREATE DATABASE `{{ db_name }}`"]
 
 - name: run command to test state=present for a database name (expect db_name in stdout)
   command: mysql "-e show databases like '{{ db_name }}';"
@@ -59,8 +60,9 @@
 - name: assert output message that database does not exist
   assert:
     that:
-       - "result.changed == true"
-       - "result.db =='{{ db_name }}'"
+       - result is changed
+       - result.db == '{{ db_name }}'
+       - result.executed_commands == ["DROP DATABASE `{{ db_name }}`"]
 
 - name: run command to test state=absent for a database name (expect db_name not in stdout)
   command: mysql "-e show databases like '{{ db_name }}';"
@@ -96,7 +98,10 @@
   register: result
 
 - name: assert output message created a database
-  assert: { that: "result.changed == true" }
+  assert:
+    that:
+    - result is changed
+    - result.executed_commands == ["CREATE DATABASE `en{{ db_name }}` CHARACTER SET 'utf8'"]
 
 - name: test database was created
   command: mysql "-e SHOW CREATE DATABASE en{{ db_name }};"
@@ -121,7 +126,10 @@
   register: result
 
 - name: assert output message that database was created
-  assert: { that: "result.changed == true" }
+  assert:
+    that:
+    - result is changed
+    - result.executed_commands == ["CREATE DATABASE `en{{ db_name }}` CHARACTER SET 'binary'"]
 
 - name: run command to test database was created
   command: mysql "-e SHOW CREATE DATABASE en{{ db_name }};"
@@ -228,7 +236,10 @@
   ignore_errors: true
 
 - name: assert output message that database was deleted using user1
-  assert: { that: "result.changed == true" }
+  assert:
+    that:
+    - result is changed
+    - result.executed_commands == ["DROP DATABASE `{{ db_user1 }}`"]
 
 - name: run command to test database was deleted using user1
   command: mysql "-e show databases like '{{ db_name }}';"
@@ -238,10 +249,12 @@
   assert: { that: "'{{ db_user1 }}' not in result.stdout" }
 
 # ============================================================
-- include: state_dump_import.yml format_type=sql file=dbdata.sql format_msg_type=ASCII file2=dump2.sql file3=dump3.sql
+- include: state_dump_import.yml format_type=sql file=dbdata.sql format_msg_type=ASCII file2=dump2.sql file3=dump3.sql file4=dump4.sql
 
-- include: state_dump_import.yml format_type=gz  file=dbdata.gz format_msg_type=gzip file2=dump2.gz file3=dump3.gz
+- include: state_dump_import.yml format_type=gz  file=dbdata.gz format_msg_type=gzip file2=dump2.gz file3=dump3.gz file4=dump4.gz
 
-- include: state_dump_import.yml format_type=bz2 file=dbdata.bz2 format_msg_type=bzip2 file2=dump2.bz2 file3=dump3.bz2
+- include: state_dump_import.yml format_type=bz2 file=dbdata.bz2 format_msg_type=bzip2 file2=dump2.bz2 file3=dump3.bz2 file4=dump4.bz2
 
 - include: multi_db_create_delete.yml 
+
+- include: encoding_dump_import.yml file=latin1.sql format_msg_type=ASCII

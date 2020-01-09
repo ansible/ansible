@@ -30,11 +30,12 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 import re
+import json
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
-from ansible.module_utils.connection import exec_command
+from ansible.module_utils.connection import Connection, ConnectionError, exec_command
 from ansible.module_utils.network.common.config import NetworkConfig, ConfigLine, ignore_line
 
 _DEVICE_CONFIGS = {}
@@ -71,6 +72,35 @@ dellos6_top_spec = {
 dellos6_argument_spec.update(dellos6_top_spec)
 
 
+def get_provider_argspec():
+    return dellos6_provider_spec
+
+
+def get_connection(module):
+    if hasattr(module, '_dellos6_connection'):
+        return module._dellos6_connection
+
+    capabilities = get_capabilities(module)
+    network_api = capabilities.get('network_api')
+    if network_api == 'cliconf':
+        module._dellos6_connection = Connection(module._socket_path)
+    else:
+        module.fail_json(msg='Invalid connection type %s' % network_api)
+
+    return module._dellos6_connection
+
+
+def get_capabilities(module):
+    if hasattr(module, '_dellos6_capabilities'):
+        return module._dellos6_capabilities
+    try:
+        capabilities = Connection(module._socket_path).get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    module._dellos6_capabilities = json.loads(capabilities)
+    return module._dellos6_capabilities
+
+
 def check_args(module, warnings):
     pass
 
@@ -93,26 +123,12 @@ def get_config(module, flags=None):
         return cfg
 
 
-def to_commands(module, commands):
-    spec = {
-        'command': dict(key=True),
-        'prompt': dict(),
-        'answer': dict()
-    }
-    transform = ComplexList(spec, module)
-    return transform(commands)
-
-
 def run_commands(module, commands, check_rc=True):
-    responses = list()
-    commands = to_commands(module, to_list(commands))
-    for cmd in commands:
-        cmd = module.jsonify(cmd)
-        rc, out, err = exec_command(module, cmd)
-        if check_rc and rc != 0:
-            module.fail_json(msg=to_text(err, errors='surrogate_or_strict'), rc=rc)
-        responses.append(to_text(out, errors='surrogate_or_strict'))
-    return responses
+    connection = get_connection(module)
+    try:
+        return connection.run_commands(commands=commands, check_rc=check_rc)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
 
 
 def load_config(module, commands):
@@ -152,16 +168,16 @@ def os6_parse(lines, indent=None, comment_tokens=None):
         re.compile(r'datacenter-bridging.*$'),
         re.compile(r'line (console|telnet|ssh).*$'),
         re.compile(r'ip ssh !(server).*$'),
+        re.compile(r'(ip|mac|management|arp) access-list.*$'),
         re.compile(r'ip dhcp pool.*$'),
         re.compile(r'ip vrf !(forwarding).*$'),
-        re.compile(r'(ip|mac|management|arp) access-list.*$'),
         re.compile(r'ipv6 (dhcp pool|router).*$'),
         re.compile(r'mail-server.*$'),
         re.compile(r'vpc domain.*$'),
         re.compile(r'router.*$'),
         re.compile(r'route-map.*$'),
         re.compile(r'policy-map.*$'),
-        re.compile(r'class-map match-all.*$'),
+        re.compile(r'((class-map match-(all|any))|(class\s)).*$'),
         re.compile(r'captive-portal.*$'),
         re.compile(r'admin-profile.*$'),
         re.compile(r'link-dependency group.*$'),
@@ -172,7 +188,9 @@ def os6_parse(lines, indent=None, comment_tokens=None):
         re.compile(r'address-family.*$'),
         re.compile(r'spanning-tree mst configuration.*$'),
         re.compile(r'logging (?!.*(cli-command|buffered|console|email|facility|file|monitor|protocol|snmp|source-interface|traps|web-session)).*$'),
-        re.compile(r'(radius-server|tacacs-server) host.*$')]
+        re.compile(r'(radius-server|tacacs-server) host.*$'),
+        re.compile(r'radius server (auth|acct).*$'),
+        re.compile(r'aaa server radius dynamic-author.*$')]
 
     childline = re.compile(r'^exit$')
     config = list()
@@ -184,8 +202,6 @@ def os6_parse(lines, indent=None, comment_tokens=None):
         cfg = ConfigLine(text)
         cfg.raw = line
         if not text or ignore_line(text, comment_tokens):
-            parent = list()
-            children = []
             continue
 
         else:

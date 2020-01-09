@@ -195,7 +195,7 @@ options:
             - Default value is set by oVirt/RHV engine.
     cpu_threads:
         description:
-            - Number of virtual CPUs sockets of the Virtual Machine.
+            - Number of threads per core of the Virtual Machine.
             - Default value is set by oVirt/RHV engine.
         version_added: "2.5"
     type:
@@ -783,6 +783,7 @@ options:
             protocol:
                 description:
                     - Graphical protocol, a list of I(spice), I(vnc), or both.
+                type: list
             disconnect_action:
                 description:
                     - "Returns the action that will take place when the graphic console(SPICE only) is disconnected. The options are:"
@@ -882,6 +883,8 @@ notes:
       I(REBOOTING), I(POWERING_UP), I(RESTORING_STATE), I(WAIT_FOR_LAUNCH). If VM is in I(PAUSED) or I(DOWN) state,
       we start the VM. Then we suspend the VM.
       When user specify I(absent) C(state), we forcibly stop the VM in any state and remove it.
+    - "If you update a VM parameter that requires a reboot, the oVirt engine always creates a new snapshot for the VM,
+      and an Ansible playbook will report this as changed."
 extends_documentation_fragment: ovirt
 '''
 
@@ -1298,30 +1301,31 @@ class VmsModule(BaseModule):
         """
         template = None
         templates_service = self._connection.system_service().templates_service()
-        if self.param('template'):
-            clusters_service = self._connection.system_service().clusters_service()
-            cluster = search_by_name(clusters_service, self.param('cluster'))
-            data_center = self._connection.follow_link(cluster.data_center)
-            templates = templates_service.list(
-                search='name=%s and datacenter=%s' % (self.param('template'), data_center.name)
-            )
-            if self.param('template_version'):
-                templates = [
-                    t for t in templates
-                    if t.version.version_number == self.param('template_version')
-                ]
-            if not templates:
-                raise ValueError(
-                    "Template with name '%s' and version '%s' in data center '%s' was not found'" % (
-                        self.param('template'),
-                        self.param('template_version'),
-                        data_center.name
-                    )
+        if self._is_new:
+            if self.param('template'):
+                clusters_service = self._connection.system_service().clusters_service()
+                cluster = search_by_name(clusters_service, self.param('cluster'))
+                data_center = self._connection.follow_link(cluster.data_center)
+                templates = templates_service.list(
+                    search='name=%s and datacenter=%s' % (self.param('template'), data_center.name)
                 )
-            template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
-        elif self._is_new:
-            # If template isn't specified and VM is about to be created specify default template:
-            template = templates_service.template_service('00000000-0000-0000-0000-000000000000').get()
+                if self.param('template_version'):
+                    templates = [
+                        t for t in templates
+                        if t.version.version_number == self.param('template_version')
+                    ]
+                if not templates:
+                    raise ValueError(
+                        "Template with name '%s' and version '%s' in data center '%s' was not found'" % (
+                            self.param('template'),
+                            self.param('template_version'),
+                            data_center.name
+                        )
+                    )
+                template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
+            else:
+                # If template isn't specified and VM is about to be created specify default template:
+                template = templates_service.template_service('00000000-0000-0000-0000-000000000000').get()
 
         return template
 
@@ -1387,7 +1391,7 @@ class VmsModule(BaseModule):
         template = self.__get_template_with_version()
         cluster = self.__get_cluster()
         snapshot = self.__get_snapshot()
-        display = self.param('graphical_console', dict())
+        display = self.param('graphical_console') or dict()
 
         disk_attachments = self.__get_storage_domain_and_all_template_disks(template)
 
@@ -1592,7 +1596,7 @@ class VmsModule(BaseModule):
 
         cpu_mode = getattr(entity.cpu, 'mode')
         vm_display = entity.display
-        provided_vm_display = self.param('graphical_console', {})
+        provided_vm_display = self.param('graphical_console') or dict()
         return (
             check_cpu_pinning() and
             check_custom_properties() and
@@ -1826,9 +1830,6 @@ class VmsModule(BaseModule):
 
         # If there are not gc add any gc to be added:
         protocol = graphical_console.get('protocol')
-        if isinstance(protocol, str):
-            protocol = [protocol]
-
         current_protocols = [str(gc.protocol) for gc in graphical_consoles]
         if not current_protocols:
             if not self._module.check_mode:
@@ -2437,7 +2438,7 @@ def main():
             type='dict',
             options=dict(
                 headless_mode=dict(type='bool'),
-                protocol=dict(),
+                protocol=dict(type='list'),
                 disconnect_action=dict(type='str'),
                 keyboard_layout=dict(type='str'),
                 monitors=dict(type='int'),

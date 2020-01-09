@@ -366,6 +366,18 @@
   register: dns_options_3
   ignore_errors: yes
 
+- name: dns_options (order idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    dns_options:
+      - no-check-names
+      - "timeout:10"
+  register: dns_options_4
+  ignore_errors: yes
+
 - name: dns_options (empty)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -373,7 +385,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     dns_options: []
-  register: dns_options_4
+  register: dns_options_5
   ignore_errors: yes
 
 - name: dns_options (empty idempotency)
@@ -383,7 +395,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     dns_options: []
-  register: dns_options_5
+  register: dns_options_6
   ignore_errors: yes
 
 - name: cleanup
@@ -397,8 +409,9 @@
       - dns_options_1 is changed
       - dns_options_2 is not changed
       - dns_options_3 is changed
-      - dns_options_4 is changed
-      - dns_options_5 is not changed
+      - dns_options_4 is not changed
+      - dns_options_5 is changed
+      - dns_options_6 is not changed
   when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.6.0', '>=')
 - assert:
     that:
@@ -588,16 +601,18 @@
       - "TEST2=val3"
   register: env_3
 
-- name: env (empty)
+- name: env (order idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
-    env: []
+    env:
+      - "TEST2=val3"
+      - "TEST1=val1"
   register: env_4
 
-- name: env (empty idempotency)
+- name: env (empty)
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
@@ -606,6 +621,15 @@
     env: []
   register: env_5
 
+- name: env (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    env: []
+  register: env_6
+
 - name: env (fail unwrapped values)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -613,7 +637,7 @@
     resolve_image: no
     env:
       TEST1: true
-  register: env_6
+  register: env_7
   ignore_errors: yes
 
 - name: env (fail invalid formatted string)
@@ -624,7 +648,7 @@
     env:
       - "TEST1=val3"
       - "TEST2"
-  register: env_7
+  register: env_8
   ignore_errors: yes
 
 - name: cleanup
@@ -638,10 +662,11 @@
       - env_1 is changed
       - env_2 is not changed
       - env_3 is changed
-      - env_4 is changed
-      - env_5 is not changed
-      - env_6 is failed
+      - env_4 is not changed
+      - env_5 is changed
+      - env_6 is not changed
       - env_7 is failed
+      - env_8 is failed
 
 ####################################################################
 ## env_files #######################################################
@@ -802,6 +827,18 @@
   register: groups_2
   ignore_errors: yes
 
+- name: groups (order idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    groups:
+      - "5678"
+      - "1234"
+  register: groups_3
+  ignore_errors: yes
+
 - name: groups (change)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -810,7 +847,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     groups:
       - "1234"
-  register: groups_3
+  register: groups_4
   ignore_errors: yes
 
 - name: groups (empty)
@@ -820,7 +857,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     groups: []
-  register: groups_4
+  register: groups_5
   ignore_errors: yes
 
 - name: groups (empty idempotency)
@@ -830,7 +867,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     groups: []
-  register: groups_5
+  register: groups_6
   ignore_errors: yes
 
 - name: cleanup
@@ -843,9 +880,10 @@
     that:
     - groups_1 is changed
     - groups_2 is not changed
-    - groups_3 is changed
+    - groups_3 is not changed
     - groups_4 is changed
-    - groups_5 is not changed
+    - groups_5 is changed
+    - groups_6 is not changed
   when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.6.0', '>=')
 - assert:
     that:
@@ -871,6 +909,7 @@
       timeout: 2s
       interval: 0h0m2s3ms4us
       retries: 2
+      start_period: 20s
   register: healthcheck_1
   ignore_errors: yes
 
@@ -888,6 +927,7 @@
       timeout: 2s
       interval: 0h0m2s3ms4us
       retries: 2
+      start_period: 20s
   register: healthcheck_2
   ignore_errors: yes
 
@@ -991,12 +1031,12 @@
     - healthcheck_7 is not changed
     - healthcheck_8 is changed
     - healthcheck_9 is not changed
-  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.6.0', '>=')
+  when: docker_api_version is version('1.29', '>=') and docker_py_version is version('2.6.0', '>=')
 - assert:
     that:
     - healthcheck_1 is failed
     - "'Minimum version required' in healthcheck_1.msg"
-  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.6.0', '<')
+  when: docker_api_version is version('1.29', '<') or docker_py_version is version('2.6.0', '<')
 
 ###################################################################
 ## hostname #######################################################

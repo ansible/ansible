@@ -1,12 +1,8 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/default_facts.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
-
 
 - name: test getting default facts
   nxos_facts:
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -27,7 +23,7 @@
       - "result.ansible_facts.ansible_net_memtotal_mb > 10" #hw
       - "result.ansible_facts.ansible_net_model is defined" #default
       - "result.ansible_facts.ansible_net_interfaces is defined" #interfaces
-    # FIXME
+      # FIXME
 #      - "result.ansible_facts.ansible_net_interfaces.Ethernet1.ipv4.masklen > 1" # interfaces
 
       # ... and not present

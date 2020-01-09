@@ -1,0 +1,41 @@
+---
+- name: Setup - Enable feature netconf
+  nxos_feature:
+    feature: netconf
+    state: enabled
+  vars: &ssh_credentials
+    ansible_connection: network_cli
+    ansible_ssh_port: 22
+  register: result
+  ignore_errors: yes
+
+- debug: msg='Netconf feature is not supported on this platform!'
+  when: result.failed
+
+- name: Setup - Remove Vlan
+  nxos_config:
+    lines:
+      - no vlan 42
+  ignore_errors: yes
+  when: not result.failed
+
+- block:
+  - name: Run netconf tests
+    include: netconf.yaml
+    when: not result.failed
+
+  always:
+  - name: Disable feature netconf
+    nxos_feature:
+      feature: netconf
+      state: disabled
+    vars: *ssh_credentials
+    when: not result.failed
+
+  - name: Cleanup - Remove vlan
+    nxos_config:
+      lines:
+        - no vlan 42
+    vars: *ssh_credentials
+    ignore_errors: yes
+    when: not result.failed

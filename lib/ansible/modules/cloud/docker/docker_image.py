@@ -426,6 +426,7 @@ image:
     sample: {}
 '''
 
+import errno
 import os
 import re
 import traceback
@@ -787,20 +788,15 @@ class ImageManager(DockerBaseClass):
         '''
         try:
             self.log("Opening image %s" % self.load_path)
-            image_tar = open(self.load_path, 'rb')
-        except Exception as exc:
-            self.fail("Error opening image %s - %s" % (self.load_path, str(exc)))
-
-        try:
-            self.log("Loading image from %s" % self.load_path)
-            self.client.load_image(image_tar)
+            with open(self.load_path, 'rb') as image_tar:
+                self.log("Loading image from %s" % self.load_path)
+                self.client.load_image(image_tar)
+        except EnvironmentError as exc:
+            if exc.errno == errno.ENOENT:
+                self.fail("Error opening image %s - %s" % (self.load_path, str(exc)))
+            self.fail("Error loading image %s - %s" % (self.name, str(exc)))
         except Exception as exc:
             self.fail("Error loading image %s - %s" % (self.name, str(exc)))
-
-        try:
-            image_tar.close()
-        except Exception as exc:
-            self.fail("Error closing image %s - %s" % (self.name, str(exc)))
 
         return self.client.find_image(self.name, self.tag)
 
@@ -808,7 +804,7 @@ class ImageManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         source=dict(type='str', choices=['build', 'load', 'pull', 'local']),
-        build=dict(type='dict', suboptions=dict(
+        build=dict(type='dict', options=dict(
             cache_from=dict(type='list', elements='str'),
             container_limits=dict(type='dict', options=dict(
                 memory=dict(type='int'),
@@ -834,25 +830,25 @@ def main():
             memswap=dict(type='int'),
             cpushares=dict(type='int'),
             cpusetcpus=dict(type='str'),
-        ), removedin_version='2.12'),
-        dockerfile=dict(type='str', removedin_version='2.12'),
+        ), removed_in_version='2.12'),
+        dockerfile=dict(type='str', removed_in_version='2.12'),
         force=dict(type='bool', removed_in_version='2.12'),
         force_source=dict(type='bool', default=False),
         force_absent=dict(type='bool', default=False),
         force_tag=dict(type='bool', default=False),
-        http_timeout=dict(type='int', removedin_version='2.12'),
+        http_timeout=dict(type='int', removed_in_version='2.12'),
         load_path=dict(type='path'),
         name=dict(type='str', required=True),
-        nocache=dict(type='bool', default=False, removedin_version='2.12'),
-        path=dict(type='path', aliases=['build_path'], removedin_version='2.12'),
-        pull=dict(type='bool', removedin_version='2.12'),
+        nocache=dict(type='bool', default=False, removed_in_version='2.12'),
+        path=dict(type='path', aliases=['build_path'], removed_in_version='2.12'),
+        pull=dict(type='bool', removed_in_version='2.12'),
         push=dict(type='bool', default=False),
         repository=dict(type='str'),
-        rm=dict(type='bool', default=True, removedin_version='2.12'),
+        rm=dict(type='bool', default=True, removed_in_version='2.12'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'build']),
         tag=dict(type='str', default='latest'),
         use_tls=dict(type='str', choices=['no', 'encrypt', 'verify'], removed_in_version='2.11'),
-        buildargs=dict(type='dict', removedin_version='2.12'),
+        buildargs=dict(type='dict', removed_in_version='2.12'),
     )
 
     required_if = [

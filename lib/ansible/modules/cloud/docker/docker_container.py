@@ -33,14 +33,17 @@ notes:
   - When I(restart) is set to C(true), the module will only restart the container if no config changes are detected.
     Please note that several options have default values; if the container to be restarted uses different values for
     these options, it will be recreated instead. The options with default values which can cause this are I(auto_remove),
-    I(detach), I(init), I(interactive), I(memory), I(paused), I(privileged), I(read_only) and I(tty).
+    I(detach), I(init), I(interactive), I(memory), I(paused), I(privileged), I(read_only) and I(tty). This behavior
+    can be changed by setting I(container_default_behavior) to C(no_defaults), which will be the default value from
+    Ansible 2.14 on.
 
 options:
   auto_remove:
     description:
       - Enable auto-removal of the container on daemon side when the container's process exits.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
     version_added: "2.4"
   blkio_weight:
     description:
@@ -90,14 +93,38 @@ options:
       - See the examples for details.
     type: dict
     version_added: "2.8"
+  container_default_behavior:
+    description:
+      - Various module options used to have default values. This causes problems with
+        containers which use different values for these options.
+      - The default value is C(compatibility), which will ensure that the default values
+        are used when the values are not explicitly specified by the user.
+      - From Ansible 2.14 on, the default value will switch to C(no_defaults). To avoid
+        deprecation warnings, please set I(container_default_behavior) to an explicit
+        value.
+      - This affects the I(auto_remove), I(detach), I(init), I(interactive), I(memory),
+        I(paused), I(privileged), I(read_only) and I(tty) options.
+    type: str
+    choices:
+      - compatibility
+      - no_defaults
+    version_added: "2.10"
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period.
+      - See I(cpus) for an easier to use alternative.
     type: int
   cpu_quota:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) quota.
+      - See I(cpus) for an easier to use alternative.
     type: int
+  cpus:
+    description:
+      - Specify how much of the available CPU resources a container can use.
+      - A value of C(1.5) means that at most one and a half CPU (core) will be used.
+    type: float
+    version_added: '2.10'
   cpuset_cpus:
     description:
       - CPUs in which to allow execution C(1,3) or C(1-3).
@@ -114,8 +141,9 @@ options:
     description:
       - Enable detached mode to leave the container running in background.
       - If disabled, the task will reflect the status of the container run (failed if the command failed).
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(yes).
     type: bool
-    default: yes
   devices:
     description:
       - List of host device bindings to add to the container.
@@ -323,14 +351,16 @@ options:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
       - This option requires Docker API >= 1.25.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
     version_added: "2.6"
   interactive:
     description:
       - Keep stdin open after a container is launched, even if not attached.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
   ipc_mode:
     description:
       - Set the IPC mode for the container.
@@ -385,8 +415,9 @@ options:
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C("0").
     type: str
-    default: '0'
   memory_reservation:
     description:
       - "Memory soft limit in format C(<number>[<unit>]). Number is a positive integer.
@@ -496,7 +527,11 @@ options:
     required: yes
   network_mode:
     description:
-      - Connect the container to a network. Choices are C(bridge), C(host), C(none) or C(container:<name|id>).
+      - Connect the container to a network. Choices are C(bridge), C(host), C(none), C(container:<name|id>), C(<network_name>) or C(default).
+      - "*Note* that from Ansible 2.14 on, if I(networks_cli_compatible) is C(true) and I(networks) contains at least one network,
+         the default value for I(network_mode) will be the name of the first network in the I(networks) list. You can prevent this
+         by explicitly specifying a value for I(network_mode), like the default value C(default) which will be used by Docker if
+         I(network_mode) is not specified."
     type: str
   userns_mode:
     description:
@@ -551,10 +586,13 @@ options:
       - "If I(networks_cli_compatible) is set to C(yes), this module will behave as
          C(docker run --network) and will *not* add the default network if I(networks) is
          specified. If I(networks) is not specified, the default network will be attached."
-      - "Note that docker CLI also sets I(network_mode) to the name of the first network
+      - "*Note* that docker CLI also sets I(network_mode) to the name of the first network
          added if C(--network) is specified. For more compatibility with docker CLI, you
          explicitly have to set I(network_mode) to the name of the first network you're
-         adding."
+         adding. This behavior will change for Ansible 2.14: then I(network_mode) will
+         automatically be set to the first network name in I(networks) if I(network_mode)
+         is not specified, I(networks) has at least one entry and I(networks_cli_compatible)
+         is C(true)."
       - Current value is C(no). A new default of C(yes) will be set in Ansible 2.12.
     type: bool
     version_added: "2.8"
@@ -578,8 +616,9 @@ options:
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
   pid_mode:
     description:
       - Set the PID namespace mode for the container.
@@ -595,8 +634,9 @@ options:
   privileged:
     description:
       - Give extended privileges to the container.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
   published_ports:
     description:
       - List of ports to publish from the container to the host.
@@ -637,13 +677,25 @@ options:
   read_only:
     description:
       - Mount the container's root file system as read-only.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
   recreate:
     description:
       - Use with present and started states to force the re-creation of an existing container.
     type: bool
     default: no
+  removal_wait_timeout:
+    description:
+      - When removing an existing container, the docker daemon API call exists after the container
+        is scheduled for removal. Removal usually is very fast, but it can happen that during high I/O
+        load, removal can take longer. By default, the module will wait until the container has been
+        removed before trying to (re-)create it, however long this takes.
+      - By setting this option, the module will wait at most this many seconds for the container to be
+        removed. If the container is still in the removal phase after this many seconds, the module will
+        fail.
+    type: float
+    version_added: "2.10"
   restart:
     description:
       - Use with started state to force a matching container to be stopped and restarted.
@@ -723,6 +775,7 @@ options:
   trust_image_content:
     description:
       - If C(yes), skip image verification.
+      - The option has never been used by the module. It will be removed in Ansible 2.14.
     type: bool
     default: no
   tmpfs:
@@ -734,8 +787,9 @@ options:
   tty:
     description:
       - Allocate a pseudo-TTY.
+      - If I(container_default_behavior) is set to C(compatiblity) (the default value), this
+        option has a default of C(no).
     type: bool
-    default: no
   ulimits:
     description:
       - "List of ulimit options. A ulimit is specified as C(nofile:262144:262144)."
@@ -1064,6 +1118,7 @@ import re
 import shlex
 import traceback
 from distutils.version import LooseVersion
+from time import sleep
 
 from ansible.module_utils.common.text.formatters import human_to_bytes
 from ansible.module_utils.docker.common import (
@@ -1179,6 +1234,7 @@ class TaskParameters(DockerBaseClass):
         self.command = None
         self.cpu_period = None
         self.cpu_quota = None
+        self.cpus = None
         self.cpuset_cpus = None
         self.cpuset_mems = None
         self.cpu_shares = None
@@ -1236,6 +1292,7 @@ class TaskParameters(DockerBaseClass):
         self.pull = None
         self.read_only = None
         self.recreate = None
+        self.removal_wait_timeout = None
         self.restart = None
         self.restart_retries = None
         self.restart_policy = None
@@ -1264,6 +1321,9 @@ class TaskParameters(DockerBaseClass):
         # Only the container's name is needed.
         if self.state == 'absent':
             return
+
+        if self.cpus is not None:
+            self.cpus = int(round(self.cpus * 1E9))
 
         if self.groups:
             # In case integers are passed as groups, we need to convert them to
@@ -1366,12 +1426,17 @@ class TaskParameters(DockerBaseClass):
             mem_reservation='memory_reservation',
             memswap_limit='memory_swap',
             kernel_memory='kernel_memory',
+            restart_policy='restart_policy',
         )
 
         result = dict()
         for key, value in update_parameters.items():
             if getattr(self, value, None) is not None:
-                if self.client.option_minimal_versions[value]['supported']:
+                if key == 'restart_policy' and self.client.option_minimal_versions[value]['supported']:
+                    restart_policy = dict(Name=self.restart_policy,
+                                          MaximumRetryCount=self.restart_retries)
+                    result[key] = restart_policy
+                elif self.client.option_minimal_versions[value]['supported']:
                     result[key] = getattr(self, value)
         return result
 
@@ -1516,6 +1581,7 @@ class TaskParameters(DockerBaseClass):
             device_write_iops='device_write_iops',
             pids_limit='pids_limit',
             mounts='mounts',
+            nano_cpus='cpus',
         )
 
         if self.client.docker_py_version >= LooseVersion('1.9') and self.client.docker_api_version >= LooseVersion('1.22'):
@@ -1954,6 +2020,12 @@ class Container(DockerBaseClass):
         return True if self.container else False
 
     @property
+    def removing(self):
+        if self.container and self.container.get('State'):
+            return self.container['State'].get('Status') == 'removing'
+        return False
+
+    @property
     def running(self):
         if self.container and self.container.get('State'):
             if self.container['State'].get('Running') and not self.container['State'].get('Ghost', False):
@@ -2022,7 +2094,6 @@ class Container(DockerBaseClass):
 
         host_config = self.container['HostConfig']
         log_config = host_config.get('LogConfig', dict())
-        restart_policy = host_config.get('RestartPolicy', dict())
         config = self.container['Config']
         network = self.container['NetworkSettings']
 
@@ -2069,7 +2140,6 @@ class Container(DockerBaseClass):
             privileged=host_config.get('Privileged'),
             expected_ports=host_config.get('PortBindings'),
             read_only=host_config.get('ReadonlyRootfs'),
-            restart_policy=restart_policy.get('Name'),
             runtime=host_config.get('Runtime'),
             shm_size=host_config.get('ShmSize'),
             security_opts=host_config.get("SecurityOpt"),
@@ -2097,10 +2167,9 @@ class Container(DockerBaseClass):
             # The previous tag, v1.9.1, has API version 1.21 and does not have
             # HostConfig.Mounts. I have no idea what about API 1.25...
             expected_mounts=self._decode_mounts(host_config.get('Mounts')),
+            cpus=host_config.get('NanoCpus'),
         )
         # Options which don't make sense without their accompanying option
-        if self.parameters.restart_policy:
-            config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
         if self.parameters.log_driver:
             config_mapping['log_driver'] = log_config.get('Type')
             config_mapping['log_options'] = log_config.get('Config')
@@ -2122,6 +2191,12 @@ class Container(DockerBaseClass):
             # we need to handle all limits which are usually handled by
             # update_container() as configuration changes which require a container
             # restart.
+            restart_policy = host_config.get('RestartPolicy', dict())
+
+            # Options which don't make sense without their accompanying option
+            if self.parameters.restart_policy:
+                config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
+
             config_mapping.update(dict(
                 blkio_weight=host_config.get('BlkioWeight'),
                 cpu_period=host_config.get('CpuPeriod'),
@@ -2133,6 +2208,7 @@ class Container(DockerBaseClass):
                 memory=host_config.get('Memory'),
                 memory_reservation=host_config.get('MemoryReservation'),
                 memory_swap=host_config.get('MemorySwap'),
+                restart_policy=restart_policy.get('Name')
             ))
 
         differences = DifferenceTracker()
@@ -2186,6 +2262,8 @@ class Container(DockerBaseClass):
 
         host_config = self.container['HostConfig']
 
+        restart_policy = host_config.get('RestartPolicy') or dict()
+
         config_mapping = dict(
             blkio_weight=host_config.get('BlkioWeight'),
             cpu_period=host_config.get('CpuPeriod'),
@@ -2197,7 +2275,12 @@ class Container(DockerBaseClass):
             memory=host_config.get('Memory'),
             memory_reservation=host_config.get('MemoryReservation'),
             memory_swap=host_config.get('MemorySwap'),
+            restart_policy=restart_policy.get('Name')
         )
+
+        # Options which don't make sense without their accompanying option
+        if self.parameters.restart_policy:
+            config_mapping['restart_retries'] = restart_policy.get('MaximumRetryCount')
 
         differences = DifferenceTracker()
         for key, value in config_mapping.items():
@@ -2235,7 +2318,7 @@ class Container(DockerBaseClass):
                 ))
             else:
                 diff = False
-                network_info_ipam = network_info.get('IPAMConfig', {})
+                network_info_ipam = network_info.get('IPAMConfig') or {}
                 if network.get('ipv4_address') and network['ipv4_address'] != network_info_ipam.get('IPv4Address'):
                     diff = True
                 if network.get('ipv6_address') and network['ipv6_address'] != network_info_ipam.get('IPv6Address'):
@@ -2554,6 +2637,39 @@ class ContainerManager(DockerBaseClass):
             self.results['ansible_facts'] = {'docker_container': self.facts}
             self.results['container'] = self.facts
 
+    def wait_for_state(self, container_id, complete_states=None, wait_states=None, accept_removal=False, max_wait=None):
+        delay = 1.0
+        total_wait = 0
+        while True:
+            # Inspect container
+            result = self.client.get_container_by_id(container_id)
+            if result is None:
+                if accept_removal:
+                    return
+                msg = 'Encontered vanished container while waiting for container "{0}"'
+                self.fail(msg.format(container_id))
+            # Check container state
+            state = result.get('State', {}).get('Status')
+            if complete_states is not None and state in complete_states:
+                return
+            if wait_states is not None and state not in wait_states:
+                msg = 'Encontered unexpected state "{1}" while waiting for container "{0}"'
+                self.fail(msg.format(container_id, state))
+            # Wait
+            if max_wait is not None:
+                if total_wait > max_wait:
+                    msg = 'Timeout of {1} seconds exceeded while waiting for container "{0}"'
+                    self.fail(msg.format(container_id, max_wait))
+                if total_wait + delay > max_wait:
+                    delay = max_wait - total_wait
+            sleep(delay)
+            total_wait += delay
+            # Exponential backoff, but never wait longer than 10 seconds
+            # (1.1**24 < 10, 1.1**25 > 10, so it will take 25 iterations
+            #  until the maximal 10 seconds delay is reached. By then, the
+            #  code will have slept for ~1.5 minutes.)
+            delay = min(delay * 1.1, 10)
+
     def present(self, state):
         container = self._get_container(self.parameters.name)
         was_running = container.running
@@ -2567,12 +2683,19 @@ class ContainerManager(DockerBaseClass):
         # image ID.
         image = self._get_image()
         self.log(image, pretty_print=True)
-        if not container.exists:
+        if not container.exists or container.removing:
             # New container
-            self.log('No container found')
+            if container.removing:
+                self.log('Found container in removal phase')
+            else:
+                self.log('No container found')
             if not self.parameters.image:
                 self.fail('Cannot create container when image is not specified!')
             self.diff_tracker.add('exists', parameter=True, active=False)
+            if container.removing and not self.check_mode:
+                # Wait for container to be removed before trying to create it
+                self.wait_for_state(
+                    container.Id, wait_states=['removing'], accept_removal=True, max_wait=self.parameters.removal_wait_timeout)
             new_container = self.container_create(self.parameters.image, self.parameters.create_parameters)
             if new_container:
                 container = new_container
@@ -2598,6 +2721,9 @@ class ContainerManager(DockerBaseClass):
                 if container.running:
                     self.container_stop(container.Id)
                 self.container_remove(container.Id)
+                if not self.check_mode:
+                    self.wait_for_state(
+                        container.Id, wait_states=['removing'], accept_removal=True, max_wait=self.parameters.removal_wait_timeout)
                 new_container = self.container_create(image_to_use, self.parameters.create_parameters)
                 if new_container:
                     container = new_container
@@ -2619,7 +2745,7 @@ class ContainerManager(DockerBaseClass):
                 self.container_stop(container.Id)
                 container = self._get_container(container.Id)
 
-            if state == 'started' and container.paused != self.parameters.paused:
+            if state == 'started' and container.paused is not None and container.paused != self.parameters.paused:
                 self.diff_tracker.add('paused', parameter=self.parameters.paused, active=was_paused)
                 if not self.check_mode:
                     try:
@@ -2804,7 +2930,7 @@ class ContainerManager(DockerBaseClass):
             except Exception as exc:
                 self.fail("Error starting container %s: %s" % (container_id, str(exc)))
 
-            if not self.parameters.detach:
+            if self.parameters.detach is False:
                 if self.client.docker_py_version >= LooseVersion('3.0'):
                     status = self.client.wait(container_id)['StatusCode']
                 else:
@@ -2966,7 +3092,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
     __NON_CONTAINER_PROPERTY_OPTIONS = tuple([
         'env_file', 'force_kill', 'keep_volumes', 'ignore_image', 'name', 'pull', 'purge_networks',
         'recreate', 'restart', 'state', 'trust_image_content', 'networks', 'cleanup', 'kill_signal',
-        'output_logs', 'paused'
+        'output_logs', 'paused', 'removal_wait_timeout'
     ] + list(DOCKER_COMMON_ARGS.keys()))
 
     def _parse_comparisons(self):
@@ -3128,6 +3254,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             uts=dict(docker_py_version='3.5.0', docker_api_version='1.25'),
             pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
             mounts=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
+            cpus=dict(docker_py_version='2.3.0', docker_api_version='1.25'),
             # specials
             ipvX_address_supported=dict(docker_py_version='1.9.0', docker_api_version='1.22',
                                         detect_usage=detect_ipvX_address_usage,
@@ -3148,22 +3275,47 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         self._get_additional_minimal_versions()
         self._parse_comparisons()
 
+        if self.module.params['container_default_behavior'] is None:
+            self.module.params['container_default_behavior'] = 'compatibility'
+            self.module.deprecate(
+                'The container_default_behavior option will change its default value from "compatibility" to '
+                '"no_defaults" in Ansible 2.14. To remove this warning, please specify an explicit value for it now',
+                version='2.14'
+            )
+        if self.module.params['container_default_behavior'] == 'compatibility':
+            old_default_values = dict(
+                auto_remove=False,
+                detach=True,
+                init=False,
+                interactive=False,
+                memory="0",
+                paused=False,
+                privileged=False,
+                read_only=False,
+                tty=False,
+            )
+            for param, value in old_default_values.items():
+                if self.module.params[param] is None:
+                    self.module.params[param] = value
+
 
 def main():
     argument_spec = dict(
-        auto_remove=dict(type='bool', default=False),
+        auto_remove=dict(type='bool'),
         blkio_weight=dict(type='int'),
         capabilities=dict(type='list', elements='str'),
         cap_drop=dict(type='list', elements='str'),
         cleanup=dict(type='bool', default=False),
         command=dict(type='raw'),
         comparisons=dict(type='dict'),
+        container_default_behavior=dict(type='str', choices=['compatibility', 'no_defaults']),
         cpu_period=dict(type='int'),
         cpu_quota=dict(type='int'),
+        cpus=dict(type='float'),
         cpuset_cpus=dict(type='str'),
         cpuset_mems=dict(type='str'),
         cpu_shares=dict(type='int'),
-        detach=dict(type='bool', default=True),
+        detach=dict(type='bool'),
         devices=dict(type='list', elements='str'),
         device_read_bps=dict(type='list', elements='dict', options=dict(
             path=dict(required=True, type='str'),
@@ -3202,8 +3354,8 @@ def main():
         hostname=dict(type='str'),
         ignore_image=dict(type='bool', default=False),
         image=dict(type='str'),
-        init=dict(type='bool', default=False),
-        interactive=dict(type='bool', default=False),
+        init=dict(type='bool'),
+        interactive=dict(type='bool'),
         ipc_mode=dict(type='str'),
         keep_volumes=dict(type='bool', default=True),
         kernel_memory=dict(type='str'),
@@ -3213,7 +3365,7 @@ def main():
         log_driver=dict(type='str'),
         log_options=dict(type='dict', aliases=['log_opt']),
         mac_address=dict(type='str'),
-        memory=dict(type='str', default='0'),
+        memory=dict(type='str'),
         memory_reservation=dict(type='str'),
         memory_swap=dict(type='str'),
         memory_swappiness=dict(type='int'),
@@ -3244,15 +3396,16 @@ def main():
         oom_killer=dict(type='bool'),
         oom_score_adj=dict(type='int'),
         output_logs=dict(type='bool', default=False),
-        paused=dict(type='bool', default=False),
+        paused=dict(type='bool'),
         pid_mode=dict(type='str'),
         pids_limit=dict(type='int'),
-        privileged=dict(type='bool', default=False),
+        privileged=dict(type='bool'),
         published_ports=dict(type='list', elements='str', aliases=['ports']),
         pull=dict(type='bool', default=False),
         purge_networks=dict(type='bool', default=False),
-        read_only=dict(type='bool', default=False),
+        read_only=dict(type='bool'),
         recreate=dict(type='bool', default=False),
+        removal_wait_timeout=dict(type='float'),
         restart=dict(type='bool', default=False),
         restart_policy=dict(type='str', choices=['no', 'on-failure', 'always', 'unless-stopped']),
         restart_retries=dict(type='int'),
@@ -3264,8 +3417,8 @@ def main():
         stop_timeout=dict(type='int'),
         sysctls=dict(type='dict'),
         tmpfs=dict(type='list', elements='str'),
-        trust_image_content=dict(type='bool', default=False),
-        tty=dict(type='bool', default=False),
+        trust_image_content=dict(type='bool', default=False, removed_in_version='2.14'),
+        tty=dict(type='bool'),
         ulimits=dict(type='list', elements='str'),
         user=dict(type='str'),
         userns_mode=dict(type='str'),
@@ -3295,6 +3448,18 @@ def main():
             'the new `networks_cli_compatible` option to `yes`, and remove this warning by setting '
             'it to `no`',
             version='2.12'
+        )
+    if client.module.params['networks_cli_compatible'] is True and client.module.params['networks'] and client.module.params['network_mode'] is None:
+        client.module.deprecate(
+            'Please note that the default value for `network_mode` will change from not specified '
+            '(which is equal to `default`) to the name of the first network in `networks` if '
+            '`networks` has at least one entry and `networks_cli_compatible` is `true`. You can '
+            'change the behavior now by explicitly setting `network_mode` to the name of the first '
+            'network in `networks`, and remove this warning by setting `network_mode` to `default`. '
+            'Please make sure that the value you set to `network_mode` equals the inspection result '
+            'for existing containers, otherwise the module will recreate them. You can find out the '
+            'correct value by running "docker inspect --format \'{{.HostConfig.NetworkMode}}\' <container_name>"',
+            version='2.14'
         )
 
     try:

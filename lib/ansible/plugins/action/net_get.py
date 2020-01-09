@@ -17,7 +17,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import copy
 import os
 import re
 import uuid
@@ -26,26 +25,27 @@ import hashlib
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.connection import Connection, ConnectionError
-from ansible.plugins.action import ActionBase
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.six.moves.urllib.parse import urlsplit
 from ansible.utils.display import Display
 
 display = Display()
 
 
-class ActionModule(ActionBase):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         socket_path = None
-        play_context = copy.deepcopy(self._play_context)
-        play_context.network_os = self._get_network_os(task_vars)
+        self._get_network_os(task_vars)
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
-        if play_context.connection != 'network_cli':
+        if persistent_connection != 'network_cli':
             # It is supported only with network_cli
             result['failed'] = True
-            result['msg'] = ('please use network_cli connection type for net_get module')
+            result['msg'] = ('connection type %s is not valid for net_get module,'
+                             ' please use fully qualified name of network_cli connection type' % self._play_context.connection)
             return result
 
         try:

@@ -84,7 +84,7 @@ EXAMPLES = '''
     organization: My optional Organization
     schema: "{{ lookup('file', 'my_workflow.json') }}"
 
-- tower_worflow_template:
+- tower_workflow_template:
     name: Workflow Template
     state: absent
 '''

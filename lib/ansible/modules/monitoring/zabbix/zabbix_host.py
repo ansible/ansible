@@ -28,7 +28,7 @@ author:
     - Eike Frost (@eikef)
 requirements:
     - "python >= 2.6"
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
 options:
     host_name:
         description:
@@ -252,13 +252,13 @@ EXAMPLES = '''
         useip: 1
         ip: 10.xx.xx.xx
         dns: ""
-        port: 10050
+        port: "10050"
       - type: 4
         main: 1
         useip: 1
         ip: 10.xx.xx.xx
         dns: ""
-        port: 12345
+        port: "12345"
     proxy: a.zabbix.proxy
 - name: Update an existing host's TLS settings
   local_action:
@@ -287,6 +287,7 @@ except ImportError:
     ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
+from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
@@ -294,6 +295,7 @@ class Host(object):
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
+        self._zbx_api_version = zbx.api_version()[:5]
 
     # exist host
     def is_host_exist(self, host_name):
@@ -445,13 +447,12 @@ class Host(object):
 
     # get group ids by group names
     def get_group_ids_by_group_names(self, group_names):
-        group_ids = []
         if self.check_host_group_exist(group_names):
-            group_list = self._zapi.hostgroup.get({'output': 'extend', 'filter': {'name': group_names}})
-            for group in group_list:
-                group_id = group['groupid']
-                group_ids.append({'groupid': group_id})
-        return group_ids
+            return self._zapi.hostgroup.get({'output': 'groupid', 'filter': {'name': group_names}})
+
+    # get host groups ids by host id
+    def get_group_ids_by_host_id(self, host_id):
+        return self._zapi.hostgroup.get({'output': 'groupid', 'hostids': host_id})
 
     # get host templates by host id
     def get_host_templates_by_host_id(self, host_id):
@@ -461,16 +462,6 @@ class Host(object):
             template_ids.append(template['templateid'])
         return template_ids
 
-    # get host groups by host id
-    def get_host_groups_by_host_id(self, host_id):
-        exist_host_groups = []
-        host_groups_list = self._zapi.hostgroup.get({'output': 'extend', 'hostids': host_id})
-
-        if len(host_groups_list) >= 1:
-            for host_groups_name in host_groups_list:
-                exist_host_groups.append(host_groups_name['name'])
-        return exist_host_groups
-
     # check the exist_interfaces whether it equals the interfaces or not
     def check_interface_properties(self, exist_interface_list, interfaces):
         interfaces_port_list = []
@@ -478,20 +469,20 @@ class Host(object):
         if interfaces is not None:
             if len(interfaces) >= 1:
                 for interface in interfaces:
-                    interfaces_port_list.append(int(interface['port']))
+                    interfaces_port_list.append(str(interface['port']))
 
         exist_interface_ports = []
         if len(exist_interface_list) >= 1:
             for exist_interface in exist_interface_list:
-                exist_interface_ports.append(int(exist_interface['port']))
+                exist_interface_ports.append(str(exist_interface['port']))
 
         if set(interfaces_port_list) != set(exist_interface_ports):
             return True
 
         for exist_interface in exist_interface_list:
-            exit_interface_port = int(exist_interface['port'])
+            exit_interface_port = str(exist_interface['port'])
             for interface in interfaces:
-                interface_port = int(interface['port'])
+                interface_port = str(interface['port'])
                 if interface_port == exit_interface_port:
                     for key in interface.keys():
                         if str(exist_interface[key]) != str(interface[key]):
@@ -504,14 +495,14 @@ class Host(object):
         return host['status']
 
     # check all the properties before link or clear template
-    def check_all_properties(self, host_id, host_groups, status, interfaces, template_ids,
+    def check_all_properties(self, host_id, group_ids, status, interfaces, template_ids,
                              exist_interfaces, host, proxy_id, visible_name, description, host_name,
                              inventory_mode, inventory_zabbix, tls_accept, tls_psk_identity, tls_psk,
                              tls_issuer, tls_subject, tls_connect, ipmi_authtype, ipmi_privilege,
                              ipmi_username, ipmi_password):
         # get the existing host's groups
-        exist_host_groups = self.get_host_groups_by_host_id(host_id)
-        if set(host_groups) != set(exist_host_groups):
+        exist_host_groups = sorted(self.get_group_ids_by_host_id(host_id), key=lambda k: k['groupid'])
+        if sorted(group_ids, key=lambda k: k['groupid']) != exist_host_groups:
             return True
 
         # get the existing status
@@ -533,7 +524,7 @@ class Host(object):
 
         # Check whether the visible_name has changed; Zabbix defaults to the technical hostname if not set.
         if visible_name:
-            if host['name'] != visible_name and host['name'] != host_name:
+            if host['name'] != visible_name:
                 return True
 
         # Only compare description if it is given as a module parameter
@@ -542,11 +533,15 @@ class Host(object):
                 return True
 
         if inventory_mode:
-            if host['inventory']:
-                if int(host['inventory']['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+            if LooseVersion(self._zbx_api_version) <= LooseVersion('4.4.0'):
+                if host['inventory']:
+                    if int(host['inventory']['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+                        return True
+                elif inventory_mode != 'disabled':
                     return True
-            elif inventory_mode != 'disabled':
-                return True
+            else:
+                if int(host['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+                    return True
 
         if inventory_zabbix:
             proposed_inventory = copy.deepcopy(host['inventory'])
@@ -742,6 +737,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
@@ -779,6 +775,11 @@ def main():
                 interface['ip'] = ''
             if 'main' not in interface:
                 interface['main'] = 0
+            if 'port' in interface and not isinstance(interface['port'], str):
+                try:
+                    interface['port'] = str(interface['port'])
+                except ValueError:
+                    module.fail_json(msg="port should be convertable to string on interface '%s'." % interface)
             if 'port' not in interface:
                 if interface['type'] == 1:
                     interface['port'] = "10050"
@@ -818,8 +819,7 @@ def main():
             if not host_groups:
                 # if host_groups have not been specified when updating an existing host, just
                 # get the group_ids from the existing host without updating them.
-                host_groups = host.get_host_groups_by_host_id(host_id)
-                group_ids = host.get_group_ids_by_group_names(host_groups)
+                group_ids = host.get_group_ids_by_host_id(host_id)
 
             # get existing host's interfaces
             exist_interfaces = host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id})
@@ -839,7 +839,7 @@ def main():
                             interface.pop(key, None)
 
                     for index in interface.keys():
-                        if index in ['useip', 'main', 'type', 'port']:
+                        if index in ['useip', 'main', 'type']:
                             interface[index] = int(interface[index])
 
                     if interface not in interfaces:
@@ -849,12 +849,12 @@ def main():
                 template_ids = list(set(template_ids + host.get_host_templates_by_host_id(host_id)))
 
             if not force:
-                for group_id in host.get_group_ids_by_group_names(host.get_host_groups_by_host_id(host_id)):
+                for group_id in host.get_group_ids_by_host_id(host_id):
                     if group_id not in group_ids:
                         group_ids.append(group_id)
 
             # update host
-            if host.check_all_properties(host_id, host_groups, status, interfaces, template_ids,
+            if host.check_all_properties(host_id, group_ids, status, interfaces, template_ids,
                                          exist_interfaces, zabbix_host_obj, proxy_id, visible_name,
                                          description, host_name, inventory_mode, inventory_zabbix,
                                          tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, tls_connect,

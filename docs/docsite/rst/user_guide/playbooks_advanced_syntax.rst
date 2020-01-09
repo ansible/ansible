@@ -11,30 +11,28 @@ The advanced YAML syntax examples on this page give you more control over the da
 
 .. _unsafe_strings:
 
-Unsafe or Raw Strings
+Unsafe or raw strings
 =====================
 
-Ansible provides an internal data type for declaring variable values as "unsafe". This means that the data held within the variables value should be treated as unsafe preventing unsafe character substitution and information disclosure.
+When handling values returned by lookup plugins, Ansible uses a data type called ``unsafe`` to block templating. Marking data as unsafe prevents malicious users from abusing Jinja2 templates to execute arbitrary code on target machines. The Ansible implementation ensures that unsafe values are never templated. It is more comprehensive than escaping Jinja2 with ``{% raw %} ... {% endraw %}`` tags.
 
-Jinja2 contains functionality for escaping, or telling Jinja2 to not template data by means of functionality such as ``{% raw %} ... {% endraw %}``, however this uses a more comprehensive implementation to ensure that the value is never templated.
-
-Using YAML tags, you can also mark a value as "unsafe" by using the ``!unsafe`` tag such as:
+You can use the same ``unsafe`` data type in variables you define, to prevent templating errors and information disclosure. You can mark values supplied by :ref:`vars_prompts<unsafe_prompts>` as unsafe. You can also use ``unsafe`` in playbooks. The most common use cases include passwords that allow special characters like ``{`` or ``%``, and JSON arguments that look like templates but should not be templated. For example:
 
 .. code-block:: yaml
 
     ---
-    my_unsafe_variable: !unsafe 'this variable has {{ characters that should not be treated as a jinja2 template'
+    mypassword: !unsafe 234%234{435lkj{{lkjsdf
 
-In a playbook, this may look like::
+In a playbook::
 
     ---
     hosts: all
     vars:
-        my_unsafe_variable: !unsafe 'unsafe value'
+        my_unsafe_variable: !unsafe 'unsafe % value'
     tasks:
         ...
 
-For complex variables such as hashes or arrays, ``!unsafe`` should be used on the individual elements such as::
+For complex variables such as hashes or arrays, use ``!unsafe`` on the individual elements::
 
     ---
     my_unsafe_array:

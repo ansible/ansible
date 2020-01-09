@@ -124,6 +124,7 @@ containers:
       - List of IDs of deleted containers.
     returned: I(containers) is C(true)
     type: list
+    elements: str
     sample: '[]'
 containers_space_reclaimed:
     description:
@@ -138,6 +139,7 @@ images:
       - List of IDs of deleted images.
     returned: I(images) is C(true)
     type: list
+    elements: str
     sample: '[]'
 images_space_reclaimed:
     description:
@@ -152,6 +154,7 @@ networks:
       - List of IDs of deleted networks.
     returned: I(networks) is C(true)
     type: list
+    elements: str
     sample: '[]'
 
 # volumes
@@ -160,6 +163,7 @@ volumes:
       - List of IDs of deleted volumes.
     returned: I(volumes) is C(true)
     type: list
+    elements: str
     sample: '[]'
 volumes_space_reclaimed:
     description:

@@ -28,7 +28,7 @@
         validate_certs: False
         library_name: Sample_Library
         library_description: Sample Description
-        datastore_name: '{{ ds1 }}'
+        datastore_name: '{{ rw_datastore }}'
         state: present
       register: content_lib_create_result
 
@@ -80,7 +80,7 @@
       assert:
         that:
           - content_lib_delete_result.changed
-          
+
     - <<: *content_lib_delete
       name: Delete content library again
       register: content_lib_delete_result

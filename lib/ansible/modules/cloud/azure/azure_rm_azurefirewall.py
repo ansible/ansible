@@ -17,207 +17,220 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_azurefirewall
 version_added: '2.9'
-short_description: Manage Azure Firewall instance.
+short_description: Manage Azure Firewall instance
 description:
-  - Create, update and delete instance of Azure Firewall.
+    - Create, update and delete instance of Azure Firewall.
 options:
-  resource_group:
-    description:
-      - The name of the resource group.
-    required: true
-  name:
-    description:
-      - The name of the Azure Firewall.
-    required: true
-  location:
-    description:
-      - Resource location.
-  application_rule_collections:
-    description:
-      - Collection of application rule collections used by Azure Firewall.
-    type: list
-    suboptions:
-      priority:
+    resource_group:
         description:
-          - Priority of the application rule collection resource.
-        type: int
-      action:
+            - The name of the resource group.
+        required: true
+        type: str
+    name:
         description:
-          - The action type of a rule collection
-        choices:
-          - allow
-          - deny
-      rules:
+            - The name of the Azure Firewall.
+        required: true
+        type: str
+    location:
         description:
-          - Collection of rules used by a application rule collection.
+            - Resource location.
+        type: str
+    application_rule_collections:
+        description:
+            - Collection of application rule collections used by Azure Firewall.
         type: list
         suboptions:
-          name:
-            description:
-              - Name of the application rule.
-          description:
-            description:
-              - Description of the rule.
-          source_addresses:
-            description:
-              - List of source IP addresses for this rule.
-            type: list
-          protocols:
-            description:
-              - Array of ApplicationRuleProtocols.
-            type: list
-          target_fqdns:
-            description:
-              - List of FQDNs for this rule.
-            type: list
-          fqdn_tags:
-            description:
-              - List of FQDN Tags for this rule.
-            type: list
-      name:
+            priority:
+                description:
+                    - Priority of the application rule collection resource.
+                type: int
+            action:
+                description:
+                    - The action type of a rule collection.
+                choices:
+                    - allow
+                    - deny
+                type: str
+            rules:
+                description:
+                    - Collection of rules used by a application rule collection.
+                type: list
+                suboptions:
+                    name:
+                        description:
+                            - Name of the application rule.
+                        type: str
+                    description:
+                        description:
+                            - Description of the rule.
+                        type: str
+                    source_addresses:
+                        description:
+                            - List of source IP addresses for this rule.
+                        type: list
+                    protocols:
+                        description:
+                            - Array of ApplicationRuleProtocols.
+                        type: list
+                    target_fqdns:
+                        description:
+                            - List of FQDNs for this rule.
+                        type: list
+                    fqdn_tags:
+                        description:
+                            - List of FQDN Tags for this rule.
+                        type: list
+            name:
+                description:
+                    - Gets name of the resource that is unique within a resource group.
+                    - This name can be used to access the resource.
+                type: str
+    nat_rule_collections:
         description:
-          - >-
-            Gets name of the resource that is unique within a resource group.
-            This name can be used to access the resource.
-  nat_rule_collections:
-    description:
-      - Collection of NAT rule collections used by Azure Firewall.
-    type: list
-    suboptions:
-      priority:
-        description:
-          - Priority of the NAT rule collection resource.
-        type: int
-      action:
-        description:
-          - The action type of a NAT rule collection
-        choices:
-          - snat
-          - dnat
-      rules:
-        description:
-          - Collection of rules used by a NAT rule collection.
+            - Collection of NAT rule collections used by Azure Firewall.
         type: list
         suboptions:
-          name:
-            description:
-              - Name of the NAT rule.
-          description:
-            description:
-              - Description of the rule.
-          source_addresses:
-            description:
-              - List of source IP addresses for this rule.
-            type: list
-          destination_addresses:
-            description:
-              - List of destination IP addresses for this rule.
-            type: list
-          destination_ports:
-            description:
-              - List of destination ports.
-            type: list
-          protocols:
-            description:
-              - >-
-                Array of AzureFirewallNetworkRuleProtocols applicable to this
-                NAT rule.
-            type: list
-          translated_address:
-            description:
-              - The translated address for this NAT rule.
-          translated_port:
-            description:
-              - The translated port for this NAT rule.
-      name:
+            priority:
+                description:
+                    - Priority of the NAT rule collection resource.
+                type: int
+            action:
+                description:
+                    - The action type of a NAT rule collection
+                choices:
+                    - snat
+                    - dnat
+                type: str
+            rules:
+                description:
+                    - Collection of rules used by a NAT rule collection.
+                type: list
+                suboptions:
+                    name:
+                        description:
+                            - Name of the NAT rule.
+                        type: str
+                    description:
+                        description:
+                            - Description of the rule.
+                        type: str
+                    source_addresses:
+                        description:
+                            - List of source IP addresses for this rule.
+                        type: list
+                    destination_addresses:
+                        description:
+                            - List of destination IP addresses for this rule.
+                        type: list
+                    destination_ports:
+                        description:
+                            - List of destination ports.
+                        type: list
+                    protocols:
+                        description:
+                            - Array of AzureFirewallNetworkRuleProtocols applicable to this NAT rule.
+                        type: list
+                    translated_address:
+                        description:
+                            - The translated address for this NAT rule.
+                        type: str
+                    translated_port:
+                        description:
+                            - The translated port for this NAT rule.
+                        type: str
+            name:
+                description:
+                    - Gets name of the resource that is unique within a resource group.
+                    - This name can be used to access the resource.
+                type: str
+    network_rule_collections:
         description:
-          - >-
-            Gets name of the resource that is unique within a resource group.
-            This name can be used to access the resource.
-  network_rule_collections:
-    description:
-      - Collection of network rule collections used by Azure Firewall.
-    type: list
-    suboptions:
-      priority:
-        description:
-          - Priority of the network rule collection resource.
-        type: int
-      action:
-        description:
-          - The action type of a rule collection
-        choices:
-          - allow
-          - deny
-      rules:
-        description:
-          - Collection of rules used by a network rule collection.
+            - Collection of network rule collections used by Azure Firewall.
         type: list
         suboptions:
-          name:
-            description:
-              - Name of the network rule.
-          description:
-            description:
-              - Description of the rule.
-          protocols:
-            description:
-              - Array of AzureFirewallNetworkRuleProtocols.
-            type: list
-          source_addresses:
-            description:
-              - List of source IP addresses for this rule.
-            type: list
-          destination_addresses:
-            description:
-              - List of destination IP addresses.
-            type: list
-          destination_ports:
-            description:
-              - List of destination ports.
-            type: list
-      name:
+            priority:
+                description:
+                    - Priority of the network rule collection resource.
+                type: int
+            action:
+                description:
+                    - The action type of a rule collection.
+                type: str
+                choices:
+                    - allow
+                    - deny
+            rules:
+                description:
+                    - Collection of rules used by a network rule collection.
+                type: list
+                suboptions:
+                    name:
+                        description:
+                            - Name of the network rule.
+                        type: str
+                    description:
+                        description:
+                            - Description of the rule.
+                        type: str
+                    protocols:
+                        description:
+                            - Array of AzureFirewallNetworkRuleProtocols.
+                        type: list
+                    source_addresses:
+                        description:
+                            - List of source IP addresses for this rule.
+                        type: list
+                    destination_addresses:
+                        description:
+                            - List of destination IP addresses.
+                        type: list
+                    destination_ports:
+                        description:
+                            - List of destination ports.
+                        type: list
+            name:
+                description:
+                    - Gets name of the resource that is unique within a resource group.
+                    - This name can be used to access the resource.
+                type: str
+    ip_configurations:
         description:
-          - >-
-            Gets name of the resource that is unique within a resource group.
-            This name can be used to access the resource.
-  ip_configurations:
-    description:
-      - IP configuration of the Azure Firewall resource.
-    type: list
-    suboptions:
-      subnet:
+            - IP configuration of the Azure Firewall resource.
+        type: list
+        suboptions:
+            subnet:
+                description:
+                    - Existing subnet.
+                    - It can be a string containing subnet resource ID.
+                    - It can be a dictionary containing I(name), I(virtual_network_name) and optionally I(resource_group) .
+                type: raw
+            public_ip_address:
+                description:
+                    - Existing public IP address.
+                    - It can be a string containing resource ID.
+                    - It can be a string containing a name in current resource group.
+                    - It can be a dictionary containing I(name) and optionally I(resource_group).
+                type: raw
+            name:
+                description:
+                    - Name of the resource that is unique within a resource group.
+                    - This name can be used to access the resource.
+                type: str
+    state:
         description:
-          - Existing subnet.
-          - It can be a string containing subnet resource id.
-          - It can be a dictionary containing C(name), C(virtual_network_name) and optionally C(resource_group) .
-      public_ip_address:
-        description:
-          - Existing public IP address
-          - It can be a string containing resource id.
-          - It can be a string containing a name in current resource group.
-          - It can be a dictionary containing C(name) and optionally C(resource_group).
-      name:
-        description:
-          - >-
-            Name of the resource that is unique within a resource group. This
-            name can be used to access the resource.
-  state:
-    description:
-      - Assert the state of the AzureFirewall.
-      - >-
-        Use C(present) to create or update an AzureFirewall and C(absent) to
-        delete it.
-    default: present
-    choices:
-      - absent
-      - present
+            - Assert the state of the AzureFirewall.
+            - Use C(present) to create or update an AzureFirewall and C(absent) to delete it.
+        default: present
+        type: str
+        choices:
+            - absent
+            - present
 extends_documentation_fragment:
-  - azure
-  - azure_tags
+    - azure
+    - azure_tags
 author:
-  - Zim Kalinowski (@zikalino)
-  - Jurijs Fadejevs (@needgithubid)
+    - Zim Kalinowski (@zikalino)
+    - Jurijs Fadejevs (@needgithubid)
 
 '''
 
@@ -300,11 +313,11 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-  description:
-    - Resource ID.
-  returned: always
-  type: str
-  sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/azureFirewalls/myAzureFirewall
+    description:
+        - Resource ID.
+    returned: always
+    type: str
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/azureFirewalls/myAzureFirewall
 '''
 
 import time

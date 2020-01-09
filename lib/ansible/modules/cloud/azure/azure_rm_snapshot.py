@@ -19,81 +19,80 @@ module: azure_rm_snapshot
 version_added: '2.9'
 short_description: Manage Azure Snapshot instance.
 description:
-  - 'Create, update and delete instance of Azure Snapshot.'
+    - Create, update and delete instance of Azure Snapshot.
 options:
-  resource_group:
-    description:
-      - The name of the resource group.
-    required: true
-    type: str
-  name:
-    description:
-      - Resource name
-    type: str
-  location:
-    description:
-      - Resource location
-    type: str
-  sku:
-    description:
-      - SKU
-    type: dict
-    suboptions:
-      name:
+    resource_group:
         description:
-          - The sku name.
+            - The name of the resource group.
+        required: true
+        type: str
+    name:
+        description:
+            - Resource name.
+        type: str
+    location:
+        description:
+            - Resource location.
+        type: str
+    sku:
+        description:
+            - The snapshots SKU.
+        type: dict
+        suboptions:
+            name:
+                description:
+                    - The sku name.
+                type: str
+                choices:
+                    - Standard_LRS
+                    - Premium_LRS
+                    - Standard_ZRS
+            tier:
+                description:
+                    - The sku tier.
+                type: str
+    os_type:
+        description:
+            - The Operating System type.
         type: str
         choices:
-          - Standard_LRS
-          - Premium_LRS
-          - Standard_ZRS
-      tier:
+            - Linux
+            - Windows
+    creation_data:
         description:
-          - The sku tier.
-        type: str
-  os_type:
-    description:
-      - The Operating System type.
-    type: str
-    choices:
-      - Linux
-      - Windows
-  creation_data:
-    description:
-      - >-
-        Disk source information. CreationData information cannot be changed
-        after the disk has been created.
-    type: dict
-    suboptions:
-      create_option:
+            - Disk source information.
+            - CreationData information cannot be changed after the disk has been created.
+        type: dict
+        suboptions:
+            create_option:
+                description:
+                    - This enumerates the possible sources of a disk's creation.
+                type: str
+                choices:
+                    - Import
+                    - Copy
+            source_uri:
+                description:
+                    - If I(createOption=Import), this is the URI of a blob to be imported into a managed disk.
+                type: str
+            source_id:
+                description:
+                    - If I(createOption=Copy), this is the resource ID of a managed disk to be copied from.
+                type: str
+    state:
         description:
-          - This enumerates the possible sources of a disk's creation.
+            - Assert the state of the Snapshot.
+            - Use C(present) to create or update an Snapshot and C(absent) to delete it.
+        default: present
         type: str
-        default: Import
         choices:
-          - Import
-      source_uri:
-        description:
-          - >-
-            If createOption is Import, this is the URI of a blob to be imported
-            into a managed disk.
-        type: str
-  state:
-    description:
-      - Assert the state of the Snapshot.
-      - >-
-        Use C(present) to create or update an Snapshot and C(absent) to delete
-        it.
-    default: present
-    type: str
-    choices:
-      - absent
-      - present
+          - absent
+          - present
 extends_documentation_fragment:
-  - azure
-  - azure_tags
+    - azure
+    - azure_tags
 author:
-  - Zim Kalinowski (@zikalino)
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -106,23 +105,30 @@ EXAMPLES = '''
     creation_data:
       create_option: Import
       source_uri: 'https://mystorageaccount.blob.core.windows.net/osimages/osimage.vhd'
+
+- name: Create a snapshot by copying an existing managed disk.
+  azure_rm_snapshot:
+    resource_group: myResourceGroup
+    name: mySnapshot
+    location: eastus
+    creation_data:
+      create_option: Copy
+      source_id: '/subscriptions/sub123/resourceGroups/group123/providers/Microsoft.Compute/disks/disk123'
 '''
 
 RETURN = '''
 id:
-  description:
-    - Resource Id
-  returned: always
-  type: str
-  sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot
+    description:
+        - Resource ID.
+    returned: always
+    type: str
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/snapshots/mySnapshot
 '''
 
 import time
 import json
-import re
 from ansible.module_utils.azure_rm_common_ext import AzureRMModuleBaseExt
 from ansible.module_utils.azure_rm_common_rest import GenericRestClient
-from copy import deepcopy
 try:
     from msrestazure.azure_exceptions import CloudError
 except ImportError:
@@ -182,12 +188,17 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
                     create_option=dict(
                         type='str',
                         disposition='createOption',
-                        choices=['Import'],
-                        default='Import'
+                        choices=['Import', 'Copy'],
                     ),
                     source_uri=dict(
                         type='str',
-                        disposition='sourceUri'
+                        disposition='sourceUri',
+                        purgeIfNone=True
+                    ),
+                    source_id=dict(
+                        type='str',
+                        disposition='sourceResourceId',
+                        purgeIfNone=True
                     )
                 )
             ),
@@ -360,6 +371,7 @@ class AzureRMSnapshots(AzureRMModuleBaseExt):
                                               expected_status_codes=self.status_code,
                                               polling_timeout=600,
                                               polling_interval=30)
+            response = json.loads(response.text)
             found = True
             self.log("Response : {0}".format(response))
             # self.log("Snapshot instance : {0} found".format(response.name))

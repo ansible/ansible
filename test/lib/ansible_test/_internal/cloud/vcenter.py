@@ -272,4 +272,12 @@ class VcenterEnvironment(CloudEnvironment):
         return CloudEnvironmentConfig(
             env_vars=env_vars,
             ansible_vars=ansible_vars,
+            module_defaults={
+                'group/vmware': {
+                    'hostname': env_vars['VCENTER_HOSTNAME'],
+                    'username': env_vars['VCENTER_USERNAME'],
+                    'password': env_vars['VCENTER_PASSWORD'],
+                    'validate_certs': env_vars.get('VMWARE_VALIDATE_CERTS', 'no'),
+                },
+            },
         )

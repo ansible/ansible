@@ -89,6 +89,9 @@ class SumologicHTTPCollectorSource(object):
         else:
             ansible_role = None
 
+        if 'args' in result._task_fields:
+            del result._task_fields['args']
+
         data = {}
         data['uuid'] = result._task._uuid
         data['session'] = self.session

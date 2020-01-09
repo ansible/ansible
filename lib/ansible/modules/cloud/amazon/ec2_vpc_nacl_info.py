@@ -30,9 +30,9 @@ options:
     type: list
   filters:
     description:
-      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See \
-      U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkAcls.html) for possible filters. Filter \
-      names and values are case sensitive.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
+        U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkAcls.html) for possible filters. Filter
+        names and values are case sensitive.
     required: false
     default: {}
     type: dict
@@ -87,20 +87,23 @@ nacls:
         subnets:
             description: A list of subnet IDs that are associated with the NACL.
             returned: always
-            type: list of string
+            type: list
+            elements: str
         ingress:
             description:
               - A list of NACL ingress rules with the following format.
-              - [rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to]
+              - "C([rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to])"
             returned: always
-            type: list of list
+            type: list
+            elements: list
             sample: [[100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]]
         egress:
             description:
               - A list of NACL egress rules with the following format.
-              - [rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to]
+              - "C([rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to])"
             returned: always
-            type: list of list
+            type: list
+            elements: list
             sample: [[100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]]
 '''
 

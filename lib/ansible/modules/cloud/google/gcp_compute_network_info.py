@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_compute_network_info
 description:
 - Gather info for GCP Network
-- This module was called C(gcp_compute_network_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP Network
 version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
@@ -86,9 +84,9 @@ options:
     - This only alters the User Agent string for any API requests.
     type: str
 notes:
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -131,17 +129,6 @@ resources:
       - The unique identifier for the resource.
       returned: success
       type: int
-    ipv4_range:
-      description:
-      - If this field is specified, a deprecated legacy network is created.
-      - You will no longer be able to create a legacy network on Feb 1, 2020.
-      - See the [legacy network docs](U(https://cloud.google.com/vpc/docs/legacy))
-        for more details.
-      - The range of internal addresses that are legal on this legacy network.
-      - 'This range is a CIDR specification, for example: `192.168.0.0/16`.'
-      - The resource must be recreated to modify this field.
-      returned: success
-      type: str
     name:
       description:
       - Name of the resource. Provided by the client when the resource is created.
@@ -202,9 +189,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
-
-    if module._name == 'gcp_compute_network_facts':
-        module.deprecate("The 'gcp_compute_network_facts' module has been renamed to 'gcp_compute_network_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']

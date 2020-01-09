@@ -1,7 +1,9 @@
 #!/usr/bin/python
-
 # Copyright: (c) 2018, Rob White (@wimnat)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -21,42 +23,47 @@ options:
     description:
       - The ID of the Data Catalog in which to create the connection. If none is supplied,
         the AWS account ID is used by default.
-    required: false
+    type: str
   connection_properties:
     description:
       - A dict of key-value pairs used as parameters for this connection.
-    required: true
+      - Required when I(state=present).
+    type: dict
   connection_type:
     description:
       - The type of the connection. Currently, only JDBC is supported; SFTP is not supported.
-    required: false
     default: JDBC
     choices: [ 'JDBC', 'SFTP' ]
+    type: str
   description:
     description:
       - The description of the connection.
-    required: false
+    type: str
   match_criteria:
     description:
       - A list of UTF-8 strings that specify the criteria that you can use in selecting this connection.
-    required: false
+    type: list
+    elements: str
   name:
     description:
       - The name of the connection.
     required: true
+    type: str
   security_groups:
     description:
       - A list of security groups to be used by the connection. Use either security group name or ID.
-    required: false
+    type: list
+    elements: str
   state:
     description:
       - Create or delete the AWS Glue connection.
     required: true
     choices: [ 'present', 'absent' ]
+    type: str
   subnet_id:
     description:
       - The subnet ID used by the connection.
-    required: false
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2

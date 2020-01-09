@@ -33,6 +33,8 @@
     - master_status is not changed
 
 # Test changemaster mode:
+# master_ssl_ca will be set as '' to check the module's behaviour for #23976,
+# must be converted to an empty string
 - name: Run replication
   mysql_replication:
     login_host: 127.0.0.1
@@ -44,12 +46,13 @@
     master_password: "{{ replication_pass }}"
     master_log_file: "{{ master_status.File }}"
     master_log_pos: "{{ master_status.Position }}"
+    master_ssl_ca: ''
   register: result
 
 - assert:
     that:
     - result is changed
-    - result.queries == ["CHANGE MASTER TO MASTER_HOST='127.0.0.1',MASTER_USER='replication_user',MASTER_PASSWORD='********',MASTER_PORT=3306,MASTER_LOG_FILE='{{ master_status.File }}',MASTER_LOG_POS={{ master_status.Position }}"]
+    - result.queries == ["CHANGE MASTER TO MASTER_HOST='127.0.0.1',MASTER_USER='replication_user',MASTER_PASSWORD='********',MASTER_PORT=3306,MASTER_LOG_FILE='{{ master_status.File }}',MASTER_LOG_POS={{ master_status.Position }},MASTER_SSL_CA=''"]
 
 # Test startslave mode:
 - name: Start slave

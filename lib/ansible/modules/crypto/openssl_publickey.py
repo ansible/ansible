@@ -58,8 +58,8 @@ options:
     privatekey_path:
         description:
             - Path to the TLS/SSL private key from which to generate the public key.
+            - Required if I(state) is C(present).
         type: path
-        required: true
     privatekey_passphrase:
         description:
             - The passphrase for the private key.

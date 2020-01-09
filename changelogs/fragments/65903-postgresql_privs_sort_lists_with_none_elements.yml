@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_privs - fix sorting lists with None elements for python3 (https://github.com/ansible/ansible/issues/65761).

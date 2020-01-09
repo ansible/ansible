@@ -52,6 +52,11 @@ dry_mode_cmd_with_port_700 = {
     "ufw --dry-run allow from any to any port 7000 proto tcp": skippg_adding_existing_rules,
     "ufw --dry-run delete allow from any to any port 7000 proto tcp": "",
     "ufw --dry-run delete allow from any to any port 7001 proto tcp": user_rules_with_port_7000,
+    "ufw --dry-run route allow in on foo out on bar from 1.1.1.1 port 7000 to 8.8.8.8 port 7001 proto tcp": "",
+    "ufw --dry-run allow in on foo from any to any port 7003 proto tcp": "",
+    "ufw --dry-run allow in on foo from 1.1.1.1 port 7002 to 8.8.8.8 port 7003 proto tcp": "",
+    "ufw --dry-run allow out on foo from any to any port 7004 proto tcp": "",
+    "ufw --dry-run allow out on foo from 1.1.1.1 port 7003 to 8.8.8.8 port 7004 proto tcp": "",
     grep_config_cli: user_rules_with_port_7000
 }
 
@@ -168,6 +173,134 @@ class TestUFW(unittest.TestCase):
         })
         result = self.__getResult(do_nothing_func_port_7000)
         self.assertFalse(result.exception.args[0]['changed'])
+
+    def test_check_mode_add_detailed_route(self):
+        set_module_args({
+            'rule': 'allow',
+            'route': 'yes',
+            'interface_in': 'foo',
+            'interface_out': 'bar',
+            'proto': 'tcp',
+            'from_ip': '1.1.1.1',
+            'to_ip': '8.8.8.8',
+            'from_port': '7000',
+            'to_port': '7001',
+            '_ansible_check_mode': True
+        })
+
+        result = self.__getResult(do_nothing_func_port_7000)
+        self.assertTrue(result.exception.args[0]['changed'])
+
+    def test_check_mode_add_ambiguous_route(self):
+        set_module_args({
+            'rule': 'allow',
+            'route': 'yes',
+            'interface_in': 'foo',
+            'interface_out': 'bar',
+            'direction': 'in',
+            'interface': 'baz',
+            '_ansible_check_mode': True
+        })
+
+        with self.assertRaises(AnsibleFailJson) as result:
+            self.__getResult(do_nothing_func_port_7000)
+
+        exc = result.exception.args[0]
+        self.assertTrue(exc['failed'])
+        self.assertIn('mutually exclusive', exc['msg'])
+
+    def test_check_mode_add_interface_in(self):
+        set_module_args({
+            'rule': 'allow',
+            'proto': 'tcp',
+            'port': '7003',
+            'interface_in': 'foo',
+            '_ansible_check_mode': True
+        })
+        result = self.__getResult(do_nothing_func_port_7000)
+        self.assertTrue(result.exception.args[0]['changed'])
+
+    def test_check_mode_add_interface_out(self):
+        set_module_args({
+            'rule': 'allow',
+            'proto': 'tcp',
+            'port': '7004',
+            'interface_out': 'foo',
+            '_ansible_check_mode': True
+        })
+        result = self.__getResult(do_nothing_func_port_7000)
+        self.assertTrue(result.exception.args[0]['changed'])
+
+    def test_check_mode_add_non_route_interface_both(self):
+        set_module_args({
+            'rule': 'allow',
+            'proto': 'tcp',
+            'port': '7004',
+            'interface_in': 'foo',
+            'interface_out': 'bar',
+            '_ansible_check_mode': True
+        })
+
+        with self.assertRaises(AnsibleFailJson) as result:
+            self.__getResult(do_nothing_func_port_7000)
+
+        exc = result.exception.args[0]
+        self.assertTrue(exc['failed'])
+        self.assertIn('combine', exc['msg'])
+
+    def test_check_mode_add_direction_in(self):
+        set_module_args({
+            'rule': 'allow',
+            'proto': 'tcp',
+            'port': '7003',
+            'direction': 'in',
+            'interface': 'foo',
+            '_ansible_check_mode': True
+        })
+        result = self.__getResult(do_nothing_func_port_7000)
+        self.assertTrue(result.exception.args[0]['changed'])
+
+    def test_check_mode_add_direction_in_with_ip(self):
+        set_module_args({
+            'rule': 'allow',
+            'proto': 'tcp',
+            'from_ip': '1.1.1.1',
+            'from_port': '7002',
+            'to_ip': '8.8.8.8',
+            'to_port': '7003',
+            'direction': 'in',
+            'interface': 'foo',
+            '_ansible_check_mode': True
+        })
+        result = self.__getResult(do_nothing_func_port_7000)
+        self.assertTrue(result.exception.args[0]['changed'])
+
+    def test_check_mode_add_direction_out(self):
+        set_module_args({
+            'rule': 'allow',
+            'proto': 'tcp',
+            'port': '7004',
+            'direction': 'out',
+            'interface': 'foo',
+            '_ansible_check_mode': True
+        })
+        result = self.__getResult(do_nothing_func_port_7000)
+        self.assertTrue(result.exception.args[0]['changed'])
+
+    def test_check_mode_add_direction_out_with_ip(self):
+        set_module_args({
+            'rule': 'allow',
+            'proto': 'tcp',
+            'from_ip': '1.1.1.1',
+            'from_port': '7003',
+            'to_ip': '8.8.8.8',
+            'to_port': '7004',
+            'direction': 'out',
+            'interface': 'foo',
+            '_ansible_check_mode': True
+        })
+        result = self.__getResult(do_nothing_func_port_7000)
+        self.assertTrue(result.exception.args[0]['changed'])
 
     def test_check_mode_delete_existing_rules(self):
 

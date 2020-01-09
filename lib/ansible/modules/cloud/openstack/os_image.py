@@ -177,8 +177,10 @@ def main():
     try:
 
         changed = False
-        if module.params['checksum']:
-            image = cloud.get_image(name_or_id=None, filters={'checksum': module.params['checksum']})
+        if module.params['id']:
+            image = cloud.get_image(name_or_id=module.params['id'])
+        elif module.params['checksum']:
+            image = cloud.get_image(name_or_id=module.params['name'], filters={'checksum': module.params['checksum']})
         else:
             image = cloud.get_image(name_or_id=module.params['name'])
 

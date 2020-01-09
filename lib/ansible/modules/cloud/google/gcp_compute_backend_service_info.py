@@ -32,8 +32,6 @@ DOCUMENTATION = '''
 module: gcp_compute_backend_service_info
 description:
 - Gather info for GCP BackendService
-- This module was called C(gcp_compute_backend_service_facts) before Ansible 2.9.
-  The usage has not changed.
 short_description: Gather info for GCP BackendService
 version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
@@ -86,9 +84,9 @@ options:
     - This only alters the User Agent string for any API requests.
     type: str
 notes:
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -162,8 +160,8 @@ resources:
           - For Network Endpoint Groups this defines list of endpoints. All endpoints
             of Network Endpoint Group must be hosted on instances located in the same
             zone as the Network Endpoint Group.
-          - Backend service can not contain mix of Instance Group and Network Endpoint
-            Group backends.
+          - Backend services cannot mix Instance Group and Network Endpoint Group
+            backends.
           - Note that you must specify an Instance Group or Network Endpoint Group
             resource using the fully-qualified URL, rather than a partial URL.
           returned: success
@@ -418,9 +416,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
-
-    if module._name == 'gcp_compute_backend_service_facts':
-        module.deprecate("The 'gcp_compute_backend_service_facts' module has been renamed to 'gcp_compute_backend_service_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']

@@ -74,10 +74,34 @@ EXAMPLES = '''
     state: present
 '''
 
+RETURN = r'''
+gid:
+  description: Group ID of the group.
+  returned: When C(state) is 'present'
+  type: int
+  sample: 1001
+name:
+  description: Group name
+  returned: always
+  type: str
+  sample: users
+state:
+  description: Whether the group is present or not
+  returned: always
+  type: str
+  sample: 'absent'
+system:
+  description: Whether the group is a system group or not
+  returned: When C(state) is 'present'
+  type: bool
+  sample: False
+'''
+
 import grp
 
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.sys_info import get_platform_subclass
 
 
 class Group(object):
@@ -98,7 +122,8 @@ class Group(object):
     GROUPFILE = '/etc/group'
 
     def __new__(cls, *args, **kwargs):
-        return load_platform_subclass(Group, args, kwargs)
+        new_cls = get_platform_subclass(Group)
+        return super(cls, new_cls).__new__(new_cls)
 
     def __init__(self, module):
         self.module = module

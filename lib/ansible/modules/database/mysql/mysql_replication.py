@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2013, Balazs Pocze <banyek@gawker.com>
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # Certain parts are taken from Mark Theunissen's mysqldb module
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -19,124 +20,147 @@ DOCUMENTATION = r'''
 module: mysql_replication
 short_description: Manage MySQL replication
 description:
-    - Manages MySQL server replication, slave, master status get and change master host.
-version_added: "1.3"
+- Manages MySQL server replication, slave, master status, get and change master host.
+version_added: '1.3'
 author:
 - Balazs Pocze (@banyek)
+- Andrew Klychkov (@Andersson007)
 options:
-    mode:
-        description:
-            - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave
-              (START SLAVE), stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetslaveall (RESET SLAVE ALL)
-        type: str
-        choices:
-            - getslave
-            - getmaster
-            - changemaster
-            - stopslave
-            - startslave
-            - resetslave
-            - resetslaveall
-        default: getslave
-    master_host:
-        description:
-            - Same as mysql variable.
-        type: str
-    master_user:
-        description:
-            - Same as mysql variable.
-        type: str
-    master_password:
-        description:
-            - Same as mysql variable.
-        type: str
-    master_port:
-        description:
-            - Same as mysql variable.
-        type: int
-    master_connect_retry:
-        description:
-            - Same as mysql variable.
-        type: int
-    master_log_file:
-        description:
-            - Same as mysql variable.
-        type: str
-    master_log_pos:
-        description:
-            - Same as mysql variable.
-        type: int
-    relay_log_file:
-        description:
-            - Same as mysql variable.
-        type: str
-    relay_log_pos:
-        description:
-            - Same as mysql variable.
-        type: int
-    master_ssl:
-        description:
-            - Same as mysql variable.
-        type: bool
-    master_ssl_ca:
-        description:
-            - Same as mysql variable.
-        type: str
-    master_ssl_capath:
-        description:
-            - Same as mysql variable.
-        type: str
-    master_ssl_cert:
-        description:
-            - Same as mysql variable.
-        type: str
-    master_ssl_key:
-        description:
-            - Same as mysql variable.
-        type: str
-    master_ssl_cipher:
-        description:
-            - Same as mysql variable.
-        type: str
-    master_auto_position:
-        description:
-            - Whether the host uses GTID based replication or not.
-        type: bool
-        version_added: "2.0"
-    master_use_gtid:
-        description:
-            - Configures the slave to use the MariaDB Global Transaction ID.
-            - C(disabled) equals MASTER_USE_GTID=no command.
-            - To find information about available values see
-              U(https://mariadb.com/kb/en/library/change-master-to/#master_use_gtid).
-            - Available since MariaDB 10.0.2.
-        choices: [current_pos, slave_pos, disabled]
-        type: str
-        version_added: "2.10"
-    master_delay:
-        description:
-            - Time lag behind the master's state (in seconds).
-            - Available from MySQL 5.6.
-            - For more information see U(https://dev.mysql.com/doc/refman/8.0/en/replication-delayed.html).
-        type: int
-        version_added: "2.10"
-    connection_name:
-        description:
-            - Name of the master connection.
-            - Supported from MariaDB 10.0.1.
-            - For more information see U(https://mariadb.com/kb/en/library/multi-source-replication/).
-        type: str
-        version_added: "2.10"
-    channel:
-        description:
-            - Name of replication channel.
-            - Multi-source replication is supported from MySQL 5.7.
-            - For more information see U(https://dev.mysql.com/doc/refman/8.0/en/replication-multi-source.html).
-        type: str
-        version_added: "2.10"
+  mode:
+    description:
+    - Module operating mode. Could be
+      C(changemaster) (CHANGE MASTER TO),
+      C(getmaster) (SHOW MASTER STATUS),
+      C(getslave) (SHOW SLAVE STATUS),
+      C(startslave) (START SLAVE),
+      C(stopslave) (STOP SLAVE),
+      C(resetmaster) (RESET MASTER) - supported from Ansible 2.10,
+      C(resetslave) (RESET SLAVE),
+      C(resetslaveall) (RESET SLAVE ALL).
+    type: str
+    choices:
+    - changemaster
+    - getmaster
+    - getslave
+    - startslave
+    - stopslave
+    - resetmaster
+    - resetslave
+    - resetslaveall
+    default: getslave
+  master_host:
+    description:
+    - Same as mysql variable.
+    type: str
+  master_user:
+    description:
+    - Same as mysql variable.
+    type: str
+  master_password:
+    description:
+    - Same as mysql variable.
+    type: str
+  master_port:
+    description:
+    - Same as mysql variable.
+    type: int
+  master_connect_retry:
+    description:
+    - Same as mysql variable.
+    type: int
+  master_log_file:
+    description:
+    - Same as mysql variable.
+    type: str
+  master_log_pos:
+    description:
+    - Same as mysql variable.
+    type: int
+  relay_log_file:
+    description:
+    - Same as mysql variable.
+    type: str
+  relay_log_pos:
+    description:
+    - Same as mysql variable.
+    type: int
+  master_ssl:
+    description:
+    - Same as mysql variable.
+    type: bool
+  master_ssl_ca:
+    description:
+    - Same as mysql variable.
+    type: str
+  master_ssl_capath:
+    description:
+    - Same as mysql variable.
+    type: str
+  master_ssl_cert:
+    description:
+    - Same as mysql variable.
+    type: str
+  master_ssl_key:
+    description:
+    - Same as mysql variable.
+    type: str
+  master_ssl_cipher:
+    description:
+    - Same as mysql variable.
+    type: str
+  master_auto_position:
+    description:
+    - Whether the host uses GTID based replication or not.
+    type: bool
+    version_added: '2.0'
+  master_use_gtid:
+    description:
+    - Configures the slave to use the MariaDB Global Transaction ID.
+    - C(disabled) equals MASTER_USE_GTID=no command.
+    - To find information about available values see
+      U(https://mariadb.com/kb/en/library/change-master-to/#master_use_gtid).
+    - Available since MariaDB 10.0.2.
+    choices: [current_pos, slave_pos, disabled]
+    type: str
+    version_added: '2.10'
+  master_delay:
+    description:
+    - Time lag behind the master's state (in seconds).
+    - Available from MySQL 5.6.
+    - For more information see U(https://dev.mysql.com/doc/refman/8.0/en/replication-delayed.html).
+    type: int
+    version_added: '2.10'
+  connection_name:
+    description:
+    - Name of the master connection.
+    - Supported from MariaDB 10.0.1.
+    - Mutually exclusive with I(channel).
+    - For more information see U(https://mariadb.com/kb/en/library/multi-source-replication/).
+    type: str
+    version_added: '2.10'
+  channel:
+    description:
+    - Name of replication channel.
+    - Multi-source replication is supported from MySQL 5.7.
+    - Mutually exclusive with I(connection_name).
+    - For more information see U(https://dev.mysql.com/doc/refman/8.0/en/replication-multi-source.html).
+    type: str
+    version_added: '2.10'
+
+notes:
+- If an empty value for the parameter of string type is needed, use an empty string.
 
 extends_documentation_fragment:
 - mysql
+
+seealso:
+- module: mysql_info
+- name: MySQL replication reference
+  description: Complete reference of the MySQL replication documentation.
+  link: https://dev.mysql.com/doc/refman/8.0/en/replication.html
+- name: MariaDB replication reference
+  description: Complete reference of the MariaDB replication documentation.
+  link: https://mariadb.com/kb/en/library/setting-up-replication/
 '''
 
 EXAMPLES = r'''
@@ -181,6 +205,12 @@ EXAMPLES = r'''
   mysql_replication:
     mode: stopslave
     channel: master-1
+
+- name: >
+    Run RESET MASTER command which will delete all existing binary log files
+    and reset the binary log index file on the master
+  mysql_replication:
+    mode: resetmaster
 '''
 
 RETURN = r'''
@@ -276,6 +306,17 @@ def reset_slave_all(cursor, connection_name='', channel=''):
     return reset
 
 
+def reset_master(cursor):
+    query = 'RESET MASTER'
+    try:
+        executed_queries.append(query)
+        cursor.execute(query)
+        reset = True
+    except Exception:
+        reset = False
+    return reset
+
+
 def start_slave(cursor, connection_name='', channel=''):
     if connection_name:
         query = "START SLAVE '%s'" % connection_name
@@ -316,7 +357,8 @@ def main():
             login_port=dict(type='int', default=3306),
             login_unix_socket=dict(type='str'),
             mode=dict(type='str', default='getslave', choices=[
-                'getmaster', 'getslave', 'changemaster', 'stopslave', 'startslave', 'resetslave', 'resetslaveall']),
+                'getmaster', 'getslave', 'changemaster', 'stopslave',
+                'startslave', 'resetmaster', 'resetslave', 'resetslaveall']),
             master_auto_position=dict(type='bool', default=False),
             master_host=dict(type='str'),
             master_user=dict(type='str'),
@@ -342,7 +384,10 @@ def main():
             master_delay=dict(type='int'),
             connection_name=dict(type='str'),
             channel=dict(type='str'),
-        )
+        ),
+        mutually_exclusive=[
+            ['connection_name', 'channel']
+        ],
     )
     mode = module.params["mode"]
     master_host = module.params["master_host"]
@@ -383,9 +428,9 @@ def main():
     login_user = module.params["login_user"]
 
     try:
-        cursor = mysql_connect(module, login_user, login_password, config_file,
-                               ssl_cert, ssl_key, ssl_ca, None, cursor_class='DictCursor',
-                               connect_timeout=connect_timeout)
+        cursor, db_conn = mysql_connect(module, login_user, login_password, config_file,
+                                        ssl_cert, ssl_key, ssl_ca, None, cursor_class='DictCursor',
+                                        connect_timeout=connect_timeout)
     except Exception as e:
         if os.path.exists(config_file):
             module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
@@ -412,37 +457,37 @@ def main():
     elif mode in "changemaster":
         chm = []
         result = {}
-        if master_host:
+        if master_host is not None:
             chm.append("MASTER_HOST='%s'" % master_host)
-        if master_user:
+        if master_user is not None:
             chm.append("MASTER_USER='%s'" % master_user)
-        if master_password:
+        if master_password is not None:
             chm.append("MASTER_PASSWORD='%s'" % master_password)
         if master_port is not None:
             chm.append("MASTER_PORT=%s" % master_port)
         if master_connect_retry is not None:
             chm.append("MASTER_CONNECT_RETRY=%s" % master_connect_retry)
-        if master_log_file:
+        if master_log_file is not None:
             chm.append("MASTER_LOG_FILE='%s'" % master_log_file)
         if master_log_pos is not None:
             chm.append("MASTER_LOG_POS=%s" % master_log_pos)
         if master_delay is not None:
             chm.append("MASTER_DELAY=%s" % master_delay)
-        if relay_log_file:
+        if relay_log_file is not None:
             chm.append("RELAY_LOG_FILE='%s'" % relay_log_file)
         if relay_log_pos is not None:
             chm.append("RELAY_LOG_POS=%s" % relay_log_pos)
         if master_ssl:
             chm.append("MASTER_SSL=1")
-        if master_ssl_ca:
+        if master_ssl_ca is not None:
             chm.append("MASTER_SSL_CA='%s'" % master_ssl_ca)
-        if master_ssl_capath:
+        if master_ssl_capath is not None:
             chm.append("MASTER_SSL_CAPATH='%s'" % master_ssl_capath)
-        if master_ssl_cert:
+        if master_ssl_cert is not None:
             chm.append("MASTER_SSL_CERT='%s'" % master_ssl_cert)
-        if master_ssl_key:
+        if master_ssl_key is not None:
             chm.append("MASTER_SSL_KEY='%s'" % master_ssl_key)
-        if master_ssl_cipher:
+        if master_ssl_cipher is not None:
             chm.append("MASTER_SSL_CIPHER='%s'" % master_ssl_cipher)
         if master_auto_position:
             chm.append("MASTER_AUTO_POSITION=1")
@@ -468,6 +513,12 @@ def main():
             module.exit_json(msg="Slave stopped", changed=True, queries=executed_queries)
         else:
             module.exit_json(msg="Slave already stopped", changed=False, queries=executed_queries)
+    elif mode in "resetmaster":
+        reset = reset_master(cursor)
+        if reset is True:
+            module.exit_json(msg="Master reset", changed=True, queries=executed_queries)
+        else:
+            module.exit_json(msg="Master already reset", changed=False, queries=executed_queries)
     elif mode in "resetslave":
         reset = reset_slave(cursor, connection_name, channel)
         if reset is True:

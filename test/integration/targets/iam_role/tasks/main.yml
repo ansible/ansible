@@ -279,6 +279,7 @@
       - '"permissions_boundary" not in role_info.iam_roles[0]'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 0
 
   - name: 'Remove IAM Role'
     iam_role:
@@ -372,6 +373,7 @@
       - '"permissions_boundary" not in role_info.iam_roles[0]'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 0
 
   - name: 'iam_role_info after Role creation (searching a path)'
     iam_role_info:
@@ -397,6 +399,7 @@
       - role_info.iam_roles[0].path == '{{ test_path }}'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 0
 
   - name: 'Remove IAM Role'
     iam_role:
@@ -483,6 +486,7 @@
       - '"permissions_boundary" not in role_info.iam_roles[0]'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 0
 
   # ===================================================================
   # Max Session Duration Manipulation
@@ -542,6 +546,7 @@
       - '"permissions_boundary" not in role_info.iam_roles[0]'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 0
 
   # ===================================================================
   # Description Manipulation
@@ -602,6 +607,7 @@
       - '"permissions_boundary" not in role_info.iam_roles[0]'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 0
 
   - name: 'Update Description (CHECK MODE)'
     iam_role:
@@ -659,6 +665,281 @@
       - '"permissions_boundary" not in role_info.iam_roles[0]'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 0
+
+
+  # ===================================================================
+  # Tag Manipulation
+
+  - name: 'Add Tag (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      tags:
+        TagA: ValueA
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Add Tag'
+    iam_role:
+      name: '{{ test_role }}'
+      tags:
+        TagA: ValueA
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+      - iam_role.iam_role.tags | length == 1
+      - '"TagA" in iam_role.iam_role.tags'
+      - iam_role.iam_role.tags.TagA == "ValueA"
+
+  - name: 'Add Tag (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      tags:
+        TagA: ValueA
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+      - '"TagA" in iam_role.iam_role.tags'
+      - iam_role.iam_role.tags.TagA == "ValueA"
+
+  - name: 'iam_role_info after adding Tags'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - 'role_info.iam_roles[0].description == "Ansible Test Role (updated) {{ resource_prefix }}"'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 1
+      - '"TagA" in role_info.iam_roles[0].tags'
+      - role_info.iam_roles[0].tags.TagA == "ValueA"
+
+  - name: 'Update Tag (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      tags:
+        TagA: AValue
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Update Tag'
+    iam_role:
+      name: '{{ test_role }}'
+      tags:
+        TagA: AValue
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+      - '"TagA" in iam_role.iam_role.tags'
+      - iam_role.iam_role.tags.TagA == "AValue"
+
+  - name: 'Update Tag (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      tags:
+        TagA: AValue
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+      - '"TagA" in iam_role.iam_role.tags'
+      - iam_role.iam_role.tags.TagA == "AValue"
+
+  - name: 'iam_role_info after updating Tag'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - 'role_info.iam_roles[0].description == "Ansible Test Role (updated) {{ resource_prefix }}"'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 1
+      - '"TagA" in role_info.iam_roles[0].tags'
+      - role_info.iam_roles[0].tags.TagA == "AValue"
+
+  - name: 'Add second Tag without purge (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_tags: no
+      tags:
+        TagB: ValueB
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Add second Tag without purge'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_tags: no
+      tags:
+        TagB: ValueB
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+      - '"TagB" in iam_role.iam_role.tags'
+      - iam_role.iam_role.tags.TagB == "ValueB"
+
+  - name: 'Add second Tag without purge (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_tags: no
+      tags:
+        TagB: ValueB
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+      - '"TagB" in iam_role.iam_role.tags'
+      - iam_role.iam_role.tags.TagB == "ValueB"
+
+  - name: 'iam_role_info after adding second Tag without purge'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - 'role_info.iam_roles[0].description == "Ansible Test Role (updated) {{ resource_prefix }}"'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 2
+      - '"TagA" in role_info.iam_roles[0].tags'
+      - role_info.iam_roles[0].tags.TagA == "AValue"
+      - '"TagB" in role_info.iam_roles[0].tags'
+      - role_info.iam_roles[0].tags.TagB == "ValueB"
+
+  - name: 'Purge first tag (CHECK MODE)'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_tags: yes
+      tags:
+        TagB: ValueB
+    check_mode: yes
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+
+  - name: 'Purge first tag'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_tags: yes
+      tags:
+        TagB: ValueB
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is changed
+      - iam_role.iam_role.role_name == test_role
+      - '"TagB" in iam_role.iam_role.tags'
+      - iam_role.iam_role.tags.TagB == "ValueB"
+
+  - name: 'Purge first tag (no change)'
+    iam_role:
+      name: '{{ test_role }}'
+      purge_tags: yes
+      tags:
+        TagB: ValueB
+    register: iam_role
+  - assert:
+      that:
+      - iam_role is not changed
+      - iam_role.iam_role.role_name == test_role
+      - '"TagB" in iam_role.iam_role.tags'
+      - iam_role.iam_role.tags.TagB == "ValueB"
+
+  - name: 'iam_role_info after purging first Tag'
+    iam_role_info:
+      name: '{{ test_role }}'
+    register: role_info
+  - assert:
+      that:
+      - role_info is succeeded
+      - role_info.iam_roles | length == 1
+      - 'role_info.iam_roles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].arn.endswith("role/" + test_role )'
+      - '"assume_role_policy_document" in role_info.iam_roles[0]'
+      - '"create_date" in role_info.iam_roles[0]'
+      - 'role_info.iam_roles[0].description == "Ansible Test Role (updated) {{ resource_prefix }}"'
+      - role_info.iam_roles[0].inline_policies | length == 0
+      - role_info.iam_roles[0].instance_profiles | length == 1
+      - role_info.iam_roles[0].instance_profiles[0].instance_profile_name == test_role
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.startswith("arn")'
+      - 'role_info.iam_roles[0].instance_profiles[0].arn.endswith("instance-profile/" + test_role)'
+      - role_info.iam_roles[0].managed_policies | length == 0
+      - role_info.iam_roles[0].max_session_duration == 43200
+      - role_info.iam_roles[0].path == '/'
+      - '"permissions_boundary" not in role_info.iam_roles[0]'
+      - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
+      - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 1
+      - '"TagA" not in role_info.iam_roles[0].tags'
+      - '"TagB" in role_info.iam_roles[0].tags'
+      - role_info.iam_roles[0].tags.TagB == "ValueB"
 
 
   # ===================================================================
@@ -726,6 +1007,9 @@
       - '"permissions_boundary" not in role_info.iam_roles[0]'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 1
+      - '"TagB" in role_info.iam_roles[0].tags'
+      - role_info.iam_roles[0].tags.TagB == "ValueB"
 
   - name: 'Update Managed Policy without purge (CHECK MODE)'
     iam_role:
@@ -789,6 +1073,9 @@
       - '"permissions_boundary" not in role_info.iam_roles[0]'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 1
+      - '"TagB" in role_info.iam_roles[0].tags'
+      - role_info.iam_roles[0].tags.TagB == "ValueB"
 
   # Managed Policies are purged by default
   - name: 'Update Managed Policy with purge (CHECK MODE)'
@@ -850,6 +1137,9 @@
       - '"permissions_boundary" not in role_info.iam_roles[0]'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 1
+      - '"TagB" in role_info.iam_roles[0].tags'
+      - role_info.iam_roles[0].tags.TagB == "ValueB"
 
   # ===================================================================
   # Inline Policy (test _info behaviour)
@@ -902,6 +1192,9 @@
       - '"permissions_boundary" not in role_info.iam_roles[0]'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - role_info.iam_roles[0].tags | length == 1
+      - '"TagB" in role_info.iam_roles[0].tags'
+      - role_info.iam_roles[0].tags.TagB == "ValueB"
 
   # XXX iam_role fails to remove inline policies before deleting the role
   - name: 'Detach inline policy a'
@@ -1077,6 +1370,8 @@
       - '{{ custom_policy_name }}'
       max_session_duration: 43200
       path: '{{ test_path }}'
+      tags:
+        TagA: 'ValueA'
     check_mode: yes
     register: iam_role
   - assert:
@@ -1108,6 +1403,8 @@
       - '{{ custom_policy_name }}'
       max_session_duration: 43200
       path: '{{ test_path }}'
+      tags:
+        TagA: 'ValueA'
     register: iam_role
   - assert:
       that:
@@ -1140,6 +1437,8 @@
       - '{{ custom_policy_name }}'
       max_session_duration: 43200
       path: '{{ test_path }}'
+      tags:
+        TagA: 'ValueA'
     register: iam_role
   - assert:
       that:
@@ -1170,6 +1469,8 @@
       - role_info.iam_roles[0].permissions_boundary.permissions_boundary_type == 'Policy'
       - role_info.iam_roles[0].role_id == iam_role.iam_role.role_id
       - role_info.iam_roles[0].role_name == test_role
+      - '"TagA" in role_info.iam_roles[0].tags'
+      - role_info.iam_roles[0].tags.TagA == "ValueA"
 
   always:
   # ===================================================================

@@ -29,12 +29,14 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils import six
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 
 display = Display()
+urlparse = six.moves.urllib.parse.urlparse
 
 
 class GalaxyCLI(CLI):
@@ -44,7 +46,7 @@ class GalaxyCLI(CLI):
 
     def __init__(self, args):
         # Inject role into sys.argv[1] as a backwards compatibility step
-        if len(args) > 1 and args[1] not in ['-h', '--help'] and 'role' not in args and 'collection' not in args:
+        if len(args) > 1 and args[1] not in ['-h', '--help', '--version'] and 'role' not in args and 'collection' not in args:
             # TODO: Should we add a warning here and eventually deprecate the implicit role subcommand choice
             # Remove this in Ansible 2.13 when we also remove -v as an option on the root parser for ansible-galaxy.
             idx = 2 if args[1].startswith('-v') else 1
@@ -318,7 +320,10 @@ class GalaxyCLI(CLI):
                       ('auth_url', False)]
 
         config_servers = []
-        for server_key in (C.GALAXY_SERVER_LIST or []):
+
+        # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
+        server_list = [s for s in C.GALAXY_SERVER_LIST or [] if s]
+        for server_key in server_list:
             # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
             # section [galaxy_server.<server>] for the values url, username, password, and token.
             config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in server_def)
@@ -651,6 +656,7 @@ class GalaxyCLI(CLI):
                 documentation='http://docs.example.com',
                 homepage='http://example.com',
                 issues='http://example.com/issue/tracker',
+                build_ignore=[],
             ))
 
             obj_path = os.path.join(init_path, namespace, collection_name)
@@ -804,7 +810,13 @@ class GalaxyCLI(CLI):
             else:
                 requirements = []
                 for collection_input in collections:
-                    name, dummy, requirement = collection_input.partition(':')
+                    requirement = None
+                    if os.path.isfile(to_bytes(collection_input, errors='surrogate_or_strict')) or \
+                            urlparse(collection_input).scheme.lower() in ['http', 'https']:
+                        # Arg is a file path or URL to a collection
+                        name = collection_input
+                    else:
+                        name, dummy, requirement = collection_input.partition(':')
                     requirements.append((name, requirement or '*', None))
 
             output_path = GalaxyCLI._resolve_path(output_path)

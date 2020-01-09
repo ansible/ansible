@@ -21,11 +21,14 @@ short_description: Run PostgreSQL queries
 description:
 - Runs arbitrary PostgreSQL queries.
 - Can run queries from SQL script files.
+- Does not run against backup files. Use M(postgresql_db) with I(state=restore)
+  to run queries on files made by pg_dump/pg_dumpall utilities.
 version_added: '2.8'
 options:
   query:
     description:
-    - SQL query to run. Variables can be escaped with psycopg2 syntax U(http://initd.org/psycopg/docs/usage.html).
+    - SQL query to run. Variables can be escaped with psycopg2 syntax
+      U(http://initd.org/psycopg/docs/usage.html).
     type: str
   positional_args:
     description:
@@ -66,6 +69,8 @@ options:
     type: bool
     default: no
     version_added: '2.9'
+seealso:
+- module: postgresql_db
 author:
 - Felix Archambault (@archf)
 - Andrew Klychkov (@Andersson007)
@@ -252,9 +257,6 @@ def main():
     if autocommit and module.check_mode:
         module.fail_json(msg="Using autocommit is mutually exclusive with check_mode")
 
-    if positional_args and named_args:
-        module.fail_json(msg="positional_args and named_args params are mutually exclusive")
-
     if path_to_script and query:
         module.fail_json(msg="path_to_script is mutually exclusive with query")
 
@@ -266,7 +268,8 @@ def main():
 
     if path_to_script:
         try:
-            query = open(path_to_script, 'r').read()
+            with open(path_to_script, 'r') as f:
+                query = f.read()
         except Exception as e:
             module.fail_json(msg="Cannot read file '%s' : %s" % (path_to_script, to_native(e)))
 
@@ -289,6 +292,9 @@ def main():
     try:
         cursor.execute(query, arguments)
     except Exception as e:
+        if not autocommit:
+            db_connection.rollback()
+
         cursor.close()
         db_connection.close()
         module.fail_json(msg="Cannot execute SQL '%s' %s: %s" % (query, arguments, to_native(e)))

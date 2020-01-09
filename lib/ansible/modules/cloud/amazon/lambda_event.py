@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: lambda_event
-short_description: Creates, updates or deletes AWS Lambda function event mappings.
+short_description: Creates, updates or deletes AWS Lambda function event mappings
 description:
     - This module allows the management of AWS Lambda function event source mappings such as DynamoDB and Kinesis stream
       events via the Ansible framework. These event source mappings are relevant only in the AWS Lambda pull model, where
@@ -31,44 +31,58 @@ options:
       - The name or ARN of the lambda function.
     required: true
     aliases: ['function_name', 'function_arn']
+    type: str
   state:
     description:
       - Describes the desired state.
-    required: true
     default: "present"
     choices: ["present", "absent"]
+    type: str
   alias:
     description:
-      - Name of the function alias. Mutually exclusive with C(version).
-    required: true
+      - Name of the function alias.
+      - Mutually exclusive with I(version).
+    type: str
   version:
     description:
-      -  Version of the Lambda function. Mutually exclusive with C(alias).
-    required: false
+      - Version of the Lambda function.
+      - Mutually exclusive with I(alias).
+    type: int
   event_source:
     description:
       - Source of the event that triggers the lambda function.
-      - For DynamoDB and Kinesis events, select 'stream'
-      - For SQS queues, select 'sqs'
-    required: false
+      - For DynamoDB and Kinesis events, select C(stream)
+      - For SQS queues, select C(sqs)
     default: stream
     choices: ['stream', 'sqs']
+    type: str
   source_params:
     description:
       -  Sub-parameters required for event source.
-      -  I(== stream event source ==)
-      -  C(source_arn) The Amazon Resource Name (ARN) of the Kinesis or DynamoDB stream that is the event source.
-      -  C(enabled) Indicates whether AWS Lambda should begin polling the event source. Default is True.
-      -  C(batch_size) The largest number of records that AWS Lambda will retrieve from your event source at the
-         time of invoking your function. Default is 100.
-      -  C(starting_position) The position in the stream where AWS Lambda should start reading.
-         Choices are TRIM_HORIZON or LATEST.
-      -  I(== sqs event source ==)
-      -  C(source_arn) The Amazon Resource Name (ARN) of the SQS queue to read events from.
-      -  C(enabled) Indicates whether AWS Lambda should begin reading from the event source. Default is True.
-      -  C(batch_size) The largest number of records that AWS Lambda will retrieve from your event source at the
-         time of invoking your function. Default is 100.
+    suboptions:
+      source_arn:
+        description:
+          -  The Amazon Resource Name (ARN) of the SQS queue, Kinesis stream or DynamoDB stream that is the event source.
+        type: str
+        required: true
+      enabled:
+        description:
+          -  Indicates whether AWS Lambda should begin polling or readin from the event source.
+        default: true.
+        type: bool
+      batch_size:
+        description:
+          -  The largest number of records that AWS Lambda will retrieve from your event source at the time of invoking your function.
+        default: 100
+        type: int
+      starting_position:
+        description:
+          - The position in the stream where AWS Lambda should start reading.
+          - Required when I(event_source=stream).
+        choices: [TRIM_HORIZON,LATEST]
+        type: str
     required: true
+    type: dict
 requirements:
     - boto3
 extends_documentation_fragment:
@@ -399,9 +413,9 @@ def main():
     argument_spec.update(
         dict(
             state=dict(required=False, default='present', choices=['present', 'absent']),
-            lambda_function_arn=dict(required=True, default=None, aliases=['function_name', 'function_arn']),
+            lambda_function_arn=dict(required=True, aliases=['function_name', 'function_arn']),
             event_source=dict(required=False, default="stream", choices=source_choices),
-            source_params=dict(type='dict', required=True, default=None),
+            source_params=dict(type='dict', required=True),
             alias=dict(required=False, default=None),
             version=dict(type='int', required=False, default=0),
         )

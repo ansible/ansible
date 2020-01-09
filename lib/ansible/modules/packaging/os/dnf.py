@@ -886,9 +886,16 @@ class DnfModule(YumDnf):
         if self.with_modules:
             module_spec = module_spec.strip()
             module_list, nsv = self.module_base._get_modules(module_spec)
+            enabled_streams = self.base._moduleContainer.getEnabledStream(nsv.name)
 
-            if nsv.stream in self.base._moduleContainer.getEnabledStream(nsv.name):
-                return True
+            if enabled_streams:
+                if nsv.stream:
+                    if nsv.stream in enabled_streams:
+                        return True     # The provided stream was found
+                    else:
+                        return False    # The provided stream was not found
+                else:
+                    return True         # No stream provided, but module found
 
         return False  # seems like a sane default
 
@@ -1158,7 +1165,7 @@ class DnfModule(YumDnf):
             else:
                 response['changed'] = True
                 if failure_response['failures']:
-                    failure_response['msg'] = 'Failed to install some of the specified packages',
+                    failure_response['msg'] = 'Failed to install some of the specified packages'
                     self.module.fail_json(**failure_response)
                 if self.module.check_mode:
                     response['msg'] = "Check mode: No changes made, but would have if not in check mode"
@@ -1188,7 +1195,7 @@ class DnfModule(YumDnf):
                         response['results'].append("Removed: {0}".format(package))
 
                 if failure_response['failures']:
-                    failure_response['msg'] = 'Failed to install some of the specified packages',
+                    failure_response['msg'] = 'Failed to install some of the specified packages'
                     self.module.exit_json(**response)
                 self.module.exit_json(**response)
         except dnf.exceptions.DepsolveError as e:

@@ -446,9 +446,9 @@ options:
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/healthChecks)'
 - 'Official Documentation: U(https://cloud.google.com/load-balancing/docs/health-checks)'
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -888,8 +888,7 @@ def main():
                     port_specification=dict(type='str'),
                 ),
             ),
-        ),
-        mutually_exclusive=[['http2_health_check', 'http_health_check', 'https_health_check', 'ssl_health_check', 'tcp_health_check']],
+        )
     )
 
     if not module.params['scopes']:

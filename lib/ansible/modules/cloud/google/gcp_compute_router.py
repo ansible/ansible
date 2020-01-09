@@ -116,7 +116,7 @@ options:
           range:
             description:
             - The IP range to advertise. The value must be a CIDR-formatted string.
-            required: false
+            required: true
             type: str
           description:
             description:
@@ -168,9 +168,9 @@ options:
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/routers)'
 - 'Google Cloud Router: U(https://cloud.google.com/router/docs/)'
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -322,7 +322,7 @@ def main():
                     asn=dict(required=True, type='int'),
                     advertise_mode=dict(default='DEFAULT', type='str'),
                     advertised_groups=dict(type='list', elements='str'),
-                    advertised_ip_ranges=dict(type='list', elements='dict', options=dict(range=dict(type='str'), description=dict(type='str'))),
+                    advertised_ip_ranges=dict(type='list', elements='dict', options=dict(range=dict(required=True, type='str'), description=dict(type='str'))),
                 ),
             ),
             region=dict(required=True, type='str'),

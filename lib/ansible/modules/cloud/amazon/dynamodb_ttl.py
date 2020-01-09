@@ -13,27 +13,29 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: dynamodb_ttl
-short_description: set TTL for a given DynamoDB table.
+short_description: Set TTL for a given DynamoDB table
 description:
 - Uses boto3 to set TTL.
-- requires botocore version 1.5.24 or higher.
+- Requires botocore version 1.5.24 or higher.
 version_added: "2.4"
 options:
   state:
     description:
-    - state to set DynamoDB table to
+    - State to set DynamoDB table to.
     choices: ['enable', 'disable']
     required: false
-    default: enable
+    type: str
   table_name:
     description:
-    - name of the DynamoDB table to work on
+    - Name of the DynamoDB table to work on.
     required: true
+    type: str
   attribute_name:
     description:
-    - the name of the Time to Live attribute used to store the expiration time for items in the table
-    - this appears to be required by the API even when disabling TTL.
+    - The name of the Time To Live attribute used to store the expiration time for items in the table.
+    - This appears to be required by the API even when disabling TTL.
     required: true
+    type: str
 
 author: Ted Timmons (@tedder)
 extends_documentation_fragment:

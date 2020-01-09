@@ -248,13 +248,13 @@ def main():
 
     aci = ACIModule(module)
 
-    tenant = module.params['tenant']
-    l3out = module.params['l3out']
-    extepg = module.params['extepg']
-    description = module.params['description']
-    preferred_group = aci.boolean(module.params['preferred_group'], 'include', 'exclude')
-    dscp = module.params['dscp']
-    state = module.params['state']
+    tenant = module.params.get('tenant')
+    l3out = module.params.get('l3out')
+    extepg = module.params.get('extepg')
+    description = module.params.get('description')
+    preferred_group = aci.boolean(module.params.get('preferred_group'), 'include', 'exclude')
+    dscp = module.params.get('dscp')
+    state = module.params.get('state')
 
     aci.construct_url(
         root_class=dict(

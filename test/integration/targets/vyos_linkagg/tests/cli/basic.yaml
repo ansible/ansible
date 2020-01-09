@@ -130,8 +130,8 @@
 - name: Create collection of linkagg definitions
   vyos_linkagg:
     aggregate:
-        - { name: bond0, members: [eth1] }
-        - { name: bond1, members: [eth2] }
+      - {name: bond0, members: [eth1]}
+      - {name: bond1, members: [eth2]}
     state: present
   register: result
 
@@ -146,8 +146,8 @@
 - name: Create collection of linkagg definitions again (idempotent)
   vyos_linkagg:
     aggregate:
-        - { name: bond0, members: [eth1] }
-        - { name: bond1, members: [eth2] }
+      - {name: bond0, members: [eth1]}
+      - {name: bond1, members: [eth2]}
     state: present
   register: result
 

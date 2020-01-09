@@ -1,5 +1,5 @@
-coverage >= 4.2, != 4.3.2 ; python_version <= '3.7' # features in 4.2+ required, avoid known bug in 4.3.2 on python 2.6
-coverage >= 4.5.4 ; python_version > '3.7' # coverage had a bug in < 4.5.4 that would cause unit tests to hang in Python 3.8
+coverage >= 4.2, < 5.0.0, != 4.3.2 ; python_version <= '3.7' # features in 4.2+ required, avoid known bug in 4.3.2 on python 2.6, coverage 5.0+ incompatible
+coverage >= 4.5.4, < 5.0.0 ; python_version > '3.7' # coverage had a bug in < 4.5.4 that would cause unit tests to hang in Python 3.8, coverage 5.0+ incompatible
 cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for python 2.6
 deepdiff < 4.0.0 ; python_version < '3' # deepdiff 4.0.0 and later require python 3
 urllib3 < 1.24 ; python_version < '2.7' # urllib3 1.24 and later require python 2.7 or later
@@ -25,6 +25,7 @@ requests-credssp >= 0.1.0 # message encryption support
 voluptuous >= 0.11.0 # Schema recursion via Self
 openshift >= 0.6.2, < 0.9.0 # merge_type support
 virtualenv < 16.0.0 ; python_version < '2.7' # virtualenv 16.0.0 and later require python 2.7 or later
+pathspec < 0.6.0 ; python_version < '2.7' # pathspec 0.6.0 and later require python 2.7 or later
 pyopenssl < 18.0.0 ; python_version < '2.7' # pyOpenSSL 18.0.0 and later require python 2.7 or later
 pyfmg == 0.6.1 # newer versions do not pass current unit tests
 pyyaml < 5.1 ; python_version < '2.7' # pyyaml 5.1 and later require python 2.7 or later

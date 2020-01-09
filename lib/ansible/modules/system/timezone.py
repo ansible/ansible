@@ -83,7 +83,7 @@ import re
 import string
 import filecmp
 
-from ansible.module_utils.basic import AnsibleModule, get_platform, get_distribution
+from ansible.module_utils.basic import AnsibleModule, get_distribution
 from ansible.module_utils.six import iteritems
 
 
@@ -104,7 +104,7 @@ class Timezone(object):
         Args:
             module: The AnsibleModule.
         """
-        if get_platform() == 'Linux':
+        if platform.system() == 'Linux':
             timedatectl = module.get_bin_path('timedatectl')
             if timedatectl is not None:
                 rc, stdout, stderr = module.run_command(timedatectl)
@@ -116,7 +116,7 @@ class Timezone(object):
             else:
                 return super(Timezone, NosystemdTimezone).__new__(NosystemdTimezone)
         elif re.match('^joyent_.*Z', platform.version()):
-            # get_platform() returns SunOS, which is too broad. So look at the
+            # platform.system() returns SunOS, which is too broad. So look at the
             # platform version instead. However we have to ensure that we're not
             # running in the global zone where changing the timezone has no effect.
             zonename_cmd = module.get_bin_path('zonename')

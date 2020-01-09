@@ -30,6 +30,8 @@ options:
             - Name or list of names of the package(s) or file(s) to install, upgrade, or remove.
               Can't be used in combination with C(upgrade).
         aliases: [ package, pkg ]
+        type: list
+        elements: str
 
     state:
         description:
@@ -416,7 +418,7 @@ def expand_package_groups(module, pacman_path, pkgs):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='list', aliases=['pkg', 'package']),
+            name=dict(type='list', elements='str', aliases=['pkg', 'package']),
             state=dict(type='str', default='present', choices=['present', 'installed', 'latest', 'absent', 'removed']),
             force=dict(type='bool', default=False),
             extra_args=dict(type='str', default=''),
@@ -431,6 +433,7 @@ def main():
     )
 
     pacman_path = module.get_bin_path('pacman', True)
+    module.run_command_environ_update = dict(LC_ALL='C')
 
     p = module.params
 

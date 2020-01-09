@@ -8,22 +8,6 @@
     fail:
       msg: Please define an API key
     when: auth_key is not defined
-    
-  - name: Use an invalid domain
-    meraki_config_template:
-      auth_key: '{{ auth_key }}'
-      host: marrrraki.com
-      state: query
-      org_name: '{{test_org_name}}'
-      output_level: debug
-    delegate_to: localhost
-    register: invalid_domain
-    ignore_errors: yes
-
-  - name: Connection assertions
-    assert:
-      that:
-        - '"Failed to connect to" in invalid_domain.msg'
 
   - name: Query all configuration templates
     meraki_config_template:

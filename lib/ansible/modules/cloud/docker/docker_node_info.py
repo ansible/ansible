@@ -86,6 +86,7 @@ nodes:
         managers and nodes that are unreachable.
     returned: always
     type: list
+    elements: dict
 '''
 
 import traceback

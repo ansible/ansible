@@ -12,6 +12,12 @@
 ## build.args ######################################################
 ####################################################################
 
+- name: cleanup
+  docker_image:
+    name: "{{ iname }}"
+    state: absent
+    force_absent: yes
+
 - name: buildargs
   docker_image:
     name: "{{ iname }}"
@@ -276,7 +282,7 @@
     name: "{{ iname }}"
     build:
       path: "{{ role_path }}/files"
-      dockefile: "EtcHostsDockerfile"
+      dockerfile: "EtcHostsDockerfile"
       pull: no
       etc_hosts:
         some-custom-host: "127.0.0.1"

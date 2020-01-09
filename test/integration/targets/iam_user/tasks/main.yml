@@ -7,7 +7,6 @@
       security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
   block:
-
   - name: ensure improper usage of parameters fails gracefully
     iam_user_info:
       path: '{{ test_path }}'
@@ -51,11 +50,39 @@
         - iam_user_info is failed
         - '"path" in iam_user_info.msg'
 
-  - name: ensure ansible user exists
+  - name: create test user (check mode)
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+    check_mode: yes
+    register: iam_user
+
+  - name: assert that the user would be created
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: create test user
     iam_user:
       name: '{{ test_user }}'
       state: present
     register: iam_user
+
+  - name: assert that the user is created
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: ensure test user exists (no change)
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+    register: iam_user
+
+  - name: assert that the user wasn't changed
+    assert:
+      that:
+        - iam_user is not changed
 
   - name: ensure the info used to validate other tests is valid
     set_fact:
@@ -104,6 +131,170 @@
         - iam_user_info.iam_users[0].user_id == test_iam_user.user_id
         - iam_user_info.iam_users[0].user_name == test_iam_user.user_name
 
+  # ===========================================
+  # Test Managed Policy management
+  #
+  # Use a couple of benign policies for testing:
+  # - AWSDenyAll
+  # - ServiceQuotasReadOnlyAccess
+  #
+  - name: attach managed policy to user (check mode)
+    check_mode: yes
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSDenyAll
+    register: iam_user
+
+  - name: assert that the user is changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: attach managed policy to user
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSDenyAll
+    register: iam_user
+
+  - name: assert that the user is changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: ensure managed policy is attached to user (no change)
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSDenyAll
+    register: iam_user
+
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
+
+  - name: attach different managed policy to user (check mode)
+    check_mode: yes
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
+
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: attach different managed policy to user
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
+
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: Check first policy wasn't purged
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSDenyAll
+      purge_policy: no
+    register: iam_user
+
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
+
+  - name: Check that managed policy order doesn't matter
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/AWSDenyAll
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
+
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
+
+  - name: Check that policy doesn't require full ARN path
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - AWSDenyAll
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: no
+    register: iam_user
+
+  - name: assert that the user hasn't changed
+    assert:
+      that:
+        - iam_user is not changed
+
+  - name: Remove one of the managed policies - with purge (check mode)
+    check_mode: yes
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: yes
+    register: iam_user
+
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: Remove one of the managed policies - with purge
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: yes
+    register: iam_user
+
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is changed
+
+  - name: Check we only have the one policy attached
+    iam_user:
+      name: '{{ test_user }}'
+      state: present
+      managed_policy:
+        - arn:aws:iam::aws:policy/ServiceQuotasReadOnlyAccess
+      purge_policy: yes
+    register: iam_user
+
+  - name: assert that the user changed
+    assert:
+      that:
+        - iam_user is not changed
+
   - name: ensure group exists
     iam_group:
       name: '{{ test_group }}'
@@ -112,11 +303,17 @@
       state: present
     register: iam_group
 
+  - assert:
+      that:
+        - iam_group.changed
+        - iam_group.iam_group.users
+
   - name: get info on IAM user(s) in group
     iam_user_info:
       group: '{{ test_group }}'
       name: '{{ test_user }}'
     register: iam_user_info
+
   - assert:
       that:
         - iam_user_info.iam_users | length == 1
@@ -215,14 +412,69 @@
       that:
         - iam_user_info.iam_users | length == 0
 
+  - name: remove group
+    iam_group:
+      name: '{{ test_group }}'
+      state: absent
+    register: iam_group
+
+  - name: assert that group was removed
+    assert:
+      that:
+        - iam_group.changed
+        - iam_group
+
+  - name: Test remove group again (idempotency)
+    iam_group:
+      name: "{{ test_group }}"
+      state: absent
+    register: iam_group
+
+  - name: assert that group remove is not changed
+    assert:
+      that:
+        - not iam_group.changed
+
+  - name: Remove user with attached policy
+    iam_user:
+      name: "{{ test_user }}"
+      state: absent
+    register: iam_user
+
+  - name: get info on IAM user(s) after deleting
+    iam_user_info:
+      group: '{{ test_user }}'
+    ignore_errors: yes
+    register: iam_user_info
+
+  - name: Assert user was removed
+    assert:
+      that:
+        - iam_user.changed
+        - "'cannot be found' in iam_user_info.msg"
+
+  - name: Remove user with attached policy (idempotent)
+    iam_user:
+      name: "{{ test_user }}"
+      state: absent
+    ignore_errors: yes
+    register: iam_user
+
+  - name: Assert user was removed
+    assert:
+      that:
+        - not iam_user.changed
+
   always:
   - name: remove group
     iam_group:
       name: '{{ test_group }}'
       state: absent
+    ignore_errors: yes
 
   - name: remove ansible users
     iam_user:
       name: '{{ item }}'
       state: absent
     with_items: '{{ test_users }}'
+    ignore_errors: yes

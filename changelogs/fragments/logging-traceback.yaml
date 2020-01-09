@@ -1,0 +1,4 @@
+bugfixes:
+- display logging - Fix issue where 3rd party modules will print tracebacks when attempting to log information when ``ANSIBLE_LOG_PATH`` is set - https://github.com/ansible/ansible/issues/65249
+- display logging - Re-added the ``name`` attribute to the log formatter so that the source of the log can be seen
+- display logging - Fixed up the logging formatter to use the proper prefixes for ``u=user`` and ``p=process``

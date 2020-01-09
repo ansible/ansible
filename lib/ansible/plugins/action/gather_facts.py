@@ -45,6 +45,15 @@ class ActionModule(ActionBase):
 
         return mod_args
 
+    def _combine_task_result(self, result, task_result):
+        filtered_res = {
+            'ansible_facts': task_result.get('ansible_facts', {}),
+            'warnings': task_result.get('warnings', []),
+            'deprecations': task_result.get('deprecations', []),
+        }
+
+        return combine_vars(result, filtered_res)
+
     def run(self, tmp=None, task_vars=None):
 
         self._supports_check_mode = True
@@ -73,7 +82,7 @@ class ActionModule(ActionBase):
                 elif res.get('skipped', False):
                     skipped[fact_module] = res
                 else:
-                    result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
+                    result = self._combine_task_result(result, res)
 
             self._remove_tmp_path(self._connection._shell.tmpdir)
         else:
@@ -95,7 +104,7 @@ class ActionModule(ActionBase):
                         elif res.get('skipped', False):
                             skipped[module] = res
                         else:
-                            result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
+                            result = self._combine_task_result(result, res)
                         del jobs[module]
                         break
                     else:

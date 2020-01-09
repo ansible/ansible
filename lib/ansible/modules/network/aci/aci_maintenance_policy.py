@@ -214,13 +214,13 @@ def main():
 
     aci = ACIModule(module)
 
-    state = module.params['state']
-    name = module.params['name']
-    runmode = module.params['runmode']
-    scheduler = module.params['scheduler']
-    adminst = module.params['adminst']
-    graceful = aci.boolean(module.params['graceful'])
-    ignoreCompat = aci.boolean(module.params['ignoreCompat'])
+    state = module.params.get('state')
+    name = module.params.get('name')
+    runmode = module.params.get('runmode')
+    scheduler = module.params.get('scheduler')
+    adminst = module.params.get('adminst')
+    graceful = aci.boolean(module.params.get('graceful'))
+    ignoreCompat = aci.boolean(module.params.get('ignoreCompat'))
 
     aci.construct_url(
         root_class=dict(

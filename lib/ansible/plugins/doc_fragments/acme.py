@@ -64,8 +64,8 @@ options:
   acme_version:
     description:
       - "The ACME version of the endpoint."
-      - "Must be 1 for the classic Let's Encrypt ACME endpoint and Buypass'
-         current production endpoint, or 2 for standardized ACME v2 endpoints."
+      - "Must be 1 for the classic Let's Encrypt and Buypass ACME endpoints,
+         or 2 for standardized ACME v2 endpoints."
       - "The default value is 1. Note that in Ansible 2.14, this option *will
          be required* and will no longer have a default."
       - "Please also note that we will deprecate ACME v1 support eventually."
@@ -89,7 +89,7 @@ options:
       - "For Let's Encrypt, the production directory URL for ACME v1 is
          U(https://acme-v01.api.letsencrypt.org/directory), and the production
          directory URL for ACME v2 is U(https://acme-v02.api.letsencrypt.org/directory)."
-      - "For Buypass, the production directory URL for ACME v1 is
+      - "For Buypass, the production directory URL for ACME v2 and v1 is
          U(https://api.buypass.com/acme/directory)."
       - "*Warning:* So far, the module has only been tested against Let's Encrypt
          (staging and production), Buypass (staging and production), and

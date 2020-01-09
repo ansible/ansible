@@ -22,12 +22,21 @@ DOCUMENTATION = '''
     vars: host_group_vars
     version_added: "2.4"
     short_description: In charge of loading group_vars and host_vars
+    requirements:
+        - whitelist in configuration
     description:
         - Loads YAML vars into corresponding groups/hosts in group_vars/ and host_vars/ directories.
         - Files are restricted by extension to one of .yaml, .json, .yml or no extension.
         - Hidden (starting with '.') and backup (ending with '~') files and directories are ignored.
         - Only applies to inventory sources that are existing paths.
+        - Starting in 2.10, this plugin requires whitelisting and is whitelisted by default.
     options:
+      stage:
+        ini:
+          - key: stage
+            section: vars_host_group_vars
+        env:
+          - name: ANSIBLE_VARS_PLUGIN_STAGE
       _valid_extensions:
         default: [".yml", ".yaml", ".json"]
         description:
@@ -39,6 +48,8 @@ DOCUMENTATION = '''
           - section: yaml_valid_extensions
             key: defaults
         type: list
+    extends_documentation_fragment:
+      - vars_plugin_staging
 '''
 
 import os
@@ -54,6 +65,8 @@ FOUND = {}
 
 
 class VarsModule(BaseVarsPlugin):
+
+    REQUIRES_WHITELIST = True
 
     def get_vars(self, loader, path, entities, cache=True):
         ''' parses the inventory file '''

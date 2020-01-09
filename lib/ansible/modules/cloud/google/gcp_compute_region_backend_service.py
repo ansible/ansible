@@ -33,8 +33,6 @@ module: gcp_compute_region_backend_service
 description:
 - A Region Backend Service defines a regionally-scoped group of virtual machines that
   will serve traffic for load balancing.
-- Region backend services can only be used when using internal load balancing.
-- For external load balancing, use a global backend service instead.
 short_description: Creates a GCP RegionBackendService
 version_added: '2.10'
 author: Google Inc. (@googlecloudplatform)
@@ -51,28 +49,27 @@ options:
     - absent
     default: present
     type: str
-  name:
-    description:
-    - Name of the resource. Provided by the client when the resource is created. The
-      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
-      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-      which means the first character must be a lowercase letter, and all following
-      characters must be a dash, lowercase letter, or digit, except the last character,
-      which cannot be a dash.
-    required: true
-    type: str
-  health_checks:
-    description:
-    - The list of HealthChecks for checking the health of the backend service.
-    - Currently at most one health check can be specified, and a health check is required.
-    required: true
-    type: list
   backends:
     description:
-    - The list of backends that serve this RegionBackendService.
+    - The set of backends that serve this RegionBackendService.
     required: false
     type: list
     suboptions:
+      balancing_mode:
+        description:
+        - Specifies the balancing mode for this backend. Defaults to CONNECTION.
+        - 'Some valid choices include: "UTILIZATION", "RATE", "CONNECTION"'
+        required: false
+        default: CONNECTION
+        type: str
+      capacity_scaler:
+        description:
+        - A multiplier applied to the group's maximum servicing capacity (based on
+          UTILIZATION, RATE or CONNECTION).
+        - A setting of 0 means the group is completely drained, offering 0% of its
+          available Capacity. Valid range is [0.0,1.0].
+        required: false
+        type: str
       description:
         description:
         - An optional description of this resource.
@@ -81,46 +78,76 @@ options:
         type: str
       group:
         description:
-        - The fully-qualified URL of an Instance Group. This defines the list of instances
-          that serve traffic. Member virtual machine instances from each instance
-          group must live in the same zone as the instance group itself. No two backends
-          in a backend service are allowed to use same Instance Group resource.
-        - Note that you must specify an Instance Group resource using the fully-qualified
-          URL, rather than a partial URL.
-        - The instance group must be within the same region as the BackendService.
+        - The fully-qualified URL of an Instance Group or Network Endpoint Group resource.
+          In case of instance group this defines the list of instances that serve
+          traffic. Member virtual machine instances from each instance group must
+          live in the same zone as the instance group itself. No two backends in a
+          backend service are allowed to use same Instance Group resource.
+        - For Network Endpoint Groups this defines list of endpoints. All endpoints
+          of Network Endpoint Group must be hosted on instances located in the same
+          zone as the Network Endpoint Group.
+        - Backend services cannot mix Instance Group and Network Endpoint Group backends.
+        - When the `load_balancing_scheme` is INTERNAL, only instance groups are supported.
+        - Note that you must specify an Instance Group or Network Endpoint Group resource
+          using the fully-qualified URL, rather than a partial URL.
+        required: true
+        type: str
+      max_connections:
+        description:
+        - The max number of simultaneous connections for the group. Can be used with
+          either CONNECTION or UTILIZATION balancing modes.
+        - For CONNECTION mode, either maxConnections or one of maxConnectionsPerInstance
+          or maxConnectionsPerEndpoint, as appropriate for group type, must be set.
+        required: false
+        type: int
+      max_connections_per_instance:
+        description:
+        - The max number of simultaneous connections that a single backend instance
+          can handle. This is used to calculate the capacity of the group. Can be
+          used in either CONNECTION or UTILIZATION balancing modes.
+        - For CONNECTION mode, either maxConnections or maxConnectionsPerInstance
+          must be set.
+        required: false
+        type: int
+      max_connections_per_endpoint:
+        description:
+        - The max number of simultaneous connections that a single backend network
+          endpoint can handle. This is used to calculate the capacity of the group.
+          Can be used in either CONNECTION or UTILIZATION balancing modes.
+        - For CONNECTION mode, either maxConnections or maxConnectionsPerEndpoint
+          must be set.
+        required: false
+        type: int
+      max_rate:
+        description:
+        - The max requests per second (RPS) of the group.
+        - Can be used with either RATE or UTILIZATION balancing modes, but required
+          if RATE mode. Either maxRate or one of maxRatePerInstance or maxRatePerEndpoint,
+          as appropriate for group type, must be set.
+        required: false
+        type: int
+      max_rate_per_instance:
+        description:
+        - The max requests per second (RPS) that a single backend instance can handle.
+          This is used to calculate the capacity of the group. Can be used in either
+          balancing mode. For RATE mode, either maxRate or maxRatePerInstance must
+          be set.
         required: false
         type: str
-  description:
-    description:
-    - An optional description of this resource.
-    required: false
-    type: str
-  protocol:
-    description:
-    - The protocol this BackendService uses to communicate with backends.
-    - The possible values are TCP and UDP, and the default is TCP.
-    - 'Some valid choices include: "HTTP", "HTTPS", "HTTP2", "SSL", "TCP", "UDP"'
-    required: false
-    type: str
-  session_affinity:
-    description:
-    - Type of session affinity to use. The default is NONE.
-    - Can be NONE, CLIENT_IP, CLIENT_IP_PROTO, or CLIENT_IP_PORT_PROTO.
-    - When the protocol is UDP, this field is not used.
-    - 'Some valid choices include: "NONE", "CLIENT_IP", "CLIENT_IP_PROTO", "CLIENT_IP_PORT_PROTO"'
-    required: false
-    type: str
-  region:
-    description:
-    - The region where the regional backend service resides.
-    required: false
-    type: str
-  timeout_sec:
-    description:
-    - How many seconds to wait for the backend before considering it a failed request.
-      Default is 30 seconds. Valid range is [1, 86400].
-    required: false
-    type: int
+      max_rate_per_endpoint:
+        description:
+        - The max requests per second (RPS) that a single backend network endpoint
+          can handle. This is used to calculate the capacity of the group. Can be
+          used in either balancing mode. For RATE mode, either maxRate or maxRatePerEndpoint
+          must be set.
+        required: false
+        type: str
+      max_utilization:
+        description:
+        - Used when balancingMode is UTILIZATION. This ratio defines the CPU utilization
+          target for the group. Valid range is [0.0, 1.0].
+        required: false
+        type: str
   connection_draining:
     description:
     - Settings for connection draining .
@@ -132,14 +159,66 @@ options:
         - Time for which instance will be drained (not accept new connections, but
           still work to finish started).
         required: false
+        default: '300'
         type: int
+  description:
+    description:
+    - An optional description of this resource.
+    required: false
+    type: str
+  health_checks:
+    description:
+    - The set of URLs to HealthCheck resources for health checking this RegionBackendService.
+      Currently at most one health check can be specified, and a health check is required.
+    required: true
+    type: list
   load_balancing_scheme:
     description:
-    - This signifies what the ForwardingRule will be used for and can only be INTERNAL
-      for RegionBackendServices .
-    - 'Some valid choices include: "INTERNAL"'
+    - Indicates what kind of load balancing this regional backend service will be
+      used for. A backend service created for one type of load balancing cannot be
+      used with the other(s). Must be `INTERNAL` or `INTERNAL_MANAGED`. Defaults to
+      `INTERNAL`.
+    - 'Some valid choices include: "INTERNAL", "INTERNAL_MANAGED"'
     required: false
     default: INTERNAL
+    type: str
+  name:
+    description:
+    - Name of the resource. Provided by the client when the resource is created. The
+      name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+      name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+    type: str
+  protocol:
+    description:
+    - The protocol this RegionBackendService uses to communicate with backends.
+    - 'Possible values are HTTP, HTTPS, HTTP2, SSL, TCP, and UDP. The default is HTTP.
+      **NOTE**: HTTP2 is only valid for beta HTTP/2 load balancer types and may result
+      in errors if used with the GA API.'
+    - 'Some valid choices include: "HTTP", "HTTPS", "HTTP2", "SSL", "TCP", "UDP"'
+    required: false
+    type: str
+  session_affinity:
+    description:
+    - Type of session affinity to use. The default is NONE. Session affinity is not
+      applicable if the protocol is UDP.
+    - 'Some valid choices include: "NONE", "CLIENT_IP", "CLIENT_IP_PORT_PROTO", "CLIENT_IP_PROTO",
+      "GENERATED_COOKIE", "HEADER_FIELD", "HTTP_COOKIE"'
+    required: false
+    type: str
+  timeout_sec:
+    description:
+    - How many seconds to wait for the backend before considering it a failed request.
+      Default is 30 seconds. Valid range is [1, 86400].
+    required: false
+    type: int
+  region:
+    description:
+    - A reference to the region where the regional backend service resides.
+    required: true
     type: str
   project:
     description:
@@ -181,9 +260,9 @@ options:
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/regionBackendServices)'
 - 'Internal TCP/UDP Load Balancing: U(https://cloud.google.com/compute/docs/load-balancing/internal/)'
-- for authentication, you can set service_account_file using the c(gcp_service_account_file)
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
   env variable.
-- for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS)
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
   env variable.
 - For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
   env variable.
@@ -224,28 +303,25 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-name:
-  description:
-  - Name of the resource. Provided by the client when the resource is created. The
-    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
-    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-    which means the first character must be a lowercase letter, and all following
-    characters must be a dash, lowercase letter, or digit, except the last character,
-    which cannot be a dash.
-  returned: success
-  type: str
-healthChecks:
-  description:
-  - The list of HealthChecks for checking the health of the backend service.
-  - Currently at most one health check can be specified, and a health check is required.
-  returned: success
-  type: list
 backends:
   description:
-  - The list of backends that serve this RegionBackendService.
+  - The set of backends that serve this RegionBackendService.
   returned: success
   type: complex
   contains:
+    balancingMode:
+      description:
+      - Specifies the balancing mode for this backend. Defaults to CONNECTION.
+      returned: success
+      type: str
+    capacityScaler:
+      description:
+      - A multiplier applied to the group's maximum servicing capacity (based on UTILIZATION,
+        RATE or CONNECTION).
+      - A setting of 0 means the group is completely drained, offering 0% of its available
+        Capacity. Valid range is [0.0,1.0].
+      returned: success
+      type: str
     description:
       description:
       - An optional description of this resource.
@@ -254,50 +330,76 @@ backends:
       type: str
     group:
       description:
-      - The fully-qualified URL of an Instance Group. This defines the list of instances
-        that serve traffic. Member virtual machine instances from each instance group
-        must live in the same zone as the instance group itself. No two backends in
-        a backend service are allowed to use same Instance Group resource.
-      - Note that you must specify an Instance Group resource using the fully-qualified
-        URL, rather than a partial URL.
-      - The instance group must be within the same region as the BackendService.
+      - The fully-qualified URL of an Instance Group or Network Endpoint Group resource.
+        In case of instance group this defines the list of instances that serve traffic.
+        Member virtual machine instances from each instance group must live in the
+        same zone as the instance group itself. No two backends in a backend service
+        are allowed to use same Instance Group resource.
+      - For Network Endpoint Groups this defines list of endpoints. All endpoints
+        of Network Endpoint Group must be hosted on instances located in the same
+        zone as the Network Endpoint Group.
+      - Backend services cannot mix Instance Group and Network Endpoint Group backends.
+      - When the `load_balancing_scheme` is INTERNAL, only instance groups are supported.
+      - Note that you must specify an Instance Group or Network Endpoint Group resource
+        using the fully-qualified URL, rather than a partial URL.
       returned: success
       type: str
-description:
-  description:
-  - An optional description of this resource.
-  returned: success
-  type: str
-fingerprint:
-  description:
-  - Fingerprint of this resource. A hash of the contents stored in this object. This
-    field is used in optimistic locking.
-  returned: success
-  type: str
-protocol:
-  description:
-  - The protocol this BackendService uses to communicate with backends.
-  - The possible values are TCP and UDP, and the default is TCP.
-  returned: success
-  type: str
-sessionAffinity:
-  description:
-  - Type of session affinity to use. The default is NONE.
-  - Can be NONE, CLIENT_IP, CLIENT_IP_PROTO, or CLIENT_IP_PORT_PROTO.
-  - When the protocol is UDP, this field is not used.
-  returned: success
-  type: str
-region:
-  description:
-  - The region where the regional backend service resides.
-  returned: success
-  type: str
-timeoutSec:
-  description:
-  - How many seconds to wait for the backend before considering it a failed request.
-    Default is 30 seconds. Valid range is [1, 86400].
-  returned: success
-  type: int
+    maxConnections:
+      description:
+      - The max number of simultaneous connections for the group. Can be used with
+        either CONNECTION or UTILIZATION balancing modes.
+      - For CONNECTION mode, either maxConnections or one of maxConnectionsPerInstance
+        or maxConnectionsPerEndpoint, as appropriate for group type, must be set.
+      returned: success
+      type: int
+    maxConnectionsPerInstance:
+      description:
+      - The max number of simultaneous connections that a single backend instance
+        can handle. This is used to calculate the capacity of the group. Can be used
+        in either CONNECTION or UTILIZATION balancing modes.
+      - For CONNECTION mode, either maxConnections or maxConnectionsPerInstance must
+        be set.
+      returned: success
+      type: int
+    maxConnectionsPerEndpoint:
+      description:
+      - The max number of simultaneous connections that a single backend network endpoint
+        can handle. This is used to calculate the capacity of the group. Can be used
+        in either CONNECTION or UTILIZATION balancing modes.
+      - For CONNECTION mode, either maxConnections or maxConnectionsPerEndpoint must
+        be set.
+      returned: success
+      type: int
+    maxRate:
+      description:
+      - The max requests per second (RPS) of the group.
+      - Can be used with either RATE or UTILIZATION balancing modes, but required
+        if RATE mode. Either maxRate or one of maxRatePerInstance or maxRatePerEndpoint,
+        as appropriate for group type, must be set.
+      returned: success
+      type: int
+    maxRatePerInstance:
+      description:
+      - The max requests per second (RPS) that a single backend instance can handle.
+        This is used to calculate the capacity of the group. Can be used in either
+        balancing mode. For RATE mode, either maxRate or maxRatePerInstance must be
+        set.
+      returned: success
+      type: str
+    maxRatePerEndpoint:
+      description:
+      - The max requests per second (RPS) that a single backend network endpoint can
+        handle. This is used to calculate the capacity of the group. Can be used in
+        either balancing mode. For RATE mode, either maxRate or maxRatePerEndpoint
+        must be set.
+      returned: success
+      type: str
+    maxUtilization:
+      description:
+      - Used when balancingMode is UTILIZATION. This ratio defines the CPU utilization
+        target for the group. Valid range is [0.0, 1.0].
+      returned: success
+      type: str
 connectionDraining:
   description:
   - Settings for connection draining .
@@ -310,10 +412,73 @@ connectionDraining:
         work to finish started).
       returned: success
       type: int
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource.
+  returned: success
+  type: str
+fingerprint:
+  description:
+  - Fingerprint of this resource. A hash of the contents stored in this object. This
+    field is used in optimistic locking.
+  returned: success
+  type: str
+healthChecks:
+  description:
+  - The set of URLs to HealthCheck resources for health checking this RegionBackendService.
+    Currently at most one health check can be specified, and a health check is required.
+  returned: success
+  type: list
+id:
+  description:
+  - The unique identifier for the resource.
+  returned: success
+  type: int
 loadBalancingScheme:
   description:
-  - This signifies what the ForwardingRule will be used for and can only be INTERNAL
-    for RegionBackendServices .
+  - Indicates what kind of load balancing this regional backend service will be used
+    for. A backend service created for one type of load balancing cannot be used with
+    the other(s). Must be `INTERNAL` or `INTERNAL_MANAGED`. Defaults to `INTERNAL`.
+  returned: success
+  type: str
+name:
+  description:
+  - Name of the resource. Provided by the client when the resource is created. The
+    name must be 1-63 characters long, and comply with RFC1035. Specifically, the
+    name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+protocol:
+  description:
+  - The protocol this RegionBackendService uses to communicate with backends.
+  - 'Possible values are HTTP, HTTPS, HTTP2, SSL, TCP, and UDP. The default is HTTP.
+    **NOTE**: HTTP2 is only valid for beta HTTP/2 load balancer types and may result
+    in errors if used with the GA API.'
+  returned: success
+  type: str
+sessionAffinity:
+  description:
+  - Type of session affinity to use. The default is NONE. Session affinity is not
+    applicable if the protocol is UDP.
+  returned: success
+  type: str
+timeoutSec:
+  description:
+  - How many seconds to wait for the backend before considering it a failed request.
+    Default is 30 seconds. Valid range is [1, 86400].
+  returned: success
+  type: int
+region:
+  description:
+  - A reference to the region where the regional backend service resides.
   returned: success
   type: str
 '''
@@ -324,7 +489,6 @@ loadBalancingScheme:
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
-import re
 import time
 
 ################################################################################
@@ -338,16 +502,32 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            name=dict(required=True, type='str'),
-            health_checks=dict(required=True, type='list', elements='str'),
-            backends=dict(type='list', elements='dict', options=dict(description=dict(type='str'), group=dict(type='str'))),
+            backends=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    balancing_mode=dict(default='CONNECTION', type='str'),
+                    capacity_scaler=dict(type='str'),
+                    description=dict(type='str'),
+                    group=dict(required=True, type='str'),
+                    max_connections=dict(type='int'),
+                    max_connections_per_instance=dict(type='int'),
+                    max_connections_per_endpoint=dict(type='int'),
+                    max_rate=dict(type='int'),
+                    max_rate_per_instance=dict(type='str'),
+                    max_rate_per_endpoint=dict(type='str'),
+                    max_utilization=dict(type='str'),
+                ),
+            ),
+            connection_draining=dict(type='dict', options=dict(draining_timeout_sec=dict(default=300, type='int'))),
             description=dict(type='str'),
+            health_checks=dict(required=True, type='list', elements='str'),
+            load_balancing_scheme=dict(default='INTERNAL', type='str'),
+            name=dict(required=True, type='str'),
             protocol=dict(type='str'),
             session_affinity=dict(type='str'),
-            region=dict(type='str'),
             timeout_sec=dict(type='int'),
-            connection_draining=dict(type='dict', options=dict(draining_timeout_sec=dict(type='int'))),
-            load_balancing_scheme=dict(default='INTERNAL', type='str'),
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -400,16 +580,15 @@ def delete(module, link, kind):
 def resource_to_request(module):
     request = {
         u'kind': 'compute#backendService',
-        u'name': module.params.get('name'),
-        u'healthChecks': module.params.get('health_checks'),
         u'backends': RegionBackendServiceBackendsArray(module.params.get('backends', []), module).to_request(),
+        u'connectionDraining': RegionBackendServiceConnectiondraining(module.params.get('connection_draining', {}), module).to_request(),
         u'description': module.params.get('description'),
+        u'healthChecks': module.params.get('health_checks'),
+        u'loadBalancingScheme': module.params.get('load_balancing_scheme'),
+        u'name': module.params.get('name'),
         u'protocol': module.params.get('protocol'),
         u'sessionAffinity': module.params.get('session_affinity'),
-        u'region': region_selflink(module.params.get('region'), module.params),
         u'timeoutSec': module.params.get('timeout_sec'),
-        u'connectionDraining': RegionBackendServiceConnectiondraining(module.params.get('connection_draining', {}), module).to_request(),
-        u'loadBalancingScheme': module.params.get('load_balancing_scheme'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -475,27 +654,19 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
-        u'name': module.params.get('name'),
-        u'healthChecks': response.get(u'healthChecks'),
         u'backends': RegionBackendServiceBackendsArray(response.get(u'backends', []), module).from_response(),
+        u'connectionDraining': RegionBackendServiceConnectiondraining(response.get(u'connectionDraining', {}), module).from_response(),
+        u'creationTimestamp': response.get(u'creationTimestamp'),
         u'description': response.get(u'description'),
         u'fingerprint': response.get(u'fingerprint'),
+        u'healthChecks': response.get(u'healthChecks'),
+        u'id': response.get(u'id'),
+        u'loadBalancingScheme': module.params.get('load_balancing_scheme'),
+        u'name': module.params.get('name'),
         u'protocol': response.get(u'protocol'),
         u'sessionAffinity': response.get(u'sessionAffinity'),
-        u'region': region_selflink(module.params.get('region'), module.params),
         u'timeoutSec': response.get(u'timeoutSec'),
-        u'connectionDraining': RegionBackendServiceConnectiondraining(response.get(u'connectionDraining', {}), module).from_response(),
-        u'loadBalancingScheme': response.get(u'loadBalancingScheme'),
     }
-
-
-def region_selflink(name, params):
-    if name is None:
-        return
-    url = r"https://www.googleapis.com/compute/v1/projects/.*/regions/.*"
-    if not re.match(url, name):
-        name = "https://www.googleapis.com/compute/v1/projects/{project}/regions/%s".format(**params) % name
-    return name
 
 
 def async_op_url(module, extra_data=None):
@@ -554,10 +725,38 @@ class RegionBackendServiceBackendsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({u'description': item.get('description'), u'group': item.get('group')})
+        return remove_nones_from_dict(
+            {
+                u'balancingMode': item.get('balancing_mode'),
+                u'capacityScaler': item.get('capacity_scaler'),
+                u'description': item.get('description'),
+                u'group': item.get('group'),
+                u'maxConnections': item.get('max_connections'),
+                u'maxConnectionsPerInstance': item.get('max_connections_per_instance'),
+                u'maxConnectionsPerEndpoint': item.get('max_connections_per_endpoint'),
+                u'maxRate': item.get('max_rate'),
+                u'maxRatePerInstance': item.get('max_rate_per_instance'),
+                u'maxRatePerEndpoint': item.get('max_rate_per_endpoint'),
+                u'maxUtilization': item.get('max_utilization'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({u'description': item.get(u'description'), u'group': item.get(u'group')})
+        return remove_nones_from_dict(
+            {
+                u'balancingMode': item.get(u'balancingMode'),
+                u'capacityScaler': item.get(u'capacityScaler'),
+                u'description': item.get(u'description'),
+                u'group': item.get(u'group'),
+                u'maxConnections': item.get(u'maxConnections'),
+                u'maxConnectionsPerInstance': item.get(u'maxConnectionsPerInstance'),
+                u'maxConnectionsPerEndpoint': item.get(u'maxConnectionsPerEndpoint'),
+                u'maxRate': item.get(u'maxRate'),
+                u'maxRatePerInstance': item.get(u'maxRatePerInstance'),
+                u'maxRatePerEndpoint': item.get(u'maxRatePerEndpoint'),
+                u'maxUtilization': item.get(u'maxUtilization'),
+            }
+        )
 
 
 class RegionBackendServiceConnectiondraining(object):

@@ -116,6 +116,18 @@ hcloud_server_info:
             description: User-defined labels (key-value pairs)
             returned: always
             type: dict
+        delete_protection:
+            description: True if server is protected for deletion
+            type: bool
+            returned: always
+            sample: false
+            version_added: "2.10"
+        rebuild_protection:
+            description: True if server is protected for rebuild
+            type: bool
+            returned: always
+            sample: false
+            version_added: "2.10"
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -138,12 +150,13 @@ class AnsibleHcloudServerInfo(Hcloud):
 
         for server in self.hcloud_server_info:
             if server is not None:
+                image = None if server.image is None else to_native(server.image.name)
                 tmp.append({
                     "id": to_native(server.id),
                     "name": to_native(server.name),
                     "ipv4_address": to_native(server.public_net.ipv4.ip),
                     "ipv6": to_native(server.public_net.ipv6.ip),
-                    "image": to_native(server.image.name),
+                    "image": image,
                     "server_type": to_native(server.server_type.name),
                     "datacenter": to_native(server.datacenter.name),
                     "location": to_native(server.datacenter.location.name),
@@ -151,6 +164,8 @@ class AnsibleHcloudServerInfo(Hcloud):
                     "backup_window": to_native(server.backup_window),
                     "labels": server.labels,
                     "status": to_native(server.status),
+                    "delete_protection": server.protection["delete"],
+                    "rebuild_protection": server.protection["rebuild"],
                 })
         return tmp
 
