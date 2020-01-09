@@ -11,13 +11,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ipa_hostgroup
 author: Thomas Krahn (@Nosmoht)
 short_description: Manage FreeIPA host-group
 description:
-- Add, modify and delete an IPA host-group using IPA API
+- Add, modify and delete an IPA host-group using IPA API.
 options:
   cn:
     description:
@@ -25,33 +25,40 @@ options:
     - Can not be changed as it is the unique identifier.
     required: true
     aliases: ["name"]
+    type: str
   description:
     description:
-    - Description
+    - Description.
+    type: str
   host:
     description:
     - List of hosts that belong to the host-group.
     - If an empty list is passed all hosts will be removed from the group.
     - If option is omitted hosts will not be checked or changed.
     - If option is passed all assigned hosts that are not passed will be unassigned from the group.
+    type: list
+    elements: str
   hostgroup:
     description:
     - List of host-groups than belong to that host-group.
     - If an empty list is passed all host-groups will be removed from the group.
     - If option is omitted host-groups will not be checked or changed.
     - If option is passed all assigned hostgroups that are not passed will be unassigned from the group.
+    type: list
+    elements: str
   state:
     description:
     - State to ensure.
     default: "present"
-    choices: ["present", "absent", "enabled", "disabled"]
+    choices: ["absent", "disabled", "enabled", "present"]
+    type: str
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
 
-EXAMPLES = '''
-# Ensure host-group databases is present
-- ipa_hostgroup:
+EXAMPLES = r'''
+- name: Ensure host-group databases is present
+  ipa_hostgroup:
     name: databases
     state: present
     host:
@@ -63,8 +70,8 @@ EXAMPLES = '''
     ipa_user: admin
     ipa_pass: topsecret
 
-# Ensure host-group databases is absent
-- ipa_hostgroup:
+- name: Ensure host-group databases is absent
+  ipa_hostgroup:
     name: databases
     state: absent
     ipa_host: ipa.example.com
@@ -72,7 +79,7 @@ EXAMPLES = '''
     ipa_pass: topsecret
 '''
 
-RETURN = '''
+RETURN = r'''
 hostgroup:
   description: Hostgroup as returned by IPA API.
   returned: always
@@ -180,8 +187,8 @@ def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(cn=dict(type='str', required=True, aliases=['name']),
                          description=dict(type='str'),
-                         host=dict(type='list'),
-                         hostgroup=dict(type='list'),
+                         host=dict(type='list', elements='str'),
+                         hostgroup=dict(type='list', elements='str'),
                          state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']))
 
     module = AnsibleModule(argument_spec=argument_spec,

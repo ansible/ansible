@@ -11,13 +11,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ipa_role
 author: Thomas Krahn (@Nosmoht)
 short_description: Manage FreeIPA role
 description:
-- Add, modify and delete a role within FreeIPA server using FreeIPA API
+- Add, modify and delete a role within FreeIPA server using FreeIPA API.
 options:
   cn:
     description:
@@ -25,33 +25,43 @@ options:
     - Can not be changed as it is the unique identifier.
     required: true
     aliases: ['name']
+    type: str
   description:
     description:
     - A description of this role-group.
+    type: str
   group:
     description:
     - List of group names assign to this role.
     - If an empty list is passed all assigned groups will be unassigned from the role.
     - If option is omitted groups will not be checked or changed.
     - If option is passed all assigned groups that are not passed will be unassigned from the role.
+    type: list
+    elements: str
   host:
     description:
     - List of host names to assign.
     - If an empty list is passed all assigned hosts will be unassigned from the role.
     - If option is omitted hosts will not be checked or changed.
     - If option is passed all assigned hosts that are not passed will be unassigned from the role.
+    type: list
+    elements: str
   hostgroup:
     description:
     - List of host group names to assign.
     - If an empty list is passed all assigned host groups will be removed from the role.
     - If option is omitted host groups will not be checked or changed.
     - If option is passed all assigned hostgroups that are not passed will be unassigned from the role.
+    type: list
+    elements: str
   privilege:
     description:
     - List of privileges granted to the role.
     - If an empty list is passed all assigned privileges will be removed.
     - If option is omitted privileges will not be checked or changed.
     - If option is passed all assigned privileges that are not passed will be removed.
+    type: list
+    elements: str
     version_added: "2.4"
   service:
     description:
@@ -59,22 +69,27 @@ options:
     - If an empty list is passed all assigned services will be removed from the role.
     - If option is omitted services will not be checked or changed.
     - If option is passed all assigned services that are not passed will be removed from the role.
+    type: list
+    elements: str
   state:
-    description: State to ensure
+    description: State to ensure.
     default: "present"
-    choices: ["present", "absent"]
+    choices: ["absent", "present"]
+    type: str
   user:
     description:
     - List of user names to assign.
     - If an empty list is passed all assigned users will be removed from the role.
     - If option is omitted users will not be checked or changed.
+    type: list
+    elements: str
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
 
-EXAMPLES = '''
-# Ensure role is present
-- ipa_role:
+EXAMPLES = r'''
+- name: Ensure role is present
+  ipa_role:
     name: dba
     description: Database Administrators
     state: present
@@ -85,8 +100,8 @@ EXAMPLES = '''
     ipa_user: admin
     ipa_pass: topsecret
 
-# Ensure role with certain details
-- ipa_role:
+- name: Ensure role with certain details
+  ipa_role:
     name: another-role
     description: Just another role
     group:
@@ -101,8 +116,8 @@ EXAMPLES = '''
     service:
     - service01
 
-# Ensure role is absent
-- ipa_role:
+- name: Ensure role is absent
+  ipa_role:
     name: dba
     state: absent
     ipa_host: ipa.example.com
@@ -110,7 +125,7 @@ EXAMPLES = '''
     ipa_pass: topsecret
 '''
 
-RETURN = '''
+RETURN = r'''
 role:
   description: Role as returned by IPA API.
   returned: always
@@ -263,13 +278,13 @@ def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(cn=dict(type='str', required=True, aliases=['name']),
                          description=dict(type='str'),
-                         group=dict(type='list'),
-                         host=dict(type='list'),
-                         hostgroup=dict(type='list'),
-                         privilege=dict(type='list'),
-                         service=dict(type='list'),
+                         group=dict(type='list', elements='str'),
+                         host=dict(type='list', elements='str'),
+                         hostgroup=dict(type='list', elements='str'),
+                         privilege=dict(type='list', elements='str'),
+                         service=dict(type='list', elements='str'),
                          state=dict(type='str', default='present', choices=['present', 'absent']),
-                         user=dict(type='list'))
+                         user=dict(type='list', elements='str'))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
