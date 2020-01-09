@@ -589,6 +589,7 @@ def main():
     del argument_spec['force']
     del argument_spec['force_basic_auth']
     del argument_spec['http_agent']
+    del argument_spec['encode_url']
 
     argument_spec.update(
         name=dict(required=True, type='str'),

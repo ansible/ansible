@@ -551,6 +551,10 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
 
 def main():
     argument_spec = url_argument_spec()
+
+    # remove unnecessary arguments
+    del argument_spec['encode_url']
+
     argument_spec.update(
         dest=dict(type='path'),
         url_username=dict(type='str', aliases=['user']),
