@@ -48,6 +48,8 @@ display = Display()
 
 MANIFEST_FORMAT = 1
 
+ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
+
 
 class CollectionRequirement:
 
@@ -202,7 +204,7 @@ class CollectionRequirement:
 
         display.vvv("Verifying '%s:%s'." % (to_text(self), self.latest_version))
         display.vvv("Installed collection found at '%s'" % collection_path)
-        display.vvv("Remote collection found at '%s'" % remote_collection._metadata.download_url)
+        display.vvv("Remote collection found at '%s'" % remote_collection.metadata.download_url)
 
         # Compare installed version versus requirement version
         if self.latest_version != remote_collection.latest_version:
@@ -215,7 +217,7 @@ class CollectionRequirement:
         # Verify the manifest hash matches before verifying the file manifest
         expected_hash = _get_tar_file_hash(b_temp_tar_path, 'MANIFEST.json')
         self._verify_file_hash(b_collection_path, 'MANIFEST.json', expected_hash, modified_content)
-        manifest = _get_tar_file_as_json(b_temp_tar_path, 'MANIFEST.json')
+        manifest = _get_json_from_tar_file(b_temp_tar_path, 'MANIFEST.json')
 
         # Use the manifest to verify the file manifest checksum
         file_manifest_data = manifest['file_manifest_file']
@@ -224,7 +226,7 @@ class CollectionRequirement:
 
         # Verify the file manifest before using it to verify individual files
         self._verify_file_hash(b_collection_path, file_manifest_filename, expected_hash, modified_content)
-        file_manifest = _get_tar_file_as_json(b_temp_tar_path, file_manifest_filename)
+        file_manifest = _get_json_from_tar_file(b_temp_tar_path, file_manifest_filename)
 
         # Use the file manifest to verify individual file checksums
         for manifest_data in file_manifest['files']:
@@ -249,7 +251,6 @@ class CollectionRequirement:
             actual_hash = _consume_file(file_object)
 
         if expected_hash != actual_hash:
-            ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
             error_queue.append(ModifiedContent(filename=filename, expected=expected_hash, installed=actual_hash))
 
     def _get_metadata(self):
@@ -555,7 +556,7 @@ def verify_collections(collections, search_path, apis, validate_certs, ignore_er
                     located_by_name = False
 
                     if os.path.isfile(b_collection):
-                        remote_collection = CollectionRequirement.from_tar(to_bytes(collection[0]), False, parent=None)
+                        remote_collection = CollectionRequirement.from_tar(b_collection, False, parent=None)
                     elif os.path.isdir(b_collection):
                         remote_collection = CollectionRequirement.from_path(b_collection, False, parent=None)
                     elif urlparse(collection[0]).scheme.lower() in ['http', 'https']:
@@ -571,8 +572,7 @@ def verify_collections(collections, search_path, apis, validate_certs, ignore_er
                     if b_temp_tar_path is None:
                         if not located_by_name:
                             remote_collection = CollectionRequirement.from_name(collection_name, apis, collection_version, False, parent=None)
-                        remote_collection._get_metadata()
-                        download_url = remote_collection._metadata.download_url
+                        download_url = remote_collection.metadata.download_url
                         headers = {}
                         remote_collection.api._add_auth_token(headers, download_url, required=False)
                         b_temp_tar_path = _download_file(download_url, b_temp_path, None, validate_certs, headers=headers)
@@ -1054,7 +1054,7 @@ def _get_tar_file_member(tar, filename):
     return _tarfile_extract(tar, member)
 
 
-def _get_tar_file_as_json(b_path, filename):
+def _get_json_from_tar_file(b_path, filename):
     file_contents = ''
 
     with tarfile.open(b_path, mode='r') as collection_tar:
