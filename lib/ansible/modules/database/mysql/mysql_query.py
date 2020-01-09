@@ -205,13 +205,13 @@ def main():
             module.fail_json(msg="Cannot fetch rows from cursor: %s" % to_native(e))
 
         # Check DML or DDL keywords in query and set changed accordingly:
-        q = q.lstrip()[0:max_keyword_len]
+        q = q.lstrip()[0:max_keyword_len].upper()
         for keyword in DML_QUERY_KEYWORDS:
-            if keyword in q.upper() and cursor.rowcount > 0:
+            if keyword in q and cursor.rowcount > 0:
                 changed = True
 
         for keyword in DDL_QUERY_KEYWORDS:
-            if keyword in q.upper():
+            if keyword in q:
                 changed = True
 
         executed_queries.append(cursor._last_executed)
