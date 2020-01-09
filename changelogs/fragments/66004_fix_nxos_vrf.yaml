@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix issue where purge breaks with empty aggregate (https://github.com/ansible/ansible/pull/66004).
