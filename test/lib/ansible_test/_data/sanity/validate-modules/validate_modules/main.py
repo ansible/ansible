@@ -1177,6 +1177,8 @@ class ModuleValidator(Validator):
         args_from_argspec = set()
         deprecated_args_from_argspec = set()
         doc_options = docs.get('options', {})
+        if doc_options is None:
+            doc_options = {}
         for arg, data in spec.items():
             if not isinstance(data, dict):
                 msg = "Argument '%s' in argument_spec" % arg
