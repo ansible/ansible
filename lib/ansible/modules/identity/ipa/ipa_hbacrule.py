@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ipa_hbacrule
 author: Thomas Krahn (@Nosmoht)
@@ -25,72 +25,94 @@ options:
     - Can not be changed as it is the unique identifier.
     required: true
     aliases: ["name"]
+    type: str
   description:
     description: Description
+    type: str
   host:
     description:
     - List of host names to assign.
     - If an empty list is passed all hosts will be removed from the rule.
     - If option is omitted hosts will not be checked or changed.
     required: false
+    type: list
+    elements: str
   hostcategory:
     description: Host category
     choices: ['all']
+    type: str
   hostgroup:
     description:
     - List of hostgroup names to assign.
     - If an empty list is passed all hostgroups will be removed. from the rule
     - If option is omitted hostgroups will not be checked or changed.
+    type: list
+    elements: str
   service:
     description:
     - List of service names to assign.
     - If an empty list is passed all services will be removed from the rule.
     - If option is omitted services will not be checked or changed.
+    type: list
+    elements: str
   servicecategory:
     description: Service category
     choices: ['all']
+    type: str
   servicegroup:
     description:
     - List of service group names to assign.
     - If an empty list is passed all assigned service groups will be removed from the rule.
     - If option is omitted service groups will not be checked or changed.
+    type: list
+    elements: str
   sourcehost:
     description:
     - List of source host names to assign.
     - If an empty list if passed all assigned source hosts will be removed from the rule.
     - If option is omitted source hosts will not be checked or changed.
+    type: list
+    elements: str
   sourcehostcategory:
     description: Source host category
     choices: ['all']
+    type: str
   sourcehostgroup:
     description:
     - List of source host group names to assign.
     - If an empty list if passed all assigned source host groups will be removed from the rule.
     - If option is omitted source host groups will not be checked or changed.
+    type: list
+    elements: str
   state:
     description: State to ensure
     default: "present"
-    choices: ["present", "absent", "enabled", "disabled"]
+    choices: ["absent",  "disabled", "enabled","present"]
+    type: str
   user:
     description:
     - List of user names to assign.
     - If an empty list if passed all assigned users will be removed from the rule.
     - If option is omitted users will not be checked or changed.
+    type: list
+    elements: str
   usercategory:
     description: User category
     choices: ['all']
+    type: str
   usergroup:
     description:
     - List of user group names to assign.
     - If an empty list if passed all assigned user groups will be removed from the rule.
     - If option is omitted user groups will not be checked or changed.
+    type: list
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''
 
-EXAMPLES = '''
-# Ensure rule to allow all users to access any host from any host
-- ipa_hbacrule:
+EXAMPLES = r'''
+- name: Ensure rule to allow all users to access any host from any host
+  ipa_hbacrule:
     name: allow_all
     description: Allow all users to access any host from any host
     hostcategory: all
@@ -101,8 +123,8 @@ EXAMPLES = '''
     ipa_user: admin
     ipa_pass: topsecret
 
-# Ensure rule with certain limitations
-- ipa_hbacrule:
+- name: Ensure rule with certain limitations
+  ipa_hbacrule:
     name: allow_all_developers_access_to_db
     description: Allow all developers to access any database from any host
     hostgroup:
@@ -114,8 +136,8 @@ EXAMPLES = '''
     ipa_user: admin
     ipa_pass: topsecret
 
-# Ensure rule is absent
-- ipa_hbacrule:
+- name: Ensure rule is absent
+  ipa_hbacrule:
     name: rule_to_be_deleted
     state: absent
     ipa_host: ipa.example.com
@@ -123,7 +145,7 @@ EXAMPLES = '''
     ipa_pass: topsecret
 '''
 
-RETURN = '''
+RETURN = r'''
 hbacrule:
   description: HBAC rule as returned by IPA API.
   returned: always
@@ -300,19 +322,19 @@ def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(cn=dict(type='str', required=True, aliases=['name']),
                          description=dict(type='str'),
-                         host=dict(type='list'),
+                         host=dict(type='list', elements='str'),
                          hostcategory=dict(type='str', choices=['all']),
-                         hostgroup=dict(type='list'),
-                         service=dict(type='list'),
+                         hostgroup=dict(type='list', elements='str'),
+                         service=dict(type='list', elements='str'),
                          servicecategory=dict(type='str', choices=['all']),
-                         servicegroup=dict(type='list'),
-                         sourcehost=dict(type='list'),
+                         servicegroup=dict(type='list', elements='str'),
+                         sourcehost=dict(type='list', elements='str'),
                          sourcehostcategory=dict(type='str', choices=['all']),
-                         sourcehostgroup=dict(type='list'),
+                         sourcehostgroup=dict(type='list', elements='str'),
                          state=dict(type='str', default='present', choices=['present', 'absent', 'enabled', 'disabled']),
-                         user=dict(type='list'),
+                         user=dict(type='list', elements='str'),
                          usercategory=dict(type='str', choices=['all']),
-                         usergroup=dict(type='list'))
+                         usergroup=dict(type='list', elements='str'))
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True
