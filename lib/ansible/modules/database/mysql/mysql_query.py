@@ -178,6 +178,8 @@ def main():
     # Set defaults:
     changed = False
 
+    max_keyword_len = len(max(DML_QUERY_KEYWORDS + DDL_QUERY_KEYWORDS, key=len))
+
     # Execute query:
     query_result = []
     executed_queries = []
@@ -203,6 +205,7 @@ def main():
             module.fail_json(msg="Cannot fetch rows from cursor: %s" % to_native(e))
 
         # Check DML or DDL keywords in query and set changed accordingly:
+        q = q.lstrip()[0:max_keyword_len]
         for keyword in DML_QUERY_KEYWORDS:
             if keyword in q.upper() and cursor.rowcount > 0:
                 changed = True
