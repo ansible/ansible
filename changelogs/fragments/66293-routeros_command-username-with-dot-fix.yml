@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix regular expression to allow dots in username (https://github.com/ansible/ansible/pull/66293)
