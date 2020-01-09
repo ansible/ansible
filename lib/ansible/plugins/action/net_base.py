@@ -33,6 +33,8 @@ class ActionModule(ActionBase):
         socket_path = None
         play_context = copy.deepcopy(self._play_context)
         play_context.network_os = self._get_network_os(task_vars)
+        persistent_connection = play_context.connection.split('.')[-1]
+        self._warnings = []
 
         if play_context.connection == 'local':
             # we should be able to stream line this a bit by creating a common
@@ -48,13 +50,13 @@ class ActionModule(ActionBase):
             self.provider = load_provider(module.get_provider_argspec(), self._task.args)
             if self.provider.get('transport') == 'netconf' and play_context.network_os in _NETCONF_SUPPORTED_PLATFORMS \
                     and self._task.action not in _CLI_ONLY_MODULES:
-                play_context.connection = 'netconf'
+                play_context.connection = 'ansible.netcommon.netconf'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 830)
             elif self.provider.get('transport') in ('nxapi', 'eapi') and play_context.network_os in ('nxos', 'eos'):
                 play_context.connection = 'local'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 22)
             else:
-                play_context.connection = 'network_cli'
+                play_context.connection = 'ansible.netcommon.network_cli'
                 play_context.port = int(self.provider['port'] or self._play_context.port or 22)
 
             play_context.remote_addr = self.provider['host'] or self._play_context.remote_addr
@@ -68,10 +70,14 @@ class ActionModule(ActionBase):
                 play_context.become_method = 'enable'
 
             if self._play_context.connection == 'local':
-                if self.provider.get('transport') == 'nxapi' and play_context.network_os == 'nxos':
+                if self.provider.get('transport') == 'nxapi' and play_context.network_os.split('.')[-1] == 'nxos':
                     self._task.args['provider'] = _NxosActionModule.nxapi_implementation(self.provider, self._play_context)
-                elif self.provider.get('transport') == 'eapi' and play_context.network_os == 'eos':
+                    self._warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14,'
+                                           ' use connection httpapi'])
+                elif self.provider.get('transport') == 'eapi' and play_context.network_os.split('.')[-1] == 'eos':
                     self._task.args['provider'] = _EosActionModule.eapi_implementation(self.provider, self._play_context)
+                    self._warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14,'
+                                           ' use connection httpapi'])
                 else:
                     socket_path = self._start_connection(play_context)
                     task_vars['ansible_socket'] = socket_path
@@ -82,7 +88,7 @@ class ActionModule(ActionBase):
                 display.warning('provider is unnecessary when using %s and will be ignored' % play_context.connection)
                 del self._task.args['provider']
 
-        if play_context.connection == 'network_cli':
+        if persistent_connection == 'network_cli':
             # make sure we are in the right cli context which should be
             # enable mode and not config module
             if socket_path is None:
@@ -127,13 +133,29 @@ class ActionModule(ActionBase):
             display.vvvv('Caching network OS %s in facts' % play_context.network_os)
             result['ansible_facts'] = {'network_os': play_context.network_os}
 
+        if self._warnings:
+            if 'warnings' in result:
+                result['warnings'].extend(self._warnings)
+            else:
+                result['warnings'] = self._warnings
         return result
 
     def _start_connection(self, play_context):
 
+        connection = self._shared_loader_obj.connection_loader.get('ansible.netcommon.persistent', play_context, sys.stdin,
+                                                                   task_uuid=self._task._uuid, collection_list=self._collection_list)
+
+        # TODO: Remove below code after ansible minimal is cut out
+        if connection is None:
+            play_context.network_os = play_context.network_os.split('.')[-1]
+            if play_context.connection.split('.')[-1] == 'netconf':
+                play_context.connection = 'netconf'
+            else:
+                play_context.connection = 'network_cli'
+
+            connection = self._shared_loader_obj.connection_loader.get('persistent', play_context, sys.stdin, task_uuid=self._task._uuid)
+
         display.vvv('using connection plugin %s (was local)' % play_context.connection, play_context.remote_addr)
-        connection = self._shared_loader_obj.connection_loader.get('persistent',
-                                                                   play_context, sys.stdin, task_uuid=self._task._uuid)
 
         connection.set_options(direct={'persistent_command_timeout': play_context.timeout})
 
@@ -147,7 +169,8 @@ class ActionModule(ActionBase):
         if self._play_context.become_method == 'enable':
             self._play_context.become = False
             self._play_context.become_method = None
-
+        self._warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14,'
+                               ' use connection %s' % play_context.connection])
         return socket_path
 
     def _get_network_os(self, task_vars):
