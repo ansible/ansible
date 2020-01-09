@@ -212,8 +212,8 @@ def main():
         warnings.filterwarnings('error', category=mysql_driver.Warning)
 
     try:
-        cursor = mysql_connect(module, user, password, config_file, ssl_cert, ssl_key, ssl_ca, db,
-                               connect_timeout=connect_timeout)
+        cursor, db_conn = mysql_connect(module, user, password, config_file, ssl_cert, ssl_key, ssl_ca, db,
+                                        connect_timeout=connect_timeout)
     except Exception as e:
         if os.path.exists(config_file):
             module.fail_json(msg=("unable to connect to database, check login_user and "
