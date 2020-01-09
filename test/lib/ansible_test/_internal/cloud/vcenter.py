@@ -245,11 +245,7 @@ class VcenterEnvironment(CloudEnvironment):
             parser = ConfigParser()
             parser.read(self.config_path)  # Worldstream and static
 
-            # Most of the test cases use ansible_vars, but we plan to refactor these
-            # to use env_vars, output both for now
-            env_vars = dict(
-                (key.upper(), value) for key, value in parser.items('DEFAULT', raw=True))
-
+            env_vars = dict()
             ansible_vars = dict(
                 resource_prefix=self.resource_prefix,
             )
@@ -263,6 +259,9 @@ class VcenterEnvironment(CloudEnvironment):
 
             ansible_vars = dict(
                 vcsim=self._get_cloud_config('vcenter_hostname'),
+                vcenter_hostname=self._get_cloud_config('vcenter_hostname'),
+                vcenter_username='user',
+                vcenter_password='pass',
             )
 
         for key, value in ansible_vars.items():
@@ -274,10 +273,10 @@ class VcenterEnvironment(CloudEnvironment):
             ansible_vars=ansible_vars,
             module_defaults={
                 'group/vmware': {
-                    'hostname': env_vars['VCENTER_HOSTNAME'],
-                    'username': env_vars['VCENTER_USERNAME'],
-                    'password': env_vars['VCENTER_PASSWORD'],
-                    'validate_certs': env_vars.get('VMWARE_VALIDATE_CERTS', 'no'),
+                    'hostname': ansible_vars['vcenter_hostname'],
+                    'username': ansible_vars['vcenter_username'],
+                    'password': ansible_vars['vcenter_password'],
+                    'validate_certs': ansible_vars.get('vmware_validate_certs', 'no'),
                 },
             },
         )
