@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "os_user_role: fix os_user_role for groups in multidomain context"
