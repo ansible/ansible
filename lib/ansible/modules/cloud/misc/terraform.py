@@ -347,6 +347,8 @@ def main():
     # we aren't sure if this plan will result in changes, so assume yes
     needs_application, changed = True, False
 
+    out, err = '', ''
+
     if state == 'absent':
         command.extend(variables_args)
     elif state == 'present' and plan_file:
