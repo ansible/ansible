@@ -9,8 +9,8 @@
   set_fact:
     role_list:
       - Admin
-      - NoCryptoAdmin
-      - NoAccess
+# With govcsim, NoCryptoAdmin has no privilege.
+#      - NoCryptoAdmin
       - Anonymous
       - ReadOnly
 
@@ -23,12 +23,19 @@
     validate_certs: no
   register: role_details
 
+- &list_to_dict
+  name: List to dict
+  set_fact:
+    role_dict: "{{ dict(role_details.local_role_facts|map(attribute='role_name')|zip(role_details.local_role_facts)) }}"
+
+- name: Test if NoAccess has no privilege
+  assert:
+    that: "{{ role_dict['NoAccess']['privileges'] | list | length == 0 }}"
+
 - &role_test
   name: Test if role id is present for role
   assert:
-    that: "{{ role_details.local_role_facts | json_query(s_query) != [] }}"
-  vars:
-    s_query: "[?role_name == '{{ item }}'].role_id"
+    that: "{{ role_dict[item]['privileges'] | list | length > 0 }}"
   with_items: "{{ role_list }}"
 
 - <<: *role_data
