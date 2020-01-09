@@ -1,0 +1,2 @@
+bugfixes:
+- "network_cli: Only check cli prompt when the connection is actually used"
