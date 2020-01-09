@@ -22,6 +22,7 @@ from ansible.module_utils.network.eos.facts.lldp_interfaces.lldp_interfaces impo
 from ansible.module_utils.network.eos.facts.vlans.vlans import VlansFacts
 from ansible.module_utils.network.eos.facts.legacy.base import Default, Hardware, Config, Interfaces
 from ansible.module_utils.network.eos.facts.acl_interfaces.acl_interfaces import Acl_interfacesFacts
+from ansible.module_utils.network.eos.facts.acls.acls import acls
 
 
 FACT_LEGACY_SUBSETS = dict(
@@ -40,7 +41,12 @@ FACT_RESOURCE_SUBSETS = dict(
     lldp_global=Lldp_globalFacts,
     lldp_interfaces=Lldp_interfacesFacts,
     vlans=VlansFacts,
+<<<<<<< HEAD
     acl_interfaces=Acl_interfacesFacts,
+=======
+    static_routes=Static_routesFacts,
+    acls=AclsFacts,
+>>>>>>> eos_acls resource module added
 )
 
 
