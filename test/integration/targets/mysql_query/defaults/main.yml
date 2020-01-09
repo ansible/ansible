@@ -1,0 +1,6 @@
+root_user: root
+db_name: data
+test_db: testdb
+test_table1: test1
+test_table2: test2
+test_script_path: /tmp/test.sql

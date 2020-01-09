@@ -44,7 +44,7 @@ mysql_driver_fail_msg = 'The PyMySQL (Python 2.7 and Python 3.X) or MySQL-python
 
 
 def mysql_connect(module, login_user=None, login_password=None, config_file='', ssl_cert=None, ssl_key=None, ssl_ca=None, db=None, cursor_class=None,
-                  connect_timeout=30):
+                  connect_timeout=30, autocommit=False):
     config = {}
 
     if ssl_ca is not None or ssl_key is not None or ssl_cert is not None:
@@ -76,12 +76,19 @@ def mysql_connect(module, login_user=None, login_password=None, config_file='', 
     if connect_timeout is not None:
         config['connect_timeout'] = connect_timeout
 
-    db_connection = mysql_driver.connect(**config)
+    if _mysql_cursor_param == 'cursor':
+        # In case of PyMySQL driver:
+        db_connection = mysql_driver.connect(autocommit=autocommit, **config)
+    else:
+        # In case of MySQLdb driver
+        db_connection = mysql_driver.connect(**config)
+        if autocommit:
+            db_connection.autocommit(True)
 
     if cursor_class == 'DictCursor':
-        return db_connection.cursor(**{_mysql_cursor_param: mysql_driver.cursors.DictCursor})
+        return db_connection.cursor(**{_mysql_cursor_param: mysql_driver.cursors.DictCursor}), db_connection
     else:
-        return db_connection.cursor()
+        return db_connection.cursor(), db_connection
 
 
 def mysql_common_argument_spec():
