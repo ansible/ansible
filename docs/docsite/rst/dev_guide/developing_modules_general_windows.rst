@@ -215,6 +215,7 @@ options set:
 - ``aliases``: A list of aliases for the module option
 - ``choices``: A list of valid values for the module option, if ``type=list`` then each list value is validated against the choices and not the list itself
 - ``default``: The default value for the module option if not set
+- ``deprecated_aliases``: A list of hashtables that define aliases that are deprecated and the versions they will be removed in. Each entry must contain the keys ``name`` and ``version``
 - ``elements``: When ``type=list``, this sets the type of each list value, the values are the same as ``type``
 - ``no_log``: Will sanitise the input value before being returned in the ``module_invocation`` return value
 - ``removed_in_version``: States when a deprecated module option is to be removed, a warning is displayed to the end user if set
