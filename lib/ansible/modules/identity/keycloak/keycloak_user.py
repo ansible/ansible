@@ -414,6 +414,8 @@ class KeycloakUser(object):
                 new_param_value = new_attributes
             if user_param == 'user_id':
                 payload['id'] = new_param_value
+            elif user_param == 'keycloak_username':
+                payload['username'] = new_param_value
             else:
                 payload[camel(user_param)] = new_param_value
         new_payload = dict_merge(self.initial_representation, payload)
