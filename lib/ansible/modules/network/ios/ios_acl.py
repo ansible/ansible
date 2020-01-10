@@ -37,7 +37,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: ios_acl
-version_added: 2.10
+version_added: '2.10'
 short_description: Manages named or numbered ACLs on IOS devices.
 description: This module configures and manages the named or numbered ACLs on IOS platforms.
 author: Sumit Jaiswal (@justjais)
