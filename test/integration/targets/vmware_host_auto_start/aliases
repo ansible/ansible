@@ -1,4 +1,5 @@
 cloud/vcenter
-unsupported
 skip/python2.6
-zuul/vmware/vcenter_only
+shippable/vcenter/group1
+needs/target/prepare_vmware_tests
+zuul/vmware/vcenter_1esxi
