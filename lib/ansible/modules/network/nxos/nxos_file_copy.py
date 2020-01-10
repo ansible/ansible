@@ -57,6 +57,7 @@ options:
       - When (file_pull is False) this is the path to the local file on the Ansible controller.
         The local directory must exist.
       - When (file_pull is True) this is the file name used on the NXOS device.
+    type: path
   remote_file:
     description:
       - When (file_pull is False) this is the remote file path on the NXOS device.
@@ -64,6 +65,7 @@ options:
         The remote directory must exist.
       - When (file_pull is True) this is the full path to the file on the remote SCP
         server to be copied to the NXOS device.
+    type: path
   file_system:
     description:
       - The remote file system of the device. If omitted,
@@ -91,6 +93,7 @@ options:
         and written to this directory on the NXOS device. If the directory does not exist, it
         will be created under the file_system. This is an optional parameter.
       - When (file_pull is False), this not used.
+    type: path
     version_added: "2.7"
   file_pull_timeout:
     description:
@@ -125,7 +128,6 @@ EXAMPLES = '''
 # Initiate file copy from the nxos device to transfer file from an SCP server back to the nxos device
   - name: "initiate file copy from device"
     nxos_file_copy:
-      nxos_file_copy:
       file_pull: True
       local_file: "xyz"
       local_filr_directory: "dir1/dir2/dir3"
@@ -352,13 +354,13 @@ def copy_file_from_remote(module, local, local_file_directory, file_system='boot
 
 def main():
     argument_spec = dict(
-        local_file=dict(type='str'),
-        remote_file=dict(type='str'),
+        local_file=dict(type='path'),
+        remote_file=dict(type='path'),
         file_system=dict(required=False, default='bootflash:'),
         connect_ssh_port=dict(required=False, type='int', default=22),
         file_pull=dict(type='bool', default=False),
         file_pull_timeout=dict(type='int', default=300),
-        local_file_directory=dict(required=False, type='str'),
+        local_file_directory=dict(required=False, type='path'),
         remote_scp_server=dict(type='str'),
         remote_scp_server_user=dict(type='str'),
         remote_scp_server_password=dict(no_log=True),
