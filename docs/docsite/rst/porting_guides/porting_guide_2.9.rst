@@ -725,6 +725,11 @@ Network resource modules
 
 Ansible 2.9 introduced the first batch of network resource modules. Sections of a network device's configuration can be thought of as a resource provided by that device. Network resource modules are intentionally scoped to configure a single resource and you can combine them as building blocks to configure complex network services. The older modules are deprecated in Ansible 2.9 and will be removed in Ansible 2.13. You should scan the list of deprecated modules above and replace them with the new network resource modules in your playbooks. See `Ansible Network Features in 2.9 <https://www.ansible.com/blog/network-features-coming-soon-in-ansible-engine-2.9>`_ for details.
 
+Improved ``gather_facts`` support for network devices
+-----------------------------------------------------
+
+In Ansible 2.9, the ``gather_facts`` keyword now supports gathering network device facts in standardized key/value pairs. You can feed these network facts into further tasks to manage the network device. You can also use the new ``gather_network_resources`` parameter with the network ``*_facts`` modules (such as :ref:`eos_facts <eos_facts_module>`) to return just a subset of the device configuration.  See :ref:`network_gather_facts` for an example.
+
 Top-level connection arguments removed in 2.9
 ---------------------------------------------
 
