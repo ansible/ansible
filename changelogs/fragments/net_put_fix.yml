@@ -1,2 +1,0 @@
-bugfixes:
-- Fix net_put module to handle text based files (https://github.com/ansible/ansible/issues/66059)
