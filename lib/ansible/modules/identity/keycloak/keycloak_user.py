@@ -218,6 +218,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 URL_USERS = "{url}/admin/realms/{realm}/users"
 URL_USER = "{url}/admin/realms/{realm}/users/{id}"
+URL_FOR_PASSWORD = "{url}/admin/realms/{realm}/users/{id}/reset-password"
 AUTHORIZED_REQUIRED_ACTIONS = [
     'CONFIGURE_TOTP',
     'UPDATE_PASSWORD',
@@ -334,9 +335,35 @@ class KeycloakUser(object):
         if check:
             return payload
         put_on_url(self._get_user_url(), self.restheaders, self.module, self.description, payload)
+        if self.module.params.get('user_password'):
+            self._set_new_password()
         return payload
 
+    def _set_new_password(self, user_id=''):
+        password_payload = {
+            "type": "password",
+            "value": self.module.params.get('user_password'),
+            "temporary": False,
+        }
+        if not user_id:
+            uuid = self.uuid
+        else:
+            uuid = user_id
+        put_on_url(
+            url=URL_FOR_PASSWORD.format(
+                url=self.module.params.get('auth_keycloak_url'),
+                realm=quote(self.module.params.get('realm')),
+                id=quote(uuid),
+            ),
+            restheaders=self.restheaders,
+            module=self.module,
+            description=self.description,
+            representation=password_payload,
+        )
+
     def _arguments_update_representation(self):
+        if self.module.params.get('user_password'):
+            return True
         clean_payload = self._create_payload()
         payload_diff, _ = recursive_diff(clean_payload, self.initial_representation)
         if not payload_diff:
@@ -360,6 +387,9 @@ class KeycloakUser(object):
         post_on_url(
             post_url, self.restheaders, self.module, 'user %s' % self.given_id, user_payload,
         )
+        if self.module.params.get('user_password'):
+            user_id = self.representation['id']
+            self._set_new_password(user_id)
         return user_payload
 
     def _create_payload(self):
