@@ -444,6 +444,8 @@ class Connection(ConnectionBase):
         line = to_text(line)
 
         if self.is_windows:
+            osc_filter = re.compile(r'\x1b\][^\x07]*\x07')
+            line = osc_filter.sub('', line)
             ansi_filter = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]')
             line = ansi_filter.sub('', line)
 
