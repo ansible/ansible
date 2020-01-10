@@ -296,7 +296,7 @@ class KeycloakUser(object):
             url=self._get_user_url(),
             restheaders=self.restheaders,
             module=self.module,
-            description='user {}'.format(self.given_id),
+            description='user {given_id}'.format(given_id=self.given_id),
         )
         if json_user:
             if self.uuid:
