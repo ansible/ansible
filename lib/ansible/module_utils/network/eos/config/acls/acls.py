@@ -10,12 +10,14 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+import socket
+import re
+import itertools
+
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.common.utils import remove_empties
 from ansible.module_utils.network.eos.facts.facts import Facts
-
-import socket, itertools, re
 
 class Acls(ConfigBase):
     """
@@ -111,12 +113,12 @@ class Acls(ConfigBase):
         have = existing_acls_facts
         resp = self.set_state(want, have)
         if self.state == 'merged':
-            to_config = self.compare_configs(onbox_configs,to_list(resp))
+            to_config = self.compare_configs(onbox_configs, to_list(resp))
         else:
             to_config = resp
         return to_config
 
-    def compare_configs(self,have,want):
+    def compare_configs(self, have, want):
         commands = []
         want = list(itertools.chain(*want))
         have = list(itertools.chain(*have))
@@ -127,11 +129,11 @@ class Acls(ConfigBase):
             if access_list:
                 if w in have:
                     h_index = have.index(w)
-            else :
+            else:
                 for num, h in enumerate(have, start=h_index + 1):
                     if "access-list" not in h:
                         if w in h:
-                            config.pop(config.index(w)) 
+                            config.pop(config.index(w))
                             break
         for c in config:
             if "no" in c:
@@ -142,9 +144,8 @@ class Acls(ConfigBase):
             else:
                 if config[acl_index] not in commands:
                     commands.append(config[acl_index])
-                commands.append(c) 
+                commands.append(c)
         return commands
-                             
 
     def set_state(self, want, have):
         """ Select the appropriate function based on the state provided
@@ -181,12 +182,12 @@ class Acls(ConfigBase):
         have_commands = []
         remove_cmds = []
         for w in want:
-            afi = "ipv6" if w["afi"] == "ipv6" else "ipv4" 
+            afi = "ipv6" if w["afi"] == "ipv6" else "ipv4"
         for h in have:
             if h["afi"] == afi:
                 h = {"afi": afi}
                 remove_cmds = del_commands(h, have)
-        config_cmds = set_commands(want,have)
+        config_cmds = set_commands(want, have)
         config_cmds = list(itertools.chain(*config_cmds))
         for cmd in have:
             have_configs = add_commands(cmd)
@@ -211,7 +212,7 @@ class Acls(ConfigBase):
             h = {"afi": h["afi"]}
             remove_cmds = del_commands(h, have)
             commands.append(remove_cmds)
-        config_cmds = set_commands(want,have)
+        config_cmds = set_commands(want, have)
         config_cmds = list(itertools.chain(*config_cmds))
         commands.append(config_cmds)
         commands = list(itertools.chain(*commands))
@@ -297,11 +298,11 @@ def add_commands(want):
                 elif "subnet_address" in ace["source"].keys():
                     command = command + " " + ace["source"]["subnet_address"]
                 elif "host" in ace["source"].keys():
-                    command = command + " host " + ace["source"]["host"] 
+                    command = command + " host " + ace["source"]["host"]
                 elif "address" in ace["source"].keys():
                     command = command + " " + ace["source"]["address"] + " " + ace["source"]["wildcard_bits"]
                 if "port_protocol" in ace["source"].keys():
-                    for op,val in ace["source"]["port_protocol"].items():
+                    for op, val in ace["source"]["port_protocol"].items():
                         if val.isnumeric():
                             val = socket.getservbyport(int(val))
                         command = command + " " + op + " " + val
@@ -313,7 +314,7 @@ def add_commands(want):
                 elif "host" in ace["destination"].keys():
                     command = command + " host " + ace["destination"]["host"]
                 elif "address" in ace["destination"].keys():
-                    command = command + " " + ace["destination"]["address"] + " " + ace["destination"]["wildcard_bits"]    
+                    command = command + " " + ace["destination"]["address"] + " " + ace["destination"]["wildcard_bits"]
                 if "port_protocol" in ace["destination"].keys():
                     for op in ace["destination"]["port_protocol"].keys():
                         command = command + " " + op + " " + ace["destination"]["port_protocol"][op]
@@ -325,21 +326,21 @@ def add_commands(want):
                     elif proto == "ip" or proto == "ipv6":
                         command = command + " nexthop-group " + ace["protocol_options"][proto]["nexthop_group"]
                     elif proto == "tcp":
-                        for flag,val in ace["prtocol_options"][proto]["flags"].items():
+                        for flag, val in ace["prtocol_options"][proto]["flags"].items():
                             command = command + " " + val
             if "hop_limit" in ace.keys():
-                for op,val in ace["hop_limit"].items():
+                for op, val in ace["hop_limit"].items():
                     command = command + " hop-limit " + op + " " + val
             if "tracked" in  ace.keys() and ace["tracked"]:
                 command = command + " tracked"
             if "ttl" in ace.keys():
-                for op,val in ace["ttl"].items():
+                for op, val in ace["ttl"].items():
                     command = command + " ttl " + op + " " + val
             if "fragments" in ace.keys():
                 command = command + " fragments"
             if "log" in ace.keys():
                 command = command + " log"
-            commandset.append(command.strip())     
+            commandset.append(command.strip())
     return commandset
 
 def del_commands(want, have):
@@ -357,7 +358,7 @@ def del_commands(want, have):
             if access_list and access_list.group(1) == afi:
                 commandset.append("no " + have_cmd)
         return commandset
-    
+
     for acl in want["acls"]:
         ace_present = True
         if "standard" in acl.keys() and acl["standard"]:
@@ -373,11 +374,9 @@ def del_commands(want, have):
             if "access-list" in cmd:
                 commandset.append(cmd)
                 continue
-            seq = re.search(r'(\d+) (permit|deny|fragment-rules|remark) .*', cmd) 
+            seq = re.search(r'(\d+) (permit|deny|fragment-rules|remark) .*', cmd)
             if seq:
                 commandset.append("no " + seq.group(1))
             else:
                 commandset.append("no " + cmd)
     return commandset
-            
-                 

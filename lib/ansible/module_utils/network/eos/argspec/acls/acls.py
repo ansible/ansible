@@ -40,6 +40,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                     'elements': 'dict',
                     'options': {
                         'aces': {
+                            'elements': 'dict',
                             'options': {
                                 'destination': {
                                     'mutually_exclusive':
@@ -83,6 +84,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                     'type': 'bool'
                                 },
                                 'grant': {
+                                    'choices': ['ipv4', 'ipv6'],
                                     'type': 'str'
                                 },
                                 'hop_limit': {
@@ -95,6 +97,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                     'type': 'str'
                                 },
                                 'protocol_options': {
+                                    'elements': 'dict',
                                     'options': {
                                         'icmp': {
                                             'options': {

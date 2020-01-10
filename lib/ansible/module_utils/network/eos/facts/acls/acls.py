@@ -61,11 +61,11 @@ class AclsFacts(object):
             if "ipv6" in resource:
                 ipv6list.append(resource)
             else:
-                ipv4list.append(resource) 
+                ipv4list.append(resource)
         ipv4list = ["\n".join(ipv4list)]
         ipv6list = ["\n".join(ipv6list)]
         for resource in ipv4list:
-            if resource: 
+            if resource:
                 obj = self.render_config(self.generated_spec, resource)
                 if obj:
                     objs.append(obj)
@@ -115,7 +115,7 @@ class AclsFacts(object):
             dev_config = dev_config.strip()
             matches = re.findall(r'(ip.*?) access-list (.*)', dev_config)
             if matches:
-                afi = "ipv4" if matches[0][0] == "ip" else "ipv6"  
+                afi = "ipv4" if matches[0][0] == "ip" else "ipv6"
                 ace_list = []
                 if bool(name_dict):
                     acls_list.append(name_dict.copy())
@@ -133,7 +133,7 @@ class AclsFacts(object):
             else:
                 source_dict = {}
                 dest_dict = {}
-                dev_config = re.sub('\-', '_', dev_config)   
+                dev_config = re.sub('-', '_', dev_config)
                 dev_config_remainder = dev_config.split()
                 if "fragment_rules" in dev_config:
                     ace_dict.update({"sequence": dev_config_remainder.pop(0)})
@@ -155,7 +155,7 @@ class AclsFacts(object):
                     if not standard:
                         protocol = dev_config_remainder[0]
                         ace_dict.update({"protocol": dev_config_remainder.pop(0)})
-                    src_prefix = re.search(r'/', dev_config_remainder[0]) 
+                    src_prefix = re.search(r'/', dev_config_remainder[0])
                     src_address = re.search(r'[a-z\d:\.]+', dev_config_remainder[0])
                     if dev_config_remainder[0] == "host":
                         source_dict.update({"host": dev_config_remainder.pop(1)})
@@ -266,9 +266,9 @@ class AclsFacts(object):
                             dev_config_remainder.pop(0)
                             ip_dict.update({"nexthop_group": dev_config_remainder.pop(0)})
                     if bool(ip_dict):
-                        protocol_option_dict.update({protocol: ip_dict}) 
+                        protocol_option_dict.update({protocol: ip_dict})
                     if bool(protocol_option_dict):
-                        ace_dict.update({"protocol_options": protocol_option_dict}) 
+                        ace_dict.update({"protocol_options": protocol_option_dict})
                     if dev_config_remainder[0] == "ttl":
                         dev_config_remainder.pop(0)
                         ttl_dict = {dev_config_remainder.pop(0): dev_config_remainder.pop(0)}

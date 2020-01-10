@@ -81,7 +81,7 @@ class Static_routesArgs(object):
                                         'track': {
                                             'type': 'str'
                                         },
-                                        'vrf': {
+                                        'dest_vrf': {
                                             'type': 'str'
                                         }
                                     },
