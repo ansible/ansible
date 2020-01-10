@@ -73,7 +73,7 @@ options:
           aces:
             description: Filtering data
             type: list
-            element: dict
+            elements: dict
             suboptions:
               sequence:
                 description: sequence number for the ordered list of rules
@@ -87,7 +87,7 @@ options:
               grant:
                 description: Action to be applied on the rule
                 type: str
-                choice: ['permit', 'deny']
+                choices: ['permit', 'deny']
               protocol:
                 description:
                       - Specify the protocol to match.
@@ -99,7 +99,6 @@ options:
               protocol_options:
                 description: All the possible sub options for the protocol chosen.
                 type: dict
-                element: dict
                 suboptions:
                   tcp:
                     description: Options for tcp protocol.
@@ -438,6 +437,19 @@ options:
               hop_limit:
                 description: Hop limit value.
                 type: dict
+  running_config:
+    description:
+      - The module, by default, will connect to the remote device and
+        retrieve the current running-config to use as a base for comparing
+        against the contents of source. There are times when it is not
+        desirable to have the task get the current running-config for
+        every task in a playbook.  The I(running_config) argument allows the
+        implementer to pass in the configuration to use as the base
+        config for comparison. This value of this option should be the
+        output received from device by executing command
+    version_added: "2.10"
+    type: str
+
   state:
     description:
       - The state the configuration should be left in.
@@ -465,15 +477,16 @@ EXAMPLES = """
   eos_acls:
     config:
      - afi: "ipv4"
-      	- name: test1
+       acls:
+        - name: test1
           aces:
-	  - sequence: 35
-	    grant: "deny"
-	    protocol: "ospf"
-	    source:
-	      subnetaddress: 20.0.0.0/8
-            dest:
-              any: true
+	    - sequence: 35
+	      grant: "deny"
+	      protocol: "ospf"
+	      source:
+	        subnetaddress: 20.0.0.0/8
+              dest:
+                any: true
     state: merged
 
 # After state:
@@ -513,15 +526,16 @@ EXAMPLES = """
   eos_acls:
     config:
       - afi: "ipv4"
-        - name: test1
+        - acls:
+          name: test1
           aces:
-	  - sequence: 35
-	    grant: "permit"
-	    protocol: "ospf"
-	    source:
-	      subnetaddress: 20.0.0.0/8
-            dest:
-              any: true
+	    - sequence: 35
+	      grant: "permit"
+	      protocol: "ospf"
+	      source:
+	        subnetaddress: 20.0.0.0/8
+              dest:
+                any: true
     state: replaced
 
 # After state:
@@ -561,15 +575,16 @@ EXAMPLES = """
   eos_acls:
     config:
       - afi: "ipv4"
-        - name: test1
-          aces:
-	  - sequence: 35
-	    action: "permit"
-	    protocol: "ospf"
-	    source:
-	      subnetaddress: 20.0.0.0/8
-            dest:
-              any: true
+        acls:
+          - name: test1
+            aces:
+	      - sequence: 35
+	        action: "permit"
+	        protocol: "ospf"
+	        source:
+	          subnetaddress: 20.0.0.0/8
+                dest:
+                  any: true
     state: overridden
 
 # After state:
@@ -600,9 +615,10 @@ EXAMPLES = """
   eos_acls:
     config:
       - afi: "ipv4"
-      	- name: test1
-          aces:
-	  - sequence: 30
+        acls:
+      	  - name: test1
+            aces:
+	      - sequence: 30
     state: deleted
 
 # After state:
@@ -636,7 +652,8 @@ EXAMPLES = """
   eos_acls:
     config:
      - afi: "ipv4"
-       - name: test1
+       acls:
+         - name: test1
     state: deleted
 
 # After state:
@@ -664,6 +681,7 @@ ip access-list test2
 eos_acls:
     config:
      - afi: "ipv4"
+       acls:
         - name: test1
           aces:
           - sequence: 35
@@ -674,17 +692,18 @@ eos_acls:
             dest:
               any: true
     - afi: "ipv6"
-      - name: test2
-        aces:
-	 - sequence: 40
-           grant: "permit"
-           vlan: "55 0xE2"
-           protocol: "icmpv6"
-           log: true
-           source:
-             any: true
-           dest:
-             any: true
+      acls:
+        - name: test2
+          aces:
+	   - sequence: 40
+             grant: "permit"
+             vlan: "55 0xE2"
+             protocol: "icmpv6"
+             log: true
+             source:
+               any: true
+             dest:
+               any: true
 
 
 returns:
@@ -692,6 +711,7 @@ returns:
   eos_acls:
     config:
      - afi: "ipv4"
+       acls:
         - name: test1
           aces:
           - sequence: 35
@@ -708,6 +728,7 @@ returns:
 eos_acls:
     config:
      - afi: "ipv4"
+       acls:
         - name: test1
           aces:
           - sequence: 35
@@ -718,17 +739,18 @@ eos_acls:
             dest:
               any: true
     - afi: "ipv6"
-      - name: test2
-        aces:
-	 - sequence: 40
-           grant: "permit"
-           vlan: "55 0xE2"
-           protocol: "icmpv6"
-           log: true
-           source:
-             any: true
-           dest:
-             any: true
+      acls:
+        - name: test2
+          aces:
+	   - sequence: 40
+             grant: "permit"
+             vlan: "55 0xE2"
+             protocol: "icmpv6"
+             log: true
+             source:
+               any: true
+             dest:
+               any: true
 
 returns:
 

@@ -84,7 +84,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                     'type': 'bool'
                                 },
                                 'grant': {
-                                    'choices': ['ipv4', 'ipv6'],
+                                    'choices': ['permit', 'deny'],
                                     'type': 'str'
                                 },
                                 'hop_limit': {
