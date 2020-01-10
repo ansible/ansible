@@ -579,7 +579,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                 except Exception as exc:
                     self.fail("Failed to update tags: {0}".format(str(exc)))
 
-        if not compare_cors(self.account_dict.get('blob_cors', []), self.blob_cors):
+        if self.blob_cors is not None and not compare_cors(self.account_dict.get('blob_cors', []), self.blob_cors):
             self.results['changed'] = True
             if not self.check_mode:
                 self.set_blob_cors()
