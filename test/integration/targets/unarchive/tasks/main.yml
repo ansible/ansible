@@ -641,7 +641,8 @@
     state: present
   when:
     - ansible_facts.distribution == 'CentOS'
-    - ansible_facts.distribution_major_version is version('6', '==')
+    - not ansible_facts.python.has_sslcontext
+  notify: remove python TLS packages
 
 - name: unarchive a tar from an URL
   unarchive:
