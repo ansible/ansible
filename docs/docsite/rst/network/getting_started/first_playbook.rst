@@ -156,7 +156,7 @@ The extended first playbook has four tasks in a single play. Run it with the sam
 Gathering facts from network devices
 ====================================
 
-Ansible 2.9 introduced improved fact gathering for network devices. The ``gather_facts`` keyword now supports gathering network device facts in standardized key/value pairs. You can feed these network facts into further tasks to manage the network device.
+The ``gather_facts`` keyword now supports gathering network device facts in standardized key/value pairs. You can feed these network facts into further tasks to manage the network device.
 
 You can also use the new ``gather_network_resources`` parameter with the network ``*_facts`` modules (such as :ref:`eos_facts <eos_facts_module>`) to return just a subset of the device configuration, as shown below.
 
