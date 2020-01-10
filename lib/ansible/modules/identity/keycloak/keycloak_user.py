@@ -117,6 +117,8 @@ options:
     user_password:
         description:
             - the password set to the user
+            - this value is not given by the Keycloak API when requesting the user. When given, it 
+              reset the user password with the given one and put the C(changed) to True
         aliases: [ userPassword ]
         type: str
 
@@ -161,7 +163,7 @@ EXAMPLES = '''
     last_name: test
     required_actions: [ UPDATE_PROFILE, CONFIGURE_TOTP ]
     attributes: {'one key': 'one value', 'another key': 42}
-    credentials: {'type': 'password', 'value': 'userTest1secret'}
+    user_password: userTest1secret
 '''
 
 RETURN = '''
@@ -171,26 +173,14 @@ msg:
   type: str
   sample: "User usertest1 has been updated"
 
-proposed:
-    description: user representation of proposed changes to user
+changed:
+    description: whether the user state has changed
     returned: always
-    type: dict
-    sample: {
-      "email": "userTest1@domain.org",
-      "attributes": {"onekey": "RS256"}
+    type: bool
+    sample: True
     }
-existing:
-    description: client representation of existing client (sample is truncated)
-    returned: always
-    type: dict
-    sample: {
-        "enabled": false,
-        "attributes": {
-            "onekey": ["RS256"],
-        }
-    }
-end_state:
-    description: client representation of client after module execution (sample is truncated)
+user:
+    description: user representation the user at the end of the moudel (sample is truncated)
     returned: always
     type: dict
     sample: {
