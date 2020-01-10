@@ -104,7 +104,10 @@ def command_units(args):
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
             '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-units.xml' % version),
         ]
-
+        
+        if args.pdb:
+            cmd.append('--pdb')
+            
         if not data_context().content.collection:
             cmd.append('--durations=25')
 
