@@ -4,13 +4,10 @@
 # Copyright: (c) 2018, Nicolas Duclert <nicolas.duclert@metronlab.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
-ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
-    'status': ['preview'],
-    'supported_by': 'community'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ['preview'], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -203,32 +200,199 @@ end_state:
     }
 '''
 
-import copy
-
-from ansible.module_utils.identity.keycloak.keycloak import KeycloakAPI, camel, keycloak_argument_spec, get_token
+from ansible.module_utils.identity.keycloak.crud import crud_with_instance
+from ansible.module_utils.identity.keycloak.keycloak import (
+    camel,
+    keycloak_argument_spec,
+    get_token,
+    KeycloakError,
+    get_on_url,
+    put_on_url,
+    post_on_url,
+    delete_on_url,
+)
+from ansible.module_utils.common.dict_transformations import recursive_diff, dict_merge
+from ansible.module_utils.six.moves.urllib.parse import quote
 from ansible.module_utils.basic import AnsibleModule
 
 
+URL_USERS = "{url}/admin/realms/{realm}/users"
+URL_USER = "{url}/admin/realms/{realm}/users/{id}"
 AUTHORIZED_REQUIRED_ACTIONS = [
-    'CONFIGURE_TOTP', 'UPDATE_PASSWORD', 'UPDATE_PROFILE', 'VERIFY_EMAIL']
+    'CONFIGURE_TOTP',
+    'UPDATE_PASSWORD',
+    'UPDATE_PROFILE',
+    'VERIFY_EMAIL',
+]
 # is this compatible with native string stategy?
 AUTHORIZED_ATTRIBUTE_VALUE_TYPE = (str, int, float, bool)
 
 
-def sanitize_user_representation(user_representation):
-    """ Removes probably sensitive details from a user representation
+class KeycloakUser(object):
+    def __init__(self, module, connection_header):
+        self.module = module
+        if not self.attributes_format_is_correct(self.module.params.get('attributes')):
+            self.module.fail_json(
+                msg=(
+                    'Attributes are not in the correct format. Should be a dictionary with '
+                    'one value per key as string, integer and boolean'
+                )
+            )
+        self.new_password = self.module.params.get('user_password')
+        self.restheaders = connection_header
+        self.uuid = self.module.params.get('user_id')
+        self.initial_representation = self.get_user()
+        self.description = 'user {given_id}'.format(given_id=self.given_id)
+        try:
+            self.uuid = self.initial_representation['id']
+        except KeyError:
+            pass
 
-    :param userrep: the userrep dict to be sanitized
-    :return: sanitized userrep dict
-    """
-    result = user_representation.copy()
-    if 'user_password' in result or 'userPassword' in result:
-        if 'user_password' in result:
-            password_key = 'user_password'
+    def attributes_format_is_correct(self, given_attributes):
+        if not given_attributes:
+            return True
+        for one_value in given_attributes.values():
+            if isinstance(one_value, list):
+                if not self.attribute_as_list_format_is_correct(one_value):
+                    return False
+                continue
+            if isinstance(one_value, dict):
+                return False
+            if not isinstance(one_value, AUTHORIZED_ATTRIBUTE_VALUE_TYPE):
+                return False
+        return True
+
+    def attribute_as_list_format_is_correct(self, one_value, first_call=True):
+        if isinstance(one_value, list) and first_call:
+            if len(one_value) > 1:
+                return False
+            return self.attribute_as_list_format_is_correct(one_value[0], False)
         else:
-            password_key = 'userPassword'
-        result[password_key] = 'no_log'
-    return result
+            if not isinstance(one_value, AUTHORIZED_ATTRIBUTE_VALUE_TYPE):
+                return False
+        return True
+
+    def _get_user_url(self):
+        """Create the url in order to get the federation from the given argument (uuid or name)
+        :return: the url as string
+        :rtype: str
+        """
+        if self.uuid:
+            return URL_USER.format(
+                url=self.module.params.get('auth_keycloak_url'),
+                realm=quote(self.module.params.get('realm')),
+                id=quote(self.uuid),
+            )
+        return URL_USERS.format(
+            url=self.module.params.get('auth_keycloak_url'),
+            realm=quote(self.module.params.get('realm')),
+        ) + '?username={username}'.format(
+            username=self.module.params.get('keycloak_username').lower()
+        )
+
+    def get_user(self):
+        json_user = get_on_url(
+            url=self._get_user_url(),
+            restheaders=self.restheaders,
+            module=self.module,
+            description='user {}'.format(self.given_id),
+        )
+        if json_user:
+            if self.uuid:
+                return json_user
+            user_name = self.module.params.get('keycloak_username').lower()
+            if user_name:
+                for one_user in json_user:
+                    if user_name == one_user['username']:
+                        return one_user
+            return json_user
+        return {}
+
+    @property
+    def given_id(self):
+        """Get the asked id given by the user.
+        :return the asked id given by the user as a name or an uuid.
+        :rtype: str
+        """
+        if self.module.params.get('keycloak_username'):
+            return self.module.params.get('keycloak_username')
+        return self.module.params.get('user_id')
+
+    @property
+    def representation(self):
+        return self.get_user()
+
+    def delete(self):
+        """Delete the federation"""
+        user_url = self._get_user_url()
+        delete_on_url(user_url, self.restheaders, self.module, 'user %s' % self.given_id)
+
+    def update(self, check=False):
+        if not self._arguments_update_representation():
+            return {}
+        payload = self._create_payload()
+        if check:
+            return payload
+        put_on_url(self._get_user_url(), self.restheaders, self.module, self.description, payload)
+        return payload
+
+    def _arguments_update_representation(self):
+        clean_payload = self._create_payload()
+        payload_diff, _ = recursive_diff(clean_payload, self.initial_representation)
+        if not payload_diff:
+            return False
+        return True
+
+    def create(self):
+        """Create the federation from the given arguments.
+        Before create the federation, there is a check concerning the mandatory
+        arguments waited by keycloak.
+        If asked by the user, before creating the federation, the connection or
+        the authentication can be tested.
+        :return: the representation of the updated federation
+        :rtype: dict
+        """
+        user_payload = self._create_payload()
+        post_url = URL_USERS.format(
+            url=self.module.params.get('auth_keycloak_url'),
+            realm=quote(self.module.params.get('realm')),
+        )
+        post_on_url(
+            post_url, self.restheaders, self.module, 'user %s' % self.given_id, user_payload,
+        )
+        return user_payload
+
+    def _create_payload(self):
+        user_params = [
+            x
+            for x in self.module.params
+            if x not in list(keycloak_argument_spec().keys()) + ['state', 'realm', 'user_password']
+            and self.module.params.get(x) is not None
+        ]
+        payload = {}
+        for user_param in user_params:
+            new_param_value = self.module.params.get(user_param)
+            # some lists in the Keycloak API are sorted, some are not.
+
+            if user_param == 'attributes':
+                new_attributes = {}
+                for key, value in new_param_value.items():
+                    if not isinstance(value, list):
+                        new_attributes.update({key: [value]})
+                    else:
+                        new_attributes.update({key: value})
+                new_param_value = new_attributes
+            if user_param == 'user_id':
+                payload['id'] = new_param_value
+            else:
+                payload[camel(user_param)] = new_param_value
+        new_payload = dict_merge(self.initial_representation, payload)
+        if 'id' in new_payload:
+            try:
+                new_payload.pop('username')
+            except KeyError:
+                pass
+        return new_payload
 
 
 def run_module():
@@ -236,249 +400,43 @@ def run_module():
     meta_args = dict(
         state=dict(default='present', choices=['present', 'absent']),
         realm=dict(default='master'),
-
         keycloak_username=dict(type='str', aliases=['keycloakUsername']),
         user_id=dict(type='str', aliases=['userId']),
-
         email_verified=dict(type='bool', aliases=['emailVerified']),
         enabled=dict(type='bool'),
         attributes=dict(type='dict'),
         email=dict(type='str'),
         first_name=dict(type='str', aliases=['firstName']),
         last_name=dict(type='str', aliases=['lastName']),
-        required_actions=dict(type='list', aliases=['requiredActions'],
-                              choices=AUTHORIZED_REQUIRED_ACTIONS),
+        required_actions=dict(
+            type='list', aliases=['requiredActions'], choices=AUTHORIZED_REQUIRED_ACTIONS
+        ),
         user_password=dict(type='str', aliases=['userPassword']),
     )
 
     argument_spec.update(meta_args)
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True,
-                           required_one_of=([['keycloak_username', 'user_id']]),
-                           mutually_exclusive=[['keycloak_username', 'user_id']]
-                           )
-
-    realm = module.params.get('realm')
-    state = module.params.get('state')
-    given_user_id = {'name': module.params.get('keycloak_username')}
-    if not given_user_id['name']:
-        given_user_id.update({'id': module.params.get('user_id')})
-        given_user_id.pop('name')
-    else:
-        given_user_id.update({'name': given_user_id['name'].lower()})
-
-    if not attributes_format_is_correct(module.params.get('attributes')):
-        module.fail_json(msg=(
-            'Attributes are not in the correct format. Should be a dictionary with '
-            'one value per key as string, integer and boolean'))
-    token_header = get_token(
-        base_url=module.params.get('auth_keycloak_url'),
-        validate_certs=module.params.get('validate_certs'),
-        auth_realm=module.params.get('auth_realm'),
-        client_id=module.params.get('auth_client_id'),
-        auth_username=module.params.get('auth_username'),
-        auth_password=module.params.get('auth_password'),
-        client_secret=module.params.get('auth_client_secret'),
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        required_one_of=([['keycloak_username', 'user_id']]),
+        mutually_exclusive=[['keycloak_username', 'user_id']],
     )
-    kc = KeycloakAPI(module, token_header)
-    before_user = get_initial_user(given_user_id, kc, realm)
 
-    result = create_result(before_user, module)
-
-    # If the user does not exist yet, before_user is still empty
-    if before_user == dict():
-        if state == 'absent':
-            do_nothing_and_exit(kc, result)
-
-        create_user(kc, result, realm, given_user_id)
-    else:
-        if state == 'present':
-            updating_user(kc, result, realm, given_user_id)
-        else:
-            deleting_user(kc, result, realm, given_user_id)
-
-
-def attributes_format_is_correct(given_attributes):
-    if not given_attributes:
-        return True
-    for one_value in given_attributes.values():
-        if isinstance(one_value, list):
-            if not attribute_as_list_format_is_correct(one_value):
-                return False
-            continue
-        if isinstance(one_value, dict):
-            return False
-        if not isinstance(one_value, AUTHORIZED_ATTRIBUTE_VALUE_TYPE):
-            return False
-    return True
-
-
-def attribute_as_list_format_is_correct(one_value, first_call=True):
-    if isinstance(one_value, list) and first_call:
-        if len(one_value) > 1:
-            return False
-        return attribute_as_list_format_is_correct(one_value[0], False)
-    else:
-        if not isinstance(one_value, AUTHORIZED_ATTRIBUTE_VALUE_TYPE):
-            return False
-    return True
-
-
-def get_initial_user(given_user_id, kc, realm):
-    if 'name' in given_user_id:
-        before_user = kc.get_user_by_name(given_user_id['name'], realm=realm)
-    else:
-        before_user = kc.get_user_by_id(given_user_id['id'], realm=realm)
-    if before_user is None:
-        before_user = dict()
-    return before_user
-
-
-def create_result(before_user, module):
-    changeset = create_changeset(module)
-    result = dict(changed=False, msg='', diff={}, proposed={}, existing={},
-                  end_state={})
-    result['proposed'] = changeset
-    result['existing'] = before_user
-    return result
-
-
-def create_changeset(module):
-    user_params = [
-        x for x in module.params
-        if x not in list(keycloak_argument_spec().keys()) + ['state', 'realm'] and
-        module.params.get(x) is not None]
-    changeset = dict()
-    for user_param in user_params:
-        new_param_value = module.params.get(user_param)
-
-        # some lists in the Keycloak API are sorted, some are not.
-        if isinstance(new_param_value, list):
-            if user_param in ['attributes']:
-                try:
-                    new_param_value = sorted(new_param_value)
-                except TypeError:
-                    pass
-
-        changeset[camel(user_param)] = new_param_value
-    return sanitize_user_representation(changeset)
-
-
-def do_nothing_and_exit(kc, result):
-    module = kc.module
-    if module._diff:
-        result['diff'] = dict(before='', after='')
-    result['msg'] = 'User does not exist, doing nothing.'
-    module.exit_json(**result)
-
-
-def create_payload(dict_from_argument):
-    if 'user_password' in dict_from_argument:
-        password_key = 'user_password'
-    elif 'userPassword' in dict_from_argument:
-        password_key = 'userPassword'
     try:
-        user_password = dict_from_argument.pop(password_key)
-    except NameError:
-        pass
-    else:
-        dict_from_argument.update(
-            {'credentials': {'type': 'password', 'value': user_password, 'temporary': False}}
+        connection_header = get_token(
+            base_url=module.params.get('auth_keycloak_url'),
+            validate_certs=module.params.get('validate_certs'),
+            auth_realm=module.params.get('auth_realm'),
+            client_id=module.params.get('auth_client_id'),
+            auth_username=module.params.get('auth_username'),
+            auth_password=module.params.get('auth_password'),
+            client_secret=module.params.get('auth_client_secret'),
         )
-    return dict_from_argument
-
-
-def existing_payload_to_args(existing_user):
-    try:
-        credentials = existing_user.pop('credentials')
-    except KeyError:
-        pass
-    else:
-        if credentials['type'] == 'password':
-            existing_user['user_password'] = credentials['value']
-    return existing_user
-
-
-def create_user(kc, result, realm, given_user_id):
-    module = kc.module
-    user_to_create = copy.deepcopy(result['proposed'])
-    result['changed'] = True
-
-    if module._diff:
-        result['diff'] = dict(before='',
-                              after=sanitize_user_representation(user_to_create))
-    if module.check_mode:
-        module.exit_json(**result)
-
-    user_to_create = create_payload(user_to_create)
-    response = kc.create_user(user_to_create, realm=realm)
-    after_user = kc.get_json_from_url(response.headers.get('Location'))
-
-    result['end_state'] = sanitize_user_representation(
-        existing_payload_to_args(after_user)
-    )
-    result['msg'] = 'User %s has been created.' % given_user_id['name']
-    module.exit_json(**result)
-
-
-def updating_user(kc, result, realm, given_user_id):
-    module = kc.module
-    changeset = copy.deepcopy(result['proposed'])
-    before_user = result['existing']
-    updated_user = before_user.copy()
-    updated_user.update(changeset)
-    result['changed'] = True
-
-    if module.check_mode:
-        # We can only compare the current user with the proposed updates we have
-        if module._diff:
-            result['diff'] = dict(
-                before=sanitize_user_representation(before_user),
-                after=sanitize_user_representation(updated_user))
-        result['changed'] = (before_user != updated_user)
-        module.exit_json(**result)
-
-    changeset = create_payload(changeset)
-
-    if 'name' in given_user_id.keys():
-        asked_id = kc.get_user_id(given_user_id['name'], realm=realm)
-    else:
-        asked_id = given_user_id['id']
-    kc.update_user(asked_id, changeset, realm=realm)
-    after_user = existing_payload_to_args(kc.get_user_by_id(asked_id, realm=realm))
-    if before_user == after_user:
-        result['changed'] = False
-
-    if module._diff:
-        result['diff'] = dict(
-            before=sanitize_user_representation(before_user),
-            after=sanitize_user_representation(after_user))
-
-    result['end_state'] = sanitize_user_representation(after_user)
-    result['msg'] = 'User %s has been updated.' % list(given_user_id.values())[0]
-    module.exit_json(**result)
-
-
-def deleting_user(kc, result, realm, given_user_id):
-    module = kc.module
-    before_user = result['existing']
-    result['proposed'] = {}
-    result['changed'] = True
-    if module._diff:
-        result['diff']['before'] = sanitize_user_representation(
-            before_user)
-        result['diff']['after'] = ''
-    if module.check_mode:
-        module.exit_json(**result)
-    if 'name' in given_user_id:
-        asked_id = kc.get_user_id(given_user_id['name'], realm=realm)
-    else:
-        asked_id = given_user_id['id']
-    kc.delete_user(asked_id, realm=realm)
-    result['proposed'] = dict()
-    result['end_state'] = dict()
-    result['msg'] = 'User %s has been deleted.' % list(given_user_id.values())[0]
+        keycloak_user = KeycloakUser(module, connection_header)
+        result = crud_with_instance(keycloak_user, 'user')
+    except KeycloakError as e:
+        module.fail_json(msg=str(e), changed=False, user={})
     module.exit_json(**result)
 
 

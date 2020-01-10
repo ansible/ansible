@@ -74,6 +74,30 @@ LIST_USER_RESPONSE_ADMIN_ONLY = r"""[
   }
 ]"""
 
+USER_ONE = """[
+    {
+        "id": "883eeb5e-51d0-4aa9-8cb7-667f53e62e90",
+        "createdTimestamp": 1549806949269,
+        "username": "user1",
+        "enabled": true,
+        "totp": false,
+        "emailVerified": false,
+        "disableableCredentialTypes": [
+          "password"
+        ],
+        "requiredActions": [],
+        "notBefore": 0,
+        "access": {
+          "manageGroupMembership": true,
+          "view": true,
+          "mapRoles": true,
+          "impersonate": true,
+          "manage": true
+        }
+    }
+]
+"""
+
 TO_DELETE_USER = """{
     "id": "994eeb5e-62e1-4bb9-8cb7-667f53e62f01",
     "createdTimestamp": 1549806949269,
@@ -214,10 +238,13 @@ def create_wrapper(text_as_string):
 
 RESPONSE_ADMIN_ONLY = {
     'http://keycloak.url/auth/realms/master/protocol/openid-connect/token': create_wrapper('{"access_token": "a long token"}'),
+    'http://keycloak.url/auth/admin/realms/master/users?username=user1': create_wrapper(USER_ONE),
+    'http://keycloak.url/auth/admin/realms/master/users?username=to_not_add_user': create_wrapper('{}'),
+    'http://keycloak.url/auth/admin/realms/master/users?username=to_add_user': create_wrapper('{}'),
+    'http://keycloak.url/auth/admin/realms/master/users?username=to_delete': create_wrapper('[{to_delete}]'.format(to_delete=TO_DELETE_USER)),
     'http://keycloak.url/auth/admin/realms/master/users': {
-        'GET': create_wrapper(LIST_USER_RESPONSE_ADMIN_ONLY),
         'POST': CreatedUserMockResponse()
-    },
+     },
     'http://keycloak.url/auth/admin/realms/master/users/992ddb5e-51d0-4aa9-8cb7-556f53e62e91': create_wrapper(
         CREATED_USER_RESPONSE),
     'http://keycloak.url/auth/admin/realms/master/users/994eeb5e-62e1-4bb9-8cb7-667f53e62f01': {
@@ -243,7 +270,7 @@ def test_state_absent_should_not_create_absent_user(monkeypatch, url_mock_keyclo
     with pytest.raises(AnsibleExitJson) as exec_error:
         keycloak_user.main()
     ansible_exit_json = exec_error.value.args[0]
-    assert ansible_exit_json['msg'] == 'User does not exist, doing nothing.'
+    assert ansible_exit_json['msg'] == 'User to_not_add_user does not exist, doing nothing.'
 
 
 def test_state_present_should_create_absent_user(monkeypatch, url_mock_keycloak):
@@ -261,7 +288,7 @@ def test_state_present_should_create_absent_user(monkeypatch, url_mock_keycloak)
     with pytest.raises(AnsibleExitJson) as exec_error:
         keycloak_user.main()
     ansible_exit_json = exec_error.value.args[0]
-    assert ansible_exit_json['msg'] == 'User to_add_user has been created.'
+    assert ansible_exit_json['msg'] == 'User to_add_user created.'
 
 
 @pytest.mark.parametrize('user_to_delete', [
@@ -283,7 +310,7 @@ def test_state_absent_should_delete_existing_user(monkeypatch, url_mock_keycloak
     with pytest.raises(AnsibleExitJson) as exec_error:
         keycloak_user.main()
     ansible_exit_json = exec_error.value.args[0]
-    assert ansible_exit_json['msg'] == ('User %s has been deleted.' % list(user_to_delete.values())[0])
+    assert ansible_exit_json['msg'] == ('User %s deleted.' % list(user_to_delete.values())[0])
 
 
 @pytest.fixture(params=[
@@ -331,20 +358,14 @@ def test_state_present_should_update_existing_user(monkeypatch, dynamic_url_for_
         'auth_realm': 'master',
         'state': 'present',
         'email': 'user1@domain.net',
-        'user_password': 'user1_secret',
     }
     arguments.update(user_to_update)
     set_module_args(arguments)
     with pytest.raises(AnsibleExitJson) as exec_error:
         keycloak_user.main()
     ansible_exit_json = exec_error.value.args[0]
-    assert ansible_exit_json['msg'] == ('User %s has been updated.' % list(user_to_update.values())[0].lower())
-    assert ansible_exit_json['end_state'] == json.loads(UPDATED_USER)
-    try:
-        user_password = ansible_exit_json['proposed']['userPassword']
-    except KeyError:
-        user_password = ansible_exit_json['proposed']['user_password']
-    assert user_password == 'no_log'
+    assert ansible_exit_json['msg'] == ('User %s updated.' % list(user_to_update.values())[0].lower())
+    assert ansible_exit_json['user'] == json.loads(UPDATED_USER)
 
 
 @pytest.mark.parametrize('wrong_attributes', [
@@ -353,7 +374,7 @@ def test_state_present_should_update_existing_user(monkeypatch, dynamic_url_for_
     {'dict1': {'a': 2}},
     {'list3': [[['a']]]},
 ], ids=['too long list', 'list into a list', 'dictionary as value', 'list russian doll'])
-def test_wrong_attributes_type_should_raise_an_error(monkeypatch, wrong_attributes):
+def test_wrong_attributes_type_should_raise_an_error(monkeypatch, wrong_attributes, url_mock_keycloak):
     monkeypatch.setattr(keycloak_user.AnsibleModule, 'exit_json', exit_json)
     monkeypatch.setattr(keycloak_user.AnsibleModule, 'fail_json', fail_json)
     arguments = {
