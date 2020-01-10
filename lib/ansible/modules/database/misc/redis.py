@@ -25,8 +25,10 @@ options:
             - C(config) (new in 1.6), ensures a configuration setting on an instance.
             - C(flush) flushes all the instance or a specified db.
             - C(slave) sets a redis instance in slave or master mode.
+            - C(config rewrite) (new in 2.10) rewrite config file with the
+              minimal change to reflect running config.
         required: true
-        choices: [ config, flush, slave ]
+        choices: [ config, flush, slave, config rewrite ]
     login_password:
         description:
             - The password used to authenticate with (usually not used)
@@ -76,7 +78,9 @@ notes:
      this needs to be in the redis.conf in the masterauth variable
 
 requirements: [ redis ]
-author: "Xabier Larrakoetxea (@slok)"
+author:
+- Xabier Larrakoetxea (@slok)
+- Tobias Birkefeld (@tcraxs)
 '''
 
 EXAMPLES = '''
@@ -113,6 +117,10 @@ EXAMPLES = '''
     command: config
     name: lua-time-limit
     value: 100
+
+- name: Save local redis running config to disk
+  redis:
+    command: config rewrite
 '''
 
 import traceback
@@ -160,7 +168,7 @@ def flush(client, db=None):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            command=dict(type='str', choices=['config', 'flush', 'slave']),
+            command=dict(type='str', choices=['config', 'flush', 'slave', 'config rewrite']),
             login_password=dict(type='str', no_log=True),
             login_host=dict(type='str', default='localhost'),
             login_port=dict(type='int', default=6379),
@@ -270,6 +278,8 @@ def main():
                 module.exit_json(changed=True, flushed=True, db=db)
             else:  # Flush never fails :)
                 module.fail_json(msg="Unable to flush '%d' database" % db)
+
+    # config Command section -----------
     elif command == 'config':
         name = module.params['name']
         value = module.params['value']
@@ -295,6 +305,29 @@ def main():
             except Exception as e:
                 module.fail_json(msg="unable to write config: %s" % to_native(e), exception=traceback.format_exc())
             module.exit_json(changed=changed, name=name, value=value)
+
+    # config rewrite Command section -----------
+    elif command == 'config rewrite':
+
+        # Connect and check
+        r = redis.StrictRedis(host=login_host, port=login_port, password=login_password, db=db)
+        try:
+            r.ping()
+        except Exception as e:
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+
+        # Do the stuff
+        # (Check check_mode before commands so the commands aren't evaluated
+        # if not necessary)
+        if module.check_mode:
+            module.exit_json(changed=False)
+        else:
+            try:
+                r.config_rewrite()
+            except Exception as e:
+                module.fail_json(msg="unable to write config: %s" % to_native(e), exception=traceback.format_exc())
+            module.exit_json(changed=True)
+
     else:
         module.fail_json(msg='A valid command must be provided')
 
