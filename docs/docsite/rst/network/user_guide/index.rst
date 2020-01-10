@@ -16,6 +16,7 @@ If you're new to Ansible, or new to using Ansible for network automation, start 
    :maxdepth: 2
    :caption: Advanced Topics
 
+   network_resource_modules
    faq
    network_best_practices_2.5
    network_debug_troubleshooting
