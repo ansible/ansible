@@ -25,6 +25,7 @@
 - name: copy file from controller to ios + scp (Default)
   net_put:
     src: ios1.cfg
+    mode: 'text'
   register: result
 
 - assert:
@@ -34,6 +35,7 @@
 - name: Idempotency Check
   net_put:
     src: ios1.cfg
+    mode: 'text'
   register: result
 
 - assert:
