@@ -129,7 +129,7 @@ options:
                     description:
                       - MPLS label
                     type: int
-                  vrf:
+                  dest_vrf:
                     description:
                       - VRF of the destination.
                     type: str
@@ -378,7 +378,7 @@ rendered:
                                             "nexthop_grp": null,
                                             "tag": null,
                                             "track": null,
-                                            "vrf": null
+                                            "dest_vrf": null
                                         }
                                     ]
                                 }

@@ -485,7 +485,7 @@ EXAMPLES = """
 	      protocol: "ospf"
 	      source:
 	        subnetaddress: 20.0.0.0/8
-              dest:
+              destnation:
                 any: true
     state: merged
 
@@ -534,7 +534,7 @@ EXAMPLES = """
 	      protocol: "ospf"
 	      source:
 	        subnetaddress: 20.0.0.0/8
-              dest:
+              destination:
                 any: true
     state: replaced
 
@@ -583,7 +583,7 @@ EXAMPLES = """
 	        protocol: "ospf"
 	        source:
 	          subnetaddress: 20.0.0.0/8
-                dest:
+                destination:
                   any: true
     state: overridden
 
@@ -689,7 +689,7 @@ eos_acls:
             protocol: "ospf"
             source:
               subnetaddress: 20.0.0.0/8
-            dest:
+            destination:
               any: true
     - afi: "ipv6"
       acls:
@@ -702,7 +702,7 @@ eos_acls:
              log: true
              source:
                any: true
-             dest:
+             destination:
                any: true
 
 
@@ -719,7 +719,7 @@ returns:
             protocol: "ospf"
             source:
               subnetaddress: 20.0.0.0/8
-            dest:
+            destination:
               any: true
 
 
@@ -736,7 +736,7 @@ eos_acls:
             protocol: "ospf"
             source:
               subnetaddress: 20.0.0.0/8
-            dest:
+            destination:
               any: true
     - afi: "ipv6"
       acls:
@@ -749,7 +749,7 @@ eos_acls:
              log: true
              source:
                any: true
-             dest:
+             destination:
                any: true
 
 returns:
