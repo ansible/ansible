@@ -366,7 +366,7 @@ class KeycloakUser(object):
         if self.module.params.get('user_password'):
             return True
         clean_payload = self._create_payload()
-        payload_diff, _ = recursive_diff(clean_payload, self.initial_representation)
+        payload_diff, not_used = recursive_diff(clean_payload, self.initial_representation)
         if not payload_diff:
             return False
         return True
