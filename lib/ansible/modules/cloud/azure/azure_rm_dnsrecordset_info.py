@@ -273,8 +273,9 @@ class AzureRMRecordSetInfo(AzureRMModuleBase):
     def record_to_dict(self, record):
         record_type = record.type[len('Microsoft.Network/dnszones/'):]
         records = getattr(record, RECORDSET_VALUE_MAP.get(record_type))
-        if not isinstance(records, list) and records:
-            records = [records]
+        if records:
+            if not isinstance(records, list):
+                records = [records]
         else:
             records = []
         return dict(
