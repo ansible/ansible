@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - terraform - moved line as suggested by @sivel to stop the suppression of output from terraform in ansible (https://github.com/ansible/ansible/issues/64369)
