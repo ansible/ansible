@@ -9,6 +9,7 @@
       vars:
         setup_attach_host: true
 
+    # NOTE: prepare_vmware_tests should have already done that
     - name: Add first ESXi Host to vCenter
       vmware_host:
         hostname: '{{ vcenter_hostname }}'
