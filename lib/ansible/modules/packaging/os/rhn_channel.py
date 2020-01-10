@@ -16,7 +16,7 @@ module: rhn_channel
 short_description: Adds or removes Red Hat software channels
 description:
     - Adds or removes Red Hat software channels.
-version_added: "2.10"
+version_added: "1.1"
 author:
 - Vincent Van der Kussen (@vincentvdk)
 notes:
@@ -51,6 +51,7 @@ options:
         description:
             - ssl CA certificate for use with spacewalk self signed certificate
         required: False
+        version_added: "2.10"
 '''
 
 EXAMPLES = '''
