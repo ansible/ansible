@@ -84,6 +84,7 @@
     path_to_script: '~{{ pg_user }}/test.sql'
     positional_args:
     - 1
+    encoding: UTF-8
   register: result
   ignore_errors: yes
   when: sql_file_created

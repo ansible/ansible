@@ -69,6 +69,12 @@ options:
     type: bool
     default: no
     version_added: '2.9'
+  encoding:
+    description:
+    - Read or set the client encoding for the current session (e.g. C(UTF-8)).
+    - The default is the encoding defined by the database.
+    type: str
+    version_added: '2.10'
 seealso:
 - module: postgresql_db
 author:
@@ -240,6 +246,7 @@ def main():
         session_role=dict(type='str'),
         path_to_script=dict(type='path'),
         autocommit=dict(type='bool', default=False),
+        encoding=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -253,6 +260,7 @@ def main():
     named_args = module.params["named_args"]
     path_to_script = module.params["path_to_script"]
     autocommit = module.params["autocommit"]
+    encoding = module.params["encoding"]
 
     if autocommit and module.check_mode:
         module.fail_json(msg="Using autocommit is mutually exclusive with check_mode")
@@ -275,6 +283,8 @@ def main():
 
     conn_params = get_conn_params(module, module.params)
     db_connection = connect_to_db(module, conn_params, autocommit=autocommit)
+    if encoding is not None:
+        db_connection.set_client_encoding(encoding)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Prepare args:
