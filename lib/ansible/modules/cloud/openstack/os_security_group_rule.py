@@ -250,6 +250,16 @@ def _find_matching_rule(module, secgroup, remotegroup):
     ethertype = module.params['ethertype']
     direction = module.params['direction']
     remote_group_id = remotegroup['id']
+    port_range_min = module.params['port_range_min']
+    port_range_max = module.params['port_range_max']
+
+    # Because 'any' protocol does not match ports, we need to make sure we
+    # correct the parameters the sdk return when matching.
+    # And also re-set the protocol type (which is translated to None earlier)
+    if protocol == None:
+        protocol = 'any'
+        port_range_min = 0
+        port_range_max = 65535
 
     for rule in secgroup['security_group_rules']:
         if (protocol == rule['protocol'] and
@@ -258,8 +268,8 @@ def _find_matching_rule(module, secgroup, remotegroup):
                 direction == rule['direction'] and
                 remote_group_id == rule['remote_group_id'] and
                 _ports_match(protocol,
-                             module.params['port_range_min'],
-                             module.params['port_range_max'],
+                             port_range_min,
+                             port_range_max,
                              rule['port_range_min'],
                              rule['port_range_max'])):
             return rule
