@@ -101,15 +101,10 @@ options:
     description:
     - The username to use for authentication.
     type: str
-    aliases:
-    - user
-    - username
   url_password:
     description:
     - The password for I(url_username).
     type: str
-    aliases:
-    - password
   use_default_credential:
     description:
     - Uses the current user's credentials when authenticating with a server
