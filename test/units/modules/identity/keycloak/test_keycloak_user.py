@@ -223,10 +223,11 @@ def get_response(object_with_future_response, method, get_id_call_count):
             # manage python 2 versions.
             call_number = get_id_call_count.next()
         try:
-            return get_response(object_with_future_response[call_number], method, get_id_call_count)
+            return get_response(
+                object_with_future_response[call_number], method, get_id_call_count
+            )
         except IndexError:
-            return get_response(object_with_future_response[-1], method,
-                                get_id_call_count)
+            return get_response(object_with_future_response[-1], method, get_id_call_count)
     return object_with_future_response
 
 

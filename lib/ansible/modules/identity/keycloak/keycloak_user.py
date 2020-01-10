@@ -113,7 +113,7 @@ options:
             - the user last name
         aliases: [ lastName ]
         type: str
-    
+
     user_password:
         description:
             - the password set to the user
