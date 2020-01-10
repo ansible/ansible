@@ -16,7 +16,7 @@ module: rhn_channel
 short_description: Adds or removes Red Hat software channels
 description:
     - Adds or removes Red Hat software channels.
-version_added: "1.1"
+version_added: "2.10"
 author:
 - Vincent Van der Kussen (@vincentvdk)
 notes:
@@ -124,8 +124,8 @@ def main():
     # initialize connection
     ctx = None
     if module.params['cacert'] is not None:
-            ctx = ssl.create_default_context()
-            ctx.load_verify_locations(cafile=module.params['cacert'])
+        ctx = ssl.create_default_context()
+        ctx.load_verify_locations(cafile=module.params['cacert'])
     client = xmlrpc_client.ServerProxy(saturl, context=ctx)
     try:
         session = client.auth.login(user, password)
