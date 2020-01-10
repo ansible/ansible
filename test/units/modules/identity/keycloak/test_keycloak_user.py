@@ -316,7 +316,7 @@ def test_state_present_should_create_absent_user(monkeypatch, url_mock_keycloak)
 
 @pytest.mark.parametrize(
     'user_to_delete',
-    [{'keycloak_username': 'to_delete'}, {'user_id': '994eeb5e-62e1-4bb9-8cb7-667f53e62f01'},],
+    [{'keycloak_username': 'to_delete'}, {'user_id': '994eeb5e-62e1-4bb9-8cb7-667f53e62f01'}],
     ids=['with name', 'with id'],
 )
 def test_state_absent_should_delete_existing_user(monkeypatch, url_mock_keycloak, user_to_delete):
