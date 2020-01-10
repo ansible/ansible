@@ -73,6 +73,20 @@ options:
       - This option cannot be set with I(checksum).
     type: str
     version_added: "2.8"
+  url_username:
+    description:
+    - The username to use for authentication.
+    - The aliases I(user) and I(username) are deprecated and will be removed in
+      Ansible 2.14.
+    aliases:
+    - user
+    - username
+  url_password:
+    description:
+    - The password for I(url_username).
+    - The alias I(password) is deprecated and will be removed in Ansible 2.14.
+    aliases:
+    - password
   proxy_url:
     version_added: "2.0"
   proxy_username:
