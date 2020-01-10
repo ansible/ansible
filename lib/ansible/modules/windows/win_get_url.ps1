@@ -22,9 +22,14 @@ $spec = @{
     mutually_exclusive = @(
         ,@('checksum', 'checksum_url')
     )
+    deprecated_aliases = @(
+        @{ name = "user"; version = "2.14" },
+        @{ name = "username"; version = "2.14" },
+        @{ name = "password"; version = "2.14" }
+    )
     supports_check_mode = $true
 }
-$spec.options += $ansible_web_request_options
+$spec = Merge-WebRequestSpec -ModuleSpec $spec
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
