@@ -121,6 +121,8 @@ def main():
         'test/units/modules/cloud/amazon/test_ec2_vpc_nat_gateway.py',
         'test/units/modules/cloud/amazon/test_ec2_vpc_vpn.py',
         'test/units/modules/system/interfaces_file/test_interfaces_file.py',
+        # These files contain false positives.
+        'lib/ansible/modules/system/solaris_zone.py',
     ])
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
