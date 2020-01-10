@@ -796,24 +796,16 @@ test_no_log - Invoked with:
     "Deprecated aliases" = {
         $spec = @{
             options = @{
-                option1 = @{ type = "str"; aliases = "alias1" }
-                option2 = @{ type = "str"; aliases = "alias2" }
+                option1 = @{ type = "str"; aliases = "alias1"; deprecated_aliases = @(@{name = "alias1"; version = "2.10"}) }
+                option2 = @{ type = "str"; aliases = "alias2"; deprecated_aliases = @(@{name = "alias2"; version = "2.11"}) }
                 option3 = @{
                     type = "dict"
                     options = @{
-                        option1 = @{ type = "str"; aliases = "alias1" }
-                        option2 = @{ type = "str"; aliases = "alias2" }
+                        option1 = @{ type = "str"; aliases = "alias1"; deprecated_aliases = @(@{name = "alias1"; version = "2.10"}) }
+                        option2 = @{ type = "str"; aliases = "alias2"; deprecated_aliases = @(@{name = "alias2"; version = "2.11"}) }
                     }
-                    deprecated_aliases = @(
-                        @{ name = "alias1"; version = "2.10" }
-                        @{ name = "alias2"; version = "2.11" }
-                    )
                 }
             }
-            deprecated_aliases = @(
-                @{ name = "alias1"; version = "2.10" }
-                @{ name = "alias2"; version = "2.11" }
-            )
         }
 
         $complex_args = @{
@@ -1666,12 +1658,11 @@ test_no_log - Invoked with:
                 option_key = @{
                     type = "str"
                     aliases = ,"alias_name"
+                    deprecated_aliases = @(
+                        @{name = "alias_name"}
+                    )
                 }
             }
-
-            deprecated_aliases = @(
-                @{name = "alias_name"}
-            )
         }
 
         $failed = $false
@@ -1701,13 +1692,11 @@ test_no_log - Invoked with:
                         sub_option_key = @{
                             type = "str"
                             aliases = ,"alias_name"
-
+                            deprecated_aliases = @(
+                                @{version = "2.10"}
+                            )
                         }
                     }
-
-                    deprecated_aliases = @(
-                        @{version = "2.10"}
-                    )
                 }
             }
         }
@@ -2578,3 +2567,4 @@ try {
 }
 
 Exit-Module
+

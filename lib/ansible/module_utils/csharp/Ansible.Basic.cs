@@ -685,26 +685,26 @@ namespace Ansible.Basic
                     if (parameters.Contains(alias))
                         parameters[k] = parameters[alias];
                 }
-            }
 
-            List<Hashtable> deprecatedAliases = (List<Hashtable>)argumentSpec["deprecated_aliases"];
-            foreach (Hashtable depInfo in deprecatedAliases)
-            {
-                foreach (string keyName in new List<string> { "name", "version" })
+                List<Hashtable> deprecatedAliases = (List<Hashtable>)v["deprecated_aliases"];
+                foreach (Hashtable depInfo in deprecatedAliases)
                 {
-                    if (!depInfo.ContainsKey(keyName))
+                    foreach (string keyName in new List<string> { "name", "version" })
                     {
-                        string msg = String.Format("{0} is required in a deprecated_aliases entry", keyName);
-                        throw new ArgumentException(FormatOptionsContext(msg, " - "));
+                        if (!depInfo.ContainsKey(keyName))
+                        {
+                            string msg = String.Format("{0} is required in a deprecated_aliases entry", keyName);
+                            throw new ArgumentException(FormatOptionsContext(msg, " - "));
+                        }
                     }
-                }
-                string aliasName = (string)depInfo["name"];
-                string depVersion = (string)depInfo["version"];
+                    string aliasName = (string)depInfo["name"];
+                    string depVersion = (string)depInfo["version"];
 
-                if (parameters.Contains(aliasName))
-                {
-                    string msg = String.Format("Alias '{0}' is deprecated. See the module docs for more information", aliasName);
-                    Deprecate(FormatOptionsContext(msg, " - "), depVersion);
+                    if (parameters.Contains(aliasName))
+                    {
+                        string msg = String.Format("Alias '{0}' is deprecated. See the module docs for more information", aliasName);
+                        Deprecate(FormatOptionsContext(msg, " - "), depVersion);
+                    }
                 }
             }
 
@@ -1334,4 +1334,3 @@ namespace Ansible.Basic
         }
     }
 }
-
