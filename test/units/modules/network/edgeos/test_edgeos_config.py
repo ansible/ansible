@@ -143,7 +143,7 @@ class TestEdgeosConfigModule(TestEdgeosModule):
             'set system interfaces ethernet eth0 address 1.2.3.4/24',
             'set system interfaces ethernet eth0 description Outside'
         ]
-        self.execute_module(changed=True, commands=result_commands, sort=False)
+        self.execute_module(changed=True, commands=result_commands)
 
     def test_edgeos_config_filtered(self):
         candidate_config = ['set system login user test authentication encrypted-password test1']
