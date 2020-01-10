@@ -28,7 +28,7 @@ options:
     description:
       - Specifies the fully qualified hostname to add or remove from
         the system. User can also update the hostname as it is possible
-        to pass a dict containing I(new_name), I(old_name). See examples.
+        to pass a dict containing I(new_ipv4addr), I(new_ipv4addr). See examples.
     required: true
   view:
     description:
