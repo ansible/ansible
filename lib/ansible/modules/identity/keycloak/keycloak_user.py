@@ -50,7 +50,6 @@ options:
             - a dictionary with the key and the value to put in keycloak.
               Keycloak will always return the value in a list of one element.
               Keys and values are converted into string.
-        required: false
         type: dict
 
     user_id:
@@ -77,7 +76,6 @@ options:
     enabled:
         description:
             - show if the user can logged in
-        required: false
         type: bool
 
     email:
@@ -86,7 +84,6 @@ options:
             - this module does not check the validity of the email
             - when using the api, there is no check about the validity of the email in keycloak
             - but with manual action, the format is checked
-        required: false
         type: str
 
     required_actions:
