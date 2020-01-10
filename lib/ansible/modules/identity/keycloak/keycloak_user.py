@@ -171,11 +171,11 @@ msg:
   sample: "User usertest1 has been updated"
 
 changed:
-    description: whether the user state has changed
-    returned: always
-    type: bool
-    sample: True
-    }
+  description: whether the user state has changed
+  returned: always
+  type: bool
+  sample: True
+
 user:
     description: user representation the user at the end of the moudel (sample is truncated)
     returned: always
