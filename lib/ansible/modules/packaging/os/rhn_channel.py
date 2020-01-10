@@ -47,6 +47,10 @@ options:
         description:
             - RHN/Satellite password.
         required: true
+    cacert:
+        description:
+            - ssl CA certificate for use with spacewalk self signed certificate
+        required: False
 '''
 
 EXAMPLES = '''
@@ -56,9 +60,11 @@ EXAMPLES = '''
     url: https://rhn.redhat.com/rpc/api
     user: rhnuser
     password: guessme
+    cacert: '/usr/share/rhn/RHN-ORG-TRUSTED-SSL-CERT'
   delegate_to: localhost
 '''
 
+import ssl
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import xmlrpc_client
@@ -104,6 +110,7 @@ def main():
             url=dict(type='str', required=True),
             user=dict(type='str', required=True),
             password=dict(type='str', required=True, aliases=['pwd'], no_log=True),
+            cacert=dict(type='str', required=False),
         )
     )
 
@@ -115,7 +122,11 @@ def main():
     password = module.params['password']
 
     # initialize connection
-    client = xmlrpc_client.ServerProxy(saturl)
+    ctx = None
+    if module.params['cacert'] is not None:
+            ctx = ssl.create_default_context()
+            ctx.load_verify_locations(cafile=module.params['cacert'])
+    client = xmlrpc_client.ServerProxy(saturl, context=ctx)
     try:
         session = client.auth.login(user, password)
     except Exception as e:
