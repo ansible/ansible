@@ -71,7 +71,7 @@ options:
     version_added: '2.9'
   encoding:
     description:
-    - Read or set the client encoding for the current session (e.g. C(UTF-8)).
+    - Set the client encoding for the current session (e.g. C(UTF-8)).
     - The default is the encoding defined by the database.
     type: str
     version_added: '2.10'
@@ -113,12 +113,13 @@ EXAMPLES = r'''
     db: test_db
     query: INSERT INTO test_table (id, story) VALUES (2, 'my_long_story')
 
-- name: Run queries from SQL script
+- name: Run queries from SQL script using UTF-8 client encoding for session
   postgresql_query:
     db: test_db
     path_to_script: /var/lib/pgsql/test.sql
     positional_args:
     - 1
+    encoding: UTF-8
 
 - name: Example of using autocommit parameter
   postgresql_query:
