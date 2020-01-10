@@ -15,7 +15,7 @@ module: keycloak_user
 
 short_description: Allows administration of Keycloak users via Keycloak API
 
-version_added: "2.11"
+version_added: "2.10"
 
 description:
     - This module allows the administration of Keycloak clients via the Keycloak REST API. It
@@ -117,6 +117,7 @@ options:
     user_password:
         description:
             - the password set to the user
+        aliases: [ userPassword ]
         type: str
 
 extends_documentation_fragment:
