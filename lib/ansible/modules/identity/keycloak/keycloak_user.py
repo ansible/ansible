@@ -114,7 +114,7 @@ options:
     user_password:
         description:
             - the password set to the user
-            - this value is not given by the Keycloak API when requesting the user. When given, it 
+            - this value is not given by the Keycloak API when requesting the user. When given, it
               reset the user password with the given one and put the C(changed) to True
         aliases: [ userPassword ]
         type: str
