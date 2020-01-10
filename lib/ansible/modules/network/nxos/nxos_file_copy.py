@@ -65,7 +65,7 @@ options:
         The remote directory must exist.
       - When (file_pull is True) this is the full path to the file on the remote SCP
         server to be copied to the NXOS device.
-    type: path    
+    type: path
   file_system:
     description:
       - The remote file system of the device. If omitted,
@@ -93,7 +93,7 @@ options:
         and written to this directory on the NXOS device. If the directory does not exist, it
         will be created under the file_system. This is an optional parameter.
       - When (file_pull is False), this not used.
-    type: path  
+    type: path
     version_added: "2.7"
   file_pull_timeout:
     description:
