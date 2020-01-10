@@ -230,7 +230,7 @@
     src: "{{ remote_tmp_dir }}/unarchive-00.{{item}}"
     dest: "{{ remote_tmp_dir }}/exclude-{{item}}"
     remote_src: yes
-    exclude: 
+    exclude:
       - "exclude/exclude-*.txt"
       - "other/exclude-1.ext"
   with_items:
@@ -632,6 +632,17 @@
 # Test downloading a file before unarchiving it
 - name: create our unarchive destination
   file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
+
+- name: Install packages to make TLS connections work on CentOS 6
+  yum:
+    name:
+      - python-urllib3
+      - python2-ndg_httpsclient
+    state: present
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - not ansible_facts.python.has_sslcontext
+  notify: remove python TLS packages
 
 - name: unarchive a tar from an URL
   unarchive:
