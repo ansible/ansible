@@ -21,15 +21,21 @@ $spec = @{
        return_content = @{ type = "bool"; default = $false }
        status_code = @{ type = "list"; elements = "int"; default = @(200) }
 
-       # Defined for the alias backwards compatibilityi, remove once aliases are removed
-       url_username = @{ aliases = @("user", "username") }
-       url_password = @{ aliases = @("password") }
+       # Defined for the alias backwards compatibility, remove once aliases are removed
+       url_username = @{
+           aliases = @("user", "username")
+           deprecated_aliases = @(
+               @{ name = "user"; version = "2.14" },
+               @{ name = "username"; version = "2.14" }
+           )
+       }
+       url_password = @{
+           aliases = @("password")
+           deprecated_aliases = @(
+               @{ name = "password"; version = "2.14" }
+           )
+       }
     }
-    deprecated_aliases = @(
-        @{ name = "user"; version = "2.14" },
-        @{ name = "username"; version = "2.14" },
-        @{ name = "password"; version = "2.14" }
-    )
     supports_check_mode = $true
 }
 $spec = Merge-WebRequestSpec -ModuleSpec $spec
