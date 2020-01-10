@@ -145,7 +145,6 @@ class Acl(ConfigBase):
 
         :param want: the desired configuration as a dictionary
         :param have: the current configuration as a dictionary
-        :param interface_type: interface type
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
                   to the deisred configuration
@@ -154,11 +153,11 @@ class Acl(ConfigBase):
 
         for config_want in want:
             for acls_want in config_want.get('acls'):
-                for ace_want in acls_want.get('ace'):
+                for ace_want in acls_want.get('aces'):
                     check = False
                     for config_have in have:
                         for acls_have in config_have.get('acls'):
-                            for ace_have in acls_have.get('ace'):
+                            for ace_have in acls_have.get('aces'):
                                 if acls_want.get('name') == acls_have.get('name'):
                                     ace_want = remove_empties(ace_want)
                                     acls_want = remove_empties(acls_want)
@@ -194,9 +193,8 @@ class Acl(ConfigBase):
 
     def _state_overridden(self, want, have):
         """ The command generator when state is overridden
-
         :param want: the desired configuration as a dictionary
-        :param obj_in_have: the current configuration as a dictionary
+        :param have: the current configuration as a dictionary
         :rtype: A list
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
@@ -208,12 +206,12 @@ class Acl(ConfigBase):
 
         for config_have in have:
             for acls_have in config_have.get('acls'):
-                for ace_have in acls_have.get('ace'):
+                for ace_have in acls_have.get('aces'):
                     check = False
                     for config_want in temp_want:
                         count = 0
                         for acls_want in config_want.get('acls'):
-                            for ace_want in acls_want.get('ace'):
+                            for ace_want in acls_want.get('aces'):
                                 if acls_want.get('name') == acls_have.get('name'):
                                     ace_want = remove_empties(ace_want)
                                     acls_want = remove_empties(acls_want)
@@ -246,7 +244,7 @@ class Acl(ConfigBase):
         # For configuring any non-existing want config
         for config_want in temp_want:
             for acls_want in config_want.get('acls'):
-                for ace_want in acls_want.get('ace'):
+                for ace_want in acls_want.get('aces'):
                     ace_want = remove_empties(ace_want)
                     commands.extend(self._set_config(ace_want,
                                                      {},
@@ -263,7 +261,7 @@ class Acl(ConfigBase):
         """ The command generator when state is merged
 
         :param want: the additive configuration as a dictionary
-        :param obj_in_have: the current configuration as a dictionary
+        :param have: the current configuration as a dictionary
         :rtype: A list
         :returns: the commands necessary to merge the provided into
                   the current configuration
@@ -272,11 +270,11 @@ class Acl(ConfigBase):
 
         for config_want in want:
             for acls_want in config_want.get('acls'):
-                for ace_want in acls_want.get('ace'):
+                for ace_want in acls_want.get('aces'):
                     check = False
                     for config_have in have:
                         for acls_have in config_have.get('acls'):
-                            for ace_have in acls_have.get('ace'):
+                            for ace_have in acls_have.get('aces'):
                                 if acls_want.get('name') == acls_have.get('name'):
                                     ace_want = remove_empties(ace_want)
                                     cmd, check = self.common_condition_check(ace_want,
@@ -304,8 +302,7 @@ class Acl(ConfigBase):
         """ The command generator when state is deleted
 
         :param want: the objects from which the configuration should be removed
-        :param obj_in_have: the current configuration as a dictionary
-        :param interface_type: interface type
+        :param have: the current configuration as a dictionary
         :rtype: A list
         :returns: the commands necessary to remove the current configuration
                   of the provided objects
@@ -448,7 +445,7 @@ class Acl(ConfigBase):
         return cmd
 
     def _set_config(self, want, have, acl_want, afi):
-        """ Function that sets the interface config based on the want and have config
+        """ Function that sets the acls config based on the want and have config
         :param want: want config
         :param have: have config
         :param acl_want: want acl config
@@ -485,7 +482,7 @@ class Acl(ConfigBase):
             elif afi == 'ipv6':
                 cmd = 'ipv6 access-list {0}'.format(name)
 
-            # Get all of ace option values from diff dict
+            # Get all of aces option values from diff dict
             grant = want.get('grant')
             source = want.get('source')
             destination = want.get('destination')

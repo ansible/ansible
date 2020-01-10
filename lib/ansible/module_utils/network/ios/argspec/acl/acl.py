@@ -48,37 +48,14 @@ class AclArgs(object):
                     'options': {
                         'name': {'required': True, 'type': 'str'},
                         'acl_type': {'choices': ['extended', 'standard'], 'type': 'str'},
-                        'ace': {
+                        'aces': {
                             'elements': 'dict',
                             'type': 'list',
                             'options': {
                                 'grant': {'choices': ['permit', 'deny'], 'type': 'str'},
                                 'source': {
-                                    'options': {
-                                        'address': {'type': 'str'},
-                                        'wildcard_bits': {'type': 'str'},
-                                        'any': {'type': 'bool'},
-                                        'port_protocol': {
-                                            'options': {
-                                                'eq': {'type': 'str'},
-                                                'gt': {'type': 'str'},
-                                                'lt': {'type': 'str'},
-                                                'neq': {'type': 'str'},
-                                                'range': {
-                                                    'elements': 'dict',
-                                                    'options': {
-                                                        'start': {'type': 'int'},
-                                                        'end': {'type': 'int'}
-                                                    }
-                                                }
-                                            },
-                                            'type': 'dict'
-                                        }
-                                    },
-                                    'type': 'dict'
-                                },
-                                'destination': {
                                     'type': 'dict',
+                                    'mutually_exclusive': [['address', 'any'], ['wildcard_bits', 'any']],
                                     'options': {
                                         'address': {'type': 'str'},
                                         'wildcard_bits': {'type': 'str'},
@@ -91,7 +68,32 @@ class AclArgs(object):
                                                 'lt': {'type': 'str'},
                                                 'neq': {'type': 'str'},
                                                 'range': {
-                                                    'elements': 'dict',
+                                                    'type': 'dict',
+                                                    'options': {
+                                                        'start': {'type': 'int'},
+                                                        'end': {'type': 'int'}
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                },
+                                'destination': {
+                                    'type': 'dict',
+                                    'mutually_exclusive': [['address', 'any'], ['wildcard_bits', 'any']],
+                                    'options': {
+                                        'address': {'type': 'str'},
+                                        'wildcard_bits': {'type': 'str'},
+                                        'any': {'type': 'bool'},
+                                        'port_protocol': {
+                                            'type': 'dict',
+                                            'options': {
+                                                'eq': {'type': 'str'},
+                                                'gt': {'type': 'str'},
+                                                'lt': {'type': 'str'},
+                                                'neq': {'type': 'str'},
+                                                'range': {
+                                                    'type': 'dict',
                                                     'options': {
                                                         'start': {'type': 'int'},
                                                         'end': {'type': 'int'}
@@ -211,12 +213,10 @@ class AclArgs(object):
                                         'dps': {'type': 'bool'},
                                         'encode': {'type': 'bool'},
                                         'eool': {'type': 'bool'},
-                                        'echo': {'type': 'bool'},
                                         'ext_ip': {'type': 'bool'},
                                         'ext_security': {'type': 'bool'},
                                         'finn': {'type': 'bool'},
                                         'imitd': {'type': 'bool'},
-                                        'ip_option_value': {'type': 'bool'},
                                         'lsr': {'type': 'bool'},
                                         'mtup': {'type': 'bool'},
                                         'mtur': {'type': 'bool'},
@@ -235,7 +235,7 @@ class AclArgs(object):
                                         'zsu': {'type': 'bool'}
                                     }
                                 },
-                                'precedence': {'type': 'str'},
+                                'precedence': {'type': 'int'},
                                 'time_range': {'type': 'str'},
                                 'tos': {
                                     'type': 'dict',

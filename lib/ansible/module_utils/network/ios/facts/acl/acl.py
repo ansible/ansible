@@ -189,6 +189,60 @@ class AclFacts(object):
         if 'eq' in each_list or 'gt' in each_list or 'lt' in each_list or 'neq' in each_list or 'range' in each_list:
             self.populate_port_protocol(source, destination, each_list)
 
+    def populate_source_destination(self, each, config, source, destination):
+        any = re.findall('any', each)
+        if len(any) == 2:
+            source['any'] = True
+            destination['any'] = True
+        else:
+            if config['afi'] == 'ipv4':
+                ip_n_wildcard_bits = re.findall(r'[0-9]+(?:\.[0-9]+){3}', each)
+                if len(ip_n_wildcard_bits) == 0 and len(any) == 1:
+                    source['any'] = True
+                elif len(ip_n_wildcard_bits) == 1:
+                    source['address'] = ip_n_wildcard_bits[0]
+                elif len(ip_n_wildcard_bits) == 2:
+                    if 'any' in each:
+                        if each.index('any') > each.index(ip_n_wildcard_bits[0]):
+                            source['address'] = ip_n_wildcard_bits[0]
+                            source['wildcard_bits'] = ip_n_wildcard_bits[1]
+                            destination['any'] = True
+                        elif each.index('any') < each.index(ip_n_wildcard_bits[0]):
+                            source['any'] = True
+                            destination['address'] = ip_n_wildcard_bits[0]
+                            destination['wildcard_bits'] = ip_n_wildcard_bits[1]
+                    else:
+                        source['address'] = ip_n_wildcard_bits[0]
+                        source['wildcard_bits'] = ip_n_wildcard_bits[1]
+                elif len(ip_n_wildcard_bits) == 4:
+                    source['address'] = ip_n_wildcard_bits[0]
+                    source['wildcard_bits'] = ip_n_wildcard_bits[1]
+                    destination['address'] = ip_n_wildcard_bits[2]
+                    destination['wildcard_bits'] = ip_n_wildcard_bits[3]
+            elif config['afi'] == 'ipv6':
+                temp_ipv6 = []
+                each = each.split(' ')
+                check_n_return_valid_ipv6_addr(self._module, each, temp_ipv6)
+                count = 0
+                for every in each:
+                    if len(temp_ipv6) == 2:
+                        if temp_ipv6[0] in every or temp_ipv6[1] in every:
+                            temp_ipv6[count] = every
+                            count += 1
+                    elif len(temp_ipv6) == 1:
+                        if temp_ipv6[0] in every:
+                            temp_ipv6[count] = every
+                if 'any' in each:
+                    if each.index('any') > each.index(temp_ipv6[0]):
+                        source['address'] = temp_ipv6[0]
+                        destination['any'] = True
+                    elif each.index('any') < each.index(temp_ipv6[0]):
+                        source['any'] = True
+                        destination['address'] = temp_ipv6[0]
+                elif len(temp_ipv6) == 2:
+                    source['address'] = temp_ipv6[0]
+                    destination['address'] = temp_ipv6[1]
+
     def render_config(self, spec, key, value):
         """
         Render config as dictionary structure and delete keys
@@ -207,7 +261,7 @@ class AclFacts(object):
                 config['afi'] = 'ipv4'
         config['acls'] = []
         acls = {}
-        ace = []
+        aces = []
         for each in value:
             each_list = each.split(' ')
             if 'extended' in key:
@@ -230,8 +284,7 @@ class AclFacts(object):
             elif utils.parse_conf_arg(each, 'deny'):
                 ace_options['grant'] = 'deny'
                 each_list.remove('deny')
-            source = {}
-            destination = {}
+
             protocol_option = ['ahp', 'eigrp', 'esp', 'gre', 'icmp', 'igmp', 'ip', 'ipinip', 'nos', 'ospf', 'pcp',
                                'pim', 'sctp', 'tcp', 'udp']
             tcp_flags = ['ack', 'established', 'fin', 'psh', 'rst', 'syn', 'urg']
@@ -319,58 +372,9 @@ class AclFacts(object):
                 each_list = [item for item in each_list[:each_list.index('ttl')]]
                 ace_options['ttl'] = ttl
 
-            any = re.findall('any', each)
-            if len(any) == 2:
-                source['any'] = True
-                destination['any'] = True
-            else:
-                if config['afi'] == 'ipv4':
-                    ip_n_wildcard_bits = re.findall(r'[0-9]+(?:\.[0-9]+){3}', each)
-                    if len(ip_n_wildcard_bits) == 0 and len(any) == 1:
-                        source['any'] = True
-                    elif len(ip_n_wildcard_bits) == 1:
-                        source['address'] = ip_n_wildcard_bits[0]
-                    elif len(ip_n_wildcard_bits) == 2:
-                        if 'any' in each:
-                            if each.index('any') > each.index(ip_n_wildcard_bits[0]):
-                                source['address'] = ip_n_wildcard_bits[0]
-                                source['wildcard_bits'] = ip_n_wildcard_bits[1]
-                                destination['any'] = True
-                            elif each.index('any') < each.index(ip_n_wildcard_bits[0]):
-                                source['any'] = True
-                                destination['address'] = ip_n_wildcard_bits[0]
-                                destination['wildcard_bits'] = ip_n_wildcard_bits[1]
-                        else:
-                            source['address'] = ip_n_wildcard_bits[0]
-                            source['wildcard_bits'] = ip_n_wildcard_bits[1]
-                    elif len(ip_n_wildcard_bits) == 4:
-                        source['address'] = ip_n_wildcard_bits[0]
-                        source['wildcard_bits'] = ip_n_wildcard_bits[1]
-                        destination['address'] = ip_n_wildcard_bits[2]
-                        destination['wildcard_bits'] = ip_n_wildcard_bits[3]
-                elif config['afi'] == 'ipv6':
-                    temp_ipv6 = []
-                    each = each.split(' ')
-                    check_n_return_valid_ipv6_addr(self._module, each, temp_ipv6)
-                    count = 0
-                    for every in each:
-                        if len(temp_ipv6) == 2:
-                            if temp_ipv6[0] in every or temp_ipv6[1] in every:
-                                temp_ipv6[count] = every
-                                count += 1
-                        elif len(temp_ipv6) == 1:
-                            if temp_ipv6[0] in every:
-                                temp_ipv6[count] = every
-                    if 'any' in each:
-                        if each.index('any') > each.index(temp_ipv6[0]):
-                            source['address'] = temp_ipv6[0]
-                            destination['any'] = True
-                        elif each.index('any') < each.index(temp_ipv6[0]):
-                            source['any'] = True
-                            destination['address'] = temp_ipv6[0]
-                    elif len(temp_ipv6) == 2:
-                        source['address'] = temp_ipv6[0]
-                        destination['address'] = temp_ipv6[1]
+            source = {}
+            destination = {}
+            self.populate_source_destination(each, config, source, destination)
 
             if source.get('address') and source.get('address') == destination.get('address'):
                 self._module.fail_json(msg='Source and Destination address cannot be same!')
@@ -408,8 +412,8 @@ class AclFacts(object):
                     protocol_options[temp_option] = True
                 ace_options['protocol_options'] = protocol_options
 
-            ace.append(ace_options)
-            acls['ace'] = ace
+            aces.append(ace_options)
+            acls['aces'] = aces
         config['acls'].append(acls)
 
         return utils.remove_empties(config)
