@@ -256,7 +256,7 @@ def _find_matching_rule(module, secgroup, remotegroup):
     # Because 'any' protocol does not match ports, we need to make sure we
     # correct the parameters the sdk return when matching.
     # And also re-set the protocol type (which is translated to None earlier)
-    if protocol == None:
+    if protocol is None:
         protocol = 'any'
         port_range_min = 0
         port_range_max = 65535
