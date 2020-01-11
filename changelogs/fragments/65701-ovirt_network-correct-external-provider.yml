@@ -1,0 +1,2 @@
+bugfixes:
+- "ovirt_network: correct external_provider logic - first try to import when not found try to create it"
