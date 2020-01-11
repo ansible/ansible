@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_hostmacro
 short_description: Create/update/delete Zabbix host macros
@@ -31,14 +31,17 @@ options:
         description:
             - Name of the host.
         required: true
+        type: str
     macro_name:
         description:
             - Name of the host macro without the enclosing curly braces and the leading dollar sign.
         required: true
+        type: str
     macro_value:
         description:
             - Value of the host macro.
-        required: true
+            - Required if I(state=present).
+        type: str
     state:
         description:
             - State of the macro.
@@ -46,6 +49,7 @@ options:
             - On C(absent) will remove a macro if it exists.
         required: false
         choices: ['present', 'absent']
+        type: str
         default: "present"
     force:
         description:
@@ -58,8 +62,8 @@ extends_documentation_fragment:
     - zabbix
 '''
 
-EXAMPLES = '''
-- name: Create a new host macro or update an existing macro's value
+EXAMPLES = r'''
+- name: Create new host macro or update an existing macro's value
   local_action:
     module: zabbix_hostmacro
     server_url: http://monitor.example.com
@@ -159,8 +163,8 @@ def main():
             validate_certs=dict(type='bool', required=False, default=True),
             host_name=dict(type='str', required=True),
             macro_name=dict(type='str', required=True),
-            macro_value=dict(type='str', required=True),
-            state=dict(default="present", choices=['present', 'absent']),
+            macro_value=dict(type='str', required=False),
+            state=dict(type='str', default='present', choices=['present', 'absent']),
             timeout=dict(type='int', default=10),
             force=dict(type='bool', default=True)
         ),

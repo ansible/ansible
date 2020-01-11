@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-RETURN = '''
+RETURN = r'''
 ---
 hosts:
   description: List of Zabbix hosts. See https://www.zabbix.com/documentation/3.4/manual/api/reference/host/get for list of host values.
@@ -22,7 +22,7 @@ hosts:
   sample: [ { "available": "1", "description": "", "disable_until": "0", "error": "", "flags": "0", "groups": ["1"], "host": "Host A", ... } ]
 '''
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_host_info
 short_description: Gather information about Zabbix host
@@ -40,11 +40,16 @@ options:
         description:
             - Name of the host in Zabbix.
             - host_name is the unique identifier used and cannot be updated using this module.
-        required: true
+            - Required when I(host_ip) is not used.
+        required: false
+        type: str
     host_ip:
         description:
             - Host interface IP of the host in Zabbix.
+            - Required when I(host_name) is not used.
         required: false
+        type: list
+        elements: str
     exact_match:
         description:
             - Find the exact match
@@ -60,13 +65,14 @@ options:
             - List of host inventory keys to display in result.
             - Whole host inventory is retrieved if keys are not specified.
         type: list
+        elements: str
         required: false
         version_added: 2.8
 extends_documentation_fragment:
     - zabbix
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Get host info
   local_action:
     module: zabbix_host_info

@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_proxy
 short_description: Create/delete/get/update Zabbix proxies
@@ -42,45 +42,54 @@ options:
         description:
             - Name of the proxy in Zabbix.
         required: true
+        type: str
     description:
         description:
             - Description of the proxy.
         required: false
+        type: str
     status:
         description:
             - Type of proxy. (4 - active, 5 - passive)
         required: false
         choices: ['active', 'passive']
         default: "active"
+        type: str
     tls_connect:
         description:
             - Connections to proxy.
         required: false
         choices: ['no_encryption','PSK','certificate']
         default: 'no_encryption'
+        type: str
     tls_accept:
         description:
             - Connections from proxy.
         required: false
         choices: ['no_encryption','PSK','certificate']
         default: 'no_encryption'
+        type: str
     ca_cert:
         description:
             - Certificate issuer.
         required: false
         aliases: [ tls_issuer ]
+        type: str
     tls_subject:
         description:
             - Certificate subject.
         required: false
+        type: str
     tls_psk_identity:
         description:
             - PSK identity. Required if either I(tls_connect) or I(tls_accept) has PSK enabled.
         required: false
+        type: str
     tls_psk:
         description:
             - The preshared key, at least 32 hex digits. Required if either I(tls_connect) or I(tls_accept) has PSK enabled.
         required: false
+        type: str
     state:
         description:
             - State of the proxy.
@@ -89,6 +98,7 @@ options:
         required: false
         choices: ['present', 'absent']
         default: "present"
+        type: str
     interface:
         description:
             - Dictionary with params for the interface when proxy is in passive mode
@@ -97,12 +107,13 @@ options:
             - U(https://www.zabbix.com/documentation/3.2/manual/api/reference/proxy/object#proxy_interface)
         required: false
         default: {}
+        type: dict
 
 extends_documentation_fragment:
     - zabbix
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a new proxy or update an existing proxy
   local_action:
     module: zabbix_proxy
@@ -122,7 +133,7 @@ EXAMPLES = '''
         port: 10050
 '''
 
-RETURN = ''' # '''
+RETURN = r''' # '''
 
 
 import traceback
@@ -246,12 +257,12 @@ def main():
             http_login_password=dict(type='str', required=False,
                                      default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            status=dict(default="active", choices=['active', 'passive']),
-            state=dict(default="present", choices=['present', 'absent']),
+            status=dict(type='str', default="active", choices=['active', 'passive']),
+            state=dict(type='str', default="present", choices=['present', 'absent']),
             description=dict(type='str', required=False),
-            tls_connect=dict(default='no_encryption',
+            tls_connect=dict(type='str', default='no_encryption',
                              choices=['no_encryption', 'PSK', 'certificate']),
-            tls_accept=dict(default='no_encryption',
+            tls_accept=dict(type='str', default='no_encryption',
                             choices=['no_encryption', 'PSK', 'certificate']),
             ca_cert=dict(type='str', required=False, default=None, aliases=['tls_issuer']),
             tls_subject=dict(type='str', required=False, default=None),
