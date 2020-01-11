@@ -48,6 +48,7 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
         cookies=cookies,
         unix_socket='/foo/bar/baz.sock',
         ca_path='/foo/bar/baz.pem',
+        encode_url=False,
     )
     fallback_mock = mocker.spy(request, '_fallback')
 
@@ -68,10 +69,11 @@ def test_Request_fallback(urlopen_mock, install_opener_mock, mocker):
         call(None, cookies),  # cookies
         call(None, '/foo/bar/baz.sock'),  # unix_socket
         call(None, '/foo/bar/baz.pem'),  # ca_path
+        call(None, False),  # encode_url
     ]
     fallback_mock.assert_has_calls(calls)
 
-    assert fallback_mock.call_count == 14  # All but headers use fallback
+    assert fallback_mock.call_count == 15  # All but headers use fallback
 
     args = urlopen_mock.call_args[0]
     assert args[1] is None  # data, this is handled in the Request not urlopen
@@ -453,4 +455,4 @@ def test_open_url(urlopen_mock, install_opener_mock, mocker):
                                      url_username=None, url_password=None, http_agent=None,
                                      force_basic_auth=False, follow_redirects='urllib2',
                                      client_cert=None, client_key=None, cookies=None, use_gssapi=False,
-                                     unix_socket=None, ca_path=None, unredirected_headers=None)
+                                     unix_socket=None, ca_path=None, unredirected_headers=None, encode_url=False)
