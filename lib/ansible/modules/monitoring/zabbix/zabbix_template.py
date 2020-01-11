@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_template
 short_description: Create/update/delete/dump Zabbix template
@@ -35,6 +35,7 @@ options:
             - Required when I(template_json) or I(template_xml) are not used.
             - Mutually exclusive with I(template_json) and I(template_xml).
         required: false
+        type: str
     template_json:
         description:
             - JSON dump of templates to import.
@@ -52,6 +53,7 @@ options:
             - Mutually exclusive with I(template_name) and I(template_json).
         required: false
         version_added: '2.9'
+        type: str
     template_groups:
         description:
             - List of host groups to add template to when template is created.
@@ -60,6 +62,7 @@ options:
               Not required when updating an existing template.
         required: false
         type: list
+        elements: str
     link_templates:
         description:
             - List of template names to be linked to the template.
@@ -67,12 +70,14 @@ options:
               cleared from the template.
         required: false
         type: list
+        elements: str
     clear_templates:
         description:
             - List of template names to be unlinked and cleared from the template.
             - This option is ignored if template is being created for the first time.
         required: false
         type: list
+        elements: str
     macros:
         description:
             - List of user macros to create for the template.
@@ -80,14 +85,17 @@ options:
             - See examples on how to pass macros.
         required: false
         type: list
+        elements: dict
         suboptions:
             name:
                 description:
                     - Name of the macro.
                     - Must be specified in {$NAME} format.
+                type: str
             value:
                 description:
                     - Value of the macro.
+                type: str
     dump_format:
         description:
             - Format to use when dumping template with C(state=dump).
@@ -96,6 +104,7 @@ options:
         choices: [json, xml]
         default: "json"
         version_added: '2.9'
+        type: str
     state:
         description:
             - Required state of the template.
@@ -106,12 +115,13 @@ options:
         required: false
         choices: [present, absent, dump]
         default: "present"
+        type: str
 
 extends_documentation_fragment:
     - zabbix
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 ---
 - name: Create a new Zabbix template linked to groups, macros and templates
   local_action:
@@ -226,7 +236,7 @@ EXAMPLES = '''
   register: template_dump
 '''
 
-RETURN = '''
+RETURN = r'''
 ---
 template_json:
   description: The JSON dump of the template
@@ -611,7 +621,7 @@ def main():
             clear_templates=dict(type='list', required=False),
             macros=dict(type='list', required=False),
             dump_format=dict(type='str', required=False, default='json', choices=['json', 'xml']),
-            state=dict(default="present", choices=['present', 'absent', 'dump']),
+            state=dict(type='str', default="present", choices=['present', 'absent', 'dump']),
             timeout=dict(type='int', default=10)
         ),
         required_one_of=[

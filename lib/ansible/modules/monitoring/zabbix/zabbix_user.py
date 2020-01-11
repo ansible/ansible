@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 module: zabbix_user
 short_description: Create/update/delete Zabbix users
 author:
@@ -43,7 +43,9 @@ options:
     usrgrps:
         description:
             - User groups to add the user to.
+        required: true
         type: list
+        elements: str
     passwd:
         description:
             - User's password.
@@ -183,6 +185,7 @@ options:
                 default: true
                 type: bool
         type: list
+        elements: dict
     type:
         description:
             - Type of the user.
@@ -204,7 +207,7 @@ extends_documentation_fragment:
   - zabbix
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: create of zabbix user.
   zabbix_user:
     server_url: "http://zabbix.example.com/zabbix/"
@@ -253,7 +256,7 @@ EXAMPLES = '''
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 user_ids:
     description: User id created or changed
     returned: success
