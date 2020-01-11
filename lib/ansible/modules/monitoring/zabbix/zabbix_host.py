@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_host
 short_description: Create/update/delete Zabbix hosts
@@ -35,36 +35,46 @@ options:
             - Name of the host in Zabbix.
             - I(host_name) is the unique identifier used and cannot be updated using this module.
         required: true
+        type: str
     visible_name:
         description:
             - Visible name of the host in Zabbix.
         version_added: '2.3'
+        type: str
     description:
         description:
             - Description of the host in Zabbix.
         version_added: '2.5'
+        type: str
     host_groups:
         description:
             - List of host groups the host is part of.
+        type: list
+        elements: str
     link_templates:
         description:
             - List of templates linked to the host.
+        type: list
+        elements: str
     inventory_mode:
         description:
             - Configure the inventory mode.
         choices: ['automatic', 'manual', 'disabled']
         version_added: '2.1'
+        type: str
     inventory_zabbix:
         description:
             - Add Facts for a zabbix inventory (e.g. Tag) (see example below).
             - Please review the interface documentation for more information on the supported properties
             - U(https://www.zabbix.com/documentation/3.2/manual/api/reference/host/object#host_inventory)
         version_added: '2.5'
+        type: dict
     status:
         description:
             - Monitoring status of the host.
         choices: ['enabled', 'disabled']
         default: 'enabled'
+        type: str
     state:
         description:
             - State of the host.
@@ -72,11 +82,14 @@ options:
             - On C(absent) will remove a host if it exists.
         choices: ['present', 'absent']
         default: 'present'
+        type: str
     proxy:
         description:
             - The name of the Zabbix proxy to be used.
+        type: str
     interfaces:
         type: list
+        elements: dict
         description:
             - List of interfaces to be created for the host (see example below).
             - For more information, review host interface documentation at
@@ -143,6 +156,7 @@ options:
             - Works only with >= Zabbix 3.0
         default: 1
         version_added: '2.5'
+        type: int
     tls_accept:
         description:
             - Specifies what types of connections are allowed for incoming connections.
@@ -152,29 +166,34 @@ options:
             - Works only with >= Zabbix 3.0
         default: 1
         version_added: '2.5'
+        type: int
     tls_psk_identity:
         description:
             - It is a unique name by which this specific PSK is referred to by Zabbix components
             - Do not put sensitive information in the PSK identity string, it is transmitted over the network unencrypted.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
+        type: str
     tls_psk:
         description:
             - PSK value is a hard to guess string of hexadecimal digits.
             - The preshared key, at least 32 hex digits. Required if either I(tls_connect) or I(tls_accept) has PSK enabled.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
+        type: str
     ca_cert:
         description:
             - Required certificate issuer.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
         aliases: [ tls_issuer ]
+        type: str
     tls_subject:
         description:
             - Required certificate subject.
             - Works only with >= Zabbix 3.0
         version_added: '2.5'
+        type: str
     ipmi_authtype:
         description:
             - IPMI authentication algorithm.
@@ -186,6 +205,7 @@ options:
               any of the I(ipmi_)-options; this means that if you attempt to set any of the four
               options individually, the rest will be reset to default values.
         version_added: '2.5'
+        type: int
     ipmi_privilege:
         description:
             - IPMI privilege level.
@@ -195,16 +215,19 @@ options:
               being the API default.
             - also see the last note in the I(ipmi_authtype) documentation
         version_added: '2.5'
+        type: int
     ipmi_username:
         description:
             - IPMI username.
             - also see the last note in the I(ipmi_authtype) documentation
         version_added: '2.5'
+        type: str
     ipmi_password:
         description:
             - IPMI password.
             - also see the last note in the I(ipmi_authtype) documentation
         version_added: '2.5'
+        type: str
     force:
         description:
             - Overwrite the host configuration, even if already present.
@@ -215,7 +238,7 @@ extends_documentation_fragment:
     - zabbix
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a new host or update an existing host's info
   local_action:
     module: zabbix_host
@@ -676,9 +699,9 @@ def main():
             validate_certs=dict(type='bool', required=False, default=True),
             host_groups=dict(type='list', required=False),
             link_templates=dict(type='list', required=False),
-            status=dict(default="enabled", choices=['enabled', 'disabled']),
-            state=dict(default="present", choices=['present', 'absent']),
-            inventory_mode=dict(required=False, choices=['automatic', 'manual', 'disabled']),
+            status=dict(type='str', default="enabled", choices=['enabled', 'disabled']),
+            state=dict(type='str', default="present", choices=['present', 'absent']),
+            inventory_mode=dict(type='str', required=False, choices=['automatic', 'manual', 'disabled']),
             ipmi_authtype=dict(type='int', default=None),
             ipmi_privilege=dict(type='int', default=None),
             ipmi_username=dict(type='str', required=False, default=None),
@@ -689,7 +712,7 @@ def main():
             tls_psk=dict(type='str', required=False),
             ca_cert=dict(type='str', required=False, aliases=['tls_issuer']),
             tls_subject=dict(type='str', required=False),
-            inventory_zabbix=dict(required=False, type='dict'),
+            inventory_zabbix=dict(type='dict', required=False),
             timeout=dict(type='int', default=10),
             interfaces=dict(type='list', required=False),
             force=dict(type='bool', default=True),
