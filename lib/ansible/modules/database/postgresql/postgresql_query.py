@@ -69,6 +69,12 @@ options:
     type: bool
     default: no
     version_added: '2.9'
+  encoding:
+    description:
+    - Set the client encoding for the current session (e.g. C(UTF-8)).
+    - The default is the encoding defined by the database.
+    type: str
+    version_added: '2.10'
 seealso:
 - module: postgresql_db
 author:
@@ -107,12 +113,13 @@ EXAMPLES = r'''
     db: test_db
     query: INSERT INTO test_table (id, story) VALUES (2, 'my_long_story')
 
-- name: Run queries from SQL script
+- name: Run queries from SQL script using UTF-8 client encoding for session
   postgresql_query:
     db: test_db
     path_to_script: /var/lib/pgsql/test.sql
     positional_args:
     - 1
+    encoding: UTF-8
 
 - name: Example of using autocommit parameter
   postgresql_query:
@@ -240,6 +247,7 @@ def main():
         session_role=dict(type='str'),
         path_to_script=dict(type='path'),
         autocommit=dict(type='bool', default=False),
+        encoding=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -253,6 +261,7 @@ def main():
     named_args = module.params["named_args"]
     path_to_script = module.params["path_to_script"]
     autocommit = module.params["autocommit"]
+    encoding = module.params["encoding"]
 
     if autocommit and module.check_mode:
         module.fail_json(msg="Using autocommit is mutually exclusive with check_mode")
@@ -268,13 +277,15 @@ def main():
 
     if path_to_script:
         try:
-            with open(path_to_script, 'r') as f:
-                query = f.read()
+            with open(path_to_script, 'rb') as f:
+                query = to_native(f.read())
         except Exception as e:
             module.fail_json(msg="Cannot read file '%s' : %s" % (path_to_script, to_native(e)))
 
     conn_params = get_conn_params(module, module.params)
     db_connection = connect_to_db(module, conn_params, autocommit=autocommit)
+    if encoding is not None:
+        db_connection.set_client_encoding(encoding)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Prepare args:
