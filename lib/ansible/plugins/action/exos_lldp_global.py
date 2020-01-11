@@ -27,7 +27,7 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        if self._play_context.connection != 'httpapi':
+        if self._play_context.connection.split('.')[-1] != 'httpapi':
             return {'failed': True, 'msg': "Connection type %s is not valid for this module" % self._play_context.connection}
 
         return super(ActionModule, self).run(task_vars=task_vars)
