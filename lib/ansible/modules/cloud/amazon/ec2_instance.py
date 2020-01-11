@@ -1294,7 +1294,7 @@ def find_instances(ec2, ids=None, filters=None):
     elif filters is None:
         module.fail_json(msg="No filters provided when they were required")
     elif filters is not None:
-        for key in filters.keys():
+        for key in list(filters.keys()):
             if not key.startswith("tag:"):
                 filters[key.replace("_", "-")] = filters.pop(key)
         return list(paginator.paginate(
