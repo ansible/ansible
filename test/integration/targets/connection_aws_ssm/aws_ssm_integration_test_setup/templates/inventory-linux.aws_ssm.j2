@@ -1,0 +1,12 @@
+[aws_ssm]
+{{linux_output.instance_ids[0]}} ansible_aws_ssm_instance_id={{linux_output.instance_ids[0]}} ansible_aws_ssm_region={{aws_region}}
+
+[aws_ssm:vars]
+ansible_connection=aws_ssm
+ansible_aws_ssm_bucket_name={{s3_output.name}}
+ansible_aws_ssm_plugin=/usr/local/sessionmanagerplugin/bin/session-manager-plugin
+ansible_python_interpreter=/usr/bin/env python
+
+# support tests that target testhost
+[testhost:children]
+aws_ssm

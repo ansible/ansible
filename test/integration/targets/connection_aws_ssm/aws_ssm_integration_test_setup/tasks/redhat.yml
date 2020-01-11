@@ -1,0 +1,13 @@
+---
+- name: Download SSM plugin
+  get_url:
+    url: https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
+    dest: /tmp/session-manager-plugin.rpm
+    mode: 0440
+  tags: setup_infra
+
+- name: Install SSM Plugin
+  yum:
+    name: /tmp/session-manager-plugin.rpm
+    state: present
+  tags: setup_infra
