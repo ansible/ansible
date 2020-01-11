@@ -237,6 +237,15 @@ EXAMPLES = '''
                   ContentType: "text/plain"
                   MessageBody: "This is the page you're looking for"
                   StatusCode: "200"
+          - Conditions:
+              - Field: host-header
+                Values:
+                  - "hostname.domain.com"
+                  - "alternate.domain.com"
+            Priority: '4'
+            Actions:
+              - TargetGroupName: test-target-group
+                Type: forward
     state: present
 
 # Remove an ELB
