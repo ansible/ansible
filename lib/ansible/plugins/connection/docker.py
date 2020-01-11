@@ -831,8 +831,8 @@ class DockerPyDriver:
         # TODO: stream tar file, instead of creating it in-memory into a BytesIO
 
         bio = io.BytesIO()
-        with tarfile.open(fileobj=bio, mode='w|') as tar:
-            tarinfo = tar.gettarinfo(in_path if PY3 else b_in_path)
+        with tarfile.open(fileobj=bio, mode='w|', dereference=True) as tar:
+            tarinfo = tar.gettarinfo(to_text(in_path) if PY3 else b_in_path)
             tarinfo.name = out_file
             user_id, group_id = self.ids[self.actual_user]
             tarinfo.uid = user_id
