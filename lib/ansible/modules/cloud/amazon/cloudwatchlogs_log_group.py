@@ -58,7 +58,7 @@ options:
       default: false
       required: false
       type: bool
-      version_added: "2.9"
+      version_added: "2.10"
     overwrite:
       description:
         - Whether an existing log group should be overwritten on create.
