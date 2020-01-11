@@ -82,14 +82,6 @@ options:
       - name: ANSIBLE_PRIVATE_KEY_FILE
     vars:
       - name: ansible_private_key_file
-  timeout:
-    type: int
-    description:
-      - Sets the connection time, in seconds, for communicating with the
-        remote device.  This timeout is used as the default timeout value when
-        awaiting a response after issuing a call to a RPC.  If the RPC
-        does not return in timeout seconds, an error is generated.
-    default: 120
   look_for_keys:
     default: True
     description:
