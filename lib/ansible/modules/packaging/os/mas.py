@@ -1,41 +1,44 @@
 #!/usr/bin/python
-
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Michael Heap
-
-# Written by Michael Heap <m@michaelheap.com>
+# Copyright: (c) 2020, Lukas Bestle <project-ansible@lukasbestle.com>
+# Copyright: (c) 2017, Michael Heap <m@michaelheap.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'status': ['preview'],
-                    'supported_by': 'community',
-                    'metadata_version': '1.1'}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 module: mas
-author:
-    - "Michael Heap (@mheap)"
-version_added: "2.8"
-short_description: Manage applications via the Mac App Store
+short_description: Manage Mac App Store applications with mas-cli
 description:
-    - Manage applications via the Mac App Store.
-    - The `mas` tool only supports installing applications. Removing applications is not supported.
+    - Installs macOS applications from the Mac App Store using the `mas-cli`.
+version_added: "2.10"
+author:
+    - Michael Heap (@mheap)
+    - Lukas Bestle (@lukasbestle)
 options:
     id:
         description:
-        - The ID of the package you want to install.
-        - This can be found by running C(mas search APP_NAME) on your machine
+            - The Mac App Store identifier of the package you want to install.
+            - This can be found by running C(mas search APP_NAME) on your machine.
         required: true
     state:
         description:
-          - C(present) will make sure the package is installed.
+            - C(present) will make sure the package is installed.
         required: false
-        choices: [ present ]
-        default: "present"
+        choices:
+            - present
+        default: present
+requirements:
+    - macOS 10.11+
+    - "`mas-cli` (U(https://github.com/mas-cli/mas)) 1.5.0+ available as C(mas) in the bin path"
+    - The Apple ID to use already needs to be signed in to the Mac App Store (check with C(mas account)).
 '''
 
 EXAMPLES = '''
@@ -52,8 +55,8 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-  description: the ID of the package installed
-  returned: success
+  description: The ID of the package installed.
+  returned: on success
   type: str
   sample: 409183694
 '''
