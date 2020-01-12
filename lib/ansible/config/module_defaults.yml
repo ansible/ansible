@@ -555,6 +555,10 @@ groupings:
   - aws
   sts_session_token:
   - aws
+  gcp_appengine_firewall_rule:
+  - gcp
+  gcp_appengine_firewall_rule_info:
+  - gcp
   gcp_bigquery_dataset:
   - gcp
   gcp_bigquery_dataset_info:
@@ -567,13 +571,25 @@ groupings:
   - gcp
   gcp_cloudbuild_trigger_info:
   - gcp
+  gcp_cloudfunctions_cloud_function:
+  - gcp
+  gcp_cloudfunctions_cloud_function_info:
+  - gcp
   gcp_cloudscheduler_job:
   - gcp
   gcp_cloudscheduler_job_info:
   - gcp
+  gcp_cloudtasks_queue:
+  - gcp
+  gcp_cloudtasks_queue_info:
+  - gcp
   gcp_compute_address:
   - gcp
   gcp_compute_address_info:
+  - gcp
+  gcp_compute_autoscaler:
+  - gcp
+  gcp_compute_autoscaler_info:
   - gcp
   gcp_compute_backend_bucket:
   - gcp
@@ -643,9 +659,29 @@ groupings:
   - gcp
   gcp_compute_network_info:
   - gcp
+  gcp_compute_network_endpoint_group:
+  - gcp
+  gcp_compute_network_endpoint_group_info:
+  - gcp
+  gcp_compute_node_group:
+  - gcp
+  gcp_compute_node_group_info:
+  - gcp
+  gcp_compute_node_template:
+  - gcp
+  gcp_compute_node_template_info:
+  - gcp
+  gcp_compute_region_backend_service:
+  - gcp
+  gcp_compute_region_backend_service_info:
+  - gcp
   gcp_compute_region_disk:
   - gcp
   gcp_compute_region_disk_info:
+  - gcp
+  gcp_compute_reservation:
+  - gcp
+  gcp_compute_reservation_info:
   - gcp
   gcp_compute_route:
   - gcp
@@ -654,6 +690,10 @@ groupings:
   gcp_compute_router:
   - gcp
   gcp_compute_router_info:
+  - gcp
+  gcp_compute_snapshot:
+  - gcp
+  gcp_compute_snapshot_info:
   - gcp
   gcp_compute_ssl_certificate:
   - gcp
@@ -674,6 +714,10 @@ groupings:
   gcp_compute_target_https_proxy:
   - gcp
   gcp_compute_target_https_proxy_info:
+  - gcp
+  gcp_compute_target_instance:
+  - gcp
+  gcp_compute_target_instance_info:
   - gcp
   gcp_compute_target_pool:
   - gcp
@@ -715,6 +759,10 @@ groupings:
   - gcp
   gcp_dns_resource_record_set_info:
   - gcp
+  gcp_filestore_instance:
+  - gcp
+  gcp_filestore_instance_info:
+  - gcp
   gcp_iam_role:
   - gcp
   gcp_iam_role_info:
@@ -724,6 +772,26 @@ groupings:
   gcp_iam_service_account_info:
   - gcp
   gcp_iam_service_account_key:
+  - gcp
+  gcp_kms_crypto_key:
+  - gcp
+  gcp_kms_crypto_key_info:
+  - gcp
+  gcp_kms_key_ring:
+  - gcp
+  gcp_kms_key_ring_info:
+  - gcp
+  gcp_logging_metric:
+  - gcp
+  gcp_logging_metric_info:
+  - gcp
+  gcp_mlengine_model:
+  - gcp
+  gcp_mlengine_model_info:
+  - gcp
+  gcp_mlengine_version:
+  - gcp
+  gcp_mlengine_version_info:
   - gcp
   gcp_pubsub_subscription:
   - gcp
@@ -740,6 +808,18 @@ groupings:
   gcp_resourcemanager_project:
   - gcp
   gcp_resourcemanager_project_info:
+  - gcp
+  gcp_runtimeconfig_config:
+  - gcp
+  gcp_runtimeconfig_config_info:
+  - gcp
+  gcp_runtimeconfig_variable:
+  - gcp
+  gcp_runtimeconfig_variable_info:
+  - gcp
+  gcp_serviceusage_service:
+  - gcp
+  gcp_serviceusage_service_info:
   - gcp
   gcp_sourcerepo_repository:
   - gcp
@@ -770,6 +850,10 @@ groupings:
   gcp_storage_bucket_access_control:
   - gcp
   gcp_storage_object:
+  - gcp
+  gcp_tpu_node:
+  - gcp
+  gcp_tpu_node_info:
   - gcp
   azure_rm_acs:
   - azure
