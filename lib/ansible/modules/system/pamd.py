@@ -463,6 +463,8 @@ class PamdService(object):
 
     def append(self, pamd_line):
         if self._head is None:
+            pamd_line.prev = None
+            pamd_line.next = None
             self._head = self._tail = pamd_line
         else:
             pamd_line.prev = self._tail
