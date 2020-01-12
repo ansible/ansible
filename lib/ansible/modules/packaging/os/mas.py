@@ -27,7 +27,6 @@ options:
         description:
             - The Mac App Store identifier of the app(s) you want to manage.
             - This can be found by running C(mas search APP_NAME) on your machine.
-        required: true
         type: list
         elements: int
     state:
@@ -40,6 +39,12 @@ options:
             - latest
             - present
         default: present
+    upgrade_all:
+        description:
+            - Upgrade all installed Mac App Store apps.
+        type: bool
+        default: "no"
+        aliases: ["upgrade"]
 requirements:
     - macOS 10.11+
     - "`mas-cli` (U(https://github.com/mas-cli/mas)) 1.5.0+ available as C(mas) in the bin path"
@@ -65,6 +70,18 @@ EXAMPLES = '''
   mas:
     id: 409183694
     state: latest
+
+- name: Upgrade all installed Mac App Store apps
+  mas:
+    upgrade_all: yes
+
+- name: Install specific apps and also upgrade all others
+  mas:
+    id:
+      - 409183694 # Keynote
+      - 413857545 # Divvy
+    state: present
+    upgrade_all: yes
 
 - name: Uninstall Divvy
   mas:
@@ -206,20 +223,39 @@ class Mas(object):
         cmd.insert(0, self.mas_path)
         return self.module.run_command(cmd, False)
 
+    def upgrade_all(self):
+        ''' Upgrades all installed apps and sets the correct result data '''
+
+        outdated = self.outdated()
+
+        if not self.module.check_mode:
+            self.check_signin()
+
+            rc, out, err = self.run(['upgrade'])
+            if rc != 0:
+                self.module.fail_json(msg='Could not upgrade all apps: ' + out.rstrip())
+
+        self.count_upgrade += outdated
+
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            id=dict(type='list', elements='int', required=True),
-        )
+            id=dict(type='list', elements='int'),
             state=dict(type='str', default='present', choices=['absent', 'latest', 'present']),
+            upgrade_all=dict(type='bool', default=False, aliases=['upgrade']),
+        ),
         supports_check_mode=True
     )
     mas = Mas(module)
 
-    apps  = module.params['id']
-    state = module.params['state']
+    if module.params['id']:
+        apps = module.params['id']
+    else:
+        apps = []
 
+    state   = module.params['state']
+    upgrade = module.params['upgrade_all']
 
     # Run operations on the given app IDs
     for app in apps:
@@ -240,6 +276,11 @@ def main():
                 mas.app_command('install', app)
             elif mas.is_outdated(app):
                 mas.app_command('upgrade', app)
+
+    # Upgrade all apps if requested
+    mas._outdated = None # Clear cache
+    if upgrade and mas.outdated():
+        mas.upgrade_all()
 
     # Exit with the collected data
     mas.exit()
