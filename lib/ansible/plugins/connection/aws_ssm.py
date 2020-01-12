@@ -146,7 +146,6 @@ EXAMPLES = r'''
 '''
 
 import os
-import boto3
 import getpass
 import json
 import os
@@ -158,9 +157,17 @@ import string
 import subprocess
 import time
 
+try:
+    import boto3
+    HAS_BOTO_3 = True
+except ImportError as e:
+    HAS_BOTO_3_ERROR = str(e)
+    HAS_BOTO_3 = False
+
 from functools import wraps
 from ansible import constants as C
 from ansible.errors import AnsibleConnectionFailure, AnsibleError, AnsibleFileNotFound
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import xrange
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -240,6 +247,8 @@ class Connection(ConnectionBase):
     MARK_LENGTH = 26
 
     def __init__(self, *args, **kwargs):
+        if not HAS_BOTO_3:
+            raise AnsibleError('{0}: {1}'.format(missing_required_lib("ncclient"), HAS_BOTO_3_ERROR))
 
         super(Connection, self).__init__(*args, **kwargs)
         self.host = self._play_context.remote_addr

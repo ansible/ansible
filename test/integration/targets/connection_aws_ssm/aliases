@@ -4,4 +4,3 @@ shippable/aws/group1
 non_local
 needs/root
 needs/target/connection
-disabled
