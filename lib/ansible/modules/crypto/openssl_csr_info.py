@@ -35,9 +35,14 @@ options:
     path:
         description:
             - Remote absolute path where the CSR file is loaded from.
+            - Either I(path) or I(content) must be specified, but not both.
         type: path
-        required: true
-
+    content:
+        description:
+            - Content of the CSR file.
+            - Either I(path) or I(content) must be specified, but not both.
+        type: str
+        version_added: "2.10"
     select_crypto_backend:
         description:
             - Determines which crypto backend to use.
@@ -257,13 +262,16 @@ TIMESTAMP_FORMAT = "%Y%m%d%H%M%SZ"
 class CertificateSigningRequestInfo(crypto_utils.OpenSSLObject):
     def __init__(self, module, backend):
         super(CertificateSigningRequestInfo, self).__init__(
-            module.params['path'],
+            module.params['path'] or '',
             'present',
             False,
             module.check_mode,
         )
         self.backend = backend
         self.module = module
+        self.content = module.params['content']
+        if self.content is not None:
+            self.content = self.content.encode('utf-8')
 
     def generate(self):
         # Empty method because crypto_utils.OpenSSLObject wants this
@@ -319,7 +327,7 @@ class CertificateSigningRequestInfo(crypto_utils.OpenSSLObject):
 
     def get_info(self):
         result = dict()
-        self.csr = crypto_utils.load_certificate_request(self.path, backend=self.backend)
+        self.csr = crypto_utils.load_certificate_request(self.path, content=self.content, backend=self.backend)
 
         subject = self._get_subject_ordered()
         result['subject'] = dict()
@@ -591,19 +599,27 @@ class CertificateSigningRequestInfoPyOpenSSL(CertificateSigningRequestInfo):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(type='path', required=True),
+            path=dict(type='path'),
+            content=dict(type='str'),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
+        ),
+        required_one_of=(
+            ['path', 'content'],
+        ),
+        mutually_exclusive=(
+            ['path', 'content'],
         ),
         supports_check_mode=True,
     )
 
     try:
-        base_dir = os.path.dirname(module.params['path']) or '.'
-        if not os.path.isdir(base_dir):
-            module.fail_json(
-                name=base_dir,
-                msg='The directory %s does not exist or the file is not a directory' % base_dir
-            )
+        if module.params['path'] is not None:
+            base_dir = os.path.dirname(module.params['path']) or '.'
+            if not os.path.isdir(base_dir):
+                module.fail_json(
+                    name=base_dir,
+                    msg='The directory %s does not exist or the file is not a directory' % base_dir
+                )
 
         backend = module.params['select_crypto_backend']
         if backend == 'auto':

@@ -48,8 +48,14 @@ options:
     privatekey_path:
         description:
             - The path to the private key to use when signing the certificate signing request.
-            - Required if I(state) is C(present).
+            - Either I(privatekey_path) or I(privatekey_content) must be specified if I(state) is C(present), but not both.
         type: path
+    privatekey_content:
+        description:
+            - The content of the private key to use when signing the certificate signing request.
+            - Either I(privatekey_path) or I(privatekey_content) must be specified if I(state) is C(present), but not both.
+        type: str
+        version_added: "2.10"
     privatekey_passphrase:
         description:
             - The passphrase for the private key.
@@ -295,6 +301,12 @@ EXAMPLES = r'''
     privatekey_path: /etc/ssl/private/ansible.com.pem
     common_name: www.ansible.com
 
+- name: Generate an OpenSSL Certificate Signing Request with an inline key
+  openssl_csr:
+    path: /etc/ssl/csr/www.ansible.com.csr
+    privatekey_content: "{{ private_key_content }}"
+    common_name: www.ansible.com
+
 - name: Generate an OpenSSL Certificate Signing Request with a passphrase protected private key
   openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
@@ -355,7 +367,9 @@ EXAMPLES = r'''
 
 RETURN = r'''
 privatekey:
-    description: Path to the TLS/SSL private key the CSR was generated for
+    description:
+    - Path to the TLS/SSL private key the CSR was generated for
+    - Will be C(none) if the private key has been provided in I(privatekey_content).
     returned: changed or success
     type: str
     sample: /etc/ssl/private/ansible.com.pem
@@ -474,6 +488,9 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         )
         self.digest = module.params['digest']
         self.privatekey_path = module.params['privatekey_path']
+        self.privatekey_content = module.params['privatekey_content']
+        if self.privatekey_content is not None:
+            self.privatekey_content = self.privatekey_content.encode('utf-8')
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.version = module.params['version']
         self.subjectAltName = module.params['subject_alt_name']
@@ -655,7 +672,11 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
 
     def _load_private_key(self):
         try:
-            self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
+            self.privatekey = crypto_utils.load_privatekey(
+                path=self.privatekey_path,
+                content=self.privatekey_content,
+                passphrase=self.privatekey_passphrase
+            )
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             raise CertificateSigningRequestError(exc)
 
@@ -842,12 +863,16 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
 
     def _load_private_key(self):
         try:
-            with open(self.privatekey_path, 'rb') as f:
-                self.privatekey = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                    f.read(),
-                    None if self.privatekey_passphrase is None else to_bytes(self.privatekey_passphrase),
-                    backend=self.cryptography_backend
-                )
+            if self.privatekey_content is not None:
+                content = self.privatekey_content
+            else:
+                with open(self.privatekey_path, 'rb') as f:
+                    content = f.read()
+            self.privatekey = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                content,
+                None if self.privatekey_passphrase is None else to_bytes(self.privatekey_passphrase),
+                backend=self.cryptography_backend
+            )
         except Exception as e:
             raise CertificateSigningRequestError(e)
 
@@ -1003,6 +1028,7 @@ def main():
             state=dict(type='str', default='present', choices=['absent', 'present']),
             digest=dict(type='str', default='sha256'),
             privatekey_path=dict(type='path'),
+            privatekey_content=dict(type='str'),
             privatekey_passphrase=dict(type='str', no_log=True),
             version=dict(type='int', default=1),
             force=dict(type='bool', default=False),
@@ -1035,7 +1061,10 @@ def main():
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
         ),
         required_together=[('authority_cert_issuer', 'authority_cert_serial_number')],
-        required_if=[('state', 'present', ['privatekey_path'])],
+        required_if=[('state', 'present', ['privatekey_path', 'privatekey_content'], True)],
+        mutually_exclusive=(
+            ['privatekey_path', 'privatekey_content'],
+        ),
         add_file_common_args=True,
         supports_check_mode=True,
     )
