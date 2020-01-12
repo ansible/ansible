@@ -661,6 +661,7 @@ files:
   $modules/network/meraki/: &meraki
     labels: [ cisco, meraki, networking ]
     maintainers: $team_meraki
+    migrated_to: cisco.meraki
   $modules/network/netconf/netconf_config.py: userlerueda $team_networking
   $modules/network/netconf/netconf_get.py: $team_networking
   $modules/network/netconf/netconf_rpc.py: $team_networking
