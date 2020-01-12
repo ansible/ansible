@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - >
+    ansible-galaxy - Avoid infinite loop by following symbolic link target dirs
+    when building collection (https://github.com/ansible/ansible/pull/65833)
