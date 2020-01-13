@@ -22,6 +22,8 @@ author:
 notes:
     - This module fetches the system id from RHN.
     - This module doesn't support I(check_mode).
+requirements:
+    - python >= 2.7.9 (only for cacert option usage due to use of xmlrpclib context arg added in 2.7.9)
 options:
     name:
         description:
@@ -49,7 +51,7 @@ options:
         required: true
     cacert:
         description:
-            - ssl CA certificate for use with spacewalk self signed certificate
+            - ssl CA certificate for use with spacewalk self signed certificate (require python >= 2.7.9)
         required: False
         version_added: "2.10"
 '''
@@ -66,6 +68,8 @@ EXAMPLES = '''
 '''
 
 import ssl
+import sys
+import warnings
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six.moves import xmlrpc_client
@@ -123,11 +127,15 @@ def main():
     password = module.params['password']
 
     # initialize connection
-    ctx = None
-    if module.params['cacert'] is not None:
+    if module.params['cacert'] is not None and sys.version_info > (2, 7, 9):
         ctx = ssl.create_default_context()
         ctx.load_verify_locations(cafile=module.params['cacert'])
-    client = xmlrpc_client.ServerProxy(saturl, context=ctx)
+        client = xmlrpc_client.ServerProxy(saturl, context=ctx)
+    else:
+        if sys.version_info < (2, 7, 9):
+            warnings.warn("cacert option require at least python 2.7.9")
+        client = xmlrpc_client.ServerProxy(saturl)
+
     try:
         session = client.auth.login(user, password)
     except Exception as e:
