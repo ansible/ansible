@@ -1,4 +1,4 @@
 openshift
 
 # setuptools 45.0.0 no longer works with Python 2
-setuptools<=44.0.0 ; python_version < '3'
+setuptools<45.0.0 ; python_version < '3'
