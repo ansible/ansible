@@ -1033,20 +1033,14 @@ class GalaxyCLI(CLI):
                 vwidth=w2,
             ))
 
-        def _get_role_widths(roles):
-            if is_iterable(roles):
-                role_set = set(r.name for r in roles)
-                version_set = set(r.install_info.get('version', '*') for r in roles if r.install_info)
-            else:
-                role_set = set([roles.name])
-                version_set = set('*')
-                if roles.install_info:
-                    version_set = set([roles.install_info.get('version')])
-
-            role_name_length = len(max(role_set, key=len))
-            version_length = len(max(version_set, key=len))
-
-            return role_name_length, version_length
+        def _display_role(gr):
+            install_info = gr.install_info
+            version = None
+            if install_info:
+                version = install_info.get("version", None)
+            if not version:
+                version = "(unknown version)"
+            display.display("- %s, %s" % (gr.name, version))
 
         def _get_collection_widths(collections):
             if is_iterable(collections):
@@ -1069,15 +1063,6 @@ class GalaxyCLI(CLI):
                 vwidth=vwidth)
             )
 
-        def _display_role(gr, rwidth=42, vwidth=22):
-            install_info = gr.install_info
-            version = None
-            if install_info:
-                version = install_info.get("version", None)
-            if not version:
-                version = '*'
-            display.display('{0:{rwidth}} {1:{vwidth}}'.format(gr.name, version, rwidth=rwidth, vwidth=vwidth))
-
         path_found = False
         warnings = []
         galaxy_type = context.CLIARGS['type']
@@ -1086,17 +1071,11 @@ class GalaxyCLI(CLI):
                 # show the requested role, if it exists
                 name = context.CLIARGS['role']
                 gr = GalaxyRole(self.galaxy, self.api, name)
-                role_name_width, version_width = _get_role_widths(gr)
-
                 if gr.metadata:
-                    path_found = True
-                    role_path = os.path.dirname(gr.path)
-
-                    _display_header(role_path, 'Role', 'Version', role_name_width, version_width)
-                    _display_role(gr, role_name_width, version_width)
+                    display.display('# %s' % os.path.dirname(gr.path))
+                    _display_role(gr)
                 else:
-                    raise AnsibleError("the role '%s' was not found" % name)
-
+                    display.display("- the role %s was not found" % name)
             else:
                 # show all valid roles in the roles_path directory
                 roles_path = context.CLIARGS['roles_path']
@@ -1108,21 +1087,13 @@ class GalaxyCLI(CLI):
                     elif not os.path.isdir(role_path):
                         warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
                         continue
-
+                    display.display('# %s' % role_path)
                     path_files = os.listdir(role_path)
-
-                    roles = []
+                    path_found = True
                     for path_file in path_files:
                         gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
                         if gr.metadata:
-                            roles.append(gr)
-                    path_found = True
-
-                    role_name_width, version_width = _get_role_widths(roles)
-                    _display_header(role_path, 'Role', 'Version', role_name_width, version_width)
-                    roles.sort(key=lambda x: x.name)
-                    for role in roles:
-                        _display_role(role, role_name_width, version_width)
+                            _display_role(gr)
 
         elif context.CLIARGS['type'] == 'collection':
             collections_search_paths = context.CLIARGS['collections_path']
