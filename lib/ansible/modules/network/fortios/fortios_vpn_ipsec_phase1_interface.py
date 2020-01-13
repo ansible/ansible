@@ -748,6 +748,65 @@ options:
                     - des-sha256
                     - des-sha384
                     - des-sha512
+                    - 3des-md5
+                    - 3des-sha1
+                    - 3des-sha256
+                    - 3des-sha384
+                    - 3des-sha512
+                    - aes128-md5
+                    - aes128-sha1
+                    - aes128-sha256
+                    - aes128-sha384
+                    - aes128-sha512
+                    - aes128gcm-prfsha1
+                    - aes128gcm-prfsha256
+                    - aes128gcm-prfsha384
+                    - aes128gcm-prfsha512
+                    - aes192-md5
+                    - aes192-sha1
+                    - aes192-sha256
+                    - aes192-sha384
+                    - aes192-sha512
+                    - aes256-md5
+                    - aes256-sha1
+                    - aes256-sha256
+                    - aes256-sha384
+                    - aes256-sha512
+                    - aes256gcm-prfsha1
+                    - aes256gcm-prfsha256
+                    - aes256gcm-prfsha384
+                    - aes256gcm-prfsha512
+                    - aria128-md5
+                    - aria128-sha1
+                    - aria128-sha256
+                    - aria128-sha384
+                    - aria128-sha512
+                    - aria192-md5
+                    - aria192-sha1
+                    - aria192-sha256
+                    - aria192-sha384
+                    - aria192-sha512
+                    - aria256-md5
+                    - aria256-sha1
+                    - aria256-sha256
+                    - aria256-sha384
+                    - aria256-sha512
+                    - seed-md5
+                    - seed-sha1
+                    - seed-sha256
+                    - seed-sha384
+                    - seed-sha512
+                    - seed128-md5
+                    - seed128-sha1
+                    - seed128-sha256
+                    - seed128-sha384
+                    - seed128-sha512
+                    - suite-b-gcm-128
+                    - suite-b-gcm-256
+                    - chacha20poly1305-prfsha1
+                    - chacha20poly1305-prfsha256
+                    - chacha20poly1305-prfsha384
+                    - chacha20poly1305-prfsha512
             psksecret:
                 description:
                     - Pre-shared secret for PSK authentication (ASCII string or hexadecimal encoded with a leading 0x).
@@ -1216,7 +1275,6 @@ def is_successful_status(status):
 
 
 def fortios_vpn_ipsec(data, fos):
-
     if data['vpn_ipsec_phase1_interface']:
         resp = vpn_ipsec_phase1_interface(data, fos)
 
@@ -1419,7 +1477,27 @@ def main():
                 "priority": {"required": False, "type": "int"},
                 "proposal": {"required": False, "type": "str",
                              "choices": ["des-md5", "des-sha1", "des-sha256",
-                                         "des-sha384", "des-sha512"]},
+                                         "des-sha384", "des-sha512", "3des-md5",
+                                         "3des-sha1", "3des-sha256", "3des-sha384",
+                                         "3des-sha512", "aes128-md5", "aes128-sha1",
+                                         "aes128-sha256", "aes128-sha384", "aes128-sha512",
+                                         "aes128gcm-prfsha1", "aes128gcm-prfsha256"
+                                         "aes128gcm-prfsha384", "aes128gcm-prfsha512"
+                                         "aes192-md5", "aes192-sha1", "aes192-sha256",
+                                         "aes192-sha384", "aes192-sha512", "aes256-md5",
+                                         "aes256-sha1", "aes256-sha256", "aes256-sha384",
+                                         "aes256-sha512", "aes256gcm-prfsha1", "aes256gcm-prfsha256",
+                                         "aes256gcm-prfsha384", "aes256gcm-prfsha512",
+                                         "aria128-md5", "aria128-sha1", "aria128-sha256",
+                                         "aria128-sha384", "aria128-sha512", "aria192-md5",
+                                         "aria192-sha1", "aria192-sha256", "aria192-sha384",
+                                         "aria192-sha512", "aria256-md5", "aria256-sha1",
+                                         "aria256-sha256", "aria256-sha384", "aria256-sha512",
+                                         "chacha20poly1305-prfsha1", "chacha20poly1305-prfsha256",
+                                         "chacha20poly1305-prfsha384", "chacha20poly1305-prfsha512",
+                                         "seed-md5", "seed-sha1", "seed-sha256", "seed-sha384",
+                                         "seed-sha512", "seed128-md5", "seed128-sha1", "seed128-sha256",
+                                         "seed128-sha384", "seed-sha512", "suite-b-gcm-128", "suite-b-gcm-256"]},
                 "psksecret": {"required": False, "type": "str"},
                 "psksecret_remote": {"required": False, "type": "str"},
                 "reauth": {"required": False, "type": "str",
