@@ -254,11 +254,12 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                         # Create Ansible groups for host collections
                         for hostcollection in hostcollections:
                             try:
-                                hostcollection_group = to_safe_group_name('%shostcollection_%s' % (self.get_option('group_prefix'), hostcollection['name'].lower().replace(" ", "")))
+                                hostcollection_group = to_safe_group_name('%shostcollection_%s' % (self.get_option('group_prefix'),
+                                                                          hostcollection['name'].lower().replace(" ", "")))
                                 hostcollection_group = self.inventory.add_group(hostcollection_group)
                                 self.inventory.add_child(hostcollection_group, host_name)
                             except ValueError as e:
-                    self.display.warning("Could not create groups for host collections for %s, skipping: %s" % (host_name, to_text(e)))
+                                self.display.warning("Could not create groups for host collections for %s, skipping: %s" % (host_name, to_text(e)))
 
                 # put ansible_ssh_host as hostvar
                 if self.get_option('want_ansible_ssh_host'):
