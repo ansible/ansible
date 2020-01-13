@@ -99,6 +99,10 @@ options:
             - A list of DNS search domains.
         type: list
         version_added: '2.5'
+    dns4_options:
+        description:
+            - A list of DNS options
+        type: list
     ip6:
         description:
             - The IPv6 address to this interface.
@@ -498,6 +502,19 @@ EXAMPLES = r'''
       - 198.51.100.53
       state: present
 
+  - name: Add DNS timeout, rotate, attempt options
+    nmcli:
+      conn_name: my-eth1
+      type: ethernet
+      dns4:
+      - 192.0.2.53
+      - 198.51.100.53
+      dns4_options:
+      - rotate
+      - timeout:5
+      - attempts:1
+      state: present
+
   - name: Make a profile usable for all compatible Ethernet interfaces
     nmcli:
       ctype: ethernet
@@ -650,6 +667,7 @@ class Nmcli(object):
         self.gw4 = module.params['gw4']
         self.dns4 = ' '.join(module.params['dns4']) if module.params.get('dns4') else None
         self.dns4_search = ' '.join(module.params['dns4_search']) if module.params.get('dns4_search') else None
+        self.dns4_options = ' '.join(module.params['dns4_options'] if module.params.get('dns_options') else None)
         self.ip6 = module.params['ip6']
         self.gw6 = module.params['gw6']
         self.dns6 = ' '.join(module.params['dns6']) if module.params.get('dns6') else None
@@ -815,6 +833,7 @@ class Nmcli(object):
             'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
+            'ipv4.dns-options': self.dns4_options,
             'ipv6.dns-search': self.dns6_search,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
@@ -831,6 +850,7 @@ class Nmcli(object):
             'ipv4.address': self.ip4,
             'ipv4.gateway': self.gw4,
             'ipv4.dns': self.dns4,
+            'ipv4.dns-options': self.dns4_options,
             'ipv6.address': self.ip6,
             'ipv6.gateway': self.gw6,
             'ipv6.dns': self.dns6,
@@ -891,6 +911,7 @@ class Nmcli(object):
             'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
+            'ipv4.dns-options': self.dns4_options,
             'ipv6.dns-search': self.dns6_search,
             'miimon': self.miimon,
             'downdelay': self.downdelay,
@@ -919,6 +940,7 @@ class Nmcli(object):
             'ipv6.dns': self.dns6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
+            'ipv4.dns-options': self.dns4_options,
             'ipv6.dns-search': self.dns6_search,
             'miimon': self.miimon,
             'downdelay': self.downdelay,
@@ -984,6 +1006,7 @@ class Nmcli(object):
             'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
+            'ipv4.dns-options': self.dns4_options,
             'ipv6.dns-search': self.dns6_search,
             'ipv4.dhcp-client-id': self.dhcp_client_id,
         }
@@ -1004,6 +1027,7 @@ class Nmcli(object):
             'ipv4.address': self.ip4,
             'ipv4.gateway': self.gw4,
             'ipv4.dns': self.dns4,
+            'ipv4.dns-options': self.dns4_options,
             'ipv6.address': self.ip6,
             'ipv6.gateway': self.gw6,
             'ipv6.dns': self.dns6,
@@ -1182,6 +1206,7 @@ class Nmcli(object):
                   'ipv4.address': self.ip4 or '',
                   'ipv4.gateway': self.gw4 or '',
                   'ipv4.dns': self.dns4 or '',
+                  'ipv4.dns-options': self.dns4_options,
                   'ipv6.address': self.ip6 or '',
                   'ipv6.gateway': self.gw6 or '',
                   'ipv6.dns': self.dns6 or '',
