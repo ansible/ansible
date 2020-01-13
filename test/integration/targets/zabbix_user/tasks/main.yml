@@ -524,7 +524,7 @@
       after_login_url: http://example.com
       theme: dark-theme
       type: Zabbix super admin
-      lang: "{{ item }}"
+      lang: en_US
       user_medias:
         - mediatype: Email
           sendto: example@example.com
@@ -548,29 +548,11 @@
             high: yes
             disaster: yes
           active: yes
-    loop:
-      - en_US
-      - zh_CN
-      - cs_CZ
-      - fr_FR
-      - he_IL
-      - it_IT
-      - ko_KR
-      - ja_JP
-      - nb_NO
-      - pl_PL
-      - pt_BR
-      - pt_PT
-      - ru_RU
-      - sk_SK
-      - tr_TR
-      - uk_UA
     register: update_lang_parameter_existing_user_result
 
   - assert:
       that:
-        - item.changed is sameas true
-    loop: "{{ update_lang_parameter_existing_user_result.results }}"
+        - update_lang_parameter_existing_user_result.changed is sameas true
 
   - name: test - Update name and surname parameter for existing user
     zabbix_user:
@@ -590,7 +572,7 @@
       after_login_url: http://example.com
       theme: dark-theme
       type: Zabbix super admin
-      lang: uk_UA
+      lang: en_US
       user_medias:
         - mediatype: Email
           sendto: example@example.com
