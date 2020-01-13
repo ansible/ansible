@@ -55,7 +55,7 @@ junos_provider_spec = {
     'transport': dict(default='netconf', choices=['cli', 'netconf'])
 }
 junos_argument_spec = {
-    'provider': dict(type='dict', options=junos_provider_spec),
+    'provider': dict(type='dict', options=junos_provider_spec, removed_in_version=2.14),
 }
 
 
