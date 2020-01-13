@@ -930,9 +930,8 @@ You can do this by using an external variables file, or files, just like this::
         - /vars/external_vars.yml
 
       tasks:
-
-      - name: this is just a placeholder
-        command: /bin/echo foo
+        - name: this is just a placeholder
+          command: /bin/echo foo
 
 This removes the risk of sharing sensitive data with others when
 sharing your playbook source with them.
