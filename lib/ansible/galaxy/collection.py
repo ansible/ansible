@@ -548,9 +548,9 @@ def validate_collection_path(collection_path):
     """
 
     if os.path.split(collection_path)[1] != 'ansible_collections':
-        return os.path.join(collection_path, 'ansible_collections')
+        path = os.path.join(collection_path, 'ansible_collections')
 
-    return collection_path
+    return path
 
 
 def verify_collections(collections, search_paths, apis, validate_certs, ignore_errors):
