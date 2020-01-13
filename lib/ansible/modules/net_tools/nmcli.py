@@ -668,7 +668,7 @@ class Nmcli(object):
         self.gw4 = module.params['gw4']
         self.dns4 = ' '.join(module.params['dns4']) if module.params.get('dns4') else None
         self.dns4_search = ' '.join(module.params['dns4_search']) if module.params.get('dns4_search') else None
-        self.dns4_options = ' '.join(module.params['dns4_options'] if module.params.get('dns4_options') else None)
+        self.dns4_options = ' '.join(module.params['dns4_options']) if module.params.get('dns4_options') else None
         self.ip6 = module.params['ip6']
         self.gw6 = module.params['gw6']
         self.dns6 = ' '.join(module.params['dns6']) if module.params.get('dns6') else None
