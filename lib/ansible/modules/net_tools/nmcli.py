@@ -1206,7 +1206,7 @@ class Nmcli(object):
                   'ipv4.address': self.ip4 or '',
                   'ipv4.gateway': self.gw4 or '',
                   'ipv4.dns': self.dns4 or '',
-                  'ipv4.dns-options': self.dns4_options,
+                  'ipv4.dns-options': self.dns4_options or '',
                   'ipv6.address': self.ip6 or '',
                   'ipv6.gateway': self.gw6 or '',
                   'ipv6.dns': self.dns6 or '',
