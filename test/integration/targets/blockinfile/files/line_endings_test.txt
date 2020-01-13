@@ -1,0 +1,19 @@
+unix
+unix
+unix
+
+dos
+dos
+dos
+
+unix
+unix
+
+# BEGIN ANSIBLE MANAGED BLOCK
+dos
+# END ANSIBLE MANAGED BLOCK
+
+unix
+unix
+unix
+unix

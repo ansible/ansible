@@ -112,3 +112,25 @@
       - empty_test_2 is changed
       - "'Block removed' in empty_test_2.msg"
       - empty_test_stat.stat.size == 0
+
+- name: copy the line_endings_test.txt to the test dir
+  copy:
+    src: line_endings_test.txt
+    dest: "{{ output_dir_test }}"
+
+- name: insert/update "dos" configuration block in line_endings_test.txt
+  blockinfile:
+    path: "{{ output_dir_test }}/line_endings_test.txt"
+    block: "dos\r\ndos\r\ndos\r\n"
+  register: blockinfile_test2
+
+- name: check content
+  shell: 'grep -P "^dos\r$" {{ output_dir_test }}/line_endings_test.txt'
+  register: blockinfile_test2_grep
+
+- name: validate line_endings_test.txt results
+  assert:
+    that:
+      - 'blockinfile_test2 is changed'
+      - 'blockinfile_test2.msg == "Block inserted"'
+      - 'blockinfile_test2_grep.stdout_lines | length == 6'
