@@ -47,6 +47,7 @@ class ACMEProvider(CloudProvider):
         else:
             self.image = 'quay.io/ansible/acme-test-container:1.9.0'
         self.container_name = ''
+        self.docker_binary = args.docker_binary
 
     def _wait_for_service(self, protocol, acme_host, port, local_part, name):
         """Wait for an endpoint to accept connections."""
@@ -74,7 +75,7 @@ class ACMEProvider(CloudProvider):
         :type targets: tuple[TestTarget]
         :type exclude: list[str]
         """
-        docker = find_executable('docker', required=False)
+        docker = find_executable(self.docker_binary, required=False)
 
         if docker:
             return

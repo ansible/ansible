@@ -58,6 +58,7 @@ class NiosProvider(CloudProvider):
 
         self.image = self.__container_from_env or self.DOCKER_IMAGE
         self.container_name = ''
+        self.docker_binary = args.docker_binary
 
     def filter(self, targets, exclude):
         """Filter out the tests with the necessary config and res unavailable.
@@ -65,8 +66,7 @@ class NiosProvider(CloudProvider):
         :type targets: tuple[TestTarget]
         :type exclude: list[str]
         """
-        docker_cmd = 'docker'
-        docker = find_executable(docker_cmd, required=False)
+        docker = find_executable(self.docker_binary, required=False)
 
         if docker:
             return

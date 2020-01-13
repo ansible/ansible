@@ -389,7 +389,7 @@ def delegate_remote(args, exclude, require, integration_targets):
     else:
         use_httptester = args.httptester and any('needs/httptester/' in target.aliases for target in integration_targets)
 
-    if use_httptester and not docker_available():
+    if use_httptester and not docker_available(args):
         display.warning('Assuming --disable-httptester since `docker` is not available.')
         use_httptester = False
 

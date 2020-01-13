@@ -55,6 +55,7 @@ class CsCloudProvider(CloudProvider):
         self.endpoint = ''
         self.host = ''
         self.port = 0
+        self.docker_binary = args.docker_binary
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
@@ -64,7 +65,7 @@ class CsCloudProvider(CloudProvider):
         if os.path.isfile(self.config_static_path):
             return
 
-        docker = find_executable('docker', required=False)
+        docker = find_executable(self.docker_binary, required=False)
 
         if docker:
             return

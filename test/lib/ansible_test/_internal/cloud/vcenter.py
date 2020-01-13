@@ -56,6 +56,7 @@ class VcenterProvider(CloudProvider):
         self.insecure = False
         self.proxy = None
         self.platform = 'vcenter'
+        self.docker_binary = args.docker_binary
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
@@ -63,7 +64,7 @@ class VcenterProvider(CloudProvider):
         :type exclude: list[str]
         """
         if self.vmware_test_platform == 'govcsim' or (self.vmware_test_platform == '' and not os.path.isfile(self.config_static_path)):
-            docker = find_executable('docker', required=False)
+            docker = find_executable(self.docker_binary, required=False)
 
             if docker:
                 return

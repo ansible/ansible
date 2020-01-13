@@ -69,6 +69,7 @@ class EnvConfig(CommonConfig):
         self.show = args.show
         self.dump = args.dump
         self.timeout = args.timeout
+        self.docker_binary = args.docker_binary
 
         if not self.show and not self.dump and self.timeout is None:
             # default to --show if no options were given
@@ -257,7 +258,7 @@ def get_docker_details(args):
     :type args: CommonConfig
     :rtype: dict[str, any]
     """
-    docker = find_executable('docker', required=False)
+    docker = find_executable(args.docker_binary, required=False)
     info = None
     version = None
 

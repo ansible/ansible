@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-test can now use an alternative ``docker`` binary with the ``--docker-binary`` optional parameter

@@ -634,7 +634,7 @@ def command_windows_integration(args):
         # if running under Docker delegation, the httptester may have already been started
         docker_httptester = bool(os.environ.get("HTTPTESTER", False))
 
-        if use_httptester and not docker_available() and not docker_httptester:
+        if use_httptester and not docker_available(args) and not docker_httptester:
             display.warning('Assuming --disable-httptester since `docker` is not available.')
         elif use_httptester:
             if docker_httptester:

@@ -25,11 +25,11 @@ from .config import (
 BUFFER_SIZE = 256 * 256
 
 
-def docker_available():
+def docker_available(args):
     """
     :rtype: bool
     """
-    return find_executable('docker', required=False)
+    return find_executable(args.docker_binary, required=False)
 
 
 def get_docker_container_id():
@@ -279,7 +279,7 @@ def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=Fal
     :rtype: str | None, str | None
     """
     env = docker_environment()
-    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always)
+    return run_command(args, [args.docker_binary] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always)
 
 
 def docker_environment():

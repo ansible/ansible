@@ -575,6 +575,8 @@ def parse_args():
                      metavar='MINUTES',
                      help='timeout for future ansible-test commands (0 clears)')
 
+    add_extra_docker_options(env)
+
     if argcomplete:
         argcomplete.autocomplete(parser, always_complete_options=False, validator=lambda i, k: True)
 
@@ -774,6 +776,10 @@ def add_extra_docker_options(parser, integration=True):
                         default=None,
                         help='set seccomp confinement for the test container: %(choices)s')
 
+    docker.add_argument('--docker-binary',
+                        default='docker',
+                        help='Docker command to use (e.g: podman, docker, )', type=str)
+
     if not integration:
         return
 
@@ -784,6 +790,11 @@ def add_extra_docker_options(parser, integration=True):
     # noinspection PyTypeChecker
     docker.add_argument('--docker-memory',
                         help='memory limit for docker in bytes', type=int)
+
+    docker.add_argument('--docker-binary',
+                        default='docker',
+                        help='Docker command to use (e.g: podman, docker, )', type=str)
+
 
 
 def complete_target(prefix, parsed_args, **_):
