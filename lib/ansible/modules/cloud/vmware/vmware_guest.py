@@ -2086,10 +2086,10 @@ class PyVmomiHelper(PyVmomi):
     def sanitize_disk_parameters(self, vm_obj):
         """
 
-        Sanitize user provided disk parameters to configure multiple types of disk controllers and attached disks 
+        Sanitize user provided disk parameters to configure multiple types of disk controllers and attached disks
 
         Returns: A sanitized dict of disk params, else fails
-                 e.g., returned controllers: 
+                 e.g., returned controllers:
                  {'boot_disk': {}, 'other_disk_ctls': [{'type': 'nvme', 'num': 1, 'disk': []}, {}, {}, {}]}
 
         """
@@ -2115,7 +2115,7 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="Configured hardware version '%d' not support nvme controller."
                                               % self.params['hardware']['version'])
                 elif self.params['esxi_hostname'] is not None:
-                    if not self.host_version_at_least(verison=(6,5,0), host_name=self.params['esxi_hostname']):
+                    if not self.host_version_at_least(verison=(6, 5, 0), host_name=self.params['esxi_hostname']):
                         self.module.fail_json(msg="ESXi host '%s' version < 6.5.0, not support nvme controller."
                                                   % self.params['esxi_hostname'])
                 elif vm_obj is not None:
