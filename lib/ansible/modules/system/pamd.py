@@ -351,6 +351,8 @@ class PamdRule(PamdLine):
     valid_control_actions = ['ignore', 'bad', 'die', 'ok', 'done', 'reset']
 
     def __init__(self, rule_type, rule_control, rule_path, rule_args=None):
+        self.prev = None
+        self.next = None
         self._control = None
         self._args = None
         self.rule_type = rule_type
@@ -463,8 +465,6 @@ class PamdService(object):
 
     def append(self, pamd_line):
         if self._head is None:
-            pamd_line.prev = None
-            pamd_line.next = None
             self._head = self._tail = pamd_line
         else:
             pamd_line.prev = self._tail
