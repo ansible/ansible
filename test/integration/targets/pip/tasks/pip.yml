@@ -499,6 +499,7 @@
       name: distribute
       virtualenv: "{{ output_dir }}/pipenv"
       state: present
+      extra_args: "-c {{ remote_constraints }}"
 
   - name: try to remove distribute
     pip:
