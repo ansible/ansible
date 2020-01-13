@@ -193,13 +193,15 @@ def main():
 
     :returns: ansible_facts
     """
-    spec = FactsArgs.argument_spec
-    spec.update(iosxr_argument_spec)
+    argument_spec = FactsArgs.argument_spec
+    argument_spec.update(iosxr_argument_spec)
 
-    module = AnsibleModule(argument_spec=spec,
+    module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
-    warnings = ['default value for `gather_subset` '
-                'will be changed to `min` from `!config` v2.11 onwards']
+
+    warnings = []
+    if module.params["gather_subset"] == "!config":
+        warnings.append('default value for `gather_subset` will be changed to `min` from `!config` v2.11 onwards')
 
     result = Facts(module).get_facts()
 
