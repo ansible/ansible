@@ -176,6 +176,9 @@ class RabbitMqUser(object):
         """Get permissions of the user from RabbitMQ."""
         perms_out = [perm for perm in self._exec(['list_user_permissions', self.username], True) if perm.strip()]
 
+        if perms_out[0] == "vhost\tconfigure\twrite\tread":
+            perms_out.pop(0)
+
         perms_list = list()
         for perm in perms_out:
             vhost, configure_priv, write_priv, read_priv = perm.split('\t')
