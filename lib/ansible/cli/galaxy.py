@@ -1117,15 +1117,10 @@ class GalaxyCLI(CLI):
 
                     path_found = True
 
-                    # Make sure we look inside the 'ansible_collections' dir
-                    if os.path.split(collection_path)[1] != 'ansible_collections':
-                        collection_path = os.path.join(collection_path, 'ansible_collections')
+                    validate_collection_name(collection_name)
+                    namespace, collection = collection_name.split('.')
 
-                    try:
-                        namespace, collection = collection_name.split('.')
-                    except ValueError:
-                        raise AnsibleOptionsError("Incorrect value for collection name. Must be 'namespace.collection' got '%s'" % collection_name)
-
+                    collection_path = validate_collection_path(collection_path)
                     b_collection_path = to_bytes(os.path.join(collection_path, namespace, collection), errors='surrogate_or_strict')
 
                     if not os.path.exists(b_collection_path):
@@ -1152,10 +1147,7 @@ class GalaxyCLI(CLI):
                         warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
                         continue
 
-                    # Make sure we look inside the 'ansible_collections' dir
-                    if os.path.split(path)[1] != 'ansible_collections':
-                        path = os.path.join(path, 'ansible_collections')
-
+                    path = validate_collection_path(path)
                     collections = _find_existing_collections(path)
 
                     # Display header
