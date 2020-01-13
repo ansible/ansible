@@ -5,6 +5,9 @@ __metaclass__ = type
 
 import os
 import sys
+import warnings
+
+warnings.simplefilter('ignore')  # avoid python version deprecation warnings when using newer pip dependencies
 
 try:
     import pip
