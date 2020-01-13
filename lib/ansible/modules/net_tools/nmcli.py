@@ -1477,6 +1477,7 @@ def main():
             gw4=dict(type='str'),
             dns4=dict(type='list'),
             dns4_search=dict(type='list'),
+            dns4_options=dict(type='list'),
             dhcp_client_id=dict(type='str'),
             ip6=dict(type='str'),
             gw6=dict(type='str'),
