@@ -934,7 +934,7 @@ class User(object):
                 for line in reversed_lines:
                     if line.startswith(to_bytes(name_test)):
                         info = line.split(to_bytes(":"))
-                        passwd  = info[1].decode()
+                        passwd = info[1].decode()
                         expires = int(info[7].decode()) if info[7] else ''
                         return passwd, expires
 
@@ -1782,7 +1782,7 @@ class SunOS(User):
 
     def remove_user(self):
         cmd = [self.module.get_bin_path('userdel', True)]
-        if self.local and re.match('^11\.[1-4]', os.uname()[3]):
+        if self.local and re.match('^11[.][1-4]', os.uname()[3]):
             cmd.extend(['-S', 'files'])
         if self.remove:
             cmd.append('-r')
@@ -1792,7 +1792,7 @@ class SunOS(User):
 
     def create_user(self):
         cmd = [self.module.get_bin_path('useradd', True)]
-        if self.local and re.match('^11\.[1-4]', os.uname()[3]):
+        if self.local and re.match('^11[.][1-4]', os.uname()[3]):
             cmd.extend(['-S', 'files'])
 
         if self.uid is not None:
@@ -1895,7 +1895,7 @@ class SunOS(User):
 
     def modify_user_usermod(self):
         cmd = [self.module.get_bin_path('usermod', True)]
-        if self.local and re.match('^11\.[1-4]', os.uname()[3]):
+        if self.local and re.match('^11[.][1-4]', os.uname()[3]):
             cmd.extend(['-S', 'files'])
         cmd_len = len(cmd)
         info = self.user_info()
