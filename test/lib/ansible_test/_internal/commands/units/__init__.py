@@ -266,7 +266,9 @@ def command_units(args: UnitsConfig) -> None:
         if not data_context().content.collection:
             cmd.append('--durations=25')
 
-        plugins = []
+        plugins = [
+            'ansible_pytest_unit_test_module_mocks',
+        ]
 
         if args.coverage:
             plugins.append('ansible_pytest_coverage')
@@ -276,9 +278,9 @@ def command_units(args: UnitsConfig) -> None:
 
         plugins.append('ansible_forked')
 
-        if plugins:
-            env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'pytest/plugins')
-            env['PYTEST_PLUGINS'] = ','.join(plugins)
+        env['PYTHONPATH'] += ':%s' % os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'pytest/plugins')
+        for plugin in plugins:
+            cmd.extend(('-p', plugin))
 
         if args.collect_only:
             cmd.append('--collect-only')

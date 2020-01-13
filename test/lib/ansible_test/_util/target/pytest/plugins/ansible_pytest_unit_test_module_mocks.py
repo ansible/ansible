@@ -1,5 +1,6 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+"""Pytest fixtures for mocking Ansible modules."""
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -15,6 +16,7 @@ from ansible.module_utils.six.moves.collections_abc import MutableMapping
 
 @pytest.fixture
 def patch_ansible_module(request, mocker):
+    """Monkey-patch given Ansible module."""
     if isinstance(request.param, string_types):
         args = request.param
     elif isinstance(request.param, MutableMapping):
