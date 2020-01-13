@@ -57,7 +57,7 @@ The best place to start learning about writing code that supports both Python 2 
 is `Lennart Regebro's book: Porting to Python 3 <http://python3porting.com/>`_.
 The book describes several strategies for porting to Python 3. The one we're
 using is `to support Python 2 and Python 3 from a single code base
-<http://python3porting.com/strategies.html#python 2-and-python 3-without-conversion>`_
+<http://python3porting.com/strategies.html#python-2-and-python-3-without-conversion>`_
 
 Understanding strings in Python 2 and Python 3
 ----------------------------------------------
