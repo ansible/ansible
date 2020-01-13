@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-test no longer tries to install ``setuptools`` 45+ on Python 2.x since those versions are unsupported
