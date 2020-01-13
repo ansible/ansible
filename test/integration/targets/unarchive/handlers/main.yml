@@ -1,9 +1,0 @@
-- name: remove python TLS packages
-  pip:
-    name:
-      - cryptography
-      - ndg_httpsclient
-      - pyOpenSSL
-      - six
-      - urllib3
-    state: absent

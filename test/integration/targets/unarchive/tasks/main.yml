@@ -643,7 +643,6 @@
   when:
     - ansible_facts.distribution == 'CentOS'
     - not ansible_facts.python.has_sslcontext
-  notify: remove python TLS packages
 
 - name: unarchive a tar from an URL
   unarchive:
