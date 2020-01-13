@@ -1,0 +1,2 @@
+openshift
+setuptools<=44.0.0 ; python_version < '3'
