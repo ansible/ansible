@@ -1370,7 +1370,7 @@ class PyVmomi(object):
         Returns: vm folder managed object if found else None
 
         """
-        return find_folder_by_name(self.content, fodler_name=folder_name)
+        return find_folder_by_name(self.content, folder_name=folder_name)
 
     # Datastore cluster
     def find_datastore_cluster_by_name(self, datastore_cluster_name):
