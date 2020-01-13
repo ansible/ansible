@@ -1,7 +1,7 @@
 ---
 - when:
     - ansible_distribution == 'Ubuntu'
-- block:
+  block:
   # New user create test from here
   - name: test - Create a new Zabbix user with check_mode and diff
     zabbix_user:
