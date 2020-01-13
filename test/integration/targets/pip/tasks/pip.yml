@@ -496,7 +496,7 @@
 
   - name: install distribute in the virtualenv
     pip:
-      name: distribute
+      name: distribute,setuptools<=44.0.0
       virtualenv: "{{ output_dir }}/pipenv"
       state: present
 
