@@ -97,10 +97,12 @@ class CacheModule(BaseCacheModule):
                 )
             except pymongo.errors.OperationFailure:
                 # We make it here when the fact_caching_timeout was set to a different value between runs
-                collection.drop_index('ttl')
+                if 'ttl' in collection.index_information():
+                    collection.drop_index('ttl')
                 return self._manage_indexes(collection)
         else:
-            collection.drop_index('ttl')
+            if 'ttl' in collection.index_information():
+                collection.drop_index('ttl')
 
     @contextmanager
     def _collection(self):
