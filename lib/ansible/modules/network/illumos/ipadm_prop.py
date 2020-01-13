@@ -88,7 +88,7 @@ value:
 from ansible.module_utils.basic import AnsibleModule
 
 
-SUPPORTED_PROTOCOLS = ['ipv4', 'ipv6', 'icmp', 'tcp', 'udp', 'sctp']
+SUPPORTED_PROTOCOLS = ['ip', 'ipv4', 'ipv6', 'icmp', 'tcp', 'udp', 'sctp']
 
 
 class Prop(object):
