@@ -1,5 +1,4 @@
 ---
-
 version: '1.0'
 groupings:
   acme_account:
