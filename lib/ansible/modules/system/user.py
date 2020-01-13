@@ -889,6 +889,27 @@ class User(object):
     def get_pwd_info(self):
         if not self.user_exists():
             return False
+        # As mentioned in user_exists() method, the pwd module does not distinguish between
+        # local and directory accounts. When a user is defined both in Directory and locally,
+        # the return info can be different leading to infinity change state
+        # So search locally is forced when local flag is set
+        elif self.local:
+            if not os.path.exists(self.PASSWORDFILE):
+                self.module.fail_json(msg="'local: true' specified but unable to find local account file {0} to parse.".format(self.PASSWORDFILE))
+
+            name_test = '{0}:'.format(self.name)
+            with open(self.PASSWORDFILE, 'rb') as f:
+                reversed_lines = f.readlines()[::-1]
+                for line in reversed_lines:
+                    line = line.rstrip()
+                    if line.startswith(to_bytes(name_test)):
+                        info = line.split(to_bytes(":"))
+                        for i in [0, 1, 4, 5, 6]:
+                            info[i] = info[i].decode()
+                        info[2] = int(info[2].decode())
+                        info[3] = int(info[3].decode())
+                        return info
+
         return list(pwd.getpwnam(self.name))
 
     def user_info(self):
@@ -902,7 +923,22 @@ class User(object):
     def user_password(self):
         passwd = ''
         expires = ''
-        if HAVE_SPWD:
+        # Cf user_exists() and get_pwd_info() for details
+        if self.local:
+            if not os.path.exists(self.SHADOWFILE):
+                self.module.fail_json(msg="'local: true' specified but unable to find local account file {0} to parse.".format(self.SHADOWFILE))
+
+            name_test = '{0}:'.format(self.name)
+            with open(self.SHADOWFILE, 'rb') as f:
+                reversed_lines = f.readlines()[::-1]
+                for line in reversed_lines:
+                    if line.startswith(to_bytes(name_test)):
+                        info = line.split(to_bytes(":"))
+                        passwd  = info[1].decode()
+                        expires = int(info[7].decode()) if info[7] else ''
+                        return passwd, expires
+
+        elif HAVE_SPWD:
             try:
                 passwd = spwd.getspnam(self.name)[1]
                 expires = spwd.getspnam(self.name)[7]
@@ -1746,6 +1782,8 @@ class SunOS(User):
 
     def remove_user(self):
         cmd = [self.module.get_bin_path('userdel', True)]
+        if self.local and re.match('^11\.[1-4]', os.uname()[3]):
+            cmd.extend(['-S', 'files'])
         if self.remove:
             cmd.append('-r')
         cmd.append(self.name)
@@ -1754,6 +1792,8 @@ class SunOS(User):
 
     def create_user(self):
         cmd = [self.module.get_bin_path('useradd', True)]
+        if self.local and re.match('^11\.[1-4]', os.uname()[3]):
+            cmd.extend(['-S', 'files'])
 
         if self.uid is not None:
             cmd.append('-u')
@@ -1855,6 +1895,8 @@ class SunOS(User):
 
     def modify_user_usermod(self):
         cmd = [self.module.get_bin_path('usermod', True)]
+        if self.local and re.match('^11\.[1-4]', os.uname()[3]):
+            cmd.extend(['-S', 'files'])
         cmd_len = len(cmd)
         info = self.user_info()
 
