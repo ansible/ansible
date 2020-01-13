@@ -1815,13 +1815,10 @@ lib/ansible/modules/files/xml.py validate-modules:doc-required-mismatch
 lib/ansible/modules/identity/cyberark/cyberark_authentication.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/identity/keycloak/keycloak_client.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/identity/keycloak/keycloak_client.py validate-modules:doc-missing-type
-lib/ansible/modules/identity/keycloak/keycloak_client.py validate-modules:doc-required-mismatch
 lib/ansible/modules/identity/keycloak/keycloak_client.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/identity/keycloak/keycloak_clienttemplate.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/identity/keycloak/keycloak_clienttemplate.py validate-modules:doc-missing-type
-lib/ansible/modules/identity/keycloak/keycloak_clienttemplate.py validate-modules:doc-required-mismatch
 lib/ansible/modules/identity/keycloak/keycloak_clienttemplate.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/identity/keycloak/keycloak_group.py validate-modules:doc-required-mismatch
 lib/ansible/modules/identity/opendj/opendj_backendprop.py validate-modules:doc-missing-type
 lib/ansible/modules/identity/opendj/opendj_backendprop.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/messaging/rabbitmq/rabbitmq_binding.py validate-modules:doc-default-does-not-match-spec
