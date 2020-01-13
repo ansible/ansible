@@ -11,7 +11,7 @@ set -eux
 source virtualenv.sh
 if [[ $(python --version 2>&1) =~ 2\.7 ]]
   then
-    pip install openshift,setuptools<=44.0.0
+    pip install "openshift,setuptools<=44.0.0"
 else
     pip install openshift
 fi
