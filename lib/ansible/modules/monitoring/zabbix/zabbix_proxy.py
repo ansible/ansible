@@ -122,7 +122,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: Create a new proxy or update an existing proxy
+- name: Create or update a proxy with proxy type active
   local_action:
     module: zabbix_proxy
     server_url: http://monitor.example.com
@@ -133,13 +133,24 @@ EXAMPLES = r'''
     status: active
     state: present
     proxy_address: ExampleProxy.local
+
+- name: Create or update a proxy with proxy type passive
+  local_action:
+    module: zabbix_proxy
+    server_url: http://monitor.example.com
+    login_user: username
+    login_password: password
+    proxy_name: ExampleProxy
+    description: ExampleProxy
+    status: passive
+    state: present
     interface:
-        type: 0
-        main: 1
-        useip: 1
-        ip: 10.xx.xx.xx
-        dns: ""
-        port: 10050
+      type: 0
+      main: 1
+      useip: 1
+      ip: 10.xx.xx.xx
+      dns: ""
+      port: 10050
 '''
 
 RETURN = r''' # '''
