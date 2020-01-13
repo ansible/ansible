@@ -14,3 +14,13 @@
       - role_templated_name is defined
       - role_non_templated_listener is defined
       - role_templated_listener is undefined
+
+- command: echo
+  notify: "{{ handler_list }}"
+
+- meta: flush_handlers
+
+- assert:
+    that:
+      - role_handler5 is defined
+      - role_handler6 is defined
