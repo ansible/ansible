@@ -103,6 +103,7 @@ options:
         description:
             - A list of DNS options
         type: list
+        version_added: '2.10'
     ip6:
         description:
             - The IPv6 address to this interface.
