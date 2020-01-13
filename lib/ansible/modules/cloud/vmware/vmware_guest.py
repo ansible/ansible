@@ -2278,13 +2278,15 @@ class PyVmomiHelper(PyVmomi):
             return
 
         # do single controller type disks configuration
-        scsi_ctl = self.get_vm_scsi_controllers(vm_obj)[0]
+        scsi_ctls = self.get_vm_scsi_controllers(vm_obj)
 
         # Create scsi controller only if we are deploying a new VM, not a template or reconfiguring
-        if vm_obj is None or scsi_ctl is None:
+        if vm_obj is None or not scsi_ctls:
             scsi_ctl = self.device_helper.create_scsi_controller(self.get_scsi_type(), 0)
             self.change_detected = True
             self.configspec.deviceChange.append(scsi_ctl)
+        else:
+            scsi_ctl = scsi_ctls[0]
 
         disks = [x for x in vm_obj.config.hardware.device if isinstance(x, vim.vm.device.VirtualDisk)] \
             if vm_obj is not None else None

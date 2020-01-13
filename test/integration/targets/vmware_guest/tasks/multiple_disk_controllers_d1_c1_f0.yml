@@ -19,7 +19,7 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: "{{ ds2 }}"
+      datastore: "{{ rw_datastore }}"
   register: one_scsi_disk_vm
 
 - debug: var=one_scsi_disk_vm
@@ -48,12 +48,14 @@
       unit_number: 0
       boot_disk: true
       size_mb: 512
-      datastore: "{{ ds2 }}"
+      type: thin
+      datastore: "{{ rw_datastore }}"
     - controller_type: paravirtual
       controller_number: 1
       unit_number: 0
       size_mb: 256
       type: thin
+      datastore: "{{ rw_datastore }}"
   register: multi_scsi_disk_vm
 
 - debug: var=multi_scsi_disk_vm
@@ -82,16 +84,18 @@
       unit_number: 0
       boot_disk: true
       size_mb: 512
-      datastore: "{{ ds2 }}"
+      datastore: "{{ rw_datastore }}"
     - controller_type: sata
       controller_number: 1
       unit_number: 0
       size_mb: 256
       type: thin
+      datastore: "{{ rw_datastore }}"
     - controller_type: sata
       controller_number: 2
       unit_number: 0
       size_mb: 256
+      datastore: "{{ rw_datastore }}"
   register: multi_sata_disk_vm
 
 - debug: var=multi_sata_disk_vm
@@ -121,16 +125,20 @@
       unit_number: 0
       boot_disk: true
       size_mb: 512
-      datastore: "{{ ds2 }}"
+      type: thin
+      datastore: "{{ rw_datastore }}"
     - controller_type: nvme
       controller_number: 1
       unit_number: 0
       size_mb: 256
       type: thin
+      datastore: "{{ rw_datastore }}"
     - controller_type: nvme
       controller_number: 2
       unit_number: 0
       size_mb: 256
+      type: thin
+      datastore: "{{ rw_datastore }}"
   register: multi_nvme_disk_vm
 
 - debug: var=multi_nvme_disk_vm
@@ -160,16 +168,20 @@
       unit_number: 0
       boot_disk: true
       size_mb: 512
-      datastore: "{{ ds2 }}"
+      type: thin
+      datastore: "{{ rw_datastore }}"
     - controller_type: nvme
       controller_number: 0
       unit_number: 0
       size_mb: 256
       type: thin
+      datastore: "{{ rw_datastore }}"
     - controller_type: sata
       controller_number: 0
       unit_number: 0
       size_mb: 256
+      type: thin
+      datastore: "{{ rw_datastore }}"
   register: multi_disk_vm
 
 - debug: var=multi_disk_vm
