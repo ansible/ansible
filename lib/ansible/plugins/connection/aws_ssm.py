@@ -248,7 +248,7 @@ class Connection(ConnectionBase):
 
     def __init__(self, *args, **kwargs):
         if not HAS_BOTO_3:
-            raise AnsibleError('{0}: {1}'.format(missing_required_lib("ncclient"), HAS_BOTO_3_ERROR))
+            raise AnsibleError('{0}: {1}'.format(missing_required_lib("boto3"), HAS_BOTO_3_ERROR))
 
         super(Connection, self).__init__(*args, **kwargs)
         self.host = self._play_context.remote_addr
