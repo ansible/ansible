@@ -461,6 +461,19 @@ def validate_collection_name(name):
                        "characters from [a-zA-Z0-9_] only." % name)
 
 
+def validate_collection_path(collection_path):
+    """ Ensure a given path ends with 'ansible_collection'
+
+    :param collection_path: The path that should end in 'ansible_collection'
+    :return: collection_path ending in 'ansible_collection' if it does not already.
+    """
+
+    if os.path.split(collection_path)[1] != 'ansible_collections':
+        path = os.path.join(collection_path, 'ansible_collections')
+
+    return path
+
+
 @contextmanager
 def _tempdir():
     b_temp_path = tempfile.mkdtemp(dir=to_bytes(C.DEFAULT_LOCAL_TMP, errors='surrogate_or_strict'))
