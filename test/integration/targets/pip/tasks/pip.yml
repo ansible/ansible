@@ -496,7 +496,10 @@
 
   - name: install distribute in the virtualenv
     pip:
-      name: distribute,setuptools<=44.0.0
+      name:
+        - distribute
+        # setuptools 45.0.0 no longer works with Python 2
+        - setuptools<=44.0.0
       virtualenv: "{{ output_dir }}/pipenv"
       state: present
 
