@@ -382,7 +382,9 @@ def main():
 
     try:
         defaults = OSXDefaults(module=module)
-        module.exit_json(changed=defaults.run())
+        changed = defaults.run()
+        diff = dict(before=dict(value=defaults.current_value), after=dict(value=defaults.value))
+        module.exit_json(changed=changed, diff=diff)
     except OSXDefaultsException as e:
         module.fail_json(msg=e.message)
 
