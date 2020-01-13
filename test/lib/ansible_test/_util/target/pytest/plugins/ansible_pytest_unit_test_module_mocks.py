@@ -1,5 +1,6 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+"""Pytest fixtures for mocking Ansible modules."""
 
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ from ansible.module_utils.common.text.converters import to_bytes
 
 @pytest.fixture
 def patch_ansible_module(request, mocker):
+    """Monkey-patch given Ansible module."""
     request.param = {'ANSIBLE_MODULE_ARGS': request.param}
     request.param['ANSIBLE_MODULE_ARGS']['_ansible_remote_tmp'] = '/tmp'
     request.param['ANSIBLE_MODULE_ARGS']['_ansible_keep_remote_files'] = False
