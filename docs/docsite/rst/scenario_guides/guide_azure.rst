@@ -264,7 +264,6 @@ If you want to create a VM in an availability zone,
 consider the following:
 
 * Both OS disk and data disk must be a 'managed disk', not an 'unmanaged disk'.
-  to create a Virtual Machine in Availability Zones.
 * When creating a Virtual Machine with the azure_rm_virtualmachine,
   you need to specify explicitly managed_disk_type
   to change OS disk to 'Managed Disk'.
