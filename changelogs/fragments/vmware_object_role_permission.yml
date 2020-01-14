@@ -1,0 +1,2 @@
+minor_changes:
+    - Added a object parent to adress non unique object names.
