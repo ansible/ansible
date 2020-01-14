@@ -23,7 +23,7 @@ notes:
     - This module fetches the system id from RHN.
     - This module doesn't support I(check_mode).
 requirements:
-    - python >= 2.7.9 (only for cacert option usage due to use of xmlrpclib context arg added in 2.7.9)
+    - python >= 2.7.9 (only for ca_cert option usage due to use of xmlrpclib context arg added in 2.7.9)
 options:
     name:
         description:
@@ -63,7 +63,7 @@ EXAMPLES = '''
     url: https://rhn.redhat.com/rpc/api
     user: rhnuser
     password: guessme
-    cacert: '/usr/share/rhn/RHN-ORG-TRUSTED-SSL-CERT'
+    ca_cert: '/usr/share/rhn/RHN-ORG-TRUSTED-SSL-CERT'
   delegate_to: localhost
 '''
 
@@ -115,7 +115,7 @@ def main():
             url=dict(type='str', required=True),
             user=dict(type='str', required=True),
             password=dict(type='str', required=True, aliases=['pwd'], no_log=True),
-            cacert=dict(type='str', required=False),
+            ca_cert=dict(type='str', required=False),
         )
     )
 
@@ -127,13 +127,13 @@ def main():
     password = module.params['password']
 
     # initialize connection
-    if module.params['cacert'] is not None and sys.version_info > (2, 7, 9):
+    if module.params['ca_cert'] is not None and sys.version_info > (2, 7, 9):
         ctx = ssl.create_default_context()
-        ctx.load_verify_locations(cafile=module.params['cacert'])
+        ctx.load_verify_locations(cafile=module.params['ca_cert'])
         client = xmlrpc_client.ServerProxy(saturl, context=ctx)
     else:
         if sys.version_info < (2, 7, 9):
-            warnings.warn("cacert option require at least python 2.7.9")
+            warnings.warn("ca_cert option require at least python 2.7.9")
         client = xmlrpc_client.ServerProxy(saturl)
 
     try:
