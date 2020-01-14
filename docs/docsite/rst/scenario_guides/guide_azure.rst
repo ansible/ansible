@@ -260,7 +260,7 @@ virtual network already with an existing subnet, you can run the following to cr
 Creating a Virtual Machine in Availability Zones
 ..................................................
 
-If you want to create a Virtual Machines in Availability Zones,
+If you want to create a VM in an availability zone,
 Note the following:
 
 * Both OS disk and data disk must be a 'Managed Disk', not 'Unmanaged Disk',
