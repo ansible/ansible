@@ -1,9 +1,0 @@
-- name: remove python TLS packages
-  yum:
-    name:
-      - python-urllib3
-      - python2-ndg_httpsclient
-      - pyOpenSSL
-      - 'python-backports*'
-      - python-six
-    state: absent
