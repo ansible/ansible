@@ -179,18 +179,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         # Image
         if server.image is not None:
-            if server.image.id is not None:
-                self.inventory.set_variable(server.name, "image_id", to_native(server.image.id))
-            else:
-                self.inventory.set_variable(server.name, "image_id", to_native("No Image ID found"))
+            self.inventory.set_variable(server.name, "image_id", to_native(server.image.id))
+            self.inventory.set_variable(server.name, "image_os_flavor", to_native(server.image.os_flavor))
             if server.image.name is not None:
                 self.inventory.set_variable(server.name, "image_name", to_native(server.image.name))
             else:
-                self.inventory.set_variable(server.name, "image_name", to_native("No Image Name found"))
-            if server.image.os_flavor is not None:
-                self.inventory.set_variable(server.name, "image_os_flavor", to_native(server.image.os_flavor))
-            else:
-                self.inventory.set_variable(server.name, "image_os_flavor", to_native("No Image OS Flavor found"))
+                self.inventory.set_variable(server.name, "image_name", to_native(server.image.description))
         else:
             self.inventory.set_variable(server.name, "image_id", to_native("No Image ID found"))
             self.inventory.set_variable(server.name, "image_name", to_native("No Image Name found"))
