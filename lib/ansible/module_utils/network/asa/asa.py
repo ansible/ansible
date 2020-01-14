@@ -25,9 +25,11 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+import json
+
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
-from ansible.module_utils.network.common.utils import to_list, EntityCollection
+from ansible.module_utils.network.common.utils import EntityCollection
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.connection import Connection, ConnectionError
 
@@ -81,22 +83,29 @@ def check_args(module):
 
 
 def get_connection(module):
-    global _CONNECTION
-    if _CONNECTION:
-        return _CONNECTION
-    _CONNECTION = Connection(module._socket_path)
+    if hasattr(module, '_asa_connection'):
+        return module._asa_connection
 
-    # Not all modules include the 'context' key.
-    context = module.params.get('context')
+    capabilities = get_capabilities(module)
+    network_api = capabilities.get('network_api')
+    if network_api == 'cliconf':
+        module._asa_connection = Connection(module._socket_path)
+    else:
+        module.fail_json(msg='Invalid connection type %s' % network_api)
 
-    if context:
-        if context == 'system':
-            command = 'changeto system'
-        else:
-            command = 'changeto context %s' % context
-        _CONNECTION.get(command)
+    return module._asa_connection
 
-    return _CONNECTION
+
+def get_capabilities(module):
+    if hasattr(module, '_asa_capabilities'):
+        return module._asa_capabilities
+    try:
+        capabilities = Connection(module._socket_path).get_capabilities()
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+    module._asa_capabilities = json.loads(capabilities)
+
+    return module._asa_capabilities
 
 
 def to_commands(module, commands):
@@ -116,37 +125,56 @@ def to_commands(module, commands):
 
 def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
+    try:
+        return connection.run_commands(commands=commands, check_rc=check_rc)
+    except ConnectionError as exc:
+        module.fail_json(msg=to_text(exc))
 
-    commands = to_commands(module, to_list(commands))
 
-    responses = list()
-
-    for cmd in commands:
-        out = connection.get(**cmd)
-        responses.append(to_text(out, errors='surrogate_then_replace'))
-
-    return responses
-
+# def get_config(module, flags=None):
+#     flags = [] if flags is None else flags
+#
+#     # Not all modules include the 'passwords' key.
+#     passwords = module.params.get('passwords', False)
+#     if passwords:
+#         cmd = 'more system:running-config'
+#     else:
+#         cmd = 'show running-config '
+#         cmd += ' '.join(flags)
+#         cmd = cmd.strip()
+#
+#     try:
+#         return _DEVICE_CONFIGS[cmd]
+#     except KeyError:
+#         conn = get_connection(module)
+#         out = conn.get(cmd)
+#         cfg = to_text(out, errors='surrogate_then_replace').strip()
+#         _DEVICE_CONFIGS[cmd] = cfg
+#         return cfg
 
 def get_config(module, flags=None):
-    flags = [] if flags is None else flags
+    flags = to_list(flags)
 
-    # Not all modules include the 'passwords' key.
-    passwords = module.params.get('passwords', False)
-    if passwords:
-        cmd = 'more system:running-config'
-    else:
-        cmd = 'show running-config '
-        cmd += ' '.join(flags)
-        cmd = cmd.strip()
+    section_filter = False
+    if flags and 'section' in flags[-1]:
+        section_filter = True
+
+    flag_str = ' '.join(flags)
 
     try:
-        return _DEVICE_CONFIGS[cmd]
+        return _DEVICE_CONFIGS[flag_str]
     except KeyError:
-        conn = get_connection(module)
-        out = conn.get(cmd)
+        connection = get_connection(module)
+        try:
+            out = connection.get_config(flags=flags)
+        except ConnectionError as exc:
+            if section_filter:
+                # Some asa devices don't understand `| section foo`
+                out = get_config(module, flags=flags[:-1])
+            else:
+                module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()
-        _DEVICE_CONFIGS[cmd] = cfg
+        _DEVICE_CONFIGS[flag_str] = cfg
         return cfg
 
 
