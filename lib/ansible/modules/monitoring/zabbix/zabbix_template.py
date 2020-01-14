@@ -530,7 +530,7 @@ class Template(object):
                     template.remove(element)
 
         # Filter new lines and indentation
-        xml_root_text = list(line.strip() for line in ET.tostring(parsed_xml_root).split('\n'))
+        xml_root_text = list(line.strip() for line in ET.tostring(parsed_xml_root, encoding='utf8', method='xml').decode().split('\n'))
         return ''.join(xml_root_text)
 
     def load_json_template(self, template_json):
