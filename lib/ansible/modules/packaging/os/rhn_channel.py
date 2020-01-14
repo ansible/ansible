@@ -49,7 +49,7 @@ options:
         description:
             - RHN/Satellite password.
         required: true
-    cacert:
+    ca_cert:
         description:
             - ssl CA certificate for use with spacewalk self signed certificate (require python >= 2.7.9)
         required: False
