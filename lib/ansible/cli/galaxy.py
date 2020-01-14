@@ -22,7 +22,10 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
-from ansible.galaxy.collection import build_collection, install_collections, publish_collection, \
+from ansible.galaxy.collection import (
+    build_collection,
+    install_collections,
+    publish_collection,
     validate_collection_name,
     validate_collection_path,
 )
