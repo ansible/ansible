@@ -1,7 +1,7 @@
 ---
 - name: Reset state
-  cli_config:
-    config: |
+  eos_config:
+    lines: |
       interface Ethernet1
          channel-group 5 mode on
       interface Ethernet2

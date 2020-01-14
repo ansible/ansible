@@ -1,12 +1,17 @@
 ---
 - name: Reset initial config
-  cli_config:
-    config: |
+  eos_config:
+    before:
       no vlan 1-4094
+    defaults: yes
+    match: exact
+    lines: |
       vlan 10
          name ten
+         state active
       vlan 20
          name twenty
+         state active
   become: yes
 
 - eos_facts:
