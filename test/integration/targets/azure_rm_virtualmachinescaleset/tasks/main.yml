@@ -163,6 +163,7 @@
         disk_size_gb: 64
         caching: ReadWrite
         managed_disk_type: Standard_LRS
+    scale_in_policy: "NewestVM"
   register: results
 
 - name: Assert that VMSS was created
@@ -350,6 +351,18 @@
     vmss_name: testVMSS{{ rpfx }}
     instance_id: "{{ instances.instances[0].instance_id }}"
     latest_model: yes
+  register: results
+
+- name: Assert that something has changed
+  assert:
+    that: results.changed
+
+- name: Upgrade instance protection policy
+  azure_rm_virtualmachinescalesetinstance:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    instance_id: "{{ instances.instances[0].instance_id }}"
+    protect_from_scale_in: true
   register: results
 
 - name: Assert that something has changed
