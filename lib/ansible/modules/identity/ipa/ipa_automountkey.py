@@ -26,7 +26,7 @@ options:
     required: false
     type: str
     default: present
-    choices: ["present", "absent"]
+    choices: ["absent", "present"]
   key:
     description: Automount key name.
     required: true
@@ -51,8 +51,8 @@ version_added: "2.10"
 '''
 
 EXAMPLES = '''
-# Ensure that /exports/nas key in auto.direct map is present
-- ipa_automountkey:
+- name: Ensure that /exports/nas key in auto.direct map is present
+  ipa_automountkey:
     state: present
     key: /exports/nas
     mountinformation: '-rw,soft,rsize=8192,wsize=8192 nas-server:/exports/nas/'
@@ -62,8 +62,8 @@ EXAMPLES = '''
     ipa_user: admin
     ipa_pass: topsecret
 
-# Ensure that /exports/nas key in auto.direct map is absent
-- ipa_automountkey:
+- name: Ensure that /exports/nas key in auto.direct map is absent
+  ipa_automountkey:
     state: absent
     key: /exports/nas
     location: default
@@ -78,6 +78,36 @@ automountkey:
   description: Automount Key as returned by IPA API
   returned: always
   type: dict
+  sample:
+    {
+        "result": {
+            "count": 1,
+            "truncated": false,
+            "result": [
+                {
+                    "objectclass": [
+                        "automount",
+                        "top"
+                    ],
+                    "automountkey": [
+                        "/exports/nas"
+                    ],
+                    "dn": "description=/exports/nas,automountmapname=auto.direct,cn=default,cn=automount,dc=example,dc=com",
+                    "description": [
+                        "/exports/nas"
+                    ],
+                    "automountinformation": [
+                        "-rw,soft,rsize=8192,wsize=8192 nfs.example.com:/exports/nas/"
+                    ]
+                }
+            ],
+            "summary": "1 automount key matched"
+        },
+        "version": "4.6.5",
+        "error": null,
+        "id": 0,
+        "principal": "admin@AGSBL.AGS.NATO.INT"
+    }
 '''
 
 import traceback
