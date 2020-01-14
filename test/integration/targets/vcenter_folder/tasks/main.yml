@@ -139,19 +139,6 @@
   register: recreate_yet_another_level
 - debug: var=recreate_yet_another_level
 
-- name: Remove a 3rd level of directory
-  vcenter_folder:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    validate_certs: no
-    datacenter: "{{ dc1 }}"
-    folder_name: yet_another_level
-    parent_folder: vm_folder/sub_vm_folder
-    state: absent
-  register: remove_yet_another_level
-- debug: var=remove_yet_another_level
-
 - debug:
     msg: "{{ all_folder_results }}"
 
@@ -167,6 +154,19 @@
 # Doesn't work with vcsim. Looks like UnregisterAndDestroy isn't supported.
 - when: vcsim is not defined
   block:
+  - name: Remove a 3rd level of directory
+    vcenter_folder:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: no
+      datacenter: "{{ dc1 }}"
+      folder_name: yet_another_level
+      parent_folder: vm_folder/sub_vm_folder
+      state: absent
+    register: remove_yet_another_level
+  - debug: var=remove_yet_another_level
+
   - name: Delete all types of folder
     vcenter_folder:
       hostname: "{{ vcenter_hostname }}"
