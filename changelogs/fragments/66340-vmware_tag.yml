@@ -1,0 +1,2 @@
+bugfixes:
+- Handle multiple tags name with different category id in vmware_tag module (https://github.com/ansible/ansible/issues/66340).
