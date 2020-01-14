@@ -1,7 +1,7 @@
 ---
 - name: Reset state
-  cli_config:
-    config: |
+  eos_config:
+    lines: |
       interface Ethernet1
          switchport access vlan 20
          no switchport trunk native vlan

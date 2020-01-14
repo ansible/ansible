@@ -32,6 +32,8 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.module_utils.network.eos import eos
+from ansible.module_utils.network.nxos import nxos
 from ansible.module_utils.network.common.netconf import NetconfConnection
 from ansible.module_utils.network.common.parsing import Cli
 from ansible.module_utils.six import iteritems
@@ -212,7 +214,11 @@ def get_resource_connection(module):
 
     capabilities = get_capabilities(module)
     network_api = capabilities.get('network_api')
-    if network_api in ('cliconf', 'nxapi', 'eapi', 'exosapi'):
+    if network_api == 'eapi':
+        module._connection = eos.get_connection(module)
+    elif network_api == 'nxapi':
+        module._connection = nxos.get_connection(module)
+    elif network_api in ('cliconf', 'exosapi'):
         module._connection = Connection(module._socket_path)
     elif network_api == 'netconf':
         module._connection = NetconfConnection(module._socket_path)

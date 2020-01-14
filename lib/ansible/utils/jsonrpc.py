@@ -39,7 +39,7 @@ class JsonRpcServer(object):
                 break
 
         if not rpc_method:
-            error = self.method_not_found()
+            error = self.method_not_found(rpc_method)
             response = json.dumps(error)
         else:
             try:
