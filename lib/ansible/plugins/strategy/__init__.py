@@ -160,6 +160,11 @@ class StrategyBase:
     # the throttling internally (as `free` does)
     ALLOW_BASE_THROTTLING = True
 
+    # defines how the strategy handles host/task flow
+    # lockstep: all active hosts in batch are always on the same task
+    # free: active hosts might execute different tasks
+    FLOW = 'lockstep'
+
     def __init__(self, tqm):
         self._tqm = tqm
         self._inventory = tqm.get_inventory()

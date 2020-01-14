@@ -200,11 +200,9 @@ class CallbackModule(CallbackBase):
         if prefix is not None:
             self._task_type_cache[task._uuid] = prefix
 
-        # Preserve task name, as all vars may not be available for templating
-        # when we need it later
-        if self._play.strategy == 'free':
-            # Explicitly set to None for strategy 'free' to account for any cached
-            # task title from a previous non-free play
+        # Preserve task name, as all vars may not be available for templating when we need it later
+        if getattr(self._play.strategy, 'FLOW', 'lockstep')  == 'free':
+            # Explicitly set to None for strategy 'free' flow to account for any cached task title from a previous lockstep play
             self._last_task_name = None
         else:
             self._last_task_name = task.get_name().strip()

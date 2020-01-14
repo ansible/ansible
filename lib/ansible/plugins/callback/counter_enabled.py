@@ -152,7 +152,7 @@ class CallbackModule(CallbackBase):
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
 
-        if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
+        if getattr(self._play.strategy, 'FLOW', 'lockdown')  == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
         if isinstance(result._task, TaskInclude):
@@ -188,7 +188,7 @@ class CallbackModule(CallbackBase):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         self._clean_results(result._result, result._task.action)
 
-        if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
+        if getattr(self._play.strategy, 'FLOW', 'lockdown')  == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
         self._handle_exception(result._result)
@@ -218,7 +218,7 @@ class CallbackModule(CallbackBase):
 
             self._clean_results(result._result, result._task.action)
 
-            if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
+            if getattr(self._play.strategy, 'FLOW', 'lockdown')  == 'free' and self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
             if result._task.loop and 'results' in result._result:
@@ -232,7 +232,7 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_unreachable(self, result):
         self._host_counter += 1
 
-        if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
+        if getattr(self._play.strategy, 'FLOW', 'lockdown')  == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)

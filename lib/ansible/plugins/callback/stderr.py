@@ -49,7 +49,7 @@ class CallbackModule(CallbackModule_default):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         self._clean_results(result._result, result._task.action)
 
-        if self._play.strategy == 'free' and self._last_task_banner != result._task._uuid:
+        if getattr(self._play.strategy, 'FLOW', 'lockdown') == 'free' and self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
         self._handle_exception(result._result, use_stderr=True)
