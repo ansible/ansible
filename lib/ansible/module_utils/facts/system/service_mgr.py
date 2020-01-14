@@ -56,9 +56,8 @@ class ServiceMgrFactCollector(BaseFactCollector):
     def is_systemd_managed_offline(module):
         # tools must be installed
         if module.get_bin_path('systemctl'):
-            # check if /sbin/init is a symlink to systemd, or does not exist
-            if not os.path.exists('/sbin/init'):
-                return True
+            # check if /sbin/init is a symlink to systemd
+            # on SUSE, /sbin/init may be missing if systemd-sysvinit package is not installed.
             if os.path.islink('/sbin/init') and os.path.basename(os.readlink('/sbin/init')) == 'systemd':
                 return True
         return False
