@@ -274,7 +274,7 @@ consider the following:
   Otherwise, the data disk will be 'Unmanaged disk'.
 * 'Managed Disk' does not require 'Storage Account' or 'Storage Container'
   unlike 'Unmanaged Disk'.
-  In particular, note that once a Virtual Machine is created on an 'Unmanaged disk',
+  In particular, note that once a VM is created on an unmanaged disk,
   an unnecessary 'Storage container' named "vhds" is automatically created.
 * When creating an IP address with azure_rm_publicipaddress,
   it is necessary to specify 'standard' in the 'sku' property.
