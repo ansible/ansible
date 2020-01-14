@@ -82,7 +82,7 @@ The following functionality will change in Ansible 2.14. Please update update yo
 * :ref:`iam_policy <iam_policy_module>`: the default value for the ``skip_duplicates`` option will change from ``true`` to ``false``.  To maintain the existing behavior explicitly set it to ``true``.
 * :ref:`iam_role <iam_role_module>`: the ``purge_policies`` option (also know as ``purge_policy``) default value will change from ``true`` to ``false``
 * :ref:`elb_network_lb <elb_network_lb_module>`: the default behaviour for the ``state`` option will change from ``absent`` to ``present``.  To maintain the existing behavior explicitly set state to ``absent``.
-
+* :ref:`vmware_tag_info <vmware_tag_info_module>`: the module will not return ``tag_facts`` since it does not return multiple tags with the same name and different category id. To maintain the existing behavior use ``tag_info`` which is a list of tag metadata.
 
 The following modules will be removed in Ansible 2.14. Please update your playbooks accordingly.
 
