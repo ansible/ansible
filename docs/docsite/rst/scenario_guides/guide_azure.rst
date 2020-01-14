@@ -277,7 +277,7 @@ consider the following:
   In particular, note that once a VM is created on an unmanaged disk,
   an unnecessary storage container named "vhds" is automatically created.
 * When you create an IP address with the ``azure_rm_publicipaddress`` module,
-  it is necessary to specify 'standard' in the 'sku' property.
+  you must set the  ``sku`` parameter to ``standard``.
   Otherwise, the IP address cannot be used in Availability Zones.
 
 
