@@ -140,6 +140,14 @@ $ansible_facts = @{
 
 $osversion = [Environment]::OSVersion
 
+if ($osversion.Version -lt [version]"6.2") {
+    # Server 2008, 2008 R2, and Windows 7 are not tested in CI and we want to let customers know about it before
+    # removing support altogether.
+    $version_string = "{0}.{1}" -f ($osversion.Version.Major, $osversion.Version.Minor)
+    $msg = "Windows version '$version_string' will no longer be supported or tested in the next Ansible release"
+    Add-DeprecationWarning -obj $result -message $msg -version "2.11"
+}
+
 if($gather_subset.Contains('all_ipv4_addresses') -or $gather_subset.Contains('all_ipv6_addresses')) {
     $netcfg = Get-LazyCimInstance Win32_NetworkAdapterConfiguration
 
