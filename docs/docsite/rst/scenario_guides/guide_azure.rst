@@ -261,7 +261,7 @@ Creating a Virtual Machine in Availability Zones
 ..................................................
 
 If you want to create a VM in an availability zone,
-Note the following:
+consider the following:
 
 * Both OS disk and data disk must be a 'Managed Disk', not 'Unmanaged Disk',
   to create a Virtual Machine in Availability Zones.
