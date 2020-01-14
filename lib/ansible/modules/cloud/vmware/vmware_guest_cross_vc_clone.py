@@ -70,7 +70,8 @@ options:
     required: True
   destination_datastore:
     description:
-      - The name of the destination datastore.
+      - The name of the destination datastore or the datastore cluster.
+      - If datastore cluster name is specified, we will find the Storage DRS recommended datastore in that cluster.
     type: str
     required: True
   destination_vm_folder:
@@ -83,6 +84,11 @@ options:
       - '   folder: /datacenter1/vm'
     type: str
     required: True
+  destination_resource_pool:
+    description:
+      - Destination resource pool.
+      - If not provided, the destination host's parent's resource pool will be used.
+    type: str
   power_on:
     description:
       - Whether to power on the VM after cloning
@@ -170,7 +176,7 @@ from ansible.module_utils.vmware import (PyVmomi, find_hostsystem_by_name,
                                          find_datastore_by_name,
                                          find_folder_by_name, find_vm_by_name,
                                          connect_to_api, vmware_argument_spec,
-                                         gather_vm_facts,
+                                         gather_vm_facts, find_obj, find_resource_pool_by_name,
                                          wait_for_task, TaskError)
 from ansible.module_utils._text import to_native
 try:
@@ -243,13 +249,26 @@ class CrossVCCloneManager(PyVmomi):
         if vm:
             self.module.fail_json(msg="A VM with the given name already exists")
 
-        self.destination_datastore = find_datastore_by_name(content=self.destination_content, datastore_name=self.params['destination_datastore'])
+        datastore_name = self.params['destination_datastore']
+        datastore_cluster = find_obj(self.destination_content, [vim.StoragePod], datastore_name)
+        if datastore_cluster:
+            # If user specified datastore cluster so get recommended datastore
+            datastore_name = self.get_recommended_datastore(datastore_cluster_obj=datastore_cluster)
+            # Check if get_recommended_datastore or user specified datastore exists or not
+        self.destination_datastore = find_datastore_by_name(content=self.destination_content, datastore_name=datastore_name)
         if self.destination_datastore is None:
             self.module.fail_json(msg="Destination datastore not found.")
 
         self.destination_host = find_hostsystem_by_name(content=self.destination_content, hostname=self.params['destination_host'])
         if self.destination_host is None:
             self.module.fail_json(msg="Destination host not found.")
+
+        if self.params['destination_resource_pool']:
+            self.destination_resource_pool = find_resource_pool_by_name(
+                content=self.destination_content,
+                resource_pool_name=self.params['destination_resource_pool'])
+        else:
+            self.destination_resource_pool = self.destination_host.parent.resourcePool
 
     def populate_specs(self):
         # populate service locator
@@ -262,7 +281,7 @@ class CrossVCCloneManager(PyVmomi):
 
         # populate relocate spec
         self.relocate_spec.datastore = self.destination_datastore
-        self.relocate_spec.pool = self.destination_host.parent.resourcePool
+        self.relocate_spec.pool = self.destination_resource_pool
         self.relocate_spec.service = self.service_locator
         self.relocate_spec.host = self.destination_host
 
@@ -270,6 +289,46 @@ class CrossVCCloneManager(PyVmomi):
         self.clone_spec.config = self.config_spec
         self.clone_spec.powerOn = self.module.params['power_on']
         self.clone_spec.location = self.relocate_spec
+
+    def get_recommended_datastore(self, datastore_cluster_obj=None):
+        """
+        Function to return Storage DRS recommended datastore from datastore cluster
+        Args:
+            datastore_cluster_obj: datastore cluster managed object
+        Returns: Name of recommended datastore from the given datastore cluster
+        """
+        if datastore_cluster_obj is None:
+            return None
+        # Check if Datastore Cluster provided by user is SDRS ready
+        sdrs_status = datastore_cluster_obj.podStorageDrsEntry.storageDrsConfig.podConfig.enabled
+        if sdrs_status:
+            # We can get storage recommendation only if SDRS is enabled on given datastorage cluster
+            pod_sel_spec = vim.storageDrs.PodSelectionSpec()
+            pod_sel_spec.storagePod = datastore_cluster_obj
+            storage_spec = vim.storageDrs.StoragePlacementSpec()
+            storage_spec.podSelectionSpec = pod_sel_spec
+            storage_spec.type = 'create'
+
+            try:
+                rec = self.content.storageResourceManager.RecommendDatastores(storageSpec=storage_spec)
+                rec_action = rec.recommendations[0].action[0]
+                return rec_action.destination.name
+            except Exception:
+                # There is some error so we fall back to general workflow
+                pass
+        datastore = None
+        datastore_freespace = 0
+        for ds in datastore_cluster_obj.childEntity:
+            if isinstance(ds, vim.Datastore) and ds.summary.freeSpace > datastore_freespace:
+                # If datastore field is provided, filter destination datastores
+                if not self.is_datastore_valid(datastore_obj=ds):
+                    continue
+
+                datastore = ds
+                datastore_freespace = ds.summary.freeSpace
+        if datastore:
+            return datastore.name
+        return None
 
 
 def main():
@@ -289,6 +348,7 @@ def main():
         destination_vcenter_username=dict(type='str', required=True),
         destination_vcenter_password=dict(type='str', required=True),
         destination_vm_folder=dict(type='str', required=True),
+        destination_resource_pool=dict(type='str', default=None),
         power_on=dict(type='bool', default=False)
     )
 

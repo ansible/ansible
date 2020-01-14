@@ -92,6 +92,28 @@
     that:
         - cross_vc_clone_from_vm is changed
 
+- name: clone a VM across VC when datastore cluster is specified
+  vmware_guest_cross_vc_clone:
+    hostname: '{{ destination_vcenter_hostname }}'
+    username: '{{ destination_vcenter_username }}'
+    password: "{{ destination_vcenter_password }}"
+    validate_certs: no
+    name: "test_vm1"
+    destination_vm_name: "cloned_vm_from_vm"
+    destination_vcenter: '{{ destination_vcenter_hostname }}'
+    destination_vcenter_username: '{{ destination_vcenter_username }}'
+    destination_vcenter_password: '{{ destination_vcenter_password }}'
+    destination_host: '{{ destination_esxi1 }}'
+    destination_datastore: '{{ destination_datastore_cluster }}'
+    destination_vm_folder: '{{ destination_vm_folder }}'
+    power_on: yes
+  register: cross_vc_clone_from_vm_with_datastore_cluster
+
+- name: assert that changes were made
+  assert:
+    that:
+        - cross_vc_clone_from_vm_with_datastore_cluster is changed
+
 - name: clone in check mode
   vmware_guest_cross_vc_clone:
     hostname: '{{ vcenter_hostname }}'
