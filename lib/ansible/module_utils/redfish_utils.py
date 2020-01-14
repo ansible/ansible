@@ -1987,20 +1987,18 @@ class RedfishUtils(object):
         target_serial_interface_uri = None
         target_serial_interface_current_setting = None
         for uri in serial_interface_uris:
-            # If serial_interface_id is not specified, set first interface
-            if serial_interface_id in ['null', '']:
-                target_serial_interface_uri = uri
-                break
-
-            # If serial_interface_id is specified, find the interface whose id match with serial_interface_id
+            # Get current setting 
             response = self.get_request(self.root_uri + uri)
             if response['ret'] is False:
                 return response
             data = response['data']
-            if data['Id'] == serial_interface_id:
-                target_serial_interface_uri = uri
-                target_serial_interface_current_setting = data
-                break
+
+            # If serial_interface_id is not specified, set first interface, or
+            # find the interface whose id match with serial_interface_id specified
+            if serial_interface_id in ['null', ''] or data['Id'] == serial_interface_id:
+                 target_serial_interface_uri = uri
+                 target_serial_interface_current_setting = data
+                 break
         if target_serial_interface_uri is None:
             return {'ret': False, 'msg': "No matched SerialInterface found under Manager"}
 
