@@ -32,8 +32,10 @@ options:
     required: yes
     aliases: [ "ipv4_addresses", "ip_addresses", "addresses" ]
 notes:
-  - When setting an empty list of DNS server addresses on an adapter with DHCP enabled, a change will always be registered, since it is not possible to
-    detect the difference between a DHCP-sourced server value and one that is statically set.
+  - In previous versions, when setting an empty list of DNS server addresses on an adapter with DHCP enabled, a change was always registered,
+    however that is no longer the case as of 2.10.
+  - In 2.10, DNS servers will always be reset if the format of servers in the registry is not comma delimited.
+    See: U(https://www.welivesecurity.com/2016/06/02/crouching-tiger-hidden-dns/)
 author:
 - Matt Davis (@nitzmahone)
 '''
@@ -66,5 +68,94 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-
+adapters:
+  description: A list of the adapters as filtered by the I(adapter_names) option.
+  returned: always
+  type: list
+  elements: dict
+  version_added: '2.10'
+  contains:
+    name:
+      description: The name of the network interface.
+      returned: always
+      type: str
+      sample: 'Ethernet 2'
+    interface_index:
+      description: The index of the network interface.
+      returned: always
+      type: int
+      sample: 44
+    interface_guid:
+      description: The GUID of the network interface. This matches its entry in the registry.
+      returned: always
+      type: str
+      sample: '{f652e1cb-98b2-4017-9b6f-c0e51d5dc2cf}'
+    ipv4_DhcpAssignedNameServers:
+      description: The list of IPv4 nameservers that is supplied via DHCP (may not be active if static nameservers are set).
+      returned: when available
+      type: list
+      elements: str
+      sample:
+        - '192.168.1.1'
+        - '172.16.16.16'
+    ipv4_StaticNameServers:
+      description: The list of IPv4 nameservers set statically.
+      returned: when available
+      type: list
+      elements: str
+      sample:
+        - '8.8.8.8'
+        - '8.8.4.4'
+    ipv4_EffectiveNameServers:
+      description: The list of IPv4 nameservers currently in use.
+      returned: when available
+      type: list
+      elements: str
+      sample:
+        - '10.1.2.3'
+        - '10.4.5.6'
+    ipv4_UsingDhcp:
+      description: True if DHCP assigned nameservers are in use for IPv4.
+      returned: when available
+      type: bool
+      sample: True
+    ipv4_NameServerBadFormat:
+      description: True if the IPv4 static nameservers are set using a malicious format that obfuscates them. See U(https://www.welivesecurity.com/2016/06/02/crouching-tiger-hidden-dns/).
+      returned: when available
+      type: bool
+      sample: False
+    ipv6_DhcpAssignedNameServers:
+      description: The list of IPv4 nameservers that is supplied via DHCP (may not be active if static nameservers are set).
+      returned: when available
+      type: list
+      elements: str
+      sample:
+        - '2001:db8::2'
+        - '2001:db8::3'
+    ipv6_StaticNameServers:
+      description: The list of IPv4 nameservers set statically.
+      returned: when available
+      type: list
+      elements: str
+      sample:
+        - '2001:db8::4'
+        - '2001:db8::5'
+    ipv6_EffectiveNameServers:
+      description: The list of IPv4 nameservers currently in use.
+      returned: when available
+      type: list
+      elements: str
+      sample:
+        - '2001:db8::6'
+        - '2001:db8::7'
+    ipv6_UsingDhcp:
+      description: True if DHCP assigned nameservers are in use for IPv6.
+      returned: when available
+      type: bool
+      sample: True
+    ipv6_NameServerBadFormat:
+      description: True if the IPv6 static nameservers are set using a malicious format that obfuscates them. See U(https://www.welivesecurity.com/2016/06/02/crouching-tiger-hidden-dns/).
+      returned: when available
+      type: bool
+      sample: False
 '''
