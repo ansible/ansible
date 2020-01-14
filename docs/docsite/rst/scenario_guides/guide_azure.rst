@@ -275,7 +275,7 @@ consider the following:
 * 'Managed Disk' does not require 'Storage Account' or 'Storage Container'
   unlike 'Unmanaged Disk'.
   In particular, note that once a VM is created on an unmanaged disk,
-  an unnecessary 'Storage container' named "vhds" is automatically created.
+  an unnecessary storage container named "vhds" is automatically created.
 * When creating an IP address with azure_rm_publicipaddress,
   it is necessary to specify 'standard' in the 'sku' property.
   Otherwise, the IP address cannot be used in Availability Zones.
