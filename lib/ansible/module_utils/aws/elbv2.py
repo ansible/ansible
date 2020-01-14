@@ -337,7 +337,6 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
 class NetworkLoadBalancer(ElasticLoadBalancerV2):
 
     def __init__(self, connection, connection_ec2, module):
-
         """
 
         :param connection: boto3 connection
@@ -350,9 +349,13 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
         # Ansible module parameters specific to NLBs
         self.type = 'network'
         self.cross_zone_load_balancing = module.params.get('cross_zone_load_balancing')
+        self.access_logs_enabled = module.params.get('access_logs_enabled')
+        self.access_logs_s3_bucket = module.params.get('access_logs_s3_bucket')
+        self.access_logs_s3_prefix = module.params.get('access_logs_s3_prefix')
 
         if self.elb is not None and self.elb['Type'] != 'network':
-            self.module.fail_json(msg="The load balancer type you are trying to manage is not network. Try elb_application_lb module instead.")
+            self.module.fail_json(msg="The load balancer type you are trying to manage is not network."
+                                      " Try elb_application_lb module instead.")
 
     def create_elb(self):
         """
@@ -395,9 +398,24 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
 
         if self.cross_zone_load_balancing is not None and str(self.cross_zone_load_balancing).lower() != \
                 self.elb_attributes['load_balancing_cross_zone_enabled']:
-            update_attributes.append({'Key': 'load_balancing.cross_zone.enabled', 'Value': str(self.cross_zone_load_balancing).lower()})
-        if self.deletion_protection is not None and str(self.deletion_protection).lower() != self.elb_attributes['deletion_protection_enabled']:
-            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': str(self.deletion_protection).lower()})
+            update_attributes.append({'Key': 'load_balancing.cross_zone.enabled',
+                                      'Value': str(self.cross_zone_load_balancing).lower()})
+        if self.deletion_protection is not None and \
+                str(self.deletion_protection).lower() != self.elb_attributes['deletion_protection_enabled']:
+            update_attributes.append({'Key': 'deletion_protection.enabled',
+                                      'Value': str(self.deletion_protection).lower()})
+        if self.access_logs_enabled is not None and str(self.access_logs_enabled).lower() != \
+                self.elb_attributes['access_logs_s3_enabled']:
+            update_attributes.append({'Key': 'access_logs.s3.enabled',
+                                      'Value': str(self.access_logs_enabled).lower()})
+        if self.access_logs_s3_bucket is not None and self.access_logs_s3_bucket != \
+                self.elb_attributes['access_logs_s3_bucket']:
+            update_attributes.append({'Key': 'access_logs.s3.bucket',
+                                      'Value': self.access_logs_s3_bucket})
+        if self.access_logs_s3_prefix is not None and self.access_logs_s3_prefix != \
+                self.elb_attributes['access_logs_s3_prefix']:
+            update_attributes.append({'Key': 'access_logs.s3.prefix',
+                                      'Value': self.access_logs_s3_prefix})
 
         if update_attributes:
             try:
@@ -406,7 +424,8 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
                 )(LoadBalancerArn=self.elb['LoadBalancerArn'], Attributes=update_attributes)
                 self.changed = True
             except (BotoCoreError, ClientError) as e:
-                # Something went wrong setting attributes. If this ELB was created during this task, delete it to leave a consistent state
+                # Something went wrong setting attributes. If this ELB was created during this task,
+                # delete it to leave a consistent state
                 if self.new_load_balancer:
                     AWSRetry.jittered_backoff()(self.connection.delete_load_balancer)(LoadBalancerArn=self.elb['LoadBalancerArn'])
                 self.module.fail_json_aws(e)

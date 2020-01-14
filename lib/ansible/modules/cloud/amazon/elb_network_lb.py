@@ -21,6 +21,22 @@ version_added: "2.6"
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
+  access_logs_enabled:
+    description:
+        - Indicates whether or not the network load balancer should have Access Logs configured.
+    default: false
+    type: bool
+    version_added: "2.10"
+  access_logs_s3_bucket:
+    description:
+        - The name of the amazon S3 bucket to be used for Access Log delivery.
+    type: str
+    version_added: "2.10"
+  access_logs_s3_prefix:
+    description:
+        - Prefix used for this NLB within the given S3 bucket. For example `prefix/`.
+    type: str
+    version_added: "2.10"
   cross_zone_load_balancing:
     description:
       - Indicates whether cross-zone load balancing is enabled.
@@ -133,6 +149,7 @@ extends_documentation_fragment:
 notes:
   - Listeners are matched based on port. If a listener's port is changed then a new listener will be created.
   - Listener rules are matched based on priority. If a rule's priority is changed then a new rule will be created.
+  - Access Logs S3 bucket must be the same region as the load balancer.
 '''
 
 EXAMPLES = '''
@@ -170,6 +187,23 @@ EXAMPLES = '''
 - elb_network_lb:
     name: myelb
     state: absent
+
+# ELB with S3 Access Logs configured
+- elb_network_lb:
+    name: myelb
+    access_logs_enabled: yes | bool
+    access_logs_s3_bucket: example-access-logs-s3-bucket-name
+    access_logs_s3_prefix: prefix/
+    subnet_mappings:
+      - SubnetId: subnet-012345678
+        AllocationId: eipalloc-aabbccdd
+    listeners:
+      - Protocol: TCP
+        Port: 80
+        DefaultActions:
+          - Type: forward
+            TargetGroupName: mytargetgroup
+    state: present
 
 '''
 
@@ -405,6 +439,9 @@ def main():
 
     argument_spec = (
         dict(
+            access_logs_enabled=dict(type='bool'),
+            access_logs_s3_bucket=dict(type='str'),
+            access_logs_s3_prefix=dict(type='str'),
             cross_zone_load_balancing=dict(type='bool'),
             deletion_protection=dict(type='bool'),
             listeners=dict(type='list',
@@ -431,7 +468,10 @@ def main():
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
-                              mutually_exclusive=[['subnets', 'subnet_mappings']])
+                              mutually_exclusive=[['subnets', 'subnet_mappings']],
+                              required_together=[['access_logs_enabled',
+                                                  'access_logs_s3_bucket',
+                                                  'access_logs_s3_prefix']])
 
     # Check for subnets or subnet_mappings if state is present
     state = module.params.get("state")
