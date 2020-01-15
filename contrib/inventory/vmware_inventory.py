@@ -366,6 +366,7 @@ class VMWareInventory(object):
     def _get_instances(self, inkwargs):
         ''' Make API calls '''
         instances = []
+        si = None
         try:
             si = SmartConnect(**inkwargs)
         except ssl.SSLError as connection_error:
