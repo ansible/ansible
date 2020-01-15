@@ -621,7 +621,6 @@ class HttpApi:
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
         resp = list()
 
-        self.set_module_specific_options()
         self.check_edit_config_capability(candidate, commit, replace, comment)
 
         if replace:
@@ -635,18 +634,6 @@ class HttpApi:
             resp = ['']
 
         return resp
-
-    def set_module_specific_options(self):
-        """Set module-specific options; e.g. minimum timeout requirements.
-        """
-        if self._module._name == 'nxos_gir':
-            gir_timeout = 200
-            conn = self._connection
-            persistent_command_timeout = conn.get_option('persistent_command_timeout')
-            if persistent_command_timeout < gir_timeout:
-                conn.set_option('persistent_command_timeout', gir_timeout)
-                msg = "timeout value extended to %ss for nxos_gir." % gir_timeout
-                self._module.warn(msg)
 
     def get_capabilities(self):
         """Returns platform info of the remove device
