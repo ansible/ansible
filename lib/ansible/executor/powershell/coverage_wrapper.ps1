@@ -176,7 +176,9 @@ try {
         $code_cov_json = ConvertTo-Json -InputObject $coverage_info -Compress
 
         Write-AnsibleLog "INFO - Outputting coverage json to '$coverage_output_path'" "coverage_wrapper"
-        Set-Content -LiteralPath $coverage_output_path -Value $code_cov_json -Encoding $file_encoding
+        # Ansible controller expects these files to be UTF-8 without a BOM, use .NET for this.
+        $utf8_no_bom = New-Object -TypeName System.Text.UTF8Encoding -ArgumentList $false
+        [System.IO.File]::WriteAllbytes($coverage_output_path, $utf8_no_bom.GetBytes($code_cov_json))
     }
 } finally {
     try {
