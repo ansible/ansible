@@ -5,6 +5,25 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.16
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-01-15
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- **SECURITY** - CVE-2019-14904 - solaris_zone module accepts zone name and performs actions related to that. However, there is no user input validation done while performing actions. A malicious user could provide a crafted zone name which allows executing commands into the server manipulating the module behaviour. Adding user input validation as per Solaris Zone documentation fixes this issue.
+- CVE-2019-14905 - nxos_file_copy module accepts remote_file parameter which is used for destination name and performs actions related to that on the device using the value of remote_file which is of string type However, there is no user input validation done while performing actions. A malicious code could crafts the filename parameter to take advantage by performing an OS command injection. This fix validates the option value if it is legitimate file path or not.
+- ansible-test no longer tries to install ``coverage`` 5.0+ since those versions are unsupported
+- ansible-test no longer tries to install ``setuptools`` 45+ on Python 2.x since those versions are unsupported
+- ansible-test now ignores warnings when comparing pip versions before and after integration tests run
+
 v2.7.15
 =======
 

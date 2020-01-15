@@ -672,6 +672,16 @@ releases:
     - 63522-remove-args-from-sumologic-and-splunk-callbacks.yml
     - v2.7.15_summary.yaml
     release_date: '2019-11-13'
+  2.7.16:
+    codename: In the Light
+    fragments:
+    - ansible-test-coverage-constraint.yml
+    - ansible-test-ignore-pip-warnings.yml
+    - ansible-test-setuptools-constraint.yml
+    - nxos_file_copy_path_issue.yml
+    - solaris_zone_name_fix.yml
+    - v2.7.16_summary.yaml
+    release_date: '2020-01-15'
   2.7.2:
     codename: In the Light
     fragments:
