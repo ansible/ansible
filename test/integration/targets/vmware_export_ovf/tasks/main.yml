@@ -61,7 +61,7 @@
       that:
         - "ovf_template.changed == true"
         - "ovf_template.instance.device_files | length >= 1"
-  rescue:
+  always:
   - name: Clean up the temporary dir
     file:
       path: "{{ temp_dir.path }}"
