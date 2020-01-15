@@ -1,0 +1,2 @@
+bugfixes:
+  - ims_rest - be sure to logout for each exit path.

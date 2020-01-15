@@ -408,6 +408,7 @@ def main():
         # Perform actual request
         resp, info = fetch_url(module, url, data=data, method='POST', timeout=timeout)
         if resp is None or info['status'] != 200:
+            logout(module, url, cookie, timeout)
             result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
             module.fail_json(msg='Task failed with error %(status)s: %(msg)s' % info, **result)
 
@@ -424,6 +425,7 @@ def main():
         result['changed'] = ('modified' in results)
 
     # Report success
+    logout(module, url, cookie, timeout)
     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     module.exit_json(**result)
 
