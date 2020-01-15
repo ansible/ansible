@@ -170,8 +170,9 @@ def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, s
             working_path = ''
 
         inventory_path = os.path.join(working_path, get_inventory_relative_path(args))
+        inventory_tuple = inventory_path_src, inventory_path
 
-        if os.path.isfile(inventory_path_src) and os.path.relpath(inventory_path_src, data_context().content.root) != inventory_path:
+        if os.path.isfile(inventory_path_src) and inventory_tuple not in files:
             originals = [item for item in files if item[1] == inventory_path]
 
             if originals:
@@ -182,7 +183,7 @@ def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, s
             else:
                 display.notice('Sourcing inventory file "%s" from "%s".' % (inventory_path, inventory_path_src))
 
-            files.append((inventory_path_src, inventory_path))
+            files.append(inventory_tuple)
 
     data_context().register_payload_callback(inventory_callback)
 
