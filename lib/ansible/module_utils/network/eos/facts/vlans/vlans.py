@@ -63,7 +63,8 @@ class VlansFacts(object):
                 if obj:
                     objs.extend(obj)
 
-        facts = {'vlans': []}
+        ansible_facts['ansible_network_resources'].pop('vlans', None)
+        facts = {}
         if objs:
             params = utils.validate_config(self.argument_spec, {'config': objs})
             facts['vlans'] = [utils.remove_empties(cfg) for cfg in params['config']]

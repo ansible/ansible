@@ -130,13 +130,6 @@ class Interfaces(FactsBase):
         self.facts['all_ipv6_addresses'] = list()
 
         data = self.responses[0]
-        if not isinstance(data, dict):
-            # EAPI kills the whole request on an error.
-            self.COMMANDS.pop()
-            super(Interfaces, self).populate()
-            self.responses.append(None)
-            data = self.responses[0]
-
         self.facts['interfaces'] = self.populate_interfaces(data)
 
         data = self.responses[1]
