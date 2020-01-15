@@ -1464,3 +1464,78 @@ releases:
     - win_iis_webapppool-check-mode.yaml
     - windows-coverage-encoding.yaml
     release_date: '2019-12-04'
+  2.9.3:
+    codename: Immigrant Song
+    fragments:
+    - 58812-support_absolute_paths_additionally.yml
+    - 62374-ec2-clb-group-rules.yml
+    - 63467-docker-stack-return-fix.yml
+    - 63551-yum-single-YumBase-instantiation.yaml
+    - 63650_fix_nxos_vlans.yaml
+    - 63683-dnf-handle-empty-appstream-stream.yml
+    - 63920-vmware_deploy_ovf.yml
+    - 64585-mysql_dont_mask_mysql_connect_errors_from_modules.yml
+    - 64902-fix-allow-duplicates-in-single-role.yml
+    - 65021-65183-elb-bugs.yml
+    - 65044-fix-terraform-no-workspace.yaml
+    - 65145-zabbix_modules_doc.yml
+    - 65176-gitlab-runner-idempotency.yaml
+    - 65238-fix_pacman_stdout_parsing.yml
+    - 65302-dnf-msg-return.yml
+    - 65317-ovirt_vm-udpate-template.yml
+    - 65609-docker-context-manager.yml
+    - 65632-docker-argspec-fixup.yml
+    - 65633-crypto-argspec-fixup.yml
+    - 65679-postgresql_schema_user_query_params_with_cursor.yml
+    - 65701-ovirt_network-correct-external-provider.yml
+    - 65787-postgresql_sequence_use_query_params_with_cursor.yml
+    - 65791-postgresql_modules_use_query_params_with_cursor.yml
+    - 65796_fix_nxos_hsrp_keyerror.yaml
+    - 65839-docker_network-idempotence.yml
+    - 65854-docker_container-wait-for-removal.yml
+    - 65903-postgresql_privs_sort_lists_with_none_elements.yml
+    - 65909_fix_nxos_bgp_neighbor.yaml
+    - 65962_nxos_user_roles_fix.yaml
+    - 65993-restart-docker_container-on-restart-policy-updates.yaml
+    - 66004_fix_nxos_vrf.yaml
+    - 66049_fix_nxos_l3_interfaces_dhcp.yaml
+    - 66088_fix_nxos_vxlan_vtep_vni.yaml
+    - 66094_fix_nxos_snmp_community.yaml
+    - 66095_fix_nxos_ospf_vrf.yaml
+    - 66126_fix_nxos_lag_interfaces_idempotence.yaml
+    - 66128-fix-callback-set-options.yml
+    - 66151-docker_swarm_service-healthcheck-start-period.yml
+    - 66268-cyberarkpassword-fix-invalid-attr.yaml
+    - 66293-routeros_command-username-with-dot-fix.yml
+    - action-plugin-always-cleanup.yml
+    - ansible-galaxy-agent.yaml
+    - ansible-test-coverage-constraint.yml
+    - ansible-test-ignore-pip-warnings.yml
+    - ansible-test-pylint-plugin-paths.yml
+    - ansible-test-setuptools-constraint.yml
+    - collection_loader-sort-plugins.yaml
+    - ec2-filter-dict-iteration.yml
+    - fips-paramiko-import-error.yaml
+    - galaxy-server-list.yaml
+    - gather_facts-warnings.yaml
+    - iosxr_netconf_plugix_fix.yml
+    - logging-traceback.yaml
+    - netconf_plugin_device_handler.yml
+    - network_action_plugin_fixes.yml
+    - network_action_plugin_load.yml
+    - network_cli_enable_fix.yml
+    - nxos_file_copy_path_issue.yml
+    - solaris_zone_name_fix.yml
+    - spec_fix.yml
+    - user-alpine-on-changed-fix.yaml
+    - user-fix-value-comparison-on-macos.yaml
+    - v2.9.3_summary.yaml
+    - win_get_url-redirection.yaml
+    plugins:
+      netconf:
+      - ce
+      - default
+      - iosxr
+      - junos
+      - sros
+    release_date: '2020-01-15'

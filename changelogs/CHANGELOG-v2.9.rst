@@ -5,6 +5,105 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.3
+======
+
+Release Summary
+---------------
+
+| Release Date: 2020-01-15
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Fixed typos in various modules regarding argument_spec data types.
+- dnf - Properly handle module AppStreams that don't define stream (https://github.com/ansible/ansible/issues/63683)
+- docker_container.py - update a containers restart_policy without restarting the container (https://github.com/ansible/ansible/issues/65993)
+- docker_stack - Added ``stdout``, ``stderr``, and ``rc`` to return values.
+- zabbix_* - underlying python module now required in version zabbix-api==0.5.4 (https://github.com/ansible/ansible/pull/65145)
+
+Bugfixes
+--------
+
+- **SECURITY** - CVE-2019-14904 - solaris_zone module accepts zone name and performs actions related to that. However, there is no user input validation done while performing actions. A malicious user could provide a crafted zone name which allows executing commands into the server manipulating the module behaviour. Adding user input validation as per Solaris Zone documentation fixes this issue.
+- ActionBase - Add new ``cleanup`` method that is explicitly run by the ``TaskExecutor`` to ensure that the shell plugins ``tmpdir`` is always removed. This change means that individual action plugins need not be responsible for removing the temporary directory, which ensures that we don't have code paths that accidentally leave behind the temporary directory.
+- CVE-2019-14905 - nxos_file_copy module accepts remote_file parameter which is used for destination name and performs actions related to that on the device using the value of remote_file which is of string type However, there is no user input validation done while performing actions. A malicious code could crafts the filename parameter to take advantage by performing an OS command injection. This fix validates the option value if it is legitimate file path or not.
+- Fix bandwidth calculation in nxos_ospf_vrf for Python 3 (https://github.com/ansible/ansible/pull/66095)
+- Fix for network_cli become method to be compatible with collections
+- Fix how the neighbour password was being defaulted (https://github.com/ansible/ansible/pull/65909)
+- Fix idempotence issue in nxos_lag_interfaces with Python 3 (https://github.com/ansible/ansible/pull/66126)
+- Fix issue where nxos_l3_interfaces was not rendering 'dhcp' in facts (https://github.com/ansible/ansible/pull/66049)
+- Fix issue where nxos_user unintentionally creates user with two different roles (https://github.com/ansible/ansible/pull/65962)
+- Fix issue where purge breaks with empty aggregate (https://github.com/ansible/ansible/pull/66004).
+- Fix issue with callbacks ``set_options`` method that was not called with collections
+- Fix multiple issues with how nxos_vlans Resource Module behaves (https://github.com/ansible/ansible/pull/63650)
+- Fix nxos_hsrp throwing a KeyError for `auth_enc` (https://github.com/ansible/ansible/pull/65796)
+- Fix nxos_vxlan_vtep_vni rendering duplicate peer-ip commands (https://github.com/ansible/ansible/pull/66088)
+- Fix ordering of the commands sent in nxos_snmp_community (https://github.com/ansible/ansible/pull/66094).
+- Fix regular expression to allow dots in username (https://github.com/ansible/ansible/pull/66293)
+- Fixes in network action plugins load from collections using module prefix (https://github.com/ansible/ansible/issues/65071)
+- Fixes in network action plugins to work in network connection plugin and modules in collection
+- Make netconf plugin configurable to set ncclient device handler name in netconf plugin (https://github.com/ansible/ansible/pull/65718)
+- Netconf modules are sending a bad rpc call for IOS-XR (https://github.com/ansible/ansible/issues/64634)
+- Use correct datastore in multi-datacenter environment while using vmware_deploy_ovf (https://github.com/ansible/ansible/issues/63920).
+- When cloning vm from the template it assigned Blank template to it and when rerun playbook it failed.
+- ansible-galaxy - Expand the ``User-Agent`` to include more information and add it to more calls to Galaxy endpoints.
+- ansible-galaxy - Treat the ``GALAXY_SERVER_LIST`` config entry that is defined but with no values as an empty list
+- ansible-test no longer tries to install ``coverage`` 5.0+ since those versions are unsupported
+- ansible-test no longer tries to install ``setuptools`` 45+ on Python 2.x since those versions are unsupported
+- ansible-test now ignores warnings when comparing pip versions before and after integration tests run
+- ansible-test now properly recognizes modules and module_utils in collections when using the ``blacklist`` plugin for the ``pylint`` sanity test
+- collection_loader - sort Windows modules below other plugin types so the correct builtin plugin inside a role is selected (https://github.com/ansible/ansible/issues/65298)
+- cyberarkpassword - fix invalid attribute access (https://github.com/ansible/ansible/issues/66268)
+- display logging - Fix issue where 3rd party modules will print tracebacks when attempting to log information when ``ANSIBLE_LOG_PATH`` is set - https://github.com/ansible/ansible/issues/65249
+- display logging - Fixed up the logging formatter to use the proper prefixes for ``u=user`` and ``p=process``
+- display logging - Re-added the ``name`` attribute to the log formatter so that the source of the log can be seen
+- dnf module - Ensure the modules exit_json['msg'] response is always string, not sometimes a tuple.
+- docker_container - wait for removal of container if docker API returns early (https://github.com/ansible/ansible/issues/65811).
+- docker_image - fix validation of build options.
+- docker_image - improve file handling when loading images from disk.
+- docker_login - fix error handling when ``username`` or ``password`` is not specified when ``state`` is ``present``.
+- docker_network - fix idempotency for multiple IPAM configs of the same IP version (https://github.com/ansible/ansible/issues/65815).
+- docker_network - validate IPAM config subnet CIDR notation on module setup and not during idempotence checking.
+- docker_swarm_service - fix task always reporting as changed when using ``healthcheck.start_period``.
+- ec2_group - Fix regression with revoking security groups in EC2 Classic Load Balancers.
+- ec2_group_info, ec2_vol_info, ec2_vol_info - Fixed RuntimeErrors on Python3.8 when iterating filter dictionaries. (https://github.com/ansible/ansible/issues/65024)
+- elb_application_lb, elb_network_lb - fixed errors during listener rule comparison which caused broken JSON, and which caused some values not being compared correctly. (https://github.com/ansible/ansible/issues/65020)
+- elb_application_lb, elb_network_lb - idempotence check for rules now compares all values order-independently, instead of just comparing the first value if multiple are specified.
+- fact gathering - Display warnings and deprecation messages that are created during the fact gathering phase
+- gitlab_runner - fix idempotency for shared runner
+- mysql - dont mask ``mysql_connect`` function errors from modules (https://github.com/ansible/ansible/issues/64560).
+- openssl_certificate - ``provider`` option was documented as required, but it was not checked whether it was provided. It is now only required when ``state`` is ``present``.
+- ovirt_network: correct external_provider logic - first try to import when not found try to create it
+- pacman - Fix pacman output parsing on localized environment. (https://github.com/ansible/ansible/issues/65237)
+- paramiko - catch and handle exception to prevent stack trace when running in FIPS mode
+- postgresql_privs - fix sorting lists with None elements for python3 (https://github.com/ansible/ansible/issues/65761).
+- postgresql_schema - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65679).
+- postgresql_sequence - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65787).
+- postgresql_set - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65791).
+- postgresql_slot - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65791).
+- roles - Ensure that ``allow_duplicates: true`` enables to run single role multiple times (https://github.com/ansible/ansible/issues/64902)
+- terraform - adding support for absolute paths additionally to the relative path within project_path (https://github.com/ansible/ansible/issues/58578)
+- terraform module - fixes usage for providers not supporting workspaces
+- user - fix comparison on macOS so module does not improperly report a change (https://github.com/ansible/ansible/issues/62969)
+- user - on systems using busybox, honor the ``on_changed`` parameter to prevent unnecessary password changing (https://github.com/ansible/ansible/issues/65711)
+- win_uri win_get_url - Fix the behaviour of ``follow_redirects: safe`` to actual redirect on ``GET`` and ``HEAD`` requests - https://github.com/ansible/ansible/issues/65556
+- yum - performance bugfix, the YumBase object was being  instantiated multiple times unnecessarily, which lead to considerable overhead when operating against large sets of packages.
+
+New Plugins
+-----------
+
+Netconf
+~~~~~~~
+
+- ce - Use ce netconf plugin to run netconf commands on Huawei Cloudengine platform
+- default - Use default netconf plugin to run standard netconf commands as per RFC
+- iosxr - Use iosxr netconf plugin to run netconf commands on Cisco IOSXR platform
+- junos - Use junos netconf plugin to run netconf commands on Juniper JUNOS platform
+- sros - Use Nokia SROS netconf plugin to run netconf commands on Nokia SROS platform
+
 v2.9.2
 ======
 
