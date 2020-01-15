@@ -1,7 +1,7 @@
 ---
 - name: Reset initial config
-  eos_config:
-    lines: |
+  cli_config:
+    config: |
       interface Ethernet1
          description "Interface 1"
          no shutdown
