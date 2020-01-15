@@ -53,7 +53,7 @@ options:
     auto_inflate_enabled:
         description:
             - Value that indicates whether AutoInflate is enabled for eventhub namespace.
-            - Default is C(false) when creation.
+            - Default is C(false) when created.
         type: bool
     maximum_throughput_units:
         description:
@@ -64,7 +64,7 @@ options:
     kafka_enabled:
         description:
             - Value that indicates whether Kafka is enabled for eventhub namespace.
-            - Default is C(false) when creation.
+            - Default is C(false) when created.
             - Cannot be updated after the creation.
         type: bool
 
