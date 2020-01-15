@@ -1,7 +1,7 @@
 ---
 - name: Reset initial config
-  eos_config:
-    lines: |
+  cli_config:
+    config: |
       interface Ethernet1
          lacp port-priority 30
          lacp rate normal
