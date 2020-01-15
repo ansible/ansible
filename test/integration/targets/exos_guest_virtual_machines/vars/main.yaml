@@ -1,0 +1,218 @@
+---
+initial_state:
+  - auto_start: false
+    forceful: false
+    image: /usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2
+    memory_size: 4096
+    name: vm_1
+    num_cores: 1
+    operational_state: started
+    virtual_ports:
+    - name: '57'
+      port: '57'
+      type: vtd
+    - name: VM11-58
+      port: '58'
+      type: sriov
+      vlan_id: '10'
+    vnc:
+      enabled: false
+      port: 0
+  - auto_start: false
+    forceful: false
+    image: /usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2
+    memory_size: 2048
+    name: vm_2
+    num_cores: 2
+    operational_state: stopped
+    virtual_ports:
+    - name: VM21-58
+      port: '58'
+      type: sriov
+      vlan_id: '20'
+    vnc:
+      enabled: true
+      port: 5902
+
+deleted:
+  requests_1:
+    - data: '{"extreme-virtual-service:input": {"forceful": "true", "name": "vm_1"}}'
+      method: POST
+      path: /rest/restconf/operations/extreme-virtual-service:stop
+    - data: '{"extreme-virtual-service:input": {"name": "vm_1"}}'
+      method: POST
+      path: /rest/restconf/operations/extreme-virtual-service:uninstall
+  requests_2:
+    - data: '{"extreme-virtual-service:input": {"name": "vm_2"}}'
+      method: POST
+      path: /rest/restconf/operations/extreme-virtual-service:uninstall
+  after:
+    - auto_start: false
+      forceful: false
+      image: /usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2
+      memory_size: 2048
+      name: vm_2
+      num_cores: 2
+      operational_state: stopped
+      virtual_ports:
+      - name: VM21-58
+        port: '58'
+        type: sriov
+        vlan_id: '20'
+      vnc:
+        enabled: true
+        port: 5902
+
+merged:
+  requests:
+    - data: '{"extreme-virtual-service:input": {"name": "vm_4", "package": "/usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2"}}'
+      method: POST
+      path: /rest/restconf/operations/extreme-virtual-service:install
+    - data: '{"extreme-virtual-service:vport": [{"port": 58, "vlans": {"vlan": [{"id": 40}]}, "name": "VM41-58", "connect-type": "SRIOV"}]}'
+      method: POST
+      path: /rest/restconf/data/extreme-virtual-service:virtual-services-config/virtual-service-config=vm_4/vports
+    - data: '{"extreme-virtual-service:virtual-service-config": [{"vnc-port": 5904, "memory-size": 2048, "num-cores": 2}]}'
+      method: PATCH
+      path: /rest/restconf/data/extreme-virtual-service:virtual-services-config/virtual-service-config=vm_4
+    - data: '{"extreme-virtual-service:input": {"name": "vm_4"}}'
+      method: POST
+      path: /rest/restconf/operations/extreme-virtual-service:start
+  after:
+    - auto_start: false
+      forceful: false
+      image: /usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2
+      memory_size: 4096
+      name: vm_1
+      num_cores: 1
+      operational_state: started
+      virtual_ports:
+        - name: '57'
+          port: '57'
+          type: vtd
+        - name: VM11-58
+          port: '58'
+          type: sriov
+          vlan_id: '10'
+      vnc:
+        enabled: false
+        port: 0
+    - auto_start: false
+      forceful: false
+      image: /usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2
+      memory_size: 2048
+      name: vm_2
+      num_cores: 2
+      operational_state: stopped
+      virtual_ports:
+        - name: VM21-58
+          port: '58'
+          type: sriov
+          vlan_id: '20'
+      vnc:
+        enabled: true
+        port: 5902
+    - auto_start: false
+      forceful: false
+      image: /usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2
+      memory_size: 2048
+      name: vm_4
+      num_cores: 2
+      operational_state: started
+      virtual_ports:
+        - name: VM41-58
+          port: '58'
+          type: sriov
+          vlan_id: '40'
+      vnc:
+        enabled: true
+        port: 5904
+overridden:
+  requests:
+    - data: '{"extreme-virtual-service:vport": [{"port": 58, "vlans": {"vlan": [{"id": 20}]}, "name": "VM22-58", "connect-type": "SRIOV"}]}'
+      method: POST
+      path: /rest/restconf/data/extreme-virtual-service:virtual-services-config/virtual-service-config=vm_2/vports
+    - data: '{"extreme-virtual-service:vport": [{"name": "mgmt", "connect-type": "BRIDGE"}]}'
+      method: POST
+      path: /rest/restconf/data/extreme-virtual-service:virtual-services-config/virtual-service-config=vm_2/vports
+    - data: '{"extreme-virtual-service:virtual-service-config": [{"memory-size": 4096, "num-cores": 1}]}'
+      method: PATCH
+      path: /rest/restconf/data/extreme-virtual-service:virtual-services-config/virtual-service-config=vm_2
+    - data: '{"extreme-virtual-service:input": {"name": "vm_2"}}'
+      method: POST
+      path: /rest/restconf/operations/extreme-virtual-service:start
+    - data: '{"extreme-virtual-service:input": {"forceful": "true", "name": "vm_1"}}'
+      method: POST
+      path: /rest/restconf/operations/extreme-virtual-service:stop
+    - data: '{"extreme-virtual-service:input": {"name": "vm_1"}}'
+      method: POST
+      path: /rest/restconf/operations/extreme-virtual-service:uninstall
+  after:
+    - auto_start: false
+      forceful: false
+      image: /usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2
+      memory_size: 4096
+      name: vm_2
+      num_cores: 1
+      operational_state: started
+      virtual_ports:
+        - name: mgmt
+          port: mgmt
+          type: bridge
+        - name: VM22-58
+          port: '58'
+          type: sriov
+          vlan_id: '20'
+        - name: VM21-58
+          port: '58'
+          type: sriov
+          vlan_id: '20'
+      vnc:
+        enabled: true
+        port: 5902
+replaced:
+  requests:
+    - data: '{"extreme-virtual-service:virtual-service-config": [{"memory-size": 4096, "num-cores": 1}]}'
+      method: PATCH
+      path: /rest/restconf/data/extreme-virtual-service:virtual-services-config/virtual-service-config=vm_2
+    - data: '{"extreme-virtual-service:vport": [{"port": 58, "name": "VM22-58", "connect-type": "SRIOV"}]}'
+      method: POST
+      path: /rest/restconf/data/extreme-virtual-service:virtual-services-config/virtual-service-config=vm_2/vports
+    - data: null
+      method: DELETE
+      path: /rest/restconf/data/extreme-virtual-service:virtual-services-config/virtual-service-config=vm_2/vports/vport=VM21-58
+    - data: '{"extreme-virtual-service:input": {"name": "vm_2"}}'
+      method: POST
+      path: /rest/restconf/operations/extreme-virtual-service:start
+  after:
+    - auto_start: false
+      forceful: false
+      image: /usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2
+      memory_size: 4096
+      name: vm_1
+      num_cores: 1
+      operational_state: started
+      virtual_ports:
+        - name: '57'
+          port: '57'
+          type: vtd
+        - name: VM11-58
+          port: '58'
+          type: sriov
+          vlan_id: '10'
+      vnc:
+        enabled: false
+        port: 0
+    - auto_start: false
+      forceful: false
+      image: /usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2
+      memory_size: 4096
+      name: vm_2
+      num_cores: 1
+      operational_state: started
+      virtual_ports:
+        - name: VM22-58
+          port: '58'
+          type: sriov
+      vnc:
+        enabled: true
+        port: 5902

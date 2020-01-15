@@ -1,0 +1,11 @@
+---
+- name: Populate config
+  exos_config:
+    lines:
+      - create vm vm_1 image /usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2 cpus 1 memory 4096 
+      - create vm vm_2 image /usr/local/vm/packages/TPVM_Ubuntu16.04_25Feb2019.qcow2 cpus 2 memory 2048 vnc 2
+      - configure vm vm_1 add ports 57
+      - configure vm vm_1 add virtual-interface port 58 name VM11-58 vlan 10
+      - configure vm vm_2 add virtual-interface port 58 name VM21-58 vlan 20
+      - start vm vm_1
+        #- start vm vm_2

@@ -1,0 +1,19 @@
+---
+- name: Collect all vms available
+  exos_facts:
+    gather_network_resources: guest_virtual_machines
+
+- name: Stop all active vms
+  exos_config:
+    lines:
+      - stop vm "{{ item.name }}" forceful
+  when: "{{ item.operational_state == 'started' }}"
+  with_items: "{{ ansible_facts.network_resources.guest_virtual_machines }}"
+  ignore_errors: yes
+
+- name: Delete all vms
+  exos_config:
+    lines:
+      - delete vm "{{ item.name }}"
+  with_items: "{{ ansible_facts.network_resources.guest_virtual_machines }}"
+  ignore_errors: yes

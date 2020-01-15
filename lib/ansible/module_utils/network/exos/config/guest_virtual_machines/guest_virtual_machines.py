@@ -159,12 +159,12 @@ class Guest_virtual_machines(ConfigBase):
                                 existing_vports = self._compare_vports(w["virtual_ports"], h["virtual_ports"])
                             for vport in w["virtual_ports"]:
                                 self._compare_dedicated_ports(vport, have)
-                                if vport not in existing_vports:
+                                if vport["name"] not in existing_vports:
                                     request_post_vport = self._update_vport_request(vport, w["name"], have)
                                     request_post_vport["data"] = json.dumps(request_post_vport["data"])
                                     requests.append(request_post_vport)
                             for vport in h["virtual_ports"]:
-                                if vport not in existing_vports:
+                                if vport["name"] not in existing_vports:
                                     request_delete_vport = self._update_vport_delete_request(vport, w["name"])
                                     requests.append(request_delete_vport)
                         request_patch = self._update_existing_config(diff, h, w, have)
@@ -197,14 +197,10 @@ class Guest_virtual_machines(ConfigBase):
                                 existing_vports = self._compare_vports(w["virtual_ports"], h["virtual_ports"])
                             for vport in w["virtual_ports"]:
                                 self._compare_dedicated_ports(vport, have)
-                                if vport not in existing_vports:
+                                if vport["name"] not in existing_vports:
                                     request_post_vport = self._update_vport_request(vport, w["name"], have)
                                     request_post_vport["data"] = json.dumps(request_post_vport["data"])
                                     requests.append(request_post_vport)
-                            for vport in h["virtual_ports"]:
-                                if vport not in existing_vports:
-                                    request_delete_vport = self._update_vport_delete_request(vport, w["name"])
-                                    requests.append(request_delete_vport)
                         request_patch = self._update_existing_config(diff, h, w, have)
                         requests.extend(request_patch)
                 else:
@@ -215,6 +211,7 @@ class Guest_virtual_machines(ConfigBase):
             if h not in have_copy:
                 if h['operational_state'] == 'started':
                     request_stop = self._update_stop_request(h)
+                    request_stop["data"]["extreme-virtual-service:input"]["forceful"] = str(True).lower()
                     request_stop["data"] = json.dumps(request_stop["data"])
                     requests.append(request_stop)
                 request_delete = self._update_delete_request(h)
@@ -243,7 +240,7 @@ class Guest_virtual_machines(ConfigBase):
                                 existing_vports = self._compare_vports(w["virtual_ports"], h["virtual_ports"])
                             for vport in w["virtual_ports"]:
                                 self._compare_dedicated_ports(vport, have)
-                                if vport not in existing_vports:
+                                if vport["name"] not in existing_vports:
                                     request_post_vport = self._update_vport_request(vport, w["name"], have)
                                     request_post_vport["data"] = json.dumps(request_post_vport["data"])
                                     requests.append(request_post_vport)
@@ -356,7 +353,7 @@ class Guest_virtual_machines(ConfigBase):
                 request_patch["data"]["extreme-virtual-service:virtual-service-config"][0]["vnc-port"] = diff["vnc"]["port"]
             else:
                 request_patch["data"]["extreme-virtual-service:virtual-service-config"][0]["vnc-port"] = 0
-        if diff.get("auto_start") or not diff.get("auto_start"):
+        if diff.get("auto_start"):
             request_patch["data"]["extreme-virtual-service:virtual-service-config"][0]["enable"] = str(diff["auto_start"]).lower()
 
         return request_patch
@@ -371,9 +368,9 @@ class Guest_virtual_machines(ConfigBase):
             if len(insight_port_vf) >= 16:
                 self._module.fail_json(msg="Port %s already has 16 active VFs" % str(vport["port"]))
             request_post_vport["data"]["extreme-virtual-service:vport"][0]["port"] = vport["port"]
-            if vport.get("vlan"):
+            if vport.get("vlan_id"):
                 vlan = deepcopy(self.VM_POST_VPORT_VLAN)
-                vlan["vlan"][0]["id"] = vport["vlan"]
+                vlan["vlan"][0]["id"] = vport["vlan_id"]
                 request_post_vport["data"]["extreme-virtual-service:vport"][0]["vlans"] = vlan
 
         return request_post_vport
@@ -398,7 +395,7 @@ class Guest_virtual_machines(ConfigBase):
         for w in wvport:
             for h in hvport:
                 if w["name"] == h["name"]:
-                    vports.append(w)
+                    vports.append(w["name"])
         return vports
 
     def _compare_dedicated_ports(self, wvport, have):
@@ -431,10 +428,13 @@ class Guest_virtual_machines(ConfigBase):
         if request_patch["data"]["extreme-virtual-service:virtual-service-config"][0]:
             request_patch["data"] = json.dumps(request_patch["data"])
             requests.append(request_patch)
-        if w.get("operational_state") == "started" and not w.get("auto_start"):
-            request_start = self._update_start_request(w)
-            request_start["data"] = json.dumps(request_start["data"])
-            requests.append(request_start)
+        if w.get("operational_state") == "started":
+            if w.get("auto_start"):
+                pass
+            else:
+                request_start = self._update_start_request(w)
+                request_start["data"] = json.dumps(request_start["data"])
+                requests.append(request_start)
         if w.get("operational_state") == "stopped" and w.get("auto_start"):
             request_stop = self._update_stop_request(w)
             request_stop["data"] = json.dumps(request_stop["data"])
@@ -454,12 +454,9 @@ class Guest_virtual_machines(ConfigBase):
 
         if diff.get("operational_state"):
             if diff["operational_state"] == "stopped" and h["operational_state"] == "started":
-                if not diff.get("auto_start"):
-                    return requests
-                else:
-                    request_stop = self._update_stop_request(w)
-                    request_stop["data"] = json.dumps(request_stop["data"])
-                    requests.append(request_stop)
+                request_stop = self._update_stop_request(w)
+                request_stop["data"] = json.dumps(request_stop["data"])
+                requests.append(request_stop)
             elif diff["operational_state"] == "started" and h["operational_state"] == "stopped":
                 if diff.get("auto_start"):
                     return requests
@@ -478,12 +475,7 @@ class Guest_virtual_machines(ConfigBase):
                         request_start["data"] = json.dumps(request_start["data"])
                         requests.append(request_start)
                 elif h["operational_state"] == "started":
-                    if not diff.get("auto_start"):
-                        request_start = self._update_start_request(w)
-                        request_start["data"] = json.dumps(request_start["data"])
-                        requests.append(request_start)
-                    else:
-                        request_restart = self._update_restart_request(w)
-                        request_restart["data"] = json.dumps(request_restart["data"])
-                        requests.append(request_restart)
+                    request_restart = self._update_restart_request(w)
+                    request_restart["data"] = json.dumps(request_restart["data"])
+                    requests.append(request_restart)
         return requests

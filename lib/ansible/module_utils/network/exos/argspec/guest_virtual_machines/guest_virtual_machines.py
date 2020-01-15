@@ -40,11 +40,11 @@ class Guest_virtual_machinesArgs(object):  # pylint: disable=R0903
         'config': {
             'elements': 'dict',
             'options': {
-                'auto_start': {'type': 'bool'},
-                'forceful': {'type': 'bool'},
+                'auto_start': {'type': 'bool', 'default': 'False'},
+                'forceful': {'type': 'bool', 'default': 'False'},
                 'image': {'type': 'str'},
                 'memory_size': {'type': 'int'},
-                'name': {'type': 'str'},
+                'name': {'type': 'str', 'required': True},
                 'num_cores': {'type': 'int'},
                 'operational_state': {
                     'choices': ['started',
@@ -53,17 +53,18 @@ class Guest_virtual_machinesArgs(object):  # pylint: disable=R0903
                     'type': 'str'},
                 'virtual_ports': {
                     'options': {
-                        'name': {'type': 'str'},
+                        'name': {'type': 'str', 'required': True},
                         'port': {'type': 'str'},
                         'type': {'choices': ['vtd',
                                              'sriov',
                                              'bridge'],
-                                 'type': 'str'},
-                        'vlan': {'type': 'int'}},
-                    'type': 'dict'},
+                                 'type': 'str',
+                                 'required': True},
+                        'vlan_id': {'type': 'int'}},
+                    'type': 'list'},
                 'vnc': {
                     'options': {
-                        'enabled': {'type': 'bool'},
+                        'enabled': {'type': 'bool', 'default': 'False'},
                         'port': {'type': 'int'}},
                     'type': 'dict'}},
             'type': 'list'},

@@ -109,7 +109,7 @@ class Guest_virtual_machinesFacts(object):
                 config_vport["type"] = conf_vport[num].get("connect-type").lower()
                 config_vport["port"] = conf_vport[num].get("port")
                 if conf_vport[num].get("vlans"):
-                    config_vport["vlan"] = conf_vport[num]["vlans"]["vlan"][0]["id"]
+                    config_vport["vlan_id"] = conf_vport[num]["vlans"]["vlan"][0]["id"]
                 config["virtual_ports"].append(config_vport)
         config["vnc"]["enabled"] = False if conf1["vnc-port"] == 0 else True
         config["vnc"]["port"] = conf1["vnc-port"]

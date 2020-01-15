@@ -60,6 +60,7 @@ options:
         description:
           - Name of the virtual machine
         type: str
+        required: True
       image:
         description:
           - Name and location of the image on the switch to be installed
@@ -78,17 +79,18 @@ options:
           - Only local Insight ports can be assigned as a dedicated port (type - vtd) or a virtual interface (type - sriov).
           - An Insight port assigned as a dedicated port to a VM cannot be used to define a virtual interface for any VM or vice versa.
           - An Insight port can have maximum of 16 active virtual interfaces associated with it at a time.
-        type: dict
+        type: list
         suboptions:
           name:
             description:
               - Name of the virtual port interface
             type: str
+            required: True
           port:
             description:
               - Port associated with the virtual port
             type: str
-          vlan:
+          vlan_id:
             description:
               - Vlan to which the virtual port is to be attached
             type: int
@@ -100,6 +102,7 @@ options:
               - vtd
               - sriov
               - bridge
+            required: True
       vnc:
         description:
           - VNC configuration for the virtual machine.
@@ -109,6 +112,7 @@ options:
             description:
               - Enable/disable VNC port access for the virtual machine
             type: bool
+            default: False
           port:
             description:
               - VNC port number to be assigned to the Virtual machine. Possible range is 5900 to 5915
@@ -117,6 +121,7 @@ options:
         description:
           - Auto-start virtual machine on boot
         type: bool
+        default: False
       operational_state:
         description:
           - State the virtual machine should be left in
@@ -129,6 +134,7 @@ options:
         description:
           - Forcefully stop/restart the virtual machine. Used with stop and restart operational_state.
         type: bool
+        default: False
   state:
     description:
       - The state the configuration should be left in
