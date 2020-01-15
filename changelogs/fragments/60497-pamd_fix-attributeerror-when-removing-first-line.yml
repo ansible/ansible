@@ -1,2 +1,0 @@
-bugfixes:
-- "pamd - Bugfix for attribute error when removing the first line. In this fix, the prev/next attribute of pamd_line is explicitly set to None."
