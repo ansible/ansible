@@ -115,3 +115,116 @@
       that:
         - not no_nw_details.changed
         - no_nw_details.failed
+
+  - name: Change portgroup to dvPortgroup
+    vmware_guest_network:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: test_vm1
+      networks:
+        - name: "{{ dvpg1 }}"
+          label: "Network adapter 1"
+          connected: false
+          start_connected: true
+          state: present
+    register: change_netaddr_dvp
+
+  - debug: var=change_netaddr_dvp
+
+  - name: Check changed to dvPortgroup from PortGroup
+    assert:
+      that:
+        - change_netaddr_dvp.changed is sameas true
+
+  - name: Change portgroup to dvPortgroup
+    vmware_guest_network:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: test_vm1
+      networks:
+        - name: "{{ dvpg1 }}"
+          label: "Network adapter 1"
+          connected: false
+          start_connected: true
+          state: present
+    register: change_netaddr_dvp
+
+  - debug: var=change_netaddr_dvp
+
+  - name: Check not changed of dvPortgroup
+    assert:
+      that:
+        - change_netaddr_dvp.changed is sameas false
+
+  - name: Change dvPortgroup to PortGroup
+    vmware_guest_network:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: test_vm1
+      networks:
+        - name: "VM Network"
+          label: "Network adapter 1"
+          connected: false
+          start_connected: true
+          state: present
+    register: change_netaddr_pg
+
+  - debug: var=change_netaddr_pg
+
+  - name: Check changed to dvPortgroup from PortGroup
+    assert:
+      that:
+        - change_netaddr_pg.changed is sameas true
+        - change_netaddr_pg.network_data['0'].name == "VM Network"
+
+  - name: Change dvPortgroup to PortGroup
+    vmware_guest_network:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: test_vm1
+      networks:
+        - name: "VM Network"
+          label: "Network adapter 1"
+          connected: false
+          start_connected: true
+          state: present
+    register: change_netaddr_pg
+
+  - debug: var=change_netaddr_pg
+
+  - name: Check not changed of PortGroup
+    assert:
+      that:
+        - change_netaddr_pg.changed is sameas false
+        - change_netaddr_pg.network_data['0'].name == "VM Network"
+
+  # https://github.com/ansible/ansible/issues/65968
+  - name: Create a network with dvPortgroup
+    vmware_guest_network:
+      validate_certs: False
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      name: test_vm1
+      networks:
+        - name: "{{ dvpg1 }}"
+          label: "Network adapter 2"
+          connected: true
+          start_connected: true
+          state: new
+    register: create_netaddr_pg
+
+  - debug: var=create_netaddr_pg
+
+  - name: Check if network is created with dvpg
+    assert:
+      that:
+        - create_netaddr_pg.changed is sameas true

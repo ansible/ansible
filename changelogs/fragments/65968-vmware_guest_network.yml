@@ -1,0 +1,2 @@
+bugfixes:
+- In vmware_guest_network module use appropriate network while creating or reconfiguring (https://github.com/ansible/ansible/issues/65968).

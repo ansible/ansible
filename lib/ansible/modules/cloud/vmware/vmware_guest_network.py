@@ -256,9 +256,27 @@ class PyVmomiHelper(PyVmomi):
         nic = vim.vm.device.VirtualDeviceSpec()
         nic.device = self.get_device_type(device_type=device_info.get('device_type', 'vmxnet3'))
         nic.device.deviceInfo = vim.Description()
-        nic.device.deviceInfo.summary = device_info['name']
-        nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
-        nic.device.backing.deviceName = device_info['name']
+        network_object = self.find_network_by_name(network_name=device_info['name'])[0]
+        if network_object:
+            if hasattr(network_object, 'portKeys'):
+                # DistributedVirtualPortGroup
+                nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+                nic.device.backing.port = vim.dvs.PortConnection()
+                nic.device.backing.port.switchUuid = network_object.config.distributedVirtualSwitch.uuid
+                nic.device.backing.port.portgroupKey = network_object.key
+            elif isinstance(network_object, vim.OpaqueNetwork):
+                # NSX-T Logical Switch
+                nic.device.backing = vim.vm.device.VirtualEthernetCard.OpaqueNetworkBackingInfo()
+                network_id = network_object.summary.opaqueNetworkId
+                nic.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
+                nic.device.backing.opaqueNetworkId = network_id
+                nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
+            else:
+                # Standard vSwitch
+                nic.device.deviceInfo.summary = device_info['name']
+                nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
+                nic.device.backing.deviceName = device_info['name']
+                nic.device.backing.network = network_object
         nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
         nic.device.connectable.startConnected = device_info.get('start_connected', True)
         nic.device.connectable.allowGuestControl = True
@@ -402,9 +420,31 @@ class PyVmomiHelper(PyVmomi):
                             if 'connected' in network and nic_device.connectable.connected != network['connected']:
                                 nic_device.connectable.connected = network['connected']
                                 self.change_detected = True
-                            if 'name' in network and nic_device.deviceInfo.summary != network['name']:
-                                nic_device.deviceInfo.summary = network['name']
-                                self.change_detected = True
+                            if 'name' in network:
+                                network_object = self.find_network_by_name(network_name=network['name'])[0]
+                                if network_object and hasattr(network_object, 'portKeys') and hasattr(nic_spec.device.backing, 'port'):
+                                    if network_object.config.distributedVirtualSwitch.uuid != nic_spec.device.backing.port.switchUuid:
+                                        # DistributedVirtualPortGroup
+                                        nic_spec.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
+                                        nic_spec.device.backing.port = vim.dvs.PortConnection()
+                                        nic_spec.device.backing.port.switchUuid = network_object.config.distributedVirtualSwitch.uuid
+                                        nic_spec.device.backing.port.portgroupKey = network_object.key
+                                        self.change_detected = True
+                                elif network_object and isinstance(network_object, vim.OpaqueNetwork) and hasattr(nic_spec.device.backing, 'opaqueNetworkId'):
+                                    if nic_spec.device.backing.opaqueNetworkId != network_object.summary.opaqueNetworkId:
+                                        # NSX-T Logical Switch
+                                        nic_spec.device.backing = vim.vm.device.VirtualEthernetCard.OpaqueNetworkBackingInfo()
+                                        network_id = network_object.summary.opaqueNetworkId
+                                        nic_spec.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
+                                        nic_spec.device.backing.opaqueNetworkId = network_id
+                                        nic_spec.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
+                                        self.change_detected = True
+                                elif nic_device.deviceInfo.summary != network['name']:
+                                    # Standard vSwitch
+                                    nic_spec.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
+                                    nic_spec.device.backing.deviceName = network['name']
+                                    nic_spec.device.backing.network = network_object
+                                    self.change_detected = True
                             if 'manual_mac' in network and nic_device.macAddress != network['manual_mac']:
                                 if vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOff:
                                     self.module.fail_json(msg='Expected power state is poweredOff to reconfigure MAC address')
