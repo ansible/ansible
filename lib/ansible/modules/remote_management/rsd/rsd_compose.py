@@ -206,16 +206,22 @@ node:
     contains:
         Id:
             description: Composed node ID
+            type: str
         Name:
             description: Composed node name
+            type: str
         Description:
             description: Description associated with the node
+            type: str
         UUID:
             description: The resource UUID assigned by PODM
+            type: str
         PowerState:
             description: Current power state
+            type: str
         ComposedNodeState:
             description: State of the composed node
+            type: str
 
     sample:
         "Id": "Node1"
