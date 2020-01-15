@@ -94,6 +94,11 @@ class CollectionRequirement:
         return u"%s.%s" % (self.namespace, self.name)
 
     @property
+    def metadata(self):
+        self._get_metadata()
+        return self._metadata
+
+    @property
     def latest_version(self):
         try:
             return max([v for v in self.versions if v != '*'], key=LooseVersion)
