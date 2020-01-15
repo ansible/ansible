@@ -51,7 +51,6 @@ options:
   node:
     description:
       - erlang node name of the rabbit we wish to configure
-    default: rabbit
     version_added: "1.2"
   configure_priv:
     description:
@@ -249,7 +248,7 @@ def main():
         read_priv=dict(default='^$'),
         force=dict(default='no', type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
-        node=dict(default='rabbit'),
+        node=dict(default=None),
         update_password=dict(default='on_create', choices=['on_create', 'always'])
     )
     module = AnsibleModule(
