@@ -49,6 +49,16 @@
           - host_ipv6_info_check_mode is defined
           - not (host_ipv6_info_check_mode is changed)
 
+    - name: Reset the status again
+      vmware_host_ipv6:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ ccr1 }}"
+        validate_certs: no
+        state: disabled
+      register: host_ipv6_info
+
     - name: Enable IPv6 support for all hosts in given cluster
       vmware_host_ipv6:
         hostname: "{{ vcenter_hostname }}"
