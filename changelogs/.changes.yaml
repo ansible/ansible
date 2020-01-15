@@ -1994,3 +1994,39 @@ releases:
     - win_iis_website-restarted.yaml
     - win_partition-var.yaml
     release_date: '2019-11-13'
+  2.8.8:
+    codename: How Many More Times
+    fragments:
+    - 59887-scale-bug.yml
+    - 62348-yarn-no_version_install_fix.yml
+    - 63551-yum-single-YumBase-instantiation.yaml
+    - 63621-gitlab_user-fix-sshkey-and-user.yml
+    - 64397-netscaler_service-bugfix.yml
+    - 64648-acme_certificate-acmev1.yml
+    - 64902-fix-allow-duplicates-in-single-role.yml
+    - 64940_update_modules_docs_notes.yml
+    - 64941_update_modules_docs_notes.yml
+    - 64942_update_modules_docs_notes.yml
+    - 64943_update_modules_docs_notes.yml
+    - 64944_update_modules_docs_notes.yml
+    - 64945_update_modules_docs_notes.yml
+    - 65017-openssh_keypair-idempotence.yml
+    - 65018-docker-none-errors.yml
+    - 65065-plugins-netconf-ce-fix.yaml
+    - 65176-gitlab-runner-idempotency.yaml
+    - 65302-dnf-msg-return.yml
+    - 65435-openssl_csr-privatekey_path-required.yml
+    - 65839-docker_network-idempotence.yml
+    - 65854-docker_container-wait-for-removal.yml
+    - 65993-restart-docker_container-on-restart-policy-updates.yaml
+    - 66151-docker_swarm_service-healthcheck-start-period.yml
+    - ansible-test-coverage-constraint.yml
+    - ansible-test-ignore-pip-warnings.yml
+    - ansible-test-setuptools-constraint.yml
+    - fips-paramiko-import-error.yaml
+    - nxos_file_copy_path_issue.yml
+    - solaris_zone_name_fix.yml
+    - user-alpine-on-changed-fix.yaml
+    - v2.8.8_summary.yaml
+    - yum-enable-missing-repo.yaml
+    release_date: '2020-01-15'

@@ -5,6 +5,57 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.8
+======
+
+Release Summary
+---------------
+
+| Release Date: 2020-01-15
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- docker_container.py - update a containers restart_policy without restarting the container (https://github.com/ansible/ansible/issues/65993)
+
+Bugfixes
+--------
+
+- **SECURITY** - CVE-2019-14904 - solaris_zone module accepts zone name and performs actions related to that. However, there is no user input validation done while performing actions. A malicious user could provide a crafted zone name which allows executing commands into the server manipulating the module behaviour. Adding user input validation as per Solaris Zone documentation fixes this issue.
+- CVE-2019-14905 - nxos_file_copy module accepts remote_file parameter which is used for destination name and performs actions related to that on the device using the value of remote_file which is of string type However, there is no user input validation done while performing actions. A malicious code could crafts the filename parameter to take advantage by performing an OS command injection. This fix validates the option value if it is legitimate file path or not.
+- acme_certificate - fix misbehavior when ACME v1 is used with ``modify_account`` set to ``false``.
+- ansible-test no longer tries to install ``coverage`` 5.0+ since those versions are unsupported
+- ansible-test no longer tries to install ``setuptools`` 45+ on Python 2.x since those versions are unsupported
+- ansible-test now ignores warnings when comparing pip versions before and after integration tests run
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- ce modules - Update(add) docs notes to tell user modules work connection.
+- decouple k8s_scale from the k8s module utils so that it doesn't complain about missing arguments
+- dnf module - Ensure the modules exit_json['msg'] response is always string, not sometimes a tuple.
+- docker_container - fix network idempotence comparison error.
+- docker_container - wait for removal of container if docker API returns early (https://github.com/ansible/ansible/issues/65811).
+- docker_network - fix idempotence comparison error.
+- docker_network - fix idempotency for multiple IPAM configs of the same IP version (https://github.com/ansible/ansible/issues/65815).
+- docker_network - validate IPAM config subnet CIDR notation on module setup and not during idempotence checking.
+- docker_swarm_service - fix task always reporting as changed when using ``healthcheck.start_period``.
+- gitlab_runner - fix idempotency for shared runner
+- gitlab_user - Fix adding ssh key to new/changed user and adding group membership for new/changed user
+- netscaler_service - fixed issue preventing use of graceful attribute
+- openssh_keypair - fixes idempotence issue with public key (https://github.com/ansible/ansible/issues/64969).
+- openssl_csr - the module will now enforce that ``privatekey_path`` is specified when ``state=present``.
+- paramiko - catch and handle exception to prevent stack trace when running in FIPS mode
+- plugins-netconf-ce - Fix failed to get version information.
+- roles - Ensure that ``allow_duplicates: true`` enables to run single role multiple times (https://github.com/ansible/ansible/issues/64902)
+- user - on systems using busybox, honor the ``on_changed`` parameter to prevent unnecessary password changing (https://github.com/ansible/ansible/issues/65711)
+- yarn - handle no version when installing module by name (https://github.com/ansible/ansible/issues/55097)
+- yum - gracefully handle failure case of enabling a non existent repo, as the yum cli does (Fixes https://github.com/ansible/ansible/issues/52582)
+- yum - performance bugfix, the YumBase object was being  instantiated multiple times unnecessarily, which lead to considerable overhead when operating against large sets of packages.
+
 v2.8.7
 ======
 
