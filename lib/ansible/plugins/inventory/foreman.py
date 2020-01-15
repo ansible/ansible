@@ -268,7 +268,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                             self.inventory.set_variable(host_name, 'ansible_ssh_host', host['ip'])
                         except ValueError as e:
                             self.display.warning("Could not set hostvar ansible_ssh_host to '%s' for the '%s' host, skipping: %s" %
-                                                 (host['ip'], host_name, to_native(e)))
+                                                 (host['ip'], host_name, to_text(e)))
 
                 strict = self.get_option('strict')
 
