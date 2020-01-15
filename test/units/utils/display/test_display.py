@@ -9,9 +9,7 @@ __metaclass__ = type
 from ansible.utils.display import Display
 
 
-def test_display(capsys, mocker):
-    """ Test default call to display() """
-
+def test_display_basic_message(capsys, mocker):
     # Disable logging
     mocker.patch('ansible.utils.display.logger', return_value=None)
 
@@ -19,21 +17,4 @@ def test_display(capsys, mocker):
     d.display(u'Some displayed message')
     out, err = capsys.readouterr()
     assert out == 'Some displayed message\n'
-
-
-def test_display_color_warning(capsys, mocker):
-    """ Test displaying a warning message """
-
-    # Disable logging
-    mocker.patch('ansible.utils.display.logger', return_value=None)
-
-    # Warning message wrapped in bright purple color code
-    msg = u'[WARNING] This is a warning'
-    colorized_msg = u'\x1b[1;35m%s\x1b[0m\n\x1b[1;35m\x1b[0m' % msg
-    mocker.patch('ansible.utils.display.stringc', return_value=colorized_msg)
-
-    d = Display()
-    d.display(msg, color='bright purple', stderr=True)
-    out, err = capsys.readouterr()
-
-    assert err == colorized_msg
+    assert err == ''
