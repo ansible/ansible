@@ -241,8 +241,8 @@ def filter_wanopt_auth_group_data(json):
 
 def underscore_to_hyphen(data):
     if isinstance(data, list):
-        for elem in data:
-            elem = underscore_to_hyphen(elem)
+        for i, elem in enumerate(data):
+            data[i] = underscore_to_hyphen(elem)
     elif isinstance(data, dict):
         new_data = {}
         for k, v in data.items():

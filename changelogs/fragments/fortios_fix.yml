@@ -1,0 +1,2 @@
+bugfixes:
+- Fix underscore_to_hyphen API in fortios_* modules.
