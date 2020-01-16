@@ -487,6 +487,8 @@ class PFSenseModuleAggregate(object):
                     params = {}
                     params['state'] = 'absent'
                     params['name'] = rule_elt.find('descr').text
+                    if params['name'] is None:
+                        params['name'] = ''
                     params['interface'] = rule_elt.find('interface').text
                     if rule_elt.find('floating') is not None:
                         params['floating'] = True

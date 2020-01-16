@@ -126,14 +126,14 @@ class TestPFSenseNatPortForwardModule(TestPFSenseModule):
     def test_nat_port_forward_create_associated(self):
         """ test """
         obj = dict(descr='test_pf', interface='lan', source='any:443', destination='1.2.3.4:443', target='2.3.4.5:443', associated_rule='associated')
-        cmd1 = "create rule 'NAT test_pf', source='any:443', destination='1.2.3.4:443', protocol='tcp', interface='lan'"
+        cmd1 = "create rule 'NAT test_pf' on 'lan', source='any:443', destination='1.2.3.4:443', protocol='tcp'"
         cmd2 = "create nat_port_forward 'test_pf', interface='lan', source='any:443', destination='1.2.3.4:443', target='2.3.4.5:443'"
         self.do_module_test(obj, command=[cmd1, cmd2], target_idx=3)
 
     def test_nat_port_forward_create_unassociated(self):
         """ test """
         obj = dict(descr='test_pf', interface='lan', source='any:443', destination='1.2.3.4:443', target='2.3.4.5:443', associated_rule='unassociated')
-        cmd1 = "create rule 'NAT test_pf', source='any:443', destination='1.2.3.4:443', protocol='tcp', interface='lan'"
+        cmd1 = "create rule 'NAT test_pf' on 'lan', source='any:443', destination='1.2.3.4:443', protocol='tcp'"
         cmd2 = (
             "create nat_port_forward 'test_pf', interface='lan', source='any:443', destination='1.2.3.4:443', target='2.3.4.5:443', "
             "associated_rule='unassociated'"
@@ -205,8 +205,8 @@ class TestPFSenseNatPortForwardModule(TestPFSenseModule):
     def test_nat_port_forward_update_interface_associated(self):
         """ test """
         obj = dict(descr='last', interface='lan_100', source='any', destination='IP:wan:22022', target='10.255.1.20:22', associated_rule='associated')
-        cmd1 = "delete rule 'NAT last', interface='wan'"
-        cmd2 = "create rule 'NAT last', source='any', destination='IP:wan:22022', protocol='tcp', interface='lan_100'"
+        cmd1 = "delete rule 'NAT last' on 'wan'"
+        cmd2 = "create rule 'NAT last' on 'lan_100', source='any', destination='IP:wan:22022', protocol='tcp'"
         cmd3 = "update nat_port_forward 'last' set interface='lan_100'"
         self.do_module_test(obj, command=[cmd1, cmd2, cmd3], target_idx=2)
 

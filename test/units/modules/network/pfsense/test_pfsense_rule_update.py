@@ -57,6 +57,11 @@ class TestPFSenseRuleUpdateModule(TestPFSenseRuleModule):
         rule = dict(name='test_rule_floating', source='any', destination='any', interface='lan', floating='yes', direction='any', protocol='tcp')
         self.do_rule_update_test(rule)
 
+    def test_rule_update_floating_interfaces(self):
+        """ test updating interfaces of a floating rule """
+        rule = dict(name='test_rule_floating', source='any', destination='any', interface='lan,lan_100', floating='yes', direction='any', protocol='tcp')
+        self.do_rule_update_test(rule)
+
     def test_rule_update_floating_direction(self):
         """ test updating direction of a rule to out """
         rule = dict(name='test_rule_floating', source='any', destination='any', interface='wan', floating='yes', direction='out', protocol='tcp')

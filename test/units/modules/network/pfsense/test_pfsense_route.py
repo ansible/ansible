@@ -12,6 +12,7 @@ if sys.version_info < (2, 7):
 
 from ansible.modules.network.pfsense import pfsense_route
 from .pfsense_module import TestPFSenseModule
+from units.compat.mock import patch
 
 
 class TestPFSenseRouteModule(TestPFSenseModule):
@@ -21,6 +22,15 @@ class TestPFSenseRouteModule(TestPFSenseModule):
     def __init__(self, *args, **kwargs):
         super(TestPFSenseRouteModule, self).__init__(*args, **kwargs)
         self.config_file = 'pfsense_route_config.xml'
+
+    def setUp(self):
+        """ mocking up """
+
+        super(TestPFSenseRouteModule, self).setUp()
+
+        self.mock_run_command = patch('ansible.module_utils.basic.AnsibleModule.run_command')
+        self.run_command = self.mock_run_command.start()
+        self.run_command.return_value = (0, '', '')
 
     @staticmethod
     def get_args_fields():

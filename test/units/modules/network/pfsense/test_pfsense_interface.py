@@ -142,11 +142,11 @@ class TestPFSenseInterfaceModule(TestPFSenseModule):
         interface = dict(descr='lan', state='absent')
         commands = [
             "delete rule_separator 'test_separator', interface='lan'",
-            "update rule 'floating_rule_2', interface='floating' set interface='wan,opt3'",
-            "delete rule 'floating_rule_1', interface='floating'",
-            "delete rule 'antilock_out_1', interface='lan'",
-            "delete rule 'antilock_out_2', interface='lan'",
-            "delete rule 'antilock_out_3', interface='lan'",
+            "update rule 'floating_rule_2' on 'floating(lan,wan,lan_1100)' set interface='wan,lan_1100'",
+            "delete rule 'floating_rule_1' on 'floating(lan)'",
+            "delete rule 'antilock_out_1' on 'lan'",
+            "delete rule 'antilock_out_2' on 'lan'",
+            "delete rule 'antilock_out_3' on 'lan'",
             "delete interface 'lan'"
         ]
         self.do_module_test(interface, delete=True, command=commands)

@@ -312,11 +312,13 @@ class PFSenseInterfaceModule(PFSenseModuleBase):
         for rule_elt in self.pfsense.rules:
             if rule_elt.find('floating') is not None:
                 interfaces = rule_elt.find('interface').text.split(',')
+                old_ifs = ','.join([self.pfsense.get_interface_display_name(interface) for interface in interfaces])
                 if interface in interfaces:
                     if len(interfaces) > 1:
                         interfaces.remove(interface)
+                        new_ifs = ','.join([self.pfsense.get_interface_display_name(new_interface) for new_interface in interfaces])
                         rule_elt.find('interface').text = ','.join(interfaces)
-                        cmd = 'update rule \'{0}\', interface=\'floating\' set interface=\'{1}\''.format(rule_elt.find('descr').text, ','.join(interfaces))
+                        cmd = 'update rule \'{0}\' on \'floating({1})\' set interface=\'{2}\''.format(rule_elt.find('descr').text, old_ifs, new_ifs)
                         self.result['commands'].append(cmd)
                         continue
                     todel.append(rule_elt)

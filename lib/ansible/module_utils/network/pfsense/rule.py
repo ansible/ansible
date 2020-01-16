@@ -14,25 +14,25 @@ from ansible.module_utils.network.pfsense.module_base import PFSenseModuleBase
 
 RULE_ARGUMENT_SPEC = dict(
     name=dict(required=True, type='str'),
-    action=dict(default='pass', required=False, choices=['pass', "block", 'reject']),
+    action=dict(default='pass', choices=['pass', "block", 'reject']),
     state=dict(default='present', choices=['present', 'absent']),
     disabled=dict(default=False, required=False, type='bool'),
     interface=dict(required=True, type='str'),
     floating=dict(required=False, type='bool'),
     direction=dict(required=False, choices=["any", "in", "out"]),
-    ipprotocol=dict(required=False, default='inet', choices=['inet', 'inet46', 'inet6']),
-    protocol=dict(default='any', required=False, choices=["any", "tcp", "udp", "tcp/udp", "icmp", "igmp"]),
+    ipprotocol=dict(default='inet', choices=['inet', 'inet46', 'inet6']),
+    protocol=dict(default='any', choices=["any", "tcp", "udp", "tcp/udp", "icmp", "igmp"]),
     source=dict(required=False, type='str'),
     destination=dict(required=False, type='str'),
     log=dict(required=False, type='bool'),
     after=dict(required=False, type='str'),
     before=dict(required=False, type='str'),
-    statetype=dict(required=False, default='keep state', choices=['keep state', 'sloppy state', 'synproxy state', 'none']),
+    statetype=dict(default='keep state', choices=['keep state', 'sloppy state', 'synproxy state', 'none']),
     queue=dict(required=False, type='str'),
     ackqueue=dict(required=False, type='str'),
     in_queue=dict(required=False, type='str'),
     out_queue=dict(required=False, type='str'),
-    gateway=dict(required=False, type='str', default='default'),
+    gateway=dict(default='default', type='str'),
 )
 
 RULE_REQUIRED_IF = [
@@ -452,13 +452,13 @@ if (filter_configure() == 0) { clear_subsystem_dirty('filter'); }''')
     #
     def _get_obj_name(self):
         """ return obj's name """
-        return "'" + self.obj['descr'] + "'"
+        return "'{0}' on '{1}'".format(self.obj['descr'], self._interface_name())
 
     def _interface_name(self):
         """ return formated interface name for logging """
         if self._floating:
-            return 'floating(' + self.obj['interface'] + ')'
-        return self.obj['interface']
+            return 'floating(' + self.params['interface'] + ')'
+        return self.params['interface']
 
     def _log_fields(self, before=None):
         """ generate pseudo-CLI command fields parameters to create an obj """
@@ -467,7 +467,6 @@ if (filter_configure() == 0) { clear_subsystem_dirty('filter'); }''')
             values += self.format_cli_field(self.params, 'source')
             values += self.format_cli_field(self.params, 'destination')
             values += self.format_cli_field(self.params, 'protocol')
-            values += self.format_cli_field(self.params, 'interface')
             values += self.format_cli_field(self.params, 'floating')
             values += self.format_cli_field(self.params, 'direction')
             values += self.format_cli_field(self.params, 'ipprotocol', default='inet')
@@ -488,12 +487,6 @@ if (filter_configure() == 0) { clear_subsystem_dirty('filter'); }''')
             fafter['before'] = self._before
             fafter['after'] = self._after
 
-            log = ''
-            if self._floating:
-                log += ", interface='floating'"
-            else:
-                log += ", interface='{0}'".format(self.pfsense.get_interface_display_name(self.obj['interface']))
-
             values += self.format_updated_cli_field(fafter, fbefore, 'source', add_comma=(values))
             values += self.format_updated_cli_field(fafter, fbefore, 'destination', add_comma=(values))
             values += self.format_updated_cli_field(self.obj, before, 'protocol', add_comma=(values))
@@ -502,7 +495,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('filter'); }''')
             values += self.format_updated_cli_field(self.obj, before, 'direction', add_comma=(values))
             values += self.format_updated_cli_field(self.obj, before, 'ipprotocol', add_comma=(values))
             values += self.format_updated_cli_field(self.obj, before, 'statetype', add_comma=(values))
-            values += self.format_updated_cli_field(self.obj, before, 'action', add_comma=(values))
+            values += self.format_updated_cli_field(self.params, before, 'action', add_comma=(values))
             values += self.format_updated_cli_field(self.obj, before, 'disabled', add_comma=(values))
             values += self.format_updated_cli_field(self.obj, before, 'log', add_comma=(values))
             if self._position_changed:
@@ -513,14 +506,7 @@ if (filter_configure() == 0) { clear_subsystem_dirty('filter'); }''')
             values += self.format_updated_cli_field(self.obj, before, 'in_queue', add_comma=(values))
             values += self.format_updated_cli_field(self.obj, before, 'out_queue', add_comma=(values))
             values += self.format_updated_cli_field(self.obj, before, 'gateway', add_comma=(values))
-            values = log + values
         return values
-
-    def _log_fields_delete(self):
-        """ generate pseudo-CLI command fields parameters to delete an obj """
-        if self._floating:
-            return ", interface='floating'"
-        return ", interface='{0}'".format(self.pfsense.get_interface_display_name(self.obj['interface']))
 
     @staticmethod
     def _obj_address_to_log_field(rule, addr):
@@ -544,4 +530,5 @@ if (filter_configure() == 0) { clear_subsystem_dirty('filter'); }''')
         res = {}
         res['source'] = self._obj_address_to_log_field(rule, 'source')
         res['destination'] = self._obj_address_to_log_field(rule, 'destination')
+        res['interface'] = self.pfsense.get_interface_display_name(rule['interface'])
         return res
