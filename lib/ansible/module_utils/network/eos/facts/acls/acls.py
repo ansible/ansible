@@ -173,7 +173,7 @@ class AclsFacts(object):
                             port_dict = {}
                             src_port = ""
                             src_opr = dev_config_remainder.pop(0)
-                            portlist = dev_config_remainder.copy()
+                            portlist = dev_config_remainder
                             for config_remainder in portlist:
                                 addr = re.search(r'[\.\:]', config_remainder)
                                 if config_remainder == "any" or \
@@ -192,7 +192,8 @@ class AclsFacts(object):
                         if bool(ace_dict):
                             ace_list.append(ace_dict.copy())
                         if len(ace_list):
-                            name_dict.update({"aces": ace_list.copy()})
+                            name_dict = name_dict.copy()
+                            name_dict.update({"aces": ace_list[:]})
                         # acls_list.append(name_dict)
                         continue
                     dest_prefix = re.search(r'/', dev_config_remainder[0])
@@ -232,7 +233,8 @@ class AclsFacts(object):
                         if bool(ace_dict):
                             ace_list.append(ace_dict.copy())
                         if len(ace_list):
-                            name_dict.update({"aces": ace_list.copy()})
+                            name_dict = name_dict.copy()
+                            name_dict.update({"aces": ace_list[:]})
                         # acls_list.append(name_dict)
                         continue
                     if protocol == "tcp" or "6":
@@ -286,7 +288,8 @@ class AclsFacts(object):
             if bool(ace_dict):
                 ace_list.append(ace_dict.copy())
             if len(ace_list):
-                name_dict.update({"aces": ace_list.copy()})
+                name_dict = name_dict.copy()
+                name_dict.update({"aces": ace_list[:]})
         acls_list.append(name_dict.copy())
         config.update({"acls": acls_list})
         return utils.remove_empties(config)
