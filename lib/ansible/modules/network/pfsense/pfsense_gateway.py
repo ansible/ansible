@@ -70,7 +70,6 @@ options:
     type: int
   state:
     description: State in which to leave the gateway
-    required: true
     choices: [ "present", "absent" ]
     default: present
     type: str

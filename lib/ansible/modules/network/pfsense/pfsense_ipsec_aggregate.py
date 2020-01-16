@@ -138,10 +138,10 @@ options:
       descr:
         description: The description of the ipsec tunnel
         default: null
+        required: True
         type: str
       state:
         description: State in which to leave the ipsec tunnel
-        required: true
         choices: [ "present", "absent" ]
         default: present
         type: str
@@ -182,7 +182,6 @@ options:
         type: str
       state:
         description: State in which to leave the ipsec proposal.
-        required: true
         choices: [ "present", "absent" ]
         default: present
         type: str
@@ -313,7 +312,7 @@ options:
         type: str
       descr:
         description: The description of the ipsec tunnel phase2
-        required: true
+        required: True
         type: str
       p1_descr:
         description: The description of the ipsec tunnel
@@ -321,7 +320,6 @@ options:
         type: str
       state:
         description: State in which to leave the ipsec tunnel phase2
-        required: true
         choices: [ "present", "absent" ]
         default: present
         type: str

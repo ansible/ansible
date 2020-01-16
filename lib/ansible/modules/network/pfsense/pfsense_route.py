@@ -40,7 +40,6 @@ options:
     type: bool
   state:
     description: State in which to leave the route
-    required: true
     choices: [ "present", "absent" ]
     default: present
     type: str

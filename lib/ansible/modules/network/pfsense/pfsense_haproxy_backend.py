@@ -57,7 +57,6 @@ options:
     type: int
   check_type:
     description: Health check method.
-    required: true
     type: str
     choices: ['none', 'Basic', 'HTTP', 'Agent', 'LDAP', 'MySQL', 'PostgreSQL', 'Redis', 'SMTP', 'ESMTP', 'SSL']
     default: 'none'

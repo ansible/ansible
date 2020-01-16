@@ -33,7 +33,6 @@ options:
         type: str
       state:
         description: State in which to leave the alias
-        required: true
         choices: [ "present", "absent" ]
         default: present
         type: str
@@ -65,7 +64,6 @@ options:
     suboptions:
       state:
         description: State in which to leave the interface.
-        required: true
         choices: [ "present", "absent" ]
         default: present
         type: str
@@ -75,11 +73,9 @@ options:
         type: str
       interface:
         description: Network port to which assign the interface.
-        required: true
         type: str
       enable:
         description: Enable interface.
-        required: true
         type: bool
       ipv4_type:
         description: IPv4 Configuration Type.
@@ -144,7 +140,6 @@ options:
         type: str
       action:
         description: The action of the rule
-        required: true
         default: pass
         choices: [ "pass", "block", "reject" ]
         type: str
@@ -180,12 +175,10 @@ options:
         type: str
       source:
         description: The source address, in [!]{IP,HOST,ALIAS,any,(self)}[:port], IP:INTERFACE or NET:INTERFACE format
-        required: true
         default: null
         type: str
       destination:
         description: The destination address, in [!]{IP,HOST,ALIAS,any,(self)}[:port], IP:INTERFACE or NET:INTERFACE format
-        required: true
         default: null
         type: str
       log:
@@ -229,13 +222,11 @@ options:
         type: str
       state:
         description: State in which to leave the separator
-        required: true
         choices: [ "present", "absent" ]
         default: present
         type: str
       interface:
         description: The interface for the separator
-        required: true
         type: str
       floating:
         description: Is the rule on floating tab
@@ -274,7 +265,6 @@ options:
         type: str
       state:
         description: State in which to leave the vlan
-        required: true
         choices: [ "present", "absent" ]
         default: present
         type: str
