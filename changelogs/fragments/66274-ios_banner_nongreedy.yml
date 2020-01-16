@@ -1,0 +1,3 @@
+bugfixes:
+- Modified the regular expression check to be non greedy when multiple banners are present.
+  Modification in ios_banner.py.
