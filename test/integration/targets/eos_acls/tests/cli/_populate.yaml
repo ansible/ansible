@@ -1,0 +1,15 @@
+---
+- name: Setup
+  cli_config:
+    config: "{{ lines }}"
+  become: yes
+  vars:
+    lines: |
+      ipv6 access-list standard test2
+      10 permit any log 
+      ip access-list test1
+      35 deny tcp 20.0.0.0/8 any log 
+      45 remark Run by ansible
+      55 permit tcp any any
+      ip access-list test4
+      10 permit tcp any eq smtp any eq www ttl eq 55

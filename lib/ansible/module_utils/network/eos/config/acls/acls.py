@@ -13,10 +13,11 @@ created
 import socket
 import re
 import itertools
+import q
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils.network.common.utils import remove_empties
+from ansible.module_utils.network.common.utils import remove_empties, dict_diff
 from ansible.module_utils.network.eos.facts.facts import Facts
 
 class Acls(ConfigBase):
@@ -76,6 +77,7 @@ class Acls(ConfigBase):
         if self.state in self.ACTION_STATES or self.state == 'gathered':
             changed_acls_facts = self.get_acls_facts()
         elif self.state == 'rendered':
+            commands = list(itertools.chain(*commands))
             result['rendered'] = commands
         elif self.state == 'parsed':
             if not self._module.params['running_config']:
@@ -105,7 +107,7 @@ class Acls(ConfigBase):
         want = []
         onbox_configs = []
         for h in existing_acls_facts:
-            have_configs = add_commands(h)
+            have_configs = add_commands(remove_empties(h))
             onbox_configs.append(have_configs)
         if config:
             for w in config:
@@ -132,12 +134,17 @@ class Acls(ConfigBase):
             else:
                 for num, h in enumerate(have, start=h_index + 1):
                     if "access-list" not in h:
+                        seq_num = re.search(r'(\d+) (.*)', w)
+                        if seq_num:
+                            have_seq_num = re.search(r'(\d+) (.*)', h)
+                            if seq_num.group(1) == have_seq_num.group(1) and have_seq_num.group(2) != seq_num.group(2):
+                                negate_cmd = "no " + seq_num.group(1)
+                                config.insert(config.index(w), negate_cmd)
                         if w in h:
                             config.pop(config.index(w))
                             break
+                        
         for c in config:
-            if "no" in c:
-                commands.append(c)
             access_list = re.findall(r'(ip.*) access-list (.*)', c)
             if access_list:
                 acl_index = config.index(c)
@@ -181,22 +188,33 @@ class Acls(ConfigBase):
         commands = []
         have_commands = []
         remove_cmds = []
+        ace_diff = {}
+        present = False
         for w in want:
             afi = "ipv6" if w["afi"] == "ipv6" else "ipv4"
+            for acl in w["acls"]:
+                name = acl["name"]
+                want_ace = acl["aces"]
         for h in have:
             if h["afi"] == afi:
-                h = {"afi": afi}
-                remove_cmds = del_commands(h, have)
-        config_cmds = set_commands(want, have)
-        config_cmds = list(itertools.chain(*config_cmds))
-        for cmd in have:
-            have_configs = add_commands(cmd)
-            have_commands.append(have_configs)
-        have_commands = list(itertools.chain(*have_commands))
-        if remove_cmds:
-            commands.append(remove_cmds)
-        commands.append(config_cmds)
-        commands = list(itertools.chain(*commands))
+                for h_acl in h["acls"]:
+                    if h_acl["name"] == name:
+                        present = True
+                        h = {"afi": afi, "acls":[{"name": name}]}
+                        ace_diff = get_ace_diff(want_ace, h_acl["aces"])
+                        if ace_diff:
+                            remove_cmds = del_commands(h, have)
+        if ace_diff or not present:
+            config_cmds = set_commands(want, have)
+            config_cmds = list(itertools.chain(*config_cmds))
+            for cmd in have:
+                have_configs = add_commands(cmd)
+                have_commands.append(have_configs)
+            have_commands = list(itertools.chain(*have_commands))
+            if remove_cmds:
+                commands.append(remove_cmds)
+            commands.append(config_cmds)
+            commands = list(itertools.chain(*commands))
         return commands
 
     @staticmethod
@@ -208,14 +226,39 @@ class Acls(ConfigBase):
                   to the desired configuration
         """
         commands = []
+        present = False
+        ace_diff = {}
+        for w in want:
+            afi = "ipv6" if w["afi"] == "ipv6" else "ipv4"
+            for acl in w["acls"]:
+                name = acl["name"]
+                want_ace = acl["aces"]
+
         for h in have:
-            h = {"afi": h["afi"]}
-            remove_cmds = del_commands(h, have)
-            commands.append(remove_cmds)
-        config_cmds = set_commands(want, have)
-        config_cmds = list(itertools.chain(*config_cmds))
-        commands.append(config_cmds)
-        commands = list(itertools.chain(*commands))
+            if h["afi"] != afi:
+                h = {"afi": h["afi"]}
+                remove_cmds = del_commands(h, have)
+                commands.append(remove_cmds)
+                continue
+            for h_acl in h["acls"]:
+                if h_acl["name"] == name:
+                    present = True
+                    ace_diff = get_ace_diff(want_ace, h_acl["aces"])
+                    if ace_diff:
+                        h = {"afi": afi, "acls":[{"name": name, "aces": h_acl["aces"]}]}
+                        remove_cmds = del_commands(h, have)
+                        commands.append(remove_cmds)
+                else:
+                   h = {"afi": afi, "acls":[{"name": h_acl["name"]}]}
+                   remove_cmds = del_commands(h, have)
+                   commands.append(remove_cmds)
+                    
+        if ace_diff:
+            config_cmds = set_commands(want, have)
+            config_cmds = list(itertools.chain(*config_cmds))
+            commands.append(config_cmds)
+        if commands:
+            commands = list(itertools.chain(*commands))
         return commands
 
     @staticmethod
@@ -335,7 +378,7 @@ def add_commands(want):
                 command = command + " tracked"
             if "ttl" in ace.keys():
                 for op, val in ace["ttl"].items():
-                    command = command + " ttl " + op + " " + val
+                    command = command + " ttl " + op + " " + str(val)
             if "fragments" in ace.keys():
                 command = command + " fragments"
             if "log" in ace.keys():
@@ -380,3 +423,7 @@ def del_commands(want, have):
             else:
                 commandset.append("no " + cmd)
     return commandset
+
+def get_ace_diff( want_ace, have_ace):
+    d = dict_diff(want_ace[0], have_ace[0])
+    return d
