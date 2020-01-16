@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pfsense_ipsec_p2
-version_added: "2.9"
+version_added: "2.10"
 author: Frederic Bor (@f-bor)
 short_description: Manage pfSense ipsec tunnels phase 2 options
 description:
@@ -147,7 +147,6 @@ options:
     type: str
   state:
     description: State in which to leave the ipsec tunnel phase2
-    required: true
     choices: [ "present", "absent" ]
     default: present
     type: str

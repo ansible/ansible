@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pfsense_haproxy_backend_server
-version_added: "2.9"
+version_added: "2.10"
 author: Frederic Bor (@f-bor)
 short_description: Manage pfSense haproxy backend servers
 description:
@@ -31,7 +31,7 @@ options:
     type: str
   mode:
     description: How to use the server.
-    required: True
+    required: false
     type: str
     choices: ['active', 'backup', 'disabled', 'inactive']
     default: 'active'
@@ -99,7 +99,6 @@ options:
     type: str
   state:
     description: State in which to leave the backend server
-    required: true
     choices: [ "present", "absent" ]
     default: present
     type: str

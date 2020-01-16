@@ -9,7 +9,7 @@ __metaclass__ = type
 DOCUMENTATION = """
 lookup: pfsense
 author: Frederic Bor (@f-bor)
-version_added: "2.9"
+version_added: "2.10"
 short_description: Generate pfSense aliases, rules and rule_separators
 description:
 - This lookup plugin is designed to be used with pfsense_aggregate module.

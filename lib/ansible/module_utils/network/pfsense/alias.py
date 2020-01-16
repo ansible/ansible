@@ -19,6 +19,7 @@ ALIAS_ARGUMENT_SPEC = dict(
 )
 
 ALIAS_REQUIRED_IF = [
+    ["state", "present", ["type", "address", "descr", "detail"]],
     ["type", "urltable", ["updatefreq"]],
     ["type", "urltable_ports", ["updatefreq"]],
 ]

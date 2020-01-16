@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pfsense_authserver_ldap
-version_added: "2.9"
+version_added: "2.10"
 short_description: Manage pfSense LDAP authentication servers
 description:
   >
@@ -187,7 +187,6 @@ def main():
             'host': {'required': True, 'type': 'str'},
             'port': {'default': '389', 'type': 'str'},
             'transport': {
-                'required': True,
                 'choices': ['tcp', 'starttls', 'ssl']
             },
             'ca': {'required': False, 'type': 'str'},
@@ -197,7 +196,6 @@ def main():
             },
             'timeout': {'default': '25', 'type': 'str'},
             'scope': {
-                'required': True,
                 'choices': ['one', 'subtree']
             },
             'basedn': {'required': False, 'type': 'str'},
@@ -210,6 +208,7 @@ def main():
             'attr_groupobj': {'default': 'posixGroup', 'type': 'str'},
         },
         required_if=[
+            ["state", "present", ["host", "port", "transport", "ca", "scope"]],
             ["transport", "starttls", ["ca"]],
             ["transport", "ssl", ["ca"]],
         ],

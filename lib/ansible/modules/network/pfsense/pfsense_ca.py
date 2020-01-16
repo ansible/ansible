@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pfsense_ca
-version_added: "2.9"
+version_added: "2.10"
 short_description: Manage pfSense Certificate Authorities
 description:
   >
@@ -36,7 +36,6 @@ options:
       >
         The certificate for the Certificate Authority.  This can be in PEM form or Base64
         encoded PEM as a single string (which is how pfSense stores it).
-    required: true
     type: str
   crl:
     description:

@@ -9,7 +9,7 @@ from ansible.module_utils.network.pfsense.module_base import PFSenseModuleBase
 from ansible.module_utils.compat.ipaddress import ip_address, ip_network
 
 GATEWAY_ARGUMENT_SPEC = dict(
-    state=dict(default='present', choices=['present', 'absent']),
+    state=dict(required=True, default='present', choices=['present', 'absent']),
     name=dict(required=True, type='str'),
     interface=dict(required=False, type='str'),
     ipprotocol=dict(default='inet', choices=['inet', 'inet6']),

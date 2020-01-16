@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pfsense_alias
-version_added: "2.9"
+version_added: "2.10"
 author: Orion Poplawski (@opoplawski), Frederic Bor (@f-bor)
 short_description: Manage pfSense aliases
 description:
@@ -28,7 +28,6 @@ options:
     type: str
   state:
     description: State in which to leave the alias
-    required: true
     choices: [ "present", "absent" ]
     default: present
     type: str

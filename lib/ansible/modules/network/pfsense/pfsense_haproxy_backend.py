@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pfsense_haproxy_backend
-version_added: "2.9"
+version_added: "2.10"
 author: Frederic Bor (@f-bor)
 short_description: Manage pfSense haproxy backends
 description:
@@ -27,7 +27,7 @@ options:
     type: str
   balance:
     description: The load balancing option.
-    required: true
+    required: false
     type: str
     choices: ['none', 'roundrobin', 'static-rr', 'leastconn', 'source', 'uri']
     default: 'none'
@@ -92,7 +92,6 @@ options:
     type: str
   state:
     description: State in which to leave the backend
-    required: true
     choices: [ "present", "absent" ]
     default: present
     type: str

@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: pfsense_rule
-version_added: "2.9"
+version_added: "2.10"
 author: Orion Poplawski (@opoplawski), Frederic Bor (@f-bor)
 short_description: Manage pfSense rules
 description:
@@ -29,7 +29,6 @@ options:
     type: str
   action:
     description: The action of the rule
-    required: true
     default: pass
     choices: [ "pass", "block", "reject" ]
     type: str
@@ -65,12 +64,10 @@ options:
     type: str
   source:
     description: The source address, in [!]{IP,HOST,ALIAS,any,(self),IP:INTERFACE,NET:INTERFACE}[:port] format.
-    required: true
     default: null
     type: str
   destination:
     description: The destination address, in [!]{IP,HOST,ALIAS,any,(self),IP:INTERFACE,NET:INTERFACE}[:port] format.
-    required: true
     default: null
     type: str
   log:
