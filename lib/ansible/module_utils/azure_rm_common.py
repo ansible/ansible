@@ -936,7 +936,7 @@ class AzureRMModuleBase(object):
         if not self._network_client:
             self._network_client = self.get_mgmt_svc_client(NetworkManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2018-08-01')
+                                                            api_version='2019-06-01')
         return self._network_client
 
     @property
@@ -964,13 +964,13 @@ class AzureRMModuleBase(object):
         if not self._compute_client:
             self._compute_client = self.get_mgmt_svc_client(ComputeManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2018-06-01')
+                                                            api_version='2019-07-01')
         return self._compute_client
 
     @property
     def compute_models(self):
         self.log("Getting compute models")
-        return ComputeManagementClient.models("2018-06-01")
+        return ComputeManagementClient.models("2019-07-01")
 
     @property
     def dns_client(self):

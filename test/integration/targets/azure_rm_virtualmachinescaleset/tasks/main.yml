@@ -163,6 +163,7 @@
         disk_size_gb: 64
         caching: ReadWrite
         managed_disk_type: Standard_LRS
+    scale_in_policy: "NewestVM"
   register: results
 
 - name: Assert that VMSS was created
