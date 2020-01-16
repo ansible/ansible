@@ -10,7 +10,24 @@ from . import types as t
 
 from .util import (
     to_bytes,
+    to_text,
 )
+
+
+def read_json_file(path):  # type: (t.AnyStr) -> t.Any
+    """Parse and return the json content from the specified path."""
+    return json.loads(read_text_file(path))
+
+
+def read_text_file(path):  # type: (t.AnyStr) -> t.Text
+    """Return the contents of the specified path as text."""
+    return to_text(read_binary_file(path))
+
+
+def read_binary_file(path):  # type: (t.AnyStr) -> bytes
+    """Return the contents of the specified path as bytes."""
+    with open(to_bytes(path), 'rb') as file:
+        return file.read()
 
 
 def make_dirs(path):  # type: (str) -> None
