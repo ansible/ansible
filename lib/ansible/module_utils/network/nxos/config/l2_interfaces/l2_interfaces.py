@@ -246,7 +246,7 @@ class L2_interfaces(ConfigBase):
             diff.update({'name': w['name']})
         return diff
 
-    def add_commands(self, d):
+    def add_commands(self, d, vlan_exists=False):
         commands = []
         if not d:
             return commands
@@ -255,7 +255,10 @@ class L2_interfaces(ConfigBase):
         if 'vlan' in d:
             commands.append(cmd + 'access vlan ' + str(d['vlan']))
         if 'allowed_vlans' in d:
-            commands.append(cmd + 'trunk allowed vlan ' + str(d['allowed_vlans']))
+            if vlan_exists:
+                commands.append(cmd + 'trunk allowed vlan add ' + str(d['allowed_vlans']))
+            else:
+                commands.append(cmd + 'trunk allowed vlan ' + str(d['allowed_vlans']))
         if 'native_vlan' in d:
             commands.append(cmd + 'trunk native vlan ' + str(d['native_vlan']))
         if commands:
@@ -269,5 +272,9 @@ class L2_interfaces(ConfigBase):
             commands = self.add_commands(w)
         else:
             diff = self.diff_of_dicts(w, obj_in_have)
+            if diff:
+                if "allowed_vlans" in diff.keys() and diff["allowed_vlans"]:
+                    commands = self.add_commands(diff, True)
+                    return commands
             commands = self.add_commands(diff)
         return commands
