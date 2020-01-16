@@ -187,8 +187,8 @@ Then run these commands:
 
 .. note:: This method has been verified with the Trusty sources in Debian Jessie and Stretch but may not be supported in earlier versions. You may want to use ``apt-get`` instead of ``apt`` in older versions.
 
-Installing Ansible on Gentoo
-----------------------------
+Installing Ansible on Gentoo with portage
+-----------------------------------------
 
 .. code-block:: bash
 
