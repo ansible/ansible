@@ -42,6 +42,11 @@ class TestPFSenseRuleModule(TestPFSenseModule):
         config_file = 'pfsense_rule_config.xml'
         self.parse.return_value = ElementTree(fromstring(load_fixture(config_file)))
 
+    @staticmethod
+    def runTest():
+        """ dummy function needed to instantiate this test module from another in python 2.7 """
+        pass
+
     ########################################################
     # Generic set of funcs used for testing rules
     # First we run the module

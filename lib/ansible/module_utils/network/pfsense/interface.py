@@ -299,6 +299,7 @@ class PFSenseInterfaceModule(PFSenseModuleBase):
     def _pre_remove_target_elt(self):
         """ processing before removing elt """
         self.obj['if'] = self.target_elt.find('if').text
+
         self._remove_all_separators(self.target_elt.tag)
         self._remove_all_rules(self.target_elt.tag)
 
@@ -312,7 +313,7 @@ class PFSenseInterfaceModule(PFSenseModuleBase):
         for rule_elt in self.pfsense.rules:
             if rule_elt.find('floating') is not None:
                 interfaces = rule_elt.find('interface').text.split(',')
-                old_ifs = ','.join([self.pfsense.get_interface_display_name(interface) for interface in interfaces])
+                old_ifs = ','.join([self.pfsense.get_interface_display_name(old_interface) for old_interface in interfaces])
                 if interface in interfaces:
                     if len(interfaces) > 1:
                         interfaces.remove(interface)
