@@ -63,6 +63,16 @@ options:
       - The password of the destination VCenter.
     type: str
     required: True
+  destination_vcenter_port:
+    description:
+      - The port to establish connection in the destination VCenter.
+    type: int
+    default: 443
+  destination_vcenter_validate_certs:
+    description:
+      - Parameter to indicate if certification validation needs to be done on destination VCenter.
+    type: bool
+    default: False
   destination_host:
     description:
       - The name of the destination host.
@@ -89,11 +99,17 @@ options:
       - Destination resource pool.
       - If not provided, the destination host's parent's resource pool will be used.
     type: str
-  power_on:
+  state:
     description:
-      - Whether to power on the VM after cloning
-    default: no
-    type: bool
+      - The state of Virtual Machine deployed from template in content library.
+      - If set to C(present) and VM does not exists, then VM is created.
+      - If set to C(present) and VM exists, no action is taken.
+      - If set to C(poweredon) and VM does not exists, then VM is created with powered on state.
+      - If set to C(poweredon) and VM exists, no action is taken.
+    type: str
+    required: False
+    default: 'present'
+    choices: [ 'present', 'poweredon' ]
 
 extends_documentation_fragment:
   - vmware.documentation
@@ -115,10 +131,12 @@ EXAMPLES = '''
     destination_vcenter: '{{ destination_vcenter_hostname }}'
     destination_vcenter_username: '{{ destination_vcenter_username }}'
     destination_vcenter_password: '{{ destination_vcenter_password }}'
+    destination_vcenter_port: '{{ destination_vcenter_port }}'
+    destination_vcenter_validate_certs: '{{ destination_vcenter_validate_certs }}'
     destination_host: '{{ destination_esxi }}'
     destination_datastore: '{{ destination_datastore }}'
     destination_vm_folder: '{{ destination_vm_folder }}'
-    power_on: no
+    state: present
   register: cross_vc_clone_from_template
 
 - name: clone a VM across VC
@@ -135,7 +153,7 @@ EXAMPLES = '''
     destination_host: '{{ destination_esxi }}'
     destination_datastore: '{{ destination_datastore }}'
     destination_vm_folder: '{{ destination_vm_folder }}'
-    power_on: yes
+    state: poweredon
   register: cross_vc_clone_from_vm
 
 - name: check_mode support
@@ -152,7 +170,6 @@ EXAMPLES = '''
     destination_host: '{{ destination_esxi }}'
     destination_datastore: '{{ destination_datastore }}'
     destination_vm_folder: '{{ destination_vm_folder }}'
-    power_on: yes
   check_mode: yes
 '''
 
@@ -195,6 +212,8 @@ class CrossVCCloneManager(PyVmomi):
         self.destination_vcenter = self.params['destination_vcenter']
         self.destination_vcenter_username = self.params['destination_vcenter_username']
         self.destination_vcenter_password = self.params['destination_vcenter_password']
+        self.destination_vcenter_port = self.params.get('port', 443)
+        self.destination_vcenter_validate_certs = self.params.get('destination_vcenter_validate_certs', None)
 
     def get_new_vm_info(self, vm):
         # to check if vm has been cloned in the destination vc
@@ -232,7 +251,7 @@ class CrossVCCloneManager(PyVmomi):
         '''
         this method is used to verify user provided parameters
         '''
-        self.vm_obj = find_vm_by_name(content=self.content, vm_name=self.params['name'])
+        self.vm_obj = self.get_vm()
         if self.vm_obj is None:
             vm_id = self.vm_uuid or self.vm_name or self.moid
             self.module.fail_json(msg="Failed to find the VM/template with %s" % vm_id)
@@ -242,7 +261,9 @@ class CrossVCCloneManager(PyVmomi):
             self.module,
             hostname=self.destination_vcenter,
             username=self.destination_vcenter_username,
-            password=self.destination_vcenter_password)
+            password=self.destination_vcenter_password,
+            port=self.destination_vcenter_port,
+            validate_certs=self.destination_vcenter_validate_certs)
 
         # Check if vm name already exists in the destination VC
         vm = find_vm_by_name(content=self.destination_content, vm_name=self.params['destination_vm_name'])
@@ -287,7 +308,7 @@ class CrossVCCloneManager(PyVmomi):
 
         # populate clone spec
         self.clone_spec.config = self.config_spec
-        self.clone_spec.powerOn = self.module.params['power_on']
+        self.clone_spec.powerOn = True if self.params['state'].lower() == 'poweredon' else False
         self.clone_spec.location = self.relocate_spec
 
     def get_recommended_datastore(self, datastore_cluster_obj=None):
@@ -347,9 +368,12 @@ def main():
         destination_vcenter=dict(type='str', required=True),
         destination_vcenter_username=dict(type='str', required=True),
         destination_vcenter_password=dict(type='str', required=True),
+        destination_vcenter_port=dict(type='int', default=443),
+        destination_vcenter_validate_certs=dict(type='bool', default=False),
         destination_vm_folder=dict(type='str', required=True),
         destination_resource_pool=dict(type='str', default=None),
-        power_on=dict(type='bool', default=False)
+        state=dict(type='str', default='present',
+                   choices=['present', 'poweredon'])
     )
 
     module = AnsibleModule(
@@ -364,15 +388,28 @@ def main():
     )
     result = {'failed': False, 'changed': False}
     if module.check_mode:
-        result.update(
-            vm_name=module.params['destination_vm_name'],
-            vcenter=module.params['destination_vcenter'],
-            host=module.params['destination_host'],
-            datastore=module.params['destination_datastore'],
-            vm_folder=module.params['destination_vm_folder'],
-            power_on=module.params['power_on'],
-            changed=True
-        )
+        if module.params['state'] in ['present']:
+            result.update(
+                vm_name=module.params['destination_vm_name'],
+                vcenter=module.params['destination_vcenter'],
+                host=module.params['destination_host'],
+                datastore=module.params['destination_datastore'],
+                vm_folder=module.params['destination_vm_folder'],
+                state=module.params['state'],
+                changed=True,
+                desired_operation='Create VM with PowerOff State'
+            )
+        if module.params['state'] == 'poweredon':
+            result.update(
+                vm_name=module.params['destination_vm_name'],
+                vcenter=module.params['destination_vcenter'],
+                host=module.params['destination_host'],
+                datastore=module.params['destination_datastore'],
+                vm_folder=module.params['destination_vm_folder'],
+                state=module.params['state'],
+                changed=True,
+                desired_operation='Create VM with PowerON State'
+            )
         module.exit_json(**result)
 
     clone_manager = CrossVCCloneManager(module)

@@ -81,6 +81,8 @@
     destination_vcenter: '{{ destination_vcenter_hostname }}'
     destination_vcenter_username: '{{ destination_vcenter_username }}'
     destination_vcenter_password: '{{ destination_vcenter_password }}'
+    destination_vcenter_port: '{{ destination_vcenter_port }}'
+    destination_vcenter_validate_certs: '{{ destination_vcenter_validate_certs }}'
     destination_host: '{{ destination_esxi1 }}'
     destination_datastore: '{{ destination_datastore }}'
     destination_vm_folder: '{{ destination_vm_folder }}'
