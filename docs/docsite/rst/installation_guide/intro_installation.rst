@@ -43,7 +43,7 @@ Managed node requirements
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 On the managed nodes, you need a way to communicate, which is normally SSH. By
-default this uses sftp. If that's not available, you can switch to scp in
+default this uses SFTP. If that's not available, you can switch to SCP in
 :ref:`ansible.cfg <ansible_configuration_settings>`.  You also need Python 2 (version 2.6 or later) or Python 3 (version 3.5 or
 later).
 
@@ -90,7 +90,7 @@ Which Ansible version to install is based on your particular needs. You can choo
 Because Ansible runs so easily from source and does not require any installation of software on remote
 machines, many users will actually track the development version.
 
-Ansible's releases two to three times a year. Due to this short release cycle,
+Ansible creates new releases two to three times a year. Due to this short release cycle,
 minor bugs will generally be fixed in the next release versus maintaining backports on the stable branch.
 Major bugs will still have maintenance releases when needed, though these are infrequent.
 
