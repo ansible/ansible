@@ -327,6 +327,7 @@ def get_coverage_group(args, coverage_file):
     """
     parts = os.path.basename(coverage_file).split('=', 4)
 
+    # noinspection PyTypeChecker
     if len(parts) != 5 or not parts[4].startswith('coverage.'):
         return None
 

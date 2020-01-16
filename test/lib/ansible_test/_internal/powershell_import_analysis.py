@@ -49,7 +49,7 @@ def get_powershell_module_utils_name(path):  # type: (str) -> str
     else:
         prefix = ''
 
-    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.sep, '.')
+    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.path.sep, '.')
 
     return name
 

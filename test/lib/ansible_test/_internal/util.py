@@ -588,6 +588,7 @@ def is_binary_file(path):
         return True
 
     with open(path, 'rb') as path_fd:
+        # noinspection PyTypeChecker
         return b'\0' in path_fd.read(1024)
 
 
@@ -839,11 +840,11 @@ def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
 
 def is_subdir(candidate_path, path):  # type: (str, str) -> bool
     """Returns true if candidate_path is path or a subdirectory of path."""
-    if not path.endswith(os.sep):
-        path += os.sep
+    if not path.endswith(os.path.sep):
+        path += os.path.sep
 
-    if not candidate_path.endswith(os.sep):
-        candidate_path += os.sep
+    if not candidate_path.endswith(os.path.sep):
+        candidate_path += os.path.sep
 
     return candidate_path.startswith(path)
 
@@ -874,10 +875,10 @@ def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> Non
 
     path = os.path.join(root, directory)
     package = __name__.rsplit('.', 1)[0]
-    prefix = '%s.%s.' % (package, directory.replace(os.sep, '.'))
+    prefix = '%s.%s.' % (package, directory.replace(os.path.sep, '.'))
 
     for (_module_loader, name, _ispkg) in pkgutil.iter_modules([path], prefix=prefix):
-        module_path = os.path.join(root, name[len(package) + 1:].replace('.', os.sep) + '.py')
+        module_path = os.path.join(root, name[len(package) + 1:].replace('.', os.path.sep) + '.py')
         load_module(module_path, name)
 
 

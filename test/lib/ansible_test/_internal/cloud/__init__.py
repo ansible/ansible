@@ -367,7 +367,7 @@ class CloudProvider(CloudBase):
         """
         with open(self.config_template_path, 'r') as template_fd:
             lines = template_fd.read().splitlines()
-            lines = [l for l in lines if not l.startswith('#')]
+            lines = [line for line in lines if not line.startswith('#')]
             config = '\n'.join(lines).strip() + '\n'
             return config
 
