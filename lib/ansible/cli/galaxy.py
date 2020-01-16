@@ -66,7 +66,7 @@ class GalaxyCLI(CLI):
         # Common arguments that apply to more than 1 action
         common = opt_help.argparse.ArgumentParser(add_help=False)
         common.add_argument('-s', '--server', dest='api_server', help='The Galaxy API server URL')
-        common.add_argument('--api-key', dest='api_key',
+        common.add_argument('--token', '--api-key', dest='api_key',
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences. You can also use ansible-galaxy login to '
                                  'retrieve this key or set the token for the GALAXY_SERVER_LIST entry.')
