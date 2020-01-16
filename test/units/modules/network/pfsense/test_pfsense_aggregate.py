@@ -10,36 +10,18 @@ import sys
 if sys.version_info < (2, 7):
     pytestmark = pytest.mark.skip("pfSense Ansible modules require Python >= 2.7")
 
-from xml.etree.ElementTree import fromstring, ElementTree
-
 from units.modules.utils import set_module_args
 from ansible.modules.network.pfsense import pfsense_aggregate
-
-from .pfsense_module import TestPFSenseModule, load_fixture
-
-
-def args_from_var(var, state='present', **kwargs):
-    """ return arguments for pfsense_alias module from var """
-    args = {}
-    for field in ['name', 'address', 'descr', 'type', 'updatefreq', 'detail']:
-        if field in var and (state == 'present' or field == 'name'):
-            args[field] = var[field]
-
-    args['state'] = state
-    for key, value in kwargs.items():
-        args[key] = value
-
-    return args
+from .pfsense_module import TestPFSenseModule
 
 
 class TestPFSenseAggregateModule(TestPFSenseModule):
 
     module = pfsense_aggregate
 
-    def load_fixtures(self, commands=None):
-        """ loading data """
-        config_file = 'pfsense_aggregate_config.xml'
-        self.parse.return_value = ElementTree(fromstring(load_fixture(config_file)))
+    def __init__(self, *args, **kwargs):
+        super(TestPFSenseAggregateModule, self).__init__(*args, **kwargs)
+        self.config_file = 'pfsense_aggregate_config.xml'
 
     def assert_find_alias(self, alias):
         """ test if an alias exist """
@@ -295,10 +277,10 @@ class TestPFSenseAggregateModule(TestPFSenseModule):
         set_module_args(args)
         result = self.execute_module(changed=True)
         result_separators = []
-        result_separators.append("create rule_separator 'one_separator', interface='lan', color='info'")
-        result_separators.append("create rule_separator 'another_separator', interface='lan_100', color='info'")
-        result_separators.append("delete rule_separator 'another_test_separator', interface='lan'")
-        result_separators.append("update rule_separator 'test_separator' set interface='lan', color='warning', before='bottom'")
+        result_separators.append("create rule_separator 'one_separator' on 'lan', color='info'")
+        result_separators.append("create rule_separator 'another_separator' on 'lan_100', color='info'")
+        result_separators.append("delete rule_separator 'another_test_separator' on 'lan'")
+        result_separators.append("update rule_separator 'test_separator' on 'lan' set color='warning', before='bottom'")
 
         self.assertEqual(result['result_rule_separators'], result_separators)
         self.assert_find_rule_separator('one_separator', 'lan')
@@ -320,13 +302,13 @@ class TestPFSenseAggregateModule(TestPFSenseModule):
         set_module_args(args)
         result = self.execute_module(changed=True)
         result_separators = []
-        result_separators.append("create rule_separator 'one_separator', interface='lan', color='info'")
-        result_separators.append("create rule_separator 'another_separator', interface='lan_100', color='info'")
-        result_separators.append("delete rule_separator 'another_test_separator', interface='lan'")
-        result_separators.append("update rule_separator 'test_separator' set interface='lan', color='warning', before='bottom'")
-        result_separators.append("delete rule_separator 'test_separator', interface='wan'")
-        result_separators.append("delete rule_separator 'last_test_separator', interface='lan'")
-        result_separators.append("delete rule_separator 'test_sep_floating', floating=True")
+        result_separators.append("create rule_separator 'one_separator' on 'lan', color='info'")
+        result_separators.append("create rule_separator 'another_separator' on 'lan_100', color='info'")
+        result_separators.append("delete rule_separator 'another_test_separator' on 'lan'")
+        result_separators.append("update rule_separator 'test_separator' on 'lan' set color='warning', before='bottom'")
+        result_separators.append("delete rule_separator 'test_separator' on 'wan'")
+        result_separators.append("delete rule_separator 'last_test_separator' on 'lan'")
+        result_separators.append("delete rule_separator 'test_sep_floating' on 'floating'")
 
         self.assertEqual(result['result_rule_separators'], result_separators)
         self.assert_find_rule_separator('one_separator', 'lan')

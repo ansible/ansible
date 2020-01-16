@@ -3,11 +3,16 @@
 # Copyright: (c) 2018, Orion Poplawski <orion@nwra.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible.module_utils.compat.ipaddress import ip_address, ip_network
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+from ansible.module_utils.compat.ipaddress import ip_address, ip_network, IPv4Address, IPv6Address, IPv4Network, IPv6Network
 import json
 import shutil
 import os
 import pwd
+import random
+import re
 import time
 import xml.etree.ElementTree as ET
 from tempfile import mkstemp
@@ -15,6 +20,9 @@ from tempfile import mkstemp
 
 class PFSenseModule(object):
     """ class managing pfsense base configuration """
+
+    from ansible.module_utils.network.pfsense.__impl.parse_address import parse_address
+    from ansible.module_utils.network.pfsense.__impl.checks import check_name
 
     def __init__(self, module, config='/cf/conf/config.xml'):
         self.module = module
@@ -27,8 +35,10 @@ class PFSenseModule(object):
         self.shapers = self.get_element('shaper')
         self.dnshapers = self.get_element('dnshaper')
         self.vlans = self.get_element('vlans')
+        self.gateways = self.get_element('gateways')
         self.ipsec = self.get_element('ipsec')
         self.openvpn = self.get_element('openvpn')
+        self.virtualip = None
         self.debug = open('/tmp/pfsense.debug', 'w')
 
     @staticmethod
@@ -60,6 +70,17 @@ class PFSenseModule(object):
     def get_index(self, elt):
         """ Get elt index  """
         return list(self.root).index(elt)
+
+    @staticmethod
+    def remove_deleted_param_from_elt(elt, param, params):
+        """ Remove from a deleted param from an xml elt """
+        changed = False
+        if param not in params:
+            param_elt = elt.find(param)
+            if param_elt is not None:
+                changed = True
+                elt.remove(param_elt)
+        return changed
 
     def get_interface_pfsense_by_name(self, name):
         """ return pfsense interface by name """
@@ -154,6 +175,18 @@ class PFSenseModule(object):
                 return True
         return False
 
+    def find_ipsec_phase1(self, field_value, field='descr'):
+        """ return ipsec phase1 elt if found """
+        for ipsec_elt in self.ipsec:
+            if ipsec_elt.tag != 'phase1':
+                continue
+
+            field_elt = ipsec_elt.find(field)
+            if field_elt is not None and field_elt.text == field_value:
+                return ipsec_elt
+
+        return None
+
     @staticmethod
     def rule_match_interface(rule_elt, interface, floating):
         """ check if a rule elt match the targeted interface
@@ -161,7 +194,7 @@ class PFSenseModule(object):
         """
         interface_elt = rule_elt.find('interface')
         floating_elt = rule_elt.find('floating')
-        if floating_elt is not None and floating_elt.text == 'yes':
+        if floating_elt is not None:
             return floating
         elif floating:
             return False
@@ -316,22 +349,89 @@ class PFSenseModule(object):
                 or self.find_alias(address, 'urltable_ports') is not None):
             return True
 
-        # Is it an IP address?
+        # Is it an IP address or network?
+        if self.is_ip_address(address) or self.is_ip_network(address):
+            return True
+
+        # None of the above
+        return False
+
+    @staticmethod
+    def is_ip_address(address):
+        """ test if address is a valid ip address """
         try:
             ip_address(u'{0}'.format(address))
             return True
         except ValueError:
             pass
+        return False
 
-        # Is it an IP network?
+    @staticmethod
+    def is_ipv4_address(address):
+        """ test if address is a valid ipv4 address """
         try:
-            ip_network(u'{0}'.format(address))
+            addr = ip_address(u'{0}'.format(address))
+            return isinstance(addr, IPv4Address)
+        except ValueError:
+            pass
+        return False
+
+    @staticmethod
+    def is_ipv6_address(address):
+        """ test if address is a valid ipv6 address """
+        try:
+            addr = ip_address(u'{0}'.format(address))
+            return isinstance(addr, IPv6Address)
+        except ValueError:
+            pass
+        return False
+
+    @staticmethod
+    def is_ip_network(address, strict=True):
+        """ test if address is a valid ip network """
+        try:
+            ip_network(u'{0}'.format(address), strict=strict)
             return True
         except ValueError:
             pass
-
-        # None of the above
         return False
+
+    @staticmethod
+    def is_ipv4_network(address, strict=True):
+        """ test if address is a valid ipv4 network """
+        try:
+            addr = ip_network(u'{0}'.format(address), strict=strict)
+            return isinstance(addr, IPv4Network)
+        except ValueError:
+            pass
+        return False
+
+    @staticmethod
+    def is_ipv6_network(address, strict=True):
+        """ test if address is a valid ipv6 network """
+        try:
+            addr = ip_network(u'{0}'.format(address), strict=strict)
+            return isinstance(addr, IPv6Network)
+        except ValueError:
+            pass
+        return False
+
+    @staticmethod
+    def parse_ip_network(address, strict=True, returns_ip=True):
+        """ return cidr parts of address """
+        try:
+            addr = ip_network(u'{0}'.format(address), strict=strict)
+            if strict or not returns_ip:
+                return (str(addr.network_address), addr.prefixlen)
+            else:
+                # we parse the address with ipaddr just for type checking
+                # but we use a regex to return the result as it dont kept the address bits
+                group = re.match(r'(.*)/(.*)', address)
+                if group:
+                    return (group.group(1), group.group(2))
+        except ValueError:
+            pass
+        return None
 
     def is_port_or_alias(self, port):
         """ return True if port is a valid port number or an alias """
@@ -342,6 +442,18 @@ class PFSenseModule(object):
                 return True
         except ValueError:
             pass
+        return False
+
+    def is_virtual_ip(self, addr):
+        """ return True if addr is a virtual ip """
+        if self.virtualip is None:
+            self.virtualip = self.get_element('virtualip')
+        if self.virtualip is None:
+            return False
+
+        for ip_elt in self.virtualip:
+            if ip_elt.find('subnet').text == addr:
+                return True
         return False
 
     def find_queue(self, name, interface=None, enabled=False):
@@ -395,15 +507,86 @@ class PFSenseModule(object):
 
     def find_vlan(self, interface, tag):
         """ return vlan elt if found """
-        for vlan in self.vlans:
-            if vlan.find('if').text == interface and vlan.find('tag').text == tag:
-                return vlan
+        if self.vlans is None:
+            self.vlans = self.get_element('vlans')
+
+        if self.vlans is not None:
+            for vlan in self.vlans:
+                if vlan.find('if').text == interface and vlan.find('tag').text == tag:
+                    return vlan
 
         return None
 
+    def find_gateway_elt(self, name, interface=None, protocol=None):
+        """ return gateway elt if found """
+        for gw_elt in self.gateways:
+            if gw_elt.tag != 'gateway_item':
+                continue
+
+            if protocol is not None and gw_elt.find('ipprotocol').text != protocol:
+                continue
+
+            if interface is not None and gw_elt.find('interface').text != interface:
+                continue
+
+            if gw_elt.find('name').text == name:
+                return gw_elt
+
+        return None
+
+    def find_gateway_group_elt(self, name, protocol='inet'):
+        """ return gateway_group elt if found """
+        for gw_grp_elt in self.gateways:
+            if gw_grp_elt.tag != 'gateway_group':
+                continue
+            if gw_grp_elt.find('name').text != name:
+                continue
+
+            # check if protocol match
+            match_protocol = True
+            for gw_elt in gw_grp_elt:
+                if gw_elt.tag != 'item' or gw_elt.text is None:
+                    continue
+
+                items = gw_elt.text.split('|')
+                if not items or self.find_gateway_elt(items[0], None, protocol) is None:
+                    match_protocol = False
+                    break
+
+            if not match_protocol:
+                continue
+
+            return gw_grp_elt
+
+        return None
+
+    def find_certobj_elt(self, descr, objtype, search_field='descr'):
+        """ return certificate object elt if found """
+        cas_elt = self.get_elements(objtype)
+        for ca_elt in cas_elt:
+            descr_elt = ca_elt.find(search_field)
+            if descr_elt is not None and descr_elt.text == descr:
+                return ca_elt
+        return None
+
+    def find_ca_elt(self, descr, search_field='descr'):
+        """ return certificate authority elt if found """
+        return self.find_certobj_elt(descr, 'ca', search_field)
+
+    def find_cert_elt(self, descr, search_field='descr'):
+        """ return certificate elt if found """
+        return self.find_certobj_elt(descr, 'cert', search_field)
+
+    def find_crl_elt(self, descr, search_field='descr'):
+        """ return certificate revocation list elt if found """
+        return self.find_certobj_elt(descr, 'crl', search_field)
+
     @staticmethod
-    def uniqid(prefix=''):
+    def uniqid(prefix='', more_entropy=False):
         """ return an identifier based on time """
+        if more_entropy:
+            return prefix + hex(int(time.time()))[2:10] + hex(int(time.time() * 1000000) % 0x100000)[2:7] + "%.8F" % (random.random() * 10)
+
         return prefix + hex(int(time.time()))[2:10] + hex(int(time.time() * 1000000) % 0x100000)[2:7]
 
     def phpshell(self, command):
@@ -447,46 +630,3 @@ class PFSenseModule(object):
                 pass
             else:
                 raise
-
-
-class PFSenseModuleBase(object):
-    """ class providing base services for pfSense modules """
-
-    @staticmethod
-    def fvalue_idem(value):
-        """ dummy value formatting function """
-        return value
-
-    def format_cli_field(self, after, field, log_none=False, add_comma=True, fvalue=None, default=None, fname=None):
-        """ format field for pseudo-CLI command """
-        if fvalue is None:
-            fvalue = self.fvalue_idem
-
-        if fname is None:
-            fname = field
-
-        res = ''
-        if field in after:
-            if log_none and after[field] is None:
-                res = "{0}=none".format(fname)
-            if after[field] is not None:
-                if default is None or after[field] != default:
-                    if isinstance(after[field], str):
-                        res = "{0}='{1}'".format(fname, fvalue(after[field].replace("'", "\\'")))
-                    else:
-                        res = "{0}={1}".format(fname, fvalue(after[field]))
-        elif log_none:
-            res = "{0}=none".format(fname)
-
-        if add_comma and res:
-            return ', ' + res
-        return res
-
-    def format_updated_cli_field(self, after, before, field, log_none=True, add_comma=True, fvalue=None, default=None, fname=None):
-        """ format field for pseudo-CLI update command """
-        if field in after and field in before:
-            if after[field] != before[field]:
-                return self.format_cli_field(after, field, log_none=log_none, add_comma=add_comma, fvalue=fvalue, default=default, fname=fname)
-        elif field in after and field not in before or field not in after and field in before:
-            return self.format_cli_field(after, field, log_none=log_none, add_comma=add_comma, fvalue=fvalue, default=default, fname=fname)
-        return ''
