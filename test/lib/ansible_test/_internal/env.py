@@ -17,6 +17,10 @@ from .config import (
     TestConfig,
 )
 
+from .io import (
+    write_json_file,
+)
+
 from .util import (
     display,
     find_executable,
@@ -28,7 +32,6 @@ from .util import (
 
 from .util_common import (
     write_json_test_results,
-    write_json_file,
     ResultType,
 )
 

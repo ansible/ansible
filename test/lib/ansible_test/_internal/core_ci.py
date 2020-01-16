@@ -18,9 +18,13 @@ from .http import (
     HttpError,
 )
 
+from .io import (
+    make_dirs,
+    write_json_file,
+)
+
 from .util import (
     ApplicationError,
-    make_dirs,
     display,
     is_shippable,
     to_text,
@@ -29,7 +33,6 @@ from .util import (
 
 from .util_common import (
     run_command,
-    write_json_file,
     ResultType,
 )
 

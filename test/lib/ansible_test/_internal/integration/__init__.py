@@ -22,10 +22,15 @@ from ..config import (
     WindowsIntegrationConfig,
 )
 
+from ..io import (
+    make_dirs,
+    write_text_file,
+)
+
+
 from ..util import (
     ApplicationError,
     display,
-    make_dirs,
     COVERAGE_CONFIG_NAME,
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
@@ -35,7 +40,6 @@ from ..util import (
 
 from ..util_common import (
     named_temporary_file,
-    write_text_file,
     ResultType,
 )
 

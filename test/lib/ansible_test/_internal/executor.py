@@ -46,7 +46,6 @@ from .util import (
     SubprocessError,
     display,
     remove_tree,
-    make_dirs,
     is_shippable,
     is_binary_file,
     find_executable,
@@ -71,10 +70,14 @@ from .util_common import (
     intercept_command,
     named_temporary_file,
     run_command,
-    write_text_file,
     write_json_test_results,
     ResultType,
     handle_layout_messages,
+)
+
+from .io import (
+    make_dirs,
+    write_text_file,
 )
 
 from .docker_util import (

@@ -493,17 +493,6 @@ def remove_tree(path):
             raise
 
 
-def make_dirs(path):
-    """
-    :type path: str
-    """
-    try:
-        os.makedirs(to_bytes(path))
-    except OSError as ex:
-        if ex.errno != errno.EEXIST:
-            raise
-
-
 def is_binary_file(path):
     """
     :type path: str

@@ -17,9 +17,12 @@ from xml.dom import (
     minidom,
 )
 
+from ..io import (
+    make_dirs,
+)
+
 from ..util import (
     to_text,
-    make_dirs,
 )
 
 from ..util_common import (
