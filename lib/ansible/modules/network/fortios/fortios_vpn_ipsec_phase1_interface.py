@@ -1481,8 +1481,8 @@ def main():
                                          "3des-sha1", "3des-sha256", "3des-sha384",
                                          "3des-sha512", "aes128-md5", "aes128-sha1",
                                          "aes128-sha256", "aes128-sha384", "aes128-sha512",
-                                         "aes128gcm-prfsha1", "aes128gcm-prfsha256"
-                                         "aes128gcm-prfsha384", "aes128gcm-prfsha512"
+                                         "aes128gcm-prfsha1", "aes128gcm-prfsha256",
+                                         "aes128gcm-prfsha384", "aes128gcm-prfsha512",
                                          "aes192-md5", "aes192-sha1", "aes192-sha256",
                                          "aes192-sha384", "aes192-sha512", "aes256-md5",
                                          "aes256-sha1", "aes256-sha256", "aes256-sha384",
