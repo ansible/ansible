@@ -141,7 +141,7 @@ options:
                     - Note that if using relative time this module is NOT idempotent, except when
                       I(ignore_timestamps) is set to C(yes).
                 type: str
-                required: yes
+                default: "+0s"
             issuer:
                 description:
                     - The certificate's issuer.
@@ -752,7 +752,7 @@ def main():
                 options=dict(
                     path=dict(type='path'),
                     serial_number=dict(type='int'),
-                    revocation_date=dict(type='str', required=True),
+                    revocation_date=dict(type='str', default='+0s'),
                     issuer=dict(type='list'),
                     issuer_critical=dict(type='bool', default=False),
                     reason=dict(
