@@ -1,0 +1,2 @@
+minor_changes:
+  - os_server now supports diff and check_mode

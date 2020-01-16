@@ -437,10 +437,23 @@ from ansible.module_utils.openstack import (
     openstack_full_argument_spec, openstack_module_kwargs)
 
 
-def _exit_hostvars(module, cloud, server, changed=True):
-    hostvars = cloud.get_openstack_vars(server)
+def _exit_hostvars(module, cloud, server, diff, changed=True):
+    redact_keys = ['adminPass']
+    for k in redact_keys:
+        if k in diff['before']:
+            diff['before'][k] = '***'
+        if k in diff['after']:
+            diff['after'][k] = '***'
+        if k in server:
+            server[k] = '***'
+
+    if module.check_mode:
+        hostvars = server
+    else:
+        hostvars = cloud.get_openstack_vars(server)
+
     module.exit_json(
-        changed=changed, server=server, id=server.id, openstack=hostvars)
+        changed=changed, diff=diff, server=server, id=server.get('id', None), openstack=hostvars)
 
 
 def _parse_nics(nics):
@@ -497,8 +510,8 @@ def _network_args(module, cloud):
 def _parse_meta(meta):
     if isinstance(meta, str):
         metas = {}
-        for kv_str in meta.split(","):
-            k, v = kv_str.split("=")
+        for kv_str in meta.split(','):
+            k, v = kv_str.split('=')
             metas[k] = v
         return metas
     if not meta:
@@ -507,14 +520,17 @@ def _parse_meta(meta):
 
 
 def _delete_server(module, cloud):
+    if module.check_mode:
+        return True
+
     try:
         cloud.delete_server(
             module.params['name'], wait=module.params['wait'],
             timeout=module.params['timeout'],
             delete_ips=module.params['delete_fip'])
     except Exception as e:
-        module.fail_json(msg="Error in deleting vm: %s" % e.message)
-    module.exit_json(changed=True, result='deleted')
+        module.fail_json(msg='Error in deleting vm: %s' % e.message)
+    return True
 
 
 def _create_server(module, cloud):
@@ -527,20 +543,26 @@ def _create_server(module, cloud):
         image_id = cloud.get_image_id(
             module.params['image'], module.params['image_exclude'])
         if not image_id:
-            module.fail_json(msg="Could not find image %s" %
+            module.fail_json(msg='Could not find image %s' %
                              module.params['image'])
 
     if flavor:
         flavor_dict = cloud.get_flavor(flavor)
         if not flavor_dict:
-            module.fail_json(msg="Could not find flavor %s" % flavor)
+            module.fail_json(msg='Could not find flavor %s' % flavor)
     else:
         flavor_dict = cloud.get_flavor_by_ram(flavor_ram, flavor_include)
         if not flavor_dict:
-            module.fail_json(msg="Could not find any matching flavor")
+            module.fail_json(msg='Could not find any matching flavor')
+
+    if module.check_mode:
+        server = dict(
+            name=module.params['name'],
+            security_groups=module.params['security_groups']
+        )
+        return server
 
     nics = _network_args(module, cloud)
-
     module.params['meta'] = _parse_meta(module.params['meta'])
 
     bootkwargs = dict(
@@ -571,11 +593,13 @@ def _create_server(module, cloud):
         **bootkwargs
     )
 
-    _exit_hostvars(module, cloud, server)
+    return server
 
 
 def _update_server(module, cloud, server):
     changed = False
+    sg_changed = False
+    ip_changed = False
 
     module.params['meta'] = _parse_meta(module.params['meta'])
 
@@ -587,8 +611,20 @@ def _update_server(module, cloud, server):
             update_meta[k] = v
 
     if update_meta:
-        cloud.set_server_metadata(server, update_meta)
+        if module.check_mode:
+            server['metadata'].update(update_meta)
+        else:
+            cloud.set_server_metadata(server, update_meta)
         changed = True
+
+    # these functions perform update checks themselves
+    (sg_changed, server) = _update_security_groups(module, cloud, server)
+    (ip_changed, server) = _update_ips(module, cloud, server)
+
+    if sg_changed or ip_changed:
+        changed = True
+
+    if changed and not module.check_mode:
         # Refresh server vars
         server = cloud.get_server(module.params['name'])
 
@@ -603,7 +639,7 @@ def _detach_ip_list(cloud, server, extra_ips):
             server_id=server.id, floating_ip_id=ip_id)
 
 
-def _check_ips(module, cloud, server):
+def _update_ips(module, cloud, server):
     changed = False
 
     auto_ip = module.params['auto_ip']
@@ -661,7 +697,7 @@ def _check_ips(module, cloud, server):
     return (changed, server)
 
 
-def _check_security_groups(module, cloud, server):
+def _update_security_groups(module, cloud, server):
     changed = False
 
     # server security groups were added to shade in 1.19. Until then this
@@ -677,6 +713,19 @@ def _check_security_groups(module, cloud, server):
     add_sgs = module_security_groups - server_security_groups
     remove_sgs = server_security_groups - module_security_groups
 
+    if module.check_mode:
+        if add_sgs:
+            sg_list = [dict(name=sg) for sg in add_sgs]
+            server['security_groups'].extend(sg_list)
+            changed = True
+
+        if remove_sgs:
+            sg_list = [dict(name=sg) for sg in server_security_groups if sg not in remove_sgs]
+            server['security_groups'] = sg_list
+            changed = True
+
+        return (changed, server)
+
     if add_sgs:
         cloud.add_server_security_groups(server, list(add_sgs))
         changed = True
@@ -688,23 +737,42 @@ def _check_security_groups(module, cloud, server):
     return (changed, server)
 
 
-def _get_server_state(module, cloud):
-    state = module.params['state']
+def _present_server(module, cloud):
+    changed = False
+    diff = {'before': '', 'after': ''}
     server = cloud.get_server(module.params['name'])
-    if server and state == 'present':
-        if server.status not in ('ACTIVE', 'SHUTOFF', 'PAUSED', 'SUSPENDED'):
-            module.fail_json(
-                msg="The instance is available but not Active state: " + server.status)
-        (ip_changed, server) = _check_ips(module, cloud, server)
-        (sg_changed, server) = _check_security_groups(module, cloud, server)
-        (server_changed, server) = _update_server(module, cloud, server)
-        _exit_hostvars(module, cloud, server,
-                       ip_changed or sg_changed or server_changed)
-    if server and state == 'absent':
-        return True
-    if state == 'absent':
-        module.exit_json(changed=False, result="not present")
-    return True
+
+    if not server:
+        server = _create_server(module, cloud)
+        diff['after'] = server
+        _exit_hostvars(module, cloud, server, diff, True)
+
+    if server.status not in ('ACTIVE', 'SHUTOFF', 'PAUSED', 'SUSPENDED'):
+        module.fail_json(
+            msg='The instance is available but not Active state: %s' % server.status)
+
+    if server:
+        diff['before'] = cloud.get_openstack_vars(server)
+        (changed, server) = _update_server(module, cloud, server)
+        if module.check_mode:
+            diff['after'] = server
+        else:
+            diff['after'] = cloud.get_openstack_vars(server)
+
+        _exit_hostvars(module, cloud, server, diff, changed)
+
+
+def _absent_server(module, cloud):
+    changed = False
+    diff = {'before': '', 'after': ''}
+    server = cloud.get_server(module.params['name'])
+
+    if server:
+        diff['before'] = cloud.get_openstack_vars(server)
+        changed = _delete_server(module, cloud)
+        module.exit_json(changed=changed, result='deleted', diff=diff)
+
+    module.exit_json(changed=changed, diff=diff, result='not present')
 
 
 def main():
@@ -750,7 +818,9 @@ def main():
             ('boot_from_volume', True, ['volume_size', 'image']),
         ],
     )
-    module = AnsibleModule(argument_spec, **module_kwargs)
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
 
     state = module.params['state']
     image = module.params['image']
@@ -761,23 +831,19 @@ def main():
     if state == 'present':
         if not (image or boot_volume):
             module.fail_json(
-                msg="Parameter 'image' or 'boot_volume' is required "
-                    "if state == 'present'"
+                msg='Parameter image or boot_volume is required if state == present'
             )
         if not flavor and not flavor_ram:
             module.fail_json(
-                msg="Parameter 'flavor' or 'flavor_ram' is required "
-                    "if state == 'present'"
+                msg='Parameter flavor or flavor_ram is required if state == present'
             )
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
         if state == 'present':
-            _get_server_state(module, cloud)
-            _create_server(module, cloud)
-        elif state == 'absent':
-            _get_server_state(module, cloud)
-            _delete_server(module, cloud)
+            _present_server(module, cloud)
+        if state == 'absent':
+            _absent_server(module, cloud)
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
