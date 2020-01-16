@@ -241,6 +241,19 @@ options:
               U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/using-cloud-init#cloud-init-overview),
               follow these steps U(https://docs.microsoft.com/en-us/azure/virtual-machines/linux/cloudinit-prepare-custom-image).
         version_added: "2.8"
+    scale_in_policy:
+        description:
+            - define the order in which vmss instances are scaled-in
+        choices:
+            - Default
+            - NewestVM
+            - OldestVM
+        version_added: "2.10"
+    terminate_event_timeout_minutes:
+        description:
+            - timeout time for termination notification event
+            - in range between 5 and 15
+        version_added: "2.10"
 
 extends_documentation_fragment:
     - azure
@@ -261,6 +274,8 @@ EXAMPLES = '''
     virtual_network_name: testvnet
     upgrade_policy: Manual
     subnet_name: testsubnet
+    terminate_event_timeout_minutes: 10
+    scale_in_policy: NewestVM
     admin_username: adminUser
     ssh_password_enabled: false
     ssh_public_keys:
@@ -364,6 +379,11 @@ azure_vmss:
     sample: {
         "properties": {
             "overprovision": true,
+             "scaleInPolicy": {
+                    "rules": [
+                        "NewestVM"
+                    ]
+            },
             "singlePlacementGroup": true,
             "upgradePolicy": {
                 "mode": "Manual"
@@ -410,6 +430,12 @@ azure_vmss:
                     },
                     "secrets": []
                 },
+                "scheduledEventsProfile": {
+                        "terminateNotificationProfile": {
+                            "enable": true,
+                            "notBeforeTimeout": "PT10M"
+                        }
+                },
                 "storageProfile": {
                     "dataDisks": [
                         {
@@ -448,8 +474,6 @@ azure_vmss:
     }
 '''  # NOQA
 
-import random
-import re
 import base64
 
 try:
@@ -508,6 +532,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             plan=dict(type='dict', options=dict(publisher=dict(type='str', required=True),
                       product=dict(type='str', required=True), name=dict(type='str', required=True),
                       promotion_code=dict(type='str'))),
+            scale_in_policy=dict(type='str', choices=['Default', 'OldestVM', 'NewestVM']),
+            terminate_event_timeout_minutes=dict(type='int')
         )
 
         self.resource_group = None
@@ -542,11 +568,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         self.zones = None
         self.custom_data = None
         self.plan = None
-
-        required_if = [
-            ('state', 'present', [
-             'vm_size'])
-        ]
+        self.scale_in_policy = None
+        self.terminate_event_timeout_minutes = None
 
         mutually_exclusive = [('load_balancer', 'application_gateway')]
         self.results = dict(
@@ -558,12 +581,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         super(AzureRMVirtualMachineScaleSet, self).__init__(
             derived_arg_spec=self.module_arg_spec,
             supports_check_mode=True,
-            required_if=required_if,
             mutually_exclusive=mutually_exclusive)
 
     def exec_module(self, **kwargs):
-
-        nsg = None
 
         for key in list(self.module_arg_spec.keys()) + ['tags']:
             setattr(self, key, kwargs[key])
@@ -585,11 +605,8 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
         results = dict()
         vmss = None
         disable_ssh_password = None
-        vmss_dict = None
-        virtual_network = None
         subnet = None
         image_reference = None
-        custom_image = False
         load_balancer_backend_address_pools = None
         load_balancer_inbound_nat_pools = None
         load_balancer = None
@@ -737,6 +754,27 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                     changed = True
                     vmss_dict['zones'] = self.zones
 
+                if self.terminate_event_timeout_minutes:
+                    timeout = self.terminate_event_timeout_minutes
+                    if timeout < 5 or timeout > 15:
+                        self.fail("terminate_event_timeout_minutes should >= 5 and <= 15")
+                    iso_8601_format = "PT" + str(timeout) + "M"
+                    old = vmss_dict['properties']['virtualMachineProfile'].get('scheduledEventsProfile', {}).\
+                        get('terminateNotificationProfile', {}).get('notBeforeTimeout', "")
+                    if old != iso_8601_format:
+                        differences.append('terminateNotification')
+                        changed = True
+                        vmss_dict['properties']['virtualMachineProfile'].setdefault('scheduledEventsProfile', {})['terminateNotificationProfile'] = {
+                            'notBeforeTimeout': iso_8601_format,
+                            "enable": 'true'
+                        }
+
+                if self.scale_in_policy and self.scale_in_policy != vmss_dict['properties'].get('scaleInPolicy', {}).get('rules', [""])[0]:
+                    self.log("CHANGED: virtual machine sale sets {0} scale in policy".format(self.name))
+                    differences.append('scaleInPolicy')
+                    changed = True
+                    vmss_dict['properties'].setdefault('scaleInPolicy', {})['rules'] = [self.scale_in_policy]
+
                 nicConfigs = vmss_dict['properties']['virtualMachineProfile']['networkProfile']['networkInterfaceConfigurations']
 
                 backend_address_pool = nicConfigs[0]['properties']['ipConfigurations'][0]['properties'].get('loadBalancerBackendAddressPools', [])
@@ -752,7 +790,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         lb_or_ag_id = "{0}/".format(application_gateway.id)
 
                     backend_address_pool_id = backend_address_pool[0].get('id')
-                    if bool(lb_or_ag_id) != bool(backend_address_pool_id) or not backend_address_pool_id.startswith(lb_or_ag_id):
+                    if lb_or_ag_id is not None and (bool(lb_or_ag_id) != bool(backend_address_pool_id) or not backend_address_pool_id.startswith(lb_or_ag_id)):
                         differences.append('load_balancer')
                         changed = True
 
@@ -785,6 +823,9 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
             if self.state == 'present':
                 if not vmss:
                     # Create the VMSS
+                    if self.vm_size is None:
+                        self.fail("vm size must be set")
+
                     self.log("Create virtual machine scale set {0}".format(self.name))
                     self.results['actions'].append('Created VMSS {0}'.format(self.name))
 
@@ -793,9 +834,7 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                             self.fail("Parameter error: ssh_public_keys required when disabling SSH password.")
 
                     if not self.virtual_network_name:
-                        default_vnet = self.create_default_vnet()
-                        virtual_network = default_vnet.id
-                        self.virtual_network_name = default_vnet.name
+                        self.fail("virtual network name is required")
 
                     if self.subnet_name:
                         subnet = self.get_subnet(self.virtual_network_name, self.subnet_name)
@@ -876,6 +915,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                         ),
                         zones=self.zones
                     )
+
+                    if self.scale_in_policy:
+                        vmss_resource.scale_in_policy = self.gen_scale_in_policy()
+
+                    if self.terminate_event_timeout_minutes:
+                        vmss_resource.virtual_machine_profile.scheduled_events_profile = self.gen_scheduled_event_profile()
 
                     if self.admin_password:
                         vmss_resource.virtual_machine_profile.os_profile.admin_password = self.admin_password
@@ -971,6 +1016,12 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                 ),
                             ))
                         vmss_resource.virtual_machine_profile.storage_profile.data_disks = data_disks
+
+                    if self.scale_in_policy:
+                        vmss_resource.scale_in_policy = self.gen_scale_in_policy()
+
+                    if self.terminate_event_timeout_minutes:
+                        vmss_resource.virtual_machine_profile.scheduled_events_profile = self.gen_scheduled_event_profile()
 
                     if image_reference is not None:
                         vmss_resource.virtual_machine_profile.storage_profile.image_reference = image_reference
@@ -1137,6 +1188,23 @@ class AzureRMVirtualMachineScaleSet(AzureRMModuleBase):
                                 resource_group=resource_group)
         name = azure_id_to_dict(id).get('name')
         return dict(id=id, name=name)
+
+    def gen_scheduled_event_profile(self):
+        if self.terminate_event_timeout_minutes is None:
+            return None
+
+        scheduledEventProfile = self.compute_models.ScheduledEventsProfile()
+        terminationProfile = self.compute_models.TerminateNotificationProfile()
+        terminationProfile.not_before_timeout = "PT" + str(self.terminate_event_timeout_minutes) + "M"
+        terminationProfile.enable = True
+        scheduledEventProfile.terminate_notification_profile = terminationProfile
+        return scheduledEventProfile
+
+    def gen_scale_in_policy(self):
+        if self.scale_in_policy is None:
+            return None
+
+        return self.compute_models.ScaleInPolicy(rules=[self.scale_in_policy])
 
 
 def main():
