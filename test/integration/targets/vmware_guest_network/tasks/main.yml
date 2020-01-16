@@ -9,6 +9,8 @@
     vars:
       setup_attach_host: true
       setup_datastore: true
+      setup_dvs_portgroup: true
+      setup_dvswitch: true
 
   - name: Create VMs
     vmware_guest:
