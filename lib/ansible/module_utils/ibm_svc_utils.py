@@ -1,8 +1,8 @@
 # Copyright (C) 2019 IBM CORPORATION
 # Author(s): John Hetherington <john.hetherington@uk.ibm.com>
 #
-# Simplified BSD License (see licenses/simplified_bsd.txt or
-# https://opensource.org/licenses/BSD-2-Clause)
+# GNU General Public License v3.0+ (see COPYING or
+# https://www.gnu.org/licenses/gpl-3.0.txt)
 
 """ Support class for IBM SVC ansible modules """
 
