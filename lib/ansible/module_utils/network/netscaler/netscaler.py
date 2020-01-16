@@ -681,7 +681,9 @@ class NitroResourceConfig(object):
         if len(defined_ids) == 0:
             raise Exception('Cannot get resource without some get_id attribute defined')
         else:
-            args = {id: self.values_dict[id] for id in defined_ids}
+            args = {}
+            for id in defined_ids:
+                args[id] = self.values_dict[id]
             result = self.fetcher.get(self.resource, args=args)
 
         log('result retrieved %s' % result)
@@ -1008,7 +1010,9 @@ class MASResourceConfig(object):
         elif use_filter:
             result = self.fetcher.get(self.resource, filter=defined_id_attributes_dict)
         else:
-            args = {id: self.values_dict[id] for id in defined_ids}
+            args = {}
+            for id in defined_ids:
+                args[id] = self.values_dict[id]
             result = self.fetcher.get(self.resource, args=defined_id_attributes_dict)
 
         log('result retrieved %s' % result)
