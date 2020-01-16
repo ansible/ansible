@@ -64,6 +64,13 @@ EXAMPLES = '''
     role: admin
     project: project1
 
+# Grant an admin role on the user admin in the domain mydomain
+- os_user_role:
+    cloud: mycloud
+    user: admin
+    role: admin
+    domain: mydomain
+
 # Revoke the admin role from the user barney in the newyork domain
 - os_user_role:
     cloud: mycloud
@@ -130,6 +137,7 @@ def main():
     sdk, cloud = openstack_cloud_from_module(module)
     try:
         filters = {}
+        domain_id = None
 
         r = cloud.get_role(role)
         if r is None:
@@ -141,6 +149,7 @@ def main():
             if d is None:
                 module.fail_json(msg="Domain %s is not valid" % domain)
             filters['domain'] = d['id']
+            domain_id = d['id']
         if user:
             if domain:
                 u = cloud.get_user(user, domain_id=filters['domain'])
@@ -155,7 +164,6 @@ def main():
             if g is None:
                 module.fail_json(msg="Group %s is not valid" % group)
             filters['group'] = g['id']
-        domain_id = None
         if project:
             if domain:
                 p = cloud.get_project(project, domain_id=filters['domain'])
