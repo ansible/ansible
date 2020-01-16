@@ -1,0 +1,3580 @@
+Interface eth0
+  Scope: both
+  Hardware is METH  Current HW addr: ecf4.bbfe.2beb
+  Physical:ecf4.bbfe.2beb  Logical:(not set)
+  Port Mode is Router
+  Interface index: 3
+  Metric 1 mtu 1500 duplex-full(auto) link-speed 1g(auto)
+  <UP,BROADCAST,RUNNING,MULTICAST>
+  VRF Binding: Associated with management
+  IPV4 DHCP client is enabled <client-id=eth0, hostname=n/a>.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  inet 10.5.178.3/22 broadcast 10.5.179.255
+  inet6 fe80::eef4:bbff:fefe:2beb/64
+  Rx
+    multicast packets 29758 non-multicast packets 3520091
+    input packets 3549849 bytes 234543836
+    length 0 overrun 0 CRC 0 frame 0 fifo 0 missed 0
+    input errors 0 input discard 0
+  Tx
+    output packets 13976 bytes 4429132
+    aborted 0 carrier 0 fifo 0 heartbeat 0 window 0
+    output errors 0 output discards 0
+    collisions 0
+
+Interface lo
+  Scope: both
+  Hardware is LB
+  Port Mode is Router
+  Interface index: 1
+  Metric 1 mtu 16436
+  <UP,LOOPBACK,RUNNING>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  inet 127.0.0.1/8
+  inet6 ::1/128
+  Rx
+    multicast packets 0 non-multicast packets 76320
+    input packets 76320 bytes 4275828
+    length 0 overrun 0 CRC 0 frame 0 fifo 0 missed 0
+    input errors 0 input discard 0
+  Tx
+    output packets 76320 bytes 4275828
+    aborted 0 carrier 0 fifo 0 heartbeat 0 window 0
+    output errors 0 output discards 0
+    collisions 0
+
+Interface lo.management
+  Scope: both
+  Hardware is LB
+  Port Mode is Router
+  Interface index: 15002
+  Metric 1 mtu 16436
+  <UP,LOOPBACK,RUNNING>
+  VRF Binding: Associated with management
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  inet 127.0.0.1/8
+  inet6 ::1/128
+  Rx
+    multicast packets 0 non-multicast packets 11567691
+    input packets 11567691 bytes 647810060
+    length 0 overrun 0 CRC 0 frame 0 fifo 0 missed 0
+    input errors 0 input discard 0
+  Tx
+    output packets 11567697 bytes 647810228
+    aborted 0 carrier 0 fifo 0 heartbeat 0 window 0
+    output errors 0 output discards 0
+    collisions 0
+
+Interface vlan1.1
+  Scope: both
+  Hardware is SVI  Current HW addr: ecf4.bb3e.c0ec
+  Physical:(Not Applicable)  Logical:(not set)
+  Port Mode is Router
+  Interface index: 25001
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface vlan1.2
+  Scope: both
+  Hardware is SVI  Current HW addr: ecf4.bb3e.c0ec
+  Physical:(Not Applicable)  Logical:(not set)
+  Port Mode is Router
+  Interface index: 25002
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface vlan1.3
+  Scope: both
+  Hardware is SVI  Current HW addr: ecf4.bb3e.c0ec
+  Physical:(Not Applicable)  Logical:(not set)
+  Port Mode is Router
+  Interface index: 25003
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface vlan1.4
+  Scope: both
+  Hardware is SVI  Current HW addr: ecf4.bb3e.c0ec
+  Physical:(Not Applicable)  Logical:(not set)
+  Port Mode is Router
+  Interface index: 25004
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface vlan1.5
+  Scope: both
+  Hardware is SVI  Current HW addr: ecf4.bb3e.c0ec
+  Physical:(Not Applicable)  Logical:(not set)
+  Port Mode is Router
+  Interface index: 25005
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface vlan1.6
+  Scope: both
+  Hardware is SVI  Current HW addr: ecf4.bb3e.c0ec
+  Physical:(Not Applicable)  Logical:(not set)
+  Port Mode is Router
+  Interface index: 25006
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface vlan1.7
+  Scope: both
+  Hardware is SVI  Current HW addr: ecf4.bb3e.c0ec
+  Physical:(Not Applicable)  Logical:(not set)
+  Port Mode is Router
+  Interface index: 25007
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface vlan1.8
+  Scope: both
+  Hardware is SVI  Current HW addr: ecf4.bb3e.c0ec
+  Physical:(Not Applicable)  Logical:(not set)
+  Port Mode is Router
+  Interface index: 25008
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface vlan1.9
+  Scope: both
+  Hardware is SVI  Current HW addr: ecf4.bb3e.c0ec
+  Physical:(Not Applicable)  Logical:(not set)
+  Port Mode is Router
+  Interface index: 25009
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface vlan1.10
+  Scope: both
+  Hardware is SVI  Current HW addr: ecf4.bb3e.c0ec
+  Physical:(Not Applicable)  Logical:(not set)
+  Port Mode is Router
+  Interface index: 25010
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe1/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0ed  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10001
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe1/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0ee  Logical:(not set)
+  Description: test interface set by ansible
+  Port Mode is Router
+  Interface index: 10002
+  Metric 1 mtu 1500
+  <BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe1/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0ef  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10003
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe1/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0f0  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10004
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe2
+  Scope: both
+  Flexport: Non Control Port (Active)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0f1  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10005
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe3/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out Enabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0f2  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10006
+  Metric 1 mtu 1500 duplex-full link-speed 10g
+  <UP,BROADCAST,RUNNING,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: 2019 Dec 06 11:53:21 (05w0d05h ago)
+  inet6 fe80::eef4:bbff:fe3e:c0ec/64
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 7 broadcast packets 0 
+    output packets 7 bytes 766
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe3/2
+  Scope: both
+  Flexport: Non Control Port (Active)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0f3
+  Physical:ecf4.bb3e.c0f3  Logical:(not set)
+  Port Mode is Switch
+  Interface index: 5007
+  Metric 1 mtu 1500 duplex-full link-speed 10g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: 2019 Dec 06 11:53:21 (05w0d05h ago)
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe3/3
+  Scope: both
+  Flexport: Non Control Port (Active)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0f4  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10008
+  Metric 1 mtu 1500 duplex-full link-speed 10g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe3/4
+  Scope: both
+  Flexport: Non Control Port (Active)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0f5  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10009
+  Metric 1 mtu 1500 duplex-full link-speed 10g
+  <UP,BROADCAST,RUNNING,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  inet6 fe80::eef4:bbff:fe3e:c0ec/64
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 7 broadcast packets 0 
+    output packets 7 bytes 766
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe4
+  Scope: both
+  Flexport: Non Control Port (Active)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0f6  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10010
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe5/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0f7  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10011
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe5/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0f8  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10012
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe5/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0f9  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10013
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe5/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0fa  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10014
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe6
+  Scope: both
+  Flexport: Non Control Port (Active)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0fb  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10015
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe7/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0fc  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10016
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe7/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0fd  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10017
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe7/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0fe  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10018
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe7/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c0ff  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10019
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe8
+  Scope: both
+  Flexport: Non Control Port (Active)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c000  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10020
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe9/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c001  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10021
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe9/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c002  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10022
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe9/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c003  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10023
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe9/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c004  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10024
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe10/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c005  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10025
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe10/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c006  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10026
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe10/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c007  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10027
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe10/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c008  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10028
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe11/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c009  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10029
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe11/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c00a  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10030
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe11/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c00b  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10031
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe11/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c00c  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10032
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe12/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c00d  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10033
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe12/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c00e  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10034
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe12/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c00f  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10035
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe12/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c010  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10036
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe13/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c011  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10037
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe13/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c012  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10038
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe13/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c013  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10039
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe13/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c014  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10040
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe14/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c015  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10041
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe14/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c016  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10042
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe14/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c017  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10043
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe14/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c018  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10044
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe15/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c019  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10045
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe15/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c01a  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10046
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe15/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c01b  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10047
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe15/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c01c  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10048
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe16/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c01d  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10049
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe16/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c01e  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10050
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe16/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c01f  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10051
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe16/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c020  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10052
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe17/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c021  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10053
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe17/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c022  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10054
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe17/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c023  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10055
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe17/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c024  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10056
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe18/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c025  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10057
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe18/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c026  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10058
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe18/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c027  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10059
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe18/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c028  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10060
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe19/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c029  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10061
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe19/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c02a  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10062
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe19/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c02b  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10063
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe19/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c02c  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10064
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe20/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c02d  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10065
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe20/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c02e  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10066
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe20/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c02f  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10067
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe20/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c030  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10068
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe21/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c031  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10069
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe21/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c032  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10070
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe21/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c033  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10071
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe21/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c034  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10072
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe22/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c035  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10073
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe22/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c036  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10074
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe22/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c037  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10075
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe22/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c038  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10076
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe23/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c039  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10077
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe23/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c03a  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10078
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe23/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c03b  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10079
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe23/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c03c  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10080
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe24/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c03d  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10081
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe24/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c03e  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10082
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe24/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c03f  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10083
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe24/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c040  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10084
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe25
+  Scope: both
+  Flexport: Non Control Port (Active)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c041  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10085
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe26/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c042  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10086
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe26/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c043  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10087
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe26/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c044  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10088
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe26/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c045  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10089
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe27
+  Scope: both
+  Flexport: Non Control Port (Active)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c046  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10090
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe28/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c047  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10091
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe28/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c048  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10092
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe28/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c049  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10093
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe28/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c04a  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10094
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe29
+  Scope: both
+  Flexport: Non Control Port (Active)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c04b  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10095
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe30/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c04c  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10096
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe30/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c04d  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10097
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe30/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c04e  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10098
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe30/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c04f  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10099
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe31
+  Scope: both
+  Flexport: Non Control Port (Active)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c050  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10100
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe32/1
+  Scope: both
+  Flexport: Breakout Control Port (Active): Break Out disabled
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c051  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10101
+  Metric 1 mtu 1500 duplex-full link-speed 40g
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe32/2
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c052  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10102
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe32/3
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c053  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10103
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+
+Interface xe32/4
+  Scope: both
+  Flexport: Non Control Port (InActive)
+  Hardware is ETH  Current HW addr: ecf4.bb3e.c0ec
+  Physical:ecf4.bb3e.c054  Logical:(not set)
+  Port Mode is Router
+  Interface index: 10104
+  Metric 1 mtu 1500
+  <UP,BROADCAST,MULTICAST>
+  VRF Binding: Not bound
+  DHCP client is disabled.
+  Last Flapped: Never
+  Statistics last cleared: Never
+  5 minute input rate 0 bits/sec, 0 packets/sec
+  5 minute output rate 0 bits/sec, 0 packets/sec
+  RX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    input packets 0 bytes 0 
+    jumbo packets 0 
+    undersize 0 oversize 0 CRC 0 fragments 0 jabbers 0
+    input error 0 
+    input with dribble 0 input discard 0 
+    Rx pause 0 
+  TX
+    unicast packets 0 multicast packets 0 broadcast packets 0 
+    output packets 0 bytes 0
+    jumbo packets 0
+    output errors 0 collision 0 deferred 0 late collision 0
+    output discard 0
+    Tx pause 0 
+

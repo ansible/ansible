@@ -1,0 +1,41 @@
+
+System Board Information
+========================
+Product Name          	: S6000-ON
+Part Number           	: xxxxxx
+Serial Number         	: xxxxxxxxxxxxxxxxxxxx
+Base MAC Address      	: xx:xx:xx:xx:xx:xx
+Label Revision        	: A04
+ONIE Version          	: 3.20.1.3
+MAC Addresses         	: 129
+Manufacturer          	: FF
+Vendor Name           	: DELL
+Service Tag           	: xxxxxxx
+CRC-32                	: 0x0468D267
+Switch Chip Revision  	: BCM56850_A2
+SYS CPLD BOARD STAGE  	: P2B_P2C_STAGE
+MSTR BOARD STAGE      	: P2B_P2C_STAGE
+SLV BOARD STAGE       	: P2B_P2C_STAGE
+SYS CPLD Version      	: 10
+MSTR CPLD Version     	: 12
+SLV CPLD Version      	: 10
+CFAST CARD            	: Present
+USB-A VBUS            	: Enabled
+MICRO USB CONSOLE     	: Enabled
+VCC 5V POWER RAIL     	: Enabled
+VCC 3.3V POWER RAIL   	: Enabled
+VCC 1.05V POWER RAIL  	: Enabled
+VCC 1.5V POWER RAIL   	: Enabled
+VCC 1.8V POWER RAIL   	: Enabled
+MAC 1V POWER RAIL     	: Enabled
+MAC AVS 1V POWER RAIL 	: Enabled
+POWER VDDR            	: Enabled
+3.3V POWER RAIL       	: Enabled
+1.8V POWER RAIL       	: Enabled
+1.05V POWER RAIL      	: Enabled
+1.5V POWER RAIL       	: Enabled
+VCC POWER RAIL        	: Enabled
+1.5V SB POWER RAIL    	: Disabled
+MAIN BOARD POWER RAIL 	: Enabled
+HOT SWAP1 POWER RAIL  	: Enabled
+HOT SWAP2 POWER RAIL  	: Enabled
