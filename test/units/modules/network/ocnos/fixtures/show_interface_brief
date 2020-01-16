@@ -1,0 +1,149 @@
+
+Codes: ETH - Ethernet, LB - Loopback, AGG - Aggregate, MLAG - MLAG Aggregate
+       FR - Frame Relay, TUN -Tunnel, PBB - PBB Logical Port, VP - Virtual Port
+       CVP - Channelised Virtual Port, METH - Management Ethernet, UNK- Unknown
+       ED - ErrDisabled, PD - Protocol Down, AD - Admin Down,
+ IA - InActive
+       PD(Min L/B) - Protocol Down Min-Links/Bandwidth
+       DV - DDM Violation, NA - Not Applicable
+       NOM - No operational members, PVID - Port Vlan-id
+       Ctl - Control Port (Br-Breakout/Bu-Bundle)
+       HD  - ESI Hold Timer Down
+
+
+--------------------------------------------------------------------------------
+Interface     Type             Status  Reason  Speed
+--------------------------------------------------------------------------------
+eth0          METH             up      --     1g
+
+
+--------------------------------------------------------------------------------
+Interface                                           Status      Description
+--------------------------------------------------------------------------------
+lo                                                  up          --
+lo.management                                       up          --
+
+
+--------------------------------------------------------------------------------
+Interface    Status   Reason
+--------------------------------------------------------------------------------
+vlan1.1      down     PD
+vlan1.2      down     PD
+vlan1.3      down     PD
+vlan1.4      down     PD
+vlan1.5      down     PD
+vlan1.6      down     PD
+vlan1.7      down     PD
+vlan1.8      down     PD
+vlan1.9      down     PD
+vlan1.10     down     PD
+
+
+--------------------------------------------------------------------------------
+Ethernet   Type  PVID  Mode              Status  Reason  Speed Port    Ctl Br 
+Interface                                                       Ch #
+--------------------------------------------------------------------------------
+xe1/1      ETH   --    routed            down    PD      40g   --       Br  No 
+xe1/2      ETH   --    routed            down    IA      --    --       No  No 
+xe1/3      ETH   --    routed            down    IA      --    --       No  No 
+xe1/4      ETH   --    routed            down    IA      --    --       No  No 
+xe2        ETH   --    routed            down    PD      40g   --       No  No 
+xe3/1      ETH   --    routed            up      none    10g   --       Br  Yes
+xe3/2      ETH   --    --                down    PD      10g   --       No  No 
+xe3/3      ETH   --    routed            down    PD      10g   --       No  No 
+xe3/4      ETH   --    routed            up      none    10g   --       No  No 
+xe4        ETH   --    routed            down    PD      40g   --       No  No 
+xe5/1      ETH   --    routed            down    PD      40g   --       Br  No 
+xe5/2      ETH   --    routed            down    IA      --    --       No  No 
+xe5/3      ETH   --    routed            down    IA      --    --       No  No 
+xe5/4      ETH   --    routed            down    IA      --    --       No  No 
+xe6        ETH   --    routed            down    PD      40g   --       No  No 
+xe7/1      ETH   --    routed            down    PD      40g   --       Br  No 
+xe7/2      ETH   --    routed            down    IA      --    --       No  No 
+xe7/3      ETH   --    routed            down    IA      --    --       No  No 
+xe7/4      ETH   --    routed            down    IA      --    --       No  No 
+xe8        ETH   --    routed            down    PD      40g   --       No  No 
+xe9/1      ETH   --    routed            down    PD      40g   --       Br  No 
+xe9/2      ETH   --    routed            down    IA      --    --       No  No 
+xe9/3      ETH   --    routed            down    IA      --    --       No  No 
+xe9/4      ETH   --    routed            down    IA      --    --       No  No 
+xe10/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe10/2     ETH   --    routed            down    IA      --    --       No  No 
+xe10/3     ETH   --    routed            down    IA      --    --       No  No 
+xe10/4     ETH   --    routed            down    IA      --    --       No  No 
+xe11/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe11/2     ETH   --    routed            down    IA      --    --       No  No 
+xe11/3     ETH   --    routed            down    IA      --    --       No  No 
+xe11/4     ETH   --    routed            down    IA      --    --       No  No 
+xe12/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe12/2     ETH   --    routed            down    IA      --    --       No  No 
+xe12/3     ETH   --    routed            down    IA      --    --       No  No 
+xe12/4     ETH   --    routed            down    IA      --    --       No  No 
+xe13/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe13/2     ETH   --    routed            down    IA      --    --       No  No 
+xe13/3     ETH   --    routed            down    IA      --    --       No  No 
+xe13/4     ETH   --    routed            down    IA      --    --       No  No 
+xe14/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe14/2     ETH   --    routed            down    IA      --    --       No  No 
+xe14/3     ETH   --    routed            down    IA      --    --       No  No 
+xe14/4     ETH   --    routed            down    IA      --    --       No  No 
+xe15/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe15/2     ETH   --    routed            down    IA      --    --       No  No 
+xe15/3     ETH   --    routed            down    IA      --    --       No  No 
+xe15/4     ETH   --    routed            down    IA      --    --       No  No 
+xe16/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe16/2     ETH   --    routed            down    IA      --    --       No  No 
+xe16/3     ETH   --    routed            down    IA      --    --       No  No 
+xe16/4     ETH   --    routed            down    IA      --    --       No  No 
+xe17/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe17/2     ETH   --    routed            down    IA      --    --       No  No 
+xe17/3     ETH   --    routed            down    IA      --    --       No  No 
+xe17/4     ETH   --    routed            down    IA      --    --       No  No 
+xe18/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe18/2     ETH   --    routed            down    IA      --    --       No  No 
+xe18/3     ETH   --    routed            down    IA      --    --       No  No 
+xe18/4     ETH   --    routed            down    IA      --    --       No  No 
+xe19/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe19/2     ETH   --    routed            down    IA      --    --       No  No 
+xe19/3     ETH   --    routed            down    IA      --    --       No  No 
+xe19/4     ETH   --    routed            down    IA      --    --       No  No 
+xe20/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe20/2     ETH   --    routed            down    IA      --    --       No  No 
+xe20/3     ETH   --    routed            down    IA      --    --       No  No 
+xe20/4     ETH   --    routed            down    IA      --    --       No  No 
+xe21/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe21/2     ETH   --    routed            down    IA      --    --       No  No 
+xe21/3     ETH   --    routed            down    IA      --    --       No  No 
+xe21/4     ETH   --    routed            down    IA      --    --       No  No 
+xe22/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe22/2     ETH   --    routed            down    IA      --    --       No  No 
+xe22/3     ETH   --    routed            down    IA      --    --       No  No 
+xe22/4     ETH   --    routed            down    IA      --    --       No  No 
+xe23/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe23/2     ETH   --    routed            down    IA      --    --       No  No 
+xe23/3     ETH   --    routed            down    IA      --    --       No  No 
+xe23/4     ETH   --    routed            down    IA      --    --       No  No 
+xe24/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe24/2     ETH   --    routed            down    IA      --    --       No  No 
+xe24/3     ETH   --    routed            down    IA      --    --       No  No 
+xe24/4     ETH   --    routed            down    IA      --    --       No  No 
+xe25       ETH   --    routed            down    PD      40g   --       No  No 
+xe26/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe26/2     ETH   --    routed            down    IA      --    --       No  No 
+xe26/3     ETH   --    routed            down    IA      --    --       No  No 
+xe26/4     ETH   --    routed            down    IA      --    --       No  No 
+xe27       ETH   --    routed            down    PD      40g   --       No  No 
+xe28/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe28/2     ETH   --    routed            down    IA      --    --       No  No 
+xe28/3     ETH   --    routed            down    IA      --    --       No  No 
+xe28/4     ETH   --    routed            down    IA      --    --       No  No 
+xe29       ETH   --    routed            down    PD      40g   --       No  No 
+xe30/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe30/2     ETH   --    routed            down    IA      --    --       No  No 
+xe30/3     ETH   --    routed            down    IA      --    --       No  No 
+xe30/4     ETH   --    routed            down    IA      --    --       No  No 
+xe31       ETH   --    routed            down    PD      40g   --       No  No 
+xe32/1     ETH   --    routed            down    PD      40g   --       Br  No 
+xe32/2     ETH   --    routed            down    IA      --    --       No  No 
+xe32/3     ETH   --    routed            down    IA      --    --       No  No 
+xe32/4     ETH   --    routed            down    IA      --    --       No  No 

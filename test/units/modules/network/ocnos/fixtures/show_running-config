@@ -1,0 +1,260 @@
+!
+! Software version: DELL_S6000-ON-OcNOS-1.3.8.44a-DC_IPBASE-S0-P0 09/28/2019 21:41:50
+!
+!Last configuration change at 14:13:56 UTC Fri Jan 10 2020 by ocnos
+!
+no service password-encryption
+!
+logging monitor 7
+!
+ip vrf management
+!
+forwarding profile l2-profile-three
+!
+hostname foo
+ip domain-lookup vrf management
+no ip domain-lookup
+bridge 1 protocol mstp
+data-center-bridging enable bridge 1
+feature telnet vrf management
+feature ssh vrf management
+snmp-server enable snmp vrf management 
+snmp-server view all .1 included vrf management
+snmp-server community public group network-operator vrf management
+feature ntp vrf management
+ntp enable vrf management
+username ocnos role network-admin password encrypted $1$we7czZA/$kGreh592N7ohrMdsGQUj5.
+feature rsyslog vrf management
+!
+vlan database
+ vlan 2-10 bridge 1 state enable
+!
+spanning-tree mst configuration
+!
+interface eth0
+ ip vrf forwarding management
+ ip address dhcp
+!
+interface lo
+ ip address 127.0.0.1/8
+ ipv6 address ::1/128
+!
+interface lo.management
+ ip vrf forwarding management
+ ip address 127.0.0.1/8
+ ipv6 address ::1/128
+!
+interface xe1/1
+!
+interface xe1/2
+ description test interface set by ansible
+ ip address 172.16.105.5/24
+ shutdown
+!
+interface xe1/3
+!
+interface xe1/4
+!
+interface xe2
+!
+interface xe3/1
+ port breakout enable
+!
+interface xe3/2
+ switchport
+!
+interface xe3/3
+!
+interface xe3/4
+!
+interface xe4
+!
+interface xe5/1
+!
+interface xe5/2
+!
+interface xe5/3
+!
+interface xe5/4
+!
+interface xe6
+!
+interface xe7/1
+!
+interface xe7/2
+!
+interface xe7/3
+!
+interface xe7/4
+!
+interface xe8
+!
+interface xe9/1
+!
+interface xe9/2
+!
+interface xe9/3
+!
+interface xe9/4
+!
+interface xe10/1
+!
+interface xe10/2
+!
+interface xe10/3
+!
+interface xe10/4
+!
+interface xe11/1
+!
+interface xe11/2
+!
+interface xe11/3
+!
+interface xe11/4
+!
+interface xe12/1
+!
+interface xe12/2
+!
+interface xe12/3
+!
+interface xe12/4
+!
+interface xe13/1
+!
+interface xe13/2
+!
+interface xe13/3
+!
+interface xe13/4
+!
+interface xe14/1
+!
+interface xe14/2
+!
+interface xe14/3
+!
+interface xe14/4
+!
+interface xe15/1
+!
+interface xe15/2
+!
+interface xe15/3
+!
+interface xe15/4
+!
+interface xe16/1
+!
+interface xe16/2
+!
+interface xe16/3
+!
+interface xe16/4
+!
+interface xe17/1
+!
+interface xe17/2
+!
+interface xe17/3
+!
+interface xe17/4
+!
+interface xe18/1
+!
+interface xe18/2
+!
+interface xe18/3
+!
+interface xe18/4
+!
+interface xe19/1
+!
+interface xe19/2
+!
+interface xe19/3
+!
+interface xe19/4
+!
+interface xe20/1
+!
+interface xe20/2
+!
+interface xe20/3
+!
+interface xe20/4
+!
+interface xe21/1
+!
+interface xe21/2
+!
+interface xe21/3
+!
+interface xe21/4
+!
+interface xe22/1
+!
+interface xe22/2
+!
+interface xe22/3
+!
+interface xe22/4
+!
+interface xe23/1
+!
+interface xe23/2
+!
+interface xe23/3
+!
+interface xe23/4
+!
+interface xe24/1
+!
+interface xe24/2
+!
+interface xe24/3
+!
+interface xe24/4
+!
+interface xe25
+!
+interface xe26/1
+!
+interface xe26/2
+!
+interface xe26/3
+!
+interface xe26/4
+!
+interface xe27
+!
+interface xe28/1
+!
+interface xe28/2
+!
+interface xe28/3
+!
+interface xe28/4
+!
+interface xe29
+!
+interface xe30/1
+!
+interface xe30/2
+!
+interface xe30/3
+!
+interface xe30/4
+!
+interface xe31
+!
+interface xe32/1
+!
+interface xe32/2
+!
+interface xe32/3
+!
+interface xe32/4
+!
+end

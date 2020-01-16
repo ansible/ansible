@@ -1,0 +1,32 @@
+
+---------------------------------------------------------------------------------------
+
+Nearest bridge Neighbors
+Interface Name               : eth1
+ Mandatory TLVs
+  Chassis id type            : MAC address [5254.0027.4096]
+  Port id type               : MAC address [5254.0027.4096]
+  Time to live               : 121
+ Basic Management TLVs
+  System Name                : 
+  System Description         : 
+  Port Description           : 
+  Remote System Capabilities : None
+   Capabilities Enabled      : None
+  Management Address         : None
+ 802.1 Org specific TLVs
+  Port vlan id               : 0
+  Port & Protocol vlan id    : 0
+  Remote Configured VLANs    : None
+  Remote Protocols Advertised: None
+  Remote VID Usage Digest    : 0
+  Remote Management Vlan     : 0
+  Link Aggregation Capability: not capable of being aggregated
+  Link Aggregation Status    : not currently in aggregation
+  Link Aggregation Port ID   : 
+ 802.3 Org specific TLVs
+  AutoNego Support           : Not-Supported
+  AutoNego Status            : Disabled
+  AutoNego Capability        : 0
+  Operational MAU Type       : 0 [unknown]
+  Max Frame Size             : 

@@ -1,0 +1,38 @@
+-------------------------------------------------------
+		RAM INFORMATION
+-------------------------------------------------------
+
+Total                                    : 7988 MB
+Used                                     : 430 MB (5 %)
+Free                                     : 7558 MB (95 %)
+Shared                                   : 56 MB
+Buffers                                  : 145 MB
+Total Swap                               : 0 MB
+Free Swap                                : 0 MB
+Current Processes                        : 177
+Total High Memory                        : 0 MB
+Available High Memory                    : 0 MB
+Unit Size                                : 1 Bytes
+Alert Threshold                          : 90 %
+Critical Threshold                       : 80 %
+-------------------------------------------------------
+		HARD DISK INFORMATION
+-------------------------------------------------------
+
+Serial Number                            : xxxxxxxxxxxxxxxxxxxx
+Model Number                             : 16GB SATA Flash Drive         
+Firmware Revision                        : SFDDA01C16GB SATA Flash Drive      
+Cylinders                                : 16383
+Heads                                    : 16
+Sectors                                  : 31277232
+Unformatted Bytes/Track                  : 0
+Unformatted Bytes/Sector                 : 0
+Revision No                              : 496.0
+Usage Alert Threshold                    : 90 %
+Usage Critical Threshold                 : 80 %
+----------------------------------------------------------
+Filesystem   Total        Used         Free         Use%
+----------------------------------------------------------
+/            13987        2955         11032        21%
+/cfg         476          42           434          9%
+----------------------------------------------------------

@@ -401,6 +401,8 @@ lib/ansible/module_utils/network/nxos/nxos.py future-import-boilerplate
 lib/ansible/module_utils/network/nxos/nxos.py metaclass-boilerplate
 lib/ansible/module_utils/network/nxos/utils/utils.py future-import-boilerplate
 lib/ansible/module_utils/network/nxos/utils/utils.py metaclass-boilerplate
+lib/ansible/module_utils/network/ocnos/ocnos.py future-import-boilerplate
+lib/ansible/module_utils/network/ocnos/ocnos.py metaclass-boilerplate
 lib/ansible/module_utils/network/onyx/onyx.py future-import-boilerplate
 lib/ansible/module_utils/network/onyx/onyx.py metaclass-boilerplate
 lib/ansible/module_utils/network/ordnance/ordnance.py future-import-boilerplate
@@ -5882,6 +5884,7 @@ lib/ansible/plugins/action/netconf.py action-plugin-docs # base class for deprec
 lib/ansible/plugins/action/network.py action-plugin-docs # base class for network action plugins
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/action/nxos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
+lib/ansible/plugins/action/ocnos.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/slxos.py action-plugin-docs # undocumented action plugin to fix
 lib/ansible/plugins/action/sros.py action-plugin-docs # base class for deprecated network platform modules using `connection: local`
 lib/ansible/plugins/action/voss.py action-plugin-docs # undocumented action plugin to fix
@@ -6022,6 +6025,8 @@ lib/ansible/plugins/doc_fragments/nso.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/nso.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/nxos.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/nxos.py metaclass-boilerplate
+lib/ansible/plugins/doc_fragments/ocnos.py future-import-boilerplate
+lib/ansible/plugins/doc_fragments/ocnos.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/oneview.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/oneview.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/online.py future-import-boilerplate
