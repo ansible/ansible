@@ -45,6 +45,14 @@ except ImportError:
 
 from . import types as t
 
+# noinspection PyUnresolvedReferences
+from .encoding import (
+    to_bytes,
+    to_optional_bytes,
+    to_optional_text,
+    to_text,
+)
+
 try:
     C = t.TypeVar('C')
 except AttributeError:
@@ -95,10 +103,6 @@ MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
 
-ENCODING = 'utf-8'
-
-Text = type(u'')
-
 REMOTE_ONLY_PYTHON_VERSIONS = (
     '2.6',
 )
@@ -111,38 +115,6 @@ SUPPORTED_PYTHON_VERSIONS = (
     '3.7',
     '3.8',
 )
-
-
-def to_optional_bytes(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[bytes]
-    """Return the given value as bytes encoded using UTF-8 if not already bytes, or None if the value is None."""
-    return None if value is None else to_bytes(value, errors)
-
-
-def to_optional_text(value, errors='strict'):  # type: (t.Optional[t.AnyStr], str) -> t.Optional[t.Text]
-    """Return the given value as text decoded using UTF-8 if not already text, or None if the value is None."""
-    return None if value is None else to_text(value, errors)
-
-
-def to_bytes(value, errors='strict'):  # type: (t.AnyStr, str) -> bytes
-    """Return the given value as bytes encoded using UTF-8 if not already bytes."""
-    if isinstance(value, bytes):
-        return value
-
-    if isinstance(value, Text):
-        return value.encode(ENCODING, errors)
-
-    raise Exception('value is not bytes or text: %s' % type(value))
-
-
-def to_text(value, errors='strict'):  # type: (t.AnyStr, str) -> t.Text
-    """Return the given value as text decoded using UTF-8 if not already text."""
-    if isinstance(value, bytes):
-        return value.decode(ENCODING, errors)
-
-    if isinstance(value, Text):
-        return value
-
-    raise Exception('value is not bytes or text: %s' % type(value))
 
 
 def get_docker_completion():
