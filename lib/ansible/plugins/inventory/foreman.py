@@ -59,6 +59,17 @@ DOCUMENTATION = '''
         description: Toggle, if true the inventory will retrieve 'all_parameters' information as host vars
         type: boolean
         default: False
+      want_hostcollections:
+        description: Toggle, if true the plugin will create Ansible groups for host collections
+        type: boolean
+        default: False
+        version_added: '2.10'
+      want_ansible_ssh_host:
+        description: Toggle, if true the plugin will populate the ansible_ssh_host variable to explicitly specify the connection target
+        type: boolean
+        default: False
+        version_added: '2.10'
+
 '''
 
 EXAMPLES = '''
@@ -181,6 +192,10 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
         url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
         return self._get_json(url)
 
+    def _get_host_data_by_id(self, hid):
+        url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
+        return self._get_json(url)
+
     def _get_facts(self, host):
         """Fetch all host facts of the host"""
 
@@ -230,6 +245,30 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                 # set host vars from facts
                 if self.get_option('want_facts'):
                     self.inventory.set_variable(host_name, 'foreman_facts', self._get_facts(host))
+
+                # create group for host collections
+                if self.get_option('want_hostcollections'):
+                    host_data = self._get_host_data_by_id(host['id'])
+                    hostcollections = host_data.get('host_collections')
+                    if hostcollections:
+                        # Create Ansible groups for host collections
+                        for hostcollection in hostcollections:
+                            try:
+                                hostcollection_group = to_safe_group_name('%shostcollection_%s' % (self.get_option('group_prefix'),
+                                                                          hostcollection['name'].lower().replace(" ", "")))
+                                hostcollection_group = self.inventory.add_group(hostcollection_group)
+                                self.inventory.add_child(hostcollection_group, host_name)
+                            except ValueError as e:
+                                self.display.warning("Could not create groups for host collections for %s, skipping: %s" % (host_name, to_text(e)))
+
+                # put ansible_ssh_host as hostvar
+                if self.get_option('want_ansible_ssh_host'):
+                    if host.get('ip'):
+                        try:
+                            self.inventory.set_variable(host_name, 'ansible_ssh_host', host['ip'])
+                        except ValueError as e:
+                            self.display.warning("Could not set hostvar ansible_ssh_host to '%s' for the '%s' host, skipping: %s" %
+                                                 (host['ip'], host_name, to_text(e)))
 
                 strict = self.get_option('strict')
 
