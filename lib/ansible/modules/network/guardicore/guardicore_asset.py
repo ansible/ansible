@@ -70,7 +70,7 @@ options:
   asset_name:
     description:
       - The name of the asset.
-    required: True
+    required: False
     type: str
   bios_uuid:
     description:
@@ -225,7 +225,10 @@ def _get_request_body(module, params):
         request_data['id'] = params['bios_uuid']
 
     request_data['bios-uuid'] = params['bios_uuid']
-    request_data['name'] = params['asset_name']
+    if params['asset_name']:
+        request_data['name'] = params['asset_name']
+    else:
+        request_data['name'] = params['ansible_facts']['ansible_hostname']
 
     if params['labels']:
         request_data['labels'] = _get_asset_labels(params=params)
@@ -468,7 +471,7 @@ def main():
         ssl_port=dict(type='str', required=False, default='443'),
         labels=dict(type='str', required=False),
         state=dict(type='str', default='present'),
-        asset_name=dict(type='str', required=True),
+        asset_name=dict(type='str', required=False),
         bios_uuid=dict(type='str', required=False),
         asset_id=dict(type='str', required=False),
         aws_instance=dict(type='bool', required=False, default=False),
@@ -479,7 +482,7 @@ def main():
         asset_request_data_file_path=dict(type='path', required=False)
     )
 
-    required_if = [('state', 'present', ['ssl_address', 'asset_name'])]
+    required_if = [('state', 'present', ['ssl_address'])]
     module = AnsibleModule(argument_spec=argument_spec, required_if=required_if)
     params = module.params
 
