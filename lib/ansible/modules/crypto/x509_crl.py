@@ -89,7 +89,8 @@ options:
             - Time will always be interpreted as UTC.
             - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-            - Note that if using relative time this module is NOT idempotent.
+            - Note that if using relative time this module is NOT idempotent, except when
+              I(ignore_timestamps) is set to C(yes).
         type: str
         default: "+0s"
 
@@ -101,7 +102,8 @@ options:
             - Time will always be interpreted as UTC.
             - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-            - Note that if using relative time this module is NOT idempotent.
+            - Note that if using relative time this module is NOT idempotent, except when
+              I(ignore_timestamps) is set to C(yes).
         type: str
         required: yes
 
@@ -136,7 +138,8 @@ options:
                     - Time will always be interpreted as UTC.
                     - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
                       + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-                    - Note that if using relative time this module is NOT idempotent.
+                    - Note that if using relative time this module is NOT idempotent, except when
+                      I(ignore_timestamps) is set to C(yes).
                 type: str
                 required: yes
             issuer:
@@ -178,13 +181,23 @@ options:
                     - Time will always be interpreted as UTC.
                     - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
                       + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-                    - Note that if using relative time this module is NOT idempotent.
+                    - Note that if using relative time this module is NOT idempotent. This will NOT
+                      change when I(ignore_timestamps) is set to C(yes).
                 type: str
             invalidity_date_critical:
                 description:
                     - Whether the invalidity date extension should be critical.
                 type: bool
                 default: no
+
+    ignore_timestamps:
+        description:
+            - Whether the timestamps I(last_update), I(next_update) and I(revocation_date) (in
+              I(revoked_certificates)) should be ignored for idempotency checks. The timestamp
+              I(invalidity_date) in I(revoked_certificates) will never be ignored.
+            - Use this in combination with relative timestamps for these values to get idempotency.
+        type: bool
+        default: no
 
 extends_documentation_fragment:
     - files
@@ -396,6 +409,7 @@ class CRL(crypto_utils.OpenSSLObject):
         )
 
         self.update = module.params['mode'] == 'update'
+        self.ignore_timestamps = module.params['ignore_timestamps']
 
         self.privatekey_path = module.params['privatekey_path']
         self.privatekey_passphrase = module.params['privatekey_passphrase']
@@ -494,16 +508,28 @@ class CRL(crypto_utils.OpenSSLObject):
         super(CRL, self).remove(self.module)
 
     def _compress_entry(self, entry):
-        return (
-            entry['serial_number'],
-            entry['revocation_date'],
-            tuple(entry['issuer']) if entry['issuer'] is not None else None,
-            entry['issuer_critical'],
-            entry['reason'],
-            entry['reason_critical'],
-            entry['invalidity_date'],
-            entry['invalidity_date_critical'],
-        )
+        if self.ignore_timestamps:
+            # Throw out revocation_date
+            return (
+                entry['serial_number'],
+                tuple(entry['issuer']) if entry['issuer'] is not None else None,
+                entry['issuer_critical'],
+                entry['reason'],
+                entry['reason_critical'],
+                entry['invalidity_date'],
+                entry['invalidity_date_critical'],
+            )
+        else:
+            return (
+                entry['serial_number'],
+                entry['revocation_date'],
+                tuple(entry['issuer']) if entry['issuer'] is not None else None,
+                entry['issuer_critical'],
+                entry['reason'],
+                entry['reason_critical'],
+                entry['invalidity_date'],
+                entry['invalidity_date_critical'],
+            )
 
     def _decode_revoked(self, cert):
         result = {
@@ -547,9 +573,9 @@ class CRL(crypto_utils.OpenSSLObject):
         if self.crl is None:
             return False
 
-        if self.last_update != self.crl.last_update:
+        if self.last_update != self.crl.last_update and not self.ignore_timestamps:
             return False
-        if self.next_update != self.crl.next_update:
+        if self.next_update != self.crl.next_update and not self.ignore_timestamps:
             return False
         if self.digest.name != self.crl.signature_hash_algorithm.name:
             return False
@@ -558,18 +584,17 @@ class CRL(crypto_utils.OpenSSLObject):
         if want_issuer != [(sub.oid, sub.value) for sub in self.crl.issuer]:
             return False
 
-        entries = [self._decode_revoked(cert) for cert in self.crl]
+        old_entries = [self._compress_entry(self._decode_revoked(cert)) for cert in self.crl]
+        new_entries = [self._compress_entry(cert) for cert in self.revoked_certificates]
         if self.update:
-            # We don't use a set so that duplicate entries are treated correctly
-            old_entries = [self._compress_entry(self._decode_revoked(entry)) for entry in self.crl]
-            for entry in self.revoked_certificates:
-                compressed_entry = self._compress_entry(entry)
+            # We don't simply use a set so that duplicate entries are treated correctly
+            for entry in new_entries:
                 try:
-                    old_entries.remove(compressed_entry)
+                    old_entries.remove(entry)
                 except ValueError:
                     return False
         else:
-            if entries != self.revoked_certificates:
+            if old_entries != new_entries:
                 return False
 
         return True
@@ -719,6 +744,7 @@ def main():
             last_update=dict(type='str', default='+0s'),
             next_update=dict(type='str', required=True),
             digest=dict(type='str', default='sha256'),
+            ignore_timestamps=dict(type='bool', default=False),
             revoked_certificates=dict(
                 type='list',
                 elements='dict',
