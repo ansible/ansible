@@ -272,7 +272,7 @@ consider the following:
   you need to  explicitly specify the  ``storage_account_type`` parameter
   to make it a  managed disk.
   Otherwise, the data disk will be an unmanaged disk.
-* 'Managed Disk' does not require 'Storage Account' or 'Storage Container'
+* A managed disk does not require a storage account or a storage container,
   unlike 'Unmanaged Disk'.
   In particular, note that once a VM is created on an unmanaged disk,
   an unnecessary storage container named "vhds" is automatically created.
