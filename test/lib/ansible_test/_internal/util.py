@@ -53,6 +53,10 @@ from .encoding import (
     to_text,
 )
 
+from .io import (
+    read_text_file,
+)
+
 try:
     C = t.TypeVar('C')
 except AttributeError:
@@ -185,8 +189,7 @@ def read_lines_without_comments(path, remove_blank_lines=False, optional=False):
     if optional and not os.path.exists(path):
         return []
 
-    with open(path, 'r') as path_fd:
-        lines = path_fd.read().splitlines()
+    lines = read_text_file(path).splitlines()
 
     lines = [re.sub(r' *#.*$', '', line) for line in lines]
 

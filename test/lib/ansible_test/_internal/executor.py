@@ -40,6 +40,11 @@ from .cloud import (
     CloudEnvironmentConfig,
 )
 
+from .io import (
+    read_binary_file,
+    read_text_file,
+)
+
 from .util import (
     ApplicationWarning,
     ApplicationError,
@@ -1513,8 +1518,7 @@ def detect_changes(args):
     elif args.changed_from or args.changed_path:
         paths = args.changed_path or []
         if args.changed_from:
-            with open(args.changed_from, 'r') as changes_fd:
-                paths += changes_fd.read().splitlines()
+            paths += read_text_file(args.changed_from).splitlines()
     elif args.changed:
         paths = detect_changes_local(args)
     else:
@@ -1602,8 +1606,7 @@ def detect_changes_local(args):
                 args.metadata.changes[path] = ((0, 0),)
                 continue
 
-            with open(path, 'r') as source_fd:
-                line_count = len(source_fd.read().splitlines())
+            line_count = len(read_text_file(path).splitlines())
 
             args.metadata.changes[path] = ((1, line_count),)
 
@@ -2073,8 +2076,7 @@ class EnvironmentDescription:
 
         file_hash = hashlib.md5()
 
-        with open(path, 'rb') as file_fd:
-            file_hash.update(file_fd.read())
+        file_hash.update(read_binary_file(path))
 
         return file_hash.hexdigest()
 

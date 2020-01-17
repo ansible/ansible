@@ -25,6 +25,7 @@ from ..config import (
 from ..io import (
     make_dirs,
     write_text_file,
+    read_text_file,
 )
 
 
@@ -140,8 +141,7 @@ def check_inventory(args, inventory_path):  # type: (IntegrationConfig, str) -> 
     """Check the given inventory for issues."""
     if args.docker or args.remote:
         if os.path.exists(inventory_path):
-            with open(inventory_path) as inventory_file:
-                inventory = inventory_file.read()
+            inventory = read_text_file(inventory_path)
 
             if 'ansible_ssh_private_key_file' in inventory:
                 display.warning('Use of "ansible_ssh_private_key_file" in inventory with the --docker or --remote option is unsupported and will likely fail.')

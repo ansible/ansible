@@ -6,6 +6,10 @@ import json
 import os
 import time
 
+from .io import (
+    read_text_file,
+)
+
 from .util import (
     ApplicationError,
     common_environment,
@@ -41,8 +45,7 @@ def get_docker_container_id():
     if not os.path.exists(path):
         return None
 
-    with open(path) as cgroup_fd:
-        contents = cgroup_fd.read()
+    contents = read_text_file(path)
 
     paths = [line.split(':')[2] for line in contents.splitlines()]
     container_ids = set(path.split('/')[2] for path in paths if path.startswith('/docker/'))

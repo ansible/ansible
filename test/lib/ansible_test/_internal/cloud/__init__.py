@@ -14,6 +14,10 @@ import tempfile
 
 from .. import types as t
 
+from ..io import (
+    read_text_file,
+)
+
 from ..util import (
     ApplicationError,
     display,
@@ -365,11 +369,10 @@ class CloudProvider(CloudBase):
         """
         :rtype: str
         """
-        with open(self.config_template_path, 'r') as template_fd:
-            lines = template_fd.read().splitlines()
-            lines = [line for line in lines if not line.startswith('#')]
-            config = '\n'.join(lines).strip() + '\n'
-            return config
+        lines = read_text_file(self.config_template_path).splitlines()
+        lines = [line for line in lines if not line.startswith('#')]
+        config = '\n'.join(lines).strip() + '\n'
+        return config
 
     @staticmethod
     def _populate_config_template(template, values):

@@ -2,7 +2,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import os
 import re
 
@@ -12,9 +11,12 @@ from ..target import (
     walk_powershell_targets,
 )
 
+from ..io import (
+    read_json_file,
+)
+
 from ..util import (
     display,
-    to_text,
 )
 
 from ..util_common import (
@@ -191,8 +193,7 @@ def _command_coverage_combine_powershell(args):
             continue
 
         try:
-            with open(coverage_file, 'rb') as original_fd:
-                coverage_run = json.loads(to_text(original_fd.read(), errors='replace'))
+            coverage_run = read_json_file(coverage_file)
         except Exception as ex:  # pylint: disable=locally-disabled, broad-except
             display.error(u'%s' % ex)
             continue
