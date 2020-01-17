@@ -68,7 +68,7 @@ options:
     default: 1
 """
 
-EXAMPLES = """
+EXAMPLES = r"""
 tasks:
   - name: run show sysinfo on remote devices
     aireos_command:
@@ -101,7 +101,7 @@ tasks:
           prompt:"Are you sure you want to start\? \(y\/N\)"
           response: y
       wait_for: response[0] contains "File transfer is successful"
-      
+
 """
 
 RETURN = """
