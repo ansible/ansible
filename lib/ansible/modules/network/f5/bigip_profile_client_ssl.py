@@ -32,6 +32,10 @@ options:
         parent on the C(Common) partition.
     type: str
     default: /Common/clientssl
+  cipherGroup:
+    description:
+      - Specifies a cipherGroup for that clientssl profile. 
+    type: str
   ciphers:
     description:
       - Specifies the list of ciphers that the system supports. When creating a new
@@ -388,6 +392,7 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
+        'cipherGroup',
         'ciphers',
         'certKeyChain',
         'defaultsFrom',
@@ -410,6 +415,7 @@ class Parameters(AnsibleF5Parameters):
     ]
 
     returnables = [
+        'cipherGroup',
         'ciphers',
         'allow_non_ssl',
         'options',
@@ -432,6 +438,7 @@ class Parameters(AnsibleF5Parameters):
     ]
 
     updatables = [
+        'cipherGroup',
         'ciphers',
         'cert_key_chain',
         'allow_non_ssl',
@@ -480,6 +487,17 @@ class ModuleParameters(Parameters):
         else:
             result = self._cert_filename(fq_name(self.partition, item['chain']))
         return result
+
+    @property
+    def ciphers(self):
+        if 'cipherGroup' in self._values:
+            # This may be a API fix as specifying cipherGroup and not cipher = "" results in the error
+            # "Profile ... cannot contain both ciphers and a cipher-group"
+            return ""
+        elif 'ciphers' in self._values:
+            return self._values['ciphers']
+        else:
+            return None
 
     @property
     def parent(self):
