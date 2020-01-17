@@ -67,8 +67,14 @@ options:
     privatekey_path:
         description:
             - Path to the CA's private key to use when signing the CRL.
+            - Either I(privatekey_path) or I(privatekey_content) must be specified if I(state) is C(present), but not both.
         type: path
-        required: yes
+
+    privatekey_content:
+        description:
+            - The content of the CA's private key to use when signing the CRL.
+            - Either I(privatekey_path) or I(privatekey_content) must be specified if I(state) is C(present), but not both.
+        type: str
 
     privatekey_passphrase:
         description:
@@ -80,8 +86,8 @@ options:
         description:
             - Key/value pairs that will be present in the issuer name field of the CRL.
             - If you need to specify more than one value with the same key, use a list as value.
+            - Required if I(state) is C(present).
         type: dict
-        required: yes
 
     last_update:
         description:
@@ -105,8 +111,8 @@ options:
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
             - Note that if using relative time this module is NOT idempotent, except when
               I(ignore_timestamps) is set to C(yes).
+            - Required if I(state) is C(present).
         type: str
-        required: yes
 
     digest:
         description:
@@ -117,9 +123,9 @@ options:
     revoked_certificates:
         description:
             - List of certificates to be revoked.
+            - Required if I(state) is C(present).
         type: list
         elements: dict
-        required: yes
         suboptions:
             path:
                 description:
@@ -413,6 +419,9 @@ class CRL(crypto_utils.OpenSSLObject):
         self.ignore_timestamps = module.params['ignore_timestamps']
 
         self.privatekey_path = module.params['privatekey_path']
+        self.privatekey_content = module.params['privatekey_content']
+        if self.privatekey_content is not None:
+            self.privatekey_content = self.privatekey_content.encode('utf-8')
         self.privatekey_passphrase = module.params['privatekey_passphrase']
 
         self.issuer = crypto_utils.parse_name_field(module.params['issuer'])
@@ -488,8 +497,9 @@ class CRL(crypto_utils.OpenSSLObject):
 
         try:
             self.privatekey = crypto_utils.load_privatekey(
-                self.privatekey_path,
-                self.privatekey_passphrase,
+                path=self.privatekey_path,
+                content=self.privatekey_content,
+                passphrase=self.privatekey_passphrase,
                 backend='cryptography'
             )
         except crypto_utils.OpenSSLBadPassphraseError as exc:
@@ -739,17 +749,17 @@ def main():
             force=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
             path=dict(type='path', required=True),
-            privatekey_path=dict(type='path', required=True),
+            privatekey_path=dict(type='path'),
+            privatekey_content=dict(type='str'),
             privatekey_passphrase=dict(type='str', no_log=True),
-            issuer=dict(type='dict', required=True),
+            issuer=dict(type='dict'),
             last_update=dict(type='str', default='+0s'),
-            next_update=dict(type='str', required=True),
+            next_update=dict(type='str'),
             digest=dict(type='str', default='sha256'),
             ignore_timestamps=dict(type='bool', default=False),
             revoked_certificates=dict(
                 type='list',
                 elements='dict',
-                required=True,
                 options=dict(
                     path=dict(type='path'),
                     serial_number=dict(type='int'),
@@ -769,6 +779,13 @@ def main():
                     invalidity_date_critical=dict(type='bool', default=False),
                 ),
             ),
+        ),
+        required_if=[
+            ('state', 'present', ['privatekey_path', 'privatekey_content'], True)
+            ('state', 'present', ['issuer', 'next_update', 'revoked_certificates'], False)
+        ],
+        mutually_exclusive=(
+            ['privatekey_path', 'privatekey_content'],
         ),
         supports_check_mode=True,
         add_file_common_args=True,
