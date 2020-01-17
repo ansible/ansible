@@ -1100,6 +1100,11 @@ class GalaxyCLI(CLI):
             collection_name = context.CLIARGS['collection']
 
             # TODO: Should we support listing all collections in a given namespace?
+            #       Suggestion from team: use fnmatch() to accept a glob or partial collection name
+            #           match, such as:
+            #               namesp*
+            #               namespace
+            #               namespace.ab*
 
             # list a specific collection
             if collection_name:
@@ -1107,7 +1112,7 @@ class GalaxyCLI(CLI):
                     collection_path = GalaxyCLI._resolve_path(path)
                     if not os.path.exists(path):
                         if path in C.COLLECTIONS_PATHS:
-                            # don't warn for missing default dirs
+                            # don't warn for missing default paths
                             continue
                         warnings.append("- the configured path {0} does not exist.".format(collection_path))
                         continue
@@ -1132,6 +1137,10 @@ class GalaxyCLI(CLI):
 
                     _display_header(path, 'Collection', 'Version', fqcn_width, version_width)
                     _display_collection(collection, fqcn_width, version_width)
+
+                # Do not warn if the specific collection was found in any of the search paths
+                if path_found:
+                    warnings = []
 
             else:
                 # list all collections
