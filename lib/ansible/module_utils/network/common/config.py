@@ -164,7 +164,6 @@ class NetworkConfig(object):
         self._indent = indent
         self._items = list()
         self._config_text = None
-
         if ignore_lines:
             for item in ignore_lines:
                 if not isinstance(item, Pattern):
@@ -220,15 +219,16 @@ class NetworkConfig(object):
         config = list()
 
         indents = [0]
-
         for linenum, line in enumerate(to_native(lines, errors='surrogate_or_strict').split('\n')):
             text = entry_reg.sub('', line).strip()
 
             cfg = ConfigLine(line)
-
             if not text or ignore_line(text, comment_tokens):
-                continue
-
+                # To accomodate !! comments in config mode
+                if "!!" in text:
+                    pass
+                else:
+                    continue
             # handle top level commands
             if toplevel.match(line):
                 ancestors = [cfg]
@@ -377,7 +377,6 @@ class NetworkConfig(object):
                     expanded.append(p)
             expanded.append(item)
             visited.add(item.line)
-
         return expanded
 
     def add(self, lines, parents=None):
