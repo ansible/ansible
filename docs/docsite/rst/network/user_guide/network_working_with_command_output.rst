@@ -1,10 +1,13 @@
 .. _networking_working_with_command_output:
 
-**********************************************
-Working with Command Output in Network Modules
-**********************************************
+**********************************************************
+Working with command output and prompts in network modules
+**********************************************************
 
-Conditionals in Networking Modules
+.. contents::
+  :local:
+
+Conditionals in networking modules
 ===================================
 
 Ansible allows you to use conditionals to control the flow of your playbooks. Ansible networking command modules use the following unique conditional statements.
@@ -63,3 +66,34 @@ The ``wait_for`` argument must always start with result and then the
 command index in ``[]``, where ``0`` is the first command in the commands list,
 ``1`` is the second command, ``2`` is the third and so on.
 
+
+Handling prompts in network modules
+===================================
+
+Network devices may require that you answer a prompt before performing a change on the device. Individual network modules such as :ref:`ios_command <ios_command_module>` and :ref:`nxos_command <nxos_command_module>` can handle this with a ``prompt`` parameter.
+
+You can also use the :ref:`cli_command <cli_command_module>` to handle multiple prompts.
+
+.. code-block:: yaml
+
+  ---
+   - name: reboot ios device
+     cli_command:
+       command: reload
+       prompt:
+         - Save?
+         - confirm
+       answer:
+         - y
+         - y
+
+This task answers yes to both prompts. You must list the prompt and the answers in the same order (that is, prompt[0] is answered by answer[0]).
+
+
+.. seealso::
+
+  `Rebooting network devices with Ansible <https://www.ansible.com/blog/rebooting-network-devices-with-ansible>`_
+      Examples using ``wait_for``, ``wait_for_connection``, and ``prompt`` for network devices.
+
+  `Deep dive on cli_command <https://www.ansible.com/blog/deep-dive-on-cli-command-for-network-automation>`_
+      Detailed overview of how to use the ``cli_command``.
