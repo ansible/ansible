@@ -22,7 +22,10 @@ options:
     description:
       - File name of Type Enforcement file to apply to system
     type: path
+<<<<<<< HEAD
     required: True
+=======
+>>>>>>> f05d6eae78e5743495a9a95bca73cf2f17d1eaf2
   state:
     description:
       - State of policy module in system
