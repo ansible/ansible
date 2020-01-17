@@ -6,6 +6,8 @@
       - crl_1 is changed
       - crl_1_idem_check is not changed
       - crl_1_idem is not changed
+      - crl_1_idem_content_check is not changed
+      - crl_1_idem_content is not changed
 
 - name: Validate CRL 2
   assert:

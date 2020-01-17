@@ -77,6 +77,45 @@
       - serial_number: 1234
         revocation_date: 20191001000000Z
   register: crl_1_idem
+- name: Create CRL 1 (idempotent with content, check mode)
+  x509_crl:
+    path: '{{ output_dir }}/ca-crl1.crl'
+    privatekey_content: "{{ lookup('file', output_dir ~ '/ca.key') }}"
+    issuer:
+      CN: Ansible
+    last_update: 20191013000000Z
+    next_update: 20191113000000Z
+    revoked_certificates:
+      - content: "{{ lookup('file', output_dir ~ '/cert-1.pem') }}"
+        revocation_date: 20191013000000Z
+      - content: "{{ lookup('file', output_dir ~ '/cert-2.pem') }}"
+        revocation_date: 20191013000000Z
+        reason: key_compromise
+        reason_critical: yes
+        invalidity_date: 20191012000000Z
+      - serial_number: 1234
+        revocation_date: 20191001000000Z
+  check_mode: yes
+  register: crl_1_idem_content_check
+- name: Create CRL 1 (idempotent with content)
+  x509_crl:
+    path: '{{ output_dir }}/ca-crl1.crl'
+    privatekey_content: "{{ lookup('file', output_dir ~ '/ca.key') }}"
+    issuer:
+      CN: Ansible
+    last_update: 20191013000000Z
+    next_update: 20191113000000Z
+    revoked_certificates:
+      - content: "{{ lookup('file', output_dir ~ '/cert-1.pem') }}"
+        revocation_date: 20191013000000Z
+      - content: "{{ lookup('file', output_dir ~ '/cert-2.pem') }}"
+        revocation_date: 20191013000000Z
+        reason: key_compromise
+        reason_critical: yes
+        invalidity_date: 20191012000000Z
+      - serial_number: 1234
+        revocation_date: 20191001000000Z
+  register: crl_1_idem_content
 
 - name: Create CRL 2 (check mode)
   x509_crl:
