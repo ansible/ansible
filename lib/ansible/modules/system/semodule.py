@@ -16,12 +16,13 @@ module: semodule
 short_description: Manage selinux policy modules
 description:
   - Use this module to manage selinux policy modules from Type Enforcement files
-version_added: "2.9"
+version_added: "2.10"
 options:
   src:
     description:
       - File name of Type Enforcement file to apply to system
     type: path
+    required: True
   state:
     description:
       - State of policy module in system
