@@ -70,6 +70,12 @@ options:
       type: int
       default: 3
       choices: [ 1, 2, 3, 4, 5 ]
+    advanced_settings:
+      version_added: "2.10"
+      description:
+      - A dictionary of advanced DRS settings.
+      default: {}
+      type: dict
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -82,6 +88,18 @@ EXAMPLES = r"""
     datacenter_name: datacenter
     cluster_name: cluster
     enable_drs: yes
+  delegate_to: localhost
+
+- name: Enable DRS and distribute a more even number of virtual machines across hosts for availability
+  vmware_cluster_drs:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: datacenter
+    cluster_name: cluster
+    enable_drs: yes
+    advanced_settings:
+      'TryBalanceVmsPerHost': '1'
   delegate_to: localhost
 
 - name: Enable DRS and set default VM behavior to partially automated
@@ -107,7 +125,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import (PyVmomi, TaskError, find_datacenter_by_name,
-                                         vmware_argument_spec, wait_for_task)
+                                         vmware_argument_spec, wait_for_task, option_diff)
 from ansible.module_utils._text import to_native
 
 
@@ -128,6 +146,12 @@ class VMwareCluster(PyVmomi):
         if self.cluster is None:
             self.module.fail_json(msg="Cluster %s does not exist." % self.cluster_name)
 
+        self.advanced_settings = self.params.get('advanced_settings')
+        if self.advanced_settings:
+            self.changed_advanced_settings = option_diff(self.advanced_settings, self.cluster.configurationEx.drsConfig.option)
+        else:
+            self.changed_advanced_settings = None
+
     def check_drs_config_diff(self):
         """
         Check DRS configuration diff
@@ -141,6 +165,10 @@ class VMwareCluster(PyVmomi):
                 drs_config.defaultVmBehavior != self.params.get('drs_default_vm_behavior') or \
                 drs_config.vmotionRate != self.params.get('drs_vmotion_rate'):
             return True
+
+        if self.changed_advanced_settings:
+            return True
+
         return False
 
     def configure_drs(self):
@@ -158,6 +186,10 @@ class VMwareCluster(PyVmomi):
                 cluster_config_spec.drsConfig.enableVmBehaviorOverrides = self.params.get('drs_enable_vm_behavior_overrides')
                 cluster_config_spec.drsConfig.defaultVmBehavior = self.params.get('drs_default_vm_behavior')
                 cluster_config_spec.drsConfig.vmotionRate = self.params.get('drs_vmotion_rate')
+
+                if self.changed_advanced_settings:
+                    cluster_config_spec.drsConfig.option = self.changed_advanced_settings
+
                 try:
                     task = self.cluster.ReconfigureComputeResource_Task(cluster_config_spec, True)
                     changed, result = wait_for_task(task)
@@ -190,6 +222,7 @@ def main():
         drs_vmotion_rate=dict(type='int',
                               choices=range(1, 6),
                               default=3),
+        advanced_settings=dict(type='dict', default=dict(), required=False),
     ))
 
     module = AnsibleModule(
