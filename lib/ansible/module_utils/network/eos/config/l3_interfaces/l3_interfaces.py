@@ -122,7 +122,6 @@ class L3_interfaces(ConfigBase):
                 extant = have[interface_name]
             else:
                 extant = dict()
-
             intf_commands = set_interface(desired, extant)
             intf_commands.extend(clear_interface(desired, extant))
 
@@ -177,7 +176,6 @@ class L3_interfaces(ConfigBase):
                 extant = dict()
 
             intf_commands = set_interface(desired, extant)
-
             if intf_commands:
                 commands.append("interface {0}".format(interface_name))
                 commands.extend(intf_commands)
@@ -231,7 +229,6 @@ def set_interface(want, have):
     for address in want_ipv6 - have_ipv6:
         address = dict(address)
         commands.append("ipv6 address {0}".format(address["address"]))
-
     return commands
 
 
@@ -240,7 +237,7 @@ def clear_interface(want, have):
 
     want_ipv4 = set(tuple(address.items()) for address in want.get("ipv4") or [])
     have_ipv4 = set(tuple(address.items()) for address in have.get("ipv4") or [])
-    if not want_ipv4:
+    if not want_ipv4 and have_ipv4:
         commands.append("no ip address")
     else:
         for address in have_ipv4 - want_ipv4:
@@ -250,10 +247,9 @@ def clear_interface(want, have):
                 if tuple(address.items()) in want_ipv4:
                     continue
 
-            address_cmd = "no ip address"
             if address.get("secondary"):
-                address_cmd += " {0} secondary".format(address["address"])
-            commands.append(address_cmd)
+                address_cmd = " {0} secondary".format(address["address"])
+                commands.append(address_cmd)
 
             if "secondary" not in address:
                 # Removing non-secondary removes all other interfaces
@@ -264,5 +260,4 @@ def clear_interface(want, have):
     for address in have_ipv6 - want_ipv6:
         address = dict(address)
         commands.append("no ipv6 address {0}".format(address["address"]))
-
     return commands
