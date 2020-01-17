@@ -23,9 +23,9 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import (
-    _find_existing_collections,
     build_collection,
     CollectionRequirement,
+    find_existing_collections,
     install_collections,
     publish_collection,
     validate_collection_name,
@@ -1143,7 +1143,7 @@ class GalaxyCLI(CLI):
                 else:
                     # list all collections
                     path = validate_collection_path(path)
-                    collections = _find_existing_collections(path)
+                    collections = find_existing_collections(path)
 
                     # Display header
                     fqcn_width, version_width = _get_collection_widths(collections)
