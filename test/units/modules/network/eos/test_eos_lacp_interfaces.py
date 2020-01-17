@@ -136,8 +136,6 @@ class TestEosLacpInterfacesModule(TestEosModule):
                 rate="fast"
             )], state="overridden"
         ))
-        commands = ['interface Ethernet1', 'lacp port-priority 45', 'lacp rate normal',
-                    'interface Ethernet2', 'lacp rate normal']
         self.execute_module(changed=False, commands=[])
 
     def test_eos_lacp_interfaces_deleted(self):
