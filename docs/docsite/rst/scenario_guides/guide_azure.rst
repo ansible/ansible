@@ -269,7 +269,7 @@ consider the following:
   to change the OS disk to a managed disk.
   Otherwise, the OS disk becomes  an unmanaged disk..
 * When you create a data disk with  the ``azure_rm_manageddisk`` module,
-  you need to specify explicitly storage_account_type
+  you need to  explicitly specify the  ``storage_account_type`` parameter
   to make it a 'Managed Disk'.
   Otherwise, the data disk will be 'Unmanaged disk'.
 * 'Managed Disk' does not require 'Storage Account' or 'Storage Container'
