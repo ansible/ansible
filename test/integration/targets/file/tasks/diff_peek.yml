@@ -1,0 +1,10 @@
+- name: Run task with _diff_peek
+  file:
+    path: "{{ output_file }}"
+    _diff_peek: yes
+  register: diff_peek_result
+
+- name: Ensure warning was not issued when using _diff_peek parameter
+  assert:
+    that:
+      - diff_peek_result['warnings'] is not defined
