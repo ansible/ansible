@@ -266,7 +266,7 @@ consider the following:
 * Both OS disk and data disk must be a 'managed disk', not an 'unmanaged disk'.
 * When creating a VM with the ``azure_rm_virtualmachine`` module,
   you need to explicitly set the ``managed_disk_type`` parameter
-  to change OS disk to 'Managed Disk'.
+  to change the OS disk to a managed disk.
   Otherwise, OS disk becomes 'Unmanaged disk'.
 * When creating a data disk with azure_rm_manageddisk,
   you need to specify explicitly storage_account_type
