@@ -125,7 +125,8 @@ class Acls(ConfigBase):
         want = list(itertools.chain(*want))
         have = list(itertools.chain(*have))
         h_index = 0
-        config = want
+        config = list(want)
+        q(want, have)
         for w in want:
             access_list = re.findall(r'(ip.*) access-list (.*)', w)
             if access_list:
@@ -143,7 +144,7 @@ class Acls(ConfigBase):
                         if w in h:
                             config.pop(config.index(w))
                             break
-                        
+        q(config)
         for c in config:
             access_list = re.findall(r'(ip.*) access-list (.*)', c)
             if access_list:
@@ -331,7 +332,7 @@ def add_commands(want):
                 command = command + " vlan " + ace["vlan"]
             if "protocol" in ace.keys():
                 protocol = ace["protocol"]
-                if unicode(protocol).isnumeric():
+                if protocol.isdigit():
                     if protocol in protocol_name.keys():
                         protocol = protocol_name[protocol]
                 command = command + " " + protocol
@@ -346,7 +347,7 @@ def add_commands(want):
                     command = command + " " + ace["source"]["address"] + " " + ace["source"]["wildcard_bits"]
                 if "port_protocol" in ace["source"].keys():
                     for op, val in ace["source"]["port_protocol"].items():
-                        if unicode(val).isnumeric():
+                        if val.isdigit():
                             val = socket.getservbyport(int(val))
                         command = command + " " + op + " " + val
             if "destination" in ace.keys():

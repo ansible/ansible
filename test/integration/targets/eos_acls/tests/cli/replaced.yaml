@@ -2,7 +2,6 @@
 - debug:
     msg: "Start eos_acls merged integration tests ansible_connection={{ ansible_connection }}"
 
-- include_tasks: _populate.yaml
 
 - set_fact:
     config:
@@ -10,28 +9,22 @@
         acls:
          - name: test1
            aces:
-             - sequence: 35
-               grant: "deny"
-               protocol: "tcp"
+             - sequence: 10
+               grant: "permit"
+               protocol: "ospf"
                source:
-                 subnet_address: 20.0.0.0/8
+                 any: true
                destination:
                  any: true
                log: true
-             - remark: "Run by ansible"
-             - grant: "permit"
-               protocol: "6"
-               source:
-                any: true
-               destination:
-                any: true
          - name: test4
            aces:
              - grant: "permit"
+               sequence: 10
                source:
                  any: true
                  port_protocol:
-                  eq: "25"
+                  eq: "smtp"
                destination:
                  any: true
                  port_protocol:
@@ -45,6 +38,7 @@
             standard: true
             aces:
               - grant: "permit"
+                sequence: 10
                 log: "true"
                 source:
                   any: true
@@ -57,45 +51,14 @@
           acls:
            - name: test1
              aces:
-               - sequence: 35
-                 grant: "deny"
-                 protocol: "tcp"
+                 grant: "permit"
+                 protocol: "ospf"
                  source:
-                   subnet_address: 20.0.0.0/8
+                   any: true
                  destination:
                    any: true
                  log: true
-               - remark: "Run by ansible"
-               - grant: "permit"
-                 protocol: "6"
-                 source:
-                  any: true
-                 destination:
-                  any: true
-           - name: test4
-             aces:
-               - grant: "permit"
-                 source:
-                   any: true
-                   port_protocol:
-                    eq: "25"
-                 destination:
-                   any: true
-                   port_protocol:
-                    eq: "www"
-                 protocol: "tcp"
-                 ttl:
-                   eq: "55"
-        - afi: "ipv6"
-          acls:
-            - name: test2
-              standard: true
-              aces:
-                - grant: "permit"
-                  log: "true"
-                  source:
-                    any: true
-      state: merged
+      state: replaced
     become: yes
     register: result
   
@@ -105,9 +68,9 @@
   
   - assert:
       that:
-        - "ansible_facts.network_resources.acls|symmetric_difference(config) == []"
-        - "result.commands|length == 8"
+        - "result.commands|length == 4"
         - "result.changed == true"
+        - "ansible_facts.network_resources.acls|symmetric_difference(config) == []"`
     become: yes
   
   - name: Idempotency check
@@ -119,6 +82,7 @@
       that:
         - "result.changed == false"
         - "result.commands|length == 0"
+        - "ansible_facts.network_resources.acls|symmetric_difference(result.before) == []"
   
   always:
     - include_tasks: _remove_config.yaml
