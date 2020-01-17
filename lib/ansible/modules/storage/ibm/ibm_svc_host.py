@@ -38,6 +38,7 @@ options:
     clustername:
         description:
             - clustername for IBM SVC storage
+        required: true
         type: str
     domain:
         description:
