@@ -467,6 +467,8 @@ class CRL(crypto_utils.OpenSSLObject):
                     )
                 # Load certificate from file or content
                 try:
+                    if rc['content'] is not None:
+                        rc['content'] = rc['content'].encode('utf-8')
                     cert = crypto_utils.load_certificate(rc['path'], content=rc['content'], backend='cryptography')
                     try:
                         result['serial_number'] = cert.serial_number
