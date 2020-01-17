@@ -1106,21 +1106,20 @@ class GalaxyCLI(CLI):
             #               namespace
             #               namespace.ab*
 
-            # list a specific collection
-            if collection_name:
-                for path in collections_search_paths:
-                    collection_path = GalaxyCLI._resolve_path(path)
-                    if not os.path.exists(path):
-                        if path in C.COLLECTIONS_PATHS:
-                            # don't warn for missing default paths
-                            continue
-                        warnings.append("- the configured path {0} does not exist.".format(collection_path))
+            for path in collections_search_paths:
+                collection_path = GalaxyCLI._resolve_path(path)
+                if not os.path.exists(path):
+                    if path in C.COLLECTIONS_PATHS:
+                        # don't warn for missing default paths
                         continue
-                    elif not os.path.isdir(collection_path):
-                        warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
-                        continue
+                    warnings.append("- the configured path {0} does not exist.".format(collection_path))
+                    continue
+                elif not os.path.isdir(collection_path):
+                    warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
+                    continue
 
-                    path_found = True
+                if collection_name:
+                    # list a specific collection
 
                     validate_collection_name(collection_name)
                     namespace, collection = collection_name.split('.')
@@ -1132,30 +1131,16 @@ class GalaxyCLI(CLI):
                         warnings.append("- unable to find {0} in collection paths".format(collection_name))
                         continue
 
+                    path_found = True
+
                     collection = CollectionRequirement.from_path(b_collection_path, False)
                     fqcn_width, version_width = _get_collection_widths(collection)
 
                     _display_header(path, 'Collection', 'Version', fqcn_width, version_width)
                     _display_collection(collection, fqcn_width, version_width)
 
-                # Do not warn if the specific collection was found in any of the search paths
-                if path_found:
-                    warnings = []
-
-            else:
-                # list all collections
-                for path in collections_search_paths:
-                    collection_path = GalaxyCLI._resolve_path(path)
-                    if not os.path.exists(path):
-                        if path in C.COLLECTIONS_PATHS:
-                            # don't warn for missing default dirs
-                            continue
-                        warnings.append("- the configured path {0} does not exist.".format(collection_path))
-                        continue
-                    elif not os.path.isdir(collection_path):
-                        warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
-                        continue
-
+                else:
+                    # list all collections
                     path = validate_collection_path(path)
                     collections = _find_existing_collections(path)
 
@@ -1168,7 +1153,11 @@ class GalaxyCLI(CLI):
                     for collection in collections:
                         _display_collection(collection, fqcn_width, version_width)
 
-                path_found = True
+                    path_found = True
+
+            # Do not warn if the specific collection was found in any of the search paths
+            if path_found and collection_name:
+                warnings = []
 
         for w in warnings:
             display.warning(w)
