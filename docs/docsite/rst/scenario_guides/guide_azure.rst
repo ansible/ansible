@@ -273,7 +273,7 @@ consider the following:
   to make it a  managed disk.
   Otherwise, the data disk will be an unmanaged disk.
 * A managed disk does not require a storage account or a storage container,
-  unlike 'Unmanaged Disk'.
+  unlike  a n unmanaged disk.
   In particular, note that once a VM is created on an unmanaged disk,
   an unnecessary storage container named "vhds" is automatically created.
 * When you create an IP address with the ``azure_rm_publicipaddress`` module,
