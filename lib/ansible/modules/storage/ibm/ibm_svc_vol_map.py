@@ -47,7 +47,6 @@ options:
     description:
     - rest api
     type: str
-    required: true
   username:
     description:
     - rest api username
