@@ -53,38 +53,38 @@ import os
 
 def ismount(path):
     """Test whether a path is a mount point
-    clone of os.path.ismount (from cpython Lib/posixpath.py)
-    fixed to solve https://github.com/ansible/ansible-modules-core/issues/2186
-    and workaround non-fixed http://bugs.python.org/issue2466
-    this should be rewritten as soon as python issue 2466 is fixed
-    probably check for python version and use os.path.ismount if fixed
-
-    to remove replace in this file ismount( -> os.path.ismount( and remove this
-    function"""
-
+    This is a copy of the upstream version of ismount(). Originally this was copied here as a workaround
+    until Python issue 2466 was fixed. Now it is here so this will work on older versions of Python
+    that may not have the upstream fix.
+    https://github.com/ansible/ansible-modules-core/issues/2186
+    http://bugs.python.org/issue2466
+    """
     try:
         s1 = os.lstat(path)
-    except OSError:
-        # the OSError should be handled with more care
-        # it could be a "permission denied" but path is still a mount
+    except (OSError, ValueError):
+        # It doesn't exist -- so not a mount point. :-)
         return False
     else:
         # A symlink can never be a mount point
         if os.path.stat.S_ISLNK(s1.st_mode):
             return False
 
-    parent = os.path.join(path, os.path.pardir)
+    if isinstance(path, bytes):
+        parent = os.path.join(path, b'..')
+    else:
+        parent = os.path.join(path, '..')
     parent = os.path.realpath(parent)
-
     try:
         s2 = os.lstat(parent)
-    except OSError:
-        # one should handle the returned OSError with more care to figure
-        # out whether this is still a mount
+    except (OSError, ValueError):
         return False
 
-    if s1.st_dev != s2.st_dev:
+    dev1 = s1.st_dev
+    dev2 = s2.st_dev
+    if dev1 != dev2:
         return True     # path/.. on a different device as path
-    if s1.st_ino == s2.st_ino:
-        return True     # path/.. is the same i-node as path, i.e. path=='/'
+    ino1 = s1.st_ino
+    ino2 = s2.st_ino
+    if ino1 == ino2:
+        return True     # path/.. is the same i-node as path
     return False
