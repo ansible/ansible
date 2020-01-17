@@ -268,7 +268,7 @@ consider the following:
   you need to explicitly set the ``managed_disk_type`` parameter
   to change the OS disk to a managed disk.
   Otherwise, the OS disk becomes  an unmanaged disk..
-* When creating a data disk with azure_rm_manageddisk,
+* When you create a data disk with  the ``azure_rm_manageddisk`` module,
   you need to specify explicitly storage_account_type
   to make it a 'Managed Disk'.
   Otherwise, the data disk will be 'Unmanaged disk'.
