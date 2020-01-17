@@ -367,7 +367,7 @@ def main():
         destination_host=dict(type='str', required=True),
         destination_vcenter=dict(type='str', required=True),
         destination_vcenter_username=dict(type='str', required=True),
-        destination_vcenter_password=dict(type='str', required=True),
+        destination_vcenter_password=dict(type='str', required=True, no_log=True),
         destination_vcenter_port=dict(type='int', default=443),
         destination_vcenter_validate_certs=dict(type='bool', default=False),
         destination_vm_folder=dict(type='str', required=True),
