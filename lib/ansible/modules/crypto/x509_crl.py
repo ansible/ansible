@@ -131,12 +131,21 @@ options:
                 description:
                     - Path to a certificate in PEM format.
                     - The serial number and issuer will be extracted from the certificate.
-                    - Mutually exclusive with I(serial_number). One of these two options must be specified.
+                    - Mutually exclusive with I(content) and I(serial_number). One of these three options
+                      must be specified.
+                type: path
+            content:
+                description:
+                    - Content of a certificate in PEM format.
+                    - The serial number and issuer will be extracted from the certificate.
+                    - Mutually exclusive with I(path) and I(serial_number). One of these three options
+                      must be specified.
                 type: path
             serial_number:
                 description:
                     - Serial number of the certificate.
-                    - Mutually exclusive with I(path). One of these two options must be specified.
+                    - Mutually exclusive with I(path) and I(content). One of these three options must
+                      be specified.
                 type: int
             revocation_date:
                 description:
@@ -447,23 +456,32 @@ class CRL(crypto_utils.OpenSSLObject):
                 'invalidity_date_critical': False,
             }
             path_prefix = 'revoked_certificates[{0}].'.format(i)
-            if rc['path'] is not None:
-                # Load certificate from file
+            if rc['path'] is not None or rc['content'] is not None:
+                if rc['path'] is not None and rc['content'] is not None:
+                    module.fail_json(
+                        msg='{0}path and {0}content must not both be specified'.format(path_prefix)
+                    )
                 if rc['serial_number'] is not None:
                     module.fail_json(
                         msg='{0}serial_number must not be specified if {0}path is specified'.format(path_prefix)
                     )
+                # Load certificate from file or content
                 try:
-                    cert = crypto_utils.load_certificate(rc['path'], backend='cryptography')
+                    cert = crypto_utils.load_certificate(rc['path'], content=rc['content'], backend='cryptography')
                     try:
                         result['serial_number'] = cert.serial_number
                     except AttributeError:
                         # The property was called "serial" before cryptography 1.4
                         result['serial_number'] = cert.serial
                 except crypto_utils.OpenSSLObjectError as e:
-                    module.fail_json(
-                        msg='Cannot read certificate "{1}" from {0}path: {2}'.format(path_prefix, rc['path'], to_native(e))
-                    )
+                    if rc['content'] is not None:
+                        module.fail_json(
+                            msg='Cannot parse certificate from {0}content: {1}'.format(path_prefix, to_native(e))
+                        )
+                    else:
+                        module.fail_json(
+                            msg='Cannot read certificate "{1}" from {0}path: {2}'.format(path_prefix, rc['path'], to_native(e))
+                        )
             else:
                 # Specify serial_number (and potentially issuer) directly
                 if rc['serial_number'] is None:
@@ -762,6 +780,7 @@ def main():
                 elements='dict',
                 options=dict(
                     path=dict(type='path'),
+                    content=dict(type='str'),
                     serial_number=dict(type='int'),
                     revocation_date=dict(type='str', default='+0s'),
                     issuer=dict(type='list'),
