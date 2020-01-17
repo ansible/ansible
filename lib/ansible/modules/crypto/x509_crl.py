@@ -140,7 +140,7 @@ options:
                     - The serial number and issuer will be extracted from the certificate.
                     - Mutually exclusive with I(path) and I(serial_number). One of these three options
                       must be specified.
-                type: path
+                type: str
             serial_number:
                 description:
                     - Serial number of the certificate.
