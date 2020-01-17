@@ -8,6 +8,10 @@ import os
 
 from . import types as t
 
+from .encoding import (
+    ENCODING,
+)
+
 from .util import (
     to_bytes,
     to_text,
@@ -26,7 +30,7 @@ def read_text_file(path):  # type: (t.AnyStr) -> t.Text
 
 def read_binary_file(path):  # type: (t.AnyStr) -> bytes
     """Return the contents of the specified path as bytes."""
-    with open(to_bytes(path), 'rb') as file:
+    with open_binary_file(path) as file:
         return file.read()
 
 
@@ -50,5 +54,23 @@ def write_text_file(path, content, create_directories=False):  # type: (str, str
     if create_directories:
         make_dirs(os.path.dirname(path))
 
-    with open(to_bytes(path), 'wb') as file:
+    with open_binary_file(path, 'wb') as file:
         file.write(to_bytes(content))
+
+
+def open_text_file(path, mode='r'):  # type: (str, str) -> t.TextIO
+    """Open the given path for text access."""
+    if 'b' in mode:
+        raise Exception('mode cannot include "b" for text files: %s' % mode)
+
+    # noinspection PyTypeChecker
+    return open(to_bytes(path), mode, encoding=ENCODING)
+
+
+def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.BinaryIO
+    """Open the given path for binary access."""
+    if 'b' not in mode:
+        raise Exception('mode must include "b" for binary files: %s' % mode)
+
+    # noinspection PyTypeChecker
+    return open(to_bytes(path), mode)
