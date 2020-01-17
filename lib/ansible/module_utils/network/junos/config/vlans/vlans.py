@@ -37,7 +37,7 @@ from ansible.module_utils.network.common.netconf import (build_root_xml_node,
 
 class Vlans(ConfigBase):
     """
-    The junos_vlans class
+    The junos_vlans class will be used to test another patch - DNM
     """
 
     gather_subset = [
