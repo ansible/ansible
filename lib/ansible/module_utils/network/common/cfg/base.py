@@ -15,4 +15,10 @@ class ConfigBase(object):
     """
     def __init__(self, module):
         self._module = module
+        self.state = module.params['state']
+        self._connection = None
+
+        if self.state not in ['rendered', 'parsed']:
+            self._connection = get_resource_connection(module)
+        self._module = module
         self._connection = get_resource_connection(module)
