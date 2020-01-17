@@ -40,6 +40,7 @@ options:
             - If set to C(update), makes sure that the CRL contains the revoked certificates from
               I(revoked_certificates), but can also contain other revoked certificates. If the CRL file
               already exists, all entries from the existing CRL will also be included in the new CRL.
+              When using C(update), you might be interested in setting I(ignore_timestamps) to C(yes).
         type: str
         default: generate
         choices: [ generate, update ]
