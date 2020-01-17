@@ -35,6 +35,7 @@ options:
     description:
       - name of host cluster
     type: str
+    required: true
   domain:
     description:
       - domain for IBM SVC storage
@@ -57,6 +58,7 @@ options:
     description:
       - The storage pool to which you want to add the mdisk
     type: str
+    required: true
   log_path:
     description:
       - Debug logging to this file
