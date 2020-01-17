@@ -800,8 +800,8 @@ def main():
             ),
         ),
         required_if=[
-            ('state', 'present', ['privatekey_path', 'privatekey_content'], True)
-            ('state', 'present', ['issuer', 'next_update', 'revoked_certificates'], False)
+            ('state', 'present', ['privatekey_path', 'privatekey_content'], True),
+            ('state', 'present', ['issuer', 'next_update', 'revoked_certificates'], False),
         ],
         mutually_exclusive=(
             ['privatekey_path', 'privatekey_content'],
