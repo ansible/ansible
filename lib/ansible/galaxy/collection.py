@@ -428,7 +428,7 @@ def install_collections(collections, output_path, apis, validate_certs, ignore_e
     :param force: Re-install a collection if it has already been installed.
     :param force_deps: Re-install a collection as well as its dependencies if they have already been installed.
     """
-    existing_collections = _find_existing_collections(output_path)
+    existing_collections = find_existing_collections(output_path)
 
     with _tempdir() as b_temp_path:
         display.display("Process install dependency map")
@@ -760,7 +760,7 @@ def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, fi
         display.display('Created collection for %s at %s' % (collection_name, to_text(b_tar_path)))
 
 
-def _find_existing_collections(path):
+def find_existing_collections(path):
     collections = []
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
