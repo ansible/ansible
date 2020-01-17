@@ -20,6 +20,10 @@ $async_dir = [System.Environment]::ExpandEnvironmentVariables($Payload.environme
 $jid = $Payload.async_jid
 $local_jid = $jid + "." + $pid
 
+# The user specified async timeout seems like a reasonable upper time limit on the named pipe connection, too
+$named_pipe_timeout = $Payload.async_timeout_sec
+Write-AnsibleLog "INFO - named pipe timeout set to '$named_pipe_timeout' " "async_wrapper"
+
 $results_path = [System.IO.Path]::Combine($async_dir, $local_jid)
 
 Write-AnsibleLog "INFO - creating async results path at '$results_path'" "async_wrapper"
@@ -145,9 +149,9 @@ try {
     $result_json = ConvertTo-Json -InputObject $result -Depth 99 -Compress
     Set-Content $results_path -Value $result_json
 
-    Write-AnsibleLog "INFO - waiting for async process to connect to named pipe for 5 seconds" "async_wrapper"
+    Write-AnsibleLog "INFO - waiting for async process to connect to named pipe for $named_pipe_timeout seconds" "async_wrapper"
     $wait_async = $pipe.BeginWaitForConnection($null, $null)
-    $wait_async.AsyncWaitHandle.WaitOne(60000) > $null
+    $wait_async.AsyncWaitHandle.WaitOne($named_pipe_timeout) > $null
     if (-not $wait_async.IsCompleted) {
         throw "timeout while waiting for child process to connect to named pipe"
     }
