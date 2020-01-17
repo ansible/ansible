@@ -1,0 +1,2 @@
+bugfixes:
+  - "dnf - Fix idempotence of `state: installed` (https://github.com/ansible/ansible/issues/64963)"
