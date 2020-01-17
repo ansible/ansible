@@ -147,7 +147,7 @@ try {
 
     Write-AnsibleLog "INFO - waiting for async process to connect to named pipe for 5 seconds" "async_wrapper"
     $wait_async = $pipe.BeginWaitForConnection($null, $null)
-    $wait_async.AsyncWaitHandle.WaitOne(5000) > $null
+    $wait_async.AsyncWaitHandle.WaitOne(60000) > $null
     if (-not $wait_async.IsCompleted) {
         throw "timeout while waiting for child process to connect to named pipe"
     }
