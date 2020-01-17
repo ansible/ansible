@@ -93,6 +93,15 @@ tasks:
       wait_for:
         - result[0] contains Cisco Controller
         - result[1] contains Loopback0
+
+  - name: example using a prompt and response
+    aireos_command:
+      commands:
+        - command: transfer download start
+          prompt:"Are you sure you want to start\? \(y\/N\)"
+          response: y
+      wait_for: response[0] contains "File transfer is successful"
+      
 """
 
 RETURN = """
