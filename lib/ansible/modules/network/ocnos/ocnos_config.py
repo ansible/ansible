@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: ocnos_config
-version_added: "2.9"
+version_added: "2.10"
 author: "Tsuyoshi MOMOSE (@momose)"
 short_description: Manage IP Infusion OcNOS configuration sections
 description:
@@ -138,6 +138,13 @@ options:
         config for comparison.
     aliases: ['config']
     type: str
+  diff_ignore_lines:
+    description:
+      - Use this argument to specify one or more lines that should be
+        ignored during the diff.  This is used for lines in the configuration
+        that are automatically updated by the system.  This argument takes
+        a list of regular expressions or exact line matches.
+    type: list
   backup_options:
     description:
       - This is a dict object containing configurable options related to backup file path.
