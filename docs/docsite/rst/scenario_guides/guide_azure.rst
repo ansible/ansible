@@ -271,7 +271,7 @@ consider the following:
 * When you create a data disk with  the ``azure_rm_manageddisk`` module,
   you need to  explicitly specify the  ``storage_account_type`` parameter
   to make it a  managed disk.
-  Otherwise, the data disk will be 'Unmanaged disk'.
+  Otherwise, the data disk will be an unmanaged disk.
 * 'Managed Disk' does not require 'Storage Account' or 'Storage Container'
   unlike 'Unmanaged Disk'.
   In particular, note that once a VM is created on an unmanaged disk,
