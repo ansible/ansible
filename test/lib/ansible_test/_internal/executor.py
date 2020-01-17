@@ -41,6 +41,7 @@ from .cloud import (
 )
 
 from .io import (
+    open_text_file,
     read_binary_file,
     read_text_file,
 )
@@ -1209,7 +1210,7 @@ def inject_httptester(args):
     comment = ' # ansible-test httptester\n'
     append_lines = ['127.0.0.1 %s%s' % (host, comment) for host in HTTPTESTER_HOSTS]
 
-    with open('/etc/hosts', 'r+') as hosts_fd:
+    with open_text_file('/etc/hosts', 'r+') as hosts_fd:
         original_lines = hosts_fd.readlines()
 
         if not any(line.endswith(comment) for line in original_lines):
@@ -2062,7 +2063,7 @@ class EnvironmentDescription:
         :type path: str
         :rtype: str
         """
-        with open(path) as script_fd:
+        with open_text_file(path) as script_fd:
             return script_fd.readline().strip()
 
     @staticmethod

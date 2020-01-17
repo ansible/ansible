@@ -54,6 +54,8 @@ from .encoding import (
 )
 
 from .io import (
+    open_binary_file,
+    open_text_file,
     read_text_file,
 )
 
@@ -551,7 +553,7 @@ def is_binary_file(path):
     if ext in assume_binary:
         return True
 
-    with open(path, 'rb') as path_fd:
+    with open_binary_file(path) as path_fd:
         # noinspection PyTypeChecker
         return b'\0' in path_fd.read(1024)
 
@@ -877,7 +879,7 @@ def load_module(path, name):  # type: (str, str) -> None
         # noinspection PyDeprecation
         import imp
 
-        with open(path, 'r') as module_file:
+        with open_text_file(path) as module_file:
             # noinspection PyDeprecation
             imp.load_module(name, module_file, path, ('.py', 'r', imp.PY_SOURCE))
 
