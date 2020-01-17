@@ -1074,6 +1074,7 @@ class GalaxyCLI(CLI):
                 if gr.metadata:
                     display.display('# %s' % os.path.dirname(gr.path))
                     _display_role(gr)
+                    path_found = True
                 else:
                     display.display("- the role %s was not found" % name)
             else:
