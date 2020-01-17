@@ -101,6 +101,9 @@ class VmwareRestClient(object):
                           fallback=(env_fallback, ['VMWARE_PASSWORD']),
                           aliases=['pass', 'pwd'],
                           no_log=True),
+            port=dict(type='int',
+                      default=443,
+                      fallback=(env_fallback, ['VMWARE_PORT'])),
             protocol=dict(type='str',
                           default='https',
                           choices=['https', 'http']),
@@ -117,6 +120,7 @@ class VmwareRestClient(object):
         username = self.params.get('username')
         password = self.params.get('password')
         hostname = self.params.get('hostname')
+        port = self.params.get('port')
         session = requests.Session()
         session.verify = self.params.get('validate_certs')
 
@@ -125,7 +129,7 @@ class VmwareRestClient(object):
                                       " Please read the documentation for more information.")
 
         client = create_vsphere_client(
-            server=hostname,
+            server="%s:%s" % (hostname, port),
             username=username,
             password=password,
             session=session)

@@ -33,6 +33,13 @@ options:
     - If the value is not specified in the task, the value of environment variable C(VMWARE_VALIDATE_CERTS) will be used instead.
     type: bool
     default: yes
+  port:
+    description:
+    - The port number of the vSphere vCenter.
+    - If the value is not specified in the task, the value of environment variable C(VMWARE_PORT) will be used instead.
+    type: int
+    default: 443
+    version_added: '2.10'
   protocol:
     description:
     - The connection to protocol.
