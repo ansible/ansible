@@ -66,7 +66,7 @@ class TestModule(ModuleTestCase):
         result = scheduled_action.get_common_params(module)
         assert result['AutoScalingGroupName'] == 'group'
         assert result['ScheduledActionName'] == 'action'
-        assert result['aws_retry'] == True
+        assert result['aws_retry'] is True
 
     @patch.object(scheduled_action, 'get_common_params')
     def test_describe_scheduled_actions(self, get_common_params_mock):
@@ -103,21 +103,21 @@ class TestModule(ModuleTestCase):
 
     @patch.object(scheduled_action, 'describe_scheduled_actions')
     def test_delete_scheduled_action_empty(self, describe_scheduled_actions_mock):
-        describe_scheduled_actions_mock.return_value ={}
+        describe_scheduled_actions_mock.return_value = {}
         module = MagicMock()
         client = MagicMock()
         (changed, results) = scheduled_action.delete_scheduled_action(client, module)
-        assert changed == False
+        assert changed is False
         assert results == []
         assert client.describe_scheduled_actions.call_count == 0
 
     @patch.object(scheduled_action, 'describe_scheduled_actions')
     def test_delete_scheduled_action_no_actions(self, describe_scheduled_actions_mock):
-        describe_scheduled_actions_mock.return_value ={ 'ScheduledUpdateGroupActions': [] }
+        describe_scheduled_actions_mock.return_value = {'ScheduledUpdateGroupActions': []}
         module = MagicMock()
         client = MagicMock()
         (changed, results) = scheduled_action.delete_scheduled_action(client, module)
-        assert changed == False
+        assert changed is False
         assert results == []
         assert client.describe_scheduled_actions.call_count == 0
 
@@ -130,14 +130,14 @@ class TestModule(ModuleTestCase):
         describe = {
             'ScheduledUpdateGroupActions': [params['ScheduledActionName']]
         }
-        expect = { 'client': 'success' }
+        expect = {'client': 'success'}
         get_common_params_mock.return_value = params
         describe_scheduled_actions_mock.return_value = describe
         module = MagicMock()
         client = MagicMock()
         client.delete_scheduled_action.return_value = expect
         (changed, results) = scheduled_action.delete_scheduled_action(client, module)
-        assert changed == True
+        assert changed is True
         assert results == expect
         client.delete_scheduled_action.assert_called_once_with(**params)
 
@@ -187,7 +187,7 @@ class TestModule(ModuleTestCase):
         client = MagicMock()
         (changed, results) = scheduled_action.put_scheduled_update_group_action(client, module)
         client.put_scheduled_update_group_action.assert_called_once_with(**expect)
-        assert changed == True
+        assert changed is True
 
     @patch.object(scheduled_action, 'describe_scheduled_actions')
     @patch.object(scheduled_action, 'get_common_params')
@@ -198,7 +198,7 @@ class TestModule(ModuleTestCase):
         client = MagicMock()
         (changed, results) = scheduled_action.put_scheduled_update_group_action(client, module)
         assert describe_scheduled_actions_mock.call_count == 2
-        assert changed == False
+        assert changed is False
 
     @patch.object(scheduled_action, 'describe_scheduled_actions')
     @patch.object(scheduled_action, 'get_common_params')
