@@ -132,6 +132,7 @@ def get_common_params(module):
 
 
 def delete_scheduled_action(client, module):
+    actions = []
     changed = False
     existing = describe_scheduled_actions(client, module)
 
@@ -189,6 +190,7 @@ def put_scheduled_update_group_action(client, module):
 
     existing = describe_scheduled_actions(client, module)
     actions = existing.get("ScheduledUpdateGroupActions")
+    status = {}
 
     try:
         status = client.put_scheduled_update_group_action(**params)
