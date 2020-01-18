@@ -658,6 +658,46 @@ files:
   $modules/network/icx/: sushma-alethea
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
+  $modules/network/meraki/meraki_admin.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_config_template.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_content_filtering.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_device.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_device2.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_firewalled_services.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_malware.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_mr_l3_firewall.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_mx_l3_firewall.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_mx_l7_firewall.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_nat.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_network.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_organization.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_snmp.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_ssid.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_static_route.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_switchport.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_syslog.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_vlan.py: &meraki
+      migrated_to: cisco.meraki
+  $modules/network/meraki/meraki_webhook.py: &meraki
+      migrated_to: cisco.meraki
   $modules/network/meraki/: &meraki
     labels: [ cisco, meraki, networking ]
     maintainers: $team_meraki
@@ -1123,6 +1163,7 @@ files:
   $module_utils/network/junos:
     support: network
   $module_utils/network/meraki: *meraki
+      migrated_to: cisco.meraki
   $module_utils/network/netconf:
     support: network
     maintainers: $team_networking
@@ -1861,6 +1902,7 @@ files:
   test/integration/targets/ios_: *ios
   test/integration/targets/iosxr_: *ios
   test/integration/targets/meraki_: *meraki
+      migrated_to: cisco.meraki
   test/integration/targets/mso_: *aci
   test/integration/targets/mysql: *mysql
   test/integration/targets/nxos_: *nxos
