@@ -19,6 +19,7 @@ from ansible.module_utils.network.common.utils import dict_diff, to_list, remove
 from ansible.module_utils.network.nxos.facts.facts import Facts
 from ansible.module_utils.network.nxos.utils.utils import flatten_dict, normalize_interface, search_obj_in_list, vlan_range_to_list
 
+
 class L2_interfaces(ConfigBase):
     """
     The nxos_l2_interfaces class
