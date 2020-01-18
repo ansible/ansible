@@ -216,7 +216,7 @@ class JenkinsJob:
             if "color" not in response:
                 return self.EXCL_STATE
             else:
-                return response['color'].encode('utf-8')
+                return to_native(response['color'])
 
         except Exception as e:
             self.module.fail_json(msg='Unable to fetch job information, %s' % to_native(e), exception=traceback.format_exc())
