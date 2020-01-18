@@ -555,221 +555,305 @@ groupings:
   - aws
   sts_session_token:
   - aws
+  gcp_appengine_firewall_rule:
+  - gcp
+  gcp_appengine_firewall_rule_info:
+  - gcp
   gcp_bigquery_dataset:
   - gcp
-  gcp_bigquery_dataset_facts:
+  gcp_bigquery_dataset_info:
   - gcp
   gcp_bigquery_table:
   - gcp
-  gcp_bigquery_table_facts:
+  gcp_bigquery_table_info:
   - gcp
   gcp_cloudbuild_trigger:
   - gcp
-  gcp_cloudbuild_trigger_facts:
+  gcp_cloudbuild_trigger_info:
+  - gcp
+  gcp_cloudfunctions_cloud_function:
+  - gcp
+  gcp_cloudfunctions_cloud_function_info:
   - gcp
   gcp_cloudscheduler_job:
   - gcp
-  gcp_cloudscheduler_job_facts:
+  gcp_cloudscheduler_job_info:
+  - gcp
+  gcp_cloudtasks_queue:
+  - gcp
+  gcp_cloudtasks_queue_info:
   - gcp
   gcp_compute_address:
   - gcp
-  gcp_compute_address_facts:
+  gcp_compute_address_info:
+  - gcp
+  gcp_compute_autoscaler:
+  - gcp
+  gcp_compute_autoscaler_info:
   - gcp
   gcp_compute_backend_bucket:
   - gcp
-  gcp_compute_backend_bucket_facts:
+  gcp_compute_backend_bucket_info:
   - gcp
   gcp_compute_backend_service:
   - gcp
-  gcp_compute_backend_service_facts:
+  gcp_compute_backend_service_info:
   - gcp
   gcp_compute_disk:
   - gcp
-  gcp_compute_disk_facts:
+  gcp_compute_disk_info:
   - gcp
   gcp_compute_firewall:
   - gcp
-  gcp_compute_firewall_facts:
+  gcp_compute_firewall_info:
   - gcp
   gcp_compute_forwarding_rule:
   - gcp
-  gcp_compute_forwarding_rule_facts:
+  gcp_compute_forwarding_rule_info:
   - gcp
   gcp_compute_global_address:
   - gcp
-  gcp_compute_global_address_facts:
+  gcp_compute_global_address_info:
   - gcp
   gcp_compute_global_forwarding_rule:
   - gcp
-  gcp_compute_global_forwarding_rule_facts:
+  gcp_compute_global_forwarding_rule_info:
   - gcp
   gcp_compute_health_check:
   - gcp
-  gcp_compute_health_check_facts:
+  gcp_compute_health_check_info:
   - gcp
   gcp_compute_http_health_check:
   - gcp
-  gcp_compute_http_health_check_facts:
+  gcp_compute_http_health_check_info:
   - gcp
   gcp_compute_https_health_check:
   - gcp
-  gcp_compute_https_health_check_facts:
+  gcp_compute_https_health_check_info:
   - gcp
   gcp_compute_image:
   - gcp
-  gcp_compute_image_facts:
+  gcp_compute_image_info:
   - gcp
   gcp_compute_instance:
   - gcp
-  gcp_compute_instance_facts:
+  gcp_compute_instance_info:
   - gcp
   gcp_compute_instance_group:
   - gcp
-  gcp_compute_instance_group_facts:
+  gcp_compute_instance_group_info:
   - gcp
   gcp_compute_instance_group_manager:
   - gcp
-  gcp_compute_instance_group_manager_facts:
+  gcp_compute_instance_group_manager_info:
   - gcp
   gcp_compute_instance_template:
   - gcp
-  gcp_compute_instance_template_facts:
+  gcp_compute_instance_template_info:
   - gcp
   gcp_compute_interconnect_attachment:
   - gcp
-  gcp_compute_interconnect_attachment_facts:
+  gcp_compute_interconnect_attachment_info:
   - gcp
   gcp_compute_network:
   - gcp
-  gcp_compute_network_facts:
+  gcp_compute_network_info:
+  - gcp
+  gcp_compute_network_endpoint_group:
+  - gcp
+  gcp_compute_network_endpoint_group_info:
+  - gcp
+  gcp_compute_node_group:
+  - gcp
+  gcp_compute_node_group_info:
+  - gcp
+  gcp_compute_node_template:
+  - gcp
+  gcp_compute_node_template_info:
+  - gcp
+  gcp_compute_region_backend_service:
+  - gcp
+  gcp_compute_region_backend_service_info:
   - gcp
   gcp_compute_region_disk:
   - gcp
-  gcp_compute_region_disk_facts:
+  gcp_compute_region_disk_info:
+  - gcp
+  gcp_compute_reservation:
+  - gcp
+  gcp_compute_reservation_info:
   - gcp
   gcp_compute_route:
   - gcp
-  gcp_compute_route_facts:
+  gcp_compute_route_info:
   - gcp
   gcp_compute_router:
   - gcp
-  gcp_compute_router_facts:
+  gcp_compute_router_info:
+  - gcp
+  gcp_compute_snapshot:
+  - gcp
+  gcp_compute_snapshot_info:
   - gcp
   gcp_compute_ssl_certificate:
   - gcp
-  gcp_compute_ssl_certificate_facts:
+  gcp_compute_ssl_certificate_info:
   - gcp
   gcp_compute_ssl_policy:
   - gcp
-  gcp_compute_ssl_policy_facts:
+  gcp_compute_ssl_policy_info:
   - gcp
   gcp_compute_subnetwork:
   - gcp
-  gcp_compute_subnetwork_facts:
+  gcp_compute_subnetwork_info:
   - gcp
   gcp_compute_target_http_proxy:
   - gcp
-  gcp_compute_target_http_proxy_facts:
+  gcp_compute_target_http_proxy_info:
   - gcp
   gcp_compute_target_https_proxy:
   - gcp
-  gcp_compute_target_https_proxy_facts:
+  gcp_compute_target_https_proxy_info:
+  - gcp
+  gcp_compute_target_instance:
+  - gcp
+  gcp_compute_target_instance_info:
   - gcp
   gcp_compute_target_pool:
   - gcp
-  gcp_compute_target_pool_facts:
+  gcp_compute_target_pool_info:
   - gcp
   gcp_compute_target_ssl_proxy:
   - gcp
-  gcp_compute_target_ssl_proxy_facts:
+  gcp_compute_target_ssl_proxy_info:
   - gcp
   gcp_compute_target_tcp_proxy:
   - gcp
-  gcp_compute_target_tcp_proxy_facts:
+  gcp_compute_target_tcp_proxy_info:
   - gcp
   gcp_compute_target_vpn_gateway:
   - gcp
-  gcp_compute_target_vpn_gateway_facts:
+  gcp_compute_target_vpn_gateway_info:
   - gcp
   gcp_compute_url_map:
   - gcp
-  gcp_compute_url_map_facts:
+  gcp_compute_url_map_info:
   - gcp
   gcp_compute_vpn_tunnel:
   - gcp
-  gcp_compute_vpn_tunnel_facts:
+  gcp_compute_vpn_tunnel_info:
   - gcp
   gcp_container_cluster:
   - gcp
-  gcp_container_cluster_facts:
+  gcp_container_cluster_info:
   - gcp
   gcp_container_node_pool:
   - gcp
-  gcp_container_node_pool_facts:
+  gcp_container_node_pool_info:
   - gcp
   gcp_dns_managed_zone:
   - gcp
-  gcp_dns_managed_zone_facts:
+  gcp_dns_managed_zone_info:
   - gcp
   gcp_dns_resource_record_set:
   - gcp
-  gcp_dns_resource_record_set_facts:
+  gcp_dns_resource_record_set_info:
+  - gcp
+  gcp_filestore_instance:
+  - gcp
+  gcp_filestore_instance_info:
   - gcp
   gcp_iam_role:
   - gcp
-  gcp_iam_role_facts:
+  gcp_iam_role_info:
   - gcp
   gcp_iam_service_account:
   - gcp
-  gcp_iam_service_account_facts:
+  gcp_iam_service_account_info:
   - gcp
   gcp_iam_service_account_key:
   - gcp
+  gcp_kms_crypto_key:
+  - gcp
+  gcp_kms_crypto_key_info:
+  - gcp
+  gcp_kms_key_ring:
+  - gcp
+  gcp_kms_key_ring_info:
+  - gcp
+  gcp_logging_metric:
+  - gcp
+  gcp_logging_metric_info:
+  - gcp
+  gcp_mlengine_model:
+  - gcp
+  gcp_mlengine_model_info:
+  - gcp
+  gcp_mlengine_version:
+  - gcp
+  gcp_mlengine_version_info:
+  - gcp
   gcp_pubsub_subscription:
   - gcp
-  gcp_pubsub_subscription_facts:
+  gcp_pubsub_subscription_info:
   - gcp
   gcp_pubsub_topic:
   - gcp
-  gcp_pubsub_topic_facts:
+  gcp_pubsub_topic_info:
   - gcp
   gcp_redis_instance:
   - gcp
-  gcp_redis_instance_facts:
+  gcp_redis_instance_info:
   - gcp
   gcp_resourcemanager_project:
   - gcp
-  gcp_resourcemanager_project_facts:
+  gcp_resourcemanager_project_info:
+  - gcp
+  gcp_runtimeconfig_config:
+  - gcp
+  gcp_runtimeconfig_config_info:
+  - gcp
+  gcp_runtimeconfig_variable:
+  - gcp
+  gcp_runtimeconfig_variable_info:
+  - gcp
+  gcp_serviceusage_service:
+  - gcp
+  gcp_serviceusage_service_info:
   - gcp
   gcp_sourcerepo_repository:
   - gcp
-  gcp_sourcerepo_repository_facts:
+  gcp_sourcerepo_repository_info:
   - gcp
   gcp_spanner_database:
   - gcp
-  gcp_spanner_database_facts:
+  gcp_spanner_database_info:
   - gcp
   gcp_spanner_instance:
   - gcp
-  gcp_spanner_instance_facts:
+  gcp_spanner_instance_info:
   - gcp
   gcp_sql_database:
   - gcp
-  gcp_sql_database_facts:
+  gcp_sql_database_info:
   - gcp
   gcp_sql_instance:
   - gcp
-  gcp_sql_instance_facts:
+  gcp_sql_instance_info:
   - gcp
   gcp_sql_user:
   - gcp
-  gcp_sql_user_facts:
+  gcp_sql_user_info:
   - gcp
   gcp_storage_bucket:
   - gcp
   gcp_storage_bucket_access_control:
   - gcp
   gcp_storage_object:
+  - gcp
+  gcp_tpu_node:
+  - gcp
+  gcp_tpu_node_info:
   - gcp
   azure_rm_acs:
   - azure
