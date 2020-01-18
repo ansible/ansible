@@ -10,7 +10,6 @@ for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
 import re
-import q
 from copy import deepcopy
 
 from ansible.module_utils.network.common import utils
@@ -197,7 +196,6 @@ class AclsFacts(object):
                             name_dict.update({"aces": ace_list[:]})
                         # acls_list.append(name_dict)
                         continue
-                    q(dev_config,dev_config_remainder)
                     dest_prefix = re.search(r'/', dev_config_remainder[0])
                     dest_address = re.search(r'[a-z\d:\.]+', dev_config_remainder[0])
                     if dev_config_remainder[0] == "host":
@@ -227,7 +225,6 @@ class AclsFacts(object):
                             port_dict.update({dest_opr: dest_port})
                             dest_dict.update({"port_protocol": port_dict})
                     ace_dict.update({"destination": dest_dict})
-                    q("after dest", ace_dict, dev_config_remainder) 
                     protocol_option_dict = {}
                     tcp_dict = {}
                     icmp_dict = {}
@@ -275,11 +272,9 @@ class AclsFacts(object):
                     if bool(protocol_option_dict):
                         ace_dict.update({"protocol_options": protocol_option_dict})
                     if dev_config_remainder[0] == "ttl":
-                        q("inside ttl" , dev_config_remainder)
                         dev_config_remainder.pop(0)
                         op = dev_config_remainder.pop(0)
                         ttl_dict = {op: dev_config_remainder.pop(0)}
-                        q(ttl_dict)
                         ace_dict.update({"ttl": ttl_dict})
                     for config_remainder in dev_config_remainder:
                         if config_remainder in others:

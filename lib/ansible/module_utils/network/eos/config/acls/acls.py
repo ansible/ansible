@@ -13,7 +13,6 @@ created
 import socket
 import re
 import itertools
-import q
 
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
@@ -126,7 +125,6 @@ class Acls(ConfigBase):
         have = list(itertools.chain(*have))
         h_index = 0
         config = list(want)
-        q(want, have)
         for w in want:
             access_list = re.findall(r'(ip.*) access-list (.*)', w)
             if access_list:
@@ -144,7 +142,6 @@ class Acls(ConfigBase):
                         if w in h:
                             config.pop(config.index(w))
                             break
-        q(config)
         for c in config:
             access_list = re.findall(r'(ip.*) access-list (.*)', c)
             if access_list:

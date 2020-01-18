@@ -1,6 +1,6 @@
 ---
 - debug:
-    msg: "Start eos_acls replaced integration tests ansible_connection={{ ansible_connection }}"
+    msg: "Start eos_acls merged integration tests ansible_connection={{ ansible_connection }}"
 
 - include_tasks: _populate.yaml
 
@@ -18,35 +18,10 @@
                destination:
                  any: true
                log: true
-         - name: test4
-           aces:
-             - grant: "permit"
-               sequence: 10
-               source:
-                 any: true
-                 port_protocol:
-                  eq: "smtp"
-               destination:
-                 any: true
-                 port_protocol:
-                  eq: "www"
-               protocol: "tcp"
-               ttl:
-                 eq: "55"
-      - afi: "ipv6"
-        acls:
-          - name: test2
-            standard: true
-            aces:
-              - grant: "permit"
-                sequence: 10
-                log: "true"
-                source:
-                  any: true
 
 - block:
-  - name: replace attributes with given acls.
-    eos_acls: &replaced
+  - name: overriden attributes with given acls.
+    eos_acls: &overridden
       config:
         - afi: "ipv4"
           acls:
@@ -60,7 +35,7 @@
                 destination:
                   any: true
                 log: true
-      state: replaced
+      state: overridden
     become: yes
     register: result
   
@@ -70,13 +45,15 @@
   
   - assert:
       that:
-        - "result.commands|length == 3"
+        - "result.commands|length == 8"
         - "result.changed == true"
+        - "'ip access-list test1' in result.commands"
+        - "'10 permit ospf any any log' in result.commands"
         - "ansible_facts.network_resources.acls|symmetric_difference(result.after) == []"
     become: yes
   
   - name: Idempotency check
-    eos_acls: *replaced
+    eos_acls: *overridden
     become: yes
     register: result
 
