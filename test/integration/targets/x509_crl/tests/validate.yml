@@ -22,3 +22,4 @@
       - crl_2_idem_update is not changed
       - crl_2_change_check is changed
       - crl_2_change is changed
+      - crl_2_change.crl == lookup('file', output_dir ~ '/ca-crl2.crl', rstrip=False)

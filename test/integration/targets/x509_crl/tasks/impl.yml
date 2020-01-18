@@ -277,4 +277,5 @@
         invalidity_date: 20191012000000Z
     ignore_timestamps: no
     mode: update
+    return_crl_content: yes
   register: crl_2_change
