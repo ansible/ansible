@@ -1520,15 +1520,13 @@ class TaskParameters(DockerBaseClass):
         result = []
         if self.volumes:
             for vol in self.volumes:
+                # Only pass anonymous volumes to create container
                 if ':' in vol:
                     parts = vol.split(':')
                     if len(parts) == 3:
-                        dummy, container, dummy = parts
-                        result.append(container)
                         continue
                     if len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
-                            result.append(parts[1])
                             continue
                 result.append(vol)
         self.log("mounts:")
@@ -2494,22 +2492,15 @@ class Container(DockerBaseClass):
 
         if self.parameters.volumes:
             for vol in self.parameters.volumes:
-                container = None
+                # We only expect anonymous volumes to show up in the list
                 if ':' in vol:
                     parts = vol.split(':')
                     if len(parts) == 3:
-                        dummy, container, mode = parts
-                        if not is_volume_permissions(mode):
-                            self.fail('Found invalid volumes mode: {0}'.format(mode))
+                        continue
                     if len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
-                            dummy, container, mode = vol.split(':') + ['rw']
-                new_vol = dict()
-                if container:
-                    new_vol[container] = dict()
-                else:
-                    new_vol[vol] = dict()
-                expected_vols.update(new_vol)
+                            continue
+                expected_vols[vol] = dict()
 
         if not expected_vols:
             expected_vols = None
