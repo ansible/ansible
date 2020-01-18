@@ -283,7 +283,7 @@ class PACMAN(CLIMgr):
         return out.split("\n\n")[:-1]
 
     def get_package_details(self, package):
-        # parse values of details might extend over several lines
+        # parse values of details that might extend over several lines
         raw_pkg_details = {}
         last_detail = None
         for line in package.splitlines():
