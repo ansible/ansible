@@ -1,5 +1,5 @@
 docker_prereq_packages:
-  - dnf-utils
+  - yum-utils
   - device-mapper-persistent-data
   - lvm2
   - libseccomp
