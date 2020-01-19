@@ -165,7 +165,12 @@ except ImportError:
 @AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
 def list_elbs(connection, names):
     paginator = connection.get_paginator('describe_load_balancers')
-    load_balancers = paginator.paginate(LoadBalancerNames=names).build_full_result().get('LoadBalancerDescriptions', [])
+    try:
+        load_balancers = paginator.paginate(LoadBalancerNames=names).build_full_result().get('LoadBalancerDescriptions', [])
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == 'LoadBalancerNotFound':
+            return []
+
     results = []
 
     for lb in load_balancers:
