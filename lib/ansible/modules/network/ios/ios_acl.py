@@ -25,37 +25,45 @@ options:
     parent:
         description:
             - Name of the parent ACL.
+        type: str
         required: true
     type:
         description:
             - Type of ACL (extended, standard, etc.). Only extended is supported in this version.
         default: extended
+        type: str
         choices: ['extended']
     number:
         description:
             - ACL line number.
+        type: str
         required: true
     status:
         description:
             - ACL permit or deny traffic.
         choices: ['permit', 'deny']
+        type: str
         default: permit
     protocol:
         description:
             - ACL protocol.
         choices: ['tcp', 'udp', 'ip']
+        type: str
         required: true
     source:
         description:
             - ACL source IP.
+        type: str
         required: true
     destination:
         description:
             - ACL destination IP.
+        type: str
         required: true
     dst_port:
         description:
             - ACL destination port.
+        type: str
         required: true
     logging:
         description:
@@ -65,6 +73,7 @@ options:
     state:
         description:
             - Manage the state of the resource.
+        type: str
         default: present
         choices: ['present', 'absent']
 """
