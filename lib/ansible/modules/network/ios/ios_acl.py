@@ -121,12 +121,10 @@ class Parser():
     def __init__(self, sh_acl):
         self.sh_acl = sh_acl
 
-
     def parse_acl_name(self):
         have_acl_name = self.sh_acl[0].splitlines()[0].split()[-1]
 
         return have_acl_name
-
 
     def parse_acl_type(self):
         have_acl_type = self.sh_acl[0].splitlines()[0].split()[0]
@@ -176,7 +174,7 @@ def map_config_to_obj(module):
         type=type_have.lower(),
         parent=parent_have,
     )
-    lines_have = [ line.lstrip().rstrip() for line in sh_acl[0].splitlines()[1:] ]
+    lines_have = [line.lstrip().rstrip() for line in sh_acl[0].splitlines()[1:]]
 
     return parent_have, lines_have
 
@@ -242,6 +240,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
