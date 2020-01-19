@@ -123,7 +123,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
 
 try:
-    from botocore.exceptions import BotoCoreError, ClientError
+    from botocore.exceptions import BotoCoreError, ClientError, InvalidParameterException
 except ImportError:
     pass    # Handled by AnsibleAWSModule
 __metaclass__ = type
@@ -134,6 +134,8 @@ def get_tags(ecs, module, resource):
         return boto3_tag_list_to_ansible_dict(ecs.list_tags_for_resource(resourceArn=resource)['tags'])
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Failed to fetch tags for resource {0}'.format(resource))
+    except InvalidParameterException as e:
+        module.fail_json_aws(e, msg='Invlid Parameter resource {0}'.format(resource))
 
 
 def main():
