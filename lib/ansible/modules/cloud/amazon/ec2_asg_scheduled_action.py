@@ -113,7 +113,7 @@ task:
 '''
 
 try:
-    from botocore.exceptions import ClientError
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # caught by imported HAS_BOTO3
 
@@ -229,8 +229,8 @@ def main():
 
     try:
         client = module.client('autoscaling', retry_decorator=AWSRetry.jittered_backoff())
-    except ClientError as e:
-        module.fail_json(msg=e.message, **camel_dict_to_snake_dict(e.response))
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json(msg='{0}'.format(e))
 
     state = module.params.get('state')
 
