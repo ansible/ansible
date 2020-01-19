@@ -1,0 +1,20 @@
+---
+- block:
+    - name: Include create_dir_structure
+      include_tasks: create_dir_structure.yml
+
+    - name: Include test_single_file
+      include_tasks: test_file_zip.yml
+
+    - name: Include test_single_file
+      include_tasks: test_dir_zip.yml
+
+    - name: Include test_creates_param
+      include_tasks: test_creates_param.yml
+
+    - name: Include test_delete_src_param
+      include_tasks: test_delete_src_param.yml
+
+  always:
+    - name: Include cleanup
+      include_tasks: cleanup.yml

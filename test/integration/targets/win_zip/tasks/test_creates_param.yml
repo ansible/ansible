@@ -1,0 +1,26 @@
+---
+- name: Test create param
+  debug:
+    msg: "Test create param"
+
+- name: create file that zip would create
+  win_file:
+    path: "{{ target_zip_destfile }}"
+    state: touch
+
+- name: Zip dir with creates param
+  win_zip:
+    src: "{{ working_dir }}\\dir1"
+    dest: "{{ target_zip_destfile }}"
+    creates: "{{ target_zip_destfile }}"
+  register: param_output
+
+- name: Assert zip didn't execute
+  assert:
+    that:
+      - "not param_output|changed"
+
+- name: Remove zip file
+  win_file:
+    path: "{{ target_zip_destfile }}"
+    state: absent

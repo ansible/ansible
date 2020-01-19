@@ -1,0 +1,30 @@
+---
+- name: Test Zipping directory
+  debug:
+    msg: "Testing zip of directory"
+
+- name: Zip up directory
+  win_zip:
+    src: "{{ working_dir }}\\dir1"
+    dest: "{{ target_zip_destfile }}"
+  register: dirzip_task
+
+- name: Assert task is changed
+  assert:
+    that:
+      - "dirzip_task|changed"
+
+- name: Assert zip exists
+  include_tasks: assert_exists.yml
+  vars:
+    target: "{{ target_zip_destfile }}"
+
+- name: Assert original dir wasn't deleted
+  include_tasks: assert_exists.yml
+  vars:
+    target: "{{ working_dir }}\\dir1"
+
+- name: Remove zip file
+  win_file:
+    path: "{{ target_zip_destfile }}"
+    state: absent

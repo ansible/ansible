@@ -1,0 +1,10 @@
+---
+- name: Remove working dir
+  win_file:
+    path: "{{ working_dir }}"
+    state: absent
+
+- name: Remove zip file
+  win_file:
+    path: "{{ target_zip_destfile }}"
+    state: absent

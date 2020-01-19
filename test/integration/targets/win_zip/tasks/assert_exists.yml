@@ -1,0 +1,10 @@
+---
+- name: Stat the file or dir
+  win_stat:
+    path: "{{ target }}"
+  register: target_output
+
+- name: Assert file or dir exists
+  assert:
+    that:
+      - "target_output.stat.exists"

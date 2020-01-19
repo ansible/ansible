@@ -1,0 +1,45 @@
+---
+- name: Create temp dir
+  win_file:
+    path: "{{ temp_dir }}"
+    state: directory
+
+- name: Create working dir
+  win_tempfile:
+    state: directory
+    path: "{{ temp_dir}}"
+  register: wd_output
+
+- name: set working_dir var
+  set_fact:
+    working_dir: "{{ wd_output.path }}"
+
+- name: create dir structure
+  win_file:
+    path: "{{ working_dir }}\\dir1\\dir1_1\\dir1_1_1"
+    state: directory
+
+- name: Create files in structure
+  win_file:
+    path: "{{ item }}"
+    state: touch
+  with_items:
+    - "{{ working_dir }}\\dir1\\test1.txt"
+    - "{{ working_dir }}\\dir1\\test2.txt"
+    - "{{ working_dir }}\\dir1\\dir1_1\\test1.txt"
+    - "{{ working_dir }}\\dir1\\dir1_1\\test2.txt"
+    - "{{ working_dir }}\\dir1\\dir1_1\\dir1_1_1\\test1.txt"
+    - "{{ working_dir }}\\dir1\\dir1_1\\dir1_1_1\\test2.txt"
+
+- name: Create content in files
+  win_lineinfile:
+    path: "{{ item }}"
+    state: present
+    line: "some content"
+  with_items:
+    - "{{ working_dir }}\\dir1\\test1.txt"
+    - "{{ working_dir }}\\dir1\\test2.txt"
+    - "{{ working_dir }}\\dir1\\dir1_1\\test1.txt"
+    - "{{ working_dir }}\\dir1\\dir1_1\\test2.txt"
+    - "{{ working_dir }}\\dir1\\dir1_1\\dir1_1_1\\test1.txt"
+    - "{{ working_dir }}\\dir1\\dir1_1\\dir1_1_1\\test2.txt"

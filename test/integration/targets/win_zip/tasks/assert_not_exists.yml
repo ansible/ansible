@@ -1,0 +1,10 @@
+---
+- name: Stat the file or dir
+  win_stat:
+    path: "{{ target }}"
+  register: target_output
+
+- name: Assert file or dir was deleted
+  assert:
+    that:
+      - "not target_output.stat.exists"

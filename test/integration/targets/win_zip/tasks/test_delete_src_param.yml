@@ -1,0 +1,33 @@
+---
+# Test deletes param
+# Keep this one at end since it deletes the dirs
+- name: Test delete_src param
+  debug:
+    msg: "Test delete_src param"
+
+- name: Zip up directory
+  win_zip:
+    src: "{{ working_dir }}\\dir1"
+    dest: "{{ target_zip_destfile }}"
+    delete_src: true
+  register: zipdeletesrc_output
+
+- name: Assert task is changed
+  assert:
+    that:
+      - "zipdeletesrc_output|changed"
+
+- name: Assert zip exists
+  include_tasks: assert_exists.yml
+  vars:
+    target: "{{ target_zip_destfile }}"
+
+- name: Assert original dir was deleted
+  include_tasks: assert_not_exists.yml
+  vars:
+    target: "{{ working_dir }}\\dir1"
+
+- name: Remove zip file
+  win_file:
+    path: "{{ target_zip_destfile }}"
+    state: absent

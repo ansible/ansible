@@ -1,0 +1,3 @@
+---
+temp_dir: "c:\\ziptemp"
+target_zip_destfile: "{{ temp_dir }}\\myfile.zip"
