@@ -76,7 +76,7 @@ class TestIosAclModule(TestIosModule):
         ))
         commands = [
             "ip access-list extended MY_TEST",
-            "60 deny udp 29.0.0.0 0.0.7.255 host 8.8.8.8 eq domain ",
+            "60 deny udp 29.0.0.0 0.0.7.255 host 8.8.8.8 eq domain",
         ]
         self.execute_module(changed=True, commands=commands)
 
@@ -95,6 +95,6 @@ class TestIosAclModule(TestIosModule):
         ))
         commands = [
             "ip access-list extended MY_TEST",
-            "no 60 deny udp 29.0.0.0 0.0.7.255 host 8.8.8.8 eq domain ",
+            "no 60 deny udp 29.0.0.0 0.0.7.255 host 8.8.8.8 eq domain",
         ]
         self.execute_module(changed=True, commands=commands)
