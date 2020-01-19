@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2019, Ansible by Red Hat, inc
+# (c) 2020, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -14,7 +14,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: ios_acl
-version_added: "2.9"
+extends_documentation_fragment: ios
+version_added: "2.10"
 author:
     - "Federico Olivieri (@Federico87)"
 short_description: Manage ACLs on Cisco IOS device
@@ -44,7 +45,7 @@ options:
             - ACL protocol.
         choices: ['tcp', 'udp', 'ip']
         required: true
-    spurce:
+    source:
         description:
             - ACL source IP.
         required: true
@@ -55,12 +56,12 @@ options:
     dst_port:
         description:
             - ACL destination port.
+        required: true
     logging:
         description:
             - ACL logging enabled.
         type: bool
         default: False
-        choices: [True, False]
     state:
         description:
             - Manage the state of the resource.
@@ -165,7 +166,7 @@ def map_params_to_obj(module):
 
 def map_config_to_obj(module):
 
-    sh_acl = run_commands(module, commands=['show access-list {}'.format(module.params['parent'])])
+    sh_acl = run_commands(module, commands=['show access-list {0}'.format(module.params['parent'])])
     parser_have = Parser(sh_acl)
     type_have = parser_have.parse_acl_type()
     parent_have = parser_have.parse_acl_name()
@@ -208,10 +209,10 @@ def main():
 
     argument_spec = dict(
         parent=dict(required=True),
-        type=dict(choise=['extended'], default='extended'),
+        type=dict(choices=['extended'], default='extended'),
         number=dict(required=True),
-        status=dict(choise=['permit', 'deny'], default='permit'),
-        protocol=dict(required=True, choise=['tcp', 'udp', 'ip']),
+        status=dict(choices=['permit', 'deny'], default='permit'),
+        protocol=dict(required=True, choices=['tcp', 'udp', 'ip']),
         source=dict(required=True),
         destination=dict(required=True),
         dst_port=dict(required=True),
