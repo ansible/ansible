@@ -93,7 +93,8 @@ class ShellModule(ShellBase):
         return ""
 
     def join_path(self, *args):
-        parts = []
+        parts = ['\\'] if args[0].startswith('\\\\') else []
+
         for arg in args:
             arg = self._unquote(arg).replace('/', '\\')
             parts.extend([a for a in arg.split('\\') if a])
