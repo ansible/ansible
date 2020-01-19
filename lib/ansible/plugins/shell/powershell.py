@@ -99,8 +99,6 @@ class ShellModule(ShellBase):
             arg = self._unquote(arg).replace('/', '\\')
             parts.extend([a for a in arg.split('\\') if a])
         path = '\\'.join(parts)
-        if path.startswith('~'):
-            return path
         return path
 
     def get_remote_filename(self, pathname):
