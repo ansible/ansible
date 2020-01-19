@@ -1,0 +1,158 @@
+---
+- name: remove test config if any
+  ios_config:
+    lines:
+      - no 30 permit udp host 192.168.90.250 29.0.0.0 0.0.7.255 eq syslog log
+      - no 40 permit udp host 192.168.90.250 29.0.0.0 0.0.7.255 eq tftp
+      - no 50 permit tcp 192.168.90.0 0.0.0.255 10.74.254.0 0.0.0.255 gt 1023
+    parents: ip access-list extended TM_LAN
+  ignore_errors: true
+
+
+- block:
+
+  - name: STAGE 0
+    ios_acl: &config
+      parent: TM_LAN
+      type: extended
+      number: 30
+      status: permit
+      protocol: udp
+      source: host 192.168.90.250
+      destination: 29.0.0.0 0.0.7.255
+      dst_port: eq syslog
+      logging: true
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: idempotence check
+    ios_acl: *config
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: STAGE 1
+    ios_acl: &config1
+      parent: TM_LAN
+      type: extended
+      number: 30
+      status: permit
+      protocol: udp
+      source: host 192.168.90.250
+      destination: 29.0.0.0 0.0.7.255
+      dst_port: eq syslog
+      logging: true
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    ios_acl: *config1
+    register: result
+
+  - assert: *false
+
+  - name: STAGE 2
+    ios_acl: &config2
+      parent: TM_LAN
+      type: extended
+      number: 40
+      status: permit
+      protocol: udp
+      source: host 192.168.90.250
+      destination: 29.0.0.0 0.0.7.255
+      dst_port: eq tftp
+      logging: false
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    ios_acl: *config2
+    register: result
+
+  - assert: *false
+
+  - name: STAGE 3
+    ios_acl: &config3
+      parent: TM_LAN
+      type: extended
+      number: 40
+      status: permit
+      protocol: udp
+      source: host 192.168.90.250
+      destination: 29.0.0.0 0.0.7.255
+      dst_port: eq tftp
+      logging: false
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    ios_acl: *config3
+    register: result
+
+  - assert: *false
+
+  - name: STAGE 4
+    ios_acl: &config4
+      parent: TM_LAN
+      type: extended
+      number: 50
+      status: permit
+      protocol: tcp
+      source: 192.168.90.0 0.0.0.255
+      destination: 10.74.254.0 0.0.0.255
+      dst_port: gt 1023
+      logging: false
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    ios_acl: *config4
+    register: result
+
+  - assert: *false
+
+  - name: STAGE 5
+    ios_acl: &config5
+      parent: TM_LAN
+      type: extended
+      number: 50
+      status: permit
+      protocol: tcp
+      source: 192.168.90.0 0.0.0.255
+      destination: 10.74.254.0 0.0.0.255
+      dst_port: gt 1023
+      logging: false
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: idempotence check
+    ios_acl: *config5
+    register: result
+
+  - assert: *false
+
+  always:
+    - name: remove test config if any
+      ios_config:
+        lines:
+          - no 30 permit udp host 192.168.90.250 29.0.0.0 0.0.7.255 eq syslog log
+          - no 40 permit udp host 192.168.90.250 29.0.0.0 0.0.7.255 eq tftp
+          - no 50 permit tcp 192.168.90.0 0.0.0.255 10.74.254.0 0.0.0.255 gt 1023
+        parents: ip access-list extended TM_LAN
+      ignore_errors: true
