@@ -291,7 +291,10 @@ Function Test-DnsClientMatch {
     Write-DebugLog ("Getting DNS config for adapter {0}" -f $AdapterInfo.Name)
 
     foreach ($proto in $AdapterInfo.RegInfo) {
-        $desired_dns = $dns_servers | Where-Object -FilterScript {$_.AddressFamily -eq $proto.AddressFamily}
+        $desired_dns = if ($dns_servers) {
+            $dns_servers | Where-Object -FilterScript {$_.AddressFamily -eq $proto.AddressFamily}
+        }
+
         $current_dns = [System.Net.IPAddress[]]($proto.EffectiveNameServers)
         Write-DebugLog ("Current DNS settings for '{1}' Address Family: {0}" -f ([string[]]$current_dns -join ", "),$AddressFamilies[$proto.AddressFamily])
 
@@ -314,7 +317,9 @@ Function Test-DnsClientMatch {
                 return $false
             }
 
-            if ((Compare-Object -ReferenceObject $current_dns -DifferenceObject $desired_dns -SyncWindow 0)) {
+            if ($null -ne $current_dns -and
+                $null -ne $desired_dns -and
+                (Compare-Object -ReferenceObject $current_dns -DifferenceObject $desired_dns -SyncWindow 0)) {
                 Write-DebugLog "Static DNS servers are not in the desired state (incorrect or in the wrong order)."
                 return $false
             }

@@ -24,20 +24,21 @@ options:
     required: yes
   dns_servers:
     description:
-      - Single or ordered list of DNS servers (IPv4 and IPv6 addresses) to configure for lookup. An empty list will configure the adapter to use the
-        DHCP-assigned values on connections where DHCP is enabled, or disable DNS lookup on statically-configured connections.
+      - Single or ordered list of DNS servers (IPv4 and IPv6 addresses) to configure for lookup.
+      - An empty list will configure the adapter to use the DHCP-assigned values on connections where DHCP is enabled,
+        or disable DNS lookup on statically-configured connections.
       - IPv6 DNS servers can only be set on Windows Server 2012 or newer, older hosts can only set IPv4 addresses.
       - Before 2.10 use ipv4_addresses instead.
     type: list
     required: yes
     aliases: [ "ipv4_addresses", "ip_addresses", "addresses" ]
 notes:
-  - In previous versions, when setting an empty list of DNS server addresses on an adapter with DHCP enabled, a change was always registered,
-    however that is no longer the case as of 2.10.
-  - In 2.10, DNS servers will always be reset if the format of servers in the registry is not comma delimited.
-    See: U(https://www.welivesecurity.com/2016/06/02/crouching-tiger-hidden-dns/)
+  - Before 2.10, when setting an empty list of DNS server addresses on an adapter with DHCP enabled, a change was always registered.
+  - In 2.10, DNS servers will always be reset if the format of nameservers in the registry is not comma delimited.
+    See U(https://www.welivesecurity.com/2016/06/02/crouching-tiger-hidden-dns/)
 author:
 - Matt Davis (@nitzmahone)
+- Brian Scholer (@briantist)
 '''
 
 EXAMPLES = r'''
@@ -120,12 +121,12 @@ adapters:
       type: bool
       sample: True
     ipv4_NameServerBadFormat:
-      description: True if the IPv4 static nameservers are set using a malicious format that obfuscates them. See U(https://www.welivesecurity.com/2016/06/02/crouching-tiger-hidden-dns/).
+      description: True if the IPv4 static nameservers are set using a malicious format that obfuscates them. See Notes.
       returned: when available
       type: bool
       sample: False
     ipv6_DhcpAssignedNameServers:
-      description: The list of IPv4 nameservers that is supplied via DHCP (may not be active if static nameservers are set).
+      description: The list of IPv6 nameservers that is supplied via DHCP (may not be active if static nameservers are set).
       returned: when available
       type: list
       elements: str
@@ -133,7 +134,7 @@ adapters:
         - '2001:db8::2'
         - '2001:db8::3'
     ipv6_StaticNameServers:
-      description: The list of IPv4 nameservers set statically.
+      description: The list of IPv6 nameservers set statically.
       returned: when available
       type: list
       elements: str
@@ -141,7 +142,7 @@ adapters:
         - '2001:db8::4'
         - '2001:db8::5'
     ipv6_EffectiveNameServers:
-      description: The list of IPv4 nameservers currently in use.
+      description: The list of IPv6 nameservers currently in use.
       returned: when available
       type: list
       elements: str
@@ -154,7 +155,8 @@ adapters:
       type: bool
       sample: True
     ipv6_NameServerBadFormat:
-      description: True if the IPv6 static nameservers are set using a malicious format that obfuscates them. See U(https://www.welivesecurity.com/2016/06/02/crouching-tiger-hidden-dns/).
+      description:
+        - True if the IPv6 static nameservers are set using a malicious format that obfuscates them. See Notes.
       returned: when available
       type: bool
       sample: False
