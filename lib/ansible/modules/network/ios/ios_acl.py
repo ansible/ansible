@@ -166,11 +166,11 @@ def map_params_to_obj(module):
         protocol=obj['protocol'],
         source=obj['source'],
         destination=obj['destination'],
-        dst_port=''.join([obj.get('dst_port') if obj.get('dst_port') else '']).rstrip(),
-        logging=''.join(['log' if obj.get('logging') else '']).rstrip(),
+        dst_port=''.join([obj.get('dst_port') if obj.get('dst_port') else '']),
+        logging=''.join(['log' if obj.get('logging') else '']),
     )
 
-    return parent_want, line_want
+    return parent_want, line_want.strip()
 
 
 def map_config_to_obj(module):
@@ -184,7 +184,7 @@ def map_config_to_obj(module):
         type=type_have.lower(),
         parent=parent_have,
     )
-    lines_have = [line.lstrip().rstrip() for line in sh_acl[0].splitlines()[1:]]
+    lines_have = [line.strip() for line in sh_acl[0].splitlines()[1:]]
 
     return parent_have, lines_have
 
@@ -201,13 +201,13 @@ def map_obj_to_commands(module, want, have):
 
     if state == 'present':
         if parent_have == parent_want:
-            if line_want.rstrip() not in lines_have:
+            if line_want not in lines_have:
                 commands.append(parent_want)
                 commands.append(line_want)
 
     if state == 'absent':
         if parent_have == parent_want:
-            if line_want.rstrip() in lines_have:
+            if line_want in lines_have:
                 commands.append(parent_want)
                 commands.append('no ' + line_want)
 
