@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_valuemap
 short_description: Create/update/delete Zabbix value maps
@@ -40,9 +40,10 @@ options:
         default: 'present'
     mappings:
         type: 'list'
+        elements: dict
         description:
             - List of value mappings for the value map.
-        required: true
+            - Required when I(state=present).
         suboptions:
             value:
                 type: 'str'
@@ -57,10 +58,10 @@ extends_documentation_fragment:
     - zabbix
 '''
 
-RETURN = '''
+RETURN = r'''
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a value map
   local_action:
     module: zabbix_valuemap

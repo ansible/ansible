@@ -15,69 +15,95 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: mysql_db
-short_description: Add or remove MySQL databases from a remote host.
+short_description: Add or remove MySQL databases from a remote host
 description:
-   - Add or remove MySQL databases from a remote host.
-version_added: "0.6"
+- Add or remove MySQL databases from a remote host.
+version_added: '0.6'
 options:
   name:
     description:
-      - name of the database to add or remove.
-      - I(name=all) May only be provided if I(state) is C(dump) or C(import).
-      - List of databases is provided with I(state=dump), I(state=present) and I(state=absent).
-      - if name=all Works like --all-databases option for mysqldump (Added in 2.0).
+    - Name of the database to add or remove.
+    - I(name=all) may only be provided if I(state) is C(dump) or C(import).
+    - List of databases is provided with I(state=dump), I(state=present) and I(state=absent).
+    - If I(name=all) it works like --all-databases option for mysqldump (Added in 2.0).
     required: true
     type: list
     elements: str
-    aliases: [ db ]
+    aliases: [db]
   state:
     description:
-      - The database state
+    - The database state
+    type: str
     default: present
-    choices: [ "present", "absent", "dump", "import" ]
+    choices: ['absent', 'dump', 'import', 'present']
   collation:
     description:
-      - Collation mode (sorting). This only applies to new table/databases and does not update existing ones, this is a limitation of MySQL.
+    - Collation mode (sorting). This only applies to new table/databases and
+      does not update existing ones, this is a limitation of MySQL.
+    type: str
+    default: ''
   encoding:
     description:
-      - Encoding mode to use, examples include C(utf8) or C(latin1_swedish_ci), at creation of database, dump or importation of sql script
+    - Encoding mode to use, examples include C(utf8) or C(latin1_swedish_ci),
+      at creation of database, dump or importation of sql script.
+    type: str
+    default: ''
   target:
     description:
-      - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
-        files (C(.sql)) as well as bzip2 (C(.bz2)), gzip (C(.gz)) and xz (Added in 2.0) compressed files are supported.
+    - Location, on the remote host, of the dump file to read from or write to.
+    - Uncompressed SQL files (C(.sql)) as well as bzip2 (C(.bz2)), gzip (C(.gz)) and
+      xz (Added in 2.0) compressed files are supported.
+    type: path
   single_transaction:
     description:
-      - Execute the dump in a single transaction
+    - Execute the dump in a single transaction.
     type: bool
-    default: 'no'
-    version_added: "2.1"
+    default: no
+    version_added: '2.1'
   quick:
     description:
-      - Option used for dumping large tables
+    - Option used for dumping large tables.
     type: bool
-    default: 'yes'
-    version_added: "2.1"
+    default: yes
+    version_added: '2.1'
   ignore_tables:
     description:
-      - A list of table names that will be ignored in the dump of the form database_name.table_name
-    required: false
+    - A list of table names that will be ignored in the dump
+      of the form database_name.table_name.
+    type: list
+    elements: str
+    required: no
     default: []
-    version_added: "2.7"
+    version_added: '2.7'
   hex_blob:
     description:
-      - Dump binary columns using hexadecimal notation
-    required: false
-    default: false
+    - Dump binary columns using hexadecimal notation.
+    required: no
+    default: no
     type: bool
-    version_added: "2.10"
+    version_added: '2.10'
   force:
     description:
-      - Continue dump or import even if we get an SQL error.
-      - Used only when I(state) is C(dump) or C(import).
+    - Continue dump or import even if we get an SQL error.
+    - Used only when I(state) is C(dump) or C(import).
     required: no
     type: bool
     default: no
-    version_added: "2.10"
+    version_added: '2.10'
+  master_data:
+    description:
+      - Option to dump a master replication server to produce a dump file
+        that can be used to set up another server as a slave of the master.
+      - C(0) to not include master data.
+      - C(1) to generate a 'CHANGE MASTER TO' statement
+        required on the slave to start the replication process.
+      - C(2) to generate a commented 'CHANGE MASTER TO'.
+      - Can be used when I(state=dump).
+    required: no
+    type: int
+    choices: [0, 1, 2]
+    default: 0
+    version_added: '2.10'
 seealso:
 - module: mysql_info
 - module: mysql_variables
@@ -101,7 +127,8 @@ requirements:
    - mysqldump (command line binary)
 notes:
    - Requires the mysql and mysqldump binaries on the remote host.
-   - This module is B(not idempotent) when I(state) is C(import), and will import the dump file each time if run more than once.
+   - This module is B(not idempotent) when I(state) is C(import),
+     and will import the dump file each time if run more than once.
 extends_documentation_fragment: mysql
 '''
 
@@ -157,8 +184,17 @@ EXAMPLES = r'''
     name: all
     target: /tmp/dump.sql
 
+- name: Dump all databases to hostname.sql including master data
+  mysql_db:
+    state: dump
+    name: all
+    target: /tmp/dump.sql
+    master_data: 1
+
 # Import of sql script with encoding option
-- name: Import dump.sql with specific latin1 encoding, similar to mysql -u <username> --default-character-set=latin1 -p <password> < dump.sql
+- name: >
+    Import dump.sql with specific latin1 encoding,
+    similar to mysql -u <username> --default-character-set=latin1 -p <password> < dump.sql
   mysql_db:
     state: import
     name: all
@@ -166,7 +202,9 @@ EXAMPLES = r'''
     target: /tmp/dump.sql
 
 # Dump of database with encoding option
-- name: Dump of Databse with specific latin1 encoding, similar to mysqldump -u <username> --default-character-set=latin1 -p <password> <database>
+- name: >
+    Dump of Databse with specific latin1 encoding,
+    similar to mysqldump -u <username> --default-character-set=latin1 -p <password> <database>
   mysql_db:
     state: dump
     name: db_1
@@ -243,7 +281,7 @@ def db_delete(cursor, db):
 def db_dump(module, host, user, password, db_name, target, all_databases, port,
             config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None,
             single_transaction=None, quick=None, ignore_tables=None, hex_blob=None,
-            encoding=None, force=False):
+            encoding=None, force=False, master_data=0):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
     if config_file:
@@ -279,6 +317,8 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port,
             cmd += " --ignore-table={0}".format(an_ignored_table)
     if hex_blob:
         cmd += " --hex-blob"
+    if master_data:
+        cmd += " --master-data=%s" % master_data
 
     path = None
     if os.path.splitext(target)[-1] == '.gz':
@@ -408,6 +448,7 @@ def main():
             ignore_tables=dict(type='list', default=[]),
             hex_blob=dict(default=False, type='bool'),
             force=dict(type='bool', default=False),
+            master_data=dict(type='int', default=0, choices=[0, 1, 2]),
         ),
         supports_check_mode=True,
     )
@@ -444,6 +485,7 @@ def main():
     quick = module.params["quick"]
     hex_blob = module.params["hex_blob"]
     force = module.params["force"]
+    master_data = module.params["master_data"]
 
     if len(db) > 1 and state == 'import':
         module.fail_json(msg="Multiple databases are not supported with state=import")
@@ -459,8 +501,8 @@ def main():
         if db == ['all']:
             module.fail_json(msg="name is not allowed to equal 'all' unless state equals import, or dump.")
     try:
-        cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca,
-                               connect_timeout=connect_timeout)
+        cursor, db_conn = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca,
+                                        connect_timeout=connect_timeout)
     except Exception as e:
         if os.path.exists(config_file):
             module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
@@ -510,7 +552,7 @@ def main():
                                      login_password, db, target, all_databases,
                                      login_port, config_file, socket, ssl_cert, ssl_key,
                                      ssl_ca, single_transaction, quick, ignore_tables,
-                                     hex_blob, encoding, force)
+                                     hex_blob, encoding, force, master_data)
         if rc != 0:
             module.fail_json(msg="%s" % stderr)
         module.exit_json(changed=True, db=db_name, db_list=db, msg=stdout,

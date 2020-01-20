@@ -1,6 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_overlay_global sanity test"
-  when: ansible_connection == "local"
 
 - set_fact: overlay_global_supported="false"
 - set_fact: overlay_global_supported="true"

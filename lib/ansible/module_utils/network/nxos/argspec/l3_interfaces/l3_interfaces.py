@@ -39,6 +39,9 @@ class L3_interfacesArgs(object):  # pylint: disable=R0903
         'config': {
             'elements': 'dict',
             'options': {
+                'dot1q': {
+                    'type': 'int'
+                },
                 'ipv4': {
                     'elements': 'dict',
                     'options': {
@@ -69,7 +72,13 @@ class L3_interfacesArgs(object):  # pylint: disable=R0903
                 'name': {
                     'required': True,
                     'type': 'str'
-                }
+                },
+                'redirects': {
+                    'type': 'bool',
+                },
+                'unreachables': {
+                    'type': 'bool',
+                },
             },
             'type': 'list'
         },

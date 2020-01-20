@@ -141,7 +141,7 @@ options:
     type: str
     version_added: "2.1"
 requirements:
-  - cron
+  - cron (or cronie on CentOS)
 author:
     - Dane Summers (@dsummersl)
     - Mike Grozak (@rhaido)

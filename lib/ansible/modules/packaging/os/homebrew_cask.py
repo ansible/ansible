@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Daniel Jaouen <dcj24@cornell.edu>
-# (c) 2016, Indrajit Raychaudhuri <irc+code@indrajit.com>
+# Copyright: (c) 2013, Daniel Jaouen <dcj24@cornell.edu>
+# Copyright: (c) 2016, Indrajit Raychaudhuri <irc+code@indrajit.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -10,131 +10,143 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = '''
 ---
 module: homebrew_cask
 author:
-    - "Indrajit Raychaudhuri (@indrajitr)"
-    - "Daniel Jaouen (@danieljaouen)"
-    - "Enric Lluelles (@enriclluelles)"
+- "Indrajit Raychaudhuri (@indrajitr)"
+- "Daniel Jaouen (@danieljaouen)"
+- "Enric Lluelles (@enriclluelles)"
 requirements:
-   - "python >= 2.6"
-short_description: Install/uninstall homebrew casks.
+- "python >= 2.6"
+short_description: Install and uninstall homebrew casks.
 description:
-    - Manages Homebrew casks.
+- Manages Homebrew casks.
 version_added: "1.6"
 options:
-    name:
-        description:
-            - name of cask to install/remove
-        required: true
-        aliases: ['pkg', 'package', 'cask']
-    path:
-        description:
-            - "':' separated list of paths to search for 'brew' executable."
-        default: '/usr/local/bin'
-    state:
-        description:
-            - state of the cask
-        choices: [ 'present', 'absent', 'upgraded' ]
-        default: present
-    sudo_password:
-        description:
-            - The sudo password to be passed to SUDO_ASKPASS.
-        required: false
-        version_added: 2.8
-    update_homebrew:
-        description:
-            - update homebrew itself first. Note that C(brew cask update) is
-              a synonym for C(brew update).
-        type: bool
-        default: 'no'
-        aliases: ['update-brew']
-        version_added: "2.2"
-    install_options:
-        description:
-            - options flags to install a package
-        aliases: ['options']
-        version_added: "2.2"
-    accept_external_apps:
-        description:
-            - allow external apps
-        type: bool
-        default: 'no'
-        version_added: "2.5.0"
-    upgrade_all:
-        description:
-            - upgrade all casks (mutually exclusive with `upgrade`)
-        type: bool
-        default: 'no'
-        version_added: "2.5.0"
-    upgrade:
-        description:
-            - upgrade all casks (mutually exclusive with `upgrade_all`)
-        type: bool
-        default: 'no'
-        version_added: "2.5.0"
-    greedy:
-        description:
-            - upgrade casks that auto update; passes --greedy to brew cask
-              outdated when checking if an installed cask has a newer version
-              available
-        type: bool
-        default: 'no'
-        version_added: "2.7.0"
+  name:
+    description:
+    - Name of cask to install or remove.
+    required: true
+    aliases: ['pkg', 'package', 'cask']
+    type: list
+  path:
+    description:
+    - "':' separated list of paths to search for 'brew' executable."
+    default: '/usr/local/bin'
+    type: path
+  state:
+    description:
+    - State of the cask.
+    choices: [ 'present', 'absent', 'upgraded' ]
+    default: present
+    type: str
+  sudo_password:
+    description:
+    - The sudo password to be passed to SUDO_ASKPASS.
+    required: false
+    version_added: 2.8
+    type: str
+  update_homebrew:
+    description:
+    - Update homebrew itself first.
+    - Note that C(brew cask update) is a synonym for C(brew update).
+    type: bool
+    default: 'no'
+    aliases: ['update-brew']
+    version_added: "2.2"
+  install_options:
+    description:
+    - Options flags to install a package.
+    aliases: ['options']
+    version_added: "2.2"
+    type: list
+  accept_external_apps:
+    description:
+    - Allow external apps.
+    type: bool
+    default: 'no'
+    version_added: "2.5.0"
+  upgrade_all:
+    description:
+    - Upgrade all casks.
+    - Mutually exclusive with C(upgraded) state.
+    type: bool
+    default: 'no'
+    version_added: "2.5.0"
+    aliases: ['upgrade']
+  greedy:
+    description:
+    - Upgrade casks that auto update.
+    - Passes --greedy to brew cask outdated when checking
+      if an installed cask has a newer version available.
+    type: bool
+    default: 'no'
+    version_added: "2.7.0"
 '''
 EXAMPLES = '''
-- homebrew_cask:
+- name: Install cask
+  homebrew_cask:
     name: alfred
     state: present
 
-- homebrew_cask:
+- name: Remove cask
+  homebrew_cask:
     name: alfred
     state: absent
 
-- homebrew_cask:
+- name: Install cask with install options
+  homebrew_cask:
     name: alfred
     state: present
     install_options: 'appdir=/Applications'
 
-- homebrew_cask:
+- name: Install cask with install options
+  homebrew_cask:
     name: alfred
     state: present
     install_options: 'debug,appdir=/Applications'
 
-- homebrew_cask:
+- name: Allow external app
+  homebrew_cask:
     name: alfred
     state: present
     accept_external_apps: True
 
-- homebrew_cask:
+- name: Remove cask with force option
+  homebrew_cask:
     name: alfred
     state: absent
     install_options: force
 
-- homebrew_cask:
+- name: Upgrade all casks
+  homebrew_cask:
     upgrade_all: true
 
-- homebrew_cask:
+- name: Upgrade given cask with force option
+  homebrew_cask:
     name: alfred
     state: upgraded
     install_options: force
 
-- homebrew_cask:
+- name: Upgrade cask with greedy option
+  homebrew_cask:
     name: 1password
     state: upgraded
     greedy: True
 
-- homebrew_cask:
+- name: Using sudo password for installing cask
+  homebrew_cask:
     name: wireshark
     state: present
     sudo_password: "{{ ansible_become_pass }}"
-
 '''
 
 import os

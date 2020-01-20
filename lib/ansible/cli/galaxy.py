@@ -66,7 +66,7 @@ class GalaxyCLI(CLI):
         # Common arguments that apply to more than 1 action
         common = opt_help.argparse.ArgumentParser(add_help=False)
         common.add_argument('-s', '--server', dest='api_server', help='The Galaxy API server URL')
-        common.add_argument('--api-key', dest='api_key',
+        common.add_argument('--token', '--api-key', dest='api_key',
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences. You can also use ansible-galaxy login to '
                                  'retrieve this key or set the token for the GALAXY_SERVER_LIST entry.')
@@ -320,7 +320,10 @@ class GalaxyCLI(CLI):
                       ('auth_url', False)]
 
         config_servers = []
-        for server_key in (C.GALAXY_SERVER_LIST or []):
+
+        # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
+        server_list = [s for s in C.GALAXY_SERVER_LIST or [] if s]
+        for server_key in server_list:
             # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
             # section [galaxy_server.<server>] for the values url, username, password, and token.
             config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in server_def)

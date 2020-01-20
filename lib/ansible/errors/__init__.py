@@ -230,7 +230,7 @@ class AnsibleCallbackError(AnsibleRuntimeError):
 
 
 class AnsibleTemplateError(AnsibleRuntimeError):
-    '''A template related errror'''
+    '''A template related error'''
     pass
 
 

@@ -222,6 +222,12 @@ options:
                   - Maximum number of prefixes to accept from this peer.
                   - The range is from 1 to 2147483647.
                 type: int
+              prefix_list_in:
+                description:
+                  - Name of ip prefix-list to apply to incoming prefixes.
+              prefix_list_out:
+                description:
+                  - Name of ip prefix-list to apply to outgoing prefixes.
   operation:
     description:
       - Specifies the operation to be performed on the BGP process configured on the device.
@@ -388,7 +394,9 @@ def main():
         'next_hop_self': dict(type='bool'),
         'route_reflector_client': dict(type='bool'),
         'route_server_client': dict(type='bool'),
-        'maximum_prefix': dict(type='int')
+        'maximum_prefix': dict(type='int'),
+        'prefix_list_in': dict(),
+        'prefix_list_out': dict()
     }
 
     address_family_spec = {

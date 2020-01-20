@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bgp_neighbor sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: intname="{{ nxos_int1 }}"
 
@@ -9,6 +7,9 @@
   when: (imagetag and (imagetag is version_compare('D1', 'ne')) and (imagetag is version_compare('N1', 'ne')))
 - set_fact: log_neighbor_changesd="disable"
   when: (imagetag and (imagetag is version_compare('D1', 'ne')) and (imagetag is version_compare('N1', 'ne')))
+
+- debug:
+    var: titanium
 
 - set_fact: remove_private_asa="all"
   when: not titanium
@@ -18,7 +19,6 @@
 - name: "Setup: Disable features"
   nxos_feature:
     feature: "{{ item }}"
-    provider: "{{ connection }}"
     state: disabled
   loop: ['bgp', 'bfd']
   ignore_errors: yes
@@ -26,7 +26,6 @@
 - name: "Setup: Enable features"
   nxos_feature:
     feature: "{{ item }}"
-    provider: "{{ connection }}"
     state: enabled
   loop: ['bgp', 'bfd']
 
@@ -51,7 +50,6 @@
       description: "just a description"
       update_source: "{{ intname.capitalize() }}"
       shutdown: true
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -89,7 +87,6 @@
       description: default
       update_source: default
       shutdown: False
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -108,7 +105,6 @@
       asn: 65535
       neighbor: 192.0.2.3/32
       vrf: "{{ item }}"
-      provider: "{{ connection }}"
       state: absent
     with_items: "{{ vrfs }}"
     register: result
@@ -129,7 +125,6 @@
       vrf: "{{ item }}"
       description: "tested by ansible"
       remove_private_as: "{{remove_private_asa|default(omit)}}"
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -150,7 +145,6 @@
       vrf: "{{ item }}"
       description: "tested by ansible"
       remove_private_as: "{{remove_private_asr|default(omit)}}"
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -288,7 +282,6 @@
       asn: 65535
       neighbor: 192.0.2.3
       vrf: "{{ item }}"
-      provider: "{{ connection }}"
       state: absent
     with_items: "{{ vrfs }}"
     register: result
@@ -307,7 +300,6 @@
       asn: 65535
       neighbor: 192.168.1.1
       bfd: enable
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -324,7 +316,6 @@
       asn: 65535
       neighbor: 192.168.1.1
       bfd: disable
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -340,7 +331,6 @@
   - name: "Teardown: Disable features"
     nxos_feature:
       feature: "{{ item }}"
-      provider: "{{ connection }}"
       state: disabled
     loop: ['bgp', 'bfd']
     ignore_errors: yes

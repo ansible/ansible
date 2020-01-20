@@ -197,9 +197,10 @@ class VmwareHostDNS(PyVmomi):
         verbose = self.module.params.get('verbose', False)
         host_change_list = []
         for host in self.hosts:
+            initial_name = host.name
             changed = False
             changed_list = []
-            results['dns_config_result'][host.name] = dict(changed='', msg='')
+            host_result = {'changed': '', 'msg': '', 'host_name': host.name}
 
             host_netstack_config = host.config.network.netStackInstance
             for instance in host_netstack_config:
@@ -209,41 +210,50 @@ class VmwareHostDNS(PyVmomi):
                     netstack_spec.netStackInstance = vim.host.NetStackInstance()
                     netstack_spec.netStackInstance.key = 'defaultTcpipStack'
                     dns_config = vim.host.DnsConfig()
-                    results['dns_config_result'][host.name]['dns_config'] = self.network_type
+                    host_result['dns_config'] = self.network_type
+                    host_result['search_domains'] = self.search_domains
                     if self.network_type == 'static':
+                        if self.host_name:
+                            if instance.dnsConfig.hostName != self.host_name:
+                                host_result['host_name_previous'] = instance.dnsConfig.hostName
+                                changed = True
+                                changed_list.append("Host name")
+                            dns_config.hostName = self.host_name
+                        else:
+                            dns_config.hostName = instance.dnsConfig.hostName
+
+                        if self.search_domains:
+                            if instance.dnsConfig.searchDomain != self.search_domains:
+                                host_result['search_domains_previous'] = instance.dnsConfig.searchDomain
+                                host_result['search_domains_changed'] = (
+                                    self.get_differt_entries(instance.dnsConfig.searchDomain, self.search_domains)
+                                )
+                                changed = True
+                                changed_list.append("Search domains")
+                            dns_config.searchDomain = self.search_domains
+                        else:
+                            dns_config.searchDomain = instance.dnsConfig.searchDomain
+
                         if instance.dnsConfig.dhcp:
-                            results['dns_config_result'][host.name]['domain'] = self.domain
-                            results['dns_config_result'][host.name]['dns_servers'] = self.dns_servers
-                            results['dns_config_result'][host.name]['search_domains'] = self.search_domains
-                            results['dns_config_result'][host.name]['dns_config_previous'] = 'DHCP'
+                            host_result['domain'] = self.domain
+                            host_result['dns_servers'] = self.dns_servers
+                            host_result['search_domains'] = self.search_domains
+                            host_result['dns_config_previous'] = 'DHCP'
                             changed = True
                             changed_list.append("DNS configuration")
                             dns_config.dhcp = False
                             dns_config.virtualNicDevice = None
-                            if self.host_name:
-                                dns_config.hostName = self.host_name
-                            else:
-                                dns_config.hostName = instance.dnsConfig.hostName
                             dns_config.domainName = self.domain
                             dns_config.address = self.dns_servers
                             dns_config.searchDomain = self.search_domains
                         else:
-                            results['dns_config_result'][host.name]['host_name'] = self.host_name
                             # Check host name
-                            if self.host_name:
-                                if instance.dnsConfig.hostName != self.host_name:
-                                    results['dns_config_result'][host.name]['host_name_previous'] = instance.dnsConfig.hostName
-                                    changed = True
-                                    changed_list.append("Host name")
-                                dns_config.hostName = self.host_name
-                            else:
-                                dns_config.hostName = instance.dnsConfig.hostName
 
                             # Check domain
-                            results['dns_config_result'][host.name]['domain'] = self.domain
+                            host_result['domain'] = self.domain
                             if self.domain:
                                 if instance.dnsConfig.domainName != self.domain:
-                                    results['dns_config_result'][host.name]['domain_previous'] = instance.dnsConfig.domainName
+                                    host_result['domain_previous'] = instance.dnsConfig.domainName
                                     changed = True
                                     changed_list.append("Domain")
                                 dns_config.domainName = self.domain
@@ -251,11 +261,11 @@ class VmwareHostDNS(PyVmomi):
                                 dns_config.domainName = instance.dnsConfig.domainName
 
                             # Check DNS server(s)
-                            results['dns_config_result'][host.name]['dns_servers'] = self.dns_servers
+                            host_result['dns_servers'] = self.dns_servers
                             if self.dns_servers:
                                 if instance.dnsConfig.address != self.dns_servers:
-                                    results['dns_config_result'][host.name]['dns_servers_previous'] = instance.dnsConfig.address
-                                    results['dns_config_result'][host.name]['dns_servers_changed'] = (
+                                    host_result['dns_servers_previous'] = instance.dnsConfig.address
+                                    host_result['dns_servers_changed'] = (
                                         self.get_differt_entries(instance.dnsConfig.address, self.dns_servers)
                                     )
                                     changed = True
@@ -271,22 +281,9 @@ class VmwareHostDNS(PyVmomi):
                             else:
                                 dns_config.address = instance.dnsConfig.address
 
-                            # Check search domain config
-                            results['dns_config_result'][host.name]['search_domains'] = self.search_domains
-                            if self.search_domains:
-                                if instance.dnsConfig.searchDomain != self.search_domains:
-                                    results['dns_config_result'][host.name]['search_domains_previous'] = instance.dnsConfig.searchDomain
-                                    results['dns_config_result'][host.name]['search_domains_changed'] = (
-                                        self.get_differt_entries(instance.dnsConfig.searchDomain, self.search_domains)
-                                    )
-                                    changed = True
-                                    changed_list.append("Search domains")
-                                dns_config.searchDomain = self.search_domains
-                            else:
-                                dns_config.searchDomain = instance.dnsConfig.searchDomain
                     elif self.network_type == 'dhcp' and not instance.dnsConfig.dhcp:
-                        results['dns_config_result'][host.name]['device'] = self.vmkernel_device
-                        results['dns_config_result'][host.name]['dns_config_previous'] = 'static'
+                        host_result['device'] = self.vmkernel_device
+                        host_result['dns_config_previous'] = 'static'
                         changed = True
                         changed_list.append("DNS configuration")
                         dns_config.dhcp = True
@@ -313,7 +310,7 @@ class VmwareHostDNS(PyVmomi):
                         message = dns_servers_verbose_message
                 else:
                     message += changed_suffix
-                results['dns_config_result'][host.name]['changed'] = True
+                host_result['changed'] = True
                 host_network_system = host.configManager.networkSystem
                 if not self.module.check_mode:
                     try:
@@ -344,9 +341,11 @@ class VmwareHostDNS(PyVmomi):
                             (host.name, to_native(config_fault.msg))
                         )
             else:
-                results['dns_config_result'][host.name]['changed'] = False
+                host_result['changed'] = False
                 message = 'All settings are already configured'
-            results['dns_config_result'][host.name]['msg'] = message
+
+            host_result['msg'] = message
+            results['dns_config_result'][initial_name] = host_result
 
             host_change_list.append(changed)
 

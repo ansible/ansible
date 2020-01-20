@@ -1,13 +1,10 @@
 ---
 - debug: msg="START connection={{ ansible_connection }}/not_hardware_facts.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - name: test not hardware
   nxos_facts:
     gather_subset:
       - "!hardware"
-    provider: "{{ connection }}"
   register: result
 
 - assert:

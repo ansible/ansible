@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_igmp_snooping sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - meta: end_host
   # show ip igmp snooping | json does not work on some platforms
@@ -16,7 +14,6 @@
 
 - name: Setup
   nxos_igmp_snooping: &default
-    provider: "{{ connection }}"
     state: default
 
 - block:
@@ -27,7 +24,6 @@
       link_local_grp_supp: false
       report_supp: false
       v3_report_supp: true
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -49,7 +45,6 @@
       nxos_igmp_snooping:
         snooping: false
         group_timeout: "{{group_timeout|default(omit)}}"
-        provider: "{{ connection }}"
         state: present
       ignore_errors: yes
       register: result
@@ -63,7 +58,6 @@
       nxos_igmp_snooping: &non-defgt
         snooping: true
         group_timeout: "{{group_timeout|default(omit)}}"
-        provider: "{{ connection }}"
         state: present
       register: result
 
@@ -79,7 +73,6 @@
   - name: Configure igmp snooping with default group timeout
     nxos_igmp_snooping: &defgt
       group_timeout: "{{def_group_timeout|default(omit)}}"
-      provider: "{{ connection }}"
       state: present
     register: result
 

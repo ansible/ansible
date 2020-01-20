@@ -1,3 +1,9 @@
+# test using builtin module of multiple types in a role in a collection
+# https://github.com/ansible/ansible/issues/65298
+- name: Run setup module because there is both setup.ps1 and setup.py
+  setup:
+    gather_subset: min
+
 - name: check collections list from role meta
   plugin_lookup:
   register: pluginlookup_out

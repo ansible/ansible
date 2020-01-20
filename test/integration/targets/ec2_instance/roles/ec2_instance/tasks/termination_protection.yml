@@ -1,0 +1,101 @@
+- block:
+  - name: "Make termination-protected instance in the testing subnet created in the test VPC"
+    ec2_instance:
+      state: running
+      name: "{{ resource_prefix }}-test-protected-instance-in-vpc"
+      image_id: "{{ ec2_ami_image }}"
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+      security_groups: "{{ sg.group_id }}"
+      vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      termination_protection: true
+      instance_type: "{{ ec2_instance_type }}"
+      wait: yes
+    register: in_test_vpc
+
+  - name: "Make termination-protected instance in the testing subnet created in the test VPC(check mode)"
+    ec2_instance:
+      state: running
+      name: "{{ resource_prefix }}-test-protected-instance-in-vpc-checkmode"
+      image_id: "{{ ec2_ami_image }}"
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+      security_groups: "{{ sg.group_id }}"
+      vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      termination_protection: true
+      instance_type: "{{ ec2_instance_type }}"
+    check_mode: yes
+
+  - name: "fact presented ec2 instance"
+    ec2_instance_info:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-protected-instance-in-vpc"
+        "instance-state-name": "running"
+    register: presented_instance_fact
+
+  - name: "fact checkmode ec2 instance"
+    ec2_instance_info:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-protected-instance-in-vpc-checkmode"
+    register: checkmode_instance_fact
+
+  - name: "Confirm whether the check mode is working normally."
+    assert:
+      that:
+        - "{{ presented_instance_fact.instances | length }} > 0"
+        - "'{{ presented_instance_fact.instances.0.state.name }}' in ['running', 'pending']"
+        - "{{ checkmode_instance_fact.instances | length }} == 0"
+
+  - name: "Try to terminate the instance"
+    ec2_instance:
+      state: absent
+      name: "{{ resource_prefix }}-test-protected-instance-in-vpc"
+      image_id: "{{ ec2_ami_image }}"
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+      security_groups: "{{ sg.group_id }}"
+      vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      termination_protection: true
+      instance_type: "{{ ec2_instance_type }}"
+    register: bad_terminate
+    ignore_errors: yes
+
+  - name: "Cannot terminate protected instance"
+    assert:
+      that:
+        - bad_terminate is failed
+
+  - name: "Alter termination protection setting"
+    ec2_instance:
+      state: present
+      name: "{{ resource_prefix }}-test-protected-instance-in-vpc"
+      image_id: "{{ ec2_ami_image }}"
+      vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      termination_protection: false
+      instance_type: "{{ ec2_instance_type }}"
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+
+  - name: "Try to terminate the instance again (should work)"
+    ec2_instance:
+      state: absent
+      name: "{{ resource_prefix }}-test-protected-instance-in-vpc"
+      image_id: "{{ ec2_ami_image }}"
+      vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      instance_type: "{{ ec2_instance_type }}"
+      wait: false
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+    register: terminate_results
+
+  - assert:
+      that: terminate_results is not failed
+
+  always:
+  - name: "Terminate termination_protection instances"
+    ec2_instance:
+      state: absent
+      filters:
+        "tag:TestId": "{{ ec2_instance_tag_TestId }}"
+      wait: yes
+    ignore_errors: yes

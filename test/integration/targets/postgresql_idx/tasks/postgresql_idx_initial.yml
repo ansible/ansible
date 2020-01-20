@@ -253,6 +253,51 @@
     - result.schema == 'public'
     - result.query == 'CREATE INDEX CONCURRENTLY test1_idx ON public.test_table USING BTREE (id) WHERE id > 1 AND id != 10'
 
+- name: postgresql_idx - create unique index
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    table: test_table
+    columns: story
+    idxname: test_unique0_idx
+    unique: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is changed
+    - result.tblname == 'test_table'
+    - result.name == 'test_unique0_idx'
+    - result.state == 'present'
+    - result.valid != ''
+    - result.tblspace == ''
+    - result.storage_params == []
+    - result.schema == 'public'
+    - result.query == 'CREATE UNIQUE INDEX CONCURRENTLY test_unique0_idx ON public.test_table USING BTREE (story)'
+
+- name: postgresql_idx - avoid unique index with type different of btree
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_idx:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    table: test_table
+    columns: story
+    idxname: test_unique0_idx
+    unique: yes
+    concurrent: no
+    type: brin
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result is not changed
+    - result.msg == 'Only btree currently supports unique indexes'
+
 # Get idx stat in check mode
 - name: postgresql_idx - test state stat in check_mode
   become_user: "{{ pg_user }}"

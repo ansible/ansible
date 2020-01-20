@@ -542,7 +542,7 @@ def test_find_existing_collections(tmp_path_factory, monkeypatch):
     mock_warning = MagicMock()
     monkeypatch.setattr(Display, 'warning', mock_warning)
 
-    actual = collection._find_existing_collections(test_dir)
+    actual = collection.find_existing_collections(test_dir)
 
     assert len(actual) == 2
     for actual_collection in actual:

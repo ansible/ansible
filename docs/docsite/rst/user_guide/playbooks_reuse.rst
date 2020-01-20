@@ -50,7 +50,7 @@ Tradeoffs and Pitfalls Between Includes and Imports
 
 Using ``include*`` vs. ``import*`` has some advantages as well as some tradeoffs which users should consider when choosing to use each:
 
-The primary advantage of using ``include*`` statements is looping. When a loop is used with an include, the included tasks or role will be executed once for each item in the loop.
+The primary advantage of using ``include*`` statements is the support of looping. When a loop is used with an include, the included tasks or role will be executed once for each item in the loop.
 
 Using ``include*`` does have some limitations when compared to ``import*`` statements:
 

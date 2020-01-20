@@ -1,0 +1,3 @@
+minor_changes:
+- PowerShell Add-Type - Add an easier way to reference extra types when compiling C# code on PowerShell Core
+- PowerShell Add-Type - Added the ``X86`` and ``AMD64`` preprocessor symbols for conditional compiling

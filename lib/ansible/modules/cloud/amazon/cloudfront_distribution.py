@@ -307,7 +307,7 @@ options:
       elements: dict
       description:
         - A list of dictionaries describing the cache behaviors for the distribution.
-        - The order of the list is preserved across runs unless I(purge_cache_behavior) is enabled.
+        - The order of the list is preserved across runs unless I(purge_cache_behaviors) is enabled.
       suboptions:
         path_pattern:
           description:
@@ -1379,10 +1379,8 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceManager
 from ansible.module_utils.common.dict_transformations import recursive_diff
-from ansible.module_utils.ec2 import get_aws_connection_info
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, compare_aws_tags
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ansible_dict_to_boto3_tag_list
-from ansible.module_utils.ec2 import snake_dict_to_camel_dict, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import compare_aws_tags, ansible_dict_to_boto3_tag_list, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, snake_dict_to_camel_dict
 import datetime
 
 try:
@@ -1396,7 +1394,7 @@ except ImportError:
 try:
     import botocore
 except ImportError:
-    pass
+    pass  # caught by AnsibleAWSModule
 
 
 def change_dict_key_name(dictionary, old_key, new_key):
@@ -2089,17 +2087,15 @@ class CloudFrontValidationManager(object):
             attempts = 1 + int(wait_timeout / 60)
             waiter.wait(Id=distribution_id, WaiterConfig={'MaxAttempts': attempts})
         except botocore.exceptions.WaiterError as e:
-            self.module.fail_json(msg="Timeout waiting for CloudFront action. Waited for {0} seconds before timeout. "
-                                  "Error: {1}".format(to_text(wait_timeout), to_native(e)))
+            self.module.fail_json_aws(e, msg="Timeout waiting for CloudFront action."
+                                      " Waited for {0} seconds before timeout.".format(to_text(wait_timeout)))
 
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg="Error getting distribution {0}".format(distribution_id))
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(choices=['present', 'absent'], default='present'),
         caller_reference=dict(),
         comment=dict(),
@@ -2130,7 +2126,7 @@ def main():
         default_origin_path=dict(),
         wait=dict(default=False, type='bool'),
         wait_timeout=dict(default=1800, type='int')
-    ))
+    )
 
     result = {}
     changed = True
@@ -2145,8 +2141,7 @@ def main():
         ]
     )
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='cloudfront', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client('cloudfront')
 
     validation_mgr = CloudFrontValidationManager(module)
 

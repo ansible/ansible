@@ -1,0 +1,2 @@
+bugfixes:
+  - user - on systems using busybox, honor the ``on_changed`` parameter to prevent unnecessary password changing (https://github.com/ansible/ansible/issues/65711)

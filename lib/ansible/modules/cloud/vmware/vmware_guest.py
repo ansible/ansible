@@ -379,8 +379,10 @@ options:
     version_added: '2.3'
   vapp_properties:
     description:
-    - A list of vApp properties
-    - 'For full list of attributes and types refer to: U(https://github.com/vmware/pyvmomi/blob/master/docs/vim/vApp/PropertyInfo.rst)'
+    - A list of vApp properties.
+    - 'For full list of attributes and types refer to:'
+    - 'U(https://vdc-download.vmware.com/vmwb-repository/dcr-public/6b586ed2-655c-49d9-9029-bc416323cb22/
+      fa0b429a-a695-4c11-b7d2-2cbc284049dc/doc/vim.vApp.PropertyInfo.html)'
     - 'Basic attributes are:'
     - ' - C(id) (string): Property id - required.'
     - ' - C(value) (string): Property value.'
@@ -618,6 +620,24 @@ EXAMPLES = r'''
       num_cpus: 2
       scsi: paravirtual
   delegate_to: localhost
+
+- name: Create a diskless VM
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    state: poweredoff
+    cluster: "{{ ccr1 }}"
+    name: diskless_vm
+    folder: /Asia-Datacenter1/vm
+    guest_id: centos64Guest
+    datastore: "{{ ds1 }}"
+    hardware:
+        memory_mb: 1024
+        num_cpus: 2
+        num_cpu_cores_per_socket: 1
 '''
 
 RETURN = r'''
@@ -2412,7 +2432,7 @@ class PyVmomiHelper(PyVmomi):
                 if key == 'type' and nw['type'] == 'dhcp':
                     network_changes = True
                     break
-                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
+                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected', 'dvswitch_name'):
                     network_changes = True
                     break
 
@@ -2681,7 +2701,7 @@ class PyVmomiHelper(PyVmomi):
         for nw in self.params['networks']:
             for key in nw:
                 # We don't need customizations for these keys
-                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
+                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected', 'dvswitch_name'):
                     network_changes = True
                     break
         if len(self.params['customization']) > 1 or network_changes or self.params.get('customization_spec'):

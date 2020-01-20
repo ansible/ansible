@@ -1,0 +1,2 @@
+bugfixes:
+- ec2_launch_template - Update output to include latest_version and default_version, matching the documentation

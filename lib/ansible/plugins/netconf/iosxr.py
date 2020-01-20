@@ -20,6 +20,24 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+netconf: iosxr
+short_description: Use iosxr netconf plugin to run netconf commands on Cisco IOSXR platform
+description:
+  - This iosxr plugin provides low level abstraction apis for
+    sending and receiving netconf commands from Cisco iosxr network devices.
+version_added: "2.9"
+options:
+  ncclient_device_handler:
+    type: str
+    default: iosxr
+    description:
+      - Specifies the ncclient device handler name for Cisco iosxr network os. To
+        identify the ncclient device handler name refer ncclient library documentation.
+"""
+
 import json
 import re
 import collections
@@ -77,7 +95,7 @@ class Netconf(NetconfBase):
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'validate', 'lock', 'unlock', 'get-schema']
+        result['rpc'] = self.get_base_rpc()
         result['network_api'] = 'netconf'
         result['device_info'] = self.get_device_info()
         result['server_capabilities'] = [c for c in self.m.server_capabilities]

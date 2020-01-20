@@ -8,3 +8,15 @@ policy:
         - ecr:GetDownloadUrlForLayer
         - ecr:BatchGetImage
         - ecr:BatchCheckLayerAvailability
+
+lifecycle_policy:
+  rules:
+    - rulePriority: 1
+      description: new policy
+      selection:
+        tagStatus: untagged
+        countType: sinceImagePushed
+        countUnit: days
+        countNumber: 365
+      action:
+        type: expire

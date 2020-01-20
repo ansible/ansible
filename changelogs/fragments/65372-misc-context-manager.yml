@@ -1,0 +1,5 @@
+bugfixes:
+  - spacewalk inventory - improve file handling by using a context manager.
+  - intersight_rest_api, intersight_info - improve file handling by using a context manager.
+  - one_vm - improve file handling by using a context manager.
+  - postgresql_query - improve file handling by using a context manager.
