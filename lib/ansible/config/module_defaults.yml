@@ -227,6 +227,8 @@ groupings:
   - aws
   ec2_asg_lifecycle_hook:
   - aws
+  ec2_asg_scheduled_action:
+  - aws
   ec2_customer_gateway:
   - aws
   ec2_customer_gateway_facts:
