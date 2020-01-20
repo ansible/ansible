@@ -200,6 +200,7 @@ def query_package(module, name):
     # Search failed, so return None
     return None
 
+
 def format_action_message(module, action, count):
     vars = {"actioned": action,
             "count": count}
@@ -270,7 +271,7 @@ def install_packages(module, packages):
         query_result = query_package(module, package)
         if query_result:
             continue
-        elif query_result == None:
+        elif query_result is None:
             module.fail_json(msg="failed to find package %s for installation" % package)
 
         rc, out, err = module.run_command(
