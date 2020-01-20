@@ -55,6 +55,7 @@ options:
     description:
     - Gather mount information of NFS datastores.
     - Disabled per default because this slows down the execution if you have a lot of datastores.
+    - Only valid when C(schema) is C(summary).
     type: bool
     default: false
     version_added: 2.8
@@ -62,9 +63,36 @@ options:
     description:
     - Gather mount information of VMFS datastores.
     - Disabled per default because this slows down the execution if you have a lot of datastores.
+    - Only valid when C(schema) is C(summary).
     type: bool
     default: false
     version_added: 2.8
+   schema:
+     description:
+     - Specify the output schema desired.
+     - The 'summary' output schema is the legacy output from the module
+     - The 'vsphere' output schema is the vSphere API class definition
+       which requires pyvmomi>6.7.1
+     choices: ['summary', 'vsphere']
+     default: 'summary'
+     type: str
+     version_added: '2.10'
+   properties:
+     description:
+     - Specify the properties to retrieve.
+     - If not specified, all properties are retrieved (deeply).
+     - Results are returned in a structure identical to the vsphere API.
+     - 'Example:'
+     - '   properties: ['
+     - '      "name",'
+     - '      "info.vmfs.ssd",'
+     - '      "capability.vsanSparseSupported",'
+     - '      "overallStatus"'
+     - '   ]'
+     - Only valid when C(schema) is C(vsphere).
+     type: list
+     required: False
+     version_added: '2.10'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -86,6 +114,21 @@ EXAMPLES = '''
     password: '{{ vcenter_password }}'
     datacenter_name: '{{ datacenter_name }}'
     name: datastore1
+  delegate_to: localhost
+  register: info
+
+- name: Gather some info from a datastore using the vSphere API output schema
+  vmware_datastore_info:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: '{{ datacenter_name }}'
+    schema: vsphere
+    properties:
+      - name
+      - info.vmfs.ssd
+      - capability.vsanSparseSupported
+      - overallStatus
   delegate_to: localhost
   register: info
 '''
@@ -146,6 +189,8 @@ class VMwareHostDatastore(PyVmomi):
         super(VMwareHostDatastore, self).__init__(module)
         self.gather_nfs_mount_info = self.module.params['gather_nfs_mount_info']
         self.gather_vmfs_mount_info = self.module.params['gather_vmfs_mount_info']
+        self.schema = self.module.params['schema']
+        self.properties = self.module.params['properties']
 
     def check_datastore_host(self, esxi_host, datastore):
         """ Get all datastores of specified ESXi host """
@@ -163,43 +208,50 @@ class VMwareHostDatastore(PyVmomi):
         """ Build list with datastores """
         datastores = list()
         for datastore in datastore_list:
-            summary = datastore.summary
-            datastore_summary = dict()
-            datastore_summary['accessible'] = summary.accessible
-            datastore_summary['capacity'] = summary.capacity
-            datastore_summary['name'] = summary.name
-            datastore_summary['freeSpace'] = summary.freeSpace
-            datastore_summary['maintenanceMode'] = summary.maintenanceMode
-            datastore_summary['multipleHostAccess'] = summary.multipleHostAccess
-            datastore_summary['type'] = summary.type
-            if self.gather_nfs_mount_info or self.gather_vmfs_mount_info:
-                if self.gather_nfs_mount_info and summary.type.startswith("NFS"):
-                    # get mount info from the first ESXi host attached to this NFS datastore
-                    host_mount_info = self.check_datastore_host(summary.datastore.host[0].key.name, summary.name)
-                    datastore_summary['nfs_server'] = host_mount_info.volume.remoteHost
-                    datastore_summary['nfs_path'] = host_mount_info.volume.remotePath
-                if self.gather_vmfs_mount_info and summary.type == "VMFS":
-                    # get mount info from the first ESXi host attached to this VMFS datastore
-                    host_mount_info = self.check_datastore_host(summary.datastore.host[0].key.name, summary.name)
-                    datastore_summary['vmfs_blockSize'] = host_mount_info.volume.blockSize
-                    datastore_summary['vmfs_version'] = host_mount_info.volume.version
-                    datastore_summary['vmfs_uuid'] = host_mount_info.volume.uuid
-            # vcsim does not return uncommitted
-            if not summary.uncommitted:
-                summary.uncommitted = 0
-            datastore_summary['uncommitted'] = summary.uncommitted
-            datastore_summary['url'] = summary.url
-            # Calculated values
-            datastore_summary['provisioned'] = summary.capacity - summary.freeSpace + summary.uncommitted
-            datastore_summary['datastore_cluster'] = 'N/A'
-            if isinstance(datastore.parent, vim.StoragePod):
-                datastore_summary['datastore_cluster'] = datastore.parent.name
+            if self.schema == 'summary':
+                summary = datastore.summary
+                datastore_summary = dict()
+                datastore_summary['accessible'] = summary.accessible
+                datastore_summary['capacity'] = summary.capacity
+                datastore_summary['name'] = summary.name
+                datastore_summary['freeSpace'] = summary.freeSpace
+                datastore_summary['maintenanceMode'] = summary.maintenanceMode
+                datastore_summary['multipleHostAccess'] = summary.multipleHostAccess
+                datastore_summary['type'] = summary.type
+                if self.gather_nfs_mount_info or self.gather_vmfs_mount_info:
+                    if self.gather_nfs_mount_info and summary.type.startswith("NFS"):
+                        # get mount info from the first ESXi host attached to this NFS datastore
+                        host_mount_info = self.check_datastore_host(summary.datastore.host[0].key.name, summary.name)
+                        datastore_summary['nfs_server'] = host_mount_info.volume.remoteHost
+                        datastore_summary['nfs_path'] = host_mount_info.volume.remotePath
+                    if self.gather_vmfs_mount_info and summary.type == "VMFS":
+                        # get mount info from the first ESXi host attached to this VMFS datastore
+                        host_mount_info = self.check_datastore_host(summary.datastore.host[0].key.name, summary.name)
+                        datastore_summary['vmfs_blockSize'] = host_mount_info.volume.blockSize
+                        datastore_summary['vmfs_version'] = host_mount_info.volume.version
+                        datastore_summary['vmfs_uuid'] = host_mount_info.volume.uuid
+                # vcsim does not return uncommitted
+                if not summary.uncommitted:
+                    summary.uncommitted = 0
+                datastore_summary['uncommitted'] = summary.uncommitted
+                datastore_summary['url'] = summary.url
+                # Calculated values
+                datastore_summary['provisioned'] = summary.capacity - summary.freeSpace + summary.uncommitted
+                datastore_summary['datastore_cluster'] = 'N/A'
+                if isinstance(datastore.parent, vim.StoragePod):
+                    datastore_summary['datastore_cluster'] = datastore.parent.name
 
-            if self.module.params['name']:
-                if datastore_summary['name'] == self.module.params['name']:
+                if self.module.params['name']:
+                    if datastore_summary['name'] == self.module.params['name']:
+                        datastores.extend([datastore_summary])
+                else:
                     datastores.extend([datastore_summary])
             else:
-                datastores.extend([datastore_summary])
+                if self.module.params['name']:
+                    if datastore.name == self.module.params['name']:
+                        datastores.extend(([self.to_json(datastore, self.properties)]))
+                else:
+                    datastores.extend(([self.to_json(datastore, self.properties)]))
 
         return datastores
 
@@ -257,7 +309,9 @@ def main():
         datacenter=dict(type='str', aliases=['datacenter_name']),
         cluster=dict(type='str'),
         gather_nfs_mount_info=dict(type='bool', default=False),
-        gather_vmfs_mount_info=dict(type='bool', default=False)
+        gather_vmfs_mount_info=dict(type='bool', default=False),
+        schema=dict(type='str', choices=['summary', 'vsphere'], default='summary'),
+        properties=dict(type='list')
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True
