@@ -665,10 +665,10 @@ EXAMPLES = """
 
 # using gathered
 
-ip access-list test1
-    35 deny ospf 20.0.0.0/8 any
-ip access-list test2
-    40 permit vlan 55 0xE2 icmpv6 any any log
+# ip access-list test1
+#    35 deny ospf 20.0.0.0/8 any
+# ip access-list test2
+#    40 permit vlan 55 0xE2 icmpv6 any any log
 
 - name: Gather the exisitng condiguration
   eos_acls:
