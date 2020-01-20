@@ -400,7 +400,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                         'wildcard_bits': {
                                             'type': 'str'
                                         }
-                                      },
+                                        },
                                     'required_together': [['address', 'wildcard_bits']],
                                     'type': 'dict'
                                 },
