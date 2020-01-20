@@ -24,10 +24,12 @@ options:
             device over the specified transport.  The value of host is used as
             the destination address for the transport.
         type: str
+        required: true
       port:
         description:
           - Specifies the port to use when building the connection to the remote device.
         type: int
+        default: 22
       username:
         description:
           - Configures the username to use to authenticate the connection to
@@ -48,6 +50,7 @@ options:
             for either connecting or sending commands.  If the timeout is
             exceeded before the operation is completed, the module will error.
         type: int
+        default: 10
       ssh_keyfile:
         description:
           - Specifies the SSH key to use to authenticate the connection to

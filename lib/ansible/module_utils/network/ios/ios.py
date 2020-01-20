@@ -35,14 +35,14 @@ from ansible.module_utils.connection import Connection, ConnectionError
 _DEVICE_CONFIGS = {}
 
 ios_provider_spec = {
-    'host': dict(),
-    'port': dict(type='int'),
+    'host': dict(required=True),
+    'port': dict(type='int', default=22),
     'username': dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
     'password': dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), no_log=True),
     'ssh_keyfile': dict(fallback=(env_fallback, ['ANSIBLE_NET_SSH_KEYFILE']), type='path'),
     'authorize': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTHORIZE']), type='bool'),
     'auth_pass': dict(fallback=(env_fallback, ['ANSIBLE_NET_AUTH_PASS']), no_log=True),
-    'timeout': dict(type='int')
+    'timeout': dict(type='int', default=10)
 }
 ios_argument_spec = {
     'provider': dict(type='dict', options=ios_provider_spec, removed_in_version=2.14),
