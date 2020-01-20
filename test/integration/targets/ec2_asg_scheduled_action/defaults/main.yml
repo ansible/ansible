@@ -4,6 +4,6 @@
 ec2_ami_name: 'amzn2-ami-hvm-2.0.20190612-x86_64-gp2'
 scheduled_action_name: "{{ resource_prefix }}-sa"
 autoscaling_group_name: "{{ resource_prefix }}-asg"
-autoscaling_launch_template_name: "{{ resource_prefix }}-lt"
+autoscaling_launch_configuration_name: "{{ resource_prefix }}-lc"
 desired_capacity: 0
 recurrence: '40 22 * * 1-5'

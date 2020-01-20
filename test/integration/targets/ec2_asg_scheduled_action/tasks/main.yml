@@ -115,16 +115,15 @@
     - set_fact:
         ec2_ami_image: '{{ ec2_amis.images[0].image_id }}'
 
-    - name: Create an ec2 launch template
-      ec2_launch_template:
-        name: "{{ autoscaling_launch_template_name }}"
+    - name: Create an ec2 launch configuration
+      ec2_lc:
+        name: "{{ autoscaling_launch_configuration_name }}"
         image_id: "{{ ec2_ami_image }}"
         instance_type: t3.micro
 
     - name: Create asg
       ec2_asg:
-        launch_template:
-          launch_template_name: "{{ autoscaling_launch_template_name }}"
+        launch_config_name: "{{ autoscaling_launch_configuration_name }}"
         state: present
         wait_for_instances: no
       register: ec2_asg
@@ -194,9 +193,9 @@
       ignore_errors: yes
       retries: 10
 
-    - name: remove ec2 launch template
-      ec2_launch_template:
-        name: "{{ autoscaling_launch_template_name }}"
+    - name: remove ec2 launch config
+      ec2_lc:
+        name: "{{ autoscaling_launch_configuration_name }}"
         state: absent
       register: removed
       until: removed is not failed
