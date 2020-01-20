@@ -53,7 +53,7 @@
                   any: true
 
 - block:
-  - name: merge attributes of given static routes.
+  - name: merge attributes of given acls.
     eos_acls: &merged
       config:
         - afi: "ipv4"
