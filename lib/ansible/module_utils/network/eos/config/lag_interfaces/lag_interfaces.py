@@ -14,13 +14,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils.network.common.utils import to_list, dict_diff
-
-from ansible.module_utils.network.common.cfg.base import ConfigBase
+from ansible.module_utils.network.eos.config.base import Config
 from ansible.module_utils.network.eos.facts.facts import Facts
 from ansible.module_utils.network.eos.utils.utils import normalize_interface
 
 
-class Lag_interfaces(ConfigBase):
+class Lag_interfaces(Config):
     """
     The eos_lag_interfaces class
     """

@@ -14,12 +14,12 @@ created
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import dict_diff, to_list
+from ansible.module_utils.network.eos.config.base import Config
 from ansible.module_utils.network.eos.facts.facts import Facts
 
 
-class Lldp_global(ConfigBase):
+class Lldp_global(Config):
     """
     The eos_lldp_global class
     """
