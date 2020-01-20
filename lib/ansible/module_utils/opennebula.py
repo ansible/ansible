@@ -5,7 +5,7 @@
 
 import time
 import ssl
-from os import environ
+from os import environ,path
 from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import AnsibleModule
 
@@ -19,6 +19,13 @@ except ImportError:
     OneException = Exception
     HAS_PYONE = False
 
+VM_STATES = ['INIT', 'PENDING', 'HOLD', 'ACTIVE', 'STOPPED', 'SUSPENDED', 'DONE', '', 'POWEROFF', 'UNDEPLOYED', 'CLONING', 'CLONING_FAILURE']
+LCM_STATES = ['LCM_INIT', 'PROLOG', 'BOOT', 'RUNNING', 'MIGRATE', 'SAVE_STOP',
+              'SAVE_SUSPEND', 'SAVE_MIGRATE', 'PROLOG_MIGRATE', 'PROLOG_RESUME',
+              'EPILOG_STOP', 'EPILOG', 'SHUTDOWN', 'STATE13', 'STATE14', 'CLEANUP_RESUBMIT', 'UNKNOWN', 'HOTPLUG', 'SHUTDOWN_POWEROFF',
+              'BOOT_UNKNOWN', 'BOOT_POWEROFF', 'BOOT_SUSPENDED', 'BOOT_STOPPED', 'CLEANUP_DELETE', 'HOTPLUG_SNAPSHOT', 'HOTPLUG_NIC',
+              'HOTPLUG_SAVEAS', 'HOTPLUG_SAVEAS_POWEROFF', 'HOTPULG_SAVEAS_SUSPENDED', 'SHUTDOWN_UNDEPLOY']
+
 
 class OpenNebulaModule:
     """
@@ -31,6 +38,7 @@ class OpenNebulaModule:
         api_url=dict(type='str', aliases=['api_endpoint'], default=environ.get("ONE_URL")),
         api_username=dict(type='str', default=environ.get("ONE_USERNAME")),
         api_password=dict(type='str', no_log=True, aliases=['api_token'], default=environ.get("ONE_PASSWORD")),
+        api_auth_file=dict(type='str', default=environ.get("ONE_AUTH")),
         validate_certs=dict(default=True, type='bool'),
         wait_timeout=dict(type='int', default=300),
     )
@@ -73,15 +81,22 @@ class OpenNebulaModule:
         else:
             self.fail("Either api_url or the environment variable ONE_URL must be provided")
 
-        if self.module.params.get("api_username"):
+        if self.module.params.get("api_username") and self.module.params.get("api_password"):
             username = self.module.params.get("api_username")
-        else:
-            self.fail("Either api_username or the environment vairable ONE_USERNAME must be provided")
-
-        if self.module.params.get("api_password"):
             password = self.module.params.get("api_password")
         else:
-            self.fail("Either api_password or the environment vairable ONE_PASSWORD must be provided")
+            if self.module.params.get("api_auth_file"):
+                authfile = self.module.params.get("api_auth_file")
+            else:
+                authfile = path.join(environ.get("HOME"), ".one", "one_auth")
+            try:
+                authstring = open(authfile, "r").read().rstrip()
+                username = authstring.split(":")[0]
+                password = authstring.split(":")[1]
+            except (OSError, IOError):
+                self.fail(msg=("No Credentials provided and could not find or read ONE_AUTH file at '%s'" % authfile))
+            except Exception:
+                self.fail(msg=("Error occurs when read ONE_AUTH file at '%s'" % authfile))
 
         session = "%s:%s" % (username, password)
 
@@ -283,6 +298,140 @@ class OpenNebulaModule:
             time.sleep(self.one.server_retry_interval())
 
         self.fail(msg="Wait timeout has expired!")
+
+    def get_all_vms(self):
+        pool = self.one.vmpool.info(-2, -1, -1, -1)
+        # Filter -2 means fetch all vms user has
+
+        return pool
+
+    def parse_vm_permissions(self, vm):
+        vm_PERMISSIONS = self.one.vm.info(vm.ID).PERMISSIONS
+
+        owner_octal = int(vm_PERMISSIONS.OWNER_U) * 4 + int(vm_PERMISSIONS.OWNER_M) * 2 + int(vm_PERMISSIONS.OWNER_A)
+        group_octal = int(vm_PERMISSIONS.GROUP_U) * 4 + int(vm_PERMISSIONS.GROUP_M) * 2 + int(vm_PERMISSIONS.GROUP_A)
+        other_octal = int(vm_PERMISSIONS.OTHER_U) * 4 + int(vm_PERMISSIONS.OTHER_M) * 2 + int(vm_PERMISSIONS.OTHER_A)
+
+        permissions = str(owner_octal) + str(group_octal) + str(other_octal)
+
+        return permissions
+
+    def get_vm_labels_and_attributes_dict(self, vm_id):
+        vm_USER_TEMPLATE = self.one.vm.info(vm_id).USER_TEMPLATE
+
+        attrs_dict = {}
+        labels_list = []
+
+        for key, value in vm_USER_TEMPLATE.items():
+            if key != 'LABELS':
+                attrs_dict[key] = value
+            else:
+                if key is not None:
+                    labels_list = value.split(',')
+
+        return labels_list, attrs_dict
+
+    def get_vm_info(self, vm):
+        # get additional info
+        vm = self.one.vm.info(vm.ID)
+        # get Uptime
+        current_time = time.localtime()
+        vm_start_time = time.localtime(vm.STIME)
+        vm_uptime = time.mktime(current_time) - time.mktime(vm_start_time)
+        vm_uptime /= (60 * 60)
+
+        vm_labels, vm_attributes = self.get_vm_labels_and_attributes_dict(vm.ID)
+
+        # get disk info
+        disks = []
+        if 'DISK' in vm.TEMPLATE:
+            if isinstance(vm.TEMPLATE['DISK'], list):
+                for disk in vm.TEMPLATE['DISK']:
+                    disk_entry = dict()
+                    disk_entry['SIZE'] = disk['SIZE'] + ' MB'
+                    disk_entry['DISK_ID'] = disk['DISK_ID']
+                    disks.append(disk_entry)
+            else:
+                disk_entry = dict()
+                disk_entry['SIZE'] = vm.TEMPLATE['DISK']['SIZE'] + ' MB'
+                disk_entry['DISK_ID'] = vm.TEMPLATE['DISK']['DISK_ID']
+                disks.append(disk_entry)
+
+        # get network info
+        networks_info = []
+        if 'NIC' in vm.TEMPLATE:
+            if isinstance(vm.TEMPLATE['NIC'], list):
+                for nic in vm.TEMPLATE['NIC']:
+                    networks_info.append({'ip': nic['IP'], 'mac': nic['MAC'], 'name': nic['NETWORK'], 'security_groups': nic['SECURITY_GROUPS']})
+            else:
+                networks_info.append(
+                    {'ip': vm.TEMPLATE['NIC']['IP'], 'mac': vm.TEMPLATE['NIC']['MAC'],
+                        'name': vm.TEMPLATE['NIC']['NETWORK'], 'security_groups': vm.TEMPLATE['NIC']['SECURITY_GROUPS']})
+
+        info = {
+            'id': vm.ID,
+            'name': vm.NAME,
+            'state': VM_STATES[vm.STATE],
+            'user_name': vm.UNAME,
+            'user_id': vm.UID,
+            'group_name': vm.GNAME,
+            'group_id': vm.GID,
+            'lcm_state': LCM_STATES[vm.LCM_STATE],
+            'uptime_h': int(vm_uptime),
+            'mode': self.parse_vm_permissions(vm),
+            'cpu': vm.TEMPLATE['CPU'],
+            'vcpu': vm.TEMPLATE['VCPU'],
+            'memory': vm.TEMPLATE['MEMORY'] + ' MB',
+            'disks': disks,
+            'networks': networks_info,
+            'labels': vm_labels,
+            'attributes': vm_attributes
+        }
+        return info
+
+    def get_vms_by_ids(self, ids):
+        vms = []
+        pool = self.get_all_vms()
+
+        for vm in pool.VM:
+            if str(vm.ID) in ids:
+                vms.append(vm)
+                ids.remove(str(vm.ID))
+                if len(ids) == 0:
+                    break
+
+        if len(ids) > 0:
+            self.fail(msg='There is no VM(s) with id(s)=' + ', '.join('{id}'.format(id=str(vm_id)) for vm_id in ids))
+
+        return vms
+
+
+    def get_vms_by_name(self, name_pattern):
+
+        vms = []
+        pattern = None
+
+        pool = self.get_all_vms()
+
+        if name_pattern.startswith('~'):
+            import re
+            if name_pattern[1] == '*':
+                pattern = re.compile(name_pattern[2:], re.IGNORECASE)
+            else:
+                pattern = re.compile(name_pattern[1:])
+
+        for vm in pool.VM:
+            if pattern is not None:
+                if pattern.match(vm.NAME):
+                    vms.append(vm)
+            elif name_pattern == vm.NAME:
+                vms.append(vm)
+                break
+
+        if pattern is None and len(vms) == 0:
+            self.fail(msg="There is no VM with name=" + name_pattern)
+
+        return vms
 
     def run_module(self):
         """
