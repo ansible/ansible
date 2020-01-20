@@ -103,9 +103,9 @@ class TestEosAclsModule(TestEosModule):
                                        destination=dict(any="true"),
                                        log="true"),
                                   dict(grant="permit",
-                                      source=dict(any="true"),
-                                      destination=dict(any="true"),
-                                      protocol=6)
+                                       source=dict(any="true"),
+                                       destination=dict(any="true"),
+                                       protocol=6)
                               ])
                      ])
             ], state="merged"))
@@ -144,9 +144,9 @@ class TestEosAclsModule(TestEosModule):
                                        destination=dict(any="true"),
                                        log="true"),
                                   dict(grant="permit",
-                                      source=dict(any="true"),
-                                      destination=dict(any="true"),
-                                      protocol=6)
+                                       source=dict(any="true"),
+                                       destination=dict(any="true"),
+                                       protocol=6)
                               ])
                      ])
             ], state="replaced"))
@@ -185,9 +185,9 @@ class TestEosAclsModule(TestEosModule):
                                        destination=dict(any="true"),
                                        log="true"),
                                   dict(grant="permit",
-                                      source=dict(any="true"),
-                                      destination=dict(any="true"),
-                                      protocol=6)
+                                       source=dict(any="true"),
+                                       destination=dict(any="true"),
+                                       protocol=6)
                               ])
                      ])
             ], state="overridden"))
@@ -201,15 +201,15 @@ class TestEosAclsModule(TestEosModule):
                          dict(name="test1",
                               aces=[
                                   dict(grant="permit",
-                                      sequence="45",
-                                      source=dict(any="true"),
-                                      destination=dict(any="true"),
-                                      protocol=6)
+                                       sequence="45",
+                                       source=dict(any="true"),
+                                       destination=dict(any="true"),
+                                       protocol=6)
                               ])
                      ])
             ], state="deleted"))
         commands = ['ip access-list test1', 'no 45']
-        result = self.execute_module(changed=True, commands=commands) 
+        result = self.execute_module(changed=True, commands=commands)
 
     def test_eos_acls_deletedacls(self):
         set_module_args(
@@ -229,7 +229,6 @@ class TestEosAclsModule(TestEosModule):
             ], state="deleted"))
         commands = ['no ip access-list test1']
         result = self.execute_module(changed=True, commands=commands)
-
 
     def test_eos_acls_gathered(self):
         set_module_args(
@@ -252,10 +251,10 @@ class TestEosAclsModule(TestEosModule):
                          dict(name="test1",
                               aces=[
                                   dict(grant="permit",
-                                      sequence="45",
-                                      source=dict(any="true"),
-                                      destination=dict(any="true"),
-                                      protocol=6)
+                                       sequence="45",
+                                       source=dict(any="true"),
+                                       destination=dict(any="true"),
+                                       protocol=6)
                               ])
                      ])
             ], state="rendered"))

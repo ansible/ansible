@@ -25,6 +25,9 @@
 The arg spec for the eos_acls module
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 
 class AclsArgs(object):  # pylint: disable=R0903
     """The arg spec for the eos_acls module
@@ -45,12 +48,12 @@ class AclsArgs(object):  # pylint: disable=R0903
                                 'destination': {
                                     'mutually_exclusive':
                                     [[
-                                        'address', 'subnetaddress', 'any',
-                                        'host'
+                                      'address', 'subnetaddress', 'any',
+                                      'host'
                                     ],
                                     [
-                                         'wildcard_bits', 'subnetaddress',
-                                         'any', 'host'
+                                      'wildcard_bits', 'subnetaddress',
+                                      'any', 'host'
                                     ]],
                                     'options': {
                                         'address': {
@@ -382,8 +385,8 @@ class AclsArgs(object):  # pylint: disable=R0903
                                 },
                                 'source': {
                                     'mutually_exclusive': [[
-                                        'address', 'subnetaddress', 'any',
-                                        'host'
+                                     'address', 'subnetaddress', 'any',
+                                     'host'
                                     ],
                                     [
                                         'wildcard_bits',

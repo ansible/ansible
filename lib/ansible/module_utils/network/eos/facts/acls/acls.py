@@ -9,6 +9,10 @@ It is in this file the configuration is collected from the device
 for a given resource, parsed, and the facts tree is populated
 based on the configuration.
 """
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import re
 from copy import deepcopy
 
@@ -51,8 +55,8 @@ class AclsFacts(object):
         # split the config into instances of the resource
         find_pattern = r'(?:^|\n)(?:ip|ipv6) access\-list.*?(?=(?:^|\n)(?:ip|ipv6) access\-list|$)'
         resources = [p for p in re.findall(find_pattern,
-                                          data,
-                                          re.DOTALL)]
+                                           data,
+                                           re.DOTALL)]
 
         objs = []
         ipv4list = []
@@ -110,7 +114,7 @@ class AclsFacts(object):
             ace_dict = {}
             if not dev_config:
                 continue
-            if dev_config is '!':
+            if dev_config == '!':
                 continue
             dev_config = dev_config.strip()
             matches = re.findall(r'(ip.*?) access-list (.*)', dev_config)
@@ -252,8 +256,8 @@ class AclsFacts(object):
                             tcp_dict.update({"flags": flags_dict})
                     if bool(tcp_dict):
                         protocol_option_dict.update({"tcp": tcp_dict})
-                    if protocol is "icmp" or protocol is "icmpv6" \
-                            or protocol is "1" or protocol is "58":
+                    if protocol == "icmp" or protocol == "icmpv6" \
+                            or protocol == "1" or protocol == "58":
                         if protocol == "1":
                             protocol = "icmp"
                         elif protocol == "58":
@@ -280,7 +284,7 @@ class AclsFacts(object):
                         if config_remainder in others:
                             if config_remainder == "hop_limit":
                                 hop_index = dev_config_remainder.index(config_remainder)
-                                hoplimit_dict = {dev_config_remainder[hop_index+1]: dev_config_remainder[hop_index+2]}
+                                hoplimit_dict = {dev_config_remainder[hop_index + 1]: dev_config_remainder[hop_index+2]}
                                 ace_dict.update({"hop_limit": hoplimit_dict})
                                 dev_config_remainder.pop(0)
                                 continue

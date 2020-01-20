@@ -10,6 +10,10 @@ is compared to the provided configuration (as dict) and the command set
 necessary to bring the current configuration to it's desired end-state is
 created
 """
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import socket
 import re
 import itertools
@@ -244,7 +248,7 @@ class Acls(ConfigBase):
                     present = True
                     ace_diff = get_ace_diff(want_ace, h_acl["aces"])
                     if ace_diff:
-                        h = {"afi": afi, "acls":[{"name": name, "aces": h_acl["aces"]}]}
+                        h = {"afi": afi, "acls": [{"name": name, "aces": h_acl["aces"]}]}
                         remove_cmds = del_commands(h, have)
                         commands.append(remove_cmds)
                 else:
@@ -299,11 +303,12 @@ def set_commands(want, have):
         commands.append(return_command)
     return commands
 
+
 def add_commands(want):
     commandset = []
-    protocol_name = {"51": "ahp", "47": "gre", "1": "icmp", "2": "igmp",\
-                    "4": "ip", "89": "ospf", "103": "pim", "6": "tcp",\
-                    "17": "udp", "112": "vrrp"}
+    protocol_name = {"51": "ahp", "47": "gre", "1": "icmp", "2": "igmp",
+                     "4": "ip", "89": "ospf", "103": "pim", "6": "tcp",
+                     "17": "udp", "112": "vrrp"}
     if not want:
         return commandset
     command = ""
@@ -385,6 +390,7 @@ def add_commands(want):
             commandset.append(command.strip())
     return commandset
 
+
 def del_commands(want, have):
     commandset = []
     command = ""
@@ -422,6 +428,7 @@ def del_commands(want, have):
             else:
                 commandset.append("no " + cmd)
     return commandset
+
 
 def get_ace_diff(want_ace, have_ace):
     d = dict_diff(want_ace[0], have_ace[0])

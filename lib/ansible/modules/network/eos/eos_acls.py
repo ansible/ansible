@@ -29,11 +29,9 @@ The module file for eos_acls
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {
-  'metadata_version': '1.1',
-  'status': ['preview'],
-  'supported_by': 'network'
-}
+ANSIBLE_METADATA = {'metadata_version': '1.1',
+                    'status': ['preview'],
+                    'supported_by': 'network'}
 
 DOCUMENTATION = """
 ---
@@ -62,8 +60,8 @@ options:
         type: list
         elements: dict
         suboptions:
-          standard: 
-            description: standard access-list or not 
+          standard:
+            description: standard access-list or not
             type: bool
             default: False
           name:
@@ -317,7 +315,7 @@ options:
                         type: bool
                       parameter_problem:
                         description: parameter problem
-                        type: bool 
+                        type: bool
                       port_unreachable:
                         description: port unreachable
                         type: bool
@@ -468,7 +466,7 @@ EXAMPLES = """
 # ip access-list test1
 #    10 permit ip 10.10.10.0/24 any ttl eq 200
 #    20 permit ip 10.30.10.0/24 host 10.20.10.1
-#    30 deny tcp host 10.10.20.1 eq finger www any syn log 
+#    30 deny tcp host 10.10.20.1 eq finger www any syn log
 #    40 permit ip any any
 # ipv6 access-list test2
 #     10 deny icmpv6 any any reject-route hop-limit eq 20
@@ -478,15 +476,15 @@ EXAMPLES = """
     config:
      - afi: "ipv4"
        - acls:
-         - name: test1
-           aces:
-            - sequence: 35
-	      grant: "deny"
-	      protocol: "ospf"
-	      source:
-	        subnetaddress: 20.0.0.0/8
-              destnation:
-                any: true
+         name: test1
+         aces:
+           - sequence: 35
+             grant: "deny"
+             protocol: "ospf"
+             source:
+               subnetaddress: 20.0.0.0/8
+             destnation:
+               any: true
     state: merged
 
 # After state:
@@ -496,7 +494,7 @@ EXAMPLES = """
 # ip access-list test1
 #    10 permit ip 10.10.10.0/24 any ttl eq 200
 #    20 permit ip 10.30.10.0/24 host 10.20.10.1
-#    30 deny tcp host 10.10.20.1 eq finger www any syn log 
+#    30 deny tcp host 10.10.20.1 eq finger www any syn log
 #    35 deny ospf 20.0.0.0/8 any
 #    40 permit ip any any
 # ipv6 access-list test2
@@ -511,7 +509,7 @@ EXAMPLES = """
 # ip access-list test1
 #    10 permit ip 10.10.10.0/24 any ttl eq 200
 #    20 permit ip 10.30.10.0/24 host 10.20.10.1
-#    30 deny tcp host 10.10.20.1 eq finger www any syn log 
+#    30 deny tcp host 10.10.20.1 eq finger www any syn log
 #    40 permit ip any any
 # !
 # ip access-list test3
@@ -522,7 +520,7 @@ EXAMPLES = """
 
 
 
-- name: Replace device configuration with provided configuration 
+- name: Replace device configuration with provided configuration
   eos_acls:
     config:
       - afi: "ipv4"
@@ -530,10 +528,10 @@ EXAMPLES = """
           name: test1
           aces:
 	    - sequence: 35
-	      grant: "permit"
-	      protocol: "ospf"
+              grant: "permit"
+              protocol: "ospf"
 	      source:
-	        subnetaddress: 20.0.0.0/8
+                subnetaddress: 20.0.0.0/8
               destination:
                 any: true
     state: replaced
@@ -546,7 +544,7 @@ EXAMPLES = """
 #    35 permit ospf 20.0.0.0/8 any
 # !
 # ip access-list test3
-#    10 permit ip 35.33.0.0/16 any log 
+#    10 permit ip 35.33.0.0/16 any log
 # !
 # ipv6 access-list test2
 #     10 deny icmpv6 any any reject-route hop-limit eq 20
@@ -560,7 +558,7 @@ EXAMPLES = """
 # ip access-list test1
 #    10 permit ip 10.10.10.0/24 any ttl eq 200
 #    20 permit ip 10.30.10.0/24 host 10.20.10.1
-#    30 deny tcp host 10.10.20.1 eq finger www any syn log 
+#    30 deny tcp host 10.10.20.1 eq finger www any syn log
 #    40 permit ip any any
 # !
 # ip access-list test3
@@ -578,11 +576,11 @@ EXAMPLES = """
         acls:
           - name: test1
             aces:
-	      - sequence: 35
-	        action: "permit"
-	        protocol: "ospf"
-	        source:
-	          subnetaddress: 20.0.0.0/8
+          - sequence: 35
+                action: "permit"
+                protocol: "ospf"
+                source:
+                  subnetaddress: 20.0.0.0/8
                 destination:
                   any: true
     state: overridden
@@ -604,21 +602,21 @@ EXAMPLES = """
 # ip access-list test1
 #    10 permit ip 10.10.10.0/24 any ttl eq 200
 #    20 permit ip 10.30.10.0/24 host 10.20.10.1
-#    30 deny tcp host 10.10.20.1 eq finger www any syn log 
+#    30 deny tcp host 10.10.20.1 eq finger www any syn log
 #    40 permit ip any any
 # !
 # ipv6 access-list test2
 #     10 deny icmpv6 any any reject-route hop-limit eq 20
 
 
-- name: Delete provided configuration 
+- name: Delete provided configuration
   eos_acls:
     config:
       - afi: "ipv4"
         acls:
-      	  - name: test1
+          - name: test1
             aces:
-	      - sequence: 30
+              - sequence: 30
     state: deleted
 
 # After state:
@@ -738,11 +736,11 @@ eos_acls:
               subnetaddress: 20.0.0.0/8
             destination:
               any: true
-    - afi: "ipv6"
+      - afi: "ipv6"
       acls:
         - name: test2
           aces:
-	   - sequence: 40
+           - sequence: 40
              grant: "permit"
              vlan: "55 0xE2"
              protocol: "icmpv6"
@@ -806,7 +804,6 @@ def main():
                            required_if=required_if,
                            supports_check_mode=True,
                            mutually_exclusive=mutually_exclusive)
-
 
     result = Acls(module).execute_module()
     module.exit_json(**result)
