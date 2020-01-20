@@ -127,7 +127,7 @@ class OnyxLinkAggModule(BaseOnyxModule):
             name=dict(type='str'),
             members=dict(type='list'),
             mode=dict(default='on', choices=['active', 'on', 'passive']),
-            state=dict(default='present', choices=['present', 'absent']),
+            state=dict(default='present', choices=['present', 'absent', 'up', 'down']),
         )
 
     @classmethod
