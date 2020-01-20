@@ -169,6 +169,16 @@
             "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:function:*"
         },
         {
+            "Sid": "AllowLambdaLayerManagementWithResource",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:DeleteLayerVersion",
+                "lambda:GetLayerVersion",
+                "lambda:PublishLayerVersion"
+            ],
+            "Resource": "arn:aws:lambda:{{aws_region}}:{{aws_account}}:layer:*"
+        },
+        {
             "Sid": "AllowRoleManagement",
             "Effect": "Allow",
             "Action": [

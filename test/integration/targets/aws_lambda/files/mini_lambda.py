@@ -2,6 +2,11 @@ from __future__ import print_function
 import json
 import os
 
+try:
+    from mini_lambda_layer import LAMBDA_LAYER_APPEND_STRING
+except ImportError:
+    LAMBDA_LAYER_APPEND_STRING = ''
+
 
 def handler(event, context):
     """
@@ -23,9 +28,9 @@ def handler(event, context):
 
     extra = os.environ.get("EXTRA_MESSAGE")
     if extra is not None and len(extra) > 0:
-        greeting = "hello {0}. {1}".format(name, extra)
+        greeting = "hello {0}. {1}{2}".format(name, extra, LAMBDA_LAYER_APPEND_STRING)
     else:
-        greeting = "hello " + name
+        greeting = "hello " + name + LAMBDA_LAYER_APPEND_STRING
 
     return {"message": greeting}
 

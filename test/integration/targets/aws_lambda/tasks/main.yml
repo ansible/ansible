@@ -271,6 +271,83 @@
           - lambda_infos_mappings.function[lambda_function_name].mappings is defined
 
     # ============================================================
+    - name: create lambda layer code directory
+      file:
+        path: "{{ output_dir }}/python"
+        state: directory
+
+    - name: move lambda layer into place for archive module
+      copy:
+        src: mini_lambda_layer.py
+        dest: "{{ output_dir }}/python/mini_lambda_layer.py"
+
+    - name: bundle lambda layer into a zip
+      archive:
+        format: zip
+        path: "{{ output_dir }}/python"
+        dest: "{{ output_dir }}/mini_lambda_layer.zip"
+      register: zip_layer_res
+
+    - name: publish layer from zip
+      lambda_layer:
+        name: "{{ lambda_layer_name }}"
+        zip_file: "{{ zip_layer_res.dest }}"
+        runtimes:
+          - python2.7
+      register: layer_result
+
+    - name: assert lambda layer upload succeeded
+      assert:
+        that:
+          - layer_result is succeeded
+          - layer_result.layer_version_arn is defined
+
+    - name: update lambda to use the layer
+      lambda:
+        name: "{{ lambda_function_name }}"
+        runtime: "python2.7"
+        layers:
+          - "{{ lambda_layer_name }}"
+        handler: mini_lambda.handler
+        role: ansible_lambda_role
+      register: result
+
+    - name: assert lambda layer config for lambda function
+      assert:
+        that:
+          - result is succeeded
+          - result.configuration.layers is sequence
+          - result.configuration.layers | length == 1
+          - result.configuration.layers[0]['arn'] == layer_result.layer_version_arn
+
+    - name: test lambda layer works
+      execute_lambda:
+        name: "{{ lambda_function_name }}"
+        payload:
+          name: "Mr Ansible Tests"
+      register: result
+
+    - name: assert layered lambda manages to respond as expected
+      assert:
+        that:
+          - result is succeeded
+          - 'result.result.output.message == "hello Mr Ansible Tests (appended from lambda layer)"'
+
+    - name: update lambda to strip the layer
+      lambda:
+        name: "{{ lambda_function_name }}"
+        runtime: python2.7
+        handler: mini_lambda.handler
+        role: ansible_lambda_role
+      register: result
+
+    - name: assert lambda layer config absent for lambda function
+      assert:
+        that:
+          - result is succeeded
+          - result.layers is not defined
+
+    # ============================================================
     - name: test state=present with security group but no vpc
       lambda:
         name: "{{lambda_function_name}}"
@@ -342,7 +419,7 @@
         name: "{{lambda_function_name}}"
         payload:
           name: "Mr Ansible Tests"
-        security_token: '{{security_token}}'
+        security_token: "{{ security_token | default(omit) }}"
       register: result
 
     - name: assert lambda manages to respond as expected
@@ -511,5 +588,11 @@
     - name: ensure function is absent at end of test
       lambda:
         name: "{{lambda_function_name}}"
+        state: absent
+      ignore_errors: true
+
+    - name: ensure layer is absent at end of test
+      lambda:
+        name: "{{ lambda_layer_name }}"
         state: absent
       ignore_errors: true

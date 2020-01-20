@@ -491,6 +491,8 @@ groupings:
   - aws
   lambda_info:
   - aws
+  lambda_layer:
+  - aws
   lambda_policy:
   - aws
   lightsail:
