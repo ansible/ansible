@@ -1591,6 +1591,13 @@ class AnsibleModule(object):
             choices = v.get('choices', None)
             if choices is None:
                 continue
+            if BOOLEANS.intersection(choices):
+                msg = (
+                    'Using boolean keywords ({0}) in string parameters is discouraged. '
+                    'Update the code and API for this module. AnsibleModule will '
+                    'refuse to accept such choices in the '
+                    'future').format(','.join(map(str, BOOLEANS)))
+                self.deprecate(msg, version='2.12')
             if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
                 if k in param:
                     # Allow one or more when type='list' param with choices
