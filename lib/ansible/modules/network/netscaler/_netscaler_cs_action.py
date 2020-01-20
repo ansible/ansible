@@ -9,7 +9,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -25,9 +25,15 @@ version_added: "2.4.0"
 
 author: George Nikolopoulos (@giorgos-nikolopoulos)
 
+deprecated:
+    removed_in: "2.13"
+    why: Updated module with new name
+    alternative: Use M(citrix_adc_cs_action) instead.
+
 options:
 
     name:
+        type: str
         description:
             - >-
                 Name for the content switching action. Must begin with an ASCII alphanumeric or underscore C(_)
@@ -36,18 +42,17 @@ options:
                 switching action is created.
 
     targetlbvserver:
+        type: str
         description:
             - "Name of the load balancing virtual server to which the content is switched."
 
-    targetvserver:
-        description:
-            - "Name of the VPN virtual server to which the content is switched."
-
     targetvserverexpr:
+        type: str
         description:
             - "Information about this content switching action."
 
     comment:
+        type: str
         description:
             - "Comments associated with this cs action."
 

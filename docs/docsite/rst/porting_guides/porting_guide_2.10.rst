@@ -53,6 +53,8 @@ The following modules will be removed in Ansible 2.14. Please update your playbo
 
 * ldap_attr use :ref:`ldap_attrs <ldap_attrs_module>` instead.
 
+* netscaler_cs_action use :ref:`citrix_adc_cs_action <citrix_adc_cs_action_module>` instead.
+
 
 The following functionality will be removed in Ansible 2.14. Please update update your playbooks accordingly.
 
