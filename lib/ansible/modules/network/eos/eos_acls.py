@@ -705,26 +705,9 @@ EXAMPLES = """
                any: true
 
 
-returns:
-
-  eos_acls:
-    config:
-     - afi: "ipv4"
-       acls:
-        - name: test1
-          aces:
-          - sequence: 35
-            grant: "deny"
-            protocol: "ospf"
-            source:
-              subnetaddress: 20.0.0.0/8
-            destination:
-              any: true
-
-
 # using rendered
 
-eos_acls:
+  eos_acls:
     config:
      - afi: "ipv4"
        acls:
@@ -750,13 +733,14 @@ eos_acls:
                 any: true
               destination:
                 any: true
+    state: rendered
 
-returns:
+# returns:
 
-ip access-list test1
-    35 deny ospf 20.0.0.0/8 any
-ip access-list test2
-    40 permit vlan 55 0xE2 icmpv6 any any log
+# ip access-list test1
+#    35 deny ospf 20.0.0.0/8 any
+# ip access-list test2
+#    40 permit vlan 55 0xE2 icmpv6 any any log
 
 
 """
