@@ -9,6 +9,15 @@
       vars:
         setup_attach_host: true
 
+    - name: Reset all the hosts to balanced
+      vmware_host_powermgmt_policy:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ ccr1 }}"
+        policy: balanced
+        validate_certs: no
+
     # The following test cases aren't supported by vcsim
     - name: Set the Power Management Policy for esxi1
       vmware_host_powermgmt_policy:
@@ -25,7 +34,7 @@
         that:
             - host_result.result['{{ esxi1 }}'].current_state == "high-performance"
 
-    - name: Set the Power Management Policy on all hosts of {{ ccr1 }}
+    - name: Reset all the hosts to balanced
       vmware_host_powermgmt_policy:
         hostname: "{{ vcenter_hostname }}"
         username: "{{ vcenter_username }}"
@@ -40,6 +49,15 @@
         that:
             - all_hosts_result is changed
             - all_hosts_result.result is defined
+
+    - name: Reset all the hosts to balanced
+      vmware_host_powermgmt_policy:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ ccr1 }}"
+        policy: balanced
+        validate_certs: no
 
     - name: Set the Power Management Policy for esxi1 in check mode
       vmware_host_powermgmt_policy:
@@ -74,4 +92,12 @@
         that:
             - not (all_hosts_result is changed)
             - "all_hosts_result.result['{{ esxi1 }}'].current_state == 'balanced'"
-            - "all_hosts_result.result['{{ esxi2 }}'].current_state == 'balanced'"
+  always:
+    - name: Reset all the hosts to balanced
+      vmware_host_powermgmt_policy:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        cluster_name: "{{ ccr1 }}"
+        policy: balanced
+        validate_certs: no
