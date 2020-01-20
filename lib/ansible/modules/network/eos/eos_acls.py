@@ -676,7 +676,8 @@ EXAMPLES = """
 
 # returns:
 
-eos_acls:
+
+  eos_acls:
     config:
      - afi: "ipv4"
        acls:
@@ -689,8 +690,8 @@ eos_acls:
               subnetaddress: 20.0.0.0/8
             destination:
               any: true
-    - afi: "ipv6"
-      acls:
+     - afi: "ipv6"
+       acls:
         - name: test2
           aces:
            - sequence: 40
