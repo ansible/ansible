@@ -405,7 +405,6 @@ class OpenNebulaModule:
 
         return vms
 
-
     def get_vms_by_name(self, name_pattern):
         vms = []
         pattern = None
