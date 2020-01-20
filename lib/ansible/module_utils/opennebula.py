@@ -394,9 +394,9 @@ class OpenNebulaModule:
         pool = self.get_all_vms()
 
         for vm in pool.VM:
-            if str(vm.ID) in ids:
+            if vm.ID in ids:
                 vms.append(vm)
-                ids.remove(str(vm.ID))
+                ids.remove(vm.ID)
                 if len(ids) == 0:
                     break
 

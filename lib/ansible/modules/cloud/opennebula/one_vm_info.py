@@ -239,7 +239,12 @@ def main():
 
     one = OpenNebulaModule(argument_spec=fields, supports_check_mode=True, mutually_exclusive=mutually_exclusive)
 
-    ids = one.module.params.get('ids')
+    # ensure that all ids are int.
+    str_ids = one.module.params.get('ids')
+    ids = []
+    for str_id in str_ids:
+            ids.append(int(str_id))
+
     name = one.module.params.get('name')
 
     result = {'vms': []}
