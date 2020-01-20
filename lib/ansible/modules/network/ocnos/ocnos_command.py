@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: ocnos_command
-version_added: "2.9"
+version_added: "2.10"
 author: "Tsuyoshi MOMOSE (@momose)"
 short_description: Run arbitrary commands on IP Infusion OcNOS
 description:

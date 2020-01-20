@@ -26,7 +26,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ocnos_facts
-version_added: "2.9"
+version_added: "2.10"
 author: "Tsuyoshi MOMOSE (@momose)"
 short_description: Collect facts from remote devices running IP Infusion OcNOS
 description:
