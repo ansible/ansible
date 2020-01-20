@@ -26,7 +26,7 @@ version_added: "2.4.0"
 author: George Nikolopoulos (@giorgos-nikolopoulos)
 
 deprecated:
-    removed_in: "2.13"
+    removed_in: "2.14"
     why: Updated module with new name
     alternative: Use M(citrix_adc_cs_action) instead.
 
