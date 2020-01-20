@@ -37,7 +37,8 @@
     - name:
       assert:
         that:
-          - "'Partial credentials found in explicit, missing: aws_secret_access_key' in result.msg"
+          - "'The security token included in the request is invalid.' in result.msg or
+             'Partial credentials found in explicit, missing: aws_secret_access_key' in result.msg"
 
     - name: test without specifying region
       ec2_asg_scheduled_action:
