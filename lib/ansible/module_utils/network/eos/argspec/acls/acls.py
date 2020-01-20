@@ -48,10 +48,10 @@ class AclsArgs(object):  # pylint: disable=R0903
                                         'address', 'subnetaddress', 'any',
                                         'host'
                                     ],
-                                     [
+                                    [
                                          'wildcard_bits', 'subnetaddress',
                                          'any', 'host'
-                                     ]],
+                                    ]],
                                     'options': {
                                         'address': {
                                             'type': 'str'
@@ -97,7 +97,6 @@ class AclsArgs(object):  # pylint: disable=R0903
                                     'type': 'str'
                                 },
                                 'protocol_options': {
-                                    'elements': 'dict',
                                     'options': {
                                         'icmp': {
                                             'options': {
@@ -386,11 +385,11 @@ class AclsArgs(object):  # pylint: disable=R0903
                                         'address', 'subnetaddress', 'any',
                                         'host'
                                     ],
-                                                           [
-                                                               'wildcard_bits',
-                                                               'subnetaddress',
-                                                               'any', 'host'
-                                                           ]],
+                                    [
+                                        'wildcard_bits',
+                                        'subnetaddress',
+                                        'any', 'host'
+                                    ]],
                                     'options': {
                                         'address': {
                                             'type': 'str'

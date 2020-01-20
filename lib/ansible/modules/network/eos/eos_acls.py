@@ -477,10 +477,10 @@ EXAMPLES = """
   eos_acls:
     config:
      - afi: "ipv4"
-       acls:
-        - name: test1
-          aces:
-	    - sequence: 35
+       - acls:
+         - name: test1
+           aces:
+            - sequence: 35
 	      grant: "deny"
 	      protocol: "ospf"
 	      source:

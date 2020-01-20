@@ -19,6 +19,7 @@ from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.common.utils import remove_empties, dict_diff
 from ansible.module_utils.network.eos.facts.facts import Facts
 
+
 class Acls(ConfigBase):
     """
     The eos_acls class
@@ -247,10 +248,10 @@ class Acls(ConfigBase):
                         remove_cmds = del_commands(h, have)
                         commands.append(remove_cmds)
                 else:
-                   h = {"afi": afi, "acls":[{"name": h_acl["name"]}]}
-                   remove_cmds = del_commands(h, have)
-                   commands.append(remove_cmds)
-                    
+                    h = {"afi": afi, "acls":[{"name": h_acl["name"]}]}
+                    remove_cmds = del_commands(h, have)
+                    commands.append(remove_cmds)
+
         if ace_diff:
             config_cmds = set_commands(want, have)
             config_cmds = list(itertools.chain(*config_cmds))
@@ -422,6 +423,6 @@ def del_commands(want, have):
                 commandset.append("no " + cmd)
     return commandset
 
-def get_ace_diff( want_ace, have_ace):
+def get_ace_diff(want_ace, have_ace):
     d = dict_diff(want_ace[0], have_ace[0])
     return d
