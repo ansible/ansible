@@ -156,7 +156,7 @@ EXAMPLES = r'''
     group: foo
     mode: u+rw,g-wx,o-rwx
 
-- name: Copy a new "ntp.conf file into place, backing up the original if it differs from the copied version
+- name: Copy a new "ntp.conf" file into place, backing up the original if it differs from the copied version
   copy:
     src: /mine/ntp.conf
     dest: /etc/ntp.conf
