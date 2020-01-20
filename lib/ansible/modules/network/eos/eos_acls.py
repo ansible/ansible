@@ -475,9 +475,9 @@ EXAMPLES = """
   eos_acls:
     config:
      - afi: "ipv4"
-       - acls:
-         name: test1
-         aces:
+       acls:
+        - name: test1
+          aces:
            - sequence: 35
              grant: "deny"
              protocol: "ospf"
@@ -524,13 +524,13 @@ EXAMPLES = """
   eos_acls:
     config:
       - afi: "ipv4"
-        - acls:
-          name: test1
-          aces:
-	    - sequence: 35
+        acls:
+         - name: test1
+           aces:
+            - sequence: 35
               grant: "permit"
               protocol: "ospf"
-	      source:
+              source:
                 subnetaddress: 20.0.0.0/8
               destination:
                 any: true
@@ -576,7 +576,7 @@ EXAMPLES = """
         acls:
           - name: test1
             aces:
-          - sequence: 35
+              - sequence: 35
                 action: "permit"
                 protocol: "ospf"
                 source:
@@ -693,7 +693,7 @@ eos_acls:
       acls:
         - name: test2
           aces:
-	   - sequence: 40
+           - sequence: 40
              grant: "permit"
              vlan: "55 0xE2"
              protocol: "icmpv6"
@@ -737,18 +737,18 @@ eos_acls:
             destination:
               any: true
       - afi: "ipv6"
-      acls:
-        - name: test2
-          aces:
-           - sequence: 40
-             grant: "permit"
-             vlan: "55 0xE2"
-             protocol: "icmpv6"
-             log: true
-             source:
-               any: true
-             destination:
-               any: true
+        acls:
+         - name: test2
+           aces:
+            - sequence: 40
+              grant: "permit"
+              vlan: "55 0xE2"
+              protocol: "icmpv6"
+              log: true
+              source:
+                any: true
+              destination:
+                any: true
 
 returns:
 

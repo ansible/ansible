@@ -203,7 +203,7 @@ class Acls(ConfigBase):
                 for h_acl in h["acls"]:
                     if h_acl["name"] == name:
                         present = True
-                        h = {"afi": afi, "acls":[{"name": name}]}
+                        h = {"afi": afi, "acls": [{"name": name}]}
                         ace_diff = get_ace_diff(want_ace, h_acl["aces"])
                         if ace_diff:
                             remove_cmds = del_commands(h, have)
@@ -252,7 +252,7 @@ class Acls(ConfigBase):
                         remove_cmds = del_commands(h, have)
                         commands.append(remove_cmds)
                 else:
-                    h = {"afi": afi, "acls":[{"name": h_acl["name"]}]}
+                    h = {"afi": afi, "acls": [{"name": h_acl["name"]}]}
                     remove_cmds = del_commands(h, have)
                     commands.append(remove_cmds)
 
@@ -295,6 +295,7 @@ class Acls(ConfigBase):
                 commands.append(return_command)
         commands = list(itertools.chain(*commands))
         return commands
+
 
 def set_commands(want, have):
     commands = []
@@ -378,7 +379,7 @@ def add_commands(want):
             if "hop_limit" in ace.keys():
                 for op, val in ace["hop_limit"].items():
                     command = command + " hop-limit " + op + " " + val
-            if "tracked" in  ace.keys() and ace["tracked"]:
+            if "tracked" in ace.keys() and ace["tracked"]:
                 command = command + " tracked"
             if "ttl" in ace.keys():
                 for op, val in ace["ttl"].items():

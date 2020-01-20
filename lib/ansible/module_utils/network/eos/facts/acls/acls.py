@@ -182,7 +182,7 @@ class AclsFacts(object):
                                 addr = re.search(r'[\.\:]', config_remainder)
                                 if config_remainder == "any" or \
                                     config_remainder == "host" or addr:
-                                    break
+                                      break
                                 else:
                                     src_port = src_port + " " + config_remainder
                                     dev_config_remainder.pop(0)
@@ -284,7 +284,7 @@ class AclsFacts(object):
                         if config_remainder in others:
                             if config_remainder == "hop_limit":
                                 hop_index = dev_config_remainder.index(config_remainder)
-                                hoplimit_dict = {dev_config_remainder[hop_index + 1]: dev_config_remainder[hop_index+2]}
+                                hoplimit_dict = {dev_config_remainder[hop_index + 1]: dev_config_remainder[hop_index + 2]}
                                 ace_dict.update({"hop_limit": hoplimit_dict})
                                 dev_config_remainder.pop(0)
                                 continue
