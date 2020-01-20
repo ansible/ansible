@@ -401,10 +401,8 @@ class AclsArgs(object):  # pylint: disable=R0903
                                             'type': 'str'
                                         }
                                     },
-                                    'required_together':
-                                    [['address', 'wildcard_bits']],
-                                    'type':
-                                    'dict'
+                                    'required_together': [['address', 'wildcard_bits']],
+                                    'type': 'dict'
                                 },
                                 'tracked': {
                                     'type': 'bool'
