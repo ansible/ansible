@@ -1,0 +1,6 @@
+---
+
+bugfixes:
+  - zabbix_template fix for error on linked templates and their removal
+  - zabbix_template fix for error on dump/import of templates
+  
