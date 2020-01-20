@@ -677,6 +677,37 @@ EXAMPLES = """
 # returns:
 
 
+#  eos_acls:
+#    config:
+#     - afi: "ipv4"
+#       acls:
+#        - name: test1
+#          aces:
+#          - sequence: 35
+#            grant: "deny"
+#            protocol: "ospf"
+#            source:
+#              subnetaddress: 20.0.0.0/8
+#            destination:
+#              any: true
+#     - afi: "ipv6"
+#       acls:
+#        - name: test2
+#          aces:
+#           - sequence: 40
+#             grant: "permit"
+#             vlan: "55 0xE2"
+#             protocol: "icmpv6"
+#             log: true
+#             source:
+#               any: true
+#             destination:
+#               any: true
+
+
+# using rendered
+
+- name: Delete provided configuration
   eos_acls:
     config:
      - afi: "ipv4"
@@ -703,36 +734,6 @@ EXAMPLES = """
                any: true
              destination:
                any: true
-
-
-# using rendered
-
-  eos_acls:
-    config:
-     - afi: "ipv4"
-       acls:
-        - name: test1
-          aces:
-          - sequence: 35
-            grant: "deny"
-            protocol: "ospf"
-            source:
-              subnetaddress: 20.0.0.0/8
-            destination:
-              any: true
-      - afi: "ipv6"
-        acls:
-         - name: test2
-           aces:
-            - sequence: 40
-              grant: "permit"
-              vlan: "55 0xE2"
-              protocol: "icmpv6"
-              log: true
-              source:
-                any: true
-              destination:
-                any: true
     state: rendered
 
 # returns:

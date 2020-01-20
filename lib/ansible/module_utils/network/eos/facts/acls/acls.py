@@ -180,9 +180,8 @@ class AclsFacts(object):
                             portlist = dev_config_remainder[:]
                             for config_remainder in portlist:
                                 addr = re.search(r'[\.\:]', config_remainder)
-                                if config_remainder == "any" or \
-                                    config_remainder == "host" or addr:
-                                      break
+                                if config_remainder == "any" or config_remainder == "host" or addr:
+                                    break
                                 else:
                                     src_port = src_port + " " + config_remainder
                                     dev_config_remainder.pop(0)
