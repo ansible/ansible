@@ -117,6 +117,11 @@ options:
       - tag dict to apply to the function (requires botocore 1.5.40 or above).
     version_added: "2.5"
     type: dict
+  layers:
+    description:
+      - The list of lambda layers to include (see lambda_layer module).
+    version_added: "2.10"
+    type: list
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
@@ -141,6 +146,7 @@ EXAMPLES = '''
     - sg-123abcde
     - sg-edcba321
     environment_variables: '{{ item.env_vars }}'
+    layers: '{{ item.layers | d(omit) }}'
     tags:
       key1: 'value1'
   loop:
@@ -154,6 +160,8 @@ EXAMPLES = '''
       env_vars:
         key1: "1"
         key2: "2"
+      layers:
+      - lambda_layer1_name:1
 
 # To remove previously added tags pass an empty dict
 - name: remove tags
@@ -234,6 +242,10 @@ except ImportError:
     pass  # protected by AnsibleAWSModule
 
 
+class LambdaLayerError(Exception):
+    pass
+
+
 def get_account_info(module, region=None, endpoint=None, **aws_connect_kwargs):
     """return the account information (account id and partition) we are currently working on
 
@@ -283,6 +295,18 @@ def get_current_function(connection, function_name, qualifier=None):
         except (KeyError, AttributeError):
             pass
         raise e
+
+
+def get_latest_layer_version_arn(connection, layer_name):
+    try:
+        return connection.list_layer_versions(
+            LayerName=layer_name,
+            MaxItems=1,
+        )['LayerVersions'][0]['LayerVersionArn']
+    except IndexError:
+        raise LambdaLayerError(
+            'Lambda layer not found: {}.'.format(layer_name)
+        )
 
 
 def sha256sum(filename):
@@ -358,6 +382,7 @@ def main():
         dead_letter_arn=dict(),
         tracing_mode=dict(choices=['Active', 'PassThrough']),
         tags=dict(type='dict'),
+        layers=dict(type='list', default=[]),
     )
 
     mutually_exclusive = [['zip_file', 's3_key'],
@@ -393,6 +418,7 @@ def main():
     dead_letter_arn = module.params.get('dead_letter_arn')
     tracing_mode = module.params.get('tracing_mode')
     tags = module.params.get('tags')
+    layers = module.params.get('layers')
 
     check_mode = module.check_mode
     changed = False
@@ -414,6 +440,40 @@ def main():
             # get account ID and assemble ARN
             account_id, partition = get_account_info(module, region=region, endpoint=ec2_url, **aws_connect_kwargs)
             role_arn = 'arn:{0}:iam::{1}:role/{2}'.format(partition, account_id, role)
+
+        layer_arns = []
+        for layer in layers:
+            try:
+                # Detect lambda arn:version.
+                if layer.startswith('arn:aws:lambda:') and layer.count(':') == 7:
+                    layer_arns.append(layer)
+
+                # Detect lambda arn no version.
+                elif layer.startswith('arn:aws:lambda:') and layer.count(':') == 6:
+                    layer_arns.append(get_latest_layer_version_arn(client, layer))
+
+                # Detect lambda name:version and resolve arn.
+                elif layer.count(':') == 1:
+                    layer_name, layer_version = layer.split(':')
+                    layer_version_arn = get_latest_layer_version_arn(client, layer_name)
+                    layer_arns.append(
+                        '{0}:{1}'.format(
+                            ':'.join(layer_version_arn.split(':')[:-1]),
+                            layer_version
+                        )
+                    )
+
+                # Detect lambda name and no version; append latest vetsion.
+                elif ':' not in layer:
+                    layer_arns.append(get_latest_layer_version_arn(client, layer))
+
+                else:
+                    raise LambdaLayerError(
+                      'Lambda layer name is invalid: {}.'.format(layer)
+                    )
+
+            except (ParamValidationError, ClientError, LambdaLayerError) as e:
+                module.fail_json_aws(e, msg="Trying to validate lambda layer name")
 
     # Get function configuration if present, False otherwise
     current_function = get_current_function(client, name)
@@ -453,6 +513,8 @@ def main():
                     func_kwargs.update({'DeadLetterConfig': {'TargetArn': dead_letter_arn}})
         if tracing_mode and (current_config.get('TracingConfig', {}).get('Mode', 'PassThrough') != tracing_mode):
             func_kwargs.update({'TracingConfig': {'Mode': tracing_mode}})
+        if [l['Arn'] for l in current_config.get('Layers', [])] != layer_arns:
+            func_kwargs.update({'Layers': layer_arns})
 
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
@@ -579,6 +641,9 @@ def main():
 
         if tracing_mode:
             func_kwargs.update({'TracingConfig': {'Mode': tracing_mode}})
+
+        if layer_arns:
+            func_kwargs.update({'Layers': layer_arns})
 
         # If VPC configuration is given
         if vpc_subnet_ids or vpc_security_group_ids:
