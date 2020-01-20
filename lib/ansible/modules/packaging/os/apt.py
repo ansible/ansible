@@ -1028,7 +1028,7 @@ def main():
             default_release=dict(type='str', aliases=['default-release']),
             install_recommends=dict(type='bool', aliases=['install-recommends']),
             force=dict(type='bool', default=False),
-            upgrade=dict(type='str', choices=['', 'dist', 'full', 'safe']),
+            upgrade=dict(type='str', choices=['', 'dist', 'full', 'safe'], default=''),
             dpkg_options=dict(type='str', default=DPKG_OPTIONS),
             autoremove=dict(type='bool', default=False),
             autoclean=dict(type='bool', default=False),
@@ -1072,9 +1072,6 @@ def main():
     APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
-
-    if p['upgrade'] == 'no':
-        p['upgrade'] = None
 
     use_apt_get = p['force_apt_get']
 
