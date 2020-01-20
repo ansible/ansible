@@ -13,13 +13,13 @@ created
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list, dict_diff, param_list_to_dict
+from ansible.module_utils.network.eos.config.base import Config
 from ansible.module_utils.network.eos.facts.facts import Facts
 from ansible.module_utils.network.eos.utils.utils import normalize_interface
 
 
-class Lacp_interfaces(ConfigBase):
+class Lacp_interfaces(Config):
     """
     The eos_lacp_interfaces class
     """
