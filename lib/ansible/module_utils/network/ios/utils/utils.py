@@ -9,6 +9,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import socket
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.utils import is_masklen, to_netmask
 
@@ -28,7 +29,26 @@ def add_command_to_config_list(interface, cmd, commands):
     commands.append(cmd)
 
 
+<<<<<<< HEAD
 def new_dict_to_set(input_dict, temp_list, test_set, count):
+=======
+def check_n_return_valid_ipv6_addr(module, input_list, filtered_ipv6_list):
+    # To verify the valid ipv6 address
+    try:
+        for each in input_list:
+            if '::' in each:
+                if '/' in each:
+                    each = each.split('/')[0]
+                if socket.inet_pton(socket.AF_INET6, each):
+                    filtered_ipv6_list.append(each)
+        return filtered_ipv6_list
+    except socket.error:
+        module.fail_json(msg='Incorrect IPV6 address!')
+
+
+def new_dict_to_set(input_dict, temp_list, test_set, count=0):
+    # recursive function to convert input dict to set for comparision
+>>>>>>> fix ios_acl
     test_dict = dict()
     if isinstance(input_dict, dict):
         input_dict_len = len(input_dict)
@@ -45,9 +65,32 @@ def new_dict_to_set(input_dict, temp_list, test_set, count):
             else:
                 if v is not None:
                     test_dict.update({k: v})
+<<<<<<< HEAD
                 if tuple(iteritems(test_dict)) not in test_set and count == input_dict_len:
                     test_set.add(tuple(iteritems(test_dict)))
                     count = 0
+=======
+                try:
+                    if tuple(iteritems(test_dict)) not in test_set and count == input_dict_len:
+                        test_set.add(tuple(iteritems(test_dict)))
+                        count = 0
+                except TypeError:
+                    temp_dict = {}
+
+                    def expand_dict(dict_to_expand):
+                        temp = dict()
+                        for k, v in iteritems(dict_to_expand):
+                            if isinstance(v, dict):
+                                expand_dict(v)
+                            else:
+                                if v is not None:
+                                    temp.update({k: v})
+                                temp_dict.update(tuple(iteritems(temp)))
+                    new_dict = {k: v}
+                    expand_dict(new_dict)
+                    if tuple(iteritems(temp_dict)) not in test_set:
+                        test_set.add(tuple(iteritems(temp_dict)))
+>>>>>>> fix ios_acl
 
 
 def dict_to_set(sample_dict):

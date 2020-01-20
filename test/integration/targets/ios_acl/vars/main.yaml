@@ -1,0 +1,557 @@
+---
+merged:
+  before: []
+
+  commands:
+    - "ip access-list extended test_acl"
+    - "deny tcp 192.0.2.0 0.0.0.255 192.0.3.0 0.0.0.255 eq www fin option traceroute ttl eq 10"
+    - "ip access-list extended 110"
+    - "deny icmp 192.0.2.0 0.0.0.255 192.0.3.0 0.0.0.255 echo dscp ef ttl eq 10"
+    - "ip access-list extended 123"
+    - "deny tcp 198.51.100.0 0.0.0.255 198.51.101.0 0.0.0.255 eq telnet ack tos 12"
+    - "deny tcp 192.0.3.0 0.0.0.255 192.0.4.0 0.0.0.255 eq www ack dscp ef ttl lt 20"
+    - "ipv6 access-list R1_TRAFFIC"
+    - "deny tcp any eq www any eq telnet ack dscp af11"
+
+  after:
+    - acls:
+      - ace:
+        - destination:
+            address: 198.51.101.0
+            port_protocol:
+              eq: telnet
+            wildcard_bits: 0.0.0.255
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            address: 198.51.100.0
+            wildcard_bits: 0.0.0.255
+          tos:
+            service_value: 12
+        - destination:
+            address: 192.0.4.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            address: 192.0.3.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            lt: 20
+        name: '123'
+      - ace:
+        - destination:
+            address: 192.0.3.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          grant: deny
+          option:
+            traceroute: true
+          protocol_options:
+            tcp:
+              fin: true
+          source:
+            address: 192.0.2.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        acl_type: extended
+        name: test_acl
+      - ace:
+        - destination:
+            address: 192.0.3.0
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            icmp:
+              echo: true
+          source:
+            address: 192.0.2.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        name: '110'
+      afi: ipv4
+    - acls:
+      - ace:
+        - destination:
+            any: true
+            port_protocol:
+              eq: telnet
+          dscp: af11
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            any: true
+            port_protocol:
+              eq: www
+        name: R1_TRAFFIC
+      afi: ipv6
+
+replaced:
+  before:
+    - acls:
+      - ace:
+        - destination:
+            address: 198.51.101.0
+            port_protocol:
+              eq: telnet
+            wildcard_bits: 0.0.0.255
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            address: 198.51.100.0
+            wildcard_bits: 0.0.0.255
+          tos:
+            service_value: 12
+        - destination:
+            address: 192.0.4.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            address: 192.0.3.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            lt: 20
+        name: '123'
+      - ace:
+        - destination:
+            address: 192.0.3.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          grant: deny
+          option:
+            traceroute: true
+          protocol_options:
+            tcp:
+              fin: true
+          source:
+            address: 192.0.2.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        acl_type: extended
+        name: test_acl
+      - ace:
+        - destination:
+            address: 192.0.3.0
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            icmp:
+              echo: true
+          source:
+            address: 192.0.2.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        name: '110'
+      afi: ipv4
+    - acls:
+      - ace:
+        - destination:
+            any: true
+            port_protocol:
+              eq: telnet
+          dscp: af11
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            any: true
+            port_protocol:
+              eq: www
+        name: R1_TRAFFIC
+      afi: ipv6
+
+  commands:
+    - "no ip access-list extended 110"
+    - "ip access-list extended 110"
+    - "deny tcp 192.0.2.0 0.0.0.255 192.0.3.0 0.0.0.255 eq www syn dscp ef ttl eq 10"
+    - "ip access-list extended 150"
+    - "deny tcp 198.51.100.0 0.0.0.255 eq telnet 198.51.110.0 0.0.0.255 eq telnet syn dscp ef ttl eq 10"
+
+
+  after:
+    - acls:
+      - ace:
+        - destination:
+            address: 198.51.110.0
+            port_protocol:
+              eq: telnet
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            tcp:
+              syn: true
+          source:
+            address: 198.51.100.0
+            port_protocol:
+              eq: telnet
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        name: '150'
+      - ace:
+        - destination:
+            address: 198.51.101.0
+            port_protocol:
+              eq: telnet
+            wildcard_bits: 0.0.0.255
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            address: 198.51.100.0
+            wildcard_bits: 0.0.0.255
+          tos:
+            service_value: 12
+        - destination:
+            address: 192.0.4.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            address: 192.0.3.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            lt: 20
+        name: '123'
+      - ace:
+        - destination:
+            address: 192.0.3.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          grant: deny
+          option:
+            traceroute: true
+          protocol_options:
+            tcp:
+              fin: true
+          source:
+            address: 192.0.2.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        acl_type: extended
+        name: test_acl
+      - ace:
+        - destination:
+            address: 192.0.3.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            tcp:
+              syn: true
+          source:
+            address: 192.0.2.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        name: '110'
+      afi: ipv4
+    - acls:
+      - ace:
+        - destination:
+            any: true
+            port_protocol:
+              eq: telnet
+          dscp: af11
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            any: true
+            port_protocol:
+              eq: www
+        name: R1_TRAFFIC
+      afi: ipv6
+
+overridden:
+  before:
+    - acls:
+      - ace:
+        - destination:
+            address: 198.51.101.0
+            port_protocol:
+              eq: telnet
+            wildcard_bits: 0.0.0.255
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            address: 198.51.100.0
+            wildcard_bits: 0.0.0.255
+          tos:
+            service_value: 12
+        - destination:
+            address: 192.0.4.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            address: 192.0.3.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            lt: 20
+        name: '123'
+      - ace:
+        - destination:
+            address: 192.0.3.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          grant: deny
+          option:
+            traceroute: true
+          protocol_options:
+            tcp:
+              fin: true
+          source:
+            address: 192.0.2.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        acl_type: extended
+        name: test_acl
+      - ace:
+        - destination:
+            address: 192.0.3.0
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            icmp:
+              echo: true
+          source:
+            address: 192.0.2.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        name: '110'
+      afi: ipv4
+    - acls:
+      - ace:
+        - destination:
+            any: true
+            port_protocol:
+              eq: telnet
+          dscp: af11
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            any: true
+            port_protocol:
+              eq: www
+        name: R1_TRAFFIC
+      afi: ipv6
+
+  commands:
+    - "no ip access-list extended 123"
+    - "no ip access-list extended test_acl"
+    - "no ip access-list extended 110"
+    - "no ipv6 access-list R1_TRAFFIC"
+    - "ip access-list extended 110"
+    - "deny tcp 198.51.100.0 0.0.0.255 eq telnet 198.51.110.0 0.0.0.255 eq www ack dscp ef ttl eq 10"
+    - "ip access-list extended 150"
+    - "deny tcp 198.51.100.0 0.0.0.255 eq telnet 198.51.110.0 0.0.0.255 eq telnet syn dscp ef ttl eq 10"
+
+  after:
+    - acls:
+      - ace:
+        - destination:
+            address: 198.51.110.0
+            port_protocol:
+              eq: telnet
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            tcp:
+              syn: true
+          source:
+            address: 198.51.100.0
+            port_protocol:
+              eq: telnet
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        name: '150'
+      - ace:
+        - destination:
+            address: 198.51.110.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            address: 198.51.100.0
+            port_protocol:
+              eq: telnet
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        name: '110'
+      afi: ipv4
+
+deleted:
+  before:
+    - acls:
+      - ace:
+        - destination:
+            address: 198.51.101.0
+            port_protocol:
+              eq: telnet
+            wildcard_bits: 0.0.0.255
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            address: 198.51.100.0
+            wildcard_bits: 0.0.0.255
+          tos:
+            service_value: 12
+        - destination:
+            address: 192.0.4.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            address: 192.0.3.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            lt: 20
+        name: '123'
+      - ace:
+        - destination:
+            address: 192.0.3.0
+            port_protocol:
+              eq: www
+            wildcard_bits: 0.0.0.255
+          grant: deny
+          option:
+            traceroute: true
+          protocol_options:
+            tcp:
+              fin: true
+          source:
+            address: 192.0.2.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        acl_type: extended
+        name: test_acl
+      - ace:
+        - destination:
+            address: 192.0.3.0
+            wildcard_bits: 0.0.0.255
+          dscp: ef
+          grant: deny
+          protocol_options:
+            icmp:
+              echo: true
+          source:
+            address: 192.0.2.0
+            wildcard_bits: 0.0.0.255
+          ttl:
+            eq: 10
+        name: '110'
+      afi: ipv4
+    - acls:
+      - ace:
+        - destination:
+            any: true
+            port_protocol:
+              eq: telnet
+          dscp: af11
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            any: true
+            port_protocol:
+              eq: www
+        name: R1_TRAFFIC
+      afi: ipv6
+
+  commands:
+    - "no ip access-list extended 123"
+    - "no ip access-list extended test_acl"
+    - "no ip access-list extended 110"
+    - "no ipv6 access-list R1_TRAFFIC"
+
+  after: []
+
+round_trip:
+  after:
+    - acls:
+      - ace:
+        - {}
+        - destination:
+            any: true
+            port_protocol:
+              eq: telnet
+          dscp: af11
+          grant: deny
+          protocol_options:
+            tcp:
+              ack: true
+          source:
+            any: true
+            port_protocol:
+              eq: www
+        name: R1_TRAFFIC
+      afi: ipv6
