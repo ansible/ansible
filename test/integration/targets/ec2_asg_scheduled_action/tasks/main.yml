@@ -1,0 +1,203 @@
+---
+# tasks file for test_ec2_asg_scheduled_action
+
+- name: Test incomplete credentials with ec2_asg_scheduled_action
+
+  module_defaults:
+    ec2_asg_scheduled_action:
+        scheduled_action_name: "{{ scheduled_action_name }}"
+        autoscaling_group_name: "{{ autoscaling_group_name }}"
+        desired_capacity: "{{ desired_capacity }}"
+        recurrence: "{{ recurrence }}"
+
+  block:
+
+    # ============================================================
+
+    - name: test invalid profile
+      ec2_asg_scheduled_action:
+        region: "{{ aws_region }}"
+        profile: notavalidprofile
+      ignore_errors: yes
+      register: result
+
+    - name:
+      assert:
+        that:
+          - "'The config profile (notavalidprofile) could not be found' in result.msg"
+
+    - name: test partial credentials
+      ec2_asg_scheduled_action:
+        region: "{{ aws_region }}"
+        aws_access_key: nil
+        aws_secret_key: "{{ aws_secret_key }}"
+      ignore_errors: yes
+      register: result
+
+    - name:
+      assert:
+        that:
+          - "'Partial credentials found in explicit, missing: aws_secret_access_key' in result.msg"
+
+    - name: test without specifying region
+      ec2_asg_scheduled_action:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token | default(omit) }}"
+      ignore_errors: yes
+      register: result
+
+    - name:
+      assert:
+        that:
+          - result.msg == 'The ec2_asg_scheduled_action module requires a region and none was found in configuration, environment variables or module parameters'
+
+    # ============================================================
+
+- name: Test incomplete arguments with ec2_asg_scheduled_action
+
+  block:
+
+    # ============================================================
+
+    - name: test without specifying required module options
+      ec2_asg_scheduled_action:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token | default(omit) }}"
+      ignore_errors: yes
+      register: result
+
+    - name: assert required module options are detected
+      assert:
+        that:
+          - item in result.msg
+      loop:
+        - 'missing required arguments:'
+        - 'autoscaling_group_name'
+        - 'scheduled_action_name'
+        - 'recurrence'
+        - 'desired_capacity'
+
+- name: Run ec2_asg_scheduled_action integration tests.
+
+  module_defaults:
+    ec2_asg:
+      name: "{{ autoscaling_group_name }}"
+      min_size: 0
+      max_size: 0
+    ec2_asg_scheduled_action:
+        scheduled_action_name: "{{ scheduled_action_name }}"
+        autoscaling_group_name: "{{ autoscaling_group_name }}"
+        desired_capacity: "{{ desired_capacity }}"
+        recurrence: "{{ recurrence }}"
+        # start_time: 2020 January 1 08:00 UTC+10
+        # end_time: 2020 December 1 08:00 UTC+10
+        min_size: 0
+        max_size: 1
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+
+  block:
+
+    # ============================================================
+
+    - name: Find AMI to use
+      ec2_ami_info:
+        owners: 'amazon'
+        filters:
+          name: '{{ ec2_ami_name }}'
+      register: ec2_amis
+    - set_fact:
+        ec2_ami_image: '{{ ec2_amis.images[0].image_id }}'
+
+    - name: Create an ec2 launch template
+      ec2_launch_template:
+        name: "{{ autoscaling_launch_template_name }}"
+        image_id: "{{ ec2_ami_image }}"
+        instance_type: t3.micro
+
+    - name: Create asg
+      ec2_asg:
+        launch_template:
+          launch_template_name: "{{ autoscaling_launch_template_name }}"
+        state: present
+        wait_for_instances: no
+      register: ec2_asg
+
+    - name: create a scheduled action for autoscaling group
+      ec2_asg_scheduled_action:
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+
+    - name: check scheduled action idempotency
+      ec2_asg_scheduled_action:
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+
+    - name: create a second scheduled action (recurrence cannot collide)
+      ec2_asg_scheduled_action:
+        scheduled_action_name: "{{ scheduled_action_name }}-2"
+        recurrence: '0 23 * * *'
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+
+    - name: remove second scheduled action
+      ec2_asg_scheduled_action:
+        scheduled_action_name: "{{ scheduled_action_name }}-2"
+        state: absent
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+
+    - name: check idempotency on initial action
+      ec2_asg_scheduled_action:
+      register: output
+
+    - assert:
+        that:
+          - output is not changed
+
+    - name: remove initial scheduled action
+      ec2_asg_scheduled_action:
+        state: absent
+      register: output
+
+    - assert:
+        that:
+          - output is changed
+
+# ============================================================
+
+  always:
+
+    - name: remove asg
+      ec2_asg:
+        state: absent
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: remove ec2 launch template
+      ec2_launch_template:
+        name: "{{ autoscaling_launch_template_name }}"
+        state: absent
+      register: removed
+      until: removed is not failed
+      ignore_errors: yes
+      retries: 10
