@@ -33,6 +33,10 @@ options:
             - This parameter is ignored if PYTHONHTTPSVERIFY environment variable is used.
         type: bool
         default: yes
+    api_auth_file:
+        type: str
+        description:
+            - if set it overrides environment variable C(ONE_AUTH).
     wait_timeout:
         description:
             - Time to wait for the desired state to be reached before timeout, in seconds.

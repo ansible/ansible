@@ -5,7 +5,7 @@
 
 import time
 import ssl
-from os import environ,path
+from os import environ, path
 from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import AnsibleModule
 
@@ -407,7 +407,6 @@ class OpenNebulaModule:
 
 
     def get_vms_by_name(self, name_pattern):
-
         vms = []
         pattern = None
 

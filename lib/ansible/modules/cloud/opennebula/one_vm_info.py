@@ -38,37 +38,6 @@ version_added: "2.10"
 requirements:
   - pyone
 options:
-  api_url:
-    type: str
-    description:
-      - URL of the OpenNebula RPC server.
-      - It is recommended to use HTTPS so that the username/password are not
-      - transferred over the network unencrypted.
-      - If not set then the value of the C(ONE_URL) environment variable is used.
-    aliases: ['api_endpoint']
-  api_username:
-    type: str
-    description:
-      - Name of the user to login into the OpenNebula RPC server. If not set
-      - then the value of the C(ONE_USERNAME) environment variable is used.
-  api_password:
-    type: str
-    description:
-      - Password of the user to login into OpenNebula RPC server. If not set
-      - then the value of the C(ONE_PASSWORD) environment variable is used.
-      - if both I(api_username) or I(api_password) are not set, then it will try
-      - authenticate with ONE auth file. Default path is "~/.one/one_auth".
-      - Set environment variable C(ONE_AUTH) or api_auth_file to override this path.
-    aliases: ['api_token']
-  api_auth_file:
-    type: str
-    description:
-      - if set it overrides environment variable C(ONE_AUTH).
-  validate_certs:
-    description:
-      - If C(False), SSL certificates will not be validated.
-    type: bool
-    default: True
   ids:
     type: list
     description:
@@ -82,6 +51,9 @@ options:
       - which restricts the list of VMs (whose facts will be returned) whose names match specified regex.
       - Also, if the C(name) begins with '~*' case-insensitive matching will be performed.
       - See examples for more details.
+
+extends_documentation_fragment: opennebula
+
 author:
     - "Jan Meerkamp (@meerkampdvv)"
 '''
@@ -243,7 +215,7 @@ def main():
     str_ids = one.module.params.get('ids')
     ids = []
     for str_id in str_ids:
-            ids.append(int(str_id))
+        ids.append(int(str_id))
 
     name = one.module.params.get('name')
 
