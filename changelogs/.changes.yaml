@@ -1539,3 +1539,9 @@ releases:
       - junos
       - sros
     release_date: '2020-01-15'
+  2.9.4:
+    codename: Immigrant Song
+    fragments:
+    - 66549-enablerepo-not-honored-when-used-with-disablerepo-all.yml
+    - v2.9.4_summary.yaml
+    release_date: '2020-01-20'
