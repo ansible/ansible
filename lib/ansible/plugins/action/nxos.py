@@ -25,6 +25,7 @@ import sys
 
 from ansible import constants as C
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
+from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.nxos.nxos import nxos_provider_spec
 from ansible.utils.display import Display
@@ -80,6 +81,15 @@ class ActionModule(ActionNetworkModule):
             if self._task.args.get('transport'):
                 display.warning('transport is unnecessary when using %s and will be ignored' % self._play_context.connection)
                 del self._task.args['transport']
+
+            if module_name == 'nxos_gir':
+                conn = Connection(self._connection.socket_path)
+                persistent_command_timeout = conn.get_option('persistent_command_timeout')
+                gir_timeout = 200
+                if persistent_command_timeout < gir_timeout:
+                    conn.set_option('persistent_command_timeout', gir_timeout)
+                    msg = "timeout value extended to %ss for nxos_gir" % gir_timeout
+                    display.warning(msg)
 
         elif self._play_context.connection == 'local':
             provider = load_provider(nxos_provider_spec, self._task.args)
