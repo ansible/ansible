@@ -3968,8 +3968,6 @@ lib/ansible/modules/network/netconf/netconf_rpc.py validate-modules:doc-missing-
 lib/ansible/modules/network/netconf/netconf_rpc.py validate-modules:doc-required-mismatch
 lib/ansible/modules/network/netconf/netconf_rpc.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/netconf/netconf_rpc.py validate-modules:return-syntax-error
-lib/ansible/modules/network/netscaler/netscaler_cs_action.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/network/netscaler/netscaler_cs_action.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/netscaler/netscaler_cs_policy.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/netscaler/netscaler_cs_vserver.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/network/netscaler/netscaler_cs_vserver.py validate-modules:nonexistent-parameter-documented
@@ -6417,8 +6415,6 @@ test/units/modules/network/ftd/test_ftd_install.py future-import-boilerplate
 test/units/modules/network/ftd/test_ftd_install.py metaclass-boilerplate
 test/units/modules/network/netscaler/netscaler_module.py future-import-boilerplate
 test/units/modules/network/netscaler/netscaler_module.py metaclass-boilerplate
-test/units/modules/network/netscaler/test_netscaler_cs_action.py future-import-boilerplate
-test/units/modules/network/netscaler/test_netscaler_cs_action.py metaclass-boilerplate
 test/units/modules/network/netscaler/test_netscaler_cs_policy.py future-import-boilerplate
 test/units/modules/network/netscaler/test_netscaler_cs_policy.py metaclass-boilerplate
 test/units/modules/network/netscaler/test_netscaler_cs_vserver.py future-import-boilerplate
