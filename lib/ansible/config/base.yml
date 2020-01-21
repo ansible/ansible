@@ -898,7 +898,7 @@ DEFAULT_WIN_ASYNC_STARTUP_TIMEOUT:
       overall maximum duration the task can take will be extended by the amount specified here.
   env: [{name: ANSIBLE_WIN_ASYNC_STARTUP_TIMEOUT}]
   ini:
-    - {key: named_pipe_timeout, section: defaults}
+    - {key: win_async_startup_timeout, section: defaults}
   type: integer
   version_added: '2.10'
 DEFAULT_NO_LOG:

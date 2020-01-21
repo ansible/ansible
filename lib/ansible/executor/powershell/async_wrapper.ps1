@@ -145,14 +145,15 @@ try {
     $result_json = ConvertTo-Json -InputObject $result -Depth 99 -Compress
     Set-Content $results_path -Value $result_json
 
-    $np_timeout = $Payload.async_named_pipe_timeout * 1000
+    $np_timeout = $Payload.win_async_startup_timeout * 1000
     Write-AnsibleLog "INFO - waiting for async process to connect to named pipe for $np_timeout milliseconds" "async_wrapper"
     $wait_async = $pipe.BeginWaitForConnection($null, $null)
     $wait_async.AsyncWaitHandle.WaitOne($np_timeout) > $null
     if (-not $wait_async.IsCompleted) {
-        throw """Ansible encountered a timeout while waiting for the async task to start and connect to the named
-         pipe. This can be affected by the performance of the target - you can increase this timeout using
-         ANSIBLE_NAMED_PIPE_TIMEOUT if this keeps happening."""
+        $msg = "Ansible encountered a timeout while waiting for the async task to start and connect to the named"
+        $msg += "pipe. This can be affected by the performance of the target - you can increase this timeout using"
+        $msg += "DEFAULT_WIN_ASYNC_STARTUP_TIMEOUT if this keeps happening."
+        throw $msg
     }
     $pipe.EndWaitForConnection($wait_async)
 
