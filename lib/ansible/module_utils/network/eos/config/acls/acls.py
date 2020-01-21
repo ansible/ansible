@@ -241,7 +241,7 @@ class Acls(ConfigBase):
             if hafi not in w_afi_list:
                 h = {"afi": hafi}
                 remove_cmds = del_commands(h, have)
-                commands.append(remove_cmds) 
+                commands.append(remove_cmds)
         for w in want:
             w_names = []
             for h in have:
@@ -264,7 +264,7 @@ class Acls(ConfigBase):
                             remove_cmds = del_commands(h, have)
                             if remove_cmds not in commands:
                                 commands.append(remove_cmds)
-        
+
         if diff:
             config_cmds = set_commands(want, have)
             config_cmds = list(itertools.chain(*config_cmds))
