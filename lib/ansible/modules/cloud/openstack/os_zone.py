@@ -160,7 +160,7 @@ def _wait(timeout, cloud, zone, state, module, sdk):
 def main():
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
-        zone_type=dict(required=False, choice=['primary', 'secondary']),
+        zone_type=dict(required=False, choices=['primary', 'secondary']),
         email=dict(required=False, default=None),
         description=dict(required=False, default=None),
         ttl=dict(required=False, default=None, type='int'),

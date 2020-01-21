@@ -241,7 +241,7 @@ def main():
         interface=dict(type='str'),
         description=dict(type='str'),
         admin_distance=dict(type='str', default='1'),
-        tag=dict(tag='str'),
+        tag=dict(type='str'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 

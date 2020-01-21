@@ -263,7 +263,7 @@ def main():
         name=dict(type='str', aliases=['description']),
         admin_distance=dict(type='str'),
         track=dict(type='str'),
-        tag=dict(tag='str'),
+        tag=dict(type='str'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 

@@ -158,7 +158,7 @@ options:
         description:
         - Default VLAN ID.
         - Requires C(ip_assignment_mode) to be C(Bridge mode) or C(Layer 3 roaming).
-        type: str
+        type: int
     vlan_id:
         description:
         - ID number of VLAN on SSID.
@@ -343,10 +343,7 @@ data:
             sample: 0
 '''
 
-import os
-from ansible.module_utils.basic import AnsibleModule, json, env_fallback
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule, json
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -415,7 +412,7 @@ def main():
                            port=dict(type='int'),
                            secret=dict(type='str', no_log=True),
                            )
-    vlan_arg_spec = dict(tags=dict(type='list'),
+    vlan_arg_spec = dict(tags=dict(type='list', elements='str'),
                          vlan_id=dict(type='int'),
                          )
 
@@ -424,7 +421,7 @@ def main():
                          number=dict(type='int', aliases=['ssid_number']),
                          name=dict(type='str'),
                          org_name=dict(type='str', aliases=['organization']),
-                         org_id=dict(type='int'),
+                         org_id=dict(type='str'),
                          net_name=dict(type='str'),
                          net_id=dict(type='str'),
                          enabled=dict(type='bool'),
@@ -444,12 +441,12 @@ def main():
                                                                'Facebook Wi-Fi',
                                                                'Google OAuth',
                                                                'Sponsored guest']),
-                         radius_servers=dict(type='list', default=None, element='dict', options=radius_arg_spec),
+                         radius_servers=dict(type='list', default=None, elements='dict', options=radius_arg_spec),
                          radius_coa_enabled=dict(type='bool'),
                          radius_failover_policy=dict(type='str', choices=['Deny access', 'Allow access']),
                          radius_load_balancing_policy=dict(type='str', choices=['Strict priority order', 'Round robin']),
                          radius_accounting_enabled=dict(type='bool'),
-                         radius_accounting_servers=dict(type='list', element='dict', options=radius_arg_spec),
+                         radius_accounting_servers=dict(type='list', elements='dict', options=radius_arg_spec),
                          ip_assignment_mode=dict(type='str', choices=['NAT mode',
                                                                       'Bridge mode',
                                                                       'Layer 3 roaming',
@@ -459,7 +456,7 @@ def main():
                          concentrator_network_id=dict(type='str'),
                          vlan_id=dict(type='int'),
                          default_vlan_id=dict(type='int'),
-                         ap_tags_vlan_ids=dict(type='list', default=None, element='dict', options=vlan_arg_spec),
+                         ap_tags_vlan_ids=dict(type='list', default=None, elements='dict', options=vlan_arg_spec),
                          walled_garden_enabled=dict(type='bool'),
                          walled_garden_ranges=dict(type='list'),
                          min_bitrate=dict(type='float', choices=[1, 2, 5.5, 6, 9, 11, 12, 18, 24, 36, 48, 54]),
@@ -557,6 +554,12 @@ def main():
                 try:
                     i['vlanId'] = i['vlan_id']
                     del i['vlan_id']
+                except KeyError:
+                    pass
+                try:
+                    tags = ','.join(i['tags'])
+                    del i['tags']
+                    i['tags'] = tags
                 except KeyError:
                     pass
         ssids = get_ssids(meraki, net_id)
