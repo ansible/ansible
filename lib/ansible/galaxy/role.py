@@ -64,6 +64,7 @@ class GalaxyRole(object):
         self.version = version
         self.src = src or name
         self.scm = scm
+        self.download_path = context.CLIARGS['download_roles_path']
 
         if path is not None:
             if self.name not in path:
@@ -181,7 +182,7 @@ class GalaxyRole(object):
 
             try:
                 url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent())
-                temp_file = tempfile.NamedTemporaryFile(delete=False)
+                temp_file = tempfile.NamedTemporaryFile(delete=False, dir=self.download_path)
                 data = url_file.read()
                 while data:
                     temp_file.write(data)

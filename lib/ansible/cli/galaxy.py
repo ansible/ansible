@@ -93,7 +93,14 @@ class GalaxyCLI(CLI):
                                 help='The path to the directory containing your roles. The default is the first '
                                      'writable one configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
 
-        # Add sub parser for the Galaxy role type (role or collection)
+        download_roles_path = opt_help.argparse.ArgumentParser(add_help=False)
+        download_roles_path.add_argument('-d', '--download-roles-path', dest='download_roles_path',
+                                         type=opt_help.unfrack_path(pathsep=True),
+                                         default=None, action=opt_help.PrependListAction,
+                                         help='The path used to download role with ansible-galaxy'
+                                              ' install. The default path is /tmp ')
+
+    # Add sub parser for the Galaxy role type (role or collection)
         type_parser = self.parser.add_subparsers(metavar='TYPE', dest='type')
         type_parser.required = True
 
