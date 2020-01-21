@@ -3,5 +3,5 @@
     - include_tasks: setup.yml
     - include_tasks: semodule.yml
   when: 
-    - not ('opensuse' in ansible_facts.distribution | lower and ansible_facts.python_version[0] | int == 2)
+    - not 'opensuse' in ansible_facts.distribution | lower
     - not ansible_facts.distribution | lower == 'ubuntu'
