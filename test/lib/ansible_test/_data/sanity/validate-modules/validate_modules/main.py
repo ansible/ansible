@@ -52,6 +52,7 @@ from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass
 from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
+from ansible.module_utils.parsing.convert_bool import BOOLEANS
 
 if PY3:
     # Because there is no ast.TryExcept in Python 3 ast module
@@ -1423,6 +1424,16 @@ class ModuleValidator(Validator):
                             msg=msg
                         )
                         raise StopIteration()
+                    if choice in BOOLEANS:
+                        msg = "Argument '%s' in argument_spec" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " defines boolean-like choice (%r) in a string parameter, which is discouraged." % choice
+                        self.reporter.warning(
+                            path=self.object_path,
+                            code='no-boolean-choices',
+                            msg=msg
+                        )
             except StopIteration:
                 continue
 

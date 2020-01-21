@@ -5006,6 +5006,7 @@ lib/ansible/modules/packaging/language/yarn.py validate-modules:parameter-type-n
 lib/ansible/modules/packaging/os/apk.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/packaging/os/apk.py validate-modules:doc-missing-type
 lib/ansible/modules/packaging/os/apk.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/packaging/os/apt.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/packaging/os/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/packaging/os/apt.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/packaging/os/apt.py validate-modules:undocumented-parameter

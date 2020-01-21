@@ -90,14 +90,14 @@ options:
     version_added: "2.1"
   upgrade:
     description:
-      - If safe, performs an aptitude safe-upgrade.
+      - If yes or safe, performs an aptitude safe-upgrade.
       - If full, performs an aptitude full-upgrade.
       - If dist, performs an apt-get dist-upgrade.
       - 'Note: This does not upgrade a specific package, use state=latest for that.'
       - 'Note: Since 2.4, apt-get is used as a fall-back if aptitude is not present.'
     version_added: "1.1"
-    choices: [ '', safe, dist, full ]
-    default: ''
+    choices: [ dist, full, 'no', safe, 'yes' ]
+    default: 'no'
   dpkg_options:
     description:
       - Add dpkg options to apt command. Defaults to '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
@@ -150,7 +150,7 @@ requirements:
    - aptitude (before 2.4)
 author: "Matthew Williams (@mgwilliams)"
 notes:
-   - Three of the upgrade modes (C(full), C(safe)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
+   - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
    - In most cases, packages installed with apt will start newly installed services by default. Most distributions have mechanisms to avoid this.
      For example when installing Postgresql-9.5 in Debian 9, creating an excutable shell script (/usr/sbin/policy-rc.d) that throws
      a return code of 101 will stop Postgresql 9.5 starting up after install. Remove the file or remove its execute permission afterwards.
@@ -891,7 +891,7 @@ def cleanup(m, purge=False, force=False, operation=None,
     m.exit_json(changed=changed, stdout=out, stderr=err, diff=diff)
 
 
-def upgrade(m, mode="safe", force=False, default_release=None,
+def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False,
             allow_unauthenticated=False,
@@ -1028,7 +1028,7 @@ def main():
             default_release=dict(type='str', aliases=['default-release']),
             install_recommends=dict(type='bool', aliases=['install-recommends']),
             force=dict(type='bool', default=False),
-            upgrade=dict(type='str', choices=['', 'dist', 'full', 'safe'], default=''),
+            upgrade=dict(type='str', choices=['dist', 'full', 'no', 'safe', 'yes']),
             dpkg_options=dict(type='str', default=DPKG_OPTIONS),
             autoremove=dict(type='bool', default=False),
             autoclean=dict(type='bool', default=False),
@@ -1072,6 +1072,9 @@ def main():
     APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
+
+    if p['upgrade'] == 'no':
+        p['upgrade'] = None
 
     use_apt_get = p['force_apt_get']
 

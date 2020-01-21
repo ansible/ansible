@@ -1591,13 +1591,6 @@ class AnsibleModule(object):
             choices = v.get('choices', None)
             if choices is None:
                 continue
-            if BOOLEANS.intersection(choices):
-                msg = (
-                    'Using boolean keywords ({0}) in string parameters is discouraged. '
-                    'Update the code and API for this module. AnsibleModule will '
-                    'refuse to accept such choices in the '
-                    'future').format(','.join(map(str, BOOLEANS)))
-                self.deprecate(msg, version='2.12')
             if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
                 if k in param:
                     # Allow one or more when type='list' param with choices
@@ -1613,6 +1606,12 @@ class AnsibleModule(object):
                         # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
                         # the value.  If we can't figure this out, module author is responsible.
                         lowered_choices = None
+                        if param[k] in [ 'False', 'True' ]:
+                            msg = (
+                                'Using boolean keywords ({0}) in string parameters is discouraged. '
+                                'Check the module documentation and use a different keyword instead.'
+                                ).format(','.join(map(str, BOOLEANS)))
+                            self.deprecate(msg, version='2.14')
                         if param[k] == 'False':
                             lowered_choices = lenient_lowercase(choices)
                             overlap = BOOLEANS_FALSE.intersection(choices)
