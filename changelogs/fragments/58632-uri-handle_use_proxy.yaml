@@ -1,2 +1,2 @@
 bugfixes:
-  - uri - properly honor use_proxy parameter
+  - uri - properly honor ``use_proxy`` parameter (https://github.com/ansible/ansible/issues/58632)
