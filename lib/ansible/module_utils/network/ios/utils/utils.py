@@ -62,23 +62,35 @@ def dict_to_set(sample_dict):
 def filter_dict_having_none_value(want, have):
     # Generate dict with have dict value which is None in want dict
     test_dict = dict()
-    test_key_dict = dict()
     name = want.get('name')
     if name:
         test_dict['name'] = name
     diff_ip = False
-    want_ip = ''
     for k, v in iteritems(want):
         if isinstance(v, dict):
             for key, value in iteritems(v):
+                test_key_dict = dict()
                 if value is None:
                     dict_val = have.get(k).get(key)
+                    test_key_dict.update({key: dict_val})
+                elif k == 'ipv6' and value.lower() != have.get(k)[0].get(key).lower():
+                    # as multiple IPV6 address can be configured on same
+                    # interface, for replace state in place update will
+                    # actually create new entry, which isn't as expected
+                    # for replace state, so in case of IPV6 address
+                    # every time 1st delete the existing IPV6 config and
+                    # then apply the new change
+                    dict_val = have.get(k)[0].get(key)
                     test_key_dict.update({key: dict_val})
                 test_dict.update({k: test_key_dict})
         if isinstance(v, list):
             for key, value in iteritems(v[0]):
+                test_key_dict = dict()
                 if value is None:
                     dict_val = have.get(k).get(key)
+                    test_key_dict.update({key: dict_val})
+                elif k == 'ipv6' and value.lower() != have.get(k)[0].get(key).lower():
+                    dict_val = have.get(k)[0].get(key)
                     test_key_dict.update({key: dict_val})
                 test_dict.update({k: test_key_dict})
             # below conditions checks are added to check if
