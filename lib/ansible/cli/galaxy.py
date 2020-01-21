@@ -1063,25 +1063,31 @@ class GalaxyCLI(CLI):
                 vwidth=vwidth)
             )
 
+        search_path_found = False
         path_found = False
         warnings = []
         galaxy_type = context.CLIARGS['type']
+        import q
         if context.CLIARGS['type'] == 'role':
-            if context.CLIARGS['role']:
-                # show the requested role, if it exists
-                name = context.CLIARGS['role']
-                gr = GalaxyRole(self.galaxy, self.api, name)
-                if gr.metadata:
-                    display.display('# %s' % os.path.dirname(gr.path))
-                    _display_role(gr)
-                    path_found = True
+            roles_search_paths = context.CLIARGS['roles_path']
+            role_name = context.CLIARGS['role']
+
+            for path in q/roles_search_paths:
+                role_path = GalaxyCLI._resolve_path(path)
+                if os.path.isdir(path):
+                    search_path_found = True
+
+                if role_name:
+                    # show the requested role, if it exists
+                    gr = GalaxyRole(self.galaxy, self.api, role_name)
+                    if os.path.isdir(gr.path):
+                        path_found = True
+                        display.display('# %s' % os.path.dirname(gr.path))
+                        _display_role(gr)
+                        break
+                    else:
+                        warnings.append("- the role %s was not found" % role_name)
                 else:
-                    display.display("- the role %s was not found" % name)
-            else:
-                # show all valid roles in the roles_path directory
-                roles_path = context.CLIARGS['roles_path']
-                for path in roles_path:
-                    role_path = os.path.expanduser(path)
                     if not os.path.exists(role_path):
                         warnings.append("- the configured path %s does not exist." % role_path)
                         continue
@@ -1090,7 +1096,7 @@ class GalaxyCLI(CLI):
                         continue
                     display.display('# %s' % role_path)
                     path_files = os.listdir(role_path)
-                    path_found = True
+                    search_path_found = True
                     for path_file in path_files:
                         gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
                         if gr.metadata:
@@ -1107,6 +1113,7 @@ class GalaxyCLI(CLI):
             #               namespace
             #               namespace.ab*
 
+            collection_path_found = False
             for path in collections_search_paths:
                 collection_path = GalaxyCLI._resolve_path(path)
                 if not os.path.exists(path):
@@ -1118,6 +1125,8 @@ class GalaxyCLI(CLI):
                 elif not os.path.isdir(collection_path):
                     warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
                     continue
+
+                search_path_found = True
 
                 if collection_name:
                     # list a specific collection
@@ -1132,8 +1141,7 @@ class GalaxyCLI(CLI):
                         warnings.append("- unable to find {0} in collection paths".format(collection_name))
                         continue
 
-                    path_found = True
-
+                    collection_path_found = True
                     collection = CollectionRequirement.from_path(b_collection_path, False)
                     fqcn_width, version_width = _get_collection_widths(collection)
 
@@ -1154,15 +1162,13 @@ class GalaxyCLI(CLI):
                     for collection in collections:
                         _display_collection(collection, fqcn_width, version_width)
 
-                    path_found = True
-
             # Do not warn if the specific collection was found in any of the search paths
-            if path_found and collection_name:
+            if collection_path_found and collection_name:
                 warnings = []
 
         for w in warnings:
             display.warning(w)
-        if not path_found:
+        if not search_path_found:
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(galaxy_type))
         return 0
 
