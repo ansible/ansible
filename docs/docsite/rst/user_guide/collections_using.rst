@@ -87,6 +87,14 @@ Using ``collections`` in roles
 
 In a role, you can control which collections Ansible searches for modules and action plugins globally with the ``collections`` keyword. Define the collections in the ``metadata/main.yml`` file within your role, and Ansible will use them for your role every time, in any context. Ansible will use the collections defined by a role even if the playbook that calls the role defines different collections in a separate ``collections`` keyword entry.
 
+.. code-block:: yaml
+
+   # myrole/metadata/main.yml
+   collections:
+     - my_namespace.first_collection
+     - my_namespace.second_collection
+     - other_namespace.other_collection
+
 Using ``collections`` in playbooks
 ----------------------------------
 
