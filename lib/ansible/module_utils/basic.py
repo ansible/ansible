@@ -579,9 +579,9 @@ class AnsibleFallbackNotFound(Exception):
 
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
-                 check_invalid_arguments=None, mutually_exclusive=None, required_together=None,
-                 required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-                 required_if=None, required_by=None):
+                 mutually_exclusive=None, required_together=None,
+                 required_one_of=None, add_file_common_args=False,
+                 supports_check_mode=False, required_if=None, required_by=None):
 
         '''
         Common code for quickly building an ansible module in Python
@@ -597,14 +597,6 @@ class AnsibleModule(object):
         self.check_mode = False
         self.bypass_checks = bypass_checks
         self.no_log = no_log
-
-        # Check whether code set this explicitly for deprecation purposes
-        if check_invalid_arguments is None:
-            check_invalid_arguments = True
-            module_set_check_invalid_arguments = False
-        else:
-            module_set_check_invalid_arguments = True
-        self.check_invalid_arguments = check_invalid_arguments
 
         self.mutually_exclusive = mutually_exclusive
         self.required_together = required_together
@@ -654,7 +646,7 @@ class AnsibleModule(object):
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
 
-        self._check_arguments(check_invalid_arguments)
+        self._check_arguments()
 
         # check exclusive early
         if not bypass_checks:
@@ -695,15 +687,6 @@ class AnsibleModule(object):
 
         # finally, make sure we're in a sane working dir
         self._set_cwd()
-
-        # Do this at the end so that logging parameters have been set up
-        # This is to warn third party module authors that the functionality is going away.
-        # We exclude uri and zfs as they have their own deprecation warnings for users and we'll
-        # make sure to update their code to stop using check_invalid_arguments when 2.9 rolls around
-        if module_set_check_invalid_arguments and self._name not in ('uri', 'zfs'):
-            self.deprecate('Setting check_invalid_arguments is deprecated and will be removed.'
-                           ' Update the code for this module  In the future, AnsibleModule will'
-                           ' always check for invalid arguments.', version='2.9')
 
     @property
     def tmpdir(self):
@@ -1454,7 +1437,7 @@ class AnsibleModule(object):
                                "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
         self._deprecations.extend(list_deprecations(spec, param))
 
-    def _check_arguments(self, check_invalid_arguments, spec=None, param=None, legal_inputs=None):
+    def _check_arguments(self, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
         unsupported_parameters = set()
         if spec is None:
@@ -1466,7 +1449,7 @@ class AnsibleModule(object):
 
         for k in list(param.keys()):
 
-            if check_invalid_arguments and k not in legal_inputs:
+            if k not in legal_inputs:
                 unsupported_parameters.add(k)
 
         for k in PASS_VARS:
@@ -1728,7 +1711,7 @@ class AnsibleModule(object):
 
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
 
-                    self._check_arguments(self.check_invalid_arguments, spec, param, options_legal_inputs)
+                    self._check_arguments(spec, param, options_legal_inputs)
 
                     # check exclusive early
                     if not self.bypass_checks:
@@ -2054,9 +2037,9 @@ class AnsibleModule(object):
                     elif isinstance(d, Mapping):
                         self.deprecate(d['msg'], version=d.get('version', None))
                     else:
-                        self.deprecate(d)
+                        self.deprecate(d)  # pylint: disable=ansible-deprecated-no-version
             else:
-                self.deprecate(kwargs['deprecations'])
+                self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
 
         if self._deprecations:
             kwargs['deprecations'] = self._deprecations

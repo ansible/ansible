@@ -6264,6 +6264,7 @@ test/units/module_utils/aws/test_aws_module.py metaclass-boilerplate
 test/units/module_utils/basic/test__symbolic_mode_to_octal.py future-import-boilerplate
 test/units/module_utils/basic/test_deprecate_warn.py future-import-boilerplate
 test/units/module_utils/basic/test_deprecate_warn.py metaclass-boilerplate
+test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-no-version
 test/units/module_utils/basic/test_exit_json.py future-import-boilerplate
 test/units/module_utils/basic/test_get_file_attributes.py future-import-boilerplate
 test/units/module_utils/basic/test_heuristic_log_sanitize.py future-import-boilerplate
