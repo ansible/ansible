@@ -44,7 +44,7 @@ Each directory within a role must contain a ``main.yml`` file with relevant cont
 - ``templates/main.yml`` - templates that the role deploys.
 - ``meta/main.yml`` - metadata for the role, including role dependencies.
 
-You may add other YAML files in some directories. For example, you can place platform-specific tasks in separate files and refer to them in the ``tasks/main.yml`` file:
+You can add other YAML files in some directories. For example, you can place platform-specific tasks in separate files and refer to them in the ``tasks/main.yml`` file:
 
 .. code-block:: yaml
 
@@ -192,7 +192,7 @@ You can pass other keywords, including variables and tags, when including roles:
           tags: typeA
       ...
 
-When you add a :ref:`tag <tags>` to an ``include_role`` task, Ansible applies the tag ONLY to the include itself. This means you can pass ``--tags`` to run only selected tasks from the role, if those tasks themselves have the same tag as the include statement. See :ref:`selective_reuse` for details.
+When you add a :ref:`tag <tags>` to an ``include_role`` task, Ansible applies the tag `only` to the include itself. This means you can pass ``--tags`` to run only selected tasks from the role, if those tasks themselves have the same tag as the include statement. See :ref:`selective_reuse` for details.
 
 You can conditionally include a role:
 
@@ -236,7 +236,7 @@ You can pass other keywords, including variables and tags, when importing roles:
             app_port: 5000
       ...
 
-When you add a tag to an ``import_role`` statement, Ansible applies the tag to ALL tasks within the role. See :ref:`tag_inheritance` for details.
+When you add a tag to an ``import_role`` statement, Ansible applies the tag to `all` tasks within the role. See :ref:`tag_inheritance` for details.
 
 Running a role multiple times in one playbook
 =============================================
@@ -378,7 +378,7 @@ To use ``allow_duplicates: true`` with role dependencies, you must specify it fo
 Embedding modules and plugins in roles
 ======================================
 
-If you write a custom module (see :ref:`developing_modules`) or a plugin (see :ref:`developing_plugins`), you may wish to distribute it as part of a role. For example, if you write a module that helps configure your company's internal software, and you want other people in your organization to use this module, but you do not want to tell everyone how to configure their Ansible library path, you can include the module in your internal_config role.
+If you write a custom module (see :ref:`developing_modules`) or a plugin (see :ref:`developing_plugins`), you might wish to distribute it as part of a role. For example, if you write a module that helps configure your company's internal software, and you want other people in your organization to use this module, but you do not want to tell everyone how to configure their Ansible library path, you can include the module in your internal_config role.
 
 Alongside the 'tasks' and 'handlers' structure of a role, add a directory named 'library'.  In this 'library' directory, then include the module directly inside of it.
 
@@ -403,7 +403,7 @@ The module will be usable in the role itself, as well as any roles that are call
         - some_other_role_using_my_custom_modules
         - yet_another_role_using_my_custom_modules
 
-This can also be used, with some limitations, to modify modules in Ansible's core distribution, such as to use development versions of modules before they are released in production releases. Use this approach with caution, as API signatures may change in core components, and is not always guaranteed to work.
+If necessary, you can also embed a module in a role to modify a module in Ansible's core distribution. For example, you can use the development version of a particular module before it is released in production releases by copying the module and embedding the copy in a role. Use this approach with caution, as API signatures may change in core components, and this workaround is not guaranteed to work.
 
 The same mechanism can be used to embed and distribute plugins in a role, using the same schema. For example, for a filter plugin:
 

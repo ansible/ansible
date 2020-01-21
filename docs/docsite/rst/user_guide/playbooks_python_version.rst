@@ -5,10 +5,10 @@ Python3 in templates
 ********************
 
 Ansible uses Jinja2 to leverage Python data types and standard functions in templates and variables.
-This approach makes for a rich set of operations that can be performed on data. However,
+You can use these data types and standard functions to perform a rich set of operations on your data. However,
 if you use templates, you must be aware of differences between Python versions.
 
-These topics help you design templates that work on both Python2 and Python3. They may also help if you are upgrading from Python2 to Python3. Upgrading within Python2 or Python3 does not usually introduce changes that affect Jinja2 templates.
+These topics help you design templates that work on both Python2 and Python3. They might also help if you are upgrading from Python2 to Python3. Upgrading within Python2 or Python3 does not usually introduce changes that affect Jinja2 templates.
 
 .. _pb-py-compat-dict-views:
 
@@ -42,9 +42,9 @@ using the :func:`list <jinja2:list>` filter whenever using :meth:`dict.keys`,
 dict.iteritems()
 ================
 
-In Python2, dictionaries have :meth:`~dict.iterkeys`, :meth:`~dict.itervalues`, and :meth:`~dict.iteritems` methods.
+Python2 dictionaries have :meth:`~dict.iterkeys`, :meth:`~dict.itervalues`, and :meth:`~dict.iteritems` methods.
 
-In Python3 these methods have been removed. Use :meth:`dict.keys`, :meth:`dict.values`, and :meth:`dict.items` to make your playbooks and templates compatible with both Python2 and Python3::
+Python3 dictionaries do not have these methods. Use :meth:`dict.keys`, :meth:`dict.values`, and :meth:`dict.items` to make your playbooks and templates compatible with both Python2 and Python3::
 
     vars:
       hosts:

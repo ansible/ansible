@@ -98,7 +98,7 @@ You add tags to includes the same way you add tags to any other task:
      include_tasks: db.yml
      tags: db
 
-You can add a tag only to the dynamic include of a role. In this example, the ``foo`` tag will *NOT* apply to tasks inside the ``bar`` role:
+You can add a tag only to the dynamic include of a role. In this example, the ``foo`` tag will `not` apply to tasks inside the ``bar`` role:
 
 .. code-block:: yaml
 
@@ -194,7 +194,7 @@ There are three ways to add tags to roles:
 
   #. Add the same tag or tags to all tasks in the role by setting tags under ``roles``. See examples in this section.
   #. Add the same tag or tags to all tasks in the role by setting tags on a static ``import_role`` in your playbook. See examples in :ref:`tags_on_imports`.
-  #. Add a tag or tags to to individual tasks or blocks within the role itself. This is the only approach that allows you to select or skip some tasks within the role. To select or skip tasks within the role, you must have tags set on individual tasks or blocks, use the dynamic ``include_role`` in your playbook, and add the same tag or tags to the include. When you use this approach, and then run your playbook with ``-tags foo``, Ansible runs the include itself plus any tasks in the role that also have the tag ``foo``. See :ref:`tags_on_includes` for details.
+  #. Add a tag or tags to to individual tasks or blocks within the role itself. This is the only approach that allows you to select or skip some tasks within the role. To select or skip tasks within the role, you must have tags set on individual tasks or blocks, use the dynamic ``include_role`` in your playbook, and add the same tag or tags to the include. When you use this approach, and then run your playbook with ``--tags foo``, Ansible runs the include itself plus any tasks in the role that also have the tag ``foo``. See :ref:`tags_on_includes` for details.
 
 When you incorporate a role in your playbook statically with the ``roles`` keyword, Ansible adds any tags you define to all the tasks in the role. For example:
 
@@ -248,7 +248,7 @@ Tag inheritance for includes: blocks and the ``apply`` keyword
 
 By default, Ansible does not apply :ref:`tag inheritance <tag_inheritance>` to dynamic re-use with ``include_role`` and ``include_tasks``. If you add tags to an include, they apply only to the include itself, not to any tasks in the included file or role. This allows you to execute selected tasks within a role or task file - see :ref:`selective_reuse` when you run your playbook.
 
-Generally speaking, if you want tag inheritance, you probably want to use imports. However, using both includes and imports in a single playbook can lead to difficult-to-diagnose bugs. For this reason, if your playbook uses includes to re-use roles or tasks, and you need tag inheritance on one include, Ansible offers two workarounds. You can use the ``apply`` keyword:
+If you want tag inheritance, you probably want to use imports. However, using both includes and imports in a single playbook can lead to difficult-to-diagnose bugs. For this reason, if your playbook uses ``include_*`` to re-use roles or tasks, and you need tag inheritance on one include, Ansible offers two workarounds. You can use the ``apply`` keyword:
 
 .. code-block:: yaml
 
@@ -292,7 +292,7 @@ For example:
      - tag1
 
 .. warning::
-   * Fact gathering is tagged with 'always' by default. It is ONLY skipped if
+   * Fact gathering is tagged with 'always' by default. It is only skipped if
      you apply a tag and then use a different tag in ``--tags`` or the same
      tag in ``--skip-tags``.
 
@@ -326,7 +326,7 @@ Once you have added tags to your tasks, includes, blocks, plays, roles, and impo
 * ``--tags tagged`` - run only tasks with at least one tag
 * ``--tags untagged`` - run only tasks with no tags
 
-For example, to run only the "configuration" and "packages" parts of a very long playbook:
+For example, to run only tasks and blocks tagged ``configuration`` and ``packages`` in a very long playbook:
 
 .. code-block:: bash
 
@@ -341,7 +341,7 @@ To run all tasks except those tagged ``packages``:
 Previewing the results of using tags
 ------------------------------------
 
-Especially when you run a role or playbook someone else has written or edited, you may not know which tasks have which tags, or which tags exist at all. Ansible offers two command-line flags for :ref:`ansible-playbook` that help you manage tagged playbooks:
+When you run a role or playbook, you might not know or remember which tasks have which tags, or which tags exist at all. Ansible offers two command-line flags for :ref:`ansible-playbook` that help you manage tagged playbooks:
 
 * ``--list-tags`` - generate a list of available tags
 * ``--list-tasks`` - when used with ``--tags tagname`` or ``--skip-tags tagname``, generate a preview of tagged tasks
@@ -358,14 +358,14 @@ If you do not know which tasks have the tags ``configuration`` and ``packages``,
 
    ansible-playbook example.yml --tags "configuration,packages" --list-tasks
 
-These command-line flags have one limitation - they cannot show tags or tasks within dynamically included files or roles. See :ref:`dynamic_vs_static` for more information on differences between static imports and dynamic includes.
+These command-line flags have one limitation: they cannot show tags or tasks within dynamically included files or roles. See :ref:`dynamic_vs_static` for more information on differences between static imports and dynamic includes.
 
 .. _selective_reuse:
 
 Selectively running tagged tasks in re-usable files
 ---------------------------------------------------
 
-If you have a role or a tasks file with tags defined at the task or block level, you can selectively run or skip those tagged tasks in a playbook if you use a dynamic include instead of a static import. You must use the same tag on the included tasks and on the include statement itself. For example if you use a file like this:
+If you have a role or a tasks file with tags defined at the task or block level, you can selectively run or skip those tagged tasks in a playbook if you use a dynamic include instead of a static import. You must use the same tag on the included tasks and on the include statement itself. For example you might create a file with some tagged and some untagged tasks:
 
 .. code-block:: yaml
 
@@ -388,7 +388,7 @@ If you have a role or a tasks file with tags defined at the task or block level,
      tags:
      - mytag
 
-in a playbook like this:
+And you might include the tasks file above in a playbook:
 
 .. code-block:: yaml
 
@@ -399,7 +399,7 @@ in a playbook like this:
          name: mixed.yml
        tags: mytag
 
-and run the playbook with ``ansible-playbook -i hosts myplaybook.yml --tags "mytag"``, Ansible skips the task with no tags, runs the tagged individual task, and runs the two tasks in the block.
+When you run the playbook with ``ansible-playbook -i hosts myplaybook.yml --tags "mytag"``, Ansible skips the task with no tags, runs the tagged individual task, and runs the two tasks in the block.
 
 Configuring tags globally
 -------------------------
