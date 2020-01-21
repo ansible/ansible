@@ -100,7 +100,7 @@ class TestJunosCommandModule(TestJunosModule):
 
     def test_junos_rpc_args(self):
         set_module_args(dict(rpc='get-software-information', args={'interface': 'em0', 'media': True}))
-        result = self.execute_module(format='xml')
+        self.execute_module(format='xml')
         args, kwargs = self.exec_rpc.call_args
         reply = args[1]
         self.assertTrue(reply.find('<interface>em0</interface><media /></get-software-information>'))
