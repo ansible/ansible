@@ -34,8 +34,9 @@ options:
     default: /Common/clientssl
   cipherGroup:
     description:
-      - Specifies a cipherGroup for that clientssl profile. 
+      - Specifies a cipherGroup for that clientssl profile.
     type: str
+    version_added: 2.10
   ciphers:
     description:
       - Specifies the list of ciphers that the system supports. When creating a new
@@ -1040,6 +1041,7 @@ class ArgumentSpec(object):
             name=dict(required=True),
             parent=dict(default='/Common/clientssl'),
             ciphers=dict(),
+            cipherGroup=dict(),
             allow_non_ssl=dict(type='bool'),
             secure_renegotiation=dict(
                 choices=['require', 'require-strict', 'request']
