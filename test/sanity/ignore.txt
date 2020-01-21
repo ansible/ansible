@@ -129,6 +129,8 @@ hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-3.5
 hacking/build_library/build_ansible/command_plugins/release_announcement.py compile-2.6!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/release_announcement.py compile-2.7!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/release_announcement.py compile-3.5!skip # release process only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.6!skip # release process and docs build only, 3.5+ required
+hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.7!skip # release process and docs build only, 3.5+ required
 hacking/fix_test_syntax.py future-import-boilerplate
 hacking/fix_test_syntax.py metaclass-boilerplate
 hacking/get_library.py future-import-boilerplate
