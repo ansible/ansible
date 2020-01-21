@@ -201,6 +201,76 @@ import os
 import time
 
 
+VM_STATES = ['INIT', 'PENDING', 'HOLD', 'ACTIVE', 'STOPPED', 'SUSPENDED', 'DONE', '', 'POWEROFF', 'UNDEPLOYED', 'CLONING', 'CLONING_FAILURE']
+LCM_STATES = ['LCM_INIT', 'PROLOG', 'BOOT', 'RUNNING', 'MIGRATE', 'SAVE_STOP',
+              'SAVE_SUSPEND', 'SAVE_MIGRATE', 'PROLOG_MIGRATE', 'PROLOG_RESUME',
+              'EPILOG_STOP', 'EPILOG', 'SHUTDOWN', 'STATE13', 'STATE14', 'CLEANUP_RESUBMIT', 'UNKNOWN', 'HOTPLUG', 'SHUTDOWN_POWEROFF',
+              'BOOT_UNKNOWN', 'BOOT_POWEROFF', 'BOOT_SUSPENDED', 'BOOT_STOPPED', 'CLEANUP_DELETE', 'HOTPLUG_SNAPSHOT', 'HOTPLUG_NIC',
+              'HOTPLUG_SAVEAS', 'HOTPLUG_SAVEAS_POWEROFF', 'HOTPULG_SAVEAS_SUSPENDED', 'SHUTDOWN_UNDEPLOY']
+
+
+def get_vm_info(one, vm):
+    # get additional info
+    vm = one.one.vm.info(vm.ID)
+    # get Uptime
+    current_time = time.localtime()
+    vm_start_time = time.localtime(vm.STIME)
+    vm_uptime = time.mktime(current_time) - time.mktime(vm_start_time)
+    vm_uptime /= (60 * 60)
+
+    vm_labels, vm_attributes = one.get_vm_labels_and_attributes_dict(vm.ID)
+
+    # get disk info
+    disks = []
+    if 'DISK' in vm.TEMPLATE:
+        if isinstance(vm.TEMPLATE['DISK'], list):
+            for disk in vm.TEMPLATE['DISK']:
+                disk_entry = dict()
+                disk_entry['SIZE'] = disk['SIZE'] + ' MB'
+                disk_entry['DISK_ID'] = disk['DISK_ID']
+                disks.append(disk_entry)
+        else:
+            disk_entry = dict()
+            disk_entry['SIZE'] = vm.TEMPLATE['DISK']['SIZE'] + ' MB'
+            disk_entry['DISK_ID'] = vm.TEMPLATE['DISK']['DISK_ID']
+            disks.append(disk_entry)
+
+    # get network info
+    networks_info = []
+    if 'NIC' in vm.TEMPLATE:
+        if isinstance(vm.TEMPLATE['NIC'], list):
+            for nic in vm.TEMPLATE['NIC']:
+                networks_info.append({'ip': nic['IP'], 'mac': nic['MAC'], 'name': nic['NETWORK'], 'security_groups': nic['SECURITY_GROUPS']})
+        else:
+            networks_info.append(
+                {'ip': vm.TEMPLATE['NIC']['IP'], 'mac': vm.TEMPLATE['NIC']['MAC'],
+                    'name': vm.TEMPLATE['NIC']['NETWORK'], 'security_groups': vm.TEMPLATE['NIC']['SECURITY_GROUPS']})
+
+    info = {
+        'id': vm.ID,
+        'name': vm.NAME,
+        'state': VM_STATES[vm.STATE],
+        'user_name': vm.UNAME,
+        'user_id': vm.UID,
+        'group_name': vm.GNAME,
+        'group_id': vm.GID,
+        'lcm_state': LCM_STATES[vm.LCM_STATE],
+        'uptime_h': int(vm_uptime),
+        'mode': one.parse_vm_permissions(vm),
+        'cpu': vm.TEMPLATE['CPU'],
+        'memory': vm.TEMPLATE['MEMORY'] + ' MB',
+        'disks': disks,
+        'networks': networks_info,
+        'labels': vm_labels,
+        'attributes': vm_attributes
+    }
+
+    if "VCPU" in vm.TEMPLATE:
+        info["VCPU"] = vm.TEMPLATE['VCPU']
+
+    return info
+
+
 def main():
     fields = {
         "ids": {"required": False, "aliases": ['id'], "type": "list"},
@@ -230,7 +300,7 @@ def main():
         vms = one.get_all_vms().VM
 
     for vm in vms:
-        result['vms'].append(one.get_vm_info(vm))
+        result['vms'].append(get_vm_info(one, vm))
 
     one.module.exit_json(**result)
 
