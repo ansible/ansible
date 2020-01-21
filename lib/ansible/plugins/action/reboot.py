@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common.collections import is_string
+from ansible.module_utils.common.validation import check_type_str
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -25,7 +26,16 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('connect_timeout', 'msg', 'post_reboot_delay', 'pre_reboot_delay', 'test_command', 'reboot_timeout', 'search_paths'))
+    _VALID_ARGS = frozenset((
+        'boot_time_command',
+        'connect_timeout',
+        'msg',
+        'post_reboot_delay',
+        'pre_reboot_delay',
+        'test_command',
+        'reboot_timeout',
+        'search_paths'
+    ))
 
     DEFAULT_REBOOT_TIMEOUT = 600
     DEFAULT_CONNECT_TIMEOUT = None
@@ -178,6 +188,14 @@ class ActionModule(ActionBase):
 
     def get_system_boot_time(self, distribution):
         boot_time_command = self._get_value_from_facts('BOOT_TIME_COMMANDS', distribution, 'DEFAULT_BOOT_TIME_COMMAND')
+        if self._task.args.get('boot_time_command'):
+            boot_time_command = self._task.args.get('boot_time_command')
+
+            try:
+                check_type_str(boot_time_command, allow_conversion=False)
+            except TypeError as e:
+                raise AnsibleError("Invalid value given for 'boot_time_command': %s." % to_native(e))
+
         display.debug("{action}: getting boot time with command: '{command}'".format(action=self._task.action, command=boot_time_command))
         command_result = self._low_level_execute_command(boot_time_command, sudoable=self.DEFAULT_SUDOABLE)
 
