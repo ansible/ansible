@@ -379,8 +379,8 @@ class AclsArgs(object):  # pylint: disable=R0903
                                 },
                                 'source': {
                                     'mutually_exclusive':
-                                        [['address', 'subnetaddress', 'any', 'host'],
-                                         ['wildcard_bits', 'subnetaddress', 'any', 'host']],
+                                    [['address', 'subnetaddress', 'any', 'host'],
+                                     ['wildcard_bits', 'subnetaddress', 'any', 'host']],
                                     'options': {
                                         'address': {
                                             'type': 'str'
@@ -400,7 +400,7 @@ class AclsArgs(object):  # pylint: disable=R0903
                                         'wildcard_bits': {
                                             'type': 'str'
                                         }
-                                        },
+                                    },
                                     'required_together': [['address', 'wildcard_bits']],
                                     'type': 'dict'
                                 },

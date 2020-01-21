@@ -1,0 +1,110 @@
+round_trip:
+  after:
+    - afi: "ipv4"
+      acls:
+       - name: test1
+         aces:
+           - sequence: 35
+             grant: "deny"
+             protocol: "tcp"
+             source:
+               subnet_address: 20.0.0.0/8
+             destination:
+               any: true
+             log: true
+           - remark: "Run by ansible"
+             sequence: 45
+           - grant: "permit"
+             sequence: 55
+             protocol: "tcp"
+             source:
+              any: true
+             destination:
+              any: true
+       - name: test3
+         aces:
+           - sequence: 100
+             grant: "permit"
+             protocol: "icmp"
+             source:
+               any: true
+             destination:
+               any: true
+             log: true
+       - name: test4
+         aces:
+           - grant: "permit"
+             sequence: 10
+             source:
+               any: true
+               port_protocol:
+                eq: "smtp"
+             destination:
+               any: true
+               port_protocol:
+                eq: "www"
+             protocol: "tcp"
+             ttl:
+               eq: "55"
+    - afi: "ipv6"
+      acls:
+        - name: test2
+          standard: true
+          aces:
+            - grant: "permit"
+              sequence: 10
+              log: true
+              source:
+                any: true
+
+  commands:
+    - "ip access-list test3"
+    - "100 permit icmp any any log"
+
+base_config:
+  after:
+    - afi: "ipv4"
+      acls:
+       - name: test1
+         aces:
+           - sequence: 35
+             grant: "deny"
+             protocol: "tcp"
+             source:
+               subnet_address: 20.0.0.0/8
+             destination:
+               any: true
+             log: true
+           - remark: "Run by ansible"
+             sequence: 45
+           - grant: "permit"
+             sequence: 55
+             protocol: "tcp"
+             source:
+              any: true
+             destination:
+              any: true
+       - name: test4
+         aces:
+           - grant: "permit"
+             sequence: 10
+             source:
+               any: true
+               port_protocol:
+                eq: "smtp"
+             destination:
+               any: true
+               port_protocol:
+                eq: "www"
+             protocol: "tcp"
+             ttl:
+               eq: "55"
+    - afi: "ipv6"
+      acls:
+        - name: test2
+          standard: true
+          aces:
+            - grant: "permit"
+              log: "true"
+              source:
+                any: true
