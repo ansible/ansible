@@ -345,3 +345,18 @@
         - "{{ output_dir }}/test_follow1_link"
 
 # END #56928
+
+
+# Test failure with src and no state parameter
+- name: Specify src without state
+  file:
+    src: "{{ output_file }}"
+    dest: "{{ output_dir }}/link.txt"
+  ignore_errors: yes
+  register: src_state
+
+- name: Ensure src without state failed
+  assert:
+    that:
+      - src_state is failed
+      - "'src option requires state to be' in src_state.msg"
