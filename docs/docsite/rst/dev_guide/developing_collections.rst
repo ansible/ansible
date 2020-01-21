@@ -307,32 +307,32 @@ You can publish collections to Galaxy using the ``ansible-galaxy collection publ
 
 .. _galaxy_get_token:
 
-Getting your token or API key
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Getting your API token
+^^^^^^^^^^^^^^^^^^^^^^
 
-To upload your collection to Galaxy, you must first obtain an API token (``--api-key`` in the ``ansible-galaxy`` CLI command or ``token`` in the :file:`ansible.cfg` file under the ``galaxy_server`` section). The API token is a secret token used to protect your content.
+To upload your collection to Galaxy, you must first obtain an API token (``--token`` in the ``ansible-galaxy`` CLI command or ``token`` in the :file:`ansible.cfg` file under the ``galaxy_server`` section). The API token is a secret token used to protect your content.
 
 To get your API token:
 
-* For Galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API token`.
-* For Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Get API token` from the version dropdown.
+* For Galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API Key`.
+* For Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Load token` from the version dropdown.
 
 Storing or using your API token
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once you have retrieved your API token, you can store or use the token for collections in two ways:
 
-* Pass the token to  the ``ansible-galaxy`` command using the ``--api-key``.
+* Pass the token to  the ``ansible-galaxy`` command using the ``--token``.
 * Specify the token within a Galaxy server list in your :file:`ansible.cfg` file.
 
-Using the ``api-key``
-.....................
+Using the ``token`` argument
+............................
 
-You can use the ``--api-key`` argument with the ``ansible-galaxy`` command (in conjunction with the ``--server`` argument or :ref:`GALAXY_SERVER` setting in your :file:`ansible.cfg` file). You cannot use ``apt-key``  with any servers defined in your :ref:`Galaxy server list <galaxy_server_config>`.
+You can use the ``--token`` argument with the ``ansible-galaxy`` command (in conjunction with the ``--server`` argument or :ref:`GALAXY_SERVER` setting in your :file:`ansible.cfg` file). You cannot use ``apt-key`` with any servers defined in your :ref:`Galaxy server list <galaxy_server_config>`.
 
 .. code-block:: bash
 
-    ansible-galaxy collection publish ./geerlingguy-collection-1.2.3.tar.gz --api-key=<key goes here>
+    ansible-galaxy collection publish ./geerlingguy-collection-1.2.3.tar.gz --token=<key goes here>
 
 
 Specify the token within a Galaxy server list
