@@ -65,6 +65,14 @@ options:
     type: list
     default: ['/sbin', '/usr/sbin', '/usr/local/sbin']
     version_added: '2.8'
+
+  boot_time_command:
+    description:
+      - Command to run that returns a unique string indicating the last time the system was booted.
+      - Setting this to a command that has different output each time it is run will cause the task to fail.
+    type: str
+    default: 'cat /proc/sys/kernel/random/boot_id'
+    version_added: '2.10'
 seealso:
 - module: win_reboot
 author:
