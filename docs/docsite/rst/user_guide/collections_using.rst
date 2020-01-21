@@ -74,9 +74,23 @@ This works for roles or any type of plugin distributed within the collection:
          - debug:
              msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
 
+The ``collections`` keyword
+===========================
 
-To avoid a lot of typing, you can use the ``collections`` keyword added in Ansible 2.8:
+The ``collections`` keyword lets you define the collections you want your role or playbook to use for modules and for action plugins. Ansible searches those collections first for any modules or action plugins without an FQCN. So you can use the ``collections`` keyword, then call modules and action plugins using their short-form names later in that role or playbook.
 
+.. warning::
+   If your playbook uses both the ``collections`` keyword and one or more roles, the roles do not inherit the collections set by the playbook. See below for details.
+
+Using ``collections`` in roles
+------------------------------
+
+In a role, you can control which collections Ansible searches for modules and action plugins globally with the ``collections`` keyword. Define the collections in the ``metadata/main.yml`` file within your role, and Ansible will use them for your role every time, in any context. Ansible will use the collections defined by a role even if the playbook that calls the role defines different collections in a separate ``collections`` keyword entry.
+
+Using ``collections`` in playbooks
+----------------------------------
+
+In a playbook, you can control the collections Ansible searches for modules and action plugins, but only for tasks, not for roles. Some roles rely on particular collections to work properly, so Ansible does not apply ``collections`` from a playbook to any roles within that playbook. This is true even if the role does not define its own ``collections`` keyword.
 
 .. code-block:: yaml
 
@@ -93,8 +107,7 @@ To avoid a lot of typing, you can use the ``collections`` keyword added in Ansib
          - debug:
              msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
 
-This keyword creates a 'search path' for non namespaced plugin references. It does not import roles or anything else.
-Notice that you still need the FQCN for non-action or module plugins.
+The ``collections`` keyword creates a 'search path' for non-namespaced plugin references. It does not import roles or anything else. Notice that you still need the FQCN for non-action or module plugins.
 
 .. seealso::
 
