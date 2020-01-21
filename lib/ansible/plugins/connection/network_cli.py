@@ -263,6 +263,17 @@ options:
           key: network_cli_retries
     vars:
         - name: ansible_network_cli_retries
+  ssh_transport_type:
+    description:
+      - The type of the transport used by C(network_cli) connection plugin to connection to remote host.
+        Valid value is either I(paramiko) of I(libssh)
+    default: libssh
+    env:
+        - name: ANSIBLE_NETWORK_CLI_SSH_TRANSPORT_TYPE
+    ini:
+        - section: persistent_connection
+          key: ssh_transport_type
+    version_added: "2.10"
 """
 
 from functools import wraps
@@ -277,7 +288,7 @@ import time
 import traceback
 from io import BytesIO
 
-from ansible.errors import AnsibleConnectionFailure
+from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle
 from ansible.module_utils.network.common.utils import to_list
@@ -321,14 +332,13 @@ class Connection(NetworkConnectionBase):
 
         self._terminal = None
         self.cliconf = None
-        self._paramiko_conn = None
 
         # Managing prompt context
         self._check_prompt = False
-        self._task_uuid = to_text(kwargs.get('task_uuid', ''))
 
-        if self._play_context.verbosity > 3:
-            logging.getLogger('paramiko').setLevel(logging.DEBUG)
+        self._task_uuid = to_text(kwargs.get('task_uuid', ''))
+        self._transport_conn = None
+        self._transport_type = None
 
         if self._network_os:
             self._terminal = terminal_loader.get(self._network_os, self)
@@ -350,15 +360,19 @@ class Connection(NetworkConnectionBase):
         self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
     @property
-    def paramiko_conn(self):
-        if self._paramiko_conn is None:
-            self._paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
-            self._paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
-        return self._paramiko_conn
+    def transport_conn(self):
+        if self._transport_conn is None:
+            if self._transport_type not in ['paramiko', 'libssh']:
+                raise AnsibleConnectionFailure("Invalid value '%s' set for ssh_transport_type option."
+                                               " Excpected value is either 'libssh' or 'paramiko'" % self._transport_type)
+
+            self._transport_conn = connection_loader.get(self._transport_type, self._play_context, '/dev/null')
+            self._transport_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
+        return self._transport_conn
 
     def _get_log_channel(self):
         name = "p=%s u=%s | " % (os.getpid(), getpass.getuser())
-        name += "paramiko [%s]" % self._play_context.remote_addr
+        name += "%s [%s]" % (self._transport_type, self._play_context.remote_addr)
         return name
 
     @ensure_connect
@@ -428,9 +442,16 @@ class Connection(NetworkConnectionBase):
         '''
         Connects to the remote device and starts the terminal
         '''
+        self._transport_type = self.get_option('ssh_transport_type')
+        if self._play_context.verbosity > 3:
+            logging.getLogger(self._transport_type).setLevel(logging.DEBUG)
+
+        self.queue_message('vvvv', 'invoked shell using ssh_transport_type: %s' % self._transport_type)
+        self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
+
         if not self.connected:
-            self.paramiko_conn._set_log_channel(self._get_log_channel())
-            self.paramiko_conn.force_persistence = self.force_persistence
+            self.transport_conn._set_log_channel(self._get_log_channel())
+            self.transport_conn.force_persistence = self.force_persistence
 
             command_timeout = self.get_option('persistent_command_timeout')
             max_pause = min([self.get_option('persistent_connect_timeout'), command_timeout])
@@ -439,8 +460,10 @@ class Connection(NetworkConnectionBase):
 
             for attempt in range(retries + 1):
                 try:
-                    ssh = self.paramiko_conn._connect()
+                    ssh = self.transport_conn._connect()
                     break
+                except AnsibleError as e:
+                    raise
                 except Exception as e:
                     pause = 2 ** (attempt + 1)
                     if attempt == retries or total_pause >= max_pause:
@@ -456,17 +479,15 @@ class Connection(NetworkConnectionBase):
 
             self.queue_message('vvvv', 'ssh connection done, setting terminal')
             self._connected = True
-
             self._ssh_shell = ssh.ssh.invoke_shell()
-            self._ssh_shell.settimeout(command_timeout)
 
-            self.queue_message('vvvv', 'loaded terminal plugin for network_os %s' % self._network_os)
+            if self._transport_type == 'paramiko':
+                self._ssh_shell.settimeout(command_timeout)
 
             terminal_initial_prompt = self.get_option('terminal_initial_prompt') or self._terminal.terminal_initial_prompt
             terminal_initial_answer = self.get_option('terminal_initial_answer') or self._terminal.terminal_initial_answer
             newline = self.get_option('terminal_inital_prompt_newline') or self._terminal.terminal_inital_prompt_newline
             check_all = self.get_option('terminal_initial_prompt_checkall') or False
-
             self.receive(prompts=terminal_initial_prompt, answer=terminal_initial_answer, newline=newline, check_all=check_all)
 
             if self._play_context.become:
@@ -478,7 +499,6 @@ class Connection(NetworkConnectionBase):
             self._terminal.on_open_shell()
 
             self.queue_message('vvvv', 'ssh connection has completed successfully')
-
         return self
 
     def close(self):
@@ -495,8 +515,8 @@ class Connection(NetworkConnectionBase):
                 self._ssh_shell = None
                 self.queue_message('debug', "cli session is now closed")
 
-                self.paramiko_conn.close()
-                self._paramiko_conn = None
+                self.transport_conn.close()
+                self._transport_conn = None
                 self.queue_message('debug', "ssh connection has been closed successfully")
         super(Connection, self).close()
 
@@ -515,22 +535,28 @@ class Connection(NetworkConnectionBase):
         self._terminal_stderr_re = self._get_terminal_std_re('terminal_stderr_re')
         self._terminal_stdout_re = self._get_terminal_std_re('terminal_stdout_re')
 
-        cache_socket_timeout = self._ssh_shell.gettimeout()
         command_timeout = self.get_option('persistent_command_timeout')
         self._validate_timeout_value(command_timeout, "persistent_command_timeout")
-        if cache_socket_timeout != command_timeout:
-            self._ssh_shell.settimeout(command_timeout)
+
+        if self._transport_type == 'paramiko':
+            cache_socket_timeout = self._ssh_shell.gettimeout()
+            if cache_socket_timeout != command_timeout:
+                self._ssh_shell.settimeout(command_timeout)
 
         buffer_read_timeout = self.get_option('persistent_buffer_read_timeout')
         self._validate_timeout_value(buffer_read_timeout, "persistent_buffer_read_timeout")
-
         self._log_messages("command: %s" % command)
+
         while True:
             if command_prompt_matched:
                 try:
                     signal.signal(signal.SIGALRM, self._handle_buffer_read_timeout)
                     signal.setitimer(signal.ITIMER_REAL, buffer_read_timeout)
-                    data = self._ssh_shell.recv(256)
+
+                    data = self._receive_data(256)
+
+                    if not data:
+                        break
                     signal.alarm(0)
                     self._log_messages("response-%s: %s" % (window_count + 1, data))
                     # if data is still received on channel it indicates the prompt string
@@ -544,11 +570,13 @@ class Connection(NetworkConnectionBase):
 
                 except AnsibleCmdRespRecv:
                     # reset socket timeout to global timeout
-                    self._ssh_shell.settimeout(cache_socket_timeout)
+                    if self._transport_type == 'paramiko':
+                        self._ssh_shell.settimeout(cache_socket_timeout)
                     return self._command_response
             else:
-                data = self._ssh_shell.recv(256)
+                data = self._receive_data(256)
                 self._log_messages("response-%s: %s" % (window_count + 1, data))
+
             # when a channel stream is closed, received data will be empty
             if not data:
                 break
@@ -575,9 +603,11 @@ class Connection(NetworkConnectionBase):
                 self._last_response = recv.getvalue()
                 resp = self._strip(self._last_response)
                 self._command_response = self._sanitize(resp, command)
+
                 if buffer_read_timeout == 0.0:
-                    # reset socket timeout to global timeout
-                    self._ssh_shell.settimeout(cache_socket_timeout)
+                    if self._transport_type == 'paramiko':
+                        # reset socket timeout to global timeout
+                        self._ssh_shell.settimeout(cache_socket_timeout)
                     return self._command_response
                 else:
                     command_prompt_matched = True
@@ -587,6 +617,7 @@ class Connection(NetworkConnectionBase):
         '''
         Sends the command to the device in the opened shell
         '''
+        self.queue_message('vvvv', 'invoked shell using ssh_transport_type: %s' % self._transport_type)
         if check_all:
             prompt_len = len(to_list(prompt))
             answer_len = len(to_list(answer))
@@ -757,3 +788,10 @@ class Connection(NetworkConnectionBase):
             terminal_std_re = getattr(self._terminal, option)
 
         return terminal_std_re
+
+    def _receive_data(self, buffer):
+        if self._transport_type == 'libssh':
+            while True:
+                if self._ssh_shell.poll():
+                    break
+        return self._ssh_shell.recv(buffer)

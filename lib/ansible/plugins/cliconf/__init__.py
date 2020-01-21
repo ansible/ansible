@@ -340,7 +340,7 @@ class CliconfBase(AnsiblePlugin):
                         remote host before triggering timeout exception
         :return: None
         """
-        ssh = self._connection.paramiko_conn._connect_uncached()
+        ssh = self._connection.transport_conn._connect_uncached()
         if proto == 'scp':
             if not HAS_SCP:
                 raise AnsibleError("Required library scp is not installed.  Please install it using `pip install scp`")
@@ -361,7 +361,7 @@ class CliconfBase(AnsiblePlugin):
         :return: None
         """
         """Fetch file over scp/sftp from remote device"""
-        ssh = self._connection.paramiko_conn._connect_uncached()
+        ssh = self._connection.transport_conn._connect_uncached()
         if proto == 'scp':
             if not HAS_SCP:
                 raise AnsibleError("Required library scp is not installed.  Please install it using `pip install scp`")
