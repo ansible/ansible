@@ -98,7 +98,9 @@ You add tags to includes the same way you add tags to any other task:
      include_tasks: db.yml
      tags: db
 
-You can add a tag only to the dynamic include of a role. In this example, the ``foo`` tag will *NOT* apply to tasks inside the ``bar`` role::
+You can add a tag only to the dynamic include of a role. In this example, the ``foo`` tag will *NOT* apply to tasks inside the ``bar`` role:
+
+.. code-block:: yaml
 
    ---
    - hosts: webservers
@@ -204,7 +206,9 @@ When you incorporate a role in your playbook statically with the ``roles`` keywo
          port: 5000
        tags: [ web, foo ]
 
-or::
+or:
+
+.. code-block:: yaml
 
    ---
    - hosts: webservers
@@ -244,7 +248,9 @@ Tag inheritance for includes: blocks and the ``apply`` keyword
 
 By default, Ansible does not apply :ref:`tag inheritance <tag_inheritance>` to dynamic re-use with ``include_role`` and ``include_tasks``. If you add tags to an include, they apply only to the include itself, not to any tasks in the included file or role. This allows you to execute selected tasks within a role or task file - see :ref:`selective_reuse` when you run your playbook.
 
-Generally speaking, if you want tag inheritance, you probably want to use imports. However, using both includes and imports in a single playbook can lead to difficult-to-diagnose bugs. For this reason, if your playbook uses includes to re-use roles or tasks, and you need tag inheritance on one include, Ansible offers two workarounds. You can use the ``apply`` keyword::
+Generally speaking, if you want tag inheritance, you probably want to use imports. However, using both includes and imports in a single playbook can lead to difficult-to-diagnose bugs. For this reason, if your playbook uses includes to re-use roles or tasks, and you need tag inheritance on one include, Ansible offers two workarounds. You can use the ``apply`` keyword:
+
+.. code-block:: yaml
 
    - name: applies the db tag to the include and to all tasks in db.yaml
      include_tasks:
@@ -255,7 +261,9 @@ Generally speaking, if you want tag inheritance, you probably want to use import
      # adds 'db' tag to this 'include_tasks' itself
      tags: db
 
-Or you can use a block::
+Or you can use a block:
+
+.. code-block:: yaml
 
      - block:
         - include_tasks: db.yml
