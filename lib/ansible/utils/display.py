@@ -72,7 +72,6 @@ def get_text_width(text):
     On Py2, this depends on ``locale.setlocale(locale.LC_ALL, '')``,
     that in the case of Ansible is done in ``bin/ansible``
     """
-    text = to_text(text)
     try:
         width = _LIBC.wcswidth(text, _MAX_INT)
     except ctypes.ArgumentError:
