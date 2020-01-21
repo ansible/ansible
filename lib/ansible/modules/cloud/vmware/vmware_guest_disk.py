@@ -169,7 +169,7 @@ EXAMPLES = '''
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter_name }}"
     validate_certs: no
-    name: VM_123
+    name: "VM_225"
     disk:
       - type: raw
         state: present
@@ -658,7 +658,7 @@ class PyVmomiHelper(PyVmomi):
             disk_type = disk.get('type', 'thick').lower()
             if disk_type not in ['thin', 'thick', 'eagerzeroedthick', 'raw']:
                 self.module.fail_json(msg="Invalid 'disk_type' specified for disk index [%s]. Please specify"
-                                          " 'disk_type' value from ['thin', 'thick', 'eagerzeroedthick']." % disk_index)
+                                          " 'disk_type' value from ['thin', 'thick', 'eagerzeroedthick', 'raw']." % disk_index)
             current_disk['disk_type'] = disk_type
 
             # Mode of Disk
