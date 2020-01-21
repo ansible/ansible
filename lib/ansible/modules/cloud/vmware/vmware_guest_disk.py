@@ -416,7 +416,7 @@ class PyVmomiHelper(PyVmomi):
                         str(scsi_controller),
                         str(disk['disk_unit_number']))
                 else:
-                    disk_spec.device.backing.fileName = disk['filename']    
+                    disk_spec.device.backing.fileName = disk['filename']
 
                 if disk['disk_type'] != 'raw':
                     disk_spec.device.capacityInKB = disk['size']
@@ -425,7 +425,7 @@ class PyVmomiHelper(PyVmomi):
                                                                                    str(scsi_controller),
                                                                                    str(disk['disk_unit_number']))
                 disk_spec.device.backing.datastore = disk['datastore']
-                
+
                 if disk['disk_type'] != 'raw':
                     disk_spec.device.capacityInKB = disk['size']
                     disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
@@ -618,7 +618,7 @@ class PyVmomiHelper(PyVmomi):
 
                 elif current_disk['filename'] is None:
                     # No size found but disk, fail
-                    self.module.fail_json(msg="No size, size_kb, size_mb, size_gb or size_tb"
+                    self.module.fail_json(msg="No size, size_kb, size_mb, size_gb or size_tb")
                 else:
                     if disk['type'] != 'raw':
                         # No size found but disk and not raw device, fail
