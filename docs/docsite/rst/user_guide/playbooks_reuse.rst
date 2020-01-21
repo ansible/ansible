@@ -4,7 +4,7 @@
 Re-using Ansible artifacts
 **************************
 
-You can write a simple playbook in one very large file, and most users learn the one-file approach first. However, breaking tasks up into different files is an excellent way to organize complex sets of tasks and reuse them. Smaller, more distributed artifacts let you re-use the same variables, tasks, and plays in multiple playbooks to address different use cases. You can use distributed artifacts across multiple parent playbooks or even multiple times within one playbook. For example, you may want to update your customer database as part of several different playbooks. A task file lets you re-use the tasks that update the database in many playbooks while only maintaining them in one place.
+You can write a simple playbook in one very large file, and most users learn the one-file approach first. However, breaking tasks up into different files is an excellent way to organize complex sets of tasks and reuse them. Smaller, more distributed artifacts let you re-use the same variables, tasks, and plays in multiple playbooks to address different use cases. You can use distributed artifacts across multiple parent playbooks or even multiple times within one playbook. For example, you may want to update your customer database as part of several different playbooks. If you put all the tasks related to updating your database in a tasks file, you can re-use them in many playbooks while only maintaining them in one place.
 
 .. contents::
    :local:

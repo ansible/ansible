@@ -313,7 +313,7 @@ Role dependencies are stored in the ``meta/main.yml`` file within the role direc
           dbname: blarg
           other_parameter: 12
 
-Ansible always executes role dependencies before the role that includes them. You can add recursive role dependencies.
+Ansible always executes role dependencies before the role that includes them. Ansible executes recursive role dependencies as well. If one role depends on a second role, and the second role depends on a third role, Ansible executes the third role, then the second role, then the first role.
 
 Running role dependencies multiple times
 ----------------------------------------
