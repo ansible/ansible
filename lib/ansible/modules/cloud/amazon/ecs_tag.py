@@ -123,7 +123,7 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list, compare_aws_tags
 
 try:
-    from botocore.exceptions import BotoCoreError, ClientError, InvalidParameterException
+    from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass    # Handled by AnsibleAWSModule
 __metaclass__ = type
@@ -134,8 +134,32 @@ def get_tags(ecs, module, resource):
         return boto3_tag_list_to_ansible_dict(ecs.list_tags_for_resource(resourceArn=resource)['tags'])
     except (BotoCoreError, ClientError) as e:
         module.fail_json_aws(e, msg='Failed to fetch tags for resource {0}'.format(resource))
-    except InvalidParameterException as e:
-        module.fail_json_aws(e, msg='Invlid Parameter resource {0}'.format(resource))
+
+
+def get_arn(ecs, module, cluster_name, resource_type, resource):
+
+    try:
+        if resource_type == 'cluster':
+            description = ecs.describe_clusters(clusters=[resource])
+            resource_arn = description['clusters'][0]['clusterArn']
+        elif resource_type == 'task':
+            description = ecs.describe_tasks(cluster=cluster_name, tasks=[resource])
+            resource_arn = description['tasks'][0]['taskArn']
+        elif resource_type == 'service':
+            description = ecs.describe_services(cluster=cluster_name, services=[resource])
+            resource_arn = description['services'][0]['serviceArn']
+        elif resource_type == 'task_definition':
+            description = ecs.describe_task_definition(taskDefinition=resource)
+            resource_arn = description['taskDefinition']['taskDefinitionArn']
+        elif resource_type == 'container':
+            description = ecs.describe_container_instances(clusters=[resource])
+            resource_arn = description['containerInstances'][0]['containerInstanceArn']
+    except (IndexError, KeyError):
+        module.fail_json(msg='Failed to find {0} {1}'.format(resource_type, resource))
+    except (BotoCoreError, ClientError) as e:
+        module.fail_json_aws(e, msg='Failed to find {0} {1}'.format(resource_type, resource))
+
+    return resource_arn
 
 
 def main():
@@ -165,34 +189,7 @@ def main():
 
     ecs = module.client('ecs')
 
-    try:
-        if resource_type == 'cluster':
-            description = ecs.describe_clusters(clusters=[resource])
-            if len(description['clusters']) == 0:
-                module.fail_json(msg='Failed to find {0} {1}'.format(resource_type, resource))
-            resource_arn = description['clusters'][0]['clusterArn']
-        elif resource_type == 'task':
-            description = ecs.describe_tasks(cluster=cluster_name, tasks=[resource])
-            if len(description['tasks']) == 0:
-                module.fail_json(msg='Failed to find {0} {1}'.format(resource_type, resource))
-            resource_arn = description['tasks'][0]['taskArn']
-        elif resource_type == 'service':
-            description = ecs.describe_services(cluster=cluster_name, services=[resource])
-            if len(description['services']) == 0:
-                module.fail_json(msg='Failed to find {0} {1}'.format(resource_type, resource))
-            resource_arn = description['services'][0]['serviceArn']
-        elif resource_type == 'task_definition':
-            description = ecs.describe_task_definition(taskDefinition=resource)
-            if 'taskDefinition' not in description or 'taskDefinitionArn' not in description['taskDefinition']:
-                module.fail_json(msg='Failed to find {0} {1}'.format(resource_type, resource))
-            resource_arn = description['taskDefinition']['taskDefinitionArn']
-        elif resource_type == 'container':
-            description = ecs.describe_container_instances(clusters=[resource])
-            if len(description['containerInstances']) == 0:
-                module.fail_json(msg='Failed to find {0} {1}'.format(resource_type, resource))
-            resource_arn = description['containerInstances'][0]['containerInstanceArn']
-    except (BotoCoreError, ClientError) as e:
-        module.fail_json_aws(e, msg='Failed to find {0} {1}'.format(resource_type, resource))
+    resource_arn = get_arn(ecs, module, cluster_name, resource_type, resource)
 
     current_tags = get_tags(ecs, module, resource_arn)
 

@@ -179,6 +179,25 @@
           - taglist.failed == false
           - taglist.changed == false
 
+
+    - name: cluster tags - invalid cluster name
+      ecs_tag:
+        cluster_name: "{{resource_prefix}}-foo"
+        resource: "{{resource_prefix}}-foo"
+        resource_type: cluster
+        state: absent
+        tags:
+          temp:
+          temp_two:
+        <<: *aws_connection_info
+      register: taglist
+      ignore_errors: yes
+
+    - name: cluster tags - Make sure invalid clustername is handled
+      assert:
+        that:
+          - taglist.failed == true
+          - taglist.changed == false
     # Test tagging service resource
 
     - name: services tags - Add name tag
