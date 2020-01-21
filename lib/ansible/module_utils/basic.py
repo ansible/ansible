@@ -2452,9 +2452,10 @@ class AnsibleModule(object):
             are expanded before running the command. When ``True`` a string such as
             ``$SHELL`` will be expanded regardless of escaping. When ``False`` and
             ``use_unsafe_shell=False`` no path or variable expansion will be done.
-        :kw pass_fds: When running on python3 this argument
+        :kw pass_fds: When running on Python 3 this argument
             dictates which file descriptors should be passed
-            to an underlying ``Popen`` constructor.
+            to an underlying ``Popen`` constructor. On Python 2, this will
+            set ``close_fds`` to False.
         :kw before_communicate_callback: This function will be called
             after ``Popen`` object will be created
             but before communicating to the process.
@@ -2565,6 +2566,8 @@ class AnsibleModule(object):
         )
         if PY3 and pass_fds:
             kwargs["pass_fds"] = pass_fds
+        elif PY2 and pass_fds:
+            kwargs['close_fds'] = False
 
         # store the pwd
         prev_dir = os.getcwd()
