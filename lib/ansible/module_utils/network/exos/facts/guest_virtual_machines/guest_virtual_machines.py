@@ -63,15 +63,9 @@ class Guest_virtual_machinesFacts(object):
 
         objs = []
         if data:
-            conf_config = data[0]["extreme-virtual-service:virtual-services-config"]
-            conf_state = data[1]["extreme-virtual-service:virtual-services-state"]
-            if conf_config.get("virtual-service-config") and conf_state.get("virtual-service-state"):
-                conf_config = conf_config["virtual-service-config"]
-                conf_state = conf_state["virtual-service-state"]
-                for d in range(len(conf_config)):
-                    obj = self.render_config(self.generated_spec, conf_config[d], conf_state[d])
-                    if obj:
-                        objs.append(obj)
+            obj = self.render_config(self.generated_spec, data)
+            if obj:
+                objs.extend(obj)
 
         ansible_facts['ansible_network_resources'].pop('guest_virtual_machines', None)
         facts = {}
@@ -82,7 +76,7 @@ class Guest_virtual_machinesFacts(object):
         ansible_facts['ansible_network_resources'].update(facts)
         return ansible_facts
 
-    def render_config(self, spec, conf1, conf2):
+    def render_config(self, spec, conf):
         """
         Render config as dictionary structure and delete keys
           from spec for null values
@@ -94,23 +88,31 @@ class Guest_virtual_machinesFacts(object):
         """
         config = deepcopy(spec)
 
-        config["auto_start"] = conf1["enable"]
-        config["image"] = conf2["package-info"]["path"] + str('/') + conf2["package-info"]["name"]
-        config["memory_size"] = conf1["memory-size"]
-        config["name"] = conf1["name"]
-        config["num_cores"] = conf1["num-cores"]
-        config["operational_state"] = "started" if conf2["state"]["state"] == 1 else "stopped"
-        config["virtual_ports"] = []
-        if conf1.get("vports"):
-            conf_vport = conf1["vports"]["vport"]
-            for num in range(len(conf1["vports"]["vport"])):
-                config_vport = {}
-                config_vport["name"] = conf_vport[num].get("name")
-                config_vport["type"] = conf_vport[num].get("connect-type").lower()
-                config_vport["port"] = conf_vport[num].get("port")
-                if conf_vport[num].get("vlans"):
-                    config_vport["vlan_id"] = conf_vport[num]["vlans"]["vlan"][0]["id"]
-                config["virtual_ports"].append(config_vport)
-        config["vnc"]["enabled"] = False if conf1["vnc-port"] == 0 else True
-        config["vnc"]["port"] = conf1["vnc-port"]
-        return utils.remove_empties(config)
+        vms = []
+        conf_config = conf[0]["extreme-virtual-service:virtual-services-config"]
+        conf_state = conf[1]["extreme-virtual-service:virtual-services-state"]
+        if conf_config.get("virtual-service-config") and conf_state.get("virtual-service-state"):
+            conf_config = conf_config["virtual-service-config"]
+            conf_state = conf_state["virtual-service-state"]
+            for d in range(len(conf_config)):
+                config["auto_start"] = conf_config[d]["enable"]
+                config["image"] = conf_state[d]["package-info"]["path"] + str('/') + conf_state[d]["package-info"]["name"]
+                config["memory_size"] = conf_config[d]["memory-size"]
+                config["name"] = conf_config[d]["name"]
+                config["num_cores"] = conf_config[d]["num-cores"]
+                config["operational_state"] = "started" if conf_state[d]["state"]["state"] == 1 else "stopped"
+                config["virtual_ports"] = []
+                if conf_config[d].get("vports"):
+                    conf_vport = conf_config[d]["vports"]["vport"]
+                    for num in range(len(conf_config[d]["vports"]["vport"])):
+                        config_vport = {}
+                        config_vport["name"] = conf_vport[num].get("name")
+                        config_vport["type"] = conf_vport[num].get("connect-type").lower()
+                        config_vport["port"] = conf_vport[num].get("port")
+                        if conf_vport[num].get("vlans"):
+                            config_vport["vlan_id"] = conf_vport[num]["vlans"]["vlan"][0]["id"]
+                        config["virtual_ports"].append(config_vport)
+                config["vnc"]["enabled"] = False if conf_config[d]["vnc-port"] == 0 else True
+                config["vnc"]["port"] = conf_config[d]["vnc-port"]
+                vms.append(utils.remove_empties(config))
+        return vms
