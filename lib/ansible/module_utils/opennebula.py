@@ -19,6 +19,7 @@ except ImportError:
     OneException = Exception
     HAS_PYONE = False
 
+
 class OpenNebulaModule:
     """
     Base class for all OpenNebula Ansible Modules.
