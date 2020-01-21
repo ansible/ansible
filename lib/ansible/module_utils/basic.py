@@ -1606,11 +1606,9 @@ class AnsibleModule(object):
                         # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
                         # the value.  If we can't figure this out, module author is responsible.
                         lowered_choices = None
-                        if param[k] in [ 'False', 'True' ]:
-                            msg = (
-                                'Using boolean keywords ({0}) in string parameters is discouraged. '
-                                'Check the module documentation and use a different keyword instead.'
-                                ).format(','.join(map(str, BOOLEANS)))
+                        if param[k] in ['False', 'True']:
+                            msg = ('Using boolean keywords ({0}) in string parameters is discouraged. '
+                                   'Check the module documentation and use a different keyword instead.').format(','.join(map(str, BOOLEANS)))
                             self.deprecate(msg, version='2.14')
                         if param[k] == 'False':
                             lowered_choices = lenient_lowercase(choices)
