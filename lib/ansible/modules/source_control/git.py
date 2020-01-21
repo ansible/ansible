@@ -165,8 +165,9 @@ options:
 
     archive_prefix:
         description:
-            - Specify a prefix to add to each file path in archive.
+            - Specify a prefix to add to each file path in archive. Requires C(archive) to be specified.
         version_added: "2.10"
+        type: str
 
     separate_git_dir:
         description:
@@ -980,7 +981,10 @@ def git_version(git_path, module):
 def git_archive(git_path, module, dest, archive, archive_fmt, archive_prefix, version):
     """ Create git archive in given source directory """
     cmd = "%s archive --format=%s --output=%s --prefix=%s %s" \
-          % (git_path, archive_fmt, archive, archive_prefix, version)
+        cmd = [git_path, 'archive', '--format', archive_fmt, '--output', archive, version]
+        if archive_prefix is not None:
+            cmd.insert(-1, '--prefix')
+            cmd.insert(-1, archive_prefix)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to perform archive operation",
@@ -1064,7 +1068,7 @@ def main():
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
             archive=dict(type='path'),
-            archive_prefix=dict(default=None, type='path'),
+            archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare')],
