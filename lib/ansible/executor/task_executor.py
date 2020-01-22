@@ -1017,14 +1017,14 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
-        module_prefix = self._task.action.split('.')[-1].split('_')[0]
+        module_collection, separator, module_name = self._task.action.rpartition(".")
+        module_prefix = module_name.split('_')[0]
 
-        collections = self._task.collections
+        collections = [module_collection] + self._task.collections
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
-        # FIXME: is this code path even live anymore? check w/ networking folks; it trips sometimes when it shouldn't
         elif all((module_prefix in C.NETWORK_GROUP_MODULES, self._shared_loader_obj.action_loader.has_plugin(module_prefix, collection_list=collections))):
             handler_name = module_prefix
         else:
