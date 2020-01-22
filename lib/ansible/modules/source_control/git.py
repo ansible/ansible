@@ -980,11 +980,10 @@ def git_version(git_path, module):
 
 def git_archive(git_path, module, dest, archive, archive_fmt, archive_prefix, version):
     """ Create git archive in given source directory """
-    cmd = "%s archive --format=%s --output=%s --prefix=%s %s" \
-        cmd = [git_path, 'archive', '--format', archive_fmt, '--output', archive, version]
-        if archive_prefix is not None:
-            cmd.insert(-1, '--prefix')
-            cmd.insert(-1, archive_prefix)
+    cmd = [git_path, 'archive', '--format', archive_fmt, '--output', archive, version]
+    if archive_prefix is not None:
+        cmd.insert(-1, '--prefix')
+        cmd.insert(-1, archive_prefix)
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg="Failed to perform archive operation",
@@ -1071,8 +1070,8 @@ def main():
             archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
         ),
-         mutually_exclusive=[('separate_git_dir', 'bare')],
-         required_by={'archive_prefix': ['archive']},
+        mutually_exclusive=[('separate_git_dir', 'bare')],
+        required_by={'archive_prefix': ['archive']},
         supports_check_mode=True
     )
 
