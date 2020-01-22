@@ -93,16 +93,9 @@ class GalaxyCLI(CLI):
             vwidth=vwidth)
         )
 
-    def _display_warnings(self, galaxy_type, warnings, path_found):
-        """
-        Display a warning for each item in warnings. Raise AnsibleOptionsError
-        if no path was found.
-        """
-
+    def _display_warnings(self, warnings):
         for w in warnings:
             display.warning(w)
-        if not path_found:
-            raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(galaxy_type))
 
     def _get_collection_widths(self, collections):
         if is_iterable(collections):
@@ -1116,10 +1109,15 @@ class GalaxyCLI(CLI):
                     if gr.metadata:
                         self._display_role(gr)
 
-        self._display_warnings(context.CLIARGS['type'], warnings, path_found)
         # Do not warn if the role was found in any of the search paths
         if role_found and role_name:
             warnings = []
+
+        self._display_warnings(warnings)
+
+        if not path_found:
+            raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
+
         return 0
 
     def execute_list_collection(self):
