@@ -74,7 +74,7 @@ This works for roles or any type of plugin distributed within the collection:
          - debug:
              msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
 
-The ``collections`` keyword
+Simplifying module names with the ``collections`` keyword
 ===========================
 
 The ``collections`` keyword lets you define a list of collections that your role or playbook should search for unqualified module and action names. So you can use the ``collections`` keyword, then simply refer to modules and action plugins by their short-form names throughout that role or playbook.
