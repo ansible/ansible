@@ -77,7 +77,7 @@ This works for roles or any type of plugin distributed within the collection:
 The ``collections`` keyword
 ===========================
 
-The ``collections`` keyword lets you define the collections you want your role or playbook to use for modules and for action plugins. Ansible searches those collections first for any modules or action plugins without an FQCN. So you can use the ``collections`` keyword, then call modules and action plugins using their short-form names later in that role or playbook.
+The ``collections`` keyword lets you define a list of collections that your role or playbook should search for unqualified module and action names. So you can use the ``collections`` keyword, then simply refer to modules and action plugins by their short-form names throughout that role or playbook.
 
 .. warning::
    If your playbook uses both the ``collections`` keyword and one or more roles, the roles do not inherit the collections set by the playbook. See below for details.
@@ -85,7 +85,7 @@ The ``collections`` keyword lets you define the collections you want your role o
 Using ``collections`` in roles
 ------------------------------
 
-In a role, you can control which collections Ansible searches for modules and action plugins globally with the ``collections`` keyword. Define the collections in the ``metadata/main.yml`` file within your role, and Ansible will use them for your role every time, in any context. Ansible will use the collections defined by a role even if the playbook that calls the role defines different collections in a separate ``collections`` keyword entry.
+Within a role, you can control which collections Ansible searches for the tasks inside the role using the ``collections`` keyword in the role's ``metadata/main.yml``. Ansible will use the collections list defined inside the role even if the playbook that calls the role defines different collections in a separate ``collections`` keyword entry. Roles defined inside a collection always implicitly search their own collection first, so you don't need to use the ``collections`` keyword to access modules, actions, or other roles contained in the same collection. 
 
 .. code-block:: yaml
 
@@ -98,7 +98,7 @@ In a role, you can control which collections Ansible searches for modules and ac
 Using ``collections`` in playbooks
 ----------------------------------
 
-In a playbook, you can control the collections Ansible searches for modules and action plugins, but only for tasks, not for roles. Some roles rely on particular collections to work properly, so Ansible does not apply ``collections`` from a playbook to any roles within that playbook. This is true even if the role does not define its own ``collections`` keyword.
+In a playbook, you can control the collections Ansible searches for modules, action plugins, and roles to execute. However, the called roles define their own collections search order; they do not inherit the calling playbook's settings. This is true even if the role does not define its own ``collections`` keyword.
 
 .. code-block:: yaml
 
@@ -115,7 +115,7 @@ In a playbook, you can control the collections Ansible searches for modules and 
          - debug:
              msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
 
-The ``collections`` keyword creates a 'search path' for non-namespaced plugin references. It does not import roles or anything else. Notice that you still need the FQCN for non-action or module plugins.
+The ``collections`` keyword merely creates an ordered 'search path' for non-namespaced plugin and role references. It does not install content or otherwise change Ansible's behavior around the loading of plugins or roles. Note that an FQCN is still required for non-action or module plugins (e.g., lookups, filters, tests).
 
 .. seealso::
 
