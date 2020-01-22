@@ -264,7 +264,7 @@ latex_documents = [
 autoclass_content = 'both'
 
 # Note:  Our strategy for intersphinx mappings is to have the upstream build location as the
-# canonical source and then cached copies of hthe mapping stored locally in case someone is building
+# canonical source and then cached copies of the mapping stored locally in case someone is building
 # when disconnected from the internet.  We then have a script to update the cached copies.
 #
 # Because of that, each entry in this mapping should have this format:
