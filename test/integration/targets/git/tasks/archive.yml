@@ -85,7 +85,8 @@
 - name: ARCHIVE | Ensure archive content is correct
   assert:
     that:
-      - item.stdout_lines | sort | first == 'defaults/'
+# sort without (case_sensitive=false) fails on RedHat6
+      - item.stdout_lines | sort(case_sensitive=false) | first == 'defaults/'
   with_items: "{{ archive_content.results }}"
 - name: ARCHIVE | Clear checkout_dir
   file:
