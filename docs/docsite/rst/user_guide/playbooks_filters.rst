@@ -1418,11 +1418,11 @@ This can then be used to reference hashes in Pod specifications::
 .. versionadded:: 2.8
 
 
-.. _Jinja2 map() docs: https://jinja.palletsprojects.com/templates/#map
+.. _Jinja2 map() docs: https://jinja.palletsprojects.com/en/2.10.x/templates/#map
 
-.. _builtin filters: https://jinja.palletsprojects.com/templates/#builtin-filters
+.. _builtin filters: https://jinja.palletsprojects.com/en/2.10.x/templates/#builtin-filters
 
-.. _Python methods: https://jinja.palletsprojects.com/templates/#python-methods
+.. _Python methods: https://jinja.palletsprojects.com/en/2.10.x/templates/#python-methods
 
 .. _PyYAML library: https://pyyaml.org/
 
