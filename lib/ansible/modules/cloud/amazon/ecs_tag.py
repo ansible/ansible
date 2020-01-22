@@ -97,7 +97,7 @@ EXAMPLES = r'''
 - name: Remove all tags except for Name from a cluster
   ecs_tag:
     cluster_name: mycluster
-    resource_type: cluster:27
+    resource_type: cluster
     tags:
         Name: foo
     state: absent
