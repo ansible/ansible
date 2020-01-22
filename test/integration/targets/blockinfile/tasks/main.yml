@@ -47,7 +47,7 @@
   register: blockinfile_test0
 
 - name: check content
-  shell: 'grep -e "Match User ansible-agent" -e "PasswordAuthentication no" {{ output_dir_test }}/sshd_config'
+  shell: 'grep -c -e "Match User ansible-agent" -e "PasswordAuthentication no" {{ output_dir_test }}/sshd_config'
   register: blockinfile_test0_grep
 
 - debug:
@@ -65,7 +65,7 @@
       - 'blockinfile_test0.msg is defined'
       - 'blockinfile_test0.changed'
       - 'blockinfile_test0.msg == "Block inserted"'
-      - 'blockinfile_test0_grep.stdout_lines | length == 2'
+      - 'blockinfile_test0_grep.stdout == "2"'
 
 - name: check idemptotence
   blockinfile:
@@ -125,7 +125,8 @@
   register: blockinfile_test2
 
 - name: check content
-  shell: 'grep -P "^dos\r$" {{ output_dir_test }}/line_endings_test.txt'
+  # using the more precise `grep -Pc "^dos\\r$" ...` fails on BSD/macOS
+  shell: 'grep -c "^dos.$" {{ output_dir_test }}/line_endings_test.txt'
   register: blockinfile_test2_grep
 
 - name: validate line_endings_test.txt results
@@ -133,4 +134,4 @@
     that:
       - 'blockinfile_test2 is changed'
       - 'blockinfile_test2.msg == "Block inserted"'
-      - 'blockinfile_test2_grep.stdout_lines | length == 6'
+      - 'blockinfile_test2_grep.stdout == "6"'
