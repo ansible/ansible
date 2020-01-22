@@ -1214,6 +1214,8 @@ files:
     support: core
   $plugins/inventory/aws_ec2.py:
     maintainers: s-hertel
+  $plugins/inventory/azure_rm.py:
+    migrated_to: azure.azcollection
   $plugins/inventory/docker: *docker
   $plugins/inventory/docker_swarm.py:
     <<: *docker
