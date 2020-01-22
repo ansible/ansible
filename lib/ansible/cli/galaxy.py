@@ -22,8 +22,13 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
-from ansible.galaxy.collection import build_collection, install_collections, publish_collection, \
-    validate_collection_name
+from ansible.galaxy.collection import (
+    build_collection,
+    install_collections,
+    publish_collection,
+    validate_collection_name,
+    validate_collection_path,
+)
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
@@ -827,9 +832,7 @@ class GalaxyCLI(CLI):
                                 "collections paths '%s'. The installed collection won't be picked up in an Ansible "
                                 "run." % (to_text(output_path), to_text(":".join(collections_path))))
 
-            if os.path.split(output_path)[1] != 'ansible_collections':
-                output_path = os.path.join(output_path, 'ansible_collections')
-
+            output_path = validate_collection_path(output_path)
             b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
             if not os.path.exists(b_output_path):
                 os.makedirs(b_output_path)
