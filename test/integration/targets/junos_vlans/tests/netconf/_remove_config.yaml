@@ -5,6 +5,7 @@
 - name: Remove interface config
   junos_config:
     lines:
+      - delete vlan default # required for vqfx
       - delete vlan vlan1
       - delete vlan vlan2
 
