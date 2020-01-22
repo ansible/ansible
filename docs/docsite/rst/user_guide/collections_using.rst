@@ -75,7 +75,7 @@ This works for roles or any type of plugin distributed within the collection:
              msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
 
 Simplifying module names with the ``collections`` keyword
-===========================
+=========================================================
 
 The ``collections`` keyword lets you define a list of collections that your role or playbook should search for unqualified module and action names. So you can use the ``collections`` keyword, then simply refer to modules and action plugins by their short-form names throughout that role or playbook.
 
@@ -85,7 +85,7 @@ The ``collections`` keyword lets you define a list of collections that your role
 Using ``collections`` in roles
 ------------------------------
 
-Within a role, you can control which collections Ansible searches for the tasks inside the role using the ``collections`` keyword in the role's ``metadata/main.yml``. Ansible will use the collections list defined inside the role even if the playbook that calls the role defines different collections in a separate ``collections`` keyword entry. Roles defined inside a collection always implicitly search their own collection first, so you don't need to use the ``collections`` keyword to access modules, actions, or other roles contained in the same collection. 
+Within a role, you can control which collections Ansible searches for the tasks inside the role using the ``collections`` keyword in the role's ``metadata/main.yml``. Ansible will use the collections list defined inside the role even if the playbook that calls the role defines different collections in a separate ``collections`` keyword entry. Roles defined inside a collection always implicitly search their own collection first, so you don't need to use the ``collections`` keyword to access modules, actions, or other roles contained in the same collection.
 
 .. code-block:: yaml
 
@@ -98,7 +98,7 @@ Within a role, you can control which collections Ansible searches for the tasks 
 Using ``collections`` in playbooks
 ----------------------------------
 
-In a playbook, you can control the collections Ansible searches for modules, action plugins, and roles to execute. However, the called roles define their own collections search order; they do not inherit the calling playbook's settings. This is true even if the role does not define its own ``collections`` keyword.
+In a playbook, you can control the collections Ansible searches for modules and action plugins to execute. However, any roles you call in your playbook define their own collections search order; they do not inherit the calling playbook's settings. This is true even if the role does not define its own ``collections`` keyword.
 
 .. code-block:: yaml
 
