@@ -263,6 +263,15 @@ latex_documents = [
 
 autoclass_content = 'both'
 
-intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2-2.7.13.inv')),
-                       'python3': ('https://docs.python.org/3/', (None, '../python3-3.6.2.inv')),
-                       'jinja2': ('http://jinja.pocoo.org/docs/', (None, '../jinja2-2.9.7.inv'))}
+# Note:  Our strategy for intersphinx mappings is to have the upstream build location as the
+# canonical source and then cached copies of the mapping stored locally in case someone is building
+# when disconnected from the internet.  We then have a script to update the cached copies.
+#
+# Because of that, each entry in this mapping should have this format:
+#   name: ('http://UPSTREAM_URL', (None, 'path/to/local/cache.inv'))
+#
+# The update script depends on this format so deviating from this (for instance, adding a third
+# location for the mappning to live) will confuse it.
+intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2.inv')),
+                       'python3': ('https://docs.python.org/3/', (None, '../python3.inv')),
+                       'jinja2': ('http://jinja.pocoo.org/docs/', (None, '../jinja.inv'))}
