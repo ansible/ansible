@@ -236,7 +236,7 @@ class GalaxyCLI(CLI):
             galaxy_type = 'collection'
 
         # Seprate methods for listing a role or collection
-        list_func = getattr(self, 'execute_%s_list' % galaxy_type)
+        list_func = getattr(self, 'execute_list_%s' % galaxy_type)
 
         list_parser = parser.add_parser('list', parents=parents,
                                         help='Show the name and version of each {0} installed in the {0}s_path.'.format(galaxy_type))
@@ -1073,7 +1073,7 @@ class GalaxyCLI(CLI):
 
         return 0
 
-    def execute_role_list(self):
+    def execute_list_role(self):
         """
         List all roles installed on the local system or a specific role
         """
@@ -1115,7 +1115,7 @@ class GalaxyCLI(CLI):
         self._display_warnings(context.CLIARGS['type'], warnings, path_found)
         return 0
 
-    def execute_collection_list(self):
+    def execute_list_collection(self):
         """
         List all collections installed on the local system or a specific collection
         """
@@ -1130,9 +1130,9 @@ class GalaxyCLI(CLI):
         #               namespace
         #               namespace.ab*
 
-        path_found = False
         warnings = []
-        collection_path_found = False
+        path_found = False
+        collection_found = False
         for path in collections_search_paths:
             collection_path = GalaxyCLI._resolve_path(path)
             if not os.path.exists(path):
@@ -1163,7 +1163,7 @@ class GalaxyCLI(CLI):
                     warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
                     continue
 
-                collection_path_found = True
+                collection_found = True
                 collection = CollectionRequirement.from_path(b_collection_path, False)
                 fqcn_width, version_width = self._get_collection_widths(collection)
 
@@ -1184,11 +1184,15 @@ class GalaxyCLI(CLI):
                 for collection in collections:
                     self._display_collection(collection, fqcn_width, version_width)
 
-            # Do not warn if the specific collection was found in any of the search paths
-            if collection_path_found and collection_name:
-                warnings = []
+        # Do not warn if the specific collection was found in any of the search paths
+        if collection_found and collection_name:
+            warnings = []
 
-        self._display_warnings(context.CLIARGS['type'], warnings, path_found)
+        self._display_warnings(warnings)
+
+        if not path_found:
+            raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
+
         return 0
 
     def execute_publish(self):
