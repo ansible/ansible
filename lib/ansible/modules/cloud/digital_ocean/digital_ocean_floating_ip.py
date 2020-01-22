@@ -113,7 +113,7 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
-
+from ansible.module_utils.digital_ocean import DigitalOceanHelper
 
 class Response(object):
 
@@ -138,45 +138,6 @@ class Response(object):
     def status_code(self):
         return self.info["status"]
 
-
-class Rest(object):
-
-    def __init__(self, module, headers):
-        self.module = module
-        self.headers = headers
-        self.baseurl = 'https://api.digitalocean.com/v2'
-
-    def _url_builder(self, path):
-        if path[0] == '/':
-            path = path[1:]
-        return '%s/%s' % (self.baseurl, path)
-
-    def send(self, method, path, data=None, headers=None):
-        url = self._url_builder(path)
-        data = self.module.jsonify(data)
-        timeout = self.module.params['timeout']
-
-        resp, info = fetch_url(self.module, url, data=data, headers=self.headers, method=method, timeout=timeout)
-
-        # Exceptions in fetch_url may result in a status -1, the ensures a
-        if info['status'] == -1:
-            self.module.fail_json(msg=info['msg'])
-
-        return Response(resp, info)
-
-    def get(self, path, data=None, headers=None):
-        return self.send('GET', path, data, headers)
-
-    def put(self, path, data=None, headers=None):
-        return self.send('PUT', path, data, headers)
-
-    def post(self, path, data=None, headers=None):
-        return self.send('POST', path, data, headers)
-
-    def delete(self, path, data=None, headers=None):
-        return self.send('DELETE', path, data, headers)
-
-
 def wait_action(module, rest, ip, action_id, timeout=10):
     end_time = time.time() + 10
     while time.time() < end_time:
@@ -200,8 +161,7 @@ def core(module):
     ip = module.params['ip']
     droplet_id = module.params['droplet_id']
 
-    rest = Rest(module, {'Authorization': 'Bearer {0}'.format(api_token),
-                         'Content-type': 'application/json'})
+    rest = DigitalOceanHelper(module)
 
     if state in ('present'):
         if droplet_id is not None and module.params['ip'] is not None:
@@ -277,18 +237,11 @@ def create_floating_ips(module, rest):
     if module.params['droplet_id'] is not None:
         payload["droplet_id"] = module.params['droplet_id']
 
-        page = 1
-        while page is not None:
-            response = rest.get('floating_ips?page={0}&per_page=20'.format(page))
-            json_data = response.json
-            if response.status_code == 200:
-                for floating_ip in json_data['floating_ips']:
-                    if floating_ip['droplet'] and floating_ip['droplet']['id'] == int(module.params['droplet_id']):
-                        floating_ip_data = {'floating_ip': floating_ip}
-                if 'links' in json_data and 'pages' in json_data['links'] and 'next' in json_data['links']['pages']:
-                    page += 1
-                else:
-                    page = None
+    floating_ips = rest.get_paginated_data(base_url='floating_ips?', data_key_name='floating_ips')
+
+    for floating_ip in floating_ips:
+        if floating_ip['droplet'] and floating_ip['droplet']['id'] == module.params['droplet_id']:
+            floating_ip_data = {'floating_ip': floating_ip}
 
     if floating_ip_data:
         module.exit_json(changed=False, data=floating_ip_data)
@@ -310,7 +263,7 @@ def main():
             state=dict(choices=['present', 'absent'], default='present'),
             ip=dict(aliases=['id'], required=False),
             region=dict(required=False),
-            droplet_id=dict(required=False),
+            droplet_id=dict(required=False, type='int'),
             oauth_token=dict(
                 no_log=True,
                 # Support environment variable for DigitalOcean OAuth Token
