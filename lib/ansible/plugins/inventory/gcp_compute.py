@@ -333,16 +333,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         resp = self._return_if_object(
             self.fake_module, self.auth_session.get(link, params={"filter": query})
         )
-        lists.append(resp.get("items"))
-        while resp.get("nextPageToken"):
-            resp = self._return_if_object(
-                self.fake_module,
-                self.auth_session.get(
-                    link,
-                    params={"filter": query, "pageToken": resp.get("nextPageToken")},
-                ),
-            )
-            lists.append(resp.get("items"))
+        if resp != None:
+          lists.append(resp.get("items"))
+          while resp.get("nextPageToken"):
+              resp = self._return_if_object(
+                  self.fake_module,
+                  self.auth_session.get(
+                      link,
+                      params={"filter": query, "pageToken": resp.get("nextPageToken")},
+                  ),
+              )
+              lists.append(resp.get("items"))
         return self.build_list(lists)
 
     def build_list(self, lists):
@@ -590,7 +591,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if params["folders"]:
             for folder in params["folders"]:
                 projects = projects + self.projects_for_folder(config_data, folder)
-
 
         if not cache or cache_needs_update:
             cached_data = {}
