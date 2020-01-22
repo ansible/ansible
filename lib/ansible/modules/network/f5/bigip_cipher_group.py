@@ -6,10 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import logging
-logging.basicConfig( level=logging.DEBUG, filename='/tmp/bigip_cipher_group.py.log')
-logger = logging.getLogger("bigip_cipher_group")
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'certified'}
@@ -49,6 +45,7 @@ options:
     description:
       - Specifies in which order mechanism the cipher list ist processed by the client. 
     type: str
+    default: default
     choices:
       - default
       - speed
@@ -101,8 +98,6 @@ EXAMPLES = r'''
 RETURN = r'''
 
 '''
-
-import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
@@ -232,10 +227,7 @@ class Difference(object):
         try:
             attr2 = getattr(self.have, param)
             if attr1 != attr2:
-                logger.info("param[%s] differs: %s | %s" %(param, attr1, attr2))
                 return attr1
-            else:
-                logger.info("param[%s] same: %s | %s" % (param,attr1, attr2))
         except AttributeError:
             return attr1
 
@@ -281,7 +273,6 @@ class ModuleManager(object):
         changed = dict()
         for k in updatables:
             change = diff.compare(k)
-            logger.info("compare: %s -> change: %s" % (k, change))
             if change is None:
                 continue
             else:
@@ -450,11 +441,12 @@ class ArgumentSpec(object):
         self.supports_check_mode = True
         argument_spec = dict(
             name=dict(required=True),
-            allow=dict(type='list'),
-            exclude=dict(type='list'),
-            require=dict(type='list'),
+            allow=dict(type='list', default=[]),
+            exclude=dict(type='list', default=[]),
+            require=dict(type='list', default=[]),
             ordering=dict(type='str',
-                          choices=['default', 'speed', 'strength', 'fips', 'hardware']),
+                          choices=['default', 'speed', 'strength', 'fips', 'hardware'],
+                          default='default'),
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])

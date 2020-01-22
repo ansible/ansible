@@ -6,7 +6,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'certified'}
@@ -64,7 +63,7 @@ EXAMPLES = r'''
   bigip_cipher_rule:
     state: present
     name: default
-    cipher: ECDHE:TLS13-AES128-GCM-SHA256:TLS13-AES256-GCM-SHA384:TLS13-CHACHA20-POLY1305-SHA256:!TLSv1:!EXPORT:!DHE:!3DES:-MD5:-SSLv3:-RC4:!ECDHE-RSA-AES128-CBC-SHA:!ECDHE-RSA-AES256-CBC-SHA
+    cipher: ECDHE:TLS13-AES128-GCM-SHA256::!TLSv1:!EXPORT:!DHE:!3DES:-MD5:-SSLv3:-RC4:!ECDHE-RSA-AES128-CBC-SHA
   delegate_to: localhost
 '''
 
@@ -75,8 +74,6 @@ ciphers:
   type: str
   sample: "!SSLv3:!SSLv2:ECDHE+AES-GCM+SHA256:ECDHE-RSA-AES128-CBC-SHA"
 '''
-
-import os
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
