@@ -1079,6 +1079,7 @@ class GalaxyCLI(CLI):
         """
 
         path_found = False
+        role_found = False
         warnings = []
         roles_search_paths = context.CLIARGS['roles_path']
         role_name = context.CLIARGS['role']
@@ -1087,12 +1088,15 @@ class GalaxyCLI(CLI):
             role_path = GalaxyCLI._resolve_path(path)
             if os.path.isdir(path):
                 path_found = True
+            else:
+                warnings.append("- the configured path {0} does not exist.".format(path))
+                continue
 
             if role_name:
                 # show the requested role, if it exists
-                gr = GalaxyRole(self.galaxy, self.api, role_name)
+                gr = GalaxyRole(self.galaxy, self.api, role_name, path=os.path.join(role_path, role_name))
                 if os.path.isdir(gr.path):
-                    path_found = True
+                    role_found = True
                     display.display('# %s' % os.path.dirname(gr.path))
                     self._display_role(gr)
                     break
@@ -1113,6 +1117,9 @@ class GalaxyCLI(CLI):
                         self._display_role(gr)
 
         self._display_warnings(context.CLIARGS['type'], warnings, path_found)
+        # Do not warn if the role was found in any of the search paths
+        if role_found and role_name:
+            warnings = []
         return 0
 
     def execute_list_collection(self):
