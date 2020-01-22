@@ -42,10 +42,10 @@
         destination-group 99
         sensor-group 2
           data-source NX-API
-          path sys/bgp/inst depth unbounded query-condition foo filter-condition foo
+          path "show bgp l2vpn evpn summary" depth unbounded query-condition foo filter-condition foo
         sensor-group 8
           data-source NX-API
-          path sys/bgp depth 0 query-condition foo filter-condition foo
+          path "show ip bgp neighbors" depth 0 query-condition foo filter-condition foo
         sensor-group 55
           data-source DME
           path sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11] depth 0 query-condition foo filter-condition foo
@@ -107,7 +107,7 @@
           - id: 100
             data_source: NX-API
             path:
-              name: sys/bgp/inst
+              name: '"show bgp l2vpn evpn summary"'
               depth: unbounded
               query_condition: foo
               filter_condition: foo
@@ -147,7 +147,7 @@
         - "'ip address 192.168.0.1 port 65001 protocol grpc encoding gpb' in result.commands"
         - "'ip address 192.168.0.3 port 55001 protocol grpc encoding gpb' in result.commands"
         - "'sensor-group 100' in result.commands"
-        - "'path sys/bgp/inst depth unbounded query-condition foo filter-condition foo' in result.commands"
+        - result.commands is search("path .*show bgp l2vpn evpn summary.* depth unbounded query-condition foo filter-condition foo")
         - "'data-source NX-API' in result.commands"
         - "'subscription 99' in result.commands"
         - "'snsr-grp 100 sample-interval 2000' in result.commands"

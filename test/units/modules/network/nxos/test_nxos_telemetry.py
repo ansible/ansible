@@ -609,6 +609,27 @@ class TestNxosTelemetryModule(TestNxosModule):
         set_module_args(args, ignore_provider_arg)
         self.execute_module(changed=False)
 
+    def test_tms_sensorgroup_quotes_merged_idempotent_n9k(self):
+        # Assumes feature telemetry is enabled
+        # TMS sensorgroup config is present with quotes in NX-API path.
+        self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K_SGs.cfg')
+        self.get_platform_shortname.return_value = 'N9K'
+        args = build_args([
+            {'id': '2',
+             'data_source': 'NX-API',
+             'path': {'name': '"show mac address-table count"', 'depth': 2},
+             },
+            {'id': '3',
+             'data_source': 'NX-API',
+             'path': {'name': '"show interface ethernet1/1-52"'},
+             },
+            {'id': '1',
+             'path': {'name': 'sys/procsys', 'depth': 1},
+             },
+        ], 'sensor_groups')
+        set_module_args(args, ignore_provider_arg)
+        self.execute_module(changed=False)
+
     def test_tms_sensorgroup_vxlan_idempotent_n9k(self):
         # TMS sensorgroup config present.
         self.execute_show_command.return_value = load_fixture('nxos_telemetry', 'N9K.cfg')
