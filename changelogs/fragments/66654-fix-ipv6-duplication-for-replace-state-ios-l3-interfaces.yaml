@@ -1,0 +1,3 @@
+bugfixes:
+  - Fix bug where IPV6 was duplicated for replace state.
+  - PR(https://github.com/ansible/ansible/pull/66654)
