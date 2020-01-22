@@ -48,7 +48,7 @@ notes:
   - Requires BIG-IP software version >= 12
 extends_documentation_fragment: f5
 author:
-  - @diLLec
+  - diLLec
 '''
 
 EXAMPLES = r'''
