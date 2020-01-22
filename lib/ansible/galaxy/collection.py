@@ -535,7 +535,7 @@ def validate_collection_name(name):
         return name
 
     raise AnsibleError("Invalid collection name '%s', "
-                       "name must be in the format <namespace>.<collection>. "
+                       "name must be in the format <namespace>.<collection>. \n"
                        "Please make sure namespace and collection name contains "
                        "characters from [a-zA-Z0-9_] only." % name)
 
