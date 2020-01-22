@@ -104,7 +104,7 @@ path:
   _exclude: ['N3K', 'N5K', 'N6k', 'N7k']
   multiple: true
   kind: dict
-  getval: path (?P<name>\\S+)( depth (?P<depth>\\S+))?( query-condition (?P<query_condition>\\S+))?( filter-condition (?P<filter_condition>\\S+))?$
+  getval: path (?P<name>(\\S+|".*"))( depth (?P<depth>\\S+))?( query-condition (?P<query_condition>\\S+))?( filter-condition (?P<filter_condition>\\S+))?$
   setval: path {name} depth {depth} query-condition {query_condition} filter-condition {filter_condition}
   default:
     name: ~
