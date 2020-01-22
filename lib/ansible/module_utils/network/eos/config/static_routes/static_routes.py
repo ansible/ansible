@@ -187,7 +187,7 @@ class Static_routes(ConfigBase):
             for command in return_command:
                 haveconfigs.append(command)
         wantconfigs = set_commands(want, have)
-        idempotentconfigs = list(set(wantconfigs) - set(haveconfigs))
+        idempotentconfigs = list(set(haveconfigs) - set(wantconfigs))
         if not idempotentconfigs:
             return idempotentconfigs
         removeconfigs = list(set(haveconfigs) - set(wantconfigs))

@@ -12,6 +12,7 @@
       no ip route 10.50.0.0/16 Management1
       no ip route 23.1.0.0/16 Nexthop-Group testgrp tag 42
       no ip route 155.55.1.0/24 Nexthop-Group testgrp tag 100
+      no ip route 122.1.19.0/24 Nexthop-Group testgrp 21
       no ip route vrf testvrf 120.1.1.0/24 Ethernet1 23
       no ip route vrf vrftest1 77.77.1.0/24 33.1.1.1
       no ipv6 route 1000:10::/64 Ethernet1 67 tag 98
