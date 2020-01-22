@@ -230,7 +230,7 @@ class TestEosStaticRoutesModule(TestEosModule):
                                    next_hops=[
                                        dict(interface="Ethernet1",
                                             admin_distance=67,
-                                             tag=98)
+                                            tag=98)
                                    ])
                           ])
                      ])
