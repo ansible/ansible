@@ -616,7 +616,7 @@ def test_no_log_false(stdin, capfd):
         "arg_pass": {"no_log": False}
     }
     am = basic.AnsibleModule(arg_spec)
-    assert "testing" not in am.no_log_values and not am._warnings
+    assert "testing" not in am.no_log_values and not warnings.global_warnings
 
 
 @pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
@@ -630,4 +630,4 @@ def test_no_log_none(stdin, capfd):
     # Omitting no_log is only picked up by _log_invocation, so the value never
     # makes it into am.no_log_values. Instead we can check for the warning
     # emitted by am._log_invocation.
-    assert len(am._warnings) > 0
+    assert len(warnings.global_warnings) > 0
