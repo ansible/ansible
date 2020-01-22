@@ -7,7 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'certified'}
@@ -491,14 +490,14 @@ class ModuleParameters(Parameters):
 
     @property
     def ciphers(self):
-        if 'cipherGroup' in self._values:
+        if 'cipherGroup' in self._values and self._values['cipherGroup'] not in (None, ''):
             # This may be a API fix as specifying cipherGroup and not cipher = "" results in the error
             # "Profile ... cannot contain both ciphers and a cipher-group"
-            return ""
-        elif 'ciphers' in self._values:
+            return None
+        elif 'ciphers' in self._values and self._values['ciphers'] not in (None, ''):
             return self._values['ciphers']
         else:
-            return None
+            return ""
 
     @property
     def parent(self):
