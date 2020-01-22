@@ -115,6 +115,7 @@ from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.digital_ocean import DigitalOceanHelper
 
+
 class Response(object):
 
     def __init__(self, resp, info):
@@ -137,6 +138,7 @@ class Response(object):
     @property
     def status_code(self):
         return self.info["status"]
+
 
 def wait_action(module, rest, ip, action_id, timeout=10):
     end_time = time.time() + 10
