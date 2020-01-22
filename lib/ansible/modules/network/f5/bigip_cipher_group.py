@@ -25,7 +25,7 @@ options:
     required: True
   allow:
     description:
-      - Specifies cipher rules C(cipher_rules) which define ciphers that are included. 
+      - Specifies cipher rules C(cipher_rules) which define ciphers that are included.
     type: list
     default: []
   exclude:
@@ -42,7 +42,7 @@ options:
     default: []
   ordering:
     description:
-      - Specifies in which order mechanism the cipher list ist processed by the client. 
+      - Specifies in which order mechanism the cipher list ist processed by the client.
     type: str
     default: default
     choices:
@@ -77,7 +77,7 @@ EXAMPLES = r'''
   bigip_cipher_group:
     state: present
     name: cgroup_test
-    allow: 
+    allow:
     - crule_intermediate_ciphers
     ordering: speed
   delegate_to: localhost

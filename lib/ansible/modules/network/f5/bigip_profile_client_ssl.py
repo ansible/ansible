@@ -36,7 +36,7 @@ options:
     description:
       - Specifies a cipherGroup for that clientssl profile.
     type: str
-    version_added: 2.10
+    version_added: "2.10"
   ciphers:
     description:
       - Specifies the list of ciphers that the system supports. When creating a new
