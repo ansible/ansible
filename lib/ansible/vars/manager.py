@@ -133,6 +133,8 @@ class VariableManager:
         self._inventory = data.get('inventory', None)
         self._options_vars = data.get('options_vars', dict())
         self.safe_basedir = data.get('safe_basedir', False)
+        self._loader = None
+        self._hostvars = None
 
     @property
     def extra_vars(self):
