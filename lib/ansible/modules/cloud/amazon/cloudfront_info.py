@@ -504,7 +504,7 @@ class CloudFrontServiceManager:
         try:
             distribution_id = ""
             distributions = self.list_distributions(False)
-            distributions += self.list_streaming_distributions(False)
+            distributions.update(self.list_streaming_distributions(False))
             for dist in distributions:
                 if 'Items' in dist['Aliases']:
                     for alias in dist['Aliases']['Items']:
