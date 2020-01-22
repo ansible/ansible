@@ -213,7 +213,28 @@ class TestEosStaticRoutesModule(TestEosModule):
                                                 admin_distance=23)
                                        ])
                               ])
+                     ]),
+                dict(address_families=[
+                         dict(afi="ipv4",
+                              routes=[
+                                  dict(dest="10.1.1.0/24",
+                                       next_hops=[
+                                           dict(interface="Management1")
+                                       ])
+                              ])
+                     ]),
+                dict(address_families=[
+                         dict(afi="ipv6",
+                              routes=[
+                                  dict(dest="1000:10::/64", 
+                                       next_hops=[
+                                           dict(interface="Ethernet1",
+                                                admin_distance=67,
+                                                tag=98)
+                                       ])
+                              ])
                      ])
+                
             ], state="overridden"))
         self.execute_module(changed=False, commands=[])
 
