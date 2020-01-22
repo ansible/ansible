@@ -41,7 +41,7 @@ def test_group_by_value_only(inventory_module):
         {
             'prefix': '',
             'separator': '',
-            'key': 'bar'
+            'key': '{{ bar }}'
         }
     ]
     inventory_module._add_host_to_keyed_groups(
@@ -61,11 +61,11 @@ def test_keyed_group_separator(inventory_module):
         {
             'prefix': 'farmer',
             'separator': '_old_',
-            'key': 'farmer'
+            'key': '{{ farmer }}'
         },
         {
             'separator': 'mmmmmmmmmm',
-            'key': 'barn'
+            'key': '{{ barn }}'
         }
     ]
     inventory_module._add_host_to_keyed_groups(
@@ -84,7 +84,7 @@ def test_keyed_group_empty_construction(inventory_module):
     keyed_groups = [
         {
             'separator': 'mmmmmmmmmm',
-            'key': 'barn'
+            'key': '{{ barn }}'
         }
     ]
     inventory_module._add_host_to_keyed_groups(
@@ -102,7 +102,7 @@ def test_keyed_group_host_confusion(inventory_module):
         {
             'separator': '',
             'prefix': '',
-            'key': 'species'
+            'key': '{{ species }}'
         }
     ]
     inventory_module._add_host_to_keyed_groups(
@@ -123,7 +123,7 @@ def test_keyed_parent_groups(inventory_module):
     keyed_groups = [
         {
             'prefix': 'region',
-            'key': 'region',
+            'key': '{{ region }}',
             'parent_group': 'region_list'
         }
     ]
@@ -146,18 +146,18 @@ def test_parent_group_templating(inventory_module):
     host = inventory_module.inventory.get_host('cow')
     keyed_groups = [
         {
-            'key': 'sound',
+            'key': '{{ sound }}',
             'prefix': 'sound',
             'parent_group': '{{ nickname }}'
         },
         {
-            'key': 'nickname',
+            'key': '{{ nickname }}',
             'prefix': '',
             'separator': '',
             'parent_group': 'nickname'  # statically-named parent group, conflicting with hostvar
         },
         {
-            'key': 'nickname',
+            'key': '{{ nickname }}',
             'separator': '',
             'parent_group': '{{ location | default("field") }}'
         }
