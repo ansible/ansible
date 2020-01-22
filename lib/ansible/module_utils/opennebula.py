@@ -72,7 +72,15 @@ class OpenNebulaModule:
         if self.module.params.get("api_url"):
             url = self.module.params.get("api_url")
         else:
-            self.fail("Either api_url or the environment variable ONE_URL must be provided")
+            import socket
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            url = 'http://localhost:2633/RPC2'
+            try:
+                self.module.warn("api_url or the environment variable ONE_URL was not provided, trying default {}".format(url))
+                s.connect(('localhost', 2633))
+                s.shutdown(2)
+            except ConnectionError:
+                self.fail("api_url or the environment variable ONE_URL was not provided, default {} also unavailable".format(url))
 
         if self.module.params.get("api_username") and self.module.params.get("api_password"):
             username = self.module.params.get("api_username")
