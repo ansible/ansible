@@ -92,9 +92,8 @@
     state: absent
     path: "{{ checkout_dir }}"
 
-- name: ARCHIVE | Set some facts for further tests
+- name: ARCHIVE | Generate an archive prefix
   set_fact:
-    git_archive_extensions: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) | difference(['zip']) }}" # Exclude zip archives since they require unzip binary that's not always available
     git_archive_prefix: '{{ range(2 ** 31, 2 ** 32) | random }}' # Generate some random archive prefix
 
 - name: ARCHIVE | Archive repo using various archival format and with an archive prefix
@@ -104,19 +103,19 @@
     archive: '{{ checkout_dir }}/test_role.{{ item }}'
     archive_prefix: '{{ git_archive_prefix }}/'
   register: git_archive
-  with_items: "{{ git_archive_extensions }}"
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
 
 - name: ARCHIVE | Prepare the target for archive(s) extraction
   file:
     state: directory
     path: '{{ checkout_dir }}/{{ git_archive_prefix }}.{{ item }}'
-  with_items: "{{ git_archive_extensions }}"
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
 
 - name: ARCHIVE | Extract the archive(s) into that target
   unarchive:
     src: '{{ checkout_dir }}/test_role.{{ item }}'
     dest: '{{ checkout_dir }}/{{ git_archive_prefix }}.{{ item }}'
-  with_items: "{{ git_archive_extensions }}"
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
 
 - name: ARCHIVE | Check if prefix directory exists in what's extracted
   find:
@@ -124,7 +123,7 @@
     patterns: '{{ git_archive_prefix }}'
     file_type: directory
   register: archive_check
-  with_items: "{{ git_archive_extensions }}"
+  with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
 
 - name: ARCHIVE | Assert that prefix directory is found
   assert:
