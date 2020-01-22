@@ -31,7 +31,7 @@ from ansible.template import Templar
 config_data = {
     'plugin': 'openstack',
     'compose': {
-        'composed_var': '"testvar-" + testvar',
+        'composed_var': '{{ "testvar-" + testvar}}',
     },
     'groups': {
         'testgroup': '"host" in inventory_hostname',
@@ -39,7 +39,7 @@ config_data = {
     'keyed_groups':
     [{
         'prefix': 'keyed',
-        'key': 'testvar',
+        'key': '{{ testvar }}',
     }]
 }
 
