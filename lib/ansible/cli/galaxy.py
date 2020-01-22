@@ -65,6 +65,58 @@ class GalaxyCLI(CLI):
         self.galaxy = None
         super(GalaxyCLI, self).__init__(args)
 
+    def _display_header(self, path, h1, h2, w1=42, w2=22):
+        display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
+            path,
+            h1,
+            h2,
+            '-' * max([len(h1), w1]),  # Make sure that the number of dashes is at least the width of the header
+            '-' * max([len(h2), w2]),
+            cwidth=w1,
+            vwidth=w2,
+        ))
+
+    def _display_role(self, gr):
+        install_info = gr.install_info
+        version = None
+        if install_info:
+            version = install_info.get("version", None)
+        if not version:
+            version = "(unknown version)"
+        display.display("- %s, %s" % (gr.name, version))
+
+    def _display_collection(self, collection, cwidth=42, vwidth=22):
+        display.display('{fqcn:{cwidth}} {version:{vwidth}}'.format(
+            fqcn=to_text(collection),
+            version=collection.latest_version,
+            cwidth=cwidth,
+            vwidth=vwidth)
+        )
+
+    def _display_warnings(self, galaxy_type, warnings, path_found):
+        """
+        Display a warning for each item in warnings. Raise AnsibleOptionsError
+        if no path was found.
+        """
+
+        for w in warnings:
+            display.warning(w)
+        if not path_found:
+            raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(galaxy_type))
+
+    def _get_collection_widths(self, collections):
+        if is_iterable(collections):
+            fqcn_set = set(to_text(c) for c in collections)
+            version_set = set(to_text(c.latest_version) for c in collections)
+        else:
+            fqcn_set = set([to_text(collections)])
+            version_set = set([collections.latest_version])
+
+        fqcn_length = len(max(fqcn_set, key=len))
+        version_length = len(max(version_set, key=len))
+
+        return fqcn_length, version_length
+
     def init_parser(self):
         ''' create an options parser for bin/ansible '''
 
@@ -183,9 +235,13 @@ class GalaxyCLI(CLI):
         if parser.metavar == 'COLLECTION_ACTION':
             galaxy_type = 'collection'
 
+        # Seprate methods for listing a role or collection
+        list_func = getattr(self, 'execute_%s_list' % galaxy_type)
+
         list_parser = parser.add_parser('list', parents=parents,
                                         help='Show the name and version of each {0} installed in the {0}s_path.'.format(galaxy_type))
-        list_parser.set_defaults(func=self.execute_list)
+
+        list_parser.set_defaults(func=list_func)
 
         list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
 
@@ -627,9 +683,9 @@ class GalaxyCLI(CLI):
                 requirements.append((name, requirement or '*', None))
         return requirements
 
-############################
-# execute actions
-############################
+    ############################
+    # execute actions
+    ############################
 
     def execute_role(self):
         """
@@ -1017,159 +1073,122 @@ class GalaxyCLI(CLI):
 
         return 0
 
-    def execute_list(self):
+    def execute_role_list(self):
         """
-        lists the roles or collections installed on the local system or matches a single role or collection passed as an argument.
+        List all roles installed on the local system or a specific role
         """
 
-        def _display_header(path, h1, h2, w1=42, w2=22):
-            display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
-                path,
-                h1,
-                h2,
-                '-' * max([len(h1), w1]),  # Make sure that the number of dashes is at least the width of the header
-                '-' * max([len(h2), w2]),
-                cwidth=w1,
-                vwidth=w2,
-            ))
-
-        def _display_role(gr):
-            install_info = gr.install_info
-            version = None
-            if install_info:
-                version = install_info.get("version", None)
-            if not version:
-                version = "(unknown version)"
-            display.display("- %s, %s" % (gr.name, version))
-
-        def _get_collection_widths(collections):
-            if is_iterable(collections):
-                fqcn_set = set(to_text(c) for c in collections)
-                version_set = set(to_text(c.latest_version) for c in collections)
-            else:
-                fqcn_set = set([to_text(collections)])
-                version_set = set([collections.latest_version])
-
-            fqcn_length = len(max(fqcn_set, key=len))
-            version_length = len(max(version_set, key=len))
-
-            return fqcn_length, version_length
-
-        def _display_collection(collection, cwidth=42, vwidth=22):
-            display.display('{fqcn:{cwidth}} {version:{vwidth}}'.format(
-                fqcn=to_text(collection),
-                version=collection.latest_version,
-                cwidth=cwidth,
-                vwidth=vwidth)
-            )
-
-        search_path_found = False
         path_found = False
         warnings = []
-        galaxy_type = context.CLIARGS['type']
-        import q
-        if context.CLIARGS['type'] == 'role':
-            roles_search_paths = context.CLIARGS['roles_path']
-            role_name = context.CLIARGS['role']
+        roles_search_paths = context.CLIARGS['roles_path']
+        role_name = context.CLIARGS['role']
 
-            for path in q/roles_search_paths:
-                role_path = GalaxyCLI._resolve_path(path)
-                if os.path.isdir(path):
-                    search_path_found = True
+        for path in roles_search_paths:
+            role_path = GalaxyCLI._resolve_path(path)
+            if os.path.isdir(path):
+                path_found = True
 
-                if role_name:
-                    # show the requested role, if it exists
-                    gr = GalaxyRole(self.galaxy, self.api, role_name)
-                    if os.path.isdir(gr.path):
-                        path_found = True
-                        display.display('# %s' % os.path.dirname(gr.path))
-                        _display_role(gr)
-                        break
-                    else:
-                        warnings.append("- the role %s was not found" % role_name)
+            if role_name:
+                # show the requested role, if it exists
+                gr = GalaxyRole(self.galaxy, self.api, role_name)
+                if os.path.isdir(gr.path):
+                    path_found = True
+                    display.display('# %s' % os.path.dirname(gr.path))
+                    self._display_role(gr)
+                    break
                 else:
-                    if not os.path.exists(role_path):
-                        warnings.append("- the configured path %s does not exist." % role_path)
-                        continue
-                    elif not os.path.isdir(role_path):
-                        warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
-                        continue
-                    display.display('# %s' % role_path)
-                    path_files = os.listdir(role_path)
-                    search_path_found = True
-                    for path_file in path_files:
-                        gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
-                        if gr.metadata:
-                            _display_role(gr)
+                    warnings.append("- the role %s was not found" % role_name)
+            else:
+                if not os.path.exists(role_path):
+                    warnings.append("- the configured path %s does not exist." % role_path)
+                    continue
+                elif not os.path.isdir(role_path):
+                    warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
+                    continue
+                display.display('# %s' % role_path)
+                path_files = os.listdir(role_path)
+                for path_file in path_files:
+                    gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
+                    if gr.metadata:
+                        self._display_role(gr)
 
-        elif context.CLIARGS['type'] == 'collection':
-            collections_search_paths = context.CLIARGS['collections_path']
-            collection_name = context.CLIARGS['collection']
+        self._display_warnings(context.CLIARGS['type'], warnings, path_found)
+        return 0
 
-            # TODO: Should we support listing all collections in a given namespace?
-            #       Suggestion from team: use fnmatch() to accept a glob or partial collection name
-            #           match, such as:
-            #               namesp*
-            #               namespace
-            #               namespace.ab*
+    def execute_collection_list(self):
+        """
+        List all collections installed on the local system or a specific collection
+        """
 
-            collection_path_found = False
-            for path in collections_search_paths:
-                collection_path = GalaxyCLI._resolve_path(path)
-                if not os.path.exists(path):
-                    if path in C.COLLECTIONS_PATHS:
-                        # don't warn for missing default paths
-                        continue
-                    warnings.append("- the configured path {0} does not exist.".format(collection_path))
+        collections_search_paths = context.CLIARGS['collections_path']
+        collection_name = context.CLIARGS['collection']
+
+        # TODO: Should we support listing all collections in a given namespace?
+        #       Suggestion from team: use fnmatch() to accept a glob or partial collection name
+        #           match, such as:
+        #               namesp*
+        #               namespace
+        #               namespace.ab*
+
+        path_found = False
+        warnings = []
+        collection_path_found = False
+        for path in collections_search_paths:
+            collection_path = GalaxyCLI._resolve_path(path)
+            if not os.path.exists(path):
+                if path in C.COLLECTIONS_PATHS:
+                    # don't warn for missing default paths
+                    continue
+                warnings.append("- the configured path {0} does not exist.".format(collection_path))
+                continue
+            elif not os.path.isdir(collection_path):
+                warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
+                continue
+
+            path_found = True
+
+            if collection_name:
+                # list a specific collection
+
+                validate_collection_name(collection_name)
+                namespace, collection = collection_name.split('.')
+
+                collection_path = validate_collection_path(collection_path)
+                b_collection_path = to_bytes(os.path.join(collection_path, namespace, collection), errors='surrogate_or_strict')
+
+                if not os.path.exists(b_collection_path):
+                    warnings.append("- unable to find {0} in collection paths".format(collection_name))
                     continue
                 elif not os.path.isdir(collection_path):
                     warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
                     continue
 
-                search_path_found = True
+                collection_path_found = True
+                collection = CollectionRequirement.from_path(b_collection_path, False)
+                fqcn_width, version_width = self._get_collection_widths(collection)
 
-                if collection_name:
-                    # list a specific collection
+                self._display_header(path, 'Collection', 'Version', fqcn_width, version_width)
+                self._display_collection(collection, fqcn_width, version_width)
 
-                    validate_collection_name(collection_name)
-                    namespace, collection = collection_name.split('.')
+            else:
+                # list all collections
+                path = validate_collection_path(path)
+                collections = find_existing_collections(path)
 
-                    collection_path = validate_collection_path(collection_path)
-                    b_collection_path = to_bytes(os.path.join(collection_path, namespace, collection), errors='surrogate_or_strict')
+                # Display header
+                fqcn_width, version_width = self._get_collection_widths(collections)
+                self._display_header(path, 'Collection', 'Version', fqcn_width, version_width)
 
-                    if not os.path.exists(b_collection_path):
-                        warnings.append("- unable to find {0} in collection paths".format(collection_name))
-                        continue
-
-                    collection_path_found = True
-                    collection = CollectionRequirement.from_path(b_collection_path, False)
-                    fqcn_width, version_width = _get_collection_widths(collection)
-
-                    _display_header(path, 'Collection', 'Version', fqcn_width, version_width)
-                    _display_collection(collection, fqcn_width, version_width)
-
-                else:
-                    # list all collections
-                    path = validate_collection_path(path)
-                    collections = find_existing_collections(path)
-
-                    # Display header
-                    fqcn_width, version_width = _get_collection_widths(collections)
-                    _display_header(path, 'Collection', 'Version', fqcn_width, version_width)
-
-                    # Sort collections by the namespace and name
-                    collections.sort(key=to_text)
-                    for collection in collections:
-                        _display_collection(collection, fqcn_width, version_width)
+                # Sort collections by the namespace and name
+                collections.sort(key=to_text)
+                for collection in collections:
+                    self._display_collection(collection, fqcn_width, version_width)
 
             # Do not warn if the specific collection was found in any of the search paths
             if collection_path_found and collection_name:
                 warnings = []
 
-        for w in warnings:
-            display.warning(w)
-        if not search_path_found:
-            raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(galaxy_type))
+        self._display_warnings(context.CLIARGS['type'], warnings, path_found)
         return 0
 
     def execute_publish(self):
