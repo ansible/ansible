@@ -66,6 +66,7 @@
     login_unix_socket: '{{ mysql_socket }}'
     force: yes
     master_data: 1
+    skip_lock_tables: yes
   register: result
 
 - name: assert successful completion of dump operation
