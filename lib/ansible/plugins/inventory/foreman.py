@@ -69,7 +69,12 @@ DOCUMENTATION = '''
         type: boolean
         default: False
         version_added: '2.10'
-
+      group_patterns:
+        description: Create hierarchies of Ansible groups based on the pattern using parameters on the hostgroup and host variables
+        version_added: '2.10'
+      host_filters:
+        description: This can be used to restrict the list of returned host
+        version_added: '2.10'
 '''
 
 EXAMPLES = '''
@@ -79,8 +84,20 @@ url: http://localhost:2222
 user: ansible-tester
 password: secure
 validate_certs: False
+
+# my.foreman.with.group.pattern.yml
+plugin: foreman
+url: http://localhost:2222
+user: ansible-tester
+password: secure
+validate_certs: False
+group_patterns: '["{app_param}-{tier_param}-{dc_param}",
+                  "{app_param}-{tier_param}",
+                  "{new_param}"]'
+# here new_param, tier_param and dc_param are parameters on the host groups.
 '''
 
+import json
 from distutils.version import LooseVersion
 
 from ansible.errors import AnsibleError
@@ -132,7 +149,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
             self.session.verify = self.get_option('validate_certs')
         return self.session
 
-    def _get_json(self, url, ignore_errors=None):
+    def _get_json(self, url, ignore_errors=None, params=None):
 
         if not self.use_cache or url not in self._cache.get(self.cache_key, {}):
 
@@ -141,7 +158,10 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
 
             results = []
             s = self._get_session()
-            params = {'page': 1, 'per_page': 250}
+            if params is None:
+                params = {}
+            params['page'] = 1
+            params['per_page'] = 250
             while True:
                 ret = s.get(url, params=params)
                 if ignore_errors and ret.status_code in ignore_errors:
@@ -179,7 +199,11 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
         return self._cache[self.cache_key][url]
 
     def _get_hosts(self):
-        return self._get_json("%s/api/v2/hosts" % self.foreman_url)
+        url = "%s/api/v2/hosts" % self.foreman_url
+        params = {}
+        if self.get_option('host_filters'):
+            params['search'] = self.get_option('host_filters')
+        return self._get_json(url, params=params)
 
     def _get_all_params_by_id(self, hid):
         url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
@@ -269,6 +293,18 @@ class InventoryModule(BaseInventoryPlugin, Cacheable, Constructable):
                         except ValueError as e:
                             self.display.warning("Could not set hostvar ansible_ssh_host to '%s' for the '%s' host, skipping: %s" %
                                                  (host['ip'], host_name, to_text(e)))
+
+                if self.get_option('group_patterns'):
+                    groupby = dict()
+                    for p in self._get_all_params_by_id(host['id']):
+                        groupby[p['name']] = to_safe_group_name('%s' % (p['value'].lower().replace(" ", "")))
+                    for pattern in json.loads(self.get_option('group_patterns')):
+                        try:
+                            key = pattern.format(**groupby)
+                            pattern_group = self.inventory.add_group(key)
+                            self.inventory.add_child(pattern_group, host_name)
+                        except KeyError:
+                            pass  # Host not part of this group
 
                 strict = self.get_option('strict')
 
