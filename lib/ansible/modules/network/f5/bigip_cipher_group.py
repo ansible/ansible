@@ -8,16 +8,15 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
 module: bigip_cipher_group
 short_description: Manages cipher groups on a BIG-IP
 description:
-  - Manages cipher groups on a BIG-IP.
-  - see: https://clouddocs.f5.com/api/icontrol-rest/APIRef_tm_ltm_cipher_group.html
-version_added: 2.10
+  - Manages cipher groups on a BIG-IP (https://clouddocs.f5.com/api/icontrol-rest/APIRef_tm_ltm_cipher_group.html).
+version_added: "2.10"
 options:
   name:
     description:
@@ -32,7 +31,7 @@ options:
   exclude:
     description:
       - Specifies cipher rules C(cipher_rules) which define a subset of the allowed
-        ciphers that are excluded. 
+        ciphers that are excluded.
     type: list
     default: []
   require:
@@ -70,7 +69,7 @@ notes:
   - Requires BIG-IP software version >= 12
 extends_documentation_fragment: f5
 author:
-  - diLLec
+  - Michael Kluge (@diLLec)
 '''
 
 EXAMPLES = r'''
@@ -87,16 +86,15 @@ EXAMPLES = r'''
   bigip_cipher_group:
     state: present
     name: cgroup_test
-    allow: 
+    allow:
     - crule_intermediate_ciphers
-    exclude:  
+    exclude:
     - crule_AES128_ciphers
     ordering: speed
   delegate_to: localhost
 '''
 
 RETURN = r'''
-
 '''
 
 from ansible.module_utils.basic import AnsibleModule

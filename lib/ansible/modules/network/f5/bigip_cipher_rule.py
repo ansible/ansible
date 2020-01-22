@@ -8,16 +8,15 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = r'''
 ---
 module: bigip_cipher_rule
 short_description: Manages cipher rules on a BIG-IP
 description:
-  - Manages cipher rules on a BIG-IP.
-  - see: https://clouddocs.f5.com/api/icontrol-rest/APIRef_tm_ltm_cipher_rule.html
-version_added: 2.10
+  - Manages cipher rules on a BIG-IP (https://clouddocs.f5.com/api/icontrol-rest/APIRef_tm_ltm_cipher_rule.html).
+version_added: "2.10"
 options:
   name:
     description:
@@ -27,7 +26,7 @@ options:
   cipher:
     description:
       - Specifies the cipher string which this cipher rule uses to propagate ciphers
-        to cipher groups. 
+        to cipher groups.
     type: str
     default: "DEFAULT"
   state:
@@ -48,7 +47,8 @@ notes:
   - Requires BIG-IP software version >= 12
 extends_documentation_fragment: f5
 author:
-  - diLLec
+  - Michael Kluge (@diLLec)
+
 '''
 
 EXAMPLES = r'''
@@ -376,7 +376,7 @@ class ArgumentSpec(object):
         self.supports_check_mode = True
         argument_spec = dict(
             name=dict(required=True),
-            cipher=dict(type='str'),
+            cipher=dict(type='str', default="DEFAULT"),
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
