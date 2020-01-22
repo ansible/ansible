@@ -237,7 +237,7 @@ def main():
         f = open(path, 'rb')
         original = f.read()
         f.close()
-        lines = original.splitlines(keepends=True)
+        lines = original.splitlines(True)
 
     diff = {'before': '',
             'after': '',
@@ -272,7 +272,7 @@ def main():
         # Escape sequences like '\n' need to be handled in Ansible 1.x
         if module.ansible_version.startswith('1.'):
             block = re.sub('', block, '')
-        blocklines = [marker0] + block.splitlines(keepends=True) + [marker1]
+        blocklines = [marker0] + block.splitlines(True) + [marker1]
     else:
         blocklines = []
 
