@@ -292,6 +292,15 @@ def generate_egg_info(args):
     if args.explain:
         return
 
+    ansible_version = get_ansible_version()
+
+    # inclusion of the version number in the path is optional
+    # see: https://setuptools.readthedocs.io/en/latest/formats.html#filename-embedded-metadata
+    egg_info_path = ANSIBLE_LIB_ROOT + '-%s.egg-info' % ansible_version
+
+    if os.path.exists(egg_info_path):
+        return
+
     egg_info_path = ANSIBLE_LIB_ROOT + '.egg-info'
 
     if os.path.exists(egg_info_path):
