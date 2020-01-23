@@ -1934,7 +1934,7 @@ macros:
   team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
-  team_azure: haroldwongms nitzmahone yuwzho yungezz zikalino haiyuazhang gavinfish
+  team_azure: haroldwongms yuwzho yungezz zikalino haiyuazhang gavinfish
   team_bsd: bcoca dagwieers dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: dpassante rhtyd
@@ -1992,6 +1992,6 @@ macros:
   team_vmware_httpapi: Akasurde warthog9 Tomorrow9 goneri pgbidkar n3pjk
   team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
-  team_windows: jborean93 jhawkesworth nitzmahone ShachafGoldstein
+  team_windows: jborean93 jhawkesworth ShachafGoldstein
   team_windows_core: nitzmahone jborean93
   team_zabbix: D3DeFi rubentsirunyan sky-joker
