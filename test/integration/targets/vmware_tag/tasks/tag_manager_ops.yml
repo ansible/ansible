@@ -29,7 +29,7 @@
       name: Get info about tag in check mode
       check_mode: yes
 
-    - set_fact: Tag_Name={{ tag_info['tag_info'].keys() | list }}
+    - set_fact: Tag_Name={{ tag_info['tag_facts'].keys() | list }}
 
     - debug: var=Tag_Name
 
