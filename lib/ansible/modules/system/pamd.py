@@ -351,6 +351,8 @@ class PamdRule(PamdLine):
     valid_control_actions = ['ignore', 'bad', 'die', 'ok', 'done', 'reset']
 
     def __init__(self, rule_type, rule_control, rule_path, rule_args=None):
+        self.prev = None
+        self.next = None
         self._control = None
         self._args = None
         self.rule_type = rule_type
@@ -478,7 +480,8 @@ class PamdService(object):
             if current_line.matches(rule_type, rule_control, rule_path):
                 if current_line.prev is not None:
                     current_line.prev.next = current_line.next
-                    current_line.next.prev = current_line.prev
+                    if current_line.next is not None:
+                        current_line.next.prev = current_line.prev
                 else:
                     self._head = current_line.next
                     current_line.next.prev = None
