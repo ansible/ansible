@@ -428,7 +428,7 @@ class GalaxyCLI(CLI):
                     "Failed to parse the requirements yml at '%s' with the following error:\n%s"
                     % (to_native(requirements_file), to_native(err)))
 
-        if requirements_file is None:
+        if file_requirements is None:
             raise AnsibleError("No requirements found in file '%s'" % to_native(requirements_file))
 
         def parse_role_req(requirement):
