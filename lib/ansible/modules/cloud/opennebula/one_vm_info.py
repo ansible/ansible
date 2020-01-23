@@ -197,16 +197,9 @@ vms:
 
 from ansible.module_utils.opennebula import OpenNebulaModule
 from ansible.module_utils.basic import AnsibleModule
+from pyone import VM_STATE, LCM_STATE
 import os
 import time
-
-
-VM_STATES = ['INIT', 'PENDING', 'HOLD', 'ACTIVE', 'STOPPED', 'SUSPENDED', 'DONE', '', 'POWEROFF', 'UNDEPLOYED', 'CLONING', 'CLONING_FAILURE']
-LCM_STATES = ['LCM_INIT', 'PROLOG', 'BOOT', 'RUNNING', 'MIGRATE', 'SAVE_STOP',
-              'SAVE_SUSPEND', 'SAVE_MIGRATE', 'PROLOG_MIGRATE', 'PROLOG_RESUME',
-              'EPILOG_STOP', 'EPILOG', 'SHUTDOWN', 'STATE13', 'STATE14', 'CLEANUP_RESUBMIT', 'UNKNOWN', 'HOTPLUG', 'SHUTDOWN_POWEROFF',
-              'BOOT_UNKNOWN', 'BOOT_POWEROFF', 'BOOT_SUSPENDED', 'BOOT_STOPPED', 'CLEANUP_DELETE', 'HOTPLUG_SNAPSHOT', 'HOTPLUG_NIC',
-              'HOTPLUG_SAVEAS', 'HOTPLUG_SAVEAS_POWEROFF', 'HOTPULG_SAVEAS_SUSPENDED', 'SHUTDOWN_UNDEPLOY']
 
 
 def get_vm_info(one, vm):
@@ -249,12 +242,12 @@ def get_vm_info(one, vm):
     info = {
         'id': vm.ID,
         'name': vm.NAME,
-        'state': VM_STATES[vm.STATE],
+        'state': VM_STATE(vm.STATE).name,
         'user_name': vm.UNAME,
         'user_id': vm.UID,
         'group_name': vm.GNAME,
         'group_id': vm.GID,
-        'lcm_state': LCM_STATES[vm.LCM_STATE],
+        'lcm_state': LCM_STATE(vm.LCM_STATE).name,
         'uptime_h': int(vm_uptime),
         'mode': one.parse_vm_permissions(vm),
         'cpu': vm.TEMPLATE['CPU'],
