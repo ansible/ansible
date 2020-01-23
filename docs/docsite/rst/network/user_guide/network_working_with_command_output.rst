@@ -72,6 +72,10 @@ Handling prompts in network modules
 
 Network devices may require that you answer a prompt before performing a change on the device. Individual network modules such as :ref:`ios_command <ios_command_module>` and :ref:`nxos_command <nxos_command_module>` can handle this with a ``prompt`` parameter.
 
+.. note::
+
+	``prompt`` is a Python regex. If you add special characters such as ``?`` in the ``prompt`` value, the prompt won't match and you will get a timeout. To avoid this, ensure that the ``prompt`` value is a Python regex that matches the actual device prompt. Any special characters must be handled correctly in the ``prompt`` regex.
+
 You can also use the :ref:`cli_command <cli_command_module>` to handle multiple prompts.
 
 .. code-block:: yaml
@@ -92,13 +96,9 @@ You can also use the :ref:`cli_command <cli_command_module>` to handle multiple 
 
 You must list the prompt and the answers in the same order (that is, prompt[0] is answered by answer[0]).
 
-.. note::
-
-	``prompt`` is a Python regex. If you add special characters such as ``?`` in the ``prompt`` value, the prompt won't match and you will get a timeout. To avoid this, ensure that the ``prompt`` value is a Python regex that matches the actual device prompt. Any special characters must be handled correctly in the ``prompt`` regex.
-
 In the above example, ``check_all: True`` ensures that the task gives the matching answer to each prompt. Without that setting, a task with multiple prompts would give the first answer to every prompt.
 
-In the following example, the second answer would be ignored and ``y`` would be the answer given to both prompts. That is, this task only works because both answers are identical.
+In the following example, the second answer would be ignored and ``y`` would be the answer given to both prompts. That is, this task only works because both answers are identical. Also notice again that ``prompt`` must be a Python regex, which is why the ``?`` is escaped in the first prompt.
 
 .. code-block:: yaml
 
@@ -112,7 +112,6 @@ In the following example, the second answer would be ignored and ``y`` would be 
        answer:
          - y
          - y
-
 
 .. seealso::
 
