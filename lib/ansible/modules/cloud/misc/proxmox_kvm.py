@@ -668,16 +668,16 @@ from ansible.module_utils._text import to_native
 
 VZ_TYPE = 'qemu'
 AGENT_INFO_API_MAP = {
-  'fsinfo': 'get-fsinfo',
-  'hostname': 'get-host-name',
-  'memory_block_info': 'get-memory-block-info',
-  'memory_blocks': 'get-memory-blocks',
-  'osinfo': 'get-osinfo',
-  'time': 'get-time',
-  'timezone': 'get-timezone',
-  'users': 'get-users',
-  'vcpus': 'get-vcpus',
-  'network_interfaces': 'network-get-interfaces'
+    'fsinfo': 'get-fsinfo',
+    'hostname': 'get-host-name',
+    'memory_block_info': 'get-memory-block-info',
+    'memory_blocks': 'get-memory-blocks',
+    'osinfo': 'get-osinfo',
+    'time': 'get-time',
+    'timezone': 'get-timezone',
+    'users': 'get-users',
+    'vcpus': 'get-vcpus',
+    'network_interfaces': 'network-get-interfaces'
 }
 
 
@@ -741,31 +741,31 @@ def get_vminfo(module, proxmox, node, vmid, **kwargs):
     results['devices'] = devices
     results['vmid'] = int(vmid)
 
-  
+
 def get_vm_agent_info(proxmox, node, vmid, agent_info):
-  info = {}
-  warn = []
-  proxmox_vm_agent = getattr(proxmox.nodes(node), VZ_TYPE)(vmid).agent
-  for info_key in agent_info:
-    try:
-      info[info_key] = proxmox_vm_agent.get(get_agent_info_api_endpoint(info_key))['result']
-    except Exception as e:
-      if isinstance(e.args, tuple) and len(e.args) > 0:
-        warn.append('Agent info not available for \'%s\': %s' % (info_key, get_agent_info_api_error_message(e.args)))
-      else:
-        warn.append('Not able to get agent info for \'%s\', unkown error.' % info_key)
-  return info, warn
+    info = {}
+    warn = []
+    proxmox_vm_agent = getattr(proxmox.nodes(node), VZ_TYPE)(vmid).agent
+    for info_key in agent_info:
+        try:
+            info[info_key] = proxmox_vm_agent.get(get_agent_info_api_endpoint(info_key))['result']
+        except Exception as e:
+            if isinstance(e.args, tuple) and len(e.args) > 0:
+                warn.append('Agent info not available for \'%s\': %s' % (info_key, get_agent_info_api_error_message(e.args)))
+            else:
+                warn.append('Not able to get agent info for \'%s\', unkown error.' % info_key)
+    return info, warn
 
 
 def get_agent_info_api_endpoint(info_key):
-  return AGENT_INFO_API_MAP[info_key] if info_key in AGENT_INFO_API_MAP else info_key
+    return AGENT_INFO_API_MAP[info_key] if info_key in AGENT_INFO_API_MAP else info_key
 
 
 def get_agent_info_api_error_message(error_tuple):
-  error, = error_tuple
-  if '500' in error:
-    return 'Server returned no data.'
-  return 'Unkown error - is instance running?'
+    error, = error_tuple
+    if '500' in error:
+        return 'Server returned no data.'
+    return 'Unkown error - is instance running?'
 
 
 def settings(module, proxmox, vmid, node, name, timeout, **kwargs):
@@ -873,7 +873,7 @@ def start_vm(module, proxmox, vm, vmid, timeout):
         timeout -= 1
         if timeout == 0:
             module.fail_json(msg='Reached timeout while waiting for starting VM. Last line in task before timeout: %s'
-                             % proxmox.nodes(vm[0]['node']).tasks(taskid).log.get()[:1])
+                                 % proxmox.nodes(vm[0]['node']).tasks(taskid).log.get()[:1])
 
         time.sleep(1)
     return False
@@ -891,7 +891,7 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
         timeout -= 1
         if timeout == 0:
             module.fail_json(msg='Reached timeout while waiting for stopping VM. Last line in task before timeout: %s'
-                             % proxmox.nodes(vm[0]['node']).tasks(taskid).log.get()[:1])
+                                 % proxmox.nodes(vm[0]['node']).tasks(taskid).log.get()[:1])
         time.sleep(1)
     return False
 
@@ -906,7 +906,9 @@ def main():
         argument_spec=dict(
             acpi=dict(type='bool', default='yes'),
             agent=dict(type='bool'),
-            agent_info=dict(type='list', choices=['fsinfo', 'hostname', 'memory_block_info', 'memory_blocks', 'osinfo', 'time', 'timezone', 'users', 'vcpus', 'info', 'network_interfaces'], default=None),
+            agent_info=dict(type='list',
+                            choices=['fsinfo', 'hostname', 'memory_block_info', 'memory_blocks', 'osinfo', 'time',
+                                     'timezone', 'users', 'vcpus', 'info', 'network_interfaces'], default=None),
             args=dict(type='str', default=None),
             api_host=dict(required=True),
             api_user=dict(required=True),
@@ -1017,7 +1019,7 @@ def main():
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
         global VZ_TYPE
         global PVE_MAJOR_VERSION
-	      PVE_MAJOR_VERSION = 3 if proxmox_version(proxmox) < LooseVersion('4.0') else 4
+        PVE_MAJOR_VERSION = 3 if proxmox_version(proxmox) < LooseVersion('4.0') else 4
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
@@ -1213,7 +1215,7 @@ def main():
                 timeout -= 1
                 if timeout == 0:
                     module.fail_json(msg='Reached timeout while waiting for removing VM. Last line in task before timeout: %s'
-                                     % proxmox.nodes(vm[0]['node']).tasks(taskid).log.get()[:1])
+                                         % proxmox.nodes(vm[0]['node']).tasks(taskid).log.get()[:1])
 
                 time.sleep(1)
         except Exception as e:
