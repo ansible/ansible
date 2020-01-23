@@ -36,6 +36,9 @@ class Firewall_rulesFacts(object):
 
         self.generated_spec = utils.generate_dict(facts_argument_spec)
 
+    def get_device_data(self, connection):
+        return connection.get_config()
+
     def populate_facts(self, connection, ansible_facts, data=None):
         """ Populate the facts for firewall_rules
         :param connection: the device connection
@@ -44,13 +47,11 @@ class Firewall_rulesFacts(object):
         :rtype: dictionary
         :returns: facts
         """
-        if connection:  # just for linting purposes, remove
-            pass
         if not data:
             # typically data is populated from the current device configuration
             # data = connection.get('show running-config | section ^interface')
             # using mock data instead
-            data = connection.get_config()
+            data = self.get_device_data(connection)
         # split the config into instances of the resource
         objs = []
         v6_rules = findall(r'^set firewall ipv6-name (?:\'*)(\S+)(?:\'*)', data, M)
@@ -282,6 +283,7 @@ class Firewall_rulesFacts(object):
             if conf:
                 if self.is_bool(attrib):
                     out = conf.find(attrib.replace("_", "-"))
+
                     dis = conf.find(attrib.replace("_", "-") + " 'disable'")
                     if out >= 1:
                         if dis >= 1:
@@ -315,7 +317,7 @@ class Firewall_rulesFacts(object):
         :param attrib: attribute.
         :return: True/False
         """
-        bool_set = ('new', 'invalid', 'related', 'disabled', 'established', 'enabled_default_log')
+        bool_set = ('new', 'invalid', 'related', 'disabled', 'established', 'enable_default_log')
         return True if attrib in bool_set else False
 
     def is_num(self, attrib):

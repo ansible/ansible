@@ -303,6 +303,10 @@ options:
                   - Time to match rule.
                 type: dict
                 suboptions:
+                  utc:
+                    description:
+                      - Interpret times for startdate, stopdate, starttime and stoptime to be UTC.
+                    type: bool
                   monthdays:
                     description:
                       - Monthdays to match rule on.
@@ -354,6 +358,865 @@ options:
     default: merged
 """
 EXAMPLES = """
+# Using deleted
+#
+# Before state
+# -------------
+#
+# vyos@vyos:~$ show configuration commands| grep firewall
+# set firewall group address-group 'inbound'
+# set firewall name Downlink default-action 'accept'
+# set firewall name Downlink description 'IPv4 INBOUND rule set'
+# set firewall name Downlink rule 501 action 'accept'
+# set firewall name Downlink rule 501 description 'Rule 501 is configured by Ansible'
+# set firewall name Downlink rule 501 ipsec 'match-ipsec'
+# set firewall name Downlink rule 502 action 'reject'
+# set firewall name Downlink rule 502 description 'Rule 502 is configured by Ansible'
+# set firewall name Downlink rule 502 ipsec 'match-ipsec'
+#
+- name: Delete attributes of given static routes.
+      vyos_firewall_rules:
+        config:
+          - afi: ipv4
+            rule_sets:
+              - name: 'Downlink'
+        state: deleted
+#
+#
+# ------------------------
+# Module Execution Results
+# ------------------------
+#
+#    "before": [
+#        {
+#            "afi": "ipv4",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "IPv4 INBOUND rule set",
+#                    "name": "Downlink",
+#                    "rules": [
+#                        {
+#                            "action": "accept",
+#                            "description": "Rule 501 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 501
+#                        },
+#                        {
+#                            "action": "reject",
+#                            "description": "Rule 502 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 502
+#                        }
+#                    ]
+#               }
+#            ]
+#        }
+#    ]
+#    "commands": [
+#        "delete firewall name Downlink"
+#    ]
+#
+# "after": []
+# After state
+# ------------
+# vyos@vyos# run show configuration commands | grep firewall
+# set firewall group address-group 'inbound'
+
+
+# Using merged
+#
+# Before state:
+# -------------
+#
+# vyos@vyos# run show  configuration commands | grep firewall
+# set firewall group address-group 'inbound'
+#
+- name: Merge the provided configuration with the exisiting running configuration
+      vyos_firewall_rules:
+        config:
+          - afi: 'ipv6'
+            rule_sets:
+            - name: 'UPLINK'
+              description: 'This is ipv6 specific rule-set'
+              default_action: 'accept'
+              rules:
+                - number: 1
+                  action: 'accept'
+                  description: 'Fwipv6-Rule 1 is configured by Ansible'
+                  ipsec: 'match-ipsec'
+                - number: 2
+                  action: 'accept'
+                  description: 'Fwipv6-Rule 2 is configured by Ansible'
+                  ipsec: 'match-ipsec'
+
+          - afi: 'ipv4'
+            rule_sets:
+              - name: 'INBOUND'
+                description: 'IPv4 INBOUND rule set'
+                default_action: 'accept'
+                rules:
+                  - number: 101
+                    action: 'accept'
+                    description: 'Rule 101 is configured by Ansible'
+                    ipsec: 'match-ipsec'
+                  - number: 102
+                    action: 'reject'
+                    description: 'Rule 102 is configured by Ansible'
+                    ipsec: 'match-ipsec'
+                  - number: 103
+                    action: 'accept'
+                    description: 'Rule 103 is configured by Ansible'
+                    destination:
+                      group:
+                        address_group: 'inbound'
+                    source:
+                      address: '192.0.2.0'
+                    state:
+                      established: true
+                      new: false
+                      invalid: false
+                      related: true
+        state: merged
+#
+#
+# -------------------------
+# Module Execution Result
+# -------------------------
+#
+# before": []
+#
+#    "commands": [
+#       "set firewall ipv6-name UPLINK default-action 'accept'",
+#       "set firewall ipv6-name UPLINK description 'This is ipv6 specific rule-set'",
+#       "set firewall ipv6-name UPLINK rule 1 action 'accept'",
+#       "set firewall ipv6-name UPLINK rule 1",
+#       "set firewall ipv6-name UPLINK rule 1 description 'Fwipv6-Rule 1 is configured by Ansible'",
+#       "set firewall ipv6-name UPLINK rule 1 ipsec 'match-ipsec'",
+#       "set firewall ipv6-name UPLINK rule 2 action 'accept'",
+#       "set firewall ipv6-name UPLINK rule 2",
+#       "set firewall ipv6-name UPLINK rule 2 description 'Fwipv6-Rule 2 is configured by Ansible'",
+#       "set firewall ipv6-name UPLINK rule 2 ipsec 'match-ipsec'",
+#       "set firewall name INBOUND default-action 'accept'",
+#       "set firewall name INBOUND description 'IPv4 INBOUND rule set'",
+#       "set firewall name INBOUND rule 101 action 'accept'",
+#       "set firewall name INBOUND rule 101",
+#       "set firewall name INBOUND rule 101 description 'Rule 101 is configured by Ansible'",
+#       "set firewall name INBOUND rule 101 ipsec 'match-ipsec'",
+#       "set firewall name INBOUND rule 102 action 'reject'",
+#       "set firewall name INBOUND rule 102",
+#       "set firewall name INBOUND rule 102 description 'Rule 102 is configured by Ansible'",
+#       "set firewall name INBOUND rule 102 ipsec 'match-ipsec'",
+#       "set firewall name INBOUND rule 103 description 'Rule 103 is configured by Ansible'",
+#       "set firewall name INBOUND rule 103 destination group address-group inbound",
+#       "set firewall name INBOUND rule 103",
+#       "set firewall name INBOUND rule 103 source address 192.0.2.0",
+#       "set firewall name INBOUND rule 103 state established enable",
+#       "set firewall name INBOUND rule 103 state related enable",
+#       "set firewall name INBOUND rule 103 state invalid disable",
+#       "set firewall name INBOUND rule 103 state new disable",
+#       "set firewall name INBOUND rule 103 action 'accept'"
+#    ]
+#
+# "after": [
+#        {
+#            "afi": "ipv6",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "This is ipv6 specific rule-set",
+#                    "name": "UPLINK",
+#                    "rules": [
+#                        {
+#                            "action": "accept",
+#                            "description": "Fwipv6-Rule 1 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 1
+#                        },
+#                        {
+#                            "action": "accept",
+#                            "description": "Fwipv6-Rule 2 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 2
+#                        }
+#                    ]
+#                }
+#            ]
+#        },
+#        {
+#            "afi": "ipv4",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "IPv4 INBOUND rule set",
+#                    "name": "INBOUND",
+#                    "rules": [
+#                        {
+#                            "action": "accept",
+#                            "description": "Rule 101 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 101
+#                        },
+#                        {
+#                            "action": "reject",
+#                            "description": "Rule 102 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 102
+#                        },
+#                        {
+#                            "action": "accept",
+#                            "description": "Rule 103 is configured by Ansible",
+#                            "destination": {
+#                                "group": {
+#                                    "address_group": "inbound"
+#                                }
+#                            },
+#                            "number": 103,
+#                            "source": {
+#                                "address": "192.0.2.0"
+#                            },
+#                            "state": {
+#                                "established": true,
+#                                "invalid": false,
+#                                "new": false,
+#                                "related": true
+#                            }
+#                        }
+#                    ]
+#                }
+#            ]
+#        }
+#    ]
+#
+# After state:
+# -------------
+#
+# vyos@vyos:~$ show configuration commands| grep static
+# set firewall group address-group 'inbound'
+# set firewall ipv6-name UPLINK default-action 'accept'
+# set firewall ipv6-name UPLINK description 'This is ipv6 specific rule-set'
+# set firewall ipv6-name UPLINK rule 1 action 'accept'
+# set firewall ipv6-name UPLINK rule 1 description 'Fwipv6-Rule 1 is configured by Ansible'
+# set firewall ipv6-name UPLINK rule 1 ipsec 'match-ipsec'
+# set firewall ipv6-name UPLINK rule 2 action 'accept'
+# set firewall ipv6-name UPLINK rule 2 description 'Fwipv6-Rule 2 is configured by Ansible'
+# set firewall ipv6-name UPLINK rule 2 ipsec 'match-ipsec'
+# set firewall name INBOUND default-action 'accept'
+# set firewall name INBOUND description 'IPv4 INBOUND rule set'
+# set firewall name INBOUND rule 101 action 'accept'
+# set firewall name INBOUND rule 101 description 'Rule 101 is configured by Ansible'
+# set firewall name INBOUND rule 101 ipsec 'match-ipsec'
+# set firewall name INBOUND rule 102 action 'reject'
+# set firewall name INBOUND rule 102 description 'Rule 102 is configured by Ansible'
+# set firewall name INBOUND rule 102 ipsec 'match-ipsec'
+# set firewall name INBOUND rule 103 action 'accept'
+# set firewall name INBOUND rule 103 description 'Rule 103 is configured by Ansible'
+# set firewall name INBOUND rule 103 destination group address-group 'inbound'
+# set firewall name INBOUND rule 103 source address '192.0.2.0'
+# set firewall name INBOUND rule 103 state established 'enable'
+# set firewall name INBOUND rule 103 state invalid 'disable'
+# set firewall name INBOUND rule 103 state new 'disable'
+# set firewall name INBOUND rule 103 state related 'enable'
+
+
+# Using replaced
+#
+# Before state:
+# -------------
+#
+# vyos@vyos:~$ show configuration commands| grep static
+# set firewall group address-group 'inbound'
+# set firewall ipv6-name UPLINK default-action 'accept'
+# set firewall ipv6-name UPLINK description 'This is ipv6 specific rule-set'
+# set firewall ipv6-name UPLINK rule 1 action 'accept'
+# set firewall ipv6-name UPLINK rule 1 description 'Fwipv6-Rule 1 is configured by Ansible'
+# set firewall ipv6-name UPLINK rule 1 ipsec 'match-ipsec'
+# set firewall ipv6-name UPLINK rule 2 action 'accept'
+# set firewall ipv6-name UPLINK rule 2 description 'Fwipv6-Rule 2 is configured by Ansible'
+# set firewall ipv6-name UPLINK rule 2 ipsec 'match-ipsec'
+# set firewall name INBOUND default-action 'accept'
+# set firewall name INBOUND description 'IPv4 INBOUND rule set'
+# set firewall name INBOUND rule 101 action 'accept'
+# set firewall name INBOUND rule 101 description 'Rule 101 is configured by Ansible'
+# set firewall name INBOUND rule 101 ipsec 'match-ipsec'
+# set firewall name INBOUND rule 102 action 'reject'
+# set firewall name INBOUND rule 102 description 'Rule 102 is configured by Ansible'
+# set firewall name INBOUND rule 102 ipsec 'match-ipsec'
+# set firewall name INBOUND rule 103 action 'accept'
+# set firewall name INBOUND rule 103 description 'Rule 103 is configured by Ansible'
+# set firewall name INBOUND rule 103 destination group address-group 'inbound'
+# set firewall name INBOUND rule 103 source address '192.0.2.0'
+# set firewall name INBOUND rule 103 state established 'enable'
+# set firewall name INBOUND rule 103 state invalid 'disable'
+# set firewall name INBOUND rule 103 state new 'disable'
+# set firewall name INBOUND rule 103 state related 'enable'
+#
+- name: Replace device configurations of listed static routes with provided configurations
+      vyos_firewall_rules:
+        config:
+          - afi: 'ipv6'
+            rule_sets:
+            - name: 'UPLINK'
+              description: 'This is ipv6 specific rule-set'
+              default_action: 'accept'
+          - afi: 'ipv4'
+            rule_sets:
+              - name: 'INBOUND'
+                description: 'IPv4 INBOUND rule set'
+                default_action: 'accept'
+                rules:
+                  - number: 101
+                    action: 'accept'
+                    description: 'Rule 101 is configured by Ansible'
+                    ipsec: 'match-ipsec'
+                  - number: 104
+                    action: 'reject'
+                    description: 'Rule 104 is configured by Ansible'
+                    ipsec: 'match-none'
+        state: replaced
+#
+#
+# -------------------------
+# Module Execution Result
+# -------------------------
+#
+#    "before": [
+#        {
+#            "afi": "ipv6",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "This is ipv6 specific rule-set",
+#                    "name": "UPLINK",
+#                    "rules": [
+#                        {
+#                            "action": "accept",
+#                            "description": "Fwipv6-Rule 1 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 1
+#                        },
+#                        {
+#                            "action": "accept",
+#                            "description": "Fwipv6-Rule 2 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 2
+#                        }
+#                    ]
+#                }
+#            ]
+#        },
+#        {
+#            "afi": "ipv4",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "IPv4 INBOUND rule set",
+#                    "name": "INBOUND",
+#                    "rules": [
+#                        {
+#                            "action": "accept",
+#                            "description": "Rule 101 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 101
+#                        },
+#                        {
+#                            "action": "reject",
+#                            "description": "Rule 102 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 102
+#                        },
+#                        {
+#                            "action": "accept",
+#                            "description": "Rule 103 is configured by Ansible",
+#                            "destination": {
+#                                "group": {
+#                                    "address_group": "inbound"
+#                                }
+#                            },
+#                            "number": 103,
+#                            "source": {
+#                                "address": "192.0.2.0"
+#                            },
+#                            "state": {
+#                                "established": true,
+#                                "invalid": false,
+#                                "new": false,
+#                                "related": true
+#                            }
+#                        }
+#                    ]
+#                }
+#            ]
+#        }
+#    ]
+#
+# "commands": [
+#        "delete firewall ipv6-name UPLINK rule 1",
+#        "delete firewall ipv6-name UPLINK rule 2",
+#        "delete firewall name INBOUND rule 102",
+#        "delete firewall name INBOUND rule 103",
+#        "set firewall name INBOUND rule 104 action 'reject'",
+#        "set firewall name INBOUND rule 104 description 'Rule 104 is configured by Ansible'",
+#        "set firewall name INBOUND rule 104",
+#        "set firewall name INBOUND rule 104 ipsec 'match-none'"
+#    ]
+#
+#    "after": [
+#        {
+#            "afi": "ipv6",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "This is ipv6 specific rule-set",
+#                    "name": "UPLINK"
+#                }
+#            ]
+#        },
+#        {
+#            "afi": "ipv4",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "IPv4 INBOUND rule set",
+#                    "name": "INBOUND",
+#                    "rules": [
+#                        {
+#                            "action": "accept",
+#                            "description": "Rule 101 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 101
+#                        },
+#                        {
+#                            "action": "reject",
+#                            "description": "Rule 104 is configured by Ansible",
+#                            "ipsec": "match-none",
+#                            "number": 104
+#                        }
+#                    ]
+#                }
+#            ]
+#        }
+#    ]
+#
+# After state:
+# -------------
+#
+# vyos@vyos:~$ show configuration commands| grep static
+# set firewall group address-group 'inbound'
+# set firewall ipv6-name UPLINK default-action 'accept'
+# set firewall ipv6-name UPLINK description 'This is ipv6 specific rule-set'
+# set firewall name INBOUND default-action 'accept'
+# set firewall name INBOUND description 'IPv4 INBOUND rule set'
+# set firewall name INBOUND rule 101 action 'accept'
+# set firewall name INBOUND rule 101 description 'Rule 101 is configured by Ansible'
+# set firewall name INBOUND rule 101 ipsec 'match-ipsec'
+# set firewall name INBOUND rule 104 action 'reject'
+# set firewall name INBOUND rule 104 description 'Rule 104 is configured by Ansible'
+# set firewall name INBOUND rule 104 ipsec 'match-none'
+
+
+# Using overridden
+#
+# Before state
+# --------------
+#
+# vyos@vyos:~$ show configuration commands| grep firewall
+# set firewall group address-group 'inbound'
+# set firewall ipv6-name UPLINK default-action 'accept'
+# set firewall ipv6-name UPLINK description 'This is ipv6 specific rule-set'
+# set firewall name INBOUND default-action 'accept'
+# set firewall name INBOUND description 'IPv4 INBOUND rule set'
+# set firewall name INBOUND rule 101 action 'accept'
+# set firewall name INBOUND rule 101 description 'Rule 101 is configured by Ansible'
+# set firewall name INBOUND rule 101 ipsec 'match-ipsec'
+# set firewall name INBOUND rule 104 action 'reject'
+# set firewall name INBOUND rule 104 description 'Rule 104 is configured by Ansible'
+# set firewall name INBOUND rule 104 ipsec 'match-none'
+#
+- name: Overrides all device configuration with provided configuration
+      vyos_firewall_rules:
+        config:
+          - afi: 'ipv4'
+            rule_sets:
+              - name: 'Downlink'
+                description: 'IPv4 INBOUND rule set'
+                default_action: 'accept'
+                rules:
+                  - number: 501
+                    action: 'accept'
+                    description: 'Rule 501 is configured by Ansible'
+                    ipsec: 'match-ipsec'
+                  - number: 502
+                    action: 'reject'
+                    description: 'Rule 502 is configured by Ansible'
+                    ipsec: 'match-ipsec'
+        state: overridden
+#
+#
+# -------------------------
+# Module Execution Result
+# -------------------------
+#
+# "before": [
+#        {
+#            "afi": "ipv6",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "This is ipv6 specific rule-set",
+#                    "name": "UPLINK"
+#                }
+#            ]
+#        },
+#        {
+#            "afi": "ipv4",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "IPv4 INBOUND rule set",
+#                    "name": "INBOUND",
+#                    "rules": [
+#                        {
+#                            "action": "accept",
+#                            "description": "Rule 101 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 101
+#                        },
+#                        {
+#                            "action": "reject",
+#                            "description": "Rule 104 is configured by Ansible",
+#                            "ipsec": "match-none",
+#                            "number": 104
+#                        }
+#                    ]
+#                }
+#            ]
+#        }
+#    ]
+#
+#    "commands": [
+#        "delete firewall ipv6-name UPLINK",
+#        "delete firewall name INBOUND",
+#        "set firewall name Downlink default-action 'accept'",
+#        "set firewall name Downlink description 'IPv4 INBOUND rule set'",
+#        "set firewall name Downlink rule 501 action 'accept'",
+#        "set firewall name Downlink rule 501",
+#        "set firewall name Downlink rule 501 description 'Rule 501 is configured by Ansible'",
+#        "set firewall name Downlink rule 501 ipsec 'match-ipsec'",
+#        "set firewall name Downlink rule 502 action 'reject'",
+#        "set firewall name Downlink rule 502",
+#        "set firewall name Downlink rule 502 description 'Rule 502 is configured by Ansible'",
+#        "set firewall name Downlink rule 502 ipsec 'match-ipsec'"
+#
+#
+#    "after": [
+#        {
+#            "afi": "ipv4",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "IPv4 INBOUND rule set",
+#                    "name": "Downlink",
+#                    "rules": [
+#                        {
+#                            "action": "accept",
+#                            "description": "Rule 501 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 501
+#                        },
+#                        {
+#                            "action": "reject",
+#                            "description": "Rule 502 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 502
+#                        }
+#                    ]
+#               }
+#            ]
+#        }
+#    ]
+#
+#
+# After state
+# ------------
+#
+# vyos@vyos:~$ show configuration commands| grep firewall
+# set firewall group address-group 'inbound'
+# set firewall name Downlink default-action 'accept'
+# set firewall name Downlink description 'IPv4 INBOUND rule set'
+# set firewall name Downlink rule 501 action 'accept'
+# set firewall name Downlink rule 501 description 'Rule 501 is configured by Ansible'
+# set firewall name Downlink rule 501 ipsec 'match-ipsec'
+# set firewall name Downlink rule 502 action 'reject'
+# set firewall name Downlink rule 502 description 'Rule 502 is configured by Ansible'
+# set firewall name Downlink rule 502 ipsec 'match-ipsec'
+
+
+# Using gathered
+#
+# Before state:
+# -------------
+#
+# vyos@vyos:~$ show configuration commands| grep firewall
+# set firewall group address-group 'inbound'
+# set firewall ipv6-name UPLINK default-action 'accept'
+# set firewall ipv6-name UPLINK description 'This is ipv6 specific rule-set'
+# set firewall ipv6-name UPLINK rule 1 action 'accept'
+# set firewall ipv6-name UPLINK rule 1 description 'Fwipv6-Rule 1 is configured by Ansible'
+# set firewall ipv6-name UPLINK rule 1 ipsec 'match-ipsec'
+# set firewall ipv6-name UPLINK rule 2 action 'accept'
+# set firewall ipv6-name UPLINK rule 2 description 'Fwipv6-Rule 2 is configured by Ansible'
+# set firewall ipv6-name UPLINK rule 2 ipsec 'match-ipsec'
+# set firewall name INBOUND default-action 'accept'
+# set firewall name INBOUND description 'IPv4 INBOUND rule set'
+# set firewall name INBOUND rule 101 action 'accept'
+# set firewall name INBOUND rule 101 description 'Rule 101 is configured by Ansible'
+# set firewall name INBOUND rule 101 ipsec 'match-ipsec'
+# set firewall name INBOUND rule 102 action 'reject'
+# set firewall name INBOUND rule 102 description 'Rule 102 is configured by Ansible'
+# set firewall name INBOUND rule 102 ipsec 'match-ipsec'
+# set firewall name INBOUND rule 103 action 'accept'
+# set firewall name INBOUND rule 103 description 'Rule 103 is configured by Ansible'
+# set firewall name INBOUND rule 103 destination group address-group 'inbound'
+# set firewall name INBOUND rule 103 source address '192.0.2.0'
+# set firewall name INBOUND rule 103 state established 'enable'
+# set firewall name INBOUND rule 103 state invalid 'disable'
+# set firewall name INBOUND rule 103 state new 'disable'
+# set firewall name INBOUND rule 103 state related 'enable'
+#
+- name: Gather listed static routes with provided configurations
+      vyos_firewall_rules:
+          config:
+          state: gathered
+#
+#
+# -------------------------
+# Module Execution Result
+# -------------------------
+#
+#    "gathered": [
+#        {
+            "afi": "ipv6",
+            "rule_sets": [
+                {
+                    "default_action": "accept",
+                    "description": "This is ipv6 specific rule-set",
+                    "name": "UPLINK",
+                    "rules": [
+                        {
+                            "action": "accept",
+                            "description": "Fwipv6-Rule 1 is configured by Ansible",
+                            "ipsec": "match-ipsec",
+                            "number": 1
+                        },
+                        {
+                            "action": "accept",
+                            "description": "Fwipv6-Rule 2 is configured by Ansible",
+                            "ipsec": "match-ipsec",
+                            "number": 2
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "afi": "ipv4",
+            "rule_sets": [
+                {
+                    "default_action": "accept",
+                    "description": "IPv4 INBOUND rule set",
+                    "name": "INBOUND",
+                    "rules": [
+                        {
+                            "action": "accept",
+                            "description": "Rule 101 is configured by Ansible",
+                            "ipsec": "match-ipsec",
+                            "number": 101
+                        },
+                        {
+                            "action": "reject",
+                            "description": "Rule 102 is configured by Ansible",
+                            "ipsec": "match-ipsec",
+                            "number": 102
+                        },
+                        {
+                            "action": "accept",
+                            "description": "Rule 103 is configured by Ansible",
+                            "destination": {
+                                "group": {
+                                    "address_group": "inbound"
+                                }
+                            },
+                            "number": 103,
+                            "source": {
+                                "address": "192.0.2.0"
+                            },
+                            "state": {
+                                "established": true,
+                                "invalid": false,
+                                "new": false,
+                                "related": true
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+#    ]
+#
+#
+# After state:
+# -------------
+#
+# vyos@vyos:~$ show configuration commands| grep firewall
+# set firewall group address-group 'inbound'
+# set firewall ipv6-name UPLINK default-action 'accept'
+# set firewall ipv6-name UPLINK description 'This is ipv6 specific rule-set'
+# set firewall ipv6-name UPLINK rule 1 action 'accept'
+# set firewall ipv6-name UPLINK rule 1 description 'Fwipv6-Rule 1 is configured by Ansible'
+# set firewall ipv6-name UPLINK rule 1 ipsec 'match-ipsec'
+# set firewall ipv6-name UPLINK rule 2 action 'accept'
+# set firewall ipv6-name UPLINK rule 2 description 'Fwipv6-Rule 2 is configured by Ansible'
+# set firewall ipv6-name UPLINK rule 2 ipsec 'match-ipsec'
+# set firewall name INBOUND default-action 'accept'
+# set firewall name INBOUND description 'IPv4 INBOUND rule set'
+# set firewall name INBOUND rule 101 action 'accept'
+# set firewall name INBOUND rule 101 description 'Rule 101 is configured by Ansible'
+# set firewall name INBOUND rule 101 ipsec 'match-ipsec'
+# set firewall name INBOUND rule 102 action 'reject'
+# set firewall name INBOUND rule 102 description 'Rule 102 is configured by Ansible'
+# set firewall name INBOUND rule 102 ipsec 'match-ipsec'
+# set firewall name INBOUND rule 103 action 'accept'
+# set firewall name INBOUND rule 103 description 'Rule 103 is configured by Ansible'
+# set firewall name INBOUND rule 103 destination group address-group 'inbound'
+# set firewall name INBOUND rule 103 source address '192.0.2.0'
+# set firewall name INBOUND rule 103 state established 'enable'
+# set firewall name INBOUND rule 103 state invalid 'disable'
+# set firewall name INBOUND rule 103 state new 'disable'
+# set firewall name INBOUND rule 103 state related 'enable'
+
+
+# Using rendered
+#
+#
+- name: Render the commands for provided  configuration
+      vyos_firewall_rules:
+        config:
+          - afi: 'ipv6'
+            rule_sets:
+            - name: 'UPLINK'
+              description: 'This is ipv6 specific rule-set'
+              default_action: 'accept'
+          - afi: 'ipv4'
+            rule_sets:
+              - name: 'INBOUND'
+                description: 'IPv4 INBOUND rule set'
+                default_action: 'accept'
+                rules:
+                  - number: 101
+                    action: 'accept'
+                    description: 'Rule 101 is configured by Ansible'
+                    ipsec: 'match-ipsec'
+                  - number: 102
+                    action: 'reject'
+                    description: 'Rule 102 is configured by Ansible'
+                    ipsec: 'match-ipsec'
+                  - number: 103
+                    action: 'accept'
+                    description: 'Rule 103 is configured by Ansible'
+                    destination:
+                      group:
+                        address_group: 'inbound'
+                    source:
+                      address: '192.0.2.0'
+                    state:
+                      established: true
+                      new: false
+                      invalid: false
+                      related: true
+        state: rendered
+#
+#
+# -------------------------
+# Module Execution Result
+# -------------------------
+#
+#
+# "rendered": [
+#        "set firewall ipv6-name UPLINK default-action 'accept'",
+#        "set firewall ipv6-name UPLINK description 'This is ipv6 specific rule-set'",
+#        "set firewall name INBOUND default-action 'accept'",
+#        "set firewall name INBOUND description 'IPv4 INBOUND rule set'",
+#        "set firewall name INBOUND rule 101 action 'accept'",
+#        "set firewall name INBOUND rule 101",
+#        "set firewall name INBOUND rule 101 description 'Rule 101 is configured by Ansible'",
+#        "set firewall name INBOUND rule 101 ipsec 'match-ipsec'",
+#        "set firewall name INBOUND rule 102 action 'reject'",
+#        "set firewall name INBOUND rule 102",
+#        "set firewall name INBOUND rule 102 description 'Rule 102 is configured by Ansible'",
+#        "set firewall name INBOUND rule 102 ipsec 'match-ipsec'",
+#        "set firewall name INBOUND rule 103 description 'Rule 103 is configured by Ansible'",
+#        "set firewall name INBOUND rule 103 destination group address-group inbound",
+#        "set firewall name INBOUND rule 103",
+#        "set firewall name INBOUND rule 103 source address 192.0.2.0",
+#        "set firewall name INBOUND rule 103 state established enable",
+#        "set firewall name INBOUND rule 103 state related enable",
+#        "set firewall name INBOUND rule 103 state invalid disable",
+#        "set firewall name INBOUND rule 103 state new disable",
+#        "set firewall name INBOUND rule 103 action 'accept'"
+#    ]
+
+
+# Using parsed
+#
+#
+- name: Render the commands for provided  configuration
+      vyos_firewall_rules:
+        running_config:
+         "set firewall group address-group 'inbound'
+ set firewall name Downlink default-action 'accept'
+ set firewall name Downlink description 'IPv4 INBOUND rule set'
+ set firewall name Downlink rule 501 action 'accept'
+ set firewall name Downlink rule 501 description 'Rule 501 is configured by Ansible'
+ set firewall name Downlink rule 501 ipsec 'match-ipsec'
+ set firewall name Downlink rule 502 action 'reject'
+ set firewall name Downlink rule 502 description 'Rule 502 is configured by Ansible'
+ set firewall name Downlink rule 502 ipsec 'match-ipsec'"
+        state: parsed
+#
+#
+# -------------------------
+# Module Execution Result
+# -------------------------
+#
+#
+# "parsed": [
+#        {
+#            "afi": "ipv4",
+#            "rule_sets": [
+#                {
+#                    "default_action": "accept",
+#                    "description": "IPv4 INBOUND rule set",
+#                    "name": "Downlink",
+#                    "rules": [
+#                        {
+#                            "action": "accept",
+#                            "description": "Rule 501 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 501
+#                        },
+#                        {
+#                            "action": "reject",
+#                            "description": "Rule 502 is configured by Ansible",
+#                            "ipsec": "match-ipsec",
+#                            "number": 502
+#                        }
+#                    ]
+#                }
+#            ]
+#        }
+#    ]
+
 
 """
 RETURN = """
