@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+COMPLETE=yes
+
+git clone https://github.com/ansible-collection-migration/ansible-base ~/ansible-base
+cd ~/ansible-base
+
 set -o pipefail -eux
 
 declare -a args
