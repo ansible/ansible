@@ -107,6 +107,13 @@ options:
         explicitly set this to pg_default.
     type: path
     version_added: '2.9'
+  dump_extra_args:
+    description:
+      - Provides additional arguments for I(state=dump).
+      - Used when I(state) is C(dump).
+      - Cannot be used with dump-file-format-related arguments like ``--format=d``.
+    type: str
+    version_added: '2.10'
 seealso:
 - name: CREATE DATABASE reference
   description: Complete reference of the CREATE DATABASE command documentation.
@@ -155,6 +162,13 @@ EXAMPLES = r'''
     name: acme
     state: dump
     target: /tmp/acme.sql
+
+- name: Dump an existing database to a file excluding the test table
+  postgresql_db:
+    name: acme
+    state: dump
+    target: /tmp/acme_dump_dir
+    dump_extra_args: --exclude-table=test
 
 - name: Dump an existing database to a file (with compression)
   postgresql_db:
@@ -350,6 +364,7 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn
 
 def db_dump(module, target, target_opts="",
             db=None,
+            dump_extra_args=None,
             user=None,
             password=None,
             host=None,
@@ -375,6 +390,10 @@ def db_dump(module, target, target_opts="",
         comp_prog_path = module.get_bin_path('xz', True)
 
     cmd += "".join(flags)
+
+    if dump_extra_args:
+        cmd += " {0} ".format(dump_extra_args)
+
     if target_opts:
         cmd += " {0} ".format(target_opts)
 
@@ -509,6 +528,7 @@ def main():
         session_role=dict(type='str'),
         conn_limit=dict(type='str', default=''),
         tablespace=dict(type='path', default=''),
+        dump_extra_args=dict(type='str', default=None),
     )
 
     module = AnsibleModule(
@@ -530,6 +550,7 @@ def main():
     session_role = module.params["session_role"]
     conn_limit = module.params['conn_limit']
     tablespace = module.params['tablespace']
+    dump_extra_args = module.params['dump_extra_args']
 
     raw_connection = state in ("dump", "restore")
 
@@ -609,7 +630,11 @@ def main():
         elif state in ("dump", "restore"):
             method = state == "dump" and db_dump or db_restore
             try:
-                rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
+                if state == 'dump':
+                    rc, stdout, stderr, cmd = method(module, target, target_opts, db, dump_extra_args, **kw)
+                else:
+                    rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
+
                 if rc != 0:
                     module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
                 else:
