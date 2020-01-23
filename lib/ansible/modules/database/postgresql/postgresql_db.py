@@ -109,8 +109,7 @@ options:
     version_added: '2.9'
   dump_extra_args:
     description:
-      - Provides additional arguments for I(state=dump).
-      - Used when I(state) is C(dump).
+      - Provides additional arguments when I(state) is C(dump).
       - Cannot be used with dump-file-format-related arguments like ``--format=d``.
     type: str
     version_added: '2.10'
