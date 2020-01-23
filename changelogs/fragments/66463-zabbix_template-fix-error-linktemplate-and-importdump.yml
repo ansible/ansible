@@ -1,0 +1,6 @@
+---
+
+bugfixes:
+  - zabbix_template - fixed error when providing empty ``link_templates`` to the module (see https://github.com/ansible/ansible/issues/66417)
+  - zabbix_template - fixed invalid (non-importable) output provided by exporting XML (see https://github.com/ansible/ansible/issues/66466)
+  
