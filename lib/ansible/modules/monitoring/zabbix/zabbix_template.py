@@ -406,10 +406,16 @@ class Template(object):
             if set(template_groups) != set(existing_groups):
                 changed = True
 
+        if 'templates' not in existing_template['zabbix_export']['templates'][0]:
+            existing_template['zabbix_export']['templates'][0]['templates'] = []
+
         # Check if any new templates would be linked or any existing would be unlinked
         exist_child_templates = [t['name'] for t in existing_template['zabbix_export']['templates'][0]['templates']]
         if link_templates is not None:
             if set(link_templates) != set(exist_child_templates):
+                changed = True
+        else:
+            if set([]) != set(exist_child_templates):
                 changed = True
 
         # Mark that there will be changes when at least one existing template will be unlinked
@@ -433,6 +439,8 @@ class Template(object):
 
         if link_template_ids is not None:
             template_changes.update({'templates': link_template_ids})
+        else:
+            template_changes.update({'templates': []})
 
         if clear_template_ids is not None:
             template_changes.update({'templates_clear': clear_template_ids})
@@ -522,7 +530,7 @@ class Template(object):
                     template.remove(element)
 
         # Filter new lines and indentation
-        xml_root_text = list(line.strip() for line in ET.tostring(parsed_xml_root).split('\n'))
+        xml_root_text = list(line.strip() for line in ET.tostring(parsed_xml_root, encoding='utf8', method='xml').decode().split('\n'))
         return ''.join(xml_root_text)
 
     def load_json_template(self, template_json):
