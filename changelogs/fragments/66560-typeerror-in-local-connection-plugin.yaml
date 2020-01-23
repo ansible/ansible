@@ -1,0 +1,2 @@
+bugfixes:
+  - local connection plugin - fix TypeError when concatenating paths (https://github.com/ansible/ansible/issues/66560)

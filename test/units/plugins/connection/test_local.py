@@ -22,8 +22,11 @@ __metaclass__ = type
 
 from io import StringIO
 import pytest
+import shutil
+import tempfile
 
 from units.compat import unittest
+from ansible.errors import AnsibleFileNotFound
 from ansible.plugins.connection import local
 from ansible.playbook.play_context import PlayContext
 
@@ -37,4 +40,13 @@ class TestLocalConnectionClass(unittest.TestCase):
         )
         in_stream = StringIO()
 
-        self.assertIsInstance(local.Connection(play_context, in_stream), local.Connection)
+        conn = local.Connection(play_context, in_stream)
+        self.assertIsInstance(conn, local.Connection)
+
+        # Ensure that file paths are encoded properly
+        tempdir = tempfile.mkdtemp()
+        conn.cwd = tempdir.encode('utf-8')  # action plugin sets the cwd as 'bytes'
+        try:
+            self.assertRaises(AnsibleFileNotFound, conn.put_file, "source", "destination")
+        finally:
+            shutil.rmtree(tempdir)

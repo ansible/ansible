@@ -131,9 +131,12 @@ class Connection(ConnectionBase):
         return (p.returncode, stdout, stderr)
 
     def _ensure_abs(self, path):
-        if not os.path.isabs(path) and self.cwd is not None:
-            path = os.path.normpath(os.path.join(self.cwd, path))
-        return path
+        ''' join the path with optional cwd, always returns path as bytes '''
+        b_path = to_bytes(path, errors='surrogate_or_strict')
+        if not os.path.isabs(b_path) and self.cwd is not None:
+            b_cwd = to_bytes(self.cwd, errors='surrogate_or_strict')
+            b_path = os.path.normpath(os.path.join(b_cwd, b_path))
+        return b_path
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
