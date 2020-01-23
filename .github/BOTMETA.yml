@@ -314,6 +314,328 @@ files:
   $modules/network/f5/:
     ignored: Etienne-Carriere mhite mryanlam perzizzle srvg JoeReifel $team_networking
     maintainers: caphrim007 wojtek0806
+  $modules/network/f5/bigip_apm_acl.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_apm_network_access.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_apm_policy_fetch.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_apm_policy_import.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_appsvcs_extension.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_dos_application.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_fetch.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_import.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_manage.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_server_technology.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_asm_policy_signature_set.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_cli_alias.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_cli_script.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_command.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_config.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_configsync_action.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_data_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_auth_ldap.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_auth.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_certificate.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_connectivity.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_dns.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_group_member.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_ha_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_httpd.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_info.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_license.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_ntp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_sshd.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_syslog.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_traffic_group.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_device_trust.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_cache_resolver.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_nameserver.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_resolver.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_dns_zone.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_file_copy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_address_list.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_dos_profile.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_dos_vector.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_global_rules.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_log_profile_network.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_log_profile.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_port_list.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_rule_list.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_rule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_firewall_schedule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_datacenter.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_global.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_bigip.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_external.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_firepass.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_https.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_tcp_half_open.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_monitor_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_pool_member.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_server.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_topology_record.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_topology_region.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_virtual_server.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_gtm_wide_ip.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_hostname.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_iapp_service.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_iapp_template.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ike_peer.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_imish_config.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ipsec_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_irule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_log_destination.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_log_publisher.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_lx_package.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_management_route.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_peer.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_protocol.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_route.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_router.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_message_routing_transport_config.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_dns.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_external.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_gateway_icmp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_https.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_ldap.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_snmp_dca.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_tcp_echo.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_tcp_half_open.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_monitor_udp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_node.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_partition.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_password_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_policy_rule.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_pool_member.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_analytics.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_client_ssl.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_dns.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_fastl4.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_http2.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_http_compression.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_oneconnect.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_persistence_cookie.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_persistence_src_addr.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_server_ssl.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_profile_udp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_provision.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_qkview.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_remote_role.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_remote_syslog.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_remote_user.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_routedomain.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_selfip.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_service_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_smtp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snat_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snat_translation.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snmp_community.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snmp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_snmp_trap.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_software_image.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_software_install.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_software_update.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ssl_certificate.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ssl_key.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ssl_ocsp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_static_route.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_sys_daemon_log_tmm.py:
+    migrated_to: f5networks.f5_module
+  $modules/network/f5/bigip_sys_db.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_sys_global.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_timer_policy.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_traffic_selector.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_trunk.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_tunnel.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ucs_fetch.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_ucs.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_user.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_vcmp_guest.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_virtual_address.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_virtual_server.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_vlan.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigip_wait.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_fasthttp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_fastl4_tcp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_fastl4_udp.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_http.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_https_offload.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_application_https_waf.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_device_discovery.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_device_info.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_regkey_license_assignment.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_regkey_license.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_regkey_pool.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_utility_license_assignment.py:
+    migrated_to: f5networks.f5_modules
+  $modules/network/f5/bigiq_utility_license.py:
+    migrated_to: f5networks.f5_modules
   $modules/network/files/: $team_networking
   $modules/network/fortios/: bjolivot
   $modules/network/fortimanager/: $team_fortimanager
@@ -960,9 +1282,11 @@ files:
   $plugins/action/bigip:
     maintainers: caphrim007 wojtek0806
     labels: networking
+    migrated_to: f5networks.f5_modules
   $plugins/action/bigiq:
     maintainers: caphrim007 wojtek0806
     labels: networking
+    migrated_to: f5networks.f5_modules
   $plugins/action/ce:
     <<: *cloudengine
     support: network
@@ -1183,6 +1507,9 @@ files:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
   $plugins/doc_fragments/oracle*: *oracle
+  $plugins/doc_fragments/f5.py:
+    maintainers: caphrim007 wojtek0806
+    migrated_to: f5networks.f5modules
 ###############################
 # plugins/filter
   $plugins/filter/:
@@ -1429,6 +1756,9 @@ files:
   $plugins/terminal/vyos.py:
     support: network
     maintainers: $team_networking
+  $plugins/terminal/bigip.py:
+    maintainers: caphrim007 wojtek0806
+    migrated_to: f5networks.f5_modules
 ###############################
 # plugins/test
   $plugins/test:
