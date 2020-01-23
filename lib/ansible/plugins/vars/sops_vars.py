@@ -175,7 +175,7 @@ class SopsFailedToCompareVersions(SopsError):
     pass
 
 
-class SopsFileAlreadyEncrypte(SopsError):
+class SopsFileAlreadyEncrypted(SopsError):
     pass
 
 
