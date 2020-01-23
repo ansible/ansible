@@ -7,13 +7,21 @@ __metaclass__ = type
 
 DOCUMENTATION = """
   lookup: hashi_vault
-  author: Jonathan Davila <jdavila(at)ansible.com>
+  author:
+    - Jonathan Davila <jdavila(at)ansible.com>
+    - Brian Scholer (@briantist)
   version_added: "2.0"
-  short_description: retrieve secrets from HashiCorp's vault
+  extends_documentation_fragment:
+    - aws_credentials
+    - aws_region
+  short_description: Retrieve secrets from HashiCorp's vault
   requirements:
     - hvac (python library)
+    - hvac 0.7.0+ (for namespace support)
+    - hvac 0.9.3+ (for non-deprecated methods)
+    - botocore (only if inferring aws params from boto)
   description:
-    - retrieve secrets from HashiCorp's vault
+    - Retrieve secrets from HashiCorp's vault.
   notes:
     - Due to a current limitation in the HVAC library there won't necessarily be an error if a bad endpoint is specified.
     - As of Ansible 2.10, only the latest secret is returned when specifying a KV v2 path.
@@ -22,13 +30,29 @@ DOCUMENTATION = """
       description: query you are making.
       required: True
     token:
-      description: vault token.
+      description: Vault token. If using token auth and no token is supplied, will check in ~/.vault-token <- TODO UPDATE
       env:
         - name: VAULT_TOKEN
+    token_path:
+      description: If no token is specified, will try to read the token file from this path.
+      env:
+        - name: HOME
+      ini:
+        - section: lookup_hashi_vault
+          key: token_path
+    token_file:
+      description: If no token is specified, will try to read the token from this file in C(token_path).
+      ini:
+        - section: lookup_hashi_vault
+          key: token_file
+      default: '.vault-token'
     url:
       description: URL to vault service.
       env:
         - name: VAULT_ADDR
+      ini:
+        - section: lookup_hashi_vault
+          key: url
       default: 'http://127.0.0.1:8200'
     username:
       description: Authentication user name.
@@ -38,33 +62,42 @@ DOCUMENTATION = """
       description: Role id for a vault AppRole auth.
       env:
         - name: VAULT_ROLE_ID
+      ini:
+        - section: lookup_hashi_vault
+          key: role_id
     secret_id:
       description: Secret id for a vault AppRole auth.
       env:
         - name: VAULT_SECRET_ID
     auth_method:
       description:
-      - Authentication method to be used.
-      - C(userpass) is added in version 2.8.
+        - Authentication method to be used.
+        - C(userpass) is added in version 2.8.
+        - C(aws_iam_login) is added in version 2.10.
       env:
         - name: VAULT_AUTH_METHOD
+      ini:
+        - section: lookup_hashi_vault
+          key: auth_method
       choices:
+        - token
         - userpass
         - ldap
         - approle
+        - aws_iam_login
+      default: token
     mount_point:
-      description: vault mount point, only required if you have a custom mount point.
-      default: ldap
+      description: Vault mount point, only required if you have a custom mount point.
     ca_cert:
-      description: path to certificate to use for authentication.
+      description: Path to certificate to use for authentication.
       aliases: [ cacert ]
     validate_certs:
-      description: controls verification and validation of SSL certificates, mostly you only want to turn off with self signed ones.
+      description: Controls verification and validation of SSL certificates, mostly you only want to turn off with self signed ones.
       type: boolean
       default: True
     namespace:
       version_added: "2.8"
-      description: namespace where secrets reside. requires HVAC 0.7.0+ and Vault 0.11+.
+      description: Namespace where secrets reside. Requires HVAC 0.7.0+ and Vault 0.11+.
 """
 
 EXAMPLES = """
@@ -117,8 +150,8 @@ _raw:
 import os
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.display import Display
 
 HAS_HVAC = False
 try:
@@ -127,77 +160,79 @@ try:
 except ImportError:
     HAS_HVAC = False
 
+HAS_BOTOCORE = False
+try:
+    # import boto3
+    import botocore
+    HAS_BOTOCORE = True
+except ImportError:
+    HAS_BOTOCORE = False
 
-ANSIBLE_HASHI_VAULT_ADDR = 'http://127.0.0.1:8200'
-
-if os.getenv('VAULT_ADDR') is not None:
-    ANSIBLE_HASHI_VAULT_ADDR = os.environ['VAULT_ADDR']
+HAS_BOTO3 = False
+try:
+    import boto3
+    # import botocore
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
 
 
 class HashiVault:
+    def get_options(self, *option_names, **kwargs):
+        ret = {}
+        include_falsey = kwargs.get('include_falsey', False)
+        for option in option_names:
+            val = self.options.get(option)
+            if val or include_falsey:
+                ret[option] = val
+        return ret
+
     def __init__(self, **kwargs):
+        self.options = kwargs
 
-        self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
-        self.namespace = kwargs.get('namespace', None)
-        self.avail_auth_method = ['approle', 'userpass', 'ldap']
+        # check early that auth method is actually available
+        self.auth_function = 'auth_' + self.options['auth_method']
+        if not (hasattr(self, self.auth_function) and callable(getattr(self, self.auth_function))):
+            raise AnsibleError(
+                "Authentication method '%s' is not implemented. ('%s' member function not found)" % (self.options['auth_method'], self.auth_function)
+            )
 
-        # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
-        s = kwargs.get('secret')
-        if s is None:
-            raise AnsibleError("No secret specified for hashi_vault lookup")
+        client_args = {
+            'url': self.options['url'],
+            'verify': self.options['ca_cert']
+        }
 
-        s_f = s.rsplit(':', 1)
-        self.secret = s_f[0]
-        if len(s_f) >= 2:
-            self.secret_field = s_f[1]
-        else:
-            self.secret_field = ''
+        if self.options.get('namespace'):
+            client_args['namespace'] = self.options['namespace']
 
-        self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
+        if self.options['auth_method'] == 'token':
+            client_args['token'] = self.options.get('token')
 
-        # If a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
-        # token auth. This means if a particular auth backend is requested and a token is also given, then we
-        # ignore the token and attempt authentication against the specified backend.
-        #
-        # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
-        #
-        self.auth_method = kwargs.get('auth_method', os.environ.get('VAULT_AUTH_METHOD'))
-        self.verify = self.boolean_or_cacert(kwargs.get('validate_certs', True), kwargs.get('cacert', ''))
-        if self.auth_method and self.auth_method != 'token':
-            try:
-                if self.namespace is not None:
-                    self.client = hvac.Client(url=self.url, verify=self.verify, namespace=self.namespace)
-                else:
-                    self.client = hvac.Client(url=self.url, verify=self.verify)
-                # prefixing with auth_ to limit which methods can be accessed
-                getattr(self, 'auth_' + self.auth_method)(**kwargs)
-            except AttributeError:
-                raise AnsibleError("Authentication method '%s' not supported."
-                                   " Available options are %r" % (self.auth_method, self.avail_auth_method))
-        else:
-            self.token = kwargs.get('token', os.environ.get('VAULT_TOKEN', None))
-            if self.token is None and os.environ.get('HOME'):
-                token_filename = os.path.join(
-                    os.environ.get('HOME'),
-                    '.vault-token'
-                )
-                if os.path.exists(token_filename):
-                    with open(token_filename) as token_file:
-                        self.token = token_file.read().strip()
+        self.client = hvac.Client(**client_args)
 
-            if self.token is None:
-                raise AnsibleError("No Vault Token specified")
+        # Check for deprecated version:
+        # hvac is moving auth methods into the auth_methods class
+        # which lives in the client.auth member.
+        self.hvac_is_old = not hasattr(self.client, 'auth')
 
-            if self.namespace is not None:
-                self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify, namespace=self.namespace)
-            else:
-                self.client = hvac.Client(url=self.url, token=self.token, verify=self.verify)
+        self.authenticate(**kwargs)
 
-        if not self.client.is_authenticated():
-            raise AnsibleError("Invalid Hashicorp Vault Token Specified for hashi_vault lookup")
+    # If a particular backend is asked for (and its method exists) we call it, otherwise drop through to using
+    # token auth. This means if a particular auth backend is requested and a token is also given, then we
+    # ignore the token and attempt authentication against the specified backend.
+    #
+    # to enable a new auth backend, simply add a new 'def auth_<type>' method below.
+    #
+    # TODO: Update this
+
+    def authenticate(self, **kwargs):
+        getattr(self, self.auth_function)(**kwargs)
 
     def get(self):
-        data = self.client.read(self.secret)
+        secret = self.options['secret']
+        field = self.options['secret_field']
+
+        data = self.client.read(secret)
 
         # Check response for KV v2 fields and flatten nested secret data.
         #
@@ -212,64 +247,51 @@ class HashiVault:
             pass
 
         if data is None:
-            raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % self.secret)
+            raise AnsibleError("The secret %s doesn't seem to exist for hashi_vault lookup" % secret)
 
-        if self.secret_field == '':
+        if not field:
             return data['data']
 
-        if self.secret_field not in data['data']:
-            raise AnsibleError("The secret %s does not contain the field '%s'. for hashi_vault lookup" % (self.secret, self.secret_field))
+        if field not in data['data']:
+            raise AnsibleError("The secret %s does not contain the field '%s'. for hashi_vault lookup" % (secret, field))
 
-        return data['data'][self.secret_field]
+        return data['data'][field]
 
-    def check_params(self, **kwargs):
-        username = kwargs.get('username')
-        if username is None:
-            raise AnsibleError("Authentication method %s requires a username" % self.auth_method)
+    # begin auth implementation methods
 
-        password = kwargs.get('password')
-        if password is None:
-            raise AnsibleError("Authentication method %s requires a password" % self.auth_method)
-
-        mount_point = kwargs.get('mount_point')
-
-        return username, password, mount_point
+    def auth_token(self, **kwargs):
+        if not self.client.is_authenticated():
+            raise AnsibleError("Invalid Hashicorp Vault Token Specified for hashi_vault lookup.")
 
     def auth_userpass(self, **kwargs):
-        username, password, mount_point = self.check_params(**kwargs)
-        if mount_point is None:
-            mount_point = 'userpass'
-
-        self.client.auth_userpass(username, password, mount_point=mount_point)
+        params = self.get_options('username', 'password', 'mount_point')
+        if self.hvac_is_old:
+            Display().warning('HVAC should be updated to version 0.9.3 or higher. Deprecated methods will be used.')
+            self.client.auth_userpass(**params)
+        else:
+            self.client.auth.userpass.login(**params)
 
     def auth_ldap(self, **kwargs):
-        username, password, mount_point = self.check_params(**kwargs)
-        if mount_point is None:
-            mount_point = 'ldap'
-
-        self.client.auth.ldap.login(username, password, mount_point=mount_point)
-
-    def boolean_or_cacert(self, validate_certs, cacert):
-        validate_certs = boolean(validate_certs, strict=False)
-        '''' return a bool or cacert '''
-        if validate_certs is True:
-            if cacert != '':
-                return cacert
-            else:
-                return True
+        params = self.get_options('username', 'password', 'mount_point')
+        if self.hvac_is_old:
+            Display().warning('HVAC should be updated to version 0.9.3 or higher. Deprecated methods will be used.')
+            self.client.auth_ldap(**params)
         else:
-            return False
+            self.client.auth.ldap.login(**params)
 
     def auth_approle(self, **kwargs):
-        role_id = kwargs.get('role_id', os.environ.get('VAULT_ROLE_ID', None))
-        if role_id is None:
-            raise AnsibleError("Authentication method app role requires a role_id")
+        params = self.get_options('role_id', 'secret_id')
+        self.client.auth_approle(**params)
 
-        secret_id = kwargs.get('secret_id', os.environ.get('VAULT_SECRET_ID', None))
-        if secret_id is None:
-            raise AnsibleError("Authentication method app role requires a secret_id")
+    def auth_iam_login(self, **kwargs):
+        params = self.options['iam_login_credentials']
+        if self.hvac_is_old:
+            Display().warning('HVAC should be updated to version 0.9.3 or higher. Deprecated methods will be used.')
+            self.client.auth_aws_iam(**params)
+        else:
+            self.client.auth.aws.iam_login(**params)
 
-        self.client.auth_approle(role_id, secret_id)
+    # end auth implementation methods
 
 
 class LookupModule(LookupBase):
@@ -277,26 +299,158 @@ class LookupModule(LookupBase):
         if not HAS_HVAC:
             raise AnsibleError("Please pip install hvac to use the hashi_vault lookup module.")
 
-        vault_args = terms[0].split()
-        vault_dict = {}
         ret = []
 
-        for param in vault_args:
+        for term in terms:
+            opts = kwargs.copy()
+            opts.update(self.parse_term(term))
+            self.set_options(direct=opts)
+            self.process_options()
+            # return [self.get_option('aws_access_key')]
+            # return [self._options]
+            ret.append(HashiVault(**self._options).get())
+
+        return ret
+
+    def parse_term(self, term):
+        '''parses a term string into options'''
+        param_dict = {}
+
+        for i, param in enumerate(term.split()):
             try:
                 key, value = param.split('=')
             except ValueError:
-                raise AnsibleError("hashi_vault lookup plugin needs key=value pairs, but received %s" % terms)
-            vault_dict[key] = value
+                if (i == 0):
+                    # allow secret to be specified as value only if it's first
+                    key = 'secret'
+                    value = param
+                else:
+                    raise AnsibleError("hashi_vault lookup plugin needs key=value pairs, but received %s" % term)
+            param_dict[key] = value
+        return param_dict
 
-        if 'ca_cert' in vault_dict.keys():
-            vault_dict['cacert'] = vault_dict['ca_cert']
-            vault_dict.pop('ca_cert', None)
+    def process_options(self):
+        '''performs deep validation and value loading for options'''
 
-        vault_conn = HashiVault(**vault_dict)
+        # ca_cert to verify
+        self.boolean_or_cacert()
 
-        for term in terms:
-            key = term.split()[0]
-            value = vault_conn.get()
-            ret.append(value)
+        # auth methods
+        self.auth_methods()
 
-        return ret
+        # secret field splitter
+        self.field_ops()
+
+    # begin options processing methods
+
+    def boolean_or_cacert(self):
+        # This is needed because of this (https://hvac.readthedocs.io/en/stable/source/hvac_v1.html):
+        #
+        # # verify (Union[bool,str]) - Either a boolean to indicate whether TLS verification should
+        # # be performed when sending requests to Vault, or a string pointing at the CA bundle to use for verification.
+        #
+        '''' return a bool or cacert '''
+        ca_cert = self.get_option('ca_cert')
+        validate_certs = self.get_option('validate_certs')
+
+        if not (validate_certs and ca_cert):
+            self.set_option('ca_cert', validate_certs)
+
+    def field_ops(self):
+        # split secret and field
+        secret = self.get_option('secret')
+
+        s_f = secret.rsplit(':', 1)
+        self.set_option('secret', s_f[0])
+        if len(s_f) >= 2:
+            field = s_f[1]
+        else:
+            field = None
+        self.set_option('secret_field', field)
+
+    def auth_methods(self):
+        # enforce and set the list of available auth methods
+        # TODO: can this be read from the choices: field in documentation?
+        avail_auth_methods = ['token', 'approle', 'userpass', 'ldap', 'aws_iam_role']
+        self.set_option('avail_auth_methods', avail_auth_methods)
+        auth_method = self.get_option('auth_method')
+
+        if auth_method not in avail_auth_methods:
+            raise AnsibleError(
+                "Authentication method '%s' not supported. Available options are %r" % (auth_method, avail_auth_methods)
+            )
+
+        # run validator if available
+        auth_validator = 'validate_auth_' + auth_method
+        if hasattr(self, auth_validator) and callable(getattr(self, auth_validator)):
+            getattr(self, auth_validator)(auth_method)
+
+    # end options processing methods
+
+    # begin auth method validators
+
+    def validate_by_required_fields(self, auth_method, *field_names):
+        missing = [field for field in field_names if not self.get_option(field)]
+
+        if missing:
+            raise AnsibleError("Authentication method %s requires options %r to be set, but these are missing: %r" % (auth_method, field_names, missing))
+
+    def validate_auth_userpass(self, auth_method):
+        self.validate_by_required_fields(auth_method, 'username', 'password')
+
+    def validate_auth_ldap(self, auth_method):
+        self.validate_by_required_fields(auth_method, 'username', 'password')
+
+    def validate_auth_approle(self, auth_method):
+        self.validate_by_required_fields(auth_method, 'role_id', 'secret_id')
+
+    def validate_auth_token(self, auth_method):
+        if auth_method == 'token':
+            if not self.get_option('token') and self.get_option('token_path'):
+                token_filename = os.path.join(
+                    self.get_option('token_path'),
+                    self.get_option('token_file')
+                )
+                if os.path.exists(token_filename):
+                    with open(token_filename) as token_file:
+                        self.set_option('token', token_file.read().strip())
+
+            if not self.get_option('token'):
+                raise AnsibleError("No Vault Token specified or discovered.")
+
+    def validate_auth_iam(self, auth_method):
+        params = {
+            'access_key': self.get_option('aws_access_key'),
+            'secret_key': self.get_option('aws_secret_key')
+        }
+
+        if self.get_option('role_id'):
+            params['role'] = self.get_option('role_id')
+
+        if self.get_option('region'):
+            params['region'] = self.get_option('region')
+
+        if not (params['access_key'] and params['secret_key']):
+            profile = self.get_option('aws_profile')
+            if profile:
+                # try to load boto profile
+                if not HAS_BOTO3:
+                    raise AnsibleError("boto3 is required for loading a boto profile.")
+                session_credentials = boto3.session.Session(profile_name=profile).get_credentials()
+            else:
+                # try to load from IAM credentials
+                if not HAS_BOTOCORE:
+                    raise AnsibleError("botocore is required for loading IAM role credentials.")
+                session_credentials = botocore.session.get_session().get_credentials()
+
+            if not session_credentials:
+                raise AnsibleError("No AWS credentials supplied or available.")
+
+            params['access_key'] = session_credentials.access_key
+            params['secret_key'] = session_credentials.secret_key
+            if session_credentials.token:
+                params['session_token'] = session_credentials.token
+
+        self.set_option('iam_login_credentials', params)
+
+    # end auth method validators
