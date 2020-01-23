@@ -505,6 +505,7 @@ def main():
             backup=dict(type='bool', default=False),
             force=dict(type='bool', default=True, aliases=['thirsty']),
             validate=dict(type='str'),
+            validate_dest=dict(type='str'),
             directory_mode=dict(type='raw'),
             remote_src=dict(type='bool'),
             local_follow=dict(type='bool'),
@@ -528,6 +529,7 @@ def main():
     force = module.params['force']
     _original_basename = module.params.get('_original_basename', None)
     validate = module.params.get('validate', None)
+    validate_dest = module.params.get('validate_dest', None)
     follow = module.params['follow']
     local_follow = module.params['local_follow']
     mode = module.params['mode']
@@ -648,6 +650,15 @@ def main():
                     if "%s" not in validate:
                         module.fail_json(msg="validate must contain %%s: %s" % (validate))
                     (rc, out, err) = module.run_command(validate % src)
+                    if rc != 0:
+                        module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
+                if validate_dest:
+                    # We just need to run a command and check the rc.  The 
+                    # response code should be 0 for success, and 0 <> for failure.
+                    # This is useful for the purposes of us not having to write a 
+                    # separate test to check if the file already exists and not 
+                    # to overwrite it.
+                    (rc, out, err) = module.run_command(validate_dest % b_dest)
                     if rc != 0:
                         module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
                 b_mysrc = b_src
