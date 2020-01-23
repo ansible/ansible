@@ -4,7 +4,7 @@
 Filters
 *******
 
-Filters let you transform data inside template expressions. This page documents mainly Ansible-specific filters, but you can use any of the standard filters shipped with Jinja2 - see `builtin filters`_ in the official Jinja2 template documentation. You can also use `Python methods`_ to manipulate variables. A few useful filters are typically added with each new Ansible release. The development documentation shows
+Filters let you transform data inside template expressions. This page documents mainly Ansible-specific filters, but you can use any of the standard filters shipped with Jinja2 - see the list of :ref:`builtin filters <jinja:builtin-filters>` in the official Jinja2 template documentation. You can also use :ref:`Python methods <jinja:python-methods>` to manipulate variables. A few useful filters are typically added with each new Ansible release. The development documentation shows
 how to create custom Ansible filters as plugins, though we generally welcome new filters into the core code so everyone can use them.
 
 Templating happens on the Ansible controller, **not** on the target host, so filters execute on the controller and manipulate data locally.
@@ -1352,7 +1352,7 @@ To create a namespaced UUIDv5 using the default Ansible namespace '361E6D51-FAEC
 
 .. versionadded:: 1.9
 
-To make use of one attribute from each item in a list of complex variables, use the "map" filter (see the `Jinja2 map() docs`_ for more)::
+To make use of one attribute from each item in a list of complex variables, use the :func:`Jinja2 map filter <jinja:map>`::
 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts | map(attribute='mount') | join(',') }}
@@ -1416,13 +1416,6 @@ This can then be used to reference hashes in Pod specifications::
                     name: {{ my_secret | k8s_config_resource_name }}
 
 .. versionadded:: 2.8
-
-
-.. _Jinja2 map() docs: https://jinja.palletsprojects.com/templates/#map
-
-.. _builtin filters: https://jinja.palletsprojects.com/templates/#builtin-filters
-
-.. _Python methods: https://jinja.palletsprojects.com/templates/#python-methods
 
 .. _PyYAML library: https://pyyaml.org/
 
