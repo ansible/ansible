@@ -410,9 +410,11 @@ class TestTaskExecutor(unittest.TestCase):
             collection_list=te._task.collections)
 
     def test_task_executor_get_handler_prefix(self):
+        task = MagicMock()
+        task.collections = []
         te = TaskExecutor(
             host=MagicMock(),
-            task=MagicMock(),
+            task=task,
             job_vars={},
             play_context=MagicMock(),
             new_stdin=None,
@@ -436,18 +438,20 @@ class TestTaskExecutor(unittest.TestCase):
 
         self.assertIs(mock.sentinel.handler, handler)
         action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
-                                                   mock.call(module_prefix, collection_list=te._task.collections)])
+                                                   mock.call(module_prefix, collection_list=["namespace"])])
 
         action_loader.get.assert_called_once_with(
             'netconf', task=te._task, connection=mock_connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
-            collection_list=te._task.collections)
+            collection_list=["namespace"])
 
     def test_task_executor_get_handler_normal(self):
+        task = MagicMock()
+        task.collections = []
         te = TaskExecutor(
             host=MagicMock(),
-            task=MagicMock(),
+            task=task,
             job_vars={},
             play_context=MagicMock(),
             new_stdin=None,
@@ -471,7 +475,7 @@ class TestTaskExecutor(unittest.TestCase):
         self.assertIs(mock.sentinel.handler, handler)
 
         action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
-                                                   mock.call(module_prefix, collection_list=te._task.collections)])
+                                                   mock.call(module_prefix, collection_list=["namespace"])])
 
         action_loader.get.assert_called_once_with(
             'normal', task=te._task, connection=mock_connection,
