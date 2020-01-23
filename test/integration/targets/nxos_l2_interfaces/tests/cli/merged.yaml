@@ -57,7 +57,7 @@
         - "result.commands|length == 0"
 
   - name: Merge with existing vlans
-    nxos_l2_interfaces:
+    nxos_l2_interfaces: &vlanadd
       config:
         - name: "{{ test_int1 }}"
           trunk:
@@ -82,6 +82,16 @@
   - assert:
       that:
         - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.after)|length == 0"
+
+  - name: Idempotence - with newly added vlans
+    nxos_l2_interfaces: *vlanadd
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
 
   always:
   - name: teardown
