@@ -49,6 +49,7 @@
                 "ec2:DeleteTags",
                 "ec2:DeregisterImage",
                 "ec2:Describe*",
+                "ec2:DetachVolume",
                 "ec2:ImportKeyPair",
                 "ec2:ModifyImageAttribute",
                 "ec2:ModifyInstanceAttribute",
