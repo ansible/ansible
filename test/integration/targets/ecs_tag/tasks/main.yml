@@ -1,18 +1,14 @@
-- block:
-    - name: set up aws connection info
-      set_fact:
-        aws_connection_info: &aws_connection_info
-          aws_access_key: "{{ aws_access_key }}"
-          aws_secret_key: "{{ aws_secret_key }}"
-          security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
-      no_log: True
-
+- module_defaults:
+    group/aws:
+      aws_access_key: '{{ aws_access_key | default(omit) }}'
+      aws_secret_key: '{{ aws_secret_key | default(omit) }}'
+      security_token: '{{ security_token | default(omit) }}'
+      region: '{{ aws_region | default(omit) }}'
+  block:
     - name: create ecs cluster
       ecs_cluster:
         name: "{{ resource_prefix }}"
         state: present
-        <<: *aws_connection_info
       register: cluster_info
 
     - name: create ecs_taskdefinition
@@ -23,7 +19,6 @@
             memory: 128
         family: "{{ resource_prefix }}"
         state: present
-        <<: *aws_connection_info
       register: ecs_taskdefinition_creation
 
     # even after deleting the cluster and recreating with a different name
@@ -36,7 +31,6 @@
         service: "{{ resource_prefix }}"
         cluster: "{{ resource_prefix }}"
         details: yes
-        <<: *aws_connection_info
       register: ecs_service_info_results
 
     - name: delay if the service was not inactive
@@ -53,7 +47,6 @@
         task_definition: "{{ resource_prefix }}"
         desired_count: 1
         state: present
-        <<: *aws_connection_info
       register: ecs_service_creation
 
     - name: ecs_service up
@@ -69,7 +62,6 @@
         resource: "{{ resource_prefix}}"
         resource_type: cluster
         state: list
-        <<: *aws_connection_info
       register: taglist
 
     - name: cluster tags - Should be an empty list
@@ -88,7 +80,6 @@
         tags:
           Name: "{{ resource_prefix }}"
           another: foobar
-        <<: *aws_connection_info
       register: taglist
 
     - name: cluster tags - tags should be there
@@ -107,7 +98,6 @@
         tags:
           Name: "{{ resource_prefix }}"
           another: foobar
-        <<: *aws_connection_info
       register: taglist
 
     - name: cluster tags - No change after adding again
@@ -121,7 +111,6 @@
         resource: "{{ resource_prefix}}"
         resource_type: cluster
         state: list
-        <<: *aws_connection_info
       register: taglist
 
     - name: cluster tags - should have 2 tags
@@ -139,7 +128,6 @@
         state: absent
         tags:
           another:
-        <<: *aws_connection_info
       register: taglist
 
     - name: cluster tags - tag another should be gone
@@ -157,7 +145,6 @@
         tags:
           temp:
           temp_two:
-        <<: *aws_connection_info
       register: taglist
       ignore_errors: yes
 
@@ -177,7 +164,6 @@
         tags:
           temp:
           temp_two:
-        <<: *aws_connection_info
       register: taglist
       ignore_errors: yes
 
@@ -198,7 +184,6 @@
         state: present
         tags:
           Name: "service-{{resource_prefix}}"
-        <<: *aws_connection_info
       register: taglist
 
     - name: service tag - name tags should be there
@@ -216,7 +201,6 @@
         state: present
         tags:
           Name: "service-{{resource_prefix}}"
-        <<: *aws_connection_info
       register: taglist
 
     - name: service tag - test adding tag twice has no effect
@@ -231,7 +215,6 @@
         resource: "{{ecs_service_creation.service.serviceName}}"
         resource_type: service
         state: list
-        <<: *aws_connection_info
       register: taglist
 
     - name: services tags - should have 1 tag
@@ -249,7 +232,6 @@
         state: absent
         tags:
           Name:
-        <<: *aws_connection_info
       register: taglist
 
     - name: service tags - all tags gone
@@ -270,7 +252,6 @@
         state: present
         tags:
           Name: "task_definition-{{resource_prefix}}"
-        <<: *aws_connection_info
       register: taglist
 
     - name: task_definition tag - name tags should be there
@@ -288,7 +269,6 @@
         state: present
         tags:
           Name: "task_definition-{{resource_prefix}}"
-        <<: *aws_connection_info
       register: taglist
 
     - name: task_definition tag - test adding tag twice has no effect
@@ -303,7 +283,6 @@
         resource: "{{ecs_taskdefinition_creation.taskdefinition.family}}"
         resource_type: task_definition
         state: list
-        <<: *aws_connection_info
       register: taglist
 
     - name: task_definition tags - should have 1 tag
@@ -321,7 +300,6 @@
         state: absent
         tags:
           Name:
-        <<: *aws_connection_info
       register: taglist
 
     - name: task_definition tags - all tags gone
@@ -339,7 +317,6 @@
         task_definition: "{{ resource_prefix }}"
         desired_count: 0
         state: present
-        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: pause to wait for scale down
@@ -353,7 +330,6 @@
         task_definition: "{{ resource_prefix }}"
         desired_count: 1
         state: absent
-        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: remove ecs task definition
@@ -365,12 +341,10 @@
         family: "{{ resource_prefix }}"
         revision: "{{ ecs_taskdefinition_creation.taskdefinition.revision }}"
         state: absent
-        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: remove ecs cluster
       ecs_cluster:
         name: "{{ resource_prefix }}"
         state: absent
-        <<: *aws_connection_info
       ignore_errors: yes
