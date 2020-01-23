@@ -77,6 +77,32 @@ You can also use the :ref:`cli_command <cli_command_module>` to handle multiple 
 .. code-block:: yaml
 
   ---
+  - name: multiple prompt, multiple answer (mandatory check for all prompts)
+    cli_command:
+      command: "copy sftp sftp://user@host//user/test.img"
+      check_all: True
+      prompt:
+        - "Confirm download operation"
+        - "Password"
+        - "Do you want to change that to the standby image"
+      answer:
+        - 'y'
+        - <password>
+        - 'y'
+
+You must list the prompt and the answers in the same order (that is, prompt[0] is answered by answer[0]).
+
+.. note::
+
+	``prompt`` is a Python regex. If you add special characters such as ``?`` in the ``prompt`` value, the prompt won't match and you will get a timeout. To avoid this, ensure that the ``prompt`` value is a Python regex that matches the actual device prompt. Any special characters must be handled correctly in the ``prompt`` regex.
+
+In the above example, ``check_all: True`` ensures that the task gives the matching answer to each prompt. Without that setting, a task with multiple prompts would give the first answer to every prompt.
+
+In the following example, the second answer would be ignored and ``y`` would be the answer given to both prompts. That is, this task only works because both answers are identical.
+
+.. code-block:: yaml
+
+  ---
    - name: reboot ios device
      cli_command:
        command: reload
@@ -86,8 +112,6 @@ You can also use the :ref:`cli_command <cli_command_module>` to handle multiple 
        answer:
          - y
          - y
-
-This task answers yes to both prompts. You must list the prompt and the answers in the same order (that is, prompt[0] is answered by answer[0]).
 
 
 .. seealso::
