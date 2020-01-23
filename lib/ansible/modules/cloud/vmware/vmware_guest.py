@@ -52,26 +52,27 @@ options:
        configurations conforms to task arguments.'
     - 'If C(state) is set to C(absent) and virtual machine exists, then the specified virtual machine
       is removed with its associated components.'
-    - 'If C(state) is set to one of the following C(poweredon), C(poweredoff), C(present), C(restarted), C(suspended)
-      and virtual machine does not exists, then virtual machine is deployed with given parameters.'
-    - 'If C(state) is set to C(poweredon) and virtual machine exists with powerstate other than powered on,
+    - 'If C(state) is set to one of the following C(poweredon), C(powered-on), C(poweredoff), C(powered-off),
+      C(present), C(restarted), C(suspended) and virtual machine does not exists, virtual machine is deployed with the given parameters.'
+    - 'If C(state) is set to C(poweredon) or C(powered-on) and virtual machine exists with powerstate other than powered on,
       then the specified virtual machine is powered on.'
-    - 'If C(state) is set to C(poweredoff) and virtual machine exists with powerstate other than powered off,
+    - 'If C(state) is set to C(poweredoff) or C(powered-off) and virtual machine exists with powerstate other than powered off,
       then the specified virtual machine is powered off.'
     - 'If C(state) is set to C(restarted) and virtual machine exists, then the virtual machine is restarted.'
     - 'If C(state) is set to C(suspended) and virtual machine exists, then the virtual machine is set to suspended mode.'
-    - 'If C(state) is set to C(shutdownguest) and virtual machine exists, then the virtual machine is shutdown.'
-    - 'If C(state) is set to C(rebootguest) and virtual machine exists, then the virtual machine is rebooted.'
+    - 'If C(state) is set to C(shutdownguest) or C(shutdown-guest) and virtual machine exists, then the virtual machine is shutdown.'
+    - 'If C(state) is set to C(rebootguest) or C(reboot-guest) and virtual machine exists, then the virtual machine is rebooted.'
+    - 'Powerstate C(powered-on) and C(powered-off) is added in version 2.10.'
     default: present
-    choices: [ present, absent, poweredon, poweredoff, restarted, suspended, shutdownguest, rebootguest ]
+    choices: [ absent, poweredon, powered-on, poweredoff, powered-off, present, rebootguest, reboot-guest, restarted, suspended, shutdownguest, shutdown-guest]
   name:
     description:
     - Name of the virtual machine to work with.
     - Virtual machine names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
     - 'If multiple virtual machines with same name exists, then C(folder) is required parameter to
        identify uniqueness of the virtual machine.'
-    - This parameter is required, if C(state) is set to C(poweredon), C(poweredoff), C(present), C(restarted), C(suspended)
-      and virtual machine does not exists.
+    - This parameter is required, if C(state) is set to C(poweredon), C(powered-on), C(poweredoff), C(powered-off),
+      C(present), C(restarted), C(suspended) and virtual machine does not exists.
     - This parameter is case sensitive.
     required: yes
   name_match:
@@ -2559,7 +2560,7 @@ class PyVmomiHelper(PyVmomi):
                 if task.info.state == 'error':
                     return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'customvalues'}
 
-            if self.params['wait_for_ip_address'] or self.params['wait_for_customization'] or self.params['state'] in ['poweredon', 'restarted']:
+            if self.params['wait_for_ip_address'] or self.params['wait_for_customization'] or self.params['state'] in ['poweredon', 'powered-on', 'restarted']:
                 set_vm_power_state(self.content, vm, 'poweredon', force=False)
 
                 if self.params['wait_for_ip_address']:
@@ -2787,7 +2788,10 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         state=dict(type='str', default='present',
-                   choices=['absent', 'poweredoff', 'poweredon', 'present', 'rebootguest', 'restarted', 'shutdownguest', 'suspended']),
+                   choices=['absent', 'poweredoff', 'powered-off',
+                            'poweredon', 'powered-on', 'present',
+                            'rebootguest', 'reboot-guest', 'restarted',
+                            'shutdownguest', 'shutdown-guest', 'suspended']),
         template=dict(type='str', aliases=['template_src']),
         is_template=dict(type='bool', default=False),
         annotation=dict(type='str', aliases=['notes']),
@@ -2864,7 +2868,10 @@ def main():
                 )
                 module.exit_json(**result)
             result = pyv.reconfigure_vm()
-        elif module.params['state'] in ['poweredon', 'poweredoff', 'restarted', 'suspended', 'shutdownguest', 'rebootguest']:
+        elif module.params['state'] in ['poweredon', 'powered-on', 'poweredoff',
+                                        'powered-off', 'restarted', 'suspended',
+                                        'shutdownguest', 'shutdown-guest',
+                                        'rebootguest', 'reboot-guest']:
             if module.check_mode:
                 result.update(
                     vm_name=vm.name,
@@ -2877,7 +2884,7 @@ def main():
             tmp_result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
             if tmp_result['changed']:
                 result["changed"] = True
-                if module.params['state'] in ['poweredon', 'restarted', 'rebootguest'] and module.params['wait_for_ip_address']:
+                if module.params['state'] in ['poweredon', 'powered-on', 'restarted', 'rebootguest', 'reboot-guest'] and module.params['wait_for_ip_address']:
                     wait_result = wait_for_vm_ip(pyv.content, vm, module.params['wait_for_ip_address_timeout'])
                     if not wait_result:
                         module.fail_json(msg='Waiting for IP address timed out')
@@ -2893,7 +2900,8 @@ def main():
             raise AssertionError()
     # VM doesn't exist
     else:
-        if module.params['state'] in ['poweredon', 'poweredoff', 'present', 'restarted', 'suspended']:
+        if module.params['state'] in ['poweredon', 'powered-on', 'poweredoff', 'powered-off',
+                                      'present', 'restarted', 'suspended']:
             if module.check_mode:
                 result.update(
                     changed=True,

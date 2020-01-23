@@ -15,11 +15,15 @@
     - absent
     - present
     - poweredoff
+    - powered-off
     - poweredon
+    - powered-on
     - restarted
     - suspended
     - shutdownguest
+    - shutdown-guest
     - rebootguest
+    - reboot-guest
   register: check_mode_state
   check_mode: yes
 
@@ -44,7 +48,9 @@
   with_items:
     - present
     - poweredoff
+    - powered-off
     - poweredon
+    - powered-on
     - restarted
     - suspended
   register: check_mode_state

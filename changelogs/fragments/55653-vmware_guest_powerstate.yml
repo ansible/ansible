@@ -1,0 +1,2 @@
+minor_changes:
+- Add powerstates to match vmware_guest_powerstate module with vmware_guest (https://github.com/ansible/ansible/issues/55653).
