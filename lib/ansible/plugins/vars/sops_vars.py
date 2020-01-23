@@ -1,4 +1,7 @@
-# Copyright 2019 Arduino, srl
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2019, Arduino, srl
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 #############################################
 
@@ -8,7 +11,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     vars: sops_vars
     author: Edoardo Tenani <e.tenani@arduino.cc>
-    version_added: "2.8"
+    version_added: "2.10"
     short_description: Loading sops-encrypted vars files
     description:
         - Load encrypted YAML files into correspondind groups/hosts in group_vars/ and host_vars/ directories.
@@ -197,7 +200,7 @@ def decrypt_with_sops(filename):
         display.vvvv(err)
 
     if exit_code > 0:
-        if exit_code in sops_error_codes.keys():
+        if exit_code in sops_error_codes:
             exception_name = sops_error_codes[exit_code]
             raise globals()[exception_name](filename, exit_code, err)
         else:
