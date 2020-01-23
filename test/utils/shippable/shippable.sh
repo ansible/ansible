@@ -146,7 +146,5 @@ else
     timeout=50
 fi
 
-ansible-test env --dump --show --timeout "${timeout}" --color -v
-
 "test/utils/shippable/check_matrix.py"
 "test/utils/shippable/${script}.sh" "${test}"
