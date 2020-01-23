@@ -33,6 +33,7 @@ from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
+from ansible.plugins.connection.local import Connection as local_connection
 from ansible.utils.hashing import checksum
 
 
@@ -414,6 +415,7 @@ class ActionModule(ActionBase):
         dest = self._task.args.get('dest', None)
         remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
         local_follow = boolean(self._task.args.get('local_follow', True), strict=False)
+        is_local_connection = isinstance(self._connection, local_connection)
 
         result['failed'] = True
         if not source and content is None:
@@ -447,9 +449,41 @@ class ActionModule(ActionBase):
                 result['failed'] = True
                 result['msg'] = "could not write content temp file: %s" % to_native(err)
                 return self._ensure_invocation(result)
-
-        # if we have first_available_file in our vars
-        # look up the files and use the first one we find as src
+        elif is_local_connection:
+            trailing_slash = source.endswith(os.path.sep)
+            try:
+                # find in expected paths
+                source = self._find_needle('files', source)
+            except AnsibleError as e:
+                result['failed'] = True
+                result['msg'] = to_text(e)
+                result['exception'] = traceback.format_exc()
+                return self._ensure_invocation(result)
+            if trailing_slash != source.endswith(os.path.sep):
+                if source[-1] == os.path.sep:
+                    source = source[:-1]
+                else:
+                    source = source + os.path.sep
+            if os.path.isdir(to_bytes(source, errors='surrogate_or_strict')) or dest.endswith(os.path.sep):
+                new_module_args = _create_remote_file_args(self._task.args)
+                new_module_args['path'] = dest
+                new_module_args['state'] = 'directory'
+                new_module_args['mode'] = self._task.args.get('directory_mode', None)
+                new_module_args['recurse'] = False
+                del new_module_args['src']
+                module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
+                if module_return.get('failed'):
+                    result.update(module_return)
+                    return self._ensure_invocation(result)
+            new_module_args = _create_remote_copy_args(self._task.args)
+            new_module_args.update(
+                dict(
+                    src=source,
+                    remote_src=True
+                )
+            )
+            result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars))
+            return self._ensure_invocation(result)
         elif remote_src:
             result.update(self._execute_module(module_name='copy', task_vars=task_vars))
             return self._ensure_invocation(result)
