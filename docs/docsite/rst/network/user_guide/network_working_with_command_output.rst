@@ -107,7 +107,7 @@ In the following example, the second answer would be ignored and ``y`` would be 
      cli_command:
        command: reload
        prompt:
-         - Save?
+         - Save\?
          - confirm
        answer:
          - y
