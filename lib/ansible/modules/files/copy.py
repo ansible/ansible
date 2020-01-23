@@ -658,6 +658,12 @@ def main():
                     # This is useful for the purposes of us not having to write a 
                     # separate test to check if the file already exists and not 
                     # to overwrite it.
+                    #
+                    # $ touch /tmp/a
+                    # $ stat /tmp/a >/dev/null 2>&1; [[ $? == 0 ]]; echo $?
+                    # 0
+                    # $ stat /tmp/b >/dev/null 2>&1; [[ $? == 0 ]]; echo $?
+                    # 1
                     (rc, out, err) = module.run_command(validate_dest % b_dest)
                     if rc != 0:
                         module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
