@@ -100,19 +100,16 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# vios#show running-config | section ^interface
+# vios#sh running-config | include interface|description|duplex|mtu|shutdown|speed
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/2
 #  description This is test
-#  no ip address
 #  duplex auto
 #  speed 1000
 # interface GigabitEthernet0/3
-#  no ip address
 #  duplex auto
 #  speed auto
 
@@ -133,21 +130,18 @@ EXAMPLES = """
 # After state:
 # ------------
 #
-# vios#show running-config | section ^interface
+# vios#sh running-config | include interface|description|duplex|mtu|shutdown|speed
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/2
 #  description Configured and Merged by Ansible Network
-#  no ip address
 #  duplex auto
 #  speed 1000
 # interface GigabitEthernet0/3
 #  description Configured and Merged by Ansible Network
 #  mtu 2800
-#  no ip address
 #  shutdown
 #  duplex full
 #  speed 100
@@ -157,19 +151,16 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# vios#show running-config | section ^interface
+# vios#sh running-config | include interface|description|duplex|mtu|shutdown|speed
 # interface GigabitEthernet0/1
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/2
 #  description Configured by Ansible Network
-#  no ip address
 #  duplex auto
 #  speed 1000
 # interface GigabitEthernet0/3
 #  mtu 2000
-#  no ip address
 #  shutdown
 #  duplex full
 #  speed 100
@@ -188,20 +179,17 @@ EXAMPLES = """
 # After state:
 # -------------
 #
-# vios#show running-config | section ^interface
+# vios#sh running-config | include interface|description|duplex|mtu|shutdown|speed
 # interface GigabitEthernet0/1
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/2
 #  description Configured by Ansible Network
-#  no ip address
 #  duplex auto
 #  speed 1000
 # interface GigabitEthernet0/3
 #  description Configured and Replaced by Ansible Network
 #  mtu 2500
-#  no ip address
 #  shutdown
 #  duplex full
 #  speed 1000
@@ -211,21 +199,18 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# vios#show running-config | section ^interface#
+# vios#sh running-config | include interface|description|duplex|mtu|shutdown|speed#
 # interface GigabitEthernet0/1
 #  description Configured by Ansible
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/2
 #  description This is test
-#  no ip address
 #  duplex auto
 #  speed 1000
 # interface GigabitEthernet0/3
 #  description Configured by Ansible
 #  mtu 2800
-#  no ip address
 #  shutdown
 #  duplex full
 #  speed 100
@@ -246,20 +231,17 @@ EXAMPLES = """
 # After state:
 # -------------
 #
-# vios#show running-config | section ^interface
+# vios#sh running-config | include interface|description|duplex|mtu|shutdown|speed
 # interface GigabitEthernet0/1
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/2
 #  description Configured and Overridden by Ansible Network
-#  no ip address
 #  duplex auto
 #  speed 1000
 # interface GigabitEthernet0/3
 #  description Configured and Overridden by Ansible Network
 #  mtu 2000
-#  no ip address
 #  shutdown
 #  duplex full
 #  speed 100
@@ -269,20 +251,17 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# vios#show running-config | section ^interface
+# vios#sh running-config | include interface|description|duplex|mtu|shutdown|speed
 # interface GigabitEthernet0/1
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/2
 #  description Configured by Ansible Network
-#  no ip address
 #  duplex auto
 #  speed 1000
 # interface GigabitEthernet0/3
 #  description Configured by Ansible Network
 #  mtu 2500
-#  no ip address
 #  shutdown
 #  duplex full
 #  speed 1000
@@ -296,19 +275,16 @@ EXAMPLES = """
 # After state:
 # -------------
 #
-# vios#show running-config | section ^interface
+# vios#sh running-config | include interface|description|duplex|mtu|shutdown|speed
 # interface GigabitEthernet0/1
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/2
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/3
 #  description Configured by Ansible Network
 #  mtu 2500
-#  no ip address
 #  shutdown
 #  duplex full
 #  speed 1000
@@ -319,20 +295,17 @@ EXAMPLES = """
 # Before state:
 # -------------
 #
-# vios#show running-config | section ^interface
+# vios#sh running-config | include interface|description|duplex|mtu|shutdown|speed
 # interface GigabitEthernet0/1
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/2
 #  description Configured by Ansible Network
-#  no ip address
 #  duplex auto
 #  speed 1000
 # interface GigabitEthernet0/3
 #  description Configured by Ansible Network
 #  mtu 2500
-#  no ip address
 #  shutdown
 #  duplex full
 #  speed 1000
@@ -344,17 +317,14 @@ EXAMPLES = """
 # After state:
 # -------------
 #
-# vios#show running-config | section ^interface
+# vios#sh running-config | include interface|description|duplex|mtu|shutdown|speed
 # interface GigabitEthernet0/1
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/2
-#  no ip address
 #  duplex auto
 #  speed auto
 # interface GigabitEthernet0/3
-#  no ip address
 #  duplex auto
 #  speed auto
 
