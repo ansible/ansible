@@ -14,6 +14,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+from copy import deepcopy
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.ios.facts.facts import Facts
@@ -161,9 +162,12 @@ class Interfaces(ConfigBase):
                   to the desired configuration
         """
         commands = []
+        # Creating a copy of want, so that want dict is intact even after delete operation
+        # performed during override want n have comparison
+        temp_want = deepcopy(want)
 
         for each in have:
-            for interface in want:
+            for interface in temp_want:
                 count = 0
                 if each['name'] == interface['name']:
                     break
@@ -182,11 +186,11 @@ class Interfaces(ConfigBase):
             # as the pre-existing interface are now configured by
             # above set_config call, deleting the respective
             # interface entry from the want list
-            del want[count]
+            del temp_want[count]
 
         # Iterating through want list which now only have new interfaces to be
         # configured
-        for each in want:
+        for each in temp_want:
             commands.extend(self._set_config(each, dict()))
         # Remove the duplicate interface call
         commands = remove_duplicate_interface(commands)
