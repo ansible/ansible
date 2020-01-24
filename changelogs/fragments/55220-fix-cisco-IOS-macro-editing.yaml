@@ -1,0 +1,2 @@
+bugfixes:
+  - ios_config - fixed issue where adding/changing macro's would fail
