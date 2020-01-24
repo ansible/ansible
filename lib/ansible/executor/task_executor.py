@@ -1027,7 +1027,8 @@ class TaskExecutor:
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
-        elif all((module_prefix in C.NETWORK_GROUP_MODULES, self._shared_loader_obj.action_loader.has_plugin(module_prefix, collection_list=network_collections))):
+        elif all((module_prefix in C.NETWORK_GROUP_MODULES,
+                  self._shared_loader_obj.action_loader.has_plugin(module_prefix, collection_list=network_collections))):
             handler_name = module_prefix
             collections = network_collections
         else:
