@@ -1,0 +1,4 @@
+minor_changes:
+    - ansible-galaxy - Add a `verify` subcommand to `ansible-galaxy collection` to compare the checksums
+      of the files listed in the MANIFEST.json and FILES.json of the local collection with the collection
+      found on the galaxy server.
