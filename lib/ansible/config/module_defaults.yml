@@ -389,6 +389,8 @@ groupings:
   - aws
   ecs_service_info:
   - aws
+  ecs_tag:
+  - aws
   ecs_task:
   - aws
   ecs_taskdefinition:
