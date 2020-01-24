@@ -60,6 +60,7 @@ options:
         exactly as returned by a C(SHOW GRANT) statement. If not followed,
         the module will always report changes. It includes grouping columns
         by permission (C(SELECT(col1,col2)) instead of C(SELECT(col1),SELECT(col2))).
+      - Mutually exclusive with I(priv_dict).
     type: str
   append_privs:
     description:
@@ -109,6 +110,12 @@ options:
     description:
       - User's plugin auth_string (``CREATE USER user IDENTIFIED WITH plugin BY plugin_auth_string``).
     type: str
+    version_added: '2.10'
+  priv_dict:
+    description:
+      - Similar to I(priv) parameter but allows to pass privileges in the dictionary form (see the examples).
+      - Mutually exclusive with I(priv).
+    type: dict
     version_added: '2.10'
 
 notes:
@@ -166,6 +173,15 @@ EXAMPLES = r'''
     password: 12345
     priv: '*.*:ALL,GRANT'
     state: present
+
+- name: Create user with password, all database privileges and 'WITH GRANT OPTION' in db1 and db2
+  mysql_user:
+    state: present
+    name: bob
+    password: 12345dd
+    priv_dict:
+      'db1.*': 'ALL,GRANT'
+      'db2.*': 'ALL,GRANT'
 
 # Note that REQUIRESSL is a special privilege that should only apply to *.* by itself.
 - name: Modify user to require SSL connections.
@@ -649,6 +665,20 @@ def privileges_grant(cursor, user, host, db_table, priv):
     query = ' '.join(query)
     cursor.execute(query, (user, host))
 
+
+def convert_priv_dict_to_str(priv):
+    """Converts privs dictionary to string of certain format.
+
+    Args:
+        priv (dict): Dict of privileges that needs to be converted to string.
+
+    Returns:
+        priv (str): String representation of input argument.
+    """
+    priv_list = ['%s:%s' % (key, val) for key, val in iteritems(priv)]
+
+    return '/'.join(priv_list)
+
 # ===========================================
 # Module execution.
 #
@@ -681,7 +711,9 @@ def main():
             plugin=dict(default=None, type='str'),
             plugin_hash_string=dict(default=None, type='str'),
             plugin_auth_string=dict(default=None, type='str'),
+            priv_dict=dict(type='dict', default=None),
         ),
+        mutually_exclusive=(('priv', 'priv_dict'),),
         supports_check_mode=True,
     )
     login_user = module.params["login_user"]
@@ -706,6 +738,8 @@ def main():
     plugin = module.params["plugin"]
     plugin_hash_string = module.params["plugin_hash_string"]
     plugin_auth_string = module.params["plugin_auth_string"]
+    if module.params.get("priv_dict"):
+        priv = convert_priv_dict_to_str(module.params["priv_dict"])
 
     if mysql_driver is None:
         module.fail_json(msg=mysql_driver_fail_msg)
