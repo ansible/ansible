@@ -62,17 +62,12 @@ vpc_id:
 
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (
-    boto3_conn,
-    ec2_argument_spec,
-    get_aws_connection_info,
-    camel_dict_to_snake_dict
-)
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 try:
     import botocore
 except ImportError:
-    pass  # will be picked up by HAS_BOTO3 in AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def delete_eigw(module, conn, eigw_id):
@@ -167,16 +162,14 @@ def describe_eigws(module, conn, vpc_id):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         vpc_id=dict(required=True),
         state=dict(default='present', choices=['present', 'absent'])
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('ec2')
 
     vpc_id = module.params.get('vpc_id')
     state = module.params.get('state')

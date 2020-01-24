@@ -109,15 +109,14 @@ user:
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info, boto3_conn
-from ansible.module_utils.ec2 import HAS_BOTO3
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 import traceback
 
 try:
     from botocore.exceptions import ClientError, ParamValidationError, BotoCoreError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 
 def compare_attached_policies(current_attached_policies, new_attached_policies):

@@ -170,8 +170,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (ansible_dict_to_boto3_filter_list, ec2_argument_spec,
-                                      boto3_conn, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict)
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, camel_dict_to_snake_dict
 
 
 def date_handler(obj):
@@ -199,12 +198,9 @@ def list_vpn_connections(connection, module):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            vpn_connection_ids=dict(default=[], type='list'),
-            filters=dict(default={}, type='dict')
-        )
+    argument_spec = dict(
+        vpn_connection_ids=dict(default=[], type='list'),
+        filters=dict(default={}, type='dict')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,

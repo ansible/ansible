@@ -107,12 +107,10 @@ nacls:
             sample: [[100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]]
 '''
 
-import traceback
-
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass  # caught by imported HAS_BOTO3
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils._text import to_native

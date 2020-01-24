@@ -144,12 +144,11 @@ import json
 import re
 from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 
 try:
     from botocore.exceptions import ClientError
 except Exception:
-    pass  # will be protected by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def pc(key):
@@ -398,15 +397,6 @@ def manage_state(module, lambda_client):
     return dict(changed=changed, ansible_facts=dict(lambda_policy_action=action_taken))
 
 
-def setup_client(module):
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    if region:
-        connection = boto3_conn(module, conn_type='client', resource='lambda', region=region, endpoint=ec2_url, **aws_connect_params)
-    else:
-        module.fail_json(msg="region must be specified")
-    return connection
-
-
 def setup_module_object():
     argument_spec = dict(
         state=dict(default='present', choices=['present', 'absent']),
@@ -438,7 +428,7 @@ def main():
     """
 
     module = setup_module_object()
-    client = setup_client(module)
+    client = module.client('lambda')
     validate_params(module)
     results = manage_state(module, client)
 

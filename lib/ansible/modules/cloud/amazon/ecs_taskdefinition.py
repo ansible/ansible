@@ -218,12 +218,11 @@ taskdefinition:
 
 try:
     import botocore
-    HAS_BOTO3 = True
 except ImportError:
-    HAS_BOTO3 = False
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, camel_dict_to_snake_dict, ec2_argument_spec, get_aws_connection_info
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils._text import to_text
 
 
@@ -233,8 +232,7 @@ class EcsTaskManager:
     def __init__(self, module):
         self.module = module
 
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        self.ecs = module.client('ecs')
 
     def describe_task(self, task_name):
         try:
@@ -325,8 +323,7 @@ class EcsTaskManager:
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(required=True, choices=['present', 'absent']),
         arn=dict(required=False, type='str'),
         family=dict(required=False, type='str'),
@@ -340,15 +337,12 @@ def main():
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         cpu=dict(),
         memory=dict(required=False, type='str')
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
                               required_if=[('launch_type', 'FARGATE', ['cpu', 'memory'])]
                               )
-
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 is required.')
 
     task_to_describe = None
     task_mgr = EcsTaskManager(module)

@@ -126,12 +126,11 @@ delegation_set_id:
 
 import time
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def find_zones(module, client, zone_in, private_zone):
