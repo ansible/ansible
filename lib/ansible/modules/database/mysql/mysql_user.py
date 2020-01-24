@@ -390,6 +390,8 @@ def user_mod(cursor, user, host, host_all, password, encrypted,
                 FROM mysql.user WHERE user = %%s AND host = %%s
                 """ % (colA[0], colA[0], colB[0], colB[0]), (user, host))
             current_pass_hash = cursor.fetchone()[0]
+            if isinstance(current_pass_hash, bytes):
+                current_pass_hash = current_pass_hash.decode('ascii')
 
             if encrypted:
                 encrypted_password = password
