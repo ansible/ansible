@@ -98,6 +98,16 @@ def to_bool(a):
         return True
     return False
 
+def to_list(item):
+    ''' given a list, just return it; given a dict, throw an exception; given an undefined object, return an empty list; given anything else, enclose the item in a list '''
+    if isinstance(item, list):
+        return item
+    elif isinstance(item, dict):
+        raise AnsibleFilterError('Please use dict2items() for operating on dicts')
+    elif item in (None, 'None', 'null'):
+        return []
+    else:
+        return [ item ]
 
 def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
     return datetime.datetime.strptime(string, format)
@@ -637,6 +647,7 @@ class FilterModule(object):
             # types
             'bool': to_bool,
             'to_datetime': to_datetime,
+	    'to_list': to_list,
 
             # date formatting
             'strftime': strftime,
