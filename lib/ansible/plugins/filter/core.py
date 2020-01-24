@@ -103,7 +103,7 @@ def to_list(item):
     '''
     given a list, just return it;
     given a dict, throw an exception;
-    given an undefined object, return an empty list;cw
+    given an undefined object, return an empty list;
     given anything else, enclose the item in a list
     '''
     if isinstance(item, list):
