@@ -229,6 +229,14 @@ EXAMPLES = r'''
       - foo
       - bar
     state: absent
+
+# Dump database with argument not directly supported by this module
+- name: Dump databases without including triggers
+  mysql_db:
+    state: dump
+    name: foo
+    target: /tmp/dump.sql
+    extra_dump_args: "--skip-triggers"
 '''
 
 RETURN = r'''
