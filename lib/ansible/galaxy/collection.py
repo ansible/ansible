@@ -542,7 +542,7 @@ def validate_collection_path(collection_path):
 
 
 def verify_collections(collections, search_path, apis, validate_certs, ignore_errors):
-    existing_collections = _find_existing_collections(search_path)
+    existing_collections = find_existing_collections(search_path)
 
     current_collections = dict(('%s.%s' % (collection.namespace, collection.name), collection) for collection in existing_collections)
 

@@ -1139,7 +1139,7 @@ def test_verify_collections_not_installed_ignore_errors(mock_verify, mock_collec
 @patch.object(collection.CollectionRequirement, 'verify')
 def test_verify_collections_tarfile(mock_isfile, mock_verify, mock_collection, monkeypatch):
     local_collection = mock_collection()
-    monkeypatch.setattr(collection, '_find_existing_collections', MagicMock(return_value=[local_collection]))
+    monkeypatch.setattr(collection, 'find_existing_collections', MagicMock(return_value=[local_collection]))
 
     located_remote_from_tar = MagicMock(return_value=mock_collection(local=False))
     monkeypatch.setattr(collection.CollectionRequirement, 'from_tar', located_remote_from_tar)
@@ -1168,7 +1168,7 @@ def test_verify_collections_tarfile(mock_isfile, mock_verify, mock_collection, m
 @patch.object(collection.CollectionRequirement, 'verify')
 def test_verify_collections_path(mock_isfile, mock_isdir, mock_verify, mock_collection, monkeypatch):
     local_collection = mock_collection()
-    monkeypatch.setattr(collection, '_find_existing_collections', MagicMock(return_value=[local_collection]))
+    monkeypatch.setattr(collection, 'find_existing_collections', MagicMock(return_value=[local_collection]))
 
     located_remote_from_path = MagicMock(return_value=mock_collection(local=False))
     monkeypatch.setattr(collection.CollectionRequirement, 'from_path', located_remote_from_path)
@@ -1196,7 +1196,7 @@ def test_verify_collections_path(mock_isfile, mock_isdir, mock_verify, mock_coll
 @patch.object(collection.CollectionRequirement, 'verify')
 def test_verify_collections_url(mock_isfile, mock_isdir, mock_verify, mock_collection, monkeypatch):
     local_collection = mock_collection()
-    monkeypatch.setattr(collection, '_find_existing_collections', MagicMock(return_value=[local_collection]))
+    monkeypatch.setattr(collection, 'find_existing_collections', MagicMock(return_value=[local_collection]))
 
     remote_collection = mock_collection(local=False)
     located_remote_from_tar = MagicMock(return_value=remote_collection)
@@ -1221,7 +1221,7 @@ def test_verify_collections_url(mock_isfile, mock_isdir, mock_verify, mock_colle
 @patch.object(collection.CollectionRequirement, 'verify')
 def test_verify_collections_name(mock_isfile, mock_isdir, mock_verify, mock_collection, monkeypatch):
     local_collection = mock_collection()
-    monkeypatch.setattr(collection, '_find_existing_collections', MagicMock(return_value=[local_collection]))
+    monkeypatch.setattr(collection, 'find_existing_collections', MagicMock(return_value=[local_collection]))
 
     located_remote_from_name = MagicMock(return_value=mock_collection(local=False))
     monkeypatch.setattr(collection.CollectionRequirement, 'from_name', located_remote_from_name)

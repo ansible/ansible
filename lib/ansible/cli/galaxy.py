@@ -850,8 +850,7 @@ class GalaxyCLI(CLI):
                             "collections paths '%s'. The installed collection won't be picked up in an Ansible "
                             "run." % (to_text(search_path), to_text(":".join(collections_path))))
 
-        if os.path.split(search_path)[1] != 'ansible_collections':
-            search_path = os.path.join(search_path, 'ansible_collections')
+        search_path = validate_collection_path(search_path)
 
         verify_collections(requirements, search_path, self.api_servers, (not ignore_certs), ignore_errors)
         return 0
