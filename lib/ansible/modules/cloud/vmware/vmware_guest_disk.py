@@ -682,7 +682,7 @@ class PyVmomiHelper(PyVmomi):
                 else:
                     current_disk['disk_raw_device'] = disk.get('raw_device')
 
-                disks_data.append(current_disk)
+            disks_data.append(current_disk)
         return disks_data
 
     def get_recommended_datastore(self, datastore_cluster_obj):
