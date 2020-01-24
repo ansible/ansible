@@ -166,7 +166,7 @@ EXAMPLES = r'''
   postgresql_db:
     name: acme
     state: dump
-    target: /tmp/acme_dump_dir
+    target: /tmp/acme.sql
     dump_extra_args: --exclude-table=test
 
 - name: Dump an existing database to a file (with compression)
