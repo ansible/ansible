@@ -339,10 +339,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 resp = self._return_if_object(
                     self.fake_module,
                     self.auth_session.get(
-                      link,
-                      params={"filter": query, "pageToken": resp.get("nextPageToken")},
-                  ),
-              )
+                        link,
+                        params={"filter": query, "pageToken": resp.get("nextPageToken")},
+                    ),
+                )
                 lists.append(resp.get("items"))
         return self.build_list(lists)
 
