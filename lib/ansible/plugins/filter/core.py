@@ -98,8 +98,14 @@ def to_bool(a):
         return True
     return False
 
+
 def to_list(item):
-    ''' given a list, just return it; given a dict, throw an exception; given an undefined object, return an empty list; given anything else, enclose the item in a list '''
+    '''
+    given a list, just return it;
+    given a dict, throw an exception;
+    given an undefined object, return an empty list;cw
+    given anything else, enclose the item in a list
+    '''
     if isinstance(item, list):
         return item
     elif isinstance(item, dict):
@@ -107,7 +113,8 @@ def to_list(item):
     elif item in (None, 'None', 'null'):
         return []
     else:
-        return [ item ]
+        return [item]
+
 
 def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
     return datetime.datetime.strptime(string, format)
