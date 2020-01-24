@@ -42,7 +42,7 @@ options:
             portal:
                 description:
                   - "The portal being used to connect with iscsi."
-                version_added: 2.9
+                version_added: 2.10
     fcp:
         description:
             - "Dictionary with values for fibre channel storage type:"

@@ -145,7 +145,7 @@ options:
             portal:
                 description:
                     - "The portal being used to connect with iscsi."
-                version_added: 2.9
+                version_added: 2.10
         version_added: 2.4
     check_upgrade:
         description:
