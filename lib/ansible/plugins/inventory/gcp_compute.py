@@ -333,17 +333,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         resp = self._return_if_object(
             self.fake_module, self.auth_session.get(link, params={"filter": query})
         )
-        if resp != None:
-          lists.append(resp.get("items"))
-          while resp.get("nextPageToken"):
-              resp = self._return_if_object(
-                  self.fake_module,
-                  self.auth_session.get(
+        if resp:
+            lists.append(resp.get("items"))
+            while resp.get("nextPageToken"):
+                resp = self._return_if_object(
+                    self.fake_module,
+                    self.auth_session.get(
                       link,
                       params={"filter": query, "pageToken": resp.get("nextPageToken")},
                   ),
               )
-              lists.append(resp.get("items"))
+                lists.append(resp.get("items"))
         return self.build_list(lists)
 
     def build_list(self, lists):
@@ -511,7 +511,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def projects_for_folder(self, config_data, folder):
         link = 'https://cloudresourcemanager.googleapis.com/v1/projects'.format()
-        query = 'parent.id = {}'.format(folder)
+        query = 'parent.id = {0}'.format(folder)
         projects = []
         config_data['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
         projects_response = self.fetch_projects(config_data, link, query)
