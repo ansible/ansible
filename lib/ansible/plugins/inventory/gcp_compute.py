@@ -518,7 +518,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if 'projects' in projects_response:
             for item in projects_response.get('projects'):
-              projects.append(item['name'])
+                projects.append(item['name'])
         return projects
 
     def parse(self, inventory, loader, path, cache=True):
