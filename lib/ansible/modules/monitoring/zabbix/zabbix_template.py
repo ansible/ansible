@@ -605,6 +605,10 @@ class Template(object):
             if LooseVersion(api_version).version[:2] <= LooseVersion('3.2').version:
                 update_rules['applications']['updateExisting'] = True
 
+            if ( LooseVersion(api_version).version[:3] >= LooseVersion('4.0.16').version ) or \
+                ( LooseVersion(api_version).version[:3] >= LooseVersion('4.4.4').version ):
+               update_rules['templateLinkage']['deleteMissing'] = True
+
             import_data = {'format': template_type, 'source': template_content, 'rules': update_rules}
             self._zapi.configuration.import_(import_data)
         except ZabbixAPIException as e:
