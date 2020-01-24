@@ -647,7 +647,7 @@ class FilterModule(object):
             # types
             'bool': to_bool,
             'to_datetime': to_datetime,
-	    'to_list': to_list,
+            'to_list': to_list,
 
             # date formatting
             'strftime': strftime,
