@@ -48,6 +48,51 @@ display = Display()
 urlparse = six.moves.urllib.parse.urlparse
 
 
+def _display_header(path, h1, h2, w1=42, w2=22):
+    display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
+        path,
+        h1,
+        h2,
+        '-' * max([len(h1), w1]),  # Make sure that the number of dashes is at least the width of the header
+        '-' * max([len(h2), w2]),
+        cwidth=w1,
+        vwidth=w2,
+    ))
+
+
+def _display_role(gr):
+    install_info = gr.install_info
+    version = None
+    if install_info:
+        version = install_info.get("version", None)
+    if not version:
+        version = "(unknown version)"
+    display.display("- %s, %s" % (gr.name, version))
+
+
+def _display_collection(collection, cwidth=42, vwidth=22):
+    display.display('{fqcn:{cwidth}} {version:{vwidth}}'.format(
+        fqcn=to_text(collection),
+        version=collection.latest_version,
+        cwidth=cwidth,
+        vwidth=vwidth)
+    )
+
+
+def _get_collection_widths(collections):
+    if is_iterable(collections):
+        fqcn_set = set(to_text(c) for c in collections)
+        version_set = set(to_text(c.latest_version) for c in collections)
+    else:
+        fqcn_set = set([to_text(collections)])
+        version_set = set([collections.latest_version])
+
+    fqcn_length = len(max(fqcn_set, key=len))
+    version_length = len(max(version_set, key=len))
+
+    return fqcn_length, version_length
+
+
 class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
@@ -64,51 +109,6 @@ class GalaxyCLI(CLI):
         self.api_servers = []
         self.galaxy = None
         super(GalaxyCLI, self).__init__(args)
-
-    def _display_header(self, path, h1, h2, w1=42, w2=22):
-        display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
-            path,
-            h1,
-            h2,
-            '-' * max([len(h1), w1]),  # Make sure that the number of dashes is at least the width of the header
-            '-' * max([len(h2), w2]),
-            cwidth=w1,
-            vwidth=w2,
-        ))
-
-    def _display_role(self, gr):
-        install_info = gr.install_info
-        version = None
-        if install_info:
-            version = install_info.get("version", None)
-        if not version:
-            version = "(unknown version)"
-        display.display("- %s, %s" % (gr.name, version))
-
-    def _display_collection(self, collection, cwidth=42, vwidth=22):
-        display.display('{fqcn:{cwidth}} {version:{vwidth}}'.format(
-            fqcn=to_text(collection),
-            version=collection.latest_version,
-            cwidth=cwidth,
-            vwidth=vwidth)
-        )
-
-    def _display_warnings(self, warnings):
-        for w in warnings:
-            display.warning(w)
-
-    def _get_collection_widths(self, collections):
-        if is_iterable(collections):
-            fqcn_set = set(to_text(c) for c in collections)
-            version_set = set(to_text(c.latest_version) for c in collections)
-        else:
-            fqcn_set = set([to_text(collections)])
-            version_set = set([collections.latest_version])
-
-        fqcn_length = len(max(fqcn_set, key=len))
-        version_length = len(max(version_set, key=len))
-
-        return fqcn_length, version_length
 
     def init_parser(self):
         ''' create an options parser for bin/ansible '''
@@ -1091,7 +1091,7 @@ class GalaxyCLI(CLI):
                 if os.path.isdir(gr.path):
                     role_found = True
                     display.display('# %s' % os.path.dirname(gr.path))
-                    self._display_role(gr)
+                    _display_role(gr)
                     break
                 else:
                     warnings.append("- the role %s was not found" % role_name)
@@ -1107,13 +1107,14 @@ class GalaxyCLI(CLI):
                 for path_file in path_files:
                     gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
                     if gr.metadata:
-                        self._display_role(gr)
+                        _display_role(gr)
 
         # Do not warn if the role was found in any of the search paths
         if role_found and role_name:
             warnings = []
 
-        self._display_warnings(warnings)
+        for w in warnings:
+            display.warning(w)
 
         if not path_found:
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
@@ -1170,10 +1171,10 @@ class GalaxyCLI(CLI):
 
                 collection_found = True
                 collection = CollectionRequirement.from_path(b_collection_path, False)
-                fqcn_width, version_width = self._get_collection_widths(collection)
+                fqcn_width, version_width = _get_collection_widths(collection)
 
-                self._display_header(path, 'Collection', 'Version', fqcn_width, version_width)
-                self._display_collection(collection, fqcn_width, version_width)
+                _display_header(path, 'Collection', 'Version', fqcn_width, version_width)
+                _display_collection(collection, fqcn_width, version_width)
 
             else:
                 # list all collections
@@ -1181,19 +1182,20 @@ class GalaxyCLI(CLI):
                 collections = find_existing_collections(path)
 
                 # Display header
-                fqcn_width, version_width = self._get_collection_widths(collections)
-                self._display_header(path, 'Collection', 'Version', fqcn_width, version_width)
+                fqcn_width, version_width = _get_collection_widths(collections)
+                _display_header(path, 'Collection', 'Version', fqcn_width, version_width)
 
                 # Sort collections by the namespace and name
                 collections.sort(key=to_text)
                 for collection in collections:
-                    self._display_collection(collection, fqcn_width, version_width)
+                    _display_collection(collection, fqcn_width, version_width)
 
         # Do not warn if the specific collection was found in any of the search paths
         if collection_found and collection_name:
             warnings = []
 
-        self._display_warnings(warnings)
+        for w in warnings:
+            display.warning(w)
 
         if not path_found:
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
