@@ -1023,6 +1023,8 @@ class TaskExecutor:
         collections = self._task.collections
         if module_collection and module_collection not in collections:
             network_collections = [module_collection] + collections
+        else:
+            network_collections = collections
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
