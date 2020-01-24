@@ -397,8 +397,6 @@ class PyVmomiHelper(PyVmomi):
             if disk['disk_unit_number'] not in current_scsi_info[scsi_controller]['disks'] and disk['state'] == 'present':
                 # Add new disk
                 disk_spec = self.create_scsi_disk(scsi_controller, disk['disk_unit_number'], disk['disk_mode'], disk['filename'])
-                if disk['filename'] is None:
-                    disk_spec.device.capacityInKB = disk['size']
 
                 if disk['disk_type'] == 'thin':
                     disk_spec.device.backing.thinProvisioned = True
@@ -410,28 +408,17 @@ class PyVmomiHelper(PyVmomi):
                     disk_spec.device.backing.compatibilityMode = disk['disk_compatibility_mode']
 
                 if disk['filename'] is None:
-                    disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (
-                        disk['datastore'].name,
-                        vm_name, vm_name,
-                        str(scsi_controller),
-                        str(disk['disk_unit_number']))
+                    if disk['disk_type'] != 'raw':
+                        disk_spec.device.capacityInKB = disk['size']
+                        disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (
+                            disk['datastore'].name,
+                            vm_name, vm_name,
+                            str(scsi_controller),
+                            str(disk['disk_unit_number']))
                 else:
                     disk_spec.device.backing.fileName = disk['filename']
 
-                if disk['disk_type'] != 'raw':
-                    disk_spec.device.capacityInKB = disk['size']
-                    disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
-                                                                                   vm_name, vm_name,
-                                                                                   str(scsi_controller),
-                                                                                   str(disk['disk_unit_number']))
                 disk_spec.device.backing.datastore = disk['datastore']
-
-                if disk['disk_type'] != 'raw':
-                    disk_spec.device.capacityInKB = disk['size']
-                    disk_spec.device.backing.fileName = "[%s] %s/%s_%s_%s.vmdk" % (disk['datastore'].name,
-                                                                                   vm_name, vm_name,
-                                                                                   str(scsi_controller),
-                                                                                   str(disk['disk_unit_number']))
 
                 self.config_spec.deviceChange.append(disk_spec)
                 disk_change = True
@@ -615,10 +602,6 @@ class PyVmomiHelper(PyVmomi):
                                                   " Supported units are ['%s']." % (unit,
                                                                                     disk_index,
                                                                                     "', '".join(disk_units.keys())))
-
-                elif current_disk['filename'] is None:
-                    # No size found but disk, fail
-                    self.module.fail_json(msg="No size, size_kb, size_mb, size_gb or size_tb")
                 else:
                     if disk['type'] != 'raw':
                         # No size found but disk and not raw device, fail
@@ -692,7 +675,7 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="Invalid 'compatibility_mode' specified for disk index [%s]. Please specify"
                                           "'compatibility_mode' value from ['physicalMode']." % disk_index)
 
-                    current_disk['disk_compatibility_mode'] = compatibility_mode
+                current_disk['disk_compatibility_mode'] = compatibility_mode
 
                 if 'raw_device' not in disk:
                     self.module.fail_json(msg="raw_device needs to be defined when using disk type 'raw' for disk index [%s]" % disk_index)
