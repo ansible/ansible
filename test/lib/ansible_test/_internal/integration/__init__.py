@@ -170,8 +170,9 @@ def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, s
             working_path = ''
 
         inventory_path = os.path.join(working_path, get_inventory_relative_path(args))
+        inventory_tuple = inventory_path_src, inventory_path
 
-        if os.path.isfile(inventory_path_src) and os.path.relpath(inventory_path_src, data_context().content.root) != inventory_path:
+        if os.path.isfile(inventory_path_src) and inventory_tuple not in files:
             originals = [item for item in files if item[1] == inventory_path]
 
             if originals:
@@ -182,7 +183,7 @@ def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, s
             else:
                 display.notice('Sourcing inventory file "%s" from "%s".' % (inventory_path, inventory_path_src))
 
-            files.append((inventory_path_src, inventory_path))
+            files.append(inventory_tuple)
 
     data_context().register_payload_callback(inventory_callback)
 
@@ -209,7 +210,9 @@ def integration_test_environment(args, target, inventory_path_src):
         yield IntegrationEnvironment(integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
         return
 
-    root_temp_dir = os.path.expanduser('~/.ansible/test/tmp')
+    # When testing a collection, the temporary directory must reside within the collection.
+    # This is necessary to enable support for the default collection for non-collection content (playbooks and roles).
+    root_temp_dir = os.path.join(ResultType.TMP.path, 'integration')
 
     prefix = '%s-' % target.name
     suffix = u'-\u00c5\u00d1\u015a\u00cc\u03b2\u0141\u00c8'

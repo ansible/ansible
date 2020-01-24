@@ -50,7 +50,7 @@ scaleway_security_group_info:
   description: Response from Scaleway API
   returned: success
   type: complex
-  contains:
+  sample:
     "scaleway_security_group_info": [
         {
             "description": "test-ams",

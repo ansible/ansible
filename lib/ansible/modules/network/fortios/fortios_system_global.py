@@ -91,10 +91,22 @@ options:
                     - Console login timeout that overrides the admintimeout value. (15 - 300 seconds) (15 seconds to 5 minutes). 0 the default, disables this
                        timeout.
                 type: int
+            admin_hsts_max_age:
+                description:
+                    - HTTPS Strict-Transport-Security header max-age in seconds. A value of 0 will reset any HSTS records in the browser.When
+                       admin-https-redirect is disabled the header max-age will be 0.
+                type: int
             admin_https_pki_required:
                 description:
                     - Enable/disable admin login method. Enable to force administrators to provide a valid certificate to log in if PKI is enabled. Disable to
                        allow administrators to log in with a certificate or password.
+                type: str
+                choices:
+                    - enable
+                    - disable
+            admin_https_redirect:
+                description:
+                    - Enable/disable redirection of HTTP administration access to HTTPS.
                 type: str
                 choices:
                     - enable
@@ -417,7 +429,7 @@ options:
             fgd_alert_subscription:
                 description:
                     - Type of alert to retrieve from FortiGuard.
-                type: str
+                type: list
                 choices:
                     - advisory
                     - latest-threat
@@ -1244,31 +1256,33 @@ EXAMPLES = '''
       system_global:
         admin_concurrent: "enable"
         admin_console_timeout: "4"
+        admin_hsts_max_age: "5"
         admin_https_pki_required: "enable"
+        admin_https_redirect: "enable"
         admin_https_ssl_versions: "tlsv1-0"
-        admin_lockout_duration: "7"
-        admin_lockout_threshold: "8"
-        admin_login_max: "9"
+        admin_lockout_duration: "9"
+        admin_lockout_threshold: "10"
+        admin_login_max: "11"
         admin_maintainer: "enable"
-        admin_port: "11"
+        admin_port: "13"
         admin_restrict_local: "enable"
         admin_scp: "enable"
         admin_server_cert: "<your_own_value> (source certificate.local.name)"
-        admin_sport: "15"
-        admin_ssh_grace_time: "16"
+        admin_sport: "17"
+        admin_ssh_grace_time: "18"
         admin_ssh_password: "enable"
-        admin_ssh_port: "18"
+        admin_ssh_port: "20"
         admin_ssh_v1: "enable"
-        admin_telnet_port: "20"
-        admintimeout: "21"
+        admin_telnet_port: "22"
+        admintimeout: "23"
         alias: "<your_own_value>"
         allow_traffic_redirect: "enable"
         anti_replay: "disable"
-        arp_max_entry: "25"
+        arp_max_entry: "27"
         asymroute: "enable"
         auth_cert: "<your_own_value> (source certificate.local.name)"
-        auth_http_port: "28"
-        auth_https_port: "29"
+        auth_http_port: "30"
+        auth_https_port: "31"
         auth_keepalive: "enable"
         auth_session_limit: "block-new"
         auto_auth_extension_device: "enable"
@@ -1276,10 +1290,10 @@ EXAMPLES = '''
         av_failopen: "pass"
         av_failopen_session: "enable"
         batch_cmdb: "enable"
-        block_session_timer: "37"
-        br_fdb_max_entry: "38"
-        cert_chain_max: "39"
-        cfg_revert_timeout: "40"
+        block_session_timer: "39"
+        br_fdb_max_entry: "40"
+        cert_chain_max: "41"
+        cfg_revert_timeout: "42"
         cfg_save: "automatic"
         check_protocol_header: "loose"
         check_reset_range: "strict"
@@ -1287,24 +1301,24 @@ EXAMPLES = '''
         clt_cert_req: "enable"
         compliance_check: "enable"
         compliance_check_time: "<your_own_value>"
-        cpu_use_threshold: "48"
+        cpu_use_threshold: "50"
         csr_ca_attribute: "enable"
         daily_restart: "enable"
-        device_identification_active_scan_delay: "51"
-        device_idle_timeout: "52"
+        device_identification_active_scan_delay: "53"
+        device_idle_timeout: "54"
         dh_params: "1024"
-        dnsproxy_worker_count: "54"
+        dnsproxy_worker_count: "56"
         dst: "enable"
         endpoint_control_fds_access: "enable"
-        endpoint_control_portal_port: "57"
-        failtime: "58"
+        endpoint_control_portal_port: "59"
+        failtime: "60"
         fds_statistics: "enable"
-        fds_statistics_period: "60"
+        fds_statistics_period: "62"
         fgd_alert_subscription: "advisory"
         fortiextender: "enable"
-        fortiextender_data_port: "63"
+        fortiextender_data_port: "65"
         fortiextender_vlan_mode: "enable"
-        fortiservice_port: "65"
+        fortiservice_port: "67"
         gui_certificates: "enable"
         gui_custom_language: "enable"
         gui_date_format: "yyyy/MM/dd"
@@ -1312,69 +1326,69 @@ EXAMPLES = '''
         gui_device_longitude: "<your_own_value>"
         gui_display_hostname: "enable"
         gui_ipv6: "enable"
-        gui_lines_per_page: "73"
+        gui_lines_per_page: "75"
         gui_theme: "green"
         gui_wireless_opensecurity: "enable"
         honor_df: "enable"
         hostname: "myhostname"
-        igmp_state_limit: "78"
-        interval: "79"
+        igmp_state_limit: "80"
+        interval: "81"
         ip_src_port_range: "<your_own_value>"
         ips_affinity: "<your_own_value>"
         ipsec_asic_offload: "enable"
         ipsec_hmac_offload: "enable"
         ipsec_soft_dec_async: "enable"
-        ipv6_accept_dad: "85"
+        ipv6_accept_dad: "87"
         ipv6_allow_anycast_probe: "enable"
         language: "english"
-        ldapconntimeout: "88"
+        ldapconntimeout: "90"
         lldp_transmission: "enable"
         log_ssl_connection: "enable"
         log_uuid: "disable"
         login_timestamp: "enable"
         long_vdom_name: "enable"
         management_vdom: "<your_own_value> (source system.vdom.name)"
-        max_dlpstat_memory: "95"
-        max_route_cache_size: "96"
+        max_dlpstat_memory: "97"
+        max_route_cache_size: "98"
         mc_ttl_notchange: "enable"
-        memory_use_threshold_extreme: "98"
-        memory_use_threshold_green: "99"
-        memory_use_threshold_red: "100"
+        memory_use_threshold_extreme: "100"
+        memory_use_threshold_green: "101"
+        memory_use_threshold_red: "102"
         miglog_affinity: "<your_own_value>"
-        miglogd_children: "102"
+        miglogd_children: "104"
         multi_factor_authentication: "optional"
         multicast_forward: "enable"
-        ndp_max_entry: "105"
+        ndp_max_entry: "107"
         per_user_bwl: "enable"
-        policy_auth_concurrent: "107"
+        policy_auth_concurrent: "109"
         post_login_banner: "disable"
         pre_login_banner: "enable"
         private_data_encryption: "disable"
         proxy_auth_lifetime: "enable"
-        proxy_auth_lifetime_timeout: "112"
-        proxy_auth_timeout: "113"
+        proxy_auth_lifetime_timeout: "114"
+        proxy_auth_timeout: "115"
         proxy_cipher_hardware_acceleration: "disable"
         proxy_kxp_hardware_acceleration: "disable"
         proxy_re_authentication_mode: "session"
-        proxy_worker_count: "117"
-        radius_port: "118"
+        proxy_worker_count: "119"
+        radius_port: "120"
         reboot_upon_config_restore: "enable"
-        refresh: "120"
-        remoteauthtimeout: "121"
+        refresh: "122"
+        remoteauthtimeout: "123"
         reset_sessionless_tcp: "enable"
         restart_time: "<your_own_value>"
         revision_backup_on_logout: "enable"
         revision_image_auto_backup: "enable"
-        scanunit_count: "126"
+        scanunit_count: "128"
         security_rating_result_submission: "enable"
         security_rating_run_on_schedule: "enable"
         send_pmtu_icmp: "enable"
         snat_route_change: "enable"
         special_file_23_support: "disable"
-        ssd_trim_date: "132"
+        ssd_trim_date: "134"
         ssd_trim_freq: "never"
-        ssd_trim_hour: "134"
-        ssd_trim_min: "135"
+        ssd_trim_hour: "136"
+        ssd_trim_min: "137"
         ssd_trim_weekday: "sunday"
         ssh_cbc_cipher: "enable"
         ssh_hmac_md5: "enable"
@@ -1383,43 +1397,43 @@ EXAMPLES = '''
         ssl_static_key_ciphers: "enable"
         sslvpn_cipher_hardware_acceleration: "enable"
         sslvpn_kxp_hardware_acceleration: "enable"
-        sslvpn_max_worker_count: "144"
+        sslvpn_max_worker_count: "146"
         sslvpn_plugin_version_check: "enable"
         strict_dirty_session_check: "enable"
         strong_crypto: "enable"
         switch_controller: "disable"
         switch_controller_reserved_network: "<your_own_value>"
-        sys_perf_log_interval: "150"
-        tcp_halfclose_timer: "151"
-        tcp_halfopen_timer: "152"
+        sys_perf_log_interval: "152"
+        tcp_halfclose_timer: "153"
+        tcp_halfopen_timer: "154"
         tcp_option: "enable"
-        tcp_timewait_timer: "154"
+        tcp_timewait_timer: "156"
         tftp: "enable"
         timezone: "01"
         tp_mc_skip_policy: "enable"
         traffic_priority: "tos"
         traffic_priority_level: "low"
-        two_factor_email_expiry: "160"
-        two_factor_fac_expiry: "161"
-        two_factor_ftk_expiry: "162"
-        two_factor_ftm_expiry: "163"
-        two_factor_sms_expiry: "164"
-        udp_idle_timer: "165"
+        two_factor_email_expiry: "162"
+        two_factor_fac_expiry: "163"
+        two_factor_ftk_expiry: "164"
+        two_factor_ftm_expiry: "165"
+        two_factor_sms_expiry: "166"
+        udp_idle_timer: "167"
         user_server_cert: "<your_own_value> (source certificate.local.name)"
         vdom_admin: "enable"
         vip_arp_range: "unlimited"
-        virtual_server_count: "169"
+        virtual_server_count: "171"
         virtual_server_hardware_acceleration: "disable"
         wad_affinity: "<your_own_value>"
-        wad_csvc_cs_count: "172"
-        wad_csvc_db_count: "173"
+        wad_csvc_cs_count: "174"
+        wad_csvc_db_count: "175"
         wad_source_affinity: "disable"
-        wad_worker_count: "175"
+        wad_worker_count: "177"
         wifi_ca_certificate: "<your_own_value> (source certificate.ca.name)"
         wifi_certificate: "<your_own_value> (source certificate.local.name)"
         wimax_4g_usb: "enable"
         wireless_controller: "enable"
-        wireless_controller_port: "180"
+        wireless_controller_port: "182"
 '''
 
 RETURN = '''
@@ -1503,66 +1517,66 @@ def login(data, fos):
 
 
 def filter_system_global_data(json):
-    option_list = ['admin_concurrent', 'admin_console_timeout', 'admin_https_pki_required',
-                   'admin_https_ssl_versions', 'admin_lockout_duration', 'admin_lockout_threshold',
-                   'admin_login_max', 'admin_maintainer', 'admin_port',
-                   'admin_restrict_local', 'admin_scp', 'admin_server_cert',
-                   'admin_sport', 'admin_ssh_grace_time', 'admin_ssh_password',
-                   'admin_ssh_port', 'admin_ssh_v1', 'admin_telnet_port',
-                   'admintimeout', 'alias', 'allow_traffic_redirect',
-                   'anti_replay', 'arp_max_entry', 'asymroute',
-                   'auth_cert', 'auth_http_port', 'auth_https_port',
-                   'auth_keepalive', 'auth_session_limit', 'auto_auth_extension_device',
-                   'av_affinity', 'av_failopen', 'av_failopen_session',
-                   'batch_cmdb', 'block_session_timer', 'br_fdb_max_entry',
-                   'cert_chain_max', 'cfg_revert_timeout', 'cfg_save',
-                   'check_protocol_header', 'check_reset_range', 'cli_audit_log',
-                   'clt_cert_req', 'compliance_check', 'compliance_check_time',
-                   'cpu_use_threshold', 'csr_ca_attribute', 'daily_restart',
-                   'device_identification_active_scan_delay', 'device_idle_timeout', 'dh_params',
-                   'dnsproxy_worker_count', 'dst', 'endpoint_control_fds_access',
-                   'endpoint_control_portal_port', 'failtime', 'fds_statistics',
-                   'fds_statistics_period', 'fgd_alert_subscription', 'fortiextender',
-                   'fortiextender_data_port', 'fortiextender_vlan_mode', 'fortiservice_port',
-                   'gui_certificates', 'gui_custom_language', 'gui_date_format',
-                   'gui_device_latitude', 'gui_device_longitude', 'gui_display_hostname',
-                   'gui_ipv6', 'gui_lines_per_page', 'gui_theme',
-                   'gui_wireless_opensecurity', 'honor_df', 'hostname',
-                   'igmp_state_limit', 'interval', 'ip_src_port_range',
-                   'ips_affinity', 'ipsec_asic_offload', 'ipsec_hmac_offload',
-                   'ipsec_soft_dec_async', 'ipv6_accept_dad', 'ipv6_allow_anycast_probe',
-                   'language', 'ldapconntimeout', 'lldp_transmission',
-                   'log_ssl_connection', 'log_uuid', 'login_timestamp',
-                   'long_vdom_name', 'management_vdom', 'max_dlpstat_memory',
-                   'max_route_cache_size', 'mc_ttl_notchange', 'memory_use_threshold_extreme',
-                   'memory_use_threshold_green', 'memory_use_threshold_red', 'miglog_affinity',
-                   'miglogd_children', 'multi_factor_authentication', 'multicast_forward',
-                   'ndp_max_entry', 'per_user_bwl', 'policy_auth_concurrent',
-                   'post_login_banner', 'pre_login_banner', 'private_data_encryption',
-                   'proxy_auth_lifetime', 'proxy_auth_lifetime_timeout', 'proxy_auth_timeout',
-                   'proxy_cipher_hardware_acceleration', 'proxy_kxp_hardware_acceleration', 'proxy_re_authentication_mode',
-                   'proxy_worker_count', 'radius_port', 'reboot_upon_config_restore',
-                   'refresh', 'remoteauthtimeout', 'reset_sessionless_tcp',
-                   'restart_time', 'revision_backup_on_logout', 'revision_image_auto_backup',
-                   'scanunit_count', 'security_rating_result_submission', 'security_rating_run_on_schedule',
-                   'send_pmtu_icmp', 'snat_route_change', 'special_file_23_support',
-                   'ssd_trim_date', 'ssd_trim_freq', 'ssd_trim_hour',
-                   'ssd_trim_min', 'ssd_trim_weekday', 'ssh_cbc_cipher',
-                   'ssh_hmac_md5', 'ssh_kex_sha1', 'ssl_min_proto_version',
-                   'ssl_static_key_ciphers', 'sslvpn_cipher_hardware_acceleration', 'sslvpn_kxp_hardware_acceleration',
-                   'sslvpn_max_worker_count', 'sslvpn_plugin_version_check', 'strict_dirty_session_check',
-                   'strong_crypto', 'switch_controller', 'switch_controller_reserved_network',
-                   'sys_perf_log_interval', 'tcp_halfclose_timer', 'tcp_halfopen_timer',
-                   'tcp_option', 'tcp_timewait_timer', 'tftp',
-                   'timezone', 'tp_mc_skip_policy', 'traffic_priority',
-                   'traffic_priority_level', 'two_factor_email_expiry', 'two_factor_fac_expiry',
-                   'two_factor_ftk_expiry', 'two_factor_ftm_expiry', 'two_factor_sms_expiry',
-                   'udp_idle_timer', 'user_server_cert', 'vdom_admin',
-                   'vip_arp_range', 'virtual_server_count', 'virtual_server_hardware_acceleration',
-                   'wad_affinity', 'wad_csvc_cs_count', 'wad_csvc_db_count',
-                   'wad_source_affinity', 'wad_worker_count', 'wifi_ca_certificate',
-                   'wifi_certificate', 'wimax_4g_usb', 'wireless_controller',
-                   'wireless_controller_port']
+    option_list = ['admin_concurrent', 'admin_console_timeout', 'admin_hsts_max_age',
+                   'admin_https_pki_required', 'admin_https_redirect', 'admin_https_ssl_versions',
+                   'admin_lockout_duration', 'admin_lockout_threshold', 'admin_login_max',
+                   'admin_maintainer', 'admin_port', 'admin_restrict_local',
+                   'admin_scp', 'admin_server_cert', 'admin_sport',
+                   'admin_ssh_grace_time', 'admin_ssh_password', 'admin_ssh_port',
+                   'admin_ssh_v1', 'admin_telnet_port', 'admintimeout',
+                   'alias', 'allow_traffic_redirect', 'anti_replay',
+                   'arp_max_entry', 'asymroute', 'auth_cert',
+                   'auth_http_port', 'auth_https_port', 'auth_keepalive',
+                   'auth_session_limit', 'auto_auth_extension_device', 'av_affinity',
+                   'av_failopen', 'av_failopen_session', 'batch_cmdb',
+                   'block_session_timer', 'br_fdb_max_entry', 'cert_chain_max',
+                   'cfg_revert_timeout', 'cfg_save', 'check_protocol_header',
+                   'check_reset_range', 'cli_audit_log', 'clt_cert_req',
+                   'compliance_check', 'compliance_check_time', 'cpu_use_threshold',
+                   'csr_ca_attribute', 'daily_restart', 'device_identification_active_scan_delay',
+                   'device_idle_timeout', 'dh_params', 'dnsproxy_worker_count',
+                   'dst', 'endpoint_control_fds_access', 'endpoint_control_portal_port',
+                   'failtime', 'fds_statistics', 'fds_statistics_period',
+                   'fgd_alert_subscription', 'fortiextender', 'fortiextender_data_port',
+                   'fortiextender_vlan_mode', 'fortiservice_port', 'gui_certificates',
+                   'gui_custom_language', 'gui_date_format', 'gui_device_latitude',
+                   'gui_device_longitude', 'gui_display_hostname', 'gui_ipv6',
+                   'gui_lines_per_page', 'gui_theme', 'gui_wireless_opensecurity',
+                   'honor_df', 'hostname', 'igmp_state_limit',
+                   'interval', 'ip_src_port_range', 'ips_affinity',
+                   'ipsec_asic_offload', 'ipsec_hmac_offload', 'ipsec_soft_dec_async',
+                   'ipv6_accept_dad', 'ipv6_allow_anycast_probe', 'language',
+                   'ldapconntimeout', 'lldp_transmission', 'log_ssl_connection',
+                   'log_uuid', 'login_timestamp', 'long_vdom_name',
+                   'management_vdom', 'max_dlpstat_memory', 'max_route_cache_size',
+                   'mc_ttl_notchange', 'memory_use_threshold_extreme', 'memory_use_threshold_green',
+                   'memory_use_threshold_red', 'miglog_affinity', 'miglogd_children',
+                   'multi_factor_authentication', 'multicast_forward', 'ndp_max_entry',
+                   'per_user_bwl', 'policy_auth_concurrent', 'post_login_banner',
+                   'pre_login_banner', 'private_data_encryption', 'proxy_auth_lifetime',
+                   'proxy_auth_lifetime_timeout', 'proxy_auth_timeout', 'proxy_cipher_hardware_acceleration',
+                   'proxy_kxp_hardware_acceleration', 'proxy_re_authentication_mode', 'proxy_worker_count',
+                   'radius_port', 'reboot_upon_config_restore', 'refresh',
+                   'remoteauthtimeout', 'reset_sessionless_tcp', 'restart_time',
+                   'revision_backup_on_logout', 'revision_image_auto_backup', 'scanunit_count',
+                   'security_rating_result_submission', 'security_rating_run_on_schedule', 'send_pmtu_icmp',
+                   'snat_route_change', 'special_file_23_support', 'ssd_trim_date',
+                   'ssd_trim_freq', 'ssd_trim_hour', 'ssd_trim_min',
+                   'ssd_trim_weekday', 'ssh_cbc_cipher', 'ssh_hmac_md5',
+                   'ssh_kex_sha1', 'ssl_min_proto_version', 'ssl_static_key_ciphers',
+                   'sslvpn_cipher_hardware_acceleration', 'sslvpn_kxp_hardware_acceleration', 'sslvpn_max_worker_count',
+                   'sslvpn_plugin_version_check', 'strict_dirty_session_check', 'strong_crypto',
+                   'switch_controller', 'switch_controller_reserved_network', 'sys_perf_log_interval',
+                   'tcp_halfclose_timer', 'tcp_halfopen_timer', 'tcp_option',
+                   'tcp_timewait_timer', 'tftp', 'timezone',
+                   'tp_mc_skip_policy', 'traffic_priority', 'traffic_priority_level',
+                   'two_factor_email_expiry', 'two_factor_fac_expiry', 'two_factor_ftk_expiry',
+                   'two_factor_ftm_expiry', 'two_factor_sms_expiry', 'udp_idle_timer',
+                   'user_server_cert', 'vdom_admin', 'vip_arp_range',
+                   'virtual_server_count', 'virtual_server_hardware_acceleration', 'wad_affinity',
+                   'wad_csvc_cs_count', 'wad_csvc_db_count', 'wad_source_affinity',
+                   'wad_worker_count', 'wifi_ca_certificate', 'wifi_certificate',
+                   'wimax_4g_usb', 'wireless_controller', 'wireless_controller_port']
     dictionary = {}
 
     for attribute in option_list:
@@ -1573,7 +1587,7 @@ def filter_system_global_data(json):
 
 
 def flatten_multilists_attributes(data):
-    multilist_attrs = [[u'admin_https_ssl_versions']]
+    multilist_attrs = [[u'admin_https_ssl_versions'], [u'fgd_alert_subscription']]
 
     for attr in multilist_attrs:
         try:
@@ -1589,8 +1603,8 @@ def flatten_multilists_attributes(data):
 
 def underscore_to_hyphen(data):
     if isinstance(data, list):
-        for elem in data:
-            elem = underscore_to_hyphen(elem)
+        for i, elem in enumerate(data):
+            data[i] = underscore_to_hyphen(elem)
     elif isinstance(data, dict):
         new_data = {}
         for k, v in data.items():
@@ -1641,8 +1655,11 @@ def main():
                 "admin_concurrent": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
                 "admin_console_timeout": {"required": False, "type": "int"},
+                "admin_hsts_max_age": {"required": False, "type": "int"},
                 "admin_https_pki_required": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]},
+                "admin_https_redirect": {"required": False, "type": "str",
+                                         "choices": ["enable", "disable"]},
                 "admin_https_ssl_versions": {"required": False, "type": "list",
                                              "choices": ["tlsv1-0", "tlsv1-1", "tlsv1-2"]},
                 "admin_lockout_duration": {"required": False, "type": "int"},
@@ -1727,7 +1744,7 @@ def main():
                 "fds_statistics": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
                 "fds_statistics_period": {"required": False, "type": "int"},
-                "fgd_alert_subscription": {"required": False, "type": "str",
+                "fgd_alert_subscription": {"required": False, "type": "list",
                                            "choices": ["advisory", "latest-threat", "latest-virus",
                                                        "latest-attack", "new-antivirus-db", "new-attack-db"]},
                 "fortiextender": {"required": False, "type": "str",

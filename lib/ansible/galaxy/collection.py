@@ -31,6 +31,7 @@ import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.api import CollectionVersionMetadata, GalaxyError
+from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.collection_loader import AnsibleCollectionRef
@@ -93,6 +94,11 @@ class CollectionRequirement:
         return u"%s.%s" % (self.namespace, self.name)
 
     @property
+    def metadata(self):
+        self._get_metadata()
+        return self._metadata
+
+    @property
     def latest_version(self):
         try:
             return max([v for v in self.versions if v != '*'], key=LooseVersion)
@@ -153,7 +159,8 @@ class CollectionRequirement:
             download_url = self._metadata.download_url
             artifact_hash = self._metadata.artifact_sha256
             headers = {}
-            self.api._add_auth_token(headers, download_url)
+            self.api._add_auth_token(headers, download_url, required=False)
+
             self.b_path = _download_file(download_url, b_temp_path, artifact_hash, self.api.validate_certs,
                                          headers=headers)
 
@@ -352,7 +359,8 @@ def build_collection(collection_path, output_path, force):
         raise AnsibleError("The collection galaxy.yml path '%s' does not exist." % to_native(b_galaxy_path))
 
     collection_meta = _get_galaxy_yml(b_galaxy_path)
-    file_manifest = _build_files_manifest(b_collection_path, collection_meta['namespace'], collection_meta['name'])
+    file_manifest = _build_files_manifest(b_collection_path, collection_meta['namespace'], collection_meta['name'],
+                                          collection_meta['build_ignore'])
     collection_manifest = _build_manifest(**collection_meta)
 
     collection_output = os.path.join(output_path, "%s-%s-%s.tar.gz" % (collection_meta['namespace'],
@@ -381,10 +389,24 @@ def publish_collection(collection_path, api, wait, timeout):
     :param timeout: The time in seconds to wait for the import process to finish, 0 is indefinite.
     """
     import_uri = api.publish_collection(collection_path)
+
     if wait:
+        # Galaxy returns a url fragment which differs between v2 and v3.  The second to last entry is
+        # always the task_id, though.
+        # v2: {"task": "https://galaxy-dev.ansible.com/api/v2/collection-imports/35573/"}
+        # v3: {"task": "/api/automation-hub/v3/imports/collections/838d1308-a8f4-402c-95cb-7823f3806cd8/"}
+        task_id = None
+        for path_segment in reversed(import_uri.split('/')):
+            if path_segment:
+                task_id = path_segment
+                break
+
+        if not task_id:
+            raise AnsibleError("Publishing the collection did not return valid task info. Cannot wait for task status. Returned task info: '%s'" % import_uri)
+
         display.display("Collection has been published to the Galaxy server %s %s" % (api.name, api.api_server))
         with _display_progress():
-            api.wait_import_task(import_uri, timeout)
+            api.wait_import_task(task_id, timeout)
         display.display("Collection has been successfully published and imported to the Galaxy server %s %s"
                         % (api.name, api.api_server))
     else:
@@ -406,7 +428,7 @@ def install_collections(collections, output_path, apis, validate_certs, ignore_e
     :param force: Re-install a collection if it has already been installed.
     :param force_deps: Re-install a collection as well as its dependencies if they have already been installed.
     """
-    existing_collections = _find_existing_collections(output_path)
+    existing_collections = find_existing_collections(output_path)
 
     with _tempdir() as b_temp_path:
         display.display("Process install dependency map")
@@ -438,7 +460,23 @@ def validate_collection_name(name):
     if AnsibleCollectionRef.is_valid_collection_name(collection):
         return name
 
-    raise AnsibleError("Invalid collection name '%s', name must be in the format <namespace>.<collection>." % name)
+    raise AnsibleError("Invalid collection name '%s', "
+                       "name must be in the format <namespace>.<collection>. "
+                       "Please make sure namespace and collection name contains "
+                       "characters from [a-zA-Z0-9_] only." % name)
+
+
+def validate_collection_path(collection_path):
+    """ Ensure a given path ends with 'ansible_collections'
+
+    :param collection_path: The path that should end in 'ansible_collections'
+    :return: collection_path ending in 'ansible_collections' if it does not already.
+    """
+
+    if os.path.split(collection_path)[1] != 'ansible_collections':
+        return os.path.join(collection_path, 'ansible_collections')
+
+    return collection_path
 
 
 @contextmanager
@@ -583,12 +621,18 @@ def _get_galaxy_yml(b_galaxy_yml_path):
     return galaxy_yml
 
 
-def _build_files_manifest(b_collection_path, namespace, name):
-    # Contains tuple of (b_filename, only root) where 'only root' means to only ignore the file in the root dir
-    b_ignore_files = frozenset([(b'*.pyc', False), (b'*.retry', False),
-                                (to_bytes('{0}-{1}-*.tar.gz'.format(namespace, name)), True)])
-    b_ignore_dirs = frozenset([(b'CVS', False), (b'.bzr', False), (b'.hg', False), (b'.git', False), (b'.svn', False),
-                               (b'__pycache__', False), (b'.tox', False)])
+def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
+    # We always ignore .pyc and .retry files as well as some well known version control directories. The ignore
+    # patterns can be extended by the build_ignore key in galaxy.yml
+    b_ignore_patterns = [
+        b'galaxy.yml',
+        b'*.pyc',
+        b'*.retry',
+        b'tests/output',  # Ignore ansible-test result output directory.
+        to_bytes('{0}-{1}-*.tar.gz'.format(namespace, name)),  # Ignores previously built artifacts in the root dir.
+    ]
+    b_ignore_patterns += [to_bytes(p) for p in ignore_patterns]
+    b_ignore_dirs = frozenset([b'CVS', b'.bzr', b'.hg', b'.git', b'.svn', b'__pycache__', b'.tox'])
 
     entry_template = {
         'name': None,
@@ -611,16 +655,15 @@ def _build_files_manifest(b_collection_path, namespace, name):
     }
 
     def _walk(b_path, b_top_level_dir):
-        is_root = b_path == b_top_level_dir
-
         for b_item in os.listdir(b_path):
             b_abs_path = os.path.join(b_path, b_item)
             b_rel_base_dir = b'' if b_path == b_top_level_dir else b_path[len(b_top_level_dir) + 1:]
-            rel_path = to_text(os.path.join(b_rel_base_dir, b_item), errors='surrogate_or_strict')
+            b_rel_path = os.path.join(b_rel_base_dir, b_item)
+            rel_path = to_text(b_rel_path, errors='surrogate_or_strict')
 
             if os.path.isdir(b_abs_path):
-                if any(b_item == b_path for b_path, root_only in b_ignore_dirs
-                       if not root_only or root_only == is_root):
+                if any(b_item == b_path for b_path in b_ignore_dirs) or \
+                        any(fnmatch.fnmatch(b_rel_path, b_pattern) for b_pattern in b_ignore_patterns):
                     display.vvv("Skipping '%s' for collection build" % to_text(b_abs_path))
                     continue
 
@@ -640,10 +683,7 @@ def _build_files_manifest(b_collection_path, namespace, name):
 
                 _walk(b_abs_path, b_top_level_dir)
             else:
-                if b_item == b'galaxy.yml':
-                    continue
-                elif any(fnmatch.fnmatch(b_item, b_pattern) for b_pattern, root_only in b_ignore_files
-                         if not root_only or root_only == is_root):
+                if any(fnmatch.fnmatch(b_rel_path, b_pattern) for b_pattern in b_ignore_patterns):
                     display.vvv("Skipping '%s' for collection build" % to_text(b_abs_path))
                     continue
 
@@ -733,7 +773,7 @@ def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, fi
         display.display('Created collection for %s at %s' % (collection_name, to_text(b_tar_path)))
 
 
-def _find_existing_collections(path):
+def find_existing_collections(path):
     collections = []
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
@@ -806,9 +846,13 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
     if os.path.isfile(to_bytes(collection, errors='surrogate_or_strict')):
         display.vvvv("Collection requirement '%s' is a tar artifact" % to_text(collection))
         b_tar_path = to_bytes(collection, errors='surrogate_or_strict')
-    elif urlparse(collection).scheme:
+    elif urlparse(collection).scheme.lower() in ['http', 'https']:
         display.vvvv("Collection requirement '%s' is a URL to a tar artifact" % collection)
-        b_tar_path = _download_file(collection, b_temp_path, None, validate_certs)
+        try:
+            b_tar_path = _download_file(collection, b_temp_path, None, validate_certs)
+        except urllib_error.URLError as err:
+            raise AnsibleError("Failed to download collection tar from '%s': %s"
+                               % (to_native(collection), to_native(err)))
 
     if b_tar_path:
         req = CollectionRequirement.from_tar(b_tar_path, force, parent=parent)
@@ -851,7 +895,7 @@ def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
     display.vvv("Downloading %s to %s" % (url, to_text(b_path)))
     # Galaxy redirs downloads to S3 which reject the request if an Authorization header is attached so don't redir that
     resp = open_url(to_native(url, errors='surrogate_or_strict'), validate_certs=validate_certs, headers=headers,
-                    unredirected_headers=['Authorization'])
+                    unredirected_headers=['Authorization'], http_agent=user_agent())
 
     with open(b_file_path, 'wb') as download_file:
         data = resp.read(bufsize)

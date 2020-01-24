@@ -209,7 +209,7 @@ def get_workspace_context(bin_path, project_path):
     command = [bin_path, 'workspace', 'list', '-no-color']
     rc, out, err = module.run_command(command, cwd=project_path)
     if rc != 0:
-        module.fail_json(msg="Failed to list Terraform workspaces:\r\n{0}".format(err))
+        module.warn("Failed to list Terraform workspaces:\r\n{0}".format(err))
     for item in out.split('\n'):
         stripped_item = item.strip()
         if not stripped_item:
@@ -347,10 +347,12 @@ def main():
     # we aren't sure if this plan will result in changes, so assume yes
     needs_application, changed = True, False
 
+    out, err = '', ''
+
     if state == 'absent':
         command.extend(variables_args)
     elif state == 'present' and plan_file:
-        if os.path.exists(project_path + "/" + plan_file):
+        if any([os.path.isfile(project_path + "/" + plan_file), os.path.isfile(plan_file)]):
             command.append(plan_file)
         else:
             module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
@@ -359,7 +361,6 @@ def main():
                                                                      module.params.get('targets'), state, plan_file)
         command.append(plan_file)
 
-    out, err = '', ''
     if needs_application and not module.check_mode and not state == 'planned':
         rc, out, err = module.run_command(command, cwd=project_path)
         # checks out to decide if changes were made during execution

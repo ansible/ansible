@@ -48,8 +48,14 @@ options:
     privatekey_path:
         description:
             - The path to the private key to use when signing the certificate signing request.
+            - Either I(privatekey_path) or I(privatekey_content) must be specified if I(state) is C(present), but not both.
         type: path
-        required: true
+    privatekey_content:
+        description:
+            - The content of the private key to use when signing the certificate signing request.
+            - Either I(privatekey_path) or I(privatekey_content) must be specified if I(state) is C(present), but not both.
+        type: str
+        version_added: "2.10"
     privatekey_passphrase:
         description:
             - The passphrase for the private key.
@@ -58,6 +64,9 @@ options:
     version:
         description:
             - The version of the certificate signing request.
+            - "The only allowed value according to L(RFC 2986,https://tools.ietf.org/html/rfc2986#section-4.1)
+               is 1."
+            - This option will no longer accept unsupported values from Ansible 2.14 on.
         type: int
         default: 1
     force:
@@ -122,6 +131,7 @@ options:
               set to I(false).
             - More at U(https://tools.ietf.org/html/rfc5280#section-4.2.1.6).
         type: list
+        elements: str
         aliases: [ subjectAltName ]
     subject_alt_name_critical:
         description:
@@ -141,6 +151,7 @@ options:
             - This defines the purpose (e.g. encipherment, signature, certificate signing)
               of the key contained in the certificate.
         type: list
+        elements: str
         aliases: [ keyUsage ]
     key_usage_critical:
         description:
@@ -152,6 +163,7 @@ options:
             - Additional restrictions (e.g. client authentication, server authentication)
               on the allowed purposes for which the public key may be used.
         type: list
+        elements: str
         aliases: [ extKeyUsage, extendedKeyUsage ]
     extended_key_usage_critical:
         description:
@@ -162,6 +174,7 @@ options:
         description:
             - Indicates basic constraints, such as if the certificate is a CA.
         type: list
+        elements: str
         version_added: '2.5'
         aliases: [ basicConstraints ]
     basic_constraints_critical:
@@ -254,6 +267,7 @@ options:
             - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
               I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
         type: list
+        elements: str
         version_added: "2.9"
     authority_cert_serial_number:
         description:
@@ -285,6 +299,12 @@ EXAMPLES = r'''
   openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
+    common_name: www.ansible.com
+
+- name: Generate an OpenSSL Certificate Signing Request with an inline key
+  openssl_csr:
+    path: /etc/ssl/csr/www.ansible.com.csr
+    privatekey_content: "{{ private_key_content }}"
     common_name: www.ansible.com
 
 - name: Generate an OpenSSL Certificate Signing Request with a passphrase protected private key
@@ -347,7 +367,9 @@ EXAMPLES = r'''
 
 RETURN = r'''
 privatekey:
-    description: Path to the TLS/SSL private key the CSR was generated for
+    description:
+    - Path to the TLS/SSL private key the CSR was generated for
+    - Will be C(none) if the private key has been provided in I(privatekey_content).
     returned: changed or success
     type: str
     sample: /etc/ssl/private/ansible.com.pem
@@ -360,26 +382,31 @@ subject:
     description: A list of the subject tuples attached to the CSR
     returned: changed or success
     type: list
+    elements: list
     sample: "[('CN', 'www.ansible.com'), ('O', 'Ansible')]"
 subjectAltName:
     description: The alternative names this CSR is valid for
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'DNS:www.ansible.com', 'DNS:m.ansible.com' ]
 keyUsage:
     description: Purpose for which the public key may be used
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'digitalSignature', 'keyAgreement' ]
 extendedKeyUsage:
     description: Additional restriction on the public key purposes
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'clientAuth' ]
 basicConstraints:
     description: Indicates if the certificate belongs to a CA
     returned: changed or success
     type: list
+    elements: str
     sample: ['CA:TRUE', 'pathLenConstraint:0']
 ocsp_must_staple:
     description: Indicates whether the certificate has the OCSP
@@ -461,6 +488,9 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         )
         self.digest = module.params['digest']
         self.privatekey_path = module.params['privatekey_path']
+        self.privatekey_content = module.params['privatekey_content']
+        if self.privatekey_content is not None:
+            self.privatekey_content = self.privatekey_content.encode('utf-8')
         self.privatekey_passphrase = module.params['privatekey_passphrase']
         self.version = module.params['version']
         self.subjectAltName = module.params['subject_alt_name']
@@ -642,7 +672,11 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
 
     def _load_private_key(self):
         try:
-            self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
+            self.privatekey = crypto_utils.load_privatekey(
+                path=self.privatekey_path,
+                content=self.privatekey_content,
+                passphrase=self.privatekey_passphrase
+            )
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             raise CertificateSigningRequestError(exc)
 
@@ -745,6 +779,9 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
     def __init__(self, module):
         super(CertificateSigningRequestCryptography, self).__init__(module)
         self.cryptography_backend = cryptography.hazmat.backends.default_backend()
+        self.module = module
+        if self.version != 1:
+            module.warn('The cryptography backend only supports version 1. (The only valid value according to RFC 2986.)')
 
     def _generate_csr(self):
         csr = cryptography.x509.CertificateSigningRequestBuilder()
@@ -801,31 +838,41 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             )
 
         digest = None
-        if self.digest == 'sha256':
-            digest = cryptography.hazmat.primitives.hashes.SHA256()
-        elif self.digest == 'sha384':
-            digest = cryptography.hazmat.primitives.hashes.SHA384()
-        elif self.digest == 'sha512':
-            digest = cryptography.hazmat.primitives.hashes.SHA512()
-        elif self.digest == 'sha1':
-            digest = cryptography.hazmat.primitives.hashes.SHA1()
-        elif self.digest == 'md5':
-            digest = cryptography.hazmat.primitives.hashes.MD5()
-        # FIXME
-        else:
-            raise CertificateSigningRequestError('Unsupported digest "{0}"'.format(self.digest))
-        self.request = csr.sign(self.privatekey, digest, self.cryptography_backend)
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.privatekey):
+            if self.digest == 'sha256':
+                digest = cryptography.hazmat.primitives.hashes.SHA256()
+            elif self.digest == 'sha384':
+                digest = cryptography.hazmat.primitives.hashes.SHA384()
+            elif self.digest == 'sha512':
+                digest = cryptography.hazmat.primitives.hashes.SHA512()
+            elif self.digest == 'sha1':
+                digest = cryptography.hazmat.primitives.hashes.SHA1()
+            elif self.digest == 'md5':
+                digest = cryptography.hazmat.primitives.hashes.MD5()
+            # FIXME
+            else:
+                raise CertificateSigningRequestError('Unsupported digest "{0}"'.format(self.digest))
+        try:
+            self.request = csr.sign(self.privatekey, digest, self.cryptography_backend)
+        except TypeError as e:
+            if str(e) == 'Algorithm must be a registered hash algorithm.' and digest is None:
+                self.module.fail_json(msg='Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.')
+            raise
 
         return self.request.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
 
     def _load_private_key(self):
         try:
-            with open(self.privatekey_path, 'rb') as f:
-                self.privatekey = cryptography.hazmat.primitives.serialization.load_pem_private_key(
-                    f.read(),
-                    None if self.privatekey_passphrase is None else to_bytes(self.privatekey_passphrase),
-                    backend=self.cryptography_backend
-                )
+            if self.privatekey_content is not None:
+                content = self.privatekey_content
+            else:
+                with open(self.privatekey_path, 'rb') as f:
+                    content = f.read()
+            self.privatekey = cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                content,
+                None if self.privatekey_passphrase is None else to_bytes(self.privatekey_passphrase),
+                backend=self.cryptography_backend
+            )
         except Exception as e:
             raise CertificateSigningRequestError(e)
 
@@ -980,7 +1027,8 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
             digest=dict(type='str', default='sha256'),
-            privatekey_path=dict(type='path', require=True),
+            privatekey_path=dict(type='path'),
+            privatekey_content=dict(type='str'),
             privatekey_passphrase=dict(type='str', no_log=True),
             version=dict(type='int', default=1),
             force=dict(type='bool', default=False),
@@ -1013,9 +1061,17 @@ def main():
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
         ),
         required_together=[('authority_cert_issuer', 'authority_cert_serial_number')],
+        required_if=[('state', 'present', ['privatekey_path', 'privatekey_content'], True)],
+        mutually_exclusive=(
+            ['privatekey_path', 'privatekey_content'],
+        ),
         add_file_common_args=True,
         supports_check_mode=True,
     )
+
+    if module.params['version'] != 1:
+        module.deprecate('The version option will only support allowed values from Ansible 2.14 on. '
+                         'Currently, only the value 1 is allowed by RFC 2986', version='2.14')
 
     base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):

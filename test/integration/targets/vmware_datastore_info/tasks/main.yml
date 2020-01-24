@@ -76,7 +76,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ ds1 }}"
+    name: "{{ ro_datastore }}"
   register: datastore_info_0003
 
 - debug:
@@ -84,7 +84,7 @@
 
 - assert:
     that:
-      - "datastore_info_0003['datastores'][0]['name'] == ds1"
+      - "datastore_info_0003['datastores'][0]['name'] == ro_datastore"
       - "datastore_info_0003['datastores'][0]['capacity'] is defined"
 
 - name: get list of extended info about one datastore
@@ -94,7 +94,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ ds1 | basename }}"
+    name: "{{ ro_datastore }}"
     gather_nfs_mount_info: True
     gather_vmfs_mount_info: True
   register: datastore_info_0004
@@ -104,7 +104,7 @@
 
 - assert:
     that:
-      - "datastore_info_0004['datastores'][0]['name'] == ds1"
+      - "datastore_info_0004['datastores'][0]['name'] == ro_datastore"
       - "datastore_info_0004['datastores'][0]['capacity'] is defined"
 
 - name: get list of info about one datastore in check mode
@@ -114,7 +114,7 @@
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ dc1 }}"
-    name: "{{ ds1 | basename }}"
+    name: "{{ ro_datastore }}"
   register: datastore_info_0005
 
 - debug:
@@ -122,5 +122,71 @@
 
 - assert:
     that:
-      - "datastore_info_0005['datastores'][0]['name'] == ds1"
+      - "datastore_info_0005['datastores'][0]['name'] == ro_datastore"
       - "datastore_info_0005['datastores'][0]['capacity'] is defined"
+
+# Testcase with property specify
+- name: get list of info about datastores with properties specify - no dc
+  vmware_datastore_info:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster: "{{ ccr1 }}"
+    schema: vsphere
+    properties:
+      - name
+  register: datastore_info_0006
+
+- debug:
+    msg: "{{ datastore_info_0006 }}"
+
+- assert:
+    that:
+      - "datastore_info_0006['datastores'][0]['name'] is defined"
+
+- name: get list of info about one datastore with properties specify
+  vmware_datastore_info:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ ro_datastore }}"
+    schema: vsphere
+    properties:
+      - name
+  register: datastore_info_0007
+
+- debug:
+    msg: "{{ datastore_info_0007 }}"
+
+- assert:
+    that:
+      - "datastore_info_0007['datastores'][0]['name'] is defined"
+      - "datastore_info_0007['datastores'][0]['name'] == ro_datastore"
+      - "datastore_info_0007['datastores'] | length == 1"
+
+- name: get list of info about datastores with multiple properties specify
+  vmware_datastore_info:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    name: "{{ ro_datastore }}"
+    schema: vsphere
+    properties:
+      - name
+      - capability.vsanSparseSupported
+      - overallStatus
+  register: datastore_info_0008
+
+- debug:
+    msg: "{{ datastore_info_0008 }}"
+
+- assert:
+    that:
+      - "datastore_info_0008['datastores'][0]['name'] is defined"
+      - "datastore_info_0008['datastores'][0]['capability']['vsanSparseSupported'] is defined"
+      - "datastore_info_0008['datastores'][0]['overallStatus'] is defined"

@@ -112,7 +112,10 @@ from ansible.module_utils.network.junos.junos import junos_argument_spec
 
 
 def main():
-    """ Main entry point for AnsibleModule
+    """
+    Main entry point for module execution
+
+    :returns: ansible_facts
     """
     argument_spec = FactsArgs.argument_spec
     argument_spec.update(junos_argument_spec)
@@ -120,8 +123,9 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    warnings = ['default value for `gather_subset` '
-                'will be changed to `min` from `!config` v2.11 onwards']
+    warnings = []
+    if module.params["gather_subset"] == "!config":
+        warnings.append('default value for `gather_subset` will be changed to `min` from `!config` v2.11 onwards')
 
     result = Facts(module).get_facts()
 

@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bgp_neighbor_af sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: soft_reconfiguration_ina="always"
   when: imagetag is not search("D1|N1")
@@ -9,14 +7,12 @@
 - name: "Disable feature BGP"
   nxos_feature: &disable_bgp
     feature: bgp
-    provider: "{{ connection }}"
     state: disabled
   ignore_errors: yes
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
-    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -47,7 +43,6 @@
       suppress_inactive: True
       unsuppress_map: 'unsup_map'
       weight: '30'
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -81,7 +76,7 @@
       max_prefix_threshold: default
       max_prefix_warning: False
       next_hop_self: False
-      next_hop_third_party: True
+      next_hop_third_party: False
       prefix_list_in: default
       prefix_list_out: default
       send_community: 'none'
@@ -89,7 +84,6 @@
       suppress_inactive: False
       unsuppress_map: default
       weight: default
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -107,7 +101,6 @@
       neighbor: '192.0.2.3'
       afi: ipv4
       safi: unicast
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -133,7 +126,6 @@
       max_prefix_threshold: 50
       route_map_in: 'rm_in'
       route_map_out: 'rm_out'
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -159,7 +151,6 @@
       max_prefix_threshold: default
       route_map_in: default
       route_map_out: default
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -189,7 +180,6 @@
       vrf: 'blue'
       neighbor: '192.0.2.3'
       remote_as: 2
-      provider: "{{ connection }}"
 
   - name: "Configure BGP neighbor 3"
     nxos_bgp_neighbor_af: &configure3
@@ -204,7 +194,7 @@
       send_community: 'standard'
       soft_reconfiguration_in: "{{soft_reconfiguration_ina|default(omit)}}"
       soo: '3:3'
-      provider: "{{ connection }}"
+      next_hop_third_party: True
       state: present
     register: result
 
@@ -228,7 +218,6 @@
       as_override: False
       send_community: default
       soo: default
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -243,7 +232,6 @@
   - name: "Setup: Remove BGP config"
     nxos_bgp: &remove
       asn: 65535
-      provider: "{{ connection }}"
       state: absent
     register: result
 
@@ -254,7 +242,6 @@
       asn: 65535
       neighbor: '192.0.2.2'
       remote_as: 65535
-      provider: "{{ connection }}"
 
   - name: "Configure BGP neighbor 4"
     nxos_bgp_neighbor_af: &configure4
@@ -263,7 +250,6 @@
       afi: ipv4
       safi: unicast
       route_reflector_client: 'true'
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -281,7 +267,6 @@
       afi: ipv4
       safi: unicast
       route_reflector_client: False
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true

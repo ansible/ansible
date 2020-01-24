@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_snapshot sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: snapshot_run="true"
 
@@ -22,7 +20,6 @@
       snapshot_name: test_snapshot1
       description: Ansible
       save_snapshot_locally: True
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -46,7 +43,6 @@
         row_id: ROW_intf
         element_key1: intf-name
         element_key2: intf-name
-        provider: "{{ connection }}"
       register: result
 
     - assert: *true
@@ -68,7 +64,6 @@
       show_command: show ip interface brief
       row_id: ROW_intf
       element_key1: intf-name
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -87,13 +82,11 @@
       comparison_results_file: compare_snapshots.txt
       compare_option: summary
       path: '.'
-      provider: "{{ connection }}"
 
   - name: delete snapshot
     nxos_snapshot: &del
       snapshot_name: test_snapshot2
       action: delete
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -107,7 +100,6 @@
   - name: delete all snapshots
     nxos_snapshot: &delall
       action: delete_all
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -126,13 +118,11 @@
       commands:
         - snapshot section delete myshow
       match: none
-      provider: "{{ connection }}"
     ignore_errors: yes
 
   - name: delete all snapshots
     nxos_snapshot:
       action: delete_all
-      provider: "{{ connection }}"
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_snapshot sanity test"

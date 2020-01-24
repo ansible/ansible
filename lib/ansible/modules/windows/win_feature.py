@@ -117,7 +117,8 @@ feature_result:
         message:
             description: Any messages returned from the feature subsystem that occurred during installation or removal of this feature.
             returned: always
-            type: list of strings
+            type: list
+            elements: str
             sample: []
         reboot_required:
             description: True when the target server requires a reboot as a result of installing or removing this feature.

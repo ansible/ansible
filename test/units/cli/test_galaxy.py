@@ -459,7 +459,7 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
         self.assertTrue(os.path.exists(os.path.join(self.role_dir, 'templates_extra', 'templates.txt')))
 
     def test_skeleton_option(self):
-        self.assertEquals(self.role_skeleton_path, context.CLIARGS['role_skeleton'], msg='Skeleton path was not parsed properly from the command line')
+        self.assertEqual(self.role_skeleton_path, context.CLIARGS['role_skeleton'], msg='Skeleton path was not parsed properly from the command line')
 
 
 @pytest.mark.parametrize('cli_args, expected', [
@@ -880,6 +880,29 @@ def test_collection_install_in_collection_dir(collection_install, monkeypatch):
     assert mock_install.call_args[0][0] == [('namespace.collection', '*', None),
                                             ('namespace2.collection', '1.0.1', None)]
     assert mock_install.call_args[0][1] == os.path.join(collections_path, 'ansible_collections')
+    assert len(mock_install.call_args[0][2]) == 1
+    assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
+    assert mock_install.call_args[0][2][0].validate_certs is True
+    assert mock_install.call_args[0][3] is True
+    assert mock_install.call_args[0][4] is False
+    assert mock_install.call_args[0][5] is False
+    assert mock_install.call_args[0][6] is False
+    assert mock_install.call_args[0][7] is False
+
+
+def test_collection_install_with_url(collection_install):
+    mock_install, dummy, output_dir = collection_install
+
+    galaxy_args = ['ansible-galaxy', 'collection', 'install', 'https://foo/bar/foo-bar-v1.0.0.tar.gz',
+                   '--collections-path', output_dir]
+    GalaxyCLI(args=galaxy_args).run()
+
+    collection_path = os.path.join(output_dir, 'ansible_collections')
+    assert os.path.isdir(collection_path)
+
+    assert mock_install.call_count == 1
+    assert mock_install.call_args[0][0] == [('https://foo/bar/foo-bar-v1.0.0.tar.gz', '*', None)]
+    assert mock_install.call_args[0][1] == collection_path
     assert len(mock_install.call_args[0][2]) == 1
     assert mock_install.call_args[0][2][0].api_server == 'https://galaxy.ansible.com'
     assert mock_install.call_args[0][2][0].validate_certs is True

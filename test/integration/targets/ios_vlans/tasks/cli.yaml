@@ -22,3 +22,4 @@
   with_items: "{{ test_items }}"
   loop_control:
     loop_var: test_case_to_run
+  tags: connection_network_cli

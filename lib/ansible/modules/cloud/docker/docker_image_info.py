@@ -37,8 +37,9 @@ options:
       - An image name or a list of image names. Name format will be C(name[:tag]) or C(repository/name[:tag]),
         where C(tag) is optional. If a tag is not provided, C(latest) will be used. Instead of image names, also
         image IDs can be used.
+      - If no name is provided, a list of all images will be returned.
     type: list
-    required: yes
+    elements: str
 
 extends_documentation_fragment:
   - docker
@@ -78,6 +79,7 @@ images:
       - The list only contains inspection results of images existing locally.
     returned: always
     type: list
+    elements: dict
     sample: [
         {
             "Architecture": "amd64",

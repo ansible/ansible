@@ -1,0 +1,62 @@
+- name: Test podman_volume_info
+  when:
+    - ansible_facts.virtualization_type != 'docker'
+    - ansible_facts.distribution == 'RedHat'
+  block:
+
+    - name: Print podman version
+      command: podman version
+
+    - name: Generate random value for volume name
+      set_fact:
+        volume_name: "{{ 'ansible-test-podman-%0x' % ((2**32) | random) }}"
+
+    - name: Make sure volume doesn't exist
+      command: podman volume rm {{ volume_name }}
+      ignore_errors: true
+
+    - name: Get missing volume info
+      podman_volume_info:
+        name: "{{ volume_name }}"
+      register: nonexist
+      ignore_errors: true
+
+    - name: Check results
+      assert:
+        that:
+          - "'volumes' not in nonexist"
+          - nonexist is failed
+
+    - name: Make sure volume exists
+      command: podman volume create {{ volume_name }}
+
+    - name: Get existing volume info
+      podman_volume_info:
+        name: "{{ volume_name }}"
+      register: existing_volume
+
+    - name: Dump podman volume inspect result
+      debug: var=existing_volume
+
+    - name: Comparison with 'podman volume inspect'
+      command: podman volume inspect "{{ volume_name }}"
+      register: podman_inspect
+
+    - name: Convert podman inspect output to JSON
+      set_fact:
+        podman_inspect_result: "{{ podman_inspect.stdout | from_json }}"
+
+    - name: Cleanup
+      command: podman volume rm {{ volume_name }}
+
+    - name: Make checks
+      assert:
+        that:
+          - "'volumes' in existing_volume"
+          - existing_volume.volumes
+          - "existing_volume.volumes == podman_inspect_result"
+  always:
+
+    - name: Cleanup
+      command: podman volume rm {{ volume_name }}
+      ignore_errors: true

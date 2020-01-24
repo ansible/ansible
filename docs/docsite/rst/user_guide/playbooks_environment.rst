@@ -5,11 +5,11 @@ Setting the Environment (and Working With Proxies)
 
 .. versionadded:: 1.1
 
-It is quite possible that you may need to get package updates through a proxy, or even get some package
-updates through a proxy and access other packages not through a proxy.  Or maybe a script you might wish to
-call may also need certain environment variables set to run properly.
+The ``environment`` keyword allows you to set an environment variable for the action to be taken on the remote target.
+For example, it is quite possible that you may need to set a proxy for a task that does http requests.
+Or maybe a utility or script that are called may also need certain environment variables set to run properly.
 
-Ansible makes it easy for you to configure the remote execution environment by using the 'environment' keyword.  Here is an example::
+Here is an example::
 
     - hosts: all
       remote_user: root
@@ -22,6 +22,10 @@ Ansible makes it easy for you to configure the remote execution environment by u
             state: present
           environment:
             http_proxy: http://proxy.example.com:8080
+
+.. note::
+   ``environment:`` does not affect Ansible itself, ONLY the context of the specific task action and this does not include
+    Ansible's own configuration settings nor the execution of any other plugins, including lookups, filters, and so on.
 
 The environment can also be stored in a variable, and accessed like so::
 
@@ -39,7 +43,7 @@ The environment can also be stored in a variable, and accessed like so::
           package:
             name: cobbler
             state: present
-          environment: "{{proxy_env}}"
+          environment: "{{ proxy_env }}"
 
 You can also use it at a play level::
 
@@ -104,6 +108,10 @@ Some language-specific version managers (such as rbenv and nvm) require environm
           path: '{{ node_app_dir }}'
         when: packagejson.stat.exists
 
+.. note::
+   ``ansible_env:`` is normally populated by fact gathering (M(gather_facts)) and the value of the variables depends on the user
+   that did the gathering action. If you change remote_user/become_user you might end up using the wrong values for those variables.
+
 You might also want to simply specify the environment for a single task::
 
     ---
@@ -118,9 +126,6 @@ You might also want to simply specify the environment for a single task::
         CONFIGURE_OPTS: '--disable-install-doc'
         RBENV_ROOT: '{{ rbenv_root }}'
         PATH: '{{ rbenv_root }}/bin:{{ rbenv_root }}/shims:{{ rbenv_plugins }}/ruby-build/bin:{{ ansible_env.PATH }}'
-
-.. note::
-   ``environment:`` does not affect Ansible itself, ONLY the context of the specific task action and this does not include Ansible's own configuration settings.
 
 .. seealso::
 

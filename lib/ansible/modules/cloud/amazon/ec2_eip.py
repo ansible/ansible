@@ -28,65 +28,73 @@ options:
     required: false
     aliases: [ instance_id ]
     version_added: "2.0"
+    type: str
   public_ip:
     description:
       - The IP address of a previously allocated EIP.
-      - If present and device is specified, the EIP is associated with the device.
-      - If absent and device is specified, the EIP is disassociated from the device.
+      - When I(public_ip=present) and device is specified, the EIP is associated with the device.
+      - When I(public_ip=absent) and device is specified, the EIP is disassociated from the device.
     aliases: [ ip ]
+    type: str
   state:
     description:
-      - If present, allocate an EIP or associate an existing EIP with a device.
-      - If absent, disassociate the EIP from the device and optionally release it.
+      - When C(state=present), allocate an EIP or associate an existing EIP with a device.
+      - When C(state=absent), disassociate the EIP from the device and optionally release it.
     choices: ['present', 'absent']
     default: present
+    type: str
   in_vpc:
     description:
-      - Allocate an EIP inside a VPC or not. Required if specifying an ENI.
-    default: 'no'
+      - Allocate an EIP inside a VPC or not.
+      - Required if specifying an ENI with I(device_id).
+    default: false
     type: bool
     version_added: "1.4"
   reuse_existing_ip_allowed:
     description:
       - Reuse an EIP that is not associated to a device (when available), instead of allocating a new one.
-    default: 'no'
+    default: false
     type: bool
     version_added: "1.6"
   release_on_disassociation:
     description:
-      - whether or not to automatically release the EIP when it is disassociated
-    default: 'no'
+      - Whether or not to automatically release the EIP when it is disassociated.
+    default: false
     type: bool
     version_added: "2.0"
   private_ip_address:
     description:
       - The primary or secondary private IP address to associate with the Elastic IP address.
     version_added: "2.3"
+    type: str
   allow_reassociation:
     description:
       -  Specify this option to allow an Elastic IP address that is already associated with another
          network interface or instance to be re-associated with the specified instance or interface.
-    default: 'no'
+    default: false
     type: bool
     version_added: "2.5"
   tag_name:
     description:
-      - When reuse_existing_ip_allowed is true, supplement with this option to only reuse
-        an Elastic IP if it is tagged with tag_name.
-    default: 'no'
+      - When I(reuse_existing_ip_allowed=true), supplement with this option to only reuse
+        an Elastic IP if it is tagged with I(tag_name).
     version_added: "2.9"
+    type: str
   tag_value:
     description:
-      - Supplements tag_name but also checks that the value of the tag provided in tag_name matches tag_value.
-        matches the tag_value
-    default: 'no'
+      - Supplements I(tag_name) but also checks that the value of the tag provided in I(tag_name) matches I(tag_value).
     version_added: "2.9"
+    type: str
   public_ipv4_pool:
     description:
       - Allocates the new Elastic IP from the provided public IPv4 pool (BYOIP)
-        only applies to newly allocated Elastic IPs, isn't validated when reuse_existing_ip_allowed is true.
-    default: 'no'
+        only applies to newly allocated Elastic IPs, isn't validated when I(reuse_existing_ip_allowed=true).
     version_added: "2.9"
+    type: str
+  wait_timeout:
+    description:
+      - The I(wait_timeout) option does nothing and will be removed in Ansible 2.14.
+    type: int
 extends_documentation_fragment:
     - aws
     - ec2
@@ -118,7 +126,7 @@ EXAMPLES = '''
   ec2_eip:
     device_id: eni-c8ad70f3
     public_ip: 93.184.216.119
-    allow_reassociation: yes
+    allow_reassociation: true
 
 - name: disassociate an elastic IP from an instance
   ec2_eip:
@@ -150,7 +158,7 @@ EXAMPLES = '''
     keypair: mykey
     instance_type: c1.medium
     image: ami-40603AD1
-    wait: yes
+    wait: true
     group: webserver
     count: 3
   register: ec2
@@ -163,7 +171,7 @@ EXAMPLES = '''
 - name: allocate a new elastic IP inside a VPC in us-west-2
   ec2_eip:
     region: us-west-2
-    in_vpc: yes
+    in_vpc: true
   register: eip
 
 - name: output the IP
@@ -173,37 +181,37 @@ EXAMPLES = '''
 - name: allocate eip - reuse unallocated ips (if found) with FREE tag
   ec2_eip:
     region: us-east-1
-    in_vpc: yes
-    reuse_existing_ip_allowed: yes
+    in_vpc: true
+    reuse_existing_ip_allowed: true
     tag_name: FREE
 
 - name: allocate eip - reuse unallocted ips if tag reserved is nope
   ec2_eip:
     region: us-east-1
-    in_vpc: yes
-    reuse_existing_ip_allowed: yes
+    in_vpc: true
+    reuse_existing_ip_allowed: true
     tag_name: reserved
     tag_value: nope
 
 - name: allocate new eip - from servers given ipv4 pool
   ec2_eip:
     region: us-east-1
-    in_vpc: yes
+    in_vpc: true
     public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
 
 - name: allocate eip - from a given pool (if no free addresses where dev-servers tag is dynamic)
   ec2_eip:
     region: us-east-1
-    in_vpc: yes
-    reuse_existing_ip_allowed: yes
+    in_vpc: true
+    reuse_existing_ip_allowed: true
     tag_name: dev-servers
     public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
 
 - name: allocate eip from pool - check if tag reserved_for exists and value is our hostname
   ec2_eip:
     region: us-east-1
-    in_vpc: yes
-    reuse_existing_ip_allowed: yes
+    in_vpc: true
+    reuse_existing_ip_allowed: true
     tag_name: reserved_for
     tag_value: "{{ inventory_hostname }}"
     public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
@@ -241,10 +249,11 @@ def associate_ip_and_device(ec2, module, address, private_ip_address, device_id,
             try:
                 params = dict(
                     InstanceId=device_id,
-                    PrivateIpAddress=private_ip_address,
                     AllowReassociation=allow_reassociation,
                 )
-                if address.domain == "vpc":
+                if private_ip_address:
+                    params['PrivateIPAddress'] = private_ip_address
+                if address['Domain'] == 'vpc':
                     params['AllocationId'] = address['AllocationId']
                 else:
                     params['PublicIp'] = address['PublicIp']
@@ -316,6 +325,9 @@ def find_address(ec2, module, public_ip, device_id, is_instance=True):
     try:
         addresses = ec2.describe_addresses(**kwargs)
     except is_boto3_error_code('InvalidAddress.NotFound') as e:
+        # If we're releasing and we can't find it, it's already gone...
+        if module.params.get('state') == 'absent':
+            module.exit_json(changed=False)
         module.fail_json_aws(e, msg="Couldn't obtain list of existing Elastic IP addresses")
 
     addresses = addresses["Addresses"]
@@ -528,7 +540,7 @@ def main():
                                        default=False),
         release_on_disassociation=dict(required=False, type='bool', default=False),
         allow_reassociation=dict(type='bool', default=False),
-        wait_timeout=dict(default=300, type='int'),
+        wait_timeout=dict(type='int', removed_in_version='2.14'),
         private_ip_address=dict(),
         tag_name=dict(),
         tag_value=dict(),

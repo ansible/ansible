@@ -1,0 +1,2 @@
+bugfixes:
+  - ce_config - fixed issue - Re-building commands(config src) by replacing '#' with 'quit','quit' commands may close connection (https://github.com/ansible/ansible/issues/62872)

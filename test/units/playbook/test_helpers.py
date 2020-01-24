@@ -138,7 +138,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_loader)
         self._assert_is_task_list_or_blocks(res)
-        self.assertEquals(res[0].action, action_name)
+        self.assertEqual(res[0].action, action_name)
 
     def test_block_unknown_action(self):
         action_name = 'foo_test_block_unknown_action'
@@ -154,11 +154,11 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
     def _assert_default_block(self, block):
         # the expected defaults
         self.assertIsInstance(block.block, list)
-        self.assertEquals(len(block.block), 1)
+        self.assertEqual(len(block.block), 1)
         self.assertIsInstance(block.rescue, list)
-        self.assertEquals(len(block.rescue), 0)
+        self.assertEqual(len(block.rescue), 0)
         self.assertIsInstance(block.always, list)
-        self.assertEquals(len(block.always), 0)
+        self.assertEqual(len(block.always), 0)
 
     def test_block_unknown_action_use_handlers(self):
         ds = [{
@@ -183,14 +183,14 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_loader)
         self.assertIsInstance(res, list)
-        self.assertEquals(len(res), 0)
+        self.assertEqual(len(res), 0)
 
     def test_one_bogus_include_use_handlers(self):
         ds = [{'include': 'somefile.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play, use_handlers=True,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_loader)
         self.assertIsInstance(res, list)
-        self.assertEquals(len(res), 0)
+        self.assertEqual(len(res), 0)
 
     def test_one_bogus_include_static(self):
         ds = [{'include': 'somefile.yml',
@@ -198,13 +198,13 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_loader)
         self.assertIsInstance(res, list)
-        self.assertEquals(len(res), 0)
+        self.assertEqual(len(res), 0)
 
     def test_one_include(self):
         ds = [{'include': '/dev/null/includes/other_test_include.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
-        self.assertEquals(len(res), 1)
+        self.assertEqual(len(res), 1)
         self._assert_is_task_list_or_blocks(res)
 
     def test_one_parent_include(self):
@@ -280,7 +280,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertIsInstance(res[0], Handler)
 
         # default for Handler
-        self.assertEquals(res[0].listen, [])
+        self.assertEqual(res[0].listen, [])
 
     # TODO/FIXME: this doesn't seen right
     #  figure out how to get the non-static errors to be raised, this seems to just ignore everything
@@ -298,7 +298,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
                                          variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
         self._assert_is_task_list_or_blocks(res)
         self.assertIsInstance(res[0], Task)
-        self.assertEquals(res[0].args['_raw_params'], '/dev/null/includes/static_test_include.yml')
+        self.assertEqual(res[0].args['_raw_params'], '/dev/null/includes/static_test_include.yml')
 
     # TODO/FIXME: This two get stuck trying to make a mock_block into a TaskInclude
 #    def test_one_include(self):
@@ -320,7 +320,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          block=self.mock_block,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_role_loader)
-        self.assertEquals(len(res), 1)
+        self.assertEqual(len(res), 1)
         self._assert_is_task_list_or_blocks(res)
 
     def test_one_bogus_include_role_use_handlers(self):
@@ -329,7 +329,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
                                          block=self.mock_block,
                                          variable_manager=self.mock_variable_manager,
                                          loader=self.fake_role_loader)
-        self.assertEquals(len(res), 1)
+        self.assertEqual(len(res), 1)
         self._assert_is_task_list_or_blocks(res)
 
 

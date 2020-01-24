@@ -32,10 +32,8 @@ DOCUMENTATION = '''
 module: gcp_compute_global_forwarding_rule_info
 description:
 - Gather info for GCP GlobalForwardingRule
-- This module was called C(gcp_compute_global_forwarding_rule_facts) before Ansible
-  2.9. The usage has not changed.
 short_description: Gather info for GCP GlobalForwardingRule
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -48,7 +46,54 @@ options:
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
     type: list
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
+notes:
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -128,6 +173,54 @@ resources:
         NOTE: Currently global forwarding rules cannot be used for INTERNAL load balancing.'
       returned: success
       type: str
+    metadataFilters:
+      description:
+      - Opaque filter criteria used by Loadbalancer to restrict routing configuration
+        to a limited set xDS compliant clients. In their xDS requests to Loadbalancer,
+        xDS clients present node metadata. If a match takes place, the relevant routing
+        configuration is made available to those proxies.
+      - For each metadataFilter in this list, if its filterMatchCriteria is set to
+        MATCH_ANY, at least one of the filterLabels must match the corresponding label
+        provided in the metadata. If its filterMatchCriteria is set to MATCH_ALL,
+        then all of its filterLabels must match with corresponding labels in the provided
+        metadata.
+      - metadataFilters specified here can be overridden by those specified in the
+        UrlMap that this ForwardingRule references.
+      - metadataFilters only applies to Loadbalancers that have their loadBalancingScheme
+        set to INTERNAL_SELF_MANAGED.
+      returned: success
+      type: complex
+      contains:
+        filterMatchCriteria:
+          description:
+          - Specifies how individual filterLabel matches within the list of filterLabels
+            contribute towards the overall metadataFilter match.
+          - MATCH_ANY - At least one of the filterLabels must have a matching label
+            in the provided metadata.
+          - MATCH_ALL - All filterLabels must have matching labels in the provided
+            metadata.
+          returned: success
+          type: str
+        filterLabels:
+          description:
+          - The list of label value pairs that must match labels in the provided metadata
+            based on filterMatchCriteria This list must not be empty and can have
+            at the most 64 entries.
+          returned: success
+          type: complex
+          contains:
+            name:
+              description:
+              - Name of the metadata label. The length must be between 1 and 1024
+                characters, inclusive.
+              returned: success
+              type: str
+            value:
+              description:
+              - The value that the label must match. The value has a maximum length
+                of 1024 characters.
+              returned: success
+              type: str
     name:
       description:
       - Name of the resource; provided by the client when the resource is created.
@@ -165,6 +258,8 @@ resources:
       description:
       - The URL of the target resource to receive the matched traffic.
       - The forwarded traffic must be of a type appropriate to the target object.
+      - For INTERNAL_SELF_MANAGED load balancing, only HTTP and HTTPS targets are
+        valid.
       returned: success
       type: str
 '''
@@ -182,9 +277,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
-
-    if module._name == 'gcp_compute_global_forwarding_rule_facts':
-        module.deprecate("The 'gcp_compute_global_forwarding_rule_facts' module has been renamed to 'gcp_compute_global_forwarding_rule_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']

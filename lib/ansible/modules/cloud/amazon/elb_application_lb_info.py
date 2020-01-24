@@ -25,10 +25,12 @@ options:
     description:
       - The Amazon Resource Names (ARN) of the load balancers. You can specify up to 20 load balancers in a single call.
     required: false
+    type: list
   names:
     description:
       - The names of the load balancers.
     required: false
+    type: list
 
 extends_documentation_fragment:
     - aws
@@ -57,7 +59,8 @@ EXAMPLES = '''
     names: "alb-name"
     region: "aws-region"
   register: alb_info
-- debug: var=alb_info
+- debug:
+    var: alb_info
 '''
 
 RETURN = '''

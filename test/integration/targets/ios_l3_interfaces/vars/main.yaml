@@ -63,6 +63,7 @@ replaced:
     - "no ipv6 address"
     - "ip address 198.51.100.1 255.255.255.0 secondary"
     - "ip address 198.51.100.2 255.255.255.0"
+    - "ipv6 address 2001:db8:1:1::/64"
 
   after:
     - name: loopback888
@@ -77,6 +78,8 @@ replaced:
       - address: 198.51.100.1 255.255.255.0
         secondary: true
       - address: 198.51.100.2 255.255.255.0
+      ipv6:
+      - address: 2001:db8:1:1::/64
       name: GigabitEthernet0/2
 
 overridden:

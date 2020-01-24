@@ -2,19 +2,30 @@
   - debug:
       msg: "Start nxos_lldp_global merged integration tests connection={{ansible_connection}}"
 
-  - name: Enable lldp
-    nxos_feature:
-      feature: lldp
-
+  # N35 skips all tests, image issues.
   - block:
+    - set_fact:
+        port_id: 1
+        tlv_power_mgmt:
+          power_management: false
+      when: platform is not search('N5K|N6K|N7K') and imagetag is not search("I[2345]")
+
+    - name: feature off to cleanup lldp
+      nxos_feature: &feature_off
+        feature: lldp
+        state: disabled
+
+    - name: Enable lldp
+      nxos_feature:
+        feature: lldp
+
     - name: Merged
       nxos_lldp_global: &merged
         config:
           reinit: 5
           timer: 40
-          port_id: 1
-          tlv_select:
-            power_management: false
+          port_id: "{{port_id|default(omit)}}"
+          tlv_select: "{{tlv_power_mgmt|default(omit)}}"
         state: merged
       register: result
 
@@ -24,10 +35,17 @@
           - "result.changed == true"
           - "'lldp reinit 5' in result.commands"
           - "'lldp timer 40' in result.commands"
+
+    - assert:
+        that:
           - "'lldp portid-subtype 1' in result.commands"
+      when: port_id is defined
+
+    - assert:
+        that:
           - "'no lldp tlv-select power-management' in result.commands"
-          - "result.commands | length == 4"
-           
+      when: tlv_power_mgmt is defined
+
     - name: Gather lldp_global facts
       nxos_facts:
         gather_subset:
@@ -38,7 +56,7 @@
     - assert:
         that:
           - "ansible_facts.network_resources.lldp_global == result.after"
- 
+
     - name: Idempotence - Merged
       nxos_lldp_global: *merged
       register: result
@@ -47,9 +65,8 @@
         that:
           - "result.changed == false"
           - "result.commands | length == 0"
-
     always:
     - name: teardown
-      nxos_feature: 
-        feature: lldp
-        state: disabled
+      nxos_feature: *feature_off
+
+    when: platform is not search('N35')

@@ -489,6 +489,10 @@ class PodmanImageManager(object):
         if self.auth_file:
             args.extend(['--authfile', self.auth_file])
 
+        if self.username and self.password:
+            cred_string = '{user}:{password}'.format(user=self.username, password=self.password)
+            args.extend(['--creds', cred_string])
+
         if self.validate_certs:
             args.append('--tls-verify')
 

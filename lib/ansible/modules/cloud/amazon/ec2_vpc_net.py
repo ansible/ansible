@@ -26,11 +26,14 @@ options:
     description:
       - The name to give your VPC. This is used in combination with C(cidr_block) to determine if a VPC already exists.
     required: yes
+    type: str
   cidr_block:
     description:
       - The primary CIDR of the VPC. After 2.5 a list of CIDRs can be provided. The first in the list will be used as the primary CIDR
         and is used in conjunction with the C(name) to ensure idempotence.
     required: yes
+    type: list
+    elements: str
   ipv6_cidr:
     description:
       - Request an Amazon-provided IPv6 CIDR block with /56 prefix length.  You cannot specify the range of IPv6 addresses,
@@ -49,6 +52,7 @@ options:
       - Whether to be default or dedicated tenancy. This cannot be changed after the VPC has been created.
     default: default
     choices: [ 'default', 'dedicated' ]
+    type: str
   dns_support:
     description:
       - Whether to enable AWS DNS support.
@@ -61,17 +65,20 @@ options:
     type: bool
   dhcp_opts_id:
     description:
-      - the id of the DHCP options to use for this vpc
+      - The id of the DHCP options to use for this VPC.
+    type: str
   tags:
     description:
       - The tags you want attached to the VPC. This is independent of the name value, note if you pass a 'Name' key it would override the Name of
         the VPC if it's different.
     aliases: [ 'resource_tags' ]
+    type: dict
   state:
     description:
       - The state of the VPC. Either absent or present.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   multi_ok:
     description:
       - By default the module will not create another VPC if there is another VPC with the same name and CIDR block. Specify this as true if you want
@@ -136,8 +143,8 @@ vpc:
     classic_link_enabled:
       description: indicates whether ClassicLink is enabled
       returned: always
-      type: NoneType
-      sample: null
+      type: bool
+      sample: false
     dhcp_options_id:
       description: the id of the DHCP options associated with this VPC
       returned: always

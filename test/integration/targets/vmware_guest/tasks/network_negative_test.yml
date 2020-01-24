@@ -16,12 +16,12 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "Non existent VM"
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: non_existent_network
@@ -47,14 +47,14 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         type: static
         ip: 10.10.10.10
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: no_netmask
@@ -80,14 +80,14 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         type: static
         netmask: 255.255.255.0
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: no_ip
@@ -113,14 +113,14 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - ip: 10.10.10.10
         netmask: 255.255.255
         type: static
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: no_network_name
@@ -146,14 +146,14 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - vlan: non_existing_vlan
         ip: 10.10.10.10
         netmask: 255.255.255
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: no_network
@@ -179,15 +179,15 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         ip: 10.10.10.10
         netmask: 255.255.255
         device_type: abc
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: invalid_device_type
@@ -213,7 +213,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         ip: 10.10.10.10
@@ -221,8 +221,8 @@
         device_type: e1000
         mac: abcdef
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: invalid_mac
@@ -248,7 +248,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         ip: 10.10.10.10
@@ -257,8 +257,8 @@
         mac: 01:23:45:67:89:ab
         type: aaaaa
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: invalid_network_type
@@ -284,7 +284,7 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
         ip: 10.10.10.10
@@ -293,8 +293,8 @@
         mac: 01:23:45:67:89:ab
         type: dhcp
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: invalid_dhcp_network_type
@@ -320,12 +320,12 @@
     disk:
       - size: 3mb
         type: thin
-        autoselect_datastore: yes
+        datastore: "{{ rw_datastore }}"
     networks:
       - name: "VM Network"
     hardware:
-        num_cpus: 3
-        memory_mb: 512
+        num_cpus: 1
+        memory_mb: 128
     state: poweredoff
     folder: "{{ f0 }}"
   register: no_network_type

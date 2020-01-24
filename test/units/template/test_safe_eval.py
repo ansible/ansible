@@ -28,12 +28,6 @@ from ansible.template.safe_eval import safe_eval
 
 class TestSafeEval(unittest.TestCase):
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_safe_eval_usage(self):
         # test safe eval calls with different possible types for the
         # locals dictionary, to ensure we don't run into problems like

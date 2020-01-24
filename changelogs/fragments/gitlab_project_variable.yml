@@ -1,0 +1,2 @@
+bugfixes:
+- Redact GitLab Project variables which might include sensetive information such as password, api_keys and other project related details.

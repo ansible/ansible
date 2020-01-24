@@ -249,7 +249,7 @@ DOCUMENTATION = '''
       scp_if_ssh:
         default: smart
         description:
-          - "Prefered method to use when transfering files over ssh"
+          - "Preferred method to use when transfering files over ssh"
           - When set to smart, Ansible will try them until one succeeds or they all fail
           - If set to True, it will force 'scp', if False it will use 'sftp'
         env: [{name: ANSIBLE_SCP_IF_SSH}]
@@ -354,7 +354,7 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
                 msg = '{0} {1}'.format(msg, to_native(return_tuple[2]).rstrip())
             raise AnsibleConnectionFailure(msg)
 
-    # For other errors, no execption is raised so the connection is retried and we only log the messages
+    # For other errors, no exception is raised so the connection is retried and we only log the messages
     if 1 <= return_tuple[0] <= 254:
         msg = u"Failed to connect to the host via ssh:"
         if no_log:
@@ -837,7 +837,7 @@ class Connection(ConnectionBase):
                 # wait for a password prompt.
                 state = states.index('awaiting_prompt')
                 display.debug(u'Initial state: %s: %s' % (states[state], to_text(prompt)))
-            elif self._play_context.become and self.become.success:
+            elif self.become and self.become.success:
                 # We're requesting escalation without a password, so we have to
                 # detect success/failure before sending any initial data.
                 state = states.index('awaiting_escalation')
@@ -947,7 +947,8 @@ class Connection(ConnectionBase):
                 if states[state] == 'awaiting_prompt':
                     if self._flags['become_prompt']:
                         display.debug(u'Sending become_password in response to prompt')
-                        stdin.write(to_bytes(self._play_context.become_pass) + b'\n')
+                        become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
+                        stdin.write(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
                         # On python3 stdin is a BufferedWriter, and we don't have a guarantee
                         # that the write will happen without a flush
                         stdin.flush()
@@ -968,19 +969,19 @@ class Connection(ConnectionBase):
                         display.vvv(u'Escalation failed')
                         self._terminate_process(p)
                         self._flags['become_error'] = False
-                        raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
+                        raise AnsibleError('Incorrect %s password' % self.become.name)
                     elif self._flags['become_nopasswd_error']:
                         display.vvv(u'Escalation requires password')
                         self._terminate_process(p)
                         self._flags['become_nopasswd_error'] = False
-                        raise AnsibleError('Missing %s password' % self._play_context.become_method)
+                        raise AnsibleError('Missing %s password' % self.become.name)
                     elif self._flags['become_prompt']:
                         # This shouldn't happen, because we should see the "Sorry,
                         # try again" message first.
                         display.vvv(u'Escalation prompt repeated')
                         self._terminate_process(p)
                         self._flags['become_prompt'] = False
-                        raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
+                        raise AnsibleError('Incorrect %s password' % self.become.name)
 
                 # Once we're sure that the privilege escalation prompt, if any, has
                 # been dealt with, we can send any initial data and start waiting
@@ -1014,9 +1015,11 @@ class Connection(ConnectionBase):
                 # Otherwise there may still be outstanding data to read.
         finally:
             selector.close()
-            # close stdin after process is terminated and stdout/stderr are read
-            # completely (see also issue #848)
+            # close stdin, stdout, and stderr after process is terminated and
+            # stdout/stderr are read completely (see also issues #848, #64768).
             stdin.close()
+            p.stdout.close()
+            p.stderr.close()
 
         if C.HOST_KEY_CHECKING:
             if cmd[0] == b"sshpass" and p.returncode == 6:

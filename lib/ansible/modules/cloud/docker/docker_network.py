@@ -31,7 +31,11 @@ options:
   connected:
     description:
       - List of container names or container IDs to connect to a network.
+      - Please note that the module only makes sure that these containers are connected to the network,
+        but does not care about connection options. If you rely on specific IP addresses etc., use the
+        M(docker_container) module to ensure your containers are correctly connected to this network.
     type: list
+    elements: str
     aliases:
       - containers
 
@@ -48,19 +52,19 @@ options:
 
   force:
     description:
-      - With state I(absent) forces disconnecting all containers from the
-        network prior to deleting the network. With state I(present) will
+      - With state C(absent) forces disconnecting all containers from the
+        network prior to deleting the network. With state C(present) will
         disconnect all containers, delete the network and re-create the
-        network.  This option is required if you have changed the IPAM or
-        driver options and want an existing network to be updated to use the
-        new options.
+        network.
+      - This option is required if you have changed the IPAM or driver options
+        and want an existing network to be updated to use the new options.
     type: bool
     default: no
 
   appends:
     description:
       - By default the connected list is canonical, meaning containers not on the list are removed from the network.
-        Use C(appends) to leave existing containers connected.
+      - Use I(appends) to leave existing containers connected.
     type: bool
     default: no
     aliases:
@@ -86,7 +90,7 @@ options:
   ipam_options:
     description:
       - Dictionary of IPAM options.
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(ipam_config) instead. In Docker 1.10.0, IPAM
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter I(ipam_config) instead. In Docker 1.10.0, IPAM
         options were introduced (see L(here,https://github.com/moby/moby/pull/17316)). This module parameter addresses
         the IPAM config not the newly introduced IPAM options. For the IPAM options, see the I(ipam_driver_options)
         parameter.
@@ -115,6 +119,7 @@ options:
         L(Docker docs,https://docs.docker.com/compose/compose-file/compose-file-v2/#ipam) for valid options and values.
         Note that I(iprange) is spelled differently here (we use the notation from the Docker SDK for Python).
     type: list
+    elements: dict
     suboptions:
       subnet:
         description:
@@ -136,14 +141,14 @@ options:
 
   state:
     description:
-      - I(absent) deletes the network. If a network has connected containers, it
-        cannot be deleted. Use the C(force) option to disconnect all containers
+      - C(absent) deletes the network. If a network has connected containers, it
+        cannot be deleted. Use the I(force) option to disconnect all containers
         and delete the network.
-      - I(present) creates the network, if it does not already exist with the
+      - C(present) creates the network, if it does not already exist with the
         specified parameters, and connects the list of containers provided via
         the connected parameter. Containers not on the list will be disconnected.
         An empty list will leave no containers connected to the network. Use the
-        C(appends) option to leave existing containers connected. Use the C(force)
+        I(appends) option to leave existing containers connected. Use the I(force)
         options to force re-creation of the network.
     type: str
     default: present
@@ -182,6 +187,15 @@ options:
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
+
+notes:
+  - When network options are changed, the module disconnects all containers from the network, deletes the network, and re-creates the network.
+    It does not try to reconnect containers, except the ones listed in (I(connected), and even for these, it does not consider specific
+    connection options like fixed IP addresses or MAC addresses. If you need more control over how the containers are connected to the
+    network, loop the M(docker_container) module to loop over your containers to make sure they are connected properly.
+  - The module does not support Docker Swarm, i.e. it will not try to disconnect or reconnect services. If services are connected to the
+    network, deleting the network will fail. When network options are changed, the network has to be deleted and recreated, so this will
+    fail as well.
 
 author:
   - "Ben Keith (@keitwb)"
@@ -333,8 +347,8 @@ CIDR_IPV4 = re.compile(r'^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[1-2][0-9]|3[0-2])$
 CIDR_IPV6 = re.compile(r'^[0-9a-fA-F:]+/([0-9]|[1-9][0-9]|1[0-2][0-9])$')
 
 
-def get_ip_version(cidr):
-    """Gets the IP version of a CIDR string
+def validate_cidr(cidr):
+    """Validate CIDR. Return IP version of a CIDR string on success.
 
     :param cidr: Valid CIDR
     :type cidr: str
@@ -350,7 +364,7 @@ def get_ip_version(cidr):
 
 
 def normalize_ipam_config_key(key):
-    """Normalizes IPAM config keys returned by Docker API to match Ansible keys
+    """Normalizes IPAM config keys returned by Docker API to match Ansible keys.
 
     :param key: Docker API key
     :type key: str
@@ -361,6 +375,16 @@ def normalize_ipam_config_key(key):
         'AuxiliaryAddresses': 'aux_addresses'
     }
     return special_cases.get(key, key.lower())
+
+
+def dicts_are_essentially_equal(a, b):
+    """Make sure that a is a subset of b, where None entries of a are ignored."""
+    for k, v in a.items():
+        if v is None:
+            continue
+        if b.get(k) != v:
+            return False
+    return True
 
 
 class DockerNetworkManager(object):
@@ -385,6 +409,13 @@ class DockerNetworkManager(object):
         if (self.parameters.ipam_options['subnet'] or self.parameters.ipam_options['iprange'] or
                 self.parameters.ipam_options['gateway'] or self.parameters.ipam_options['aux_addresses']):
             self.parameters.ipam_config = [self.parameters.ipam_options]
+
+        if self.parameters.ipam_config:
+            try:
+                for ipam_config in self.parameters.ipam_config:
+                    validate_cidr(ipam_config['subnet'])
+            except ValueError as e:
+                self.client.fail(str(e))
 
         if self.parameters.driver_options:
             self.parameters.driver_options = clean_dict_booleans_for_docker_api(self.parameters.driver_options)
@@ -447,30 +478,29 @@ class DockerNetworkManager(object):
                                 parameter=self.parameters.ipam_config,
                                 active=net.get('IPAM', {}).get('Config'))
             else:
+                # Put network's IPAM config into the same format as module's IPAM config
+                net_ipam_configs = []
+                for net_ipam_config in net['IPAM']['Config']:
+                    config = dict()
+                    for k, v in net_ipam_config.items():
+                        config[normalize_ipam_config_key(k)] = v
+                    net_ipam_configs.append(config)
+                # Compare lists of dicts as sets of dicts
                 for idx, ipam_config in enumerate(self.parameters.ipam_config):
                     net_config = dict()
-                    try:
-                        ip_version = get_ip_version(ipam_config['subnet'])
-                        for net_ipam_config in net['IPAM']['Config']:
-                            if ip_version == get_ip_version(net_ipam_config['Subnet']):
-                                net_config = net_ipam_config
-                    except ValueError as e:
-                        self.client.fail(str(e))
-
+                    for net_ipam_config in net_ipam_configs:
+                        if dicts_are_essentially_equal(ipam_config, net_ipam_config):
+                            net_config = net_ipam_config
+                            break
                     for key, value in ipam_config.items():
                         if value is None:
                             # due to recursive argument_spec, all keys are always present
                             # (but have default value None if not specified)
                             continue
-                        camelkey = None
-                        for net_key in net_config:
-                            if key == normalize_ipam_config_key(net_key):
-                                camelkey = net_key
-                                break
-                        if not camelkey or net_config.get(camelkey) != value:
+                        if value != net_config.get(key):
                             differences.add('ipam_config[%s].%s' % (idx, key),
                                             parameter=value,
-                                            active=net_config.get(camelkey) if camelkey else None)
+                                            active=net_config.get(key))
 
         if self.parameters.enable_ipv6 is not None and self.parameters.enable_ipv6 != net.get('EnableIPv6', False):
             differences.add('enable_ipv6',
@@ -560,6 +590,8 @@ class DockerNetworkManager(object):
             self.results['changed'] = True
 
     def is_container_connected(self, container_name):
+        if not self.existing_network:
+            return False
         return container_name in container_names_in_network(self.existing_network)
 
     def connect_containers(self):

@@ -112,6 +112,25 @@
         - "yum_result is not changed"
   when: ansible_distribution == 'CentOS'
 
+# This test case is unfortunately distro specific because we have to specify
+# repo names which are not the same across Fedora/RHEL/CentOS for base/updates
+- name: install sos again with disable all and enable select repo(s)
+  yum:
+    name: sos
+    state: present
+    enablerepo:
+      - "base"
+      - "updates"
+    disablerepo: "*"
+  register: yum_result
+  when: ansible_distribution == 'CentOS'
+- name: verify no change on fourth install with missing repo enablerepo (yum)
+  assert:
+    that:
+        - "yum_result is success"
+        - "yum_result is not changed"
+  when: ansible_distribution == 'CentOS'
+
 - name: install sos again with only missing repo enablerepo
   yum:
     name: sos
@@ -301,9 +320,8 @@
   yum: name=sos,bc state=removed
 
 - name: install non-existent rpm
-  yum: name="{{ item }}"
-  with_items:
-  - does-not-exist
+  yum:
+    name: does-not-exist
   register: non_existent_rpm
   ignore_errors: True
 
@@ -692,6 +710,40 @@
   set_fact:
     yum_version: "{%- if item.yumstate == 'installed' -%}{{ item.version }}{%- else -%}{{ yum_version }}{%- endif -%}"
   with_items: "{{ yum_version.results }}"
+
+- name: Ensure double uninstall of wildcard globs works
+  block:
+  - name: "Install lohit-*-fonts"
+    yum:
+      name: "lohit-*-fonts"
+      state: present
+
+  - name: "Remove lohit-*-fonts (1st time)"
+    yum:
+      name: "lohit-*-fonts"
+      state: absent
+    register: remove_lohit_fonts_1
+
+  - name: "Verify lohit-*-fonts (1st time)"
+    assert:
+      that:
+        - "remove_lohit_fonts_1 is changed"
+        - "'msg' in remove_lohit_fonts_1"
+        - "'results' in remove_lohit_fonts_1"
+
+  - name: "Remove lohit-*-fonts (2nd time)"
+    yum:
+      name: "lohit-*-fonts"
+      state: absent
+    register: remove_lohit_fonts_2
+
+  - name: "Verify lohit-*-fonts (2nd time)"
+    assert:
+      that:
+        - "remove_lohit_fonts_2 is not changed"
+        - "'msg' in remove_lohit_fonts_2"
+        - "'results' in remove_lohit_fonts_2"
+        - "'lohit-*-fonts is not installed' in remove_lohit_fonts_2['results']"
 
 - block:
   - name: uninstall bc

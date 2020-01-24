@@ -288,7 +288,10 @@ Facts returned by this module are added/updated in the ``hostvars`` host facts a
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@" colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
-                    <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
+                    <div style="font-size: small">
+                      <span style="color: purple">@{ value.type | documented_type }@</span>
+                      {% if value.elements %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
+                    </div>
                     {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>
@@ -360,7 +363,10 @@ Common return values are documented :ref:`here <common_return_values>`, the foll
                 {% endfor %}
                 <td colspan="@{ from_kludge_ns('maxdepth') - loop.depth0 }@">
                     <b>@{ key }@</b>
-                    <div style="font-size: small; color: purple">@{ value.type | documented_type }@</div>
+                    <div style="font-size: small">
+                      <span style="color: purple">@{ value.type | documented_type }@</span>
+                      {% if value.elements %} / <span style="color: purple">elements=@{ value.elements | documented_type }@</span>{% endif %}
+                    </div>
                     {% if value.version_added %}<div style="font-style: italic; font-size: small; color: darkgreen">added in @{value.version_added}@</div>{% endif %}
                 </td>
                 <td>@{ value.returned | html_ify }@</td>

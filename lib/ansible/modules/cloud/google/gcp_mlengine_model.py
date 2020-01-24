@@ -35,7 +35,7 @@ description:
 - A model can have multiple versions, each of which is a deployed, trained model ready
   to receive prediction requests. The model itself is just a container.
 short_description: Creates a GCP Model
-version_added: 2.9
+version_added: '2.9'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -70,7 +70,7 @@ options:
       name:
         description:
         - The name specified for the version when it was created.
-        required: false
+        required: true
         type: str
   regions:
     description:
@@ -94,7 +94,43 @@ options:
     - One or more labels that you can add, to organize your models.
     required: false
     type: dict
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -178,7 +214,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             description=dict(type='str'),
-            default_version=dict(type='dict', options=dict(name=dict(type='str'))),
+            default_version=dict(type='dict', options=dict(name=dict(required=True, type='str'))),
             regions=dict(type='list', elements='str'),
             online_prediction_logging=dict(type='bool'),
             online_prediction_console_logging=dict(type='bool'),

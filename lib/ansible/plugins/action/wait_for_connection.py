@@ -115,4 +115,7 @@ class ActionModule(ActionBase):
         elapsed = datetime.now() - start
         result['elapsed'] = elapsed.seconds
 
+        # remove a temporary path we created
+        self._remove_tmp_path(self._connection._shell.tmpdir)
+
         return result

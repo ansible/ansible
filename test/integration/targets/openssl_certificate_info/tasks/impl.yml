@@ -35,6 +35,17 @@
   set_fact:
     info_results: "{{ info_results + [result] }}"
 
+- name: ({{select_crypto_backend}}) Get certificate info directly
+  openssl_certificate_info:
+    content: '{{ lookup("file", output_dir ~ "/cert_1.pem") }}'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: result_direct
+
+- name: ({{select_crypto_backend}}) Compare output of direct and loaded info
+  assert:
+    that:
+      - result == result_direct
+
 - name: ({{select_crypto_backend}}) Get certificate info
   openssl_certificate_info:
     path: '{{ output_dir }}/cert_2.pem'

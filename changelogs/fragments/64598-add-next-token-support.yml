@@ -1,0 +1,2 @@
+bugfixes:
+  - cloudwatchlogs_log_group_info - remove limitation of max 50 results

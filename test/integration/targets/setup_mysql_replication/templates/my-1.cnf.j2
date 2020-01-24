@@ -1,0 +1,11 @@
+[mysqld]
+server_id           = 1
+port                = {{ master_port }}
+datadir             = {{ master_datadir }}
+socket              = {{ master_datadir }}/mysql.sock
+pid-file            = {{ master_datadir }}/mysql.pid
+#mysqladmin          = /usr/bin/mysqladmin
+log_bin             = /var/log/mysql/mysql-bin.log
+sync_binlog         = 1
+binlog-format       = ROW
+innodb_flush_log_at_trx_commit  = 1

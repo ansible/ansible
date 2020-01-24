@@ -1,0 +1,29 @@
+- block:
+  - name: "create t3.nano with cpu options (fails gracefully)"
+    ec2_instance:
+      state: present
+      name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-ec2"
+      image_id: "{{ ec2_ami_image }}"
+      instance_type: "t3.nano"
+      cpu_options:
+          core_count: 1
+          threads_per_core: 1
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+    register: ec2_instance_cpu_options_creation
+    ignore_errors: yes
+
+  - name: "check that graceful error message is returned when creation with cpu_options and old botocore"
+    assert:
+      that:
+        - ec2_instance_cpu_options_creation.failed
+        - 'ec2_instance_cpu_options_creation.msg == "cpu_options is only supported with botocore >= 1.10.16"'
+
+  always:
+  - name: "Terminate version_fail instances"
+    ec2_instance:
+      state: absent
+      filters:
+        "tag:TestId": "{{ ec2_instance_tag_TestId }}"
+      wait: yes
+    ignore_errors: yes

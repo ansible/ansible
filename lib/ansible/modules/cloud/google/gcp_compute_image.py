@@ -43,7 +43,7 @@ description:
   You can create a custom image from root persistent disks and other images. Then,
   use the custom image to create an instance.
 short_description: Creates a GCP Image
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -79,25 +79,17 @@ options:
     type: str
   guest_os_features:
     description:
-    - A list of features to enable on the guest OS. Applicable for bootable images
-      only. Currently, only one feature can be enabled, VIRTIO_SCSI_MULTIQUEUE, which
-      allows each virtual CPU to have its own queue. For Windows images, you can only
-      enable VIRTIO_SCSI_MULTIQUEUE on images with driver version 1.2.0.1621 or higher.
-      Linux images with kernel versions 3.17 and higher will support VIRTIO_SCSI_MULTIQUEUE.
-    - For new Windows images, the server might also populate this field with the value
-      WINDOWS, to indicate that this is a Windows image.
-    - This value is purely informational and does not enable or disable any features.
+    - A list of features to enable on the guest operating system.
+    - Applicable only for bootable images.
     required: false
     type: list
     suboptions:
       type:
         description:
-        - The type of supported feature. Currently only VIRTIO_SCSI_MULTIQUEUE is
-          supported. For newer Windows images, the server might also populate this
-          property with the value WINDOWS to indicate that this is a Windows image.
-          This value is purely informational and does not enable or disable any features.
-        - 'Some valid choices include: "VIRTIO_SCSI_MULTIQUEUE"'
-        required: false
+        - The type of supported feature.
+        - 'Some valid choices include: "MULTI_IP_SUBNET", "SECURE_BOOT", "UEFI_COMPATIBLE",
+          "VIRTIO_SCSI_MULTIQUEUE", "WINDOWS"'
+        required: true
         type: str
   image_encryption_key:
     description:
@@ -118,7 +110,7 @@ options:
     - Labels to apply to this Image.
     required: false
     type: dict
-    version_added: 2.8
+    version_added: '2.8'
   licenses:
     description:
     - Any applicable license URI.
@@ -199,10 +191,56 @@ options:
     - 'Some valid choices include: "RAW"'
     required: false
     type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/images)'
 - 'Official Documentation: U(https://cloud.google.com/compute/docs/images)'
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -301,23 +339,14 @@ family:
   type: str
 guestOsFeatures:
   description:
-  - A list of features to enable on the guest OS. Applicable for bootable images only.
-    Currently, only one feature can be enabled, VIRTIO_SCSI_MULTIQUEUE, which allows
-    each virtual CPU to have its own queue. For Windows images, you can only enable
-    VIRTIO_SCSI_MULTIQUEUE on images with driver version 1.2.0.1621 or higher. Linux
-    images with kernel versions 3.17 and higher will support VIRTIO_SCSI_MULTIQUEUE.
-  - For new Windows images, the server might also populate this field with the value
-    WINDOWS, to indicate that this is a Windows image.
-  - This value is purely informational and does not enable or disable any features.
+  - A list of features to enable on the guest operating system.
+  - Applicable only for bootable images.
   returned: success
   type: complex
   contains:
     type:
       description:
-      - The type of supported feature. Currently only VIRTIO_SCSI_MULTIQUEUE is supported.
-        For newer Windows images, the server might also populate this property with
-        the value WINDOWS to indicate that this is a Windows image. This value is
-        purely informational and does not enable or disable any features.
+      - The type of supported feature.
       returned: success
       type: str
 id:
@@ -460,7 +489,7 @@ def main():
             description=dict(type='str'),
             disk_size_gb=dict(type='int'),
             family=dict(type='str'),
-            guest_os_features=dict(type='list', elements='dict', options=dict(type=dict(type='str'))),
+            guest_os_features=dict(type='list', elements='dict', options=dict(type=dict(required=True, type='str'))),
             image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'))),
             labels=dict(type='dict'),
             licenses=dict(type='list', elements='str'),

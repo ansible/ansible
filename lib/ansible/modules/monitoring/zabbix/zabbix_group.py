@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_group
 short_description: Create/delete Zabbix host groups
@@ -27,18 +27,21 @@ author:
     - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
 options:
     state:
         description:
             - Create or delete host group.
         required: false
+        type: str
         default: "present"
         choices: [ "present", "absent" ]
     host_groups:
         description:
             - List of host groups to create or delete.
         required: true
+        type: list
+        elements: str
         aliases: [ "host_group" ]
 
 extends_documentation_fragment:
@@ -48,7 +51,7 @@ notes:
     - Too many concurrent updates to the same group may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Base create host groups example
 - name: Create host groups
   local_action:
@@ -144,7 +147,7 @@ def main():
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
             host_groups=dict(type='list', required=True, aliases=['host_group']),
-            state=dict(default="present", choices=['present', 'absent']),
+            state=dict(type='str', default="present", choices=['present', 'absent']),
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True

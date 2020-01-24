@@ -2,6 +2,8 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -23,20 +25,27 @@ options:
   image_ids:
     description: One or more image IDs.
     aliases: [image_id]
+    type: list
+    elements: str
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
       - See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html) for possible filters.
       - Filter names and values are case sensitive.
+    type: dict
   owners:
     description:
       - Filter the images by the owner. Valid options are an AWS account ID, self,
-      - or an AWS owner alias ( amazon | aws-marketplace | microsoft ).
+        or an AWS owner alias ( amazon | aws-marketplace | microsoft ).
     aliases: [owner]
+    type: list
+    elements: str
   executable_users:
     description:
       - Filter images by users with explicit launch permissions. Valid options are an AWS account ID, self, or all (public AMIs).
     aliases: [executable_user]
+    type: list
+    elements: str
   describe_image_attributes:
     description:
       - Describe attributes (like launchPermission) of the images found.
@@ -74,22 +83,24 @@ EXAMPLES = '''
 
 RETURN = '''
 images:
-  description: a list of images
+  description: A list of images.
   returned: always
-  type: complex
+  type: list
+  elements: dict
   contains:
     architecture:
-      description: The architecture of the image
+      description: The architecture of the image.
       returned: always
       type: str
       sample: x86_64
     block_device_mappings:
-      description: Any block device mapping entries
+      description: Any block device mapping entries.
       returned: always
-      type: complex
+      type: list
+      elements: dict
       contains:
         device_name:
-          description: The device name exposed to the instance
+          description: The device name exposed to the instance.
           returned: always
           type: str
           sample: /dev/sda1
@@ -98,86 +109,94 @@ images:
           returned: always
           type: complex
     creation_date:
-      description: The date and time the image was created
+      description: The date and time the image was created.
       returned: always
       type: str
       sample: '2017-10-16T19:22:13.000Z'
     description:
-      description: The description of the AMI
+      description: The description of the AMI.
       returned: always
       type: str
       sample: ''
     ena_support:
-      description: whether enhanced networking with ENA is enabled
+      description: Whether enhanced networking with ENA is enabled.
       returned: always
       type: bool
       sample: true
     hypervisor:
-      description: The hypervisor type of the image
+      description: The hypervisor type of the image.
       returned: always
       type: str
       sample: xen
     image_id:
-      description: The ID of the AMI
+      description: The ID of the AMI.
       returned: always
       type: str
       sample: ami-5b466623
     image_location:
-      description: The location of the AMI
+      description: The location of the AMI.
       returned: always
       type: str
       sample: 408466080000/Webapp
     image_type:
-      description: The type of image
+      description: The type of image.
       returned: always
       type: str
       sample: machine
     launch_permissions:
-      description: launch permissions of the ami
-      returned: when image is owned by calling account and describe_image_attributes is yes
-      type: complex
+      description: A List of AWS accounts may launch the AMI.
+      returned: When image is owned by calling account and I(describe_image_attributes) is yes.
+      type: list
+      elements: dict
+      contains:
+        group:
+            description: A value of 'all' means the AMI is public.
+            type: str
+        user_id:
+            description: An AWS account ID with permissions to launch the AMI.
+            type: str
       sample: [{"group": "all"}, {"user_id": "408466080000"}]
     name:
-      description: The name of the AMI that was provided during image creation
+      description: The name of the AMI that was provided during image creation.
       returned: always
       type: str
       sample: Webapp
     owner_id:
-      description: The AWS account ID of the image owner
+      description: The AWS account ID of the image owner.
       returned: always
       type: str
       sample: '408466080000'
     public:
-      description: whether the image has public launch permissions
+      description: Whether the image has public launch permissions.
       returned: always
       type: bool
       sample: true
     root_device_name:
-      description: The device name of the root device
+      description: The device name of the root device.
       returned: always
       type: str
       sample: /dev/sda1
     root_device_type:
-      description: The type of root device used by the AMI
+      description: The type of root device used by the AMI.
       returned: always
       type: str
       sample: ebs
     sriov_net_support:
-      description: whether enhanced networking is enabled
+      description: Whether enhanced networking is enabled.
       returned: always
       type: str
       sample: simple
     state:
-      description: The current state of the AMI
+      description: The current state of the AMI.
       returned: always
       type: str
       sample: available
     tags:
-      description: Any tags assigned to the image
+      description: Any tags assigned to the image.
       returned: always
-      type: complex
+      type: dict
     virtualization_type:
-      description: The type of virtualization of the AMI
+      description: The type of virtualization of the AMI.
       returned: always
       type: str
       sample: hvm
@@ -186,11 +205,10 @@ images:
 try:
     from botocore.exceptions import ClientError, BotoCoreError
 except ImportError:
-    pass
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import (boto3_conn, ec2_argument_spec, get_aws_connection_info, ansible_dict_to_boto3_filter_list,
-                                      camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict)
+from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 
 
 def list_ec2_images(ec2_client, module):
@@ -242,27 +260,19 @@ def list_ec2_images(ec2_client, module):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            image_ids=dict(default=[], type='list', aliases=['image_id']),
-            filters=dict(default={}, type='dict'),
-            owners=dict(default=[], type='list', aliases=['owner']),
-            executable_users=dict(default=[], type='list', aliases=['executable_user']),
-            describe_image_attributes=dict(default=False, type='bool')
-        )
+    argument_spec = dict(
+        image_ids=dict(default=[], type='list', aliases=['image_id']),
+        filters=dict(default={}, type='dict'),
+        owners=dict(default=[], type='list', aliases=['owner']),
+        executable_users=dict(default=[], type='list', aliases=['executable_user']),
+        describe_image_attributes=dict(default=False, type='bool')
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._module._name == 'ec2_ami_facts':
         module._module.deprecate("The 'ec2_ami_facts' module has been renamed to 'ec2_ami_info'", version='2.13')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        ec2_client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
-    else:
-        module.fail_json(msg="region must be specified")
+    ec2_client = module.client('ec2')
 
     list_ec2_images(ec2_client, module)
 

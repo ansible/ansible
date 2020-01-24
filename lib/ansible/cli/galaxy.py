@@ -22,19 +22,26 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
-from ansible.galaxy.collection import build_collection, install_collections, publish_collection, \
-    validate_collection_name
+from ansible.galaxy.collection import (
+    build_collection,
+    install_collections,
+    publish_collection,
+    validate_collection_name,
+    validate_collection_path,
+)
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.role import GalaxyRole
-from ansible.galaxy.token import GalaxyToken, NoTokenSentinel
+from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils import six
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 
 display = Display()
+urlparse = six.moves.urllib.parse.urlparse
 
 
 class GalaxyCLI(CLI):
@@ -44,7 +51,7 @@ class GalaxyCLI(CLI):
 
     def __init__(self, args):
         # Inject role into sys.argv[1] as a backwards compatibility step
-        if len(args) > 1 and args[1] not in ['-h', '--help'] and 'role' not in args and 'collection' not in args:
+        if len(args) > 1 and args[1] not in ['-h', '--help', '--version'] and 'role' not in args and 'collection' not in args:
             # TODO: Should we add a warning here and eventually deprecate the implicit role subcommand choice
             # Remove this in Ansible 2.13 when we also remove -v as an option on the root parser for ansible-galaxy.
             idx = 2 if args[1].startswith('-v') else 1
@@ -64,7 +71,7 @@ class GalaxyCLI(CLI):
         # Common arguments that apply to more than 1 action
         common = opt_help.argparse.ArgumentParser(add_help=False)
         common.add_argument('-s', '--server', dest='api_server', help='The Galaxy API server URL')
-        common.add_argument('--api-key', dest='api_key',
+        common.add_argument('--token', '--api-key', dest='api_key',
                             help='The Ansible Galaxy API key which can be found at '
                                  'https://galaxy.ansible.com/me/preferences. You can also use ansible-galaxy login to '
                                  'retrieve this key or set the token for the GALAXY_SERVER_LIST entry.')
@@ -251,7 +258,8 @@ class GalaxyCLI(CLI):
                                             "dependencies.".format(galaxy_type))
 
         if galaxy_type == 'collection':
-            install_parser.add_argument('-p', '--collections-path', dest='collections_path', required=True,
+            install_parser.add_argument('-p', '--collections-path', dest='collections_path',
+                                        default=C.COLLECTIONS_PATHS[0],
                                         help='The path to the directory containing your collections.')
             install_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                         help='A file containing a list of collections to be installed.')
@@ -313,10 +321,14 @@ class GalaxyCLI(CLI):
                 ],
                 'required': required,
             }
-        server_def = [('url', True), ('username', False), ('password', False), ('token', False)]
+        server_def = [('url', True), ('username', False), ('password', False), ('token', False),
+                      ('auth_url', False)]
 
         config_servers = []
-        for server_key in (C.GALAXY_SERVER_LIST or []):
+
+        # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
+        server_list = [s for s in C.GALAXY_SERVER_LIST or [] if s]
+        for server_key in server_list:
             # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
             # section [galaxy_server.<server>] for the values url, username, password, and token.
             config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in server_def)
@@ -324,8 +336,28 @@ class GalaxyCLI(CLI):
             C.config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
 
             server_options = C.config.get_plugin_options('galaxy_server', server_key)
+            # auth_url is used to create the token, but not directly by GalaxyAPI, so
+            # it doesn't need to be passed as kwarg to GalaxyApi
+            auth_url = server_options.pop('auth_url', None)
             token_val = server_options['token'] or NoTokenSentinel
-            server_options['token'] = GalaxyToken(token=token_val)
+            username = server_options['username']
+
+            # default case if no auth info is provided.
+            server_options['token'] = None
+
+            if username:
+                server_options['token'] = BasicAuthToken(username,
+                                                         server_options['password'])
+            else:
+                if token_val:
+                    if auth_url:
+                        server_options['token'] = KeycloakToken(access_token=token_val,
+                                                                auth_url=auth_url,
+                                                                validate_certs=not context.CLIARGS['ignore_certs'])
+                    else:
+                        # The galaxy v1 / github / django / 'Token'
+                        server_options['token'] = GalaxyToken(token=token_val)
+
             config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
 
         cmd_server = context.CLIARGS['api_server']
@@ -396,7 +428,7 @@ class GalaxyCLI(CLI):
                     "Failed to parse the requirements yml at '%s' with the following error:\n%s"
                     % (to_native(requirements_file), to_native(err)))
 
-        if requirements_file is None:
+        if file_requirements is None:
             raise AnsibleError("No requirements found in file '%s'" % to_native(requirements_file))
 
         def parse_role_req(requirement):
@@ -629,6 +661,7 @@ class GalaxyCLI(CLI):
                 documentation='http://docs.example.com',
                 homepage='http://example.com',
                 issues='http://example.com/issue/tracker',
+                build_ignore=[],
             ))
 
             obj_path = os.path.join(init_path, namespace, collection_name)
@@ -782,7 +815,13 @@ class GalaxyCLI(CLI):
             else:
                 requirements = []
                 for collection_input in collections:
-                    name, dummy, requirement = collection_input.partition(':')
+                    requirement = None
+                    if os.path.isfile(to_bytes(collection_input, errors='surrogate_or_strict')) or \
+                            urlparse(collection_input).scheme.lower() in ['http', 'https']:
+                        # Arg is a file path or URL to a collection
+                        name = collection_input
+                    else:
+                        name, dummy, requirement = collection_input.partition(':')
                     requirements.append((name, requirement or '*', None))
 
             output_path = GalaxyCLI._resolve_path(output_path)
@@ -793,9 +832,7 @@ class GalaxyCLI(CLI):
                                 "collections paths '%s'. The installed collection won't be picked up in an Ansible "
                                 "run." % (to_text(output_path), to_text(":".join(collections_path))))
 
-            if os.path.split(output_path)[1] != 'ansible_collections':
-                output_path = os.path.join(output_path, 'ansible_collections')
-
+            output_path = validate_collection_path(output_path)
             b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
             if not os.path.exists(b_output_path):
                 os.makedirs(b_output_path)

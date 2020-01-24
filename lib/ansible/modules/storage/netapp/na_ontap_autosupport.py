@@ -144,7 +144,7 @@ class NetAppONTAPasup(object):
             node_name=dict(required=True, type='str'),
             transport=dict(required=False, type='str', choices=['smtp', 'http', 'https']),
             noteto=dict(required=False, type='list'),
-            post_url=dict(reuired=False, type='str'),
+            post_url=dict(required=False, type='str'),
             support=dict(required=False, type='bool'),
             mail_hosts=dict(required=False, type='list'),
             from_address=dict(required=False, type='str'),

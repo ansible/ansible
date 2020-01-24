@@ -34,8 +34,6 @@ import re
 import time
 import json
 
-from itertools import chain
-
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping
@@ -163,22 +161,35 @@ class Cliconf(CliconfBase):
         return resp
 
     def edit_macro(self, candidate=None, commit=True, replace=None, comment=None):
+        """
+        ios_config:
+          lines: "{{ macro_lines }}"
+          parents: "macro name {{ macro_name }}"
+          after: '@'
+          match: line
+          replace: block
+        """
         resp = {}
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         results = []
         requests = []
         if commit:
             commands = ''
+            self.send_command('config terminal')
+            time.sleep(0.1)
+            # first item: macro command
+            commands += (candidate.pop(0) + '\n')
+            multiline_delimiter = candidate.pop(-1)
             for line in candidate:
-                if line != 'None':
-                    commands += (' ' + line + '\n')
-                self.send_command('config terminal', sendonly=True)
-                obj = {'command': commands, 'sendonly': True}
-                results.append(self.send_command(**obj))
-                requests.append(commands)
+                commands += (' ' + line + '\n')
+            commands += (multiline_delimiter + '\n')
+            obj = {'command': commands, 'sendonly': True}
+            results.append(self.send_command(**obj))
+            requests.append(commands)
 
+            time.sleep(0.1)
             self.send_command('end', sendonly=True)
             time.sleep(0.1)
             results.append(self.send_command('\n'))
@@ -332,6 +343,22 @@ class Cliconf(CliconfBase):
             return 'all'
         else:
             return 'full'
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            out = self._connection.get_prompt()
+
+            if out is None:
+                raise AnsibleConnectionFailure(message=u'cli prompt is not identified from the last received'
+                                                       u' response window: %s' % self._connection._last_recv_window)
+
+            if re.search(r'config.*\)#', to_text(out, errors='surrogate_then_replace').strip()):
+                self._connection.queue_message('vvvv', 'wrong context, sending end to device')
+                self._connection.send_command('end')
 
     def _extract_banners(self, config):
         banners = {}

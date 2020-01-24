@@ -55,6 +55,33 @@
       - user_test0_1 is not changed
       - '"ansibulluser" in user_names.stdout_lines'
 
+# test adding user with uid
+# https://github.com/ansible/ansible/issues/62969
+- name: remove the test user
+  user:
+    name: ansibulluser
+    state: absent
+
+- name: try to create a user with uid
+  user:
+    name: ansibulluser
+    state: present
+    uid: 572
+  register: user_test01_0
+
+- name: create the user again
+  user:
+    name: ansibulluser
+    state: present
+    uid: 572
+  register: user_test01_1
+
+- name: validate results for testcase 0
+  assert:
+    that:
+      - user_test01_0 is changed
+      - user_test01_1 is not changed
+
 # test user add with password
 - name: add an encrypted password for user
   user:
@@ -67,6 +94,32 @@
 - name: there should not be warnings
   assert:
     that: "'warnings' not in test_user_encrypt0"
+
+# https://github.com/ansible/ansible/issues/65711
+- name: Test updating password only on creation
+  user:
+    name: ansibulluser
+    password: '*'
+    update_password: on_create
+  register: test_user_update_password
+
+- name: Ensure password was not changed
+  assert:
+    that:
+      - test_user_update_password is not changed
+
+- name: Verify password hash for Linux
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  block:
+    - name: LINUX | Get shadow entry for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure password hash was not removed
+      assert:
+        that:
+          - getent_shadow['ansibulluser'][1] != '*'
 
 - block:
     - name: add an plaintext password for user

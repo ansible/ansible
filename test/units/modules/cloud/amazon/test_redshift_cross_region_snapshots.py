@@ -1,3 +1,7 @@
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.modules.cloud.amazon import redshift_cross_region_snapshots as rcrs
 
 mock_status_enabled = {

@@ -221,7 +221,7 @@ class ManageIQTenant(object):
                     self.module.fail_json(msg="Multiple parent tenants not found in manageiq with name '%s" % parent)
 
                 parent_tenant = parent_tenant_res[0]
-                parent_id = parent_tenant['id']
+                parent_id = int(parent_tenant['id'])
                 tenants = self.client.collections.tenants.find_by(name=name)
 
                 for tenant in tenants:
@@ -448,7 +448,7 @@ class ManageIQTenant(object):
 
         try:
             ancestry = tenant['ancestry']
-            tenant_parent_id = int(ancestry.split("/")[-1])
+            tenant_parent_id = ancestry.split("/")[-1]
         except AttributeError:
             # The root tenant does not return the ancestry attribute
             tenant_parent_id = None

@@ -20,7 +20,7 @@ merged:
     - name: "eth0"
       ipv4:
         - address: "dhcp"
- 
+
     - name: "eth1"
       ipv4:
         - address: "192.0.2.10/24"

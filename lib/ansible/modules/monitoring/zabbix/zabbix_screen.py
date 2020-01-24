@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_screen
 short_description: Create/update/delete Zabbix screens
@@ -26,12 +26,13 @@ author:
     - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"
-    - "zabbix-api >= 0.5.3"
+    - "zabbix-api >= 0.5.4"
 options:
     screens:
         description:
             - List of screens to be created/updated/deleted (see example).
         type: list
+        elements: dict
         required: true
         suboptions:
             screen_name:
@@ -39,13 +40,12 @@ options:
                     - Screen name will be used.
                     - If a screen has already been added, the screen name won't be updated.
                 type: str
-                required: yes
+                required: true
             host_group:
                 description:
                     - Host group will be used for searching hosts.
                     - Required if I(state=present).
                 type: str
-                required: yes
             state:
                 description:
                     - I(present) - Create a screen if it doesn't exist. If the screen already exists, the screen will be updated as needed.
@@ -60,6 +60,7 @@ options:
                     - Graph names will be added to a screen. Case insensitive.
                     - Required if I(state=present).
                 type: list
+                elements: str
             graph_width:
                 description:
                     - Graph width will be set in graph settings.
@@ -87,7 +88,7 @@ notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Create/update a screen.
 - name: Create a new screen or update an existing screen's items 5 in a row
   local_action:
@@ -350,16 +351,24 @@ def main():
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
             timeout=dict(type='int', default=10),
-            screens=dict(type='list', elements='dict', required=True, options=dict(
-                screen_name=dict(type='str', required=True),
-                host_group=dict(type='str'),
-                state=dict(type='str', default='present', choices=['absent', 'present']),
-                graph_names=dict(type='list', elements='str'),
-                graph_width=dict(type='int', default=None),
-                graph_height=dict(type='int', default=None),
-                graphs_in_row=dict(type='int', default=3),
-                sort=dict(default=False, type='bool'),
-            ))
+            screens=dict(
+                type='list',
+                elements='dict',
+                required=True,
+                options=dict(
+                    screen_name=dict(type='str', required=True),
+                    host_group=dict(type='str'),
+                    state=dict(type='str', default='present', choices=['absent', 'present']),
+                    graph_names=dict(type='list', elements='str'),
+                    graph_width=dict(type='int', default=None),
+                    graph_height=dict(type='int', default=None),
+                    graphs_in_row=dict(type='int', default=3),
+                    sort=dict(default=False, type='bool'),
+                ),
+                required_if=[
+                    ['state', 'present', ['host_group']]
+                ]
+            )
         ),
         supports_check_mode=True
     )

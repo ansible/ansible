@@ -21,11 +21,14 @@ short_description: Run PostgreSQL queries
 description:
 - Runs arbitrary PostgreSQL queries.
 - Can run queries from SQL script files.
+- Does not run against backup files. Use M(postgresql_db) with I(state=restore)
+  to run queries on files made by pg_dump/pg_dumpall utilities.
 version_added: '2.8'
 options:
   query:
     description:
-    - SQL query to run. Variables can be escaped with psycopg2 syntax U(http://initd.org/psycopg/docs/usage.html).
+    - SQL query to run. Variables can be escaped with psycopg2 syntax
+      U(http://initd.org/psycopg/docs/usage.html).
     type: str
   positional_args:
     description:
@@ -66,6 +69,14 @@ options:
     type: bool
     default: no
     version_added: '2.9'
+  encoding:
+    description:
+    - Set the client encoding for the current session (e.g. C(UTF-8)).
+    - The default is the encoding defined by the database.
+    type: str
+    version_added: '2.10'
+seealso:
+- module: postgresql_db
 author:
 - Felix Archambault (@archf)
 - Andrew Klychkov (@Andersson007)
@@ -102,12 +113,13 @@ EXAMPLES = r'''
     db: test_db
     query: INSERT INTO test_table (id, story) VALUES (2, 'my_long_story')
 
-- name: Run queries from SQL script
+- name: Run queries from SQL script using UTF-8 client encoding for session
   postgresql_query:
     db: test_db
     path_to_script: /var/lib/pgsql/test.sql
     positional_args:
     - 1
+    encoding: UTF-8
 
 - name: Example of using autocommit parameter
   postgresql_query:
@@ -235,6 +247,7 @@ def main():
         session_role=dict(type='str'),
         path_to_script=dict(type='path'),
         autocommit=dict(type='bool', default=False),
+        encoding=dict(type='str'),
     )
 
     module = AnsibleModule(
@@ -248,12 +261,10 @@ def main():
     named_args = module.params["named_args"]
     path_to_script = module.params["path_to_script"]
     autocommit = module.params["autocommit"]
+    encoding = module.params["encoding"]
 
     if autocommit and module.check_mode:
         module.fail_json(msg="Using autocommit is mutually exclusive with check_mode")
-
-    if positional_args and named_args:
-        module.fail_json(msg="positional_args and named_args params are mutually exclusive")
 
     if path_to_script and query:
         module.fail_json(msg="path_to_script is mutually exclusive with query")
@@ -266,12 +277,15 @@ def main():
 
     if path_to_script:
         try:
-            query = open(path_to_script, 'r').read()
+            with open(path_to_script, 'rb') as f:
+                query = to_native(f.read())
         except Exception as e:
             module.fail_json(msg="Cannot read file '%s' : %s" % (path_to_script, to_native(e)))
 
     conn_params = get_conn_params(module, module.params)
     db_connection = connect_to_db(module, conn_params, autocommit=autocommit)
+    if encoding is not None:
+        db_connection.set_client_encoding(encoding)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     # Prepare args:
@@ -289,6 +303,9 @@ def main():
     try:
         cursor.execute(query, arguments)
     except Exception as e:
+        if not autocommit:
+            db_connection.rollback()
+
         cursor.close()
         db_connection.close()
         module.fail_json(msg="Cannot execute SQL '%s' %s: %s" % (query, arguments, to_native(e)))

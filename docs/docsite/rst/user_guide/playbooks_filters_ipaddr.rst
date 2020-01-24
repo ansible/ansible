@@ -268,24 +268,24 @@ In Debian-based systems, the network configuration stored in the ``/etc/network/
 In the above example, we needed to handle the fact that values were stored in
 a list, which is unusual in IPv4 networks, where only a single IP address can be
 set on an interface. However, IPv6 networks can have multiple IP addresses set
-on an interface::
+on an interface:
 
-  .. code-block:: jinja
+.. code-block:: jinja
 
     # Jinja2 template
     iface eth0 inet6 static
-      {% set ipv6_list = host_prefix | unique | ipv6('host/prefix') %}
-      address {{ ipv6_list[0] }}
-      {% if ipv6_list | length > 1 %}
-      {% for subnet in ipv6_list[1:] %}
-      up   /sbin/ip address add {{ subnet }} dev eth0
-      down /sbin/ip address del {{ subnet }} dev eth0
-      {% endfor %}
-      {% endif %}
+        {% set ipv6_list = host_prefix | unique | ipv6('host/prefix') %}
+        address {{ ipv6_list[0] }}
+        {% if ipv6_list | length > 1 %}
+        {% for subnet in ipv6_list[1:] %}
+        up   /sbin/ip address add {{ subnet }} dev eth0
+        down /sbin/ip address del {{ subnet }} dev eth0
+        {% endfor %}
+        {% endif %}
 
     # Generated configuration file
     iface eth0 inet6 static
-      address 2001:db8:deaf:be11::ef3/64
+        address 2001:db8:deaf:be11::ef3/64
 
 If needed, you can extract subnet and prefix information from the 'host/prefix' value::
 
@@ -433,6 +433,13 @@ To find the next nth usable IP address within a range, use ``next_nth_usable``::
     192.168.122.3
 
 In this example, ``next_nth_usable`` returns the second usable IP address for the given IP range.
+
+To find the peer IP address for a point to point link, use ``peer``::
+
+    # {{ '192.168.122.1/31' | ipaddr('peer') }}
+    192.168.122.0
+    # {{ '192.168.122.1/30' | ipaddr('peer') }}
+    192.168.122.2
 
 
 IP Math

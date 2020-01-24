@@ -106,7 +106,7 @@ virtualmachines:
                 - Virtual machine expiration date.
             returned: always
             type: str
-            sample: 2029-02-22T01:49:12.117974Z
+            sample: "2029-02-22T01:49:12.117974Z"
         image:
             description:
                 - Gallery image reference.

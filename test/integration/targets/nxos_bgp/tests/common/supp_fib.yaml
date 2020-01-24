@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bgp parameter test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: bgp_best_path_limit="false"
 - set_fact: bgp_best_path_limit="true"
@@ -14,14 +12,12 @@
 - name: "Disable feature BGP"
   nxos_feature:
     feature: bgp
-    provider: "{{ connection }}"
     state: disabled
   ignore_errors: yes
 
 - name: "Enable feature BGP"
   nxos_feature:
     feature: bgp
-    provider: "{{ connection }}"
     state: enabled
   ignore_errors: yes
 
@@ -33,7 +29,6 @@
       asn: 65535
       vrf: "{{ item }}"
       timer_bestpath_limit: 255
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -55,7 +50,6 @@
       asn: 65535
       vrf: "{{ item }}"
       timer_bestpath_limit: default
-      provider: "{{ connection }}"
     with_items: "{{ vrfs }}"
     register: result
 
@@ -76,7 +70,6 @@
     nxos_bgp: &set2
       asn: 65535
       suppress_fib_pending: false
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -94,7 +87,6 @@
     nxos_bgp: &reset2
       asn: 65535
       suppress_fib_pending: true
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -115,7 +107,6 @@
   - name: "Disable feature bgp"
     nxos_feature:
       feature: bgp
-      provider: "{{ connection }}"
       state: disabled
     ignore_errors: yes
 

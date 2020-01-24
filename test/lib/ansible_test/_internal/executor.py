@@ -292,6 +292,15 @@ def generate_egg_info(args):
     if args.explain:
         return
 
+    ansible_version = get_ansible_version()
+
+    # inclusion of the version number in the path is optional
+    # see: https://setuptools.readthedocs.io/en/latest/formats.html#filename-embedded-metadata
+    egg_info_path = ANSIBLE_LIB_ROOT + '-%s.egg-info' % ansible_version
+
+    if os.path.exists(egg_info_path):
+        return
+
     egg_info_path = ANSIBLE_LIB_ROOT + '.egg-info'
 
     if os.path.exists(egg_info_path):
@@ -1342,6 +1351,11 @@ def command_integration_script(args, target, test_dir, inventory_path, temp_path
         env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
         cwd = os.path.join(test_env.targets_dir, target.relative_path)
 
+        env.update(dict(
+            # support use of adhoc ansible commands in collections without specifying the fully qualified collection name
+            ANSIBLE_PLAYBOOK_DIR=cwd,
+        ))
+
         if env_config and env_config.env_vars:
             env.update(env_config.env_vars)
 
@@ -1444,6 +1458,11 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
 
             env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
             cwd = test_env.integration_dir
+
+            env.update(dict(
+                # support use of adhoc ansible commands in collections without specifying the fully qualified collection name
+                ANSIBLE_PLAYBOOK_DIR=cwd,
+            ))
 
             env['ANSIBLE_ROLES_PATH'] = test_env.targets_dir
 
@@ -1593,10 +1612,6 @@ def get_integration_filter(args, targets):
     :type targets: tuple[IntegrationTarget]
     :rtype: list[str]
     """
-    if args.tox:
-        # tox has the same exclusions as the local environment
-        return get_integration_local_filter(args, targets)
-
     if args.docker:
         return get_integration_docker_filter(args, targets)
 

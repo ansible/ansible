@@ -38,6 +38,9 @@ notes:
       DLDP working mode.
     - The default interval for sending Advertisement packets is 5 seconds, so you are advised to use time_interval=5 to
       restore default DLDP interval.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     enable:
         description:

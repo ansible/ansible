@@ -160,7 +160,7 @@ def main():
         create_alert(module, array)
     elif module.params['state'] == 'present' and exists and not enabled and module.params['enabled']:
         enable_alert(module, array)
-    elif module.params['state'] == 'present' and exists and enabled:
+    elif module.params['state'] == 'present' and exists and enabled and not module.params['enabled']:
         disable_alert(module, array)
     elif module.params['state'] == 'absent' and exists:
         delete_alert(module, array)

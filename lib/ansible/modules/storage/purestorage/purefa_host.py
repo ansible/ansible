@@ -87,7 +87,7 @@ EXAMPLES = r'''
 - name: Create new AIX host
   purefa_host:
     host: foo
-    personaility: aix
+    personality: aix
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
@@ -175,6 +175,20 @@ from ansible.module_utils.pure import get_system, purefa_argument_spec
 AC_REQUIRED_API_VERSION = '1.14'
 PREFERRED_ARRAY_API_VERSION = '1.15'
 NVME_API_VERSION = '1.16'
+
+
+def _is_cbs(module, array, is_cbs=False):
+    """Is the selected array a Cloud Block Store"""
+    model = ''
+    ct0_model = array.get_hardware('CT0')['model']
+    if ct0_model:
+        model = ct0_model
+    else:
+        ct1_model = array.get_hardware('CT1')['model']
+        model = ct1_model
+    if 'CBS' in model:
+        is_cbs = True
+    return is_cbs
 
 
 def _set_host_initiators(module, array):
@@ -417,6 +431,8 @@ def main():
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 
     array = get_system(module)
+    if _is_cbs(module, array) and module.params['wwns'] or module.params['nqn']:
+        module.fail_json(msg='Cloud block Store only support iSCSI as a protocol')
     api_version = array._list_available_rest_versions()
     if module.params['nqn'] is not None and NVME_API_VERSION not in api_version:
         module.fail_json(msg='NVMe protocol not supported. Please upgrade your array.')
@@ -436,12 +452,13 @@ def main():
                 if not all_connected_arrays:
                     module.fail_json(msg='No target arrays connected to source array. Setting preferred arrays not possible.')
                 else:
-                    current_arrays = []
+                    current_arrays = [array.get()['array_name']]
                     for current_array in range(0, len(all_connected_arrays)):
-                        current_arrays.append(all_connected_arrays[current_array]['array_name'])
+                        if all_connected_arrays[current_array]['type'] == "sync-replication":
+                            current_arrays.append(all_connected_arrays[current_array]['array_name'])
                 for array_to_connect in range(0, len(module.params['preferred_array'])):
                     if module.params['preferred_array'][array_to_connect] not in current_arrays:
-                        module.fail_json(msg='Array {0} not in existing array connections.'.format(module.params['preferred_array'][array_to_connect]))
+                        module.fail_json(msg='Array {0} is not a synchronously connected array.'.format(module.params['preferred_array'][array_to_connect]))
         except Exception:
             module.fail_json(msg='Failed to get existing array connections.')
 

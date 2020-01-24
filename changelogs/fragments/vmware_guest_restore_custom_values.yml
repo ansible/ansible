@@ -1,0 +1,2 @@
+bugfixes:
+- Revert customization of guest custom value behavior (https://github.com/ansible/ansible/issues/64291).

@@ -116,7 +116,7 @@ from ansible.module_utils.vmware import vmware_argument_spec
 
 
 def vmware_path(datastore, datacenter, path):
-    ''' Constructs a URL path that VSphere accepts reliably '''
+    ''' Constructs a URL path that vSphere accepts reliably '''
     path = "/folder/%s" % quote(path.lstrip("/"))
     # Due to a software bug in vSphere, it fails to handle ampersand in datacenter names
     # The solution is to do what vSphere does (when browsing) and double-encode ampersands, maybe others ?
@@ -194,7 +194,7 @@ def main():
         if isinstance(e.args, tuple):
             if len(e.args) > 0:
                 if e[0] == errno.ECONNRESET:
-                    # VSphere resets connection if the file is in use and cannot be replaced
+                    # vSphere resets connection if the file is in use and cannot be replaced
                     module.fail_json(msg='Failed to upload, image probably in use', status=None, errno=e[0], reason=to_native(e), url=url)
             else:
                 module.fail_json(msg=to_native(e))

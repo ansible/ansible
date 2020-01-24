@@ -403,7 +403,7 @@ def test_build_requirement_from_name_401_unauthorized(galaxy_server, monkeypatch
 
     monkeypatch.setattr(galaxy_server, 'get_collection_versions', mock_open)
 
-    expected = "error (HTTP Code: 401, Message: Unknown error returned by Galaxy server.)"
+    expected = "error (HTTP Code: 401, Message: msg)"
     with pytest.raises(api.GalaxyError, match=re.escape(expected)):
         collection.CollectionRequirement.from_name('namespace.collection', [galaxy_server, galaxy_server], '*', False)
 
@@ -609,6 +609,7 @@ def test_install_collection_with_download(galaxy_server, collection_artifact, mo
     mock_download.return_value = collection_tar
     monkeypatch.setattr(collection, '_download_file', mock_download)
 
+    monkeypatch.setattr(galaxy_server, '_available_api_versions', {'v2': 'v2/'})
     temp_path = os.path.join(os.path.split(collection_tar)[0], b'temp')
     os.makedirs(temp_path)
 

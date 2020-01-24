@@ -155,7 +155,7 @@ class Connection(object):
         try:
             response = json.loads(out)
         except ValueError:
-            params = list(args) + ['{0}={1}'.format(k, v) for k, v in iteritems(kwargs)]
+            params = [repr(arg) for arg in args] + ['{0}={1!r}'.format(k, v) for k, v in iteritems(kwargs)]
             params = ', '.join(params)
             raise ConnectionError(
                 "Unable to decode JSON from response to {0}({1}). Received '{2}'.".format(name, params, out)
@@ -163,6 +163,8 @@ class Connection(object):
 
         if response['id'] != reqid:
             raise ConnectionError('invalid json-rpc id received')
+        if "result_type" in response:
+            response["result"] = cPickle.loads(to_bytes(response["result"]))
 
         return response
 

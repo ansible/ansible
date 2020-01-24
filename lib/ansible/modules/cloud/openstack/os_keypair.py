@@ -38,8 +38,10 @@ options:
         with public_key.
   state:
     description:
-      - Should the resource be present or absent.
-    choices: [present, absent]
+      - Should the resource be present or absent. If state is replace and
+        the key exists but has different content, delete it and recreate it
+        with the new content.
+    choices: [present, absent, replace]
     default: present
   availability_zone:
     description:
@@ -100,7 +102,7 @@ def main():
         public_key=dict(default=None),
         public_key_file=dict(default=None),
         state=dict(default='present',
-                   choices=['absent', 'present']),
+                   choices=['absent', 'present', 'replace']),
     )
 
     module_kwargs = openstack_module_kwargs(
@@ -125,13 +127,18 @@ def main():
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, keypair))
 
-        if state == 'present':
+        if state in ('present', 'replace'):
             if keypair and keypair['name'] == name:
                 if public_key and (public_key != keypair['public_key']):
-                    module.fail_json(
-                        msg="Key name %s present but key hash not the same"
-                            " as offered. Delete key first." % name
-                    )
+                    if state == 'present':
+                        module.fail_json(
+                            msg="Key name %s present but key hash not the same"
+                                " as offered. Delete key first." % name
+                        )
+                    else:
+                        cloud.delete_keypair(name)
+                        keypair = cloud.create_keypair(name, public_key)
+                        changed = True
                 else:
                     changed = False
             else:

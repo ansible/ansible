@@ -431,6 +431,63 @@
     - cpuset_mems_3 is failed or cpuset_mems_3 is changed
 
 ####################################################################
+## cpus ############################################################
+####################################################################
+
+- name: cpus
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    cpus: 1
+    state: started
+  ignore_errors: yes
+  register: cpus_1
+
+- name: cpus (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    cpus: 1
+    state: started
+  ignore_errors: yes
+  register: cpus_2
+
+- name: cpus (change)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    cpus: 1.5
+    state: started
+    force_kill: yes
+  # This will fail if the system the test is run on doesn't have
+  # multiple MEMs available.
+  ignore_errors: yes
+  register: cpus_3
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - cpus_1 is changed
+    - cpus_2 is not changed and cpus_2 is not failed
+    - cpus_3 is failed or cpus_3 is changed
+  when: docker_py_version is version('2.3.0', '>=')
+- assert:
+    that:
+    - cpus_1 is failed
+    - "('version is ' ~ docker_py_version ~ ' ') in cpus_1.msg"
+    - "'Minimum version required is 2.3.0 ' in cpus_1.msg"
+  when: docker_py_version is version('2.3.0', '<')
+
+####################################################################
 ## debug ###########################################################
 ####################################################################
 
@@ -3375,12 +3432,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     - tmpfs_2 is not changed
     - tmpfs_3 is not changed
     - tmpfs_4 is changed
-
-####################################################################
-## trust_image_content #############################################
-####################################################################
-
-# TODO: - trust_image_content
 
 ####################################################################
 ## tty #############################################################

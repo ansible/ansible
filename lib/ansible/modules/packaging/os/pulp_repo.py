@@ -48,13 +48,15 @@ options:
     type: bool
     default: 'no'
     version_added: "2.8"
-  ca_cert:
+  feed_ca_cert:
     description:
       - CA certificate string used to validate the feed source SSL certificate.
         This can be the file content or the path to the file.
+        The ca_cert alias will be removed in Ansible 2.14.
     type: str
-    aliases: [ importer_ssl_ca_cert ]
-  client_cert:
+    aliases: [ importer_ssl_ca_cert, ca_cert ]
+  feed_client_cert:
+    version_added: "2.9.2"
     description:
       - Certificate used as the client certificate when synchronizing the
         repository. This is used to communicate authentication information to
@@ -62,13 +64,18 @@ options:
         certificate. The specified file may be the certificate itself or a
         single file containing both the certificate and private key. This can be
         the file content or the path to the file.
+      - If not specified the default value will come from client_cert. Which will
+        change in Ansible 2.14.
     type: str
     aliases: [ importer_ssl_client_cert ]
-  client_key:
+  feed_client_key:
+    version_added: "2.9.2"
     description:
       - Private key to the certificate specified in I(importer_ssl_client_cert),
         assuming it is not included in the certificate file itself. This can be
         the file content or the path to the file.
+      - If not specified the default value will come from client_key. Which will
+        change in Ansible 2.14.
     type: str
     aliases: [ importer_ssl_client_key ]
   name:
@@ -535,9 +542,9 @@ def main():
         add_export_distributor=dict(default=False, type='bool'),
         feed=dict(),
         generate_sqlite=dict(default=False, type='bool'),
-        ca_cert=dict(aliases=['importer_ssl_ca_cert']),
-        client_cert=dict(aliases=['importer_ssl_client_cert']),
-        client_key=dict(aliases=['importer_ssl_client_key']),
+        feed_ca_cert=dict(aliases=['importer_ssl_ca_cert', 'ca_cert'], deprecated_aliases=[dict(name='ca_cert', version='2.14')]),
+        feed_client_cert=dict(aliases=['importer_ssl_client_cert']),
+        feed_client_key=dict(aliases=['importer_ssl_client_key']),
         name=dict(required=True, aliases=['repo']),
         proxy_host=dict(),
         proxy_port=dict(),
@@ -561,9 +568,18 @@ def main():
     add_export_distributor = module.params['add_export_distributor']
     feed = module.params['feed']
     generate_sqlite = module.params['generate_sqlite']
-    importer_ssl_ca_cert = module.params['ca_cert']
-    importer_ssl_client_cert = module.params['client_cert']
-    importer_ssl_client_key = module.params['client_key']
+    importer_ssl_ca_cert = module.params['feed_ca_cert']
+    importer_ssl_client_cert = module.params['feed_client_cert']
+    if importer_ssl_client_cert is None and module.params['client_cert'] is not None:
+        importer_ssl_client_cert = module.params['client_cert']
+        module.deprecate("To specify client certificates to be used with the repo to sync, and not for communication with the "
+                         "Pulp instance, use the new options `feed_client_cert` and `feed_client_key` (available since "
+                         "Ansible 2.9.2). Until Ansible 2.14, the default value for `feed_client_cert` will be taken from "
+                         "`client_cert` if only the latter is specified", version="2.14")
+    importer_ssl_client_key = module.params['feed_client_key']
+    if importer_ssl_client_key is None and module.params['client_key'] is not None:
+        importer_ssl_client_key = module.params['client_key']
+        module.deprecate("In Ansible 2.9.2 `feed_client_key` option was added. Until 2.14 the default value will come from client_key option", version="2.14")
     proxy_host = module.params['proxy_host']
     proxy_port = module.params['proxy_port']
     proxy_username = module.params['proxy_username']

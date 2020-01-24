@@ -82,31 +82,31 @@ result:
     contains:
         _ref:
             description: The reference name of the object
-            type: string
+            type: str
         _locked:
             description: Whether or not the object is currently locked
-            type: boolean
+            type: bool
         _type:
             description: The type of the object
-            type: string
+            type: str
         name:
             description: The name of the object
-            type: string
+            type: str
         address:
              description: The ip4 address of the network/interface_address object
-             type: string
+             type: str
         address6:
              description: The ip6 address of the network/interface_address object
-             type: string
+             type: str
         comment:
             description: The comment string
-            type: string
+            type: str
         resolved:
              description: Whether or not the object is resolved
-             type: boolean
+             type: bool
         resolved6:
              description: Whether or not the object is resolved
-             type: boolean
+             type: bool
 """
 
 from ansible.module_utils.utm_utils import UTM, UTMModule

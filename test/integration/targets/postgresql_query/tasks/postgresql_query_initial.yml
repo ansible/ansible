@@ -48,7 +48,7 @@
   with_items:
   - SELECT version();
   - SELECT story FROM test_table
-  - WHERE id = %s;
+  - WHERE id = %s OR story = 'Данные';
   when: sql_file_created
 
 ##############
@@ -84,6 +84,7 @@
     path_to_script: '~{{ pg_user }}/test.sql'
     positional_args:
     - 1
+    encoding: UTF-8
   register: result
   ignore_errors: yes
   when: sql_file_created
@@ -91,7 +92,7 @@
 - assert:
     that:
     - result is not changed
-    - result.query == 'SELECT version();\nSELECT story FROM test_table\nWHERE id = 1;\n'
+    - result.query == "SELECT version();\nSELECT story FROM test_table\nWHERE id = 1 OR story = 'Данные';\n"
     - result.rowcount == 1
     - result.statusmessage == 'SELECT 1' or result.statusmessage == 'SELECT'
     - result.query_result[0].story == 'first'

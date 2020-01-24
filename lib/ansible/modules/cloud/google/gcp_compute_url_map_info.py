@@ -32,10 +32,8 @@ DOCUMENTATION = '''
 module: gcp_compute_url_map_info
 description:
 - Gather info for GCP UrlMap
-- This module was called C(gcp_compute_url_map_facts) before Ansible 2.9. The usage
-  has not changed.
 short_description: Gather info for GCP UrlMap
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -48,7 +46,54 @@ options:
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
     type: list
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
+notes:
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -74,7 +119,13 @@ resources:
       type: str
     defaultService:
       description:
-      - A reference to BackendService resource if none of the hostRules match.
+      - The BackendService resource to which traffic is directed if none of the hostRules
+        match. If defaultRouteAction is additionally specified, advanced routing actions
+        like URL Rewrites, etc. take effect prior to sending the request to the backend.
+        However, if defaultService is specified, defaultRouteAction cannot contain
+        any weightedBackendServices. Conversely, if routeAction specifies any weightedBackendServices,
+        service must not be specified. Only one of defaultService, defaultUrlRedirect
+        or defaultRouteAction.weightedBackendService must be set.
       returned: success
       type: dict
     description:
@@ -83,6 +134,85 @@ resources:
         the resource.
       returned: success
       type: str
+    id:
+      description:
+      - The unique identifier for the resource.
+      returned: success
+      type: int
+    fingerprint:
+      description:
+      - Fingerprint of this resource. A hash of the contents stored in this object.
+        This field is used in optimistic locking.
+      returned: success
+      type: str
+    headerAction:
+      description:
+      - Specifies changes to request and response headers that need to take effect
+        for the selected backendService. The headerAction specified here take effect
+        after headerAction specified under pathMatcher.
+      returned: success
+      type: complex
+      contains:
+        requestHeadersToAdd:
+          description:
+          - Headers to add to a matching request prior to forwarding the request to
+            the backendService.
+          returned: success
+          type: complex
+          contains:
+            headerName:
+              description:
+              - The name of the header.
+              returned: success
+              type: str
+            headerValue:
+              description:
+              - The value of the header to add.
+              returned: success
+              type: str
+            replace:
+              description:
+              - If false, headerValue is appended to any values that already exist
+                for the header. If true, headerValue is set for the header, discarding
+                any values that were set for that header.
+              returned: success
+              type: bool
+        requestHeadersToRemove:
+          description:
+          - A list of header names for headers that need to be removed from the request
+            prior to forwarding the request to the backendService.
+          returned: success
+          type: list
+        responseHeadersToAdd:
+          description:
+          - Headers to add the response prior to sending the response back to the
+            client.
+          returned: success
+          type: complex
+          contains:
+            headerName:
+              description:
+              - The name of the header.
+              returned: success
+              type: str
+            headerValue:
+              description:
+              - The value of the header to add.
+              returned: success
+              type: str
+            replace:
+              description:
+              - If false, headerValue is appended to any values that already exist
+                for the header. If true, headerValue is set for the header, discarding
+                any values that were set for that header.
+              returned: success
+              type: bool
+        responseHeadersToRemove:
+          description:
+          - A list of header names for headers that need to be removed from the response
+            prior to sending the response back to the client.
+          returned: success
+          type: list
     hostRules:
       description:
       - The list of HostRules to use against the URL.
@@ -91,7 +221,7 @@ resources:
       contains:
         description:
           description:
-          - An optional description of this HostRule. Provide this property when you
+          - An optional description of this resource. Provide this property when you
             create the resource.
           returned: success
           type: str
@@ -108,17 +238,6 @@ resources:
             if the hostRule matches the URL's host portion.
           returned: success
           type: str
-    id:
-      description:
-      - The unique identifier for the resource.
-      returned: success
-      type: int
-    fingerprint:
-      description:
-      - Fingerprint of this resource. This field is used internally during updates
-        of this resource.
-      returned: success
-      type: str
     name:
       description:
       - Name of the resource. Provided by the client when the resource is created.
@@ -137,16 +256,97 @@ resources:
       contains:
         defaultService:
           description:
-          - A reference to a BackendService resource. This will be used if none of
-            the pathRules defined by this PathMatcher is matched by the URL's path
-            portion.
+          - 'The BackendService resource. This will be used if none of the pathRules
+            or routeRules defined by this PathMatcher are matched. For example, the
+            following are all valid URLs to a BackendService resource: - U(https://www.googleapis.com/compute/v1/projects/project/global/backendServices/backen)
+            dService - compute/v1/projects/project/global/backendServices/backendService
+            - global/backendServices/backendService If defaultRouteAction is additionally
+            specified, advanced routing actions like URL Rewrites, etc. take effect
+            prior to sending the request to the backend. However, if defaultService
+            is specified, defaultRouteAction cannot contain any weightedBackendServices.
+            Conversely, if defaultRouteAction specifies any weightedBackendServices,
+            defaultService must not be specified. Only one of defaultService, defaultUrlRedirect
+            or defaultRouteAction.weightedBackendService must be set. Authorization
+            requires one or more of the following Google IAM permissions on the specified
+            resource default_service: - compute.backendBuckets.use - compute.backendServices.use
+            .'
           returned: success
           type: dict
         description:
           description:
-          - An optional description of this resource.
+          - An optional description of this resource. Provide this property when you
+            create the resource.
           returned: success
           type: str
+        headerAction:
+          description:
+          - Specifies changes to request and response headers that need to take effect
+            for the selected backendService. HeaderAction specified here are applied
+            after the matching HttpRouteRule HeaderAction and before the HeaderAction
+            in the UrlMap .
+          returned: success
+          type: complex
+          contains:
+            requestHeadersToAdd:
+              description:
+              - Headers to add to a matching request prior to forwarding the request
+                to the backendService.
+              returned: success
+              type: complex
+              contains:
+                headerName:
+                  description:
+                  - The name of the header.
+                  returned: success
+                  type: str
+                headerValue:
+                  description:
+                  - The value of the header to add.
+                  returned: success
+                  type: str
+                replace:
+                  description:
+                  - If false, headerValue is appended to any values that already exist
+                    for the header. If true, headerValue is set for the header, discarding
+                    any values that were set for that header.
+                  returned: success
+                  type: bool
+            requestHeadersToRemove:
+              description:
+              - A list of header names for headers that need to be removed from the
+                request prior to forwarding the request to the backendService.
+              returned: success
+              type: list
+            responseHeadersToAdd:
+              description:
+              - Headers to add the response prior to sending the response back to
+                the client.
+              returned: success
+              type: complex
+              contains:
+                headerName:
+                  description:
+                  - The name of the header.
+                  returned: success
+                  type: str
+                headerValue:
+                  description:
+                  - The value of the header to add.
+                  returned: success
+                  type: str
+                replace:
+                  description:
+                  - If false, headerValue is appended to any values that already exist
+                    for the header. If true, headerValue is set for the header, discarding
+                    any values that were set for that header.
+                  returned: success
+                  type: bool
+            responseHeadersToRemove:
+              description:
+              - A list of header names for headers that need to be removed from the
+                response prior to sending the response back to the client.
+              returned: success
+              type: list
         name:
           description:
           - The name to which this PathMatcher is referred by the HostRule.
@@ -154,10 +354,28 @@ resources:
           type: str
         pathRules:
           description:
-          - The list of path rules.
+          - 'The list of path rules. Use this list instead of routeRules when routing
+            based on simple path matching is all that''s required. The order by which
+            path rules are specified does not matter. Matches are always done on the
+            longest-path-first basis. For example: a pathRule with a path /a/b/c/*
+            will match before /a/b/* irrespective of the order in which those paths
+            appear in this list. Within a given pathMatcher, only one of pathRules
+            or routeRules must be set.'
           returned: success
           type: complex
           contains:
+            service:
+              description:
+              - The backend service resource to which traffic is directed if this
+                rule is matched. If routeAction is additionally specified, advanced
+                routing actions like URL Rewrites, etc. take effect prior to sending
+                the request to the backend. However, if service is specified, routeAction
+                cannot contain any weightedBackendService s. Conversely, if routeAction
+                specifies any weightedBackendServices, service must not be specified.
+                Only one of urlRedirect, service or routeAction.weightedBackendService
+                must be set.
+              returned: success
+              type: dict
             paths:
               description:
               - 'The list of path patterns to match. Each must start with / and the
@@ -166,15 +384,1183 @@ resources:
                 ? or #, and those chars are not allowed here.'
               returned: success
               type: list
+            routeAction:
+              description:
+              - In response to a matching path, the load balancer performs advanced
+                routing actions like URL rewrites, header transformations, etc. prior
+                to forwarding the request to the selected backend. If routeAction
+                specifies any weightedBackendServices, service must not be set. Conversely
+                if service is set, routeAction cannot contain any weightedBackendServices.
+                Only one of routeAction or urlRedirect must be set.
+              returned: success
+              type: complex
+              contains:
+                corsPolicy:
+                  description:
+                  - The specification for allowing client side cross-origin requests.
+                    Please see W3C Recommendation for Cross Origin Resource Sharing
+                    .
+                  returned: success
+                  type: complex
+                  contains:
+                    allowCredentials:
+                      description:
+                      - In response to a preflight request, setting this to true indicates
+                        that the actual request can include user credentials. This
+                        translates to the Access- Control-Allow-Credentials header.
+                        Defaults to false.
+                      returned: success
+                      type: bool
+                    allowHeaders:
+                      description:
+                      - Specifies the content for the Access-Control-Allow-Headers
+                        header.
+                      returned: success
+                      type: list
+                    allowMethods:
+                      description:
+                      - Specifies the content for the Access-Control-Allow-Methods
+                        header.
+                      returned: success
+                      type: list
+                    allowOriginRegexes:
+                      description:
+                      - Specifies the regualar expression patterns that match allowed
+                        origins. For regular expression grammar please see en.cppreference.com/w/cpp/regex/ecmascript
+                        An origin is allowed if it matches either allow_origins or
+                        allow_origin_regex.
+                      returned: success
+                      type: list
+                    allowOrigins:
+                      description:
+                      - Specifies the list of origins that will be allowed to do CORS
+                        requests. An origin is allowed if it matches either allow_origins
+                        or allow_origin_regex.
+                      returned: success
+                      type: list
+                    disabled:
+                      description:
+                      - If true, specifies the CORS policy is disabled.
+                      returned: success
+                      type: bool
+                    exposeHeaders:
+                      description:
+                      - Specifies the content for the Access-Control-Expose-Headers
+                        header.
+                      returned: success
+                      type: list
+                    maxAge:
+                      description:
+                      - Specifies how long the results of a preflight request can
+                        be cached. This translates to the content for the Access-Control-Max-Age
+                        header.
+                      returned: success
+                      type: int
+                faultInjectionPolicy:
+                  description:
+                  - The specification for fault injection introduced into traffic
+                    to test the resiliency of clients to backend service failure.
+                    As part of fault injection, when clients send requests to a backend
+                    service, delays can be introduced by Loadbalancer on a percentage
+                    of requests before sending those request to the backend service.
+                    Similarly requests from clients can be aborted by the Loadbalancer
+                    for a percentage of requests. timeout and retry_policy will be
+                    ignored by clients that are configured with a fault_injection_policy.
+                  returned: success
+                  type: complex
+                  contains:
+                    abort:
+                      description:
+                      - The specification for how client requests are aborted as part
+                        of fault injection.
+                      returned: success
+                      type: complex
+                      contains:
+                        httpStatus:
+                          description:
+                          - The HTTP status code used to abort the request. The value
+                            must be between 200 and 599 inclusive.
+                          returned: success
+                          type: int
+                        percentage:
+                          description:
+                          - The percentage of traffic (connections/operations/requests)
+                            which will be aborted as part of fault injection. The
+                            value must be between 0.0 and 100.0 inclusive.
+                          returned: success
+                          type: str
+                    delay:
+                      description:
+                      - The specification for how client requests are delayed as part
+                        of fault injection, before being sent to a backend service.
+                      returned: success
+                      type: complex
+                      contains:
+                        fixedDelay:
+                          description:
+                          - Specifies the value of the fixed delay interval.
+                          returned: success
+                          type: complex
+                          contains:
+                            nanos:
+                              description:
+                              - Span of time that's a fraction of a second at nanosecond
+                                resolution. Durations less than one second are represented
+                                with a 0 `seconds` field and a positive `nanos` field.
+                                Must be from 0 to 999,999,999 inclusive.
+                              returned: success
+                              type: int
+                            seconds:
+                              description:
+                              - Span of time at a resolution of a second. Must be
+                                from 0 to 315,576,000,000 inclusive.
+                              returned: success
+                              type: str
+                        percentage:
+                          description:
+                          - The percentage of traffic (connections/operations/requests)
+                            on which delay will be introduced as part of fault injection.
+                            The value must be between 0.0 and 100.0 inclusive.
+                          returned: success
+                          type: str
+                requestMirrorPolicy:
+                  description:
+                  - Specifies the policy on how requests intended for the route's
+                    backends are shadowed to a separate mirrored backend service.
+                    Loadbalancer does not wait for responses from the shadow service.
+                    Prior to sending traffic to the shadow service, the host / authority
+                    header is suffixed with -shadow.
+                  returned: success
+                  type: complex
+                  contains:
+                    backendService:
+                      description:
+                      - The BackendService resource being mirrored to.
+                      returned: success
+                      type: dict
+                retryPolicy:
+                  description:
+                  - Specifies the retry policy associated with this route.
+                  returned: success
+                  type: complex
+                  contains:
+                    numRetries:
+                      description:
+                      - Specifies the allowed number retries. This number must be
+                        > 0.
+                      returned: success
+                      type: int
+                    perTryTimeout:
+                      description:
+                      - Specifies a non-zero timeout per retry attempt.
+                      returned: success
+                      type: complex
+                      contains:
+                        nanos:
+                          description:
+                          - Span of time that's a fraction of a second at nanosecond
+                            resolution. Durations less than one second are represented
+                            with a 0 `seconds` field and a positive `nanos` field.
+                            Must be from 0 to 999,999,999 inclusive.
+                          returned: success
+                          type: int
+                        seconds:
+                          description:
+                          - Span of time at a resolution of a second. Must be from
+                            0 to 315,576,000,000 inclusive.
+                          returned: success
+                          type: str
+                    retryConditions:
+                      description:
+                      - 'Specifies one or more conditions when this retry rule applies.
+                        Valid values are: - 5xx: Loadbalancer will attempt a retry
+                        if the backend service responds with any 5xx response code,
+                        or if the backend service does not respond at all, example:
+                        disconnects, reset, read timeout, connection failure, and
+                        refused streams.'
+                      - "- gateway-error: Similar to 5xx, but only applies to response
+                        codes 502, 503 or 504."
+                      - "- connect-failure: Loadbalancer will retry on failures connecting
+                        to backend services, for example due to connection timeouts."
+                      - "- retriable-4xx: Loadbalancer will retry for retriable 4xx
+                        response codes."
+                      - Currently the only retriable error supported is 409.
+                      - "- refused-stream: Loadbalancer will retry if the backend
+                        service resets the stream with a REFUSED_STREAM error code.
+                        This reset type indicates that it is safe to retry."
+                      - "- cancelled: Loadbalancer will retry if the gRPC status code
+                        in the response header is set to cancelled - deadline-exceeded:
+                        Loadbalancer will retry if the gRPC status code in the response
+                        header is set to deadline-exceeded - resource-exhausted: Loadbalancer
+                        will retry if the gRPC status code in the response header
+                        is set to resource-exhausted - unavailable: Loadbalancer will
+                        retry if the gRPC status code in the response header is set
+                        to unavailable ."
+                      returned: success
+                      type: list
+                timeout:
+                  description:
+                  - Specifies the timeout for the selected route. Timeout is computed
+                    from the time the request is has been fully processed (i.e. end-of-stream)
+                    up until the response has been completely processed. Timeout includes
+                    all retries. If not specified, the default value is 15 seconds.
+                  returned: success
+                  type: complex
+                  contains:
+                    nanos:
+                      description:
+                      - Span of time that's a fraction of a second at nanosecond resolution.
+                        Durations less than one second are represented with a 0 `seconds`
+                        field and a positive `nanos` field. Must be from 0 to 999,999,999
+                        inclusive.
+                      returned: success
+                      type: int
+                    seconds:
+                      description:
+                      - Span of time at a resolution of a second. Must be from 0 to
+                        315,576,000,000 inclusive.
+                      returned: success
+                      type: str
+                urlRewrite:
+                  description:
+                  - The spec to modify the URL of the request, prior to forwarding
+                    the request to the matched service .
+                  returned: success
+                  type: complex
+                  contains:
+                    hostRewrite:
+                      description:
+                      - Prior to forwarding the request to the selected service, the
+                        request's host header is replaced with contents of hostRewrite.
+                        The value must be between 1 and 255 characters.
+                      returned: success
+                      type: str
+                    pathPrefixRewrite:
+                      description:
+                      - Prior to forwarding the request to the selected backend service,
+                        the matching portion of the request's path is replaced by
+                        pathPrefixRewrite. The value must be between 1 and 1024 characters.
+                      returned: success
+                      type: str
+                weightedBackendServices:
+                  description:
+                  - A list of weighted backend services to send traffic to when a
+                    route match occurs. The weights determine the fraction of traffic
+                    that flows to their corresponding backend service. If all traffic
+                    needs to go to a single backend service, there must be one weightedBackendService
+                    with weight set to a non 0 number. Once a backendService is identified
+                    and before forwarding the request to the backend service, advanced
+                    routing actions like Url rewrites and header transformations are
+                    applied depending on additional settings specified in this HttpRouteAction.
+                  returned: success
+                  type: complex
+                  contains:
+                    backendService:
+                      description:
+                      - The default BackendService resource. Before forwarding the
+                        request to backendService, the loadbalancer applies any relevant
+                        headerActions specified as part of this backendServiceWeight.
+                      returned: success
+                      type: dict
+                    headerAction:
+                      description:
+                      - Specifies changes to request and response headers that need
+                        to take effect for the selected backendService. headerAction
+                        specified here take effect before headerAction in the enclosing
+                        HttpRouteRule, PathMatcher and UrlMap.
+                      returned: success
+                      type: complex
+                      contains:
+                        requestHeadersToAdd:
+                          description:
+                          - Headers to add to a matching request prior to forwarding
+                            the request to the backendService.
+                          returned: success
+                          type: complex
+                          contains:
+                            headerName:
+                              description:
+                              - The name of the header.
+                              returned: success
+                              type: str
+                            headerValue:
+                              description:
+                              - The value of the header to add.
+                              returned: success
+                              type: str
+                            replace:
+                              description:
+                              - If false, headerValue is appended to any values that
+                                already exist for the header. If true, headerValue
+                                is set for the header, discarding any values that
+                                were set for that header.
+                              returned: success
+                              type: bool
+                        requestHeadersToRemove:
+                          description:
+                          - A list of header names for headers that need to be removed
+                            from the request prior to forwarding the request to the
+                            backendService.
+                          returned: success
+                          type: list
+                        responseHeadersToAdd:
+                          description:
+                          - Headers to add the response prior to sending the response
+                            back to the client.
+                          returned: success
+                          type: complex
+                          contains:
+                            headerName:
+                              description:
+                              - The name of the header.
+                              returned: success
+                              type: str
+                            headerValue:
+                              description:
+                              - The value of the header to add.
+                              returned: success
+                              type: str
+                            replace:
+                              description:
+                              - If false, headerValue is appended to any values that
+                                already exist for the header. If true, headerValue
+                                is set for the header, discarding any values that
+                                were set for that header.
+                              returned: success
+                              type: bool
+                        responseHeadersToRemove:
+                          description:
+                          - A list of header names for headers that need to be removed
+                            from the response prior to sending the response back to
+                            the client.
+                          returned: success
+                          type: list
+                    weight:
+                      description:
+                      - Specifies the fraction of traffic sent to backendService,
+                        computed as weight / (sum of all weightedBackendService weights
+                        in routeAction) . The selection of a backend service is determined
+                        only for new traffic. Once a user's request has been directed
+                        to a backendService, subsequent requests will be sent to the
+                        same backendService as determined by the BackendService's
+                        session affinity policy.
+                      - The value must be between 0 and 1000 .
+                      returned: success
+                      type: int
+            urlRedirect:
+              description:
+              - When a path pattern is matched, the request is redirected to a URL
+                specified by urlRedirect. If urlRedirect is specified, service or
+                routeAction must not be set.
+              returned: success
+              type: complex
+              contains:
+                hostRedirect:
+                  description:
+                  - The host that will be used in the redirect response instead of
+                    the one that was supplied in the request. The value must be between
+                    1 and 255 characters.
+                  returned: success
+                  type: str
+                httpsRedirect:
+                  description:
+                  - If set to true, the URL scheme in the redirected request is set
+                    to https. If set to false, the URL scheme of the redirected request
+                    will remain the same as that of the request. This must only be
+                    set for UrlMaps used in TargetHttpProxys.
+                  - Setting this true for TargetHttpsProxy is not permitted. Defaults
+                    to false.
+                  returned: success
+                  type: bool
+                pathRedirect:
+                  description:
+                  - The path that will be used in the redirect response instead of
+                    the one that was supplied in the request. Only one of pathRedirect
+                    or prefixRedirect must be specified. The value must be between
+                    1 and 1024 characters.
+                  returned: success
+                  type: str
+                prefixRedirect:
+                  description:
+                  - The prefix that replaces the prefixMatch specified in the HttpRouteRuleMatch,
+                    retaining the remaining portion of the URL before redirecting
+                    the request.
+                  returned: success
+                  type: str
+                redirectResponseCode:
+                  description:
+                  - 'The HTTP Status code to use for this RedirectAction. Supported
+                    values are: - MOVED_PERMANENTLY_DEFAULT, which is the default
+                    value and corresponds to 301.'
+                  - "- FOUND, which corresponds to 302."
+                  - "- SEE_OTHER which corresponds to 303."
+                  - "- TEMPORARY_REDIRECT, which corresponds to 307. In this case,
+                    the request method will be retained."
+                  - "- PERMANENT_REDIRECT, which corresponds to 308. In this case,
+                    the request method will be retained."
+                  returned: success
+                  type: str
+                stripQuery:
+                  description:
+                  - If set to true, any accompanying query portion of the original
+                    URL is removed prior to redirecting the request. If set to false,
+                    the query portion of the original URL is retained.
+                  returned: success
+                  type: bool
+        routeRules:
+          description:
+          - 'The list of ordered HTTP route rules. Use this list instead of pathRules
+            when advanced route matching and routing actions are desired. The order
+            of specifying routeRules matters: the first rule that matches will cause
+            its specified routing action to take effect. Within a given pathMatcher,
+            only one of pathRules or routeRules must be set. routeRules are not supported
+            in UrlMaps intended for External load balancers.'
+          returned: success
+          type: complex
+          contains:
+            priority:
+              description:
+              - For routeRules within a given pathMatcher, priority determines the
+                order in which load balancer will interpret routeRules. RouteRules
+                are evaluated in order of priority, from the lowest to highest number.
+                The priority of a rule decreases as its number increases (1, 2, 3,
+                N+1). The first rule that matches the request is applied.
+              - You cannot configure two or more routeRules with the same priority.
+              - Priority for each rule must be set to a number between 0 and 2147483647
+                inclusive.
+              - Priority numbers can have gaps, which enable you to add or remove
+                rules in the future without affecting the rest of the rules. For example,
+                1, 2, 3, 4, 5, 9, 12, 16 is a valid series of priority numbers to
+                which you could add rules numbered from 6 to 8, 10 to 11, and 13 to
+                15 in the future without any impact on existing rules.
+              returned: success
+              type: int
             service:
               description:
-              - A reference to the BackendService resource if this rule is matched.
+              - The backend service resource to which traffic is directed if this
+                rule is matched. If routeAction is additionally specified, advanced
+                routing actions like URL Rewrites, etc. take effect prior to sending
+                the request to the backend. However, if service is specified, routeAction
+                cannot contain any weightedBackendService s. Conversely, if routeAction
+                specifies any weightedBackendServices, service must not be specified.
+                Only one of urlRedirect, service or routeAction.weightedBackendService
+                must be set.
               returned: success
               type: dict
+            headerAction:
+              description:
+              - Specifies changes to request and response headers that need to take
+                effect for the selected backendService. The headerAction specified
+                here are applied before the matching pathMatchers[].headerAction and
+                after pathMatchers[].routeRules[].r outeAction.weightedBackendService.backendServiceWeightAction[].headerAction
+                .
+              returned: success
+              type: complex
+              contains:
+                requestHeadersToAdd:
+                  description:
+                  - Headers to add to a matching request prior to forwarding the request
+                    to the backendService.
+                  returned: success
+                  type: complex
+                  contains:
+                    headerName:
+                      description:
+                      - The name of the header.
+                      returned: success
+                      type: str
+                    headerValue:
+                      description:
+                      - The value of the header to add.
+                      returned: success
+                      type: str
+                    replace:
+                      description:
+                      - If false, headerValue is appended to any values that already
+                        exist for the header. If true, headerValue is set for the
+                        header, discarding any values that were set for that header.
+                      returned: success
+                      type: bool
+                requestHeadersToRemove:
+                  description:
+                  - A list of header names for headers that need to be removed from
+                    the request prior to forwarding the request to the backendService.
+                  returned: success
+                  type: list
+                responseHeadersToAdd:
+                  description:
+                  - Headers to add the response prior to sending the response back
+                    to the client.
+                  returned: success
+                  type: complex
+                  contains:
+                    headerName:
+                      description:
+                      - The name of the header.
+                      returned: success
+                      type: str
+                    headerValue:
+                      description:
+                      - The value of the header to add.
+                      returned: success
+                      type: str
+                    replace:
+                      description:
+                      - If false, headerValue is appended to any values that already
+                        exist for the header. If true, headerValue is set for the
+                        header, discarding any values that were set for that header.
+                      returned: success
+                      type: bool
+                responseHeadersToRemove:
+                  description:
+                  - A list of header names for headers that need to be removed from
+                    the response prior to sending the response back to the client.
+                  returned: success
+                  type: list
+            matchRules:
+              description:
+              - The rules for determining a match.
+              returned: success
+              type: complex
+              contains:
+                fullPathMatch:
+                  description:
+                  - For satifying the matchRule condition, the path of the request
+                    must exactly match the value specified in fullPathMatch after
+                    removing any query parameters and anchor that may be part of the
+                    original URL. FullPathMatch must be between 1 and 1024 characters.
+                    Only one of prefixMatch, fullPathMatch or regexMatch must be specified.
+                  returned: success
+                  type: str
+                headerMatches:
+                  description:
+                  - Specifies a list of header match criteria, all of which must match
+                    corresponding headers in the request.
+                  returned: success
+                  type: complex
+                  contains:
+                    exactMatch:
+                      description:
+                      - The value should exactly match contents of exactMatch. Only
+                        one of exactMatch, prefixMatch, suffixMatch, regexMatch, presentMatch
+                        or rangeMatch must be set.
+                      returned: success
+                      type: str
+                    headerName:
+                      description:
+                      - The name of the HTTP header to match. For matching against
+                        the HTTP request's authority, use a headerMatch with the header
+                        name ":authority". For matching a request's method, use the
+                        headerName ":method".
+                      returned: success
+                      type: str
+                    invertMatch:
+                      description:
+                      - If set to false, the headerMatch is considered a match if
+                        the match criteria above are met. If set to true, the headerMatch
+                        is considered a match if the match criteria above are NOT
+                        met. Defaults to false.
+                      returned: success
+                      type: bool
+                    prefixMatch:
+                      description:
+                      - The value of the header must start with the contents of prefixMatch.
+                        Only one of exactMatch, prefixMatch, suffixMatch, regexMatch,
+                        presentMatch or rangeMatch must be set.
+                      returned: success
+                      type: str
+                    presentMatch:
+                      description:
+                      - A header with the contents of headerName must exist. The match
+                        takes place whether or not the request's header has a value
+                        or not. Only one of exactMatch, prefixMatch, suffixMatch,
+                        regexMatch, presentMatch or rangeMatch must be set.
+                      returned: success
+                      type: bool
+                    rangeMatch:
+                      description:
+                      - The header value must be an integer and its value must be
+                        in the range specified in rangeMatch. If the header does not
+                        contain an integer, number or is empty, the match fails. For
+                        example for a range [-5, 0] - -3 will match. - 0 will not
+                        match. - 0.25 will not match. - -3someString will not match.
+                        Only one of exactMatch, prefixMatch, suffixMatch, regexMatch,
+                        presentMatch or rangeMatch must be set.
+                      returned: success
+                      type: complex
+                      contains:
+                        rangeEnd:
+                          description:
+                          - The end of the range (exclusive).
+                          returned: success
+                          type: int
+                        rangeStart:
+                          description:
+                          - The start of the range (inclusive).
+                          returned: success
+                          type: int
+                    regexMatch:
+                      description:
+                      - 'The value of the header must match the regualar expression
+                        specified in regexMatch. For regular expression grammar, please
+                        see: en.cppreference.com/w/cpp/regex/ecmascript For matching
+                        against a port specified in the HTTP request, use a headerMatch
+                        with headerName set to PORT and a regular expression that
+                        satisfies the RFC2616 Host header''s port specifier.'
+                      - Only one of exactMatch, prefixMatch, suffixMatch, regexMatch,
+                        presentMatch or rangeMatch must be set.
+                      returned: success
+                      type: str
+                    suffixMatch:
+                      description:
+                      - The value of the header must end with the contents of suffixMatch.
+                        Only one of exactMatch, prefixMatch, suffixMatch, regexMatch,
+                        presentMatch or rangeMatch must be set.
+                      returned: success
+                      type: str
+                ignoreCase:
+                  description:
+                  - Specifies that prefixMatch and fullPathMatch matches are case
+                    sensitive.
+                  - Defaults to false.
+                  returned: success
+                  type: bool
+                metadataFilters:
+                  description:
+                  - Opaque filter criteria used by Loadbalancer to restrict routing
+                    configuration to a limited set xDS compliant clients. In their
+                    xDS requests to Loadbalancer, xDS clients present node metadata.
+                    If a match takes place, the relevant routing configuration is
+                    made available to those proxies. For each metadataFilter in this
+                    list, if its filterMatchCriteria is set to MATCH_ANY, at least
+                    one of the filterLabels must match the corresponding label provided
+                    in the metadata. If its filterMatchCriteria is set to MATCH_ALL,
+                    then all of its filterLabels must match with corresponding labels
+                    in the provided metadata. metadataFilters specified here can be
+                    overrides those specified in ForwardingRule that refers to this
+                    UrlMap. metadataFilters only applies to Loadbalancers that have
+                    their loadBalancingScheme set to INTERNAL_SELF_MANAGED.
+                  returned: success
+                  type: complex
+                  contains:
+                    filterLabels:
+                      description:
+                      - The list of label value pairs that must match labels in the
+                        provided metadata based on filterMatchCriteria This list must
+                        not be empty and can have at the most 64 entries.
+                      returned: success
+                      type: complex
+                      contains:
+                        name:
+                          description:
+                          - Name of metadata label. The name can have a maximum length
+                            of 1024 characters and must be at least 1 character long.
+                          returned: success
+                          type: str
+                        value:
+                          description:
+                          - The value of the label must match the specified value.
+                            value can have a maximum length of 1024 characters.
+                          returned: success
+                          type: str
+                    filterMatchCriteria:
+                      description:
+                      - 'Specifies how individual filterLabel matches within the list
+                        of filterLabels contribute towards the overall metadataFilter
+                        match. Supported values are: - MATCH_ANY: At least one of
+                        the filterLabels must have a matching label in the provided
+                        metadata.'
+                      - "- MATCH_ALL: All filterLabels must have matching labels in
+                        the provided metadata."
+                      returned: success
+                      type: str
+                prefixMatch:
+                  description:
+                  - For satifying the matchRule condition, the request's path must
+                    begin with the specified prefixMatch. prefixMatch must begin with
+                    a /. The value must be between 1 and 1024 characters. Only one
+                    of prefixMatch, fullPathMatch or regexMatch must be specified.
+                  returned: success
+                  type: str
+                queryParameterMatches:
+                  description:
+                  - Specifies a list of query parameter match criteria, all of which
+                    must match corresponding query parameters in the request.
+                  returned: success
+                  type: complex
+                  contains:
+                    exactMatch:
+                      description:
+                      - The queryParameterMatch matches if the value of the parameter
+                        exactly matches the contents of exactMatch. Only one of presentMatch,
+                        exactMatch and regexMatch must be set.
+                      returned: success
+                      type: str
+                    name:
+                      description:
+                      - The name of the query parameter to match. The query parameter
+                        must exist in the request, in the absence of which the request
+                        match fails.
+                      returned: success
+                      type: str
+                    presentMatch:
+                      description:
+                      - Specifies that the queryParameterMatch matches if the request
+                        contains the query parameter, irrespective of whether the
+                        parameter has a value or not. Only one of presentMatch, exactMatch
+                        and regexMatch must be set.
+                      returned: success
+                      type: bool
+                    regexMatch:
+                      description:
+                      - The queryParameterMatch matches if the value of the parameter
+                        matches the regular expression specified by regexMatch. For
+                        the regular expression grammar, please see en.cppreference.com/w/cpp/regex/ecmascript
+                        Only one of presentMatch, exactMatch and regexMatch must be
+                        set.
+                      returned: success
+                      type: str
+                regexMatch:
+                  description:
+                  - For satifying the matchRule condition, the path of the request
+                    must satisfy the regular expression specified in regexMatch after
+                    removing any query parameters and anchor supplied with the original
+                    URL. For regular expression grammar please see en.cppreference.com/w/cpp/regex/ecmascript
+                    Only one of prefixMatch, fullPathMatch or regexMatch must be specified.
+                  returned: success
+                  type: str
+            routeAction:
+              description:
+              - In response to a matching matchRule, the load balancer performs advanced
+                routing actions like URL rewrites, header transformations, etc. prior
+                to forwarding the request to the selected backend. If routeAction
+                specifies any weightedBackendServices, service must not be set. Conversely
+                if service is set, routeAction cannot contain any weightedBackendServices.
+                Only one of routeAction or urlRedirect must be set.
+              returned: success
+              type: complex
+              contains:
+                corsPolicy:
+                  description:
+                  - The specification for allowing client side cross-origin requests.
+                    Please see W3C Recommendation for Cross Origin Resource Sharing
+                    .
+                  returned: success
+                  type: complex
+                  contains:
+                    allowCredentials:
+                      description:
+                      - In response to a preflight request, setting this to true indicates
+                        that the actual request can include user credentials. This
+                        translates to the Access- Control-Allow-Credentials header.
+                        Defaults to false.
+                      returned: success
+                      type: bool
+                    allowHeaders:
+                      description:
+                      - Specifies the content for the Access-Control-Allow-Headers
+                        header.
+                      returned: success
+                      type: list
+                    allowMethods:
+                      description:
+                      - Specifies the content for the Access-Control-Allow-Methods
+                        header.
+                      returned: success
+                      type: list
+                    allowOriginRegexes:
+                      description:
+                      - Specifies the regualar expression patterns that match allowed
+                        origins. For regular expression grammar please see en.cppreference.com/w/cpp/regex/ecmascript
+                        An origin is allowed if it matches either allow_origins or
+                        allow_origin_regex.
+                      returned: success
+                      type: list
+                    allowOrigins:
+                      description:
+                      - Specifies the list of origins that will be allowed to do CORS
+                        requests. An origin is allowed if it matches either allow_origins
+                        or allow_origin_regex.
+                      returned: success
+                      type: list
+                    disabled:
+                      description:
+                      - If true, specifies the CORS policy is disabled.
+                      - which indicates that the CORS policy is in effect. Defaults
+                        to false.
+                      returned: success
+                      type: bool
+                    exposeHeaders:
+                      description:
+                      - Specifies the content for the Access-Control-Expose-Headers
+                        header.
+                      returned: success
+                      type: list
+                    maxAge:
+                      description:
+                      - Specifies how long the results of a preflight request can
+                        be cached. This translates to the content for the Access-Control-Max-Age
+                        header.
+                      returned: success
+                      type: int
+                faultInjectionPolicy:
+                  description:
+                  - The specification for fault injection introduced into traffic
+                    to test the resiliency of clients to backend service failure.
+                    As part of fault injection, when clients send requests to a backend
+                    service, delays can be introduced by Loadbalancer on a percentage
+                    of requests before sending those request to the backend service.
+                    Similarly requests from clients can be aborted by the Loadbalancer
+                    for a percentage of requests. timeout and retry_policy will be
+                    ignored by clients that are configured with a fault_injection_policy.
+                  returned: success
+                  type: complex
+                  contains:
+                    abort:
+                      description:
+                      - The specification for how client requests are aborted as part
+                        of fault injection.
+                      returned: success
+                      type: complex
+                      contains:
+                        httpStatus:
+                          description:
+                          - The HTTP status code used to abort the request. The value
+                            must be between 200 and 599 inclusive.
+                          returned: success
+                          type: int
+                        percentage:
+                          description:
+                          - The percentage of traffic (connections/operations/requests)
+                            which will be aborted as part of fault injection. The
+                            value must be between 0.0 and 100.0 inclusive.
+                          returned: success
+                          type: str
+                    delay:
+                      description:
+                      - The specification for how client requests are delayed as part
+                        of fault injection, before being sent to a backend service.
+                      returned: success
+                      type: complex
+                      contains:
+                        fixedDelay:
+                          description:
+                          - Specifies the value of the fixed delay interval.
+                          returned: success
+                          type: complex
+                          contains:
+                            nanos:
+                              description:
+                              - Span of time that's a fraction of a second at nanosecond
+                                resolution. Durations less than one second are represented
+                                with a 0 `seconds` field and a positive `nanos` field.
+                                Must be from 0 to 999,999,999 inclusive.
+                              returned: success
+                              type: int
+                            seconds:
+                              description:
+                              - Span of time at a resolution of a second. Must be
+                                from 0 to 315,576,000,000 inclusive.
+                              returned: success
+                              type: str
+                        percentage:
+                          description:
+                          - The percentage of traffic (connections/operations/requests)
+                            on which delay will be introduced as part of fault injection.
+                            The value must be between 0.0 and 100.0 inclusive.
+                          returned: success
+                          type: str
+                requestMirrorPolicy:
+                  description:
+                  - Specifies the policy on how requests intended for the route's
+                    backends are shadowed to a separate mirrored backend service.
+                    Loadbalancer does not wait for responses from the shadow service.
+                    Prior to sending traffic to the shadow service, the host / authority
+                    header is suffixed with -shadow.
+                  returned: success
+                  type: complex
+                  contains:
+                    backendService:
+                      description:
+                      - The BackendService resource being mirrored to.
+                      returned: success
+                      type: dict
+                retryPolicy:
+                  description:
+                  - Specifies the retry policy associated with this route.
+                  returned: success
+                  type: complex
+                  contains:
+                    numRetries:
+                      description:
+                      - Specifies the allowed number retries. This number must be
+                        > 0.
+                      returned: success
+                      type: int
+                    perTryTimeout:
+                      description:
+                      - Specifies a non-zero timeout per retry attempt.
+                      - If not specified, will use the timeout set in HttpRouteAction.
+                        If timeout in HttpRouteAction is not set, will use the largest
+                        timeout among all backend services associated with the route.
+                      returned: success
+                      type: complex
+                      contains:
+                        nanos:
+                          description:
+                          - Span of time that's a fraction of a second at nanosecond
+                            resolution. Durations less than one second are represented
+                            with a 0 `seconds` field and a positive `nanos` field.
+                            Must be from 0 to 999,999,999 inclusive.
+                          returned: success
+                          type: int
+                        seconds:
+                          description:
+                          - Span of time at a resolution of a second. Must be from
+                            0 to 315,576,000,000 inclusive.
+                          returned: success
+                          type: str
+                    retryConditions:
+                      description:
+                      - 'Specfies one or more conditions when this retry rule applies.
+                        Valid values are: - 5xx: Loadbalancer will attempt a retry
+                        if the backend service responds with any 5xx response code,
+                        or if the backend service does not respond at all, example:
+                        disconnects, reset, read timeout, connection failure, and
+                        refused streams.'
+                      - "- gateway-error: Similar to 5xx, but only applies to response
+                        codes 502, 503 or 504."
+                      - "- connect-failure: Loadbalancer will retry on failures connecting
+                        to backend services, for example due to connection timeouts."
+                      - "- retriable-4xx: Loadbalancer will retry for retriable 4xx
+                        response codes."
+                      - Currently the only retriable error supported is 409.
+                      - "- refused-stream: Loadbalancer will retry if the backend
+                        service resets the stream with a REFUSED_STREAM error code.
+                        This reset type indicates that it is safe to retry."
+                      - "- cancelled: Loadbalancer will retry if the gRPC status code
+                        in the response header is set to cancelled - deadline-exceeded:
+                        Loadbalancer will retry if the gRPC status code in the response
+                        header is set to deadline-exceeded - resource-exhausted: Loadbalancer
+                        will retry if the gRPC status code in the response header
+                        is set to resource-exhausted - unavailable: Loadbalancer will
+                        retry if the gRPC status code in the response header is set
+                        to unavailable ."
+                      returned: success
+                      type: list
+                timeout:
+                  description:
+                  - Specifies the timeout for the selected route. Timeout is computed
+                    from the time the request is has been fully processed (i.e. end-of-stream)
+                    up until the response has been completely processed. Timeout includes
+                    all retries. If not specified, the default value is 15 seconds.
+                  returned: success
+                  type: complex
+                  contains:
+                    nanos:
+                      description:
+                      - Span of time that's a fraction of a second at nanosecond resolution.
+                        Durations less than one second are represented with a 0 `seconds`
+                        field and a positive `nanos` field. Must be from 0 to 999,999,999
+                        inclusive.
+                      returned: success
+                      type: int
+                    seconds:
+                      description:
+                      - Span of time at a resolution of a second. Must be from 0 to
+                        315,576,000,000 inclusive.
+                      returned: success
+                      type: str
+                urlRewrite:
+                  description:
+                  - The spec to modify the URL of the request, prior to forwarding
+                    the request to the matched service .
+                  returned: success
+                  type: complex
+                  contains:
+                    hostRewrite:
+                      description:
+                      - Prior to forwarding the request to the selected service, the
+                        request's host header is replaced with contents of hostRewrite.
+                        The value must be between 1 and 255 characters.
+                      returned: success
+                      type: str
+                    pathPrefixRewrite:
+                      description:
+                      - Prior to forwarding the request to the selected backend service,
+                        the matching portion of the request's path is replaced by
+                        pathPrefixRewrite. The value must be between 1 and 1024 characters.
+                      returned: success
+                      type: str
+                weightedBackendServices:
+                  description:
+                  - A list of weighted backend services to send traffic to when a
+                    route match occurs. The weights determine the fraction of traffic
+                    that flows to their corresponding backend service. If all traffic
+                    needs to go to a single backend service, there must be one weightedBackendService
+                    with weight set to a non 0 number. Once a backendService is identified
+                    and before forwarding the request to the backend service, advanced
+                    routing actions like Url rewrites and header transformations are
+                    applied depending on additional settings specified in this HttpRouteAction.
+                  returned: success
+                  type: complex
+                  contains:
+                    backendService:
+                      description:
+                      - The default BackendService resource. Before forwarding the
+                        request to backendService, the loadbalancer applies any relevant
+                        headerActions specified as part of this backendServiceWeight.
+                      returned: success
+                      type: dict
+                    headerAction:
+                      description:
+                      - Specifies changes to request and response headers that need
+                        to take effect for the selected backendService. headerAction
+                        specified here take effect before headerAction in the enclosing
+                        HttpRouteRule, PathMatcher and UrlMap.
+                      returned: success
+                      type: complex
+                      contains:
+                        requestHeadersToAdd:
+                          description:
+                          - Headers to add to a matching request prior to forwarding
+                            the request to the backendService.
+                          returned: success
+                          type: complex
+                          contains:
+                            headerName:
+                              description:
+                              - The name of the header.
+                              returned: success
+                              type: str
+                            headerValue:
+                              description:
+                              - The value of the header to add.
+                              returned: success
+                              type: str
+                            replace:
+                              description:
+                              - If false, headerValue is appended to any values that
+                                already exist for the header. If true, headerValue
+                                is set for the header, discarding any values that
+                                were set for that header.
+                              returned: success
+                              type: bool
+                        requestHeadersToRemove:
+                          description:
+                          - A list of header names for headers that need to be removed
+                            from the request prior to forwarding the request to the
+                            backendService.
+                          returned: success
+                          type: list
+                        responseHeadersToAdd:
+                          description:
+                          - Headers to add the response prior to sending the response
+                            back to the client.
+                          returned: success
+                          type: complex
+                          contains:
+                            headerName:
+                              description:
+                              - The name of the header.
+                              returned: success
+                              type: str
+                            headerValue:
+                              description:
+                              - The value of the header to add.
+                              returned: success
+                              type: str
+                            replace:
+                              description:
+                              - If false, headerValue is appended to any values that
+                                already exist for the header. If true, headerValue
+                                is set for the header, discarding any values that
+                                were set for that header.
+                              returned: success
+                              type: bool
+                        responseHeadersToRemove:
+                          description:
+                          - A list of header names for headers that need to be removed
+                            from the response prior to sending the response back to
+                            the client.
+                          returned: success
+                          type: list
+                    weight:
+                      description:
+                      - Specifies the fraction of traffic sent to backendService,
+                        computed as weight / (sum of all weightedBackendService weights
+                        in routeAction) . The selection of a backend service is determined
+                        only for new traffic. Once a user's request has been directed
+                        to a backendService, subsequent requests will be sent to the
+                        same backendService as determined by the BackendService's
+                        session affinity policy.
+                      - The value must be between 0 and 1000 .
+                      returned: success
+                      type: int
+            urlRedirect:
+              description:
+              - When this rule is matched, the request is redirected to a URL specified
+                by urlRedirect. If urlRedirect is specified, service or routeAction
+                must not be set.
+              returned: success
+              type: complex
+              contains:
+                hostRedirect:
+                  description:
+                  - The host that will be used in the redirect response instead of
+                    the one that was supplied in the request. The value must be between
+                    1 and 255 characters.
+                  returned: success
+                  type: str
+                httpsRedirect:
+                  description:
+                  - If set to true, the URL scheme in the redirected request is set
+                    to https. If set to false, the URL scheme of the redirected request
+                    will remain the same as that of the request. This must only be
+                    set for UrlMaps used in TargetHttpProxys.
+                  - Setting this true for TargetHttpsProxy is not permitted. Defaults
+                    to false.
+                  returned: success
+                  type: bool
+                pathRedirect:
+                  description:
+                  - The path that will be used in the redirect response instead of
+                    the one that was supplied in the request. Only one of pathRedirect
+                    or prefixRedirect must be specified. The value must be between
+                    1 and 1024 characters.
+                  returned: success
+                  type: str
+                prefixRedirect:
+                  description:
+                  - The prefix that replaces the prefixMatch specified in the HttpRouteRuleMatch,
+                    retaining the remaining portion of the URL before redirecting
+                    the request.
+                  returned: success
+                  type: str
+                redirectResponseCode:
+                  description:
+                  - 'The HTTP Status code to use for this RedirectAction. Supported
+                    values are: - MOVED_PERMANENTLY_DEFAULT, which is the default
+                    value and corresponds to 301. - FOUND, which corresponds to 302.
+                    - SEE_OTHER which corresponds to 303. - TEMPORARY_REDIRECT, which
+                    corresponds to 307. In this case, the request method will be retained.
+                    - PERMANENT_REDIRECT, which corresponds to 308. In this case,
+                    the request method will be retained.'
+                  returned: success
+                  type: str
+                stripQuery:
+                  description:
+                  - If set to true, any accompanying query portion of the original
+                    URL is removed prior to redirecting the request. If set to false,
+                    the query portion of the original URL is retained. Defaults to
+                    false.
+                  returned: success
+                  type: bool
     tests:
       description:
-      - The list of expected URL mappings. Requests to update this UrlMap will succeed
-        only if all of the test cases pass.
+      - The list of expected URL mapping tests. Request to update this UrlMap will
+        succeed only if all of the test cases pass. You can specify a maximum of 100
+        tests per UrlMap.
       returned: success
       type: complex
       contains:
@@ -195,8 +1581,7 @@ resources:
           type: str
         service:
           description:
-          - A reference to expected BackendService resource the given URL should be
-            mapped to.
+          - Expected BackendService resource the given URL should be mapped to.
           returned: success
           type: dict
 '''
@@ -214,9 +1599,6 @@ import json
 
 def main():
     module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
-
-    if module._name == 'gcp_compute_url_map_facts':
-        module.deprecate("The 'gcp_compute_url_map_facts' module has been renamed to 'gcp_compute_url_map_info'", version='2.13')
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']

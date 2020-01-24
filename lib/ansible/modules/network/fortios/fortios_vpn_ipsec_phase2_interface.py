@@ -269,7 +269,7 @@ options:
             proposal:
                 description:
                     - Phase2 proposal.
-                type: str
+                type: list
                 choices:
                     - null-md5
                     - null-sha1
@@ -282,6 +282,57 @@ options:
                     - des-sha256
                     - des-sha384
                     - des-sha512
+                    - 3des-null
+                    - 3des-md5
+                    - 3des-sha1
+                    - 3des-sha256
+                    - 3des-sha384
+                    - 3des-sha512
+                    - aes128-null
+                    - aes128-md5
+                    - aes128-sha1
+                    - aes128-sha256
+                    - aes128-sha384
+                    - aes128-sha512
+                    - aes128gcm
+                    - aes192-null
+                    - aes192-md5
+                    - aes192-sha1
+                    - aes192-sha256
+                    - aes192-sha384
+                    - aes192-sha512
+                    - aes256-null
+                    - aes256-md5
+                    - aes256-sha1
+                    - aes256-sha256
+                    - aes256-sha384
+                    - aes256-sha512
+                    - aes256gcm
+                    - chacha20poly1305
+                    - aria128-null
+                    - aria128-md5
+                    - aria128-sha1
+                    - aria128-sha256
+                    - aria128-sha384
+                    - aria128-sha512
+                    - aria192-null
+                    - aria192-md5
+                    - aria192-sha1
+                    - aria192-sha256
+                    - aria192-sha384
+                    - aria192-sha512
+                    - aria256-null
+                    - aria256-md5
+                    - aria256-sha1
+                    - aria256-sha256
+                    - aria256-sha384
+                    - aria256-sha512
+                    - seed-null
+                    - seed-md5
+                    - seed-sha1
+                    - seed-sha256
+                    - seed-sha384
+                    - seed-sha512
             protocol:
                 description:
                     - Quick mode protocol selector (1 - 255 or 0 for all).
@@ -524,10 +575,25 @@ def filter_vpn_ipsec_phase2_interface_data(json):
     return dictionary
 
 
+def flatten_multilists_attributes(data):
+    multilist_attrs = [[u'proposal']]
+
+    for attr in multilist_attrs:
+        try:
+            path = "data['" + "']['".join(elem for elem in attr) + "']"
+            current_val = eval(path)
+            flattened_val = ' '.join(elem for elem in current_val)
+            exec(path + '= flattened_val')
+        except BaseException:
+            pass
+
+    return data
+
+
 def underscore_to_hyphen(data):
     if isinstance(data, list):
-        for elem in data:
-            elem = underscore_to_hyphen(elem)
+        for i, elem in enumerate(data):
+            data[i] = underscore_to_hyphen(elem)
     elif isinstance(data, dict):
         new_data = {}
         for k, v in data.items():
@@ -546,6 +612,7 @@ def vpn_ipsec_phase2_interface(data, fos):
     else:
         state = True
     vpn_ipsec_phase2_interface_data = data['vpn_ipsec_phase2_interface']
+    vpn_ipsec_phase2_interface_data = flatten_multilists_attributes(vpn_ipsec_phase2_interface_data)
     filtered_data = underscore_to_hyphen(filter_vpn_ipsec_phase2_interface_data(vpn_ipsec_phase2_interface_data))
 
     if state == "present":
@@ -636,11 +703,28 @@ def main():
                 "pfs": {"required": False, "type": "str",
                         "choices": ["enable", "disable"]},
                 "phase1name": {"required": False, "type": "str"},
-                "proposal": {"required": False, "type": "str",
+                "proposal": {"required": False, "type": "list",
                              "choices": ["null-md5", "null-sha1", "null-sha256",
                                          "null-sha384", "null-sha512", "des-null",
                                          "des-md5", "des-sha1", "des-sha256",
-                                         "des-sha384", "des-sha512"]},
+                                         "des-sha384", "des-sha512", "3des-null",
+                                         "3des-md5", "3des-sha1", "3des-sha256",
+                                         "3des-sha384", "3des-sha512", "aes128-null",
+                                         "aes128-md5", "aes128-sha1", "aes128-sha256",
+                                         "aes128-sha384", "aes128-sha512", "aes128gcm",
+                                         "aes192-null", "aes192-md5", "aes192-sha1",
+                                         "aes192-sha256", "aes192-sha384", "aes192-sha512",
+                                         "aes256-null", "aes256-md5", "aes256-sha1",
+                                         "aes256-sha256", "aes256-sha384", "aes256-sha512",
+                                         "aes256gcm", "chacha20poly1305", "aria128-null",
+                                         "aria128-md5", "aria128-sha1", "aria128-sha256",
+                                         "aria128-sha384", "aria128-sha512", "aria192-null",
+                                         "aria192-md5", "aria192-sha1", "aria192-sha256",
+                                         "aria192-sha384", "aria192-sha512", "aria256-null",
+                                         "aria256-md5", "aria256-sha1", "aria256-sha256",
+                                         "aria256-sha384", "aria256-sha512", "seed-null",
+                                         "seed-md5", "seed-sha1", "seed-sha256",
+                                         "seed-sha384", "seed-sha512"]},
                 "protocol": {"required": False, "type": "int"},
                 "replay": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]},

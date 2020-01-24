@@ -20,156 +20,193 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ali_instance
-version_added: "2.8"
-short_description: Create, Start, Stop, Restart or Terminate an Instance in ECS. Add or Remove Instance to/from a Security Group.
+version_added: '2.8'
+short_description: Create, start, stop, restart or terminate an instance in ECS, add or remove an instance to/from a security group
 description:
-    - Create, start, stop, restart, modify or terminate ecs instances.
-    - Add or remove ecs instances to/from security group.
+- Create, start, stop, restart, modify or terminate ecs instances.
+- Add or remove ecs instances to/from security group.
 options:
-    state:
-      description:
-        - The state of the instance after operating.
-      default: 'present'
-      choices: [ 'present', 'running', 'stopped', 'restarted', 'absent' ]
-    availability_zone:
-      description:
-        - Aliyun availability zone ID in which to launch the instance.
-          If it is not specified, it will be allocated by system automatically.
-      aliases: ['alicloud_zone']
-    image_id:
-      description:
-        - Image ID used to launch instances. Required when C(state=present) and creating new ECS instances.
-      aliases: [ 'image' ]
-    instance_type:
-      description:
-        - Instance type used to launch instances. Required when C(state=present) and creating new ECS instances.
-      aliases: ['type']
-    security_groups:
-      description:
-        - A list of security group IDs.
-    vswitch_id:
-      description:
-        - The subnet ID in which to launch the instances (VPC).
-      aliases: ['subnet_id']
-    instance_name:
-      description:
-        - The name of ECS instance, which is a string of 2 to 128 Chinese or English characters. It must begin with an
-          uppercase/lowercase letter or a Chinese character and can contain numerals, ".", "_" or "-".
-          It cannot begin with http:// or https://.
-      aliases: ['name']
+  state:
     description:
-      description:
-        - The description of ECS instance, which is a string of 2 to 256 characters. It cannot begin with http:// or https://.
-    internet_charge_type:
-      description:
-        - Internet charge type of ECS instance.
-      default: 'PayByBandwidth'
-      choices: ['PayByBandwidth', 'PayByTraffic']
-    max_bandwidth_in:
-      description:
-        - Maximum incoming bandwidth from the public network, measured in Mbps (Megabits per second).
-      default: 200
-    max_bandwidth_out:
-      description:
-        - Maximum outgoing bandwidth to the public network, measured in Mbps (Megabits per second).
-      default: 0
-    host_name:
-      description:
-        - Instance host name.
-    password:
-      description:
-        - The password to login instance. After rebooting instances, modified password will take effect.
-    system_disk_category:
-      description:
-        - Category of the system disk.
-      default: 'cloud_efficiency'
-      choices: ['cloud_efficiency', 'cloud_ssd']
-    system_disk_size:
-      description:
-        - Size of the system disk, in GB. The valid values are 40~500.
-      default: 40
-    system_disk_name:
-      description:
-        - Name of the system disk.
-    system_disk_description:
-      description:
-        - Description of the system disk.
-    count:
-      description:
-        - The number of the new instance. An integer value which indicates how many instances that match I(count_tag)
-          should be running. Instances are either created or terminated based on this value.
-      default: 1
-    count_tag:
-      description:
-      - I(count) determines how many instances based on a specific tag criteria should be present.
-        This can be expressed in multiple ways and is shown in the EXAMPLES section.
-        The specified count_tag must already exist or be passed in as the I(instance_tags) option.
-        If it is not specified, it will be replaced by I(instance_name).
-    allocate_public_ip:
-      description:
-        - Whether allocate a public ip for the new instance.
-      default: False
-      aliases: [ 'assign_public_ip' ]
-      type: bool
-    instance_charge_type:
-      description:
-        - The charge type of the instance.
-      choices: ['PrePaid', 'PostPaid']
-      default: 'PostPaid'
-    period:
-      description:
-        - The charge duration of the instance, in month. Required when C(instance_charge_type=PrePaid).
-        - The valid value are [1-9, 12, 24, 36].
-      default: 1
-    auto_renew:
-      description:
-        - Whether automate renew the charge of the instance.
-      type: bool
-      default: False
-    auto_renew_period:
-      description:
-        - The duration of the automatic renew the charge of the instance. Required when C(auto_renew=True).
-      choices: [1, 2, 3, 6, 12]
-    instance_ids:
-      description:
-        - A list of instance ids. It is required when need to operate existing instances.
-          If it is specified, I(count) will lose efficacy.
-    force:
-      description:
-        - Whether the current operation needs to be execute forcibly.
-      default: False
-      type: bool
-    instance_tags:
-      description:
-        - A hash/dictionaries of instance tags, to add to the new instance or for starting/stopping instance by tag. C({"key":"value"})
-      aliases: ["tags"]
-    key_name:
-      description:
-        - The name of key pair which is used to access ECS instance in SSH.
-      required: false
-      aliases: ['keypair']
-    user_data:
-      description:
-        - User-defined data to customize the startup behaviors of an ECS instance and to pass data into an ECS instance.
-          It only will take effect when launching the new ECS instances.
-      required: false
+    - The state of the instance after operating.
+    type: str
+    default: 'present'
+    choices: ['absent', 'present', 'restarted', 'running', 'stopped']
+  availability_zone:
+    description:
+    - Aliyun availability zone ID in which to launch the instance.
+    - If it is not specified, it will be allocated by system automatically.
+    aliases: ['alicloud_zone']
+    type: str
+  image_id:
+    description:
+    - Image ID used to launch instances.
+    - Required when I(state=present) and creating new ECS instances.
+    aliases: ['image']
+    type: str
+  instance_type:
+    description:
+    - Instance type used to launch instances.
+    - Required when I(state=present) and creating new ECS instances.
+    aliases: ['type']
+    type: str
+  security_groups:
+    description:
+    - A list of security group IDs.
+    type: list
+  vswitch_id:
+    description:
+    - The subnet ID in which to launch the instances (VPC).
+    aliases: ['subnet_id']
+    type: str
+  instance_name:
+    description:
+    - The name of ECS instance, which is a string of 2 to 128 Chinese or English characters.
+    - It must begin with an uppercase/lowercase letter or a Chinese character and
+      can contain numerals, ".", "_" or "-". It cannot begin with http:// or https://.
+    aliases: ['name']
+    type: str
+  description:
+    description:
+    - The description of ECS instance, which is a string of 2 to 256 characters.
+    - It cannot begin with http:// or https://.
+    type: str
+  internet_charge_type:
+    description:
+    - Internet charge type of ECS instance.
+    type: str
+    default: 'PayByBandwidth'
+    choices: ['PayByBandwidth', 'PayByTraffic']
+  max_bandwidth_in:
+    description:
+    - Maximum incoming bandwidth from the public network,
+      measured in Mbps (Megabits per second).
+    default: 200
+    type: int
+  max_bandwidth_out:
+    description:
+    - Maximum outgoing bandwidth to the public network, measured in Mbps (Megabits per second).
+    type: int
+    default: 0
+  host_name:
+    description:
+    - Instance host name.
+    type: str
+  password:
+    description:
+    - The password to login instance.
+    - After rebooting instances, modified password will take effect.
+    type: str
+  system_disk_category:
+    description:
+    - Category of the system disk.
+    type: str
+    default: 'cloud_efficiency'
+    choices: ['cloud_efficiency', 'cloud_ssd']
+  system_disk_size:
+    description:
+    - Size of the system disk, in GB. The valid values are 40~500.
+    type: int
+    default: 40
+  system_disk_name:
+    description:
+    - Name of the system disk.
+    type: str
+  system_disk_description:
+    description:
+    - Description of the system disk.
+    type: str
+  count:
+    description:
+    - The number of the new instance.
+    - Indicates how many instances that match I(count_tag) should be running.
+    - Instances are either created or terminated based on this value.
+    type: int
+    default: 1
+  count_tag:
+    description:
+    - Determines how many instances based on a specific tag criteria should be present.
+    - This can be expressed in multiple ways and is shown in the EXAMPLES section.
+    - The specified count_tag must already exist or be passed in as the I(instance_tags) option.
+    - If it is not specified, it will be replaced by I(instance_name).
+    type: str
+  allocate_public_ip:
+    description:
+    - Whether allocate a public ip for the new instance.
+    default: False
+    aliases: ['assign_public_ip']
+    type: bool
+  instance_charge_type:
+    description:
+    - The charge type of the instance.
+    type: str
+    choices: ['PrePaid', 'PostPaid']
+    default: 'PostPaid'
+  period:
+    description:
+    - The charge duration of the instance, in month.
+    - Required when I(instance_charge_type=PrePaid).
+    - The valid value are [1-9, 12, 24, 36].
+    type: int
+    default: 1
+  auto_renew:
+    description:
+    - Whether automate renew the charge of the instance.
+    type: bool
+    default: False
+  auto_renew_period:
+    description:
+    - The duration of the automatic renew the charge of the instance.
+    - Required when I(auto_renew=True).
+    type: int
+    choices: [1, 2, 3, 6, 12]
+  instance_ids:
+    description:
+    - A list of instance ids. It is required when need to operate existing instances.
+    - If it is specified, I(count) will lose efficacy.
+    type: list
+  force:
+    description:
+    - Whether the current operation needs to be execute forcibly.
+    default: False
+    type: bool
+  instance_tags:
+    description:
+    - A hash/dictionaries of instance tags, to add to the new instance or
+      for starting/stopping instance by tag (C({"key":"value"})).
+    aliases: ['tags']
+    type: dict
+  key_name:
+    description:
+    - The name of key pair which is used to access ECS instance in SSH.
+    type: str
+    required: false
+    aliases: ['keypair']
+  user_data:
+    description:
+    - User-defined data to customize the startup behaviors of an ECS instance and to pass data into an ECS instance.
+      It only will take effect when launching the new ECS instances.
+    required: false
+    type: str
 author:
-    - "He Guimin (@xiaozhu36)"
+- "He Guimin (@xiaozhu36)"
 requirements:
-    - "python >= 2.6"
-    - "footmark >= 1.1.16"
+- "python >= 2.6"
+- "footmark >= 1.1.16"
 extends_documentation_fragment:
-    - alicloud
+- alicloud
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # basic provisioning example vpc network
 - name: basic provisioning example
   hosts: localhost
@@ -259,9 +296,9 @@ EXAMPLES = '''
         security_groups: '{{ security_groups }}'
 '''
 
-RETURN = '''
+RETURN = r'''
 instances:
-    description: List of ECS instances
+    description: List of ECS instances.
     returned: always
     type: complex
     contains:
@@ -456,7 +493,7 @@ instances:
             type: str
             sample: 10.0.0.1
         public_ip_address:
-            description: The public IPv4 address assigned to the instance
+            description: The public IPv4 address assigned to the instance.
             returned: always
             type: str
             sample: 43.0.0.1
@@ -468,18 +505,19 @@ instances:
         security_groups:
             description: One or more security groups for the instance.
             returned: always
-            type: complex
+            type: list
+            elements: dict
             contains:
-                - group_id:
-                      description: The ID of the security group.
-                      returned: always
-                      type: str
-                      sample: sg-0123456
-                - group_name:
-                      description: The name of the security group.
-                      returned: always
-                      type: str
-                      sample: my-security-group
+                group_id:
+                    description: The ID of the security group.
+                    returned: always
+                    type: str
+                    sample: sg-0123456
+                group_name:
+                    description: The name of the security group.
+                    returned: always
+                    type: str
+                    sample: my-security-group
         status:
             description: The current status of the instance.
             returned: always
@@ -501,7 +539,7 @@ instances:
             type: dict
             sample: vpc-0011223344
 ids:
-    description: List of ECS instance IDs
+    description: List of ECS instance IDs.
     returned: always
     type: list
     sample: [i-12345er, i-3245fs]

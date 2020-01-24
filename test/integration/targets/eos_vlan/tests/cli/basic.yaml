@@ -6,7 +6,6 @@
       - no vlan 4000
       - no vlan 4001
       - no vlan 4002
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -16,7 +15,6 @@
       - switchport
       - no switchport access vlan 4000
     parents: interface Ethernet1
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -26,7 +24,6 @@
       - switchport
       - no switchport access vlan 4000
     parents: interface Ethernet2
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
 
@@ -35,7 +32,6 @@
     vlan_id: 4000
     name: vlan-4000
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -53,7 +49,6 @@
     vlan_id: 4000
     name: vlan-4000
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -70,7 +65,6 @@
     vlan_id: 4000
     name: vlan-4000-new
     state: suspend
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -89,7 +83,6 @@
     vlan_id: 4000
     name: vlan-4000-new
     state: suspend
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -105,7 +98,6 @@
   eos_vlan:
     vlan_id: 4000
     state: active
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -128,7 +120,6 @@
     associated_interfaces:
       - Ethernet1
       - Ethernet2
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -151,7 +142,6 @@
     interfaces:
       - Ethernet 1   # interface name space scenario
       - Ethernet 2   # interface name space scenario
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -169,7 +159,6 @@
     state: present
     associated_interfaces:
       - test
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -185,7 +174,6 @@
     state: present
     interfaces:
       - Ethernet1
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -205,7 +193,6 @@
     state: present
     interfaces:
       - Ethernet 1 # space scenario
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -223,7 +210,6 @@
       - {vlan_id: 4000, state: absent}
       - {vlan_id: 4001, name: vlan-4001}
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -243,7 +229,6 @@
       - {vlan_id: 4000, state: absent}
       - {vlan_id: 4001, name: vlan-4001}
     state: present
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -262,7 +247,6 @@
     name: vlan-4002
     state: present
     purge: yes
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result
@@ -283,7 +267,6 @@
     name: vlan-4002
     state: present
     purge: yes
-    authorize: yes
     provider: "{{ cli }}"
   become: yes
   register: result

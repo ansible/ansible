@@ -156,7 +156,7 @@ EXAMPLES = r'''
     group: foo
     mode: u+rw,g-wx,o-rwx
 
-- name: Copy a new "ntp.conf file into place, backing up the original if it differs from the copied version
+- name: Copy a new "ntp.conf" file into place, backing up the original if it differs from the copied version
   copy:
     src: /mine/ntp.conf
     dest: /etc/ntp.conf
@@ -485,6 +485,9 @@ def copy_common_dirs(src, dest, module):
         left_only_changed = copy_left_only(b_src_item_path, b_dest_item_path, module)
         if diff_files_changed or left_only_changed:
             changed = True
+
+        # recurse into subdirectory
+        changed = changed or copy_common_dirs(os.path.join(src, item), os.path.join(dest, item), module)
     return changed
 
 

@@ -1,0 +1,4 @@
+---
+instance_type: t2.micro
+linux_ami_name: amzn-ami-hvm-2018.03.0.20190611-x86_64-ebs
+windows_ami_name: Windows_Server-2019-English-Full-Base-2019.11.13

@@ -32,7 +32,7 @@ options:
       module will escape the arguments as necessary, it is recommended to use a
       string when dealing with MSI packages due to the unique escaping issues
       with msiexec.
-    type: str
+    type: raw
   chdir:
     description:
     - Set the specified path as the current working directory before installing
@@ -97,9 +97,9 @@ options:
       getting the uninstall information if C(state=absent).
     - You can find product ids for installed programs in the Windows registry
       editor either at
-      C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit
+      C(HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit
       programs at
-      C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall).
+      C(HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall).
     - This SHOULD be set when the package is not an MSI, or the path is a url
       or a network share and credential delegation is not being used. The
       C(creates_*) options can be used instead but is not recommended.

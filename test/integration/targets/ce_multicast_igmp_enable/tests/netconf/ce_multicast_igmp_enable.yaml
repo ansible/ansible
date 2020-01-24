@@ -1,0 +1,95 @@
+---
+- debug:
+    msg: "START ce_multicast_igmp_enable presented integration tests on connection={{ ansible_connection }}"
+# clean up before test 
+- name: clean up configuration with the exisiting running configuration
+  ce_multicast_igmp_enable: &absent
+    aftype: v4
+    features: vlan
+    vlan_id: 100
+    igmp: true
+    version: 2
+    proxy: true
+
+
+- name: present the provided configuration with the exisiting running configuration
+  ce_multicast_igmp_enable: &present
+    aftype: v4
+    features: vlan
+    vlan_id: 100
+    igmp: true
+    version: 2
+    proxy: true
+  register: result
+
+- name: Assert the configuration is reflected on host
+  assert:
+    that:
+      - "result['changed'] == true"
+
+- name: Get basic config by ce_netconf.
+  ce_netconf: &get_config
+    rpc: get
+    cfg_xml: "<filter type=\"subtree\">
+              <l2mc xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                <vlan>
+                  <l2McVlanCfgs>
+                    <l2McVlanCfg>
+                      <addrFamily></addrFamily>
+                      <vlanId></vlanId>
+                      <snoopingEnable></snoopingEnable>
+                      <version></version>
+                      <proxyEnable></proxyEnable>
+                    </l2McVlanCfg>
+                  </l2McVlanCfgs>
+                </vlan>
+              </l2mc>
+            </filter>"
+  register: result_xml
+
+
+- name: present the provided configuration with the existing running configuration (IDEMPOTENT)
+  ce_multicast_igmp_enable: *present
+  register: repeat
+
+- name: Assert that the previous task was idempotent
+  assert:
+    that:
+      - "repeat.changed == false"
+      - "'<addrFamily>ipv4unicast</addrFamily>' in result_xml.end_state.result"
+      - "'<vlanId>100</vlanId>' in result_xml.end_state.result"
+      - "'<snoopingEnable>true</snoopingEnable>' in result_xml.end_state.result"
+      - "'<version>2</version>' in result_xml.end_state.result"
+      - "'<proxyEnable>true</proxyEnable>' in result_xml.end_state.result"
+
+- name: absent the provided configuration with the exisiting running configuration
+  ce_multicast_igmp_enable: *absent
+  register: result
+
+
+- name: Assert the configuration is reflected on host
+  assert:
+    that:
+      - "result['changed'] == true"
+
+- name: absent the provided configuration with the existing running configuration (REPEAT)
+  ce_multicast_igmp_enable: *absent
+  register: repeat
+
+- name: Get basic config by ce_netconf.
+  ce_netconf: *get_config
+  register: result_xml
+
+- name: Assert that the previous task was idempotent
+  assert:
+    that:
+      - "result['changed'] == false"
+      - "'<addrFamily>ipv4unicast</addrFamily>' not in result_xml.end_state.result"
+      - "'<vlanId>100</vlanId>' not in result_xml.end_state.result"
+      - "'<snoopingEnable>true</snoopingEnable>' not in result_xml.end_state.result"
+      - "'<version>2</version>' not in result_xml.end_state.result"
+      - "'<proxyEnable>true</proxyEnable>' not in result_xml.end_state.result"
+# after present, isis 100 should be deleted
+
+- debug:
+    msg: "END ce_multicast_igmp_enable resentd integration tests on connection={{ ansible_connection }}"

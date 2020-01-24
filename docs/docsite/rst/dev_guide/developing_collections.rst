@@ -13,6 +13,8 @@ You can publish and use collections through `Ansible Galaxy <https://galaxy.ansi
    :local:
    :depth: 2
 
+.. _collection_structure:
+
 Collection structure
 ====================
 
@@ -41,10 +43,11 @@ and other tools need in order to package, build and publish the collection::
 
 
 .. note::
-    * Ansible only accepts ``.yml`` extensions for galaxy.yml.
+    * Ansible only accepts ``.yml`` extensions for :file:`galaxy.yml`, and ``.md`` for the :file:`README` file and any files in the :file:`/docs` folder.
     * See the `draft collection <https://github.com/bcoca/collection>`_ for an example of a full collection structure.
     * Not all directories are currently in use. Those are placeholders for future features.
 
+.. _galaxy_yml:
 
 galaxy.yml
 ----------
@@ -52,11 +55,12 @@ galaxy.yml
 A collection must have a ``galaxy.yml`` file that contains the necessary information to build a collection artifact.
 See :ref:`collections_galaxy_meta` for details.
 
+.. _collections_doc_dir:
 
 docs directory
 ---------------
 
-Keep general documentation for the collection here. Plugins and modules still keep their specific documentation embedded as Python docstrings. Use the ``docs`` folder to describe how to use the roles and plugins the collection provides, role requirements, and so on. Currently we are looking at Markdown as the standard format for documentation files, but this is subject to change.
+Put general documentation for the collection here. Keep the specific documentation for plugins and modules embedded as Python docstrings. Use the ``docs`` folder to describe how to use the roles and plugins the collection provides, role requirements, and so on. Use markdown and do not add subfolders.
 
 Use ``ansible-doc`` to view documentation for plugins inside a collection:
 
@@ -68,11 +72,14 @@ The ``ansible-doc`` command requires the fully qualified collection name (FQCN) 
 
 .. note:: The Ansible collection namespace is defined in the ``galaxy.yml`` file and is not equivalent to the GitHub repository name.
 
+.. _collections_plugin_dir:
 
 plugins directory
 ------------------
 
-Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by any other plugin by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
+Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
+
+Vars plugins are unsupported in collections. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
 
 module_utils
 ^^^^^^^^^^^^
@@ -109,6 +116,11 @@ In the Python example the ``module_util`` in question is called ``qradar`` such 
         not_rest_data_keys=['state']
     )
 
+Note that importing something from an ``__init__.py`` file requires using the file name:
+
+.. code-block:: python
+
+    from ansible_collections.namespace.collection_name.plugins.callback.__init__ import CustomBaseClass
 
 In the PowerShell example the ``module_util`` in question is called ``hyperv`` such that the FCQN is
 ``ansible_example.community.plugins.module_utils.hyperv``:
@@ -129,6 +141,7 @@ In the PowerShell example the ``module_util`` in question is called ``hyperv`` s
 
     $module.ExitJson()
 
+.. _collections_roles_dir:
 
 roles directory
 ----------------
@@ -210,8 +223,7 @@ To build a collection, run ``ansible-galaxy collection build`` from inside the r
 
     collection_dir#> ansible-galaxy collection build
 
-This creates
-a tarball of the built collection in the current directory which can be uploaded to Galaxy.::
+This creates a tarball of the built collection in the current directory which can be uploaded to Galaxy.::
 
     my_collection/
     ├── galaxy.yml
@@ -221,26 +233,68 @@ a tarball of the built collection in the current directory which can be uploaded
 
 
 .. note::
-    Certain files and folders are excluded when building the collection artifact. This is not currently configurable
-    and is a work in progress so the collection artifact may contain files you would not wish to distribute.
+    * Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not wish to distribute.
+    * If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``.
+    * The current Galaxy maximum tarball size is 2 MB.
+
 
 This tarball is mainly intended to upload to Galaxy
 as a distribution method, but you can use it directly to install the collection on target systems.
 
+.. _ignoring_files_and_folders_collections:
+
+Ignoring files and folders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default the build step will include all the files in the collection directory in the final build artifact except for the following:
+
+* ``galaxy.yml``
+* ``*.pyc``
+* ``*.retry``
+* ``tests/output``
+* previously built artifacts in the root directory
+* Various version control directories like ``.git/``
+
+To exclude other files and folders when building the collection, you can set a list of file glob-like patterns in the
+``build_ignore`` key in the collection's ``galaxy.yml`` file. These patterns use the following special characters for
+wildcard matching:
+
+* ``*``: Matches everything
+* ``?``: Matches any single character
+* ``[seq]``: Matches and character in seq
+* ``[!seq]``:Matches any character not in seq
+
+For example, if you wanted to exclude the :file:`sensitive` folder within the ``playbooks`` folder as well any ``.tar.gz`` archives you
+can set the following in your ``galaxy.yml`` file:
+
+.. code-block:: yaml
+
+     build_ignore:
+     - playbooks/sensitive
+     - '*.tar.gz'
+
+.. note::
+     This feature is only supported when running ``ansible-galaxy collection build`` with Ansible 2.10 or newer.
+
+
 .. _trying_collection_locally:
 
-Trying collection locally
--------------------------
+Trying collections locally
+--------------------------
 
-You can try your collection locally by installing it from the tarball.
+You can try your collection locally by installing it from the tarball. The following will enable an adjacent playbook to
+access the collection:
 
 .. code-block:: bash
 
-   ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections/ansible_collections
+   ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections
 
-You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your path. This is also where Ansible itself will expect to find collections when attempting to use them.
 
-Then try to use the local collection inside a playbook, for more details see :ref:`Using collections <using_collections>`
+You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your path. This is also where Ansible itself will
+expect to find collections when attempting to use them. If you don't specify a path value, ``ansible-galaxy collection install``
+installs the collection in the first path defined in :ref:`COLLECTIONS_PATHS`, which by default is ``~/.ansible/collections``.
+
+Next, try using the local collection inside a playbook. For examples and more details see :ref:`Using collections <using_collections>`
 
 .. _publishing_collections:
 
@@ -251,25 +305,81 @@ You can publish collections to Galaxy using the ``ansible-galaxy collection publ
 
 .. note:: Once you upload a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before you upload it.
 
+.. _galaxy_get_token:
+
+Getting your API token
+^^^^^^^^^^^^^^^^^^^^^^
+
+To upload your collection to Galaxy, you must first obtain an API token (``--token`` in the ``ansible-galaxy`` CLI command or ``token`` in the :file:`ansible.cfg` file under the ``galaxy_server`` section). The API token is a secret token used to protect your content.
+
+To get your API token:
+
+* For Galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API Key`.
+* For Automation Hub, go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Load token` from the version dropdown.
+
+Storing or using your API token
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once you have retrieved your API token, you can store or use the token for collections in two ways:
+
+* Pass the token to  the ``ansible-galaxy`` command using the ``--token``.
+* Specify the token within a Galaxy server list in your :file:`ansible.cfg` file.
+
+Using the ``token`` argument
+............................
+
+You can use the ``--token`` argument with the ``ansible-galaxy`` command (in conjunction with the ``--server`` argument or :ref:`GALAXY_SERVER` setting in your :file:`ansible.cfg` file). You cannot use ``apt-key`` with any servers defined in your :ref:`Galaxy server list <galaxy_server_config>`.
+
+.. code-block:: bash
+
+    ansible-galaxy collection publish ./geerlingguy-collection-1.2.3.tar.gz --token=<key goes here>
+
+
+Specify the token within a Galaxy server list
+.............................................
+
+With this option, you configure one or more servers for Galaxy in your :file:`ansible.cfg` file under the ``galaxy_server_list`` section. For each server, you also configure the token.
+
+
+.. code-block:: ini
+
+   [galaxy]
+   server_list = release_galaxy
+
+   [galaxy_server.release_galaxy]
+   url=https://galaxy.ansible.com/
+   token=my_token
+
+See :ref:`galaxy_server_config` for complete details.
+
+.. _upload_collection_ansible_galaxy:
+
 Upload using ansible-galaxy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. note::
+  By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`). If you are only publishing your collection to Ansible Galaxy, you do not need any further configuration. If you are using Red Hat Automation Hub or any other Galaxy server, see :ref:`Configuring the ansible-galaxy client <galaxy_server_config>`.
 
 To upload the collection artifact with the ``ansible-galaxy`` command:
 
 .. code-block:: bash
 
-     ansible-galaxy collection publish path/to/my_namespace-my_collection-1.0.0.tar.gz --api-key=SECRET
+     ansible-galaxy collection publish path/to/my_namespace-my_collection-1.0.0.tar.gz
 
-The above command triggers an import process, just as if you uploaded the collection through the Galaxy website.
+.. note::
+
+	The above command assumes you have retrieved and stored your API token as part of a Galaxy server list. See :ref:`galaxy_get_token` for details.
+
+The ``ansible-galaxy collection publish`` command triggers an import process, just as if you uploaded the collection through the Galaxy website.
 The command waits until the import process completes before reporting the status back. If you wish to continue
 without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your
 `My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
 
-The API key is a secret token used by Ansible Galaxy to protect your content. You can find your API key at your
-`Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page.
 
-Upload from the Galaxy website
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _upload_collection_galaxy:
+
+Upload a collection from the Galaxy website
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To upload your collection artifact directly on Galaxy:
 
@@ -283,6 +393,7 @@ namespace, the upload request will fail.
 Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the
 import process, including any errors or warnings about the metadata and content contained in the collection.
 
+.. _collection_versions:
 
 Collection versions
 -------------------
@@ -291,11 +402,13 @@ Once you upload a version of a collection, you cannot delete or modify that vers
 uploading. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number)
 will be the version displayed everywhere in Galaxy; however, users will still be able to download older versions.
 
-Collection versions use `Sematic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
+Collection versions use `Semantic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
 
 * Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
 * Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner.
 * Increment patch (for example: z in `x.y.z`) version number for backwards compatible bug fixes.
+
+.. _migrate_to_collection:
 
 Migrating Ansible content to a collection
 =========================================

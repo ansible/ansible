@@ -32,6 +32,7 @@ options:
     - The list of groups (roles) that need to be granted to or revoked from I(target_roles).
     required: yes
     type: list
+    elements: str
     aliases:
     - group
     - source_role
@@ -41,6 +42,7 @@ options:
     - The list of target roles (groups will be granted to them).
     required: yes
     type: list
+    elements: str
     aliases:
     - target_role
     - users

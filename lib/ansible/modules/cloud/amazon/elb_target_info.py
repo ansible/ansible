@@ -191,11 +191,13 @@ instance_target_groups:
                             returned: if I(state!=present)
                             sample:
                                 - "Target desregistration is in progress"
+                            type: str
                         reason:
                             description: reason code for target health
                             returned: if I(state!=healthy)
                             sample:
                                 - "Target.Deregistration in progress"
+                            type: str
                         state:
                             description: health state
                             returned: always
@@ -206,6 +208,7 @@ instance_target_groups:
                                 - "unhealthy"
                                 - "unused"
                                 - "unavailable"
+                            type: str
 """
 
 __metaclass__ = type

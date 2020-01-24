@@ -27,14 +27,17 @@ options:
     description:
     - The name of the AWS Config resource.
     required: true
+    type: str
   state:
     description:
     - Whether the Config rule should be present or absent.
     default: present
     choices: ['present', 'absent']
+    type: str
   description:
     description:
     - The description that you provide for the AWS Config rule.
+    type: str
   scope:
     description:
     - Defines which resources can trigger an evaluation for the rule.
@@ -42,18 +45,19 @@ options:
       compliance_types:
         description:
         - The resource types of only those AWS resources that you want to trigger an evaluation for the rule.
-          You can only specify one type if you also specify a resource ID for `compliance_id`.
+          You can only specify one type if you also specify a resource ID for I(compliance_id).
       compliance_id:
         description:
         - The ID of the only AWS resource that you want to trigger an evaluation for the rule. If you specify a resource ID,
-          you must specify one resource type for `compliance_types`.
+          you must specify one resource type for I(compliance_types).
       tag_key:
         description:
         - The tag key that is applied to only those AWS resources that you want to trigger an evaluation for the rule.
       tag_value:
         description:
         - The tag value applied to only those AWS resources that you want to trigger an evaluation for the rule.
-          If you specify a value for `tag_value`, you must also specify a value for `tag_key`.
+          If you specify a value for I(tag_value), you must also specify a value for I(tag_key).
+    type: dict
   source:
     description:
     - Provides the rule owner (AWS or customer), the rule identifier, and the notifications that cause the function to
@@ -62,11 +66,11 @@ options:
       owner:
         description:
         - The resource types of only those AWS resources that you want to trigger an evaluation for the rule.
-          You can only specify one type if you also specify a resource ID for `compliance_id`.
+          You can only specify one type if you also specify a resource ID for I(compliance_id).
       identifier:
         description:
         - The ID of the only AWS resource that you want to trigger an evaluation for the rule.
-          If you specify a resource ID, you must specify one resource type for `compliance_types`.
+          If you specify a resource ID, you must specify one resource type for I(compliance_types).
       details:
         description:
         - Provides the source and type of the event that causes AWS Config to evaluate your AWS resources.
@@ -74,13 +78,17 @@ options:
         - Key `EventSource` The source of the event, such as an AWS service, that triggers AWS Config to evaluate your AWS resources.
         - Key `MessageType` The type of notification that triggers AWS Config to run an evaluation for a rule.
         - Key `MaximumExecutionFrequency` The frequency at which you want AWS Config to run evaluations for a custom rule with a periodic trigger.
+    type: dict
+    required: true
   input_parameters:
     description:
     - A string, in JSON format, that is passed to the AWS Config rule Lambda function.
+    type: str
   execution_frequency:
     description:
     - The maximum frequency with which AWS Config runs evaluations for a rule.
     choices: ['One_Hour', 'Three_Hours', 'Six_Hours', 'Twelve_Hours', 'TwentyFour_Hours']
+    type: str
 extends_documentation_fragment:
   - aws
   - ec2

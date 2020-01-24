@@ -203,9 +203,9 @@ def main():
         ],
     )
 
-    leaf_profile = module.params['leaf_profile']
-    description = module.params['description']
-    state = module.params['state']
+    leaf_profile = module.params.get('leaf_profile')
+    description = module.params.get('description')
+    state = module.params.get('state')
 
     aci = ACIModule(module)
     aci.construct_url(

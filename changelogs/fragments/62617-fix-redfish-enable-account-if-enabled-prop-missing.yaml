@@ -1,0 +1,3 @@
+---
+bugfixes:
+- redfish_command - fix EnableAccount if Enabled property is not present in Account resource (https://github.com/ansible/ansible/issues/59822)

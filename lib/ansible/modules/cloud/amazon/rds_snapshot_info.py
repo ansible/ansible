@@ -4,6 +4,10 @@
 # Copyright (c) 2017, 2018 Michael De La Rue
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -14,36 +18,43 @@ module: rds_snapshot_info
 version_added: "2.6"
 short_description: obtain information about one or more RDS snapshots
 description:
-  - obtain information about one or more RDS snapshots. These can be for unclustered snapshots or snapshots of clustered DBs (Aurora)
+  - Obtain information about one or more RDS snapshots. These can be for unclustered snapshots or snapshots of clustered DBs (Aurora).
   - Aurora snapshot information may be obtained if no identifier parameters are passed or if one of the cluster parameters are passed.
   - This module was called C(rds_snapshot_facts) before Ansible 2.9. The usage did not change.
 options:
   db_snapshot_identifier:
     description:
-      - Name of an RDS (unclustered) snapshot. Mutually exclusive with I(db_instance_identifier), I(db_cluster_identifier), I(db_cluster_snapshot_identifier)
+      - Name of an RDS (unclustered) snapshot.
+      - Mutually exclusive with I(db_instance_identifier), I(db_cluster_identifier), I(db_cluster_snapshot_identifier)
     required: false
     aliases:
       - snapshot_name
+    type: str
   db_instance_identifier:
     description:
-      - RDS instance name for which to find snapshots. Mutually exclusive with I(db_snapshot_identifier), I(db_cluster_identifier),
-        I(db_cluster_snapshot_identifier)
+      - RDS instance name for which to find snapshots.
+      - Mutually exclusive with I(db_snapshot_identifier), I(db_cluster_identifier), I(db_cluster_snapshot_identifier)
     required: false
+    type: str
   db_cluster_identifier:
     description:
-      - RDS cluster name for which to find snapshots. Mutually exclusive with I(db_snapshot_identifier), I(db_instance_identifier),
-        I(db_cluster_snapshot_identifier)
+      - RDS cluster name for which to find snapshots.
+      - Mutually exclusive with I(db_snapshot_identifier), I(db_instance_identifier), I(db_cluster_snapshot_identifier)
     required: false
+    type: str
   db_cluster_snapshot_identifier:
     description:
-      - Name of an RDS cluster snapshot. Mutually exclusive with I(db_instance_identifier), I(db_snapshot_identifier), I(db_cluster_identifier)
+      - Name of an RDS cluster snapshot.
+      - Mutually exclusive with I(db_instance_identifier), I(db_snapshot_identifier), I(db_cluster_identifier)
     required: false
+    type: str
   snapshot_type:
     description:
-      - Type of snapshot to find. By default both automated and manual
-        snapshots will be returned.
+      - Type of snapshot to find.
+      - By default both automated and manual snapshots will be returned.
     required: false
     choices: ['automated', 'manual', 'shared', 'public']
+    type: str
 requirements:
     - "python >= 2.6"
     - "boto3"
@@ -316,13 +327,13 @@ def common_snapshot_info(module, conn, method, prefix, params):
 def cluster_snapshot_info(module, conn):
     snapshot_name = module.params.get('db_cluster_snapshot_identifier')
     snapshot_type = module.params.get('snapshot_type')
-    instance_name = module.params.get('db_cluster_instance_identifier')
+    instance_name = module.params.get('db_cluster_identifier')
 
     params = dict()
     if snapshot_name:
         params['DBClusterSnapshotIdentifier'] = snapshot_name
     if instance_name:
-        params['DBClusterInstanceIdentifier'] = instance_name
+        params['DBClusterIdentifier'] = instance_name
     if snapshot_type:
         params['SnapshotType'] = snapshot_type
         if snapshot_type == 'public':

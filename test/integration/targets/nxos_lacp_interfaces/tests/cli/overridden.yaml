@@ -2,9 +2,15 @@
 - debug:
     msg: "Start nxos_lacp_interfaces overridden integration tests connection={{ ansible_connection }}"
 
+#
+# "lacp mode delay" is not supported on Nexus 9500 series switches.
+# Three models of Nexus 9500 switches have chassis types C9504, C9508 and C9516.
+#
+
 - set_fact:
     mode: delay
-  when: platform is not search('N5K|N6K|N7K') and ((imagetag != 'I2'))
+  when: platform is not search('N3K|N5K|N6K|N7K') and imagetag is not search('A8|I2') and
+    image_version is not search ('9.2') and chassis_type is not search('C95')
 
 - name: setup1
   cli_config: &cleanup

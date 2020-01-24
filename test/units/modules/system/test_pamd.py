@@ -134,6 +134,12 @@ session    required pam_unix.so"""
         auth       required pam_env.so
 """
 
+        self.no_header_system_auth_string = """auth       required pam_env.so
+auth       sufficient pam_unix.so nullok try_first_pass
+auth       requisite pam_succeed_if.so uid
+auth       required pam_deny.so
+"""
+
         self.pamd = PamdService(self.system_auth_string)
 
     def test_properly_parsed(self):
@@ -352,4 +358,15 @@ session    required pam_unix.so"""
         # Second run should not change anything
         self.assertFalse(self.pamd.remove('account', 'required', 'pam_unix.so'))
         test_rule = PamdRule('account', 'required', 'pam_unix.so')
+        self.assertNotIn(str(test_rule), str(self.pamd))
+
+    def test_remove_first_rule(self):
+        no_header_service = PamdService(self.no_header_system_auth_string)
+        self.assertTrue(no_header_service.remove('auth', 'required', 'pam_env.so'))
+        test_rule = PamdRule('auth', 'required', 'pam_env.so')
+        self.assertNotIn(str(test_rule), str(no_header_service))
+
+    def test_remove_last_rule(self):
+        self.assertTrue(self.pamd.remove('session', 'required', 'pam_unix.so'))
+        test_rule = PamdRule('session', 'required', 'pam_unix.so')
         self.assertNotIn(str(test_rule), str(self.pamd))

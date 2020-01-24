@@ -141,7 +141,7 @@ cmds:
 
 import re
 from ansible.module_utils.network.nxos.nxos import NxosCmdRef
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.network.nxos.nxos import load_config
 from ansible.module_utils.basic import AnsibleModule
 
@@ -310,7 +310,6 @@ def main():
     argument_spec.update(nxos_argument_spec)
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
     warnings = list()
-    check_args(module, warnings)
 
     cmd_ref = NxosCmdRef(module, BFD_CMD_REF)
     cmd_ref.get_existing()

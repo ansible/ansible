@@ -2,20 +2,32 @@
 - debug:
     msg: "Start nxos_l3_interfaces replaced integration tests connection={{ ansible_connection }}"
 
-- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact:
+    test_int3: "{{ nxos_int3 }}"
+    subint3: "{{ nxos_int3 }}.42"
 
 - name: setup1
   cli_config: &cleanup
     config: |
-      default interface {{ test_int1 }}
+      no system default switchport
+      default interface {{ test_int3 }}
+      interface {{ test_int3 }}
+        no switchport
+  ignore_errors: yes
+
+- name: setup2 cleanup all L3 states on all interfaces
+  nxos_l3_interfaces:
+    state: deleted
 
 - block:
-  - name: setup2
+  - name: setup3
     cli_config:
       config: |
-        interface {{ test_int1 }}
-          no switchport
+        interface {{ subint3 }}
+          encapsulation dot1q 42
           ip address 192.168.10.2/24
+          no ip redirects
+          ip unreachables
 
   - name: Gather l3_interfaces facts
     nxos_facts: &facts
@@ -27,28 +39,36 @@
   - name: Replaced
     nxos_l3_interfaces: &replaced
       config:
-        - name: "{{ test_int1 }}"
-          ipv6:
-            - address: "fd5d:12c9:2201:1::1/64"
-              tag: 6
+        - name: "{{ subint3 }}"
+          dot1q: 442
+          # Note: device auto-disables redirects when secondaries are present
+          redirects: false
+          unreachables: false
+          ipv4:
+            - address: 192.168.20.2/24
+              tag: 5
+            - address: 192.168.200.2/24
+              secondary: True
       state: replaced
     register: result
 
   - assert:
       that:
-        - "ansible_facts.network_resources.l3_interfaces|symmetric_difference(result.before)|length == 0"
+        - "result.before|length == (ansible_facts.network_resources.l3_interfaces|length|int - rsvd_intf_len|int)"
         - "result.changed == true"
-        - "'interface {{ test_int1 }}' in result.commands"
-        - "'no ip address' in result.commands"
-        - "'ipv6 address fd5d:12c9:2201:1::1/64 tag 6' in result.commands"
-        - "result.commands|length == 3"
+        - "'interface {{ subint3 }}' in result.commands"
+        - "'encapsulation dot1q 442' in result.commands"
+        - "'no ip unreachables' in result.commands"
+        - "'ip address 192.168.20.2/24 tag 5' in result.commands"
+        - "'ip address 192.168.200.2/24 secondary' in result.commands"
+        - "result.commands|length == 5"
 
   - name: Gather l3_interfaces post facts
     nxos_facts: *facts
 
   - assert:
       that:
-        - "ansible_facts.network_resources.l3_interfaces|symmetric_difference(result.after)|length == 0"
+        - "result.after|length == (ansible_facts.network_resources.l3_interfaces|length|int - rsvd_intf_len|int)"
 
   - name: Idempotence - Replaced
     nxos_l3_interfaces: *replaced
@@ -59,6 +79,39 @@
         - "result.changed == false"
         - "result.commands|length == 0"
 
+  - name: Replaced with no optional attrs specified
+    nxos_l3_interfaces: &replaced_no_attrs
+      config:
+        - name: "{{ subint3 }}"
+      state: replaced
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface {{ subint3 }}' in result.commands"
+        - "'no encapsulation dot1q' in result.commands"
+        - "'no ip address' in result.commands"
+
+  - assert:
+      that:
+        # 'ip redirects' normally auto-enables due to rmv'ing the secondaries;
+        # this behavior is unreliable on legacy platforms thus command is explicit.
+        - "'ip redirects' in result.commands"
+    when: platform is match('N[3567]')
+
+  - name: Idempotence - Replaced with no attrs specified
+    nxos_l3_interfaces: *replaced_no_attrs
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
   always:
   - name: teardown
-    cli_config: *cleanup
+    cli_config:
+      config: |
+        no interface {{ subint3 }}
+    ignore_errors: yes

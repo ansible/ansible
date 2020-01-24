@@ -111,6 +111,12 @@
       - ansible_facts['ansible_bogus_interpreter'] | default('nope') == 'nope'
       - ansible_facts['discovered_interpreter_bogus'] | default('nope') == 'nope'
 
+  - name: debian assertions
+    assert:
+      that:
+      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3'
+    when: distro == 'debian' and distro_version is version('10', '>=')
+
   - name: fedora assertions
     assert:
       that:

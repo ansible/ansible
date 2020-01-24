@@ -143,9 +143,9 @@ html_context = {
     'github_version': 'devel/docs/docsite/rst/',
     'github_module_version': 'devel/lib/ansible/modules/',
     'current_version': version,
-    'latest_version': '2.8',
+    'latest_version': '2.9',
     # list specifically out of order to make latest work
-    'available_versions': ('latest', '2.7', '2.6', 'devel'),
+    'available_versions': ('latest', '2.8', '2.7', 'devel'),
     'css_files': ('_static/ansible.css',  # overrides to the standard theme
                   ),
 }
@@ -206,7 +206,7 @@ html_copy_source = False
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
-html_use_opensearch = 'https://docs.ansible.com/ansible/latest'
+# html_use_opensearch = 'https://docs.ansible.com/ansible/latest'
 
 # If nonempty, this is the file name suffix for HTML files (e.g. ".xhtml").
 # html_file_suffix = ''
@@ -263,6 +263,15 @@ latex_documents = [
 
 autoclass_content = 'both'
 
-intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2-2.7.13.inv')),
-                       'python3': ('https://docs.python.org/3/', (None, '../python3-3.6.2.inv')),
-                       'jinja2': ('http://jinja.pocoo.org/docs/', (None, '../jinja2-2.9.7.inv'))}
+# Note:  Our strategy for intersphinx mappings is to have the upstream build location as the
+# canonical source and then cached copies of the mapping stored locally in case someone is building
+# when disconnected from the internet.  We then have a script to update the cached copies.
+#
+# Because of that, each entry in this mapping should have this format:
+#   name: ('http://UPSTREAM_URL', (None, 'path/to/local/cache.inv'))
+#
+# The update script depends on this format so deviating from this (for instance, adding a third
+# location for the mappning to live) will confuse it.
+intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2.inv')),
+                       'python3': ('https://docs.python.org/3/', (None, '../python3.inv')),
+                       'jinja': ('http://jinja.palletsprojects.com/', (None, '../jinja.inv'))}

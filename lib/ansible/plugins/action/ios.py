@@ -19,12 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
 import sys
 import copy
 
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.ios.ios import ios_provider_spec
@@ -40,9 +37,10 @@ class ActionModule(ActionNetworkModule):
 
         module_name = self._task.action.split('.')[-1]
         self._config_module = True if module_name == 'ios_config' else False
-        socket_path = None
+        persistent_connection = self._play_context.connection.split('.')[-1]
+        warnings = []
 
-        if self._play_context.connection == 'network_cli':
+        if persistent_connection == 'network_cli':
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')
@@ -50,8 +48,8 @@ class ActionModule(ActionNetworkModule):
         elif self._play_context.connection == 'local':
             provider = load_provider(ios_provider_spec, self._task.args)
             pc = copy.deepcopy(self._play_context)
-            pc.connection = 'network_cli'
-            pc.network_os = 'ios'
+            pc.connection = 'ansible.netcommon.network_cli'
+            pc.network_os = 'cisco.ios.ios'
             pc.remote_addr = provider['host'] or self._play_context.remote_addr
             pc.port = int(provider['port'] or self._play_context.port or 22)
             pc.remote_user = provider['username'] or self._play_context.connection_user
@@ -62,8 +60,16 @@ class ActionModule(ActionNetworkModule):
                 pc.become_method = 'enable'
             pc.become_pass = provider['auth_pass']
 
+            connection = self._shared_loader_obj.connection_loader.get('ansible.netcommon.persistent', pc, sys.stdin,
+                                                                       task_uuid=self._task._uuid)
+
+            # TODO: Remove below code after ansible minimal is cut out
+            if connection is None:
+                pc.connection = 'network_cli'
+                pc.network_os = 'ios'
+                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
+
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
 
             command_timeout = int(provider['timeout']) if provider['timeout'] else connection.get_option('persistent_command_timeout')
             connection.set_options(direct={'persistent_command_timeout': command_timeout})
@@ -76,22 +82,14 @@ class ActionModule(ActionNetworkModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
+            warnings.append(['connection local support for this module is deprecated and will be removed in version 2.14, use connection %s' % pc.connection])
         else:
             return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
-        # make sure we are in the right cli context which should be
-        # enable mode and not config module
-        if socket_path is None:
-            socket_path = self._connection.socket_path
-
-        conn = Connection(socket_path)
-        try:
-            out = conn.get_prompt()
-            if re.search(r'config.*\)#', to_text(out, errors='surrogate_then_replace').strip()):
-                display.vvvv('wrong context, sending end to device', self._play_context.remote_addr)
-                conn.send_command('end')
-        except ConnectionError as exc:
-            return {'failed': True, 'msg': to_text(exc)}
-
         result = super(ActionModule, self).run(task_vars=task_vars)
+        if warnings:
+            if 'warnings' in result:
+                result['warnings'].extend(warnings)
+            else:
+                result['warnings'] = warnings
         return result

@@ -299,7 +299,6 @@ from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.eos.eos import get_config, load_config, get_connection
 from ansible.module_utils.network.eos.eos import run_commands
 from ansible.module_utils.network.eos.eos import eos_argument_spec
-from ansible.module_utils.network.eos.eos import check_args
 
 
 def get_candidate(module):
@@ -384,7 +383,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

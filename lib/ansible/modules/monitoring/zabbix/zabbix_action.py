@@ -30,7 +30,7 @@ author:
     - Ruben Harutyunov (@K-DOT)
 
 requirements:
-    - zabbix-api
+    - "zabbix-api >= 0.5.4"
 
 options:
     name:
@@ -40,7 +40,8 @@ options:
     event_source:
         description:
             - Type of events that the action will handle.
-        required: true
+            - Required when C(state=present).
+        required: false
         choices: ['trigger', 'discovery', 'auto_registration', 'internal']
     state:
         description:
@@ -63,64 +64,77 @@ options:
     esc_period:
         description:
             - Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro.
-        required: true
+            - Required when C(state=present).
+        required: false
     conditions:
         type: list
         description:
             - List of dictionaries of conditions to evaluate.
             - For more information about suboptions of this option please
-              check out Zabbix API documentation U(https://www.zabbix.com/documentation/3.4/manual/api/reference/action/object#action_filter_condition)
+              check out Zabbix API documentation U(https://www.zabbix.com/documentation/4.0/manual/api/reference/action/object#action_filter_condition)
         suboptions:
             type:
-                description: Type (label) of the condition.
-                choices:
-                    # trigger
-                    - host_group
-                    - host
-                    - trigger
-                    - trigger_name
-                    - trigger_severity
-                    - time_period
-                    - host_template
-                    - application
-                    - maintenance_status
-                    - event_tag
-                    - event_tag_value
-                    # discovery
-                    - host_IP
-                    - discovered_service_type
-                    - discovered_service_port
-                    - discovery_status
-                    - uptime_or_downtime_duration
-                    - received_value
-                    - discovery_rule
-                    - discovery_check
-                    - proxy
-                    - discovery_object
-                    # auto_registration
-                    - proxy
-                    - host_name
-                    - host_metadata
-                    # internal
-                    - host_group
-                    - host
-                    - host_template
-                    - application
-                    - event_type
+                description:
+                    - Type (label) of the condition.
+                    - 'Possible values when I(event_source=trigger):'
+                    - ' - C(host_group)'
+                    - ' - C(host)'
+                    - ' - C(trigger)'
+                    - ' - C(trigger_name)'
+                    - ' - C(trigger_severity)'
+                    - ' - C(time_period)'
+                    - ' - C(host_template)'
+                    - ' - C(application)'
+                    - ' - C(maintenance_status)'
+                    - ' - C(event_tag)'
+                    - ' - C(event_tag_value)'
+                    - 'Possible values when I(event_source=discovery):'
+                    - ' - C(host_IP)'
+                    - ' - C(discovered_service_type)'
+                    - ' - C(discovered_service_port)'
+                    - ' - C(discovery_status)'
+                    - ' - C(uptime_or_downtime_duration)'
+                    - ' - C(received_value)'
+                    - ' - C(discovery_rule)'
+                    - ' - C(discovery_check)'
+                    - ' - C(proxy)'
+                    - ' - C(discovery_object)'
+                    - 'Possible values when I(event_source=auto_registration):'
+                    - ' - C(proxy)'
+                    - ' - C(host_name)'
+                    - ' - C(host_metadata)'
+                    - 'Possible values when I(event_source=internal):'
+                    - ' - C(host_group)'
+                    - ' - C(host)'
+                    - ' - C(host_template)'
+                    - ' - C(application)'
+                    - ' - C(event_type)'
             value:
                 description:
                     - Value to compare with.
-                    - When I(type) is set to C(discovery_status), the choices
-                      are C(up), C(down), C(discovered), C(lost).
-                    - When I(type) is set to C(discovery_object), the choices
-                      are C(host), C(service).
-                    - When I(type) is set to C(event_type), the choices
-                      are C(item in not supported state), C(item in normal state),
-                      C(LLD rule in not supported state),
-                      C(LLD rule in normal state), C(trigger in unknown state), C(trigger in normal state).
-                    - When I(type) is set to C(trigger_severity), the choices
-                      are (case-insensitive) C(not classified), C(information), C(warning), C(average), C(high), C(disaster)
-                      irrespective of user-visible names being changed in Zabbix. Defaults to C(not classified) if omitted.
+                    - 'When I(type=discovery_status), the choices are:'
+                    - ' - C(up)'
+                    - ' - C(down)'
+                    - ' - C(discovered)'
+                    - ' - C(lost)'
+                    - 'When I(type=discovery_object), the choices are:'
+                    - ' - C(host)'
+                    - ' - C(service)'
+                    - 'When I(type=event_type), the choices are:'
+                    - ' - C(item in not supported state)'
+                    - ' - C(item in normal state)'
+                    - ' - C(LLD rule in not supported state)'
+                    - ' - C(LLD rule in normal state)'
+                    - ' - C(trigger in unknown state)'
+                    - ' - C(trigger in normal state)'
+                    - 'When I(type=trigger_severity), the choices are (case-insensitive):'
+                    - ' - C(not classified)'
+                    - ' - C(information)'
+                    - ' - C(warning)'
+                    - ' - C(average)'
+                    - ' - C(high)'
+                    - ' - C(disaster)'
+                    - Irrespective of user-visible names being changed in Zabbix. Defaults to C(not classified) if omitted.
                     - Besides the above options, this is usually either the name
                       of the object or a string to compare with.
             operator:
@@ -359,6 +373,7 @@ EXAMPLES = '''
     event_source: 'trigger'
     state: present
     status: enabled
+    esc_period: 60
     conditions:
       - type: 'trigger_severity'
         operator: '>='
@@ -381,6 +396,7 @@ EXAMPLES = '''
     event_source: 'trigger'
     state: present
     status: enabled
+    esc_period: 60
     conditions:
       - type: 'trigger_name'
         operator: 'like'
@@ -398,6 +414,8 @@ EXAMPLES = '''
           - 'Admin'
       - type: remote_command
         command: 'systemctl restart zabbix-agent'
+        command_type: custom_script
+        execute_on: server
         run_on_hosts:
           - 0
 
@@ -411,6 +429,7 @@ EXAMPLES = '''
     event_source: 'trigger'
     state: present
     status: enabled
+    esc_period: 60
     conditions:
       - type: 'trigger_severity'
         operator: '>='
@@ -1668,10 +1687,10 @@ def main():
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            esc_period=dict(type='int', required=True),
+            esc_period=dict(type='int', required=False),
             timeout=dict(type='int', default=10),
             name=dict(type='str', required=True),
-            event_source=dict(type='str', required=True, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
+            event_source=dict(type='str', required=False, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
             state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
             status=dict(type='str', required=False, default='enabled', choices=['enabled', 'disabled']),
             pause_in_maintenance=dict(type='bool', required=False, default=True),
@@ -1974,6 +1993,12 @@ def main():
                 ]
             )
         ),
+        required_if=[
+            ['state', 'present', [
+                'esc_period',
+                'event_source'
+            ]]
+        ],
         supports_check_mode=True
     )
 

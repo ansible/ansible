@@ -12,15 +12,17 @@ Function Get-CustomFacts {
     $factpath = $null
   )
 
-  if (-not (Test-Path -Path $factpath)) {
-    Fail-Json $result "The path $factpath does not exist. Typo?"
+  if (Test-Path -Path $factpath) {
+    $FactsFiles = Get-ChildItem -Path $factpath | Where-Object -FilterScript {($PSItem.PSIsContainer -eq $false) -and ($PSItem.Extension -eq '.ps1')}
+
+    foreach ($FactsFile in $FactsFiles) {
+        $out = & $($FactsFile.FullName)
+        $result.ansible_facts.Add("ansible_$(($FactsFile.Name).Split('.')[0])", $out)
+    }
   }
-
-  $FactsFiles = Get-ChildItem -Path $factpath | Where-Object -FilterScript {($PSItem.PSIsContainer -eq $false) -and ($PSItem.Extension -eq '.ps1')}
-
-  foreach ($FactsFile in $FactsFiles) {
-      $out = & $($FactsFile.FullName)
-      $result.ansible_facts.Add("ansible_$(($FactsFile.Name).Split('.')[0])", $out)
+  else
+  {
+        Add-Warning $result "Non existing path was set for local facts - $factpath"
   }
 }
 
@@ -138,6 +140,14 @@ $ansible_facts = @{
 
 $osversion = [Environment]::OSVersion
 
+if ($osversion.Version -lt [version]"6.2") {
+    # Server 2008, 2008 R2, and Windows 7 are not tested in CI and we want to let customers know about it before
+    # removing support altogether.
+    $version_string = "{0}.{1}" -f ($osversion.Version.Major, $osversion.Version.Minor)
+    $msg = "Windows version '$version_string' will no longer be supported or tested in the next Ansible release"
+    Add-DeprecationWarning -obj $result -message $msg -version "2.11"
+}
+
 if($gather_subset.Contains('all_ipv4_addresses') -or $gather_subset.Contains('all_ipv6_addresses')) {
     $netcfg = Get-LazyCimInstance Win32_NetworkAdapterConfiguration
 
@@ -205,6 +215,13 @@ if($gather_subset.Contains('distribution')) {
         default { "unknown" }
     }
 
+    $installation_type = $null
+    $current_version_path = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+    if (Test-Path -LiteralPath $current_version_path) {
+        $install_type_prop = Get-ItemProperty -LiteralPath $current_version_path -ErrorAction SilentlyContinue
+        $installation_type = [String]$install_type_prop.InstallationType
+    }
+
     $ansible_facts += @{
         ansible_distribution = $win32_os.Caption
         ansible_distribution_version = $osversion.Version.ToString()
@@ -212,6 +229,7 @@ if($gather_subset.Contains('distribution')) {
         ansible_os_family = "Windows"
         ansible_os_name = ($win32_os.Name.Split('|')[0]).Trim()
         ansible_os_product_type = $product_type
+        ansible_os_installation_type = $installation_type
     }
 }
 
@@ -305,7 +323,10 @@ if($gather_subset.Contains('memory')) {
     $ansible_facts += @{
         # Win32_PhysicalMemory is empty on some virtual platforms
         ansible_memtotal_mb = ([math]::ceiling($win32_cs.TotalPhysicalMemory / 1024 / 1024))
+        ansible_memfree_mb = ([math]::ceiling($win32_os.FreePhysicalMemory / 1024))
         ansible_swaptotal_mb = ([math]::round($win32_os.TotalSwapSpaceSize / 1024))
+        ansible_pagefiletotal_mb = ([math]::round($win32_os.SizeStoredInPagingFiles / 1024))
+        ansible_pagefilefree_mb = ([math]::round($win32_os.FreeSpaceInPagingFiles / 1024))
     }
 }
 

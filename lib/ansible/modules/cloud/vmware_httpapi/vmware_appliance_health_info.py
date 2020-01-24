@@ -20,7 +20,7 @@ description:
 - This module can be used to gather information about VCSA health.
 - This module is based on REST API and uses httpapi connection plugin for persistent connection.
 - The Appliance API works against the VCSA and uses the "administrator@vsphere.local" user.
-version_added: '2.9'
+version_added: '2.10'
 author:
 - Paul Knight (@n3pjk)
 notes:
@@ -52,7 +52,7 @@ EXAMPLES = r'''
     ansible_host: vcenter.my.domain
     ansible_user: administrator@vsphere.local
     ansible_httpapi_password: "SomePassword"
-    ansbile_httpapi_use_ssl: yes
+    ansible_httpapi_use_ssl: yes
     ansible_httpapi_validate_certs: false
   tasks:
 

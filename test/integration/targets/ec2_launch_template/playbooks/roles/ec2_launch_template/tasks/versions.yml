@@ -1,0 +1,62 @@
+- block:
+  - name: create simple instance template
+    ec2_launch_template:
+      name: "{{ resource_prefix }}-simple"
+      image_id: "{{ ec2_ami_image[aws_region] }}"
+      tags:
+        TestId: "{{ resource_prefix }}"
+      instance_type: c4.large
+    register: lt
+
+  - name: instance with cpu_options created with the right options
+    assert:
+      that:
+        - lt is success
+        - lt is changed
+        - lt.default_version == 1
+        - lt.latest_version == 1
+
+  - name: update simple instance template
+    ec2_launch_template:
+      name: "{{ resource_prefix }}-simple"
+      default_version: 1
+      image_id: "{{ ec2_ami_image[aws_region] }}"
+      tags:
+        TestId: "{{ resource_prefix }}"
+      instance_type: m5.large
+    register: lt
+
+  - name: instance with cpu_options created with the right options
+    assert:
+      that:
+        - lt is success
+        - lt is changed
+        - lt.default_version == 1
+        - lt.latest_version == 2
+
+  - name: update simple instance template
+    ec2_launch_template:
+      name: "{{ resource_prefix }}-simple"
+      image_id: "{{ ec2_ami_image[aws_region] }}"
+      tags:
+        TestId: "{{ resource_prefix }}"
+      instance_type: t3.medium
+    register: lt
+
+  - name: instance with cpu_options created with the right options
+    assert:
+      that:
+        - lt is success
+        - lt is changed
+        - lt.default_version == 3
+        - lt.latest_version == 3
+
+  always:
+  - name: delete the template
+    ec2_launch_template:
+      name: "{{ resource_prefix }}-simple"
+      state: absent
+    register: del_lt
+    retries: 10
+    until: del_lt is not failed
+    ignore_errors: true

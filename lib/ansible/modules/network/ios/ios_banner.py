@@ -89,10 +89,9 @@ commands:
     - string
 """
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.ios.ios import load_config
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
-import re
+from ansible.module_utils.network.ios.ios import get_config, load_config
+from ansible.module_utils.network.ios.ios import ios_argument_spec
+from re import search, M
 
 
 def map_obj_to_commands(updates, module):
@@ -107,7 +106,7 @@ def map_obj_to_commands(updates, module):
         if want['text'] and (want['text'] != have.get('text')):
             banner_cmd = 'banner %s' % module.params['banner']
             banner_cmd += ' @\n'
-            banner_cmd += want['text'].strip()
+            banner_cmd += want['text'].strip('\n')
             banner_cmd += '\n@'
             commands.append(banner_cmd)
 
@@ -115,17 +114,21 @@ def map_obj_to_commands(updates, module):
 
 
 def map_config_to_obj(module):
-    rc, out, err = exec_command(module, 'show banner %s' % module.params['banner'])
-    if rc == 0:
-        output = out
-    else:
-        rc, out, err = exec_command(module,
-                                    'show running-config | begin banner %s'
-                                    % module.params['banner'])
-        if out:
-            output = re.search(r'\^C(.*)\^C', out, re.S).group(1).strip()
+    """
+    This function gets the banner config without stripping any whitespaces,
+    and then fetches the required banner from it.
+    :param module:
+    :return: banner config dict object.
+    """
+    out = get_config(module, flags='| begin banner %s' % module.params['banner'])
+    if out:
+        regex = 'banner ' + module.params['banner'] + ' ^C\n'
+        if search('banner ' + module.params['banner'], out, M):
+            output = str((out.split(regex))[1].split("^C\n")[0])
         else:
             output = None
+    else:
+        output = None
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
         obj['text'] = output
@@ -135,9 +138,6 @@ def map_config_to_obj(module):
 
 def map_params_to_obj(module):
     text = module.params['text']
-    if text:
-        text = str(text).strip()
-
     return {
         'banner': module.params['banner'],
         'text': text,
@@ -163,7 +163,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

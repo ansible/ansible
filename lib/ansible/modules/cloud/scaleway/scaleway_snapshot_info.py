@@ -50,7 +50,7 @@ scaleway_snapshot_info:
   description: Response from Scaleway API
   returned: success
   type: complex
-  contains:
+  sample:
     "scaleway_snapshot_info": [
       {
           "base_volume": {

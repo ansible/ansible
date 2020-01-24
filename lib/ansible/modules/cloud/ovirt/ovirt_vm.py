@@ -28,7 +28,7 @@ options:
             - ID of the Virtual Machine to manage.
     state:
         description:
-            - Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered/exported.
+            - Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered/exported/reboot.
               When C(state) is I(registered) and the unregistered VM's name
               belongs to an already registered in engine VM in the same DC
               then we fail to register the unregistered template.
@@ -38,7 +38,8 @@ options:
             - Please check I(notes) to more detailed description of states.
             - I(exported) state will export the VM to export domain or as OVA.
             - I(registered) is supported since 2.4.
-        choices: [ absent, next_run, present, registered, running, stopped, suspended, exported ]
+            - I(reboot) is supported since 2.10, virtual machine is rebooted only if it's in up state.
+        choices: [ absent, next_run, present, registered, running, stopped, suspended, exported, reboot ]
         default: present
     cluster:
         description:
@@ -194,7 +195,7 @@ options:
             - Default value is set by oVirt/RHV engine.
     cpu_threads:
         description:
-            - Number of virtual CPUs sockets of the Virtual Machine.
+            - Number of threads per core of the Virtual Machine.
             - Default value is set by oVirt/RHV engine.
         version_added: "2.5"
     type:
@@ -782,6 +783,31 @@ options:
             protocol:
                 description:
                     - Graphical protocol, a list of I(spice), I(vnc), or both.
+                type: list
+            disconnect_action:
+                description:
+                    - "Returns the action that will take place when the graphic console(SPICE only) is disconnected. The options are:"
+                    - I(none) No action is taken.
+                    - I(lock_screen) Locks the currently active user session.
+                    - I(logout) Logs out the currently active user session.
+                    - I(reboot) Initiates a graceful virtual machine reboot.
+                    - I(shutdown) Initiates a graceful virtual machine shutdown.
+                type: str
+                version_added: "2.10"
+            keyboard_layout:
+                description:
+                    - The keyboard layout to use with this graphic console.
+                    - This option is only available for the VNC console type.
+                    - If no keyboard is enabled then it won't be reported.
+                type: str
+                version_added: "2.10"
+            monitors:
+                description:
+                    - The number of monitors opened for this graphic console.
+                    - This option is only available for the SPICE protocol.
+                    - Possible values are 1, 2 or 4.
+                type: int
+                version_added: "2.10"
         version_added: "2.5"
     exclusive:
         description:
@@ -857,6 +883,8 @@ notes:
       I(REBOOTING), I(POWERING_UP), I(RESTORING_STATE), I(WAIT_FOR_LAUNCH). If VM is in I(PAUSED) or I(DOWN) state,
       we start the VM. Then we suspend the VM.
       When user specify I(absent) C(state), we forcibly stop the VM in any state and remove it.
+    - "If you update a VM parameter that requires a reboot, the oVirt engine always creates a new snapshot for the VM,
+      and an Ansible playbook will report this as changed."
 extends_documentation_fragment: ovirt
 '''
 
@@ -1213,6 +1241,18 @@ EXAMPLES = '''
     snapshot_name: myvm_snap
     name: myvm_clone
     state: present
+
+- name: Import external ova VM
+  ovirt_vm:
+    cluster: mycluster
+    name: myvm
+    host: myhost
+    timeout: 1800
+    poll_interval: 30
+    kvm:
+      name: myvm
+      url: ova:///path/myvm.ova
+      storage_domain: mystorage
 '''
 
 
@@ -1273,30 +1313,31 @@ class VmsModule(BaseModule):
         """
         template = None
         templates_service = self._connection.system_service().templates_service()
-        if self.param('template'):
-            clusters_service = self._connection.system_service().clusters_service()
-            cluster = search_by_name(clusters_service, self.param('cluster'))
-            data_center = self._connection.follow_link(cluster.data_center)
-            templates = templates_service.list(
-                search='name=%s and datacenter=%s' % (self.param('template'), data_center.name)
-            )
-            if self.param('template_version'):
-                templates = [
-                    t for t in templates
-                    if t.version.version_number == self.param('template_version')
-                ]
-            if not templates:
-                raise ValueError(
-                    "Template with name '%s' and version '%s' in data center '%s' was not found'" % (
-                        self.param('template'),
-                        self.param('template_version'),
-                        data_center.name
-                    )
+        if self._is_new:
+            if self.param('template'):
+                clusters_service = self._connection.system_service().clusters_service()
+                cluster = search_by_name(clusters_service, self.param('cluster'))
+                data_center = self._connection.follow_link(cluster.data_center)
+                templates = templates_service.list(
+                    search='name=%s and datacenter=%s' % (self.param('template'), data_center.name)
                 )
-            template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
-        elif self._is_new:
-            # If template isn't specified and VM is about to be created specify default template:
-            template = templates_service.template_service('00000000-0000-0000-0000-000000000000').get()
+                if self.param('template_version'):
+                    templates = [
+                        t for t in templates
+                        if t.version.version_number == self.param('template_version')
+                    ]
+                if not templates:
+                    raise ValueError(
+                        "Template with name '%s' and version '%s' in data center '%s' was not found'" % (
+                            self.param('template'),
+                            self.param('template_version'),
+                            data_center.name
+                        )
+                    )
+                template = sorted(templates, key=lambda t: t.version.version_number, reverse=True)[0]
+            else:
+                # If template isn't specified and VM is about to be created specify default template:
+                template = templates_service.template_service('00000000-0000-0000-0000-000000000000').get()
 
         return template
 
@@ -1362,6 +1403,7 @@ class VmsModule(BaseModule):
         template = self.__get_template_with_version()
         cluster = self.__get_cluster()
         snapshot = self.__get_snapshot()
+        display = self.param('graphical_console') or dict()
 
         disk_attachments = self.__get_storage_domain_and_all_template_disks(template)
 
@@ -1488,8 +1530,16 @@ class VmsModule(BaseModule):
             ) if self.param('placement_policy') else None,
             soundcard_enabled=self.param('soundcard_enabled'),
             display=otypes.Display(
-                smartcard_enabled=self.param('smartcard_enabled')
-            ) if self.param('smartcard_enabled') is not None else None,
+                smartcard_enabled=self.param('smartcard_enabled'),
+                disconnect_action=display.get('disconnect_action'),
+                keyboard_layout=display.get('keyboard_layout'),
+                monitors=display.get('monitors'),
+            ) if (
+                self.param('smartcard_enabled') is not None or
+                display.get('disconnect_action') is not None or
+                display.get('keyboard_layout') is not None or
+                display.get('monitors') is not None
+            ) else None,
             io=otypes.Io(
                 threads=self.param('io_threads'),
             ) if self.param('io_threads') is not None else None,
@@ -1558,6 +1608,7 @@ class VmsModule(BaseModule):
 
         cpu_mode = getattr(entity.cpu, 'mode')
         vm_display = entity.display
+        provided_vm_display = self.param('graphical_console') or dict()
         return (
             check_cpu_pinning() and
             check_custom_properties() and
@@ -1601,7 +1652,10 @@ class VmsModule(BaseModule):
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
             equal(self.param('placement_policy'), str(entity.placement_policy.affinity) if entity.placement_policy else None) and
             equal(self.param('numa_tune_mode'), str(entity.numa_tune_mode)) and
-            equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None)
+            equal(self.param('rng_device'), str(entity.rng_device.source) if entity.rng_device else None) and
+            equal(provided_vm_display.get('monitors'), getattr(vm_display, 'monitors', None)) and
+            equal(provided_vm_display.get('keyboard_layout'), getattr(vm_display, 'keyboard_layout', None)) and
+            equal(provided_vm_display.get('disconnect_action'), getattr(vm_display, 'disconnect_action', None), ignore_case=True)
         )
 
     def pre_create(self, entity):
@@ -1788,9 +1842,6 @@ class VmsModule(BaseModule):
 
         # If there are not gc add any gc to be added:
         protocol = graphical_console.get('protocol')
-        if isinstance(protocol, str):
-            protocol = [protocol]
-
         current_protocols = [str(gc.protocol) for gc in graphical_consoles]
         if not current_protocols:
             if not self._module.check_mode:
@@ -2315,7 +2366,9 @@ def control_state(vm, vms_service, module):
 
 def main():
     argument_spec = ovirt_full_argument_spec(
-        state=dict(type='str', default='present', choices=['absent', 'next_run', 'present', 'registered', 'running', 'stopped', 'suspended', 'exported']),
+        state=dict(type='str', default='present', choices=[
+            'absent', 'next_run', 'present', 'registered', 'running', 'stopped', 'suspended', 'exported', 'reboot'
+        ]),
         name=dict(type='str'),
         id=dict(type='str'),
         cluster=dict(type='str'),
@@ -2393,7 +2446,16 @@ def main():
         custom_properties=dict(type='list'),
         watchdog=dict(type='dict'),
         host_devices=dict(type='list'),
-        graphical_console=dict(type='dict'),
+        graphical_console=dict(
+            type='dict',
+            options=dict(
+                headless_mode=dict(type='bool'),
+                protocol=dict(type='list'),
+                disconnect_action=dict(type='str'),
+                keyboard_layout=dict(type='str'),
+                monitors=dict(type='int'),
+            )
+        ),
         exclusive=dict(type='bool'),
         export_domain=dict(default=None),
         export_ova=dict(type='dict'),
@@ -2640,6 +2702,13 @@ def main():
                     directory=export_vm.get('directory'),
                     filename=export_vm.get('filename'),
                 )
+        elif state == 'reboot':
+            ret = vms_module.action(
+                action='reboot',
+                entity=vm,
+                action_condition=lambda vm: vm.status == otypes.VmStatus.UP,
+                wait_condition=lambda vm: vm.status == otypes.VmStatus.UP,
+            )
 
         module.exit_json(**ret)
     except Exception as e:

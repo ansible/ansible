@@ -33,7 +33,7 @@ module: gcp_compute_instance
 description:
 - An instance is a virtual machine (VM) hosted on Google's infrastructure.
 short_description: Creates a GCP Instance
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -62,7 +62,7 @@ options:
     - Whether the resource should be protected against deletion.
     required: false
     type: bool
-    version_added: 2.9
+    version_added: '2.9'
   disks:
     description:
     - An array of disks that are associated with the instances that are created from
@@ -231,13 +231,13 @@ options:
       when using zonal DNS.
     required: false
     type: str
-    version_added: 2.9
+    version_added: '2.9'
   labels:
     description:
     - Labels to apply to this instance. A list of key->value pairs.
     required: false
     type: dict
-    version_added: 2.9
+    version_added: '2.9'
   metadata:
     description:
     - The metadata key/value pairs to assign to instances that are created from this
@@ -309,6 +309,32 @@ options:
             - 'Some valid choices include: "ONE_TO_ONE_NAT"'
             required: true
             type: str
+          set_public_ptr:
+            description:
+            - Specifies whether a public DNS PTR record should be created to map the
+              external IP address of the instance to a DNS domain name.
+            required: false
+            type: bool
+            version_added: '2.10'
+          public_ptr_domain_name:
+            description:
+            - The DNS domain name for the public PTR record. You can set this field
+              only if the setPublicPtr field is enabled.
+            required: false
+            type: str
+            version_added: '2.10'
+          network_tier:
+            description:
+            - This signifies the networking tier used for configuring this access
+              configuration. If an AccessConfig is specified without a valid external
+              IP address, an ephemeral IP will be created with this networkTier. If
+              an AccessConfig with a valid external IP address is specified, it must
+              match that of the networkTier associated with the Address resource owning
+              that IP.
+            - 'Some valid choices include: "PREMIUM", "STANDARD"'
+            required: false
+            type: str
+            version_added: '2.10'
       alias_ip_ranges:
         description:
         - An array of alias IP ranges for this network interface. Can only be specified
@@ -415,7 +441,7 @@ options:
     - Configuration for various parameters related to shielded instances.
     required: false
     type: dict
-    version_added: 2.9
+    version_added: '2.9'
     suboptions:
       enable_secure_boot:
         description:
@@ -442,7 +468,7 @@ options:
       "SUSPENDING", "SUSPENDED", "TERMINATED"'
     required: false
     type: str
-    version_added: 2.8
+    version_added: '2.8'
   tags:
     description:
     - A list of tags to apply to this instance. Tags are used to identify valid sources
@@ -472,7 +498,43 @@ options:
     - A reference to the zone where the machine resides.
     required: true
     type: str
-extends_documentation_fragment: gcp
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -515,6 +577,11 @@ EXAMPLES = '''
     - auto_delete: 'true'
       boot: 'true'
       source: "{{ disk }}"
+    - auto_delete: 'true'
+      interface: NVME
+      type: SCRATCH
+      initialize_params:
+        disk_type: local-ssd
     metadata:
       startup-script-url: gs:://graphite-playground/bootstrap.sh
       cost-center: '12345'
@@ -805,6 +872,27 @@ networkInterfaces:
           - The type of configuration. The default and only option is ONE_TO_ONE_NAT.
           returned: success
           type: str
+        setPublicPtr:
+          description:
+          - Specifies whether a public DNS PTR record should be created to map the
+            external IP address of the instance to a DNS domain name.
+          returned: success
+          type: bool
+        publicPtrDomainName:
+          description:
+          - The DNS domain name for the public PTR record. You can set this field
+            only if the setPublicPtr field is enabled.
+          returned: success
+          type: str
+        networkTier:
+          description:
+          - This signifies the networking tier used for configuring this access configuration.
+            If an AccessConfig is specified without a valid external IP address, an
+            ephemeral IP will be created with this networkTier. If an AccessConfig
+            with a valid external IP address is specified, it must match that of the
+            networkTier associated with the Address resource owning that IP.
+          returned: success
+          type: str
     aliasIpRanges:
       description:
       - An array of alias IP ranges for this network interface. Can only be specified
@@ -1026,7 +1114,14 @@ def main():
                     access_configs=dict(
                         type='list',
                         elements='dict',
-                        options=dict(name=dict(required=True, type='str'), nat_ip=dict(type='dict'), type=dict(required=True, type='str')),
+                        options=dict(
+                            name=dict(required=True, type='str'),
+                            nat_ip=dict(type='dict'),
+                            type=dict(required=True, type='str'),
+                            set_public_ptr=dict(type='bool'),
+                            public_ptr_domain_name=dict(type='str'),
+                            network_tier=dict(type='str'),
+                        ),
                     ),
                     alias_ip_ranges=dict(type='list', elements='dict', options=dict(ip_cidr_range=dict(type='str'), subnetwork_range_name=dict(type='str'))),
                     network=dict(type='dict'),
@@ -1605,11 +1700,27 @@ class InstanceAccessconfigsArray(object):
 
     def _request_for_item(self, item):
         return remove_nones_from_dict(
-            {u'name': item.get('name'), u'natIP': replace_resource_dict(item.get(u'nat_ip', {}), 'address'), u'type': item.get('type')}
+            {
+                u'name': item.get('name'),
+                u'natIP': replace_resource_dict(item.get(u'nat_ip', {}), 'address'),
+                u'type': item.get('type'),
+                u'setPublicPtr': item.get('set_public_ptr'),
+                u'publicPtrDomainName': item.get('public_ptr_domain_name'),
+                u'networkTier': item.get('network_tier'),
+            }
         )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({u'name': item.get(u'name'), u'natIP': item.get(u'natIP'), u'type': item.get(u'type')})
+        return remove_nones_from_dict(
+            {
+                u'name': item.get(u'name'),
+                u'natIP': item.get(u'natIP'),
+                u'type': item.get(u'type'),
+                u'setPublicPtr': item.get(u'setPublicPtr'),
+                u'publicPtrDomainName': item.get(u'publicPtrDomainName'),
+                u'networkTier': item.get(u'networkTier'),
+            }
+        )
 
 
 class InstanceAliasiprangesArray(object):

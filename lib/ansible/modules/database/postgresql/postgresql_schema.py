@@ -165,15 +165,15 @@ def set_owner(cursor, schema, owner):
 def get_schema_info(cursor, schema):
     query = ("SELECT schema_owner AS owner "
              "FROM information_schema.schemata "
-             "WHERE schema_name = '%s'" % schema)
-    cursor.execute(query)
+             "WHERE schema_name = %(schema)s")
+    cursor.execute(query, {'schema': schema})
     return cursor.fetchone()
 
 
 def schema_exists(cursor, schema):
     query = ("SELECT schema_name FROM information_schema.schemata "
-             "WHERE schema_name = '%s'" % schema)
-    cursor.execute(query)
+             "WHERE schema_name = %(schema)s")
+    cursor.execute(query, {'schema': schema})
     return cursor.rowcount == 1
 
 

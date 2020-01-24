@@ -1,0 +1,26 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Initial CI tests of mysql_replication module:
+- import_tasks: mysql_replication_initial.yml
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - ansible_facts.distribution_major_version is version('7', '==')
+
+# Tests of master_delay parameter:
+- import_tasks: mysql_replication_master_delay.yml
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - ansible_facts.distribution_major_version is version('7', '==')
+
+# Tests of channel parameter:
+- import_tasks: mysql_replication_channel.yml
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - ansible_facts.distribution_major_version is version('7', '==')
+
+# Tests of resetmaster mode:
+- import_tasks: mysql_replication_resetmaster_mode.yml
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - ansible_facts.distribution_major_version is version('7', '==')

@@ -37,6 +37,8 @@ options:
         description:
             - list of names of packages to install/remove
         aliases: ['pkg', 'package', 'formula']
+        type: list
+        elements: str
     path:
         description:
             - "A ':' separated list of paths to search for 'brew' executable.
@@ -498,6 +500,10 @@ class Homebrew(object):
 
     # updated -------------------------------- {{{
     def _update_homebrew(self):
+        if self.module.check_mode:
+            self.changed = True
+            self.message = 'Homebrew would be updated.'
+            raise HomebrewException(self.message)
         rc, out, err = self.module.run_command([
             self.brew_path,
             'update',
@@ -524,6 +530,10 @@ class Homebrew(object):
 
     # _upgrade_all --------------------------- {{{
     def _upgrade_all(self):
+        if self.module.check_mode:
+            self.changed = True
+            self.message = 'Homebrew packages would be upgraded.'
+            raise HomebrewException(self.message)
         rc, out, err = self.module.run_command([
             self.brew_path,
             'upgrade',
@@ -814,6 +824,7 @@ def main():
                 aliases=["pkg", "package", "formula"],
                 required=False,
                 type='list',
+                elements='str',
             ),
             path=dict(
                 default="/usr/local/bin",

@@ -50,16 +50,27 @@ options:
         - The name of the VRF to associate with.
         required: true
         type: str
+      schema:
+        description:
+        - The schema that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current schema.
+        type: str
+      template:
+        description:
+        - The template that defines the referenced VRF.
+        - If this parameter is unspecified, it defaults to the current template.
+        type: str
   subnets:
     description:
     - The subnets associated to this BD.
     type: list
     suboptions:
-      ip:
+      subnet:
         description:
         - The IP range in CIDR notation.
         type: str
         required: true
+        aliases: [ ip ]
       description:
         description:
         - The description of this subnet.
@@ -190,46 +201,46 @@ def main():
         ],
     )
 
-    schema = module.params['schema']
-    template = module.params['template']
-    bd = module.params['bd']
-    display_name = module.params['display_name']
-    intersite_bum_traffic = module.params['intersite_bum_traffic']
-    optimize_wan_bandwidth = module.params['optimize_wan_bandwidth']
-    layer2_stretch = module.params['layer2_stretch']
-    layer2_unknown_unicast = module.params['layer2_unknown_unicast']
-    layer3_multicast = module.params['layer3_multicast']
-    vrf = module.params['vrf']
-    subnets = module.params['subnets']
-    state = module.params['state']
+    schema = module.params.get('schema')
+    template = module.params.get('template')
+    bd = module.params.get('bd')
+    display_name = module.params.get('display_name')
+    intersite_bum_traffic = module.params.get('intersite_bum_traffic')
+    optimize_wan_bandwidth = module.params.get('optimize_wan_bandwidth')
+    layer2_stretch = module.params.get('layer2_stretch')
+    layer2_unknown_unicast = module.params.get('layer2_unknown_unicast')
+    layer3_multicast = module.params.get('layer3_multicast')
+    vrf = module.params.get('vrf')
+    subnets = module.params.get('subnets')
+    state = module.params.get('state')
 
     mso = MSOModule(module)
 
     # Get schema_id
     schema_obj = mso.get_obj('schemas', displayName=schema)
     if schema_obj:
-        schema_id = schema_obj['id']
+        schema_id = schema_obj.get('id')
     else:
         mso.fail_json(msg="Provided schema '{0}' does not exist".format(schema))
 
     schema_path = 'schemas/{id}'.format(**schema_obj)
 
     # Get template
-    templates = [t['name'] for t in schema_obj['templates']]
+    templates = [t.get('name') for t in schema_obj.get('templates')]
     if template not in templates:
         mso.fail_json(msg="Provided template '{0}' does not exist. Existing templates: {1}".format(template, ', '.join(templates)))
     template_idx = templates.index(template)
 
     # Get ANP
-    bds = [b['name'] for b in schema_obj['templates'][template_idx]['bds']]
+    bds = [b.get('name') for b in schema_obj.get('templates')[template_idx]['bds']]
 
     if bd is not None and bd in bds:
         bd_idx = bds.index(bd)
-        mso.existing = schema_obj['templates'][template_idx]['bds'][bd_idx]
+        mso.existing = schema_obj.get('templates')[template_idx]['bds'][bd_idx]
 
     if state == 'query':
         if bd is None:
-            mso.existing = schema_obj['templates'][template_idx]['bds']
+            mso.existing = schema_obj.get('templates')[template_idx]['bds']
         elif not mso.existing:
             mso.fail_json(msg="BD '{bd}' not found".format(bd=bd))
         mso.exit_json()

@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/sh
 
 FILENAME=../docsite/rst/dev_guide/testing/sanity/index.rst
 
@@ -20,7 +20,21 @@ $(for test in $(../../bin/ansible-test sanity --list-tests --allow-disabled); do
 
 EOF
 
+# By default use sha1sum which exists on Linux, if not present select the correct binary
+# based on platform defaults
+SHA_CMD="sha1sum"
+if ! which ${SHA_CMD} > /dev/null 2>&1; then
+    if which sha1 > /dev/null 2>&1; then
+        SHA_CMD="sha1"
+    elif which shasum > /dev/null 2>&1; then
+        SHA_CMD="shasum"
+    else
+        # exit early with an error if no hashing binary can be found since it is required later
+        exit 1
+    fi
+fi
+
 # Put file into place if it has changed
-if [ "$(sha1sum <$FILENAME)" != "$(sha1sum <$FILENAME.new)" ]; then
+if [ "$(${SHA_CMD} <$FILENAME)" != "$(${SHA_CMD} <$FILENAME.new)" ]; then
     mv -f $FILENAME.new $FILENAME
 fi

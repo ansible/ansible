@@ -9,32 +9,6 @@ class ModuleDocFragment(object):
     # Standard files documentation fragment
     DOCUMENTATION = r'''
 options:
-  authorize:
-    description:
-      - B(Deprecated)
-      - "Starting with Ansible 2.5 we recommend using C(connection: network_cli) and C(become: yes)."
-      - This option is only required if you are using eAPI.
-      - For more information please see the L(EOS Platform Options guide, ../network/user_guide/platform_eos.html).
-      - HORIZONTALLINE
-      - Instructs the module to enter privileged mode on the remote device
-        before sending any commands.  If not specified, the device will
-        attempt to execute all commands in non-privileged mode. If the value
-        is not specified in the task, the value of environment variable
-        C(ANSIBLE_NET_AUTHORIZE) will be used instead.
-    type: bool
-    default: no
-  auth_pass:
-    description:
-      - B(Deprecated)
-      - "Starting with Ansible 2.5 we recommend using C(connection: network_cli) and C(become: yes) with C(become_pass)."
-      - This option is only required if you are using eAPI.
-      - For more information please see the L(EOS Platform Options guide, ../network/user_guide/platform_eos.html).
-      - HORIZONTALLINE
-      - Specifies the password to use if required to enter privileged mode
-        on the remote device.  If I(authorize) is false, then this argument
-        does nothing. If the value is not specified in the task, the value of
-        environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
-    type: str
   provider:
     description:
       - B(Deprecated)

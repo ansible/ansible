@@ -71,7 +71,7 @@ options:
       pg_dump returns rc 1 in this case.
     - C(restore) also requires a target definition from which the database will be restored. (Added in Ansible 2.4)
     - The format of the backup will be detected based on the target name.
-    - Supported compression formats for dump and restore include C(.bz2), C(.gz) and C(.xz)
+    - Supported compression formats for dump and restore include C(.pgc), C(.bz2), C(.gz) and C(.xz)
     - Supported formats for dump and restore include C(.sql) and C(.tar)
     type: str
     choices: [ absent, dump, present, restore ]
@@ -178,6 +178,16 @@ EXAMPLES = r'''
     tablespace: bar
 '''
 
+RETURN = r'''
+executed_commands:
+  description: List of commands which tried to run.
+  returned: always
+  type: list
+  sample: ["CREATE DATABASE acme"]
+  version_added: '2.10'
+'''
+
+
 import os
 import subprocess
 import traceback
@@ -197,6 +207,8 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_native
 
+executed_commands = []
+
 
 class NotSupportedError(Exception):
     pass
@@ -207,9 +219,10 @@ class NotSupportedError(Exception):
 
 
 def set_owner(cursor, db, owner):
-    query = "ALTER DATABASE %s OWNER TO %s" % (
+    query = 'ALTER DATABASE %s OWNER TO "%s"' % (
             pg_quote_identifier(db, 'database'),
-            pg_quote_identifier(owner, 'role'))
+            owner)
+    executed_commands.append(query)
     cursor.execute(query)
     return True
 
@@ -218,6 +231,7 @@ def set_conn_limit(cursor, db, conn_limit):
     query = "ALTER DATABASE %s CONNECTION LIMIT %s" % (
             pg_quote_identifier(db, 'database'),
             conn_limit)
+    executed_commands.append(query)
     cursor.execute(query)
     return True
 
@@ -252,6 +266,7 @@ def db_exists(cursor, db):
 def db_delete(cursor, db):
     if db_exists(cursor, db):
         query = "DROP DATABASE %s" % pg_quote_identifier(db, 'database')
+        executed_commands.append(query)
         cursor.execute(query)
         return True
     else:
@@ -263,7 +278,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_
     if not db_exists(cursor, db):
         query_fragments = ['CREATE DATABASE %s' % pg_quote_identifier(db, 'database')]
         if owner:
-            query_fragments.append('OWNER %s' % pg_quote_identifier(owner, 'role'))
+            query_fragments.append('OWNER "%s"' % owner)
         if template:
             query_fragments.append('TEMPLATE %s' % pg_quote_identifier(template, 'database'))
         if encoding:
@@ -277,6 +292,7 @@ def db_create(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_
         if conn_limit:
             query_fragments.append("CONNECTION LIMIT %(conn_limit)s" % {"conn_limit": conn_limit})
         query = ' '.join(query_fragments)
+        executed_commands.append(cursor.mogrify(query, params))
         cursor.execute(query, params)
         return True
     else:
@@ -346,6 +362,8 @@ def db_dump(module, target, target_opts="",
 
     if os.path.splitext(target)[-1] == '.tar':
         flags.append(' --format=t')
+    elif os.path.splitext(target)[-1] == '.pgc':
+        flags.append(' --format=c')
     if os.path.splitext(target)[-1] == '.gz':
         if module.get_bin_path('pigz'):
             comp_prog_path = module.get_bin_path('pigz', True)
@@ -390,6 +408,10 @@ def db_restore(module, target, target_opts="",
 
     elif os.path.splitext(target)[-1] == '.tar':
         flags.append(' --format=Tar')
+        cmd = module.get_bin_path('pg_restore', True)
+
+    elif os.path.splitext(target)[-1] == '.pgc':
+        flags.append(' --format=Custom')
         cmd = module.get_bin_path('pg_restore', True)
 
     elif os.path.splitext(target)[-1] == '.gz':
@@ -453,6 +475,7 @@ def do_with_password(module, cmd, password):
     env = {}
     if password:
         env = {"PGPASSWORD": password}
+    executed_commands.append(cmd)
     rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True, environ_update=env)
     return rc, stderr, stdout, cmd
 
@@ -461,6 +484,7 @@ def set_tablespace(cursor, db, tablespace):
     query = "ALTER DATABASE %s SET TABLESPACE %s" % (
             pg_quote_identifier(db, 'database'),
             pg_quote_identifier(tablespace, 'tablespace'))
+    executed_commands.append(query)
     cursor.execute(query)
     return True
 
@@ -547,9 +571,6 @@ def main():
                 db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
             cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        except pgutils.LibraryError as e:
-            module.fail_json(msg="unable to connect to database: {0}".format(to_native(e)), exception=traceback.format_exc())
-
         except TypeError as e:
             if 'sslrootcert' in e.args[0]:
                 module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(to_native(e)),
@@ -561,7 +582,7 @@ def main():
 
         if session_role:
             try:
-                cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
+                cursor.execute('SET ROLE "%s"' % session_role)
             except Exception as e:
                 module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 
@@ -571,7 +592,7 @@ def main():
                 changed = db_exists(cursor, db)
             elif state == "present":
                 changed = not db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype, conn_limit, tablespace)
-            module.exit_json(changed=changed, db=db)
+            module.exit_json(changed=changed, db=db, executed_commands=executed_commands)
 
         if state == "absent":
             try:
@@ -592,7 +613,8 @@ def main():
                 if rc != 0:
                     module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
                 else:
-                    module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd)
+                    module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd,
+                                     executed_commands=executed_commands)
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
@@ -604,7 +626,7 @@ def main():
     except Exception as e:
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
-    module.exit_json(changed=changed, db=db)
+    module.exit_json(changed=changed, db=db, executed_commands=executed_commands)
 
 
 if __name__ == '__main__':

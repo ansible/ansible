@@ -41,7 +41,6 @@ class TestIosPingModule(TestIosModule):
 
     def load_fixtures(self, commands=None):
         def load_from_file(*args, **kwargs):
-            module = args
             commands = kwargs['commands']
             output = list()
 
@@ -59,7 +58,7 @@ class TestIosPingModule(TestIosModule):
 
     def test_ios_ping_expected_failure(self):
         ''' Test for unsuccessful pings when destination should not be reachable '''
-        set_module_args(dict(count=2, dest="10.255.255.250", state="absent", timeout=45))
+        set_module_args(dict(count=2, dest="10.255.255.250", state="absent"))
         self.execute_module()
 
     def test_ios_ping_unexpected_success(self):
@@ -69,5 +68,5 @@ class TestIosPingModule(TestIosModule):
 
     def test_ios_ping_unexpected_failure(self):
         ''' Test for unsuccessful pings when destination should be reachable - FAIL. '''
-        set_module_args(dict(count=2, dest="10.255.255.250", timeout=45))
+        set_module_args(dict(count=2, dest="10.255.255.250"))
         self.execute_module(failed=True)
