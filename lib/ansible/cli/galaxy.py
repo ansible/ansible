@@ -243,7 +243,8 @@ class GalaxyCLI(CLI):
                                           'found on the server and the installed copy. This does not verify dependencies.')
         verify_parser.set_defaults(func=self.execute_verify)
 
-        verify_parser.add_argument('-p', '--collections-path', dest='collections_path', default=C.COLLECTIONS_PATHS[0],
+        verify_parser.add_argument('-p', '--collections-path', dest='collections_path', default=C.COLLECTIONS_PATHS,
+                                   type=opt_help.unfrack_path(pathsep=True), action=opt_help.PrependListAction,
                                    help='The path to the directory containing your collections.')
         verify_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', help='The collection(s) name or '
                                    'path/url to a tar.gz collection artifact. This is mutually exclusive with --requirements-file.')
@@ -835,24 +836,17 @@ class GalaxyCLI(CLI):
     def execute_verify(self):
 
         collections = context.CLIARGS['args']
-        search_path = context.CLIARGS['collections_path']
+        search_paths = context.CLIARGS['collections_path']
         ignore_certs = context.CLIARGS['ignore_certs']
         ignore_errors = context.CLIARGS['ignore_errors']
         requirements_file = context.CLIARGS['requirements']
 
         requirements = self._require_one_of_collections_requirements(collections, requirements_file)
 
-        search_path = GalaxyCLI._resolve_path(search_path)
-        collections_path = C.COLLECTIONS_PATHS
+        resolved_paths = [validate_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
 
-        if len([p for p in collections_path if p.startswith(search_path)]) == 0:
-            display.warning("The specified collections path '%s' is not part of the configured Ansible "
-                            "collections paths '%s'. The installed collection won't be picked up in an Ansible "
-                            "run." % (to_text(search_path), to_text(":".join(collections_path))))
+        verify_collections(requirements, resolved_paths, self.api_servers, (not ignore_certs), ignore_errors)
 
-        search_path = validate_collection_path(search_path)
-
-        verify_collections(requirements, search_path, self.api_servers, (not ignore_certs), ignore_errors)
         return 0
 
     def execute_install(self):

@@ -541,16 +541,14 @@ def validate_collection_path(collection_path):
     return collection_path
 
 
-def verify_collections(collections, search_path, apis, validate_certs, ignore_errors):
-    existing_collections = find_existing_collections(search_path)
-
-    current_collections = dict(('%s.%s' % (collection.namespace, collection.name), collection) for collection in existing_collections)
+def verify_collections(collections, search_paths, apis, validate_certs, ignore_errors):
 
     with _display_progress():
         with _tempdir() as b_temp_path:
             for collection in collections:
                 try:
 
+                    local_collection = None
                     b_temp_tar_path = None
                     b_collection = to_bytes(collection[0], errors='surrogate_or_strict')
                     located_by_name = False
@@ -569,6 +567,18 @@ def verify_collections(collections, search_path, apis, validate_certs, ignore_er
                     collection_name = '%s.%s' % (remote_collection.namespace, remote_collection.name)
                     collection_version = remote_collection.latest_version
 
+                    # Verify local collection exists before always downloading remote for comparison if it hasn't been yet
+                    for search_path in search_paths:
+                        b_search_path = to_bytes(
+                                os.path.join(search_path, remote_collection.namespace, remote_collection.name), errors='surrogate_or_strict'
+                        )
+                        if os.path.isdir(b_search_path):
+                            local_collection = CollectionRequirement.from_path(b_search_path, False)
+                            break
+                    if local_collection is None:
+                        raise AnsibleError(message='Collection %s is not installed in any of the collection paths.' % collection_name)
+
+                    # Download the tar file to compare with the installed collection
                     if b_temp_tar_path is None:
                         if not located_by_name:
                             remote_collection = CollectionRequirement.from_name(collection_name, apis, collection_version, False, parent=None)
@@ -577,7 +587,6 @@ def verify_collections(collections, search_path, apis, validate_certs, ignore_er
                         remote_collection.api._add_auth_token(headers, download_url, required=False)
                         b_temp_tar_path = _download_file(download_url, b_temp_path, None, validate_certs, headers=headers)
 
-                    local_collection = current_collections[collection_name]
                     local_collection.verify(remote_collection, search_path, b_temp_tar_path)
 
                 except AnsibleError as err:
@@ -586,12 +595,6 @@ def verify_collections(collections, search_path, apis, validate_certs, ignore_er
                                         "Error: %s" % (collection[0], to_text(err)))
                     else:
                         raise
-                except KeyError:
-                    if ignore_errors:
-                        display.warning("Failed to verify collection '%s' because it is not installed, but skipping due to "
-                                        "--ignore-errors being set." % collection_name)
-                    else:
-                        raise AnsibleError("Failed to verify collection '%s' because it is not installed." % collection_name)
 
 
 @contextmanager

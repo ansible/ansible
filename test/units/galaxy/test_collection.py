@@ -769,14 +769,13 @@ def test_require_one_of_collections_requirements_with_collections():
 
 
 @patch('ansible.cli.galaxy.GalaxyCLI._parse_requirements_file')
-def test_require_one_of_collections_requirements_with_requirements(mock_parse_requirements_file):
+def test_require_one_of_collections_requirements_with_requirements(mock_parse_requirements_file, galaxy_server):
     cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'verify', '-r', 'requirements.yml', 'namespace.collection'])
-    galaxy_api = api.GalaxyAPI(MagicMock, 'default', 'https://galaxy.ansible.com')
-    mock_parse_requirements_file.return_value = {'collections': [('namespace.collection', '1.0.5', galaxy_api)]}
+    mock_parse_requirements_file.return_value = {'collections': [('namespace.collection', '1.0.5', galaxy_server)]}
     requirements = cli._require_one_of_collections_requirements((), 'requirements.yml')
 
     assert mock_parse_requirements_file.call_count == 1
-    assert requirements == [('namespace.collection', '1.0.5', galaxy_api)]
+    assert requirements == [('namespace.collection', '1.0.5', galaxy_server)]
 
 
 @patch('ansible.cli.galaxy.GalaxyCLI.execute_verify', spec=True)
@@ -813,12 +812,13 @@ def test_execute_verify_with_defaults(mock_verify_collections):
     galaxy_args = ['ansible-galaxy', 'collection', 'verify', 'namespace.collection:1.0.4']
     GalaxyCLI(args=galaxy_args).run()
 
-    mock_verify_collections.assert_called_once()
+    assert mock_verify_collections.call_count == 1
 
-    requirements, install_path, galaxy_apis, validate, ignore_errors = mock_verify_collections.call_args[0]
+    requirements, search_paths, galaxy_apis, validate, ignore_errors = mock_verify_collections.call_args[0]
 
     assert requirements == [('namespace.collection', '1.0.4', None)]
-    assert install_path.endswith('ansible_collections')
+    for install_path in search_paths:
+        assert install_path.endswith('ansible_collections')
     assert galaxy_apis[0].api_server == 'https://galaxy.ansible.com'
     assert validate is True
     assert ignore_errors is False
@@ -831,12 +831,13 @@ def test_execute_verify(mock_verify_collections):
         '-p', '~/.ansible', '--ignore-errors', '--server', 'http://galaxy-dev.com',
     ]).run()
 
-    mock_verify_collections.assert_called_once()
+    assert mock_verify_collections.call_count == 1
 
-    requirements, install_path, galaxy_apis, validate, ignore_errors = mock_verify_collections.call_args[0]
+    requirements, search_paths, galaxy_apis, validate, ignore_errors = mock_verify_collections.call_args[0]
 
     assert requirements == [('namespace.collection', '1.0.4', None)]
-    assert install_path.endswith('ansible_collections')
+    for install_path in search_paths:
+        assert install_path.endswith('ansible_collections')
     assert galaxy_apis[0].api_server == 'http://galaxy-dev.com'
     assert validate is False
     assert ignore_errors is True
@@ -906,18 +907,18 @@ def test_get_tar_file_member(tmp_tarfile):
     temp_dir, tfile, filename, checksum = tmp_tarfile
 
     with collection._get_tar_file_member(tfile, filename) as tar_file_obj:
-        assert os.path.isfile(tar_file_obj.name)
+        assert isinstance(tar_file_obj, tarfile.ExFileObject)
 
 
 def test_get_nonexistent_tar_file_member(tmp_tarfile):
     temp_dir, tfile, filename, checksum = tmp_tarfile
 
-    file_does_not_exist = os.path.join(to_bytes(filename), b'nonexistent')
+    file_does_not_exist = filename + 'nonexistent'
 
     with pytest.raises(AnsibleError) as err:
         collection._get_tar_file_member(tfile, file_does_not_exist)
 
-    assert err.value.message == "Collection tar at '{0}' does not contain the expected file '{1}'.".format(to_text(tfile.name), to_text(file_does_not_exist))
+    assert to_text(err.value.message) == "Collection tar at '%s' does not contain the expected file '%s'." % (to_text(tfile.name), file_does_not_exist)
 
 
 def test_get_tar_file_hash(tmp_tarfile):
@@ -1104,13 +1105,11 @@ def test_verify_collections_not_installed(mock_verify, mock_collection):
     name = 'collection'
     version = '1.0.0'
 
-    local_collection = mock_collection(local_installed=False)
-
     collections = [('%s.%s' % (namespace, name), version, None)]
     search_path = './'
     validate_certs = False
     ignore_errors = False
-    apis = [local_collection.api]
+    apis = []
 
     with pytest.raises(AnsibleError) as err:
         collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
@@ -1136,16 +1135,18 @@ def test_verify_collections_not_installed_ignore_errors(mock_verify, mock_collec
 
 
 @patch.object(os.path, 'isfile', return_value=True)
+@patch.object(os.path, 'isdir', return_value=True)
 @patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_tarfile(mock_isfile, mock_verify, mock_collection, monkeypatch):
+def test_verify_collections_tarfile(mock_verify, mock_isdir, mock_isfile, mock_collection, monkeypatch):
     local_collection = mock_collection()
-    monkeypatch.setattr(collection, 'find_existing_collections', MagicMock(return_value=[local_collection]))
+    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', MagicMock(return_value=local_collection))
 
-    located_remote_from_tar = MagicMock(return_value=mock_collection(local=False))
+    remote_collection = mock_collection(local=False)
+    located_remote_from_tar = MagicMock(return_value=remote_collection)
     monkeypatch.setattr(collection.CollectionRequirement, 'from_tar', located_remote_from_tar)
 
     with patch.object(collection, '_download_file') as mock_download_file:
-        with patch.object(collection.CollectionRequirement, 'from_name') as located_remote_from_name:
+        with patch.object(collection.CollectionRequirement, 'from_name', return_value=remote_collection) as located_remote_from_name:
 
             tarfile = '%s-%s-%s.tar.gz' % (local_collection.namespace, local_collection.name, local_collection.latest_version)
             collections = [(tarfile, '*', None)]
@@ -1156,7 +1157,7 @@ def test_verify_collections_tarfile(mock_isfile, mock_verify, mock_collection, m
 
             collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
 
-            assert mock_isfile.call_count == 1
+            assert mock_isfile.call_count == 2
             assert mock_verify.call_count == 1
             assert located_remote_from_tar.call_count == 1
             assert mock_download_file.call_count == 1
@@ -1166,15 +1167,14 @@ def test_verify_collections_tarfile(mock_isfile, mock_verify, mock_collection, m
 @patch.object(os.path, 'isfile', return_value=False)
 @patch.object(os.path, 'isdir', return_value=True)
 @patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_path(mock_isfile, mock_isdir, mock_verify, mock_collection, monkeypatch):
+def test_verify_collections_path(mock_verify, mock_isdir, mock_isfile, mock_collection, monkeypatch):
     local_collection = mock_collection()
-    monkeypatch.setattr(collection, 'find_existing_collections', MagicMock(return_value=[local_collection]))
-
-    located_remote_from_path = MagicMock(return_value=mock_collection(local=False))
-    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', located_remote_from_path)
+    remote_collection = mock_collection(local=False)
+    located_from_path = MagicMock(side_effect=[remote_collection, local_collection])
+    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', located_from_path)
 
     with patch.object(collection, '_download_file') as mock_download_file:
-        with patch.object(collection.CollectionRequirement, 'from_name') as located_remote_from_name:
+        with patch.object(collection.CollectionRequirement, 'from_name', return_value=remote_collection) as located_remote_from_name:
 
             collections = [('%s/%s/' % (local_collection.namespace, local_collection.name), '*', None)]
             search_path = './'
@@ -1184,19 +1184,19 @@ def test_verify_collections_path(mock_isfile, mock_isdir, mock_verify, mock_coll
 
             collection.verify_collections(collections, search_path, apis, validate_certs, ignore_errors)
 
-            assert mock_isdir.call_count == 1
+            assert mock_isdir.call_count == 2
             assert mock_verify.call_count == 1
-            assert located_remote_from_path.call_count == 1
+            assert located_from_path.call_count == 2
             assert mock_download_file.call_count == 1
             assert located_remote_from_name.call_count == 1
 
 
 @patch.object(os.path, 'isfile', return_value=False)
-@patch.object(os.path, 'isdir', return_value=False)
+@patch.object(os.path, 'isdir', side_effect=[False, True])
 @patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_url(mock_isfile, mock_isdir, mock_verify, mock_collection, monkeypatch):
+def test_verify_collections_url(mock_verify, mock_isdir, mock_isfile, mock_collection, monkeypatch):
     local_collection = mock_collection()
-    monkeypatch.setattr(collection, 'find_existing_collections', MagicMock(return_value=[local_collection]))
+    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', MagicMock(return_value=local_collection))
 
     remote_collection = mock_collection(local=False)
     located_remote_from_tar = MagicMock(return_value=remote_collection)
@@ -1217,11 +1217,11 @@ def test_verify_collections_url(mock_isfile, mock_isdir, mock_verify, mock_colle
 
 
 @patch.object(os.path, 'isfile', return_value=False)
-@patch.object(os.path, 'isdir', return_value=False)
+@patch.object(os.path, 'isdir', side_effect=[False, True])
 @patch.object(collection.CollectionRequirement, 'verify')
-def test_verify_collections_name(mock_isfile, mock_isdir, mock_verify, mock_collection, monkeypatch):
+def test_verify_collections_name(mock_verify, mock_isdir, mock_isfile, mock_collection, monkeypatch):
     local_collection = mock_collection()
-    monkeypatch.setattr(collection, 'find_existing_collections', MagicMock(return_value=[local_collection]))
+    monkeypatch.setattr(collection.CollectionRequirement, 'from_path', MagicMock(return_value=local_collection))
 
     located_remote_from_name = MagicMock(return_value=mock_collection(local=False))
     monkeypatch.setattr(collection.CollectionRequirement, 'from_name', located_remote_from_name)
