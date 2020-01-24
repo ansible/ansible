@@ -201,6 +201,7 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_task = MagicMock()
         mock_task._uuid = 'abcd'
+        mock_task.throttle = 0
 
         try:
             strategy_base = StrategyBase(tqm=tqm)
