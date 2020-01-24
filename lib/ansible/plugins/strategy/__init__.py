@@ -325,9 +325,26 @@ class StrategyBase:
 
         # and then queue the new task
         try:
+            # Determine the "rewind point" of the worker list. This means we start
+            # iterating over the list of workers until the end of the list is found.
+            # Normally, that is simply the length of the workers list (as determined
+            # by the forks or serial setting), however a task/block/play may "throttle"
+            # that limit down.
+            rewind_point = len(self._workers)
+            if throttle > 0 and self.ALLOW_BASE_THROTTLING:
+                if task.run_once:
+                    display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
+                else:
+                    if throttle <= rewind_point:
+                        display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
+                        rewind_point = throttle
+
             queued = False
             starting_worker = self._cur_worker
             while True:
+                if self._cur_worker >= rewind_point:
+                    self._cur_worker = 0
+
                 worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     self._queued_task_cache[(host.name, task._uuid)] = {
@@ -346,19 +363,6 @@ class StrategyBase:
 
                 self._cur_worker += 1
 
-                # Determine the "rewind point" of the worker list. This means we start
-                # iterating over the list of workers until the end of the list is found.
-                # Normally, that is simply the length of the workers list (as determined
-                # by the forks or serial setting), however a task/block/play may "throttle"
-                # that limit down.
-                rewind_point = len(self._workers)
-                if throttle > 0 and self.ALLOW_BASE_THROTTLING:
-                    if task.run_once:
-                        display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
-                    else:
-                        if throttle <= rewind_point:
-                            display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
-                            rewind_point = throttle
                 if self._cur_worker >= rewind_point:
                     self._cur_worker = 0
 

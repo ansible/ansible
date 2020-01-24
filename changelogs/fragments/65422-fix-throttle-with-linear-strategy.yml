@@ -1,0 +1,2 @@
+bugfixes:
+- "throttle: the linear strategy didn't always stuck with the throttle limit"

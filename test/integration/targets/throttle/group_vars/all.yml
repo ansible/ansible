@@ -1,0 +1,4 @@
+---
+throttledir: '{{ base_throttledir }}/{{ subdir }}'
+base_throttledir: "{{ lookup('env', 'OUTPUT_DIR') }}/throttle.dir"
+subdir: "{{ test_id if lookup('env', 'SELECTED_STRATEGY') in ['free', 'host_pinned'] else '' }}"

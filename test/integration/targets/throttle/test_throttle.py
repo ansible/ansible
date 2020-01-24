@@ -24,6 +24,7 @@ try:
     if len(throttlelist) > max_throttle:
         print(throttlelist)
         raise ValueError("Too many concurrent tasks: %d/%d" % (len(throttlelist), max_throttle))
+    time.sleep(1.5)
 finally:
     # remove the file, then wait to make sure it's gone
     os.unlink(throttlefile)
