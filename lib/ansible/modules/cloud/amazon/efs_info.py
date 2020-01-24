@@ -182,7 +182,7 @@ except ImportError:
     pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, AWSRetry
+from ansible.module_utils.ec2 import get_aws_connection_info, AWSRetry
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, boto3_tag_list_to_ansible_dict
 from ansible.module_utils._text import to_native
 
@@ -193,16 +193,14 @@ class EFSConnection(object):
     STATE_DELETING = 'deleting'
     STATE_DELETED = 'deleted'
 
-    def __init__(self, module, region, **aws_connect_params):
+    def __init__(self, module):
         try:
-            self.connection = boto3_conn(module, conn_type='client',
-                                         resource='efs', region=region,
-                                         **aws_connect_params)
+            self.connection = module.client('efs')
             self.module = module
         except Exception as e:
             module.fail_json(msg="Failed to connect to AWS: %s" % to_native(e))
 
-        self.region = region
+        self.region = get_aws_connection_info(module, boto3=True)[0]
 
     @AWSRetry.exponential_backoff(catch_extra_error_codes=['ThrottlingException'])
     def list_file_systems(self, **kwargs):
@@ -360,13 +358,12 @@ def main():
     """
     Module action handler
     """
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         id=dict(),
         name=dict(aliases=['creation_token']),
         tags=dict(type="dict", default={}),
         targets=dict(type="list", default=[])
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True)
@@ -375,8 +372,7 @@ def main():
         module.deprecate("The 'efs_facts' module has been renamed to 'efs_info', "
                          "and the renamed one no longer returns ansible_facts", version='2.13')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-    connection = EFSConnection(module, region, **aws_connect_params)
+    connection = EFSConnection(module)
 
     name = module.params.get('name')
     fs_id = module.params.get('id')

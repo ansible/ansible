@@ -139,10 +139,10 @@ services:
 try:
     import botocore
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import ec2_argument_spec, AWSRetry
+from ansible.module_utils.ec2 import AWSRetry
 
 
 class EcsServiceManager:
@@ -219,13 +219,12 @@ def chunks(l, n):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(dict(
+    argument_spec = dict(
         details=dict(type='bool', default=False),
         events=dict(type='bool', default=True),
         cluster=dict(),
         service=dict(type='list')
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     is_old_facts = module._name == 'ecs_service_facts'
