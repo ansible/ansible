@@ -48,6 +48,7 @@ files:
     ignored: ryansb
   $modules/cloud/amazon/:
     ignored: erydo seiffert simplesteph nadirollo tedder joshsouza
+    maintainers: $team_aws
   $modules/cloud/amazon/aws_kms.py:
     ignored: tedder
   $modules/cloud/amazon/cloudformation.py:
@@ -911,7 +912,7 @@ files:
     labels:
       - cloud
       - aws
-    notified: s-hertel
+    notified: $team_aws
   contrib/inventory/vmware.py:
     keywords:
       - vmware inventory
@@ -1540,7 +1541,7 @@ files:
   $plugins/inventory/__init__.py:
     support: core
   $plugins/inventory/aws_ec2.py:
-    maintainers: s-hertel
+    maintainers: $team_aws
   $plugins/inventory/azure_rm.py:
     migrated_to: azure.azcollection
   $plugins/inventory/docker: *docker
@@ -1803,7 +1804,7 @@ files:
     labels:
       - aws
       - cloud
-    maintainers: s-hertel
+    maintainers: $team_aws
   docs/docsite/rst/scenario_guides/guide_azure.rst:
     labels:
       - azure
@@ -1934,6 +1935,7 @@ macros:
   team_asa: NilashishC ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
+  team_aws: jillr s-hertel tremble
   team_azure: haroldwongms yuwzho yungezz zikalino haiyuazhang gavinfish
   team_bsd: bcoca dagwieers dch jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
