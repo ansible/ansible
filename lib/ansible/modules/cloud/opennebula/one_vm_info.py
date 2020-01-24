@@ -197,12 +197,17 @@ vms:
 
 from ansible.module_utils.opennebula import OpenNebulaModule
 from ansible.module_utils.basic import AnsibleModule
-from pyone import VM_STATE, LCM_STATE
 import os
 import time
 
 
 def get_vm_info(one, vm):
+
+    try:
+        from pyone import VM_STATE, LCM_STATE
+    except ImportError:
+        one.fail("pyone is required for this module")
+
     # get additional info
     vm = one.one.vm.info(vm.ID)
     # get Uptime
