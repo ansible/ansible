@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_image
 version_added: "2.5"
-short_description: Manage Azure image.
+short_description: Manage Azure image
 description:
     - Create, delete an image from virtual machine, blob uri, managed disk or snapshot.
 options:
@@ -33,9 +33,9 @@ options:
         description:
             - OS disk source from the same region.
             - It can be a virtual machine, OS disk blob URI, managed OS disk, or OS snapshot.
-            - Each type of source except for blob URI can be given as resource id, name or a dict contains C(resource_group), C(name) and C(types).
+            - Each type of source except for blob URI can be given as resource id, name or a dict contains C(resource_group), C(name) and C(type).
             - If source type is blob URI, the source should be the full URI of the blob in string type.
-            - If you specify the C(type) in a dict, acceptable value contains C(disks), C(virtual_machines) and C(snapshots).
+            - If you specify the I(type) in a dict, acceptable value contains C(disks), C(virtual_machines) and C(snapshots).
         type: raw
         required: true
     data_disk_sources:
@@ -63,7 +63,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Yuwei Zhou (@yuwzho)"
+    - Yuwei Zhou (@yuwzho)
 
 '''
 
@@ -107,7 +107,8 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: Image resource path.
+    description:
+        - Image resource path.
     type: str
     returned: success
     example: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Compute/images/myImage"

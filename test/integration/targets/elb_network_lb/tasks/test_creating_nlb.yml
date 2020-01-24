@@ -9,7 +9,7 @@
         region: "{{ aws_region }}"
     no_log: yes
 
-  - name: create NLB with a listener
+  - name: create NLB with listeners
     elb_network_lb:
       name: "{{ nlb_name }}"
       subnets: "{{ nlb_subnets }}"
@@ -20,15 +20,32 @@
           DefaultActions:
             - Type: forward
               TargetGroupName: "{{ tg_name }}"
+        - Protocol: TLS
+          Port: 443
+          Certificates:
+            - CertificateArn: "{{ cert.arn }}"
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+        - Protocol: UDP
+          Port: 13
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_tcpudp_name }}"
+        - Protocol: TCP_UDP
+          Port: 17
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_tcpudp_name }}"
       <<: *aws_connection_info
     register: nlb
 
   - assert:
       that:
         - nlb.changed
-        - nlb.listeners|length == 1
+        - nlb.listeners|length == 4
 
-  - name: test idempotence creating NLB with a listener
+  - name: test idempotence creating NLB with listeners
     elb_network_lb:
       name: "{{ nlb_name }}"
       subnets: "{{ nlb_subnets }}"
@@ -39,10 +56,27 @@
           DefaultActions:
             - Type: forward
               TargetGroupName: "{{ tg_name }}"
+        - Protocol: TLS
+          Port: 443
+          Certificates:
+            - CertificateArn: "{{ cert.arn }}"
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_name }}"
+        - Protocol: UDP
+          Port: 13
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_tcpudp_name }}"
+        - Protocol: TCP_UDP
+          Port: 17
+          DefaultActions:
+            - Type: forward
+              TargetGroupName: "{{ tg_tcpudp_name }}"
       <<: *aws_connection_info
     register: nlb
 
   - assert:
       that:
         - not nlb.changed
-        - nlb.listeners|length == 1
+        - nlb.listeners|length == 4

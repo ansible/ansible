@@ -1,0 +1,72 @@
+---
+- debug:
+    msg: "START junos_lldp_interfaces round trip integration tests on connection={{ ansible_connection }}"
+
+- name: get supported protocols
+  junos_command:
+    commands: show lldp
+  register: result
+  ignore_errors: yes
+
+- name: lldp supported
+  set_fact:
+    lldp_supported: True
+  when: not result.failed
+
+- name: lldp not supported
+  set_fact:
+    lldp_supported: False
+  when: result.failed
+
+- block:
+    - include_tasks: _remove_config.yaml
+
+    - set_fact:
+        expected_revert_output:
+          - name: ge-0/0/1
+          - name: ge-0/0/2
+            enabled: False
+
+    - name: Apply the provided configuration (base config)
+      junos_lldp_interfaces:
+        config:
+          - name: ge-0/0/1
+          - name: ge-0/0/2
+            enabled: False
+        state: merged
+      register: base_config
+
+    - name: Gather interfaces facts
+      junos_facts:
+        gather_subset:
+          - default
+        gather_network_resources:
+          - lldp_interfaces
+
+    - name: Apply the provided configuration (config to be reverted)
+      junos_lldp_interfaces:
+        config:
+        - name: ge-0/0/2
+        state: overridden
+      register: result
+
+    - name: Assert that changes were applied
+      assert:
+        that: "result['changed'] == true"
+
+    - name: Revert back to base config using facts round trip
+      junos_lldp_interfaces:
+        config: "{{ ansible_facts['network_resources']['lldp_interfaces'] }}"
+        state: replaced
+      register: revert
+
+    - name: Assert that config was reverted
+      assert:
+        that: "{{ expected_revert_output | symmetric_difference(revert['after']) |length == 0 }}"
+
+  always:
+    - include_tasks: _remove_config.yaml
+  when: lldp_supported
+
+- debug:
+    msg: "END junos_lldp_interfaces round trip integration tests on connection={{ ansible_connection }}"

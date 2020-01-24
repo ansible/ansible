@@ -206,12 +206,12 @@ def main():
 
     aci = ACIModule(module)
 
-    admin_state = aci.boolean(module.params['admin_state'], 'enabled', 'disabled')
-    description = module.params['description']
-    dst_group = module.params['dst_group']
-    src_group = module.params['src_group']
-    state = module.params['state']
-    tenant = module.params['tenant']
+    admin_state = aci.boolean(module.params.get('admin_state'), 'enabled', 'disabled')
+    description = module.params.get('description')
+    dst_group = module.params.get('dst_group')
+    src_group = module.params.get('src_group')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     aci.construct_url(
         root_class=dict(

@@ -301,6 +301,11 @@ options:
         the rule to apply instead to all users except that one specified.
     type: str
     version_added: "2.1"
+  gid_owner:
+    description:
+      - Specifies the GID or group to use in match by owner rule.
+    type: str
+    version_added: "2.9"
   reject_with:
     description:
       - 'Specifies the error packet type to return while rejecting. It implies
@@ -330,6 +335,12 @@ options:
     type: str
     choices: [ ACCEPT, DROP, QUEUE, RETURN ]
     version_added: "2.2"
+  wait:
+    description:
+      - Wait N seconds for the xtables lock to prevent multiple instances of
+        the program from running concurrently.
+    type: str
+    version_added: "2.10"
 '''
 
 EXAMPLES = r'''
@@ -453,8 +464,14 @@ EXAMPLES = r'''
 
 import re
 
+from distutils.version import LooseVersion
+
 from ansible.module_utils.basic import AnsibleModule
 
+
+IPTABLES_WAIT_SUPPORT_ADDED = '1.4.20'
+
+IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED = '1.6.0'
 
 BINS = dict(
     ipv4='iptables',
@@ -507,8 +524,14 @@ def append_jump(rule, param, jump):
         rule.extend(['-j', jump])
 
 
+def append_wait(rule, param, flag):
+    if param:
+        rule.extend([flag, param])
+
+
 def construct_rule(params):
     rule = []
+    append_wait(rule, params['wait'], '-w')
     append_param(rule, params['protocol'], '-p', False)
     append_param(rule, params['source'], '-s', False)
     append_param(rule, params['destination'], '-d', False)
@@ -558,6 +581,9 @@ def construct_rule(params):
     append_match(rule, params['uid_owner'], 'owner')
     append_match_flag(rule, params['uid_owner'], '--uid-owner', True)
     append_param(rule, params['uid_owner'], '--uid-owner', False)
+    append_match(rule, params['gid_owner'], 'owner')
+    append_match_flag(rule, params['gid_owner'], '--gid-owner', True)
+    append_param(rule, params['gid_owner'], '--gid-owner', False)
     if params['jump'] is None:
         append_jump(rule, params['reject_with'], 'REJECT')
     append_param(rule, params['reject_with'], '--reject-with', False)
@@ -622,6 +648,12 @@ def get_chain_policy(iptables_path, module, params):
     return None
 
 
+def get_iptables_version(iptables_path, module):
+    cmd = [iptables_path, '--version']
+    rc, out, _ = module.run_command(cmd, check_rc=True)
+    return out.split('v')[1].rstrip('\n')
+
+
 def main():
     module = AnsibleModule(
         supports_check_mode=True,
@@ -633,6 +665,7 @@ def main():
             chain=dict(type='str'),
             rule_num=dict(type='str'),
             protocol=dict(type='str'),
+            wait=dict(type='str'),
             source=dict(type='str'),
             to_source=dict(type='str'),
             destination=dict(type='str'),
@@ -669,6 +702,7 @@ def main():
             limit=dict(type='str'),
             limit_burst=dict(type='str'),
             uid_owner=dict(type='str'),
+            gid_owner=dict(type='str'),
             reject_with=dict(type='str'),
             icmp_type=dict(type='str'),
             syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
@@ -707,6 +741,15 @@ def main():
             module.params['jump'] = 'LOG'
         elif module.params['jump'] != 'LOG':
             module.fail_json(msg="Logging options can only be used with the LOG jump target.")
+
+    # Check if wait option is supported
+    iptables_version = LooseVersion(get_iptables_version(iptables_path, module))
+
+    if iptables_version >= LooseVersion(IPTABLES_WAIT_SUPPORT_ADDED):
+        if iptables_version < LooseVersion(IPTABLES_WAIT_WITH_SECONDS_SUPPORT_ADDED):
+            module.params['wait'] = ''
+    else:
+        module.params['wait'] = None
 
     # Flush the table
     if args['flush'] is True:

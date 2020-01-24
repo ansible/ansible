@@ -25,19 +25,29 @@
 - set_fact:
     remote_file_expanded: '{{ echo.stdout }}'
 
-# Include the tests
+# Import the test tasks
 - name: Run tests for state=link
-  include: state_link.yml
+  import_tasks: state_link.yml
 
 - name: Run tests for directory as dest
-  include: directory_as_dest.yml
+  import_tasks: directory_as_dest.yml
+
+- name: Run tests for unicode
+  import_tasks: unicode_path.yml
+  environment:
+    LC_ALL: C
+    LANG: C
 
 - name: decide to include or not include selinux tests
-  include: selinux_tests.yml
+  include_tasks: selinux_tests.yml
   when: selinux_installed is defined and selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
 
 - name: Initialize the test output dir
-  include: initialize.yml
+  import_tasks: initialize.yml
+
+- name: Test _diff_peek
+  import_tasks: diff_peek.yml
+
 
 # These tests need to be organized by state parameter into separate files later
 
@@ -243,7 +253,7 @@
   when: selinux_installed.stdout != ""
   ignore_errors: true
 
-- name: remote directory foobar
+- name: remove directory foobar
   file: path={{output_dir}}/foobar state=absent
 
 - name: remove file foo.txt
@@ -257,6 +267,28 @@
 
 - name: copy directory structure over
   copy: src=foobar dest={{output_dir}}
+
+- name: check what would be removed if folder state was absent and diff is enabled
+  file: 
+    path: "{{ item }}"
+    state: absent
+  check_mode: yes
+  diff: yes
+  with_items:
+    - "{{ output_dir }}"
+    - "{{ output_dir }}/foobar/fileA"
+  register: folder_absent_result
+
+- name: 'assert that the "absent" state lists expected files and folders for only directories'
+  assert:
+    that:
+      - folder_absent_result.results[0].diff.before.path_content is defined
+      - folder_absent_result.results[1].diff.before.path_content is not defined
+      - test_folder in folder_absent_result.results[0].diff.before.path_content.directories
+      - test_file in folder_absent_result.results[0].diff.before.path_content.files
+  vars:
+    test_folder: "{{ folder_absent_result.results[0].path }}/foobar"
+    test_file: "{{ folder_absent_result.results[0].path }}/foobar/fileA"
 
 - name: Change ownership of a directory with recurse=no(default)
   file: path={{output_dir}}/foobar owner=1234
@@ -491,7 +523,7 @@
 # https://github.com/ansible/ansible/issues/50943
 # Need to use /tmp as nobody can't access output_dir at all
 - name: create file as root with all write permissions
-  file: dest=/tmp/write_utime state=touch mode=0666 owner={{ansible_user}}
+  file: dest=/tmp/write_utime state=touch mode=0666 owner={{ansible_user_id}}
 
 - name: Pause to ensure stat times are not the exact same
   pause:
@@ -563,9 +595,6 @@
   stat: path={{output_dir}}/test_follow_rec_target_dir/foo
   register: file_in_dir_result
 
-- debug: var=file_result.stat.mode
-- debug: var=dir_result.stat.mode
-- debug: var=file_in_dir_result.stat.mode
 - name: assert that the link targets were unmodified
   assert:
     that:
@@ -588,12 +617,77 @@
   stat: path={{output_dir}}/test_follow_rec_target_dir/foo
   register: file_in_dir_result
 
-- debug: var=file_result.stat.mode
-- debug: var=dir_result.stat.mode
-- debug: var=file_in_dir_result.stat.mode
 - name: assert that the link targets were modified
   assert:
     that:
     - file_result.stat.mode == '0600'
     - dir_result.stat.mode == '0600'
     - file_in_dir_result.stat.mode == '0600'
+
+# https://github.com/ansible/ansible/issues/55971
+- name: Test missing src and path
+  file:
+    state: hard
+  register: file_error1
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "file_error1 is failed"
+      - "file_error1.msg == 'missing required arguments: path'"
+
+- name: Test missing src
+  file:
+    dest: "{{ output_dir }}/hard.txt"
+    state: hard
+  register: file_error2
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "file_error2 is failed"
+      - "file_error2.msg == 'src is required for creating new hardlinks'"
+
+- name: Test non-existing src
+  file:
+    src: non-existing-file-that-does-not-exist.txt
+    dest: "{{ output_dir }}/hard.txt"
+    state: hard
+  register: file_error3
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "file_error3 is failed"
+      - "file_error3.msg == 'src does not exist'"
+      - "file_error3.dest == '{{ output_dir }}/hard.txt' | expanduser"
+      - "file_error3.src == 'non-existing-file-that-does-not-exist.txt'"
+
+- block:
+  - name: Create a testing file
+    file:
+      dest: original_file.txt
+      state: touch
+
+  - name: Test relative path with state=hard
+    file:
+      src: original_file.txt
+      dest: hard_link_file.txt
+      state: hard
+    register: hard_link_relpath
+
+  - name: Just check if it was successful, we don't care about the actual hard link in this test
+    assert:
+      that:
+        - "hard_link_relpath is success"
+
+  always:
+    - name: Clean up
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - original_file.txt
+        - hard_link_file.txt
+
+# END #55971

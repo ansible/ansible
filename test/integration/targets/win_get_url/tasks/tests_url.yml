@@ -180,7 +180,7 @@
     dest: '{{ testing_dir }}\timeout.txt'
     timeout: 3
   register: timeout_req
-  failed_when: timeout_req.msg != "Error requesting 'https://" + httpbin_host + "/delay/7'. The operation has timed out"
+  failed_when: 'timeout_req.msg != "Error downloading ''https://" + httpbin_host + "/delay/7'' to ''" + testing_dir + "\\timeout.txt'': The operation has timed out"'
 
 - name: send request with headers
   win_get_url:
@@ -188,6 +188,8 @@
     dest: '{{ testing_dir }}\headers.txt'
     headers:
       testing: 123
+      User-Agent: 'badAgent'
+      accept: 'text/html'
   register: headers
 
 - name: get result of send request with headers
@@ -201,3 +203,35 @@
     - headers is changed
     - headers.status_code == 200
     - (headers_actual.content | b64decode | from_json).headers.Testing == '123'
+    - (headers_actual.content | b64decode | from_json).headers["User-Agent"] == 'badAgent'
+    - (headers_actual.content | b64decode | from_json).headers.Accept == 'text/html'
+
+- name: test download follow with redirects
+  win_get_url:
+    url: https://{{ httpbin_host }}/redirect/2
+    dest: '{{ testing_dir }}\redirects.txt'
+  register: redirection
+
+- name: assert download follow with redirects
+  assert:
+    that:
+    - redirection is changed
+    - redirection.status_code == 200
+
+- name: test download follow without redirects
+  win_get_url:
+    url: https://{{ httpbin_host }}/redirect/2
+    dest: '{{ testing_dir }}\no_redirection.txt'
+    follow_redirects: none
+  register: no_redirection
+
+- name: get result of test download follow without redirects
+  slurp:
+    path: '{{ testing_dir }}\no_redirection.txt'
+  register: no_redirection_actual
+
+- name: assert test download follow without redirects
+  assert:
+    that:
+    - no_redirection is changed
+    - no_redirection.status_code == 302

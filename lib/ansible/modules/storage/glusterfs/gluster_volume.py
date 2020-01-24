@@ -548,7 +548,8 @@ def main():
                     if brick not in bricks_in_volume:
                         new_bricks.append(brick)
 
-            if not new_bricks and len(all_bricks) < bricks_in_volume:
+            if not new_bricks and len(all_bricks) > 0 and \
+               len(all_bricks) < len(bricks_in_volume):
                 for brick in bricks_in_volume:
                     if brick not in all_bricks:
                         removed_bricks.append(brick)

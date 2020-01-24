@@ -9,15 +9,18 @@ __metaclass__ = type
 import atexit
 import time
 import re
+import traceback
 
-HAS_XENAPI = False
+XENAPI_IMP_ERR = None
 try:
     import XenAPI
     HAS_XENAPI = True
 except ImportError:
-    pass
+    HAS_XENAPI = False
+    XENAPI_IMP_ERR = traceback.format_exc()
 
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, missing_required_lib
+from ansible.module_utils.common.network import is_mac
 from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
 
 
@@ -70,19 +73,6 @@ def module_to_xapi_vm_power_state(power_state):
     }
 
     return vm_power_state_map.get(power_state)
-
-
-def is_valid_mac_addr(mac_addr):
-    """Validates given string as MAC address.
-
-    Args:
-        mac_addr (str): string to validate as MAC address.
-
-    Returns:
-        bool: True if string is valid MAC address, else False.
-    """
-    mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
-    return bool(mac_addr_regex.match(mac_addr.lower()))
 
 
 def is_valid_ip_addr(ip_addr):
@@ -859,9 +849,7 @@ class XenServerObject(object):
             module: Reference to Ansible module object.
         """
         if not HAS_XENAPI:
-            module.fail_json(changed=False, msg=("XenAPI Python library is required for this module! "
-                                                 "Please download XenServer SDK and copy XenAPI.py to your Python site-packages. "
-                                                 "Check Notes section in module documentation for more info."))
+            module.fail_json(changed=False, msg=missing_required_lib("XenAPI"), exception=XENAPI_IMP_ERR)
 
         self.module = module
         self.xapi_session = XAPI.connect(module)

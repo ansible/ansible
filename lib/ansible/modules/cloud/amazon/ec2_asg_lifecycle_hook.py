@@ -3,6 +3,9 @@
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.1'}
@@ -12,60 +15,64 @@ DOCUMENTATION = """
 module: ec2_asg_lifecycle_hook
 short_description: Create, delete or update AWS ASG Lifecycle Hooks.
 description:
-  - When no given Hook found, will create one.
-  - In case Hook found, but provided parameters are differes, will update existing Hook.
-  - In case state=absent and Hook exists, will delete it.
+  - Will create a new hook when I(state=present) and no given Hook is found.
+  - Will update an existing hook when I(state=present) and a Hook is found, but current and provided parameters differ.
+  - Will delete the hook when I(state=absent) and a Hook is found.
 version_added: "2.5"
 author: Igor 'Tsigankov' Eyrich (@tsiganenok) <tsiganenok@gmail.com>
 options:
   state:
     description:
-      - Create or delete Lifecycle Hook. Present updates existing one or creates if not found.
-    required: false
+      - Create or delete Lifecycle Hook.
+      - When I(state=present) updates existing hook or creates a new hook if not found.
     choices: ['present', 'absent']
     default: present
+    type: str
   lifecycle_hook_name:
     description:
       - The name of the lifecycle hook.
     required: true
+    type: str
   autoscaling_group_name:
     description:
       - The name of the Auto Scaling group to which you want to assign the lifecycle hook.
     required: true
+    type: str
   transition:
     description:
       - The instance state to which you want to attach the lifecycle hook.
-    required: true
+      - Required when I(state=present).
     choices: ['autoscaling:EC2_INSTANCE_TERMINATING', 'autoscaling:EC2_INSTANCE_LAUNCHING']
+    type: str
   role_arn:
     description:
       - The ARN of the IAM role that allows the Auto Scaling group to publish to the specified notification target.
-    required: false
+    type: str
   notification_target_arn:
     description:
       - The ARN of the notification target that Auto Scaling will use to notify you when an
         instance is in the transition state for the lifecycle hook.
-        This target can be either an SQS queue or an SNS topic. If you specify an empty string,
-        this overrides the current ARN.
-    required: false
+      - This target can be either an SQS queue or an SNS topic.
+      - If you specify an empty string, this overrides the current ARN.
+    type: str
   notification_meta_data:
     description:
       - Contains additional information that you want to include any time Auto Scaling sends a message to the notification target.
-    required: false
+    type: str
   heartbeat_timeout:
     description:
       - The amount of time, in seconds, that can elapse before the lifecycle hook times out.
         When the lifecycle hook times out, Auto Scaling performs the default action.
         You can prevent the lifecycle hook from timing out by calling RecordLifecycleActionHeartbeat.
-    required: false
-    default: 3600 (1 hour)
+      - By default Amazon AWS will use 3600 (1 hour)
+    type: int
   default_result:
     description:
       - Defines the action the Auto Scaling group should take when the lifecycle hook timeout
-        elapses or if an unexpected failure occurs. This parameter can be either CONTINUE or ABANDON.
-    required: false
+        elapses or if an unexpected failure occurs.
     choices: ['ABANDON', 'CONTINUE']
     default: ABANDON
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2
@@ -98,7 +105,6 @@ RETURN = '''
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, get_aws_connection_info
 
 try:
     import botocore
@@ -215,28 +221,23 @@ def delete_lifecycle_hook(connection, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            autoscaling_group_name=dict(required=True, type='str'),
-            lifecycle_hook_name=dict(required=True, type='str'),
-            transition=dict(type='str', choices=['autoscaling:EC2_INSTANCE_TERMINATING', 'autoscaling:EC2_INSTANCE_LAUNCHING']),
-            role_arn=dict(type='str'),
-            notification_target_arn=dict(type='str'),
-            notification_meta_data=dict(type='str'),
-            heartbeat_timeout=dict(type='int'),
-            default_result=dict(default='ABANDON', choices=['ABANDON', 'CONTINUE']),
-            state=dict(default='present', choices=['present', 'absent'])
-        )
+    argument_spec = dict(
+        autoscaling_group_name=dict(required=True, type='str'),
+        lifecycle_hook_name=dict(required=True, type='str'),
+        transition=dict(type='str', choices=['autoscaling:EC2_INSTANCE_TERMINATING', 'autoscaling:EC2_INSTANCE_LAUNCHING']),
+        role_arn=dict(type='str'),
+        notification_target_arn=dict(type='str'),
+        notification_meta_data=dict(type='str'),
+        heartbeat_timeout=dict(type='int'),
+        default_result=dict(default='ABANDON', choices=['ABANDON', 'CONTINUE']),
+        state=dict(default='present', choices=['present', 'absent'])
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               required_if=[['state', 'present', ['transition']]])
     state = module.params.get('state')
 
-    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    connection = boto3_conn(module, conn_type='client', resource='autoscaling', region=region, endpoint=ec2_url, **aws_connect_params)
+    connection = module.client('autoscaling')
 
     changed = False
 

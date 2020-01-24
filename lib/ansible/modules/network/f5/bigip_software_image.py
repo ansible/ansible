@@ -111,6 +111,7 @@ file_size:
 import os
 import time
 
+from ansible.module_utils.urls import urlparse
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -214,6 +215,7 @@ class ModuleManager(object):
         self.have = ApiParameters()
         self.changes = UsableChanges()
         self.image_type = None
+        self.image_url = None
 
     def _set_changed_options(self):
         changed = {}
@@ -283,42 +285,56 @@ class ModuleManager(object):
             return True
         return False
 
-    def image_exists(self):
-        result = False
-        uri = "https://{0}:{1}/mgmt/tm/sys/software/image/{2}".format(
+    def _set_image_url(self, item):
+        path = urlparse(item['selfLink']).path
+        self.image_url = "https://{0}:{1}{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.filename
+            path
+        )
+
+    def image_exists(self):
+        result = False
+        uri = "https://{0}:{1}/mgmt/tm/sys/software/image/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
         resp = self.client.api.get(uri)
+
         try:
             response = resp.json()
-            if resp.status == 404 or 'code' in response and response['code'] == 404:
-                result = False
-            else:
-                self.image_type = 'release'
-                result = True
-        except ValueError:
-            pass
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'items' in response:
+            for item in response['items']:
+                if item['name'].startswith(self.want.filename):
+                    self._set_image_url(item)
+                    self.image_type = 'release'
+                    result = True
+                    break
         return result
 
     def hotfix_exists(self):
         result = False
-        uri = "https://{0}:{1}/mgmt/tm/sys/software/hotfix/{2}".format(
+        uri = "https://{0}:{1}/mgmt/tm/sys/software/hotfix/".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.filename
         )
         resp = self.client.api.get(uri)
+
         try:
             response = resp.json()
-            if resp.status == 404 or 'code' in response and response['code'] == 404:
-                result = False
-            else:
-                self.image_type = 'hotfix'
-                result = True
-        except ValueError:
-            pass
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'items' in response:
+            for item in response['items']:
+                if item['name'].startswith(self.want.filename):
+                    self._set_image_url(item)
+                    self.image_type = 'hotfix'
+                    result = True
+                    break
         return result
 
     def update(self):
@@ -384,19 +400,7 @@ class ModuleManager(object):
             )
 
     def read_current_from_device(self):
-        if self.image_exists():
-            return self.read_iso_from_device('image')
-        elif self.hotfix_exists():
-            return self.read_iso_from_device('hotfix')
-
-    def read_iso_from_device(self, type):
-        uri = "https://{0}:{1}/mgmt/tm/sys/software/{2}/{3}".format(
-            self.client.provider['server'],
-            self.client.provider['server_port'],
-            type,
-            self.want.filename
-        )
-        resp = self.client.api.get(uri)
+        resp = self.client.api.get(self.image_url)
         try:
             response = resp.json()
         except ValueError as ex:

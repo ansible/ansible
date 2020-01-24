@@ -1,15 +1,15 @@
 recreate_crd_default_merge_expectation: recreate_crd is not failed
 
-wait_pod_metadata:
+k8s_pod_metadata:
   labels:
-    app: "{{ wait_pod_name }}"
+    app: "{{ k8s_pod_name }}"
 
-wait_pod_spec:
+k8s_pod_spec:
   containers:
-    - image: "{{ wait_pod_image }}"
+    - image: "{{ k8s_pod_image }}"
       imagePullPolicy: Always
-      name: "{{ wait_pod_name }}"
-      command: "{{ wait_pod_command }}"
+      name: "{{ k8s_pod_name }}"
+      command: "{{ k8s_pod_command }}"
       readinessProbe:
         initialDelaySeconds: 15
         exec:
@@ -19,14 +19,14 @@ wait_pod_spec:
         limits:
           cpu: "100m"
           memory: "100Mi"
-      ports: "{{ wait_pod_ports }}"
+      ports: "{{ k8s_pod_ports }}"
 
-wait_pod_command: []
+k8s_pod_command: []
 
-wait_pod_ports: []
+k8s_pod_ports: []
 
-wait_pod_template:
-  metadata: "{{ wait_pod_metadata }}"
-  spec: "{{ wait_pod_spec }}"
+k8s_pod_template:
+  metadata: "{{ k8s_pod_metadata }}"
+  spec: "{{ k8s_pod_spec }}"
 
 k8s_openshift: yes

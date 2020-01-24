@@ -43,6 +43,7 @@
     - result.changed == false
     - result.version != {}
     - result.settings != {}
+    - result.global_status != {}
     - result.databases != {}
     - result.engines != {}
     - result.users != {}
@@ -92,6 +93,7 @@
     that:
     - result.changed == false
     - result.version != {}
+    - result.global_status != {}
     - result.databases != {}
     - result.engines != {}
     - result.settings is not defined
@@ -114,4 +116,75 @@
     - result.databases != {}
     - result.engines is not defined
     - result.settings is not defined
+    - result.global_status is not defined
     - result.users is not defined
+
+# Test exclude_fields: db_size
+# 'unsupported' element is passed to check that an unsupported value
+# won't break anything (will be ignored regarding to the module's documentation).
+- name: Collect info about databases excluding their sizes
+  mysql_info:
+    login_user: '{{ user_name }}'
+    login_password: '{{ user_pass }}'
+    filter:
+    - databases
+    exclude_fields:
+    - db_size
+    - unsupported
+  register: result
+
+- assert:
+    that:
+    - result.changed == false
+    - result.databases != {}
+    - result.databases.mysql == {}
+
+########################################################
+# Issue #65727, empty databases must be in returned dict
+#
+- name: Create empty database acme
+  mysql_db:
+    login_user: '{{ user_name }}'
+    login_password: '{{ user_pass }}'
+    name: acme
+
+- name: Collect info about databases
+  mysql_info:
+    login_user: '{{ user_name }}'
+    login_password: '{{ user_pass }}'
+    filter:
+    - databases
+    return_empty_dbs: yes
+  register: result
+
+# Check acme is in returned dict
+- assert:
+    that:
+    - result.changed == false
+    - result.databases.acme.size == 0
+    - result.databases.mysql != {}
+
+- name: Collect info about databases excluding their sizes
+  mysql_info:
+    login_user: '{{ user_name }}'
+    login_password: '{{ user_pass }}'
+    filter:
+    - databases
+    exclude_fields:
+    - db_size
+    return_empty_dbs: yes
+  register: result
+
+# Check acme is in returned dict
+- assert:
+    that:
+    - result.changed == false
+    - result.databases.acme == {}
+    - result.databases.mysql == {}
+
+- name: Remove acme database
+  mysql_db:
+    login_user: '{{ user_name }}'
+    login_password: '{{ user_pass }}'
+    name: acme
+    state: absent

@@ -42,7 +42,7 @@
         public: "False"
     register: subnets
 
-  - ec2_vpc_subnet_facts:
+  - ec2_vpc_subnet_info:
       filters:
         vpc-id: "{{ vpc.vpc.id }}"
       <<: *aws_connection_info
@@ -456,7 +456,7 @@
       <<: *aws_connection_info
     register: update_tags
 
-  - name: assert purge tags worked
+  - name: assert update tags worked
     assert:
       that:
         - update_tags.changed
@@ -578,11 +578,41 @@
       <<: *aws_connection_info
     register: nat_gateway
 
-  - name: show route table facts
-    ec2_vpc_route_table_facts:
+  - name: show route table info, get table using route-table-id
+    ec2_vpc_route_table_info:
       filters:
         route-table-id: "{{ create_private_table.route_table.id }}"
       <<: *aws_connection_info
+    register: route_table_info
+
+  - name: assert route_table_info has correct attributes
+    assert:
+      that:
+        - '"route_tables" in route_table_info'
+        - 'route_table_info.route_tables | length == 1'
+        - '"id" in route_table_info.route_tables[0]'
+        - '"routes" in route_table_info.route_tables[0]'
+        - '"associations" in route_table_info.route_tables[0]'
+        - '"tags" in route_table_info.route_tables[0]'
+        - '"vpc_id" in route_table_info.route_tables[0]'
+        - 'route_table_info.route_tables[0].id == create_private_table.route_table.id'
+
+  - name: show route table info, get table using tags
+    ec2_vpc_route_table_info:
+      filters:
+        "tag:Public": "false"
+        "tag:Name": "Private route table"
+        vpc-id: "{{ vpc.vpc.id }}"
+      <<: *aws_connection_info
+    register: route_table_info
+
+  - name: assert route_table_info has correct tags
+    assert:
+      that:
+        - 'route_table_info.route_tables | length == 1'
+        - '"tags" in route_table_info.route_tables[0]'
+        - '"Public" in route_table_info.route_tables[0].tags and route_table_info.route_tables[0].tags["Public"] == "false"'
+        - '"Name" in route_table_info.route_tables[0].tags and route_table_info.route_tables[0].tags["Name"] == "Private route table"'
 
   - name: create NAT GW
     ec2_vpc_nat_gateway:
@@ -592,8 +622,8 @@
       <<: *aws_connection_info
     register: nat_gateway
 
-  - name: show route table facts
-    ec2_vpc_route_table_facts:
+  - name: show route table info
+    ec2_vpc_route_table_info:
       filters:
         route-table-id: "{{ create_private_table.route_table.id }}"
       <<: *aws_connection_info
@@ -641,8 +671,8 @@
       <<: *aws_connection_info
     register: result
 
-  - name: Get endpoint facts to verify that it wasn't purged from the route table
-    ec2_vpc_endpoint_facts:
+  - name: Get endpoint infos to verify that it wasn't purged from the route table
+    ec2_vpc_endpoint_info:
       query: endpoints
       vpc_endpoint_ids:
         - "{{ vpc_endpoint.result.vpc_endpoint_id }}"

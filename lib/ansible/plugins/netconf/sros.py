@@ -19,6 +19,27 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+netconf: sros
+short_description: Use Nokia SROS netconf plugin to run netconf commands on Nokia SROS platform
+deprecated:
+    why: This plugin moved in 'nokia.sros' collection
+    removed_in: '2.13'
+    alternative: "Use the netconf plugin in 'nokia.sros' collection within Ansible galaxy"
+description:
+  - This sros plugin provides low level abstraction apis for
+    sending and receiving netconf commands from Nokia sros network devices.
+version_added: "2.9"
+options:
+  ncclient_device_handler:
+    type: str
+    default: default
+    description:
+      - Specifies the ncclient device handler name for Nokia sros network os. To
+        identify the ncclient device handler name refer ncclient library documentation.
+"""
+
 import json
 import re
 
@@ -60,7 +81,7 @@ class Netconf(NetconfBase):
 
     def get_capabilities(self):
         result = dict()
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'validate', 'lock', 'unlock']
+        result['rpc'] = self.get_base_rpc()
         result['network_api'] = 'netconf'
         result['device_info'] = self.get_device_info()
         result['server_capabilities'] = [c for c in self.m.server_capabilities]
@@ -82,7 +103,10 @@ class Netconf(NetconfBase):
                 hostkey_verify=obj.get_option('host_key_checking'),
                 look_for_keys=obj.get_option('look_for_keys'),
                 allow_agent=obj._play_context.allow_agent,
-                timeout=obj.get_option('persistent_connect_timeout')
+                timeout=obj.get_option('persistent_connect_timeout'),
+                # We need to pass in the path to the ssh_config file when guessing
+                # the network_os so that a jumphost is correctly used if defined
+                ssh_config=obj._ssh_config
             )
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(to_native(exc))

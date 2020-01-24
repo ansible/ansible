@@ -24,18 +24,22 @@ options:
     description:
       - "Name of the s3 bucket."
     required: true
+    type: str
   state:
     description:
       - "Enable or disable logging."
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   target_bucket:
     description:
       - "The bucket to log to. Required when state=present."
+    type: str
   target_prefix:
     description:
       - "The prefix that should be prepended to the generated log files written to the target_bucket."
     default: ""
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2

@@ -179,6 +179,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.inventory.set_variable(server.name, "image_name", to_native(server.image.name))
         self.inventory.set_variable(server.name, "image_os_flavor", to_native(server.image.os_flavor))
 
+        # Labels
+        self.inventory.set_variable(server.name, "labels", dict(server.labels))
+
     def verify_file(self, path):
         """Return the possibly of a file being consumable by this plugin."""
         return (
@@ -205,7 +208,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             strict = self.get_option('strict')
 
             # Composed variables
-            self._set_composite_vars(self.get_option('compose'), {}, server.name, strict=strict)
+            self._set_composite_vars(self.get_option('compose'), self.inventory.get_host(server.name).get_vars(), server.name, strict=strict)
 
             # Complex groups based on jinja2 conditionals, hosts that meet the conditional are added to group
             self._add_host_to_composed_groups(self.get_option('groups'), {}, server.name, strict=strict)

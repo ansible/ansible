@@ -35,10 +35,12 @@ options:
       description:
       - The datacenter hosting the virtual machine.
       - If set, it will help to speed up virtual machine search.
+      type: str
     cluster:
       description:
       - The cluster hosting the virtual machine.
       - If set, it will help to speed up virtual machine search.
+      type: str
     folder:
       description:
       - Destination folder, absolute or relative path to find an existing guest or create the new guest.
@@ -54,39 +56,48 @@ options:
       - '   folder: folder1/datacenter1/vm'
       - '   folder: /folder1/datacenter1/vm/folder2'
       version_added: "2.4"
+      type: str
     vm_id:
       description:
       - Name of the virtual machine to work with.
       required: True
+      type: str
     vm_id_type:
       description:
       - The VMware identification method by which the virtual machine will be identified.
       default: vm_name
       choices: ['uuid', 'instance_uuid', 'dns_name', 'inventory_path', 'vm_name']
+      type: str
     vm_username:
       description:
       - The user to login-in to the virtual machine.
       required: True
+      type: str
     vm_password:
       description:
       - The password used to login-in to the virtual machine.
       required: True
+      type: str
     vm_shell:
       description:
       - The absolute path to the program to start.
       - On Linux, shell is executed via bash.
       required: True
+      type: str
     vm_shell_args:
       description:
       - The argument to the program.
       - The characters which must be escaped to the shell also be escaped on the command line provided.
       default: " "
+      type: str
     vm_shell_env:
       description:
       - Comma separated list of environment variable, specified in the guest OS notation.
+      type: list
     vm_shell_cwd:
       description:
       - The current working directory of the application from which it will be run.
+      type: str
     wait_for_process:
       description:
       - If set to C(True), module will wait for process to complete in the given virtual machine.
@@ -99,6 +110,7 @@ options:
       - If set to positive integers, then C(wait_for_process) will honor this parameter and will exit after this timeout.
       default: 3600
       version_added: 2.7
+      type: int
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -238,7 +250,7 @@ class VMwareShellManager(PyVmomi):
 
         tools_status = vm.guest.toolsStatus
         if tools_status in ['toolsNotInstalled', 'toolsNotRunning']:
-            self.module.fail_json(msg="VMWareTools is not installed or is not running in the guest."
+            self.module.fail_json(msg="VMwareTools is not installed or is not running in the guest."
                                       " VMware Tools are necessary to run this module.")
 
         try:

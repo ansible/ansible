@@ -20,8 +20,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import passlib
-from passlib.handlers import pbkdf2
+try:
+    import passlib
+    from passlib.handlers import pbkdf2
+except ImportError:
+    passlib = None
+    pbkdf2 = None
+
+import pytest
+
 from units.mock.loader import DictDataLoader
 
 from units.compat import unittest
@@ -32,7 +39,6 @@ from ansible.module_utils.six.moves import builtins
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import PluginLoader
 from ansible.plugins.lookup import password
-from ansible.utils import encrypt
 
 
 DEFAULT_CHARS = sorted([u'ascii_letters', u'digits', u".,:-_"])
@@ -233,7 +239,7 @@ class TestGenCandidateChars(unittest.TestCase):
         params = testcase['params']
         chars_spec = params['chars']
         res = password._gen_candidate_chars(chars_spec)
-        self.assertEquals(res, expected_candidate_chars)
+        self.assertEqual(res, expected_candidate_chars)
 
     def test_gen_candidate_chars(self):
         for testcase in old_style_params_data:
@@ -247,32 +253,32 @@ class TestRandomPassword(unittest.TestCase):
 
     def test_default(self):
         res = password.random_password()
-        self.assertEquals(len(res), password.DEFAULT_LENGTH)
+        self.assertEqual(len(res), password.DEFAULT_LENGTH)
         self.assertTrue(isinstance(res, text_type))
         self._assert_valid_chars(res, DEFAULT_CANDIDATE_CHARS)
 
     def test_zero_length(self):
         res = password.random_password(length=0)
-        self.assertEquals(len(res), 0)
+        self.assertEqual(len(res), 0)
         self.assertTrue(isinstance(res, text_type))
         self._assert_valid_chars(res, u',')
 
     def test_just_a_common(self):
         res = password.random_password(length=1, chars=u',')
-        self.assertEquals(len(res), 1)
-        self.assertEquals(res, u',')
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res, u',')
 
     def test_free_will(self):
         # A Rush and Spinal Tap reference twofer
         res = password.random_password(length=11, chars=u'a')
-        self.assertEquals(len(res), 11)
-        self.assertEquals(res, 'aaaaaaaaaaa')
+        self.assertEqual(len(res), 11)
+        self.assertEqual(res, 'aaaaaaaaaaa')
         self._assert_valid_chars(res, u'a')
 
     def test_unicode(self):
         res = password.random_password(length=11, chars=u'くらとみ')
         self._assert_valid_chars(res, u'くらとみ')
-        self.assertEquals(len(res), 11)
+        self.assertEqual(len(res), 11)
 
     def test_gen_password(self):
         for testcase in old_style_params_data:
@@ -281,10 +287,10 @@ class TestRandomPassword(unittest.TestCase):
             params_chars_spec = password._gen_candidate_chars(params['chars'])
             password_string = password.random_password(length=params['length'],
                                                        chars=params_chars_spec)
-            self.assertEquals(len(password_string),
-                              params['length'],
-                              msg='generated password=%s has length (%s) instead of expected length (%s)' %
-                              (password_string, len(password_string), params['length']))
+            self.assertEqual(len(password_string),
+                             params['length'],
+                             msg='generated password=%s has length (%s) instead of expected length (%s)' %
+                             (password_string, len(password_string), params['length']))
 
             for char in password_string:
                 self.assertIn(char, candidate_chars,
@@ -295,22 +301,22 @@ class TestRandomPassword(unittest.TestCase):
 class TestParseContent(unittest.TestCase):
     def test_empty_password_file(self):
         plaintext_password, salt = password._parse_content(u'')
-        self.assertEquals(plaintext_password, u'')
-        self.assertEquals(salt, None)
+        self.assertEqual(plaintext_password, u'')
+        self.assertEqual(salt, None)
 
     def test(self):
         expected_content = u'12345678'
         file_content = expected_content
         plaintext_password, salt = password._parse_content(file_content)
-        self.assertEquals(plaintext_password, expected_content)
-        self.assertEquals(salt, None)
+        self.assertEqual(plaintext_password, expected_content)
+        self.assertEqual(salt, None)
 
     def test_with_salt(self):
         expected_content = u'12345678 salt=87654321'
         file_content = expected_content
         plaintext_password, salt = password._parse_content(file_content)
-        self.assertEquals(plaintext_password, u'12345678')
-        self.assertEquals(salt, u'87654321')
+        self.assertEqual(plaintext_password, u'12345678')
+        self.assertEqual(salt, u'87654321')
 
 
 class TestFormatContent(unittest.TestCase):
@@ -359,7 +365,7 @@ class TestWritePasswordFile(unittest.TestCase):
             m().write.assert_called_once_with(u'Testing Café\n'.encode('utf-8'))
 
 
-class TestLookupModule(unittest.TestCase):
+class BaseTestLookupModule(unittest.TestCase):
     def setUp(self):
         self.fake_loader = DictDataLoader({'/path/to/somewhere': 'sdfsdf'})
         self.password_lookup = password.LookupModule(loader=self.fake_loader)
@@ -373,19 +379,15 @@ class TestLookupModule(unittest.TestCase):
         self.makedirs_safe = password.makedirs_safe
         password.makedirs_safe = lambda path, mode: None
 
-        # Different releases of passlib default to a different number of rounds
-        self.sha256 = passlib.registry.get_crypt_handler('pbkdf2_sha256')
-        sha256_for_tests = pbkdf2.create_pbkdf2_hash("sha256", 32, 20000)
-        passlib.registry.register_crypt_handler(sha256_for_tests, force=True)
-
     def tearDown(self):
         password.os.path.exists = self.os_path_exists
         password.os.open = self.os_open
         password.os.close = self.os_close
         password.os.remove = self.os_remove
         password.makedirs_safe = self.makedirs_safe
-        passlib.registry.register_crypt_handler(self.sha256, force=True)
 
+
+class TestLookupModuleWithoutPasslib(BaseTestLookupModule):
     @patch.object(PluginLoader, '_get_paths')
     @patch('ansible.plugins.lookup.password._write_password_file')
     def test_no_encrypt(self, mock_get_paths, mock_write_file):
@@ -395,46 +397,8 @@ class TestLookupModule(unittest.TestCase):
 
         # FIXME: assert something useful
         for result in results:
-            self.assertEquals(len(result), password.DEFAULT_LENGTH)
-            self.assertIsInstance(result, text_type)
-
-    @patch.object(PluginLoader, '_get_paths')
-    @patch('ansible.plugins.lookup.password._write_password_file')
-    def test_encrypt(self, mock_get_paths, mock_write_file):
-        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
-
-        results = self.password_lookup.run([u'/path/to/somewhere encrypt=pbkdf2_sha256'], None)
-
-        # pbkdf2 format plus hash
-        expected_password_length = 76
-
-        for result in results:
-            self.assertEquals(len(result), expected_password_length)
-            # result should have 5 parts split by '$'
-            str_parts = result.split('$', 5)
-
-            # verify the result is parseable by the passlib
-            crypt_parts = passlib.hash.pbkdf2_sha256.parsehash(result)
-
-            # verify it used the right algo type
-            self.assertEquals(str_parts[1], 'pbkdf2-sha256')
-
-            self.assertEquals(len(str_parts), 5)
-
-            # verify the string and parsehash agree on the number of rounds
-            self.assertEquals(int(str_parts[2]), crypt_parts['rounds'])
-            self.assertIsInstance(result, text_type)
-
-    @patch.object(PluginLoader, '_get_paths')
-    @patch('ansible.plugins.lookup.password._write_password_file')
-    def test_password_already_created_encrypt(self, mock_get_paths, mock_write_file):
-        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
-        password.os.path.exists = lambda x: x == to_bytes('/path/to/somewhere')
-
-        with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
-            results = self.password_lookup.run([u'/path/to/somewhere chars=anything encrypt=pbkdf2_sha256'], None)
-        for result in results:
-            self.assertEqual(result, u'$pbkdf2-sha256$20000$ODc2NTQzMjE$Uikde0cv0BKaRaAXMrUQB.zvG4GmnjClwjghwIRf2gU')
+            assert len(result) == password.DEFAULT_LENGTH
+            assert isinstance(result, text_type)
 
     @patch.object(PluginLoader, '_get_paths')
     @patch('ansible.plugins.lookup.password._write_password_file')
@@ -455,9 +419,10 @@ class TestLookupModule(unittest.TestCase):
 
         results = self.password_lookup.run([u'/path/to/somewhere chars=a'], None)
         for result in results:
-            self.assertEquals(result, u'a' * password.DEFAULT_LENGTH)
+            self.assertEqual(result, u'a' * password.DEFAULT_LENGTH)
 
-    def test_lock_been_held(self):
+    @patch('time.sleep')
+    def test_lock_been_held(self, mock_sleep):
         # pretend the lock file is here
         password.os.path.exists = lambda x: True
         try:
@@ -480,3 +445,57 @@ class TestLookupModule(unittest.TestCase):
 
         for result in results:
             self.assertEqual(result, u'hunter42')
+
+
+@pytest.mark.skipif(passlib is None, reason='passlib must be installed to run these tests')
+class TestLookupModuleWithPasslib(BaseTestLookupModule):
+    def setUp(self):
+        super(TestLookupModuleWithPasslib, self).setUp()
+
+        # Different releases of passlib default to a different number of rounds
+        self.sha256 = passlib.registry.get_crypt_handler('pbkdf2_sha256')
+        sha256_for_tests = pbkdf2.create_pbkdf2_hash("sha256", 32, 20000)
+        passlib.registry.register_crypt_handler(sha256_for_tests, force=True)
+
+    def tearDown(self):
+        super(TestLookupModuleWithPasslib, self).tearDown()
+
+        passlib.registry.register_crypt_handler(self.sha256, force=True)
+
+    @patch.object(PluginLoader, '_get_paths')
+    @patch('ansible.plugins.lookup.password._write_password_file')
+    def test_encrypt(self, mock_get_paths, mock_write_file):
+        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
+
+        results = self.password_lookup.run([u'/path/to/somewhere encrypt=pbkdf2_sha256'], None)
+
+        # pbkdf2 format plus hash
+        expected_password_length = 76
+
+        for result in results:
+            self.assertEqual(len(result), expected_password_length)
+            # result should have 5 parts split by '$'
+            str_parts = result.split('$', 5)
+
+            # verify the result is parseable by the passlib
+            crypt_parts = passlib.hash.pbkdf2_sha256.parsehash(result)
+
+            # verify it used the right algo type
+            self.assertEqual(str_parts[1], 'pbkdf2-sha256')
+
+            self.assertEqual(len(str_parts), 5)
+
+            # verify the string and parsehash agree on the number of rounds
+            self.assertEqual(int(str_parts[2]), crypt_parts['rounds'])
+            self.assertIsInstance(result, text_type)
+
+    @patch.object(PluginLoader, '_get_paths')
+    @patch('ansible.plugins.lookup.password._write_password_file')
+    def test_password_already_created_encrypt(self, mock_get_paths, mock_write_file):
+        mock_get_paths.return_value = ['/path/one', '/path/two', '/path/three']
+        password.os.path.exists = lambda x: x == to_bytes('/path/to/somewhere')
+
+        with patch.object(builtins, 'open', mock_open(read_data=b'hunter42 salt=87654321\n')) as m:
+            results = self.password_lookup.run([u'/path/to/somewhere chars=anything encrypt=pbkdf2_sha256'], None)
+        for result in results:
+            self.assertEqual(result, u'$pbkdf2-sha256$20000$ODc2NTQzMjE$Uikde0cv0BKaRaAXMrUQB.zvG4GmnjClwjghwIRf2gU')

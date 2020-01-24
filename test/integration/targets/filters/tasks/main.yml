@@ -3,6 +3,9 @@
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
 - name: a dummy task to test the changed and success filters
   shell: echo hi
   register: some_registered_var
@@ -111,7 +114,30 @@
       - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
       - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
   # map was added to jinja2 in version 2.7
-  when: "{{ ( lookup('pipe', '{{ ansible_python[\"executable\"] }} -c \"import jinja2; print(jinja2.__version__)\"')  is version('2.7', '>=') ) }}"
+  when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.7', '>=')
+
+- name: Test extract filter with defaults
+  vars:
+    container:
+      key:
+        subkey: value
+  assert:
+    that:
+      - "'key' | extract(badcontainer) | default('a') == 'a'"
+      - "'key' | extract(badcontainer, 'subkey') | default('a') == 'a'"
+      - "('key' | extract(badcontainer)).subkey | default('a') == 'a'"
+      - "'badkey' | extract(container) | default('a') == 'a'"
+      - "'badkey' | extract(container, 'subkey') | default('a') == 'a'"
+      - "('badkey' | extract(container)).subsubkey | default('a') == 'a'"
+      - "'key' | extract(container, 'badsubkey') | default('a') == 'a'"
+      - "'key' | extract(container, ['badsubkey', 'subsubkey']) | default('a') == 'a'"
+      - "('key' | extract(container, 'badsubkey')).subsubkey | default('a') == 'a'"
+      - "'badkey' | extract(hostvars) | default('a') == 'a'"
+      - "'badkey' | extract(hostvars, 'subkey') | default('a') == 'a'"
+      - "('badkey' | extract(hostvars)).subsubkey | default('a') == 'a'"
+      - "'localhost' | extract(hostvars, 'badsubkey') | default('a') == 'a'"
+      - "'localhost' | extract(hostvars, ['badsubkey', 'subsubkey']) | default('a') == 'a'"
+      - "('localhost' | extract(hostvars, 'badsubkey')).subsubkey | default('a') == 'a'"
 
 - name: Test json_query filter
   assert:
@@ -236,10 +262,10 @@
   assert:
     that:
             - "'00' | random_mac is match('^00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
-            - "'00:00' | random_mac is match('^00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"  
+            - "'00:00' | random_mac is match('^00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
             - "'00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
             - "'00:00:00:00' | random_mac is match('^00:00:00:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]:[a-f0-9][a-f0-9]$')"
-            - "'00:00:00:00:00' | random_mac is match('^00:00:00:00:00:[a-f0-9][a-f0-9]$')"  
+            - "'00:00:00:00:00' | random_mac is match('^00:00:00:00:00:[a-f0-9][a-f0-9]$')"
             - "'00:00:00' | random_mac != '00:00:00' | random_mac"
 
 - name: Verify random_mac filter with seed
@@ -276,6 +302,17 @@
       - "'192.168.0.1/24' | ipaddr('network') == '192.168.0.0'"
       - "'fe80::dead:beef/64' | ipaddr('broadcast') == 'fe80::ffff:ffff:ffff:ffff'"
       - "'::1/120' | ipaddr('netmask') == 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00'"
+      - "{{ subnets | ipaddr(1) }} == ['10.1.1.1/24', '10.1.2.1/24']"
+      - "{{ subnets | ipaddr('1') }}  == ['10.1.1.1/24', '10.1.2.1/24']"
+      - "{{ subnets | ipaddr(-1) }} == ['10.1.1.255/24', '10.1.2.255/24']"
+      - "{{ subnets | ipaddr('-1') }} == ['10.1.1.255/24', '10.1.2.255/24']"
+      - "'{{ prefix | ipaddr(1) }}'  == '10.1.1.1/24'"
+      - "'{{ prefix | ipaddr('1') }}' == '10.1.1.1/24'"
+      - "'{{ prefix | ipaddr('network') }}' == '10.1.1.0'"
+      - "'{{ prefix | ipaddr('-1') }}' == '10.1.1.255/24'"
+  vars:
+    subnets: ['10.1.1.0/24', '10.1.2.0/24']
+    prefix: '10.1.1.0/24'
 
 - name: Ensure dict2items works with hostvars
   debug:

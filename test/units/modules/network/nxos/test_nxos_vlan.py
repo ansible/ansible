@@ -22,27 +22,27 @@ __metaclass__ = type
 import json
 
 from units.compat.mock import patch
-from ansible.modules.network.nxos import nxos_vlan
+from ansible.modules.network.nxos import _nxos_vlan
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
 
 class TestNxosVlanModule(TestNxosModule):
 
-    module = nxos_vlan
+    module = _nxos_vlan
 
     def setUp(self):
         super(TestNxosVlanModule, self).setUp()
 
-        self.mock_run_commands = patch('ansible.modules.network.nxos.nxos_vlan.run_commands')
+        self.mock_run_commands = patch('ansible.modules.network.nxos._nxos_vlan.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
-        self.mock_load_config = patch('ansible.modules.network.nxos.nxos_vlan.load_config')
+        self.mock_load_config = patch('ansible.modules.network.nxos._nxos_vlan.load_config')
         self.load_config = self.mock_load_config.start()
 
-        self.mock_get_config = patch('ansible.modules.network.nxos.nxos_vlan.get_config')
+        self.mock_get_config = patch('ansible.modules.network.nxos._nxos_vlan.get_config')
         self.get_config = self.mock_get_config.start()
 
-        self.mock_get_capabilities = patch('ansible.modules.network.nxos.nxos_vlan.get_capabilities')
+        self.mock_get_capabilities = patch('ansible.modules.network.nxos._nxos_vlan.get_capabilities')
         self.get_capabilities = self.mock_get_capabilities.start()
         self.get_capabilities.return_value = {'device_info': {'network_os_platform': 'N9K-9000v'}, 'network_api': 'cliconf'}
 
@@ -68,9 +68,83 @@ class TestNxosVlanModule(TestNxosModule):
                 output.append(load_fixture('nxos_vlan', filename))
             return output
 
-        self.run_commands.side_effect = load_from_file
+        def agg_load_from_file(*args, **kwargs):
+            """Load vlan output for aggregate/purge tests"""
+            return([load_fixture('nxos_vlan', 'agg_show_vlan_brief.txt')])
+
+        if '_agg_' in self._testMethodName:
+            self.run_commands.side_effect = agg_load_from_file
+        else:
+            self.run_commands.side_effect = load_from_file
+
         self.load_config.return_value = None
         self.get_config.return_value = load_fixture('nxos_vlan', 'config.cfg')
+
+    def test_nxos_vlan_agg_1(self):
+        # Aggregate: vlan 4/5 exist -> Add 6
+        set_module_args(dict(aggregate=[
+            {'name': '_5_', 'vlan_id': 5},
+            {'name': '_6_', 'vlan_id': 6}
+        ]))
+        self.execute_module(changed=True, commands=[
+            'vlan 6',
+            'name _6_',
+            'state active',
+            'no shutdown',
+            'exit'
+        ])
+
+    def test_nxos_vlan_agg_2(self):
+        # Aggregate: vlan 4/5 exist -> Add none (idempotence)
+        set_module_args(dict(aggregate=[
+            {'name': '_5_', 'vlan_id': 5},
+            {'name': '_4_', 'vlan_id': 4}
+        ]))
+        self.execute_module(changed=False)
+
+    def test_nxos_vlan_agg_3(self):
+        # Aggregate/Purge: vlan 4/5 exist -> Add 6, Purge 4
+        set_module_args(dict(aggregate=[
+            {'name': '_5_', 'vlan_id': 5},
+            {'name': '_6_', 'vlan_id': 6}
+        ], purge=True))
+        self.execute_module(changed=True, commands=[
+            'vlan 6',
+            'name _6_',
+            'state active',
+            'no shutdown',
+            'exit',
+            'no vlan 4'
+        ])
+
+    def test_nxos_vlan_agg_4(self):
+        # Aggregate/Purge: vlan 4/5 exist -> Purge None (idempotence)
+        set_module_args(dict(aggregate=[
+            {'name': '_5_', 'vlan_id': 5},
+            {'name': '_4_', 'vlan_id': 4}
+        ]))
+        self.execute_module(changed=False)
+
+    def test_nxos_vlan_agg_5(self):
+        # Purge with Single Vlan: vlan 4/5 exist -> Add 6, Purge 4/5
+        set_module_args(dict(vlan_id=6, name='_6_', purge=True))
+        self.execute_module(changed=True, commands=[
+            'vlan 6',
+            'name _6_',
+            'state active',
+            'no shutdown',
+            'exit',
+            'no vlan 4',
+            'no vlan 5'
+        ])
+
+    def test_nxos_vlan_agg_6(self):
+        # Purge All: vlan 4/5 exist -> Purge 4/5
+        set_module_args(dict(vlan_id=1, purge=True))
+        self.execute_module(changed=True, commands=[
+            'no vlan 4',
+            'no vlan 5'
+        ])
 
     def test_nxos_vlan_range(self):
         set_module_args(dict(vlan_range='6-10'))

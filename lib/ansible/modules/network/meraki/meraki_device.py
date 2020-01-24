@@ -30,47 +30,49 @@ options:
         - Query an organization.
         choices: [absent, present, query]
         default: query
-    org_name:
-        description:
-        - Name of organization.
-        - If C(clone) is specified, C(org_name) is the name of the new organization.
-        aliases: [ organization ]
-    org_id:
-        description:
-        - ID of organization.
+        type: str
     net_name:
         description:
         - Name of a network.
         aliases: [network]
+        type: str
     net_id:
         description:
         - ID of a network.
+        type: str
     serial:
         description:
         - Serial number of a device to query.
+        type: str
     hostname:
         description:
         - Hostname of network device to search for.
         aliases: [name]
+        type: str
     model:
         description:
         - Model of network device to search for.
+        type: str
     tags:
         description:
         - Space delimited list of tags to assign to device.
+        type: str
     lat:
         description:
         - Latitude of device's geographic location.
         - Use negative number for southern hemisphere.
         aliases: [latitude]
+        type: float
     lng:
         description:
         - Longitude of device's geographic location.
         - Use negative number for western hemisphere.
         aliases: [longitude]
+        type: float
     address:
         description:
         - Postal address of device's location.
+        type: str
     move_map_marker:
         description:
         - Whether or not to set the latitude and longitude of a device based on the new address.
@@ -79,18 +81,22 @@ options:
     serial_lldp_cdp:
         description:
         - Serial number of device to query LLDP/CDP information from.
+        type: str
     lldp_cdp_timespan:
         description:
         - Timespan, in seconds, used to query LLDP and CDP information.
         - Must be less than 1 month.
+        type: int
     serial_uplink:
         description:
         - Serial number of device to query uplink information from.
+        type: str
     note:
         description:
         - Informational notes about a device.
         - Limited to 255 characters.
         version_added: '2.8'
+        type: str
 
 
 author:
@@ -173,7 +179,7 @@ EXAMPLES = r'''
     tags: recently-added
   delegate_to: localhost
 
-- name: Claim a deivce into a network.
+- name: Claim a device into a network.
   meraki_device:
     auth_key: abc123
     org_name: YourOrg
@@ -331,9 +337,12 @@ def main():
                 path = meraki.construct_path('get_all', net_id=net_id)
                 devices = meraki.request(path, method='GET')
                 for unit in devices:
-                    if unit['name'] == meraki.params['hostname']:
-                        device.append(unit)
-                        meraki.result['data'] = device
+                    try:
+                        if unit['name'] == meraki.params['hostname']:
+                            device.append(unit)
+                            meraki.result['data'] = device
+                    except KeyError:
+                        pass
             elif meraki.params['model']:
                 path = meraki.construct_path('get_all', net_id=net_id)
                 devices = meraki.request(path, method='GET')
@@ -372,6 +381,7 @@ def main():
                 query_path = meraki.construct_path('get_device', net_id=net_id) + meraki.params['serial']
                 device_data = meraki.request(query_path, method='GET')
                 ignore_keys = ['lanIp', 'serial', 'mac', 'model', 'networkId', 'moveMapMarker', 'wan1Ip', 'wan2Ip']
+                # meraki.fail_json(msg="Compare", original=device_data, payload=payload, ignore=ignore_keys)
                 if meraki.is_update_required(device_data, payload, optional_ignore=ignore_keys):
                     path = meraki.construct_path('update', net_id=net_id) + meraki.params['serial']
                     updated_device = []

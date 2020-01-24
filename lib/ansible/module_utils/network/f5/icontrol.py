@@ -296,6 +296,45 @@ class TransactionContextManager(object):
                 raise Exception
 
 
+def download_asm_file(client, url, dest):
+    """Download an ASM file from the remote device
+
+    This method handles issues with ASM file endpoints that allow
+    downloads of ASM objects on the BIG-IP.
+
+    Arguments:
+        client (object): The F5RestClient connection object.
+        url (string): The URL to download.
+        dest (string): The location on (Ansible controller) disk to store the file.
+
+    Returns:
+        bool: True on success. False otherwise.
+    """
+
+    with open(dest, 'wb') as fileobj:
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        data = {'headers': headers,
+                'verify': False
+                }
+
+        response = client.api.get(url, headers=headers, json=data)
+        if response.status == 200:
+            if 'Content-Length' not in response.headers:
+                error_message = "The Content-Length header is not present."
+                raise F5ModuleError(error_message)
+
+            length = response.headers['Content-Length']
+
+            if int(length) > 0:
+                fileobj.write(response.content)
+            else:
+                error = "Invalid Content-Length value returned: %s ," \
+                        "the value should be greater than 0" % length
+                raise F5ModuleError(error)
+
+
 def download_file(client, url, dest):
     """Download a file from the remote device
 

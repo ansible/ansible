@@ -142,6 +142,7 @@ force:
 '''
 
 import os
+import re
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -156,23 +157,33 @@ class BE(object):
         self.mountpoint = module.params['mountpoint']
         self.state = module.params['state']
         self.force = module.params['force']
-
         self.is_freebsd = os.uname()[0] == 'FreeBSD'
 
     def _beadm_list(self):
         cmd = [self.module.get_bin_path('beadm')]
         cmd.append('list')
         cmd.append('-H')
-
-        if not self.is_freebsd:
-            cmd.append(self.name)
-
+        if '@' in self.name:
+            cmd.append('-s')
         return self.module.run_command(cmd)
 
     def _find_be_by_name(self, out):
-        for line in out.splitlines():
-            if line.split('\t')[0] == self.name:
-                return line
+        if '@' in self.name:
+            for line in out.splitlines():
+                if self.is_freebsd:
+                    check = re.match(r'.+/({0})\s+\-'.format(self.name), line)
+                    if check:
+                        return check
+                else:
+                    check = line.split(';')
+                    if check[1] == self.name:
+                        return check
+        else:
+            splitter = '\t' if self.is_freebsd else ';'
+            for line in out.splitlines():
+                check = line.split(splitter)
+                if check[0] == self.name:
+                    return check
 
         return None
 
@@ -180,11 +191,10 @@ class BE(object):
         (rc, out, _) = self._beadm_list()
 
         if rc == 0:
-            if self.is_freebsd:
-                if self._find_be_by_name(out):
-                    return True
-            else:
+            if self._find_be_by_name(out):
                 return True
+            else:
+                return False
         else:
             return False
 
@@ -192,12 +202,12 @@ class BE(object):
         (rc, out, _) = self._beadm_list()
 
         if rc == 0:
+            line = self._find_be_by_name(out)
             if self.is_freebsd:
-                line = self._find_be_by_name(out)
                 if line is not None and 'R' in line.split('\t')[1]:
                     return True
             else:
-                if 'R' in out.split(';')[2]:
+                if 'R' in line.split(';')[2]:
                     return True
 
         return False
@@ -245,8 +255,8 @@ class BE(object):
         (rc, out, _) = self._beadm_list()
 
         if rc == 0:
+            line = self._find_be_by_name(out)
             if self.is_freebsd:
-                line = self._find_be_by_name(out)
                 # On FreeBSD, we exclude currently mounted BE on /, as it is
                 # special and can be activated even if it is mounted. That is not
                 # possible with non-root BEs.
@@ -254,7 +264,7 @@ class BE(object):
                         line.split('\t')[2] != '/':
                     return True
             else:
-                if out.split(';')[3]:
+                if line.split(';')[3]:
                     return True
 
         return False

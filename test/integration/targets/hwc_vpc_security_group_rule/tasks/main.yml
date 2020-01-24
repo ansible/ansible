@@ -1,0 +1,157 @@
+---
+# Pre-test setup
+- name: create a security group
+  hwc_vpc_security_group:
+    name: "ansible_network_security_group_test"
+    state: present
+  register: sg
+- name: delete a security group rule
+  hwc_vpc_security_group_rule:
+    direction: "ingress"
+    protocol: "tcp"
+    ethertype: "IPv4"
+    port_range_max: 55
+    security_group_id: "{{ sg.id }}"
+    port_range_min: 22
+    remote_ip_prefix: "0.0.0.0/0"
+    state: absent
+#----------------------------------------------------------
+- name: create a security group rule (check mode)
+  hwc_vpc_security_group_rule:
+    direction: "ingress"
+    protocol: "tcp"
+    ethertype: "IPv4"
+    port_range_max: 55
+    security_group_id: "{{ sg.id }}"
+    port_range_min: 22
+    remote_ip_prefix: "0.0.0.0/0"
+    state: present
+  check_mode: yes
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - not result.id
+      - result.changed
+#----------------------------------------------------------
+- name: create a security group rule
+  hwc_vpc_security_group_rule:
+    direction: "ingress"
+    protocol: "tcp"
+    ethertype: "IPv4"
+    port_range_max: 55
+    security_group_id: "{{ sg.id }}"
+    port_range_min: 22
+    remote_ip_prefix: "0.0.0.0/0"
+    state: present
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+#----------------------------------------------------------
+- name: create a security group rule (idemponent)
+  hwc_vpc_security_group_rule:
+    direction: "ingress"
+    protocol: "tcp"
+    ethertype: "IPv4"
+    port_range_max: 55
+    security_group_id: "{{ sg.id }}"
+    port_range_min: 22
+    remote_ip_prefix: "0.0.0.0/0"
+    state: present
+  register: result
+- name: idemponent
+  assert:
+    that:
+      - not result.changed
+# ----------------------------------------------------------------------------
+- name: create a security group rule that already exists
+  hwc_vpc_security_group_rule:
+    direction: "ingress"
+    protocol: "tcp"
+    ethertype: "IPv4"
+    port_range_max: 55
+    security_group_id: "{{ sg.id }}"
+    port_range_min: 22
+    remote_ip_prefix: "0.0.0.0/0"
+    state: present
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#----------------------------------------------------------
+- name: delete a security group rule (check mode)
+  hwc_vpc_security_group_rule:
+    direction: "ingress"
+    protocol: "tcp"
+    ethertype: "IPv4"
+    port_range_max: 55
+    security_group_id: "{{ sg.id }}"
+    port_range_min: 22
+    remote_ip_prefix: "0.0.0.0/0"
+    state: absent
+  check_mode: yes
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+#----------------------------------------------------------
+- name: delete a security group rule
+  hwc_vpc_security_group_rule:
+    direction: "ingress"
+    protocol: "tcp"
+    ethertype: "IPv4"
+    port_range_max: 55
+    security_group_id: "{{ sg.id }}"
+    port_range_min: 22
+    remote_ip_prefix: "0.0.0.0/0"
+    state: absent
+  register: result
+- name: assert changed is true
+  assert:
+    that:
+      - result is changed
+#----------------------------------------------------------
+- name: delete a security group rule (idemponent)
+  hwc_vpc_security_group_rule:
+    direction: "ingress"
+    protocol: "tcp"
+    ethertype: "IPv4"
+    port_range_max: 55
+    security_group_id: "{{ sg.id }}"
+    port_range_min: 22
+    remote_ip_prefix: "0.0.0.0/0"
+    state: absent
+  register: result
+- name: idemponent
+  assert:
+    that:
+      - not result.changed
+# ----------------------------------------------------------------------------
+- name: delete a security group rule that does not exist
+  hwc_vpc_security_group_rule:
+    direction: "ingress"
+    protocol: "tcp"
+    ethertype: "IPv4"
+    port_range_max: 55
+    security_group_id: "{{ sg.id }}"
+    port_range_min: 22
+    remote_ip_prefix: "0.0.0.0/0"
+    state: absent
+  register: result
+- name: assert changed is false
+  assert:
+    that:
+      - result.failed == 0
+      - result.changed == false
+#---------------------------------------------------------
+# Post-test teardown
+- name: delete a security group
+  hwc_vpc_security_group:
+    name: "ansible_network_security_group_test"
+    state: absent
+  register: sg

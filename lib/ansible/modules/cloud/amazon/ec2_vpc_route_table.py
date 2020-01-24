@@ -1,17 +1,9 @@
 #!/usr/bin/python
 #
-# This is a free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This Ansible library is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this library.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -36,8 +28,11 @@ options:
       route table will be created. To change tags of a route table you must look up by id.
     default: tag
     choices: [ 'tag', 'id' ]
+    type: str
   propagating_vgw_ids:
     description: Enable route propagation from virtual gateways specified by ID.
+    type: list
+    elements: str
   purge_routes:
     version_added: "2.3"
     description: Purge existing routes that are not found in routes.
@@ -50,32 +45,43 @@ options:
     type: bool
   purge_tags:
     version_added: "2.5"
-    description: Purge existing tags that are not found in route table
+    description: Purge existing tags that are not found in route table.
     type: bool
     default: 'no'
   route_table_id:
-    description: The ID of the route table to update or delete.
+    description:
+    - The ID of the route table to update or delete.
+    - Required when I(lookup=id).
+    type: str
   routes:
     description: List of routes in the route table.
         Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id',
         'instance_id', 'network_interface_id', or 'vpc_peering_connection_id'.
         If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
         Routes are required for present states.
+    type: list
+    elements: dict
   state:
-    description: Create or destroy the VPC route table
+    description: Create or destroy the VPC route table.
     default: present
     choices: [ 'present', 'absent' ]
+    type: str
   subnets:
     description: An array of subnets to add to this route table. Subnets may be specified
       by either subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'.
+    type: list
+    elements: str
   tags:
     description: >
-      A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }. Tags are
+      A dictionary of resource tags of the form: C({ tag1: value1, tag2: value2 }). Tags are
       used to uniquely identify route tables within a VPC when the route_table_id is not supplied.
     aliases: [ "resource_tags" ]
+    type: dict
   vpc_id:
-    description: VPC ID of the VPC in which to create the route table.
-    required: true
+    description:
+    - VPC ID of the VPC in which to create the route table.
+    - Required when I(state=present) or I(lookup=tag).
+    type: str
 extends_documentation_fragment:
     - aws
     - ec2

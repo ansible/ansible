@@ -89,7 +89,7 @@ session_name:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.eos.eos import load_config, run_commands
-from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import eos_argument_spec, is_local_eapi
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 
@@ -129,7 +129,7 @@ def map_config_to_obj(module):
     output = run_commands(module, ['show banner %s' % module.params['banner']])
     obj = {'banner': module.params['banner'], 'state': 'absent'}
     if output:
-        if module.params['transport'] == 'eapi':
+        if is_local_eapi(module):
             # On EAPI we need to extract the banner text from dict key
             # 'loginBanner'
             if module.params['banner'] == 'login':
@@ -174,7 +174,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

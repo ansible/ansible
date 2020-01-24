@@ -1,0 +1,65 @@
+---
+- debug:
+    msg: "Start nxos_hsrp_interfaces merged integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
+- set_fact:
+    bfd_enable: enable
+    bfd_disable: disable
+  when: platform is not search('N35')
+
+- block:
+  - name: setup1
+    cli_config: &setup_teardown
+      config: |
+        no feature bfd
+        no feature hsrp
+        default interface {{ test_int1 }}
+        default interface {{ test_int2 }}
+
+  - name: setup2
+    cli_config:
+      config: |
+        feature bfd
+        feature hsrp
+        interface {{ test_int1 }}
+          no switchport
+          hsrp bfd
+        interface {{ test_int2 }}
+          no switchport
+
+  - name: Merged
+    nxos_hsrp_interfaces: &merged
+      config:
+        - name: "{{ test_int1 }}"
+          bfd: "{{ bfd_disable|default(omit)}}"
+      state:  merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'no hsrp bfd' in result.commands"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+
+  - name: Gather hsrp_interfaces facts
+    nxos_facts:
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: hsrp_interfaces
+
+  - name: Idempotence - Merged
+    nxos_hsrp_interfaces: *merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+  when: bfd_enable is defined
+
+  always:
+  - name: teardown
+    cli_config: *setup_teardown

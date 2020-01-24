@@ -17,8 +17,6 @@ short_description: Execute Ansible 'actions'
 version_added: '1.2'
 description:
     - Meta tasks are a special kind of task which can influence Ansible internal execution or state.
-    - Prior to Ansible 2.0, the only meta option available was C(flush_handlers).
-    - As of Ansible 2.2, there are five meta tasks which can be used.
     - Meta tasks can be used anywhere within your playbook.
     - This module is also supported for Windows targets.
 options:
@@ -44,6 +42,7 @@ notes:
     - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.
     - C(clear_facts) will remove the persistent facts from M(set_fact) using C(cacheable=True),
       but not the current host variable it creates for the current run.
+    - Looping on meta tasks is not supported.
     - This module is also supported for Windows targets.
 seealso:
 - module: assert

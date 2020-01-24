@@ -5,17 +5,17 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: thin
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
     state: poweredoff
     folder: F0
   register: clone_rp_d1_c1_f0
@@ -33,7 +33,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     #guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
@@ -55,18 +55,18 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     cluster: "{{ ccr1 }}"
     hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: thin
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
     state: poweredoff
     folder: F0
   register: clone_rpc_d1_c1_f0
@@ -84,7 +84,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     #guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
@@ -107,7 +107,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
@@ -115,11 +115,11 @@
     resource_pool: DC0_C0_RP1
     hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: thin
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
     state: poweredoff
     folder: F0
   register: clone_rpcp_d1_c1_f0
@@ -137,7 +137,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     #guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
@@ -160,18 +160,18 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     guest_id: centos64Guest
     datacenter: "{{ dc1 }}"
     esxi_hostname: '{{ esxi1 }}'
     hardware:
         num_cpus: 1
-        memory_mb: 512
+        memory_mb: 128
     disk:
         - size: 1gb
           type: thin
-          autoselect_datastore: True
+          datastore: "{{ rw_datastore }}"
     state: poweredoff
     folder: F0
   register: clone_rph_d1_c1_f0
@@ -189,7 +189,7 @@
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
-    name: newvm_2
+    name: test_vm1
     #template: "{{ item|basename }}"
     #guest_id: centos64Guest
     datacenter: "{{ dc1 }}"

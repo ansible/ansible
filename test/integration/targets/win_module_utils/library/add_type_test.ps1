@@ -227,5 +227,73 @@ Add-CSharpType -References $defined_symbol -CompileSymbols "SYMBOL1"
 $actual = [Namespace8.Class8]::GetString()
 Assert-Equals -actual $actual -expected "symbol"
 
+$type_accelerator = @'
+using System;
+
+//TypeAccelerator -Name AnsibleType -TypeName Class9
+
+namespace Namespace9
+{
+    public class Class9
+    {
+        public static string GetString()
+        {
+            return "a";
+        }
+    }
+}
+'@
+Add-CSharpType -Reference $type_accelerator
+$actual = [AnsibleType]::GetString()
+Assert-Equals -actual $actual -expected "a"
+
+$missing_type_class = @'
+using System;
+
+//TypeAccelerator -Name AnsibleTypeMissing -TypeName MissingClass
+
+namespace Namespace10
+{
+    public class Class10
+    {
+        public static string GetString()
+        {
+            return "b";
+        }
+    }
+}
+'@
+$failed = $false
+try {
+    Add-CSharpType -Reference $missing_type_class
+} catch {
+    $failed = $true
+    Assert-Equals -actual $_.Exception.Message -expected "Failed to find compiled class 'MissingClass' for custom TypeAccelerator."
+}
+Assert-Equals -actual $failed -expected $true
+
+$arch_class = @'
+using System;
+
+namespace Namespace11
+{
+    public class Class11
+    {
+        public static int GetIntPtrSize()
+        {
+#if X86
+            return 4;
+#elif AMD64
+            return 8;
+#else
+            return 0;
+#endif
+        }
+    }
+}
+'@
+Add-CSharpType -Reference $arch_class
+Assert-Equals -actual ([Namespace11.Class11]::GetIntPtrSize()) -expected ([System.IntPtr]::Size)
+
 $result.res = "success"
 Exit-Json -obj $result

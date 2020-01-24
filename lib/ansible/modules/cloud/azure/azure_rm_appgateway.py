@@ -294,6 +294,7 @@ options:
             authentication_certificates:
                 description:
                     - List of references to application gateway authentication certificates.
+                    - Applicable only when C(cookie_based_affinity) is enabled, otherwise quietly ignored.
                 suboptions:
                     id:
                         description:
@@ -326,7 +327,7 @@ options:
                     - Frontend port resource of an application gateway.
             protocol:
                 description:
-                    - Protocol of the c(http) listener.
+                    - Protocol of the C(http) listener.
                 choices:
                     - 'http'
                     - 'https'

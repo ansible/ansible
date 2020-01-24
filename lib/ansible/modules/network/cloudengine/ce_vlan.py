@@ -28,6 +28,10 @@ short_description: Manages VLAN resources and attributes on Huawei CloudEngine s
 description:
     - Manages VLAN configurations on Huawei CloudEngine switches.
 author: QijunPan (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     vlan_id:
         description:

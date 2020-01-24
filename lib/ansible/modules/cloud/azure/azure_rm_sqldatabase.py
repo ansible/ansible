@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqldatabase
 version_added: "2.5"
-short_description: Manage SQL Database instance.
+short_description: Manage SQL Database instance
 description:
     - Create, update and delete instance of SQL Database.
 
@@ -36,22 +36,21 @@ options:
         required: True
     location:
         description:
-            - Resource location. If not set, location from the resource group will be used as C(default).
+            - Resource location. If not set, location from the resource group will be used as default.
     collation:
         description:
-            - The collation of the database. If I(create_mode) is not C(default), this value is ignored.
+            - The collation of the database. If not I(create_mode=default), this value is ignored.
     create_mode:
         description:
             - Specifies the mode of database creation.
-            - "C(default): regular database creation."
-            - "C(copy): creates a database as a copy of an existing database."
-            - "C(online_secondary)/C(non_readable_secondary): creates a database as a (readable or nonreadable) secondary replica of an existing database."
-            - "C(point_in_time_restore): Creates a database by restoring a point in time backup of an existing database."
-            - "C(recovery): Creates a database by restoring a geo-replicated backup."
-            - "C(restore): Creates a database by restoring a backup of a deleted database."
-            - "C(restore_long_term_retention_backup): Creates a database by restoring from a long term retention vault."
-            - "C(copy), C(non_readable_secondary), C(online_secondary) and C(restore_long_term_retention_backup) are not supported for C(data_warehouse)
-               edition."
+            - C(default), regular database creation.
+            - C(copy), creates a database as a copy of an existing database.
+            - C(online_secondary)/C(non_readable_secondary), creates a database as a (readable or nonreadable) secondary replica of an existing database.
+            - C(point_in_time_restore), Creates a database by restoring a point in time backup of an existing database.
+            - C(recovery), Creates a database by restoring a geo-replicated backup.
+            - C(restore), Creates a database by restoring a backup of a deleted database.
+            - C(restore_long_term_retention_backup), Creates a database by restoring from a long term retention vault.
+            - C(copy), C(non_readable_secondary), C(online_secondary) and C(restore_long_term_retention_backup) are not supported for C(data_warehouse) edition.
         choices:
             - 'copy'
             - 'default'
@@ -63,27 +62,27 @@ options:
             - 'restore_long_term_retention_backup'
     source_database_id:
         description:
-            - Required unless I(create_mode) is C(default) or C(restore_long_term_retention_backup).
-            - Specifies the resource ID of the source database
+            - Required unless I(create_mode=default) or I(create_mode=restore_long_term_retention_backup).
+            - Specifies the resource ID of the source database.
     source_database_deletion_date:
         description:
-            - "Required if I(create_mode) is C(restore) and I(source_database_id) is the deleted database's original resource id when it existed (as
-               opposed to its current restorable dropped database id), then this value is required. Specifies the time that the database was deleted."
+            - Required if I(create_mode=restore) and I(source_database_id) is the deleted database's original resource id when it existed (as
+               opposed to its current restorable dropped database ID), then this value is required. Specifies the time that the database was deleted.
     restore_point_in_time:
         description:
-            - "Required if I(create_mode) is C(point_in_time_restore), this value is required. If I(create_mode) is C(restore), this value is optional.
-               Specifies the point in time (ISO8601 format) of the source database that will be restored to create the new database. Must be greater than
-               or equal to the source database's earliestRestoreDate value."
+            - Required if I(create_mode=point_in_time_restore), this value is required. If I(create_mode=restore), this value is optional.
+            - Specifies the point in time (ISO8601 format) of the source database that will be restored to create the new database.
+            - Must be greater than or equal to the source database's earliestRestoreDate value.
     recovery_services_recovery_point_resource_id:
         description:
-            - "Required if I(create_mode) is C(restore_long_term_retention_backup), then this value is required. Specifies the resource ID of the
-               recovery point to restore from."
+            - Required if I(create_mode=restore_long_term_retention_backup), then this value is required.
+            - Specifies the resource ID of the recovery point to restore from.
     edition:
         description:
-            - "The edition of the database. The DatabaseEditions enumeration contains all the valid editions. If I(create_mode) is C(non_readable_secondary)
-              or C(online_secondary), this value is ignored. To see possible values, query the capabilities API
-               (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId:
-               'Capabilities_ListByLocation.'."
+            - The edition of the database. The DatabaseEditions enumeration contains all the valid editions.
+            - If I(create_mode=non_readable_secondary) or I(create_mode=online_secondary), this value is ignored.
+            - To see possible values, query the capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities)
+              referred to by operationId:'Capabilities_ListByLocation'.
         choices:
             - 'web'
             - 'business'
@@ -97,22 +96,24 @@ options:
             - 'system2'
     max_size_bytes:
         description:
-            - "The max size of the database expressed in bytes. If I(create_mode) is not C(default), this value is ignored. To see possible values, query the
-               capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by operationId:
-               'Capabilities_ListByLocation.'"
+            - The max size of the database expressed in bytes.
+            - If not I(create_mode=default), this value is ignored.
+            - To see possible values, query the capabilities API (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities).
+              referred to by operationId:'Capabilities_ListByLocation'.
     elastic_pool_name:
         description:
-            - "The name of the elastic pool the database is in. Not supported for C(data_warehouse) edition."
+            - The name of the elastic pool the database is in. Not supported for I(edition=data_warehouse).
     read_scale:
         description:
-            - "If the database is a geo-secondary, indicates whether read-only connections are allowed to this database or not. Not supported for
-               C(data_warehouse) edition."
+            - If the database is a geo-secondary, indicates whether read-only connections are allowed to this database or not.
+            - Not supported for I(edition=data_warehouse).
         type: bool
         default: False
     sample_name:
         description:
-            - "Indicates the name of the sample schema to apply when creating this database. If I(create_mode) is not C(default), this value is ignored. Not
-               supported for C(data_warehouse) edition."
+            - Indicates the name of the sample schema to apply when creating this database.
+            - If not I(create_mode=default), this value is ignored.
+            - Not supported for I(edition=data_warehouse).
         choices:
             - 'adventure_works_lt'
     zone_redundant:
@@ -138,7 +139,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -195,7 +196,7 @@ status:
 '''
 
 import time
-from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -338,7 +339,7 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
                 elif key == "max_size_bytes":
                     self.parameters["max_size_bytes"] = kwargs[key]
                 elif key == "elastic_pool_name":
-                    self.parameters["elastic_pool_name"] = kwargs[key]
+                    self.parameters["elastic_pool_id"] = kwargs[key]
                 elif key == "read_scale":
                     self.parameters["read_scale"] = 'Enabled' if kwargs[key] else 'Disabled'
                 elif key == "sample_name":
@@ -356,6 +357,9 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
 
         if "location" not in self.parameters:
             self.parameters["location"] = resource_group.location
+
+        if "elastic_pool_id" in self.parameters:
+            self.format_elastic_pool_id()
 
         old_response = self.get_sqldatabase()
 
@@ -484,6 +488,14 @@ class AzureRMSqlDatabase(AzureRMModuleBase):
             return response.as_dict()
 
         return False
+
+    def format_elastic_pool_id(self):
+        parrent_id = format_resource_id(val=self.server_name,
+                                        subscription_id=self.subscription_id,
+                                        namespace="Microsoft.Sql",
+                                        types="servers",
+                                        resource_group=self.resource_group)
+        self.parameters['elastic_pool_id'] = parrent_id + "/elasticPools/" + self.parameters['elastic_pool_id']
 
 
 def _snake_to_camel(snake, capitalize_first=False):

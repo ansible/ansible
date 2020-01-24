@@ -163,19 +163,19 @@ EXAMPLES = r'''
 
 - firewalld:
     zone: drop
-    state: present
+    state: enabled
     permanent: yes
     icmp_block_inversion: yes
 
 - firewalld:
     zone: drop
-    state: present
+    state: enabled
     permanent: yes
     icmp_block: echo-request
 
 - name: Redirect port 443 to 8443 with Rich Rule
   firewalld:
-    rich_rule: rule forward-port port=443 protocol=tcp to-port=8443
+    rich_rule: rule family=ipv4 forward-port port=443 protocol=tcp to-port=8443
     zone: public
     permanent: yes
     immediate: yes

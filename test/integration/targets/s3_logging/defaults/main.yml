@@ -1,0 +1,4 @@
+---
+test_bucket: '{{ resource_prefix }}-testbucket'
+log_bucket_1: '{{ resource_prefix }}-logs-1'
+log_bucket_2: '{{ resource_prefix }}-logs-2'

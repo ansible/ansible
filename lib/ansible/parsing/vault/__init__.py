@@ -82,7 +82,7 @@ display = Display()
 
 
 b_HEADER = b'$ANSIBLE_VAULT'
-CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
+CIPHER_WHITELIST = frozenset((u'AES256',))
 CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
@@ -288,6 +288,7 @@ def verify_secret_is_not_empty(secret, msg=None):
 
 class VaultSecret:
     '''Opaque/abstract objects for a single vault secret. ie, a password or a key.'''
+
     def __init__(self, _bytes=None):
         # FIXME: ? that seems wrong... Unset etc?
         self._bytes = _bytes

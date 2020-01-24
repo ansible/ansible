@@ -276,3 +276,67 @@
       - "' 0 0' in optional_fields_content.stdout"
       - "1 == optional_fields_content.stdout_lines | length"
   when: ansible_system in ('Linux')
+
+- name: Block to test remounted option
+  block:
+    - name: Create empty file
+      command: dd if=/dev/zero of=/tmp/myfs.img bs=1048576 count=20
+      when: ansible_system in ('Linux')
+
+    - name: Format FS
+      filesystem:
+        fstype: ext3
+        dev: /tmp/myfs.img
+      when: ansible_system in ('Linux')
+
+    - name: Mount the FS for the first time
+      mount:
+        path: /tmp/myfs
+        src: /tmp/myfs.img
+        fstype: ext2
+        state: mounted
+      when: ansible_system in ('Linux')
+
+    - name: Get the last write time
+      shell: "dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last\ write\ time: |cut -d: -f2-"
+      register: last_write_time
+      when: ansible_system in ('Linux')
+
+    - name: Wait 2 second
+      pause:
+        seconds: 2
+      when: ansible_system in ('Linux')
+
+    - name: Test if the FS is remounted
+      mount:
+        path: /tmp/myfs
+        state: remounted
+      when: ansible_system in ('Linux')
+
+    - name: Get again the last write time
+      shell: "dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last\ write\ time: |cut -d: -f2-"
+      register: last_write_time2
+      when: ansible_system in ('Linux')
+
+    - name: Fail if they are the same
+      fail:
+        msg: "Filesytem was not remounted, testing of the module failed!"
+      when: last_write is defined and last_write_time2 is defined and last_write_time.stdout == last_write_time2.stdout and ansible_system in ('Linux')
+  always:
+    - name: Umount the test FS
+      mount:
+        path: /tmp/myfs
+        src: /tmp/myfs.img
+        opts: loop
+        state: absent
+      when: ansible_system in ('Linux')
+
+    - name: Remove the test FS
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/myfs.img
+        - /tmp/myfs
+      when: ansible_system in ('Linux')
+...

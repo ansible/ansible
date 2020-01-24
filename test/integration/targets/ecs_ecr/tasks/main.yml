@@ -4,13 +4,19 @@
 
 - block:
 
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
     - name: When creating with check mode
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -26,10 +32,7 @@
       ecs_ecr:
         registry_id: 999999999999
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -43,10 +46,7 @@
     - name: When creating a repository
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should change and create
@@ -55,14 +55,16 @@
           - result is changed
           - result.created
 
+    - name: it should have been configured as mutable by default
+      assert:
+        that:
+          - result.repository.imageTagMutability == "MUTABLE"
+
 
     - name: When creating a repository that already exists in check mode
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -76,10 +78,7 @@
     - name: When creating a repository that already exists
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should not change
@@ -90,12 +89,9 @@
 
     - name: When in check mode, and deleting a policy that does not exist
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
-        delete_policy: yes
+        purge_policy: yes
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -108,12 +104,9 @@
 
     - name: When in check mode, setting policy on a repository that has no policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -127,12 +120,9 @@
 
     - name: When setting policy on a repository that has no policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should change and not create
@@ -144,31 +134,43 @@
 
     - name: When in check mode, and deleting a policy that exists
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         delete_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
-    - name: it should skip, change but not create
+    - name: it should skip, change but not create, have deprecations
       assert:
         that:
           - result is skipped
           - result is changed
           - not result.created
+          - result.deprecations
 
 
-    - name: When deleting a policy that exists
+    - name: When in check mode, and purging a policy that exists
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        delete_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        purge_policy: yes
+        <<: *aws_connection_info
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change but not create, no deprecations
+      assert:
+        that:
+          - result is skipped
+          - result is changed
+          - not result.created
+          - result.deprecations is not defined
+
+
+    - name: When purging a policy that exists
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        purge_policy: yes
+        <<: *aws_connection_info
       register: result
 
     - name: it should change and not create
@@ -180,12 +182,9 @@
 
     - name: When setting a policy as a string
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy | to_json }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should change and not create
@@ -197,27 +196,20 @@
 
     - name: When setting a policy to its current value
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should not change
       assert:
         that:
           - result is not changed
-
 
     - name: When omitting policy on a repository that has a policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
 
     - name: it should not change
@@ -225,16 +217,12 @@
         that:
           - result is not changed
 
-
-    - name: When specifying both policy and delete_policy
+    - name: When specifying both policy and purge_policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
         policy: '{{ policy }}'
-        delete_policy: yes
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        purge_policy: yes
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -246,12 +234,9 @@
 
     - name: When specifying invalid JSON for policy
       ecs_ecr:
-        region: '{{ ec2_region }}'
         name: '{{ ecr_name }}'
-        policy_text: "Ceci n'est pas une JSON"
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        policy: "Ceci n'est pas une JSON"
+        <<: *aws_connection_info
       register: result
       ignore_errors: true
 
@@ -261,14 +246,26 @@
           - result is failed
 
 
-    - name: When in check mode, deleting a policy that exists
+    - name: When in check mode, and purging a lifecycle policy that does not exists
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        purge_lifecycle_policy: yes
+        <<: *aws_connection_info
+      register: result
+      check_mode: yes
+
+    - name: it should not skip and not change
+      assert:
+        that:
+          - not result is skipped
+          - not result is changed
+
+
+    - name: When in check mode, setting lifecyle policy on a repository that has no policy
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        lifecycle_policy: '{{ lifecycle_policy }}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -280,14 +277,157 @@
           - not result.created
 
 
-    - name: When deleting a policy that exists
+    - name: When setting lifecycle policy on a repository that has no policy
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
+        lifecycle_policy: '{{ lifecycle_policy }}'
+        <<: *aws_connection_info
+      register: result
+
+    - name: it should change and not create
+      assert:
+        that:
+          - result is changed
+          - not result.created
+          - result.lifecycle_policy is defined
+          - result.lifecycle_policy.rules|length == 1
+
+
+    - name: When in check mode, and purging a lifecyle policy that exists
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        purge_lifecycle_policy: yes
+        <<: *aws_connection_info
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change but not create
+      assert:
+        that:
+          - result is skipped
+          - result is changed
+          - not result.created
+
+
+    - name: When purging a lifecycle policy that exists
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        purge_lifecycle_policy: yes
+        <<: *aws_connection_info
+      register: result
+
+    - name: it should change and not create
+      assert:
+        that:
+          - result is changed
+          - not result.created
+
+
+    - name: When setting a lifecyle policy as a string
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        lifecycle_policy: '{{ lifecycle_policy | to_json }}'
+        <<: *aws_connection_info
+      register: result
+
+    - name: it should change and not create
+      assert:
+        that:
+          - result is changed
+          - not result.created
+
+
+    - name: When setting a lifecycle policy to its current value
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        lifecycle_policy: '{{ lifecycle_policy }}'
+        <<: *aws_connection_info
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - not result is changed
+
+
+    - name: When omitting lifecycle policy on a repository that has a policy
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        <<: *aws_connection_info
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - not result is changed
+
+
+    - name: When specifying both lifecycle_policy and purge_lifecycle_policy
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        lifecycle_policy: '{{ lifecycle_policy }}'
+        purge_lifecycle_policy: yes
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: it should fail
+      assert:
+        that:
+          - result is failed
+
+
+    - name: When specifying invalid JSON for lifecycle policy
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        lifecycle_policy: "Ceci n'est pas une JSON"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: it should fail
+      assert:
+        that:
+          - result is failed
+
+
+    - name: When specifying an invalid document for lifecycle policy
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        lifecycle_policy:
+          rules:
+            - invalid: "Ceci n'est pas une rule"
+        <<: *aws_connection_info
+      register: result
+      ignore_errors: true
+
+    - name: it should fail
+      assert:
+        that:
+          - result is failed
+
+
+    - name: When in check mode, deleting a repository that exists
+      ecs_ecr:
+        name: '{{ ecr_name }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change and not create
+      assert:
+        that:
+          - result is skipped
+          - result is changed
+          - not result.created
+
+
+    - name: When deleting a repository that exists
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        state: absent
+        <<: *aws_connection_info
       register: result
 
     - name: it should change
@@ -296,14 +436,11 @@
           - result is changed
 
 
-    - name: When in check mode, deleting a policy that does not exist
+    - name: When in check mode, deleting a repository that does not exist
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info
       register: result
       check_mode: yes
 
@@ -314,14 +451,82 @@
           - result is not changed
 
 
-    - name: When deleting a policy that does not exist
+    - name: When deleting a repository that does not exist
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        state: absent
+        <<: *aws_connection_info
+      register: result
+
+    - name: it should not change
+      assert:
+        that:
+          - result is not changed
+
+    - name: When creating an immutable repository
       ecs_ecr:
         name: '{{ ecr_name }}'
         region: '{{ ec2_region }}'
-        state: absent
         ec2_access_key: '{{ec2_access_key}}'
         ec2_secret_key: '{{ec2_secret_key}}'
         security_token: '{{security_token}}'
+        image_tag_mutability: immutable
+      register: result
+
+    - name: it should change and create
+      assert:
+        that:
+          - result is changed
+          - result.created
+
+    - name: it should have been configured as immutable
+      assert:
+        that:
+          - result.repository.imageTagMutability == "IMMUTABLE"
+
+
+    - name: When configuring an existing immutable repository to be mutable in check mode
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        image_tag_mutability: mutable
+      register: result
+      check_mode: yes
+
+    - name: it should skip, change and configured mutable
+      assert:
+        that:
+          - result is skipped
+          - result is changed
+          - result.repository.imageTagMutability == "MUTABLE"
+
+    - name: When configuring an existing immutable repository to be mutable
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        image_tag_mutability: mutable
+      register: result
+
+    - name: it should change and configured mutable
+      assert:
+        that:
+          - result is changed
+          - result.repository.imageTagMutability == "MUTABLE"
+
+    - name: When configuring an already mutable repository to be mutable
+      ecs_ecr:
+        name: '{{ ecr_name }}'
+        region: '{{ ec2_region }}'
+        ec2_access_key: '{{ec2_access_key}}'
+        ec2_secret_key: '{{ec2_secret_key}}'
+        security_token: '{{security_token}}'
+        image_tag_mutability: mutable
       register: result
 
     - name: it should not change
@@ -334,8 +539,5 @@
     - name: Delete lingering ECR repository
       ecs_ecr:
         name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
         state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+        <<: *aws_connection_info

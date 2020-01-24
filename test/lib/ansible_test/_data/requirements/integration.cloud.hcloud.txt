@@ -1,0 +1,1 @@
+hcloud>=1.6.0 ; python_version >= '2.7' and python_version < '3.9' # Python 2.6 is not supported (sanity_ok); Only hcloud >= 1.6.0 supports Floating IPs with names; Python 3.9 and later are not supported

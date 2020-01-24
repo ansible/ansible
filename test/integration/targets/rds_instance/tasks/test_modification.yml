@@ -27,6 +27,7 @@
           id: "{{ instance_id }}"
           state: present
           engine: mariadb
+          engine_version: "10.1.26"
           username: "{{ username }}"
           password: "{{ password }}"
           db_instance_class: "{{ db_instance_class }}"
@@ -122,10 +123,11 @@
           backup_retention_period: 2
           preferred_backup_window: "05:00-06:00"
           preferred_maintenance_window: "mon:06:20-mon:06:50"
-          engine_version: "10.1.26"
+          engine_version: "10.2.21"
           allow_major_version_upgrade: true
           auto_minor_version_upgrade: false
           port: 1150
+          max_allocated_storage: 100
           apply_immediately: True
           <<: *aws_connection_info
         register: result
@@ -133,10 +135,11 @@
       - assert:
           that:
             - result.changed
-            - result.pending_modified_values.allocated_storage == 30
-            - result.pending_modified_values.port == 1150
-            - 'result.pending_modified_values.db_instance_class == "db.t2.medium"'
-            - 'result.pending_modified_values.engine_version == "10.1.26"'
+            - '"allocated_storage" in result.pending_modified_values or result.allocated_storage == 30'
+            - '"max_allocated_storage" in result.pending_modified_values or result.max_allocated_storage == 100'
+            - '"port" in result.pending_modified_values or result.endpoint.port == 1150'
+            - '"db_instance_class" in result.pending_modified_values or result.db_instance_class == "db.t2.medium"'
+            - '"engine_version" in result.pending_modified_values or result.engine_version == "10.2.21"'
 
       - name: Idempotence modifying several pending attributes
         rds_instance:
@@ -147,10 +150,11 @@
           backup_retention_period: 2
           preferred_backup_window: "05:00-06:00"
           preferred_maintenance_window: "mon:06:20-mon:06:50"
-          engine_version: "10.1.26"
+          engine_version: "10.2.21"
           allow_major_version_upgrade: true
           auto_minor_version_upgrade: false
           port: 1150
+          max_allocated_storage: 100
           <<: *aws_connection_info
         register: result
         retries: 30
@@ -161,18 +165,10 @@
           that:
             - not result.changed
             - '"allocated_storage" in result.pending_modified_values or result.allocated_storage == 30'
+            - '"max_allocated_storage" in result.pending_modified_values or result.max_allocated_storage == 100'
             - '"port" in result.pending_modified_values or result.endpoint.port == 1150'
             - '"db_instance_class" in result.pending_modified_values or result.db_instance_class == "db.t2.medium"'
-            - '"engine_version" in result.pending_modified_values or result.engine_version == "10.1.26"'
-
-      - name: Reboot the instance to update the modified values and add tags
-        rds_instance:
-          id: '{{ instance_id }}'
-          state: rebooted
-          tags:
-            Created_by: Ansible rds_instance tests
-          <<: *aws_connection_info
-        register: result
+            - '"engine_version" in result.pending_modified_values or result.engine_version == "10.2.21"'
 
       - name: Delete the instance
         rds_instance:

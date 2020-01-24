@@ -1,4 +1,4 @@
-Sanity Tests » test-constraints
-===============================
+test-constraints
+================
 
-Constraints for test requirements should be in ``test/runner/requirements/constraints.txt``.
+Constraints for test requirements should be in ``test/lib/ansible_test/_data/requirements/constraints.txt``.

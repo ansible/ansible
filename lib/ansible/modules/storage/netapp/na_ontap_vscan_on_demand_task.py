@@ -79,7 +79,7 @@ options:
 
   request_timeout:
     description:
-    - Total request-service time-limit in seconds. If the virus-scanner does not respond within the provided time, scan will be timedout.
+    - Total request-service time-limit in seconds. If the virus-scanner does not respond within the provided time, scan will be timed out.
 
   scan_files_with_no_ext:
     description:

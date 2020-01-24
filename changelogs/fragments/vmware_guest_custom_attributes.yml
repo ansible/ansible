@@ -1,0 +1,2 @@
+minor_changes:
+    - vmware_guest_custom_attributes does not require VM name (https://github.com/ansible/ansible/issues/63222).

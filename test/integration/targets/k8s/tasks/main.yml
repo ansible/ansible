@@ -12,10 +12,11 @@
 
 - pip:
     name:
-      - openshift==0.8.1
+      - openshift>=0.9.2
+      - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: yes
+    virtualenv_site_packages: no
 
 - include_tasks: validate_not_installed.yml
   vars:
@@ -24,16 +25,18 @@
 - file:
     path: "{{ virtualenv }}"
     state: absent
+  no_log: yes
 
 # Test validate with kubernetes-validate
 
 - pip:
     name:
-      - openshift==0.8.1
       - kubernetes-validate==1.12.0
+      - openshift>=0.9.2
+      - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: yes
+    virtualenv_site_packages: no
 
 - include_tasks: validate_installed.yml
   vars:
@@ -43,6 +46,7 @@
 - file:
     path: "{{ virtualenv }}"
     state: absent
+  no_log: yes
 
 # Test graceful failure for older versions of openshift
 
@@ -50,9 +54,10 @@
     name:
       - openshift==0.6.0
       - kubernetes==6.0.0
+      - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: yes
+    virtualenv_site_packages: no
 
 - include_tasks: older_openshift_fail.yml
   vars:
@@ -63,21 +68,25 @@
 - file:
     path: "{{ virtualenv }}"
     state: absent
+  no_log: yes
 
 # Run full test suite
 
 - pip:
     name:
-      - openshift==0.8.1
+      - openshift>=0.9.2
+      - coverage
     virtualenv: "{{ virtualenv }}"
     virtualenv_command: "{{ virtualenv_command }}"
-    virtualenv_site_packages: yes
+    virtualenv_site_packages: no
 
 - include_tasks: full_test.yml
   vars:
     ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+    create_crd_with_apply: no
     playbook_namespace: ansible-test-k8s-full
 
 - file:
     path: "{{ virtualenv }}"
     state: absent
+  no_log: yes

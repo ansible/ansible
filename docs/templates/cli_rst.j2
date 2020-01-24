@@ -14,7 +14,7 @@
 
 .. contents::
    :local:
-   :depth: 2
+   :depth: {{content_depth}}
 
 
 .. program:: {{cli_name}}
@@ -83,6 +83,29 @@ Actions
    {{ (option['desc']) }}
 {% endfor %}
 {% endif %}
+
+{% for sub_action in actions[action]['actions'] %}
+
+
+.. program:: {{cli_name}} {{action}} {{sub_action}}
+.. _{{cli_name|replace('-','_')}}_{{action}}_{{sub_action}}:
+
+{{ action + " " + sub_action }}
+{{ '+' * (action|length + sub_action|length + 1) }}
+
+{{ (actions[action]['actions'][sub_action]['desc']|default(' '))}}
+
+{% if actions[action]['actions'][sub_action]['options'] %}
+
+
+{% for option in actions[action]['actions'][sub_action]['options']|sort(attribute='options') %}
+.. option:: {% for switch in option['options'] if switch in actions[action]['actions'][sub_action]['option_names'] %}{{switch}} {% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+
+   {{ (option['desc']) }}
+{% endfor %}
+{% endif %}
+
+{% endfor %}
 
 {% endfor %}
 .. program:: {{cli_name}}

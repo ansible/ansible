@@ -14,15 +14,15 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: postgresql_slot
-short_description: Add or remove slots from a PostgreSQL database
+short_description: Add or remove replication slots from a PostgreSQL database
 description:
-- Add or remove physical or logical slots from a PostgreSQL database.
+- Add or remove physical or logical replication slots from a PostgreSQL database.
 version_added: '2.8'
 
 options:
   name:
     description:
-    - Name of the slot to add or remove.
+    - Name of the replication slot to add or remove.
     type: str
     required: yes
     aliases:
@@ -30,9 +30,6 @@ options:
   slot_type:
     description:
     - Slot type.
-    - For more information see
-      U(https://www.postgresql.org/docs/current/protocol-replication.html) and
-      U(https://www.postgresql.org/docs/current/logicaldecoding-explanation.html).
     type: str
     default: physical
     choices: [ logical, physical ]
@@ -46,7 +43,7 @@ options:
     choices: [ absent, present ]
   immediately_reserve:
     description:
-    - Optional parameter the when C(yes) specifies that the LSN for this replication slot be reserved
+    - Optional parameter that when C(yes) specifies that the LSN for this replication slot be reserved
       immediately, otherwise the default, C(no), specifies that the LSN is reserved on the first connection
       from a streaming replication client.
     - Is available from PostgreSQL version 9.6.
@@ -78,22 +75,21 @@ options:
 notes:
 - Physical replication slots were introduced to PostgreSQL with version 9.4,
   while logical replication slots were added beginning with version 10.0.
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module.
-- If the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host.
-- For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages
 
-requirements:
-- psycopg2
+seealso:
+- name: PostgreSQL pg_replication_slots view reference
+  description: Complete reference of the PostgreSQL pg_replication_slots view.
+  link: https://www.postgresql.org/docs/current/view-pg-replication-slots.html
+- name: PostgreSQL streaming replication protocol reference
+  description: Complete reference of the PostgreSQL streaming replication protocol documentation.
+  link: https://www.postgresql.org/docs/current/protocol-replication.html
+- name: PostgreSQL logical replication protocol reference
+  description: Complete reference of the PostgreSQL logical replication protocol documentation.
+  link: https://www.postgresql.org/docs/current/protocol-logical-replication.html
 
 author:
 - John Scalia (@jscalia)
-- Andew Klychkov (@Andersson007)
+- Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
 '''
 
@@ -111,12 +107,13 @@ EXAMPLES = r'''
     db: ansible
     state: absent
 
-- name: Create logical_one logical slot to the database acme if doen't exist
+- name: Create logical_one logical slot to the database acme if doesn't exist
   postgresql_slot:
     name: logical_slot_one
     slot_type: logical
     state: present
     output_plugin: custom_decoder_one
+    db: "acme"
 
 - name: Remove logical_one slot if exists from the cluster running on another host and non-standard port
   postgresql_slot:
@@ -149,9 +146,12 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
-from ansible.module_utils._text import to_native
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    get_conn_params,
+    postgres_common_argument_spec,
+)
 
 
 # ===========================================
@@ -184,44 +184,33 @@ class PgSlot(object):
         if kind == 'physical':
             # Check server version (needs for immedately_reserverd needs 9.6+):
             if self.cursor.connection.server_version < 96000:
-                query = "SELECT pg_create_physical_replication_slot('%s')" % self.name
+                query = "SELECT pg_create_physical_replication_slot(%(name)s)"
 
             else:
-                query = "SELECT pg_create_physical_replication_slot('%s', %s)" % (self.name, immediately_reserve)
+                query = "SELECT pg_create_physical_replication_slot(%(name)s, %(i_reserve)s)"
+
+            self.changed = exec_sql(self, query,
+                                    query_params={'name': self.name, 'i_reserve': immediately_reserve},
+                                    ddl=True)
 
         elif kind == 'logical':
-            query = "SELECT pg_create_logical_replication_slot('%s', '%s')" % (self.name, output_plugin)
-
-        self.changed = self.__exec_sql(query, ddl=True)
+            query = "SELECT pg_create_logical_replication_slot(%(name)s, %(o_plugin)s)"
+            self.changed = exec_sql(self, query,
+                                    query_params={'name': self.name, 'o_plugin': output_plugin}, ddl=True)
 
     def drop(self):
         if not self.exists:
             return False
 
-        query = "SELECT pg_drop_replication_slot('%s')" % self.name
-        self.changed = self.__exec_sql(query, ddl=True)
+        query = "SELECT pg_drop_replication_slot(%(name)s)"
+        self.changed = exec_sql(self, query, query_params={'name': self.name}, ddl=True)
 
     def __slot_exists(self):
-        query = "SELECT slot_type FROM pg_replication_slots WHERE slot_name = '%s'" % self.name
-        res = self.__exec_sql(query, add_to_executed=False)
+        query = "SELECT slot_type FROM pg_replication_slots WHERE slot_name = %(name)s"
+        res = exec_sql(self, query, query_params={'name': self.name}, add_to_executed=False)
         if res:
             self.exists = True
             self.kind = res[0][0]
-
-    def __exec_sql(self, query, ddl=False, add_to_executed=True):
-        try:
-            self.cursor.execute(query)
-
-            if add_to_executed:
-                self.executed_queries.append(query)
-
-            if not ddl:
-                res = self.cursor.fetchall()
-                return res
-            return True
-        except Exception as e:
-            self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
-        return False
 
 
 # ===========================================
@@ -255,7 +244,19 @@ def main():
     if immediately_reserve and slot_type == 'logical':
         module.fail_json(msg="Module parameters immediately_reserve and slot_type=logical are mutually exclusive")
 
-    db_connection = connect_to_db(module, autocommit=True)
+    # When slot_type is logical and parameter db is not passed,
+    # the default database will be used to create the slot and
+    # the user should know about this.
+    # When the slot type is physical,
+    # it doesn't matter which database will be used
+    # because physical slots are global objects.
+    if slot_type == 'logical':
+        warn_db_default = True
+    else:
+        warn_db_default = False
+
+    conn_params = get_conn_params(module, module.params, warn_db_default=warn_db_default)
+    db_connection = connect_to_db(module, conn_params, autocommit=True)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     ##################################

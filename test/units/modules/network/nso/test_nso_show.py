@@ -18,8 +18,6 @@
 
 from __future__ import (absolute_import, division, print_function)
 
-import json
-
 from units.compat.mock import patch
 from ansible.modules.network.nso import nso_show
 from . import nso_module

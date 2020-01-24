@@ -268,8 +268,25 @@ class ModuleManager(object):
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
         result.update(**changes)
+
+        if self.module._diff and self.have:
+            result['diff'] = self.make_diff()
+
         result.update(dict(changed=changed))
         self._announce_deprecations(result)
+
+        return result
+
+    def _grab_attr(self, item):
+        result = dict()
+        updatables = Parameters.updatables
+        for k in updatables:
+            if getattr(item, k) is not None:
+                result[k] = getattr(item, k)
+        return result
+
+    def make_diff(self):
+        result = dict(before=self._grab_attr(self.have), after=self._grab_attr(self.want))
         return result
 
     def update(self):

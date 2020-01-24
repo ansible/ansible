@@ -1,0 +1,56 @@
+# Test code for the vmware_dvs_portgroup_info module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_dvswitch: true
+
+- when: vcsim is not defined
+  block:
+    - &dvs_info
+      name: Gather info about DVS portgroup
+      vmware_dvs_portgroup_info:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter: "{{ dc1 }}"
+      register: dvs_results
+
+    - debug:
+        var: dvs_results
+
+    - assert:
+        that:
+          - dvs_results.dvs_portgroup_info is defined
+
+    - <<: *dvs_info
+      name: Gather info about DVS portgroup in check mode
+      check_mode: yes
+
+    - debug:
+        var: dvs_results
+
+    - assert:
+        that:
+          - dvs_results.dvs_portgroup_info is defined
+
+# Testcase 0002: Get portgroup info for a given dvswitch
+- name: get info for a given dvswitch
+  vmware_dvs_portgroup_info:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ dc1 }}"
+    dvswitch: "{{ dvswitch1 }}"
+  register: dvs_results_0002
+
+- debug:
+    msg: "{{ dvs_results_0002 }}"
+
+- assert:
+    that:
+      - "dvs_results_0002['dvs_portgroup_info']['DVS0'] is defined"

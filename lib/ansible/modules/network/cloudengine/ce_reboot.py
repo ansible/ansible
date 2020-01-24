@@ -28,13 +28,17 @@ short_description: Reboot a HUAWEI CloudEngine switches.
 description:
     - Reboot a HUAWEI CloudEngine switches.
 author: Gong Jianjun (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 requirements: ["ncclient"]
 options:
     confirm:
         description:
             - Safeguard boolean. Set to true if you're sure you want to reboot.
         type: bool
-        default: false
+        required: true
     save_config:
         description:
             - Flag indicating whether to save the configuration.
@@ -134,8 +138,8 @@ def main():
     """ main """
 
     argument_spec = dict(
-        confirm=dict(required=True, type='bool', default='false'),
-        save_config=dict(required=False, type='bool', default='false')
+        confirm=dict(required=True, type='bool'),
+        save_config=dict(default=False, type='bool')
     )
 
     argument_spec.update(ce_argument_spec)

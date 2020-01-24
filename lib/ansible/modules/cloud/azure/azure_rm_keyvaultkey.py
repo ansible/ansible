@@ -15,10 +15,11 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_keyvaultkey
 version_added: 2.5
-short_description: Use Azure KeyVault keys.
+short_description: Use Azure KeyVault keys
 description:
-    - Create or delete a key within a given keyvault. By using Key Vault, you can encrypt
-      keys and secrets (such as authentication keys, storage account keys, data encryption keys, .PFX files, and passwords).
+    - Create or delete a key within a given keyvault.
+    - By using Key Vault, you can encrypt keys and secrets.
+    - Such as authentication keys, storage account keys, data encryption keys, .PFX files, and passwords.
 options:
     keyvault_uri:
             description:
@@ -39,8 +40,7 @@ options:
             - PEM password.
     state:
         description:
-            - Assert the state of the key. Use C(present) to create a key and
-              C(absent) to delete a key.
+            - Assert the state of the key. Use C(present) to create a key and C(absent) to delete a key.
         default: present
         choices:
             - absent
@@ -51,7 +51,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Ian Philpot (@iphilpot)"
+    - Ian Philpot (@iphilpot)
 
 '''
 
@@ -70,12 +70,14 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    description: Current state of the key.
+    description:
+        - Current state of the key.
     returned: success
     type: complex
     contains:
         key_id:
-          description: key resource path.
+          description:
+              - key resource path.
           type: str
           example: https://contoso.vault.azure.net/keys/hello/e924f053839f4431b35bc54393f98423
 '''

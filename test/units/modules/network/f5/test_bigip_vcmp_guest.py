@@ -149,6 +149,28 @@ class TestParameters(unittest.TestCase):
         assert '/Common/vlan1' in p.vlans
         assert '/Common/vlan2' in p.vlans
 
+    def test_api_parameters_with_hotfix(self):
+        args = dict(
+            initialImage="BIGIP-14.1.0.3-0.0.6.iso",
+            initialHotfix="Hotfix-BIGIP-14.1.0.3.0.5.6-ENG.iso",
+            managementGw="2.2.2.2",
+            managementIp="1.1.1.1/24",
+            managementNetwork="bridged",
+            state="deployed",
+            vlans=[
+                "/Common/vlan1",
+                "/Common/vlan2"
+            ]
+        )
+
+        p = ApiParameters(params=args)
+        assert p.initial_image == 'BIGIP-14.1.0.3-0.0.6.iso'
+        assert p.initial_hotfix == 'Hotfix-BIGIP-14.1.0.3.0.5.6-ENG.iso'
+        assert p.mgmt_route == '2.2.2.2'
+        assert p.mgmt_address == '1.1.1.1/24'
+        assert '/Common/vlan1' in p.vlans
+        assert '/Common/vlan2' in p.vlans
+
 
 class TestManager(unittest.TestCase):
     def setUp(self):
@@ -160,14 +182,21 @@ class TestManager(unittest.TestCase):
             self.p1 = patch('library.modules.bigip_vcmp_guest.ModuleParameters.initial_image_exists')
             self.m1 = self.p1.start()
             self.m1.return_value = True
+            self.p2 = patch('library.modules.bigip_vcmp_guest.ModuleParameters.initial_hotfix_exists')
+            self.m2 = self.p2.start()
+            self.m2.return_value = True
         except Exception:
             self.p1 = patch('ansible.modules.network.f5.bigip_vcmp_guest.ModuleParameters.initial_image_exists')
             self.m1 = self.p1.start()
             self.m1.return_value = True
+            self.p2 = patch('ansible.modules.network.f5.bigip_vcmp_guest.ModuleParameters.initial_hotfix_exists')
+            self.m2 = self.p2.start()
+            self.m2.return_value = True
 
     def tearDown(self):
         self.patcher1.stop()
         self.p1.stop()
+        self.p2.stop()
 
     def test_create_vcmpguest(self, *args):
         set_module_args(dict(
@@ -199,3 +228,35 @@ class TestManager(unittest.TestCase):
 
         assert results['changed'] is True
         assert results['name'] == 'guest1'
+
+    def test_create_vcmpguest_with_hotfix(self, *args):
+        set_module_args(dict(
+            name="guest2",
+            mgmt_network="bridged",
+            mgmt_address="10.10.10.10/24",
+            initial_image="BIGIP-14.1.0.3-0.0.6.iso",
+            initial_hotfix="Hotfix-BIGIP-14.1.0.3.0.5.6-ENG.iso",
+            provider=dict(
+                server='localhost',
+                password='password',
+                user='admin'
+            )
+        ))
+
+        module = AnsibleModule(
+            argument_spec=self.spec.argument_spec,
+            supports_check_mode=self.spec.supports_check_mode,
+            required_if=self.spec.required_if
+        )
+
+        # Override methods to force specific logic in the module to happen
+        mm = ModuleManager(module=module)
+        mm.create_on_device = Mock(return_value=True)
+        mm.exists = Mock(return_value=False)
+        mm.is_deployed = Mock(side_effect=[False, True, True, True, True])
+        mm.deploy_on_device = Mock(return_value=True)
+
+        results = mm.exec_module()
+
+        assert results['changed'] is True
+        assert results['name'] == 'guest2'

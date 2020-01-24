@@ -5,7 +5,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import os
 import platform
 
 from ansible.module_utils import distro
@@ -50,8 +49,35 @@ def get_distribution_version():
         the version, it returns empty string. If this is not run on a Linux machine it returns None
     '''
     version = None
+
+    needs_best_version = frozenset((
+        u'centos',
+        u'debian',
+    ))
+
     if platform.system() == 'Linux':
         version = distro.version()
+        distro_id = distro.id()
+
+        if version is not None:
+            if distro_id in needs_best_version:
+                version_best = distro.version(best=True)
+
+                # CentoOS maintainers believe only the major version is appropriate
+                # but Ansible users desire minor version information, e.g., 7.5.
+                # https://github.com/ansible/ansible/issues/50141#issuecomment-449452781
+                if distro_id == u'centos':
+                    version = u'.'.join(version_best.split(u'.')[:2])
+
+                # Debian does not include minor version in /etc/os-release.
+                # Bug report filed upstream requesting this be added to /etc/os-release
+                # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=931197
+                if distro_id == u'debian':
+                    version = version_best
+
+        else:
+            version = u''
+
     return version
 
 
@@ -109,9 +135,9 @@ def get_platform_subclass(cls):
 
         # New
         class User:
-            def __new__(cls, args, kwargs):
+            def __new__(cls, *args, **kwargs):
                 new_cls = get_platform_subclass(User)
-                return super(cls, new_cls).__new__(new_cls, args, kwargs)
+                return super(cls, new_cls).__new__(new_cls)
     '''
 
     this_platform = platform.system()

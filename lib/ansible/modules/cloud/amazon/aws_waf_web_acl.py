@@ -2,16 +2,19 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
 module: aws_waf_web_acl
-short_description: create and delete WAF Web ACLs
+short_description: Create and delete WAF Web ACLs.
 description:
   - Read the AWS documentation for WAF
-    U(https://aws.amazon.com/documentation/waf/)
+    U(https://aws.amazon.com/documentation/waf/).
 version_added: "2.5"
 
 author:
@@ -22,40 +25,62 @@ extends_documentation_fragment:
   - ec2
 options:
     name:
-        description: Name of the Web Application Firewall ACL to manage
+        description: Name of the Web Application Firewall ACL to manage.
         required: yes
+        type: str
     default_action:
         description: The action that you want AWS WAF to take when a request doesn't
-          match the criteria specified in any of the Rule objects that are associated with the WebACL
+          match the criteria specified in any of the Rule objects that are associated with the WebACL.
         choices:
         - block
         - allow
         - count
+        type: str
     state:
-        description: whether the Web ACL should be present or absent
+        description: Whether the Web ACL should be present or absent.
         choices:
         - present
         - absent
         default: present
+        type: str
     metric_name:
         description:
-        - A friendly name or description for the metrics for this WebACL
+        - A friendly name or description for the metrics for this WebACL.
         - The name can contain only alphanumeric characters (A-Z, a-z, 0-9); the name can't contain whitespace.
-        - You can't change metric_name after you create the WebACL
-        - Metric name will default to I(name) with disallowed characters stripped out
+        - You can't change I(metric_name) after you create the WebACL.
+        - Metric name will default to I(name) with disallowed characters stripped out.
+        type: str
     rules:
         description:
         - A list of rules that the Web ACL will enforce.
-        - Each rule must contain I(name), I(action), I(priority) keys.
-        - Priorities must be unique, but not necessarily consecutive. Lower numbered priorities are evalauted first.
-        - The I(type) key can be passed as C(rate_based), it defaults to C(regular)
+        type: list
+        elements: dict
+        suboptions:
+            name:
+                description: Name of the rule.
+                type: str
+                required: true
+            action:
+                description: The action to perform.
+                type: str
+                required: true
+            priority:
+                description: The priority of the action.  Priorities must be unique. Lower numbered priorities are evaluated first.
+                type: int
+                required: true
+            type:
+                description: The type of rule.
+                choices:
+                - rate_based
+                - regular
+                type: str
     purge_rules:
         description:
-        - Whether to remove rules that aren't passed with C(rules).
+        - Whether to remove rules that aren't passed with I(rules).
         default: False
         type: bool
     waf_regional:
-        description: Whether to use waf_regional module. Defaults to false.
+        description: Whether to use waf-regional module.
         default: false
         required: no
         type: bool
@@ -82,54 +107,54 @@ EXAMPLES = '''
 
 RETURN = '''
 web_acl:
-  description: contents of the Web ACL
+  description: contents of the Web ACL.
   returned: always
   type: complex
   contains:
     default_action:
-      description: Default action taken by the Web ACL if no rules match
+      description: Default action taken by the Web ACL if no rules match.
       returned: always
       type: dict
       sample:
         type: BLOCK
     metric_name:
-      description: Metric name used as an identifier
+      description: Metric name used as an identifier.
       returned: always
       type: str
       sample: mywebacl
     name:
-      description: Friendly name of the Web ACL
+      description: Friendly name of the Web ACL.
       returned: always
       type: str
       sample: my web acl
     rules:
-      description: List of rules
+      description: List of rules.
       returned: always
       type: complex
       contains:
         action:
-          description: Action taken by the WAF when the rule matches
+          description: Action taken by the WAF when the rule matches.
           returned: always
           type: complex
           sample:
             type: ALLOW
         priority:
-          description: priority number of the rule (lower numbers are run first)
+          description: priority number of the rule (lower numbers are run first).
           returned: always
           type: int
           sample: 2
         rule_id:
-          description: Rule ID
+          description: Rule ID.
           returned: always
           type: str
           sample: a6fc7ab5-287b-479f-8004-7fd0399daf75
         type:
-          description: Type of rule (either REGULAR or RATE_BASED)
+          description: Type of rule (either REGULAR or RATE_BASED).
           returned: always
           type: str
           sample: REGULAR
     web_acl_id:
-      description: Unique identifier of Web ACL
+      description: Unique identifier of Web ACL.
       returned: always
       type: str
       sample: 10fff965-4b6b-46e2-9d78-24f6d2e2d21c
@@ -144,7 +169,7 @@ import re
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.aws.waiters import get_waiter
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec, camel_dict_to_snake_dict
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.waf import list_rules_with_backoff, list_web_acls_with_backoff, list_regional_web_acls_with_backoff, \
     run_func_with_change_token_backoff, list_regional_rules_with_backoff
 
@@ -307,25 +332,21 @@ def ensure_web_acl_absent(client, module):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            name=dict(required=True),
-            default_action=dict(choices=['block', 'allow', 'count']),
-            metric_name=dict(),
-            state=dict(default='present', choices=['present', 'absent']),
-            rules=dict(type='list'),
-            purge_rules=dict(type='bool', default=False),
-            waf_regional=dict(type='bool', default=False),
-        ),
+    argument_spec = dict(
+        name=dict(required=True),
+        default_action=dict(choices=['block', 'allow', 'count']),
+        metric_name=dict(),
+        state=dict(default='present', choices=['present', 'absent']),
+        rules=dict(type='list'),
+        purge_rules=dict(type='bool', default=False),
+        waf_regional=dict(type='bool', default=False)
     )
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               required_if=[['state', 'present', ['default_action', 'rules']]])
     state = module.params.get('state')
 
-    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
     resource = 'waf' if not module.params['waf_regional'] else 'waf-regional'
-    client = boto3_conn(module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+    client = module.client(resource)
     if state == 'present':
         (changed, results) = ensure_web_acl_present(client, module)
     else:

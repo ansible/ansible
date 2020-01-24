@@ -1,0 +1,98 @@
+.. _collections_galaxy_meta:
+
+************************************
+Collection Galaxy metadata structure
+************************************
+
+A key component of an Ansible collection is the ``galaxy.yml`` file placed in the root directory of a collection. This
+file contains the metadata of the collection that is used to generate a collection artifact.
+
+Structure
+=========
+
+The ``galaxy.yml`` file must contain the following keys in valid YAML:
+
+
+.. rst-class:: documentation-table
+
+.. list-table::
+    :header-rows: 1
+    :widths: auto
+
+    * - Key
+      - Comment
+
+{%- for entry in options %}
+
+
+    * - .. rst-class:: value-name
+
+        @{ entry.key }@ |br|
+
+        .. rst-class:: value-type
+
+        @{ entry.type | documented_type }@ |_|
+
+        {% if entry.get('required', False) -%}
+        .. rst-class:: value-separator
+
+        / |_|
+
+        .. rst-class:: value-required
+
+        required
+        {%- endif %}
+
+        {% if 'version_added' in entry -%}
+
+        .. rst-class:: value-added-in
+
+        |br| version_added: @{ entry.version_added }@
+
+        |_|
+
+        {%- endif %}
+
+      - {% for desc in entry.description -%}
+        @{ desc | trim | rst_ify }@
+
+        {% endfor -%}
+{%- endfor %}
+
+
+Examples
+========
+
+.. code-block:: yaml
+
+    namespace: "namespace_name"
+    name: "collection_name"
+    version: "1.0.12"
+    readme: "README.md"
+    authors:
+        - "Author1"
+        - "Author2 (https://author2.example.com)"
+        - "Author3 <author3@example.com>"
+    dependencies:
+        "other_namespace.collection1": ">=1.0.0"
+        "other_namespace.collection2": ">=2.0.0,<3.0.0"
+        "anderson55.my_collection": "*"    # note: "*" selects the highest version available
+    license:
+        - "MIT"
+    tags:
+        - demo
+        - collection
+    repository: "https://www.github.com/my_org/my_collection"
+
+.. seealso::
+
+  :ref:`developing_collections`
+       Develop or modify a collection.
+  :ref:`developing_modules_general`
+       Learn about how to write Ansible modules
+  :ref:`collections`
+       Learn how to install and use collections.
+  `Mailing List <https://groups.google.com/group/ansible-devel>`_
+       The development mailing list
+  `irc.freenode.net <http://irc.freenode.net>`_
+       #ansible IRC chat channel

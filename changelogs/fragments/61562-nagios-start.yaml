@@ -1,0 +1,5 @@
+minor_changes:
+  - nagios module - a start parameter has been added, allowing the time a
+    Nagios outage starts to be set. It defaults to the current time if not
+    provided, preserving the previous behavior and ensuring compatibility with
+    existing playbooks.

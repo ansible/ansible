@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_container - fix network creation when ``networks_cli_compatible`` is enabled."

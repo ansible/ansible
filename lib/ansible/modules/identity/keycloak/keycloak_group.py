@@ -44,7 +44,6 @@ options:
             - State of the group.
             - On C(present), the group will be created if it does not yet exist, or updated with the parameters you provide.
             - On C(absent), the group will be removed if it exists.
-        required: true
         default: 'present'
         type: str
         choices:
@@ -207,7 +206,8 @@ group:
         view: true
 '''
 
-from ansible.module_utils.keycloak import KeycloakAPI, camel, keycloak_argument_spec
+from ansible.module_utils.identity.keycloak.keycloak import KeycloakAPI, camel, \
+    keycloak_argument_spec, get_token, KeycloakError
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -235,7 +235,19 @@ def main():
     result = dict(changed=False, msg='', diff={}, group='')
 
     # Obtain access token, initialize API
-    kc = KeycloakAPI(module)
+    try:
+        connection_header = get_token(
+            base_url=module.params.get('auth_keycloak_url'),
+            validate_certs=module.params.get('validate_certs'),
+            auth_realm=module.params.get('auth_realm'),
+            client_id=module.params.get('auth_client_id'),
+            auth_username=module.params.get('auth_username'),
+            auth_password=module.params.get('auth_password'),
+            client_secret=module.params.get('auth_client_secret'),
+        )
+    except KeycloakError as e:
+        module.fail_json(msg=str(e))
+    kc = KeycloakAPI(module, connection_header)
 
     realm = module.params.get('realm')
     state = module.params.get('state')

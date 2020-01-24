@@ -1,0 +1,178 @@
+- block:
+    - name: create a VPC
+      ec2_vpc_net:
+        cidr_block: 10.230.231.0/24
+        name: "{{ resource_prefix }}-ipv6"
+        state: present
+        ipv6_cidr: yes
+      register: vpc_result
+
+    - set_fact:
+        vpc_ipv6_cidr: "{{ vpc_result.vpc.ipv6_cidr_block_association_set[0].ipv6_cidr_block }}"
+
+    # ============================================================
+    - name: create subnet with IPv6 (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: 10.230.231.0/26
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        ipv6_cidr: "{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}"
+        state: present
+        tags:
+          Name: "{{ resource_prefix }}-ipv6-subnet-1"
+      register: vpc_subnet_ipv6
+
+    - name: assert creation with IPv6 happened (expected changed=true)
+      assert:
+        that:
+           - "vpc_subnet_ipv6.subnet.ipv6_cidr_block == '{{ vpc_ipv6_cidr | regex_replace('::/56', '::/64') }}'"
+
+    # ============================================================
+
+    - name: create ingress and egress rules using subnet names
+      ec2_vpc_nacl:
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        name: "{{ resource_prefix }}-acl"
+        subnets:
+          - "{{ resource_prefix }}-ipv6-subnet-1"
+        tags:
+          Created_by: "Ansible test {{ resource_prefix }}"
+        ingress:
+          - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
+          - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
+          - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
+        egress:
+          - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
+        state: 'present'
+      register: nacl
+    - assert:
+        that:
+          - nacl.nacl_id
+
+    - set_fact:
+        nacl_id: "{{ nacl.nacl_id }}"
+
+    - name: add ipv6 entries
+      ec2_vpc_nacl:
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        name: "{{ resource_prefix }}-acl"
+        subnets:
+          - "{{ resource_prefix }}-ipv6-subnet-1"
+        tags:
+          Created_by: "Ansible test {{ resource_prefix }}"
+        ingress:
+          - [100, 'tcp', 'allow', '0.0.0.0/0', null, null, 22, 22]
+          - [200, 'tcp', 'allow', '0.0.0.0/0', null, null, 80, 80]
+          - [205, 'ipv6-tcp', 'allow', '::/0', null, null, 80, 80]
+          - [300, 'icmp', 'allow', '0.0.0.0/0', 0, 8]
+          - [305, 'ipv6-icmp', 'allow', '::/0', 0, 8]
+        egress:
+          - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
+          - [105, 'all', 'allow', '::/0', null, null, null, null]
+        state: 'present'
+      register: nacl
+      # FIXME: Currently IPv6 rules are not supported - uncomment assertion when
+      # fixed (and add some nacl_info tests)
+      ignore_errors: yes
+    - name: get network ACL facts (test that it works with ipv6 entries)
+      ec2_vpc_nacl_info:
+        nacl_ids:
+          - "{{ nacl_id }}"
+      register: nacl_facts
+
+
+    #- assert:
+    #    that:
+    #      - nacl.changed
+    #      - nacl.nacl_id == nacl_id
+
+    - name: purge ingress entries
+      ec2_vpc_nacl:
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        name: "{{ resource_prefix }}-acl"
+        subnets:
+          - "{{ resource_prefix }}-ipv6-subnet-1"
+        tags:
+          Created_by: "Ansible test {{ resource_prefix }}"
+        ingress: []
+        egress:
+          - [100, 'all', 'allow', '0.0.0.0/0', null, null, null, null]
+          - [105, 'all', 'allow', '::/0', null, null, null, null]
+        state: 'present'
+      register: nacl
+      # FIXME: Currently IPv6 rules are not supported - uncomment assertion when
+      # fixed (and add some nacl_info tests)
+      ignore_errors: yes
+
+    #- assert:
+    #    that:
+    #      - nacl.changed
+    #      - nacl.nacl_id == nacl_id
+
+    - name: purge egress entries
+      ec2_vpc_nacl:
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        name: "{{ resource_prefix }}-acl"
+        subnets:
+          - "{{ resource_prefix }}-ipv6-subnet-1"
+        tags:
+          Created_by: "Ansible test {{ resource_prefix }}"
+        ingress: []
+        egress: []
+        state: 'present'
+      register: nacl
+
+    - assert:
+        that:
+          - nacl.changed
+
+    # ============================================================
+    - name: remove subnet ipv6 cidr (expected changed=true)
+      ec2_vpc_subnet:
+        cidr: 10.230.231.0/26
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+      register: vpc_remove_ipv6_cidr
+
+    - name: assert subnet ipv6 cidr removed (expected changed=true)
+      assert:
+        that:
+           - 'vpc_remove_ipv6_cidr.changed'
+
+  always:
+
+    ################################################
+    # TEARDOWN STARTS HERE
+    ################################################
+
+    - name: remove network ACL
+      ec2_vpc_nacl:
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        name: "{{ resource_prefix }}-acl"
+        state: absent
+      register: removed_acl
+      until: removed_acl is success
+      retries: 5
+      delay: 5
+      ignore_errors: yes
+
+    - name: tidy up subnet
+      ec2_vpc_subnet:
+        cidr: 10.230.231.0/26
+        vpc_id: "{{ vpc_result.vpc.id }}"
+        state: absent
+      register: removed_subnet
+      until: removed_subnet is success
+      retries: 5
+      delay: 5
+      ignore_errors: yes
+
+    - name: tidy up VPC
+      ec2_vpc_net:
+        name: "{{ resource_prefix }}-ipv6"
+        state: absent
+        cidr_block: 10.230.231.0/24
+      register: removed_vpc
+      until: removed_vpc is success
+      retries: 5
+      delay: 5
+      ignore_errors: yes

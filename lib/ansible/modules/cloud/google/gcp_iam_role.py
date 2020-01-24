@@ -33,7 +33,7 @@ module: gcp_iam_role
 description:
 - A role in the Identity and Access Management API .
 short_description: Creates a GCP Role
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -47,35 +47,72 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - The name of the role.
     required: true
+    type: str
   title:
     description:
     - A human-readable title for the role. Typically this is limited to 100 UTF-8
       bytes.
     required: false
+    type: str
   description:
     description:
     - Human-readable description for the role.
     required: false
+    type: str
   included_permissions:
     description:
     - Names of permissions this role grants when bound in an IAM policy.
     required: false
+    type: list
   stage:
     description:
     - The current launch stage of the role.
+    - 'Some valid choices include: "ALPHA", "BETA", "GA", "DEPRECATED", "DISABLED",
+      "EAP"'
     required: false
+    type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
     choices:
-    - ALPHA
-    - BETA
-    - GA
-    - DEPRECATED
-    - DISABLED
-    - EAP
-extends_documentation_fragment: gcp
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -149,7 +186,7 @@ def main():
             title=dict(type='str'),
             description=dict(type='str'),
             included_permissions=dict(type='list', elements='str'),
-            stage=dict(type='str', choices=['ALPHA', 'BETA', 'GA', 'DEPRECATED', 'DISABLED', 'EAP']),
+            stage=dict(type='str'),
         )
     )
 

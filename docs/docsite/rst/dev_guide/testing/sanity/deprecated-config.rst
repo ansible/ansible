@@ -1,6 +1,6 @@
 :orphan:
 
-Sanity Tests » deprecated-config
-================================
+deprecated-config
+=================
 
 ``DOCUMENTATION`` config is scheduled for removal

@@ -57,7 +57,7 @@ The best place to start learning about writing code that supports both Python 2 
 is `Lennart Regebro's book: Porting to Python 3 <http://python3porting.com/>`_.
 The book describes several strategies for porting to Python 3. The one we're
 using is `to support Python 2 and Python 3 from a single code base
-<http://python3porting.com/strategies.html#python 2-and-python 3-without-conversion>`_
+<http://python3porting.com/strategies.html#python-2-and-python-3-without-conversion>`_
 
 Understanding strings in Python 2 and Python 3
 ----------------------------------------------
@@ -288,8 +288,8 @@ The ``__future__`` imports do the following:
     * `PEP 0238: Division <https://www.python.org/dev/peps/pep-0238>`_
     * `PEP 3105: Print function <https://www.python.org/dev/peps/pep-3105>`_
 
-Prefix byte strings with ``b\_``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Prefix byte strings with ``b_``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Since mixing text and bytes types leads to tracebacks we want to be clear
 about what variables hold text and what variables hold bytes.  We do this by
@@ -306,10 +306,10 @@ We do not prefix the text strings instead because we only operate
 on byte strings at the borders, so there are fewer variables that need bytes
 than text.
 
-Import Ansible's bundled ``python-six`` library
+Import Ansible's bundled Python ``six`` library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The third-party `python-six <https://pythonhosted.org/six/>`_ library exists
+The third-party Python `six <https://pypi.org/project/six/>`_ library exists
 to help projects create code that runs on both Python 2 and Python 3.  Ansible
 includes a version of the library in module_utils so that other modules can use it
 without requiring that it is installed on the remote system.  To make use of

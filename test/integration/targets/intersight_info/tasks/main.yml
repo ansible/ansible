@@ -1,0 +1,37 @@
+---
+# Test code for the Cisco Intersight modules
+# Copyright 2019, David Soper (@dsoper2)
+
+- name: Setup API access variables
+  debug: msg="Setup API keys"
+  vars:
+    api_info: &api_info
+      api_private_key: "{{ api_private_key | default('~/Downloads/SSOSecretKey.txt') }}"
+      api_key_id: "{{ api_key_id | default('596cc79e5d91b400010d15ad/596cc7945d91b400010d154e/5b6275df3437357030a7795f') }}"
+
+- name: Get infos for all servers
+  intersight_info:
+    <<: *api_info
+    server_names:
+  register: result
+
+- name: Verify info does not report a change
+  assert:
+    that:
+      - result.changed == false
+      - "'Name' in result.intersight_servers[0]"
+      - "'Moid' in result.intersight_servers[0]"
+
+- name: Get info for servers by name
+  intersight_info:
+    <<: *api_info
+    server_names:
+      - CC7UCS-13-1-1
+  register: result2
+
+- name: Verify info does not report a change
+  assert:
+    that:
+      - result2.changed == false
+      - "'Name' in result2.intersight_servers[0]"
+      - "'Moid' in result2.intersight_servers[0]"

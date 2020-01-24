@@ -155,6 +155,7 @@ volumes:
         See description for I(verbose_output).
     returned: When I(volumes) is C(yes)
     type: list
+    elements: dict
 networks:
     description:
       - List of dict objects containing the basic information about each network.
@@ -162,6 +163,7 @@ networks:
         See description for I(verbose_output).
     returned: When I(networks) is C(yes)
     type: list
+    elements: dict
 containers:
     description:
       - List of dict objects containing the basic information about each container.
@@ -169,6 +171,7 @@ containers:
         See description for I(verbose_output).
     returned: When I(containers) is C(yes)
     type: list
+    elements: dict
 images:
     description:
       - List of dict objects containing the basic information about each image.
@@ -176,6 +179,7 @@ images:
         See description for I(verbose_output).
     returned: When I(images) is C(yes)
     type: list
+    elements: dict
 disk_usage:
     description:
       - Information on summary disk usage by images, containers and volumes on docker host
@@ -185,11 +189,17 @@ disk_usage:
 
 '''
 
-from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass
+import traceback
+
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+    RequestException,
+)
 from ansible.module_utils._text import to_native
 
 try:
-    from docker.errors import APIError
+    from docker.errors import DockerException, APIError
 except ImportError:
     # Missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
@@ -321,12 +331,17 @@ def main():
     )
     client.fail_results['can_talk_to_docker'] = True
 
-    results = dict(
-        changed=False,
-    )
+    try:
+        results = dict(
+            changed=False,
+        )
 
-    DockerHostManager(client, results)
-    client.module.exit_json(**results)
+        DockerHostManager(client, results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

@@ -54,8 +54,9 @@ options:
       provided but a comma separated string also work. Use a list where
       possible as no escaping is required and it works with more complex types
       list C(CimInstance[]).
-    - If the type of the DSC resource option is a C(DateTime), use a string in
-      the form of an ISO 8901 string.
+    - If the type of the DSC resource option is a C(DateTime), you should use
+      a string in the form of an ISO 8901 string to ensure the exact date is
+      used.
     - Since Ansible 2.8, Ansible will now validate the input fields against the
       DSC resource definition automatically. Older versions will silently
       ignore invalid fields.
@@ -63,7 +64,7 @@ options:
     required: true
 notes:
 - By default there are a few builtin resources that come with PowerShell 5.0,
-  see U(https://docs.microsoft.com/en-us/powershell/dsc/builtinresource) for
+  see U(https://docs.microsoft.com/en-us/powershell/dsc/resources/resources) for
   more information on these resources.
 - Custom DSC resources can be installed with M(win_psmodule) using the I(name)
   option.
@@ -91,7 +92,7 @@ EXAMPLES = r'''
     Name: telnet-client
 
 - name: Edit HKCU reg key under specific user
-  win_regedit:
+  win_dsc:
     resource_name: Registry
     Ensure: Present
     Key: HKEY_CURRENT_USER\ExampleKey

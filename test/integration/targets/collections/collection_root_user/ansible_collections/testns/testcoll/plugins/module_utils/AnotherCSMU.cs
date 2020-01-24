@@ -1,6 +1,6 @@
 using System;
 
-namespace AnsibleCollections.testns.testcoll.AnotherCSMU
+namespace ansible_collections.testns.testcoll.plugins.module_utils.AnotherCSMU
 {
     public class AnotherThing
     {

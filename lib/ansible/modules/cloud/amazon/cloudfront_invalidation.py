@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -11,7 +14,7 @@ DOCUMENTATION = '''
 
 module: cloudfront_invalidation
 
-short_description: create invalidations for aws cloudfront distributions
+short_description: create invalidations for AWS CloudFront distributions
 description:
     - Allows for invalidation of a batch of paths for a CloudFront distribution.
 
@@ -30,21 +33,27 @@ extends_documentation_fragment:
 options:
     distribution_id:
       description:
-        - The id of the cloudfront distribution to invalidate paths for. Can be specified insted of the alias.
+        - The ID of the CloudFront distribution to invalidate paths for. Can be specified instead of the alias.
       required: false
+      type: str
     alias:
       description:
-        - The alias of the cloudfront distribution to invalidate paths for. Can be specified instead of distribution_id.
+        - The alias of the CloudFront distribution to invalidate paths for. Can be specified instead of distribution_id.
       required: false
+      type: str
     caller_reference:
       description:
         - A unique reference identifier for the invalidation paths.
+        - Defaults to current datetime stamp.
       required: false
-      default: current datetime stamp
+      default:
+      type: str
     target_paths:
       description:
         - A list of paths on the distribution to invalidate. Each path should begin with '/'. Wildcards are allowed. eg. '/foo/bar/*'
       required: true
+      type: list
+      elements: str
 
 notes:
   - does not support check mode
@@ -129,8 +138,6 @@ location:
   sample: https://cloudfront.amazonaws.com/2017-03-25/distribution/E1ZID6KZJECZY7/invalidation/I2G9MOWJZFV622
 '''
 
-from ansible.module_utils.ec2 import get_aws_connection_info
-from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -150,11 +157,7 @@ class CloudFrontInvalidationServiceManager(object):
 
     def __init__(self, module):
         self.module = module
-        self.create_client('cloudfront')
-
-    def create_client(self, resource):
-        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self.module, boto3=True)
-        self.client = boto3_conn(self.module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        self.client = module.client('cloudfront')
 
     def create_invalidation(self, distribution_id, invalidation_batch):
         current_invalidation_response = self.get_invalidation(distribution_id, invalidation_batch['CallerReference'])
@@ -192,7 +195,7 @@ class CloudFrontInvalidationServiceManager(object):
                 invalidation = self.client.get_invalidation(DistributionId=distribution_id, Id=inv_id)['Invalidation']
                 caller_ref = invalidation.get('InvalidationBatch', {}).get('CallerReference')
             except (BotoCoreError, ClientError) as e:
-                self.module.fail_json_aws(e, msg="Error getting Cloudfront invalidation {0}".format(inv_id))
+                self.module.fail_json_aws(e, msg="Error getting CloudFront invalidation {0}".format(inv_id))
             if caller_ref == caller_reference:
                 current_invalidation = invalidation
                 break
@@ -203,7 +206,7 @@ class CloudFrontInvalidationServiceManager(object):
 
 class CloudFrontInvalidationValidationManager(object):
     """
-    Manages Cloudfront validations for invalidation batches
+    Manages CloudFront validations for invalidation batches
     """
 
     def __init__(self, module):
@@ -242,14 +245,12 @@ class CloudFrontInvalidationValidationManager(object):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-
-    argument_spec.update(dict(
+    argument_spec = dict(
         caller_reference=dict(),
         distribution_id=dict(),
         alias=dict(),
         target_paths=dict(required=True, type='list')
-    ))
+    )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=False, mutually_exclusive=[['distribution_id', 'alias']])
 

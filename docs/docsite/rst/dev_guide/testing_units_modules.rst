@@ -16,7 +16,7 @@ Introduction
 This document explains why, how and when you should use unit tests for Ansible modules.
 The document doesn't apply to other parts of Ansible for which the recommendations are
 normally closer to the Python standard.  There is basic documentation for Ansible unit
-tests in the developer guide :doc:`testing_units`.  This document should
+tests in the developer guide :ref:`testing_units`.  This document should
 be readable for a new Ansible module author. If you find it incomplete or confusing,
 please open a bug or ask for help on Ansible IRC.
 
@@ -160,7 +160,7 @@ Mock objects (from https://docs.python.org/3/library/unittest.mock.html) can be 
 useful in building unit tests for special / difficult cases, but they can also
 lead to complex and confusing coding situations.  One good use for mocks would be in
 simulating an API. As for 'six', the 'mock' python package is bundled with Ansible (use
-``import ansible.compat.tests.mock``). See for example
+``import units.compat.mock``).
 
 Ensuring failure cases are visible with mock objects
 ----------------------------------------------------
@@ -294,9 +294,9 @@ handled through the :class:`AnsibleModule` object in the basic section of the ut
 this accepts input on ``STDIN``, which is not convenient for unit testing. When the special
 variable is set it will be treated as if the input came on ``STDIN`` to the module. Simply call that function before setting up your module::
 
-    import json 
-    from units.modules.utils import set_module_args 
-    from ansible.module_utils._text import to_bytes 
+    import json
+    from units.modules.utils import set_module_args
+    from ansible.module_utils._text import to_bytes
 
     def test_already_registered(self):
         set_module_args({
@@ -385,8 +385,8 @@ mock for :meth:`Ansible.get_bin_path`::
 
     import json
 
-    from ansible.compat.tests import unittest
-    from ansible.compat.tests.mock import patch
+    from units.compat import unittest
+    from units.compat.mock import patch
     from ansible.module_utils import basic
     from ansible.module_utils._text import to_bytes
     from ansible.modules.namespace import my_module
@@ -538,12 +538,12 @@ the code in Ansible to trigger that failure.
 
 .. seealso::
 
-   :doc:`testing_units`
+   :ref:`testing_units`
        Ansible unit tests documentation
-   :doc:`testing_running_locally`
+   :ref:`testing_running_locally`
        Running tests locally including gathering and reporting coverage data
-   :doc:`developing_modules`
-       How to develop modules
+   :ref:`developing_modules_general`
+       Get started developing a module
    `Python 3 documentation - 26.4. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
        The documentation of the unittest framework in python 3
    `Python 2 documentation - 25.3. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_

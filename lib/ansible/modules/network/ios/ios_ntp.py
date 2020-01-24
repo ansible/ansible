@@ -4,7 +4,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -41,7 +41,7 @@ options:
             - md5 NTP authentication key of tye 7.
     key_id:
         description:
-            - auth_key id. Datat type string
+            - auth_key id. Data type string
     state:
         description:
             - Manage the state of the resource.
@@ -93,7 +93,7 @@ import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.ios.ios import get_config, load_config
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import ios_argument_spec
 
 
 def parse_server(line, dest):
@@ -287,7 +287,6 @@ def main():
     result = {'changed': False}
 
     warnings = list()
-    check_args(module, warnings)
     if warnings:
         result['warnings'] = warnings
 

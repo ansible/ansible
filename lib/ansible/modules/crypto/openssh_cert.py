@@ -34,8 +34,8 @@ options:
     type:
         description:
             - Whether the module should generate a host or a user certificate.
+            - Required if I(state) is C(present).
         type: str
-        required: true
         choices: ['host', 'user']
     force:
         description:
@@ -50,29 +50,29 @@ options:
     signing_key:
         description:
             - The path to the private openssh key that is used for signing the public key in order to generate the certificate.
+            - Required if I(state) is C(present).
         type: path
-        required: true
     public_key:
         description:
             - The path to the public key that will be signed with the signing key in order to generate the certificate.
+            - Required if I(state) is C(present).
         type: path
-        required: true
     valid_from:
         description:
             - "The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
                Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | always)
                where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
+            - Required if I(state) is C(present).
         type: str
-        required: true
     valid_to:
         description:
             - "The point in time the certificate is valid to. Time can be specified either as relative time or as absolute timestamp.
                Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | forever)
                where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
+            - Required if I(state) is C(present).
         type: str
-        required: true
     valid_at:
         description:
             - "Check if the certificate is valid at a certain point in time. If it is not the certificate will be regenerated.
@@ -84,6 +84,7 @@ options:
             - "Certificates may be limited to be valid for a set of principal (user/host) names.
               By default, generated certificates are valid for all users or hosts."
         type: list
+        elements: str
     options:
         description:
             - "Specify certificate options when signing a key. The option that are valid for user certificates are:"
@@ -104,6 +105,7 @@ options:
                The C(address_list) is a comma-separated list of one or more address/netmask pairs in CIDR format."
             - "At present, no options are valid for host keys."
         type: list
+        elements: str
     identifier:
         description:
             - Specify the key identity when signing a public key. The identifier that is logged by the server when the certificate is used for authentication.
@@ -186,23 +188,22 @@ filename:
     description: path to the certificate
     returned: changed or success
     type: str
-    sample: /tmp/certifivate-cert.pub
+    sample: /tmp/certificate-cert.pub
 info:
     description: Information about the certificate. Output of C(ssh-keygen -L -f).
     returned: change or success
     type: list
+    elements: str
 
 '''
 
 import os
 import errno
-import random
 import re
 import tempfile
 
 from datetime import datetime
 from datetime import MINYEAR, MAXYEAR
-from datetime import timedelta
 from shutil import copy2
 from shutil import rmtree
 from ansible.module_utils.basic import AnsibleModule
@@ -365,9 +366,9 @@ class Certificate(object):
 
     def is_same_datetime(self, datetime_one, datetime_two):
 
-        # This function is for backwards compatability only because .total_seconds() is new in python2.7
-        def timedelta_total_seconds(timedelta):
-            return ((timedelta.microseconds + 0.0 + (timedelta.seconds + timedelta.days * 24 * 3600) * 10 ** 6) / 10 ** 6)
+        # This function is for backwards compatibility only because .total_seconds() is new in python2.7
+        def timedelta_total_seconds(time_delta):
+            return (time_delta.microseconds + 0.0 + (time_delta.seconds + time_delta.days * 24 * 3600) * 10 ** 6) / 10 ** 6
         # try to use .total_ seconds() from python2.7
         try:
             return (datetime_one - datetime_two).total_seconds() == 0.0
@@ -519,7 +520,6 @@ class Certificate(object):
                 raise CertificateError(exc)
             else:
                 pass
-        return
 
 
 def main():
@@ -537,8 +537,8 @@ def main():
             valid_from=dict(type='str'),
             valid_to=dict(type='str'),
             valid_at=dict(type='str'),
-            principals=dict(type='list'),
-            options=dict(type='list'),
+            principals=dict(type='list', elements='str'),
+            options=dict(type='list', elements='str'),
         ),
         supports_check_mode=True,
         add_file_common_args=True,

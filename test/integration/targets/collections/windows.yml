@@ -16,5 +16,13 @@
       that:
       - selfcontained_out.source == 'user'
       - csbasic_only_out.source == 'user'
-      - uses_coll_psmu.source == 'user' and 'user_mu' in uses_coll_psmu.ping
-      - uses_coll_csmu.source == 'user' and 'user_mu' in uses_coll_csmu.ping
+      # win_uses_coll_psmu
+      - uses_coll_psmu.source == 'user'
+      - "'user_mu' in uses_coll_psmu.ping"
+      - uses_coll_psmu.subpkg == 'from subpkg.subps.psm1'
+      # win_uses_coll_csmu
+      - uses_coll_csmu.source == 'user'
+      - "'user_mu' in uses_coll_csmu.ping"
+      - "'Hello from subpkg.subcs' in uses_coll_csmu.ping"
+      - uses_coll_csmu.subpkg == 'Hello from subpkg.subcs'
+      - uses_coll_csmu.type_accelerator == uses_coll_csmu.ping

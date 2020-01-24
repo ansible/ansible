@@ -29,6 +29,10 @@ description:
     - Manages information center debug configurations on HUAWEI CloudEngine switches.
 author:
     - wangdezhuang (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     state:
         description:
@@ -292,7 +296,7 @@ class InfoCenterDebug(object):
                     replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
                 root = ElementTree.fromstring(xml_str)
-                global_cfg = root.findall("data/syslog/globalParam")
+                global_cfg = root.findall("syslog/globalParam")
                 if global_cfg:
                     for tmp in global_cfg:
                         tmp_dict = dict()
@@ -370,7 +374,7 @@ class InfoCenterDebug(object):
                     replace('xmlns="http://www.huawei.com/netconf/vrp"', "")
 
                 root = ElementTree.fromstring(xml_str)
-                source_cfg = root.findall("data/syslog/icSources/icSource")
+                source_cfg = root.findall("syslog/icSources/icSource")
                 if source_cfg:
                     for tmp in source_cfg:
                         tmp_dict = dict()

@@ -22,6 +22,26 @@
       name: testns.testcoll.maskedmodule
     register: maskedmodule_out
 
+  # ensure the ansible ns can have real collections added to it
+  - name: call an external module in the ansible namespace
+    ansible.bullcoll.bullmodule:
+    register: bullmodule_out
+
+  # ensure the ansible ns cannot override ansible.builtin externally
+  - name: call an external module in the ansible.builtin collection (should use the built in module)
+    ansible.builtin.ping:
+    register: builtin_ping_out
+
+  # action in a collection subdir
+  - name: test subdir action FQ
+    testns.testcoll.action_subdir.subdir_ping_action:
+    register: subdir_ping_action_out
+
+  # module in a collection subdir
+  - name: test subdir module FQ
+    testns.testcoll.module_subdir.subdir_ping_module:
+    register: subdir_ping_module_out
+
   # module with a granular module_utils import (from (this collection).module_utils.leaf import thingtocall)
   - name: exec module with granular module utils import from this collection
     testns.testcoll.uses_leaf_mu_granular_import:
@@ -49,18 +69,31 @@
       - systestmodule_out.source == 'sys'
       - contentadjmodule_out.source == 'content_adj'
       - not maskedmodule_out.plugin_path
+      - bullmodule_out.source == 'user_ansible_bullcoll'
+      - builtin_ping_out.source is not defined
+      - builtin_ping_out.ping == 'pong'
+      - subdir_ping_action_out is not changed
+      - subdir_ping_module_out is not changed
       - granular_out.mu_result == 'thingtocall in leaf'
       - granular_nested_out.mu_result == 'thingtocall in base called thingtocall in secondary'
       - flat_out.mu_result == 'thingtocall in leaf'
       - from_out.mu_result == 'thingtocall in leaf'
       - from_out.mu2_result == 'thingtocall in secondary'
 
+- hosts: testhost
+  tasks:
   - name: exercise filters/tests/lookups
     assert:
       that:
-      - "'data' | testns.testcoll.testfilter == 'data_from_userdir'"
+      - "'data' | testns.testcoll.testfilter == 'data_via_testfilter_from_userdir'"
+      - "'data' | testns.testcoll.testfilter2 == 'data_via_testfilter2_from_userdir'"
+      - "'data' | testns.testcoll.filter_subdir.test_subdir_filter == 'data_via_testfilter_from_subdir'"
       - "'from_user' is testns.testcoll.testtest"
-      - lookup('testns.testcoll.mylookup') == 'lookup_from_user_dir'
+      - "'from_user2' is testns.testcoll.testtest2"
+      - "'subdir_from_user' is testns.testcoll.test_subdir.subdir_test"
+      - lookup('testns.testcoll.mylookup') == 'mylookup_from_user_dir'
+      - lookup('testns.testcoll.mylookup2') == 'mylookup2_from_user_dir'
+      - lookup('testns.testcoll.lookup_subdir.my_subdir_lookup') == 'subdir_lookup_from_user_dir'
 
 # ensure that the synthetic ansible.builtin collection limits to builtin plugins, that ansible.legacy loads overrides
 # from legacy plugin dirs, and that a same-named plugin loaded from a real collection is not masked by the others
@@ -173,16 +206,7 @@
       - testmodule_out.source == 'user'
       - systestmodule_out.source == 'sys'
 
-# FIXME: this won't work until collections list gets passed through task templar
-#  - name: exercise unqualified filters/tests/lookups
-#    assert:
-#      that:
-#      - "'data' | testfilter == 'data_from_userdir'"
-#      - "'from_user' is testtest"
-#      - lookup('mylookup') == 'lookup_from_user_dir'
-
-
-# test keyword-static execution of a FQ collection-backed role
+# test keyword-static execution of a FQ collection-backed role with "tasks/main.yaml"
 - name: verify collection-backed role execution (keyword static)
   hosts: testhost
   collections:
@@ -191,12 +215,13 @@
   vars:
     test_role_input: keyword static
   roles:
-  - role: testns.testcoll.testrole
+  - role: testns.testcoll.testrole_main_yaml
   tasks:
   - name: ensure role executed
     assert:
       that:
       - test_role_output.msg == test_role_input
+      - testrole_source == 'collection'
 
 
 # test dynamic execution of a FQ collection-backed role
@@ -214,7 +239,7 @@
     assert:
       that:
       - test_role_output.msg == test_role_input
-
+      - testrole_source == 'collection'
 
 # test task-static execution of a FQ collection-backed role
 - name: verify collection-backed role execution (task static)
@@ -230,6 +255,7 @@
     assert:
       that:
       - test_role_output.msg == test_role_input
+      - testrole_source == 'collection'
 
 
 # test a legacy playbook-adjacent role, ensure that play collections config is not inherited
@@ -248,6 +274,68 @@
     assert:
       that:
       - test_role_output.msg == test_role_input
+      - testrole_source == 'legacy roles dir'
+
+
+# test dynamic execution of a FQ collection-backed role
+- name: verify collection-backed role execution in subdir (include)
+  hosts: testhost
+  vars:
+    test_role_input: dynamic (subdir)
+  tasks:
+  - include_role:
+      name: testns.testcoll.role_subdir.subdir_testrole
+  - name: ensure role executed
+    assert:
+      that:
+      - test_role_output.msg == test_role_input
+      - testrole_source == 'collection'
+
+
+# test collection-relative role deps (keyword static)
+- name: verify collection-relative role deps
+  hosts: testhost
+  vars:
+    outer_role_input: keyword static outer
+    test_role_input: keyword static inner
+  roles:
+    - testns.testcoll.calls_intra_collection_dep_role_unqualified
+  tasks:
+    - assert:
+        that:
+          - outer_role_output.msg == outer_role_input
+          - test_role_output.msg == test_role_input
+          - testrole_source == 'collection'
+
+# test collection-relative role deps (task static)
+- name: verify collection-relative role deps
+  hosts: testhost
+  vars:
+    outer_role_input: task static outer
+    test_role_input: task static inner
+  tasks:
+    - import_role:
+        name: testns.testcoll.calls_intra_collection_dep_role_unqualified
+    - assert:
+        that:
+          - outer_role_output.msg == outer_role_input
+          - test_role_output.msg == test_role_input
+          - testrole_source == 'collection'
+
+# test collection-relative role deps (task dynamic)
+- name: verify collection-relative role deps
+  hosts: testhost
+  vars:
+    outer_role_input: task dynamic outer
+    test_role_input: task dynamic inner
+  tasks:
+    - include_role:
+        name: testns.testcoll.calls_intra_collection_dep_role_unqualified
+    - assert:
+        that:
+          - outer_role_output.msg == outer_role_input
+          - test_role_output.msg == test_role_input
+          - testrole_source == 'collection'
 
 
 - name: validate static task include behavior

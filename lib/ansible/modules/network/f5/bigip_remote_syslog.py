@@ -106,7 +106,6 @@ try:
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import f5_argument_spec
-    from library.module_utils.network.f5.compare import compare_dictionary
     from library.module_utils.network.f5.common import is_valid_hostname
     from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.ipaddress import is_valid_ip
@@ -115,7 +114,6 @@ except ImportError:
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    from ansible.module_utils.network.f5.compare import compare_dictionary
     from ansible.module_utils.network.f5.common import is_valid_hostname
     from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip

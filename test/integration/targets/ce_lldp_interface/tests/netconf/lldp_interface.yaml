@@ -1,0 +1,155 @@
+---
+- debug:
+    msg: "START ce_lldp_interface merged integration tests on connection={{ ansible_connection }}"
+
+- block:
+  - name: Merge the provided configuration with the exisiting running configuration - basic-tlv
+    ce_lldp_interface: &merged1
+      config:
+        msg_interval: 8
+        ifname: 10GE 1/0/1
+        admin_status: txandrx
+        basic_tlv:
+          management_addr: true
+          port_desc: true
+          system_capability: true
+          system_description: true
+          system_name: true
+    register: result1
+  - name: Merge the provided configuration with the existing running configuration (REPEAT)
+    ce_lldp_interface: *merged1
+    register: result2
+  - name: "Netconf get operation"
+    ce_netconf:
+      rpc: get
+      cfg_xml: '<filter type=\"subtree\">
+                  <lldp xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                    <lldpInterfaces>
+                      <lldpInterface>
+                        <ifName>10GE1/0/1</ifName>
+                        <msgInterval>
+                          <txInterval></txInterval>
+                        </msgInterval>
+                        <lldpAdminStatus></lldpAdminStatus>
+                        <tlvTxEnable>
+                          <manAddrTxEnable></manAddrTxEnable>
+                          <portDescTxEnable></portDescTxEnable>
+                          <sysCapTxEnable></sysCapTxEnable>
+                        </tlvTxEnable>
+                      </lldpInterface>
+                    </lldpInterfaces>
+                  </lldp>
+                </filter>'
+    register: result3
+  - name: Assert the configuration is reflected on host
+    assert:
+      that:
+        - "result1['changed'] == true"
+        - "result2['changed'] == false"
+        - "'<txInterval>8</txInterval>' in result3.endstate.result"
+        - "'<lldpAdminStatus>txAndRx</lldpAdminStatus>' in result3.endstate.result"
+        - "'<manAddrTxEnable>true</manAddrTxEnable>' in result3.endstate.result"
+        - "'<portDescTxEnable>true</portDescTxEnable>' in result3.endstate.result"
+        - "'<sysCapTxEnable>true</sysCapTxEnable>' in result3.endstate.result"
+
+  - name: Merge the provided configuration with the exisiting running configuration - dot1-tlv
+    ce_lldp_interface: &merged2
+      config:
+        msg_interval: 8
+        ifname: 10GE 1/0/1
+        dot1_tlv:
+          port_vlan_enable: true
+          port_desc: true
+          prot_vlan_enable: true
+          prot_vlan_id: 123
+          vlan_name: 234
+          vlan_name_enable: true
+    register: result1
+  - name: Merge the provided configuration with the existing running configuration (REPEAT)
+    ce_lldp_interface: *merged2
+    register: result2
+  - name: "Netconf get operation"
+    ce_netconf:
+      rpc: get
+      cfg_xml: '<filter type=\"subtree\">
+                  <lldp xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                    <lldpInterfaces>
+                      <lldpInterface>
+                        <ifName>10GE1/0/1</ifName>
+                        <msgInterval>
+                          <txInterval></txInterval>
+                        </msgInterval>
+                        <lldpAdminStatus></lldpAdminStatus>
+                        <tlvTxEnable>
+                          <portVlanTxEnable></portVlanTxEnable>
+                          <protoVlanTxEnable></protoVlanTxEnable>
+                          <txProtocolVlanId></txProtocolVlanId>
+                          <vlanNameTxEnable></vlanNameTxEnable>
+                          <txVlanNameId></txVlanNameId>
+                          <protoIdTxEnable></protoIdTxEnable>
+                        </tlvTxEnable>
+                      </lldpInterface>
+                    </lldpInterfaces>
+                  </lldp>
+                </filter>'
+    register: result3
+  - name: Assert the configuration is reflected on host
+    assert:
+      that:
+        - "result1['changed'] == true"
+        - "result2['changed'] == false"
+        - "'<portVlanTxEnable>true</portVlanTxEnable>' in result3.endstate.result"
+        - "'<protoVlanTxEnable>true</protoVlanTxEnable>' in result3.endstate.result"
+        - "'<txProtocolVlanId>123</txProtocolVlanId>' in result3.endstate.result"
+        - "'<vlanNameTxEnable>true</vlanNameTxEnable>' in result3.endstate.result"
+        - "'<txVlanNameId>true</txVlanNameId>' in result3.endstate.result"
+        - "'<protoIdTxEnable>true</protoIdTxEnable>' in result3.endstate.result"
+
+  - name: Merge the provided configuration with the exisiting running configuration - dot3-tlv
+    ce_lldp_interface: &merged
+      config:
+        msg_interval: 8
+        ifname: 10GE 1/0/1
+        dot3_tlv:
+          eee: true
+          link_aggregation: true
+          mac_physic: true
+          max_frame_size: true
+    register: result1
+  - name: Merge the provided configuration with the existing running configuration (REPEAT)
+    ce_lldp_interface: *merged
+    register: result2
+  - name: "Netconf get operation"
+    ce_netconf:
+      rpc: get
+      cfg_xml: '<filter type=\"subtree\">
+                  <lldp xmlns=\"http://www.huawei.com/netconf/vrp\" content-version=\"1.0\" format-version=\"1.0\">
+                    <lldpInterfaces>
+                      <lldpInterface>
+                        <ifName>10GE1/0/1</ifName>
+                        <msgInterval>
+                          <txInterval></txInterval>
+                        </msgInterval>
+                        <lldpAdminStatus></lldpAdminStatus>
+                        <tlvTxEnable>
+                          <macPhyTxEnable></macPhyTxEnable>
+                          <linkAggreTxEnable></linkAggreTxEnable>
+                          <maxFrameTxEnable></maxFrameTxEnable>
+                          <eee></eee>
+                        </tlvTxEnable>
+                      </lldpInterface>
+                    </lldpInterfaces>
+                  </lldp>
+                </filter>'
+    register: result3
+  - name: Assert the configuration is reflected on host
+    assert:
+      that:
+        - "result1['changed'] == true"
+        - "result2['changed'] == false"
+        - "'<macPhyTxEnable>true</macPhyTxEnable>' in result3.endstate.result"
+        - "'<linkAggreTxEnable>true</linkAggreTxEnable>' in result3.endstate.result"
+        - "'<maxFrameTxEnable>123</maxFrameTxEnable>' in result3.endstate.result"
+
+- debug:
+    msg: "END ce_lldp_interface merged integration tests on connection={{ ansible_connection }}"

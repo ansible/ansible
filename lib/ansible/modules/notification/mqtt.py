@@ -87,9 +87,16 @@ options:
         authentication. Support for this feature is broker dependent.
     version_added: 2.3
     aliases: [ keyfile ]
-
-
-# informational: requirements for nodes
+  tls_version:
+    description:
+      - Specifies the version of the SSL/TLS protocol to be used.
+      - By default (if the python version supports it) the highest TLS version is
+        detected. If unavailable, TLS v1 is used.
+    type: str
+    choices:
+      - tlsv1.1
+      - tlsv1.2
+    version_added: 2.9
 requirements: [ mosquitto ]
 notes:
  - This module requires a connection to an MQTT broker such as Mosquitto
@@ -112,7 +119,10 @@ EXAMPLES = '''
 #
 
 import os
+import ssl
 import traceback
+import platform
+from distutils.version import LooseVersion
 
 HAS_PAHOMQTT = True
 PAHOMQTT_IMP_ERR = None
@@ -132,6 +142,17 @@ from ansible.module_utils._text import to_native
 #
 
 def main():
+    tls_map = {}
+
+    try:
+        tls_map['tlsv1.2'] = ssl.PROTOCOL_TLSv1_2
+    except AttributeError:
+        pass
+
+    try:
+        tls_map['tlsv1.1'] = ssl.PROTOCOL_TLSv1_1
+    except AttributeError:
+        pass
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -147,6 +168,7 @@ def main():
             ca_cert=dict(default=None, type='path', aliases=['ca_certs']),
             client_cert=dict(default=None, type='path', aliases=['certfile']),
             client_key=dict(default=None, type='path', aliases=['keyfile']),
+            tls_version=dict(default=None, choices=['tlsv1.1', 'tlsv1.2'])
         ),
         supports_check_mode=True
     )
@@ -166,6 +188,7 @@ def main():
     ca_certs = module.params.get("ca_cert", None)
     certfile = module.params.get("client_cert", None)
     keyfile = module.params.get("client_key", None)
+    tls_version = module.params.get("tls_version", None)
 
     if client_id is None:
         client_id = "%s_%s" % (socket.getfqdn(), os.getpid())
@@ -179,21 +202,42 @@ def main():
 
     tls = None
     if ca_certs is not None:
-        tls = {'ca_certs': ca_certs, 'certfile': certfile,
-               'keyfile': keyfile}
+        if tls_version:
+            tls_version = tls_map.get(tls_version, ssl.PROTOCOL_SSLv23)
+        else:
+            if LooseVersion(platform.python_version()) <= "3.5.2":
+                # Specifying `None` on later versions of python seems sufficient to
+                # instruct python to autonegotiate the SSL/TLS connection. On versions
+                # 3.5.2 and lower though we need to specify the version.
+                #
+                # Note that this is an alias for PROTOCOL_TLS, but PROTOCOL_TLS was
+                # not available until 3.5.3.
+                tls_version = ssl.PROTOCOL_SSLv23
+
+        tls = {
+            'ca_certs': ca_certs,
+            'certfile': certfile,
+            'keyfile': keyfile,
+            'tls_version': tls_version,
+        }
 
     try:
-        mqtt.single(topic, payload,
-                    qos=qos,
-                    retain=retain,
-                    client_id=client_id,
-                    hostname=server,
-                    port=port,
-                    auth=auth,
-                    tls=tls)
+        mqtt.single(
+            topic,
+            payload,
+            qos=qos,
+            retain=retain,
+            client_id=client_id,
+            hostname=server,
+            port=port,
+            auth=auth,
+            tls=tls
+        )
     except Exception as e:
-        module.fail_json(msg="unable to publish to MQTT broker %s" % to_native(e),
-                         exception=traceback.format_exc())
+        module.fail_json(
+            msg="unable to publish to MQTT broker %s" % to_native(e),
+            exception=traceback.format_exc()
+        )
 
     module.exit_json(changed=False, topic=topic)
 

@@ -24,7 +24,7 @@ description:
      - Create and remove Docker secrets in a Swarm environment. Similar to C(docker secret create) and C(docker secret rm).
      - Adds to the metadata of new secrets 'ansible_key', an encrypted hash representation of the data, which is then used
        in future runs to test if a secret has changed. If 'ansible_key is not present, then a secret will not be updated
-       unless the C(force) option is set.
+       unless the I(force) option is set.
      - Updates to secrets are performed by removing the secret and creating it again.
 options:
   data:
@@ -35,20 +35,20 @@ options:
     description:
       - If set to C(true), the data is assumed to be Base64 encoded and will be
         decoded before being used.
-      - To use binary C(data), it is better to keep it Base64 encoded and let it
+      - To use binary I(data), it is better to keep it Base64 encoded and let it
         be decoded by this option.
     type: bool
     default: no
     version_added: "2.8"
   labels:
     description:
-      - "A map of key:value meta data, where both the I(key) and I(value) are expected to be a string."
+      - "A map of key:value meta data, where both key and value are expected to be strings."
       - If new meta data is provided, or existing meta data is modified, the secret will be updated by removing it and creating it again.
     type: dict
   force:
     description:
       - Use with state C(present) to always remove and recreate an existing secret.
-      - If I(true), an existing secret will be replaced, even if it has not changed.
+      - If C(true), an existing secret will be replaced, even if it has not changed.
     type: bool
     default: no
   name:
@@ -145,21 +145,27 @@ RETURN = '''
 secret_id:
   description:
     - The ID assigned by Docker to the secret object.
-  returned: success and C(state == "present")
+  returned: success and I(state) is C(present)
   type: str
   sample: 'hzehrmyjigmcp2gb6nlhmjqcv'
 '''
 
 import base64
 import hashlib
+import traceback
 
 try:
-    from docker.errors import APIError
+    from docker.errors import DockerException, APIError
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, compare_generic
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+    compare_generic,
+    RequestException,
+)
 from ansible.module_utils._text import to_native, to_bytes
 
 
@@ -281,13 +287,18 @@ def main():
         min_docker_api_version='1.25',
     )
 
-    results = dict(
-        changed=False,
-        secret_id=''
-    )
+    try:
+        results = dict(
+            changed=False,
+            secret_id=''
+        )
 
-    SecretManager(client, results)()
-    client.module.exit_json(**results)
+        SecretManager(client, results)()
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

@@ -7,6 +7,8 @@
 from collections import defaultdict
 from distutils.version import Version
 
+from ansible.module_utils.common import dict_transformations
+from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.k8s.common import list_dict_str
 from ansible.module_utils.k8s.raw import KubernetesRawModule
 
@@ -40,11 +42,16 @@ VM_SPEC_DEF_ARG_SPEC = {
     'cpu_limit': {'type': 'int'},
     'cpu_shares': {'type': 'int'},
     'cpu_features': {'type': 'list'},
+    'affinity': {'type': 'dict'},
+    'anti_affinity': {'type': 'dict'},
+    'node_affinity': {'type': 'dict'},
 }
 # And other common args go here:
 VM_COMMON_ARG_SPEC = {
     'name': {'required': True},
     'namespace': {'required': True},
+    'hostname': {'type': 'str'},
+    'subdomain': {'type': 'str'},
     'state': {
         'default': 'present',
         'choices': ['present', 'absent'],
@@ -56,6 +63,7 @@ VM_COMMON_ARG_SPEC = {
     'merge_type': {'type': 'list', 'choices': ['json', 'merge', 'strategic-merge']},
     'wait': {'type': 'bool', 'default': True},
     'wait_timeout': {'type': 'int', 'default': 120},
+    'wait_sleep': {'type': 'int', 'default': 5},
 }
 VM_COMMON_ARG_SPEC.update(VM_SPEC_DEF_ARG_SPEC)
 
@@ -127,28 +135,25 @@ class KubeVirtRawModule(KubernetesRawModule):
         super(KubeVirtRawModule, self).__init__(*args, **kwargs)
 
     @staticmethod
-    def merge_dicts(x, yy):
+    def merge_dicts(base_dict, merging_dicts):
+        """This function merges a base dictionary with one or more other dictionaries.
+        The base dictionary takes precedence when there is a key collision.
+        merging_dicts can be a dict or a list or tuple of dicts.  In the latter case, the
+        dictionaries at the front of the list have higher precedence over the ones at the end.
         """
-        This function merge two dictionaries, where the first dict has
-        higher priority in merging two same keys.
-        """
-        if not yy:
-            yy = {}
+        if not merging_dicts:
+            merging_dicts = ({},)
 
-        if not isinstance(yy, list):
-            yy = [yy]
+        if not isinstance(merging_dicts, Sequence):
+            merging_dicts = (merging_dicts,)
 
-        for y in yy:
-            for k in set(x.keys()).union(y.keys()):
-                if k in x and k in y:
-                    if isinstance(x[k], dict) and isinstance(y[k], dict):
-                        yield (k, dict(KubeVirtRawModule.merge_dicts(x[k], y[k])))
-                    else:
-                        yield (k, x[k])
-                elif k in x:
-                    yield (k, x[k])
-                else:
-                    yield (k, y[k])
+        new_dict = {}
+        for d in reversed(merging_dicts):
+            new_dict = dict_transformations.dict_merge(new_dict, d)
+
+        new_dict = dict_transformations.dict_merge(new_dict, base_dict)
+
+        return new_dict
 
     def get_resource(self, resource):
         try:
@@ -238,7 +243,7 @@ class KubeVirtRawModule(KubernetesRawModule):
             spec_interfaces = []
             for i in interfaces:
                 spec_interfaces.append(
-                    dict(self.merge_dicts(dict((k, v) for k, v in i.items() if k != 'network'), defaults['interfaces']))
+                    self.merge_dicts(dict((k, v) for k, v in i.items() if k != 'network'), defaults['interfaces'])
                 )
             if 'interfaces' not in template_spec['domain']['devices']:
                 template_spec['domain']['devices']['interfaces'] = []
@@ -249,7 +254,7 @@ class KubeVirtRawModule(KubernetesRawModule):
             for i in interfaces:
                 net = i['network']
                 net['name'] = i['name']
-                spec_networks.append(dict(self.merge_dicts(net, defaults['networks'])))
+                spec_networks.append(self.merge_dicts(net, defaults['networks']))
             if 'networks' not in template_spec:
                 template_spec['networks'] = []
             template_spec['networks'].extend(spec_networks)
@@ -269,7 +274,7 @@ class KubeVirtRawModule(KubernetesRawModule):
             spec_disks = []
             for d in disks:
                 spec_disks.append(
-                    dict(self.merge_dicts(dict((k, v) for k, v in d.items() if k != 'volume'), defaults['disks']))
+                    self.merge_dicts(dict((k, v) for k, v in d.items() if k != 'volume'), defaults['disks'])
                 )
             if 'disks' not in template_spec['domain']['devices']:
                 template_spec['domain']['devices']['disks'] = []
@@ -280,7 +285,7 @@ class KubeVirtRawModule(KubernetesRawModule):
             for d in disks:
                 volume = d['volume']
                 volume['name'] = d['name']
-                spec_volumes.append(dict(self.merge_dicts(volume, defaults['volumes'])))
+                spec_volumes.append(self.merge_dicts(volume, defaults['volumes']))
             if 'volumes' not in template_spec:
                 template_spec['volumes'] = []
             template_spec['volumes'].extend(spec_volumes)
@@ -317,6 +322,11 @@ class KubeVirtRawModule(KubernetesRawModule):
         tablets = params.get('tablets')
         cpu_shares = params.get('cpu_shares')
         cpu_limit = params.get('cpu_limit')
+        node_affinity = params.get('node_affinity')
+        vm_affinity = params.get('affinity')
+        vm_anti_affinity = params.get('anti_affinity')
+        hostname = params.get('hostname')
+        subdomain = params.get('subdomain')
         template_spec = template['spec']
 
         # Merge additional flat parameters:
@@ -350,7 +360,7 @@ class KubeVirtRawModule(KubernetesRawModule):
             template_spec['domain']['cpu']['model'] = cpu_model
 
         if labels:
-            template['metadata']['labels'] = dict(self.merge_dicts(labels, template['metadata']['labels']))
+            template['metadata']['labels'] = self.merge_dicts(labels, template['metadata']['labels'])
 
         if machine_type:
             template_spec['domain']['machine']['type'] = machine_type
@@ -363,6 +373,54 @@ class KubeVirtRawModule(KubernetesRawModule):
 
         if headless is not None:
             template_spec['domain']['devices']['autoattachGraphicsDevice'] = not headless
+
+        if vm_affinity or vm_anti_affinity:
+            vms_affinity = vm_affinity or vm_anti_affinity
+            affinity_name = 'podAffinity' if vm_affinity else 'podAntiAffinity'
+            for affinity in vms_affinity.get('soft', []):
+                if not template_spec['affinity'][affinity_name]['preferredDuringSchedulingIgnoredDuringExecution']:
+                    template_spec['affinity'][affinity_name]['preferredDuringSchedulingIgnoredDuringExecution'] = []
+                template_spec['affinity'][affinity_name]['preferredDuringSchedulingIgnoredDuringExecution'].append({
+                    'weight': affinity.get('weight'),
+                    'podAffinityTerm': {
+                        'labelSelector': {
+                            'matchExpressions': affinity.get('term').get('match_expressions'),
+                        },
+                        'topologyKey': affinity.get('topology_key'),
+                    },
+                })
+            for affinity in vms_affinity.get('hard', []):
+                if not template_spec['affinity'][affinity_name]['requiredDuringSchedulingIgnoredDuringExecution']:
+                    template_spec['affinity'][affinity_name]['requiredDuringSchedulingIgnoredDuringExecution'] = []
+                template_spec['affinity'][affinity_name]['requiredDuringSchedulingIgnoredDuringExecution'].append({
+                    'labelSelector': {
+                        'matchExpressions': affinity.get('term').get('match_expressions'),
+                    },
+                    'topologyKey': affinity.get('topology_key'),
+                })
+
+        if node_affinity:
+            for affinity in node_affinity.get('soft', []):
+                if not template_spec['affinity']['nodeAffinity']['preferredDuringSchedulingIgnoredDuringExecution']:
+                    template_spec['affinity']['nodeAffinity']['preferredDuringSchedulingIgnoredDuringExecution'] = []
+                template_spec['affinity']['nodeAffinity']['preferredDuringSchedulingIgnoredDuringExecution'].append({
+                    'weight': affinity.get('weight'),
+                    'preference': {
+                        'matchExpressions': affinity.get('term').get('match_expressions'),
+                    }
+                })
+            for affinity in node_affinity.get('hard', []):
+                if not template_spec['affinity']['nodeAffinity']['requiredDuringSchedulingIgnoredDuringExecution']['nodeSelectorTerms']:
+                    template_spec['affinity']['nodeAffinity']['requiredDuringSchedulingIgnoredDuringExecution']['nodeSelectorTerms'] = []
+                template_spec['affinity']['nodeAffinity']['requiredDuringSchedulingIgnoredDuringExecution']['nodeSelectorTerms'].append({
+                    'matchExpressions': affinity.get('term').get('match_expressions'),
+                })
+
+        if hostname:
+            template_spec['hostname'] = hostname
+
+        if subdomain:
+            template_spec['subdomain'] = subdomain
 
         # Define disks
         self._define_disks(disks, template_spec, defaults)
@@ -378,7 +436,7 @@ class KubeVirtRawModule(KubernetesRawModule):
         # Define datavolumes:
         self._define_datavolumes(datavolumes, definition['spec'])
 
-        return dict(self.merge_dicts(definition, self.resource_definitions[0]))
+        return self.merge_dicts(definition, self.resource_definitions[0])
 
     def construct_vm_definition(self, kind, definition, template, defaults=None):
         definition = self._construct_vm_definition(kind, definition, template, self.params, defaults)

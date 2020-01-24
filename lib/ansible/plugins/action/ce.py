@@ -10,8 +10,6 @@ import sys
 import copy
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.cloudengine.ce import ce_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
@@ -19,7 +17,13 @@ from ansible.utils.display import Display
 
 display = Display()
 
-CLI_SUPPORTED_MODULES = ['ce_config', 'ce_command', 'ce_facts']
+CLI_SUPPORTED_MODULES = ['ce_rollback', 'ce_mlag_interface', 'ce_startup', 'ce_config',
+                         'ce_command', 'ce_facts', 'ce_evpn_global', 'ce_evpn_bgp_rr',
+                         'ce_mtu', 'ce_evpn_bgp', 'ce_snmp_location', 'ce_snmp_contact',
+                         'ce_snmp_traps', 'ce_netstream_global', 'ce_netstream_aging',
+                         'ce_netstream_export', 'ce_netstream_template', 'ce_ntp_auth',
+                         'ce_stp', 'ce_vxlan_global', 'ce_vxlan_arp', 'ce_vxlan_gateway',
+                         'ce_acl_interface']
 
 
 class ActionModule(ActionNetworkModule):
@@ -27,8 +31,10 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        self._config_module = True if self._task.action == 'ce_config' else False
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'ce_config' else False
         socket_path = None
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
         if self._play_context.connection == 'local':
             provider = load_provider(ce_provider_spec, self._task.args)
@@ -51,10 +57,10 @@ class ActionModule(ActionNetworkModule):
                     username=pc.remote_user,
                     password=pc.password
                 )
-                if self._task.action in ['ce_netconf'] or self._task.action not in CLI_SUPPORTED_MODULES:
+                if module_name in ['ce_netconf'] or module_name not in CLI_SUPPORTED_MODULES:
                     pc.connection = 'netconf'
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
                 connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
                 socket_path = connection.run()
@@ -68,29 +74,16 @@ class ActionModule(ActionNetworkModule):
                 # make sure a transport value is set in args
                 self._task.args['transport'] = transport
                 self._task.args['provider'] = provider
-        elif self._play_context.connection in ('netconf', 'network_cli'):
+        elif persistent_connection in ('netconf', 'network_cli'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
                 del self._task.args['provider']
 
-            if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
-                    (self._play_context.connection == 'netconf' and self._task.action in CLI_SUPPORTED_MODULES):
+            if (persistent_connection == 'network_cli' and module_name not in CLI_SUPPORTED_MODULES) or \
+                    (persistent_connection == 'netconf' and module_name in CLI_SUPPORTED_MODULES):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module."
                         % (self._play_context.connection, self._task.action)}
-
-        if (self._play_context.connection == 'local' and transport == 'cli' and self._task.action in CLI_SUPPORTED_MODULES) \
-                or self._play_context.connection == 'network_cli':
-            # make sure we are in the right cli context which should be
-            # enable mode and not config module
-            if socket_path is None:
-                socket_path = self._connection.socket_path
-            conn = Connection(socket_path)
-            out = conn.get_prompt()
-            while to_text(out, errors='surrogate_then_replace').strip().endswith(']'):
-                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                conn.exec_command('return')
-                out = conn.get_prompt()
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result

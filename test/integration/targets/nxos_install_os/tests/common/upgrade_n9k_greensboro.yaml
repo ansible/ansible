@@ -1,19 +1,18 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_os_install upgrade"
-- debug: msg="Using provider={{ connection.transport }}"
   when: connection is defined
 
 # Set directory pointer to software images
 - set_fact: image_dir='/auto/fe_ssr/agents-ci/agents_images/release_images/greensboro/REL_7_0_3_I7_4/'
 
 - set_fact: checkmode='no'
-- set_fact: issu='yes'
-- set_fact: copy_images=False
+- set_fact: issu='desired'
+- set_fact: copy_images=True
 
 # Set boot pointers and reload
 - set_fact: force=False
 
-- set_fact: delete_files=False
+- set_fact: delete_files=True
 - set_fact:
     delete_image_list:
       - nxos*.bin
@@ -29,7 +28,6 @@
       - no nxapi ssl protocols
       - no nxapi ssl ciphers weak
     match: none
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 #---------------------------------------------------------#

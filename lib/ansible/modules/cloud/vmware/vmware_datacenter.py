@@ -34,11 +34,13 @@ options:
       description:
       - The name of the datacenter the cluster will be created in.
       required: True
+      type: str
     state:
       description:
       - If the datacenter should be present or absent.
       choices: [ present, absent ]
       default: present
+      type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

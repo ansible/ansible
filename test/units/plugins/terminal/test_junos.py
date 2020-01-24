@@ -52,4 +52,4 @@ def test_on_open_shell_raises_problem_setting_terminal_config(junos_terminal):
     with pytest.raises(AnsibleConnectionFailure) as exc:
         junos_terminal.on_open_shell()
 
-    assert 'unable to set terminal parameters' in str(exc)
+    assert 'unable to set terminal parameters' in str(exc.value)

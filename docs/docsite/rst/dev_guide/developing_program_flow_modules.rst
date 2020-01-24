@@ -429,7 +429,7 @@ files (changing attributes, moving, and copying). To set, add a comma separated 
 
   # ansible.cfg
   [selinux]
-  special_context_filesystems=nfs,vboxsf,fuse,ramfs
+  special_context_filesystems=nfs,vboxsf,fuse,ramfs,vfat
 
 Most modules can use the built-in ``AnsibleModule`` methods to manipulate
 files. To access in a module that needs to know about these special context filesystems, instantiate an ``AnsibleModule`` and examine the list in
@@ -615,12 +615,15 @@ required
 no_log
 """"""
 
-``no_log`` indicates that the value of the argument should not be logged or displayed.
+``no_log`` accepts a boolean, either ``True`` or ``False``, that indicates explicitly whether or not the argument value should be masked in logs and output.
+
+.. note::
+   In the absence of ``no_log``, if the parameter name appears to indicate that the argument value is a password or passphrase (such as "admin_password"), a warning will be shown and the value will be masked in logs but **not** output. To disable the warning and masking for parameters that do not contain sensitive information, set ``no_log`` to ``False``.
 
 aliases
 """""""
 
-``aliases`` accepts a list of alternative argument names for the argument, such as the case where the argument is ``name`` but the module accepts ``aliases=['pkg']`` to allow ``pkg`` to be interchangably with ``name``
+``aliases`` accepts a list of alternative argument names for the argument, such as the case where the argument is ``name`` but the module accepts ``aliases=['pkg']`` to allow ``pkg`` to be interchangeably with ``name``
 
 options
 """""""

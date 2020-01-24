@@ -81,11 +81,12 @@ options:
     default: 1
 
 notes:
-  - Tested against VYOS 1.1.7
+  - Tested against VyOS 1.1.8 (helium).
   - Running C(show system boot-messages all) will cause the module to hang since
     VyOS is using a custom pager setting to display the output of that command.
   - If a command sent to the device requires answering a prompt, it is possible
     to pass a dict containing I(command), I(answer) and I(prompt). See examples.
+  - This module works with connection C(network_cli). See L(the VyOS OS Platform Options,../network/user_guide/platform_vyos.html).
 """
 
 EXAMPLES = """

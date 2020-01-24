@@ -1,0 +1,300 @@
+---
+
+- name: Integration test for AWS Step Function state machine module
+  module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  block:
+
+    # ==== Setup ==================================================
+
+    - name: Create IAM service role needed for Step Functions
+      iam_role:
+        name: "{{ step_functions_role_name }}"
+        description: Role with permissions for AWS Step Functions actions.
+        assume_role_policy_document: "{{ lookup('file', 'state_machines_iam_trust_policy.json') }}"
+        state: present
+      register: step_functions_role
+
+    - name: Pause a few seconds to ensure IAM role is available to next task
+      pause:
+        seconds: 10
+
+    # ==== Tests ===================================================
+
+    - name: Create a random component for state machine name
+      set_fact:
+        random_num: "{{ 999999999 | random }}"
+
+    - name: Create a new state machine -- check_mode
+      aws_step_functions_state_machine:
+        name: "{{ state_machine_name }}"
+        definition: "{{ lookup('file','state_machine.json') }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
+        tags:
+          project: helloWorld
+        state: present
+      register: creation_check
+      check_mode: yes
+
+    - assert:
+        that:
+          - creation_check.changed == True
+          - creation_check.output == 'State machine would be created.'
+
+    - name: Create a new state machine
+      aws_step_functions_state_machine:
+        name: "{{ state_machine_name }}"
+        definition: "{{ lookup('file','state_machine.json') }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
+        tags:
+          project: helloWorld
+        state: present
+      register: creation_output
+
+    - assert:
+        that:
+          - creation_output.changed == True
+
+    - name: Pause a few seconds to ensure state machine role is available
+      pause:
+        seconds: 5
+
+    - name: Idempotent rerun of same state function -- check_mode
+      aws_step_functions_state_machine:
+        name: "{{ state_machine_name }}"
+        definition: "{{ lookup('file','state_machine.json') }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
+        tags:
+          project: helloWorld
+        state: present
+      register: result
+      check_mode: yes
+
+    - assert:
+        that:
+          - result.changed == False
+          - result.output == 'State is up-to-date.'
+
+    - name: Idempotent rerun of same state function
+      aws_step_functions_state_machine:
+        name: "{{ state_machine_name }}"
+        definition: "{{ lookup('file','state_machine.json') }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
+        tags:
+          project: helloWorld
+        state: present
+      register: result
+
+    - assert:
+        that:
+          - result.changed == False
+
+    - name: Update an existing state machine -- check_mode
+      aws_step_functions_state_machine:
+        name: "{{ state_machine_name }}"
+        definition: "{{ lookup('file','alternative_state_machine.json') }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
+        tags:
+          differentTag: different_tag
+        state: present
+      register: update_check
+      check_mode: yes
+
+    - assert:
+        that:
+          - update_check.changed == True
+          - "update_check.output == 'State machine would be updated: {{ creation_output.state_machine_arn }}'"
+
+    - name: Update an existing state machine
+      aws_step_functions_state_machine:
+        name: "{{ state_machine_name }}"
+        definition: "{{ lookup('file','alternative_state_machine.json') }}"
+        role_arn: "{{ step_functions_role.iam_role.arn }}"
+        tags:
+          differentTag: different_tag
+        state: present
+      register: update_output
+
+    - assert:
+        that:
+          - update_output.changed == True
+          - update_output.state_machine_arn == creation_output.state_machine_arn
+
+    - name: Start execution of state machine -- check_mode
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - start_execution_output.changed == True
+          - "start_execution_output.output == 'State machine execution would be started.'"
+
+    - name: Start execution of state machine
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output
+
+    - assert:
+        that:
+          - start_execution_output.changed
+          - "'execution_arn' in start_execution_output"
+          - "'start_date' in start_execution_output"
+
+    - name: Start execution of state machine (check for idempotency) (check mode)
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output_idem_check
+      check_mode: yes
+
+    - assert:
+        that:
+          - not start_execution_output_idem_check.changed
+          - "start_execution_output_idem_check.output == 'State machine execution already exists.'"
+
+    - name: Start execution of state machine (check for idempotency)
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        execution_input: "{}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output_idem
+
+    - assert:
+        that:
+          - not start_execution_output_idem.changed
+
+    - name: Stop execution of state machine -- check_mode
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - stop_execution_output.changed
+          - "stop_execution_output.output == 'State machine execution would be stopped.'"
+
+    - name: Stop execution of state machine
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+
+    - assert:
+        that:
+          - stop_execution_output.changed
+          - "'stop_date' in stop_execution_output"
+
+    - name: Stop execution of state machine (check for idempotency)
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+
+    - assert:
+        that:
+          - not stop_execution_output.changed
+
+    - name: Try stopping a non-running execution -- check_mode
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - not stop_execution_output.changed
+          - "stop_execution_output.output == 'State machine execution is not running.'"
+
+    - name: Try stopping a non-running execution
+      aws_step_functions_state_machine_execution:
+        action: stop
+        execution_arn: "{{ start_execution_output.execution_arn }}"
+        cause: "cause of the failure"
+        error: "error code of the failure"
+      register: stop_execution_output
+      check_mode: yes
+
+    - assert:
+        that:
+          - not stop_execution_output.changed
+
+    - name: Start execution of state machine with the same execution name
+      aws_step_functions_state_machine_execution:
+        name: "{{ execution_name }}"
+        state_machine_arn: "{{ creation_output.state_machine_arn }}"
+      register: start_execution_output_again
+
+    - assert:
+        that:
+          - not start_execution_output_again.changed
+
+    - name: Remove state machine -- check_mode
+      aws_step_functions_state_machine:
+        name: "{{ state_machine_name }}"
+        state: absent
+      register: deletion_check
+      check_mode: yes
+
+    - assert:
+        that:
+          - deletion_check.changed == True
+          - "deletion_check.output == 'State machine would be deleted: {{ creation_output.state_machine_arn }}'"
+
+    - name: Remove state machine
+      aws_step_functions_state_machine:
+        name: "{{ state_machine_name }}"
+        state: absent
+      register: deletion_output
+
+    - assert:
+        that:
+          - deletion_output.changed == True
+          - deletion_output.state_machine_arn == creation_output.state_machine_arn
+
+    - name: Non-existent state machine is absent
+      aws_step_functions_state_machine:
+        name: "non_existing_state_machine"
+        state: absent
+      register: result
+
+    - assert:
+        that:
+          - result.changed == False
+
+  # ==== Cleanup ====================================================
+
+  always:
+
+    - name: Cleanup - delete state machine
+      aws_step_functions_state_machine:
+        name: "{{ state_machine_name }}"
+        state: absent
+      ignore_errors: true
+
+    - name: Cleanup - delete IAM role needed for Step Functions test
+      iam_role:
+        name: "{{ step_functions_role_name }}"
+        state: absent
+      ignore_errors: true

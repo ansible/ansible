@@ -6,6 +6,33 @@ import pytest
 import ansible.module_utils.postgres as pg
 
 
+INPUT_DICT = dict(
+    session_role=dict(default=''),
+    login_user=dict(default='postgres'),
+    login_password=dict(default='test', no_log=True),
+    login_host=dict(default='test'),
+    login_unix_socket=dict(default=''),
+    port=dict(type='int', default=5432, aliases=['login_port']),
+    ssl_mode=dict(
+        default='prefer',
+        choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']
+    ),
+    ca_cert=dict(aliases=['ssl_rootcert']),
+)
+
+EXPECTED_DICT = dict(
+    user=dict(default='postgres'),
+    password=dict(default='test', no_log=True),
+    host=dict(default='test'),
+    port=dict(type='int', default=5432, aliases=['login_port']),
+    sslmode=dict(
+        default='prefer',
+        choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']
+    ),
+    sslrootcert=dict(aliases=['ssl_rootcert']),
+)
+
+
 class TestPostgresCommonArgSpec():
 
     """
@@ -102,8 +129,8 @@ class TestEnsureReqLibs():
     1. value of err_msg attribute of m_ansible_module mock object.
     """
 
-    @pytest.fixture
-    def m_ansible_module(self, scope='class'):
+    @pytest.fixture(scope='class')
+    def m_ansible_module(self):
         """Return an object of dummy AnsibleModule class."""
         class Dummym_ansible_module():
             def __init__(self):
@@ -154,6 +181,24 @@ class TestEnsureReqLibs():
         assert 'psycopg2 must be at least 2.4.3' in m_ansible_module.err_msg
 
 
+@pytest.fixture(scope='class')
+def m_ansible_module():
+    """Return an object of dummy AnsibleModule class."""
+    class DummyAnsibleModule():
+        def __init__(self):
+            self.params = pg.postgres_common_argument_spec()
+            self.err_msg = ''
+            self.warn_msg = ''
+
+        def fail_json(self, msg):
+            self.err_msg = msg
+
+        def warn(self, msg):
+            self.warn_msg = msg
+
+    return DummyAnsibleModule()
+
+
 class TestConnectToDb():
 
     """
@@ -168,29 +213,13 @@ class TestConnectToDb():
     2. Types of return objects (db_connection and cursor).
     """
 
-    @pytest.fixture
-    def m_ansible_module(self, scope='class'):
-        """Return an object of dummy AnsibleModule class."""
-        class DummyAnsibleModule():
-            def __init__(self):
-                self.params = pg.postgres_common_argument_spec()
-                self.err_msg = ''
-                self.warn_msg = ''
-
-            def fail_json(self, msg):
-                self.err_msg = msg
-
-            def warn(self, msg):
-                self.warn_msg = msg
-
-        return DummyAnsibleModule()
-
     def test_connect_to_db(self, m_ansible_module, monkeypatch, m_psycopg2):
         """Test connect_to_db(), common test."""
         monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
         monkeypatch.setattr(pg, 'psycopg2', m_psycopg2)
 
-        db_connection = pg.connect_to_db(m_ansible_module)
+        conn_params = pg.get_conn_params(m_ansible_module, m_ansible_module.params)
+        db_connection = pg.connect_to_db(m_ansible_module, conn_params)
         cursor = db_connection.cursor()
         # if errors, db_connection returned as None:
         assert isinstance(db_connection, DbConnection)
@@ -205,7 +234,8 @@ class TestConnectToDb():
         monkeypatch.setattr(pg, 'psycopg2', m_psycopg2)
 
         m_ansible_module.params['session_role'] = 'test_role'
-        db_connection = pg.connect_to_db(m_ansible_module)
+        conn_params = pg.get_conn_params(m_ansible_module, m_ansible_module.params)
+        db_connection = pg.connect_to_db(m_ansible_module, conn_params)
         cursor = db_connection.cursor()
         # if errors, db_connection returned as None:
         assert isinstance(db_connection, DbConnection)
@@ -213,25 +243,6 @@ class TestConnectToDb():
         assert m_ansible_module.err_msg == ''
         # The default behaviour, normal in this case:
         assert 'Database name has not been passed' in m_ansible_module.warn_msg
-
-    def test_warn_db_default_non_default(self, m_ansible_module, monkeypatch, m_psycopg2):
-        """
-        Test connect_to_db(), warn_db_default arg passed as False (by default is True).
-        """
-        monkeypatch.setattr(pg, 'HAS_PSYCOPG2', True)
-        monkeypatch.setattr(pg, 'psycopg2', m_psycopg2)
-
-        db_connection = pg.connect_to_db(m_ansible_module, warn_db_default=False)
-        cursor = db_connection.cursor()
-        # if errors, db_connection returned as None:
-        assert isinstance(db_connection, DbConnection)
-        assert isinstance(cursor, Cursor)
-        assert m_ansible_module.err_msg == ''
-        assert m_ansible_module.warn_msg == ''
-        # pay attention that warn_db_defaul=True has been checked
-        # in the previous tests by
-        # assert('Database name has not been passed' in m_ansible_module.warn_msg)
-        # because of this is the default behavior
 
     def test_fail_on_conn_true(self, m_ansible_module, monkeypatch, m_psycopg2):
         """
@@ -242,7 +253,8 @@ class TestConnectToDb():
 
         m_ansible_module.params['login_user'] = 'Exception'  # causes Exception
 
-        db_connection = pg.connect_to_db(m_ansible_module, fail_on_conn=True)
+        conn_params = pg.get_conn_params(m_ansible_module, m_ansible_module.params)
+        db_connection = pg.connect_to_db(m_ansible_module, conn_params, fail_on_conn=True)
 
         assert 'unable to connect to database' in m_ansible_module.err_msg
         assert db_connection is None
@@ -256,7 +268,8 @@ class TestConnectToDb():
 
         m_ansible_module.params['login_user'] = 'Exception'  # causes Exception
 
-        db_connection = pg.connect_to_db(m_ansible_module, fail_on_conn=False)
+        conn_params = pg.get_conn_params(m_ansible_module, m_ansible_module.params)
+        db_connection = pg.connect_to_db(m_ansible_module, conn_params, fail_on_conn=False)
 
         assert m_ansible_module.err_msg == ''
         assert 'PostgreSQL server is unavailable' in m_ansible_module.warn_msg
@@ -271,7 +284,8 @@ class TestConnectToDb():
         # case 1: psycopg2.__version >= 2.4.2 (the default in m_psycopg2)
         monkeypatch.setattr(pg, 'psycopg2', m_psycopg2)
 
-        db_connection = pg.connect_to_db(m_ansible_module, autocommit=True)
+        conn_params = pg.get_conn_params(m_ansible_module, m_ansible_module.params)
+        db_connection = pg.connect_to_db(m_ansible_module, conn_params, autocommit=True)
         cursor = db_connection.cursor()
 
         # if errors, db_connection returned as None:
@@ -283,10 +297,26 @@ class TestConnectToDb():
         m_psycopg2.__version__ = '2.4.1'
         monkeypatch.setattr(pg, 'psycopg2', m_psycopg2)
 
-        db_connection = pg.connect_to_db(m_ansible_module, autocommit=True)
+        conn_params = pg.get_conn_params(m_ansible_module, m_ansible_module.params)
+        db_connection = pg.connect_to_db(m_ansible_module, conn_params, autocommit=True)
         cursor = db_connection.cursor()
 
         # if errors, db_connection returned as None:
         assert isinstance(db_connection, DbConnection)
         assert isinstance(cursor, Cursor)
         assert 'psycopg2 must be at least 2.4.3' in m_ansible_module.err_msg
+
+
+class TestGetConnParams():
+
+    """Namespace for testing get_conn_params() function."""
+
+    def test_get_conn_params_def(self, m_ansible_module):
+        """Test get_conn_params(), warn_db_default kwarg is default."""
+        assert pg.get_conn_params(m_ansible_module, INPUT_DICT) == EXPECTED_DICT
+        assert m_ansible_module.warn_msg == 'Database name has not been passed, used default database to connect to.'
+
+    def test_get_conn_params_warn_db_def_false(self, m_ansible_module):
+        """Test get_conn_params(), warn_db_default kwarg is False."""
+        assert pg.get_conn_params(m_ansible_module, INPUT_DICT, warn_db_default=False) == EXPECTED_DICT
+        assert m_ansible_module.warn_msg == ''

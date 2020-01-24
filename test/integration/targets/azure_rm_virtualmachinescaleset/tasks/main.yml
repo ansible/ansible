@@ -163,6 +163,7 @@
         disk_size_gb: 64
         caching: ReadWrite
         managed_disk_type: Standard_LRS
+    scale_in_policy: "NewestVM"
   register: results
 
 - name: Assert that VMSS was created
@@ -584,7 +585,7 @@
       image:
         offer: UbuntuServer
   register: fail_invalid_image_dict
-  failed_when: 'fail_invalid_image_dict.msg != "parameter error: expecting image to contain [publisher, offer, sku, version] or [name, resource_group]"'
+  failed_when: 'fail_invalid_image_dict.msg != "parameter error: expecting image to contain [publisher, offer, sku, version], [name, resource_group] or [id]"'
 
 - name: assert error thrown with invalid image type
   azure_rm_virtualmachinescaleset:

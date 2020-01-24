@@ -1,0 +1,38 @@
+# Test code for the vmware_vmkernel_info module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: vcsim does not support HostVirtualNicManager related to operations
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    - name: Gather VMkernel info for a given host
+      vmware_vmkernel_info:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        validate_certs: no
+      register: host_vmkernel
+    - debug: var=host_vmkernel
+    - assert:
+        that:
+          - host_vmkernel.host_vmk_info is defined
+
+    - name: Gather VMkernel info for a given host in check mode
+      vmware_vmkernel_info:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        validate_certs: no
+      register: host_vmkernel_check_mode
+      check_mode: yes
+    - debug: var=host_vmkernel
+    - assert:
+        that:
+          - host_vmkernel_check_mode.host_vmk_info is defined

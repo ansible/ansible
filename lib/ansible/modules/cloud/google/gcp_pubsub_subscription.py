@@ -34,7 +34,7 @@ description:
 - A named resource representing the stream of messages from a single, specific topic,
   to be delivered to the subscribing application.
 short_description: Creates a GCP Subscription
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -48,10 +48,12 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - Name of the subscription.
     required: true
+    type: str
   topic:
     description:
     - A reference to a Topic resource.
@@ -61,23 +63,53 @@ options:
       to a gcp_pubsub_topic task and then set this topic field to "{{ name-of-resource
       }}"'
     required: true
+    type: dict
   labels:
     description:
     - A set of key/value label pairs to assign to this Subscription.
     required: false
-    version_added: 2.8
+    type: dict
+    version_added: '2.8'
   push_config:
     description:
     - If push delivery is used with this subscription, this field is used to configure
       it. An empty pushConfig signifies that the subscriber will pull and ack messages
       using API methods.
     required: false
+    type: dict
     suboptions:
+      oidc_token:
+        description:
+        - If specified, Pub/Sub will generate and attach an OIDC JWT token as an Authorization
+          header in the HTTP request for every pushed message.
+        required: false
+        type: dict
+        version_added: '2.10'
+        suboptions:
+          service_account_email:
+            description:
+            - Service account email to be used for generating the OIDC token.
+            - The caller (for subscriptions.create, subscriptions.patch, and subscriptions.modifyPushConfig
+              RPCs) must have the iam.serviceAccounts.actAs permission for the service
+              account.
+            required: true
+            type: str
+          audience:
+            description:
+            - 'Audience to be used when generating OIDC token. The audience claim
+              identifies the recipients that the JWT is intended for. The audience
+              value is a single case-sensitive string. Having multiple values (array)
+              for the audience field is not supported. More info about the OIDC JWT
+              token audience here: U(https://tools.ietf.org/html/rfc7519#section-4.1.3)
+              Note: if not specified, the Push endpoint URL will be used.'
+            required: false
+            type: str
       push_endpoint:
         description:
         - A URL locating the endpoint to which messages should be pushed.
-        - For example, a Webhook endpoint might use "U(https://example.com/push".)
+        - For example, a Webhook endpoint might use "U(https://example.com/push").
         required: true
+        type: str
       attributes:
         description:
         - Endpoint configuration attributes.
@@ -97,6 +129,7 @@ options:
           defined in the v1beta1 Pub/Sub API.'
         - "- v1 or v1beta2: uses the push format defined in the v1 Pub/Sub API."
         required: false
+        type: dict
   ack_deadline_seconds:
     description:
     - This value is the maximum time after a subscriber receives a message before
@@ -114,6 +147,7 @@ options:
     - If the subscriber never acknowledges the message, the Pub/Sub system will eventually
       redeliver the message.
     required: false
+    type: int
   message_retention_duration:
     description:
     - How long to retain unacknowledged messages in the subscription's backlog, from
@@ -125,7 +159,8 @@ options:
       Example: `"600.5s"`.'
     required: false
     default: 604800s
-    version_added: 2.8
+    type: str
+    version_added: '2.8'
   retain_acked_messages:
     description:
     - Indicates whether to retain acknowledged messages. If `true`, then messages
@@ -133,11 +168,78 @@ options:
       until they fall out of the messageRetentionDuration window.
     required: false
     type: bool
-    version_added: 2.8
-extends_documentation_fragment: gcp
+    version_added: '2.8'
+  expiration_policy:
+    description:
+    - A policy that specifies the conditions for this subscription's expiration.
+    - A subscription is considered active as long as any connected subscriber is successfully
+      consuming messages from the subscription or is issuing operations on the subscription.
+      If expirationPolicy is not set, a default policy with ttl of 31 days will be
+      used. If it is set but ttl is "", the resource never expires. The minimum allowed
+      value for expirationPolicy.ttl is 1 day.
+    required: false
+    type: dict
+    version_added: '2.9'
+    suboptions:
+      ttl:
+        description:
+        - Specifies the "time-to-live" duration for an associated resource. The resource
+          expires if it is not active for a period of ttl.
+        - If ttl is not set, the associated resource never expires.
+        - A duration in seconds with up to nine fractional digits, terminated by 's'.
+        - Example - "3.5s".
+        required: true
+        type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 notes:
 - 'API Reference: U(https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.subscriptions)'
 - 'Managing Subscriptions: U(https://cloud.google.com/pubsub/docs/admin#managing_subscriptions)'
+- for authentication, you can set service_account_file using the C(gcp_service_account_file)
+  env variable.
+- for authentication, you can set service_account_contents using the C(GCP_SERVICE_ACCOUNT_CONTENTS)
+  env variable.
+- For authentication, you can set service_account_email using the C(GCP_SERVICE_ACCOUNT_EMAIL)
+  env variable.
+- For authentication, you can set auth_kind using the C(GCP_AUTH_KIND) env variable.
+- For authentication, you can set scopes using the C(GCP_SCOPES) env variable.
+- Environment variables values will only be used if the playbook values are not set.
+- The I(service_account_email) and I(service_account_file) options are mutually exclusive.
 '''
 
 EXAMPLES = '''
@@ -185,10 +287,35 @@ pushConfig:
   returned: success
   type: complex
   contains:
+    oidcToken:
+      description:
+      - If specified, Pub/Sub will generate and attach an OIDC JWT token as an Authorization
+        header in the HTTP request for every pushed message.
+      returned: success
+      type: complex
+      contains:
+        serviceAccountEmail:
+          description:
+          - Service account email to be used for generating the OIDC token.
+          - The caller (for subscriptions.create, subscriptions.patch, and subscriptions.modifyPushConfig
+            RPCs) must have the iam.serviceAccounts.actAs permission for the service
+            account.
+          returned: success
+          type: str
+        audience:
+          description:
+          - 'Audience to be used when generating OIDC token. The audience claim identifies
+            the recipients that the JWT is intended for. The audience value is a single
+            case-sensitive string. Having multiple values (array) for the audience
+            field is not supported. More info about the OIDC JWT token audience here:
+            U(https://tools.ietf.org/html/rfc7519#section-4.1.3) Note: if not specified,
+            the Push endpoint URL will be used.'
+          returned: success
+          type: str
     pushEndpoint:
       description:
       - A URL locating the endpoint to which messages should be pushed.
-      - For example, a Webhook endpoint might use "U(https://example.com/push".)
+      - For example, a Webhook endpoint might use "U(https://example.com/push").
       returned: success
       type: str
     attributes:
@@ -246,6 +373,26 @@ retainAckedMessages:
     they fall out of the messageRetentionDuration window.
   returned: success
   type: bool
+expirationPolicy:
+  description:
+  - A policy that specifies the conditions for this subscription's expiration.
+  - A subscription is considered active as long as any connected subscriber is successfully
+    consuming messages from the subscription or is issuing operations on the subscription.
+    If expirationPolicy is not set, a default policy with ttl of 31 days will be used.
+    If it is set but ttl is "", the resource never expires. The minimum allowed value
+    for expirationPolicy.ttl is 1 day.
+  returned: success
+  type: complex
+  contains:
+    ttl:
+      description:
+      - Specifies the "time-to-live" duration for an associated resource. The resource
+        expires if it is not active for a period of ttl.
+      - If ttl is not set, the associated resource never expires.
+      - A duration in seconds with up to nine fractional digits, terminated by 's'.
+      - Example - "3.5s".
+      returned: success
+      type: str
 '''
 
 ################################################################################
@@ -254,6 +401,7 @@ retainAckedMessages:
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
+import re
 
 ################################################################################
 # Main
@@ -269,10 +417,18 @@ def main():
             name=dict(required=True, type='str'),
             topic=dict(required=True, type='dict'),
             labels=dict(type='dict'),
-            push_config=dict(type='dict', options=dict(push_endpoint=dict(required=True, type='str'), attributes=dict(type='dict'))),
+            push_config=dict(
+                type='dict',
+                options=dict(
+                    oidc_token=dict(type='dict', options=dict(service_account_email=dict(required=True, type='str'), audience=dict(type='str'))),
+                    push_endpoint=dict(required=True, type='str'),
+                    attributes=dict(type='dict'),
+                ),
+            ),
             ack_deadline_seconds=dict(type='int'),
             message_retention_duration=dict(default='604800s', type='str'),
             retain_acked_messages=dict(type='bool'),
+            expiration_policy=dict(type='dict', options=dict(ttl=dict(required=True, type='str'))),
         )
     )
 
@@ -331,6 +487,8 @@ def updateMask(request, response):
         update_mask.append('messageRetentionDuration')
     if request.get('retainAckedMessages') != response.get('retainAckedMessages'):
         update_mask.append('retainAckedMessages')
+    if request.get('expirationPolicy') != response.get('expirationPolicy'):
+        update_mask.append('expirationPolicy')
     return ','.join(update_mask)
 
 
@@ -341,15 +499,15 @@ def delete(module, link):
 
 def resource_to_request(module):
     request = {
-        u'name': module.params.get('name'),
-        u'topic': replace_resource_dict(module.params.get(u'topic', {}), 'name'),
+        u'name': name_pattern(module.params.get('name'), module),
+        u'topic': topic_pattern(replace_resource_dict(module.params.get(u'topic', {}), 'name'), module),
         u'labels': module.params.get('labels'),
         u'pushConfig': SubscriptionPushconfig(module.params.get('push_config', {}), module).to_request(),
         u'ackDeadlineSeconds': module.params.get('ack_deadline_seconds'),
         u'messageRetentionDuration': module.params.get('message_retention_duration'),
         u'retainAckedMessages': module.params.get('retain_acked_messages'),
+        u'expirationPolicy': SubscriptionExpirationpolicy(module.params.get('expiration_policy', {}), module).to_request(),
     }
-    request = encode_request(request, module)
     return_vals = {}
     for k, v in request.items():
         if v or v is False:
@@ -386,8 +544,6 @@ def return_if_object(module, response, allow_not_found=False):
     except getattr(json.decoder, 'JSONDecodeError', ValueError):
         module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
-    result = decode_request(result, module)
-
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
 
@@ -397,7 +553,6 @@ def return_if_object(module, response, allow_not_found=False):
 def is_different(module, response):
     request = resource_to_request(module)
     response = response_to_hash(module, response)
-    request = decode_request(request, module)
 
     # Remove all output-only from response.
     response_vals = {}
@@ -417,31 +572,40 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
-        u'name': module.params.get('name'),
-        u'topic': replace_resource_dict(module.params.get(u'topic', {}), 'name'),
+        u'name': name_pattern(module.params.get('name'), module),
+        u'topic': topic_pattern(replace_resource_dict(module.params.get(u'topic', {}), 'name'), module),
         u'labels': response.get(u'labels'),
         u'pushConfig': SubscriptionPushconfig(response.get(u'pushConfig', {}), module).from_response(),
         u'ackDeadlineSeconds': response.get(u'ackDeadlineSeconds'),
         u'messageRetentionDuration': response.get(u'messageRetentionDuration'),
         u'retainAckedMessages': response.get(u'retainAckedMessages'),
+        u'expirationPolicy': SubscriptionExpirationpolicy(response.get(u'expirationPolicy', {}), module).from_response(),
     }
 
 
-def decode_request(response, module):
-    if 'name' in response:
-        response['name'] = response['name'].split('/')[-1]
+def name_pattern(name, module):
+    if name is None:
+        return
 
-    if 'topic' in response:
-        response['topic'] = response['topic'].split('/')[-1]
+    regex = r"projects/.*/subscriptions/.*"
 
-    return response
+    if not re.match(regex, name):
+        name = "projects/{project}/subscriptions/{name}".format(**module.params)
+
+    return name
 
 
-def encode_request(request, module):
-    request['topic'] = '/'.join(['projects', module.params['project'], 'topics', request['topic']])
-    request['name'] = '/'.join(['projects', module.params['project'], 'subscriptions', module.params['name']])
+def topic_pattern(name, module):
+    if name is None:
+        return
 
-    return request
+    regex = r"projects/.*/topics/.*"
+
+    if not re.match(regex, name):
+        formatted_params = {'project': module.params['project'], 'topic': replace_resource_dict(module.params['topic'], 'name')}
+        name = "projects/{project}/topics/{topic}".format(**formatted_params)
+
+    return name
 
 
 class SubscriptionPushconfig(object):
@@ -453,10 +617,52 @@ class SubscriptionPushconfig(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'pushEndpoint': self.request.get('push_endpoint'), u'attributes': self.request.get('attributes')})
+        return remove_nones_from_dict(
+            {
+                u'oidcToken': SubscriptionOidctoken(self.request.get('oidc_token', {}), self.module).to_request(),
+                u'pushEndpoint': self.request.get('push_endpoint'),
+                u'attributes': self.request.get('attributes'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({u'pushEndpoint': self.request.get(u'pushEndpoint'), u'attributes': self.request.get(u'attributes')})
+        return remove_nones_from_dict(
+            {
+                u'oidcToken': SubscriptionOidctoken(self.request.get(u'oidcToken', {}), self.module).from_response(),
+                u'pushEndpoint': self.request.get(u'pushEndpoint'),
+                u'attributes': self.request.get(u'attributes'),
+            }
+        )
+
+
+class SubscriptionOidctoken(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'serviceAccountEmail': self.request.get('service_account_email'), u'audience': self.request.get('audience')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'serviceAccountEmail': self.request.get(u'serviceAccountEmail'), u'audience': self.request.get(u'audience')})
+
+
+class SubscriptionExpirationpolicy(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict({u'ttl': self.request.get('ttl')})
+
+    def from_response(self):
+        return remove_nones_from_dict({u'ttl': self.request.get(u'ttl')})
 
 
 if __name__ == '__main__':

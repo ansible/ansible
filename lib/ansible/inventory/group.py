@@ -22,8 +22,9 @@ from itertools import chain
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
-
+from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
 from ansible.utils.display import Display
+from ansible.utils.vars import combine_vars
 
 display = Display()
 
@@ -48,8 +49,10 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
                     warn = 'Invalid characters were found in group names but not replaced, use -vvvv to see details'
 
                 # remove this message after 2.10 AND changing the default to 'always'
-                display.deprecated('The TRANSFORM_INVALID_GROUP_CHARS settings is set to allow bad characters in group names by default,'
-                                   ' this will change, but still be user configurable on deprecation', version='2.10')
+                group_chars_setting, group_chars_origin = C.config.get_config_value_and_origin('TRANSFORM_INVALID_GROUP_CHARS')
+                if group_chars_origin == 'default':
+                    display.deprecated('The TRANSFORM_INVALID_GROUP_CHARS settings is set to allow bad characters in group names by default,'
+                                       ' this will change, but still be user configurable on deprecation', version='2.10')
 
     if warn:
         display.warning(warn)
@@ -243,7 +246,10 @@ class Group:
         if key == 'ansible_group_priority':
             self.set_priority(int(value))
         else:
-            self.vars[key] = value
+            if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
+                self.vars[key] = combine_vars(self.vars[key], value)
+            else:
+                self.vars[key] = value
 
     def clear_hosts_cache(self):
 

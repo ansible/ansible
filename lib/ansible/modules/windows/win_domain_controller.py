@@ -70,6 +70,13 @@ options:
     - If not set then the default path is C(%SYSTEMROOT%\SYSVOL).
     type: path
     version_added: '2.5'
+  install_dns:
+    description:
+    - Whether to install the DNS service when creating the domain controller.
+    - If not specified then the C(-InstallDns) option is not supplied to C(Install-ADDSDomainController) command,
+      see U(https://docs.microsoft.com/en-us/powershell/module/addsdeployment/install-addsdomaincontroller).
+    type: bool
+    version_added: '2.10'
 seealso:
 - module: win_domain
 - module: win_domain_computer

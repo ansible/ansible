@@ -38,7 +38,7 @@ options:
       - Host running the database
   login_port:
     description:
-      - Port of the MSSQL server. Requires login_host be defined as other then localhost if login_port is used
+      - Port of the MSSQL server. Requires login_host be defined as other than localhost if login_port is used
     default: 1433
   state:
     description:
@@ -122,8 +122,7 @@ def db_delete(conn, cursor, db):
 
 def db_import(conn, cursor, module, db, target):
     if os.path.isfile(target):
-        backup = open(target, 'r')
-        try:
+        with open(target, 'r') as backup:
             sqlQuery = "USE [%s]\n" % db
             for line in backup:
                 if line is None:
@@ -135,8 +134,6 @@ def db_import(conn, cursor, module, db, target):
                     sqlQuery += line
             cursor.execute(sqlQuery)
             conn.commit()
-        finally:
-            backup.close()
         return 0, "import successful", ""
     else:
         return 1, "cannot find target file", "cannot find target file"

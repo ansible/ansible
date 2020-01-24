@@ -76,9 +76,9 @@ options:
     - Specifies the firewall policy for the LIF.
 
   failover_policy:
+    choices: ['disabled', 'system-defined', 'local-only', 'sfo-partner-only', 'broadcast-domain-wide']
     description:
     - Specifies the failover policy for the LIF.
-    - Possible values are 'disabled', 'system-defined', 'local-only', 'sfo-partner-only', and 'broadcast-domain-wide'
 
   subnet_name:
     description:
@@ -111,6 +111,24 @@ options:
     - Protocol values of none, iscsi, fc-nvme or fcp can't be combined with any other data protocol(s).
     - address, netmask and firewall_policy parameters are not supported for 'fc-nvme' option.
 
+  dns_domain_name:
+    description:
+    - Specifies the unique, fully qualified domain name of the DNS zone of this LIF.
+    type: str
+    version_added: '2.9'
+
+  listen_for_dns_query:
+    description:
+    - If True, this IP address will listen for DNS queries for the dnszone specified.
+    type: bool
+    version_added: '2.9'
+
+  is_dns_update_enabled:
+    description:
+    - Specifies if DNS update is enabled for this LIF. Dynamic updates will be sent for this LIF if updates are enabled at Vserver level.
+    type: bool
+    version_added: '2.9'
+
 '''
 
 EXAMPLES = '''
@@ -128,6 +146,10 @@ EXAMPLES = '''
         is_auto_revert: true
         address: 10.10.10.10
         netmask: 255.255.255.0
+        force_subnet_association: false
+        dns_domain_name: test.com
+        listen_for_dns_query: true
+        is_dns_update_enabled: true
         vserver: svm1
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
@@ -173,16 +195,26 @@ class NetAppOntapInterface(object):
             netmask=dict(required=False, type='str'),
             vserver=dict(required=True, type='str'),
             firewall_policy=dict(required=False, type='str', default=None),
-            failover_policy=dict(required=False, type='str', default=None),
+            failover_policy=dict(required=False, type='str', default=None,
+                                 choices=['disabled', 'system-defined',
+                                          'local-only', 'sfo-partner-only', 'broadcast-domain-wide']),
             admin_status=dict(required=False, choices=['up', 'down']),
             subnet_name=dict(required=False, type='str'),
             is_auto_revert=dict(required=False, type='bool', default=None),
             protocols=dict(required=False, type='list'),
-            force_subnet_association=dict(required=False, type='bool', default=None)
+            force_subnet_association=dict(required=False, type='bool', default=None),
+            dns_domain_name=dict(required=False, type='str'),
+            listen_for_dns_query=dict(required=False, type='bool'),
+            is_dns_update_enabled=dict(required=False, type='bool')
         ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
+            mutually_exclusive=[
+                ['subnet_name', 'address'],
+                ['subnet_name', 'netmask']
+            ],
+
             supports_check_mode=True
         )
         self.na_helper = NetAppModule()
@@ -194,7 +226,7 @@ class NetAppOntapInterface(object):
         else:
             self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
-    def get_interface(self, interface_name=None):
+    def get_interface(self):
         """
         Return details about the interface
         :param:
@@ -203,11 +235,10 @@ class NetAppOntapInterface(object):
         :return: Details about the interface. None if not found.
         :rtype: dict
         """
-        if interface_name is None:
-            interface_name = self.parameters['interface_name']
         interface_info = netapp_utils.zapi.NaElement('net-interface-get-iter')
         interface_attributes = netapp_utils.zapi.NaElement('net-interface-info')
-        interface_attributes.add_new_child('interface-name', interface_name)
+        interface_attributes.add_new_child('interface-name', self.parameters['interface_name'])
+        interface_attributes.add_new_child('vserver', self.parameters['vserver'])
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(interface_attributes)
         interface_info.add_child_elem(query)
@@ -232,9 +263,18 @@ class NetAppOntapInterface(object):
                 return_value['netmask'] = interface_attributes['netmask']
             if interface_attributes.get_child_by_name('firewall-policy'):
                 return_value['firewall_policy'] = interface_attributes['firewall-policy']
+            if interface_attributes.get_child_by_name('dns-domain-name') != 'none':
+                return_value['dns_domain_name'] = interface_attributes['dns-domain-name']
+            else:
+                return_value['dns_domain_name'] = None
+            if interface_attributes.get_child_by_name('listen-for-dns-query'):
+                return_value['listen_for_dns_query'] = self.na_helper.get_value_for_bool(True, interface_attributes['listen-for-dns-query'])
+            if interface_attributes.get_child_by_name('is-dns-update-enabled'):
+                return_value['is_dns_update_enabled'] = self.na_helper.get_value_for_bool(True, interface_attributes['is-dns-update-enabled'])
         return return_value
 
-    def set_options(self, options, parameters):
+    @staticmethod
+    def set_options(options, parameters):
         """ set attributes for create or modify """
         if parameters.get('home_port') is not None:
             options['home-port'] = parameters['home_port']
@@ -254,6 +294,12 @@ class NetAppOntapInterface(object):
             options['administrative-status'] = parameters['admin_status']
         if parameters.get('force_subnet_association') is not None:
             options['force-subnet-association'] = 'true' if parameters['force_subnet_association'] else 'false'
+        if parameters.get('dns_domain_name') is not None:
+            options['dns-domain-name'] = parameters['dns_domain_name']
+        if parameters.get('listen_for_dns_query') is not None:
+            options['listen-for-dns-query'] = str(parameters['listen_for_dns_query'])
+        if parameters.get('is_dns_update_enabled') is not None:
+            options['is-dns-update-enabled'] = str(parameters['is_dns_update_enabled'])
 
     def set_protocol_option(self, required_keys):
         """ set protocols for create """
@@ -261,9 +307,12 @@ class NetAppOntapInterface(object):
             data_protocols_obj = netapp_utils.zapi.NaElement('data-protocols')
             for protocol in self.parameters.get('protocols'):
                 if protocol.lower() in ['fc-nvme', 'fcp']:
-                    required_keys.remove('address')
-                    required_keys.remove('home_port')
-                    required_keys.remove('netmask')
+                    if 'address' in required_keys:
+                        required_keys.remove('address')
+                    if 'home_port' in required_keys:
+                        required_keys.remove('home_port')
+                    if 'netmask' in required_keys:
+                        required_keys.remove('netmask')
                     not_required_params = set(['address', 'netmask', 'firewall_policy'])
                     if not not_required_params.isdisjoint(set(self.parameters.keys())):
                         self.module.fail_json(msg='Error: Following parameters for creating interface are not supported'
@@ -303,7 +352,7 @@ class NetAppOntapInterface(object):
             if node is not None:
                 self.parameters['home_node'] = node
         # validate if mandatory parameters are present for create
-        if not keys.issubset(set(self.parameters.keys())):
+        if not keys.issubset(set(self.parameters.keys())) and self.parameters.get('subnet_name') is None:
             self.module.fail_json(msg='Error: Missing one or more required parameters for creating interface: %s'
                                       % ', '.join(keys))
         # if role is intercluster, protocol cannot be specified
@@ -313,7 +362,11 @@ class NetAppOntapInterface(object):
 
     def create_interface(self):
         ''' calling zapi to create interface '''
-        required_keys = set(['role', 'address', 'home_port', 'netmask'])
+        required_keys = set(['role', 'home_port'])
+        data_protocols_obj = None
+        if self.parameters.get('subnet_name') is None:
+            required_keys.add('address')
+            required_keys.add('netmask')
         data_protocols_obj = self.set_protocol_option(required_keys)
         self.validate_create_parameters(required_keys)
 
@@ -321,7 +374,7 @@ class NetAppOntapInterface(object):
                    'role': self.parameters['role'],
                    'home-node': self.parameters.get('home_node'),
                    'vserver': self.parameters['vserver']}
-        self.set_options(options, self.parameters)
+        NetAppOntapInterface.set_options(options, self.parameters)
         interface_create = netapp_utils.zapi.NaElement.create_node_with_children('net-interface-create', **options)
         if data_protocols_obj is not None:
             interface_create.add_child_elem(data_protocols_obj)
@@ -353,7 +406,7 @@ class NetAppOntapInterface(object):
         options = {'interface-name': self.parameters['interface_name'],
                    'vserver': self.parameters['vserver']
                    }
-        self.set_options(options, modify)
+        NetAppOntapInterface.set_options(options, modify)
         interface_modify = netapp_utils.zapi.NaElement.create_node_with_children('net-interface-modify', **options)
         try:
             self.server.invoke_successfully(interface_modify, enable_tunneling=True)

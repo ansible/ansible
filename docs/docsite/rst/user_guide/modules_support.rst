@@ -42,11 +42,11 @@ If you believe you have found a bug in a module and are already running the late
 
 Should you have a question rather than a bug report, inquiries are welcome on the `ansible-project Google group <https://groups.google.com/forum/#%21forum/ansible-project>`_ or on Ansible's "#ansible" channel, located on irc.freenode.net.
 
-For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>`_ or Ansible's #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read :doc:`Community Information & Contributing <../community/index>`, :doc:`Testing Ansible <../dev_guide/testing>`, and :doc:`Developing Modules <../dev_guide/developing_modules>`.
+For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>`_ or Ansible's #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read the :ref:`Community Guide <ansible_community_guide>`, :ref:`Testing Ansible <developing_testing>`, and the :ref:`Developer Guide <developer_guide>`.
 
 The modules are hosted on GitHub in a subdirectory of the `Ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
 
-NOTE: If you have a Red Hat Ansible Engine product subscription, please follow the standard issue reporting process via the Red Hat Customer Portal.
+NOTE: If you have a Red Hat Ansible Automation product subscription, please follow the standard issue reporting process via the `Red Hat Customer Portal <https://access.redhat.com/>`_.
 
 Support
 =======
@@ -56,7 +56,7 @@ please refer to the following `knowledge base article <https://access.redhat.com
 
 .. seealso::
 
-   :ref:`Modules by category<modules_by_category>`
+   :ref:`Module index<modules_by_category>`
        A complete list of all available modules.
    :ref:`intro_adhoc`
        Examples of using modules in /usr/bin/ansible

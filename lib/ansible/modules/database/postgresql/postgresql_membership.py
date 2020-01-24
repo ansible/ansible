@@ -18,15 +18,12 @@ DOCUMENTATION = r'''
 module: postgresql_membership
 short_description: Add or remove PostgreSQL roles from groups
 description:
-- Adds or removes PostgreSQL roles from groups (other roles)
-  U(https://www.postgresql.org/docs/current/role-membership.html).
-- Users are roles with login privilege (see U(https://www.postgresql.org/docs/current/role-attributes.html) for more information).
-- Groups are PostgreSQL roles usually without LOGIN privelege.
+- Adds or removes PostgreSQL roles from groups (other roles).
+- Users are roles with login privilege.
+- Groups are PostgreSQL roles usually without LOGIN privilege.
 - "Common use case:"
-- 1) add a new group (groups) by M(postgresql_user) module
-  U(https://docs.ansible.com/ansible/latest/modules/postgresql_user_module.html) with I(role_attr_flags=NOLOGIN)
+- 1) add a new group (groups) by M(postgresql_user) module with I(role_attr_flags=NOLOGIN)
 - 2) grant them desired privileges by M(postgresql_privs) module
-  U(https://docs.ansible.com/ansible/latest/modules/postgresql_privs_module.html)
 - 3) add desired PostgreSQL users to the new group (groups) by this module
 version_added: '2.8'
 options:
@@ -35,6 +32,7 @@ options:
     - The list of groups (roles) that need to be granted to or revoked from I(target_roles).
     required: yes
     type: list
+    elements: str
     aliases:
     - group
     - source_role
@@ -44,6 +42,7 @@ options:
     - The list of target roles (groups will be granted to them).
     required: yes
     type: list
+    elements: str
     aliases:
     - target_role
     - users
@@ -74,18 +73,16 @@ options:
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
     type: str
-notes:
-- The default authentication assumes that you are either logging in as or
-  sudo'ing to the postgres account on the host.
-- To avoid "Peer authentication failed for user postgres" error,
-  use postgres user as a I(become_user).
-- This module uses psycopg2, a Python PostgreSQL database adapter. You must
-  ensure that psycopg2 is installed on the host before using this module.
-- If the remote host is the PostgreSQL server (which is the default case), then
-  PostgreSQL must also be installed on the remote host.
-- For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-  on the remote host before using this module.
-requirements: [ psycopg2 ]
+seealso:
+- module: postgresql_user
+- module: postgresql_privs
+- module: postgresql_owner
+- name: PostgreSQL role membership reference
+  description: Complete reference of the PostgreSQL role membership documentation.
+  link: https://www.postgresql.org/docs/current/role-membership.html
+- name: PostgreSQL role attributes reference
+  description: Complete reference of the PostgreSQL role attributes documentation.
+  link: https://www.postgresql.org/docs/current/role-attributes.html
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
@@ -143,137 +140,18 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError, pg_quote_identifier
-from ansible.module_utils.postgres import connect_to_db, postgres_common_argument_spec
-from ansible.module_utils._text import to_native
-
-
-class PgMembership(object):
-    def __init__(self, module, cursor, groups, target_roles, fail_on_role):
-        self.module = module
-        self.cursor = cursor
-        self.target_roles = [r.strip() for r in target_roles]
-        self.groups = [r.strip() for r in groups]
-        self.executed_queries = []
-        self.granted = {}
-        self.revoked = {}
-        self.fail_on_role = fail_on_role
-        self.non_existent_roles = []
-        self.changed = False
-        self.__check_roles_exist()
-
-    def grant(self):
-        for group in self.groups:
-            self.granted[group] = []
-
-            for role in self.target_roles:
-                # If role is in a group now, pass:
-                if self.__check_membership(group, role):
-                    continue
-
-                query = "GRANT %s TO %s" % ((pg_quote_identifier(group, 'role'),
-                                            (pg_quote_identifier(role, 'role'))))
-                self.changed = self.__exec_sql(query, ddl=True)
-
-                if self.changed:
-                    self.granted[group].append(role)
-
-        return self.changed
-
-    def revoke(self):
-        for group in self.groups:
-            self.revoked[group] = []
-
-            for role in self.target_roles:
-                # If role is not in a group now, pass:
-                if not self.__check_membership(group, role):
-                    continue
-
-                query = "REVOKE %s FROM %s" % ((pg_quote_identifier(group, 'role'),
-                                               (pg_quote_identifier(role, 'role'))))
-                self.changed = self.__exec_sql(query, ddl=True)
-
-                if self.changed:
-                    self.revoked[group].append(role)
-
-        return self.changed
-
-    def __check_membership(self, src_role, dst_role):
-        query = ("SELECT ARRAY(SELECT b.rolname FROM "
-                 "pg_catalog.pg_auth_members m "
-                 "JOIN pg_catalog.pg_roles b ON (m.roleid = b.oid) "
-                 "WHERE m.member = r.oid) "
-                 "FROM pg_catalog.pg_roles r "
-                 "WHERE r.rolname = '%s'" % dst_role)
-
-        res = self.__exec_sql(query, add_to_executed=False)
-        membership = []
-        if res:
-            membership = res[0][0]
-
-        print('MEMBERSHIP ', membership)
-
-        if not membership:
-            return False
-
-        if src_role in membership:
-            return True
-
-        return False
-
-    def __check_roles_exist(self):
-        for group in self.groups:
-            if not self.__role_exists(group):
-                if self.fail_on_role:
-                    self.module.fail_json(msg="Role %s does not exist" % group)
-                else:
-                    self.module.warn("Role %s does not exist, pass" % group)
-                    self.non_existent_roles.append(group)
-
-        for role in self.target_roles:
-            if not self.__role_exists(role):
-                if self.fail_on_role:
-                    self.module.fail_json(msg="Role %s does not exist" % role)
-                else:
-                    self.module.warn("Role %s does not exist, pass" % role)
-
-                if role not in self.groups:
-                    self.non_existent_roles.append(role)
-
-                else:
-                    if self.fail_on_role:
-                        self.module.exit_json(msg="Role role '%s' is a member of role '%s'" % (role, role))
-                    else:
-                        self.module.warn("Role role '%s' is a member of role '%s', pass" % (role, role))
-
-        # Update role lists, excluding non existent roles:
-        self.groups = [g for g in self.groups if g not in self.non_existent_roles]
-
-        self.target_roles = [r for r in self.target_roles if r not in self.non_existent_roles]
-
-    def __role_exists(self, role):
-        return self.__exec_sql("SELECT 1 FROM pg_roles WHERE rolname = '%s'" % role, add_to_executed=False)
-
-    def __exec_sql(self, query, ddl=False, add_to_executed=True):
-        try:
-            self.cursor.execute(query)
-
-            if add_to_executed:
-                self.executed_queries.append(query)
-
-            if not ddl:
-                res = self.cursor.fetchall()
-                return res
-            return True
-        except Exception as e:
-            self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
-        return False
+from ansible.module_utils.postgres import (
+    connect_to_db,
+    exec_sql,
+    get_conn_params,
+    PgMembership,
+    postgres_common_argument_spec,
+)
 
 
 # ===========================================
 # Module execution.
 #
-
 
 def main():
     argument_spec = postgres_common_argument_spec()
@@ -296,7 +174,8 @@ def main():
     fail_on_role = module.params['fail_on_role']
     state = module.params['state']
 
-    db_connection = connect_to_db(module, autocommit=False)
+    conn_params = get_conn_params(module, module.params, warn_db_default=False)
+    db_connection = connect_to_db(module, conn_params, autocommit=False)
     cursor = db_connection.cursor(cursor_factory=DictCursor)
 
     ##############

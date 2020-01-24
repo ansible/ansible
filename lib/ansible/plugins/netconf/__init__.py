@@ -29,7 +29,7 @@ from ansible.module_utils.basic import missing_required_lib
 
 try:
     from ncclient.operations import RPCError
-    from ncclient.xml_ import to_xml, to_ele
+    from ncclient.xml_ import to_xml, to_ele, NCElement
     HAS_NCCLIENT = True
     NCCLIENT_IMP_ERR = None
 except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
@@ -40,15 +40,6 @@ try:
     from lxml.etree import Element, SubElement, tostring, fromstring
 except ImportError:
     from xml.etree.ElementTree import Element, SubElement, tostring, fromstring
-
-
-def ensure_connected(func):
-    @wraps(func)
-    def wrapped(self, *args, **kwargs):
-        if not self._connection._connected:
-            self._connection._connect()
-        return func(self, *args, **kwargs)
-    return wrapped
 
 
 def ensure_ncclient(func):
@@ -111,17 +102,17 @@ class NetconfBase(AnsiblePlugin):
             conn.load_configuration(config=[''set system ntp server 1.1.1.1''], action='set', format='text')
     """
 
-    __rpc__ = ['get_config', 'edit_config', 'get_capabilities', 'get']
+    __rpc__ = ['rpc', 'get_config', 'get', 'edit_config', 'validate', 'copy_config', 'dispatch', 'lock', 'unlock',
+               'discard_changes', 'commit', 'get_schema', 'delete_config', 'get_device_operations']
 
     def __init__(self, connection):
+        super(NetconfBase, self).__init__()
         self._connection = connection
 
     @property
     def m(self):
-        return self._connection._manager
+        return self._connection.manager
 
-    @ensure_ncclient
-    @ensure_connected
     def rpc(self, name):
         """
         RPC to be execute on remote device
@@ -136,7 +127,6 @@ class NetconfBase(AnsiblePlugin):
             msg = exc.xml
             raise Exception(to_xml(msg))
 
-    @ensure_connected
     def get_config(self, source=None, filter=None):
         """
         Retrieve all or part of a specified configuration
@@ -153,7 +143,6 @@ class NetconfBase(AnsiblePlugin):
         resp = self.m.get_config(source=source, filter=filter)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
-    @ensure_connected
     def get(self, filter=None, with_defaults=None):
         """
         Retrieve device configuration and state information.
@@ -169,7 +158,6 @@ class NetconfBase(AnsiblePlugin):
         response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
         return response
 
-    @ensure_connected
     def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None):
         """
         Loads all or part of the specified *config* to the *target* configuration datastore.
@@ -189,7 +177,6 @@ class NetconfBase(AnsiblePlugin):
                                   error_option=error_option)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
-    @ensure_connected
     def validate(self, source='candidate'):
         """
         Validate the contents of the specified configuration.
@@ -200,7 +187,6 @@ class NetconfBase(AnsiblePlugin):
         resp = self.m.validate(source=source)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
-    @ensure_connected
     def copy_config(self, source, target):
         """
         Create or replace an entire configuration datastore with the contents of another complete configuration datastore.
@@ -212,7 +198,6 @@ class NetconfBase(AnsiblePlugin):
         resp = self.m.copy_config(source, target)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
-    @ensure_connected
     def dispatch(self, rpc_command=None, source=None, filter=None):
         """
         Execute rpc on the remote device eg. dispatch('clear-arp-table')
@@ -223,11 +208,23 @@ class NetconfBase(AnsiblePlugin):
         """
         if rpc_command is None:
             raise ValueError('rpc_command value must be provided')
-        req = fromstring(rpc_command)
-        resp = self.m.dispatch(req, source=source, filter=filter)
-        return resp.data_xml if resp.data_ele else resp.xml
 
-    @ensure_connected
+        resp = self.m.dispatch(fromstring(rpc_command), source=source, filter=filter)
+
+        if isinstance(resp, NCElement):
+            # In case xml reply is transformed or namespace is removed in
+            # ncclient device specific handler return modified xml response
+            result = resp.data_xml
+        elif hasattr(resp, 'data_ele') and resp.data_ele:
+            # if data node is present in xml response return the xml string
+            # with data node as root
+            result = resp.data_xml
+        else:
+            # return raw xml string received from host with rpc-reply as the root node
+            result = resp.xml
+
+        return result
+
     def lock(self, target="candidate"):
         """
         Allows the client to lock the configuration system of a device.
@@ -238,7 +235,6 @@ class NetconfBase(AnsiblePlugin):
         resp = self.m.lock(target=target)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
-    @ensure_connected
     def unlock(self, target="candidate"):
         """
         Release a configuration lock, previously obtained with the lock operation.
@@ -249,7 +245,6 @@ class NetconfBase(AnsiblePlugin):
         resp = self.m.unlock(target=target)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
-    @ensure_connected
     def discard_changes(self):
         """
         Revert the candidate configuration to the currently running configuration.
@@ -259,7 +254,6 @@ class NetconfBase(AnsiblePlugin):
         resp = self.m.discard_changes()
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
-    @ensure_connected
     def commit(self, confirmed=False, timeout=None, persist=None):
         """
         Commit the candidate configuration as the device's new current configuration.
@@ -278,7 +272,6 @@ class NetconfBase(AnsiblePlugin):
         resp = self.m.commit(confirmed=confirmed, timeout=timeout, persist=persist)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
-    @ensure_connected
     def get_schema(self, identifier=None, version=None, format=None):
         """
         Retrieve a named schema, with optional revision and type.
@@ -290,7 +283,6 @@ class NetconfBase(AnsiblePlugin):
         resp = self.m.get_schema(identifier, version=version, format=format)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
-    @ensure_connected
     def delete_config(self, target):
         """
         delete a configuration datastore
@@ -300,7 +292,6 @@ class NetconfBase(AnsiblePlugin):
         resp = self.m.delete_config(target)
         return resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
 
-    @ensure_connected
     def locked(self, target):
         return self.m.locked(target)
 
@@ -374,7 +365,7 @@ class NetconfBase(AnsiblePlugin):
         if operations['supports_startup']:
             operations['lock_datastore'].append('startup')
 
-        operations['supports_lock'] = True if len(operations['lock_datastore']) else False
+        operations['supports_lock'] = bool(operations['lock_datastore'])
 
         return operations
 

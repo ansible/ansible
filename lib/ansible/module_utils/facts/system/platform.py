@@ -33,6 +33,7 @@ class PlatformFactCollector(BaseFactCollector):
     name = 'platform'
     _fact_ids = set(['system',
                      'kernel',
+                     'kernel_version',
                      'machine',
                      'python_version',
                      'architecture',
@@ -43,6 +44,7 @@ class PlatformFactCollector(BaseFactCollector):
         # platform.system() can be Linux, Darwin, Java, or Windows
         platform_facts['system'] = platform.system()
         platform_facts['kernel'] = platform.release()
+        platform_facts['kernel_version'] = platform.version()
         platform_facts['machine'] = platform.machine()
 
         platform_facts['python_version'] = platform.python_version()

@@ -13,16 +13,16 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-RETURN = '''
+RETURN = r'''
 ---
 hosts:
-  description: List of Zabbix hosts. See https://www.zabbix.com/documentation/3.4/manual/api/reference/host/get for list of host values.
+  description: List of Zabbix hosts. See https://www.zabbix.com/documentation/4.0/manual/api/reference/host/get for list of host values.
   returned: success
   type: dict
   sample: [ { "available": "1", "description": "", "disable_until": "0", "error": "", "flags": "0", "groups": ["1"], "host": "Host A", ... } ]
 '''
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_host_info
 short_description: Gather information about Zabbix host
@@ -34,17 +34,22 @@ author:
     - "Michael Miko (@RedWhiteMiko)"
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.4"
 options:
     host_name:
         description:
             - Name of the host in Zabbix.
             - host_name is the unique identifier used and cannot be updated using this module.
-        required: true
+            - Required when I(host_ip) is not used.
+        required: false
+        type: str
     host_ip:
         description:
             - Host interface IP of the host in Zabbix.
+            - Required when I(host_name) is not used.
         required: false
+        type: list
+        elements: str
     exact_match:
         description:
             - Find the exact match
@@ -60,13 +65,14 @@ options:
             - List of host inventory keys to display in result.
             - Whole host inventory is retrieved if keys are not specified.
         type: list
+        elements: str
         required: false
         version_added: 2.8
 extends_documentation_fragment:
     - zabbix
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Get host info
   local_action:
     module: zabbix_host_info
@@ -95,24 +101,17 @@ EXAMPLES = '''
     remove_duplicate: yes
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+
+import atexit
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
-
-    # Extend the ZabbixAPI
-    # Since the zabbix-api python module too old (version 1.0, no higher version so far),
-    # it does not support the 'hostinterface' api calls,
-    # so we have to inherit the ZabbixAPI class to add 'hostinterface' support.
-    class ZabbixAPIExtends(ZabbixAPI):
-        hostinterface = None
-
-        def __init__(self, server, timeout, user, passwd, validate_certs, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd, validate_certs=validate_certs)
-            self.hostinterface = ZabbixAPISubClass(self, dict({"prefix": "hostinterface"}, **kwargs))
-
+    from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
 
@@ -127,7 +126,7 @@ class Host(object):
         if exact_match:
             search_key = 'filter'
         host_list = self._zapi.host.get({'output': 'extend', 'selectParentTemplates': ['name'], search_key: {'host': [host_name]},
-                                         'selectInventory': host_inventory})
+                                         'selectInventory': host_inventory, 'selectGroups': 'extend'})
         if len(host_list) < 1:
             self._module.fail_json(msg="Host not found: %s" % host_name)
         else:
@@ -190,7 +189,7 @@ def main():
         module.deprecate("The 'zabbix_host_facts' module has been renamed to 'zabbix_host_info'", version='2.13')
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -211,9 +210,10 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                               validate_certs=validate_certs)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

@@ -1,34 +1,31 @@
 .. _become:
 
-**********************************
-Understanding Privilege Escalation
-**********************************
+******************************************
+Understanding privilege escalation: become
+******************************************
 
-Ansible can use existing privilege escalation systems to allow a user to execute tasks as another.
+Ansible uses existing privilege escalation systems to execute tasks with root privileges or with another user's permissions. Because this feature allows you to 'become' another user, different from the user that logged into the machine (remote user), we call it ``become``. The ``become`` keyword leverages existing privilege escalation tools like `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas`, `machinectl` and others.
 
-.. contents:: Topics
+.. contents::
+   :local:
 
-Become
-======
+Using become
+============
 
-Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing privilege escalation tools such as `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas`, `machinectl` and others.
+You can control the use of ``become`` with play or task directives, connection variables, or at the command line. If you set privilege escalation properties in multiple ways, review the :ref:`general precedence rules<general_precedence_rules>` to understand which settings will be used.
 
+A full list of all become plugins that are included in Ansible can be found in the :ref:`become_plugin_list`.
 
-.. note:: Prior to version 1.9, Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user and execute tasks and create resources with the second user's permissions. As of Ansible version 1.9,  `become` supersedes the old sudo/su, while still being backwards compatible. This new implementation also makes it easier to add other privilege escalation tools, including `pbrun` (Powerbroker), `pfexec`, `dzdo` (Centrify), and others.
+Become directives
+-----------------
 
-.. note:: Become vars and directives are independent. For example, setting ``become_user`` does not set ``become``.
-
-
-Directives
-==========
-
-These can be set from play to task level, but are overridden by connection variables as they can be host specific.
+You can set the directives that control ``become`` at the play or task level. You can override these by setting connection variables, which often differ from one host to another. These variables and directives are independent. For example, setting ``become_user`` does not set ``become``.
 
 become
     set to ``yes`` to activate privilege escalation.
 
 become_user
-    set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: yes``, to allow it to be set at host level.
+    set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: yes``, to allow it to be set at host level. Default value is ``root``.
 
 become_method
     (at play or task level) overrides the default method set in ansible.cfg, set to use any of the :ref:`become_plugins`.
@@ -36,7 +33,9 @@ become_method
 become_flags
     (at play or task level) permit the use of specific flags for the tasks or role. One common use is to change the user to nobody when the shell is set to no login. Added in Ansible 2.2.
 
-For example, to manage a system service (which requires ``root`` privileges) when connected as a non-``root`` user (this takes advantage of the fact that the default value of ``become_user`` is ``root``)::
+For example, to manage a system service (which requires ``root`` privileges) when connected as a non-``root`` user, you can use the default value of ``become_user`` (``root``):
+
+.. code-block:: yaml
 
     - name: Ensure the httpd service is running
       service:
@@ -44,14 +43,18 @@ For example, to manage a system service (which requires ``root`` privileges) whe
         state: started
       become: yes
 
-To run a command as the ``apache`` user::
+To run a command as the ``apache`` user:
+
+.. code-block:: yaml
 
     - name: Run a command as the apache user
       command: somecommand
       become: yes
       become_user: apache
 
-To do something as the ``nobody`` user when the shell is nologin::
+To do something as the ``nobody`` user when the shell is nologin:
+
+.. code-block:: yaml
 
     - name: Run a command as nobody
       command: somecommand
@@ -60,9 +63,13 @@ To do something as the ``nobody`` user when the shell is nologin::
       become_user: nobody
       become_flags: '-s /bin/sh'
 
-Connection variables
---------------------
-Each allows you to set an option per group and/or host, these are normally defined in inventory but can be used as normal variables.
+To specify a password for sudo, run ``ansible-playbook`` with ``--ask-become-pass`` (``-K`` for short).
+If you run a playbook utilizing ``become`` and the playbook seems to hang, most likely it is stuck at the privilege escalation prompt. Stop it with `CTRL-c`, then execute the playbook with ``-K`` and the appropriate password.
+
+Become connection variables
+---------------------------
+
+You can define different ``become`` options for each managed node or group. You can define these variables in inventory or use them as normal variables.
 
 ansible_become
     equivalent of the become directive, decides if privilege escalation is used or not.
@@ -74,14 +81,21 @@ ansible_become_user
     set the user you become through privilege escalation; does not imply ``ansible_become: yes``
 
 ansible_become_password
-    set the privilege escalation password. See :doc:`playbooks_vault` for details on how to avoid having secrets in plain text
+    set the privilege escalation password. See :ref:`playbooks_vault` for details on how to avoid having secrets in plain text
 
-For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this::
+For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this:
+
+.. code-block:: text
 
     webserver ansible_user=manager ansible_become=yes
 
-Command line options
---------------------
+.. note::
+    The variables defined above are generic for all become plugins but plugin specific ones can also be set instead.
+    Please see the documentation for each plugin for a list of all options the plugin has and how they can be defined.
+    A full list of become plugins in Ansible can be found at :ref:`become_plugins`.
+
+Become command-line options
+---------------------------
 
 --ask-become-pass, -K
     ask for privilege escalation password; does not imply become will be used. Note that this password will be used for all hosts.
@@ -96,74 +110,53 @@ Command line options
 --become-user=BECOME_USER
     run operations as this user (default=root), does not imply --become/-b
 
-
-For those from Pre 1.9 , sudo and su still work!
-------------------------------------------------
-
-For those using old playbooks will not need to be changed, even though they are deprecated, sudo and su directives, variables and options
-will continue to work. It is recommended to move to become as they may be retired at one point.
-You cannot mix directives on the same object (become and sudo) though, Ansible will complain if you try to.
-
-Become will default to using the old sudo/su configs and variables if they exist, but will override them if you specify any of the new ones.
-
-
-Limitations
------------
+Risks and limitations of become
+===============================
 
 Although privilege escalation is mostly intuitive, there are a few limitations
 on how it works.  Users should be aware of these to avoid surprises.
 
-Becoming an Unprivileged User
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Risks of becoming an unprivileged user
+--------------------------------------
 
-Ansible 2.0.x and below has a limitation with regards to becoming an
-unprivileged user that can be a security risk if users are not aware of it.
 Ansible modules are executed on the remote machine by first substituting the
 parameters into the module file, then copying the file to the remote machine,
 and finally executing it there.
 
 Everything is fine if the module file is executed without using ``become``,
 when the ``become_user`` is root, or when the connection to the remote machine
-is made as root.  In these cases the module file is created with permissions
-that only allow reading by the user and root.
+is made as root.  In these cases Ansible creates the module file with permissions
+that only allow reading by the user and root, or only allow reading by the unprivileged
+user being switched to.
 
-The problem occurs when the ``become_user`` is an unprivileged user.  Ansible
-2.0.x and below make the module file world readable in this case, as the module
-file is written as the user that Ansible connects as, but the file needs to
-be readable by the user Ansible is set to ``become``.
+However, when both the connection user and the ``become_user`` are unprivileged,
+the module file is written as the user that Ansible connects as, but the file needs to
+be readable by the user Ansible is set to ``become``. In this case, Ansible makes
+the module file world-readable for the duration of the Ansible module execution.
+Once the module is done executing, Ansible deletes the temporary file.
 
-.. note:: In Ansible 2.1, this window is further narrowed: If the connection
-    is made as a privileged user (root), then Ansible 2.1 and above will use
-    chown to set the file's owner to the unprivileged user being switched to.
-    This means both the user making the connection and the user being switched
-    to via ``become`` must be unprivileged in order to trigger this problem.
-
-If any of the parameters passed to the module are sensitive in nature, then
-those pieces of data are located in a world readable module file for the
-duration of the Ansible module execution.  Once the module is done executing,
-Ansible will delete the temporary file.  If you trust the client machines then
-there's no problem here.  If you do not trust the client machines then this is
-a potential danger.
+If any of the parameters passed to the module are sensitive in nature, and you do
+not trust the client machines, then this is a potential danger.
 
 Ways to resolve this include:
 
-* Use `pipelining`.  When pipelining is enabled, Ansible doesn't save the
+* Use `pipelining`.  When pipelining is enabled, Ansible does not save the
   module to a temporary file on the client.  Instead it pipes the module to
   the remote python interpreter's stdin. Pipelining does not work for
   python modules involving file transfer (for example: :ref:`copy <copy_module>`,
   :ref:`fetch <fetch_module>`, :ref:`template <template_module>`), or for non-python modules.
 
-* (Available in Ansible 2.1) Install POSIX.1e filesystem acl support on the
+* Install POSIX.1e filesystem acl support on the
   managed host.  If the temporary directory on the remote host is mounted with
   POSIX acls enabled and the :command:`setfacl` tool is in the remote ``PATH``
   then Ansible will use POSIX acls to share the module file with the second
   unprivileged user instead of having to make the file readable by everyone.
 
-* Don't perform an action on the remote machine by becoming an unprivileged
+* Avoid becoming an unprivileged
   user.  Temporary files are protected by UNIX file permissions when you
   ``become`` root or do not use ``become``.  In Ansible 2.1 and above, UNIX
   file permissions are also secure if you make the connection to the managed
-  machine as root and then use ``become`` to an unprivileged account.
+  machine as root and then use ``become`` to access an unprivileged account.
 
 .. warning:: Although the Solaris ZFS filesystem has filesystem ACLs, the ACLs
     are not POSIX.1e filesystem acls (they are NFSv4 ACLs instead).  Ansible
@@ -172,48 +165,49 @@ Ways to resolve this include:
 
 .. versionchanged:: 2.1
 
-In addition to the additional means of doing this securely, Ansible 2.1 also
-makes it harder to unknowingly do this insecurely.  Whereas in Ansible 2.0.x
-and below, Ansible will silently allow the insecure behaviour if it was unable
-to find another way to share the files with the unprivileged user, in Ansible
-2.1 and above Ansible defaults to issuing an error if it can't do this
-securely.  If you can't make any of the changes above to resolve the problem,
-and you decide that the machine you're running on is secure enough for the
+Ansible makes it hard to unknowingly use ``become`` insecurely. Starting in Ansible 2.1,
+Ansible defaults to issuing an error if it cannot execute securely with ``become``.
+If you cannot use pipelining or POSIX ACLs, you must connect as an unprivileged user,
+you must use ``become`` to execute as a different unprivileged user,
+and you decide that your managed nodes are secure enough for the
 modules you want to run there to be world readable, you can turn on
 ``allow_world_readable_tmpfiles`` in the :file:`ansible.cfg` file.  Setting
 ``allow_world_readable_tmpfiles`` will change this from an error into
 a warning and allow the task to run as it did prior to 2.1.
 
-Connection Plugin Support
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Not supported by all connection plugins
+---------------------------------------
 
 Privilege escalation methods must also be supported by the connection plugin
-used.   Most connection plugins will warn if they do not support become.  Some
+used. Most connection plugins will warn if they do not support become. Some
 will just ignore it as they always run as root (jail, chroot, etc).
 
 Only one method may be enabled per host
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------------------
 
-Methods cannot be chained.  You cannot use ``sudo /bin/su -`` to become a user,
+Methods cannot be chained. You cannot use ``sudo /bin/su -`` to become a user,
 you need to have privileges to run the command as that user in sudo or be able
 to su directly to it (the same for pbrun, pfexec or other supported methods).
 
-Can't limit escalation to certain commands
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Privilege escalation must be general
+------------------------------------
 
-Privilege escalation permissions have to be general.  Ansible does not always
+You cannot limit privilege escalation permissions to certain commands.
+Ansible does not always
 use a specific command to do something but runs modules (code) from
 a temporary file name which changes every time.  If you have '/sbin/service'
 or '/bin/chmod' as the allowed commands this will fail with ansible as those
-paths won't match with the temporary file that ansible creates to run the
-module.
+paths won't match with the temporary file that Ansible creates to run the
+module. If you have security rules that constrain your sudo/pbrun/doas environment
+to running specific command paths only, use Ansible from a special account that
+does not have this constraint, or use :ref:`ansible_tower` to manage indirect access to SSH credentials.
 
-Environment variables populated by pam_systemd
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+May not access environment variables populated by pamd_systemd
+--------------------------------------------------------------
 
 For most Linux distributions using ``systemd`` as their init, the default
 methods used by ``become`` do not open a new "session", in the sense of
-systemd.  Because the ``pam_systemd`` module will not fully initialize a new
+systemd. Because the ``pam_systemd`` module will not fully initialize a new
 session, you might have surprises compared to a normal session opened through
 ssh: some environment variables set by ``pam_systemd``, most notably
 ``XDG_RUNTIME_DIR``, are not populated for the new user and instead inherited
@@ -237,10 +231,10 @@ For more information, see `this systemd issue
 
 .. _become_network:
 
-Become and Networks
-===================
+Become and network automation
+=============================
 
-As of version 2.6, Ansible supports ``become`` for privilege escalation (entering ``enable`` mode or privileged EXEC mode) on all :ref:`Ansible-maintained platforms<network_supported>` that support ``enable`` mode: ``eos``, ``ios``, and ``nxos``. Using ``become`` replaces the ``authorize`` and ``auth_pass`` options in a ``provider`` dictionary.
+As of version 2.6, Ansible supports ``become`` for privilege escalation (entering ``enable`` mode or privileged EXEC mode) on all :ref:`Ansible-maintained platforms<network_supported>` that support ``enable`` mode. Using ``become`` replaces the ``authorize`` and ``auth_pass`` options in a ``provider`` dictionary.
 
 You must set the connection type to either ``connection: network_cli`` or ``connection: httpapi`` to use ``become`` for privilege escalation on network devices. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
 
@@ -291,7 +285,6 @@ Often you wish for all tasks in all plays to run using privilege mode, that is b
    ansible_become: yes
    ansible_become_method: enable
 
-
 Passwords for enable mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -302,12 +295,12 @@ If you need a password to enter ``enable`` mode, you can specify it in one of tw
 
 .. warning::
 
-   As a reminder passwords should never be stored in plain text. For information on encrypting your passwords and other secrets with Ansible Vault, see :doc:`playbooks_vault`.
+   As a reminder passwords should never be stored in plain text. For information on encrypting your passwords and other secrets with Ansible Vault, see :ref:`vault`.
 
 authorize and auth_pass
 -----------------------
 
-Ansible still supports ``enable`` mode with ``connection: local`` for legacy playbooks. To enter ``enable`` mode with ``connection: local``, use the module options ``authorize`` and ``auth_pass``:
+Ansible still supports ``enable`` mode with ``connection: local`` for legacy network playbooks. To enter ``enable`` mode with ``connection: local``, use the module options ``authorize`` and ``auth_pass``:
 
 .. code-block:: yaml
 
@@ -341,7 +334,7 @@ delegation or accessing forbidden system calls like the WUA API. You can use
 ``become`` with the same user as ``ansible_user`` to bypass these limitations
 and run commands that are not normally accessible in a WinRM session.
 
-Administrative Rights
+Administrative rights
 ---------------------
 
 Many tasks in Windows require administrative privileges to complete. When using
@@ -355,7 +348,9 @@ debug privilege is not available, the become process will run with a limited
 set of privileges and groups.
 
 To determine the type of token that Ansible was able to get, run the following
-task::
+task:
+
+.. code-block:: yaml
 
     - win_whoami:
       become: yes
@@ -479,7 +474,9 @@ If running on a version of Ansible that is older than 2.5 or the normal
   default, and care should be taken if you grant this privilege to a user or group.
   For more information on this privilege, please see
   `Act as part of the operating system <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn221957(v=ws.11)>`_.
-  You can use the below task to set this privilege on a Windows host::
+  You can use the below task to set this privilege on a Windows host:
+
+  .. code-block:: yaml
 
     - name: grant the ansible user the SeTcbPrivilege right
       win_user_right:
@@ -490,7 +487,9 @@ If running on a version of Ansible that is older than 2.5 or the normal
 * Turn UAC off on the host and reboot before trying to become the user. UAC is
   a security protocol that is designed to run accounts with the
   ``least privilege`` principle. You can turn UAC off by running the following
-  tasks::
+  tasks:
+
+  .. code-block:: yaml
 
     - name: turn UAC off
       win_regedit:
@@ -508,10 +507,10 @@ If running on a version of Ansible that is older than 2.5 or the normal
 .. Note:: Granting the ``SeTcbPrivilege`` or turning UAC off can cause Windows
     security vulnerabilities and care should be given if these steps are taken.
 
-Local Service Accounts
+Local service accounts
 ----------------------
 
-Prior to Ansible version 2.5, ``become`` only worked with a local or domain
+Prior to Ansible version 2.5, ``become`` only worked on Windows with a local or domain
 user account. Local service accounts like ``System`` or ``NetworkService``
 could not be used as ``become_user`` in these older versions. This restriction
 has been lifted since the 2.5 release of Ansible. The three service accounts
@@ -525,10 +524,10 @@ Because local service accounts do not have passwords, the
 ``ansible_become_password`` parameter is not required and is ignored if
 specified.
 
-Become without setting a Password
+Become without setting a password
 ---------------------------------
 
-As of Ansible 2.8, ``become`` can be used to become a local or domain account
+As of Ansible 2.8, ``become`` can be used to become a Windows local or domain account
 without requiring a password for that account. For this method to work, the
 following requirements must be met:
 
@@ -561,12 +560,12 @@ undefined or set ``ansible_become_password:``.
   have access to local resources. Use become with a password if the task needs
   to access network resources
 
-Accounts without a Password
+Accounts without a password
 ---------------------------
 
 .. Warning:: As a general security best practice, you should avoid allowing accounts without passwords.
 
-Ansible can be used to become an account that does not have a password (like the
+Ansible can be used to become a Windows account that does not have a password (like the
 ``Guest`` account). To become an account without a password, set up the
 variables like normal but set ``ansible_become_password: ''``.
 
@@ -589,14 +588,14 @@ or with this Ansible task:
     to set the account's password under ``ansible_become_password`` if the
     become_user has a password.
 
-Become Flags
-------------
-Ansible 2.5 adds the ``become_flags`` parameter to the ``runas`` become method.
+Become flags for Windows
+------------------------
+
+Ansible 2.5 added the ``become_flags`` parameter to the ``runas`` become method.
 This parameter can be set using the ``become_flags`` task directive or set in
 Ansible's configuration using ``ansible_become_flags``. The two valid values
 that are initially supported for this parameter are ``logon_type`` and
 ``logon_flags``.
-
 
 .. Note:: These flags should only be set when becoming a normal user account, not a local service account like LocalSystem.
 
@@ -656,7 +655,7 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
     win_copy:
       src: \\server\share\data\file.txt
       dest: C:\temp\file.txt
-      remote_src: yex
+      remote_src: yes
     vars:
       ansible_become: yes
       ansible_become_method: runas
@@ -675,10 +674,8 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
     become_flags: logon_flags=
 
 
-Limitations
------------
-
-Be aware of the following limitations with ``become`` on Windows:
+Limitations of become on Windows
+--------------------------------
 
 * Running a task with ``async`` and ``become`` on Windows Server 2008, 2008 R2
   and Windows 7 only works when using Ansible 2.7 or newer.
@@ -693,6 +690,8 @@ Be aware of the following limitations with ``become`` on Windows:
   ``ansible_winrm_transport`` was either ``basic`` or ``credssp``. This
   restriction has been lifted since the 2.4 release of Ansible for all hosts
   except Windows Server 2008 (non R2 version).
+
+* The Secondary Logon service ``seclogon`` must be running to use ``ansible_become_method: runas``
 
 .. seealso::
 

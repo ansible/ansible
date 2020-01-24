@@ -54,10 +54,18 @@ options:
     type: int
   encap_mode:
     description:
-    - The ecapsulataion method to be used.
+    - The encapsulation method to be used.
     - The APIC defaults to C(auto) when unset during creation.
+    - If vxlan is selected, switching_mode must be "AVE".
     type: str
     choices: [ auto, vlan, vxlan ]
+  switching_mode:
+    description:
+    - Switching Mode used by the switch
+    type: str
+    choices: [ AVE, native ]
+    default: native
+    version_added: '2.9'
   epg:
     description:
     - Name of the end point group.
@@ -296,6 +304,7 @@ def main():
         domain_type=dict(type='str', choices=['l2dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap=dict(type='int'),
         encap_mode=dict(type='str', choices=['auto', 'vlan', 'vxlan']),
+        switching_mode=dict(type='str', default='native', choices=['AVE', 'native']),
         epg=dict(type='str', aliases=['name', 'epg_name']),  # Not required for querying all objects
         netflow=dict(type='bool'),
         primary_encap=dict(type='int'),
@@ -317,30 +326,31 @@ def main():
 
     aci = ACIModule(module)
 
-    allow_useg = module.params['allow_useg']
-    ap = module.params['ap']
-    deploy_immediacy = module.params['deploy_immediacy']
-    domain = module.params['domain']
-    domain_type = module.params['domain_type']
-    vm_provider = module.params['vm_provider']
-    encap = module.params['encap']
+    allow_useg = module.params.get('allow_useg')
+    ap = module.params.get('ap')
+    deploy_immediacy = module.params.get('deploy_immediacy')
+    domain = module.params.get('domain')
+    domain_type = module.params.get('domain_type')
+    vm_provider = module.params.get('vm_provider')
+    encap = module.params.get('encap')
     if encap is not None:
         if encap in range(1, 4097):
             encap = 'vlan-{0}'.format(encap)
         else:
-            module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
-    encap_mode = module.params['encap_mode']
-    epg = module.params['epg']
-    netflow = aci.boolean(module.params['netflow'], 'enabled', 'disabled')
-    primary_encap = module.params['primary_encap']
+            module.fail_json(msg='Valid VLAN assignments are from 1 to 4096')
+    encap_mode = module.params.get('encap_mode')
+    switching_mode = module.params.get('switching_mode')
+    epg = module.params.get('epg')
+    netflow = aci.boolean(module.params.get('netflow'), 'enabled', 'disabled')
+    primary_encap = module.params.get('primary_encap')
     if primary_encap is not None:
         if primary_encap in range(1, 4097):
             primary_encap = 'vlan-{0}'.format(primary_encap)
         else:
-            module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
-    resolution_immediacy = module.params['resolution_immediacy']
-    state = module.params['state']
-    tenant = module.params['tenant']
+            module.fail_json(msg='Valid VLAN assignments are from 1 to 4096')
+    resolution_immediacy = module.params.get('resolution_immediacy')
+    state = module.params.get('state')
+    tenant = module.params.get('tenant')
 
     if domain_type in ['l2dom', 'phys'] and vm_provider is not None:
         module.fail_json(msg="Domain type '%s' cannot have a 'vm_provider'" % domain_type)
@@ -391,6 +401,7 @@ def main():
                 classPref=allow_useg,
                 encap=encap,
                 encapMode=encap_mode,
+                switchingMode=switching_mode,
                 instrImedcy=deploy_immediacy,
                 netflowPref=netflow,
                 primaryEncap=primary_encap,

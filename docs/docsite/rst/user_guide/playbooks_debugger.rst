@@ -5,7 +5,7 @@ Playbook Debugger
 
 .. contents:: Topics
 
-Ansible includes a debugger as part of the strategy plugins. This debugger enables you to debug as task.
+Ansible includes a debugger as part of the strategy plugins. This debugger enables you to debug a task.
 You have access to all of the features of the debugger in the context of the task.  You can then, for example, check or set the value of variables, update module arguments, and re-run the task with the new variables and arguments to help resolve the cause of the failure.
 
 There are multiple ways to invoke the debugger.
@@ -285,7 +285,7 @@ may cause the rescheduled task to execute after subsequent tasks listed in your 
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

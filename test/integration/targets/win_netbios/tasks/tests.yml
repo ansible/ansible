@@ -1,0 +1,159 @@
+# Test code for win_netbios module
+# Copyright: (c) 2019, Thomas Moore <hi@tmmr.uk>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact:
+    get_netbios_script: |
+      $adapter = Get-CimInstance -ClassName Win32_NetworkAdapter -Filter "NetConnectionID='{{ network_adapter_name }}'"
+      $config = Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration -Filter "Index=$($adapter.DeviceID)"
+      $config.TcpipNetbiosOptions
+
+- name: disable netbios single adapter (check mode)
+  win_netbios:
+    adapter_names: '{{ network_adapter_name }}'
+    state: disabled
+  register: set_single_check
+  check_mode: yes
+
+- name: get result of disable a single adapter test (check mode)
+  win_shell: '{{ get_netbios_script }}'
+  changed_when: no
+  register: set_single_actual_check
+
+- name: assert disable a single adapter (check mode)
+  assert:
+    that:
+    - set_single_check is changed
+    - set_single_actual_check.stdout_lines == ["0"]
+
+- name: disable netbios single adapter
+  win_netbios:
+    adapter_names: '{{ network_adapter_name }}'
+    state: disabled
+  register: set_single
+
+- name: get result of disable a single adapter test
+  win_shell: '{{ get_netbios_script }}'
+  changed_when: no
+  register: set_single_actual
+
+- name: assert disable a single adapter
+  assert:
+    that:
+    - set_single_check is changed
+    - set_single_actual.stdout_lines == ["2"]
+
+- name: fail with invalid network adapter name
+  win_netbios:
+    state: disabled
+    adapter_names:
+      - FakeAdapterName
+  register: invalid_adapter
+  failed_when: invalid_adapter.msg != "Not all of the target adapter names could be found on the system. No configuration changes have been made. FakeAdapterName"
+
+- name: disable netbios all adapters (check mode)
+  win_netbios:
+    state: disabled
+  check_mode: yes
+  register: disable_check
+
+- name: assert disable netbios (check mode)
+  assert:
+    that:
+      - disable_check.changed
+
+- name: disable netbios all adapters
+  win_netbios:
+    state: disabled
+  register: netbios_disable
+
+- name: assert netbios disabled
+  assert:
+    that:
+      - netbios_disable.changed
+
+- name: test disable idempotence
+  win_netbios:
+    state: disabled
+  register: netbios_disable
+
+- name: test disable idempotence
+  assert:
+    that:
+      - not netbios_disable.changed
+
+- name: enable netbios all adapters (check mode)
+  win_netbios:
+    state: enabled
+  check_mode: yes
+  register: enable_check
+
+- name: assert enable netbios all adapters (check mode)
+  assert:
+    that:
+      - enable_check.changed
+
+- name: enable netbios all adapters
+  win_netbios:
+    state: enabled
+  register: netbios_enable
+
+- name: assert netbios enabled
+  assert:
+    that:
+      - netbios_enable.changed
+
+- name: test enable idempotence
+  win_netbios:
+    state: enabled
+  register: netbios_enable
+
+- name: assert enable idempotence
+  assert:
+    that:
+      - not netbios_enable.changed
+
+- name: default netbios all adapters (check mode)
+  win_netbios:
+    state: default
+  check_mode: yes
+  register: default_check
+
+- name: assert default netbios (check mode)
+  assert:
+    that:
+      - default_check.changed
+
+- name: default netbios all adapters
+  win_netbios:
+    state: default
+  register: default_enable
+
+- name: assert netbios default all adapters
+  assert:
+    that:
+      - default_enable.changed
+
+- name: test default idempotence
+  win_netbios:
+    state: default
+  register: netbios_default
+
+- name: assert default idempotence
+  assert:
+    that:
+      - not netbios_default.changed

@@ -28,7 +28,7 @@
     that: output.changed
 
 - name: list facts for function
-  azure_rm_functionapp_facts:
+  azure_rm_functionapp_info:
     resource_group: '{{ resource_group }}'
     name: "{{ funcapp_name_basic }}"
   register: results
@@ -36,8 +36,8 @@
 - name: assert the facts were retrieved
   assert:
     that:
-    - results.ansible_facts.azure_functionapps|length == 1
-    - results.ansible_facts.azure_functionapps[0].name == "{{ funcapp_name_basic }}"
+    - results.ansible_info.azure_functionapps|length == 1
+    - results.ansible_info.azure_functionapps[0].name == "{{ funcapp_name_basic }}"
 
 - name: delete basic function app
   azure_rm_functionapp:

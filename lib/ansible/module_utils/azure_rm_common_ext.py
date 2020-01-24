@@ -18,13 +18,22 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         for name in spec.keys():
             # first check if option was passed
             param = body.get(name)
-            if not param:
+            if param is None:
+                if spec[name].get('purgeIfNone', False):
+                    body.pop(name, None)
                 continue
             # check if pattern needs to be used
             pattern = spec[name].get('pattern', None)
             if pattern:
                 if pattern == 'camelize':
                     param = _snake_to_camel(param, True)
+                elif isinstance(pattern, list):
+                    normalized = None
+                    for p in pattern:
+                        normalized = self.normalize_resource_id(param, p)
+                        body[name] = normalized
+                        if normalized is not None:
+                            break
                 else:
                     param = self.normalize_resource_id(param, pattern)
                     body[name] = param
@@ -140,34 +149,44 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
         if new is None:
             return True
         elif isinstance(new, dict):
+            comparison_result = True
             if not isinstance(old, dict):
-                result['compare'] = 'changed [' + path + '] old dict is null'
-                return False
-            for k in new.keys():
-                if not self.default_compare(modifiers, new.get(k), old.get(k, None), path + '/' + k, result):
-                    return False
-            return True
-        elif isinstance(new, list):
-            if not isinstance(old, list) or len(new) != len(old):
-                result['compare'] = 'changed [' + path + '] length is different or null'
-                return False
-            if isinstance(old[0], dict):
-                key = None
-                if 'id' in old[0] and 'id' in new[0]:
-                    key = 'id'
-                elif 'name' in old[0] and 'name' in new[0]:
-                    key = 'name'
-                else:
-                    key = next(iter(old[0]))
-                    new = sorted(new, key=lambda x: x.get(key, None))
-                    old = sorted(old, key=lambda x: x.get(key, None))
+                result['compare'].append('changed [' + path + '] old dict is null')
+                comparison_result = False
             else:
-                new = sorted(new)
-                old = sorted(old)
-            for i in range(len(new)):
-                if not self.default_compare(modifiers, new[i], old[i], path + '/*', result):
-                    return False
-            return True
+                for k in set(new.keys()) | set(old.keys()):
+                    new_item = new.get(k, None)
+                    old_item = old.get(k, None)
+                    if new_item is None:
+                        if isinstance(old_item, dict):
+                            new[k] = old_item
+                            result['compare'].append('new item was empty, using old [' + path + '][ ' + k + ' ]')
+                    elif not self.default_compare(modifiers, new_item, old_item, path + '/' + k, result):
+                        comparison_result = False
+            return comparison_result
+        elif isinstance(new, list):
+            comparison_result = True
+            if not isinstance(old, list) or len(new) != len(old):
+                result['compare'].append('changed [' + path + '] length is different or old value is null')
+                comparison_result = False
+            else:
+                if isinstance(old[0], dict):
+                    key = None
+                    if 'id' in old[0] and 'id' in new[0]:
+                        key = 'id'
+                    elif 'name' in old[0] and 'name' in new[0]:
+                        key = 'name'
+                    else:
+                        key = next(iter(old[0]))
+                        new = sorted(new, key=lambda x: x.get(key, None))
+                        old = sorted(old, key=lambda x: x.get(key, None))
+                else:
+                    new = sorted(new)
+                    old = sorted(old)
+                for i in range(len(new)):
+                    if not self.default_compare(modifiers, new[i], old[i], path + '/*', result):
+                        comparison_result = False
+            return comparison_result
         else:
             updatable = modifiers.get(path, {}).get('updatable', True)
             comparison = modifiers.get(path, {}).get('comparison', 'default')
@@ -182,7 +201,7 @@ class AzureRMModuleBaseExt(AzureRMModuleBase):
                     new = new.replace(' ', '').lower()
                     old = old.replace(' ', '').lower()
             if str(new) != str(old):
-                result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old) + ' - ' + str(comparison)
+                result['compare'].append('changed [' + path + '] ' + str(new) + ' != ' + str(old) + ' - ' + str(comparison))
                 if updatable:
                     return False
                 else:

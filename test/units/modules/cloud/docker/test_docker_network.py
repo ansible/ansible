@@ -1,7 +1,11 @@
 """Unit tests for docker_network."""
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import pytest
 
-from ansible.modules.cloud.docker.docker_network import get_ip_version
+from ansible.modules.cloud.docker.docker_network import validate_cidr
 
 
 @pytest.mark.parametrize("cidr,expected", [
@@ -11,8 +15,8 @@ from ansible.modules.cloud.docker.docker_network import get_ip_version
     ('fdd1:ac8c:0557:7ce2::/64', 'ipv6'),
     ('fdd1:ac8c:0557:7ce2::/128', 'ipv6'),
 ])
-def test_get_ip_version_positives(cidr, expected):
-    assert get_ip_version(cidr) == expected
+def test_validate_cidr_positives(cidr, expected):
+    assert validate_cidr(cidr) == expected
 
 
 @pytest.mark.parametrize("cidr", [
@@ -21,7 +25,7 @@ def test_get_ip_version_positives(cidr, expected):
     '192.168.0.1/asd',
     'fdd1:ac8c:0557:7ce2::',
 ])
-def test_get_ip_version_negatives(cidr):
+def test_validate_cidr_negatives(cidr):
     with pytest.raises(ValueError) as e:
-        get_ip_version(cidr)
+        validate_cidr(cidr)
     assert '"{0}" is not a valid CIDR'.format(cidr) == str(e.value)

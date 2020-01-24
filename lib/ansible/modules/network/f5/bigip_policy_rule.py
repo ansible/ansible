@@ -198,7 +198,7 @@ EXAMPLES = r'''
         - type: http_uri
           path_starts_with: /HomePage/
 
-- name: Remove all rules and confitions from the rule
+- name: Remove all rules and conditions from the rule
   bigip_policy_rule:
     policy: Policy-Foo
     name: rule1
@@ -883,7 +883,7 @@ class ModuleManager(object):
     def publish_on_device(self):
         params = dict(
             name=fq_name(self.want.partition,
-                         self.want.name,
+                         self.want.policy,
                          sub_path='Drafts'
                          ),
             command="publish"

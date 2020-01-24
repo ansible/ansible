@@ -17,4 +17,5 @@ some of the differences between Linux/Unix hosts and hosts running Windows.
    windows_winrm
    windows_usage
    windows_dsc
+   windows_performance
    windows_faq

@@ -1,19 +1,18 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_pim_interface sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
-- name: "Disable feature PIM"
+- name: "Setup: Disable features"
   nxos_feature: &disable_feature
-    feature: pim
-    provider: "{{ connection }}"
+    feature: "{{ item }}"
     state: disabled
+  loop: ['pim', 'bfd']
+  ignore_errors: yes
 
-- name: "Enable feature PIM"
+- name: "Setup: Enable features"
   nxos_feature:
-    feature: pim
-    provider: "{{ connection }}"
+    feature: "{{ item }}"
     state: enabled
+  loop: ['pim', 'bfd']
 
 - set_fact: testint="{{ nxos_int1 }}"
 
@@ -21,7 +20,6 @@
   nxos_config:
     lines:
       - "default interface {{ testint }}"
-    provider: "{{ connection }}"
   ignore_errors: yes
 
 - name: "Ensure {{testint}} is layer3"
@@ -30,14 +28,12 @@
     mode: layer3
     description: 'Configured by Ansible - Layer3'
     admin_state: 'up'
-    provider: "{{ connection }}"
     state: present
 
 - block:
   - name: Configure nxos_pim_interface state absent
     nxos_pim_interface: &pimabsent
       interface: "{{ testint }}"
-      provider: "{{ connection }}"
       state: absent
 
   - name: configure jp policy and type
@@ -49,7 +45,6 @@
       jp_type_out: routemap
       sparse: True
       border: True
-      provider: "{{ connection }}"
     register: result
 
   - assert: &true
@@ -69,7 +64,6 @@
       interface: "{{ testint }}"
       neighbor_policy: NPR
       neighbor_type: routemap
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -88,7 +82,6 @@
       interface: "{{ testint }}"
       neighbor_policy: NPPF
       neighbor_type: prefix
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -103,7 +96,6 @@
     nxos_pim_interface: &confighak1
       interface: "{{ testint }}"
       hello_auth_key: password1
-      provider: "{{ connection }}"
     register: result
 
   - assert: *true
@@ -115,7 +107,7 @@
       hello_interval: 40
       sparse: True
       border: True
-      provider: "{{ connection }}"
+      bfd: enable
       state: present
     register: result
 
@@ -132,7 +124,7 @@
       interface: "{{ testint }}"
       sparse: False
       border: False
-      provider: "{{ connection }}"
+      bfd: disable
       state: present
     register: result
 
@@ -150,7 +142,6 @@
   - name: configure state default
     nxos_pim_interface: &configdefault
       interface: "{{ testint }}"
-      provider: "{{ connection }}"
       state: default
     register: result
 
@@ -166,7 +157,6 @@
     nxos_pim_interface: &configb
       interface: "{{ testint }}"
       border: True
-      provider: "{{ connection }}"
       state: present
     register: result
 
@@ -193,5 +183,6 @@
   always:
   - name: "Disable feature PIM"
     nxos_feature: *disable_feature
+    loop: ['pim', 'bfd']
 
 - debug: msg="END connection={{ ansible_connection }} nxos_pim_interface sanity test"

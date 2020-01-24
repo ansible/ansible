@@ -260,3 +260,29 @@ class TestMyModule(unittest.TestCase):
         with pytest.raises(AnsibleFailJson) as exc:
             self.get_group_mock_object('group-fail').delete_unix_group()
         assert 'Error removing UNIX group' in exc.value.args[0]['msg']
+
+    @patch('ansible.modules.storage.netapp.na_ontap_unix_group.NetAppOntapUnixGroup.get_unix_group')
+    def test_add_user_exception(self, get_unix_group):
+        data = self.mock_args()
+        data['users'] = 'test_user'
+        set_module_args(data)
+        get_unix_group.side_effect = [
+            {'users': []}
+        ]
+        with pytest.raises(AnsibleFailJson) as exc:
+            self.get_group_mock_object('group-fail').modify_users_in_group()
+            print(exc.value.args[0]['msg'])
+        assert 'Error adding user' in exc.value.args[0]['msg']
+
+    @patch('ansible.modules.storage.netapp.na_ontap_unix_group.NetAppOntapUnixGroup.get_unix_group')
+    def test_delete_user_exception(self, get_unix_group):
+        data = self.mock_args()
+        data['users'] = ''
+        set_module_args(data)
+        get_unix_group.side_effect = [
+            {'users': ['test_user']}
+        ]
+        with pytest.raises(AnsibleFailJson) as exc:
+            self.get_group_mock_object('group-fail').modify_users_in_group()
+            print(exc.value.args[0]['msg'])
+        assert 'Error deleting user' in exc.value.args[0]['msg']

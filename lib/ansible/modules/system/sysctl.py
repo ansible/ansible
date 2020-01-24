@@ -65,7 +65,7 @@ EXAMPLES = '''
 # Set vm.swappiness to 5 in /etc/sysctl.conf
 - sysctl:
     name: vm.swappiness
-    value: 5
+    value: '5'
     state: present
 
 # Remove kernel.panic entry from /etc/sysctl.conf
@@ -77,20 +77,20 @@ EXAMPLES = '''
 # Set kernel.panic to 3 in /tmp/test_sysctl.conf
 - sysctl:
     name: kernel.panic
-    value: 3
+    value: '3'
     sysctl_file: /tmp/test_sysctl.conf
     reload: no
 
 # Set ip forwarding on in /proc and verify token value with the sysctl command
 - sysctl:
     name: net.ipv4.ip_forward
-    value: 1
+    value: '1'
     sysctl_set: yes
 
 # Set ip forwarding on in /proc and in the sysctl file and reload if necessary
 - sysctl:
     name: net.ipv4.ip_forward
-    value: 1
+    value: '1'
     sysctl_set: yes
     state: present
     reload: yes
@@ -99,10 +99,11 @@ EXAMPLES = '''
 # ==============================================================
 
 import os
+import platform
 import re
 import tempfile
 
-from ansible.module_utils.basic import get_platform, AnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_FALSE, BOOLEANS_TRUE
 from ansible.module_utils._text import to_native
@@ -138,7 +139,7 @@ class SysctlModule(object):
 
     def process(self):
 
-        self.platform = get_platform().lower()
+        self.platform = platform.system().lower()
 
         # Whitespace is bad
         self.args['name'] = self.args['name'].strip()
@@ -149,7 +150,7 @@ class SysctlModule(object):
         # get the current proc fs value
         self.proc_value = self.get_token_curr_value(thisname)
 
-        # get the currect sysctl file value
+        # get the current sysctl file value
         self.read_sysctl_file()
         if thisname not in self.file_values:
             self.file_values[thisname] = None
@@ -169,9 +170,16 @@ class SysctlModule(object):
         elif self.file_values[thisname] != self.args['value']:
             self.changed = True
             self.write_file = True
+        # with reload=yes we should check if the current system values are
+        # correct, so that we know if we should reload
+        elif self.args['reload']:
+            if self.proc_value is None:
+                self.changed = True
+            elif not self._values_is_equal(self.proc_value, self.args['value']):
+                self.changed = True
 
         # use the sysctl command or not?
-        if self.args['sysctl_set']:
+        if self.args['sysctl_set'] and self.args['state'] == "present":
             if self.proc_value is None:
                 self.changed = True
             elif not self._values_is_equal(self.proc_value, self.args['value']):
@@ -182,7 +190,7 @@ class SysctlModule(object):
         if not self.module.check_mode:
             if self.write_file:
                 self.write_sysctl()
-            if self.write_file and self.args['reload']:
+            if self.changed and self.args['reload']:
                 self.reload_sysctl()
             if self.set_proc:
                 self.set_token_value(self.args['name'], self.args['value'])
@@ -271,7 +279,6 @@ class SysctlModule(object):
 
     # Run sysctl -p
     def reload_sysctl(self):
-        # do it
         if self.platform == 'freebsd':
             # freebsd doesn't support -p, so reload the sysctl service
             rc, out, err = self.module.run_command('/etc/rc.d/sysctl reload', environ_update=self.LANG_ENV)
@@ -282,10 +289,16 @@ class SysctlModule(object):
                 rc = 0
                 if k != self.args['name']:
                     rc = self.set_token_value(k, v)
+                    # FIXME this check is probably not needed as set_token_value would fail_json if rc != 0
                     if rc != 0:
                         break
             if rc == 0 and self.args['state'] == "present":
                 rc = self.set_token_value(self.args['name'], self.args['value'])
+
+            # set_token_value would have called fail_json in case of failure
+            # so return here and do not continue to the error processing below
+            # https://github.com/ansible/ansible/issues/58158
+            return
         else:
             # system supports reloading via the -p flag to sysctl, so we'll use that
             sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]

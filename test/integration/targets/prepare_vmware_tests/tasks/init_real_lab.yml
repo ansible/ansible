@@ -1,8 +1,6 @@
 ---
-- name: load vars
-  include_vars:
-    file: real_lab.yml
-
+- include_tasks: teardown_with_esxi.yml
+  when: esxi_hosts|length > 0
 - include_tasks: teardown.yml
 
 - when: setup_esxi_instance is not defined
@@ -21,3 +19,11 @@
       when: setup_dvswitch is defined
     - include_tasks: setup_resource_pool.yml
       when: setup_resource_pool is defined
+    - include_tasks: setup_category.yml
+      when: setup_category is defined
+    - include_tasks: setup_tag.yml
+      when: setup_tag is defined
+    - include_tasks: setup_content_library.yml
+      when: setup_content_library is defined
+    - include_tasks: setup_dvs_portgroup.yml
+      when: setup_dvs_portgroup is defined

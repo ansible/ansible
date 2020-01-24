@@ -202,7 +202,7 @@ def _needs_update(subnet, module, cloud, filters=None):
     if host_routes:
         curr_hr = sorted(subnet['host_routes'], key=lambda t: t.keys())
         new_hr = sorted(host_routes, key=lambda t: t.keys())
-        if sorted(curr_hr) != sorted(new_hr):
+        if curr_hr != new_hr:
             return True
     if no_gateway_ip and subnet['gateway_ip']:
         return True
@@ -234,8 +234,8 @@ def main():
         allocation_pool_start=dict(type='str'),
         allocation_pool_end=dict(type='str'),
         host_routes=dict(type='list', default=None),
-        ipv6_ra_mode=dict(type='str', choice=ipv6_mode_choices),
-        ipv6_address_mode=dict(type='str', choice=ipv6_mode_choices),
+        ipv6_ra_mode=dict(type='str', choices=ipv6_mode_choices),
+        ipv6_address_mode=dict(type='str', choices=ipv6_mode_choices),
         use_default_subnetpool=dict(type='bool', default=False),
         extra_specs=dict(type='dict', default=dict()),
         state=dict(type='str', default='present', choices=['absent', 'present']),
@@ -272,9 +272,10 @@ def main():
     if state == 'present':
         if not module.params['network_name']:
             module.fail_json(msg='network_name required with present state')
-        if not module.params['cidr'] and not use_default_subnetpool:
-            module.fail_json(msg='cidr or use_default_subnetpool required '
-                                 'with present state')
+        if (not module.params['cidr'] and not use_default_subnetpool and
+                not extra_specs.get('subnetpool_id', False)):
+            module.fail_json(msg='cidr or use_default_subnetpool or '
+                                 'subnetpool_id required with present state')
 
     if pool_start and pool_end:
         pool = [dict(start=pool_start, end=pool_end)]

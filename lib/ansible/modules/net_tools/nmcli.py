@@ -22,14 +22,18 @@ author:
 short_description: Manage Networking
 requirements:
 - dbus
-- NetworkManager-glib
+- NetworkManager-libnm (or NetworkManager-glib on older systems)
 - nmcli
 version_added: "2.0"
 description:
     - Manage the network devices. Create, modify and manage various connection and device type e.g., ethernet, teams, bonds, vlans etc.
-    - 'On CentOS and Fedora like systems, the requirements can be met by installing the following packages: NetworkManager-glib,
+    - 'On CentOS 8 and Fedora >=29 like systems, the requirements can be met by installing the following packages: NetworkManager-nmlib,
+      libsemanage-python, policycoreutils-python.'
+    - 'On CentOS 7 and Fedora <=28 like systems, the requirements can be met by installing the following packages: NetworkManager-glib,
       libnm-qt-devel.x86_64, nm-connection-editor.x86_64, libsemanage-python, policycoreutils-python.'
     - 'On Ubuntu and Debian like systems, the requirements can be met by installing the following packages: network-manager,
+      python-dbus (or python3-dbus, depending on the Python version in use), libnm-dev.'
+    - 'On older Ubuntu and Debian like systems, the requirements can be met by installing the following packages: network-manager,
       python-dbus (or python3-dbus, depending on the Python version in use), libnm-glib-dev.'
     - 'On openSUSE, the requirements can be met by installing the following packages: NetworkManager, python2-dbus-python (or
       python3-dbus-python), typelib-1_0-NMClient-1_0 and typelib-1_0-NetworkManager-1_0.'
@@ -48,7 +52,7 @@ options:
         default: yes
     conn_name:
         description:
-            - 'Where conn_name will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]'
+            - The name used to call the connection. Pattern is <type>[-<ifname>][-<num>].
         type: str
         required: true
     ifname:
@@ -369,7 +373,7 @@ EXAMPLES = r'''
   - name: install needed network manager libs
     package:
       name:
-        - NetworkManager-glib
+        - NetworkManager-libnm
         - nm-connection-editor
         - libsemanage-python
         - policycoreutils-python
@@ -563,16 +567,20 @@ except ImportError:
     HAVE_DBUS = False
 
 NM_CLIENT_IMP_ERR = None
+HAVE_NM_CLIENT = True
 try:
     import gi
-    gi.require_version('NMClient', '1.0')
-    gi.require_version('NetworkManager', '1.0')
-
-    from gi.repository import NetworkManager, NMClient
-    HAVE_NM_CLIENT = True
+    gi.require_version('NM', '1.0')
+    from gi.repository import NM
 except (ImportError, ValueError):
-    NM_CLIENT_IMP_ERR = traceback.format_exc()
-    HAVE_NM_CLIENT = False
+    try:
+        import gi
+        gi.require_version('NMClient', '1.0')
+        gi.require_version('NetworkManager', '1.0')
+        from gi.repository import NetworkManager, NMClient
+    except (ImportError, ValueError):
+        NM_CLIENT_IMP_ERR = traceback.format_exc()
+        HAVE_NM_CLIENT = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
@@ -801,10 +809,10 @@ class Nmcli(object):
             cmd.append(self.conn_name)
 
         options = {
-            'ipv4.address': self.ip4,
-            'ipv4.gateway': self.gw4,
-            'ipv6.address': self.ip6,
-            'ipv6.gateway': self.gw6,
+            'ip4': self.ip4,
+            'gw4': self.gw4,
+            'ip6': self.ip6,
+            'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
@@ -877,10 +885,10 @@ class Nmcli(object):
             cmd.append(self.conn_name)
         options = {
             'mode': self.mode,
-            'ipv4.address': self.ip4,
-            'ipv4.gateway': self.gw4,
-            'ipv6.address': self.ip6,
-            'ipv6.gateway': self.gw6,
+            'ip4': self.ip4,
+            'gw4': self.gw4,
+            'ip6': self.ip6,
+            'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
@@ -970,10 +978,10 @@ class Nmcli(object):
             cmd.append(self.conn_name)
 
         options = {
-            'ipv4.address': self.ip4,
-            'ipv4.gateway': self.gw4,
-            'ipv6.address': self.ip6,
-            'ipv6.gateway': self.gw6,
+            'ip4': self.ip4,
+            'gw4': self.gw4,
+            'ip6': self.ip6,
+            'gw6': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'ipv4.dns-search': self.dns4_search,
             'ipv6.dns-search': self.dns6_search,
@@ -991,7 +999,7 @@ class Nmcli(object):
         # format for modifying ethernet interface
         # To modify an Ethernet connection with static IP configuration, issue a command as follows
         # - nmcli: conn_name=my-eth1 ifname=eth1 type=ethernet ip4=192.0.2.100/24 gw4=192.0.2.1 state=present
-        # nmcli con mod con-name my-eth1 ifname eth1 type ethernet ip4 192.0.2.100/24 gw4 192.0.2.1
+        # nmcli con mod con-name my-eth1 ifname eth1 type ethernet ipv4.address 192.0.2.100/24 ipv4.gateway 192.0.2.1
         options = {
             'ipv4.address': self.ip4,
             'ipv4.gateway': self.gw4,
@@ -1059,10 +1067,10 @@ class Nmcli(object):
         cmd = [self.nmcli_bin, 'con', 'mod', self.conn_name]
 
         options = {
-            'ip4': self.ip4,
-            'gw4': self.gw4,
-            'ip6': self.ip6,
-            'gw6': self.gw6,
+            'ipv4.address': self.ip4,
+            'ipv4.gateway': self.gw4,
+            'ipv6.address': self.ip6,
+            'ipv6.gateway': self.gw6,
             'autoconnect': self.bool_to_string(self.autoconnect),
             'bridge.ageing-time': self.ageingtime,
             'bridge.forward-delay': self.forwarddelay,
@@ -1145,7 +1153,7 @@ class Nmcli(object):
             cmd.append('vlan%s' % self.vlanid)
 
         params = {'dev': self.vlandev,
-                  'id': self.vlanid,
+                  'id': str(self.vlanid),
                   'ip4': self.ip4 or '',
                   'gw4': self.gw4 or '',
                   'ip6': self.ip6 or '',
@@ -1170,7 +1178,7 @@ class Nmcli(object):
             cmd.append('vlan%s' % self.vlanid)
 
         params = {'vlan.parent': self.vlandev,
-                  'vlan.id': self.vlanid,
+                  'vlan.id': str(self.vlanid),
                   'ipv4.address': self.ip4 or '',
                   'ipv4.gateway': self.gw4 or '',
                   'ipv4.dns': self.dns4 or '',

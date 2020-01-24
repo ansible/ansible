@@ -40,24 +40,29 @@ options:
     - The datacenter isn't used by the API to create a datastore.
     - Will be removed in 2.11.
     required: false
+    type: str
   datastore_name:
     description:
     - Name of the datastore to add/remove.
     required: true
+    type: str
   datastore_type:
     description:
     - Type of the datastore to configure (nfs/nfs41/vmfs).
     required: true
     choices: [ 'nfs', 'nfs41', 'vmfs' ]
+    type: str
   nfs_server:
     description:
     - NFS host serving nfs datastore.
     - Required if datastore type is set to C(nfs)/C(nfs41) and state is set to C(present), else unused.
     - Two or more servers can be defined if datastore type is set to C(nfs41)
+    type: str
   nfs_path:
     description:
     - Resource path on NFS host.
     - Required if datastore type is set to C(nfs)/C(nfs41) and state is set to C(present), else unused.
+    type: str
   nfs_ro:
     description:
     - ReadOnly or ReadWrite mount.
@@ -68,14 +73,17 @@ options:
     description:
     - Name of the device to be used as VMFS datastore.
     - Required for VMFS datastore type and state is set to C(present), else unused.
+    type: str
   vmfs_version:
     description:
     - VMFS version to use for datastore creation.
     - Unused if datastore type is not set to C(vmfs) and state is not set to C(present).
+    type: int
   esxi_hostname:
     description:
     - ESXi hostname to manage the datastore.
     - Required when used with a vcenter
+    type: str
     required: false
   state:
     description:
@@ -83,6 +91,7 @@ options:
     - "absent: Umount datastore if datastore is present else do nothing."
     default: present
     choices: [ present, absent ]
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 

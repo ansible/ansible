@@ -20,9 +20,9 @@ from ..commands import Command  # pylint: disable=relative-beyond-top-level
 PORTING_GUIDE_TEMPLATE = """
 .. _porting_{{ ver }}_guide:
 
-*************************
+**************************
 Ansible {{ ver }} Porting Guide
-*************************
+**************************
 
 This section discusses the behavioral changes between Ansible {{ prev_ver }} and Ansible {{ ver }}.
 
@@ -121,7 +121,7 @@ def generate_porting_guide(version):
 
 
 def write_guide(version, guide_content):
-    filename = f'porting_guide_{version}.rst'
+    filename = 'porting_guide_{0}.rst'.format(version)
     with open(filename, 'w') as out_file:
         out_file.write(guide_content)
 

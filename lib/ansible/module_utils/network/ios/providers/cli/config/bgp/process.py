@@ -25,7 +25,8 @@ class Provider(CliProvider):
         existing_as = None
         if config:
             match = re.search(r'router bgp (\d+)', config, re.M)
-            existing_as = match.group(1)
+            if match:
+                existing_as = match.group(1)
 
         operation = self.params['operation']
 
@@ -89,7 +90,7 @@ class Provider(CliProvider):
         for entry in self.get_value('config.networks'):
             network = entry['prefix']
             cmd = 'network %s' % network
-            if entry['masklen']:
+            if entry['masklen'] and entry['masklen'] not in (24, 16, 8):
                 cmd += ' mask %s' % to_netmask(entry['masklen'])
                 network += ' mask %s' % to_netmask(entry['masklen'])
 

@@ -33,7 +33,7 @@ General guidelines & tips
 
 * Each module should be self-contained in one file, so it can be be auto-transferred by Ansible.
 * Module name MUST use underscores instead of hyphens or spaces as a word separator. Using hyphens and spaces will prevent Ansible from importing your module.
-* Always use the ``hacking/test-module`` script when developing modules - it will warn you about common pitfalls.
+* Always use the ``hacking/test-module.py`` script when developing modules - it will warn you about common pitfalls.
 * If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
 * Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
 * Don't write to files directly; use a temporary file and then use the ``atomic_move`` function from ``ansible.module_utils.basic`` to move the updated temporary file into place. This prevents data corruption and ensures that the correct context for the file is kept.
@@ -160,7 +160,8 @@ Ansible conventions offer a predictable user interface across all modules, playb
 * Implement declarative operations (not CRUD) so the user can ignore existing state and focus on final state. For example, use ``started/stopped``, ``present/absent``.
 * Strive for a consistent final state (aka idempotency). If running your module twice in a row against the same system would result in two different states, see if you can redesign or rewrite to achieve consistent final state. If you can't, document the behavior and the reasons for it.
 * Provide consistent return values within the standard Ansible return structure, even if NA/None are used for keys normally returned under other options.
-* Follow additional guidelines that apply to families of modules if applicable. For example, AWS modules should follow `the Amazon guidelines <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_
+* Follow additional guidelines that apply to families of modules if applicable. For example, AWS modules should follow the  :ref:`Amazon development checklist <AWS_module_development>`.
+
 
 Module Security
 ===============

@@ -1,5 +1,8 @@
 ---
-- { include: network_cli.yaml, tags: ['cli'] }
-- { include: network_local.yaml, tags: ['local'] }
-- { include: httpapi.yaml, tags: ['httpapi'] }
-- { include: nxapi.yaml, tags: ['nxapi'] }
+# Upgrade using SSH
+- include: network_cli.yaml
+  when: ansible_connection == 'network_cli'
+
+# Upgrade using NX-API
+- include: httpapi.yaml
+  when: ansible_connection == 'httpapi'

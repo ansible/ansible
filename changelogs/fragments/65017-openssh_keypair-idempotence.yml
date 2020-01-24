@@ -1,0 +1,2 @@
+bugfixes:
+- "openssh_keypair - fixes idempotence issue with public key (https://github.com/ansible/ansible/issues/64969)."

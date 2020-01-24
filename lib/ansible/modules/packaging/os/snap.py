@@ -39,7 +39,7 @@ options:
         choices: [ absent, present ]
     classic:
         description:
-            - Confinement policy. The classic confinment allows a snap to have
+            - Confinement policy. The classic confinement allows a snap to have
               the same level of access to the system as "classic" packages,
               like those managed by APT. This option corresponds to the --classic argument.
               This option can only be specified if there is a single snap in the task.

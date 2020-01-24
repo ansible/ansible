@@ -29,8 +29,8 @@ To ensure that your module documentation matches your ``argument_spec``:
 
    .. code-block:: bash
 
-      pip install --user -r test/runner/requirements/sanity.txt
+      pip install --user -r test/lib/ansible_test/_data/requirements/sanity.txt
 
 #. run the ``validate-modules`` test::
 
-   ./test/sanity/validate-modules/validate-modules --arg-spec --warnings lib/ansible/modules/$CATEGORY/mymodule.py
+    ansible-test sanity --test validate-modules mymodule

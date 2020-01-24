@@ -32,7 +32,7 @@ options:
       module will escape the arguments as necessary, it is recommended to use a
       string when dealing with MSI packages due to the unique escaping issues
       with msiexec.
-    type: str
+    type: raw
   chdir:
     description:
     - Set the specified path as the current working directory before installing
@@ -41,7 +41,7 @@ options:
     version_added: '2.8'
   creates_path:
     description:
-    - Will check the existance of the path specified and use the result to
+    - Will check the existence of the path specified and use the result to
       determine whether the package is already installed.
     - You can use this in conjunction with C(product_id) and other C(creates_*).
     type: path
@@ -97,9 +97,9 @@ options:
       getting the uninstall information if C(state=absent).
     - You can find product ids for installed programs in the Windows registry
       editor either at
-      C(HKLM:Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit
+      C(HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall) or for 32 bit
       programs at
-      C(HKLM:Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall).
+      C(HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall).
     - This SHOULD be set when the package is not an MSI, or the path is a url
       or a network share and credential delegation is not being used. The
       C(creates_*) options can be used instead but is not recommended.
@@ -243,12 +243,12 @@ EXAMPLES = r'''
 RETURN = r'''
 log:
   description: The contents of the MSI log.
-  returned: change occured and package is an MSI
+  returned: installation/uninstallation failure for MSI packages
   type: str
   sample: Installation completed successfully
 rc:
   description: The return code of the package process.
-  returned: change occured
+  returned: change occurred
   type: int
   sample: 0
 reboot_required:

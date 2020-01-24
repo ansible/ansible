@@ -1,0 +1,29 @@
+# SCW_API_KEY='XXX' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_snapshot_info
+
+- name: Get snapshot informations and register it in a variable
+  scaleway_snapshot_info:
+    region: par1
+  register: snapshots
+
+- name: Display snapshots variable
+  debug:
+    var: snapshots
+
+- name: Ensure retrieval of snapshots info is success
+  assert:
+    that:
+      - snapshots is success
+
+- name: Get snapshot informations and register it in a variable (AMS1)
+  scaleway_snapshot_info:
+    region: ams1
+  register: ams1_snapshots
+
+- name: Display snapshots variable (AMS1)
+  debug:
+    var: ams1_snapshots
+
+- name: Ensure retrieval of snapshots info is success (AMS1)
+  assert:
+    that:
+      - ams1_snapshots is success

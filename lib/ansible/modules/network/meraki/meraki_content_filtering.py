@@ -35,18 +35,10 @@ options:
         description:
         - ID number of a network.
         type: str
-    org_name:
-        description:
-        - Name of organization associated to a network.
-        type: str
-    org_id:
-        description:
-        - ID of organization associated to a network.
-        type: str
     state:
         description:
         - States that a policy should be created or modified.
-        choices: [present]
+        choices: [present, query]
         default: present
         type: str
     allowed_urls:
@@ -67,7 +59,12 @@ options:
         - Determines whether a network filters fo rall URLs in a category or only the list of top blocked sites.
         choices: [ top sites, full list ]
         type: str
-
+    subset:
+        description:
+        - Display only certain facts.
+        choices: [categories, policy]
+        type: str
+        version_added: '2.9'
 author:
     - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -120,6 +117,7 @@ import os
 from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -139,11 +137,12 @@ def main():
     argument_spec.update(
         net_id=dict(type='str'),
         net_name=dict(type='str', aliases=['network']),
-        state=dict(type='str', default='present', choices=['present']),
+        state=dict(type='str', default='present', choices=['present', 'query']),
         allowed_urls=dict(type='list'),
         blocked_urls=dict(type='list'),
         blocked_categories=dict(type='list'),
         category_list_size=dict(type='str', choices=['top sites', 'full list']),
+        subset=dict(type='str', choices=['categories', 'policy']),
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -172,11 +171,27 @@ def main():
     org_id = meraki.params['org_id']
     if not org_id:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-    net_id = None
+    net_id = meraki.params['net_id']
     if net_id is None:
         nets = meraki.get_nets(org_id=org_id)
         net_id = meraki.get_net_id(org_id, meraki.params['net_name'], data=nets)
 
+    if meraki.params['state'] == 'query':
+        if meraki.params['subset']:
+            if meraki.params['subset'] == 'categories':
+                path = meraki.construct_path('categories', net_id=net_id)
+            elif meraki.params['subset'] == 'policy':
+                path = meraki.construct_path('policy', net_id=net_id)
+            meraki.result['data'] = meraki.request(path, method='GET')
+        else:
+            response_data = {'categories': None,
+                             'policy': None,
+                             }
+            path = meraki.construct_path('categories', net_id=net_id)
+            response_data['categories'] = meraki.request(path, method='GET')
+            path = meraki.construct_path('policy', net_id=net_id)
+            response_data['policy'] = meraki.request(path, method='GET')
+            meraki.result['data'] = response_data
     if module.params['state'] == 'present':
         payload = dict()
         if meraki.params['allowed_urls']:
@@ -203,15 +218,26 @@ def main():
         current = meraki.request(path, method='GET')
         proposed = current.copy()
         proposed.update(payload)
-        if module.check_mode:
-            meraki.result['data'] = payload
-            meraki.exit_json(**meraki.result)
-        if meraki.is_update_required(current, payload):
+        if meraki.is_update_required(current, payload) is True:
+            meraki.result['diff'] = dict()
+            diff = recursive_diff(current, payload)
+            meraki.result['diff']['before'] = diff[0]
+            meraki.result['diff']['after'] = diff[1]
+            if module.check_mode:
+                current.update(payload)
+                meraki.result['changed'] = True
+                meraki.result['data'] = current
+                meraki.exit_json(**meraki.result)
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             meraki.result['data'] = response
             meraki.result['changed'] = True
         else:
             meraki.result['data'] = current
+            if module.check_mode:
+                meraki.result['data'] = current
+                meraki.exit_json(**meraki.result)
+            meraki.result['data'] = current
+            meraki.exit_json(**meraki.result)
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

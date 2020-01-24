@@ -4,6 +4,8 @@
 # Copyright (c) 2017, René Moser <mail@renemoser.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -78,6 +80,7 @@ options:
       - The gateway of the IPv6 network.
       - Required for shared networks.
       - Only considered on create.
+    type: str
   vlan:
     description:
       - The ID or VID of the network.
@@ -148,6 +151,13 @@ options:
       - Poll async jobs until job has finished.
     default: yes
     type: bool
+  tags:
+    description:
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
+      - "To delete all tags, set a empty list e.g. I(tags: [])."
+    type: list
+    aliases: [ tag ]
+    version_added: '2.9'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -182,7 +192,7 @@ EXAMPLES = '''
   cs_network:
     name: my network
     clean_up: yes
-    state: restared
+    state: restarted
   delegate_to: localhost
 
 - name: Remove a network
@@ -462,6 +472,10 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
             network = self.create_network(network)
         else:
             network = self.update_network(network)
+
+        if network:
+            network = self.ensure_tags(resource=network, resource_type='Network')
+
         return network
 
     def update_network(self, network):
@@ -597,6 +611,7 @@ def main():
         domain=dict(),
         account=dict(),
         poll_async=dict(type='bool', default=True),
+        tags=dict(type='list', aliases=['tag']),
     ))
     required_together = cs_required_together()
     required_together.extend([

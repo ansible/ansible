@@ -37,7 +37,7 @@ description:
 - For more information, see U(https://cloud.google.com/compute/docs/load-balancing/http/)
   .
 short_description: Creates a GCP GlobalForwardingRule
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -51,11 +51,13 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
   ip_address:
     description:
     - The IP address that this forwarding rule is serving on behalf of.
@@ -78,27 +80,22 @@ options:
       * projects/project/regions/region/addresses/address * regions/region/addresses/address
       * global/addresses/address * address .'
     required: false
+    type: str
   ip_protocol:
     description:
     - The IP protocol to which this rule applies. Valid options are TCP, UDP, ESP,
       AH, SCTP or ICMP. When the load balancing scheme is INTERNAL_SELF_MANAGED, only
       TCP is valid.
+    - 'Some valid choices include: "TCP", "UDP", "ESP", "AH", "SCTP", "ICMP"'
     required: false
-    choices:
-    - TCP
-    - UDP
-    - ESP
-    - AH
-    - SCTP
-    - ICMP
+    type: str
   ip_version:
     description:
     - The IP Version that will be used by this global forwarding rule.
     - Valid options are IPV4 or IPV6.
+    - 'Some valid choices include: "IPV4", "IPV6"'
     required: false
-    choices:
-    - IPV4
-    - IPV6
+    type: str
   load_balancing_scheme:
     description:
     - This signifies what the GlobalForwardingRule will be used for.
@@ -106,10 +103,58 @@ options:
       Global HTTP(S) LB. The value of EXTERNAL means that this will be used for External
       Global Load Balancing (HTTP(S) LB, External TCP/UDP LB, SSL Proxy) NOTE: Currently
       global forwarding rules cannot be used for INTERNAL load balancing.'
+    - 'Some valid choices include: "EXTERNAL", "INTERNAL_SELF_MANAGED"'
     required: false
-    choices:
-    - INTERNAL_SELF_MANAGED
-    - EXTERNAL
+    default: EXTERNAL
+    type: str
+  metadata_filters:
+    description:
+    - Opaque filter criteria used by Loadbalancer to restrict routing configuration
+      to a limited set xDS compliant clients. In their xDS requests to Loadbalancer,
+      xDS clients present node metadata. If a match takes place, the relevant routing
+      configuration is made available to those proxies.
+    - For each metadataFilter in this list, if its filterMatchCriteria is set to MATCH_ANY,
+      at least one of the filterLabels must match the corresponding label provided
+      in the metadata. If its filterMatchCriteria is set to MATCH_ALL, then all of
+      its filterLabels must match with corresponding labels in the provided metadata.
+    - metadataFilters specified here can be overridden by those specified in the UrlMap
+      that this ForwardingRule references.
+    - metadataFilters only applies to Loadbalancers that have their loadBalancingScheme
+      set to INTERNAL_SELF_MANAGED.
+    required: false
+    type: list
+    version_added: '2.10'
+    suboptions:
+      filter_match_criteria:
+        description:
+        - Specifies how individual filterLabel matches within the list of filterLabels
+          contribute towards the overall metadataFilter match.
+        - MATCH_ANY - At least one of the filterLabels must have a matching label
+          in the provided metadata.
+        - MATCH_ALL - All filterLabels must have matching labels in the provided metadata.
+        - 'Some valid choices include: "MATCH_ANY", "MATCH_ALL"'
+        required: true
+        type: str
+      filter_labels:
+        description:
+        - The list of label value pairs that must match labels in the provided metadata
+          based on filterMatchCriteria This list must not be empty and can have at
+          the most 64 entries.
+        required: true
+        type: list
+        suboptions:
+          name:
+            description:
+            - Name of the metadata label. The length must be between 1 and 1024 characters,
+              inclusive.
+            required: true
+            type: str
+          value:
+            description:
+            - The value that the label must match. The value has a maximum length
+              of 1024 characters.
+            required: true
+            type: str
   name:
     description:
     - Name of the resource; provided by the client when the resource is created. The
@@ -119,6 +164,7 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   network:
     description:
     - This field is not used for external load balancing.
@@ -131,6 +177,7 @@ options:
       to a gcp_compute_network task and then set this network field to "{{ name-of-resource
       }}"'
     required: false
+    type: dict
   port_range:
     description:
     - This field is used along with the target field for TargetHttpProxy, TargetHttpsProxy,
@@ -145,12 +192,51 @@ options:
       43, 110, 143, 195, 443, 465, 587, 700, 993, 995, 1883, 5222 * TargetVpnGateway:
       500, 4500 .'
     required: false
+    type: str
   target:
     description:
     - The URL of the target resource to receive the matched traffic.
     - The forwarded traffic must be of a type appropriate to the target object.
+    - For INTERNAL_SELF_MANAGED load balancing, only HTTP and HTTPS targets are valid.
     required: true
-extends_documentation_fragment: gcp
+    type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -173,7 +259,7 @@ EXAMPLES = '''
     state: present
   register: instancegroup
 
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-globalforwardingrule
     healthy_threshold: 10
@@ -190,7 +276,7 @@ EXAMPLES = '''
   gcp_compute_backend_service:
     name: backendservice-globalforwardingrule
     backends:
-    - group: "{{ instancegroup }}"
+    - group: "{{ instancegroup.selfLink }}"
     health_checks:
     - "{{ healthcheck.selfLink }}"
     enable_cdn: 'true'
@@ -200,7 +286,7 @@ EXAMPLES = '''
     state: present
   register: backendservice
 
-- name: create a url map
+- name: create a URL map
   gcp_compute_url_map:
     name: urlmap-globalforwardingrule
     default_service: "{{ backendservice }}"
@@ -210,7 +296,7 @@ EXAMPLES = '''
     state: present
   register: urlmap
 
-- name: create a target http proxy
+- name: create a target HTTP proxy
   gcp_compute_target_http_proxy:
     name: targethttpproxy-globalforwardingrule
     url_map: "{{ urlmap }}"
@@ -295,6 +381,52 @@ loadBalancingScheme:
     global forwarding rules cannot be used for INTERNAL load balancing.'
   returned: success
   type: str
+metadataFilters:
+  description:
+  - Opaque filter criteria used by Loadbalancer to restrict routing configuration
+    to a limited set xDS compliant clients. In their xDS requests to Loadbalancer,
+    xDS clients present node metadata. If a match takes place, the relevant routing
+    configuration is made available to those proxies.
+  - For each metadataFilter in this list, if its filterMatchCriteria is set to MATCH_ANY,
+    at least one of the filterLabels must match the corresponding label provided in
+    the metadata. If its filterMatchCriteria is set to MATCH_ALL, then all of its
+    filterLabels must match with corresponding labels in the provided metadata.
+  - metadataFilters specified here can be overridden by those specified in the UrlMap
+    that this ForwardingRule references.
+  - metadataFilters only applies to Loadbalancers that have their loadBalancingScheme
+    set to INTERNAL_SELF_MANAGED.
+  returned: success
+  type: complex
+  contains:
+    filterMatchCriteria:
+      description:
+      - Specifies how individual filterLabel matches within the list of filterLabels
+        contribute towards the overall metadataFilter match.
+      - MATCH_ANY - At least one of the filterLabels must have a matching label in
+        the provided metadata.
+      - MATCH_ALL - All filterLabels must have matching labels in the provided metadata.
+      returned: success
+      type: str
+    filterLabels:
+      description:
+      - The list of label value pairs that must match labels in the provided metadata
+        based on filterMatchCriteria This list must not be empty and can have at the
+        most 64 entries.
+      returned: success
+      type: complex
+      contains:
+        name:
+          description:
+          - Name of the metadata label. The length must be between 1 and 1024 characters,
+            inclusive.
+          returned: success
+          type: str
+        value:
+          description:
+          - The value that the label must match. The value has a maximum length of
+            1024 characters.
+          returned: success
+          type: str
 name:
   description:
   - Name of the resource; provided by the client when the resource is created. The
@@ -331,6 +463,7 @@ target:
   description:
   - The URL of the target resource to receive the matched traffic.
   - The forwarded traffic must be of a type appropriate to the target object.
+  - For INTERNAL_SELF_MANAGED load balancing, only HTTP and HTTPS targets are valid.
   returned: success
   type: str
 '''
@@ -339,7 +472,7 @@ target:
 # Imports
 ################################################################################
 
-from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
 import time
 
@@ -356,9 +489,19 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             ip_address=dict(type='str'),
-            ip_protocol=dict(type='str', choices=['TCP', 'UDP', 'ESP', 'AH', 'SCTP', 'ICMP']),
-            ip_version=dict(type='str', choices=['IPV4', 'IPV6']),
-            load_balancing_scheme=dict(type='str', choices=['INTERNAL_SELF_MANAGED', 'EXTERNAL']),
+            ip_protocol=dict(type='str'),
+            ip_version=dict(type='str'),
+            load_balancing_scheme=dict(default='EXTERNAL', type='str'),
+            metadata_filters=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    filter_match_criteria=dict(required=True, type='str'),
+                    filter_labels=dict(
+                        required=True, type='list', elements='dict', options=dict(name=dict(required=True, type='str'), value=dict(required=True, type='str'))
+                    ),
+                ),
+            ),
             name=dict(required=True, type='str'),
             network=dict(type='dict'),
             port_range=dict(type='str'),
@@ -433,6 +576,7 @@ def resource_to_request(module):
         u'IPProtocol': module.params.get('ip_protocol'),
         u'ipVersion': module.params.get('ip_version'),
         u'loadBalancingScheme': module.params.get('load_balancing_scheme'),
+        u'metadataFilters': GlobalForwardingRuleMetadatafiltersArray(module.params.get('metadata_filters', []), module).to_request(),
         u'name': module.params.get('name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'portRange': module.params.get('port_range'),
@@ -509,6 +653,7 @@ def response_to_hash(module, response):
         u'IPProtocol': response.get(u'IPProtocol'),
         u'ipVersion': response.get(u'ipVersion'),
         u'loadBalancingScheme': response.get(u'loadBalancingScheme'),
+        u'metadataFilters': GlobalForwardingRuleMetadatafiltersArray(response.get(u'metadataFilters', []), module).from_response(),
         u'name': response.get(u'name'),
         u'network': response.get(u'network'),
         u'portRange': response.get(u'portRange'),
@@ -549,6 +694,70 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
+
+class GlobalForwardingRuleMetadatafiltersArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict(
+            {
+                u'filterMatchCriteria': item.get('filter_match_criteria'),
+                u'filterLabels': GlobalForwardingRuleFilterlabelsArray(item.get('filter_labels', []), self.module).to_request(),
+            }
+        )
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict(
+            {
+                u'filterMatchCriteria': item.get(u'filterMatchCriteria'),
+                u'filterLabels': GlobalForwardingRuleFilterlabelsArray(item.get(u'filterLabels', []), self.module).from_response(),
+            }
+        )
+
+
+class GlobalForwardingRuleFilterlabelsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'name': item.get('name'), u'value': item.get('value')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'name': item.get(u'name'), u'value': item.get(u'value')})
 
 
 if __name__ == '__main__':

@@ -42,7 +42,7 @@ options:
     record:
         required: true
         description:
-            - Identifies the recoard in the table.
+            - Identifies the record in the table.
     col:
         required: true
         description:
@@ -157,7 +157,7 @@ def map_config_to_obj(module):
     if NON_EMPTY_MAP_RE.match(col_value):
         for kv in col_value[1:-1].split(', '):
             k, v = kv.split('=')
-            col_value_to_dict[k.strip()] = v.strip()
+            col_value_to_dict[k.strip()] = v.strip('\"')
 
     obj = {
         'table': module.params['table'],
@@ -176,6 +176,8 @@ def map_config_to_obj(module):
 
 
 def map_params_to_obj(module):
+    if module.params['value'] in ['True', 'False']:
+        module.params['value'] = module.params['value'].lower()
     obj = {
         'table': module.params['table'],
         'record': module.params['record'],

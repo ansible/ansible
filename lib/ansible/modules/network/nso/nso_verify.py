@@ -146,7 +146,7 @@ class NsoVerify(object):
                 n_value = normalize_value(
                     expected_value.value, value, expected_value.path)
                 if n_value != expected_value.value:
-                    # if the value comparision fails, try mapping identityref
+                    # if the value comparison fails, try mapping identityref
                     value_type = value_builder.get_type(expected_value.path)
                     if value_type is not None and 'identityref' in value_type:
                         n_value, t_value = self.get_prefix_name(value)

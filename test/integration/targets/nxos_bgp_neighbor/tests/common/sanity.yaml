@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_bgp_neighbor sanity test"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 - set_fact: intname="{{ nxos_int1 }}"
 
@@ -10,37 +8,26 @@
 - set_fact: log_neighbor_changesd="disable"
   when: (imagetag and (imagetag is version_compare('D1', 'ne')) and (imagetag is version_compare('N1', 'ne')))
 
+- debug:
+    var: titanium
+
 - set_fact: remove_private_asa="all"
   when: not titanium
 - set_fact: remove_private_asr="replace-as"
   when: not titanium
 
-- name: "Enable feature BGP"
+- name: "Setup: Disable features"
   nxos_feature:
-    feature: bgp
-    provider: "{{ connection }}"
+    feature: "{{ item }}"
+    state: disabled
+  loop: ['bgp', 'bfd']
+  ignore_errors: yes
+
+- name: "Setup: Enable features"
+  nxos_feature:
+    feature: "{{ item }}"
     state: enabled
-  ignore_errors: yes
-
-- name: "Setup"
-  nxos_bgp_neighbor: &removenp
-    asn: 65535
-    neighbor: 192.0.2.3
-    vrf: "{{ item }}"
-    provider: "{{ connection }}"
-    state: absent
-  with_items: "{{ vrfs }}"
-  ignore_errors: yes
-
-- name: "Setup"
-  nxos_bgp_neighbor: &remove
-    asn: 65535
-    neighbor: 192.0.2.3/32
-    vrf: "{{ item }}"
-    provider: "{{ connection }}"
-    state: absent
-  with_items: "{{ vrfs }}"
-  ignore_errors: yes
+  loop: ['bgp', 'bfd']
 
 - block:
   - name: "Configure BGP neighbor1"
@@ -63,7 +50,6 @@
       description: "just a description"
       update_source: "{{ intname.capitalize() }}"
       shutdown: true
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -101,7 +87,6 @@
       description: default
       update_source: default
       shutdown: False
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -116,7 +101,11 @@
   - assert: *false
 
   - name: "Remove BGP"
-    nxos_bgp_neighbor: *remove
+    nxos_bgp_neighbor: &remove
+      asn: 65535
+      neighbor: 192.0.2.3/32
+      vrf: "{{ item }}"
+      state: absent
     with_items: "{{ vrfs }}"
     register: result
 
@@ -136,7 +125,6 @@
       vrf: "{{ item }}"
       description: "tested by ansible"
       remove_private_as: "{{remove_private_asa|default(omit)}}"
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -157,7 +145,6 @@
       vrf: "{{ item }}"
       description: "tested by ansible"
       remove_private_as: "{{remove_private_asr|default(omit)}}"
-      provider: "{{ connection }}"
       state: present
     with_items: "{{ vrfs }}"
     register: result
@@ -291,7 +278,11 @@
   - assert: *false
 
   - name: "Remove BGP"
-    nxos_bgp_neighbor: *removenp
+    nxos_bgp_neighbor: &removenp
+      asn: 65535
+      neighbor: 192.0.2.3
+      vrf: "{{ item }}"
+      state: absent
     with_items: "{{ vrfs }}"
     register: result
 
@@ -304,17 +295,44 @@
 
   - assert: *false
 
-  rescue:
-  - name: "Cleanup BGP"
-    nxos_bgp_neighbor: *remove
-    with_items: "{{ vrfs }}"
-    ignore_errors: yes
+  - name: "Configure BFD enable"
+    nxos_bgp_neighbor: &bfd_enable
+      asn: 65535
+      neighbor: 192.168.1.1
+      bfd: enable
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Check BFD enable Idempotence
+    nxos_bgp_neighbor: *bfd_enable
+    register: result
+
+  - assert: *false
+
+  - name: Configure BFD disable Idempotence
+    nxos_bgp_neighbor: &bfd_disable
+      asn: 65535
+      neighbor: 192.168.1.1
+      bfd: disable
+      state: present
+    register: result
+
+  - assert: *true
+
+  - name: Check BFD disable Idempotence
+    nxos_bgp_neighbor: *bfd_disable
+    register: result
+
+  - assert: *false
 
   always:
-  - name: "Disable feature bgp"
-    nxos_feature: &disable_bgp
-      feature: bgp
-      provider: "{{ connection }}"
+  - name: "Teardown: Disable features"
+    nxos_feature:
+      feature: "{{ item }}"
       state: disabled
+    loop: ['bgp', 'bfd']
+    ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_bgp_neighbor sanity test"

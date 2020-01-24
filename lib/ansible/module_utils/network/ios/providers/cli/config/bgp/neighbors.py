@@ -163,7 +163,7 @@ class AFNeighbors(CliProvider):
             return cmd
 
     def _render_next_hop_self(self, item, config=None):
-        cmd = 'neighbor %s activate' % item['neighbor']
+        cmd = 'neighbor %s next-hop-self' % item['neighbor']
         if item['next_hop_self'] is False:
             if not config or cmd in config:
                 cmd = 'no %s' % cmd
@@ -182,5 +182,15 @@ class AFNeighbors(CliProvider):
 
     def _render_maximum_prefix(self, item, config=None):
         cmd = 'neighbor %s maximum-prefix %s' % (item['neighbor'], item['maximum_prefix'])
+        if not config or cmd not in config:
+            return cmd
+
+    def _render_prefix_list_in(self, item, config=None):
+        cmd = 'neighbor %s prefix-list %s in' % (item['neighbor'], item['prefix_list_in'])
+        if not config or cmd not in config:
+            return cmd
+
+    def _render_prefix_list_out(self, item, config=None):
+        cmd = 'neighbor %s prefix-list %s out' % (item['neighbor'], item['prefix_list_out'])
         if not config or cmd not in config:
             return cmd

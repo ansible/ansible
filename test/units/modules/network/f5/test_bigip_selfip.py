@@ -27,7 +27,6 @@ try:
     # In Ansible 2.8, Ansible changed import paths.
     from test.units.compat import unittest
     from test.units.compat.mock import Mock
-    from test.units.compat.mock import patch
 
     from test.units.modules.utils import set_module_args
 except ImportError:
@@ -41,7 +40,6 @@ except ImportError:
     # Ansible 2.8 imports
     from units.compat import unittest
     from units.compat.mock import Mock
-    from units.compat.mock import patch
 
     from units.modules.utils import set_module_args
 
@@ -105,7 +103,7 @@ class TestParameters(unittest.TestCase):
         p = ModuleParameters(params=args)
         with pytest.raises(F5ModuleError) as ex:
             assert p.allow_service == ['grp', 'tcp:80', 'udp:53']
-        assert 'The provided protocol' in str(ex)
+        assert 'The provided protocol' in str(ex.value)
 
     def test_api_parameters(self):
         args = dict(

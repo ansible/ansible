@@ -90,6 +90,13 @@ options:
     description:
       - Specifies the reference bandwidth used to assign OSPF cost.
         Valid values are an integer, in Mbps, or the keyword 'default'.
+  bfd:
+    description:
+      - Enables BFD on all OSPF interfaces.
+      - "Dependency: 'feature bfd'"
+    version_added: "2.9"
+    type: str
+    choices: ['enable', 'disable']
   passive_interface:
     description:
       - Setting to C(yes) will suppress routing update on interface.
@@ -112,6 +119,7 @@ EXAMPLES = '''
     timer_throttle_lsa_hold: 1100
     timer_throttle_lsa_max: 3000
     vrf: test
+    bfd: enable
     state: present
 '''
 
@@ -120,13 +128,16 @@ commands:
     description: commands sent to the device
     returned: always
     type: list
-    sample: ["router ospf 1", "vrf test", "timers throttle lsa 60 1100 3000",
-             "ospf 1", "timers throttle spf 50 1000 2000", "vrf test"]
+    sample:
+      - router ospf 1
+      - vrf test
+      - bfd
+      - timers throttle lsa 60 1100 3000
 '''
 
 import re
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
@@ -146,6 +157,7 @@ PARAM_TO_COMMAND_KEYMAP = {
     'timer_throttle_spf_start': 'timers throttle spf',
     'timer_throttle_spf_hold': 'timers throttle spf',
     'auto_cost': 'auto-cost reference-bandwidth',
+    'bfd': 'bfd',
     'passive_interface': 'passive-interface default'
 }
 PARAM_TO_DEFAULT_KEYMAP = {
@@ -156,6 +168,7 @@ PARAM_TO_DEFAULT_KEYMAP = {
     'timer_throttle_spf_max': '5000',
     'timer_throttle_spf_hold': '1000',
     'auto_cost': '40000',
+    'bfd': 'disable',
     'default_metric': '',
     'passive_interface': False,
     'router_id': '',
@@ -206,6 +219,8 @@ def get_existing(module, args):
                 if 'Gbps' in line:
                     cost = int(cost) * 1000
                 existing['auto_cost'] = str(cost)
+            elif 'bfd' in line:
+                existing['bfd'] = 'enable'
             elif 'timers throttle lsa' in line:
                 tmp = re.search(r'timers throttle lsa (\S+) (\S+) (\S+)', line)
                 existing['timer_throttle_lsa_start'] = tmp.group(1)
@@ -244,6 +259,8 @@ def state_present(module, existing, proposed, candidate):
     existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
 
     for key, value in proposed_commands.items():
+        if key == 'vrf':
+            continue
         if value is True:
             commands.append(key)
 
@@ -282,8 +299,10 @@ def state_present(module, existing, proposed, candidate):
                 if len(value) < 5:
                     command = '{0} {1} Mbps'.format(key, value)
                 else:
-                    value = str(int(value) / 1000)
+                    value = str(int(value) // 1000)
                     command = '{0} {1} Gbps'.format(key, value)
+            elif key == 'bfd':
+                command = 'no bfd' if value == 'disable' else 'bfd'
             else:
                 command = '{0} {1}'.format(key, value.lower())
 
@@ -304,6 +323,7 @@ def state_absent(module, existing, proposed, candidate):
         existing_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, existing)
         for key, value in existing_commands.items():
             if value and key != 'vrf':
+                command = None
                 if key == 'passive-interface default':
                     command = 'no {0}'.format(key)
                 elif key == 'timers throttle lsa':
@@ -337,6 +357,9 @@ def state_absent(module, existing, proposed, candidate):
                         command = 'no {0}'.format(key)
                     else:
                         command = None
+                elif key == 'bfd':
+                    if value == 'enable':
+                        command = 'no bfd'
                 else:
                     existing_value = existing_commands.get(key)
                     command = 'no {0} {1}'.format(key, existing_value)
@@ -367,6 +390,7 @@ def main():
         timer_throttle_spf_hold=dict(required=False, type='str'),
         timer_throttle_spf_max=dict(required=False, type='str'),
         auto_cost=dict(required=False, type='str'),
+        bfd=dict(required=False, type='str', choices=['enable', 'disable']),
         passive_interface=dict(required=False, type='bool'),
         state=dict(choices=['present', 'absent'], default='present', required=False)
     )
@@ -376,7 +400,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     result = dict(changed=False, commands=[], warnings=warnings)
 
     state = module.params['state']

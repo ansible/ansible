@@ -1,2 +1,0 @@
-minor_changes:
-  - Check return value of FindByInventoryPath API used for finding folder value (https://github.com/ansible/ansible/issues/54823).

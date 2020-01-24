@@ -123,6 +123,25 @@ AUTH_ARG_SPEC = {
         'aliases': ['key_file'],
     },
     'proxy': {},
+    'persist_config': {
+        'type': 'bool',
+    },
+}
+
+# Map kubernetes-client parameters to ansible parameters
+AUTH_ARG_MAP = {
+    'kubeconfig': 'kubeconfig',
+    'context': 'context',
+    'host': 'host',
+    'api_key': 'api_key',
+    'username': 'username',
+    'password': 'password',
+    'verify_ssl': 'validate_certs',
+    'ssl_ca_cert': 'ca_cert',
+    'cert_file': 'client_cert',
+    'key_file': 'client_key',
+    'proxy': 'proxy',
+    'persist_config': 'persist_config',
 }
 
 
@@ -143,19 +162,19 @@ class K8sAnsibleMixin(object):
         return self._argspec_cache
 
     def get_api_client(self, **auth_params):
-        auth_args = AUTH_ARG_SPEC.keys()
-
         auth_params = auth_params or getattr(self, 'params', {})
-        auth = copy.deepcopy(auth_params)
+        auth = {}
 
         # If authorization variables aren't defined, look for them in environment variables
-        for arg in auth_args:
-            if auth_params.get(arg) is None:
-                env_value = os.getenv('K8S_AUTH_{0}'.format(arg.upper()), None)
+        for true_name, arg_name in AUTH_ARG_MAP.items():
+            if auth_params.get(arg_name) is None:
+                env_value = os.getenv('K8S_AUTH_{0}'.format(arg_name.upper()), None) or os.getenv('K8S_AUTH_{0}'.format(true_name.upper()), None)
                 if env_value is not None:
-                    if AUTH_ARG_SPEC[arg].get('type') == 'bool':
+                    if AUTH_ARG_SPEC[arg_name].get('type') == 'bool':
                         env_value = env_value.lower() not in ['0', 'false', 'no']
-                    auth[arg] = env_value
+                    auth[true_name] = env_value
+            else:
+                auth[true_name] = auth_params[arg_name]
 
         def auth_set(*names):
             return all([auth.get(name) for name in names])
@@ -164,18 +183,18 @@ class K8sAnsibleMixin(object):
             # We have enough in the parameters to authenticate, no need to load incluster or kubeconfig
             pass
         elif auth_set('kubeconfig') or auth_set('context'):
-            kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'))
+            kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'), persist_config=auth.get('persist_config'))
         else:
             # First try to do incluster config, then kubeconfig
             try:
                 kubernetes.config.load_incluster_config()
             except kubernetes.config.ConfigException:
-                kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'))
+                kubernetes.config.load_kube_config(auth.get('kubeconfig'), auth.get('context'), persist_config=auth.get('persist_config'))
 
         # Override any values in the default configuration with Ansible parameters
         configuration = kubernetes.client.Configuration()
         for key, value in iteritems(auth):
-            if key in auth_args and value is not None:
+            if key in AUTH_ARG_MAP.keys() and value is not None:
                 if key == 'api_key':
                     setattr(configuration, key, {'authorization': "Bearer {0}".format(value)})
                 else:

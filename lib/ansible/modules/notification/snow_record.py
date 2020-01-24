@@ -1,5 +1,7 @@
 #!/usr/bin/python
-# Copyright (c) 2017 Tim Rightnour <thegarbledone@gmail.com>
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Tim Rightnour <thegarbledone@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -14,63 +16,52 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: snow_record
-
-short_description: Create/Delete/Update records in ServiceNow
-
+short_description: Manage records in ServiceNow
 version_added: "2.5"
-
 description:
-    - Creates/Deletes/Updates a single record in ServiceNow
-
+    - Creates, deletes and updates a single record in ServiceNow.
 options:
-    instance:
-        description:
-            - The service now instance name
-        required: true
-    username:
-        description:
-            - User to connect to ServiceNow as
-        required: true
-    password:
-        description:
-            - Password for username
-        required: true
     table:
-        description:
-            - Table to query for records
-        required: false
-        default: incident
+      description:
+      - Table to query for records.
+      required: false
+      default: incident
+      type: str
     state:
-        description:
-            - If C(present) is supplied with a C(number)
-              argument, the module will attempt to update the record with
-              the supplied data.  If no such record exists, a new one will
-              be created.  C(absent) will delete a record.
-        choices: [ present, absent ]
-        required: true
+      description:
+      - If C(present) is supplied with a C(number) argument, the module will attempt to update the record with the supplied data.
+      - If no such record exists, a new one will be created.
+      - C(absent) will delete a record.
+      choices: [ present, absent ]
+      required: true
+      type: str
     data:
-        description:
-            - key, value pairs of data to load into the record.
-              See Examples. Required for C(state:present)
+      description:
+      - key, value pairs of data to load into the record. See Examples.
+      - Required for C(state:present).
+      type: dict
     number:
-        description:
-            - Record number to update. Required for C(state:absent)
-        required: false
+      description:
+      - Record number to update.
+      - Required for C(state:absent).
+      required: false
+      type: str
     lookup_field:
-        description:
-            - Changes the field that C(number) uses to find records
-        required: false
-        default: number
+      description:
+      - Changes the field that C(number) uses to find records.
+      required: false
+      default: number
+      type: str
     attachment:
-        description:
-            - Attach a file to the record
-        required: false
-
+      description:
+      - Attach a file to the record.
+      required: false
+      type: str
 requirements:
     - python pysnow (pysnow)
-
 author:
     - Tim Rightnour (@garbled1)
+extends_documentation_fragment: service_now.documentation
 '''
 
 EXAMPLES = '''
@@ -78,6 +69,18 @@ EXAMPLES = '''
   snow_record:
     username: ansible_test
     password: my_password
+    instance: dev99999
+    state: present
+    number: 62826bf03710200044e0bfc8bcbe5df1
+    table: sys_user
+    lookup_field: sys_id
+
+- name: Grab a user record using OAuth
+  snow_record:
+    username: ansible_test
+    password: my_password
+    client_id: "1234567890abcdef1234567890abcdef"
+    client_secret: "Password1!"
     instance: dev99999
     state: present
     number: 62826bf03710200044e0bfc8bcbe5df1
@@ -146,29 +149,23 @@ attached_file:
 '''
 
 import os
-import traceback
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils.service_now import ServiceNowClient
 
-# Pull in pysnow
-HAS_PYSNOW = False
-PYSNOW_IMP_ERR = None
 try:
+    # This is being handled by ServiceNowClient
     import pysnow
-    HAS_PYSNOW = True
-
 except ImportError:
-    PYSNOW_IMP_ERR = traceback.format_exc()
+    pass
 
 
 def run_module():
     # define the available arguments/parameters that a user can pass to
     # the module
-    module_args = dict(
-        instance=dict(default=None, type='str', required=True),
-        username=dict(default=None, type='str', required=True, no_log=True),
-        password=dict(default=None, type='str', required=True, no_log=True),
+    module_args = ServiceNowClient.snow_argument_spec()
+    module_args.update(
         table=dict(type='str', required=False, default='incident'),
         state=dict(choices=['present', 'absent'],
                    type='str', required=True),
@@ -177,6 +174,9 @@ def run_module():
         lookup_field=dict(default='number', required=False, type='str'),
         attachment=dict(default=None, required=False, type='str')
     )
+    module_required_together = [
+        ['client_id', 'client_secret']
+    ]
     module_required_if = [
         ['state', 'absent', ['number']],
     ]
@@ -184,17 +184,17 @@ def run_module():
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True,
+        required_together=module_required_together,
         required_if=module_required_if
     )
 
-    # check for pysnow
-    if not HAS_PYSNOW:
-        module.fail_json(msg=missing_required_lib('pysnow'), exception=PYSNOW_IMP_ERR)
+    # Connect to ServiceNow
+    service_now_client = ServiceNowClient(module)
+    service_now_client.login()
+    conn = service_now_client.conn
 
     params = module.params
     instance = params['instance']
-    username = params['username']
-    password = params['password']
     table = params['table']
     state = params['state']
     number = params['number']
@@ -219,13 +219,6 @@ def run_module():
     else:
         attach = None
 
-    # Connect to ServiceNow
-    try:
-        conn = pysnow.Client(instance=instance, user=username,
-                             password=password)
-    except Exception as detail:
-        module.fail_json(msg='Could not connect to ServiceNow: {0}'.format(str(detail)), **result)
-
     # Deal with check mode
     if module.check_mode:
 
@@ -245,7 +238,7 @@ def run_module():
             except pysnow.exceptions.NoResults:
                 result['record'] = None
             except Exception as detail:
-                module.fail_json(msg="Unknown failure in query record: {0}".format(str(detail)), **result)
+                module.fail_json(msg="Unknown failure in query record: {0}".format(to_native(detail)), **result)
 
         # Let's simulate modification
         else:
@@ -260,7 +253,7 @@ def run_module():
                 snow_error = "Record does not exist"
                 module.fail_json(msg=snow_error, **result)
             except Exception as detail:
-                module.fail_json(msg="Unknown failure in query record: {0}".format(str(detail)), **result)
+                module.fail_json(msg="Unknown failure in query record: {0}".format(to_native(detail)), **result)
         module.exit_json(**result)
 
     # now for the real thing: (non-check mode)
@@ -269,9 +262,11 @@ def run_module():
     if state == 'present' and number is None:
         try:
             record = conn.insert(table=table, payload=dict(data))
-        except pysnow.UnexpectedResponse as e:
+        except pysnow.exceptions.UnexpectedResponseFormat as e:
             snow_error = "Failed to create record: {0}, details: {1}".format(e.error_summary, e.error_details)
             module.fail_json(msg=snow_error, **result)
+        except pysnow.legacy_exceptions.UnexpectedResponse as e:
+            module.fail_json(msg="Failed to create record due to %s" % to_native(e), **result)
         result['record'] = record
         result['changed'] = True
 
@@ -285,11 +280,13 @@ def run_module():
         except pysnow.exceptions.MultipleResults:
             snow_error = "Multiple record match"
             module.fail_json(msg=snow_error, **result)
-        except pysnow.UnexpectedResponse as e:
+        except pysnow.exceptions.UnexpectedResponseFormat as e:
             snow_error = "Failed to delete record: {0}, details: {1}".format(e.error_summary, e.error_details)
             module.fail_json(msg=snow_error, **result)
+        except pysnow.legacy_exceptions.UnexpectedResponse as e:
+            module.fail_json(msg="Failed to delete record due to %s" % to_native(e), **result)
         except Exception as detail:
-            snow_error = "Failed to delete record: {0}".format(str(detail))
+            snow_error = "Failed to delete record: {0}".format(to_native(detail))
             module.fail_json(msg=snow_error, **result)
         result['record'] = res
         result['changed'] = True
@@ -316,11 +313,13 @@ def run_module():
         except pysnow.exceptions.NoResults:
             snow_error = "Record does not exist"
             module.fail_json(msg=snow_error, **result)
-        except pysnow.UnexpectedResponse as e:
+        except pysnow.exceptions.UnexpectedResponseFormat as e:
             snow_error = "Failed to update record: {0}, details: {1}".format(e.error_summary, e.error_details)
             module.fail_json(msg=snow_error, **result)
+        except pysnow.legacy_exceptions.UnexpectedResponse as e:
+            module.fail_json(msg="Failed to update record due to %s" % to_native(e), **result)
         except Exception as detail:
-            snow_error = "Failed to update record: {0}".format(str(detail))
+            snow_error = "Failed to update record: {0}".format(to_native(detail))
             module.fail_json(msg=snow_error, **result)
 
     module.exit_json(**result)

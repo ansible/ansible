@@ -18,13 +18,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 """CLI tool for starting new Shippable CI runs."""
-
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 # noinspection PyCompatibility
 import argparse
 import json
 import os
+
 import requests
 
 try:
@@ -35,6 +36,12 @@ except ImportError:
 
 def main():
     """Main program body."""
+    args = parse_args()
+    start_run(args)
+
+
+def parse_args():
+    """Parse and return args."""
     api_key = get_api_key()
 
     parser = argparse.ArgumentParser(description='Start a new Shippable run.')
@@ -69,6 +76,11 @@ def main():
 
     args = parser.parse_args()
 
+    return args
+
+
+def start_run(args):
+    """Start a new Shippable run."""
     headers = dict(
         Authorization='apiToken %s' % args.key,
     )

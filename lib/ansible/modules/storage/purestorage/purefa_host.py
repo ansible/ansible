@@ -68,11 +68,17 @@ options:
   personality:
     type: str
     description:
-    - Define which operating system the host is. Recommend for
+    - Define which operating system the host is. Recommended for
       ActiveCluster integration.
     default: ''
     choices: ['hpux', 'vms', 'aix', 'esxi', 'solaris', 'hitachi-vsp', 'oracle-vm-server', 'delete', '']
     version_added: '2.7'
+  preferred_array:
+    type: list
+    description:
+    - List of preferred arrays in an ActiveCluster environment.
+    - To remove existing preferred arrays from the host, specify I(delete).
+    version_added: '2.9'
 extends_documentation_fragment:
 - purestorage.fa
 '''
@@ -81,7 +87,7 @@ EXAMPLES = r'''
 - name: Create new AIX host
   purefa_host:
     host: foo
-    personaility: aix
+    personality: aix
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
@@ -141,6 +147,22 @@ EXAMPLES = r'''
     lun: 12
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+- name: Add preferred arrays to host foo
+  purefa_host:
+    host: foo
+    preferred_array:
+    - array1
+    - array2
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+- name: Delete preferred arrays from host foo
+  purefa_host:
+    host: foo
+    preferred_array: delete
+    fa_url: 10.10.10.2
+    api_token: e31060a7-21fc-e277-6240-25983c6c4592
 '''
 
 RETURN = r'''
@@ -151,14 +173,22 @@ from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
 AC_REQUIRED_API_VERSION = '1.14'
+PREFERRED_ARRAY_API_VERSION = '1.15'
 NVME_API_VERSION = '1.16'
 
 
-try:
-    from purestorage import purestorage
-    HAS_PURESTORAGE = True
-except ImportError:
-    HAS_PURESTORAGE = False
+def _is_cbs(module, array, is_cbs=False):
+    """Is the selected array a Cloud Block Store"""
+    model = ''
+    ct0_model = array.get_hardware('CT0')['model']
+    if ct0_model:
+        model = ct0_model
+    else:
+        ct1_model = array.get_hardware('CT1')['model']
+        model = ct1_model
+    if 'CBS' in model:
+        is_cbs = True
+    return is_cbs
 
 
 def _set_host_initiators(module, array):
@@ -186,29 +216,41 @@ def _set_host_initiators(module, array):
                 module.fail_json(msg='Setting of FC WWNs failed.')
 
 
-def _update_host_initiators(module, array):
+def _update_host_initiators(module, array, answer=False):
     """Change host initiator if iscsi or nvme or add new FC WWNs"""
     if module.params['protocol'] in ['nvme', 'mixed']:
         if module.params['nqn']:
-            try:
-                array.set_host(module.params['host'],
-                               nqnlist=module.params['nqn'])
-            except Exception:
-                module.fail_json(msg='Change of NVMe NQN failed.')
+            current_nqn = array.get_host(module.params['host'])['nqn']
+            if current_nqn != module.params['nqn']:
+                try:
+                    array.set_host(module.params['host'],
+                                   nqnlist=module.params['nqn'])
+                    answer = True
+                except Exception:
+                    module.fail_json(msg='Change of NVMe NQN failed.')
     if module.params['protocol'] in ['iscsi', 'mixed']:
         if module.params['iqn']:
-            try:
-                array.set_host(module.params['host'],
-                               iqnlist=module.params['iqn'])
-            except Exception:
-                module.fail_json(msg='Change of iSCSI IQN failed.')
+            current_iqn = array.get_host(module.params['host'])['iqn']
+            if current_iqn != module.params['iqn']:
+                try:
+                    array.set_host(module.params['host'],
+                                   iqnlist=module.params['iqn'])
+                    answer = True
+                except Exception:
+                    module.fail_json(msg='Change of iSCSI IQN failed.')
     if module.params['protocol'] in ['fc', 'mixed']:
         if module.params['wwns']:
-            try:
-                array.set_host(module.params['host'],
-                               addwwnlist=module.params['wwns'])
-            except Exception:
-                module.fail_json(msg='FC WWN additiona failed.')
+            module.params['wwns'] = [wwn.replace(':', '') for wwn in module.params['wwns']]
+            module.params['wwns'] = [wwn.upper() for wwn in module.params['wwns']]
+            current_wwn = array.get_host(module.params['host'])['wwn']
+            if current_wwn != module.params['wwns']:
+                try:
+                    array.set_host(module.params['host'],
+                                   wwnlist=module.params['wwns'])
+                    answer = True
+                except Exception:
+                    module.fail_json(msg='FC WWN change failed.')
+    return answer
 
 
 def _connect_new_volume(module, array, answer=False):
@@ -237,21 +279,66 @@ def _set_host_personality(module, array):
         array.set_host(module.params['host'], personality='')
 
 
+def _set_preferred_array(module, array):
+    """Set preferred array list. Only called when supported"""
+    if module.params['preferred_array'] != ['delete']:
+        array.set_host(module.params['host'],
+                       preferred_array=module.params['preferred_array'])
+    else:
+        array.set_host(module.params['host'], personality='')
+
+
 def _update_host_personality(module, array, answer=False):
     """Change host personality. Only called when supported"""
     personality = array.get_host(module.params['host'], personality=True)['personality']
     if personality is None and module.params['personality'] != 'delete':
-        array.set_host(module.params['host'],
-                       personality=module.params['personality'])
-        answer = True
-    if personality is not None:
-        if module.params['personality'] == 'delete':
-            array.set_host(module.params['host'], personality='')
-            answer = True
-        elif personality != module.params['personality']:
+        try:
             array.set_host(module.params['host'],
                            personality=module.params['personality'])
             answer = True
+        except Exception:
+            module.fail_json(msg='Personality setting failed.')
+    if personality is not None:
+        if module.params['personality'] == 'delete':
+            try:
+                array.set_host(module.params['host'], personality='')
+                answer = True
+            except Exception:
+                module.fail_json(msg='Personality deletion failed.')
+        elif personality != module.params['personality']:
+            try:
+                array.set_host(module.params['host'],
+                               personality=module.params['personality'])
+                answer = True
+            except Exception:
+                module.fail_json(msg='Personality change failed.')
+    return answer
+
+
+def _update_preferred_array(module, array, answer=False):
+    """Update existing preferred array list. Only called when supported"""
+    preferred_array = array.get_host(module.params['host'], preferred_array=True)['preferred_array']
+    if preferred_array == [] and module.params['preferred_array'] != ['delete']:
+        try:
+            array.set_host(module.params['host'],
+                           preferred_array=module.params['preferred_array'])
+            answer = True
+        except Exception:
+            module.fail_json(msg='Preferred array list creation failed for {0}.'.format(module.params['host']))
+    elif preferred_array != []:
+        if module.params['preferred_array'] == ['delete']:
+            try:
+                array.set_host(module.params['host'], preferred_array=[])
+                answer = True
+            except Exception:
+                module.fail_json(msg='Preferred array list deletion failed for {0}.'.format(module.params['host']))
+        elif preferred_array != module.params['preferred_array']:
+            try:
+                array.set_host(module.params['host'],
+                               preferred_array=module.params['preferred_array'])
+                answer = True
+            except Exception:
+                module.fail_json(msg='Preferred array list change failed for {0}.'.format(module.params['host']))
     return answer
 
 
@@ -265,55 +352,62 @@ def get_host(module, array):
 
 
 def make_host(module, array):
-    changed = False
-    try:
-        array.create_host(module.params['host'])
-        changed = True
-    except Exception:
-        module.fail_json(msg='Host {0} creation failed.'.format(module.params['host']))
-    try:
-        _set_host_initiators(module, array)
-        api_version = array._list_available_rest_versions()
-        if AC_REQUIRED_API_VERSION in api_version and module.params['personality']:
-            _set_host_personality(module, array)
-        if module.params['volume']:
-            if module.params['lun']:
-                array.connect_host(module.params['host'],
-                                   module.params['volume'],
-                                   lun=module.params['lun'])
-            else:
-                array.connect_host(module.params['host'], module.params['volume'])
-    except Exception:
-        module.fail_json(msg='Host {0} configuration failed.'.format(module.params['host']))
+    changed = True
+    if not module.check_mode:
+        try:
+            array.create_host(module.params['host'])
+        except Exception:
+            module.fail_json(msg='Host {0} creation failed.'.format(module.params['host']))
+        try:
+            _set_host_initiators(module, array)
+            api_version = array._list_available_rest_versions()
+            if AC_REQUIRED_API_VERSION in api_version and module.params['personality']:
+                _set_host_personality(module, array)
+            if PREFERRED_ARRAY_API_VERSION in api_version and module.params['preferred_array']:
+                _set_preferred_array(module, array)
+            if module.params['volume']:
+                if module.params['lun']:
+                    array.connect_host(module.params['host'],
+                                       module.params['volume'],
+                                       lun=module.params['lun'])
+                else:
+                    array.connect_host(module.params['host'], module.params['volume'])
+        except Exception:
+            module.fail_json(msg='Host {0} configuration failed.'.format(module.params['host']))
     module.exit_json(changed=changed)
 
 
 def update_host(module, array):
-    changed = False
-    volumes = array.list_host_connections(module.params['host'])
-    if module.params['iqn'] or module.params['wwns']:
-        _update_host_initiators(module, array)
-        changed = True
-    if module.params['volume']:
-        current_vols = [vol['vol'] for vol in volumes]
-        if not module.params['volume'] in current_vols:
-            changed = _connect_new_volume(module, array)
-    api_version = array._list_available_rest_versions()
-    if AC_REQUIRED_API_VERSION in api_version:
-        if module.params['personality']:
-            changed = _update_host_personality(module, array)
+    changed = True
+    if not module.check_mode:
+        init_changed = vol_changed = pers_changed = pref_changed = False
+        volumes = array.list_host_connections(module.params['host'])
+        if module.params['iqn'] or module.params['wwns'] or module.params['nqn']:
+            init_changed = _update_host_initiators(module, array)
+        if module.params['volume']:
+            current_vols = [vol['vol'] for vol in volumes]
+            if not module.params['volume'] in current_vols:
+                vol_changed = _connect_new_volume(module, array)
+        api_version = array._list_available_rest_versions()
+        if AC_REQUIRED_API_VERSION in api_version:
+            if module.params['personality']:
+                pers_changed = _update_host_personality(module, array)
+        if PREFERRED_ARRAY_API_VERSION in api_version:
+            if module.params['preferred_array']:
+                pref_changed = _update_preferred_array(module, array)
+        changed = init_changed or vol_changed or pers_changed or pref_changed
     module.exit_json(changed=changed)
 
 
 def delete_host(module, array):
-    changed = False
-    try:
-        for vol in array.list_host_connections(module.params['host']):
-            array.disconnect_host(module.params['host'], vol["vol"])
-        array.delete_host(module.params['host'])
-        changed = True
-    except Exception:
-        module.fail_json(msg='Host {0} deletion failed'.format(module.params['host']))
+    changed = True
+    if not module.check_mode:
+        try:
+            for vol in array.list_host_connections(module.params['host']):
+                array.disconnect_host(module.params['host'], vol["vol"])
+            array.delete_host(module.params['host'])
+        except Exception:
+            module.fail_json(msg='Host {0} deletion failed'.format(module.params['host']))
     module.exit_json(changed=changed)
 
 
@@ -331,14 +425,14 @@ def main():
         personality=dict(type='str', default='',
                          choices=['hpux', 'vms', 'aix', 'esxi', 'solaris',
                                   'hitachi-vsp', 'oracle-vm-server', 'delete', '']),
+        preferred_array=dict(type='list'),
     ))
 
-    module = AnsibleModule(argument_spec, supports_check_mode=False)
-
-    if not HAS_PURESTORAGE:
-        module.fail_json(msg='purestorage sdk is required for this module in host')
+    module = AnsibleModule(argument_spec, supports_check_mode=True)
 
     array = get_system(module)
+    if _is_cbs(module, array) and module.params['wwns'] or module.params['nqn']:
+        module.fail_json(msg='Cloud block Store only support iSCSI as a protocol')
     api_version = array._list_available_rest_versions()
     if module.params['nqn'] is not None and NVME_API_VERSION not in api_version:
         module.fail_json(msg='NVMe protocol not supported. Please upgrade your array.')
@@ -351,6 +445,22 @@ def main():
             array.get_volume(module.params['volume'])
         except Exception:
             module.fail_json(msg='Volume {0} not found'.format(module.params['volume']))
+    if module.params['preferred_array']:
+        try:
+            if module.params['preferred_array'] != ['delete']:
+                all_connected_arrays = array.list_array_connections()
+                if not all_connected_arrays:
+                    module.fail_json(msg='No target arrays connected to source array. Setting preferred arrays not possible.')
+                else:
+                    current_arrays = [array.get()['array_name']]
+                    for current_array in range(0, len(all_connected_arrays)):
+                        if all_connected_arrays[current_array]['type'] == "sync-replication":
+                            current_arrays.append(all_connected_arrays[current_array]['array_name'])
+                for array_to_connect in range(0, len(module.params['preferred_array'])):
+                    if module.params['preferred_array'][array_to_connect] not in current_arrays:
+                        module.fail_json(msg='Array {0} is not a synchronously connected array.'.format(module.params['preferred_array'][array_to_connect]))
+        except Exception:
+            module.fail_json(msg='Failed to get existing array connections.')
 
     if host is None and state == 'present':
         make_host(module, array)

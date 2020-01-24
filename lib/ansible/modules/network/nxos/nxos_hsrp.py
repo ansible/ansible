@@ -76,7 +76,6 @@ EXAMPLES = r'''
     priority: 150
     interface: vlan10
     preempt: enabled
-    host: 68.170.147.165
 
 - name: Ensure HSRP is configured with following params on a SVI
         with clear text authentication
@@ -86,7 +85,6 @@ EXAMPLES = r'''
     priority: 150
     interface: vlan10
     preempt: enabled
-    host: 68.170.147.165
     auth_type: text
     auth_string: CISCO
 
@@ -98,7 +96,6 @@ EXAMPLES = r'''
     priority: 150
     interface: vlan10
     preempt: enabled
-    host: 68.170.147.165
     auth_type: md5
     auth_string: "0 1234"
 
@@ -110,7 +107,6 @@ EXAMPLES = r'''
     priority: 150
     interface: vlan10
     preempt: enabled
-    host: 68.170.147.165
     auth_type: md5
     auth_string: "7 1234"
 
@@ -119,7 +115,6 @@ EXAMPLES = r'''
     group: 10
     interface: vlan10
     vip: 10.1.1.1
-    host: 68.170.147.165
     state: absent
 '''
 
@@ -196,6 +191,8 @@ def get_hsrp_group(group, interface, module):
     try:
         body = run_commands(module, [command])[0]
         hsrp_table = body['TABLE_grp_detail']['ROW_grp_detail']
+        if 'sh_keystring_attr' not in hsrp_table:
+            del hsrp_key['sh_keystring_attr']
         if 'unknown enum:' in str(hsrp_table):
             hsrp_table = get_hsrp_group_unknown_enum(module, command, hsrp_table)
     except (AttributeError, IndexError, TypeError, KeyError):

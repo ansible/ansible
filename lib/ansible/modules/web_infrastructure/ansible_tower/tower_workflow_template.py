@@ -27,12 +27,26 @@ options:
       description:
         - If enabled, simultaneous runs of this job template will be allowed.
       type: bool
+    ask_extra_vars:
+      description:
+        - Prompt user for (extra_vars) on launch.
+      type: bool
+      version_added: "2.9"
+    ask_inventory:
+      description:
+        - Prompt user for inventory on launch.
+      type: bool
+      version_added: "2.9"
     description:
       description:
         - The description to use for the workflow.
     extra_vars:
       description:
         - Extra variables used by Ansible in YAML or key=value format.
+    inventory:
+      description:
+        - Name of the inventory to use for the job template.
+      version_added: "2.9"
     name:
       description:
         - The name to use for the workflow.
@@ -66,11 +80,11 @@ extends_documentation_fragment: tower
 EXAMPLES = '''
 - tower_workflow_template:
     name: Workflow Template
-    description: My very first Worflow Template
+    description: My very first Workflow Template
     organization: My optional Organization
     schema: "{{ lookup('file', 'my_workflow.json') }}"
 
-- tower_worflow_template:
+- tower_workflow_template:
     name: Workflow Template
     state: absent
 '''
@@ -104,6 +118,9 @@ def main():
         schema=dict(required=False),
         survey=dict(required=False),
         survey_enabled=dict(type='bool', required=False),
+        inventory=dict(required=False),
+        ask_inventory=dict(type='bool', required=False),
+        ask_extra_vars=dict(type='bool', required=False),
         state=dict(choices=['present', 'absent'], default='present'),
     )
 
@@ -153,8 +170,14 @@ def main():
         if module.params.get('survey'):
             params['survey_spec'] = module.params.get('survey')
 
-        for key in ('allow_simultaneous', 'extra_vars', 'survey_enabled',
-                    'description'):
+        if module.params.get('ask_extra_vars'):
+            params['ask_variables_on_launch'] = module.params.get('ask_extra_vars')
+
+        if module.params.get('ask_inventory'):
+            params['ask_inventory_on_launch'] = module.params.get('ask_inventory')
+
+        for key in ('allow_simultaneous', 'extra_vars', 'inventory',
+                    'survey_enabled', 'description'):
             if module.params.get(key):
                 params[key] = module.params.get(key)
 

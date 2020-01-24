@@ -59,6 +59,12 @@ options:
         - Whether the image can be accessed publicly. Note that publicizing an image requires admin role by default.
      type: bool
      default: 'yes'
+   protected:
+     version_added: "2.9"
+     description:
+        - Prevent image from being deleted
+     type: bool
+     default: 'no'
    filename:
      description:
         - The path to the file which has to be uploaded
@@ -80,6 +86,11 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
+   volume:
+     version_added: "2.10"
+     description:
+       - ID of a volume to create an image from.
+       - The volume must be in AVAILABLE state.
 requirements: ["openstacksdk"]
 '''
 
@@ -103,6 +114,33 @@ EXAMPLES = '''
     properties:
       cpu_arch: x86_64
       distro: ubuntu
+
+# Create image from volume attached to an instance
+- name: create volume snapshot
+  os_volume_snapshot:
+    auth:
+      "{{ auth }}"
+    display_name: myvol_snapshot
+    volume: myvol
+    force: yes
+  register: myvol_snapshot
+
+- name: create volume from snapshot
+  os_volume:
+    auth:
+      "{{ auth }}"
+    size: "{{ myvol_snapshot.snapshot.size }}"
+    snapshot_id: "{{ myvol_snapshot.snapshot.id }}"
+    display_name: myvol_snapshot_volume
+    wait: yes
+  register: myvol_snapshot_volume
+
+- name: create image from volume snapshot
+  os_image:
+    auth:
+      "{{ auth }}"
+    volume: "{{ myvol_snapshot_volume.volume.id }}"
+    name: myvol_image
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -121,21 +159,28 @@ def main():
         min_disk=dict(type='int', default=0),
         min_ram=dict(type='int', default=0),
         is_public=dict(type='bool', default=False),
+        protected=dict(type='bool', default=False),
         filename=dict(default=None),
         ramdisk=dict(default=None),
         kernel=dict(default=None),
         properties=dict(type='dict', default={}),
+        volume=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
     )
-    module_kwargs = openstack_module_kwargs()
+
+    module_kwargs = openstack_module_kwargs(
+        mutually_exclusive=[['filename', 'volume']],
+    )
     module = AnsibleModule(argument_spec, **module_kwargs)
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
 
         changed = False
-        if module.params['checksum']:
-            image = cloud.get_image(name_or_id=None, filters={'checksum': module.params['checksum']})
+        if module.params['id']:
+            image = cloud.get_image(name_or_id=module.params['id'])
+        elif module.params['checksum']:
+            image = cloud.get_image(name_or_id=module.params['name'], filters={'checksum': module.params['checksum']})
         else:
             image = cloud.get_image(name_or_id=module.params['name'])
 
@@ -152,8 +197,10 @@ def main():
                     wait=module.params['wait'],
                     timeout=module.params['timeout'],
                     is_public=module.params['is_public'],
+                    protected=module.params['protected'],
                     min_disk=module.params['min_disk'],
                     min_ram=module.params['min_ram'],
+                    volume=module.params['volume'],
                     **kwargs
                 )
                 changed = True
@@ -164,6 +211,7 @@ def main():
                 image=image,
                 kernel=module.params['kernel'],
                 ramdisk=module.params['ramdisk'],
+                protected=module.params['protected'],
                 **module.params['properties'])
             image = cloud.get_image(name_or_id=image.id)
             module.exit_json(changed=changed, image=image, id=image.id)

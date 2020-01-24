@@ -37,6 +37,10 @@ options:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - The patterns restrict the list of files to be returned to those whose basenames match at
               least one of the patterns specified. Multiple patterns can be specified using a list.
+            - The pattern is matched against the file base name, excluding the directory.
+            - When using regexen, the pattern MUST match the ENTIRE file name, not just parts of it. So
+              if you are looking to match all files ending in .default, you'd need to use '.*\.default'
+              as a regexp and not just '\.default'.
             - This parameter expects a list, which can be either comma separated or YAML. If any of the
               patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
               in undesirable ways.
@@ -52,7 +56,7 @@ options:
         version_added: "2.5"
     contains:
         description:
-            - One or more regex patterns which should be matched against the file content.
+            - A regular expression or pattern which should be matched against the file content.
         type: str
     paths:
         description:
@@ -108,7 +112,7 @@ options:
         default: no
     depth:
         description:
-            - Set the maximum number of levels to decend into.
+            - Set the maximum number of levels to descend into.
             - Setting recurse to C(no) will override this value, which is effectively depth 1.
             - Default is unlimited depth.
         type: int
@@ -197,12 +201,12 @@ files:
 matched:
     description: Number of matches
     returned: success
-    type: str
+    type: int
     sample: 14
 examined:
     description: Number of filesystem objects looked at
     returned: success
-    type: str
+    type: int
     sample: 34
 '''
 
@@ -212,7 +216,6 @@ import os
 import pwd
 import re
 import stat
-import sys
 import time
 
 from ansible.module_utils.basic import AnsibleModule
@@ -405,8 +408,7 @@ def main():
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
         if os.path.isdir(npath):
-            ''' ignore followlinks for python version < 2.6 '''
-            for root, dirs, files in (sys.version_info < (2, 6, 0) and os.walk(npath)) or os.walk(npath, followlinks=params['follow']):
+            for root, dirs, files in os.walk(npath, followlinks=params['follow']):
                 if params['depth']:
                     depth = root.replace(npath.rstrip(os.path.sep), '').count(os.path.sep)
                     if files or dirs:

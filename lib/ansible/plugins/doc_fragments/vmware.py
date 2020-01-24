@@ -46,6 +46,22 @@ options:
       type: int
       default: 443
       version_added: '2.5'
+    proxy_host:
+      description:
+      - Address of a proxy that will receive all HTTPS requests and relay them.
+      - The format is a hostname or a IP.
+      - If the value is not specified in the task, the value of environment variable C(VMWARE_PROXY_HOST) will be used instead.
+      - This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+      type: str
+      version_added: '2.9'
+      required: False
+    proxy_port:
+      description:
+      - Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+      - If the value is not specified in the task, the value of environment variable C(VMWARE_PROXY_PORT) will be used instead.
+      type: int
+      version_added: '2.9'
+      required: False
 '''
 
     # This doc fragment is specific to vcenter modules like vcenter_license
@@ -87,4 +103,19 @@ options:
       type: int
       default: 443
       version_added: '2.5'
+    proxy_host:
+      description:
+      - Address of a proxy that will receive all HTTPS requests and relay them.
+      - The format is a hostname or a IP.
+      - If the value is not specified in the task, the value of environment variable C(VMWARE_PROXY_HOST) will be used instead.
+      type: str
+      version_added: '2.9'
+      required: False
+    proxy_port:
+      description:
+      - Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+      - If the value is not specified in the task, the value of environment variable C(VMWARE_PROXY_PORT) will be used instead.
+      type: int
+      version_added: '2.9'
+      required: False
     '''

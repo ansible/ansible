@@ -2,7 +2,7 @@
      rpfx: "{{ resource_group | hash('md5') | truncate(8, True, '') }}"
 
  - name: Find available k8s version
-   azure_rm_aksversion_facts:
+   azure_rm_aksversion_info:
      location: eastus
    register: versions
 
@@ -27,7 +27,7 @@
    check_mode: yes
 
  - name: Check there is no AKS created
-   azure_rm_aks_facts:
+   azure_rm_aks_info:
      name: "aks{{ rpfx }}"
      resource_group: "{{ resource_group }}"
    register: fact
@@ -64,7 +64,7 @@
        - output.provisioning_state == 'Succeeded'
 
  - name: Get AKS fact
-   azure_rm_aks_facts:
+   azure_rm_aks_info:
       name: "aks{{ rpfx }}"
       resource_group: "{{ resource_group }}"
    register: fact
@@ -100,7 +100,7 @@
        - not output.changed
 
  - name: Get available version
-   azure_rm_aksversion_facts:
+   azure_rm_aksversion_info:
       location: eastus
       version: "{{ versions.azure_aks_versions[0] }}"
    register: version1
@@ -165,7 +165,7 @@
         - not output.changed
 
  - name: Get AKS fact
-   azure_rm_aks_facts:
+   azure_rm_aks_info:
       name: "aks{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       show_kubeconfig: user
@@ -202,7 +202,7 @@
        - not output.changed
 
  - name: Get AKS fact
-   azure_rm_aks_facts:
+   azure_rm_aks_info:
       name: "aks{{ rpfx }}"
       resource_group: "{{ resource_group }}"
    register: fact

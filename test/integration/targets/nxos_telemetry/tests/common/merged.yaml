@@ -1,0 +1,184 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_telemetry merged sanity test"
+
+- set_fact: source_interface="Loopback55"
+  when: imagetag and (major_version is version_compare('9.1', 'ge'))
+
+- set_fact: command_list_length=30
+- set_fact: command_list_length=31
+  when: imagetag and (major_version is version_compare('9.1', 'ge'))
+
+- name: Setup
+  nxos_feature: &setup_teardown
+    feature: telemetry
+    state: disabled
+  ignore_errors: yes
+
+- block:
+  - name: Gather Telemetry Facts Before Changes
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources:
+        - telemetry
+
+  - name: Telemetry - merged
+    nxos_telemetry: &merged
+      state: 'merged'
+      config:
+        certificate:
+          key: /bootflash/server.key
+          hostname: localhost
+        compression: gzip
+        source_interface: "{{source_interface|default(omit)}}"
+        vrf: management
+        destination_groups:
+          - id: 2
+            destination:
+              ip: 192.168.0.1
+              port: 50001
+              protocol: grpc
+              encoding: gpb
+          - { id: 2, destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: GPB}}
+          - { id: 10, destination: {ip: 192.168.0.1, port: 50001, protocol: Grpc, encoding: gPB}}
+          - { id: 10, destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: gpb}}
+        sensor_groups:
+          - { id: 8, data_source: NX-API, path: {name: '"show bgp l2vpn evpn summary"', depth: 0, query_condition: foo, filter_condition: foo}}
+          - { id: 2, data_source: NX-API, path: {name: '"show ip bgp neighbors"', depth: unbounded, query_condition: foo, filter_condition: foo}}
+          - { id: 55, data_source: DME, path: {name: 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]', depth: 0, query_condition: foo, filter_condition: foo}}
+          - { id: 55, data_source: DME, path: {name: sys/ospf, depth: 0, query_condition: foo, filter_condition: 'or(eq(ethpmPhysIf.operSt,"down"),eq(ethpmPhysIf.operSt,"up"))'}}
+        subscriptions:
+          - { id: 44, destination_group: 10, sensor_group: {id: 8, sample_interval: 2000}}
+          - { id: 44, destination_group: 2, sensor_group: {id: 2, sample_interval: 2000}}
+          - { id: 55, destination_group: 10, sensor_group: {id: 55, sample_interval: 2000}}
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "result.before|length == 0"
+        - "'feature telemetry' in result.commands"
+        - "'telemetry' in result.commands"
+        - "'certificate /bootflash/server.key localhost' in result.commands"
+        - "'destination-profile' in result.commands"
+        - "'use-compression gzip' in result.commands"
+        - "'use-vrf management' in result.commands"
+        - "'destination-group 2' in result.commands"
+        - "'ip address 192.168.0.1 port 50001 protocol grpc encoding gpb' in result.commands"
+        - "'ip address 192.168.0.2 port 60001 protocol grpc encoding gpb' in result.commands"
+        - "'destination-group 10' in result.commands"
+        - "'ip address 192.168.0.1 port 50001 protocol grpc encoding gpb' in result.commands"
+        - "'ip address 192.168.0.2 port 60001 protocol grpc encoding gpb' in result.commands"
+        - "'sensor-group 8' in result.commands"
+        - "'data-source NX-API' in result.commands"
+        - result.commands is search("path .*show bgp l2vpn evpn summary.* depth 0 query-condition foo filter-condition foo")
+        - "'sensor-group 2' in result.commands"
+        - "'data-source NX-API' in result.commands"
+        - result.commands is search("path .*show ip bgp neighbors.* depth unbounded query-condition foo filter-condition foo")
+        - "'sensor-group 55' in result.commands"
+        - "'data-source DME' in result.commands"
+        - "'path sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11] depth 0 query-condition foo filter-condition foo' in result.commands"
+        - "'path sys/ospf depth 0 query-condition foo filter-condition or(eq(ethpmPhysIf.operSt,\"down\"),eq(ethpmPhysIf.operSt,\"up\"))' in result.commands"
+        - "'subscription 44' in result.commands"
+        - "'dst-grp 10' in result.commands"
+        - "'dst-grp 2' in result.commands"
+        - "'snsr-grp 8 sample-interval 2000' in result.commands"
+        - "'snsr-grp 2 sample-interval 2000' in result.commands"
+        - "'subscription 55' in result.commands"
+        - "'dst-grp 10' in result.commands"
+        - "'snsr-grp 55 sample-interval 2000' in result.commands"
+        - "result.commands|length == {{ command_list_length }}"
+
+  # Source interface may or may not be included based on the image version.
+  - assert:
+      that:
+        - "'source-interface loopback55' in result.commands"
+    when: imagetag and (major_version is version_compare('9.1', 'ge'))
+
+  - assert:
+      that:
+        - "(ansible_facts.network_resources.telemetry|dict2items)|symmetric_difference(result.before|dict2items)|length == 0"
+
+  - name: Gather Telemetry Facts After Changes
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "(ansible_facts.network_resources.telemetry|dict2items)|symmetric_difference(result.after|dict2items)|length == 0"
+
+  - name: Telemetry - merged - idempotence
+    nxos_telemetry: *merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  - name: Telemetry - change values
+    nxos_telemetry: &merged_change
+      state: 'merged'
+      config:
+        certificate:
+          key: /bootflash/local_server.key
+          hostname: localhost
+        compression: gzip
+        source_interface: "{{source_interface|default(omit)}}"
+        vrf: management
+        destination_groups:
+          - id: 2
+            destination:
+              ip: 192.168.0.1
+              port: 50001
+              protocol: grpc
+              encoding: gpb
+          - { id: 2, destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: GPB}}
+          - { id: 10, destination: {ip: 192.168.0.1, port: 50001, protocol: Grpc, encoding: gPB}}
+          - { id: 10, destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: gpb}}
+        sensor_groups:
+          - { id: 8, data_source: NX-API, path: {name: '"show bgp l2vpn evpn summary"', depth: 0, query_condition: foo, filter_condition: foo}}
+          - { id: 2, data_source: NX-API, path: {name: '"show ip bgp neighbors"', depth: unbounded, query_condition: foo, filter_condition: foo}}
+          - { id: 55, data_source: DME, path: {name: 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]', depth: 0, query_condition: foo, filter_condition: foo}}
+          - { id: 55, data_source: DME, path: {name: sys/ospf, depth: 0, query_condition: foo, filter_condition: 'or(eq(ethpmPhysIf.operSt,"down"),eq(ethpmPhysIf.operSt,"up"))'}}
+        subscriptions:
+          - { id: 44, destination_group: 10, sensor_group: {id: 8, sample_interval: 1000}}
+          - { id: 44, destination_group: 2, sensor_group: {id: 2, sample_interval: 2000}}
+          - { id: 55, destination_group: 10, sensor_group: {id: 55, sample_interval: 2000}}
+    register: result
+
+    # The step above should result in only the following changes:
+    # "commands": [
+    #     "telemetry",
+    #     "certificate /bootflash/local_server.key localhost",
+    #     "subscription 44",
+    #     "snsr-grp 8 sample-interval 1000"
+    # ],
+
+  - set_fact:
+      test_list:
+        - "telemetry"
+        - "certificate /bootflash/local_server.key localhost"
+        - "subscription 44"
+        - "snsr-grp 8 sample-interval 1000"
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "test_list|symmetric_difference(result.commands)|length == 0"
+
+  - name: Telemetry - change values - idempotent
+    nxos_telemetry: *merged_change
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: Teardown
+    nxos_feature: *setup_teardown
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_telemetry merged sanity test"

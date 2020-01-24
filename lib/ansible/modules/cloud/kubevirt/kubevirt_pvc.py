@@ -131,7 +131,7 @@ options:
       - "If set, this module will wait for the PVC to become bound and CDI (if enabled) to finish its operation
         before returning."
       - "Used only if I(state) set to C(present)."
-      - "Unless used in conjuction with I(cdi_source), this might result in a timeout, as clusters may be configured
+      - "Unless used in conjunction with I(cdi_source), this might result in a timeout, as clusters may be configured
         to not bind PVCs until first usage."
     default: false
     type: bool
@@ -161,7 +161,7 @@ EXAMPLES = '''
     cdi_source:
       http:
         url: https://www.source.example/path/of/data/vm.img
-      # If the URL points to a tar.gz containing the disk image, ucomment the line below:
+      # If the URL points to a tar.gz containing the disk image, uncomment the line below:
       #content_type: archive
 
 - name: Create a PVC as a clone from a different PVC
@@ -391,6 +391,8 @@ class KubevirtPVC(KubernetesRawModule):
                     if import_status == desired_cdi_status:
                         return_obj = entity
                         break
+                    elif import_status == 'Failed':
+                        raise CreatePVCFailed("PVC creation incomplete; importing data failed")
                 else:
                     return_obj = entity
                     break
@@ -435,7 +437,7 @@ class KubevirtPVC(KubernetesRawModule):
             spec['volumeName'] = self.params.get('volume_name')
 
         # 'resource_definition:' has lower priority than module parameters
-        definition = dict(KubeVirtRawModule.merge_dicts(self.resource_definitions[0], definition))
+        definition = dict(KubeVirtRawModule.merge_dicts(definition, self.resource_definitions[0]))
 
         self.client = self.get_api_client()
         resource = self.find_resource(KIND, API, fail=True)

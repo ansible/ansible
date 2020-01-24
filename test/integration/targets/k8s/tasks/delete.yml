@@ -1,0 +1,101 @@
+- name: ensure that there are actually some nodes
+  k8s_info:
+    kind: Node
+  register: nodes
+
+- block:
+    - set_fact:
+        delete_namespace: delete
+
+    - name: ensure namespace exists
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ delete_namespace }}"
+
+    - name: add a daemonset
+      k8s:
+        definition:
+          apiVersion: extensions/v1beta1
+          kind: DaemonSet
+          metadata:
+            name: delete-daemonset
+            namespace: "{{ delete_namespace }}"
+          spec:
+            selector:
+              matchLabels:
+                app: "{{ k8s_pod_name }}"
+            template: "{{ k8s_pod_template }}"
+        wait: yes
+        wait_timeout: 180
+      vars:
+        k8s_pod_name: delete-ds
+        k8s_pod_image: gcr.io/kuar-demo/kuard-amd64:1
+      register: ds
+
+    - name: check that daemonset wait worked
+      assert:
+        that:
+          - ds.result.status.currentNumberScheduled == ds.result.status.desiredNumberScheduled
+
+    - name: check if pods exist
+      k8s_info:
+        namespace: "{{ delete_namespace }}"
+        kind: Pod
+        label_selectors:
+          - "app={{ k8s_pod_name }}"
+      vars:
+        k8s_pod_name: delete-ds
+      register: pods_create
+
+    - name: assert that there are pods
+      assert:
+        that:
+          - pods_create.resources
+
+    - name: remove the daemonset
+      k8s:
+        kind: DaemonSet
+        name: delete-daemonset
+        namespace: "{{ delete_namespace }}"
+        state: absent
+        wait: yes
+
+    - name: show status of pods
+      k8s_info:
+        namespace: "{{ delete_namespace }}"
+        kind: Pod
+        label_selectors:
+          - "app={{ k8s_pod_name }}"
+      vars:
+        k8s_pod_name: delete-ds
+
+    - name: wait for background deletion
+      pause:
+        seconds: 30
+
+    - name: check if pods still exist
+      k8s_info:
+        namespace: "{{ delete_namespace }}"
+        kind: Pod
+        label_selectors:
+          - "app={{ k8s_pod_name }}"
+      vars:
+        k8s_pod_name: delete-ds
+      register: pods_delete
+
+    - name: assert that deleting the daemonset deleted the pods
+      assert:
+        that:
+          - not pods_delete.resources
+
+  always:
+      - name: remove namespace
+        k8s:
+          kind: Namespace
+          name: "{{ delete_namespace }}"
+          state: absent
+
+  when: (nodes.resources | length) > 0

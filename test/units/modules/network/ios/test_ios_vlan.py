@@ -19,26 +19,24 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from units.compat.mock import patch
-from ansible.modules.network.ios import ios_vlan
-from ansible.modules.network.ios.ios_vlan import parse_vlan_brief
+from ansible.modules.network.ios import _ios_vlan
+from ansible.modules.network.ios._ios_vlan import parse_vlan_brief
 from units.modules.utils import set_module_args
 from .ios_module import TestIosModule, load_fixture
 
 
 class TestIosVlanModule(TestIosModule):
 
-    module = ios_vlan
+    module = _ios_vlan
 
     def setUp(self):
         super(TestIosVlanModule, self).setUp()
 
-        self.mock_run_commands = patch('ansible.modules.network.ios.ios_vlan.run_commands')
+        self.mock_run_commands = patch('ansible.modules.network.ios._ios_vlan.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
-        self.mock_load_config = patch('ansible.modules.network.ios.ios_vlan.load_config')
+        self.mock_load_config = patch('ansible.modules.network.ios._ios_vlan.load_config')
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):

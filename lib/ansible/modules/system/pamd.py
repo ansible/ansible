@@ -351,6 +351,8 @@ class PamdRule(PamdLine):
     valid_control_actions = ['ignore', 'bad', 'die', 'ok', 'done', 'reset']
 
     def __init__(self, rule_type, rule_control, rule_path, rule_args=None):
+        self.prev = None
+        self.next = None
         self._control = None
         self._args = None
         self.rule_type = rule_type
@@ -478,7 +480,8 @@ class PamdService(object):
             if current_line.matches(rule_type, rule_control, rule_path):
                 if current_line.prev is not None:
                     current_line.prev.next = current_line.next
-                    current_line.next.prev = current_line.prev
+                    if current_line.next is not None:
+                        current_line.next.prev = current_line.prev
                 else:
                     self._head = current_line.next
                     current_line.next.prev = None
@@ -605,7 +608,7 @@ class PamdService(object):
             if next_rule is not None and not next_rule.matches(new_type, new_control, new_path):
                 # If the previous rule doesn't match we'll insert our new rule.
 
-                # Second set the original next rule's previuous to the new_rule
+                # Second set the original next rule's previous to the new_rule
                 next_rule.prev = new_rule
                 # Third, set the new_rule's next to the original next rule
                 new_rule.next = next_rule
@@ -810,7 +813,7 @@ def main():
                             file %s with error %s.' %
                          (fname, str(e)))
 
-    # Assuming we didnt fail, create the service
+    # Assuming we didn't fail, create the service
     service = PamdService(content)
     # Set the action
     action = module.params['state']

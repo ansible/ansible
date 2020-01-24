@@ -26,7 +26,8 @@ description:
     - It uses the pyOpenSSL or cryptography python library to interact with OpenSSL. If both the
       cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
       cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with
-      C(select_crypto_backend))
+      C(select_crypto_backend)). Please note that the PyOpenSSL backend was deprecated in Ansible 2.9
+      and will be removed in Ansible 2.13.
 requirements:
     - PyOpenSSL >= 0.15 or cryptography >= 1.2.3
 author:
@@ -37,7 +38,12 @@ options:
         description:
             - Remote absolute path where the private key file is loaded from.
         type: path
-        required: true
+    content:
+        description:
+            - Content of the private key file.
+            - Either I(path) or I(content) must be specified, but not both.
+        type: str
+        version_added: "2.10"
     passphrase:
         description:
             - The passphrase for the private key.
@@ -57,6 +63,8 @@ options:
             - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to C(pyopenssl).
             - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
             - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
+            - Please note that the C(pyopenssl) backend has been deprecated in Ansible 2.9, and will be removed in Ansible 2.13.
+              From that point on, only the C(cryptography) backend will be available.
         type: str
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
@@ -315,13 +323,14 @@ def _is_cryptography_key_consistent(key, key_public_data, key_private_data):
 class PrivateKeyInfo(crypto_utils.OpenSSLObject):
     def __init__(self, module, backend):
         super(PrivateKeyInfo, self).__init__(
-            module.params['path'],
+            module.params['path'] or '',
             'present',
             False,
             module.check_mode,
         )
         self.backend = backend
         self.module = module
+        self.content = module.params['content']
 
         self.passphrase = module.params['passphrase']
         self.return_private_key_data = module.params['return_private_key_data']
@@ -352,12 +361,16 @@ class PrivateKeyInfo(crypto_utils.OpenSSLObject):
             can_parse_key=False,
             key_is_consistent=None,
         )
-        try:
-            with open(self.path, 'rb') as b_priv_key_fh:
-                priv_key_detail = b_priv_key_fh.read()
+        if self.content is not None:
+            priv_key_detail = self.content.encode('utf-8')
             result['can_load_key'] = True
-        except (IOError, OSError) as exc:
-            self.module.fail_json(msg=to_native(exc), **result)
+        else:
+            try:
+                with open(self.path, 'rb') as b_priv_key_fh:
+                    priv_key_detail = b_priv_key_fh.read()
+                result['can_load_key'] = True
+            except (IOError, OSError) as exc:
+                self.module.fail_json(msg=to_native(exc), **result)
         try:
             self.key = crypto_utils.load_privatekey(
                 path=None,
@@ -440,11 +453,11 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
         '''Convert OpenSSL BIGINT to Python integer'''
         if bn == OpenSSL._util.ffi.NULL:
             return None
+        hexstr = OpenSSL._util.lib.BN_bn2hex(bn)
         try:
-            hex = OpenSSL._util.lib.BN_bn2hex(bn)
-            return int(OpenSSL._util.ffi.string(hex), 16)
+            return int(OpenSSL._util.ffi.string(hexstr), 16)
         finally:
-            OpenSSL._util.lib.OPENSSL_free(hex)
+            OpenSSL._util.lib.OPENSSL_free(hexstr)
 
     def _get_key_info(self):
         key_public_data = dict()
@@ -573,21 +586,29 @@ class PrivateKeyInfoPyOpenSSL(PrivateKeyInfo):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            path=dict(type='path', required=True),
+            path=dict(type='path'),
+            content=dict(type='str'),
             passphrase=dict(type='str', no_log=True),
             return_private_key_data=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
+        ),
+        required_one_of=(
+            ['path', 'content'],
+        ),
+        mutually_exclusive=(
+            ['path', 'content'],
         ),
         supports_check_mode=True,
     )
 
     try:
-        base_dir = os.path.dirname(module.params['path']) or '.'
-        if not os.path.isdir(base_dir):
-            module.fail_json(
-                name=base_dir,
-                msg='The directory %s does not exist or the file is not a directory' % base_dir
-            )
+        if module.params['path'] is not None:
+            base_dir = os.path.dirname(module.params['path']) or '.'
+            if not os.path.isdir(base_dir):
+                module.fail_json(
+                    name=base_dir,
+                    msg='The directory %s does not exist or the file is not a directory' % base_dir
+                )
 
         backend = module.params['select_crypto_backend']
         if backend == 'auto':
@@ -610,11 +631,14 @@ def main():
 
         if backend == 'pyopenssl':
             if not PYOPENSSL_FOUND:
-                module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+                module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
+                                 exception=PYOPENSSL_IMP_ERR)
+            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='2.13')
             privatekey = PrivateKeyInfoPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:
-                module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
+                module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
+                                 exception=CRYPTOGRAPHY_IMP_ERR)
             privatekey = PrivateKeyInfoCryptography(module)
 
         result = privatekey.get_info()

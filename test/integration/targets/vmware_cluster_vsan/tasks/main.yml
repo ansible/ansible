@@ -1,0 +1,64 @@
+# Test code for the vmware_cluster module.
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+- when: vcsim is not defined
+  block:
+    # Setup: Create test cluster
+    - name: Create test cluster
+      vmware_cluster:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter_name: "{{ dc1 }}"
+        cluster_name: test_cluster_vsan
+        state: present
+
+    # Testcase 0001: Enable vSAN
+    - name: Enable vSAN
+      vmware_cluster_vsan:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter_name: "{{ dc1 }}"
+        cluster_name: test_cluster_vsan
+        enable_vsan: yes
+      register: cluster_vsan_result_0001
+
+    - name: Ensure vSAN is enabled
+      assert:
+        that:
+        - "{{ cluster_vsan_result_0001.changed == true }}"
+
+    # Testcase 0002: Disable vSAN
+    - name: Disable vSAN
+      vmware_cluster_vsan:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter_name: "{{ dc1 }}"
+        cluster_name: test_cluster_vsan
+        enable_vsan: no
+      register: cluster_vsan_result_0002
+
+    - name: Ensure vSAN is disabled
+      assert:
+        that:
+            - "{{ cluster_vsan_result_0002.changed == true }}"
+
+    # Delete test cluster
+    - name: Delete test cluster
+      vmware_cluster:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter_name: "{{ dc1 }}"
+        cluster_name: test_cluster_vsan
+        state: absent

@@ -58,9 +58,12 @@ options:
   pkl_dest:
     description:
       - Destination (remote) IP address used for peer keepalive link
+      - pkl_dest is required whenever pkl options are used.
   pkl_vrf:
     description:
       - VRF used for peer keepalive link
+      - The VRF must exist on the device before using pkl_vrf.
+      - "(Note) 'default' is an overloaded term: Default vrf context for pkl_vrf is 'management'; 'pkl_vrf: default' refers to the literal 'default' rib."
     default: management
   peer_gw:
     description:
@@ -152,7 +155,7 @@ commands:
 
 import re
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -262,17 +265,44 @@ def get_vpc(module):
                 if 'peer-gateway' in each:
                     vpc['peer_gw'] = False if 'no ' in each else True
                 if 'peer-keepalive destination' in each:
-                    line = each.split()
-                    vpc['pkl_dest'] = line[2]
-                    vpc['pkl_vrf'] = 'management'
-                    if 'source' in each:
-                        vpc['pkl_src'] = line[4]
-                        if 'vrf' in each:
-                            vpc['pkl_vrf'] = line[6]
-                    else:
-                        if 'vrf' in each:
-                            vpc['pkl_vrf'] = line[4]
+                    # destination is reqd; src & vrf are optional
+                    m = re.search(r'destination (?P<pkl_dest>[\d.]+)'
+                                  r'(?:.* source (?P<pkl_src>[\d.]+))*'
+                                  r'(?:.* vrf (?P<pkl_vrf>\S+))*',
+                                  each)
+                    if m:
+                        for pkl in m.groupdict().keys():
+                            if m.group(pkl):
+                                vpc[pkl] = m.group(pkl)
     return vpc
+
+
+def pkl_dependencies(module, delta, existing):
+    """peer-keepalive dependency checking.
+    1. 'destination' is required with all pkl configs.
+    2. If delta has optional pkl keywords present, then all optional pkl
+       keywords in existing must be added to delta, otherwise the device cli
+       will remove those values when the new config string is issued.
+    3. The desired behavior for this set of properties is to merge changes;
+       therefore if an optional pkl property exists on the device but not
+       in the playbook, then that existing property should be retained.
+    Example:
+      CLI:       peer-keepalive dest 10.1.1.1 source 10.1.1.2 vrf orange
+      Playbook:  {pkl_dest: 10.1.1.1, pkl_vrf: blue}
+      Result:    peer-keepalive dest 10.1.1.1 source 10.1.1.2 vrf blue
+    """
+    pkl_existing = [i for i in existing.keys() if i.startswith('pkl')]
+    for pkl in pkl_existing:
+        param = module.params.get(pkl)
+        if not delta.get(pkl):
+            if param and param == existing[pkl]:
+                # delta is missing this param because it's idempotent;
+                # however another pkl command has changed; therefore
+                # explicitly add it to delta so that the cli retains it.
+                delta[pkl] = existing[pkl]
+            elif param is None and existing[pkl]:
+                # retain existing pkl commands even if not in playbook
+                delta[pkl] = existing[pkl]
 
 
 def get_commands_to_config_vpc(module, vpc, domain, existing):
@@ -285,7 +315,7 @@ def get_commands_to_config_vpc(module, vpc, domain, existing):
         pkl_command = 'peer-keepalive destination {pkl_dest}'.format(**vpc)
         if 'pkl_src' in vpc:
             pkl_command += ' source {pkl_src}'.format(**vpc)
-        if 'pkl_vrf' in vpc and vpc['pkl_vrf'] != 'management':
+        if 'pkl_vrf' in vpc:
             pkl_command += ' vrf {pkl_vrf}'.format(**vpc)
         commands.append(pkl_command)
 
@@ -339,7 +369,6 @@ def main():
                            supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     results = {'changed': False, 'warnings': warnings}
 
     domain = module.params['domain']
@@ -389,11 +418,14 @@ def main():
     if state == 'present':
         delta = {}
         for key, value in proposed.items():
-            if str(value).lower() == 'default':
+            if str(value).lower() == 'default' and key != 'pkl_vrf':
+                # 'default' is a reserved word for vrf
                 value = PARAM_TO_DEFAULT_KEYMAP.get(key)
             if existing.get(key) != value:
                 delta[key] = value
+
         if delta:
+            pkl_dependencies(module, delta, existing)
             command = get_commands_to_config_vpc(module, delta, domain, existing)
             commands.append(command)
     elif state == 'absent':

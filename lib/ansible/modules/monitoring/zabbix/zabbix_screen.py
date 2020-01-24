@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_screen
 short_description: Create/update/delete Zabbix screens
@@ -26,19 +26,60 @@ author:
     - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.4"
 options:
     screens:
         description:
             - List of screens to be created/updated/deleted (see example).
-            - If a screen has already been added, the screen name won't be updated.
-            - When creating or updating a screen, C(screen_name) and C(host_group) are required.
-            - When deleting a screen, the C(screen_name) is required.
-            - Option C(graphs_in_row) will limit columns of a screen and make multiple rows (default 3).
-            - >
-              The available states are: C(present) (default) and C(absent). If the screen already exists, and the state is not C(absent), the screen
-              will be updated as needed.
+        type: list
+        elements: dict
         required: true
+        suboptions:
+            screen_name:
+                description:
+                    - Screen name will be used.
+                    - If a screen has already been added, the screen name won't be updated.
+                type: str
+                required: true
+            host_group:
+                description:
+                    - Host group will be used for searching hosts.
+                    - Required if I(state=present).
+                type: str
+            state:
+                description:
+                    - I(present) - Create a screen if it doesn't exist. If the screen already exists, the screen will be updated as needed.
+                    - I(absent) - If a screen exists, the screen will be deleted.
+                type: str
+                default: present
+                choices:
+                    - absent
+                    - present
+            graph_names:
+                description:
+                    - Graph names will be added to a screen. Case insensitive.
+                    - Required if I(state=present).
+                type: list
+                elements: str
+            graph_width:
+                description:
+                    - Graph width will be set in graph settings.
+                type: int
+            graph_height:
+                description:
+                    - Graph height will be set in graph settings.
+                type: int
+            graphs_in_row:
+                description:
+                    - Limit columns of a screen and make multiple rows.
+                type: int
+                default: 3
+            sort:
+                description:
+                    - Sort hosts alphabetically.
+                    - If there are numbers in hostnames, leading zero should be used.
+                type: bool
+                default: no
 
 extends_documentation_fragment:
     - zabbix
@@ -47,7 +88,7 @@ notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Create/update a screen.
 - name: Create a new screen or update an existing screen's items 5 in a row
   local_action:
@@ -111,26 +152,21 @@ EXAMPLES = '''
   when: inventory_hostname==groups['group_name'][0]
 '''
 
+
+import atexit
+import traceback
+
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPI
     from zabbix_api import ZabbixAPIException
     from zabbix_api import Already_Exists
 
-    # Extend the ZabbixAPI
-    # Since the zabbix-api python module too old (version 1.0, and there's no higher version so far), it doesn't support the 'screenitem' api call,
-    # we have to inherit the ZabbixAPI class to add 'screenitem' support.
-    class ZabbixAPIExtends(ZabbixAPI):
-        screenitem = None
-
-        def __init__(self, server, timeout, user, passwd, validate_certs, **kwargs):
-            ZabbixAPI.__init__(self, server, timeout=timeout, user=user, passwd=passwd, validate_certs=validate_certs)
-            self.screenitem = ZabbixAPISubClass(self, dict({"prefix": "screenitem"}, **kwargs))
-
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class Screen(object):
@@ -150,11 +186,13 @@ class Screen(object):
             return hostGroup_id
 
     # get monitored host_id by host_group_id
-    def get_host_ids_by_group_id(self, group_id):
+    def get_host_ids_by_group_id(self, group_id, sort):
         host_list = self._zapi.host.get({'output': 'extend', 'groupids': group_id, 'monitored_hosts': 1})
         if len(host_list) < 1:
             self._module.fail_json(msg="No host in the group.")
         else:
+            if sort:
+                host_list = sorted(host_list, key=lambda name: name['name'])
             host_ids = []
             for i in host_list:
                 host_id = i['hostid']
@@ -313,13 +351,30 @@ def main():
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
             timeout=dict(type='int', default=10),
-            screens=dict(type='list', required=True)
+            screens=dict(
+                type='list',
+                elements='dict',
+                required=True,
+                options=dict(
+                    screen_name=dict(type='str', required=True),
+                    host_group=dict(type='str'),
+                    state=dict(type='str', default='present', choices=['absent', 'present']),
+                    graph_names=dict(type='list', elements='str'),
+                    graph_width=dict(type='int', default=None),
+                    graph_height=dict(type='int', default=None),
+                    graphs_in_row=dict(type='int', default=3),
+                    sort=dict(default=False, type='bool'),
+                ),
+                required_if=[
+                    ['state', 'present', ['host_group']]
+                ]
+            )
         ),
         supports_check_mode=True
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -333,9 +388,10 @@ def main():
     zbx = None
     # login to zabbix
     try:
-        zbx = ZabbixAPIExtends(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
-                               validate_certs=validate_certs)
+        zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
+                        validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
@@ -347,7 +403,8 @@ def main():
     for zabbix_screen in screens:
         screen_name = zabbix_screen['screen_name']
         screen_id = screen.get_screen_id(screen_name)
-        state = "absent" if "state" in zabbix_screen and zabbix_screen['state'] == "absent" else "present"
+        state = zabbix_screen['state']
+        sort = zabbix_screen['sort']
 
         if state == "absent":
             if screen_id:
@@ -363,17 +420,11 @@ def main():
         else:
             host_group = zabbix_screen['host_group']
             graph_names = zabbix_screen['graph_names']
-            graphs_in_row = 3
-            if 'graphs_in_row' in zabbix_screen:
-                graphs_in_row = zabbix_screen['graphs_in_row']
-            graph_width = None
-            if 'graph_width' in zabbix_screen:
-                graph_width = zabbix_screen['graph_width']
-            graph_height = None
-            if 'graph_height' in zabbix_screen:
-                graph_height = zabbix_screen['graph_height']
+            graphs_in_row = zabbix_screen['graphs_in_row']
+            graph_width = zabbix_screen['graph_width']
+            graph_height = zabbix_screen['graph_height']
             host_group_id = screen.get_host_group_id(host_group)
-            hosts = screen.get_host_ids_by_group_id(host_group_id)
+            hosts = screen.get_host_ids_by_group_id(host_group_id, sort)
 
             screen_item_id_list = []
             resource_id_list = []

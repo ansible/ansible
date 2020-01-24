@@ -7,7 +7,7 @@
     cname_h3: "{{ cname_prefix ~ '-options-h3' }}"
 - name: Registering container name
   set_fact:
-    cnames: "{{ cnames }} + [cname, cname_h1, cname_h2, cname_h3]"
+    cnames: "{{ cnames + [cname, cname_h1, cname_h2, cname_h3] }}"
 
 ####################################################################
 ## auto_remove #####################################################
@@ -42,7 +42,8 @@
 - assert:
     that:
     - auto_remove_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.1.0') in auto_remove_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in auto_remove_1.msg"
+    - "'Minimum version required is 2.1.0 ' in auto_remove_1.msg"
   when: docker_py_version is version('2.1.0', '<')
 
 ####################################################################
@@ -430,6 +431,63 @@
     - cpuset_mems_3 is failed or cpuset_mems_3 is changed
 
 ####################################################################
+## cpus ############################################################
+####################################################################
+
+- name: cpus
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    cpus: 1
+    state: started
+  ignore_errors: yes
+  register: cpus_1
+
+- name: cpus (idempotency)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    cpus: 1
+    state: started
+  ignore_errors: yes
+  register: cpus_2
+
+- name: cpus (change)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    cpus: 1.5
+    state: started
+    force_kill: yes
+  # This will fail if the system the test is run on doesn't have
+  # multiple MEMs available.
+  ignore_errors: yes
+  register: cpus_3
+
+- name: cleanup
+  docker_container:
+    name: "{{ cname }}"
+    state: absent
+    force_kill: yes
+  diff: no
+
+- assert:
+    that:
+    - cpus_1 is changed
+    - cpus_2 is not changed and cpus_2 is not failed
+    - cpus_3 is failed or cpus_3 is changed
+  when: docker_py_version is version('2.3.0', '>=')
+- assert:
+    that:
+    - cpus_1 is failed
+    - "('version is ' ~ docker_py_version ~ ' ') in cpus_1.msg"
+    - "'Minimum version required is 2.3.0 ' in cpus_1.msg"
+  when: docker_py_version is version('2.3.0', '<')
+
+####################################################################
 ## debug ###########################################################
 ####################################################################
 
@@ -679,7 +737,8 @@
 - assert:
     that:
     - device_read_bps_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.9.0') in device_read_bps_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in device_read_bps_1.msg"
+    - "'Minimum version required is 1.9.0 ' in device_read_bps_1.msg"
   when: docker_py_version is version('1.9.0', '<')
 
 ####################################################################
@@ -758,7 +817,8 @@
 - assert:
     that:
     - device_read_iops_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.9.0') in device_read_iops_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in device_read_iops_1.msg"
+    - "'Minimum version required is 1.9.0 ' in device_read_iops_1.msg"
   when: docker_py_version is version('1.9.0', '<')
 
 ####################################################################
@@ -827,7 +887,8 @@
 - assert:
     that:
     - device_write_limit_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.9.0') in device_write_limit_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in device_write_limit_1.msg"
+    - "'Minimum version required is 1.9.0 ' in device_write_limit_1.msg"
   when: docker_py_version is version('1.9.0', '<')
 
 ####################################################################
@@ -899,7 +960,8 @@
 - assert:
     that:
     - dns_opts_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.10.0') in dns_opts_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in dns_opts_1.msg"
+    - "'Minimum version required is 1.10.0 ' in dns_opts_1.msg"
   when: docker_py_version is version('1.10.0', '<')
 
 ####################################################################
@@ -1602,7 +1664,8 @@
 - assert:
     that:
     - healthcheck_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in healthcheck_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in healthcheck_1.msg"
+    - "'Minimum version required is 2.0.0 ' in healthcheck_1.msg"
   when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################
@@ -1701,7 +1764,8 @@
 - assert:
     that:
     - init_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.2.0') in init_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in init_1.msg"
+    - "'Minimum version required is 2.2.0 ' in init_1.msg"
   when: docker_py_version is version('2.2.0', '<')
 
 ####################################################################
@@ -1815,6 +1879,7 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ container_name }}"
     state: started
+    ipc_mode: shareable
   loop:
   - "{{ cname_h1 }}"
   loop_control:
@@ -2699,7 +2764,8 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 - assert:
     that:
     - pids_limit_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.10.0') in pids_limit_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in pids_limit_1.msg"
+    - "'Minimum version required is 1.10.0 ' in pids_limit_1.msg"
   when: docker_py_version is version('1.10.0', '<')
 
 ####################################################################
@@ -2795,6 +2861,18 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     force_kill: yes
   register: published_ports_4
 
+- name: published_ports (ports with IP addresses)
+  docker_container:
+    image: alpine:3.8
+    command: '/bin/sh -c "sleep 10m"'
+    name: "{{ cname }}"
+    state: started
+    published_ports:
+    - '127.0.0.1:9002:9002/tcp'
+    - '[::1]:9003:9003/tcp'
+    force_kill: yes
+  register: published_ports_5
+
 - name: cleanup
   docker_container:
     name: "{{ cname }}"
@@ -2808,6 +2886,7 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     - published_ports_2 is not changed
     - published_ports_3 is not changed
     - published_ports_4 is changed
+    - published_ports_5 is changed
 
 ####################################################################
 ## pull ############################################################
@@ -2992,7 +3071,8 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 - assert:
     that:
     - runtime_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.4.0') in runtime_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in runtime_1.msg"
+    - "'Minimum version required is 2.4.0 ' in runtime_1.msg"
   when: docker_py_version is version('2.4.0', '<')
 
 ####################################################################
@@ -3287,7 +3367,8 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 - assert:
     that:
     - sysctls_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.10.0') in sysctls_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in sysctls_1.msg"
+    - "'Minimum version required is 1.10.0 ' in sysctls_1.msg"
   when: docker_py_version is version('1.10.0', '<')
 
 ####################################################################
@@ -3351,12 +3432,6 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
     - tmpfs_2 is not changed
     - tmpfs_3 is not changed
     - tmpfs_4 is changed
-
-####################################################################
-## trust_image_content #############################################
-####################################################################
-
-# TODO: - trust_image_content
 
 ####################################################################
 ## tty #############################################################
@@ -3561,7 +3636,8 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 - assert:
     that:
     - userns_mode_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 1.10.0') in userns_mode_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in userns_mode_1.msg"
+    - "'Minimum version required is 1.10.0 ' in userns_mode_1.msg"
   when: docker_py_version is version('1.10.0', '<')
 
 ####################################################################
@@ -3615,199 +3691,9 @@ avoid such warnings, please quote the value.' in log_options_2.warnings"
 - assert:
     that:
     - uts_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 3.5.0') in uts_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in uts_1.msg"
+    - "'Minimum version required is 3.5.0 ' in uts_1.msg"
   when: docker_py_version is version('3.5.0', '<')
-
-####################################################################
-## keep_volumes ####################################################
-####################################################################
-
-# TODO: - keep_volumes
-
-####################################################################
-## volume_driver ###################################################
-####################################################################
-
-- name: volume_driver
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    volume_driver: local
-    state: started
-  register: volume_driver_1
-
-- name: volume_driver (idempotency)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    volume_driver: local
-    state: started
-  register: volume_driver_2
-
-- name: volume_driver (change)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    volume_driver: /
-    state: started
-    force_kill: yes
-  register: volume_driver_3
-
-- name: cleanup
-  docker_container:
-    name: "{{ cname }}"
-    state: absent
-    force_kill: yes
-  diff: no
-
-- assert:
-    that:
-    - volume_driver_1 is changed
-    - volume_driver_2 is not changed
-    - volume_driver_3 is changed
-
-####################################################################
-## volumes #########################################################
-####################################################################
-
-- name: volumes
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    volumes:
-    - "/tmp:/tmp"
-    - "/:/whatever:rw,z"
-  register: volumes_1
-
-- name: volumes (idempotency)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    volumes:
-    - "/:/whatever:rw,z"
-    - "/tmp:/tmp"
-  register: volumes_2
-
-- name: volumes (less volumes)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    volumes:
-    - "/tmp:/tmp"
-  register: volumes_3
-
-- name: volumes (more volumes)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    volumes:
-    - "/tmp:/tmp"
-    - "/tmp:/somewhereelse:ro,Z"
-    force_kill: yes
-  register: volumes_4
-
-- name: volumes (different modes)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    volumes:
-    - "/tmp:/tmp"
-    - "/tmp:/somewhereelse:ro"
-    force_kill: yes
-  register: volumes_5
-
-- name: cleanup
-  docker_container:
-    name: "{{ cname }}"
-    state: absent
-    force_kill: yes
-  diff: no
-
-- assert:
-    that:
-    - volumes_1 is changed
-    - volumes_2 is not changed
-    - volumes_3 is not changed
-    - volumes_4 is changed
-    - volumes_5 is changed
-
-####################################################################
-## volumes_from ####################################################
-####################################################################
-
-- name: start helpers
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ container_name }}"
-    state: started
-    volumes:
-    - "{{ '/tmp:/tmp' if container_name == cname_h1 else '/:/whatever:ro' }}"
-  loop:
-  - "{{ cname_h1 }}"
-  - "{{ cname_h2 }}"
-  loop_control:
-    loop_var: container_name
-
-- name: volumes_from
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    volumes_from: "{{ cname_h1 }}"
-  register: volumes_from_1
-
-- name: volumes_from (idempotency)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    volumes_from: "{{ cname_h1 }}"
-  register: volumes_from_2
-
-- name: volumes_from (change)
-  docker_container:
-    image: alpine:3.8
-    command: '/bin/sh -c "sleep 10m"'
-    name: "{{ cname }}"
-    state: started
-    volumes_from: "{{ cname_h2 }}"
-    force_kill: yes
-  register: volumes_from_3
-
-- name: cleanup
-  docker_container:
-    name: "{{ container_name }}"
-    state: absent
-    force_kill: yes
-  loop:
-  - "{{ cname }}"
-  - "{{ cname_h1 }}"
-  - "{{ cname_h2 }}"
-  loop_control:
-    loop_var: container_name
-  diff: no
-
-- assert:
-    that:
-    - volumes_from_1 is changed
-    - volumes_from_2 is not changed
-    - volumes_from_3 is changed
 
 ####################################################################
 ## working_dir #####################################################

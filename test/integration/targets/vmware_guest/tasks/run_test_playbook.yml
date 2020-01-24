@@ -1,0 +1,17 @@
+- block:
+  - include_tasks: '{{ test_playbook }}'
+  always:
+    - name: Remove VM
+      vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+#        cluster: "{{ ccr1 }}"
+        name: '{{ item }}'
+        force: yes
+        state: absent
+      with_items:
+        - test_vm1
+        - test_vm2
+        - test_vm3

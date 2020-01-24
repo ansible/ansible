@@ -1,0 +1,86 @@
+---
+- debug:
+    msg: "START junos_lag_interfaces deleted integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+- include_tasks: _base_config.yaml
+
+- set_fact:
+    expected_deleted_1_output:
+      - name: ae1
+        members:
+          - member: ge-0/0/1
+          - member: ge-0/0/2
+        mode: active
+
+    expected_deleted_2_output: []
+
+- block:
+    - name: Base LAG configuration
+      junos_lag_interfaces: &initial
+        config:
+          - name: ae1
+            members:
+              - member: ge-0/0/1
+              - member: ge-0/0/2
+            mode: active
+          - name: ae2
+            link_protection: True
+            members:
+              - member: ge-0/0/3
+                link_type: primary
+              - member: ge-0/0/4
+                link_type: backup
+            mode: passive
+        state: merged
+
+    - name: Delete the provided configuration with the exisiting running configuration
+      junos_lag_interfaces: &deleted
+        config:
+          - name: ae2
+        state: deleted
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_deleted_1_output | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Delete the provided configuration with the existing running configuration (IDEMPOTENT)
+      junos_lag_interfaces: *deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+    - name: Configure initial state for lag interface
+      junos_lag_interfaces: *initial
+      register: result
+
+    - name: Delete the provided configuration with the exisiting running configuration
+      junos_lag_interfaces:
+        state: deleted
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_deleted_2_output | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Delete the provided configuration with the exisiting running configuration (IDEMPOTENT)
+      junos_lag_interfaces:
+        state: deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_lag_interfaces deleted integration tests on connection={{ ansible_connection }}"

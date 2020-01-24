@@ -1,0 +1,130 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: setup
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: cx11
+    image: "ubuntu-18.04"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    state: present
+  register: setup
+- name: verify setup
+  assert:
+    that:
+    - setup is success
+
+- name: test missing required parameter
+  hcloud_rdns:
+    state: present
+  register: result
+  ignore_errors: yes
+- name: verify fail test missing required parameters
+  assert:
+    that:
+      - result is failed
+      - 'result.msg == "missing required arguments: ip_address, server" or result.msg == "missing required arguments: server, ip_address"'
+
+- name: test missing required parameters on create
+  hcloud_rdns:
+    server: "{{ hcloud_server_name }}"
+    ip_address: "{{ setup.hcloud_server.ipv6 | ipaddr('next_usable') }}"
+    state: present
+  register: result
+  ignore_errors: yes
+- name: verify fail test missing required parameters on create
+  assert:
+    that:
+      - result is failed
+      - 'result.msg == "missing required arguments: dns_ptr"'
+
+- name: test create rdns with checkmode
+  hcloud_rdns:
+    server: "{{ hcloud_server_name }}"
+    ip_address: "{{ setup.hcloud_server.ipv6 | ipaddr('next_usable') }}"
+    dns_ptr: "example.com"
+    state: present
+  register: result
+  check_mode: yes
+- name: verify test create rdns with checkmode
+  assert:
+    that:
+    - result is changed
+
+- name: test create rdns
+  hcloud_rdns:
+    server: "{{ hcloud_server_name }}"
+    ip_address: "{{ setup.hcloud_server.ipv6 | ipaddr('next_usable') }}"
+    dns_ptr: "example.com"
+    state: present
+  register: rdns
+- name: verify create rdns
+  assert:
+    that:
+    - rdns is changed
+    - rdns.hcloud_rdns.server == "{{ hcloud_server_name }}"
+    - rdns.hcloud_rdns.ip_address == "{{ setup.hcloud_server.ipv6 | ipaddr('next_usable') }}"
+    - rdns.hcloud_rdns.dns_ptr == "example.com"
+
+- name: test create rdns idempotency
+  hcloud_rdns:
+    server: "{{ hcloud_server_name }}"
+    ip_address: "{{ setup.hcloud_server.ipv6 | ipaddr('next_usable') }}"
+    dns_ptr: "example.com"
+    state: present
+  register: result
+- name: verify create rdns idempotency
+  assert:
+    that:
+    - result is not changed
+
+- name: test absent rdns
+  hcloud_rdns:
+    server: "{{ hcloud_server_name }}"
+    ip_address: "{{ setup.hcloud_server.ipv6 | ipaddr('next_usable') }}"
+    state: absent
+  register: result
+- name: verify test absent rdns
+  assert:
+    that:
+    - result is changed
+
+- name: test update rdns
+  hcloud_rdns:
+    server: "{{ hcloud_server_name }}"
+    ip_address: "{{ setup.hcloud_server.ipv4_address }}"
+    dns_ptr: "example.com"
+    state: present
+  register: rdns
+- name: verify update rdns
+  assert:
+    that:
+    - rdns is changed
+    - rdns.hcloud_rdns.server == "{{ hcloud_server_name }}"
+    - rdns.hcloud_rdns.ip_address == "{{ setup.hcloud_server.ipv4_address }}"
+    - rdns.hcloud_rdns.dns_ptr == "example.com"
+
+- name: test reset rdns
+  hcloud_rdns:
+    server: "{{ hcloud_server_name }}"
+    ip_address: "{{ setup.hcloud_server.ipv4_address }}"
+    state: present
+  register: rdns
+- name: verify reset rdns
+  assert:
+    that:
+    - rdns is changed
+    - rdns.hcloud_rdns.server == "{{ hcloud_server_name }}"
+    - rdns.hcloud_rdns.ip_address == "{{ setup.hcloud_server.ipv4_address }}"
+    - rdns.hcloud_rdns.dns_ptr != "example.com"
+
+- name: cleanup
+  hcloud_server:
+    name: "{{hcloud_server_name}}"
+    state: absent
+  register: result
+- name: verify cleanup
+  assert:
+    that:
+      - result is success

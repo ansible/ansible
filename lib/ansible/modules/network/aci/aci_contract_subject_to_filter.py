@@ -236,7 +236,7 @@ def main():
         filter=dict(type='str', aliases=['filter_name']),  # Not required for querying all objects
         subject=dict(type='str', aliases=['contract_subject', 'subject_name']),  # Not required for querying all objects
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
-        log=dict(tyep='str', choices=['log', 'none'], aliases=['directive']),
+        log=dict(type='str', choices=['log', 'none'], aliases=['directive']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 
@@ -249,12 +249,12 @@ def main():
         ],
     )
 
-    contract = module.params['contract']
-    filter_name = module.params['filter']
-    log = module.params['log']
-    subject = module.params['subject']
-    tenant = module.params['tenant']
-    state = module.params['state']
+    contract = module.params.get('contract')
+    filter_name = module.params.get('filter')
+    log = module.params.get('log')
+    subject = module.params.get('subject')
+    tenant = module.params.get('tenant')
+    state = module.params.get('state')
 
     # Add subject_filter key to modul.params for building the URL
     module.params['subject_filter'] = filter_name

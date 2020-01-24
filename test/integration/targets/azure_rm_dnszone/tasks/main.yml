@@ -35,7 +35,7 @@
       - results.state.tags.test == 'modified'
 
 - name: Retrieve DNS Zone Facts
-  azure_rm_dnszone_facts:
+  azure_rm_dnszone_info:
     resource_group: "{{ resource_group }}"
     name: "{{ domain_name }}.com"
   register: zones
@@ -43,7 +43,7 @@
 - name: Assert that facts module returned result
   assert:
     that: 
-      - azure_dnszones[0].tags.test == 'modified'
+      - zones.dnszones[0].tags.test == 'modified'
       - zones.dnszones[0].type == 'public'
 
 - name: Create virtual network
@@ -254,11 +254,11 @@
       - results.changed
 
 #
-# azure_rm_dnsrecordset_facts
+# azure_rm_dnsrecordset_info
 #
 
 - name: Retrieve DNS Record Set Facts for single Record Set
-  azure_rm_dnsrecordset_facts:
+  azure_rm_dnsrecordset_info:
     resource_group: "{{ resource_group }}"
     zone_name: "{{ domain_name }}.com"
     relative_name: www
@@ -269,13 +269,13 @@
   assert:
     that: 
       - not results.changed
-      - azure_dnsrecordset[0].name == 'www'
+#     - azure_dnsrecordset[0].name == 'www'
       - results.dnsrecordsets[0].relative_name == 'www'
       - 'results.dnsrecordsets[0].records | length == 3'
       - results.dnsrecordsets[0].record_type == 'A'
 
 - name: Retrieve DNS Record Set Facts for all Record Sets
-  azure_rm_dnsrecordset_facts:
+  azure_rm_dnsrecordset_info:
     resource_group: "{{ resource_group }}"
     zone_name: "{{ domain_name }}.com"
   register: facts
@@ -284,9 +284,9 @@
   assert:
     that: 
       - not facts.changed
-      - facts.ansible_facts.azure_dnsrecordset[0].name == '@'
-      - facts.ansible_facts.azure_dnsrecordset[1].name == '@'
-      - facts.ansible_facts.azure_dnsrecordset[4].name == 'www'
+#     - facts.ansible_facts.azure_dnsrecordset[0].name == '@'
+#     - facts.ansible_facts.azure_dnsrecordset[1].name == '@'
+#     - facts.ansible_facts.azure_dnsrecordset[4].name == 'www'
 
 #
 # azure_rm_dnsrecordset cleanup
@@ -308,7 +308,7 @@
     that: results.changed
 
 - name: Retrieve DNS Record Set Facts for all Record Sets
-  azure_rm_dnsrecordset_facts:
+  azure_rm_dnsrecordset_info:
     resource_group: "{{ resource_group }}"
     zone_name: "{{ domain_name }}.com"
   register: facts

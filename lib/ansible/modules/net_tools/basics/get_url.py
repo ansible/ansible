@@ -61,6 +61,7 @@ options:
         will only be downloaded if the destination does not exist. Generally
         should be C(yes) only for small local files.
       - Prior to 0.6, this module behaved as if C(yes) was the default.
+      - Alias C(thirsty) has been deprecated and will be removed in 2.13.
     type: bool
     default: no
     aliases: [ thirsty ]
@@ -77,7 +78,8 @@ options:
       - If a SHA-256 checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        This option is deprecated. Use C(checksum) instead.
+        This option is deprecated and will be removed in version 2.14. Use
+        option C(checksum) instead.
     default: ''
     version_added: "1.3"
   checksum:
@@ -93,7 +95,8 @@ options:
       - Additionally, if a checksum is passed to this parameter, and the file exist under
         the C(dest) location, the I(destination_checksum) would be calculated, and if
         checksum equals I(destination_checksum), the file download would be skipped
-        (unless C(force) is true).
+        (unless C(force) is true). If the checksum does not equal I(destination_checksum),
+        the destination file is deleted.
     type: str
     default: ''
     version_added: "2.0"
@@ -222,7 +225,7 @@ EXAMPLES = r'''
     dest: /tmp/afilecopy.txt
 
 - name: < Fetch file that requires authentication.
-        username/password only availabe since 2.8, in older versions you ned to use url_username/url_password
+        username/password only available since 2.8, in older versions you need to use url_username/url_password
   get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
@@ -362,7 +365,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
-        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), elapsed=elapsed)
+        module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''), status_code=info['status'], elapsed=elapsed)
 
     # Exceptions in fetch_url may result in a status -1, the ensures a proper error to the user in all cases
     if info['status'] == -1:
@@ -444,6 +447,12 @@ def main():
         supports_check_mode=True,
         mutually_exclusive=[['checksum', 'sha256sum']],
     )
+
+    if module.params.get('thirsty'):
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
+
+    if module.params.get('sha256sum'):
+        module.deprecate('The parameter "sha256sum" has been deprecated and will be removed, use "checksum" instead', version='2.14')
 
     url = module.params['url']
     dest = module.params['dest']
@@ -535,7 +544,7 @@ def main():
                 checksum_mismatch = True
 
         # Not forcing redownload, unless checksum does not match
-        if not force and not checksum_mismatch:
+        if not force and checksum and not checksum_mismatch:
             # Not forcing redownload, unless checksum does not match
             # allow file attribute changes
             module.params['path'] = dest

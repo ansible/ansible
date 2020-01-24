@@ -1,18 +1,10 @@
 #!/usr/bin/python
 # This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -22,122 +14,142 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: dms_endpoint
-short_description: creates or destroys a data migration services endpoint
+short_description: Creates or destroys a data migration services endpoint
 description:
-    - creates or destroys a data migration services endpoint,
+    - Creates or destroys a data migration services endpoint,
       that can be used to replicate data.
 version_added: "2.9"
 options:
     state:
       description:
-        - State of the endpoint
+        - State of the endpoint.
       default: present
       choices: ['present', 'absent']
+      type: str
     endpointidentifier:
       description:
-        - An identifier name for the endpoint
+        - An identifier name for the endpoint.
+      type: str
+      required: true
     endpointtype:
       description:
-        - Type of endpoint we want to manage
+        - Type of endpoint we want to manage.
       choices: ['source', 'target']
+      type: str
+      required: true
     enginename:
       description:
         - Database engine that we want to use, please refer to
           the AWS DMS for more information on the supported
-          engines and their limitation
+          engines and their limitations.
       choices: ['mysql', 'oracle', 'postgres', 'mariadb', 'aurora',
                          'redshift', 's3', 'db2', 'azuredb', 'sybase',
                          'dynamodb', 'mongodb', 'sqlserver']
+      type: str
+      required: true
     username:
       description:
-        - Username our endpoint will use to connect to the database
+        - Username our endpoint will use to connect to the database.
+      type: str
     password:
       description:
         - Password used to connect to the database
           this attribute can only be written
-          the AWS API does not return this parameter
+          the AWS API does not return this parameter.
+      type: str
     servername:
       description:
-        - Servername that the endpoint will connect to
+        - Servername that the endpoint will connect to.
+      type: str
     port:
       description:
-        - TCP port for access to the database
+        - TCP port for access to the database.
+      type: int
     databasename:
       description:
-        - Name for the database on the origin or target side
+        - Name for the database on the origin or target side.
+      type: str
     extraconnectionattributes:
       description:
         - Extra attributes for the database connection, the AWS documentation
           states " For more information about extra connection attributes,
           see the documentation section for your data store."
+      type: str
     kmskeyid:
       description:
         - Encryption key to use to encrypt replication storage and
-          connection information
+          connection information.
+      type: str
     tags:
       description:
-        - A list of tags to add to the endpoint
+        - A list of tags to add to the endpoint.
+      type: dict
     certificatearn:
-       description:
-         -  Amazon Resource Name (ARN) for the certificate
+      description:
+        -  Amazon Resource Name (ARN) for the certificate.
+      type: str
     sslmode:
-       description:
-         - Mode used for the ssl connection
-       default: none
-       choices: ['none', 'require', 'verify-ca', 'verify-full']
+      description:
+        - Mode used for the SSL connection.
+      default: none
+      choices: ['none', 'require', 'verify-ca', 'verify-full']
+      type: str
     serviceaccessrolearn:
-       description:
-         -  Amazon Resource Name (ARN) for the service access role that you
-            want to use to create the endpoint.
+      description:
+        -  Amazon Resource Name (ARN) for the service access role that you
+           want to use to create the endpoint.
+      type: str
     externaltabledefinition:
-       description:
-         - The external table definition
+      description:
+        - The external table definition.
+      type: str
     dynamodbsettings:
-       description:
-         - Settings in JSON format for the target Amazon DynamoDB endpoint
-           if source or target is dynamodb
+      description:
+        - Settings in JSON format for the target Amazon DynamoDB endpoint
+          if source or target is dynamodb.
+      type: dict
     s3settings:
-       description:
-         - S3 buckets settings for the target Amazon S3 endpoint.
+      description:
+        - S3 buckets settings for the target Amazon S3 endpoint.
+      type: dict
     dmstransfersettings:
-       description:
-         - The settings in JSON format for the DMS transfer type of
-           source endpoint
+      description:
+        - The settings in JSON format for the DMS transfer type of
+          source endpoint.
+      type: dict
     mongodbsettings:
-       description:
-         - Settings in JSON format for the source MongoDB endpoint
+      description:
+        - Settings in JSON format for the source MongoDB endpoint.
+      type: dict
     kinesissettings:
-       description:
-         - Settings in JSON format for the target Amazon Kinesis
-           Data Streams endpoint
+      description:
+        - Settings in JSON format for the target Amazon Kinesis
+          Data Streams endpoint.
+      type: dict
     elasticsearchsettings:
-       description:
-         - Settings in JSON format for the target Elasticsearch endpoint
+      description:
+        - Settings in JSON format for the target Elasticsearch endpoint.
+      type: dict
     wait:
-       description:
-         - should wait for the object to be deleted when state = absent
-       type: bool
-       default: 'false'
+      description:
+        - Whether Ansible should wait for the object to be deleted when I(state=absent).
+      type: bool
+      default: false
     timeout:
-       description:
-         - time in seconds we should wait for when deleting a resource
-       type: int
+      description:
+        - Time in seconds we should wait for when deleting a resource.
+        - Required when I(wait=true).
+      type: int
     retries:
-       description:
-          - number of times we should retry when deleting a resource
-       type: int
-    region:
-       description:
-          - aws region, should be read from the running aws config
-    ec2_region:
-       description:
-          - alias for region
-    aws_region:
-       description:
-          - alias for region
+      description:
+        - number of times we should retry when deleting a resource
+        - Required when I(wait=true).
+      type: int
 author:
    - "Rui Moreira (@ruimoreira)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+- aws
+- ec2
 '''
 
 EXAMPLES = '''
@@ -161,8 +173,7 @@ RETURN = ''' # '''
 __metaclass__ = type
 import traceback
 from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3, \
-    camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry
 try:
     import botocore
 except ImportError:
@@ -209,23 +220,11 @@ def get_endpoint_deleted_waiter(client):
 
 
 def endpoint_exists(endpoint):
-    """ Returns boolean based on the existance of the endpoint
+    """ Returns boolean based on the existence of the endpoint
     :param endpoint: dict containing the described endpoint
     :return: bool
     """
     return bool(len(endpoint['Endpoints']))
-
-
-def get_dms_client(aws_connect_params, client_region, ec2_url):
-    client_params = dict(
-        module=module,
-        conn_type='client',
-        resource='dms',
-        region=client_region,
-        endpoint=ec2_url,
-        **aws_connect_params
-    )
-    return boto3_conn(**client_params)
 
 
 def delete_dms_endpoint(connection):
@@ -436,13 +435,10 @@ def main():
     )
     exit_message = None
     changed = False
-    if not HAS_BOTO3:
-        module.fail_json(msg='boto3 required for this module')
 
     state = module.params.get('state')
-    aws_config_region, ec2_url, aws_connect_params = \
-        get_aws_connection_info(module, boto3=True)
-    dmsclient = get_dms_client(aws_connect_params, aws_config_region, ec2_url)
+
+    dmsclient = module.client('dms')
     endpoint = describe_endpoints(dmsclient,
                                   module.params.get('endpointidentifier'))
     if state == 'present':

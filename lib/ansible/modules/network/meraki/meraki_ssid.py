@@ -38,14 +38,6 @@ options:
         description:
         - Name of SSID.
         type: str
-    org_name:
-        description:
-        - Name of organization.
-        type: str
-    org_id:
-        description:
-        - ID of organization.
-        type: int
     net_name:
         description:
         - Name of network.
@@ -110,6 +102,7 @@ options:
             secret:
                 description:
                 - RADIUS password.
+                - Setting password is not idempotent.
                 type: str
     radius_coa_enabled:
         description:
@@ -145,6 +138,7 @@ options:
             secret:
                 description:
                 - RADIUS password.
+                - Setting password is not idempotent.
                 type: str
     ip_assignment_mode:
         description:
@@ -158,18 +152,23 @@ options:
     use_vlan_tagging:
         description:
         - Set whether to use VLAN tagging.
+        - Requires C(default_vlan_id) to be set.
         type: bool
     default_vlan_id:
         description:
         - Default VLAN ID.
-        type: str
+        - Requires C(ip_assignment_mode) to be C(Bridge mode) or C(Layer 3 roaming).
+        type: int
     vlan_id:
         description:
         - ID number of VLAN on SSID.
+        - Requires C(ip_assignment_mode) to be C(ayer 3 roaming with a concentrator) or C(VPN).
         type: int
     ap_tags_vlan_ids:
         description:
         - List of VLAN tags.
+        - Requires C(ip_assignment_mode) to be C(Bridge mode) or C(Layer 3 roaming).
+        - Requires C(use_vlan_tagging) to be C(True).
         type: list
         suboptions:
             tags:
@@ -287,17 +286,17 @@ data:
             returned: success
             type: bool
             sample: true
-        splashPage:
+        splash_page:
             description: Splash page to show when user authenticates.
             returned: success
             type: str
             sample: Click-through splash page
-        ssidAdminAccessible:
+        ssid_admin_accessible:
             description: Whether SSID is administratively accessible.
             returned: success
             type: bool
             sample: true
-        authMode:
+        auth_mode:
             description: Authentication method.
             returned: success
             type: str
@@ -307,47 +306,44 @@ data:
             returned: success
             type: str
             sample: SecretWiFiPass
-        encryptionMode:
+        encryption_mode:
             description: Wireless traffic encryption method.
             returned: success
             type: str
             sample: wpa
-        wpaEncryptionMode:
+        wpa_encryption_mode:
             description: Enabled WPA versions.
             returned: success
             type: str
             sample: WPA2 only
-        ipAssignmentMode:
+        ip_assignment_mode:
             description: Wireless client IP assignment method.
             returned: success
             type: str
             sample: NAT mode
-        minBitrate:
+        min_bitrate:
             description: Minimum bitrate a wireless client can connect at.
             returned: success
             type: int
             sample: 11
-        bandSelection:
+        band_selection:
             description: Wireless RF frequency wireless network will be broadcast on.
             returned: success
             type: str
             sample: 5 GHz band only
-        perClientBandwidthLimitUp:
+        per_client_bandwidth_limit_up:
             description: Maximum upload bandwidth a client can use.
             returned: success
             type: int
             sample: 1000
-        perClientBandwidthLimitDown:
+        per_client_bandwidth_limit_down:
             description: Maximum download bandwidth a client can use.
             returned: success
             type: int
             sample: 0
 '''
 
-import os
-from ansible.module_utils.basic import AnsibleModule, json, env_fallback
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule, json
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
 
 
@@ -416,7 +412,7 @@ def main():
                            port=dict(type='int'),
                            secret=dict(type='str', no_log=True),
                            )
-    vlan_arg_spec = dict(tags=dict(type='list'),
+    vlan_arg_spec = dict(tags=dict(type='list', elements='str'),
                          vlan_id=dict(type='int'),
                          )
 
@@ -425,7 +421,7 @@ def main():
                          number=dict(type='int', aliases=['ssid_number']),
                          name=dict(type='str'),
                          org_name=dict(type='str', aliases=['organization']),
-                         org_id=dict(type='int'),
+                         org_id=dict(type='str'),
                          net_name=dict(type='str'),
                          net_id=dict(type='str'),
                          enabled=dict(type='bool'),
@@ -445,12 +441,12 @@ def main():
                                                                'Facebook Wi-Fi',
                                                                'Google OAuth',
                                                                'Sponsored guest']),
-                         radius_servers=dict(type='list', default=None, element='dict', options=radius_arg_spec),
+                         radius_servers=dict(type='list', default=None, elements='dict', options=radius_arg_spec),
                          radius_coa_enabled=dict(type='bool'),
                          radius_failover_policy=dict(type='str', choices=['Deny access', 'Allow access']),
                          radius_load_balancing_policy=dict(type='str', choices=['Strict priority order', 'Round robin']),
                          radius_accounting_enabled=dict(type='bool'),
-                         radius_accounting_servers=dict(type='list', element='dict', options=radius_arg_spec),
+                         radius_accounting_servers=dict(type='list', elements='dict', options=radius_arg_spec),
                          ip_assignment_mode=dict(type='str', choices=['NAT mode',
                                                                       'Bridge mode',
                                                                       'Layer 3 roaming',
@@ -460,7 +456,7 @@ def main():
                          concentrator_network_id=dict(type='str'),
                          vlan_id=dict(type='int'),
                          default_vlan_id=dict(type='int'),
-                         ap_tags_vlan_ids=dict(type='list', default=None, element='dict', options=vlan_arg_spec),
+                         ap_tags_vlan_ids=dict(type='list', default=None, elements='dict', options=vlan_arg_spec),
                          walled_garden_enabled=dict(type='bool'),
                          walled_garden_ranges=dict(type='list'),
                          min_bitrate=dict(type='float', choices=[1, 2, 5.5, 6, 9, 11, 12, 18, 24, 36, 48, 54]),
@@ -490,7 +486,7 @@ def main():
     meraki.params['follow_redirects'] = 'all'
 
     query_urls = {'ssid': '/networks/{net_id}/ssids'}
-    query_url = {'ssid': '/networks/{net_id}/ssids/'}
+    query_url = {'ssid': '/networks/{net_id}/ssids/{number}'}
     update_url = {'ssid': '/networks/{net_id}/ssids/'}
 
     meraki.url_catalog['get_all'].update(query_urls)
@@ -522,6 +518,9 @@ def main():
         if meraki.params['auth_mode'] not in ('open-with-radius', '8021x-radius') or meraki.params['radius_accounting_enabled'] is False:
             meraki.fail_json(msg='radius_accounting_servers is only allowed when auth_mode is open_with_radius or 8021x-radius and \
                 radius_accounting_enabled is true')
+    if meraki.params['use_vlan_tagging'] is True:
+        if meraki.params['default_vlan_id'] is None:
+            meraki.fail_json(msg="default_vlan_id is required when use_vlan_tagging is True")
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
@@ -536,10 +535,10 @@ def main():
     if meraki.params['state'] == 'query':
         if meraki.params['name']:
             ssid_id = get_ssid_number(meraki.params['name'], get_ssids(meraki, net_id))
-            path = meraki.construct_path('get_one', net_id=net_id) + str(ssid_id)
+            path = meraki.construct_path('get_one', net_id=net_id, custom={'number': ssid_id})
             meraki.result['data'] = meraki.request(path, method='GET')
-        elif meraki.params['number']:
-            path = meraki.construct_path('get_one', net_id=net_id) + meraki.params['number']
+        elif meraki.params['number'] is not None:
+            path = meraki.construct_path('get_one', net_id=net_id, custom={'number': meraki.params['number']})
             meraki.result['data'] = meraki.request(path, method='GET')
         else:
             meraki.result['data'] = get_ssids(meraki, net_id)
@@ -548,12 +547,27 @@ def main():
         for k, v in param_map.items():
             if meraki.params[v] is not None:
                 payload[k] = meraki.params[v]
+        # Short term solution for camelCase/snake_case differences
+        # Will be addressed later with a method in module utils
+        if meraki.params['ap_tags_vlan_ids'] is not None:
+            for i in payload['apTagsAndVlanIds']:
+                try:
+                    i['vlanId'] = i['vlan_id']
+                    del i['vlan_id']
+                except KeyError:
+                    pass
+                try:
+                    tags = ','.join(i['tags'])
+                    del i['tags']
+                    i['tags'] = tags
+                except KeyError:
+                    pass
         ssids = get_ssids(meraki, net_id)
         number = meraki.params['number']
         if number is None:
             number = get_ssid_number(meraki.params['name'], ssids)
         original = ssids[number]
-        if meraki.is_update_required(original, payload):
+        if meraki.is_update_required(original, payload, optional_ignore=['secret']):
             ssid_id = meraki.params['number']
             if ssid_id is None:  # Name should be used to lookup number
                 ssid_id = get_ssid_number(meraki.params['name'], ssids)
@@ -579,7 +593,6 @@ def main():
         path = meraki.construct_path('update', net_id=net_id) + str(ssid_id)
         payload = default_payload
         payload['name'] = payload['name'] + ' ' + str(ssid_id + 1)
-        # meraki.fail_json(msg='Payload', payload=payload)
         result = meraki.request(path, 'PUT', payload=json.dumps(payload))
         meraki.result['data'] = result
         meraki.result['changed'] = True

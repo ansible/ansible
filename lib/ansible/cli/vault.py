@@ -177,7 +177,7 @@ class VaultCLI(CLI):
             vault_secrets = \
                 self.setup_vault_secrets(loader,
                                          vault_ids=vault_ids,
-                                         vault_password_files=context.CLIARGS['vault_password_files'],
+                                         vault_password_files=list(context.CLIARGS['vault_password_files']),
                                          ask_vault_pass=context.CLIARGS['ask_vault_pass'],
                                          create_new_password=True)
 
@@ -317,6 +317,9 @@ class VaultCLI(CLI):
             stdin_text = sys.stdin.read()
             if stdin_text == '':
                 raise AnsibleOptionsError('stdin was empty, not encrypting')
+
+            if sys.stdout.isatty() and not stdin_text.endswith("\n"):
+                display.display("\n")
 
             b_plaintext = to_bytes(stdin_text)
 

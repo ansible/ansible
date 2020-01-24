@@ -85,7 +85,7 @@ options:
     - The name of the server pool you want to associate with this service profile template.
   server_pool_qualification:
     description:
-    - The name of the server pool policy qualificaiton you want to use for this service profile template.
+    - The name of the server pool policy qualification you want to use for this service profile template.
   power_state:
     description:
     - The power state to be applied when a service profile created from this template is associated with a server.
@@ -299,7 +299,7 @@ def check_storage_profile_props(ucs, module, dn):
         if mo_1.check_prop_match(**kwargs):
             props_match = True
     elif not module.params['storage_profile']:
-        # no stroage profile mo or desired state
+        # no storage profile mo or desired state
         props_match = True
 
     return props_match

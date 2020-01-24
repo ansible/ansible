@@ -24,17 +24,11 @@ import os
 
 from units.compat import unittest
 from units.compat.builtins import BUILTINS
-from units.compat.mock import mock_open, patch, MagicMock
-from ansible.plugins.loader import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PluginLoader
+from units.compat.mock import patch, MagicMock
+from ansible.plugins.loader import PluginLoader
 
 
 class TestErrors(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
     @patch.object(PluginLoader, '_get_paths')
     def test_print_paths(self, mock_method):

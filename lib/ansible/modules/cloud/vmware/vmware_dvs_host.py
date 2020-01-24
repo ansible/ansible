@@ -4,6 +4,7 @@
 # Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # Copyright: (c) 2018, Ansible Project
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright: (c) 2019, VMware Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -25,6 +26,7 @@ version_added: 2.0
 author:
 - Joseph Callen (@jcpowermac)
 - Abhijeet Kasurde (@Akasurde)
+- Joseph Andreatta (@vmwjoseph)
 notes:
     - Tested on vSphere 5.5
 requirements:
@@ -35,20 +37,33 @@ options:
         description:
         - The ESXi hostname.
         required: True
+        type: str
     switch_name:
         description:
         - The name of the Distributed vSwitch.
         required: True
+        type: str
     vmnics:
         description:
         - The ESXi hosts vmnics to use with the Distributed vSwitch.
         required: True
+        type: list
     state:
         description:
         - If the host should be present or absent attached to the vSwitch.
         choices: [ present, absent ]
         required: True
         default: 'present'
+        type: str
+    vendor_specific_config:
+        description:
+            - List of key,value dictionaries for the Vendor Specific Configuration.
+            - 'Element attributes are:'
+            - '- C(key) (str): Key of setting. (default: None)'
+            - '- C(value) (str): Value of setting. (default: None)'
+        required: False
+        version_added: '2.9'
+        type: list
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -60,6 +75,22 @@ EXAMPLES = '''
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
     switch_name: dvSwitch
+    vmnics:
+        - vmnic0
+        - vmnic1
+    state: present
+  delegate_to: localhost
+
+- name: Add Host to dVS/enable learnswitch (https://labs.vmware.com/flings/learnswitch)
+  vmware_dvs_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: '{{ esxi_hostname }}'
+    switch_name: dvSwitch
+    vendor_specific_config:
+        - key: com.vmware.netoverlay.layer1
+          value: learnswitch
     vmnics:
         - vmnic0
         - vmnic1
@@ -96,6 +127,7 @@ class VMwareDvsHost(PyVmomi):
         self.switch_name = self.module.params['switch_name']
         self.esxi_hostname = self.module.params['esxi_hostname']
         self.vmnics = self.module.params['vmnics']
+        self.vendor_specific_config = self.module.params['vendor_specific_config']
 
     def process_state(self):
         dvs_host_states = {
@@ -133,6 +165,11 @@ class VMwareDvsHost(PyVmomi):
         spec.host = [vim.dvs.HostMember.ConfigSpec()]
         spec.host[0].operation = operation
         spec.host[0].host = self.host
+        if self.vendor_specific_config:
+            config = list()
+            for item in self.vendor_specific_config:
+                config.append(vim.dvs.KeyedOpaqueBlob(key=item['key'], opaqueData=item['value']))
+            spec.host[0].vendorSpecificConfig = config
 
         if operation in ("edit", "add"):
             spec.host[0].backing = vim.dvs.HostMember.PnicBacking()
@@ -226,14 +263,23 @@ class VMwareDvsHost(PyVmomi):
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(esxi_hostname=dict(required=True, type='str'),
-                              switch_name=dict(required=True, type='str'),
-                              vmnics=dict(required=True, type='list'),
-                              state=dict(default='present',
-                                         choices=['present', 'absent'],
-                                         type='str')
-                              )
-                         )
+    argument_spec.update(
+        dict(
+            esxi_hostname=dict(required=True, type='str'),
+            switch_name=dict(required=True, type='str'),
+            vmnics=dict(required=True, type='list'),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            vendor_specific_config=dict(
+                type='list',
+                elements='dict',
+                required=False,
+                options=dict(
+                    key=dict(type='str', required=True),
+                    value=dict(type='str', required=True),
+                ),
+            ),
+        )
+    )
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

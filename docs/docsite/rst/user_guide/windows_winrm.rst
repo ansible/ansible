@@ -27,6 +27,14 @@ with the Ansible package, but can be installed by running the following:
 .. Note:: on distributions with multiple python versions, use pip2 or pip2.x,
     where x matches the python minor version Ansible is running under.
 
+.. Warning::
+     Using the ``winrm`` or ``psrp`` connection plugins in Ansible on MacOS in
+     the latest releases typically fail. This is a known problem that occurs
+     deep within the Python stack and cannot be changed by Ansible. The only
+     workaround today is to set the environment variable ``no_proxy=*`` and
+     avoid using Kerberos auth.
+
+
 Authentication Options
 ``````````````````````
 When connecting to a Windows host, there are several different options that can be used
@@ -66,10 +74,7 @@ The following example shows host vars configured for basic authentication:
     ansible_winrm_transport: basic
 
 Basic authentication is not enabled by default on a Windows host but can be
-enabled by running the following in PowerShell:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+enabled by running the following in PowerShell::
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
 
@@ -88,10 +93,7 @@ The following example shows host vars configured for certificate authentication:
     ansible_winrm_transport: certificate
 
 Certificate authentication is not enabled by default on a Windows host but can
-be enabled by running the following in PowerShell:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+be enabled by running the following in PowerShell::
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Certificate -Value $true
 
@@ -212,12 +214,7 @@ The code to import the client certificate public key is:
 
 Mapping a Certificate to an Account
 +++++++++++++++++++++++++++++++++++
-Once the certificate has been imported, it needs to be mapped to the local user account.
-
-This can be done with the following PowerShell command:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+Once the certificate has been imported, map it to the local user account::
 
     $username = "username"
     $password = ConvertTo-SecureString -String "password" -AsPlainText -Force
@@ -333,6 +330,16 @@ be install using ``pip``:
 .. code-block:: shell
 
     pip install pywinrm[kerberos]
+
+
+.. note::
+     While Ansible has supported Kerberos auth through ``pywinrm`` for some
+     time, optional features or more secure options may only be available in
+     newer versions of the ``pywinrm`` and/or ``pykerberos`` libraries. It is
+     recommended you upgrade each version to the latest available to resolve
+     any warnings or errors. This can be done through tools like ``pip`` or a
+     system package manager like ``dnf``, ``yum``, ``apt`` but the package
+     names and versions available may differ between tools.
 
 
 Configuring Host Kerberos
@@ -514,10 +521,7 @@ another certificate.
     certificate. With CredSSP, message transport still occurs over the WinRM listener,
     but the TLS-encrypted messages inside the channel use the service-level certificate.
 
-To explicitly set the certificate to use for CredSSP:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+To explicitly set the certificate to use for CredSSP::
 
     # Note the value $certificate_thumbprint will be different in each
     # situation, this needs to be set based on the cert that is used.
@@ -562,14 +566,13 @@ encryption uses the more secure TLS protocol instead. If both transport and
 message encryption is required, set ``ansible_winrm_message_encryption=always``
 in the host vars.
 
+.. Note:: Message encryption over HTTP requires pywinrm>=0.3.0.
+
 A last resort is to disable the encryption requirement on the Windows host. This
 should only be used for development and debugging purposes, as anything sent
 from Ansible can be viewed, manipulated and also the remote session can completely
 be taken over by anyone on the same network. To disable the encryption
-requirement, run the following from PowerShell on the target host:
-
-.. comment: Pygments powershell lexer does not support colons (i.e. URLs)
-.. code-block:: guess
+requirement::
 
     Set-Item -Path WSMan:\localhost\Service\AllowUnencrypted -Value $true
 
@@ -835,7 +838,7 @@ The below Ansible tasks can also be used to enable TLS v1.2:
         data: '{{ item.value }}'
         type: dword
         state: present
-        register: enable_tls12
+      register: enable_tls12
       loop:
       - type: Server
         property: Enabled
@@ -898,11 +901,9 @@ Some of these limitations can be mitigated by doing one of the following:
 
 .. seealso::
 
-   :doc:`index`
-       The documentation index
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell

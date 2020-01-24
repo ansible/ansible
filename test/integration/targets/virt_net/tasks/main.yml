@@ -42,6 +42,13 @@
         name: foobar
       register: second_virt_net_start
 
+    - name: Get facts for default network
+      virt_net:
+        uri: qemu:///system
+        command: facts
+        name: foobar
+      register: virt_net_facts
+
     - name: Destroy the foobar network
       virt_net:
         command: destroy

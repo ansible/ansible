@@ -13,6 +13,7 @@ from io import BytesIO
 import pytest
 
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import PY2
 
 
 class OpenBytesIO(BytesIO):
@@ -90,8 +91,8 @@ def rc_am(mocker, am, mock_os, mock_subprocess):
 class TestRunCommandArgs:
     # Format is command as passed to run_command, command to Popen as list, command to Popen as string
     ARGS_DATA = (
-                (['/bin/ls', 'a', 'b', 'c'], ['/bin/ls', 'a', 'b', 'c'], '/bin/ls a b c'),
-                ('/bin/ls a " b" "c "', ['/bin/ls', 'a', ' b', 'c '], '/bin/ls a " b" "c "'),
+                (['/bin/ls', 'a', 'b', 'c'], [b'/bin/ls', b'a', b'b', b'c'], b'/bin/ls a b c'),
+                ('/bin/ls a " b" "c "', [b'/bin/ls', b'a', b' b', b'c '], b'/bin/ls a " b" "c "'),
     )
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
@@ -119,13 +120,13 @@ class TestRunCommandCwd:
     def test_cwd(self, mocker, rc_am):
         rc_am._os.getcwd.return_value = '/old'
         rc_am.run_command('/bin/ls', cwd='/new')
-        assert rc_am._os.chdir.mock_calls == [mocker.call('/new'), mocker.call('/old'), ]
+        assert rc_am._os.chdir.mock_calls == [mocker.call(b'/new'), mocker.call('/old'), ]
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_cwd_relative_path(self, mocker, rc_am):
         rc_am._os.getcwd.return_value = '/old'
         rc_am.run_command('/bin/ls', cwd='sub-dir')
-        assert rc_am._os.chdir.mock_calls == [mocker.call('/old/sub-dir'), mocker.call('/old'), ]
+        assert rc_am._os.chdir.mock_calls == [mocker.call(b'/old/sub-dir'), mocker.call('/old'), ]
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_cwd_not_a_dir(self, mocker, rc_am):
@@ -133,14 +134,6 @@ class TestRunCommandCwd:
         rc_am._os.path.isdir.side_effect = lambda d: d != '/not-a-dir'
         rc_am.run_command('/bin/ls', cwd='/not-a-dir')
         assert rc_am._os.chdir.mock_calls == [mocker.call('/old'), ]
-
-    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-    def test_cwd_inaccessible(self, rc_am):
-        with pytest.raises(SystemExit):
-            rc_am.run_command('/bin/ls', cwd='/inaccessible')
-        assert rc_am.fail_json.called
-        args, kwargs = rc_am.fail_json.call_args
-        assert kwargs['rc'] == errno.EPERM
 
 
 class TestRunCommandPrompt:
@@ -205,3 +198,22 @@ class TestRunCommandOutput:
         # bytes because it's returning native strings
         assert stdout == to_native(u'Žarn§')
         assert stderr == to_native(u'لرئيسية')
+
+
+@pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+def test_run_command_fds(mocker, rc_am):
+    subprocess_mock = mocker.patch('ansible.module_utils.basic.subprocess')
+    subprocess_mock.Popen.side_effect = AssertionError
+
+    try:
+        rc_am.run_command('synchronize', pass_fds=(101, 42))
+    except SystemExit:
+        pass
+
+    if PY2:
+        assert subprocess_mock.Popen.call_args[1]['close_fds'] is False
+        assert 'pass_fds' not in subprocess_mock.Popen.call_args[1]
+
+    else:
+        assert subprocess_mock.Popen.call_args[1]['pass_fds'] == (101, 42)
+        assert subprocess_mock.Popen.call_args[1]['close_fds'] is True

@@ -37,22 +37,26 @@ options:
       description:
       - The name of category to manage.
       required: True
+      type: str
     category_description:
       description:
       - The category description.
       - This is required only if C(state) is set to C(present).
       - This parameter is ignored, when C(state) is set to C(absent).
       default: ''
+      type: str
     category_cardinality:
       description:
       - The category cardinality.
       - This parameter is ignored, when updating existing category.
       choices: ['multiple', 'single']
       default: 'multiple'
+      type: str
     new_category_name:
       description:
       - The new name for an existing category.
       - This value is used while updating an existing category.
+      type: str
     state:
       description:
       - The state of category.
@@ -63,6 +67,29 @@ options:
       - Process of updating category only allows name, description change.
       default: 'present'
       choices: [ 'present', 'absent' ]
+      type: str
+    associable_object_types:
+      description:
+      - List of object types that can be associated with the given category.
+      choices:
+      - All objects
+      - Cluster
+      - Content Library
+      - Datacenter
+      - Datastore
+      - Datastore Cluster
+      - Distributed Port Group
+      - Distributed Switch
+      - Folder
+      - Host
+      - Library item
+      - Network
+      - Resource Pool
+      - vApp
+      - Virtual Machine
+      version_added: '2.10'
+      type: list
+      elements: str
 extends_documentation_fragment: vmware_rest_client.documentation
 '''
 
@@ -102,6 +129,19 @@ EXAMPLES = r'''
     password: "{{ vcenter_pass }}"
     category_name: Sample_Category_0002
     state: absent
+
+- name: Create category with 2 associable object types
+  vmware_category:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: False
+    category_name: 'Sample_Category_0003'
+    category_description: 'sample description'
+    associable_object_types:
+    - Datastore
+    - Cluster
+    state: present
 '''
 
 RETURN = r'''
@@ -119,6 +159,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware_rest_client import VmwareRestClient
 try:
     from com.vmware.cis.tagging_client import CategoryModel
+    from com.vmware.vapi.std.errors_client import Error
 except ImportError:
     pass
 
@@ -157,9 +198,24 @@ class VmwareCategory(VmwareRestClient):
         else:
             category_spec.cardinality = CategoryModel.Cardinality.MULTIPLE
 
-        category_spec.associable_types = set()
+        associable_object_types = self.params.get('associable_object_types')
 
-        category_id = self.category_service.create(category_spec)
+        obj_types_set = []
+        if associable_object_types:
+            for obj_type in associable_object_types:
+                if obj_type.lower() == 'all objects':
+                    obj_types_set = []
+                    break
+                else:
+                    obj_types_set.append(obj_type)
+
+        category_spec.associable_types = set(obj_types_set)
+
+        try:
+            category_id = self.category_service.create(category_spec)
+        except Error as error:
+            self.module.fail_json(msg="%s" % self.get_error_message(error))
+
         if category_id:
             self.module.exit_json(changed=True,
                                   category_results=dict(msg="Category '%s' created." % category_spec.name,
@@ -199,8 +255,11 @@ class VmwareCategory(VmwareRestClient):
             change_list.append(True)
 
         if any(change_list):
-            self.category_service.update(category_id, category_update_spec)
-            changed = True
+            try:
+                self.category_service.update(category_id, category_update_spec)
+                changed = True
+            except Error as error:
+                self.module.fail_json(msg="%s" % self.get_error_message(error))
 
         self.module.exit_json(changed=changed,
                               category_results=results)
@@ -208,7 +267,10 @@ class VmwareCategory(VmwareRestClient):
     def state_delete_category(self):
         """Delete category."""
         category_id = self.global_categories[self.category_name]['category_id']
-        self.category_service.delete(category_id=category_id)
+        try:
+            self.category_service.delete(category_id=category_id)
+        except Error as error:
+            self.module.fail_json(msg="%s" % self.get_error_message(error))
         self.module.exit_json(changed=True,
                               category_results=dict(msg="Category '%s' deleted." % self.category_name,
                                                     category_id=category_id))
@@ -246,6 +308,17 @@ def main():
         category_cardinality=dict(type='str', choices=["multiple", "single"], default="multiple"),
         new_category_name=dict(type='str'),
         state=dict(type='str', choices=['present', 'absent'], default='present'),
+        associable_object_types=dict(
+            type='list',
+            choices=[
+                'All objects', 'Folder', 'Cluster',
+                'Datacenter', 'Datastore', 'Datastore Cluster',
+                'Distributed Port Group', 'Distributed Switch',
+                'Host', 'Content Library', 'Library item', 'Network',
+                'Resource Pool', 'vApp', 'Virtual Machine',
+            ],
+            elements=str,
+        ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
 

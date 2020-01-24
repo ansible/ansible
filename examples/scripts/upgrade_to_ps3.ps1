@@ -5,7 +5,7 @@
 # some Ansible modules that may use Powershell 3 features, so systems may need
 # to be upgraded.  This may be used by a sample playbook.  Refer to the windows
 # documentation on docs.ansible.com for details.
-# 
+#
 # - hosts: windows
 #   tasks:
 #     - script: upgrade_to_ps3.ps1
@@ -20,7 +20,7 @@
 
 if ($PSVersionTable.psversion.Major -ge 3)
 {
-    write-host "Powershell 3 Installed already; You don't need this"
+    Write-Output "Powershell 3 Installed already; You don't need this"
     Exit
 }
 
@@ -55,7 +55,7 @@ if (!(test-path $powershellpath))
 # If the Operating System is above 6.2, then you already have PowerShell Version > 3
 if ([Environment]::OSVersion.Version.Major -gt 6)
 {
-    write-host "OS is new; upgrade not needed."
+    Write-Output "OS is new; upgrade not needed."
     Exit
 }
 
@@ -67,11 +67,11 @@ $architecture = $ENV:PROCESSOR_ARCHITECTURE
 if ($architecture -eq "AMD64")
 {
     $architecture = "x64"
-}  
+}
 else
 {
-    $architecture = "x86" 
-} 
+    $architecture = "x86"
+}
 
 if ($osminor -eq 1)
 {

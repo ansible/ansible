@@ -10,7 +10,20 @@ Package: ansible
 Architecture: all
 Depends: python-jinja2, python-yaml, python-paramiko, python-httplib2, python-six, python-crypto (>= 2.6), python-setuptools, sshpass, ${misc:Depends}, ${python:Depends}
 Description: Ansible IT Automation
- A radically simple IT automation platform that makes your applications and
- systems easier to deploy. Avoid writing scripts or custom code to deploy and
- update your applications— automate in a language that approaches plain English,
- using SSH, with no agents to install on remote systems.
+ Ansible is a radically simple model-driven configuration management,
+ multi-node deployment, and remote task execution system. Ansible works
+ over SSH and does not require any software or daemons to be installed
+ on remote nodes. Extension modules can be written in any language and
+ are transferred to managed machines automatically.
+
+Package: ansible-test
+Architecture: all
+Depends: ansible (= ${binary:Version}), python-virtualenv, ${misc:Depends}
+Description: Ansible IT Automation
+ Ansible is a radically simple model-driven configuration management,
+ multi-node deployment, and remote task execution system. Ansible works
+ over SSH and does not require any software or daemons to be installed
+ on remote nodes. Extension modules can be written in any language and
+ are transferred to managed machines automatically.
+ This package installs the ansible-test command for testing modules and
+ plugins developed for ansible.

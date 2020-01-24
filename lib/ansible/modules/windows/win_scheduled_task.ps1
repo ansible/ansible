@@ -686,9 +686,6 @@ if ($null -ne $username -and $null -ne $group) {
     Fail-Json -obj $result -message "username and group can not be set at the same time"
 }
 if ($null -ne $logon_type) {
-    if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_PASSWORD -and $null -eq $password) {
-        Fail-Json -obj $result -message "password must be set when logon_type=password"
-    }
     if ($logon_type -eq [TASK_LOGON_TYPE]::TASK_LOGON_S4U -and $null -eq $password) {
         Fail-Json -obj $result -message "password must be set when logon_type=s4u"
     }
@@ -746,7 +743,7 @@ for ($i = 0; $i -lt $triggers.Count; $i++) {
         if ($trigger.ContainsKey($property_name)) {
             $date_value = $trigger.$property_name
             try {
-                $date = Get-Date -Date $date_value -Format s
+                $date = Get-Date -Date $date_value -Format "yyyy-MM-dd'T'HH:mm:ssK"
                 # make sure we convert it to the full string format
                 $trigger.$property_name = $date.ToString()
             } catch [System.Management.Automation.ParameterBindingException] {

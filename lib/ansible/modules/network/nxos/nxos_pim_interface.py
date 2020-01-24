@@ -40,6 +40,14 @@ options:
       - Enable/disable sparse-mode on the interface.
     type: bool
     default: no
+  bfd:
+    description:
+      - Enables BFD for PIM at the interface level. This overrides the bfd variable set at the pim global level.
+      - Valid values are 'enable', 'disable' or 'default'.
+      - "Dependency: 'feature bfd'"
+    version_added: "2.9"
+    type: str
+    choices: ['enable', 'disable', 'default']
   dr_prio:
     description:
       - Configures priority for PIM DR election on interface.
@@ -112,6 +120,11 @@ EXAMPLES = r'''
     jp_type_in: routemap
     jp_type_out: routemap
 
+- name: disable bfd on the interface
+  nxos_pim_interface:
+    interface: eth1/33
+    bfd: disable
+
 - name: Ensure defaults are in place
   nxos_pim_interface:
     interface: eth1/33
@@ -123,20 +136,23 @@ commands:
     description: command sent to the device
     returned: always
     type: list
-    sample: ["interface eth1/33", "ip pim neighbor-policy test",
-            "ip pim neighbor-policy test"]
+    sample: ["interface eth1/33",
+             "ip pim neighbor-policy test",
+             "ip pim bfd-instance disable",
+             "ip pim neighbor-policy test"
+            ]
 '''
 
 import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.nxos.nxos import get_config, load_config, run_commands
-from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.network.nxos.nxos import get_interface_type
-from ansible.module_utils.six import string_types
 
 
 PARAM_TO_COMMAND_KEYMAP = {
     'interface': '',
+    'bfd': 'ip pim bfd-instance',
     'sparse': 'ip pim sparse-mode',
     'dr_prio': 'ip pim dr-priority {0}',
     'hello_interval': 'ip pim hello-interval {0}',
@@ -151,11 +167,19 @@ PARAM_TO_COMMAND_KEYMAP = {
 }
 
 PARAM_TO_DEFAULT_KEYMAP = {
+    'bfd': 'default',
     'dr_prio': '1',
     'hello_interval': '30000',
     'sparse': False,
     'border': False,
     'hello_auth_key': False,
+}
+
+BFD_KEYMAP = {
+    None: None,
+    'default': 'no ip pim bfd-instance',
+    'disable': 'ip pim bfd-instance disable',
+    'enable': 'ip pim bfd-instance',
 }
 
 
@@ -222,6 +246,7 @@ def get_pim_interface(module, interface):
     pim_interface = {}
     body = get_config(module, flags=['interface {0}'.format(interface)])
 
+    pim_interface['bfd'] = 'default'
     pim_interface['neighbor_type'] = None
     pim_interface['neighbor_policy'] = None
     pim_interface['jp_policy_in'] = None
@@ -263,6 +288,10 @@ def get_pim_interface(module, interface):
                 pim_interface['isauth'] = True
             elif 'sparse-mode' in each:
                 pim_interface['sparse'] = True
+            elif 'bfd-instance' in each:
+                m = re.search(r'ip pim bfd-instance(?P<disable> disable)?', each)
+                if m:
+                    pim_interface['bfd'] = 'disable' if m.group('disable') else 'enable'
             elif 'border' in each:
                 pim_interface['border'] = True
             elif 'hello-interval' in each:
@@ -299,9 +328,11 @@ def config_pim_interface(delta, existing, jp_bidir, isauth):
                 commands.append(command)
 
     for k, v in delta.items():
-        if k in ['dr_prio', 'hello_interval', 'hello_auth_key', 'border',
+        if k in ['bfd', 'dr_prio', 'hello_interval', 'hello_auth_key', 'border',
                  'sparse']:
-            if v:
+            if k == 'bfd':
+                command = BFD_KEYMAP[v]
+            elif v:
                 command = PARAM_TO_COMMAND_KEYMAP.get(k).format(v)
             elif k == 'hello_auth_key':
                 if isauth:
@@ -350,12 +381,17 @@ def config_pim_interface(delta, existing, jp_bidir, isauth):
                 commands.append(command)
         command = None
 
+    if 'no ip pim sparse-mode' in commands:
+        # sparse is long-running on some platforms, process it last
+        commands.remove('no ip pim sparse-mode')
+        commands.append('no ip pim sparse-mode')
     return commands
 
 
 def get_pim_interface_defaults():
 
     args = dict(dr_prio=PARAM_TO_DEFAULT_KEYMAP.get('dr_prio'),
+                bfd=PARAM_TO_DEFAULT_KEYMAP.get('bfd'),
                 border=PARAM_TO_DEFAULT_KEYMAP.get('border'),
                 sparse=PARAM_TO_DEFAULT_KEYMAP.get('sparse'),
                 hello_interval=PARAM_TO_DEFAULT_KEYMAP.get('hello_interval'),
@@ -430,6 +466,15 @@ def config_pim_interface_defaults(existing, jp_bidir, isauth):
     return command
 
 
+def normalize_proposed_values(proposed):
+    keys = proposed.keys()
+    if 'bfd' in keys:
+        # bfd is a tri-state string: enable, disable, default
+        proposed['bfd'] = proposed['bfd'].lower()
+    if 'hello_interval' in keys:
+        proposed['hello_interval'] = str(proposed['hello_interval'] * 1000)
+
+
 def main():
     argument_spec = dict(
         interface=dict(type='str', required=True),
@@ -441,6 +486,7 @@ def main():
         jp_policy_in=dict(type='str'),
         jp_type_out=dict(type='str', choices=['prefix', 'routemap']),
         jp_type_in=dict(type='str', choices=['prefix', 'routemap']),
+        bfd=dict(type='str', choices=['enable', 'disable', 'default']),
         border=dict(type='bool', default=False),
         neighbor_policy=dict(type='str'),
         neighbor_type=dict(type='str', choices=['prefix', 'routemap']),
@@ -451,7 +497,6 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
 
     warnings = list()
-    check_args(module, warnings)
     results = {'changed': False, 'commands': [], 'warnings': warnings}
 
     state = module.params['state']
@@ -462,7 +507,6 @@ def main():
     jp_policy_out = module.params['jp_policy_out']
     neighbor_policy = module.params['neighbor_policy']
     neighbor_type = module.params['neighbor_type']
-    hello_interval = module.params['hello_interval']
 
     intf_type = get_interface_type(interface)
     if get_interface_mode(interface, intf_type, module) == 'layer2':
@@ -484,9 +528,7 @@ def main():
     args = PARAM_TO_COMMAND_KEYMAP.keys()
     proposed = dict((k, v) for k, v in module.params.items()
                     if v is not None and k in args)
-
-    if hello_interval:
-        proposed['hello_interval'] = str(proposed['hello_interval'] * 1000)
+    normalize_proposed_values(proposed)
 
     delta = dict(set(proposed.items()).difference(existing.items()))
 

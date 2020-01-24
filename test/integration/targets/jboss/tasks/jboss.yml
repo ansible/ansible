@@ -1,0 +1,236 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Integration tests for jboss module.
+
+# helloworld.war (got from https://github.com/aeimer/java-example-helloworld-war/) license:
+# MIT License
+#
+# Copyright (c) 2017 Alex Eimer
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# ===============================
+# Module's note section contains:
+# "- The JBoss standalone deployment-scanner has to be enabled in standalone.xml"
+#
+# Also from https://docs.jboss.org/author/display/WFLY10/Application+deployment?_sscc=t
+# "Deployment content (for example, war, ear, jar, and sar files) can be placed
+# in the standalone/deployments directory of the WildFly distribution,
+# in order to be automatically deployed into the server runtime.
+# For this to work the deployment-scanner subsystem must be present.
+# The scanner periodically checks the contents of the deployments directory
+# and reacts to changes by updating the server."
+# Regarding the information above JBoss server must be installed and running for full test suite.
+# We use WildFly server, free alternative, instead. See setup_wildfly_server role for more information.
+
+- vars:
+    war_file_1: 'helloworld-1.war'
+    war_file_1_path: '{{ wf_homedir }}/{{ war_file_1 }}'
+    fake_src_path: /fake/src
+    test_deployment: helloworld-1.war
+    task_parameters: &task_parameters
+      become_user: '{{ wf_user }}'
+      become: yes
+      register: result
+
+  block:
+  - name: Create test files
+    <<: *task_parameters
+    get_url:
+      url: 'https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/jboss/{{ war_file_1 }}'
+      dest: '{{ wf_homedir }}'
+
+  ##################
+  # Start the tests:
+
+  # Test if state=present and not deployed, check_mode:
+  - name: jboss - deploy war in check_mode, the default deploy_path
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      src: '{{ war_file_1_path }}'
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+
+  # Check 
+  - name: check that nothing changed after the previous step
+    <<: *task_parameters
+    file:
+      path: '{{ deploy_dir }}/{{ war_file_1 }}.deployed'
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - "'is absent' in result.msg"
+
+  # Test if state=present and not deployed, actual mode:
+  - name: jboss - deploy war
+    <<: *task_parameters
+    jboss:
+      deployment: helloworld-1.war
+      deploy_path: '{{ deploy_dir }}'
+      src: '{{ war_file_1_path }}'
+
+  - assert:
+      that:
+      - result is changed
+
+  # Check 
+  - name: check that the file is deployed after the previous step
+    <<: *task_parameters
+    file:
+      path: '{{ deploy_dir }}/{{ war_file_1 }}.deployed'
+
+  - assert:
+      that:
+      - result.state == 'file'
+
+  # Test if state=present and deployed in check mode, try again:
+  - name: jboss - try again to deploy war in check_mode, war is deployed now
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      src: '{{ war_file_1_path }}'
+      deploy_path: '{{ deploy_dir }}'
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is not changed
+
+  # Test if state=present and deployed, try again:
+  - name: jboss - try again to deploy war in actual mode, war is deployed now
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      src: '{{ war_file_1_path }}'
+      deploy_path: '{{ deploy_dir }}'
+
+  - assert:
+      that:
+      - result is not changed
+
+  # Check 
+  - name: check that nothing changed after the previous step
+    <<: *task_parameters
+    file:
+      path: '{{ deploy_dir }}/{{ war_file_1 }}.deployed'
+
+  - assert:
+      that:
+      - result.state == 'file'
+
+  # Test if state=absent and deployed:
+  - name: jboss - undeploy war in check_mode, war is deployed
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      deploy_path: '{{ deploy_dir }}'
+      state: absent
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: check that nothing actually changed after the previous step
+    <<: *task_parameters
+    file:
+      path: '{{ deploy_dir }}/{{ war_file_1 }}.deployed'
+
+  - assert:
+      that:
+      - result.state == 'file'
+
+  # Test if state=absent and deployed:
+  - name: jboss - undeploy war in actual mode, war is deployed
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      deploy_path: '{{ deploy_dir }}'
+      state: absent
+
+  - assert:
+      that:
+      - result is changed
+
+  - name: check that file is undeployed after the previous step
+    <<: *task_parameters
+    file:
+      path: '{{ deploy_dir }}/{{ war_file_1 }}.undeployed'
+
+  - assert:
+      that:
+      - result.state == 'file'
+
+  # Test if state=absent and undeployed:
+  - name: jboss - undeploy war in check_mode, war is undeployed
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      deploy_path: '{{ deploy_dir }}'
+      state: absent
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is not changed
+
+  # Test if state=absent and undeployed:
+  - name: jboss - undeploy war in actual_mode, war is undeployed
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      deploy_path: '{{ deploy_dir }}'
+      state: absent
+
+  - assert:
+      that:
+      - result is not changed
+
+  # Test fake src:
+  - name: jboss - test fake src
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      deploy_path: '{{ deploy_dir }}'
+      src: '{{ fake_src_path }}'
+      state: present
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result is failed
+      - "'Source file {{ fake_src_path }} does not exist.' in result.msg"
+
+  # Test errors where state=present and src is not passed:
+  - name: jboss - must fail when state=present and src is not passed
+    <<: *task_parameters
+    jboss:
+      deployment: '{{ war_file_1 }}'
+      state: present
+    ignore_errors: yes
+
+  - assert:
+      that:
+      - result is failed
+      - "'state is present but all of the following are missing: src' in result.msg"

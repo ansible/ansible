@@ -15,6 +15,30 @@ notes:
   - Ansible modules are available for the following NetApp Storage Platforms: E-Series, ONTAP, SolidFire
 '''
 
+    # Documentation fragment for Cloud Volume Services on Azure NetApp (azure_rm_netapp)
+    AZURE_RM_NETAPP = r'''
+options:
+  resource_group:
+      description:
+      - Name of the resource group.
+      required: true
+      type: str
+requirements:
+    - python >= 2.7
+    - azure >= 2.0.0
+    - Python netapp-mgmt. Install using 'pip install netapp-mgmt'
+    - Python netapp-mgmt-netapp. Install using 'pip install netapp-mgmt-netapp'
+    - For authentication with Azure NetApp log in before you run your tasks or playbook with C(az login).
+
+notes:
+    - The modules prefixed with azure_rm_netapp are built to support the Cloud Volume Services for Azure NetApp Files.
+
+seealso:
+    - name: Sign in with Azure CLI
+      link: https://docs.microsoft.com/en-us/cli/azure/authenticate-azure-cli?view=azure-cli-latest
+      description: How to authenticate using the C(az login) command.
+    '''
+
     # Documentation fragment for ONTAP (na_ontap)
     NA_ONTAP = r'''
 options:
@@ -55,6 +79,15 @@ options:
       description:
       - The ontap api version to use
       type: int
+  use_rest:
+      description:
+      - REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI.
+      - Always -- will always use the REST API
+      - Never -- will always use the ZAPI
+      - Auto -- will try to use the REST Api
+      default: Auto
+      choices: ['Never', 'Always', 'Auto']
+      type: str
 
 
 requirements:
@@ -130,14 +163,17 @@ notes:
 options:
   api_username:
     required: true
+    type: str
     description:
     - The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
   api_password:
     required: true
+    type: str
     description:
     - The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
   api_url:
     required: true
+    type: str
     description:
     - The url to the SANtricity Web Services Proxy or Embedded Web Services API.
       Example https://prod-1.wahoo.acme.com/devmgr/v2
@@ -149,6 +185,7 @@ options:
     type: bool
   ssid:
     required: false
+    type: str
     default: 1
     description:
     - The ID of the array to manage. This value must be unique for each array.
@@ -159,3 +196,31 @@ notes:
   - Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
   - M(netapp_e_storage_system) may be utilized for configuring the systems managed by a WSP instance.
 '''
+
+    # Documentation fragment for AWSCVS
+    AWSCVS = """
+options:
+  api_key:
+    required: true
+    type: str
+    description:
+    - The access key to authenticate with the AWSCVS Web Services Proxy or Embedded Web Services API.
+  secret_key:
+    required: true
+    type: str
+    description:
+    - The secret_key to authenticate with the AWSCVS Web Services Proxy or Embedded Web Services API.
+  api_url:
+    required: true
+    type: str
+    description:
+    - The url to the AWSCVS Web Services Proxy or Embedded Web Services API.
+  validate_certs:
+    required: false
+    default: true
+    description:
+    - Should https certificates be validated?
+    type: bool
+notes:
+  - The modules prefixed with aws\\_cvs\\_netapp are built to Manage AWS Cloud Volume Service .
+"""

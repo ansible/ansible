@@ -1,0 +1,2 @@
+deprecated_features:
+- 'elb_network_lb: The current default value of the `state` option has been deprecated and will change from absent to present in Ansible 2.14'

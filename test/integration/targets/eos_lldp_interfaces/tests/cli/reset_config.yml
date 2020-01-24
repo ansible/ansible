@@ -1,0 +1,26 @@
+---
+- name: Reset initial config
+  cli_config:
+    config: |
+      interface Ethernet1
+         no lldp receive
+         lldp transmit
+      interface Ethernet2
+         lldp receive
+         no lldp transmit
+  become: yes
+
+- eos_facts:
+    gather_network_resources: lldp_interfaces
+  become: yes
+
+- set_fact:
+    expected_config:
+      - name: Ethernet1
+        receive: False
+      - name: Ethernet2
+        transmit: False
+
+- assert:
+    that:
+      - "expected_config|symmetric_difference(ansible_facts.network_resources.lldp_interfaces) == []"

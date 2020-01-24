@@ -1,0 +1,14 @@
+- include_tasks: postgresql_privs_session_role.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# Initial CI tests of postgresql_privs module:
+- include_tasks: postgresql_privs_initial.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# General tests:
+- include_tasks: postgresql_privs_general.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# Tests default_privs with target_role:
+- include_tasks: test_target_role.yml
+  when: postgres_version_resp.stdout is version('9.4', '>=')

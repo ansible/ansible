@@ -1,0 +1,68 @@
+---
+- debug:
+    msg: "Start nxos_bfd_interfaces merged integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact:
+    bfd_enable: enable
+    bfd_disable: disable
+  when: platform is not search('N5K|N6K')
+
+- name: setup1
+  cli_config: &setup_teardown
+    config: |
+      no feature bfd
+      default interface {{ test_int1 }}
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        feature bfd
+        interface {{ test_int1 }}
+          no switchport
+
+  - name: Merged
+    nxos_bfd_interfaces: &merged
+      config:
+        - name: "{{ test_int1 }}"
+          bfd: "{{ bfd_disable|default(omit)}}"
+          echo: disable
+      state:  merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'no bfd echo' in result.commands"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+
+  - assert:
+      that:
+        - "{{ 'no bfd' in result.commands }}"
+      msg: "Assert failed. 'result.commands': {{ result.commands }}"
+    when: bfd_enable is defined
+
+  - name: Gather bfd_interfaces facts
+    nxos_facts:
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: bfd_interfaces
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.bfd_interfaces|symmetric_difference(result.after)|length == 0"
+
+  - name: Idempotence - Merged
+    nxos_bfd_interfaces: *merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *setup_teardown

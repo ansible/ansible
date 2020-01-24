@@ -15,6 +15,7 @@ author:
 short_description: cloudscale.ch inventory source
 description:
     - Get inventory hosts from cloudscale.ch API
+    - Uses an YAML configuration file ending with either I(cloudscale.yml) or I(cloudscale.yaml) to set parameter values (also see examples).
 version_added: '2.8'
 extends_documentation_fragment:
   - constructed
@@ -62,10 +63,22 @@ options:
 '''
 
 EXAMPLES = r'''
-# cloudscale_inventory.yml file in YAML format
-# Example command line: ansible-inventory --list -i cloudscale_inventory.yml
+# cloudscale.yml name ending file in YAML format
+# Example command line: ansible-inventory --list -i inventory_cloudscale.yml
 
 plugin: cloudscale
+
+# Example grouping by tag key "project"
+plugin: cloudscale
+keyed_groups:
+  - prefix: project
+    key: cloudscale.tags.project
+
+# Example grouping by key "operating_system" lowercased and prefixed with "os"
+plugin: cloudscale
+keyed_groups:
+  - prefix: os
+    key: cloudscale.image.operating_system | lower
 '''
 
 from collections import defaultdict

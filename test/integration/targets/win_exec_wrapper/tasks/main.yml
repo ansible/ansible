@@ -43,6 +43,10 @@
     data: error
   register: error_module
   ignore_errors: yes
+  vars:
+    # Running with coverage means the module is run from a script and not as a psuedo script in a pipeline. This
+    # results in a different error message being returned so we disable coverage collection for this task.
+    _ansible_coverage_remote_output: ''
 
 - name: assert test module with error msg
   assert:
@@ -82,6 +86,8 @@
     data: function_throw
   register: function_exception
   ignore_errors: yes
+  vars:
+    _ansible_coverage_remote_output: ''
 
 - name: assert test module with function exception
   assert:
@@ -257,7 +263,7 @@
   raw: |
     $dt=[datetime]"{{ test_starttime.stdout|trim }}"
     (Get-WinEvent -LogName Microsoft-Windows-Powershell/Operational |
-    ? { $_.TimeCreated -ge $dt -and $_.Message -match "test_fail|fail_module|hyphen-var" }).Count
+    ? { $_.TimeCreated -ge $dt -and $_.Message -match "fail_module|hyphen-var" }).Count
   register: ps_log_count
 
 - name: assert no PS events contain module args or envvars

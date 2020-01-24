@@ -1,21 +1,11 @@
 # (c) 2018, NetApp Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from mock import MagicMock
-
-from ansible.module_utils import basic, netapp
-from ansible.modules.storage.netapp import netapp_e_host
-from ansible.modules.storage.netapp.netapp_e_host import Host
 from ansible.modules.storage.netapp.netapp_e_iscsi_interface import IscsiInterface
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 __metaclass__ = type
-import unittest
 import mock
-import pytest
-import json
-from units.compat.mock import patch
-from ansible.module_utils._text import to_bytes
 
 
 class IscsiInterfaceTest(ModuleTestCase):
@@ -92,7 +82,7 @@ class IscsiInterfaceTest(ModuleTestCase):
         with mock.patch(self.REQ_FUNC, return_value=(200, interfaces)):
             iface = IscsiInterface()
             interfaces = iface.interfaces
-            self.assertEquals(interfaces, expected)
+            self.assertEqual(interfaces, expected)
 
     def test_interfaces_fail(self):
         """Ensure we fail gracefully on an error to retrieve the interfaces"""
@@ -134,8 +124,8 @@ class IscsiInterfaceTest(ModuleTestCase):
         inst = IscsiInterface()
         update, body = inst.make_update_body(iface)
         self.assertTrue(update, msg="An update was expected!")
-        self.assertEquals(body['settings']['ipv4Enabled'][0], True)
-        self.assertEquals(body['settings']['ipv4AddressConfigMethod'][0], 'configDhcp')
+        self.assertEqual(body['settings']['ipv4Enabled'][0], True)
+        self.assertEqual(body['settings']['ipv4AddressConfigMethod'][0], 'configDhcp')
 
     def test_make_update_body_static(self):
         """Ensure the update body generates correctly for a transition from dhcp to static"""
@@ -156,11 +146,11 @@ class IscsiInterfaceTest(ModuleTestCase):
         inst = IscsiInterface()
         update, body = inst.make_update_body(iface)
         self.assertTrue(update, msg="An update was expected!")
-        self.assertEquals(body['settings']['ipv4Enabled'][0], True)
-        self.assertEquals(body['settings']['ipv4AddressConfigMethod'][0], 'configStatic')
-        self.assertEquals(body['settings']['ipv4Address'][0], '10.10.10.10')
-        self.assertEquals(body['settings']['ipv4SubnetMask'][0], '255.255.255.0')
-        self.assertEquals(body['settings']['ipv4GatewayAddress'][0], '1.1.1.1')
+        self.assertEqual(body['settings']['ipv4Enabled'][0], True)
+        self.assertEqual(body['settings']['ipv4AddressConfigMethod'][0], 'configStatic')
+        self.assertEqual(body['settings']['ipv4Address'][0], '10.10.10.10')
+        self.assertEqual(body['settings']['ipv4SubnetMask'][0], '255.255.255.0')
+        self.assertEqual(body['settings']['ipv4GatewayAddress'][0], '1.1.1.1')
 
     CONTROLLERS = dict(A='1', B='2')
 

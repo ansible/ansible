@@ -1,0 +1,2 @@
+bugfixes:
+- win_partition - Fix invalid variable name causing a failure on checks - https://github.com/ansible/ansible/issues/62401

@@ -101,9 +101,9 @@ EXAMPLES = r'''
   register: sls
 
 # The cloudformation stack is always named the same as the full service, so the
-# cloudformation_facts module can get a full list of the stack resources, as
+# cloudformation_info module can get a full list of the stack resources, as
 # well as stack events and outputs
-- cloudformation_facts:
+- cloudformation_info:
     region: us-east-1
     stack_name: '{{ sls.service_name }}'
     stack_resources: true

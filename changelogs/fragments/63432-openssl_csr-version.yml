@@ -1,0 +1,4 @@
+deprecated_features:
+- "openssl_csr - all values for the ``version`` option except ``1`` are deprecated."
+bugfixes:
+- "openssl_csr - a warning is issued if an unsupported value for ``version`` is used for the ``cryptography`` backend."

@@ -18,14 +18,13 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -validateset "a
 $bind_port = Get-AnsibleParam -obj $params -name "port" -type "int"
 $bind_ip = Get-AnsibleParam -obj $params -name "ip" -type "str"
 $bind_hostname = Get-AnsibleParam -obj $params -name "hostname" -type "str"
-$bind_ssl = Get-AnsibleParam -obj $params -name "ssl" -type "str"
 
 # Custom site Parameters from string where properties
 # are separated by a pipe and property name/values by colon.
 # Ex. "foo:1|bar:2"
 $parameters = Get-AnsibleParam -obj $params -name "parameters" -type "str"
 if($null -ne $parameters) {
-  $parameters = @($parameters -split '\|' | ForEach {
+  $parameters = @($parameters -split '\|' | ForEach-Object {
     return ,($_ -split "\:", 2);
   })
 }
@@ -43,7 +42,7 @@ $result = @{
 }
 
 # Site info
-$site = Get-Website | Where { $_.Name -eq $name }
+$site = Get-Website | Where-Object { $_.Name -eq $name }
 
 Try {
   # Add site
@@ -84,7 +83,13 @@ Try {
     # This is a bug in the New-WebSite commandlet. Apparently there must be at least one site configured in IIS otherwise New-WebSite crashes.
     # For more details, see http://stackoverflow.com/questions/3573889/ps-c-new-website-blah-throws-index-was-outside-the-bounds-of-the-array
     $sites_list = get-childitem -Path IIS:\sites
-    if ($null -eq $sites_list) { $site_parameters.ID = 1 }
+    if ($null -eq $sites_list) {
+      if ($site_id) {
+        $site_parameters.ID = $site_id
+      } else {
+        $site_parameters.ID = 1
+      }
+    }
 
     $site = New-Website @site_parameters -Force
     $result.changed = $true
@@ -96,7 +101,7 @@ Try {
     $result.changed = $true
   }
 
-  $site = Get-Website | Where { $_.Name -eq $name }
+  $site = Get-Website | Where-Object { $_.Name -eq $name }
   If($site) {
     # Change Physical Path if needed
     if($physical_path) {
@@ -121,7 +126,7 @@ Try {
 
     # Set properties
     if($parameters) {
-      $parameters | foreach {
+      $parameters | ForEach-Object {
         $property_value = Get-ItemProperty "IIS:\Sites\$($site.Name)" $_[0]
 
         switch ($property_value.GetType().Name)
@@ -131,14 +136,14 @@ Try {
         }
 
         if((-not $parameter_value) -or ($parameter_value) -ne $_[1]) {
-          Set-ItemProperty "IIS:\Sites\$($site.Name)" $_[0] $_[1]
+          Set-ItemProperty -LiteralPath "IIS:\Sites\$($site.Name)" $_[0] $_[1]
           $result.changed = $true
         }
       }
     }
 
     # Set run state
-    if (($state -eq 'stopped') -and ($site.State -eq 'Started'))
+    if ((($state -eq 'stopped') -or ($state -eq 'restarted')) -and ($site.State -eq 'Started'))
     {
       Stop-Website -Name $name -ErrorAction Stop
       $result.changed = $true
@@ -157,7 +162,7 @@ Catch
 
 if ($state -ne 'absent')
 {
-  $site = Get-Website | Where { $_.Name -eq $name }
+  $site = Get-Website | Where-Object { $_.Name -eq $name }
 }
 
 if ($site)

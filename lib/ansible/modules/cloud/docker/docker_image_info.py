@@ -22,6 +22,11 @@ version_added: "2.1.0"
 
 description:
      - Provide one or more image names, and the module will inspect each, returning an array of inspection results.
+     - If an image does not exist locally, it will not appear in the results. If you want to check whether an image exists
+       locally, you can call the module with the image name, then check whether the result list is empty (image does not
+       exist) or has one element (the image exists locally).
+     - The module will not attempt to pull images from registries. Use M(docker_image) with I(source) set to C(pull)
+       to ensure an image is pulled.
 
 notes:
      - This module was called C(docker_image_facts) before Ansible 2.8. The usage did not change.
@@ -32,8 +37,9 @@ options:
       - An image name or a list of image names. Name format will be C(name[:tag]) or C(repository/name[:tag]),
         where C(tag) is optional. If a tag is not provided, C(latest) will be used. Instead of image names, also
         image IDs can be used.
+      - If no name is provided, a list of all images will be returned.
     type: list
-    required: yes
+    elements: str
 
 extends_documentation_fragment:
   - docker
@@ -49,7 +55,6 @@ author:
 '''
 
 EXAMPLES = '''
-
 - name: Inspect a single image
   docker_image_info:
     name: pacur/centos-7
@@ -59,13 +64,22 @@ EXAMPLES = '''
     name:
       - pacur/centos-7
       - sinatra
+  register: result
+
+- name: Make sure that both images pacur/centos-7 and sinatra exist locally
+  assert:
+    that:
+      - result.images | length == 2
 '''
 
 RETURN = '''
 images:
-    description: Facts for the selected images.
+    description:
+      - Inspection results for the selected images.
+      - The list only contains inspection results of images existing locally.
     returned: always
-    type: dict
+    type: list
+    elements: dict
     sample: [
         {
             "Architecture": "amd64",
@@ -154,13 +168,21 @@ images:
     ]
 '''
 
+import traceback
+
 try:
     from docker import utils
+    from docker.errors import DockerException
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, is_image_name_id
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+    is_image_name_id,
+    RequestException,
+)
 
 
 class ImageManager(DockerBaseClass):
@@ -234,13 +256,18 @@ def main():
     if client.module._name == 'docker_image_facts':
         client.module.deprecate("The 'docker_image_facts' module has been renamed to 'docker_image_info'", version='2.12')
 
-    results = dict(
-        changed=False,
-        images=[]
-    )
+    try:
+        results = dict(
+            changed=False,
+            images=[]
+        )
 
-    ImageManager(client, results)
-    client.module.exit_json(**results)
+        ImageManager(client, results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

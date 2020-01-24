@@ -1,0 +1,2 @@
+bugfixes:
+- win_become - Do not dispose of one of the logon tokens until after the process has run

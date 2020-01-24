@@ -42,7 +42,7 @@ options:
         - Password of the user.
     superuser:
       description:
-        - User is a system wide administator.
+        - User is a system wide administrator.
       type: bool
       default: 'no'
     auditor:
@@ -55,6 +55,10 @@ options:
         - Desired state of the resource.
       default: "present"
       choices: ["present", "absent"]
+
+requirements:
+  - ansible-tower-cli >= 3.2.0
+
 extends_documentation_fragment: tower
 '''
 
@@ -68,6 +72,31 @@ EXAMPLES = '''
     first_name: John
     last_name: Doe
     state: present
+    tower_config_file: "~/tower_cli.cfg"
+
+- name: Add tower user as a system administrator
+  tower_user:
+    username: jdoe
+    password: foobarbaz
+    email: jdoe@example.org
+    superuser: yes
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
+
+- name: Add tower user as a system auditor
+  tower_user:
+    username: jdoe
+    password: foobarbaz
+    email: jdoe@example.org
+    auditor: yes
+    state: present
+    tower_config_file: "~/tower_cli.cfg"
+
+- name: Delete tower user
+  tower_user:
+    username: jdoe
+    email: jdoe@example.org
+    state: absent
     tower_config_file: "~/tower_cli.cfg"
 '''
 
@@ -115,7 +144,7 @@ def main():
             if state == 'present':
                 result = user.modify(username=username, first_name=first_name, last_name=last_name,
                                      email=email, password=password, is_superuser=superuser,
-                                     is_auditor=auditor, create_on_missing=True)
+                                     is_system_auditor=auditor, create_on_missing=True)
                 json_output['id'] = result['id']
             elif state == 'absent':
                 result = user.delete(username=username)

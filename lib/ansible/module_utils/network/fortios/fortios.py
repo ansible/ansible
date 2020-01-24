@@ -4,7 +4,8 @@
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
 #
-# Copyright (c), Benjamin Jolivot <bjolivot@gmail.com>, 2014
+# Copyright (c), Benjamin Jolivot <bjolivot@gmail.com>, 2014,
+# Miguel Angel Munoz <magonzalez@fortinet.com>, 2019
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification,
@@ -24,15 +25,18 @@
 # PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 #
 import os
 import time
 import traceback
 
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import env_fallback
 
+import json
+
+# BEGIN DEPRECATED
 
 # check for pyFG lib
 try:
@@ -71,6 +75,138 @@ fortios_error_codes = {
     '-3': "Object not found",
     '-61': "Command error"
 }
+
+# END DEPRECATED
+
+
+class FortiOSHandler(object):
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def cmdb_url(self, path, name, vdom=None, mkey=None):
+
+        url = '/api/v2/cmdb/' + path + '/' + name
+        if mkey:
+            url = url + '/' + str(mkey)
+        if vdom:
+            if vdom == "global":
+                url += '?global=1'
+            else:
+                url += '?vdom=' + vdom
+        return url
+
+    def mon_url(self, path, name, vdom=None, mkey=None):
+        url = '/api/v2/monitor/' + path + '/' + name
+        if mkey:
+            url = url + '/' + str(mkey)
+        if vdom:
+            if vdom == "global":
+                url += '?global=1'
+            else:
+                url += '?vdom=' + vdom
+        return url
+
+    def schema(self, path, name, vdom=None):
+        if vdom is None:
+            url = self.cmdb_url(path, name) + "?action=schema"
+        else:
+            url = self.cmdb_url(path, name, vdom=vdom) + "&action=schema"
+
+        status, result_data = self._conn.send_request(url=url)
+
+        if status == 200:
+            if vdom == "global":
+                return json.loads(to_text(result_data))[0]['results']
+            else:
+                return json.loads(to_text(result_data))['results']
+        else:
+            return json.loads(to_text(result_data))
+
+    def get_mkeyname(self, path, name, vdom=None):
+        schema = self.schema(path, name, vdom=vdom)
+        try:
+            keyname = schema['mkey']
+        except KeyError:
+            return False
+        return keyname
+
+    def get_mkey(self, path, name, data, vdom=None):
+
+        keyname = self.get_mkeyname(path, name, vdom)
+        if not keyname:
+            return None
+        else:
+            try:
+                mkey = data[keyname]
+            except KeyError:
+                return None
+        return mkey
+
+    def get(self, path, name, vdom=None, mkey=None, parameters=None):
+        url = self.cmdb_url(path, name, vdom, mkey=mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, method='GET')
+
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def monitor(self, path, name, vdom=None, mkey=None, parameters=None):
+        url = self.mon_url(path, name, vdom, mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, method='GET')
+
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def set(self, path, name, data, mkey=None, vdom=None, parameters=None):
+
+        if not mkey:
+            mkey = self.get_mkey(path, name, data, vdom=vdom)
+        url = self.cmdb_url(path, name, vdom, mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, data=json.dumps(data), method='PUT')
+
+        if status == 404 or status == 405 or status == 500:
+            return self.post(path, name, data, vdom, mkey)
+        else:
+            return self.formatresponse(result_data, vdom=vdom)
+
+    def post(self, path, name, data, vdom=None,
+             mkey=None, parameters=None):
+
+        if mkey:
+            mkeyname = self.get_mkeyname(path, name, vdom)
+            data[mkeyname] = mkey
+
+        url = self.cmdb_url(path, name, vdom, mkey=None)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, data=json.dumps(data), method='POST')
+
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def execute(self, path, name, data, vdom=None,
+                mkey=None, parameters=None, timeout=300):
+        url = self.mon_url(path, name, vdom, mkey=mkey)
+
+        status, result_data = self._conn.send_request(url=url, params=parameters, data=json.dumps(data), method='POST', timeout=timeout)
+
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def delete(self, path, name, vdom=None, mkey=None, parameters=None, data=None):
+        if not mkey:
+            mkey = self.get_mkey(path, name, data, vdom=vdom)
+        url = self.cmdb_url(path, name, vdom, mkey)
+        status, result_data = self._conn.send_request(url=url, params=parameters, data=json.dumps(data), method='DELETE')
+        return self.formatresponse(result_data, vdom=vdom)
+
+    def formatresponse(self, res, vdom=None):
+        if vdom == "global":
+            resp = json.loads(to_text(res))[0]
+            resp['vdom'] = "global"
+        else:
+            resp = json.loads(to_text(res))
+        return resp
+
+# BEGIN DEPRECATED
 
 
 def backup(module, running_config):
@@ -117,7 +253,7 @@ class AnsibleFortios(object):
             try:
                 self.forti_device.open()
             except Exception as e:
-                self.module.fail_json(msg='Error connecting device. %s' % to_native(e),
+                self.module.fail_json(msg='Error connecting device. %s' % to_text(e),
                                       exception=traceback.format_exc())
 
     def load_config(self, path):
@@ -130,7 +266,7 @@ class AnsibleFortios(object):
                 running = f.read()
                 f.close()
             except IOError as e:
-                self.module.fail_json(msg='Error reading configuration file. %s' % to_native(e),
+                self.module.fail_json(msg='Error reading configuration file. %s' % to_text(e),
                                       exception=traceback.format_exc())
             self.forti_device.load_config(config_text=running, path=path)
 
@@ -140,7 +276,7 @@ class AnsibleFortios(object):
                 self.forti_device.load_config(path=path)
             except Exception as e:
                 self.forti_device.close()
-                self.module.fail_json(msg='Error reading running config. %s' % to_native(e),
+                self.module.fail_json(msg='Error reading running config. %s' % to_text(e),
                                       exception=traceback.format_exc())
 
         # set configs in object
@@ -166,7 +302,7 @@ class AnsibleFortios(object):
                     f.close()
                 except IOError as e:
                     self.module.fail_json(msg='Error writing configuration file. %s' %
-                                          to_native(e), exception=traceback.format_exc())
+                                          to_text(e), exception=traceback.format_exc())
             else:
                 try:
                     self.forti_device.commit()
@@ -198,3 +334,5 @@ class AnsibleFortios(object):
 
     def get_empty_configuration_block(self, block_name, block_type):
         return FortiConfig(block_name, block_type)
+
+# END DEPRECATED

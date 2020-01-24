@@ -5,7 +5,7 @@
     nname_2: "{{ name_prefix ~ '-network-foobar' }}"
 - name: Registering container and network names
   set_fact:
-    dnetworks: "{{ dnetworks }} + [nname_1, nname_2]"
+    dnetworks: "{{ dnetworks + [nname_1, nname_2] }}"
 
 ####################################################################
 

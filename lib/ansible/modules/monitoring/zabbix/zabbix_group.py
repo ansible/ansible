@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_group
 short_description: Create/delete Zabbix host groups
@@ -27,18 +27,21 @@ author:
     - "Harrison Gu (@harrisongu)"
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.4"
 options:
     state:
         description:
             - Create or delete host group.
         required: false
+        type: str
         default: "present"
         choices: [ "present", "absent" ]
     host_groups:
         description:
             - List of host groups to create or delete.
         required: true
+        type: list
+        elements: str
         aliases: [ "host_group" ]
 
 extends_documentation_fragment:
@@ -48,7 +51,7 @@ notes:
     - Too many concurrent updates to the same group may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Base create host groups example
 - name: Create host groups
   local_action:
@@ -75,15 +78,20 @@ EXAMPLES = '''
   when: inventory_hostname==groups['group_name'][0]
 '''
 
+
+import atexit
+import traceback
+
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPI
     from zabbix_api import Already_Exists
 
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class HostGroup(object):
@@ -139,14 +147,14 @@ def main():
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
             host_groups=dict(type='list', required=True, aliases=['host_group']),
-            state=dict(default="present", choices=['present', 'absent']),
+            state=dict(type='str', default="present", choices=['present', 'absent']),
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -165,6 +173,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

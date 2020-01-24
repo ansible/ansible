@@ -1,0 +1,9 @@
+cryptography
+jinja2
+pycodestyle ; python_version >= '3.5' # only used on python 3.5+
+pylint ; python_version >= '3.5' and python_version < '3.9' # only used on python 3.5+ and does not yet support python 3.9
+pyyaml
+rstcheck ; python_version >= '3.5' # only used on python 3.5+
+virtualenv
+voluptuous ; python_version >= '3.5' # only used on python 3.5+
+yamllint ; python_version >= '3.5' # only used on python 3.5+

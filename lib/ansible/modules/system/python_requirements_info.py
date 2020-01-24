@@ -81,10 +81,10 @@ mismatched:
 not_found:
   description: A list of packages that could not be imported at all, and are not installed
   returned: always
-  type: dict
+  type: list
   sample:
   - boto4
-  - riquests
+  - requests
 '''
 
 import re

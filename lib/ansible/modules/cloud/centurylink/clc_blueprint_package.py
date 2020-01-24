@@ -34,7 +34,7 @@ options:
     required: False
   state:
     description:
-      - Whether to install or un-install the package. Currently it supports only "present" for install action.
+      - Whether to install or uninstall the package. Currently it supports only "present" for install action.
     required: False
     default: present
     choices: ['present']

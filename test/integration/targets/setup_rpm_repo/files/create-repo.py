@@ -10,15 +10,15 @@ RPM = namedtuple('RPM', ['name', 'version', 'release', 'epoch', 'recommends'])
 
 
 SPECS = [
-    RPM('foo', '1.0', '1', None, None),
-    RPM('foo', '1.0', '2', '1', None),
-    RPM('foo', '1.1', '1', '1', None),
-    RPM('foo-bar', '1.0', '1', None, None),
-    RPM('foo-bar', '1.1', '1', None, None),
-    RPM('bar', '1.0', '1', None, None),
-    RPM('bar', '1.1', '1', None, None),
-    RPM('foo-with-weak-dep', '1.0', '1', None, ['foo-weak-dep']),
-    RPM('foo-weak-dep', '1.0', '1', None, None),
+    RPM('dinginessentail', '1.0', '1', None, None),
+    RPM('dinginessentail', '1.0', '2', '1', None),
+    RPM('dinginessentail', '1.1', '1', '1', None),
+    RPM('dinginessentail-olive', '1.0', '1', None, None),
+    RPM('dinginessentail-olive', '1.1', '1', None, None),
+    RPM('landsidescalping', '1.0', '1', None, None),
+    RPM('landsidescalping', '1.1', '1', None, None),
+    RPM('dinginessentail-with-weak-dep', '1.0', '1', None, ['dinginessentail-weak-dep']),
+    RPM('dinginessentail-weak-dep', '1.0', '1', None, None),
 ]
 
 

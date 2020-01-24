@@ -38,12 +38,11 @@ options:
   dest:
     description:
       - Destination of the logs.
-    choices: ['on', 'host', 'console', 'monitor', 'buffered']
+    choices: ['on', 'host', 'console', 'monitor', 'buffered', 'trap']
   name:
     description:
-      - If value of C(dest) is I(file) it indicates file-name,
-        for I(user) it indicates username and for I(host) indicates
-        the host name to be notified.
+      - The hostname or IP address of the destination.
+      - Required when I(dest=host).
   size:
     description:
       - Size of buffer. The acceptable value is in range from 4096 to
@@ -55,6 +54,8 @@ options:
   level:
     description:
       - Set logging severity levels.
+    default: debugging
+    choices: ['emergencies', 'alerts', 'critical', 'errors', 'warnings', 'notifications', 'informational', 'debugging']
   aggregate:
     description: List of logging definitions.
   state:
@@ -125,7 +126,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec, validate_ip_address
 from ansible.module_utils.network.ios.ios import get_config, load_config
 from ansible.module_utils.network.ios.ios import get_capabilities
-from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.network.ios.ios import ios_argument_spec
 
 
 def validate_size(value, module):
@@ -137,7 +138,7 @@ def validate_size(value, module):
 
 
 def map_obj_to_commands(updates, module, os_version):
-    dest_group = ('console', 'monitor', 'buffered', 'on')
+    dest_group = ('console', 'monitor', 'buffered', 'on', 'trap')
     commands = list()
     want, have = updates
     for w in want:
@@ -164,7 +165,7 @@ def map_obj_to_commands(updates, module, os_version):
                     commands.append('no logging {0}'.format(dest))
 
                 else:
-                    module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
+                    module.fail_json(msg='dest must be among console, monitor, buffered, host, on, trap')
 
             if facility:
                 commands.append('no logging facility {0}'.format(facility))
@@ -269,7 +270,7 @@ def parse_level(line, dest):
 
 def map_config_to_obj(module):
     obj = []
-    dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility')
+    dest_group = ('console', 'host', 'monitor', 'buffered', 'on', 'facility', 'trap')
 
     data = get_config(module, flags=['| include logging'])
 
@@ -374,11 +375,12 @@ def main():
     """ main entry point for module execution
     """
     element_spec = dict(
-        dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered']),
+        dest=dict(type='str', choices=['on', 'host', 'console', 'monitor', 'buffered', 'trap']),
         name=dict(type='str'),
         size=dict(type='int'),
         facility=dict(type='str'),
-        level=dict(type='str', default='debugging'),
+        level=dict(type='str', default='debugging', choices=['emergencies', 'alerts', 'critical', 'errors', 'warnings',
+                                                             'notifications', 'informational', 'debugging']),
         state=dict(default='present', choices=['present', 'absent']),
     )
 
@@ -404,7 +406,6 @@ def main():
     os_version = device_info['device_info']['network_os_version']
 
     warnings = list()
-    check_args(module, warnings)
 
     result = {'changed': False}
     if warnings:

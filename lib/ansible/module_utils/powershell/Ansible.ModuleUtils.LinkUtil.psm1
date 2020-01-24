@@ -246,7 +246,7 @@ namespace Ansible
                 finally
                 {
                     FindClose(findHandle);
-                }                
+                }
             }
 
             if (result.Count > 1)
@@ -271,7 +271,7 @@ namespace Ansible
                 IntPtr.Zero);
 
             if (fileHandle.IsInvalid)
-                throw new LinkUtilWin32Exception(String.Format("CreateFile({0}) failed", linkPath));            
+                throw new LinkUtilWin32Exception(String.Format("CreateFile({0}) failed", linkPath));
 
             REPARSE_DATA_BUFFER buffer = new REPARSE_DATA_BUFFER();
             UInt32 bytesReturned;
@@ -428,7 +428,7 @@ Function New-Link($link_path, $link_target, $link_type) {
     if (-not (Test-Path -LiteralPath $link_target)) {
         throw "link_target '$link_target' does not exist, cannot create link"
     }
-    
+
     switch($link_type) {
         "link" {
             $type = [Ansible.LinkType]::SymbolicLink

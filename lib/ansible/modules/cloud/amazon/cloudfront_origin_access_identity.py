@@ -2,6 +2,9 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -11,8 +14,8 @@ DOCUMENTATION = '''
 
 module: cloudfront_origin_access_identity
 
-short_description: create, update and delete origin access identities for a
-                   cloudfront distribution.
+short_description: Create, update and delete origin access identities for a
+                   CloudFront distribution
 
 description:
     - Allows for easy creation, updating and deletion of origin access
@@ -36,22 +39,26 @@ options:
       choices:
         - present
         - absent
-      default: update_origin_access_identity
+      default: present
+      type: str
     origin_access_identity_id:
       description:
-        - The origin_access_identity_id of the cloudfront distribution.
+        - The origin_access_identity_id of the CloudFront distribution.
       required: false
+      type: str
     comment:
       description:
-        - A comment to describe the cloudfront origin access identity.
+        - A comment to describe the CloudFront origin access identity.
       required: false
+      type: str
     caller_reference:
       description:
         - A unique identifier to reference the origin access identity by.
       required: false
+      type: str
 
 notes:
-  - does not support check mode
+  - Does not support check mode.
 
 '''
 
@@ -101,7 +108,7 @@ cloud_front_origin_access_identity:
       returned: always
       type: str
     s3_canonical_user_id:
-      description: the cannonical user id of the user who created the oai
+      description: the canonical user ID of the user who created the oai
       returned: always
       type: str
 e_tag:
@@ -115,8 +122,6 @@ location:
 
 '''
 
-from ansible.module_utils.ec2 import get_aws_connection_info, ec2_argument_spec
-from ansible.module_utils.ec2 import boto3_conn
 from ansible.module_utils.aws.cloudfront_facts import CloudFrontFactsServiceManager
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -135,19 +140,12 @@ except ImportError:
 
 class CloudFrontOriginAccessIdentityServiceManager(object):
     """
-    Handles cloudfront origin access identity service calls to aws
+    Handles CloudFront origin access identity service calls to aws
     """
 
     def __init__(self, module):
         self.module = module
-        self.create_client('cloudfront')
-
-    def create_client(self, resource):
-        try:
-            region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self.module, boto3=True)
-            self.client = boto3_conn(self.module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        except (ClientError, BotoCoreError) as e:
-            self.module.fail_json_aws(e, msg="Unable to establish connection.")
+        self.client = module.client('cloudfront')
 
     def create_origin_access_identity(self, caller_reference, comment):
         try:
@@ -198,7 +196,7 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
 
 class CloudFrontOriginAccessIdentityValidationManager(object):
     """
-    Manages Cloudfront Origin Access Identities
+    Manages CloudFront Origin Access Identities
     """
 
     def __init__(self, module):
@@ -235,14 +233,12 @@ class CloudFrontOriginAccessIdentityValidationManager(object):
 
 
 def main():
-    argument_spec = ec2_argument_spec()
-
-    argument_spec.update(dict(
+    argument_spec = dict(
         state=dict(choices=['present', 'absent'], default='present'),
         origin_access_identity_id=dict(),
         caller_reference=dict(),
         comment=dict(),
-    ))
+    )
 
     result = {}
     e_tag = None

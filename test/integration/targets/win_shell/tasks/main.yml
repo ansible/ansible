@@ -258,6 +258,21 @@
     - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
     - nonascii_output.stderr == ''
 
+- name: echo some non ascii characters with us-ascii output encoding
+  win_shell: Write-Host über den Fußgängerübergang gehen
+  args:
+    output_encoding_override: us-ascii
+  register: nonascii_output_us_ascii_encoding
+
+- name: assert echo some non ascii characters with us-ascii output encoding
+  assert:
+    that:
+    - nonascii_output_us_ascii_encoding is changed
+    - nonascii_output_us_ascii_encoding.rc == 0
+    - nonascii_output_us_ascii_encoding.stdout_lines|count == 1
+    - nonascii_output_us_ascii_encoding.stdout_lines[0] == '??ber den Fu??g??nger??bergang gehen'
+    - nonascii_output_us_ascii_encoding.stderr == ''
+
 - name: execute powershell without no_profile
   win_shell: '[System.Environment]::CommandLine'
   register: no_profile
@@ -269,7 +284,7 @@
     - no_profile is changed
     - no_profile.cmd == "[System.Environment]::CommandLine"
     - no_profile.rc == 0
-    - no_profile.stdout is match ('^powershell.exe -noninteractive -encodedcommand')
+    - no_profile.stdout is match ('^"powershell.exe" -noninteractive -encodedcommand')
 
 - name: execute powershell with no_profile
   win_shell: '[System.Environment]::CommandLine'
@@ -284,4 +299,33 @@
     - no_profile is changed
     - no_profile.cmd == "[System.Environment]::CommandLine"
     - no_profile.rc == 0
-    - no_profile.stdout is match ('^powershell.exe -noprofile -noninteractive -encodedcommand')
+    - no_profile.stdout is match ('^"powershell.exe" -noprofile -noninteractive -encodedcommand')
+
+- name: create symbolic link with space in the path
+  win_command: cmd.exe /c mklink /d "C:\ansible test link" C:\Windows\System32\WindowsPowerShell\v1.0
+  args:
+    creates: C:\ansible test link
+
+- block:
+  - name: run with space in the executable path
+    win_shell: '[System.Environment]::CommandLine'
+    args:
+      executable: C:\ansible test link\powershell
+    register: space_exe
+
+  - debug:
+      var: space_exe.stdout|trim
+
+  - name: assert run with space in the executable path
+    assert:
+      that:
+      - space_exe is successful
+      - space_exe is changed
+      - space_exe.cmd == '[System.Environment]::CommandLine'
+      - space_exe.rc == 0
+      - space_exe.stdout|trim == '"C:\\ansible test link\\powershell.exe" /c [System.Environment]::CommandLine'
+  always:
+  - name: remove test symbolic link
+    win_file:
+      path: C:\ansible test link
+      state: absent

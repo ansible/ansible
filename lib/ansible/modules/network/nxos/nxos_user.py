@@ -137,15 +137,13 @@ delta:
   type: str
   sample: "0:00:10.469466"
 """
-import re
-
 from copy import deepcopy
 from functools import partial
 
 from ansible.module_utils.network.nxos.nxos import run_commands, load_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types, iteritems
+from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.utils import remove_default_spec, to_list
 
 VALID_ROLES = ['network-admin', 'network-operator', 'vdc-admin', 'vdc-operator',
@@ -162,7 +160,6 @@ def validate_roles(value, module):
 
 def map_obj_to_commands(updates, module):
     commands = list()
-    state = module.params['state']
     update_password = module.params['update_password']
 
     for update in updates:
@@ -177,12 +174,30 @@ def map_obj_to_commands(updates, module):
         def remove(x):
             return commands.append('no username %s %s' % (want['name'], x))
 
+        def configure_roles():
+            if want['roles']:
+                if have:
+                    for item in set(have['roles']).difference(want['roles']):
+                        remove('role %s' % item)
+
+                    for item in set(want['roles']).difference(have['roles']):
+                        add('role %s' % item)
+                else:
+                    for item in want['roles']:
+                        add('role %s' % item)
+
+                return True
+            return False
+
         if want['state'] == 'absent':
             commands.append('no username %s' % want['name'])
             continue
 
+        roles_configured = False
         if want['state'] == 'present' and not have:
-            commands.append('username %s' % want['name'])
+            roles_configured = configure_roles()
+            if not roles_configured:
+                commands.append('username %s' % want['name'])
 
         if needs_update('configured_password'):
             if update_password == 'always' or not have:
@@ -191,16 +206,8 @@ def map_obj_to_commands(updates, module):
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
 
-        if want['roles']:
-            if have:
-                for item in set(have['roles']).difference(want['roles']):
-                    remove('role %s' % item)
-
-                for item in set(want['roles']).difference(have['roles']):
-                    add('role %s' % item)
-            else:
-                for item in want['roles']:
-                    add('role %s' % item)
+        if not roles_configured:
+            configure_roles()
 
     return commands
 
@@ -340,15 +347,7 @@ def main():
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
 
-    warnings = list()
-    if module.params['password'] and not module.params['configured_password']:
-        warnings.append(
-            'The "password" argument is used to authenticate the current connection. ' +
-            'To set a user password use "configured_password" instead.'
-        )
-
     result = {'changed': False}
-    result['warnings'] = warnings
 
     want = map_params_to_obj(module)
     have = map_config_to_obj(module)

@@ -1,5 +1,5 @@
-Sanity Tests » no-illegal-filenames
-===================================
+no-illegal-filenames
+====================
 
 Files and directories should not contain illegal characters or names so that
 Ansible can be checked out on any Operating System.

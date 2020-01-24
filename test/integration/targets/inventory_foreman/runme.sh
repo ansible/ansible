@@ -4,6 +4,12 @@
 
 set -euo pipefail
 
+export ANSIBLE_INVENTORY
+export ANSIBLE_PYTHON_INTERPRETER
+
+unset ANSIBLE_INVENTORY
+unset ANSIBLE_PYTHON_INTERPRETER
+
 export ANSIBLE_CONFIG=ansible.cfg
 export FOREMAN_HOST="${FOREMAN_HOST:-localhost}"
 export FOREMAN_PORT="${FOREMAN_PORT:-8080}"

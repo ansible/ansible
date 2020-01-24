@@ -513,19 +513,19 @@ Function ConvertTo-CredentialAttribute {
 }
 
 Function Get-DiffInfo {
-    param($Credential)
+    param($AnsibleCredential)
 
     $diff = @{
-        alias = $Credential.TargetAlias
+        alias = $AnsibleCredential.TargetAlias
         attributes = [System.Collections.ArrayList]@()
-        comment = $Credential.Comment
-        name = $Credential.TargetName
-        persistence = $Credential.Persist.ToString()
-        type = $Credential.Type.ToString()
-        username = $Credential.UserName
+        comment = $AnsibleCredential.Comment
+        name = $AnsibleCredential.TargetName
+        persistence = $AnsibleCredential.Persist.ToString()
+        type = $AnsibleCredential.Type.ToString()
+        username = $AnsibleCredential.UserName
     }
 
-    foreach ($attribute in $Credential.Attributes) {
+    foreach ($attribute in $AnsibleCredential.Attributes) {
         $attribute_info = @{
             name = $attribute.Keyword
             data = $null
@@ -573,7 +573,7 @@ $type = switch ($type) {
 
 $existing_credential = [Ansible.CredentialManager.Credential]::GetCredential($name, $type)
 if ($null -ne $existing_credential) {
-    $module.Diff.before = Get-DiffInfo -Credential $existing_credential
+    $module.Diff.before = Get-DiffInfo -AnsibleCredential $existing_credential
 }
 
 if ($state -eq "absent") {
@@ -654,7 +654,7 @@ if ($state -eq "absent") {
                     if (($new_keyword -cne $existing_keyword) -or ($new_value -ne $existing_value)) {
                         $attribute_changed = $true
                         break
-                    } 
+                    }
                 }
             }
 
@@ -705,9 +705,8 @@ if ($state -eq "absent") {
     } else {
         # Get a new copy of the credential and use that to set the after diff
         $new_credential = [Ansible.CredentialManager.Credential]::GetCredential($name, $type)
-        $module.Diff.after = Get-DiffInfo -Credential $new_credential
+        $module.Diff.after = Get-DiffInfo -AnsibleCredential $new_credential
     }
 }
 
 $module.ExitJson()
-

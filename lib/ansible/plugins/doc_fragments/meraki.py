@@ -10,6 +10,8 @@ class ModuleDocFragment(object):
 notes:
 - More information about the Meraki API can be found at U(https://dashboard.meraki.com/api_docs).
 - Some of the options are likely only used for developers within Meraki.
+- As of Ansible 2.9, Meraki modules output keys as snake case. To use camel case, set the C(ANSIBLE_MERAKI_FORMAT) environment variable to C(camelcase).
+- Ansible's Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
 options:
     auth_key:
         description:
@@ -19,7 +21,7 @@ options:
     host:
         description:
         - Hostname for Meraki dashboard.
-        - Only useful for internal Meraki developers.
+        - Can be used to access regional Meraki environments, such as China.
         type: str
         default: api.meraki.com
     use_proxy:
@@ -32,6 +34,12 @@ options:
         - Only useful for internal Meraki developers.
         type: bool
         default: yes
+    output_format:
+        description:
+        - Instructs module whether response keys should be snake case (ex. C(net_id)) or camel case (ex. C(netId)).
+        type: str
+        choices: [snakecase, camelcase]
+        default: snakecase
     output_level:
         description:
         - Set amount of debug output during module execution.
@@ -56,5 +64,15 @@ options:
     org_id:
         description:
         - ID of organization.
+        type: str
+    rate_limit_retry_time:
+        description:
+        - Number of seconds to retry if rate limiter is triggered.
         type: int
+        default: 165
+    internal_error_retry_time:
+        description:
+        - Number of seconds to retry if server returns an internal server error.
+        type: int
+        default: 60
 '''

@@ -57,12 +57,12 @@ options:
                 default: '15m'
     name:
         description:
-            - the name of vpc.
+            - The name of vpc.
         type: str
         required: true
     cidr:
         description:
-            - the range of available subnets in the vpc.
+            - The range of available subnets in the vpc.
         type: str
         required: true
 extends_documentation_fragment: hwc

@@ -1,7 +1,5 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos common/net_logging.yaml"
-- debug: msg="Using provider={{ connection.transport }}"
-  when: ansible_connection == "local"
 
 # Add minimal testcase to check args are passed correctly to
 # implementation module and module run is successful.
@@ -10,7 +8,6 @@
   net_logging:
     dest: console
     dest_level: 0
-    provider: "{{ connection }}"
     state: absent
   register: result
 
@@ -18,7 +15,6 @@
   net_logging:
     dest: console
     dest_level: 0
-    provider: "{{ connection }}"
     state: present
   register: result
 
@@ -31,7 +27,6 @@
   net_logging:
     dest: console
     dest_level: 0
-    provider: "{{ connection }}"
     state: absent
   register: result
 

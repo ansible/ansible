@@ -35,7 +35,7 @@ description:
   Google's cloud. The Instances resource provides methods for common configuration
   and management tasks.
 short_description: Creates a GCP Instance
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6
@@ -49,20 +49,20 @@ options:
     - present
     - absent
     default: present
+    type: str
   backend_type:
     description:
     - "* FIRST_GEN: First Generation instance. MySQL only."
     - "* SECOND_GEN: Second Generation instance or PostgreSQL instance."
     - "* EXTERNAL: A database server that is not managed by Google."
+    - 'Some valid choices include: "FIRST_GEN", "SECOND_GEN", "EXTERNAL"'
     required: false
-    choices:
-    - FIRST_GEN
-    - SECOND_GEN
-    - EXTERNAL
+    type: str
   connection_name:
     description:
     - Connection name of the Cloud SQL instance used in connection strings.
     required: false
+    type: str
   database_version:
     description:
     - The database engine type and version. For First Generation instances, can be
@@ -70,17 +70,15 @@ options:
       MYSQL_5_7. Defaults to MYSQL_5_6.
     - 'PostgreSQL instances: POSTGRES_9_6 The databaseVersion property can not be
       changed after instance creation.'
+    - 'Some valid choices include: "MYSQL_5_5", "MYSQL_5_6", "MYSQL_5_7", "POSTGRES_9_6"'
     required: false
-    choices:
-    - MYSQL_5_5
-    - MYSQL_5_6
-    - MYSQL_5_7
-    - POSTGRES_9_6
+    type: str
   failover_replica:
     description:
     - The name and status of the failover replica. This property is applicable only
       to Second Generation instances.
     required: false
+    type: dict
     suboptions:
       name:
         description:
@@ -88,43 +86,48 @@ options:
           replica is created for the instance. The name doesn't include the project
           ID. This property is applicable only to Second Generation instances.
         required: false
+        type: str
   instance_type:
     description:
     - The instance type. This can be one of the following.
     - "* CLOUD_SQL_INSTANCE: A Cloud SQL instance that is not replicating from a master."
     - "* ON_PREMISES_INSTANCE: An instance running on the customer's premises."
     - "* READ_REPLICA_INSTANCE: A Cloud SQL instance configured as a read-replica."
+    - 'Some valid choices include: "CLOUD_SQL_INSTANCE", "ON_PREMISES_INSTANCE", "READ_REPLICA_INSTANCE"'
     required: false
-    choices:
-    - CLOUD_SQL_INSTANCE
-    - ON_PREMISES_INSTANCE
-    - READ_REPLICA_INSTANCE
+    type: str
   ipv6_address:
     description:
     - The IPv6 address assigned to the instance. This property is applicable only
       to First Generation instances.
     required: false
+    type: str
   master_instance_name:
     description:
     - The name of the instance which will act as master in the replication setup.
     required: false
+    type: str
   max_disk_size:
     description:
     - The maximum disk size of the instance in bytes.
     required: false
+    type: int
   name:
     description:
     - Name of the Cloud SQL instance. This does not include the project ID.
     required: true
+    type: str
   region:
     description:
     - The geographical region. Defaults to us-central or us-central1 depending on
       the instance type (First Generation or Second Generation/PostgreSQL).
     required: false
+    type: str
   replica_configuration:
     description:
     - Configuration specific to failover replicas and read replicas.
     required: false
+    type: dict
     suboptions:
       failover_target:
         description:
@@ -144,48 +147,58 @@ options:
           is used only to set up the replication connection and is stored by MySQL
           in a file named master.info in the data directory.
         required: false
+        type: dict
         suboptions:
           ca_certificate:
             description:
             - PEM representation of the trusted CA's x509 certificate.
             required: false
+            type: str
           client_certificate:
             description:
             - PEM representation of the slave's x509 certificate .
             required: false
+            type: str
           client_key:
             description:
             - PEM representation of the slave's private key. The corresponding public
               key is encoded in the client's certificate.
             required: false
+            type: str
           connect_retry_interval:
             description:
             - Seconds to wait between connect retries. MySQL's default is 60 seconds.
             required: false
+            type: int
           dump_file_path:
             description:
             - Path to a SQL dump file in Google Cloud Storage from which the slave
               instance is to be created. The URI is in the form gs://bucketName/fileName.
               Compressed gzip files (.gz) are also supported. Dumps should have the
-              binlog co-ordinates from which replication should begin. This can be
+              binlog coordinates from which replication should begin. This can be
               accomplished by setting --master-data to 1 when using mysqldump.
             required: false
+            type: str
           master_heartbeat_period:
             description:
             - Interval in milliseconds between replication heartbeats.
             required: false
+            type: int
           password:
             description:
             - The password for the replication connection.
             required: false
+            type: str
           ssl_cipher:
             description:
             - A list of permissible ciphers to use for SSL encryption.
             required: false
+            type: str
           username:
             description:
             - The username for the replication connection.
             required: false
+            type: str
           verify_server_certificate:
             description:
             - Whether or not to check the master's Common Name value in the certificate
@@ -196,22 +209,46 @@ options:
         description:
         - The replicas of the instance.
         required: false
+        type: list
       service_account_email_address:
         description:
         - The service account email address assigned to the instance. This property
           is applicable only to Second Generation instances.
         required: false
+        type: str
   settings:
     description:
     - The user settings.
     required: false
+    type: dict
     suboptions:
+      database_flags:
+        description:
+        - The database flags passed to the instance at startup.
+        required: false
+        type: list
+        version_added: '2.9'
+        suboptions:
+          name:
+            description:
+            - The name of the flag. These flags are passed at instance startup, so
+              include both server options and system variables for MySQL. Flags should
+              be specified with underscores, not hyphens.
+            required: false
+            type: str
+          value:
+            description:
+            - The value of the flag. Booleans should be set to on for true and off
+              for false. This field must be omitted if the flag doesn't take a value.
+            required: false
+            type: str
       ip_configuration:
         description:
         - The settings for IP Management. This allows to enable or disable the instance
           IP and manage which external networks can connect to the instance. The IPv4
           address cannot be disabled for Second Generation instances.
         required: false
+        type: dict
         suboptions:
           ipv4_enabled:
             description:
@@ -224,22 +261,26 @@ options:
               using the IP. In CIDR notation, also known as 'slash' notation (e.g.
               192.168.100.0/24).
             required: false
+            type: list
             suboptions:
               expiration_time:
                 description:
                 - The time when this access control entry expires in RFC 3339 format,
                   for example 2012-11-15T16:19:00.094Z.
                 required: false
+                type: str
               name:
                 description:
                 - An optional label to identify this entry.
                 required: false
+                type: str
               value:
                 description:
                 - The whitelisted value for the access control list. For example,
                   to grant access to a client from an external IP (IPv4 or IPv6) address
                   or subnet, use that address or subnet here.
                 required: false
+                type: str
           require_ssl:
             description:
             - Whether the mysqld should default to 'REQUIRE X509' for users connecting
@@ -252,17 +293,18 @@ options:
           For MySQL instances, this field determines whether the instance is Second
           Generation (recommended) or First Generation.
         required: false
+        type: str
       availability_type:
         description:
         - The availabilityType define if your postgres instance is run zonal or regional.
+        - 'Some valid choices include: "ZONAL", "REGIONAL"'
         required: false
-        choices:
-        - ZONAL
-        - REGIONAL
+        type: str
       backup_configuration:
         description:
         - The daily backup configuration for the instance.
         required: false
+        type: dict
         suboptions:
           enabled:
             description:
@@ -279,7 +321,44 @@ options:
             description:
             - Define the backup start time in UTC (HH:MM) .
             required: false
-extends_documentation_fragment: gcp
+            type: str
+  project:
+    description:
+    - The Google Cloud Platform project to use.
+    type: str
+  auth_kind:
+    description:
+    - The type of credential used.
+    type: str
+    required: true
+    choices:
+    - application
+    - machineaccount
+    - serviceaccount
+  service_account_contents:
+    description:
+    - The contents of a Service Account JSON file, either in a dictionary or as a
+      JSON string that represents it.
+    type: jsonarg
+  service_account_file:
+    description:
+    - The path of a Service Account JSON file if serviceaccount is selected as type.
+    type: path
+  service_account_email:
+    description:
+    - An optional service account email address if machineaccount is selected and
+      the user does not wish to use the default email.
+    type: str
+  scopes:
+    description:
+    - Array of scopes to be used
+    type: list
+  env_type:
+    description:
+    - Specifies which Ansible environment you're running this module within.
+    - This should not be set unless you know what you're doing.
+    - This only alters the User Agent string for any API requests.
+    type: str
 '''
 
 EXAMPLES = '''
@@ -452,7 +531,7 @@ replicaConfiguration:
           description:
           - Path to a SQL dump file in Google Cloud Storage from which the slave instance
             is to be created. The URI is in the form gs://bucketName/fileName. Compressed
-            gzip files (.gz) are also supported. Dumps should have the binlog co-ordinates
+            gzip files (.gz) are also supported. Dumps should have the binlog coordinates
             from which replication should begin. This can be accomplished by setting
             --master-data to 1 when using mysqldump.
           returned: success
@@ -500,6 +579,25 @@ settings:
   returned: success
   type: complex
   contains:
+    databaseFlags:
+      description:
+      - The database flags passed to the instance at startup.
+      returned: success
+      type: complex
+      contains:
+        name:
+          description:
+          - The name of the flag. These flags are passed at instance startup, so include
+            both server options and system variables for MySQL. Flags should be specified
+            with underscores, not hyphens.
+          returned: success
+          type: str
+        value:
+          description:
+          - The value of the flag. Booleans should be set to on for true and off for
+            false. This field must be omitted if the flag doesn't take a value.
+          returned: success
+          type: str
     ipConfiguration:
       description:
       - The settings for IP Management. This allows to enable or disable the instance
@@ -607,11 +705,11 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            backend_type=dict(type='str', choices=['FIRST_GEN', 'SECOND_GEN', 'EXTERNAL']),
+            backend_type=dict(type='str'),
             connection_name=dict(type='str'),
-            database_version=dict(type='str', choices=['MYSQL_5_5', 'MYSQL_5_6', 'MYSQL_5_7', 'POSTGRES_9_6']),
+            database_version=dict(type='str'),
             failover_replica=dict(type='dict', options=dict(name=dict(type='str'))),
-            instance_type=dict(type='str', choices=['CLOUD_SQL_INSTANCE', 'ON_PREMISES_INSTANCE', 'READ_REPLICA_INSTANCE']),
+            instance_type=dict(type='str'),
             ipv6_address=dict(type='str'),
             master_instance_name=dict(type='str'),
             max_disk_size=dict(type='int'),
@@ -643,6 +741,7 @@ def main():
             settings=dict(
                 type='dict',
                 options=dict(
+                    database_flags=dict(type='list', elements='dict', options=dict(name=dict(type='str'), value=dict(type='str'))),
                     ip_configuration=dict(
                         type='dict',
                         options=dict(
@@ -654,7 +753,7 @@ def main():
                         ),
                     ),
                     tier=dict(type='str'),
-                    availability_type=dict(type='str', choices=['ZONAL', 'REGIONAL']),
+                    availability_type=dict(type='str'),
                     backup_configuration=dict(
                         type='dict', options=dict(enabled=dict(type='bool'), binary_log_enabled=dict(type='bool'), start_time=dict(type='str'))
                     ),
@@ -700,8 +799,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    auth = GcpSession(module, 'sql')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    module.fail_json(msg="SQL objects can't be updated to ensure data safety")
 
 
 def delete(module, link, kind, fetch):
@@ -968,6 +1066,7 @@ class InstanceSettings(object):
     def to_request(self):
         return remove_nones_from_dict(
             {
+                u'databaseFlags': InstanceDatabaseflagsArray(self.request.get('database_flags', []), self.module).to_request(),
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
                 u'tier': self.request.get('tier'),
                 u'availabilityType': self.request.get('availability_type'),
@@ -978,12 +1077,40 @@ class InstanceSettings(object):
     def from_response(self):
         return remove_nones_from_dict(
             {
+                u'databaseFlags': InstanceDatabaseflagsArray(self.request.get(u'databaseFlags', []), self.module).from_response(),
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
                 u'tier': self.request.get(u'tier'),
                 u'availabilityType': self.request.get(u'availabilityType'),
                 u'backupConfiguration': InstanceBackupconfiguration(self.request.get(u'backupConfiguration', {}), self.module).from_response(),
             }
         )
+
+
+class InstanceDatabaseflagsArray(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = []
+
+    def to_request(self):
+        items = []
+        for item in self.request:
+            items.append(self._request_for_item(item))
+        return items
+
+    def from_response(self):
+        items = []
+        for item in self.request:
+            items.append(self._response_from_item(item))
+        return items
+
+    def _request_for_item(self, item):
+        return remove_nones_from_dict({u'name': item.get('name'), u'value': item.get('value')})
+
+    def _response_from_item(self, item):
+        return remove_nones_from_dict({u'name': item.get(u'name'), u'value': item.get(u'value')})
 
 
 class InstanceIpconfiguration(object):

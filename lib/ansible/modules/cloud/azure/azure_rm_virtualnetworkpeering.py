@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualnetworkpeering
 version_added: "2.8"
-short_description: Manage Azure Virtual Network Peering.
+short_description: Manage Azure Virtual Network Peering
 description:
     - Create, update and delete Azure Virtual Network Peering.
 
@@ -30,17 +30,15 @@ options:
         required: true
     virtual_network:
         description:
-            - Virtual network to be peered.
-            - It can be name of virtual network.
-            - It can be virtual network resource id.
+            - Name or resource ID of the virtual network to be peered.
         required: true
     remote_virtual_network:
         description:
             - Remote virtual network to be peered.
             - It can be name of remote virtual network in same resource group.
-            - It can be remote virtual network resource id.
-            - It can be a dict which contains C(name) and C(resource_group) of remote virtual network.
-            - Required when creating
+            - It can be remote virtual network resource ID.
+            - It can be a dict which contains I(name) and I(resource_group) of remote virtual network.
+            - Required when creating.
     allow_virtual_network_access:
         description:
             - Allows VMs in the remote VNet to access all VMs in the local VNet.
@@ -64,7 +62,7 @@ options:
         default: false
     state:
         description:
-            - Assert the state of the virtual network peering. Use C(present) to create or update a peering and C(absent) to delete it.
+            - State of the virtual network peering. Use C(present) to create or update a peering and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -98,11 +96,11 @@ EXAMPLES = '''
 '''
 RETURN = '''
 id:
-    description: Id of the Azure virtual network peering
+    description:
+        - ID of the Azure virtual network peering.
     returned: always
-    type: dict
-    example:
-        id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualN
+    type: str
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/myVirtualN
              etwork/virtualNetworkPeerings/myPeering"
 '''
 

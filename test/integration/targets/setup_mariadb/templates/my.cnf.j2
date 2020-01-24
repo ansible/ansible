@@ -1,0 +1,31 @@
+[mysqld.{{ primary_db.name }}]
+server_id           = 1
+port                = {{ primary_db.port }}
+datadir             = {{ primary_db.datadir }}
+socket              = {{ primary_db.datadir }}/mysql.sock
+pid-file            = {{ primary_db.datadir }}/mysql.pid
+log_bin             = {{ primary_db.logdir }}/mysql-bin.log
+sync_binlog         = 1
+binlog-format       = ROW
+innodb_flush_log_at_trx_commit  = 1
+
+[mysqld.{{ replica_db.name }}]
+server_id           = 2
+port                = {{ replica_db.port }}
+datadir             = {{ replica_db.datadir }}
+socket              = {{ replica_db.datadir }}/mysqld_replica.sock
+pid-file            = {{ replica_db.datadir }}/mysqld_replica.pid
+log_bin             = {{ replica_db.logdir }}/mysql-bin.log
+relay-log           = {{ replica_db.logdir }}/relay-bin
+relay-log-index     = {{ replica_db.logdir }}/relay-bin.index
+master-info-file    = {{ replica_db.logdir }}/master.info
+relay-log-info-file = {{ replica_db.logdir }}/relay-log.info
+
+[mysqld_multi]
+mysqld     = /usr/bin/mysqld_safe
+user       = multi_admin
+password   = multipass
+
+[mysqld_safe]
+log-error={{  mysql_safe_err_log }}
+pid-file=/var/run/mariadb/mariadb.pid

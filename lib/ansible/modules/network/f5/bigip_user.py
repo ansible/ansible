@@ -638,7 +638,7 @@ class UnpartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         resp = self.client.api.get(uri)
         try:
@@ -651,7 +651,7 @@ class UnpartitionedManager(BaseManager):
 
     def create_on_device(self):
         params = self.changes.api_params()
-        params['name'] = self.want.name
+        params['name'] = self.want.username_credential
         uri = "https://{0}:{1}/mgmt/tm/auth/user/".format(
             self.client.provider['server'],
             self.client.provider['server_port']
@@ -674,7 +674,7 @@ class UnpartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         resp = self.client.api.patch(uri, json=params)
         try:
@@ -692,7 +692,7 @@ class UnpartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         response = self.client.api.delete(uri)
         if response.status == 200:
@@ -703,7 +703,7 @@ class UnpartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         resp = self.client.api.get(uri)
         try:
@@ -723,7 +723,7 @@ class PartitionedManager(BaseManager):
     def exists(self):
         response = self.list_users_on_device()
         if 'items' in response:
-            collection = [x for x in response['items'] if x['name'] == self.want.name]
+            collection = [x for x in response['items'] if x['name'] == self.want.username_credential]
             if len(collection) == 1:
                 return True
             elif len(collection) == 0:
@@ -736,7 +736,7 @@ class PartitionedManager(BaseManager):
 
     def create_on_device(self):
         params = self.changes.api_params()
-        params['name'] = self.want.name
+        params['name'] = self.want.username_credential
         params['partition'] = self.want.partition
         uri = "https://{0}:{1}/mgmt/tm/auth/user/".format(
             self.client.provider['server'],
@@ -747,17 +747,16 @@ class PartitionedManager(BaseManager):
             response = resp.json()
         except ValueError as ex:
             raise F5ModuleError(str(ex))
-
-        if 'code' in response and response['code'] in [400, 404, 409]:
+        if 'code' in response and response['code'] in [400, 404, 409, 403]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
-        return response['selfLink']
+        return True
 
     def read_current_from_device(self):
         response = self.list_users_on_device()
-        collection = [x for x in response['items'] if x['name'] == self.want.name]
+        collection = [x for x in response['items'] if x['name'] == self.want.username_credential]
         if len(collection) == 1:
             user = collection.pop()
             return ApiParameters(params=user)
@@ -775,7 +774,7 @@ class PartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         resp = self.client.api.patch(uri, json=params)
         try:
@@ -783,7 +782,7 @@ class PartitionedManager(BaseManager):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] in [400, 404, 409]:
+        if 'code' in response and response['code'] in [400, 404, 409, 403]:
             if 'message' in response:
                 if 'updated successfully' not in response['message']:
                     raise F5ModuleError(response['message'])
@@ -794,7 +793,7 @@ class PartitionedManager(BaseManager):
         uri = "https://{0}:{1}/mgmt/tm/auth/user/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            self.want.name
+            self.want.username_credential
         )
         response = self.client.api.delete(uri)
         if response.status == 200:
@@ -1068,9 +1067,9 @@ class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
         argument_spec = dict(
-            name=dict(
+            username_credential=dict(
                 required=True,
-                aliases=['username_credential']
+                aliases=['name']
             ),
             password_credential=dict(
                 no_log=True,

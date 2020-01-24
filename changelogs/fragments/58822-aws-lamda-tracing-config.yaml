@@ -1,0 +1,2 @@
+minor_changes:
+  - lambda - add a tracing_mode parameter to set the TracingConfig for AWS X-Ray. Also allow updating Lambda runtime.

@@ -207,7 +207,9 @@ class TestCollectedFacts(unittest.TestCase):
     def _mock_module(self, gather_subset=None):
         return mock_module(gather_subset=self.gather_subset)
 
-    def setUp(self):
+    @patch('platform.system', return_value='Linux')
+    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='systemd')
+    def setUp(self, mock_gfc, mock_ps):
         mock_module = self._mock_module()
         collectors = self._collectors(mock_module)
 
@@ -322,7 +324,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
         expected = {'needed_fact': 'THE_NEEDED_FACT_VALUE',
                     'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_on_compound_fact(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
@@ -332,7 +334,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
 
         expected = {'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_on_needed_fact(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
@@ -342,7 +344,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
 
         expected = {'needed_fact': 'THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_on_compound_gather_compound(self):
         _mock_module = mock_module(gather_subset=['!all', '!any', 'compound_fact'],
@@ -352,7 +354,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
 
         expected = {'compound_fact': 'compound-THE_NEEDED_FACT_VALUE'}
 
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_with_filter_no_match(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'],
@@ -361,7 +363,7 @@ class TestCollectorDepsWithFilter(unittest.TestCase):
         facts_dict = self._collect(_mock_module)
 
         expected = {}
-        self.assertEquals(expected, facts_dict)
+        self.assertEqual(expected, facts_dict)
 
     def test_concat_collector(self):
         _mock_module = mock_module(gather_subset=['all', '!facter', '!ohai'])

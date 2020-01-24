@@ -1,2 +1,0 @@
-minor_changes:
-- vmware_guest_disk_facts module - added bus number of the SCSI controller to the output (https://github.com/ansible/ansible/pull/56442)
