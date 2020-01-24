@@ -237,6 +237,8 @@ class CrossVCCloneManager(PyVmomi):
     def clone(self):
         # clone the vm/template on destination VC
         vm_folder = find_folder_by_name(content=self.destination_content, folder_name=self.params['destination_vm_folder'])
+        if not vm_folder:
+            self.module.fail_json(msg="Destination folder does not exist. Please refer to the documentation to correctly specify the folder.")
         vm_name = self.params['destination_vm_name']
         task = self.vm_obj.Clone(folder=vm_folder, name=vm_name, spec=self.clone_spec)
         wait_for_task(task)
@@ -268,7 +270,7 @@ class CrossVCCloneManager(PyVmomi):
         # Check if vm name already exists in the destination VC
         vm = find_vm_by_name(content=self.destination_content, vm_name=self.params['destination_vm_name'])
         if vm:
-            self.module.fail_json(msg="A VM with the given name already exists")
+            self.module.exit_json(changed=False, msg="A VM with the given name already exists")
 
         datastore_name = self.params['destination_datastore']
         datastore_cluster = find_obj(self.destination_content, [vim.StoragePod], datastore_name)
