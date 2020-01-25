@@ -1,0 +1,2 @@
+minor_changes:
+  - remove pycompat24 module. It is no longer required given we no longer support python2.4 through python2.6

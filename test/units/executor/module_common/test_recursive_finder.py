@@ -57,7 +57,6 @@ MODULE_UTILS_BASIC_IMPORTS = frozenset((('ansible', '__init__'),
                                         ('ansible', 'module_utils', 'distro', '_distro'),
                                         ('ansible', 'module_utils', 'parsing', '__init__'),
                                         ('ansible', 'module_utils', 'parsing', 'convert_bool'),
-                                        ('ansible', 'module_utils', 'pycompat24',),
                                         ('ansible', 'module_utils', 'six', '__init__'),
                                         ))
 
@@ -83,7 +82,6 @@ MODULE_UTILS_BASIC_FILES = frozenset(('ansible/module_utils/_text.py',
                                       'ansible/module_utils/distro/_distro.py',
                                       'ansible/module_utils/parsing/__init__.py',
                                       'ansible/module_utils/parsing/convert_bool.py',
-                                      'ansible/module_utils/pycompat24.py',
                                       'ansible/module_utils/six/__init__.py',
                                       ))
 

@@ -970,8 +970,6 @@ files:
     support: core
   $module_utils/json_utils.py:
     support: core
-  $module_utils/pycompat24.py:
-    support: core
   $module_utils/service.py:
     support: core
   $module_utils/cloudscale.py:
