@@ -436,7 +436,7 @@ options:
       suboptions:
         error_code:
           type: int
-          description: The error code the the custom error page is for.
+          description: The error code the custom error page is for.
         error_caching_min_ttl:
           type: int
           description: The length of time (in seconds) that CloudFront will cache status codes for.

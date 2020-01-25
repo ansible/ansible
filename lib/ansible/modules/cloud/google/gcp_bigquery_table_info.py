@@ -128,7 +128,7 @@ resources:
           type: str
         tableId:
           description:
-          - The ID of the the table.
+          - The ID of the table.
           returned: success
           type: str
     clustering:

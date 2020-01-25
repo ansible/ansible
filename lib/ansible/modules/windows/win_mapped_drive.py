@@ -51,7 +51,7 @@ options:
   username:
     description:
     - The username that is used when testing the initial connection.
-    - This is never saved with a mapped drive, the the M(win_credential) module
+    - This is never saved with a mapped drive, the M(win_credential) module
       to persist a username and password for a host.
     - This is required if the mapped drive requires authentication with
       custom credentials and become, or CredSSP cannot be used.
