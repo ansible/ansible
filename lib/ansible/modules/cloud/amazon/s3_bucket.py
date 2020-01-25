@@ -171,13 +171,13 @@ from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.six import string_types
 from ansible.module_utils.basic import to_text
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
-from ansible.module_utils.ec2 import compare_policies, ec2_argument_spec, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
+from ansible.module_utils.ec2 import compare_policies, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn, AWSRetry
 
 try:
     from botocore.exceptions import BotoCoreError, ClientError, EndpointConnectionError, WaiterError
 except ImportError:
-    pass  # handled by AnsibleAWSModule
+    pass  # caught by AnsibleAWSModule
 
 
 def create_or_update_bucket(s3_client, module, location):
@@ -668,22 +668,19 @@ def get_s3_client(module, aws_connect_kwargs, location, ceph, s3_url):
 
 def main():
 
-    argument_spec = ec2_argument_spec()
-    argument_spec.update(
-        dict(
-            force=dict(default=False, type='bool'),
-            policy=dict(type='json'),
-            name=dict(required=True),
-            requester_pays=dict(default=False, type='bool'),
-            s3_url=dict(aliases=['S3_URL']),
-            state=dict(default='present', choices=['present', 'absent']),
-            tags=dict(type='dict'),
-            purge_tags=dict(type='bool', default=True),
-            versioning=dict(type='bool'),
-            ceph=dict(default=False, type='bool'),
-            encryption=dict(choices=['none', 'AES256', 'aws:kms']),
-            encryption_key_id=dict()
-        )
+    argument_spec = dict(
+        force=dict(default=False, type='bool'),
+        policy=dict(type='json'),
+        name=dict(required=True),
+        requester_pays=dict(default=False, type='bool'),
+        s3_url=dict(aliases=['S3_URL']),
+        state=dict(default='present', choices=['present', 'absent']),
+        tags=dict(type='dict'),
+        purge_tags=dict(type='bool', default=True),
+        versioning=dict(type='bool'),
+        ceph=dict(default=False, type='bool'),
+        encryption=dict(choices=['none', 'AES256', 'aws:kms']),
+        encryption_key_id=dict()
     )
 
     module = AnsibleAWSModule(
