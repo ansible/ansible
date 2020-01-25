@@ -570,7 +570,7 @@ def verify_collections(collections, search_paths, apis, validate_certs, ignore_e
                     # Verify local collection exists before always downloading remote for comparison if it hasn't been yet
                     for search_path in search_paths:
                         b_search_path = to_bytes(
-                                os.path.join(search_path, remote_collection.namespace, remote_collection.name), errors='surrogate_or_strict'
+                            os.path.join(search_path, remote_collection.namespace, remote_collection.name), errors='surrogate_or_strict'
                         )
                         if os.path.isdir(b_search_path):
                             local_collection = CollectionRequirement.from_path(b_search_path, False)
