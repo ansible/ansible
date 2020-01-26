@@ -1,1 +1,0 @@
-os_subnets_info.py
