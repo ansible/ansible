@@ -41,13 +41,17 @@ options:
   queue_type:
     description:
       - Standard or FIFO queue.
+      - I(queue_type) can only be set at queue creation and will otherwise be
+        ignored.
     choices: ['standard', 'fifo']
     default: 'standard'
-    version_added: "2.8"
+    version_added: "2.10"
+    type: str
   visibility_timeout:
     description:
       - The default visibility timeout in seconds.
     aliases: [default_visibility_timeout]
+    type: int
   message_retention_period:
     description:
       - The message retention period in seconds.
@@ -60,10 +64,12 @@ options:
     description:
       - The delivery delay in seconds.
     aliases: [delivery_delay]
+    type: int
   receive_message_wait_time_seconds:
     description:
       - The receive message wait time in seconds.
     aliases: [receive_message_wait_time]
+    type: int
   policy:
     description:
       - The JSON dict policy to attach to queue.
@@ -77,30 +83,31 @@ options:
   kms_master_key_id:
     description:
       - The ID of an AWS-managed customer master key (CMK) for Amazon SQS or a custom CMK.
-    version_added: "2.8"
+    version_added: "2.10"
     type: str
   kms_data_key_reuse_period_seconds:
     description:
       - The length of time, in seconds, for which Amazon SQS can reuse a data key to encrypt or decrypt messages before calling AWS KMS again.
     aliases: [kms_data_key_reuse_period]
-    version_added: "2.8"
+    version_added: "2.10"
     type: int
   content_based_deduplication:
     type: bool
     description: Enables content-based deduplication. Used for FIFOs only.
-    version_added: "2.8"
-    default: False
+    version_added: "2.10"
+    default: false
   tags:
     description:
       - Tag dict to apply to the queue (requires botocore 1.5.40 or above).
-    version_added: "2.8"
+      - To remove all tags set I(tags={}) and I(purge_tags=true).
+    version_added: "2.10"
     type: dict
   purge_tags:
     description:
-      - Remove tags not listed in C(tags)
+      - Remove tags not listed in I(tags).
     type: bool
     default: false
-    version_added: "2.8"
+    version_added: "2.10"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -216,7 +223,7 @@ from ansible.module_utils.ec2 import camel_dict_to_snake_dict, compare_aws_tags,
 try:
     from botocore.exceptions import BotoCoreError, ClientError, ParamValidationError
 except ImportError:
-    pass
+    pass  # handled by AnsibleAWSModule
 
 ARGUMENT_SPEC = dict(
     state=dict(type='str', default='present', choices=['present', 'absent']),
