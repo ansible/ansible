@@ -1920,6 +1920,8 @@ files:
     support: community
   test/utils/shippable/:
     notified: mattclay
+  hacking/aws_config/:
+    maintainers: $team_aws
   hacking/report.py:
     notified: mattclay
   shippable.yml:
