@@ -263,7 +263,7 @@ try:
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
-from ansible.module_utils.ec2 import snake_dict_to_camel_dict
+from ansible.module_utils.ec2 import AWSRetry, snake_dict_to_camel_dict
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code
 
 
@@ -304,6 +304,45 @@ def _collect_facts(resource):
     return facts
 
 
+@AWSRetry.jittered_backoff()
+def _describe_cluster(redshift, identifier):
+    '''
+    Basic wrapper around describe_clusters with a retry applied
+    '''
+    return redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+
+
+@AWSRetry.jittered_backoff()
+def _create_cluster(redshift, **kwargs):
+    '''
+    Basic wrapper around create_cluster with a retry applied
+    '''
+    return redshift.create_cluster(**kwargs)
+
+
+# Simple wrapper around delete, try to avoid throwing an error if some other
+# operation is in progress
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidClusterState'])
+def _delete_cluster(redshift, **kwargs):
+    '''
+    Basic wrapper around delete_cluster with a retry applied.
+    Explicitly catches 'InvalidClusterState' (~ Operation in progress) so that
+    we can still delete a cluster if some kind of change operation was in
+    progress.
+    '''
+    return redshift.delete_cluster(**kwargs)
+
+
+@AWSRetry.jittered_backoff(catch_extra_error_codes=['InvalidClusterState'])
+def _modify_cluster(redshift, **kwargs):
+    '''
+    Basic wrapper around modify_cluster with a retry applied.
+    Explicitly catches 'InvalidClusterState' (~ Operation in progress) for cases
+    where another modification is still in progress
+    '''
+    return redshift.modify_cluster(**kwargs)
+
+
 def create_cluster(module, redshift):
     """
     Create a new cluster
@@ -341,15 +380,16 @@ def create_cluster(module, redshift):
         params['d_b_name'] = d_b_name
 
     try:
-        redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+        _describe_cluster(redshift, identifier)
         changed = False
     except is_boto3_error_code('ClusterNotFound'):
         try:
-            redshift.create_cluster(ClusterIdentifier=identifier,
-                                    NodeType=node_type,
-                                    MasterUsername=username,
-                                    MasterUserPassword=password,
-                                    **snake_dict_to_camel_dict(params, capitalize_first=True))
+            _create_cluster(redshift,
+                            ClusterIdentifier=identifier,
+                            NodeType=node_type,
+                            MasterUsername=username,
+                            MasterUserPassword=password,
+                            **snake_dict_to_camel_dict(params, capitalize_first=True))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Failed to create cluster")
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
@@ -365,7 +405,7 @@ def create_cluster(module, redshift):
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Timeout waiting for the cluster creation")
     try:
-        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+        resource = _describe_cluster(redshift, identifier)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Failed to describe cluster")
 
@@ -382,7 +422,7 @@ def describe_cluster(module, redshift):
     identifier = module.params.get('identifier')
 
     try:
-        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+        resource = _describe_cluster(redshift, identifier)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Error describing cluster")
 
@@ -410,10 +450,10 @@ def delete_cluster(module, redshift):
                 params[p] = module.params.get(p)
 
     try:
-        redshift.delete_cluster(
+        _delete_cluster(
+            redshift,
             ClusterIdentifier=identifier,
-            **snake_dict_to_camel_dict(params, capitalize_first=True)
-        )
+            **snake_dict_to_camel_dict(params, capitalize_first=True))
     except is_boto3_error_code('ClusterNotFound'):
         return(False, {})
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:  # pylint: disable=duplicate-except
@@ -460,8 +500,10 @@ def modify_cluster(module, redshift):
     # enhanced_vpc_routing parameter change needs an exclusive request
     if module.params.get('enhanced_vpc_routing') is not None:
         try:
-            redshift.modify_cluster(ClusterIdentifier=identifier,
-                                    EnhancedVpcRouting=module.params.get('enhanced_vpc_routing'))
+            _modify_cluster(
+                redshift,
+                ClusterIdentifier=identifier,
+                EnhancedVpcRouting=module.params.get('enhanced_vpc_routing'))
         except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
             module.fail_json_aws(e, msg="Couldn't modify redshift cluster %s " % identifier)
     if wait:
@@ -479,8 +521,10 @@ def modify_cluster(module, redshift):
 
     # change the rest
     try:
-        redshift.modify_cluster(ClusterIdentifier=identifier,
-                                **snake_dict_to_camel_dict(params, capitalize_first=True))
+        _modify_cluster(
+            redshift,
+            ClusterIdentifier=identifier,
+            **snake_dict_to_camel_dict(params, capitalize_first=True))
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json_aws(e, msg="Couldn't modify redshift cluster %s " % identifier)
 
@@ -498,7 +542,7 @@ def modify_cluster(module, redshift):
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg="Timeout waiting for cluster modification")
     try:
-        resource = redshift.describe_clusters(ClusterIdentifier=identifier)['Clusters'][0]
+        resource = _describe_cluster(redshift, identifier)
     except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:
         module.fail_json(e, msg="Couldn't modify redshift cluster %s " % identifier)
 

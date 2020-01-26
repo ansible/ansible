@@ -1,0 +1,2 @@
+minor_changes:
+- 'redshift: Add AWSRetry calls for errors outside our control'
