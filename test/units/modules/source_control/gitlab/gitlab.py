@@ -352,7 +352,7 @@ PROJECT API
 @urlmatch(scheme="http", netloc="localhost", path="/api/v4/projects", method="get")
 def resp_find_project(url, request):
     headers = {'content-type': 'application/json'}
-    content = ('[{"id": 1,"description": null, "default_branch": "master",'
+    content = ('[{"id": 1,"description": null, "default_branch": "master", "merge_method": "merge",'
                '"ssh_url_to_repo": "git@example.com:diaspora/diaspora-client.git",'
                '"http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",'
                '"web_url": "http://example.com/diaspora/diaspora-client",'
@@ -370,7 +370,7 @@ def resp_find_project(url, request):
 @urlmatch(scheme="http", netloc="localhost", path="/api/v4/projects/1", method="get")
 def resp_get_project(url, request):
     headers = {'content-type': 'application/json'}
-    content = ('{"id": 1,"description": null, "default_branch": "master",'
+    content = ('{"id": 1,"description": null, "default_branch": "master", "merge_method": "merge",'
                '"ssh_url_to_repo": "git@example.com:diaspora/diaspora-client.git",'
                '"http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",'
                '"web_url": "http://example.com/diaspora/diaspora-client",'
@@ -388,7 +388,7 @@ def resp_get_project(url, request):
 @urlmatch(scheme="http", netloc="localhost", path="/api/v4/projects/foo-bar%2Fdiaspora-client", method="get")
 def resp_get_project_by_name(url, request):
     headers = {'content-type': 'application/json'}
-    content = ('{"id": 1,"description": null, "default_branch": "master",'
+    content = ('{"id": 1,"description": null, "default_branch": "master", "merge_method": "merge",'
                '"ssh_url_to_repo": "git@example.com:diaspora/diaspora-client.git",'
                '"http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",'
                '"web_url": "http://example.com/diaspora/diaspora-client",'
@@ -406,7 +406,7 @@ def resp_get_project_by_name(url, request):
 @urlmatch(scheme="http", netloc="localhost", path="/api/v4/groups/1/projects", method="get")
 def resp_find_group_project(url, request):
     headers = {'content-type': 'application/json'}
-    content = ('[{"id": 1,"description": null, "default_branch": "master",'
+    content = ('[{"id": 1,"description": null, "default_branch": "master", "merge_method": "merge",'
                '"ssh_url_to_repo": "git@example.com:diaspora/diaspora-client.git",'
                '"http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",'
                '"web_url": "http://example.com/diaspora/diaspora-client",'
@@ -424,7 +424,7 @@ def resp_find_group_project(url, request):
 @urlmatch(scheme="http", netloc="localhost", path="/api/v4/groups/1/projects/1", method="get")
 def resp_get_group_project(url, request):
     headers = {'content-type': 'application/json'}
-    content = ('{"id": 1,"description": null, "default_branch": "master",'
+    content = ('{"id": 1,"description": null, "default_branch": "master", "merge_method": "merge",'
                '"ssh_url_to_repo": "git@example.com:diaspora/diaspora-client.git",'
                '"http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",'
                '"web_url": "http://example.com/diaspora/diaspora-client",'
@@ -442,7 +442,7 @@ def resp_get_group_project(url, request):
 @urlmatch(scheme="http", netloc="localhost", path="/api/v4/projects", method="post")
 def resp_create_project(url, request):
     headers = {'content-type': 'application/json'}
-    content = ('{"id": 1,"description": null, "default_branch": "master",'
+    content = ('{"id": 1,"description": null, "default_branch": "master", "merge_method": "merge",'
                '"ssh_url_to_repo": "git@example.com:diaspora/diaspora-client.git",'
                '"http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",'
                '"web_url": "http://example.com/diaspora/diaspora-client",'

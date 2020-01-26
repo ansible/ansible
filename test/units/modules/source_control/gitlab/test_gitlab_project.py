@@ -90,6 +90,26 @@ class TestGitlabProject(GitlabModuleTestCase):
         self.assertEqual(changed, False)
         self.assertEqual(newProject.name, "New Name")
 
+    @with_httmock(resp_get_project)
+    def test_update_project_merge_method(self):
+        project = self.gitlab_instance.projects.get(1)
+
+        # merge_method should be 'merge' by default
+        self.assertEqual(project.merge_method, "merge")
+
+        changed, newProject = self.moduleUtil.updateProject(project, {"name": "New Name", "merge_method": "rebase_merge"})
+
+        self.assertEqual(changed, True)
+        self.assertEqual(type(newProject), Project)
+        self.assertEqual(newProject.name, "New Name")
+        self.assertEqual(newProject.merge_method, "rebase_merge")
+
+        changed, newProject = self.moduleUtil.updateProject(project, {"name": "New Name", "merge_method": "rebase_merge"})
+
+        self.assertEqual(changed, False)
+        self.assertEqual(newProject.name, "New Name")
+        self.assertEqual(newProject.merge_method, "rebase_merge")
+
     @with_httmock(resp_get_group)
     @with_httmock(resp_get_project_by_name)
     @with_httmock(resp_delete_project)
