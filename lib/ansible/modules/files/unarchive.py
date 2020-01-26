@@ -823,6 +823,7 @@ def main():
             dest=dict(type='path', required=True),
             remote_src=dict(type='bool', default=False),
             creates=dict(type='path'),
+            checksum=dict(type='str', default=''),
             list_files=dict(type='bool', default=False),
             keep_newer=dict(type='bool', default=False),
             exclude=dict(type='list', default=[]),
@@ -838,6 +839,7 @@ def main():
     dest = module.params['dest']
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     remote_src = module.params['remote_src']
+    checksum = module.params['checksum']
     file_args = module.load_file_common_arguments(module.params)
 
     # did tar file arrive?
@@ -863,9 +865,22 @@ def main():
     if not os.path.isdir(b_dest):
         module.fail_json(msg="Destination '%s' is not a directory" % dest)
 
+    # checksum specified, parse for algorithm and checksum
+    if checksum:
+        try:
+            algorithm, checksum = checksum.split(':', 1)
+        except ValueError:
+            module.fail_json(
+                msg="The checksum parameter has to be in format <algorithm>:<checksum>", **result)
+        try:
+            int(checksum, 16)
+        except ValueError:
+            module.fail_json(msg='The checksum format is invalid', **result)
+
     handler = pick_handler(src, b_dest, file_args, module)
 
-    res_args = dict(handler=handler.__class__.__name__, dest=dest, src=src)
+    res_args = dict(handler=handler.__class__.__name__,
+                            dest=dest, src=src)
 
     # do we need to do unpack?
     check_results = handler.is_unarchived()
