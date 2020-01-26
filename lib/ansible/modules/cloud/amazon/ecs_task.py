@@ -58,6 +58,7 @@ options:
         description:
           - Network configuration of the service. Only applicable for task definitions created with I(network_mode=awsvpc).
           - I(assign_public_ip) requires botocore >= 1.8.4
+        version_added: 2.6
         type: dict
         suboptions:
           subnets:
@@ -76,8 +77,8 @@ options:
             description:
               - Whether the task's elastic network interface receives a public IP address.
               - This option requires botocore >= 1.8.4.
-            type: bool
             version_added: 2.6
+            type: bool
     launch_type:
         description:
           - The launch type on which to run your service
