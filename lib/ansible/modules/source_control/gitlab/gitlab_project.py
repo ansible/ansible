@@ -64,6 +64,15 @@ options:
       - Possible values are true and false.
     type: bool
     default: yes
+  merge_method:
+    description:
+      - What requirements are placed upon merges. For example, must the merge be a fast-forward commit?
+      - Possible values: 
+        - merge
+        - rebase_merge (Merge commit with semi-linear history)
+        - ff (fast-forward merges only)
+      - type: str
+      - choices: ["merge", "rebase_merge", "ff"]
   wiki_enabled:
     description:
       - If an wiki for this project should be available or not.
@@ -120,6 +129,7 @@ EXAMPLES = '''
     name: my_first_project
     group: ansible
     issues_enabled: False
+    merge_method: rebase_merge
     wiki_enabled: True
     snippets_enabled: True
     import_url: http://git.example.com/example/lab.git
@@ -190,6 +200,7 @@ class GitLabProject(object):
                 'description': options['description'],
                 'issues_enabled': options['issues_enabled'],
                 'merge_requests_enabled': options['merge_requests_enabled'],
+                'merge_method': options['merge_method'],
                 'wiki_enabled': options['wiki_enabled'],
                 'snippets_enabled': options['snippets_enabled'],
                 'visibility': options['visibility'],
@@ -201,6 +212,7 @@ class GitLabProject(object):
                 'description': options['description'],
                 'issues_enabled': options['issues_enabled'],
                 'merge_requests_enabled': options['merge_requests_enabled'],
+                'merge_method': options['merge_method'],
                 'wiki_enabled': options['wiki_enabled'],
                 'snippets_enabled': options['snippets_enabled'],
                 'visibility': options['visibility']})
@@ -280,6 +292,7 @@ def main():
         description=dict(type='str'),
         issues_enabled=dict(type='bool', default=True),
         merge_requests_enabled=dict(type='bool', default=True),
+        merge_method=dict(type='str', default='merge', choices=["merge", "rebase_merge", "ff"]),
         wiki_enabled=dict(type='bool', default=True),
         snippets_enabled=dict(default=True, type='bool'),
         visibility=dict(type='str', default="private", choices=["internal", "private", "public"], aliases=["visibility_level"]),
@@ -308,6 +321,7 @@ def main():
     project_description = module.params['description']
     issues_enabled = module.params['issues_enabled']
     merge_requests_enabled = module.params['merge_requests_enabled']
+    merge_method = module.params['merge_method']
     wiki_enabled = module.params['wiki_enabled']
     snippets_enabled = module.params['snippets_enabled']
     visibility = module.params['visibility']
@@ -350,6 +364,7 @@ def main():
                                                 "description": project_description,
                                                 "issues_enabled": issues_enabled,
                                                 "merge_requests_enabled": merge_requests_enabled,
+                                                "merge_method": merge_method,
                                                 "wiki_enabled": wiki_enabled,
                                                 "snippets_enabled": snippets_enabled,
                                                 "visibility": visibility,
