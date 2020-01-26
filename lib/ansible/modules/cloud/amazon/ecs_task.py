@@ -77,7 +77,7 @@ options:
               - Whether the task's elastic network interface receives a public IP address.
               - This option requires botocore >= 1.8.4.
             type: bool
-            version_added: 2.9
+            version_added: 2.6
     launch_type:
         description:
           - The launch type on which to run your service
