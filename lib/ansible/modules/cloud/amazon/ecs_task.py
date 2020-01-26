@@ -56,10 +56,28 @@ options:
         required: False
     network_configuration:
         description:
-          - network configuration of the service. Only applicable for task definitions created with C(awsvpc) I(network_mode).
-          - I(network_configuration) has three keys, I(subnets), a list of subnet IDs to which the task is attached I(security_groups),
-            a list of group names or group IDs for the task , and assign_public_ip (bool)
-        version_added: 2.6
+          - Network configuration of the service. Only applicable for task definitions created with I(network_mode=awsvpc).
+          - I(assign_public_ip) requires botocore >= 1.8.4
+        type: dict
+        suboptions:
+          subnets:
+            description:
+              - A list of subnet IDs to associate with the task
+            version_added: 2.6
+            type: list
+            elements: str
+          security_groups:
+            description:
+              - A list of security group names or group IDs to associate with the task
+            version_added: 2.6
+            type: list
+            elements: str
+          assign_public_ip:
+            description:
+              - Whether the task's elastic network interface receives a public IP address.
+              - This option requires botocore >= 1.8.4.
+            type: bool
+            version_added: 2.9
     launch_type:
         description:
           - The launch type on which to run your service
