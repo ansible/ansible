@@ -99,7 +99,7 @@ options:
     description:
       - Remove tags not listed in C(tags)
     type: bool
-    default: True
+    default: false
     version_added: "2.8"
 extends_documentation_fragment:
     - aws
@@ -233,7 +233,7 @@ ARGUMENT_SPEC = dict(
     kms_data_key_reuse_period_seconds=dict(type='int', aliases=['kms_data_key_reuse_period'], return_name='kms_data_key_reuse_period'),
     content_based_deduplication=dict(type='bool'),
     tags=dict(type='dict'),
-    purge_tags=dict(type='bool', default=True),
+    purge_tags=dict(type='bool', default=False),
 )
 NON_ATTRIBUTES = ('name', 'state', 'queue_type', 'tags', 'purge_tags')
 
