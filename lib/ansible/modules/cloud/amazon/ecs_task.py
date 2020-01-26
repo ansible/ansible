@@ -57,8 +57,8 @@ options:
     network_configuration:
         description:
           - network configuration of the service. Only applicable for task definitions created with C(awsvpc) I(network_mode).
-          - I(network_configuration) has two keys, I(subnets), a list of subnet IDs to which the task is attached and I(security_groups),
-            a list of group names or group IDs for the task
+          - I(network_configuration) has three keys, I(subnets), a list of subnet IDs to which the task is attached I(security_groups),
+            a list of group names or group IDs for the task , and assign_public_ip (bool)
         version_added: 2.6
     launch_type:
         description:
@@ -94,6 +94,7 @@ EXAMPLES = '''
       - arn:aws:ecs:us-west-2:172139249013:container-instance/79c23f22-876c-438a-bddf-55c98a3538a8
       started_by: ansible_user
       network_configuration:
+        assign_public_ip: no
         subnets:
         - subnet-abcd1234
         security_groups:
@@ -110,6 +111,7 @@ EXAMPLES = '''
       started_by: ansible_user
       launch_type: FARGATE
       network_configuration:
+        assign_public_ip: yes
         subnets:
         - subnet-abcd1234
         security_groups:
@@ -220,6 +222,14 @@ class EcsExecManager:
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     self.module.fail_json_aws(e, msg="Couldn't look up security groups")
             result['securityGroups'] = groups
+        if network_config['assign_public_ip'] is not None:
+            if self.module.botocore_at_least('1.8.4'):
+                if network_config['assign_public_ip'] is True:
+                    result['assignPublicIp'] = "ENABLED"
+                else:
+                    result['assignPublicIp'] = "DISABLED"
+            else:
+                self.module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use assign_public_ip in network_configuration')
         return dict(awsvpcConfiguration=result)
 
     def list_tasks(self, cluster_name, service_name, status):
@@ -301,7 +311,11 @@ def main():
         task=dict(required=False, type='str'),  # P*
         container_instances=dict(required=False, type='list'),  # S*
         started_by=dict(required=False, type='str'),  # R S
-        network_configuration=dict(required=False, type='dict'),
+        network_configuration=dict(required=False, type='dict', options=dict(
+            subnets=dict(type='list'),
+            security_groups=dict(type='list'),
+            assign_public_ip=dict(type='bool')
+        )),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE'])
     ))
 
