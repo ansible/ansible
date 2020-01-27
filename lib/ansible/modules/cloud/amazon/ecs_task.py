@@ -64,7 +64,7 @@ options:
         suboptions:
           subnets:
             description:
-              - A list of subnet IDs to associate with the task
+              - A list of subnet IDs to associate with the task.
             version_added: 2.6
             type: list
             elements: str
