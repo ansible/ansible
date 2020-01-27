@@ -31,11 +31,15 @@ DOCUMENTATION = '''
               - gitlab_runners
         server_url:
             description: The URL of the GitLab server, with protocol (i.e. http or https).
+            env:
+              - name: GITLAB_SERVER_URL
             type: str
             required: true
             default: https://gitlab.com
         api_token:
             description: GitLab token for logging in.
+            env:
+              - name: GITLAB_API_TOKEN
             type: str
             aliases:
               - private_token
