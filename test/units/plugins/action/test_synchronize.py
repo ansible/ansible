@@ -100,15 +100,17 @@ class SynchronizeTester(object):
 
     ''' A wrapper for mocking out synchronize environments '''
 
-    task = TaskMock()
-    connection = ConnectionMock()
-    _play_context = PlayContextMock()
-    loader = None
-    templar = None
-    shared_loader_obj = SharedLoaderMock()
+    def __init__(self):
+        self.task = TaskMock()
+        self.connection = ConnectionMock()
+        self._play_context = PlayContextMock()
 
-    final_task_vars = None
-    execute_called = False
+        self.loader = None
+        self.templar = None
+        self.shared_loader_obj = SharedLoaderMock()
+
+        self.final_task_vars = None
+        self.execute_called = False
 
     def _execute_module(self, module_name, module_args=None, task_vars=None):
         self.execute_called = True
