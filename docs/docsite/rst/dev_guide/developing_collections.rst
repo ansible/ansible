@@ -44,7 +44,7 @@ and other tools need in order to package, build and publish the collection::
 
 .. note::
     * Ansible only accepts ``.yml`` extensions for :file:`galaxy.yml`, and ``.md`` for the :file:`README` file and any files in the :file:`/docs` folder.
-    * See the `draft collection <https://github.com/bcoca/collection>`_ for an example of a full collection structure.
+    * See the `ansible-collections GitHub Org <https://github.com/ansible-collections/>`_ for examples of collection structure.
     * Not all directories are currently in use. Those are placeholders for future features.
 
 .. _galaxy_yml:
@@ -209,7 +209,7 @@ To start a new collection:
     collection_dir#> ansible-galaxy collection init my_namespace.my_collection
 
 Then you can populate the directories with the content you want inside the collection. See
-https://github.com/bcoca/collection to get a better idea of what you can place inside a collection.
+https://github.com/ansible-collections/ to get a better idea of what you can place inside a collection.
 
 
 .. _building_collections:
@@ -420,6 +420,22 @@ You can experiment with migrating existing modules into a collection using the `
 	This tool is in active development and is provided only for experimentation and feedback at this point.
 
 See the `content_collector README <https://github.com/ansible/content_collector>`_ for full details and usage guidelines.
+
+BOTMETA.yml
+-----------
+
+Why
+
+How
+
+Details
+
+Issues and PRs
+--------------
+
+Short term
+
+Long term
 
 .. seealso::
 
