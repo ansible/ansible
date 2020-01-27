@@ -127,6 +127,9 @@ function cleanup
                     || echo "Failed to upload code coverage report to codecov.io: ${file}"
                 done
             fi
+
+            ansible-test coverage combine
+            cp -a test/results/coverage/coverage shippable/testresults/
         fi
     fi
 
@@ -141,6 +144,8 @@ function cleanup
     if [ -d  test/results/bot/ ]; then
       cp -aT test/results/bot/ shippable/testresults/
     fi
+
+    ls -l shippable/testresults/
 }
 
 trap cleanup EXIT
