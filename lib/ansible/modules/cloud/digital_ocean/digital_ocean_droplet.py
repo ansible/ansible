@@ -120,7 +120,7 @@ EXAMPLES = '''
     region: sfo1
     image: ubuntu-16-04-x64
     wait_timeout: 500
-    ssh_keys: [ 00:00:00:00:00:00:00:00:00:00:00:00:00 ]
+    ssh_keys: [ .... ]
   register: my_droplet
 
 - debug:
