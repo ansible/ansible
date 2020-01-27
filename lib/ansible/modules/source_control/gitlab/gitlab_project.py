@@ -66,11 +66,11 @@ options:
     default: yes
   merge_method:
     description:
-      - What requirements are placed upon merges. For example, must the merge be a fast-forward commit?
+      - What requirements are placed upon merges.
       - Possible values are merge, rebase_merge (Merge commit with semi-linear history), ff (fast-forward merges only)
-      - type: str
-      - choices: ["merge", "rebase_merge", "ff"]
-      - default: merge
+    type: str
+    choices: ["merge", "rebase_merge", "ff"]
+    default: merge
   wiki_enabled:
     description:
       - If an wiki for this project should be available or not.
