@@ -86,8 +86,7 @@ options:
               - Whether the task's elastic network interface receives a public IP address.
               - This option requires botocore >= 1.8.4.
             version_added: 2.9
-            type: bool         
-
+            type: bool
     launch_type:
         description:
           - The launch type on which to run your service.
@@ -375,7 +374,6 @@ def main():
             security_groups=dict(type='list', elements='str'),
             assign_public_ip=dict(type='bool')
         )),
-        network_configuration=dict(required=False, type='dict'),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE']),
         tags=dict(required=False, type='dict')
     )
