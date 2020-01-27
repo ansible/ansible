@@ -58,13 +58,12 @@ options:
         description:
           - Network configuration of the service. Only applicable for task definitions created with I(network_mode=awsvpc).
           - I(assign_public_ip) requires botocore >= 1.8.4
-        required: False
         version_added: 2.6
         type: dict
         suboptions:
           subnets:
             description:
-              - A list of subnet IDs to associate with the task
+              - A list of subnet IDs to associate with the task.
             version_added: 2.6
             type: list
             elements: str
@@ -332,8 +331,8 @@ def main():
         container_instances=dict(required=False, type='list'),  # S*
         started_by=dict(required=False, type='str'),  # R S
         network_configuration=dict(required=False, type='dict', options=dict(
-            subnets=dict(type='list'),
-            security_groups=dict(type='list'),
+            subnets=dict(type='list', elements='str'),
+            security_groups=dict(type='list', elements='str'),
             assign_public_ip=dict(type='bool')
         )),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE'])
