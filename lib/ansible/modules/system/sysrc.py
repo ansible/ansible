@@ -27,28 +27,33 @@ description:
 options:
     name:
         description:
-            - Name of variable in $dest to manage.
+            - Name of variable in C(/etc/rc.conf) to manage.
         type: str
         required: true
     value:
         description:
-            - The value if "present"
+            - The value to set when I(state=present)
+            - The value to add when I(state=value_present)
+            - The value to remove when I(state=value_absent)
         type: str
     state:
         description:
-            - Whether the var should be present or absent in $dest.
-            - append/subtract will add or remove the value from a list.
+            - Use I(present) to add the variable.
+            - Use I(absent) to remove the variable.
+            - Use I(value_present) to add the value to the existing variable.
+            - Use I(value_absent) to remove the value from the existing variable.
         type: str
         default: "present"
-        choices: [ present, absent, append, subtract ]
-    dest:
+        choices: [ absent, present, value_present, value_absent ]
+    path:
         description:
-            - What file should be operated on
+            - Path to file to use instead of C(/etc/rc.conf).
         type: str
         default: "/etc/rc.conf"
     delim:
         description:
-            - Delimiter used in append/subtract mode
+            - Delimiter to be used insetad of C( )
+            - Only used when I(state=value_present) or I(state=value_absent).
         default: " "
         type: str
     jail:
@@ -74,13 +79,13 @@ EXAMPLES = r'''
     name: accf_http_load
     state: present
     value: "YES"
-    dest: /boot/loader.conf
+    path: /boot/loader.conf
 
 # add gif0 to cloned_interfaces
 - name: add gif0 interface
   sysrc:
     name: cloned_interfaces
-    state: append
+    state: value_present
     value: "gif0"
 
 # enable nginx on a jail
@@ -103,12 +108,12 @@ import re
 
 
 class sysrc(object):
-    def __init__(self, module, name, value, dest, delim, jail):
+    def __init__(self, module, name, value, path, delim, jail):
         self.module = module
         self.name = name
         self.changed = False
         self.value = value
-        self.dest = dest
+        self.path = path
         self.delim = delim
         self.jail = jail
         self.sysrc = module.get_bin_path('sysrc', True)
@@ -159,7 +164,7 @@ class sysrc(object):
         self.changed = True
         return True
 
-    def append(self):
+    def value_present(self):
         if self.module.check_mode:
             self.changed = True
             return
@@ -176,7 +181,7 @@ class sysrc(object):
         else:
             return False
 
-    def subtract(self):
+    def value_absent(self):
         if self.module.check_mode:
             self.changed = True
             return
@@ -194,7 +199,7 @@ class sysrc(object):
             return False
 
     def run_sysrc(self, *args):
-        cmd = [self.sysrc, '-f', self.dest]
+        cmd = [self.sysrc, '-f', self.path]
         if self.jail:
             cmd += ['-j', self.jail]
         cmd.extend(args)
@@ -214,8 +219,8 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True),
             value=dict(type='str', default=None),
-            state=dict(type='str', default='present', choices=['present', 'absent', 'append', 'subtract']),
-            dest=dict(type='str', default='/etc/rc.conf'),
+            state=dict(type='str', default='present', choices=['absent', 'present', 'value_present', 'value_absent']),
+            path=dict(type='str', default='/etc/rc.conf'),
             delim=dict(type='str', default=' '),
             jail=dict(type='str', default=None),
         ),
@@ -231,19 +236,19 @@ def main():
 
     value = module.params.pop('value')
     state = module.params.pop('state')
-    dest = module.params.pop('dest')
+    path = module.params.pop('path')
     delim = module.params.pop('delim')
     jail = module.params.pop('jail')
     result = dict(
         name=name,
         state=state,
         value=value,
-        dest=dest,
+        path=path,
         delim=delim,
         jail=jail
     )
 
-    rcValue = sysrc(module, name, value, dest, delim, jail)
+    rcValue = sysrc(module, name, value, path, delim, jail)
 
     if module._verbosity >= 4:
         result['existed'] = rcValue.exists()
@@ -252,10 +257,10 @@ def main():
         not rcValue.exists() and rcValue.create()
     elif state == 'absent':
         rcValue.exists() and rcValue.destroy()
-    elif state == 'append':
-        not rcValue.contains() and rcValue.append()
-    elif state == 'subtract':
-        rcValue.contains() and rcValue.subtract()
+    elif state == 'value_present':
+        not rcValue.contains() and rcValue.value_present()
+    elif state == 'value_absent':
+        rcValue.contains() and rcValue.value_absent()
 
     if module._verbosity > 0:
         result['command'] = ' '.join(rcValue.cmd)

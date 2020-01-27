@@ -52,6 +52,7 @@
           - sysrc_test1 is changed
           - sysrc_test1_change is not changed
           - '"sysrc_test1" not in sysrc_content1.stdout_lines'
+          - '"sysrc_test11" not in sysrc_content1.stdout_lines'
 
     ##
     ## sysrc - append/subtract
@@ -59,14 +60,14 @@
     - name: append value (creates)
       sysrc:
         name: sysrc_test_append
-        state: append
+        state: value_present
         value: test_a
       register: sysrc_test2_create
 
     - name: append value (append)
       sysrc:
         name: sysrc_test_append
-        state: append
+        state: value_present
         value: test_b
       register: sysrc_test2
 
@@ -77,7 +78,7 @@
     - name: append same value
       sysrc:
         name: sysrc_test_append
-        state: append
+        state: value_present
         value: test_b
       register: sysrc_test2_change
 
@@ -92,7 +93,7 @@
     - name: Subtract value
       sysrc:
         name: sysrc_test_append
-        state: subtract
+        state: value_absent
         value: test_b
       register: sysrc_test3
 
@@ -103,7 +104,7 @@
     - name: Subtract value
       sysrc:
         name: sysrc_test_append
-        state: subtract
+        state: value_absent
         value: test_b
       register: sysrc_test3_change
 
@@ -120,7 +121,7 @@
     - name: append value (delimiter)
       sysrc:
         name: sysrc_test_append
-        state: append
+        state: value_present
         delim: ','
         value: test_b
       register: sysrc_test4
@@ -132,7 +133,7 @@
     - name: append value again (delimiter)
       sysrc:
         name: sysrc_test_append
-        state: append
+        state: value_present
         delim: ','
         value: test_b
       register: sysrc_test4_change
@@ -147,7 +148,7 @@
     - name: subtract value (delimiter)
       sysrc:
         name: sysrc_test_append
-        state: subtract
+        state: value_absent
         delim: ','
         value: test_b
       register: sysrc_test5
@@ -159,7 +160,7 @@
     - name: subtract value again (delimiter)
       sysrc:
         name: sysrc_test_append
-        state: subtract
+        state: value_absent
         delim: ','
         value: test_b
       register: sysrc_test5_change
@@ -178,7 +179,7 @@
       sysrc:
         name: sysrc_test
         value: test
-        dest: /tmp/sysrc_file
+        path: /tmp/sysrc_file
       register: sysrc_test6
 
     - name: assert file exists
@@ -199,3 +200,24 @@
       sysrc:
         name: a.b
         value: test
+
+    ##
+    ## sysrc - jail
+    ##
+    - name: creates file in jail
+      register: jail_test0
+      sysrc:
+        name: test_jail
+        value: test
+        jail: testjail
+
+    - name: jail file exists
+      register: jail_file0
+      stat:
+        path: /usr/jails/testjail/etc/rc.conf
+
+    - name: validate jail works
+      assert:
+        that:
+          - jail_test0 is changed
+          - jail_file0.stat.exists
