@@ -1,0 +1,4 @@
+---
+bugfixes:
+- synchronize - Fix so become_user is used in the generated rsync command
+  (https://github.com/ansible/ansible/issues/29698).

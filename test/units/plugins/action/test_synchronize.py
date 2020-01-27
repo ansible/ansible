@@ -216,6 +216,11 @@ class TestSynchronizeAction(unittest.TestCase):
         x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_become'))
 
     @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_basic_become_user(self):
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_become_user'))
+
+    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
     def test_basic_become_cli(self):
         # --become on the cli sets _play_context.become
         x = SynchronizeTester()

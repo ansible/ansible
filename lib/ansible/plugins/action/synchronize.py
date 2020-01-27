@@ -363,6 +363,7 @@ class ActionModule(ActionBase):
 
         # backup original become as we are probably about to unset it
         become = self._play_context.become
+        become_user = self._play_context.become_user
 
         if not dest_is_local:
             # don't escalate for docker. doing --rsync-path with docker exec fails
@@ -371,7 +372,7 @@ class ActionModule(ActionBase):
                 # If no rsync_path is set, become was originally set, and dest is
                 # remote then add privilege escalation here.
                 if self._play_context.become_method == 'sudo':
-                    rsync_path = 'sudo rsync'
+                    rsync_path = 'sudo -u %s rsync' % self._play_context.become_user
                 # TODO: have to add in the rest of the become methods here
 
             # We cannot use privilege escalation on the machine running the
@@ -405,8 +406,8 @@ class ActionModule(ActionBase):
                 _tmp_args['rsync_opts'].append('--blocking-io')
 
             if self._remote_transport in ['docker']:
-                if become and self._play_context.become_user:
-                    _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, self._play_context.become_user))
+                if become and become_user:
+                    _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, become_user))
                 elif user is not None:
                     _tmp_args['rsync_opts'].append("--rsh=%s exec -u %s -i" % (self._docker_cmd, user))
                 else:
