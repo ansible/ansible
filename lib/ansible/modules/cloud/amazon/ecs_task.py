@@ -64,6 +64,7 @@ options:
         required: False
         type: str
     network_configuration:
+        description:
          - Network configuration of the service. Only applicable for task definitions created with I(network_mode=awsvpc).
          - I(assign_public_ip) requires botocore >= 1.8.4
         version_added: 2.6
