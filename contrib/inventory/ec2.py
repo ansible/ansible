@@ -232,6 +232,7 @@ DEFAULTS = {
     'replace_dash_in_groups': 'True',
     'route53': 'False',
     'route53_excluded_zones': '',
+    'route53_included_zones': '',
     'route53_hostnames': '',
     'stack_filters': 'False',
     'vpc_destination_variable': 'ip_address'
@@ -390,6 +391,8 @@ class Ec2Inventory(object):
 
         self.route53_excluded_zones = []
         self.route53_excluded_zones = [a for a in config.get('ec2', 'route53_excluded_zones').split(',') if a]
+        self.route53_included_zones = []
+        self.route53_included_zones = [a for a in config.get('ec2', 'route53_included_zones').split(',') if a]
 
         # Include RDS instances?
         self.rds_enabled = config.getboolean('ec2', 'rds')
@@ -1451,7 +1454,10 @@ class Ec2Inventory(object):
             r53_conn = route53.Route53Connection()
         all_zones = r53_conn.get_zones()
 
-        route53_zones = [zone for zone in all_zones if zone.name[:-1] not in self.route53_excluded_zones]
+        if self.route53_included_zones:
+            route53_zones = [zone for zone in all_zones if zone.name[:-1] in self.route53_included_zones]
+        else:
+            route53_zones = [zone for zone in all_zones if zone.name[:-1] not in self.route53_excluded_zones]
 
         self.route53_records = {}
 
