@@ -151,6 +151,114 @@ files:
     ignored: andyhky
   $modules/cloud/opennebula/: ilicmilan xorel rsmontero meerkampdvv
   $modules/cloud/openstack/: $team_openstack
+  $modules/cloud/openstack/os_auth.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_client_config.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_coe_cluster.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_coe_cluster_template.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_flavor_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_floating_ip.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_group_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_image_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_image.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_ironic_inspect.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_ironic_node.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_ironic.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keypair.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_domain_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_domain.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_endpoint.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_role.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_keystone_service.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_listener.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_loadbalancer.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_member.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_network.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_networks_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_nova_flavor.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_nova_host_aggregate.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_object.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_pool.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_port_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_port.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_project_access.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_project_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_project.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_quota.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_recordset.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_router.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_security_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_security_group_rule.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_action.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_metadata.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_server_volume.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_stack.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_subnet.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_subnets_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user_group.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user_info.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_user_role.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_volume.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_volume_snapshot.py:
+    migrated_to: openstack.cloud
+  $modules/cloud/openstack/os_zone.py:
+    migrated_to: openstack.cloud
   $modules/cloud/oracle/: &oracle
     labels: [ cloud, oracle ]
     maintainers: $team_oracle
@@ -882,6 +990,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
+    migrated_to: openstack.cloud
   contrib/inventory/ovirt4.py: *ovirt
   contrib/inventory/infoblox.py:
     keywords:
@@ -1152,6 +1261,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
+    migrated_to: openstack.cloud
   $module_utils/oracle/: *oracle
   $module_utils/ovirt.py: *ovirt
   $module_utils/postgres.py: *postgresql
@@ -1498,6 +1608,9 @@ files:
   $plugins/doc_fragments/intersight.py: *intersight
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
+  $plugins/doc_fragments/openstack.py:
+    maintainers: $team_openstack
+    migrated_to: openstack.cloud
   $plugins/doc_fragments/postgres.py: *postgresql
   $plugins/doc_fragments/proxysql.py: *mysql
   $plugins/doc_fragments/ucs.py: *ucs
@@ -1580,6 +1693,7 @@ files:
       - inventory
     labels:
       - cloud
+    migrated_to: openstack.cloud
   $plugins/inventory/scaleway.py: *scaleway
   $plugins/inventory/script.py:
     support: core
