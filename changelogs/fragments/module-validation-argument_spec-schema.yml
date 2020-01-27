@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test - the argument spec of modules is now validated by a YAML schema."
