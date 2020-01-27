@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+COVERAGE=yes
+COMPLETE=yes
+
 set -o pipefail -eux
 
 declare -a args
