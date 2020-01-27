@@ -56,21 +56,6 @@
 
     # Test tagging cluster resource
 
-    - name: cluster tags - list when there are none
-      ecs_tag:
-        cluster_name: "{{ resource_prefix}}"
-        resource: "{{ resource_prefix}}"
-        resource_type: cluster
-        state: list
-      register: taglist
-
-    - name: cluster tags - Should be an empty list
-      assert:
-        that:
-          - taglist.tags|list|length == 0
-          - taglist.failed == false
-          - taglist.changed == false
-
     - name: cluster tags - Add tags to cluster
       ecs_tag:
         cluster_name: "{{resource_prefix}}"
@@ -208,21 +193,6 @@
         that:
           - taglist.changed == false
           - taglist.tags.Name == "service-{{ resource_prefix }}"
-
-    - name: service tags - retrieve all tags on a service
-      ecs_tag:
-        cluster_name: "{{resource_prefix}}"
-        resource: "{{ecs_service_creation.service.serviceName}}"
-        resource_type: service
-        state: list
-      register: taglist
-
-    - name: services tags - should have 1 tag
-      assert:
-        that:
-          - taglist.tags|list|length == 1
-          - taglist.failed == false
-          - taglist.changed == false
 
     - name: service tags - remove service tags
       ecs_tag:
