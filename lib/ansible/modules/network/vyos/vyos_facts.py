@@ -52,7 +52,7 @@ options:
         can also be used with an initial C(M(!)) to specify that a
         specific subset should not be collected.
         Valid subsets are 'all', 'interfaces', 'l3_interfaces', 'lag_interfaces',
-        'lldp_global', 'lldp_interfaces', 'static_routes', 'firewall_rules'.
+        'lldp_global', 'lldp_interfaces', 'static_routes', 'firewall_rules', 'firewall_global'.
     required: false
     version_added: "2.9"
 """
