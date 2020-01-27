@@ -605,6 +605,14 @@ class Template(object):
             if LooseVersion(api_version).version[:2] <= LooseVersion('3.2').version:
                 update_rules['applications']['updateExisting'] = True
 
+            # templateLinkage.deleteMissing only available in 4.0 branch higher .16 and higher 4.4.4
+            # it's not available in 4.2 branches or lower 4.0.16
+            if LooseVersion(api_version).version[:2] == LooseVersion('4.0').version and \
+               LooseVersion(api_version).version[:3] >= LooseVersion('4.0.16').version:
+                update_rules['templateLinkage']['deleteMissing'] = True
+            if LooseVersion(api_version).version[:3] >= LooseVersion('4.4.4').version:
+                update_rules['templateLinkage']['deleteMissing'] = True
+
             import_data = {'format': template_type, 'source': template_content, 'rules': update_rules}
             self._zapi.configuration.import_(import_data)
         except ZabbixAPIException as e:

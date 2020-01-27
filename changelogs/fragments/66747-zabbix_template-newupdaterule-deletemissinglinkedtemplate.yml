@@ -1,0 +1,3 @@
+minor_changes:
+  - zabbix_template - adding new update rule templateLinkage.deleteMissing for newer zabbix versions (https://github.com/ansible/ansible/pull/66747).
+  
