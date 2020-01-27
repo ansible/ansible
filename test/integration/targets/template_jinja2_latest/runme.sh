@@ -16,7 +16,7 @@ virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/jinja2"
 
 source "${MYTMPDIR}/jinja2/bin/activate"
 
-pip install -U jinja2
+pip install -U -r requirements.txt
 
 ANSIBLE_ROLES_PATH="$(dirname "$(pwd)")"
 export ANSIBLE_ROLES_PATH
