@@ -332,7 +332,7 @@ def main():
         started_by=dict(required=False, type='str'),  # R S
         network_configuration=dict(required=False, type='dict', options=dict(
             subnets=dict(type='list', elements='str'),
-            security_groups=dict(type='list'),
+            security_groups=dict(type='list', elements='str'),
             assign_public_ip=dict(type='bool')
         )),
         launch_type=dict(required=False, choices=['EC2', 'FARGATE'])
