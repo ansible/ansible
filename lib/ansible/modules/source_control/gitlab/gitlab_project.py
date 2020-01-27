@@ -71,6 +71,7 @@ options:
     type: str
     choices: ["merge", "rebase_merge", "ff"]
     default: merge
+    version_added: "2.10"
   wiki_enabled:
     description:
       - If an wiki for this project should be available or not.
