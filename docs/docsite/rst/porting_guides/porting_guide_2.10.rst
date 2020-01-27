@@ -110,6 +110,10 @@ Noteworthy module changes
 Plugins
 =======
 
+Lookup plugin names case-sensitivity
+------------------------------------
+
+* Prior to Ansible ``2.10`` lookup plugin names passed in as an argument to the ``lookup()`` function were treated as case-insensitive as opposed to lookups invoked via ``with_<lookup_name>``. ``2.10`` brings consistency to ``lookup()`` and ``with_`` to be both case-sensitive.
 
 Noteworthy plugin changes
 -------------------------

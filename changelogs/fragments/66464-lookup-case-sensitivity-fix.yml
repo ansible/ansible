@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix case sensitivity for ``lookup()`` (https://github.com/ansible/ansible/issues/66464)
