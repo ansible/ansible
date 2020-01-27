@@ -13,7 +13,8 @@ def get_bin_path(arg, opt_dirs=None, required=None):
     '''
     Find system executable in PATH. Raises ValueError if executable is not found.
     Optional arguments:
-       - required:  [Deprecated in 2.12] if executable is not found and required is true it produces an Exception
+       - required:  [Deprecated] Prior to 2.10, if executable is not found and required is true it raises an Exception.
+                    In 2.10 and later, an Exception is always raised. This parameter will be removed in 2.14.
        - opt_dirs:  optional list of directories to search in addition to PATH
     If found return full path, otherwise raise ValueError.
     '''
