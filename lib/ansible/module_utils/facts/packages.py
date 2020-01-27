@@ -82,5 +82,5 @@ class CLIMgr(PkgMgr):
         try:
             self._cli = get_bin_path(self.CLI)
         except ValueError:
-            self._cli = None
-        return bool(self._cli)
+            return False
+        return True

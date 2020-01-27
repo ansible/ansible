@@ -83,27 +83,27 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
             try:
                 cmd = get_bin_path('lsattr')
             except ValueError:
-                cmd = None
+                return iscsi_facts
 
-            if cmd:
-                cmd += " -E -l iscsi0"
-                rc, out, err = module.run_command(cmd)
-                if rc == 0 and out:
-                    line = self.findstr(out, 'initiator_name')
-                    iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
+            cmd += " -E -l iscsi0"
+            rc, out, err = module.run_command(cmd)
+            if rc == 0 and out:
+                line = self.findstr(out, 'initiator_name')
+                iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
+
         elif sys.platform.startswith('hp-ux'):
             # try to find it in the default PATH and opt_dirs
             try:
                 cmd = get_bin_path('iscsiutil', opt_dirs=['/opt/iscsi/bin'])
             except ValueError:
-                cmd = None
+                return iscsi_facts
 
-            if cmd:
-                cmd += " -l"
-                rc, out, err = module.run_command(cmd)
-                if out:
-                    line = self.findstr(out, 'Initiator Name')
-                    iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
+            cmd += " -l"
+            rc, out, err = module.run_command(cmd)
+            if out:
+                line = self.findstr(out, 'Initiator Name')
+                iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
+
         return iscsi_facts
 
     def findstr(self, text, match):

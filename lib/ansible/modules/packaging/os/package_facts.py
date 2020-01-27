@@ -231,12 +231,12 @@ class RPM(LibMgr):
         we_have_lib = super(RPM, self).is_available()
 
         try:
-            rpm_bin = get_bin_path('rpm')
+            get_bin_path('rpm')
+            if not we_have_lib:
+                module.warn('Found "rpm" but %s' % (missing_required_lib('rpm')))
         except ValueError:
-            rpm_bin = None
+            pass
 
-        if not we_have_lib and rpm_bin:
-            module.warn('Found "rpm" but %s' % (missing_required_lib('rpm')))
         return we_have_lib
 
 
@@ -262,10 +262,11 @@ class APT(LibMgr):
         if not we_have_lib:
             for exe in ('apt', 'apt-get', 'aptitude'):
                 try:
-                    if get_bin_path(exe):
-                        module.warn('Found "%s" but %s' % (exe, missing_required_lib('apt')))
-                        break
+                    get_bin_path(exe)
                 except ValueError:
+                    continue
+                else:
+                    module.warn('Found "%s" but %s' % (exe, missing_required_lib('apt')))
                     break
         return we_have_lib
 
