@@ -107,11 +107,11 @@ class CallbackModule(CallbackBase):
 
         else:
             if delegated_vars:
-                self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'],
+                self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.name, delegated_vars['ansible_host'],
                                                                             self._dump_results(result._result)),
                                       color=C.COLOR_ERROR, stderr=self.display_failed_stderr)
             else:
-                self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)),
+                self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.name, self._dump_results(result._result)),
                                       color=C.COLOR_ERROR, stderr=self.display_failed_stderr)
 
         if ignore_errors:
@@ -128,9 +128,9 @@ class CallbackModule(CallbackBase):
                 self._print_task_banner(result._task)
 
             if delegated_vars:
-                msg = "changed: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+                msg = "changed: [%s -> %s]" % (result._host.name, delegated_vars['ansible_host'])
             else:
-                msg = "changed: [%s]" % result._host.get_name()
+                msg = "changed: [%s]" % result._host.name
             color = C.COLOR_CHANGED
         else:
             if not self.display_ok_hosts:
@@ -140,9 +140,9 @@ class CallbackModule(CallbackBase):
                 self._print_task_banner(result._task)
 
             if delegated_vars:
-                msg = "ok: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+                msg = "ok: [%s -> %s]" % (result._host.name, delegated_vars['ansible_host'])
             else:
-                msg = "ok: [%s]" % result._host.get_name()
+                msg = "ok: [%s]" % result._host.name
             color = C.COLOR_OK
 
         self._handle_warnings(result._result)
@@ -168,7 +168,7 @@ class CallbackModule(CallbackBase):
             if result._task.loop and 'results' in result._result:
                 self._process_items(result)
             else:
-                msg = "skipping: [%s]" % result._host.get_name()
+                msg = "skipping: [%s]" % result._host.name
                 if self._run_is_verbose(result):
                     msg += " => %s" % self._dump_results(result._result)
                 self._display.display(msg, color=C.COLOR_SKIP)
@@ -179,9 +179,9 @@ class CallbackModule(CallbackBase):
 
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if delegated_vars:
-            msg = "fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result))
+            msg = "fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.name, delegated_vars['ansible_host'], self._dump_results(result._result))
         else:
-            msg = "fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result))
+            msg = "fatal: [%s]: UNREACHABLE! => %s" % (result._host.name, self._dump_results(result._result))
         self._display.display(msg, color=C.COLOR_UNREACHABLE, stderr=self.display_failed_stderr)
 
     def v2_playbook_on_no_hosts_matched(self):
@@ -309,9 +309,9 @@ class CallbackModule(CallbackBase):
             color = C.COLOR_OK
 
         if delegated_vars:
-            msg += ": [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+            msg += ": [%s -> %s]" % (result._host.name, delegated_vars['ansible_host'])
         else:
-            msg += ": [%s]" % result._host.get_name()
+            msg += ": [%s]" % result._host.name
 
         msg += " => (item=%s)" % (self._get_item_label(result._result),)
 
@@ -330,9 +330,9 @@ class CallbackModule(CallbackBase):
 
         msg = "failed: "
         if delegated_vars:
-            msg += "[%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+            msg += "[%s -> %s]" % (result._host.name, delegated_vars['ansible_host'])
         else:
-            msg += "[%s]" % (result._host.get_name())
+            msg += "[%s]" % (result._host.name)
 
         self._handle_warnings(result._result)
         self._display.display(msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)), color=C.COLOR_ERROR)
@@ -343,7 +343,7 @@ class CallbackModule(CallbackBase):
                 self._print_task_banner(result._task)
 
             self._clean_results(result._result, result._task.action)
-            msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_item_label(result._result))
+            msg = "skipping: [%s] => (item=%s) " % (result._host.name, self._get_item_label(result._result))
             if self._run_is_verbose(result):
                 msg += " => %s" % self._dump_results(result._result)
             self._display.display(msg, color=C.COLOR_SKIP)
@@ -438,4 +438,4 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_notify(self, handler, host):
         if self._display.verbosity > 1:
-            self._display.display("NOTIFIED HANDLER %s for %s" % (handler.get_name(), host), color=C.COLOR_VERBOSE, screen_only=True)
+            self._display.display("NOTIFIED HANDLER %s for %s" % (handler.name, host), color=C.COLOR_VERBOSE, screen_only=True)

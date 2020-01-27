@@ -312,15 +312,17 @@ class Play(Base, Taggable, CollectionSearch):
                 tasklist.append(task)
         return tasklist
 
-    def serialize(self):
+    def serialize(self, include_roles=True):
         data = super(Play, self).serialize()
-
-        roles = []
-        for role in self.get_roles():
-            roles.append(role.serialize())
-        data['roles'] = roles
         data['included_path'] = self._included_path
 
+        if include_roles:
+            roles = []
+            for role in self.get_roles():
+                roles.append(role.serialize())
+            data['roles'] = roles
+
+        data.pop('tasks', None)
         return data
 
     def deserialize(self, data):

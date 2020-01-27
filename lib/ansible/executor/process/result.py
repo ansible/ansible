@@ -48,7 +48,7 @@ display = Display()
 
 class ResultProcess(AnsibleProcessBase):
 
-    def __init__(self, final_q, results_q, run_additional_callbacks=True, run_tree=True):
+    def __init__(self, final_q, results_q, run_additional_callbacks=True, run_tree=False):
 
         super(ResultProcess, self).__init__()
         self._final_q = final_q

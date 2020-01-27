@@ -65,6 +65,7 @@ export ANSIBLE_STDOUT_CALLBACK=default
 # Disable color in output for consistency
 export ANSIBLE_FORCE_COLOR=0
 export ANSIBLE_NOCOLOR=1
+export ANSIBLE_NOCOWS=1
 # Disable retry files
 export ANSIBLE_RETRY_FILES_ENABLED=0
 

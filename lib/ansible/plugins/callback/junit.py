@@ -180,8 +180,10 @@ class CallbackModule(CallbackBase):
         """ record the start of a task for one or more hosts """
 
         uuid = task._uuid
+        print("starting task %s" % (uuid,))
 
         if uuid in self._task_data:
+            print("^ already started, skipping rest of steps for starting")
             return
 
         play = self._play_name
@@ -208,7 +210,9 @@ class CallbackModule(CallbackBase):
             host_uuid = 'include'
             host_name = 'include'
 
+        print("getting task data")
         task_data = self._task_data[task_uuid]
+        print("got task data: %s" % (task_data,))
 
         if self._fail_on_change == 'true' and status == 'ok' and result._result.get('changed', False):
             status = 'failed'
@@ -300,7 +304,7 @@ class CallbackModule(CallbackBase):
         self._playbook_name = os.path.splitext(os.path.basename(self._playbook_path))[0]
 
     def v2_playbook_on_play_start(self, play):
-        self._play_name = play.get_name()
+        self._play_name = play.name
 
     def v2_runner_on_no_hosts(self, task):
         self._start_task(task)

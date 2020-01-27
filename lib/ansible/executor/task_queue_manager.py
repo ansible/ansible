@@ -117,7 +117,7 @@ class TaskQueueManager:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
         # start the results process
-        self._results_proc = ResultProcess(self._final_q, self._results_q)
+        self._results_proc = ResultProcess(self._final_q, self._results_q, run_tree=self._run_tree)
         self._results_proc.start()
 
         # A temporary file (opened pre-fork) used by connection
@@ -156,7 +156,10 @@ class TaskQueueManager:
         play_context = PlayContext(new_play, self.passwords, self._connection_lockfile.fileno())
 
         # FIXME: sending callbacks directly seems to have a problem
-        # self.send_callback('v2_playbook_on_play_start', DottedDict(new_play.serialize()))
+        serialized_play = DottedDict(new_play.dump_attrs())
+        serialized_play.pop('tasks', None)
+        serialized_play.pop('handlers', None)
+        self.send_callback('v2_playbook_on_play_start', serialized_play)
 
         # build the iterator
         iterator = PlayIterator(
