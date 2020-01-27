@@ -106,8 +106,8 @@ class Mas(object):
         # Initialize data properties
         self.mas_path = self.module.get_bin_path('mas')
         self._checked_signin = False
-        self._installed = None # Populated only if needed
-        self._outdated  = None # Populated only if needed
+        self._installed = None  # Populated only if needed
+        self._outdated = None   # Populated only if needed
         self.count_install = 0
         self.count_upgrade = 0
         self.count_uninstall = 0
@@ -149,7 +149,7 @@ class Mas(object):
         ''' Verifies that the user is signed in to the Mac App Store '''
 
         # Only check this once per execution
-        if self._checked_signin == True:
+        if self._checked_signin:
             return
 
         rc, out, err = self.run(['account'])
@@ -193,7 +193,7 @@ class Mas(object):
         ''' Returns the list of installed apps '''
 
         # Populate cache if not already done
-        if self._installed == None:
+        if self._installed is None:
             self._installed = self.get_current_state('list')
 
         return self._installed.values()
@@ -212,7 +212,7 @@ class Mas(object):
         ''' Returns the list of installed, but outdated apps '''
 
         # Populate cache if not already done
-        if self._outdated == None:
+        if self._outdated is None:
             self._outdated = self.get_current_state('outdated')
 
         return self._outdated.values()
@@ -254,7 +254,7 @@ def main():
     else:
         apps = []
 
-    state   = module.params['state']
+    state = module.params['state']
     upgrade = module.params['upgrade_all']
 
     # Run operations on the given app IDs
@@ -278,7 +278,7 @@ def main():
                 mas.app_command('upgrade', app)
 
     # Upgrade all apps if requested
-    mas._outdated = None # Clear cache
+    mas._outdated = None  # Clear cache
     if upgrade and mas.outdated():
         mas.upgrade_all()
 
