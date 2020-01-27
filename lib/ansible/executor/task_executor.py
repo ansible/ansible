@@ -1019,20 +1019,21 @@ class TaskExecutor:
 
         module_collection, separator, module_name = self._task.action.rpartition(".")
         module_prefix = module_name.split('_')[0]
+        if module_collection:
+            # For network modules, which look for one action plugin per platform, look for the
+            # action plugin in the same collection as the module by prefixing the action plugin
+            # with the same collection.
+            network_action = "{0}.{1}".format(module_collection, module_prefix)
+        else:
+            network_action = module_prefix
 
         collections = self._task.collections
-        if module_collection and module_collection not in collections:
-            network_collections = [module_collection] + collections
-        else:
-            network_collections = collections
 
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
-        elif all((module_prefix in C.NETWORK_GROUP_MODULES,
-                  self._shared_loader_obj.action_loader.has_plugin(module_prefix, collection_list=network_collections))):
-            handler_name = module_prefix
-            collections = network_collections
+        elif all((module_prefix in C.NETWORK_GROUP_MODULES, self._shared_loader_obj.action_loader.has_plugin(network_action, collection_list=collections))):
+            handler_name = network_action
         else:
             # FUTURE: once we're comfortable with collections impl, preface this action with ansible.builtin so it can't be hijacked
             handler_name = 'normal'
