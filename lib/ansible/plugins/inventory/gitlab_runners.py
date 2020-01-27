@@ -96,7 +96,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             if self.get_option('filter'):
                 runners = gl.runners.all(scope=self.get_option('filter'))
             else:
-                runners = gl.runners.all()
+                runners = gl.runners.all(all=True)
             for runner in runners:
                 host = str(runner['id'])
                 ip_address = runner['ip_address']
