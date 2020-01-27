@@ -331,7 +331,7 @@ def main():
         container_instances=dict(required=False, type='list'),  # S*
         started_by=dict(required=False, type='str'),  # R S
         network_configuration=dict(required=False, type='dict', options=dict(
-            subnets=dict(type='list'),
+            subnets=dict(type='list', elements='str'),
             security_groups=dict(type='list'),
             assign_public_ip=dict(type='bool')
         )),
