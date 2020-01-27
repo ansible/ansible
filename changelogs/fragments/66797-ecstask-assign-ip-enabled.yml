@@ -1,0 +1,2 @@
+bugfixes:
+  - ecs_task - fixed issue where ecs_task.py did not allow assign_public_ip which is needed for FARGATE support
