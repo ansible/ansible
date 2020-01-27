@@ -36,6 +36,7 @@ options:
     description:
         description:
             - "Description of the job."
+            - "When task with same description has already finished and you rerun taks it will create new job."
         required: true
     state:
         description:
