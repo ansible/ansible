@@ -80,7 +80,6 @@ except ImportError:
 NoneType = type(None)
 
 from ._text import to_native, to_bytes, to_text
-from ansible.module_utils.common import warnings
 from ansible.module_utils.common.text.converters import (
     jsonify,
     container_to_bytes as json_dict_unicode_to_bytes,
@@ -196,6 +195,8 @@ from ansible.module_utils.common._utils import get_all_subclasses as _get_all_su
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 from ansible.module_utils.common.warnings import (
     deprecate,
+    get_deprecation_messages,
+    get_warning_messages,
     warn,
 )
 
@@ -2019,8 +2020,8 @@ class AnsibleModule(object):
             else:
                 self.warn(kwargs['warnings'])
 
-        if warnings.global_warnings:
-            kwargs['warnings'] = warnings.global_warnings
+        if get_warning_messages():
+            kwargs['warnings'] = get_warning_messages()
 
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
@@ -2034,8 +2035,8 @@ class AnsibleModule(object):
             else:
                 self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
 
-        if warnings.global_deprecations:
-            kwargs['deprecations'] = warnings.global_deprecations
+        if get_deprecation_messages():
+            kwargs['deprecations'] = get_deprecation_messages()
 
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))

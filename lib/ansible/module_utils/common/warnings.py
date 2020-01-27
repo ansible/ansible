@@ -7,19 +7,29 @@ __metaclass__ = type
 
 from ansible.module_utils.six import string_types
 
-global_warnings = []
-global_deprecations = []
+_global_warnings = []
+_global_deprecations = []
 
 
 def warn(warning):
     if isinstance(warning, string_types):
-        global_warnings.append(warning)
+        _global_warnings.append(warning)
     else:
         raise TypeError("warn requires a string not a %s" % type(warning))
 
 
 def deprecate(msg, version=None):
     if isinstance(msg, string_types):
-        global_deprecations.append({'msg': msg, 'version': version})
+        _global_deprecations.append({'msg': msg, 'version': version})
     else:
         raise TypeError("deprecate requires a string not a %s" % type(msg))
+
+
+def get_warning_messages():
+    """Return a tuple of warning messages accumulated over this run"""
+    return tuple(_global_warnings)
+
+
+def get_deprecation_messages():
+    """Return a tuple of deprecations accumulated over this run"""
+    return tuple(_global_deprecations)

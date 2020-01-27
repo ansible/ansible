@@ -9,30 +9,43 @@ import pytest
 
 import ansible.module_utils.common.warnings as warnings
 
-from ansible.module_utils.common.warnings import deprecate
+from ansible.module_utils.common.warnings import deprecate, get_deprecation_messages
 from ansible.module_utils.six import PY3
 
 
-def test_deprecate_message_only():
-    deprecate('Deprecation message')
-    assert warnings.global_deprecations == [{'msg': 'Deprecation message', 'version': None}]
-
-
-def test_deprecate_with_version():
-    deprecate(msg='Deprecation message', version='2.14')
-    assert warnings.global_deprecations == [{'msg': 'Deprecation message', 'version': '2.14'}]
-
-
-def test_multiple_deprecations():
-    deprecations = [
+@pytest.fixture
+def deprecation_messages():
+    return [
         {'msg': 'First deprecation', 'version': None},
         {'msg': 'Second deprecation', 'version': '2.14'},
         {'msg': 'Third deprecation', 'version': '2.9'},
     ]
-    for d in deprecations:
+
+
+def test_deprecate_message_only():
+    deprecate('Deprecation message')
+    assert warnings._global_deprecations == [{'msg': 'Deprecation message', 'version': None}]
+
+
+def test_deprecate_with_version():
+    deprecate(msg='Deprecation message', version='2.14')
+    assert warnings._global_deprecations == [{'msg': 'Deprecation message', 'version': '2.14'}]
+
+
+def test_multiple_deprecations(deprecation_messages):
+    for d in deprecation_messages:
         deprecate(**d)
 
-    assert deprecations == warnings.global_deprecations
+    assert deprecation_messages == warnings._global_deprecations
+
+
+def test_get_deprecation_messages(deprecation_messages):
+    for d in deprecation_messages:
+        deprecate(**d)
+
+    accessor_deprecations = get_deprecation_messages()
+    assert isinstance(accessor_deprecations, tuple)
+    assert len(accessor_deprecations) == 3
 
 
 @pytest.mark.parametrize(

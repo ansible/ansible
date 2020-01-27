@@ -9,25 +9,38 @@ import pytest
 
 import ansible.module_utils.common.warnings as warnings
 
-from ansible.module_utils.common.warnings import warn
+from ansible.module_utils.common.warnings import warn, get_warning_messages
 from ansible.module_utils.six import PY3
 
 
-def test_warn():
-    warn('Warning message')
-    assert warnings.global_warnings == ['Warning message']
-
-
-def test_multiple_warningss():
-    warning_messages = [
+@pytest.fixture
+def warning_messages():
+    return [
         'First warning',
         'Second warning',
         'Third warning',
     ]
+
+
+def test_warn():
+    warn('Warning message')
+    assert warnings._global_warnings == ['Warning message']
+
+
+def test_multiple_warningss(warning_messages):
     for w in warning_messages:
         warn(w)
 
-    assert warning_messages == warnings.global_warnings
+    assert warning_messages == warnings._global_warnings
+
+
+def test_get_warning_messages(warning_messages):
+    for w in warning_messages:
+        warn(w)
+
+    accessor_warnings = get_warning_messages()
+    assert isinstance(accessor_warnings, tuple)
+    assert len(accessor_warnings) == 3
 
 
 @pytest.mark.parametrize(
