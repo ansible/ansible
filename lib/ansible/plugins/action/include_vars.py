@@ -158,10 +158,11 @@ class ActionModule(ActionBase):
                 )
                 self.source_dir = path_to_use
         else:
-            current_dir = (
-                "/".join(self._task._ds._data_source.split('/')[:-1])
-            )
-            self.source_dir = path.join(current_dir, self.source_dir)
+            if hasattr(self._task._ds, '_data_source'):
+                current_dir = (
+                    "/".join(self._task._ds._data_source.split('/')[:-1])
+                )
+                self.source_dir = path.join(current_dir, self.source_dir)
 
     def _traverse_dir_depth(self):
         """ Recursively iterate over a directory and sort the files in
