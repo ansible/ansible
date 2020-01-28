@@ -195,11 +195,11 @@ class InventoryModule(BaseInventoryPlugin):
         """Dynamically parse Linode the cloud inventory."""
         super(InventoryModule, self).parse(inventory, loader, path)
 
+        config_data = self._read_config_data(path)
         self._build_client()
 
         self._get_instances_inventory()
 
-        config_data = self._read_config_data(path)
         regions, types = self._get_query_options(config_data)
         self._filter_by_config(regions, types)
 
