@@ -1,0 +1,367 @@
+---
+- name: Run tests for zabbix_proxy module
+  block:
+    - name: test - create new passive Zabbix proxy server
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy
+        state: present
+        status: passive
+        interface:
+          useip: 0
+          ip: 10.1.1.2
+          dns: zbxproxy_example01
+          port: 10051
+      register: zbxproxy_new
+
+    - name: assert that proxy was created
+      assert:
+        that: zbxproxy_new is changed
+
+    - name: test - create same passive Zabbix proxy server
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy
+        state: present
+        status: passive
+        interface:
+          useip: 0
+          ip: 10.1.1.2
+          dns: zbxproxy_example01
+          port: 10051
+      register: zbxproxy_existing
+
+    - name: assert that nothing has been changed
+      assert:
+        that: not zbxproxy_existing is changed
+
+    - name: test - update Zabbix proxy server description
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy desc
+        state: present
+        status: passive
+        interface:
+          useip: 0
+          ip: 10.1.1.2
+          dns: zbxproxy_example01
+          port: 10051
+      register: zbxproxy_desc_update
+
+    - name: assert that description has been updated
+      assert:
+        that: zbxproxy_desc_update is changed
+
+    - name: test - update Zabbix proxy server interface
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy desc
+        state: present
+        status: passive
+        interface:
+          useip: 0
+          ip: 10.1.1.3
+          dns: zbxproxy_example01
+          port: 10051
+      register: zbxproxy_interface_update
+
+    - name: assert that interface has been updated
+      assert:
+        that: zbxproxy_interface_update is changed
+
+    - name: test - update Zabbix proxy server description & interface (again)
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy desc
+        state: present
+        status: passive
+        interface:
+          useip: 0
+          ip: 10.1.1.3
+          dns: zbxproxy_example01
+          port: 10051
+      register: zbxproxy_desc_interface_update
+
+    - name: assert that nothing has been changed
+      assert:
+        that: not zbxproxy_desc_interface_update is changed
+
+    - name: test - update Zabbix proxy server interface to use only ip
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy desc
+        state: present
+        status: passive
+        interface:
+          useip: 1
+          ip: 10.1.1.3
+          port: 10051
+      register: zbxproxy_interface_onlyip
+
+    - name: assert that interface has been updated
+      assert:
+        that: zbxproxy_interface_onlyip is changed
+
+    - name: test - update Zabbix proxy server interface to use only ip again
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy desc
+        state: present
+        status: passive
+        interface:
+          useip: 1
+          ip: 10.1.1.3
+          port: 10051
+      register: zbxproxy_interface_onlyip_again
+
+    - name: assert that nothing has been changed
+      assert:
+        that: not zbxproxy_interface_onlyip_again is changed
+
+    - name: test - update Zabbix proxy server interface to use only dns
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy desc
+        state: present
+        status: passive
+        interface:
+          useip: 0
+          dns: zbxproxy_example01
+          port: 10051
+      register: zbxproxy_interface_onlydns
+
+    - name: assert that interface has been updated
+      assert:
+        that: zbxproxy_interface_onlydns is changed
+
+    - name: test - update Zabbix proxy server interface to use only dns again
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy desc
+        state: present
+        status: passive
+        interface:
+          useip: 0
+          dns: zbxproxy_example01
+          port: 10051
+      register: zbxproxy_interface_onlydns_again
+
+    - name: assert that nothing has been changed
+      assert:
+        that: not zbxproxy_interface_onlydns_again is changed
+
+    - name: test - update Zabbix proxy server interface to fail
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy desc
+        state: present
+        status: passive
+        interface:
+          useip: 1
+          dns: zbxproxy_example01
+          port: 10051
+      register: zbxproxy_interface_fail
+      ignore_errors: True
+
+    - name: assert that module has failed
+      assert:
+        that: zbxproxy_interface_fail is failed
+
+    - name: test - update Zabbix proxy server to be active
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy
+        state: present
+        status: active
+      register: zbxproxy_active_update
+
+    - name: assert that proxy was updated
+      assert:
+        that: zbxproxy_active_update is changed
+
+    - name: test - update Zabbix proxy server to be active (again)
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy
+        state: present
+        status: active
+      register: zbxproxy_active_update_again
+
+    - name: assert that nothing has been changed
+      assert:
+        that: not zbxproxy_active_update_again is changed
+
+    - name: test - update Zabbix proxy server to be active and use proxy_address
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy
+        state: present
+        status: active
+        proxy_address: 10.1.1.0/24,zabbix.example.com
+      register: zbxproxy_active_proxyaddress
+
+    - name: assert that proxy was updated
+      assert:
+        that: zbxproxy_active_proxyaddress is changed
+
+    - name: test - update Zabbix proxy server to be active use proxy_address (again)
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy
+        state: present
+        status: active
+        proxy_address: 10.1.1.0/24,zabbix.example.com
+      register: zbxproxy_active_proxyaddress_again
+
+    - name: assert that nothing has been changed
+      assert:
+        that: not zbxproxy_active_proxyaddress_again is changed
+
+
+    - name: test - update Zabbix proxy server to use encryption
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy
+        state: present
+        status: active
+        tls_psk_identity: test
+        tls_connect: PSK
+        tls_accept: PSK
+        tls_psk: 123456789abcdef123456789abcdef12
+      register: zbxproxy_encryption
+
+    - name: assert that encryption has been enabled
+      assert:
+        that: zbxproxy_encryption is changed
+
+    - name: test - update Zabbix proxy server to use encryption (again)
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy
+        state: present
+        status: active
+        tls_psk_identity: test
+        tls_connect: PSK
+        tls_accept: PSK
+        tls_psk: 123456789abcdef123456789abcdef12
+      register: zbxproxy_encryption_again
+
+    - name: assert that nothing has been changed
+      assert:
+        that: not zbxproxy_encryption_again is changed
+
+    - name: test - update Zabbix proxy server encryption settings
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy
+        state: present
+        status: active
+        tls_connect: certificate
+        tls_accept: certificate
+        tls_issuer: AcmeCorp
+        tls_subject: AcmeCorpServer
+      register: zbxproxy_encryption_update
+
+    - name: assert that encryption has been updated
+      assert:
+        that: zbxproxy_encryption_update is changed
+
+    - name: test - update Zabbix proxy server back to being passive
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        description: Example Zabbix Proxy
+        state: present
+        status: passive
+        interface:
+          useip: 0
+          ip: 10.1.1.2
+          dns: zbxproxy_example01
+          port: 10051
+      register: zbxproxy_passive_update
+
+    - name: assert that proxy was updated
+      assert:
+        that: zbxproxy_passive_update is changed
+
+    - name: test - delete Zabbix proxy server
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        state: absent
+      register: zbxproxy_delete
+
+    - name: assert that proxy has been deleted
+      assert:
+        that: zbxproxy_delete is changed
+
+    - name: test - delete Zabbix proxy server (again)
+      zabbix_proxy:
+        server_url: "{{ zabbix_server_url }}"
+        login_user: "{{ zabbix_login_user }}"
+        login_password: "{{ zabbix_login_password }}"
+        proxy_name: zbxproxy_example01
+        state: absent
+      register: zbxproxy_delete_again
+
+    - name: assert that nothing has been changed
+      assert:
+        that: not zbxproxy_delete_again is changed
+
+  when:
+    - ansible_distribution == 'Ubuntu'
