@@ -68,7 +68,6 @@ options:
             - Accepts seconds, time unit with suffix and user macro since => Zabbix 3.4
             - Required when C(state=present).
         required: false
-        type: 'str'
     conditions:
         type: list
         description:
