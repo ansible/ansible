@@ -20,6 +20,8 @@ options:
   login_host:
     description:
       - Host running the database.
+      - In some cases for local connections the I(login_unix_socket=/path/to/mysqld/socket),
+        that is usually C(/var/run/mysqld/mysqld.sock), needs to be used instead of I(login_host=localhost).
     type: str
     default: localhost
   login_port:
@@ -74,4 +76,6 @@ notes:
      passing credentials. If none are present, the module will attempt to read
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
      default login of 'root' with no password.
+   - If there are problems with local connections, using I(login_unix_socket=/path/to/mysqld/socket)
+     instead of I(login_host=localhost) might help.
 '''
