@@ -123,8 +123,8 @@ options:
         - Add custom HTTP headers to a request in hash/dict format.
         - The hash/dict format was added in Ansible 2.6.
         - Previous versions used a C("key:value,key:value") string format.
-        - The C("key:value,key:value") string format is deprecated and will be removed in version 2.10.
-    type: raw
+        - The C("key:value,key:value") string format is deprecated and has been removed in version 2.10.
+    type: dict
     version_added: '2.0'
   url_username:
     description:
@@ -436,7 +436,7 @@ def main():
         sha256sum=dict(type='str', default=''),
         checksum=dict(type='str', default=''),
         timeout=dict(type='int', default=10),
-        headers=dict(type='raw'),
+        headers=dict(type='dict'),
         tmp_dest=dict(type='path'),
     )
 
@@ -462,6 +462,7 @@ def main():
     checksum = module.params['checksum']
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
+    headers = module.params['headers']
     tmp_dest = module.params['tmp_dest']
 
     result = dict(
@@ -472,18 +473,6 @@ def main():
         elapsed=0,
         url=url,
     )
-
-    # Parse headers to dict
-    if isinstance(module.params['headers'], dict):
-        headers = module.params['headers']
-    elif module.params['headers']:
-        try:
-            headers = dict(item.split(':', 1) for item in module.params['headers'].split(','))
-            module.deprecate('Supplying `headers` as a string is deprecated. Please use dict/hash format for `headers`', version='2.10')
-        except Exception:
-            module.fail_json(msg="The string representation for the `headers` parameter requires a key:value,key:value syntax to be properly parsed.", **result)
-    else:
-        headers = None
 
     dest_is_dir = os.path.isdir(dest)
     last_mod_time = None
