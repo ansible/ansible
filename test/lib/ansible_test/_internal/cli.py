@@ -643,6 +643,12 @@ def add_environments(parser, isolated_delegation=True):
                         default=None,
                         help='path to the docker or remote python interpreter')
 
+    parser.add_argument('--no-pip-check',
+                        dest='pip_check',
+                        default=True,
+                        action='store_false',
+                        help='do not run "pip check" to verify requirements')
+
     environments = parser.add_mutually_exclusive_group()
 
     environments.add_argument('--local',
