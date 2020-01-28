@@ -1,37 +1,39 @@
 ---
 # tasks file for test_ec2_tag
 - name: Set up AWS connection info
-  set_fact:
-    aws_connection_info: &aws_connection_info
+  module_defaults:
+    group/aws:
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
-      security_token: "{{ security_token }}"
+      security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
-  no_log: true
-
-- block:
+  block:
     - name: Create an EC2 volume so we have something to tag
       ec2_vol:
         name: "{{ resource_prefix }} ec2_tag volume"
         volume_size: 1
         state: present
         zone: "{{ aws_region }}a"
-        <<: *aws_connection_info
       register: volume
 
-    - name: List the tags
+    - name: List the tags on the volume (ec2_tag)
       ec2_tag:
         resource: "{{ volume.volume_id }}"
         state: list
-        <<: *aws_connection_info
       register: result
+    - name: List the tags on the volume (ec2_tag_info)
+      ec2_tag_info:
+        resource: "{{ volume.volume_id }}"
+      register: result_info
 
     - assert:
         that:
           - result.tags | length == 1
           - result.tags.Name == '{{ resource_prefix }} ec2_tag volume'
+          - result_info.tags | length == 1
+          - result_info.tags.Name == '{{ resource_prefix }} ec2_tag volume'
 
-    - name: Set some new tags
+    - name: Set some new tags on the volume
       ec2_tag:
         resource: "{{ volume.volume_id }}"
         state: present
@@ -39,8 +41,11 @@
           foo: foo
           bar: baz
           baz: also baz
-        <<: *aws_connection_info
       register: result
+    - name: List the new tags on the volume
+      ec2_tag_info:
+        resource: "{{ volume.volume_id }}"
+      register: result_info
 
     - assert:
         that:
@@ -51,6 +56,11 @@
           - result.tags.foo == 'foo'
           - result.tags.bar == 'baz'
           - result.tags.baz == 'also baz'
+          - result_info.tags | length == 4
+          - result_info.tags.Name == '{{ resource_prefix }} ec2_tag volume'
+          - result_info.tags.foo == 'foo'
+          - result_info.tags.bar == 'baz'
+          - result_info.tags.baz == 'also baz'
 
     - name: Remove a tag by name
       ec2_tag:
@@ -58,7 +68,6 @@
         state: absent
         tags:
           baz:
-        <<: *aws_connection_info
       register: result
 
     - assert:
@@ -73,7 +82,6 @@
         state: absent
         tags:
           foo: baz
-        <<: *aws_connection_info
       register: result
 
     - assert:
@@ -86,7 +94,6 @@
         state: absent
         tags:
           foo: foo
-        <<: *aws_connection_info
       register: result
 
     - assert:
@@ -104,7 +111,6 @@
         purge_tags: true
         tags:
           baz: quux
-        <<: *aws_connection_info
       register: result
 
     - assert:
@@ -120,7 +126,6 @@
         resource: "{{ volume.volume_id }}"
         purge_tags: true
         tags: {}
-        <<: *aws_connection_info
       register: result
 
     - assert:
@@ -133,7 +138,6 @@
       ec2_vol:
         id: "{{ volume.volume_id }}"
         state: absent
-        <<: *aws_connection_info
       register: result
       until: result is not failed
       ignore_errors: yes
