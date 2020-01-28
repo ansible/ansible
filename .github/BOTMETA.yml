@@ -1632,8 +1632,6 @@ files:
   $plugins/doc_fragments/f5.py:
     maintainers: caphrim007 wojtek0806
     migrated_to: f5networks.f5modules
-  $plugins/doc_fragments/service_now.py:
-    migrated_to: servicenow.servicenow
 ###############################
 # plugins/filter
   $plugins/filter/:
