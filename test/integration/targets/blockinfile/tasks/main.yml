@@ -113,10 +113,12 @@
       - "'Block removed' in empty_test_2.msg"
       - empty_test_stat.stat.size == 0
 
-- name: copy the line_endings_test.txt to the test dir
+- name: create line_endings_test.txt in the test dir
   copy:
-    src: line_endings_test.txt
-    dest: "{{ output_dir_test }}"
+    dest: "{{ output_dir_test }}/line_endings_test.txt"
+    # generating the content like this instead of copying a fixture file
+    # prevents sanity checks from warning about mixed line endings
+    content: "unix\nunix\nunix\n\ndos\r\ndos\r\ndos\r\n\nunix\nunix\n# BEGIN ANSIBLE MANAGED BLOCK\ndos\r\n# END ANSIBLE MANAGED BLOCK\nunix\nunix\nunix\nunix\n"
 
 - name: insert/update "dos" configuration block in line_endings_test.txt
   blockinfile:
