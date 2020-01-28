@@ -1,2 +1,2 @@
 bugfixes:
-  - dnf - fixed an issue where invalid NEVRA values in package specs would fail to remove/uninstall
+  - dnf - fixed an issue where invalid NEVRA values in package specs would fail to remove/uninstall (https://github.com/ansible/ansible/issues/64294)
