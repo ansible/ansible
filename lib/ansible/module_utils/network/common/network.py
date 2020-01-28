@@ -227,12 +227,12 @@ def get_resource_connection(module):
         if HAS_EOS:
             module._connection = eos.get_connection(module)
         else:
-            raise AnsibleError(msg=missing_required_lib("collection arista.eos"))
+            module.fail_json(msg=missing_required_lib("collection arista.eos"))
     elif network_api == 'nxapi':
         if HAS_NXOS:
             module._connection = nxos.get_connection(module)
         else:
-            raise AnsibleError(msg=missing_required_lib("collection cisco.nxos"))
+            module.fail_json(msg=missing_required_lib("collection cisco.nxos"))
     elif network_api in ('cliconf', 'exosapi'):
         module._connection = Connection(module._socket_path)
     elif network_api == 'netconf':
