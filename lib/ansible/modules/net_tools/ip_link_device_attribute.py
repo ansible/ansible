@@ -475,7 +475,7 @@ class Link(object):
                 if self.check_mode:
                     interfaces = self._get_interfaces_info(self.namespace)
                     return self.module.exit_json(
-                        changed=True, interfaces=interfaces
+                        changed=True, interfaces=list(interfaces)
                     )
                 self._move()
             self.namespace = self.netns
@@ -486,7 +486,7 @@ class Link(object):
             if not self.check_mode:
                 self._apply_changes()
         interfaces = self._get_interfaces_info(self.namespace)
-        self.module.exit_json(changed=changed, interfaces=interfaces)
+        self.module.exit_json(changed=changed, interfaces=list(interfaces))
 
 
 def main():
