@@ -1,2 +1,2 @@
 minor_changes:
-  - url lookup plugin - add parameters to match what is available in ``module_utils/urls.py``
+  - url_lookup_plugin - add parameters to match what is available in ``module_utils/urls.py``
