@@ -331,7 +331,7 @@ class NetAppOntapVolumeAutosize(object):
         if not self.use_rest:
             netapp_utils.ems_log_event("na_ontap_volume_autosize", self.server)
         if self.use_rest:
-            # we only have the volume name, we need to the the uuid for the volume
+            # we only have the volume name, we need to the uuid for the volume
             uuid = self.get_volume_uuid()
         current = self.get_volume_autosize(uuid=uuid)
         converted_parameters = copy.deepcopy(self.parameters)
