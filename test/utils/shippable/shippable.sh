@@ -107,7 +107,7 @@ function cleanup
             cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
 
             ansible-test coverage combine
-            cp -a test/results/coverage/coverage test/results/coverage/coverage-* shippable/testresults/
+            cp -a test/results/coverage/coverage test/results/coverage/coverage-* shippable/testresults/ 2>/dev/null || true
         fi
     fi
 
