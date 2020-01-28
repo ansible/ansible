@@ -259,6 +259,10 @@ class ProxySQLServer(object):
 
         cursor.execute(query_string, query_data)
         check_count = cursor.fetchone()
+
+        if isinstance(check_count, tuple):
+            return int(check_count[0]) > 0
+
         return (int(check_count['host_count']) > 0)
 
     def get_server_config(self, cursor):
