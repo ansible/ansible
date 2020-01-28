@@ -575,6 +575,12 @@ def filter_options(args, argv, options, exclude, require):
             '--base-branch': 1,
         })
 
+    if isinstance(args, IntegrationConfig):
+        options.update({
+            '--no-temp-unicode': 0,
+            '--no-pip-check': 0,
+        })
+
     if isinstance(args, (NetworkIntegrationConfig, WindowsIntegrationConfig)):
         options.update({
             '--inventory': 1,
@@ -621,3 +627,10 @@ def filter_options(args, argv, options, exclude, require):
         yield '--redact'
     else:
         yield '--no-redact'
+
+    if isinstance(args, IntegrationConfig):
+        if args.no_temp_unicode:
+            yield '--no-temp-unicode'
+
+        if not args.pip_check:
+            yield '--no-pip-check'
