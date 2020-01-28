@@ -81,6 +81,14 @@ options:
     description:
       - Maximum number of instances in group, if unspecified then the current group value will be used.
     type: int
+  max_instance_lifetime:
+    description:
+      - The maximum amount of time, in seconds, that an instance can be in service.
+      - Maximum instance lifetime must be equal to 0, between 604800 and 31536000 seconds (inclusive), or not specified.
+      - Value of 0 removes lifetime restriction.
+    version_added: "2.10"
+    default: 0
+    type: int
   mixed_instances_policy:
     description:
       - A mixed instance policy to use for the ASG.
@@ -365,7 +373,6 @@ EXAMPLES = '''
     tags:
       - environment: production
         propagate_at_launch: no
-
 '''
 
 RETURN = '''
@@ -452,6 +459,11 @@ load_balancers:
     returned: success
     type: list
     sample: ["elb-webapp-prod"]
+max_instance_lifetime:
+    description: The maximum amount of time, in seconds, that an instance can be in service.
+    returned: success
+    type: int
+    sample: 604800
 max_size:
     description: Maximum size of group
     returned: success
@@ -511,7 +523,7 @@ target_group_names:
 termination_policies:
     description: A list of termination policies for the group.
     returned: success
-    type: str
+    type: list
     sample: ["Default"]
 unhealthy_instances:
     description: Number of instances in an unhealthy state
@@ -556,8 +568,9 @@ from ansible.module_utils.aws.core import AnsibleAWSModule
 
 ASG_ATTRIBUTES = ('AvailabilityZones', 'DefaultCooldown', 'DesiredCapacity',
                   'HealthCheckGracePeriod', 'HealthCheckType', 'LaunchConfigurationName',
-                  'LoadBalancerNames', 'MaxSize', 'MinSize', 'AutoScalingGroupName', 'PlacementGroup',
-                  'TerminationPolicies', 'VPCZoneIdentifier')
+                  'LoadBalancerNames', 'MaxInstanceLifetime', 'MaxSize', 'MinSize',
+                  'AutoScalingGroupName', 'PlacementGroup', 'TerminationPolicies',
+                  'VPCZoneIdentifier')
 
 INSTANCE_ATTRIBUTES = ('instance_id', 'health_status', 'lifecycle_state', 'launch_config_name')
 
@@ -693,37 +706,37 @@ def enforce_required_arguments_for_create():
 
 
 def get_properties(autoscaling_group):
-    properties = dict()
-    properties['healthy_instances'] = 0
-    properties['in_service_instances'] = 0
-    properties['unhealthy_instances'] = 0
-    properties['pending_instances'] = 0
-    properties['viable_instances'] = 0
-    properties['terminating_instances'] = 0
-
+    properties = dict(
+        healthy_instances=0,
+        in_service_instances=0,
+        unhealthy_instances=0,
+        pending_instances=0,
+        viable_instances=0,
+        terminating_instances=0
+    )
     instance_facts = dict()
     autoscaling_group_instances = autoscaling_group.get('Instances')
-    if autoscaling_group_instances:
 
+    if autoscaling_group_instances:
         properties['instances'] = [i['InstanceId'] for i in autoscaling_group_instances]
         for i in autoscaling_group_instances:
-            if i.get('LaunchConfigurationName'):
-                instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
-                                                   'lifecycle_state': i['LifecycleState'],
-                                                   'launch_config_name': i['LaunchConfigurationName']}
-            elif i.get('LaunchTemplate'):
-                instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
-                                                   'lifecycle_state': i['LifecycleState'],
-                                                   'launch_template': i['LaunchTemplate']}
-            else:
-                instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
-                                                   'lifecycle_state': i['LifecycleState']}
+            instance_facts[i['InstanceId']] = {
+                'health_status': i['HealthStatus'],
+                'lifecycle_state': i['LifecycleState']
+            }
+            if 'LaunchConfigurationName' in i:
+                instance_facts[i['InstanceId']]['launch_config_name'] = i['LaunchConfigurationName']
+            elif 'LaunchTemplate' in i:
+                instance_facts[i['InstanceId']]['launch_template'] = i['LaunchTemplate']
+
             if i['HealthStatus'] == 'Healthy' and i['LifecycleState'] == 'InService':
                 properties['viable_instances'] += 1
+
             if i['HealthStatus'] == 'Healthy':
                 properties['healthy_instances'] += 1
             else:
                 properties['unhealthy_instances'] += 1
+
             if i['LifecycleState'] == 'InService':
                 properties['in_service_instances'] += 1
             if i['LifecycleState'] == 'Terminating':
@@ -739,11 +752,12 @@ def get_properties(autoscaling_group):
     properties['created_time'] = autoscaling_group.get('CreatedTime')
     properties['instance_facts'] = instance_facts
     properties['load_balancers'] = autoscaling_group.get('LoadBalancerNames')
-    if autoscaling_group.get('LaunchConfigurationName'):
+    if 'LaunchConfigurationName' in autoscaling_group:
         properties['launch_config_name'] = autoscaling_group.get('LaunchConfigurationName')
     else:
         properties['launch_template'] = autoscaling_group.get('LaunchTemplate')
     properties['tags'] = autoscaling_group.get('Tags')
+    properties['max_instance_lifetime'] = autoscaling_group.get('MaxInstanceLifetime')
     properties['min_size'] = autoscaling_group.get('MinSize')
     properties['max_size'] = autoscaling_group.get('MaxSize')
     properties['desired_capacity'] = autoscaling_group.get('DesiredCapacity')
@@ -1031,6 +1045,7 @@ def create_autoscaling_group(connection):
     metrics_collection = module.params.get('metrics_collection')
     metrics_granularity = module.params.get('metrics_granularity')
     metrics_list = module.params.get('metrics_list')
+    max_instance_lifetime = module.params.get('max_instance_lifetime')
     try:
         as_groups = describe_autoscaling_groups(connection, group_name)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -1086,6 +1101,8 @@ def create_autoscaling_group(connection):
             ag['LoadBalancerNames'] = load_balancers
         if target_group_arns:
             ag['TargetGroupARNs'] = target_group_arns
+        if max_instance_lifetime:
+            ag['MaxInstanceLifetime'] = max_instance_lifetime
 
         launch_object = get_launch_object(connection, ec2_connection)
         if 'LaunchConfigurationName' in launch_object:
@@ -1283,6 +1300,9 @@ def create_autoscaling_group(connection):
             ag['AvailabilityZones'] = availability_zones
         if vpc_zone_identifier:
             ag['VPCZoneIdentifier'] = vpc_zone_identifier
+        if max_instance_lifetime is not None:
+            ag['MaxInstanceLifetime'] = max_instance_lifetime
+
         try:
             update_asg(connection, **ag)
 
@@ -1375,7 +1395,6 @@ def get_chunks(l, n):
 
 
 def update_size(connection, group, max_size, min_size, dc):
-
     module.debug("setting ASG sizes")
     module.debug("minimum size: %s, desired_capacity: %s, max size: %s" % (min_size, dc, max_size))
     updated_group = dict()
@@ -1389,6 +1408,7 @@ def update_size(connection, group, max_size, min_size, dc):
 def replace(connection):
     batch_size = module.params.get('replace_batch_size')
     wait_timeout = module.params.get('wait_timeout')
+    wait_for_instances = module.params.get('wait_for_instances')
     group_name = module.params.get('name')
     max_size = module.params.get('max_size')
     min_size = module.params.get('min_size')
@@ -1399,7 +1419,7 @@ def replace(connection):
         lc_check = module.params.get('lc_check')
     else:
         lc_check = False
-    # Mirror above behaviour for Launch Templates
+    # Mirror above behavior for Launch Templates
     launch_template = module.params.get('launch_template')
     if launch_template:
         lt_check = module.params.get('lt_check')
@@ -1412,7 +1432,9 @@ def replace(connection):
     if desired_capacity is None:
         desired_capacity = as_group['DesiredCapacity']
 
-    wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'], 'viable_instances')
+    if wait_for_instances:
+        wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'], 'viable_instances')
+
     props = get_properties(as_group)
     instances = props['instances']
     if replace_all_instances:
@@ -1437,7 +1459,7 @@ def replace(connection):
             as_group = describe_autoscaling_groups(connection, group_name)[0]
             props = get_properties(as_group)
             changed = True
-            return(changed, props)
+            return changed, props
 
         #  we don't want to spin up extra instances if not necessary
         if num_new_inst_needed < batch_size:
@@ -1446,7 +1468,7 @@ def replace(connection):
 
     if not old_instances:
         changed = False
-        return(changed, props)
+        return changed, props
 
     # check if min_size/max_size/desired capacity have been specified and if not use ASG values
     if min_size is None:
@@ -1459,36 +1481,42 @@ def replace(connection):
 
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     update_size(connection, as_group, max_size + batch_size, min_size + batch_size, desired_capacity + batch_size)
-    wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'] + batch_size, 'viable_instances')
-    wait_for_elb(connection, group_name)
-    wait_for_target_group(connection, group_name)
+
+    if wait_for_instances:
+        wait_for_new_inst(connection, group_name, wait_timeout, as_group['MinSize'] + batch_size, 'viable_instances')
+        wait_for_elb(connection, group_name)
+        wait_for_target_group(connection, group_name)
+
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     props = get_properties(as_group)
     instances = props['instances']
     if replace_instances:
         instances = replace_instances
+
     module.debug("beginning main loop")
     for i in get_chunks(instances, batch_size):
         # break out of this loop if we have enough new instances
         break_early, desired_size, term_instances = terminate_batch(connection, i, instances, False)
-        wait_for_term_inst(connection, term_instances)
-        wait_for_new_inst(connection, group_name, wait_timeout, desired_size, 'viable_instances')
-        wait_for_elb(connection, group_name)
-        wait_for_target_group(connection, group_name)
-        as_group = describe_autoscaling_groups(connection, group_name)[0]
+
+        if wait_for_instances:
+            wait_for_term_inst(connection, term_instances)
+            wait_for_new_inst(connection, group_name, wait_timeout, desired_size, 'viable_instances')
+            wait_for_elb(connection, group_name)
+            wait_for_target_group(connection, group_name)
+
         if break_early:
             module.debug("breaking loop")
             break
+
     update_size(connection, as_group, max_size, min_size, desired_capacity)
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     asg_properties = get_properties(as_group)
     module.debug("Rolling update complete.")
     changed = True
-    return(changed, asg_properties)
+    return changed, asg_properties
 
 
 def get_instances_by_launch_config(props, lc_check, initial_instances):
-
     new_instances = []
     old_instances = []
     # old instances are those that have the old launch config
@@ -1509,6 +1537,7 @@ def get_instances_by_launch_config(props, lc_check, initial_instances):
                 new_instances.append(i)
             else:
                 old_instances.append(i)
+
     module.debug("New instances: %s, %s" % (len(new_instances), new_instances))
     module.debug("Old instances: %s, %s" % (len(old_instances), old_instances))
 
@@ -1535,6 +1564,7 @@ def get_instances_by_launch_template(props, lt_check, initial_instances):
                 new_instances.append(i)
             else:
                 old_instances.append(i)
+
     module.debug("New instances: %s, %s" % (len(new_instances), new_instances))
     module.debug("Old instances: %s, %s" % (len(old_instances), old_instances))
 
@@ -1546,23 +1576,25 @@ def list_purgeable_instances(props, lc_check, lt_check, replace_instances, initi
     instances = (inst_id for inst_id in replace_instances if inst_id in props['instances'])
     # check to make sure instances given are actually in the given ASG
     # and they have a non-current launch config
-    if module.params.get('launch_config_name'):
+    if 'launch_config_name' in module.params:
         if lc_check:
             for i in instances:
-                if 'launch_template' in props['instance_facts'][i]:
-                    instances_to_terminate.append(i)
-                elif props['instance_facts'][i]['launch_config_name'] != props['launch_config_name']:
+                if (
+                    'launch_template' in props['instance_facts'][i]
+                    or props['instance_facts'][i]['launch_config_name'] != props['launch_config_name']
+                ):
                     instances_to_terminate.append(i)
         else:
             for i in instances:
                 if i in initial_instances:
                     instances_to_terminate.append(i)
-    elif module.params.get('launch_template'):
+    elif 'launch_template' in module.params:
         if lt_check:
             for i in instances:
-                if 'launch_config_name' in props['instance_facts'][i]:
-                    instances_to_terminate.append(i)
-                elif props['instance_facts'][i]['launch_template'] != props['launch_template']:
+                if (
+                    'launch_config_name' in props['instance_facts'][i]
+                    or props['instance_facts'][i]['launch_template'] != props['launch_template']
+                ):
                     instances_to_terminate.append(i)
         else:
             for i in instances:
@@ -1666,7 +1698,6 @@ def wait_for_term_inst(connection, term_instances):
 
 
 def wait_for_new_inst(connection, group_name, wait_timeout, desired_size, prop):
-
     # make sure we have the latest stats after that last loop.
     as_group = describe_autoscaling_groups(connection, group_name)[0]
     props = get_properties(as_group)
@@ -1750,7 +1781,8 @@ def main():
                 'GroupStandbyInstances',
                 'GroupTerminatingInstances',
                 'GroupTotalInstances'
-            ])
+            ]),
+            max_instance_lifetime=dict(type='int')
         ),
     )
 
@@ -1789,10 +1821,16 @@ def main():
         module.exit_json(changed=changed)
 
     # Only replace instances if asg existed at start of call
-    if exists and (replace_all_instances or replace_instances) and (module.params.get('launch_config_name') or module.params.get('launch_template')):
+    if (
+        exists
+        and (replace_all_instances or replace_instances)
+        and (module.params.get('launch_config_name') or module.params.get('launch_template'))
+    ):
         replace_changed, asg_properties = replace(connection)
+
     if create_changed or replace_changed:
         changed = True
+
     module.exit_json(changed=changed, **asg_properties)
 
 
