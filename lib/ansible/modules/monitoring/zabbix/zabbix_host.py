@@ -558,7 +558,7 @@ class Host(object):
         if inventory_mode:
             if LooseVersion(self._zbx_api_version) <= LooseVersion('4.4.0'):
                 if host['inventory']:
-                    if int(host['inventory']['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+                    if int(host['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
                         return True
                 elif inventory_mode != 'disabled':
                     return True
