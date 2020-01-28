@@ -241,6 +241,10 @@ options:
     version_added: "2.6"
     type: list
     elements: str
+  max_instance_lifetime:
+    description: The maximum amount of time, in seconds, that an instance can be in service. (needs boto3 >= 1.10.0)
+    type: int
+    version_added: "2.10"
 extends_documentation_fragment:
     - aws
     - ec2
@@ -361,6 +365,11 @@ default_cooldown:
     returned: success
     type: int
     sample: 300
+max_instance_lifetime:
+    description: The maximum amount of time, in seconds, that an instance can be in service.
+    returned: success
+    type: int
+    sample: 604800
 desired_capacity:
     description: The number of EC2 instances that should be running in this group.
     returned: success
@@ -501,6 +510,7 @@ metrics_collection:
 
 import time
 import traceback
+from distutils.version import LooseVersion
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
@@ -508,6 +518,7 @@ from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, HAS_BOTO3, c
 
 try:
     import botocore
+    import boto3
 except ImportError:
     pass  # will be detected by imported HAS_BOTO3
 
@@ -704,10 +715,10 @@ def get_properties(autoscaling_group):
     properties['min_size'] = autoscaling_group.get('MinSize')
     properties['max_size'] = autoscaling_group.get('MaxSize')
     properties['desired_capacity'] = autoscaling_group.get('DesiredCapacity')
-    properties['default_cooldown'] = autoscaling_group.get('DefaultCooldown')
     properties['healthcheck_grace_period'] = autoscaling_group.get('HealthCheckGracePeriod')
     properties['healthcheck_type'] = autoscaling_group.get('HealthCheckType')
     properties['default_cooldown'] = autoscaling_group.get('DefaultCooldown')
+    properties['max_instance_lifetime'] = autoscaling_group.get('MaxInstanceLifetime')
     properties['termination_policies'] = autoscaling_group.get('TerminationPolicies')
     properties['target_group_arns'] = autoscaling_group.get('TargetGroupARNs')
     properties['vpc_zone_identifier'] = autoscaling_group.get('VPCZoneIdentifier')
@@ -960,6 +971,7 @@ def create_autoscaling_group(connection):
     health_check_period = module.params.get('health_check_period')
     health_check_type = module.params.get('health_check_type')
     default_cooldown = module.params.get('default_cooldown')
+    max_instance_lifetime = module.params.get('max_instance_lifetime')
     wait_for_instances = module.params.get('wait_for_instances')
     wait_timeout = module.params.get('wait_timeout')
     termination_policies = module.params.get('termination_policies')
@@ -1013,6 +1025,7 @@ def create_autoscaling_group(connection):
             HealthCheckType=health_check_type,
             DefaultCooldown=default_cooldown,
             TerminationPolicies=termination_policies)
+
         if vpc_zone_identifier:
             ag['VPCZoneIdentifier'] = vpc_zone_identifier
         if availability_zones:
@@ -1023,6 +1036,8 @@ def create_autoscaling_group(connection):
             ag['LoadBalancerNames'] = load_balancers
         if target_group_arns:
             ag['TargetGroupARNs'] = target_group_arns
+        if max_instance_lifetime is not None:
+            ag['MaxInstanceLifetime'] = max_instance_lifetime
 
         launch_object = get_launch_object(connection, ec2_connection)
         if 'LaunchConfigurationName' in launch_object:
@@ -1214,6 +1229,8 @@ def create_autoscaling_group(connection):
             ag['AvailabilityZones'] = availability_zones
         if vpc_zone_identifier:
             ag['VPCZoneIdentifier'] = vpc_zone_identifier
+        if max_instance_lifetime is not None:
+            ag['MaxInstanceLifetime'] = max_instance_lifetime
         try:
             update_asg(connection, **ag)
 
@@ -1622,6 +1639,12 @@ def asg_exists(connection):
     return bool(len(as_group))
 
 
+def fail_if_max_instance_lifetime_not_supported():
+    if LooseVersion(boto3.__version__) < LooseVersion('1.10.0'):
+        module.fail_json(msg="max_instance_lifetime requires boto3 version 1.10.0 or higher. Version %s is installed" %
+                         boto3.__version__)
+
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
@@ -1655,6 +1678,7 @@ def main():
             health_check_period=dict(type='int', default=300),
             health_check_type=dict(default='EC2', choices=['EC2', 'ELB']),
             default_cooldown=dict(type='int', default=300),
+            max_instance_lifetime=dict(type='int'),
             wait_for_instances=dict(type='bool', default=True),
             termination_policies=dict(type='list', default='Default'),
             notification_topic=dict(type='str', default=None),
@@ -1694,6 +1718,8 @@ def main():
     state = module.params.get('state')
     replace_instances = module.params.get('replace_instances')
     replace_all_instances = module.params.get('replace_all_instances')
+    if module.params.get('max_instance_lifetime') is not None:
+        fail_if_max_instance_lifetime_not_supported()
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
     connection = boto3_conn(module,
