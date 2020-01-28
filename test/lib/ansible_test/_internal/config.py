@@ -80,6 +80,8 @@ class EnvironmentConfig(CommonConfig):
         self.python_version = self.python or actual_major_minor
         self.python_interpreter = args.python_interpreter
 
+        self.pip_check = args.pip_check
+
         self.delegate = self.docker or self.remote or self.venv
         self.delegate_args = []  # type: t.List[str]
 
