@@ -67,6 +67,8 @@ Codes
   doc-choices-incompatible-type                                Documentation        Error                  Choices value from the documentation is not compatible with type defined in the argument_spec
   doc-default-does-not-match-spec                              Documentation        Error                  Value for "default" from the argument_spec does not match the documentation
   doc-default-incompatible-type                                Documentation        Error                  Default value from the documentation is not compatible with type defined in the argument_spec
+  doc-elements-invalid                                         Documentation        Error                  Documentation specifies elements for argument, when "type" is not ``list``.
+  doc-elements-mismatch                                        Documentation        Error                  Argument_spec defines elements different than documentation does
   doc-missing-type                                             Documentation        Error                  Documentation doesn't specify a type but argument in ``argument_spec`` use default type (``str``)
   doc-required-mismatch                                        Documentation        Error                  argument in argument_spec is required but documentation says it is not, or vice versa
   doc-type-does-not-match-spec                                 Documentation        Error                  Argument_spec defines type different than documentation does

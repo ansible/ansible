@@ -1463,6 +1463,37 @@ class ModuleValidator(Validator):
                     msg=msg
                 )
 
+            doc_elements = doc_options_arg.get('elements', None)
+            doc_type = doc_options_arg.get('type', 'str')
+            data_elements = data.get('elements', None)
+            if (doc_elements and not doc_type == 'list'):
+                msg = "Argument '%s " % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines parameter elements as %s but it is valid only when value of parameter type is list" % doc_elements
+                self.reporter.error(
+                    path=self.object_path,
+                    code='doc-elements-invalid',
+                    msg=msg
+                )
+            if (doc_elements or data_elements) and not (doc_elements == data_elements):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                if data_elements:
+                    msg += " specifies elements as %s," % data_elements
+                else:
+                    msg += " does not specify elements,"
+                if doc_elements:
+                    msg += "but elements is documented as being %s" % doc_elements
+                else:
+                    msg += "but elements is not documented"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='doc-elements-mismatch',
+                    msg=msg
+                )
+
             spec_suboptions = data.get('options')
             doc_suboptions = doc_options_arg.get('suboptions', {})
             if spec_suboptions:
