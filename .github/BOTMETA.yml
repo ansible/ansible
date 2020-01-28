@@ -394,7 +394,7 @@ files:
     labels: [ aci, cisco, networking ]
     maintainers: $team_aci
   $modules/network/aireos/: &aireos
-    maintainers: $team_aireos
+    maintainers: $team_ansible
     ignored: jmighion
     labels: [ aireos, cisco, networking ]
   $modules/network/aos/: dgarros jeremyschulman
@@ -2055,7 +2055,6 @@ macros:
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
-  team_aireos: $team_ansible
   team_aix: bcoca dagwieers d-little flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
   team_aruba: karthikeyan-dhandapani
   team_asa: NilashishC ogenstad
