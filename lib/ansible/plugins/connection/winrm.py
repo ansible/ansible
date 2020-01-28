@@ -73,7 +73,7 @@ DOCUMENTATION = """
         description:
            - List of winrm transports to attempt to to use (ssl, plaintext, kerberos, etc)
            - If None (the default) the plugin will try to automatically guess the correct list
-           - The choices avialable depend on your version of pywinrm
+           - The choices available depend on your version of pywinrm
         type: list
         vars:
           - name: ansible_winrm_transport
