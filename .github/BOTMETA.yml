@@ -690,7 +690,7 @@ files:
   $modules/network/f5/bigip_static_route.py:
     migrated_to: f5networks.f5_modules
   $modules/network/f5/bigip_sys_daemon_log_tmm.py:
-    migrated_to: f5networks.f5_module
+    migrated_to: f5networks.f5_modules
   $modules/network/f5/bigip_sys_db.py:
     migrated_to: f5networks.f5_modules
   $modules/network/f5/bigip_sys_global.py:
@@ -1631,7 +1631,7 @@ files:
     migrated_to: servicenow.servicenow
   $plugins/doc_fragments/f5.py:
     maintainers: caphrim007 wojtek0806
-    migrated_to: f5networks.f5modules
+    migrated_to: f5networks.f5_modules
 ###############################
 # plugins/filter
   $plugins/filter/:
