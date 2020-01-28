@@ -159,7 +159,7 @@ def main():
 
     if state == 'list':
         module.deprecate(
-            'Using the "list" state has been deprecated.  Please use the ec2_tag_infoi module instead', version='2.14')
+            'Using the "list" state has been deprecated.  Please use the ec2_tag_info module instead', version='2.14')
         module.exit_json(changed=False, tags=current_tags)
 
     add_tags, remove = compare_aws_tags(current_tags, tags, purge_tags=purge_tags)
