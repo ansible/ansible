@@ -16,6 +16,7 @@ from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor, VaultLib, match_encrypt_secret
+from ansible.parsing.vault.vault_yaml_editor import VaultYAMLEditor
 from ansible.utils.display import Display
 
 display = Display()
@@ -80,6 +81,8 @@ class VaultCLI(CLI):
         decrypt_parser = subparsers.add_parser('decrypt', help='Decrypt vault encrypted file', parents=[output, common])
         decrypt_parser.set_defaults(func=self.execute_decrypt)
         decrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        decrypt_parser.add_argument('--yaml-values-only', action='store_true',
+                                    help='encrypt only the values in a YAML file')
 
         edit_parser = subparsers.add_parser('edit', help='Edit vault encrypted file', parents=[vault_id, common])
         edit_parser.set_defaults(func=self.execute_edit)
@@ -88,10 +91,14 @@ class VaultCLI(CLI):
         view_parser = subparsers.add_parser('view', help='View vault encrypted file', parents=[common])
         view_parser.set_defaults(func=self.execute_view)
         view_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        view_parser.add_argument('--yaml-values-only', action='store_true',
+                                 help='encrypt only the values in a YAML file')
 
         encrypt_parser = subparsers.add_parser('encrypt', help='Encrypt YAML file', parents=[common, output, vault_id])
         encrypt_parser.set_defaults(func=self.execute_encrypt)
         encrypt_parser.add_argument('args', help='Filename', metavar='file_name', nargs='*')
+        encrypt_parser.add_argument('--yaml-values-only', action='store_true',
+                                    help='encrypt only the values in a YAML file')
 
         enc_str_parser = subparsers.add_parser('encrypt_string', help='Encrypt a string', parents=[common, output, vault_id])
         enc_str_parser.set_defaults(func=self.execute_encrypt_string)
@@ -107,6 +114,8 @@ class VaultCLI(CLI):
                                     help="Specify the variable name for stdin")
 
         rekey_parser = subparsers.add_parser('rekey', help='Re-key a vault encrypted file', parents=[common, vault_id])
+        rekey_parser.add_argument('--yaml-values-only', action='store_true',
+                                  help='encrypt only the values in a YAML file')
         rekey_parser.set_defaults(func=self.execute_rekey)
         rekey_new_group = rekey_parser.add_mutually_exclusive_group()
         rekey_new_group.add_argument('--new-vault-password-file', default=None, dest='new_vault_password_file',
@@ -235,7 +244,11 @@ class VaultCLI(CLI):
 
         # FIXME: do we need to create VaultEditor here? its not reused
         vault = VaultLib(vault_secrets)
-        self.editor = VaultEditor(vault)
+
+        if context.CLIARGS.get('yaml_values_only'):
+            self.editor = VaultYAMLEditor(vault)
+        else:
+            self.editor = VaultEditor(vault)
 
         context.CLIARGS['func']()
 

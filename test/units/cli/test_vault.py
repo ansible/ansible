@@ -188,6 +188,42 @@ class TestVaultCli(unittest.TestCase):
         cli.parse()
         cli.run()
 
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultYAMLEditor')
+    def test_encrypt_yaml_keys_only(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'encrypt',
+                             '--yaml-values-only', '/dev/null/foo'])
+        cli.parse()
+        cli.run()
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultYAMLEditor')
+    def test_decrypt_yaml_keys_only(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'decrypt',
+                             '--yaml-values-only', '/dev/null/foo'])
+        cli.parse()
+        cli.run()
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultYAMLEditor')
+    def test_rekey_yaml_keys_only(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'rekey',
+                             '--yaml-values-only', '/dev/null/foo'])
+        cli.parse()
+        cli.run()
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultYAMLEditor')
+    def test_view_yaml_keys_only(self, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault', 'view',
+                             '--yaml-values-only', '/dev/null/foo'])
+        cli.parse()
+        cli.run()
+
 
 @pytest.mark.parametrize('cli_args, expected', [
     (['ansible-vault', 'view', 'vault.txt'], 0),
