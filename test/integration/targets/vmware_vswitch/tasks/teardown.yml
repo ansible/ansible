@@ -1,0 +1,16 @@
+- name: Remove the vSwitches (ESXi1)
+  vmware_vswitch:
+    hostname: '{{ esxi1 }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    switch_name: vmswitch_0001
+    state: absent
+
+- name: Remove the vSwitches (ESXi2)
+  vmware_vswitch:
+    hostname: '{{ esxi2 }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    switch_name: vmswitch_0002
+    state: absent
+  when: esxi2 is defined
