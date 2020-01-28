@@ -52,7 +52,7 @@ options:
     type: str
   domain:
     description:
-    - The domain name to be used for the the ESXi host.
+    - The domain name to be used for the ESXi host.
     type: str
   dns_servers:
     description:
