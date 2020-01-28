@@ -1255,6 +1255,16 @@ class ModuleValidator(Validator):
                 _type_checker = module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_type)
 
             _elements = data.get('elements')
+            if (_type == 'list') and not _elements:
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " defines type as list but elements is not defined"
+                self.reporter.error(
+                    path=self.object_path,
+                    code='parameter-list-no-elements',
+                    msg=msg
+                )
             if _elements:
                 if not callable(_elements):
                     module._CHECK_ARGUMENT_TYPES_DISPATCHER.get(_elements)

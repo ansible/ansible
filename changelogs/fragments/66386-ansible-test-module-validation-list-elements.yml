@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test - the module validation code now checks whether ``elements`` is defined when ``type=list``"

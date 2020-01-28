@@ -123,6 +123,7 @@ Codes
   parameter-alias-repeated                                     Parameters           Error                  argument in argument_spec has at least one alias specified multiple times in aliases
   parameter-alias-self                                         Parameters           Error                  argument in argument_spec is specified as its own alias
   parameter-documented-multiple-times                          Documentation        Error                  argument in argument_spec with aliases is documented multiple times
+  parameter-list-no-elements                                   Parameters           Error                  argument in argument_spec "type" is specified as ``list`` without defining "elements"
   python-syntax-error                                          Syntax               Error                  Python ``SyntaxError`` while parsing module
   return-syntax-error                                          Documentation        Error                  ``RETURN`` is not valid YAML, ``RETURN`` fragments missing  or invalid
   subdirectory-missing-init                                    Naming               Error                  Ansible module subdirectories must contain an ``__init__.py``
