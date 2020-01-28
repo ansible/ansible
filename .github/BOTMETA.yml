@@ -1632,6 +1632,8 @@ files:
   $plugins/doc_fragments/f5.py:
     maintainers: caphrim007 wojtek0806
     migrated_to: f5networks.f5_modules
+  $plugins/doc_fragments/openstack.py:
+    migrated_to: openstack.cloud
 ###############################
 # plugins/filter
   $plugins/filter/:
