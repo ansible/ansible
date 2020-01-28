@@ -1,0 +1,2 @@
+bugfixes:
+  - vmware_host_vmhba_info - fixed node_wwn and port_wwn for FC HBA to hexadecimal format(https://github.com/ansible/ansible/issues/63045).
