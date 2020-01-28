@@ -800,6 +800,10 @@ files:
   $modules/notification/rocketchat.py:
     ignored: ramondelafuente
     maintainers: Deepakkothandan
+  $modules/notification/snow_record.py:
+    migrated_to: servicenow.servicenow
+  $modules/notification/snow_record_find.py:
+      migrated_to: servicenow.servicenow
   $modules/packaging/language/gem.py: $team_ansible
   $modules/packaging/language/maven_artifact.py:
     ignored: chrisisbeef
@@ -1069,6 +1073,8 @@ files:
     support: core
   $module_utils/splitter.py:
     support: core
+  $module_utils/service_now.py:
+    migrated_to: servicenow.servicenow
   $module_utils/yumdnf.py:
     support: core
   $module_utils/ansible_release.py:
@@ -1621,6 +1627,8 @@ files:
     maintainers: bvitnik
   $plugins/doc_fragments/hpe3par.py: *hpe3par
   $plugins/doc_fragments/oracle*: *oracle
+  $plugins/doc_fragments/service_now.py:
+    migrated_to: servicenow.servicenow
   $plugins/doc_fragments/f5.py:
     maintainers: caphrim007 wojtek0806
     migrated_to: f5networks.f5modules
@@ -1709,6 +1717,8 @@ files:
   $plugins/inventory/vultr.py: *vultr
   $plugins/inventory/yaml.py:
     support: core
+  $plugins/inventory/now.py:
+    migrated_to: servicenow.servicenow
 
 ###############################
 # plugins/lookup
