@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,32 +38,40 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     cloud_config_cksum:
         description:
             - Checksum of cloud configuration for poolgroup.
             - Internally set by cloud connector.
+        type: str
     cloud_ref:
         description:
             - It is a reference to an object of type cloud.
+        type: str
     created_by:
         description:
             - Name of the user who created the object.
+        type: str
     deployment_policy_ref:
         description:
             - When setup autoscale manager will automatically promote new pools into production when deployment goals are met.
             - It is a reference to an object of type poolgroupdeploymentpolicy.
+        type: str
     description:
         description:
             - Description of pool group.
+        type: str
     fail_action:
         description:
             - Enable an action - close connection, http redirect, or local http response - when a pool group failure happens.
             - By default, a connection will be closed, in case the pool group experiences a failure.
+        type: dict
     implicit_priority_labels:
         description:
             - Whether an implicit set of priority labels is generated.
@@ -73,21 +82,25 @@ options:
     members:
         description:
             - List of pool group members object of type poolgroupmember.
+        type: list
     min_servers:
         description:
             - The minimum number of servers to distribute traffic to.
             - Allowed values are 1-65535.
             - Special values are 0 - 'disable'.
             - Default value when not specified in API or module is interpreted by Avi Controller as 0.
+        type: int
     name:
         description:
             - The name of the pool group.
         required: true
+        type: str
     priority_labels_ref:
         description:
             - Uuid of the priority labels.
             - If not provided, pool group member priority label will be interpreted as a number with a larger number considered higher priority.
             - It is a reference to an object of type prioritylabels.
+        type: str
     service_metadata:
         description:
             - Metadata pertaining to the service provided by this poolgroup.
@@ -95,15 +108,21 @@ options:
             - Any user input to this field will be overwritten by avi vantage.
             - Field introduced in 17.2.14,18.1.5,18.2.1.
         version_added: "2.9"
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the pool group.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

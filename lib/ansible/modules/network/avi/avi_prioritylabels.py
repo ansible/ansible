@@ -29,6 +29,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -36,33 +37,44 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     cloud_ref:
         description:
             - It is a reference to an object of type cloud.
+        type: str
     description:
         description:
             - A description of the priority labels.
+        type: str
     equivalent_labels:
         description:
             - Equivalent priority labels in descending order.
+        type: list
     name:
         description:
             - The name of the priority labels.
         required: true
+        type: str
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the priority labels.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''

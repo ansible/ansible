@@ -30,6 +30,7 @@ options:
             - The state that should be applied on the entity.
         default: present
         choices: ["absent", "present"]
+        type: str
     avi_api_update_method:
         description:
             - Default method for object update is HTTP PUT.
@@ -37,31 +38,47 @@ options:
         version_added: "2.5"
         default: put
         choices: ["put", "patch"]
+        type: str
     avi_api_patch_op:
         description:
             - Patch operation to use when using avi_api_update_method as patch.
         version_added: "2.5"
         choices: ["add", "replace", "delete"]
+        type: str
     description:
         description:
             - User defined description for the object.
+        type: str
+    disable_quickstart:
+        description:
+            - During addition of a server or healthmonitors or during bootup, avi performs sequential health checks rather than waiting for send-interval to
+            - kick in, to mark the server up as soon as possible.
+            - This knob may be used to turn this feature off.
+            - Field introduced in 18.2.7.
+        version_added: "2.10"
+        type: bool
     dns_monitor:
         description:
             - Healthmonitordns settings for healthmonitor.
+        type: dict
     external_monitor:
         description:
             - Healthmonitorexternal settings for healthmonitor.
+        type: dict
     failed_checks:
         description:
             - Number of continuous failed health checks before the server is marked down.
             - Allowed values are 1-50.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
+        type: int
     http_monitor:
         description:
             - Healthmonitorhttp settings for healthmonitor.
+        type: dict
     https_monitor:
         description:
             - Healthmonitorhttp settings for healthmonitor.
+        type: dict
     is_federated:
         description:
             - This field describes the object's replication scope.
@@ -77,15 +94,18 @@ options:
             - If the monitor succeeds to this port, the load balanced traffic will still be sent to the port of the server defined within the pool.
             - Allowed values are 1-65535.
             - Special values are 0 - 'use server port'.
+        type: int
     name:
         description:
             - A user friendly name for this health monitor.
         required: true
+        type: str
     radius_monitor:
         description:
             - Health monitor for radius.
             - Field introduced in 18.2.3.
         version_added: "2.9"
+        type: dict
     receive_timeout:
         description:
             - A valid response from the server is expected within the receive timeout window.
@@ -93,42 +113,54 @@ options:
             - If server status is regularly flapping up and down, consider increasing this value.
             - Allowed values are 1-2400.
             - Default value when not specified in API or module is interpreted by Avi Controller as 4.
+        type: int
     send_interval:
         description:
             - Frequency, in seconds, that monitors are sent to a server.
             - Allowed values are 1-3600.
             - Default value when not specified in API or module is interpreted by Avi Controller as 10.
+        type: int
     sip_monitor:
         description:
             - Health monitor for sip.
             - Field introduced in 17.2.8, 18.1.3, 18.2.1.
         version_added: "2.9"
+        type: dict
     successful_checks:
         description:
             - Number of continuous successful health checks before server is marked up.
             - Allowed values are 1-50.
             - Default value when not specified in API or module is interpreted by Avi Controller as 2.
+        type: int
     tcp_monitor:
         description:
             - Healthmonitortcp settings for healthmonitor.
+        type: dict
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
+        type: str
     type:
         description:
             - Type of the health monitor.
             - Enum options - HEALTH_MONITOR_PING, HEALTH_MONITOR_TCP, HEALTH_MONITOR_HTTP, HEALTH_MONITOR_HTTPS, HEALTH_MONITOR_EXTERNAL, HEALTH_MONITOR_UDP,
             - HEALTH_MONITOR_DNS, HEALTH_MONITOR_GSLB, HEALTH_MONITOR_SIP, HEALTH_MONITOR_RADIUS.
         required: true
+        type: str
     udp_monitor:
         description:
             - Healthmonitorudp settings for healthmonitor.
+        type: dict
     url:
         description:
             - Avi controller URL of the object.
+        type: str
     uuid:
         description:
             - Uuid of the health monitor.
+        type: str
+
+
 extends_documentation_fragment:
     - avi
 '''
@@ -175,6 +207,7 @@ def main():
                                    choices=['put', 'patch']),
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         description=dict(type='str',),
+        disable_quickstart=dict(type='bool',),
         dns_monitor=dict(type='dict',),
         external_monitor=dict(type='dict',),
         failed_checks=dict(type='int',),
