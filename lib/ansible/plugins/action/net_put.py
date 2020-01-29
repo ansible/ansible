@@ -99,7 +99,7 @@ class ActionModule(ActionBase):
         if dest is None:
             dest = src_file_path_name
 
-        compare = self._task.args.get('compare')
+        compare = self._task.args.get('compare', True)
         if compare:
             changed = self._handle_existing_file(conn, output_file, dest, proto, sock_timeout)
             if changed is False:
