@@ -1,0 +1,2 @@
+bugfixes:
+  - junos_command - Fixed false failure when deleting files
