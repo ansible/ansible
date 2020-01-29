@@ -30,7 +30,7 @@ options:
       - The path to the server certificate you are retrieving attributes for. This argument is mutually exclusive with I(name)
     type: str
     required: false
-    version_added: '2.9'
+    version_added: '2.10'
 extends_documentation_fragment:
     - aws
     - ec2
