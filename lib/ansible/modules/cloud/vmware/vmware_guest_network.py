@@ -16,15 +16,15 @@ DOCUMENTATION = '''
 module: vmware_guest_network
 short_description: Manage network adapters of specified virtual machine in given vCenter infrastructure
 description:
-    - This module is used to add, reconfigure, remove network adapter of given virtual machine.
+  - This module is used to add, reconfigure, remove network adapter of given virtual machine.
 version_added: '2.9'
 requirements:
-    - "python >= 2.7"
-    - "PyVmomi"
+  - "python >= 2.7"
+  - "PyVmomi"
 author:
-    - Diane Wang (@Tomorrow9) <dianew@vmware.com>
+  - Diane Wang (@Tomorrow9) <dianew@vmware.com>
 notes:
-    - Tested on vSphere 6.0, 6.5 and 6.7
+  - Tested on vSphere 6.0, 6.5 and 6.7
 options:
   name:
     description:
@@ -35,17 +35,17 @@ options:
     description:
       - vm uuid
       - Required if name or moid is not supplied
-      type: str
+    type: str
   use_instance_uuid:
     description:
       - Whether to use the VMware instance UUID rather than the BIOS UUID.
-      default: False
-      type: bool
+    default: False
+    type: bool
   moid:
     description:
       - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance
       - Required if uuid or name is not supplied
-      type: str
+    type: str
   folder:
     description:
       - Folder location of given vm, this is only required when there's multiple vm's with the same name
@@ -59,10 +59,12 @@ options:
     description:
       - The hostname of the esxi host where the vm is run
       - required if cluster is not set
+    type: str
   datacenter:
     default: ha-datacenter
     description:
       - Datacenter the vm belongs to
+    type: str
   mac_address:
     description:
       - mac address of the nic that should be altered, if a mac address isn't supplied a new nic will be created
@@ -75,8 +77,8 @@ options:
   network_name:
     description:
       - Name of network in vsphere
+    type: str
   device_type:
-    default: vmxnet3
     description:
       - device type for new network interfaces, available types are e1000, e1000e, pcnet32, vmxnet2, vmxnet3 and  sriov
     type: str
@@ -87,6 +89,7 @@ options:
   switch:
     description:
       - Name of the (dv)switch for destination network, this is only required for dvswitches
+    type: str
   connected:
     default: True
     description:
@@ -97,7 +100,7 @@ options:
     description:
       - If nic should be connected to network on startup
     type: bool
-  wake_onlan
+  wake_onlan:
     default: False
     description:
       - Enable wake on lan
@@ -107,53 +110,55 @@ options:
     description:
       - Enable Universal Pass-through (UPT)
     type: bool
-   state:
-     default: present
-     description:
-       - Nic state.
-       - When state = absent, the mac_address parameter has to be set
-   force:
-     default: false
-     description:
-       - Force adapter creation even if an existing adapter is attached to the same network
-     type: bool
-   gather_network_info:
-     default: False
-     description:
-       - Return information about current guest network adapters
-     aliases: gather_network_facts
-   networks:
-     type: list
-     description:
-       - This method will be deprecated, use loops in your playbook for multiple interfaces instead
-       - A list of network adapters
-       - C(mac) or C(label) or C(device_type) is required to reconfigure or remove an existing network adapter.
-       - 'If there are multiple network adapters with the same C(device_type), you should set C(label) or C(mac) to match
-          one of them, or will apply changes on all network adapters with the C(device_type) specified.'
-       - 'C(mac), C(label), C(device_type) is the order of precedence from greatest to least if all set.'
-       - 'Valid attributes are:'
-       - ' - C(mac) (string): MAC address of the existing network adapter to be reconfigured or removed.'
-       - ' - C(label) (string): Label of the existing network adapter to be reconfigured or removed, e.g., "Network adapter 1".'
-       - ' - C(device_type) (string): Valid virtual network device types are:
-             C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3) (default), C(sriov).
-             Used to add new network adapter, reconfigure or remove the existing network adapter with this type.
-             If C(mac) and C(label) not specified or not find network adapter by C(mac) or C(label) will use this parameter.'
-       - ' - C(name) (string): Name of the portgroup or distributed virtual portgroup for this interface.
-           When specifying distributed virtual portgroup make sure given C(esxi_hostname) or C(cluster) is associated with it.'
-       - ' - C(vlan) (integer): VLAN number for this interface.'
-       - ' - C(dvswitch_name) (string): Name of the distributed vSwitch.
-             This value is required if multiple distributed portgroups exists with the same name.'
-       - ' - C(state) (string): State of the network adapter.'
-       - '   If set to C(present), then will do reconfiguration for the specified network adapter.'
-       - '   If set to C(new), then will add the specified network adapter.'
-       - '   If set to C(absent), then will remove this network adapter.'
-       - ' - C(manual_mac) (string): Manual specified MAC address of the network adapter when creating, or reconfiguring.
-             If not specified when creating new network adapter, mac address will be generated automatically.
-             When reconfigure MAC address, VM should be in powered off state.'
-       - ' - C(connected) (bool): Indicates that virtual network adapter connects to the associated virtual machine.'
-       - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on.'
-       - ' - C(directpath_io) (bool): If set, Universal Pass-Through (UPT or DirectPath I/O) will be enabled on the network adapter.
-             UPT is only compatible for Vmxnet3 adapter.'
+  state:
+    default: present
+    description:
+      - Nic state.
+      - When state = absent, the mac_address parameter has to be set
+    type: str
+  force:
+    default: false
+    description:
+      - Force adapter creation even if an existing adapter is attached to the same network
+    type: bool
+  gather_network_info:
+    aliases: gather_network_facts
+    default: False
+    description:
+      - Return information about current guest network adapters
+    type: bool
+  networks:
+    type: list
+    description:
+      - This method will be deprecated, use loops in your playbook for multiple interfaces instead
+      - A list of network adapters
+      - C(mac) or C(label) or C(device_type) is required to reconfigure or remove an existing network adapter.
+      - 'If there are multiple network adapters with the same C(device_type), you should set C(label) or C(mac) to match
+         one of them, or will apply changes on all network adapters with the C(device_type) specified.'
+      - 'C(mac), C(label), C(device_type) is the order of precedence from greatest to least if all set.'
+      - 'Valid attributes are:'
+      - ' - C(mac) (string): MAC address of the existing network adapter to be reconfigured or removed.'
+      - ' - C(label) (string): Label of the existing network adapter to be reconfigured or removed, e.g., "Network adapter 1".'
+      - ' - C(device_type) (string): Valid virtual network device types are:
+            C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3) (default), C(sriov).
+            Used to add new network adapter, reconfigure or remove the existing network adapter with this type.
+            If C(mac) and C(label) not specified or not find network adapter by C(mac) or C(label) will use this parameter.'
+      - ' - C(name) (string): Name of the portgroup or distributed virtual portgroup for this interface.
+          When specifying distributed virtual portgroup make sure given C(esxi_hostname) or C(cluster) is associated with it.'
+      - ' - C(vlan) (integer): VLAN number for this interface.'
+      - ' - C(dvswitch_name) (string): Name of the distributed vSwitch.
+            This value is required if multiple distributed portgroups exists with the same name.'
+      - ' - C(state) (string): State of the network adapter.'
+      - '   If set to C(present), then will do reconfiguration for the specified network adapter.'
+      - '   If set to C(new), then will add the specified network adapter.'
+      - '   If set to C(absent), then will remove this network adapter.'
+      - ' - C(manual_mac) (string): Manual specified MAC address of the network adapter when creating, or reconfiguring.
+            If not specified when creating new network adapter, mac address will be generated automatically.
+            When reconfigure MAC address, VM should be in powered off state.'
+      - ' - C(connected) (bool): Indicates that virtual network adapter connects to the associated virtual machine.'
+      - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on.'
+      - ' - C(directpath_io) (bool): If set, Universal Pass-Through (UPT or DirectPath I/O) will be enabled on the network adapter.
+            UPT is only compatible for Vmxnet3 adapter.'
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -197,7 +202,7 @@ RETURN = '''
 network_info:
   description: metadata about the virtual machine network adapters
   returned: always
-  type: dict
+  type: list
   sample:
     "network_info": [
         {
@@ -542,7 +547,8 @@ class PyVmomiHelper(PyVmomi):
         vlan_id_lst = [d.get('vlan_id') for d in nic_info]
         network_name_lst = [d.get('network_name') for d in nic_info]
 
-        if (self.params['vlan_id'] in vlan_id_lst or self.params['network_name'] in network_name_lst) and not self.params['mac_address'] and not self.params['force']:
+        if ((self.params['vlan_id'] in vlan_id_lst or self.params['network_name'] in network_name_lst) and not
+                self.params['mac_address'] and not self.params['force']):
             for nic in nic_info:
                 diff['before'].update({nic.get('mac_address'): copy.copy(nic)})
                 diff['after'].update({nic.get('mac_address'): copy.copy(nic)})
