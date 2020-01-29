@@ -484,7 +484,11 @@ def delegate_remote(args, exclude, require, integration_targets):
                 remote_results_name = os.path.basename(remote_results_root)
                 remote_temp_path = os.path.join('/tmp', remote_results_name)
 
-                manage.ssh('rm -rf {0} && mkdir {0} && cp -a {1}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, remote_results_root))
+                # AIX cp and GNU cp provide different options, no way could be found to have a common
+                # pattern and achieve the same goal
+                cp_opts = '-hr' if platform in ['aix', 'ibmi'] else '-a'
+
+                manage.ssh('rm -rf {0} && mkdir {0} && cp {1} {2}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, cp_opts, remote_results_root))
                 manage.download(remote_temp_path, local_test_root)
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
