@@ -1,9 +1,7 @@
 #!/usr/bin/python
-#  -*- coding: utf-8 -*-
-#  Copyright: (c) 2019, Ansible Project
+#  Copyright: (c) 2020, Ansible Project
 #  Copyright: (c) 2019, Diane Wang <dianew@vmware.com>
 #  GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
@@ -19,222 +17,229 @@ module: vmware_guest_network
 short_description: Manage network adapters of specified virtual machine in given vCenter infrastructure
 description:
     - This module is used to add, reconfigure, remove network adapter of given virtual machine.
-    - All parameters and VMware object names are case sensitive.
 version_added: '2.9'
+requirements:
+    - "python >= 2.7"
+    - "PyVmomi"
 author:
     - Diane Wang (@Tomorrow9) <dianew@vmware.com>
 notes:
     - Tested on vSphere 6.0, 6.5 and 6.7
-requirements:
-    - "python >= 2.6"
-    - PyVmomi
 options:
-   name:
+  name:
+    description:
+      - Name of virtual machine
+      - Required if uuid or moid is not supplied
+    type: str
+  uuid:
+    description:
+      - vm uuid
+      - Required if name or moid is not supplied
+      type: str
+  use_instance_uuid:
+    description:
+      - Whether to use the VMware instance UUID rather than the BIOS UUID.
+      default: False
+      type: bool
+  moid:
+    description:
+      - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance
+      - Required if uuid or name is not supplied
+      type: str
+  folder:
+    description:
+      - Folder location of given vm, this is only required when there's multiple vm's with the same name
+    type: str
+  cluster:
+    description:
+      - Name of cluster where vm is run
+      - required if esxi_hostname isn't set
+    type: str
+  esxi_hostname:
+    description:
+      - The hostname of the esxi host where the vm is run
+      - required if cluster is not set
+  datacenter:
+    default: ha-datacenter
+    description:
+      - Datacenter the vm belongs to
+  mac_address:
+    description:
+      - mac address of the nic that should be altered, if a mac address isn't supplied a new nic will be created
+      - Required when state = absent
+    type: str
+  vlan_id:
+    description:
+      - Vlan id associated with the network
+    type: int
+  network_name:
+    description:
+      - Name of network in vsphere
+  device_type:
+    default: vmxnet3
+    description:
+      - device type for new network interfaces, available types are e1000, e1000e, pcnet32, vmxnet2, vmxnet3 and  sriov
+    type: str
+  label:
+    description:
+      - Alter the name of the network adapter
+    type: str
+  switch:
+    description:
+      - Name of the (dv)switch for destination network, this is only required for dvswitches
+  connected:
+    default: True
+    description:
+      - If nic should be connected to the network
+    type: bool
+  start_connected:
+    default: True
+    description:
+      - If nic should be connected to network on startup
+    type: bool
+  wake_onlan
+    default: False
+    description:
+      - Enable wake on lan
+    type: bool
+  directpath_io:
+    default: False
+    description:
+      - Enable Universal Pass-through (UPT)
+    type: bool
+   state:
+     default: present
      description:
-     - Name of the virtual machine.
-     - This is a required parameter, if parameter C(uuid) or C(moid) is not supplied.
-     type: str
-   uuid:
+       - Nic state.
+       - When state = absent, the mac_address parameter has to be set
+   force:
+     default: false
      description:
-     - UUID of the instance to gather info if known, this is VMware's unique identifier.
-     - This is a required parameter, if parameter C(name) or C(moid) is not supplied.
-     type: str
-   use_instance_uuid:
-     description:
-     - Whether to use the VMware instance UUID rather than the BIOS UUID.
-     default: False
+       - Force adapter creation even if an existing adapter is attached to the same network
      type: bool
-     version_added: '2.10'
-   moid:
-     description:
-     - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
-     - This is required if C(name) or C(uuid) is not supplied.
-     type: str
-   folder:
-     description:
-     - Destination folder, absolute or relative path to find an existing guest.
-     - This is a required parameter, only if multiple VMs are found with same name.
-     - The folder should include the datacenter. ESXi server's datacenter is ha-datacenter.
-     - 'Examples:'
-     - '   folder: /ha-datacenter/vm'
-     - '   folder: ha-datacenter/vm'
-     - '   folder: /datacenter1/vm'
-     - '   folder: datacenter1/vm'
-     - '   folder: /datacenter1/vm/folder1'
-     - '   folder: datacenter1/vm/folder1'
-     - '   folder: /folder1/datacenter1/vm'
-     - '   folder: folder1/datacenter1/vm'
-     - '   folder: /folder1/datacenter1/vm/folder2'
-     type: str
-   cluster:
-     description:
-     - The name of cluster where the virtual machine will run.
-     - This is a required parameter, if C(esxi_hostname) is not set.
-     - C(esxi_hostname) and C(cluster) are mutually exclusive parameters.
-     type: str
-   esxi_hostname:
-     description:
-     - The ESXi hostname where the virtual machine will run.
-     - This is a required parameter, if C(cluster) is not set.
-     - C(esxi_hostname) and C(cluster) are mutually exclusive parameters.
-     type: str
-   datacenter:
-     default: ha-datacenter
-     description:
-     - The datacenter name to which virtual machine belongs to.
-     type: str
    gather_network_info:
-     description:
-     - If set to C(True), return settings of all network adapters, other parameters are ignored.
-     - If set to C(False), will add, reconfigure or remove network adapters according to the parameters in C(networks).
-     type: bool
      default: False
-     aliases: [ gather_network_facts ]
+     description:
+       - Return information about current guest network adapters
+     aliases: gather_network_facts
    networks:
      type: list
      description:
-     - A list of network adapters.
-     - C(mac) or C(label) or C(device_type) is required to reconfigure or remove an existing network adapter.
-     - 'If there are multiple network adapters with the same C(device_type), you should set C(label) or C(mac) to match
-        one of them, or will apply changes on all network adapters with the C(device_type) specified.'
-     - 'C(mac), C(label), C(device_type) is the order of precedence from greatest to least if all set.'
-     - 'Valid attributes are:'
-     - ' - C(mac) (string): MAC address of the existing network adapter to be reconfigured or removed.'
-     - ' - C(label) (string): Label of the existing network adapter to be reconfigured or removed, e.g., "Network adapter 1".'
-     - ' - C(device_type) (string): Valid virtual network device types are:
-           C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3) (default), C(sriov).
-           Used to add new network adapter, reconfigure or remove the existing network adapter with this type.
-           If C(mac) and C(label) not specified or not find network adapter by C(mac) or C(label) will use this parameter.'
-     - ' - C(name) (string): Name of the portgroup or distributed virtual portgroup for this interface.
+       - This method will be deprecated, use loops in your playbook for multiple interfaces instead
+       - A list of network adapters
+       - C(mac) or C(label) or C(device_type) is required to reconfigure or remove an existing network adapter.
+       - 'If there are multiple network adapters with the same C(device_type), you should set C(label) or C(mac) to match
+          one of them, or will apply changes on all network adapters with the C(device_type) specified.'
+       - 'C(mac), C(label), C(device_type) is the order of precedence from greatest to least if all set.'
+       - 'Valid attributes are:'
+       - ' - C(mac) (string): MAC address of the existing network adapter to be reconfigured or removed.'
+       - ' - C(label) (string): Label of the existing network adapter to be reconfigured or removed, e.g., "Network adapter 1".'
+       - ' - C(device_type) (string): Valid virtual network device types are:
+             C(e1000), C(e1000e), C(pcnet32), C(vmxnet2), C(vmxnet3) (default), C(sriov).
+             Used to add new network adapter, reconfigure or remove the existing network adapter with this type.
+             If C(mac) and C(label) not specified or not find network adapter by C(mac) or C(label) will use this parameter.'
+       - ' - C(name) (string): Name of the portgroup or distributed virtual portgroup for this interface.
            When specifying distributed virtual portgroup make sure given C(esxi_hostname) or C(cluster) is associated with it.'
-     - ' - C(vlan) (integer): VLAN number for this interface.'
-     - ' - C(dvswitch_name) (string): Name of the distributed vSwitch.
-           This value is required if multiple distributed portgroups exists with the same name.'
-     - ' - C(state) (string): State of the network adapter.'
-     - '   If set to C(present), then will do reconfiguration for the specified network adapter.'
-     - '   If set to C(new), then will add the specified network adapter.'
-     - '   If set to C(absent), then will remove this network adapter.'
-     - ' - C(manual_mac) (string): Manual specified MAC address of the network adapter when creating, or reconfiguring.
-           If not specified when creating new network adapter, mac address will be generated automatically.
-           When reconfigure MAC address, VM should be in powered off state.'
-     - ' - C(connected) (bool): Indicates that virtual network adapter connects to the associated virtual machine.'
-     - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on.'
-     - ' - C(directpath_io) (bool): If set, Universal Pass-Through (UPT or DirectPath I/O) will be enabled on the network adapter.
-           UPT is only compatible for Vmxnet3 adapter.'
+       - ' - C(vlan) (integer): VLAN number for this interface.'
+       - ' - C(dvswitch_name) (string): Name of the distributed vSwitch.
+             This value is required if multiple distributed portgroups exists with the same name.'
+       - ' - C(state) (string): State of the network adapter.'
+       - '   If set to C(present), then will do reconfiguration for the specified network adapter.'
+       - '   If set to C(new), then will add the specified network adapter.'
+       - '   If set to C(absent), then will remove this network adapter.'
+       - ' - C(manual_mac) (string): Manual specified MAC address of the network adapter when creating, or reconfiguring.
+             If not specified when creating new network adapter, mac address will be generated automatically.
+             When reconfigure MAC address, VM should be in powered off state.'
+       - ' - C(connected) (bool): Indicates that virtual network adapter connects to the associated virtual machine.'
+       - ' - C(start_connected) (bool): Indicates that virtual network adapter starts with associated virtual machine powers on.'
+       - ' - C(directpath_io) (bool): If set, Universal Pass-Through (UPT or DirectPath I/O) will be enabled on the network adapter.
+             UPT is only compatible for Vmxnet3 adapter.'
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-- name: Change network adapter settings of virtual machine
-  vmware_guest_network:
+- name: change network for 00:50:56:11:22:33 on vm01.domain.fake
+  vmware_vm_network:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter_name }}"
     validate_certs: no
-    name: test-vm
-    gather_network_info: false
-    networks:
-      - name: "VM Network"
-        state: new
-        manual_mac: "00:50:56:11:22:33"
-      - state: present
-        device_type: e1000e
-        manual_mac: "00:50:56:44:55:66"
-      - state: present
-        label: "Network adapter 3"
-        connected: false
-      - state: absent
-        mac: "00:50:56:44:55:77"
-  delegate_to: localhost
-  register: network_info
+    name: vm01.domain.fake
+    mac_address: 00:50:56:11:22:33
+    network_name: admin-network
+    state: present
 
-- name: Change network adapter settings of virtual machine using MoID
-  vmware_guest_network:
+- name: add a nic on network with vlan id 2001 for 422d000d-2000-ffff-0000-b00000000000
+  vmware_vm_network:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter_name }}"
     validate_certs: no
-    moid: vm-42
-    gather_network_info: false
-    networks:
-      - state: absent
-        mac: "00:50:56:44:55:77"
-  delegate_to: localhost
+    uuid: 422d000d-2000-ffff-0000-b00000000000
+    vlan_id: 2001
 
-- name: Change network adapter settings of virtual machine using instance UUID
-  vmware_guest_network:
+- name: remove nic with mac 00:50:56:11:22:33 from vm01.domain.fake
+- name: add multiple nics to 422d000d-2000-ffff-0000-b00000000000
+  vmware_vm_network:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
     datacenter: "{{ datacenter_name }}"
     validate_certs: no
-    uuid: 5003b4f5-c705-2f37-ccf6-dfc0b40afeb7
-    use_instance_uuid: True
-    gather_network_info: false
-    networks:
-      - state: absent
-        mac: "00:50:56:44:55:77"
-  delegate_to: localhost
-
-- name: Enable DirectPath I/O on a Vmxnet3 adapter
-  vmware_guest_network:
-    hostname: "{{ vcenter_hostname }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    datacenter: "{{ datacenter_name }}"
-    validate_certs: no
-    name: test-vm
-    gather_network_info: false
-    networks:
-      - state: present
-        mac: "aa:50:56:58:59:61"
-        directpath_io: True
-  delegate_to: localhost
+    mac_address: 00:50:56:11:22:33
+    name: vm01.domain.fake
+    state: absent
 '''
 
-RETURN = """
-network_data:
-    description: metadata about the virtual machine's network adapter after managing them
-    returned: always
-    type: dict
-    sample: {
-        "0": {
-            "label": "Network Adapter 1",
-            "name": "VM Network",
-            "device_type": "E1000E",
-            "directpath_io": "N/A",
-            "mac_addr": "00:50:56:89:dc:05",
-            "unit_number": 7,
-            "wake_onlan": false,
+RETURN = '''
+network_info:
+  description: metadata about the virtual machine network adapters
+  returned: always
+  type: dict
+  sample:
+    "network_info": [
+        {
+            "mac_address": "00:50:56:AA:AA:AA"
             "allow_guest_ctl": true,
             "connected": true,
+            "device_type": "vmxnet3",
+            "label": "Network adapter 2",
+            "network_name": "admin-net",
             "start_connected": true,
-        },
-        "1": {
-            "label": "Network Adapter 2",
-            "name": "VM Network",
-            "device_type": "VMXNET3",
-            "directpath_io": true,
-            "mac_addr": "00:50:56:8d:93:8c",
+            "switch": "vSwitch0",
             "unit_number": 8,
-            "start_connected": true,
-            "wake_on_lan": true,
+            "vlan_id": 10,
+            "wake_onlan": false
+        },
+        {
+            "mac_address": "00:50:56:BB:BB:BB",
+            "allow_guest_ctl": true,
             "connected": true,
+            "device_type": "vmxnet3",
+            "label": "Network adapter 1",
+            "network_name": "guest-net",
+            "start_connected": true,
+            "switch": "vSwitch0",
+            "unit_number": 7,
+            "vlan_id": 10,
+            "wake_onlan": true
         }
-    }
-"""
+    ]
+
+'''
 
 try:
     from pyVmomi import vim
 except ImportError:
     pass
 
+import copy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.network import is_mac
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, get_all_objs, get_parent_datacenter
+from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, wait_for_task, get_all_objs, get_parent_datacenter, find_dvs_by_name
 
 
 class PyVmomiHelper(PyVmomi):
@@ -252,307 +257,371 @@ class PyVmomiHelper(PyVmomi):
             sriov=vim.vm.device.VirtualSriovEthernetCard,
         )
 
-    def get_device_type(self, device_type=None):
-        """ Get network adapter device type """
-        if device_type and device_type in list(self.nic_device_type.keys()):
-            return self.nic_device_type[device_type]()
-        else:
-            self.module.fail_json(msg='Invalid network device_type %s' % device_type)
+    def _get_network_object(self, vm_obj):
+        '''
+        return network object matching given parameters
+        :param vm_obj: vm object
+        :return: network object
+        :rtype: object
+        '''
+        compute_resource = self._get_compute_resource_by_name()
+        pg_lookup = {}
+        vlan_id = self.params.get('vlan_id')
+        network_name = self.params.get('network_name')
+        switch_name = self.params.get('switch')
 
-    def get_network_device(self, vm=None, mac=None, device_type=None, device_label=None):
-        """
-        Get network adapter
-        """
-        nic_devices = []
-        nic_device = None
-        if vm is None:
-            if device_type:
-                return nic_devices
-            else:
-                return nic_device
+        for pg in vm_obj.runtime.host.config.network.portgroup:
+            pg_lookup[pg.spec.name] = {'switch': pg.spec.vswitchName, 'vlan_id': pg.spec.vlanId}
 
-        for device in vm.config.hardware.device:
-            if mac:
-                if isinstance(device, vim.vm.device.VirtualEthernetCard):
-                    if device.macAddress == mac:
-                        nic_device = device
+        if compute_resource:
+            for network in compute_resource.network:
+                if isinstance(network, vim.dvs.DistributedVirtualPortgroup):
+                    dvs = network.ConfigInfo.distributedVirtualSwitch
+                    if (switch_name and dvs.config.name == switch_name) or not switch_name:
+                        if network.config.defaultPortConfig.vlan.vlanId == vlan_id:
+                            return network
+                        if network.config.name == network_name:
+                            return network
+                elif isinstance(network, vim.Network):
+                    if network_name and network_name == network.name:
+                        return network
+                    if vlan_id:
+                        for k in pg_lookup.keys():
+                            if vlan_id == pg_lookup[k]['vlan_id']:
+                                if k == network.name:
+                                    return network
+                                break
+        return None
+
+    def _get_vlanid_from_network(self, network):
+        '''
+        get the vlan id from network object
+        :param network: network object to expect, either vim.Network or vim.dvs.DistributedVirtualPortgroup
+        :return: vlan id as an integer
+        :rtype: integer
+        '''
+        vlan_id = None
+        if isinstance(network, vim.dvs.DistributedVirtualPortgroup):
+            vlan_id = network.config.defaultPortConfig.vlan.vlanId
+
+        if isinstance(network, vim.Network):
+            for pg in network.host[0].config.network.portgroup:
+                if pg.spec.name == network.name:
+                    vlan_id = pg.spec.vlanId
+
+        return vlan_id
+
+    def _get_nics_from_vm(self, vm_obj):
+        '''
+        return a list of dictionaries containing vm nic info and
+        a list of objects
+        :param vm_obj: object containing virtual machine
+        :return: list of dicts and list ith nic object(s)
+        :rtype: list, list
+        '''
+        nic_info_lst = []
+        nics = [nic for nic in vm_obj.config.hardware.device if isinstance(nic, vim.vm.device.VirtualEthernetCard)]
+        for nic in nics:
+            d_item = dict(
+                mac_address=nic.macAddress,
+                label=nic.deviceInfo.label,
+                network_name=nic.backing.network.name,
+                unit_number=nic.unitNumber,
+                wake_onlan=nic.wakeOnLanEnabled,
+                allow_guest_ctl=nic.connectable.allowGuestControl,
+                connected=nic.connectable.connected,
+                start_connected=nic.connectable.startConnected,
+                vlan_id=self._get_vlanid_from_network(nic.backing.network)
+            )
+            for k in self.nic_device_type:
+                if isinstance(nic, self.nic_device_type[k]):
+                    d_item['device_type'] = k
+                    break
+
+            if isinstance(nic.backing.network, vim.dvs.DistributedVirtualPortgroup):
+                d_item['switch'] = nic.backing.network.ConfigInfo.distributedVirtualSwitch.config.name
+            if isinstance(nic.backing.network, vim.OpaqueNetwork):
+                d_item['switch'] = nic.backing.network.summary.opaqueNetworkId
+
+            if isinstance(nic.backing.network, vim.Network):
+                for pg in vm_obj.runtime.host.config.network.portgroup:
+                    if pg.spec.name == nic.backing.network.name:
+                        d_item['switch'] = pg.spec.vswitchName
                         break
-            elif device_type:
-                if isinstance(device, self.nic_device_type[device_type]):
-                    nic_devices.append(device)
-            elif device_label:
-                if isinstance(device, vim.vm.device.VirtualEthernetCard):
-                    if device.deviceInfo.label == device_label:
-                        nic_device = device
-                        break
-        if device_type:
-            return nic_devices
+
+            nic_info_lst.append(d_item)
+
+        nic_info_lst = sorted(nic_info_lst, key=lambda d: d['mac_address'])
+        return nic_info_lst, nics
+
+    def _get_compute_resource_by_name(self, recurse=True):
+        '''
+        get compute resource object with matching name of esxi_hostname or cluster
+        parameters.
+        :param recurse: recurse vmware content folder, default is True
+        :return: object matching vim.ComputeResource or None if no match
+        :rtype: object
+        '''
+        resource_name = None
+        if self.params.get('esxi_hostname'):
+            resource_name = self.params.get('esxi_hostname')
+
+        if self.params.get('cluster'):
+            resource_name = self.params.get('cluster')
+
+        container = self.content.viewManager.CreateContainerView(self.content.rootFolder, [vim.ComputeResource], recurse)
+        for obj in container.view:
+            if self.params.get('esxi_hostname') and isinstance(obj, vim.ClusterComputeResource) and hasattr(obj, 'host'):
+                for host in obj.host:
+                    if host.name == resource_name:
+                        return obj
+
+            if obj.name == resource_name:
+                return obj
+
+        return None
+
+    def _new_nic_spec(self, vm_obj, nic_obj=None):
+        network = self._get_network_object(vm_obj)
+        if not nic_obj:
+            device_type = self.nic_device_type.get(
+                self.params['device_type'].lower()
+            )
+            nic_spec = vim.vm.device.VirtualDeviceSpec(
+                device=device_type()
+            )
         else:
-            return nic_device
+            nic_spec = vim.vm.device.VirtualDeviceSpec(
+                operation=vim.vm.device.VirtualDeviceSpec.Operation.edit,
+                device=nic_obj
+            )
 
-    def get_network_device_by_mac(self, vm=None, mac=None):
-        """ Get network adapter with the specified mac address"""
-        return self.get_network_device(vm=vm, mac=mac)
+        if self.params.get('label'):
+            nic_spec.device.deviceInfo = vim.Description(
+                label=self.params['label']
+            )
 
-    def get_network_devices_by_type(self, vm=None, device_type=None):
-        """ Get network adapter list with the name type """
-        return self.get_network_device(vm=vm, device_type=device_type)
+        nic_spec.device.backing = self._nic_backing_from_obj(network)
+        nic_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo(
+            startConnected=self.params.get('start_connected', True),
+            allowGuestControl=self.params.get('guest_control', True),
+            connected=self.params.get('connected', True)
+        )
+        nic_spec.device.wakeOnLanEnabled = self.params.get('wake_onlan', False)
 
-    def get_network_device_by_label(self, vm=None, device_label=None):
-        """ Get network adapter with the specified label """
-        return self.get_network_device(vm=vm, device_label=device_label)
+        if self.params.get('mac_address'):
+            nic_spec.device.addressType = 'manual'
+            nic_spec.device.macAddress = self.params.get('mac_address')
 
-    def create_network_adapter(self, device_info):
-        nic = vim.vm.device.VirtualDeviceSpec()
-        nic.device = self.get_device_type(device_type=device_info.get('device_type', 'vmxnet3'))
-        nic.device.deviceInfo = vim.Description()
-        network_object = self.find_network_by_name(network_name=device_info['name'])[0]
-        if network_object:
-            if hasattr(network_object, 'portKeys'):
-                # DistributedVirtualPortGroup
-                nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
-                nic.device.backing.port = vim.dvs.PortConnection()
-                nic.device.backing.port.switchUuid = network_object.config.distributedVirtualSwitch.uuid
-                nic.device.backing.port.portgroupKey = network_object.key
-            elif isinstance(network_object, vim.OpaqueNetwork):
-                # NSX-T Logical Switch
-                nic.device.backing = vim.vm.device.VirtualEthernetCard.OpaqueNetworkBackingInfo()
-                network_id = network_object.summary.opaqueNetworkId
-                nic.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
-                nic.device.backing.opaqueNetworkId = network_id
-                nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
-            else:
-                # Standard vSwitch
-                nic.device.deviceInfo.summary = device_info['name']
-                nic.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
-                nic.device.backing.deviceName = device_info['name']
-                nic.device.backing.network = network_object
-        nic.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
-        nic.device.connectable.startConnected = device_info.get('start_connected', True)
-        nic.device.connectable.allowGuestControl = True
-        nic.device.connectable.connected = device_info.get('connected', True)
-        if 'manual_mac' in device_info:
-            nic.device.addressType = 'manual'
-            nic.device.macAddress = device_info['manual_mac']
-        else:
-            nic.device.addressType = 'generated'
-        if 'directpath_io' in device_info:
-            if isinstance(nic.device, vim.vm.device.VirtualVmxnet3):
-                nic.device.uptCompatibilityEnabled = device_info['directpath_io']
-            else:
-                self.module.fail_json(msg='UPT is only compatible for Vmxnet3 adapter.'
-                                      + ' Clients can set this property enabled or disabled if ethernet virtual device is Vmxnet3.')
+        if self.params.get('directpath_io') and isinstance(nic_spec.device, vim.vm.VirtualVmxnet3):
+            nic_spec.device.uptCompatibilityEnabled = True
 
-        return nic
+        return nic_spec
 
-    def get_network_info(self, vm_obj):
-        network_info = dict()
-        if vm_obj is None:
-            return network_info
+    def _nic_backing_from_obj(self, network_obj):
+        rv = None
+        if isinstance(network_obj, vim.dvs.DistributedVirtualPortgroup):
+            rv = vim.VirtualEthernetCardDistributedVirtualPortBackingInfo(
+                portgroupKey=network_obj.key,
+                switchUuid=network_obj.config.distributedVirtualSwitch.uuid
+            )
+        if isinstance(network_obj, vim.OpaqueNetwork):
+            rv = vim.vm.device.VirtualEthernetCard.OpaqueNetworkBackingInfo(
+                opaqueNetworkType='nsx.LogicalSwitch',
+                opaqueNetworkId=network_obj.summary.opaqueNetworkId
+            )
+        if isinstance(network_obj, vim.Network):
+            rv = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo(
+                deviceName=network_obj.name,
+                network=network_obj
+            )
+        return rv
 
-        nic_index = 0
-        for nic in vm_obj.config.hardware.device:
-            nic_type = None
-            directpath_io = 'N/A'
-            if isinstance(nic, vim.vm.device.VirtualPCNet32):
-                nic_type = 'PCNet32'
-            elif isinstance(nic, vim.vm.device.VirtualVmxnet2):
-                nic_type = 'VMXNET2'
-            elif isinstance(nic, vim.vm.device.VirtualVmxnet3):
-                nic_type = 'VMXNET3'
-                directpath_io = nic.uptCompatibilityEnabled
-            elif isinstance(nic, vim.vm.device.VirtualE1000):
-                nic_type = 'E1000'
-            elif isinstance(nic, vim.vm.device.VirtualE1000e):
-                nic_type = 'E1000E'
-            elif isinstance(nic, vim.vm.device.VirtualSriovEthernetCard):
-                nic_type = 'SriovEthernetCard'
-            if nic_type is not None:
-                network_info[nic_index] = dict(
-                    device_type=nic_type,
-                    label=nic.deviceInfo.label,
-                    name=nic.deviceInfo.summary,
-                    mac_addr=nic.macAddress,
-                    unit_number=nic.unitNumber,
-                    wake_onlan=nic.wakeOnLanEnabled,
-                    allow_guest_ctl=nic.connectable.allowGuestControl,
-                    connected=nic.connectable.connected,
-                    start_connected=nic.connectable.startConnected,
-                    directpath_io=directpath_io
+    def _nic_absent(self):
+        changed = False
+        diff = {'before': {}, 'after': {}}
+        device_spec = None
+        vm_obj = self.get_vm()
+        nic_info, nic_obj_lst = self._get_nics_from_vm(vm_obj)
+
+        for nic in nic_info:
+            diff['before'].update({nic['mac_address']: copy.copy(nic)})
+
+        network_info = copy.deepcopy(nic_info)
+
+        for nic_obj in nic_obj_lst:
+            if nic_obj.macAddress == self.params['mac_address']:
+                if self.module.check_mode:
+                    changed = True
+                    for nic in nic_info:
+                        if nic.get('mac_address') != nic_obj.macAddress:
+                            diff['after'].update({nic['mac_address']: copy.copy(nic)})
+                    network_info = [nic for nic in nic_info if nic.get('mac_address') != nic_obj.macAddress]
+                    return diff, changed, network_info
+                device_spec = vim.vm.device.VirtualDeviceSpec(
+                    device=nic_obj,
+                    operation=vim.vm.device.VirtualDeviceSpec.Operation.remove
                 )
-                nic_index += 1
+                break
 
-        return network_info
+        if not device_spec:
+            diff['after'] = diff['before']
+            return diff, changed, network_info
 
-    def sanitize_network_params(self):
-        network_list = []
-        valid_state = ['new', 'present', 'absent']
-        if len(self.params['networks']) != 0:
-            for network in self.params['networks']:
-                if 'state' not in network or network['state'].lower() not in valid_state:
-                    self.module.fail_json(msg="Network adapter state not specified or invalid: '%s', valid values: "
-                                              "%s" % (network.get('state', ''), valid_state))
-                # add new network adapter but no name specified
-                if network['state'].lower() == 'new' and 'name' not in network and 'vlan' not in network:
-                    self.module.fail_json(msg="Please specify at least network name or VLAN name for adding new network adapter.")
-                if network['state'].lower() == 'new' and 'mac' in network:
-                    self.module.fail_json(msg="networks.mac is used for vNIC reconfigure, but networks.state is set to 'new'.")
-                if network['state'].lower() == 'present' and 'mac' not in network and 'label' not in network and 'device_type' not in network:
-                    self.module.fail_json(msg="Should specify 'mac', 'label' or 'device_type' parameter to reconfigure network adapter")
-                if 'connected' in network:
-                    if not isinstance(network['connected'], bool):
-                        self.module.fail_json(msg="networks.connected parameter should be boolean.")
-                    if network['state'].lower() == 'new' and not network['connected']:
-                        network['start_connected'] = False
-                if 'start_connected' in network:
-                    if not isinstance(network['start_connected'], bool):
-                        self.module.fail_json(msg="networks.start_connected parameter should be boolean.")
-                    if network['state'].lower() == 'new' and not network['start_connected']:
-                        network['connected'] = False
-                # specified network does not exist
-                if 'name' in network and not self.network_exists_by_name(network['name']):
-                    self.module.fail_json(msg="Network '%(name)s' does not exist." % network)
-                elif 'vlan' in network:
-                    objects = get_all_objs(self.content, [vim.dvs.DistributedVirtualPortgroup])
-                    dvps = [x for x in objects if to_text(get_parent_datacenter(x).name) == to_text(self.params['datacenter'])]
-                    for dvp in dvps:
-                        if hasattr(dvp.config.defaultPortConfig, 'vlan') and \
-                                isinstance(dvp.config.defaultPortConfig.vlan.vlanId, int) and \
-                                str(dvp.config.defaultPortConfig.vlan.vlanId) == str(network['vlan']):
-                            network['name'] = dvp.config.name
-                            break
-                        if 'dvswitch_name' in network and \
-                                dvp.config.distributedVirtualSwitch.name == network['dvswitch_name'] and \
-                                dvp.config.name == network['vlan']:
-                            network['name'] = dvp.config.name
-                            break
-                        if dvp.config.name == network['vlan']:
-                            network['name'] = dvp.config.name
-                            break
+        try:
+            task = vm_obj.ReconfigVM_Task(vim.vm.ConfigSpec(deviceChange=[device_spec]))
+            wait_for_task(task)
+        except (vim.fault.InvalidDeviceSpec, vim.fault.RestrictedVersion) as e:
+            self.module.fail_json(msg='failed to reconfigure guest', detail=e.msg)
+
+        if task.info.state == 'error':
+            self.module.fail_json(msg='failed to reconfigure guest', detail=task.info.error.msg)
+
+        vm_obj = self.get_vm()
+        nic_info, nic_obj_lst = self._get_nics_from_vm(vm_obj)
+
+        for nic in nic_info:
+            diff['after'].update({nic.get('mac_address'): copy.copy(nic)})
+
+        network_info = nic_info
+        if diff['after'] != diff['before']:
+            changed = True
+
+        return diff, changed, network_info
+
+        return False
+
+    def _get_nic_info(self):
+        rv = {'network_info': []}
+        vm_obj = self.get_vm()
+        nic_info, nic_obj_lst = self._get_nics_from_vm(vm_obj)
+
+        rv['network_info'] = nic_info
+        return rv
+
+    def _deprectated_list_config(self):
+        '''
+        this only exists to handle the old way of configuring interfaces, which
+        should be deprectated in favour of using loops in the playbook instead of
+        feeding lists directly into the module.
+        '''
+        diff = {'before': {}, 'after': {}}
+        changed = False
+        for i in self.params['networks']:
+            self.params['mac_address'] = i.get('mac') or i.get('manual_mac')
+            self.params['network_name'] = i.get('name')
+            self.params['vlan_id'] = i.get('vlan')
+            self.params['switch'] = i.get('dvswitch_name')
+
+            for k in ['connected', 'start_connected', 'device_type', 'label', 'directpath_io']:
+                self.params[k] = i.get(k)
+
+            if i.get('state') in ['new', 'present']:
+                n_diff, n_changed, n_network_info = self._nic_present()
+                diff['before'].update(n_diff['before'])
+                diff['after'] = n_diff['after']
+                if n_changed:
+                    changed = True
+
+            if i.get('state') in ['absent']:
+                n_diff, n_changed, network_info = self._nic_absent()
+                diff['before'].update(n_diff['before'])
+                diff['after'] = n_diff['after']
+                if n_changed:
+                    changed = True
+
+        return diff, changed, network_info
+
+    def _nic_present(self):
+        changed = False
+        vm_obj = self.get_vm()
+        diff = {'before': {}, 'after': {}}
+        network_obj = self._get_network_object(vm_obj)
+        nic_info, nic_obj_lst = self._get_nics_from_vm(vm_obj)
+        mac_addr_lst = [d.get('mac_address') for d in nic_info]
+        vlan_id_lst = [d.get('vlan_id') for d in nic_info]
+        network_name_lst = [d.get('network_name') for d in nic_info]
+
+        if (self.params['vlan_id'] in vlan_id_lst or self.params['network_name'] in network_name_lst) and not self.params['mac_address'] and not self.params['force']:
+            for nic in nic_info:
+                diff['before'].update({nic.get('mac_address'): copy.copy(nic)})
+                diff['after'].update({nic.get('mac_address'): copy.copy(nic)})
+            return diff, False, nic_info
+
+        if not network_obj:
+            self.module.fail_json(
+                msg='unable to find specified network_name/vlan_id ({0}), check parameters'.format(
+                    self.params['network_name'] or self.params['vlan_id']
+                )
+            )
+        for nic in nic_info:
+            diff['before'].update({nic.get('mac_address'): copy.copy(nic)})
+
+        if self.params.get('mac_address') and self.params.get('mac_address') in mac_addr_lst:
+            for nic_obj in nic_obj_lst:
+                if nic_obj.macAddress == self.params.get('mac_address'):
+                    device_spec = self._new_nic_spec(vm_obj, nic_obj)
+
+            # fabricate diff for check_mode
+            if self.module.check_mode:
+                for nic in nic_info:
+                    nic_mac = nic.get('mac_address')
+                    if nic_mac == self.params['mac_address']:
+                        diff['after'][nic_mac] = copy.deepcopy(nic)
+                        diff['after'][nic_mac].update(
+                            {
+                                'vlan_id': self._get_vlanid_from_network(network_obj),
+                                'network_name': network_obj.name,
+                                'switch': self.params.get('switch') or nic['switch']
+                            }
+                        )
                     else:
-                        self.module.fail_json(msg="VLAN '%(vlan)s' does not exist." % network)
+                        diff['after'].update({nic_mac: copy.deepcopy(nic)})
 
-                if 'device_type' in network and network['device_type'] not in list(self.nic_device_type.keys()):
-                    self.module.fail_json(msg="Device type specified '%s' is invalid. "
-                                              "Valid types %s " % (network['device_type'], list(self.nic_device_type.keys())))
+        if not self.params.get('mac_address') or self.params.get('mac_address') not in mac_addr_lst:
+            device_spec = self._new_nic_spec(vm_obj)
+            device_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+            if self.module.check_mode:
+                # fabricate diff/returns for checkmode
+                diff['after'] = copy.deepcopy(diff['before'])
+                nic_mac = self.params.get('mac_address')
+                if not nic_mac:
+                    nic_mac = 'AA:BB:CC:DD:EE:FF'
+                diff['after'].update(
+                    {
+                        nic_mac: {
+                            'vlan_id': self._get_vlanid_from_network(network_obj),
+                            'network_name': network_obj.name,
+                            'label': 'check_mode adapter',
+                            'mac_address': nic_mac
+                        }
+                    }
+                )
 
-                if ('mac' in network and not is_mac(network['mac'])) or \
-                        ('manual_mac' in network and not is_mac(network['manual_mac'])):
-                    self.module.fail_json(msg="Device MAC address '%s' or manual set MAC address %s is invalid. "
-                                              "Please provide correct MAC address." % (network['mac'], network['manual_mac']))
+        if self.module.check_mode:
+            network_info = [diff['after'][i] for i in diff['after']]
+            if diff['after'] != diff['before']:
+                changed = True
+            return diff, changed, network_info
 
-                network_list.append(network)
-
-        return network_list
-
-    def get_network_config_spec(self, vm_obj, network_list):
-        # create network adapter config spec for adding, editing, removing
-        for network in network_list:
-            # add new network adapter
-            if network['state'].lower() == 'new':
-                nic_spec = self.create_network_adapter(network)
-                nic_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-                self.change_detected = True
-                self.config_spec.deviceChange.append(nic_spec)
-            # reconfigure network adapter or remove network adapter
-            else:
-                nic_devices = []
-                if 'mac' in network:
-                    nic = self.get_network_device_by_mac(vm_obj, mac=network['mac'])
-                    if nic is not None:
-                        nic_devices.append(nic)
-                if 'label' in network and len(nic_devices) == 0:
-                    nic = self.get_network_device_by_label(vm_obj, device_label=network['label'])
-                    if nic is not None:
-                        nic_devices.append(nic)
-                if 'device_type' in network and len(nic_devices) == 0:
-                    nic_devices = self.get_network_devices_by_type(vm_obj, device_type=network['device_type'])
-                if len(nic_devices) != 0:
-                    for nic_device in nic_devices:
-                        nic_spec = vim.vm.device.VirtualDeviceSpec()
-                        if network['state'].lower() == 'present':
-                            nic_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-                            nic_spec.device = nic_device
-                            if 'start_connected' in network and nic_device.connectable.startConnected != network['start_connected']:
-                                nic_device.connectable.startConnected = network['start_connected']
-                                self.change_detected = True
-                            if 'connected' in network and nic_device.connectable.connected != network['connected']:
-                                nic_device.connectable.connected = network['connected']
-                                self.change_detected = True
-                            if 'name' in network:
-                                network_object = self.find_network_by_name(network_name=network['name'])[0]
-                                if network_object and hasattr(network_object, 'portKeys') and hasattr(nic_spec.device.backing, 'port'):
-                                    if network_object.config.distributedVirtualSwitch.uuid != nic_spec.device.backing.port.switchUuid:
-                                        # DistributedVirtualPortGroup
-                                        nic_spec.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
-                                        nic_spec.device.backing.port = vim.dvs.PortConnection()
-                                        nic_spec.device.backing.port.switchUuid = network_object.config.distributedVirtualSwitch.uuid
-                                        nic_spec.device.backing.port.portgroupKey = network_object.key
-                                        self.change_detected = True
-                                elif network_object and isinstance(network_object, vim.OpaqueNetwork) and hasattr(nic_spec.device.backing, 'opaqueNetworkId'):
-                                    if nic_spec.device.backing.opaqueNetworkId != network_object.summary.opaqueNetworkId:
-                                        # NSX-T Logical Switch
-                                        nic_spec.device.backing = vim.vm.device.VirtualEthernetCard.OpaqueNetworkBackingInfo()
-                                        network_id = network_object.summary.opaqueNetworkId
-                                        nic_spec.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
-                                        nic_spec.device.backing.opaqueNetworkId = network_id
-                                        nic_spec.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
-                                        self.change_detected = True
-                                elif nic_device.deviceInfo.summary != network['name']:
-                                    # Standard vSwitch
-                                    nic_spec.device.backing = vim.vm.device.VirtualEthernetCard.NetworkBackingInfo()
-                                    nic_spec.device.backing.deviceName = network['name']
-                                    nic_spec.device.backing.network = network_object
-                                    self.change_detected = True
-                            if 'manual_mac' in network and nic_device.macAddress != network['manual_mac']:
-                                if vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOff:
-                                    self.module.fail_json(msg='Expected power state is poweredOff to reconfigure MAC address')
-                                nic_device.addressType = 'manual'
-                                nic_device.macAddress = network['manual_mac']
-                                self.change_detected = True
-                            if 'directpath_io' in network:
-                                if isinstance(nic_device, vim.vm.device.VirtualVmxnet3):
-                                    if nic_device.uptCompatibilityEnabled != network['directpath_io']:
-                                        nic_device.uptCompatibilityEnabled = network['directpath_io']
-                                        self.change_detected = True
-                                else:
-                                    self.module.fail_json(msg='UPT is only compatible for Vmxnet3 adapter.'
-                                                          + ' Clients can set this property enabled or disabled if ethernet virtual device is Vmxnet3.')
-                            if self.change_detected:
-                                self.config_spec.deviceChange.append(nic_spec)
-                        elif network['state'].lower() == 'absent':
-                            nic_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
-                            nic_spec.device = nic_device
-                            self.change_detected = True
-                            self.config_spec.deviceChange.append(nic_spec)
-                else:
-                    self.module.fail_json(msg='Unable to find the specified network adapter: %s' % network)
-
-    def reconfigure_vm_network(self, vm_obj):
-        network_list = self.sanitize_network_params()
-        # gather network adapter info only
-        if (self.params['gather_network_info'] is not None and self.params['gather_network_info']) or len(network_list) == 0:
-            results = {'changed': False, 'failed': False, 'network_data': self.get_network_info(vm_obj)}
-        # do reconfigure then gather info
-        else:
-            self.get_network_config_spec(vm_obj, network_list)
+        if not self.module.check_mode:
             try:
-                task = vm_obj.ReconfigVM_Task(spec=self.config_spec)
+                task = vm_obj.ReconfigVM_Task(vim.vm.ConfigSpec(deviceChange=[device_spec]))
                 wait_for_task(task)
-            except vim.fault.InvalidDeviceSpec as e:
-                self.module.fail_json(msg="Failed to configure network adapter on given virtual machine due to invalid"
-                                          " device spec : %s" % to_native(e.msg),
-                                      details="Please check ESXi server logs for more details.")
-            except vim.fault.RestrictedVersion as e:
-                self.module.fail_json(msg="Failed to reconfigure virtual machine due to"
-                                          " product versioning restrictions: %s" % to_native(e.msg))
-            if task.info.state == 'error':
-                results = {'changed': self.change_detected, 'failed': True, 'msg': task.info.error.msg}
-            else:
-                network_info = self.get_network_info(vm_obj)
-                results = {'changed': self.change_detected, 'failed': False, 'network_data': network_info}
+            except (vim.fault.InvalidDeviceSpec, vim.fault.RestrictedVersion) as e:
+                self.module.fail_json(msg='failed to reconfigure guest', detail=e.msg)
 
-        return results
+            if task.info.state == 'error':
+                self.module.fail_json(msg='failed to reconfigure guest', detail=task.info.error.msg)
+
+            vm_obj = self.get_vm()
+            network_info, nic_obj_lst = self._get_nics_from_vm(vm_obj)
+            for nic in network_info:
+                diff['after'].update({nic.get('mac_address'): copy.copy(nic)})
+
+            if diff['after'] != diff['before']:
+                changed = True
+            return diff, changed, network_info
 
 
 def main():
@@ -566,28 +635,55 @@ def main():
         datacenter=dict(type='str', default='ha-datacenter'),
         esxi_hostname=dict(type='str'),
         cluster=dict(type='str'),
+        mac_address=dict(type='str'),
+        vlan_id=dict(type='int'),
+        network_name=dict(type='str'),
+        device_type=dict(type='str', default='vmxnet3'),
+        label=dict(type='str'),
+        switch=dict(type='str'),
+        connected=dict(type='bool', default=True),
+        start_connected=dict(type='bool', default=True),
+        wake_onlan=dict(type='bool', default=False),
+        directpath_io=dict(type='bool', default=False),
+        force=dict(type='bool', default=False),
         gather_network_info=dict(type='bool', default=False, aliases=['gather_network_facts']),
-        networks=dict(type='list', default=[])
+        networks=dict(type='list'),
+        state=dict(type='str', default='present', choices=['absent', 'present'])
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive=[
+            ['vlan_id', 'network_name']
+        ],
         required_one_of=[
             ['name', 'uuid', 'moid']
-        ]
+        ],
+        supports_check_mode=True
     )
 
     pyv = PyVmomiHelper(module)
-    vm = pyv.get_vm()
-    if not vm:
-        vm_id = (module.params.get('uuid') or module.params.get('name') or module.params.get('moid'))
-        module.fail_json(msg='Unable to find the specified virtual machine using %s' % vm_id)
 
-    result = pyv.reconfigure_vm_network(vm)
-    if result['failed']:
-        module.fail_json(**result)
-    else:
-        module.exit_json(**result)
+    if module.params['gather_network_info']:
+        nics = pyv._get_nic_info()
+        module.exit_json(network_info=nics.get('network_info'), changed=False)
+
+    if module.params['state'] == 'present':
+        diff, changed, network_info = pyv._nic_present()
+
+    if module.params['state'] == 'absent':
+        if not module.params['mac_address']:
+            module.fail_json(msg='parameter mac_address required when removing nics')
+        diff, changed, network_info = pyv._nic_absent()
+
+    if module.params['network']:
+        module.deprecated(
+            'The old way of configuring interfaces by supplying an arbitrary list will be removed, loops should be used to handle multiple intefaces',
+            '2.11'
+        )
+        diff, changed, network_info = pyv._deprectated_list_config()
+
+    module.exit_json(changed=changed, network_info=network_info, diff=diff)
 
 
 if __name__ == '__main__':
