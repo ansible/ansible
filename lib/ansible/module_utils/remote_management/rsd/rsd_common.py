@@ -178,10 +178,9 @@ class RSD(object):
     )
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
-                 check_invalid_arguments=None, mutually_exclusive=None,
-                 required_together=None, required_one_of=None,
-                 add_file_common_args=False, supports_check_mode=False,
-                 required_if=None):
+                 mutually_exclusive=None, required_together=None,
+                 required_one_of=None, add_file_common_args=False,
+                 supports_check_mode=False, required_if=None):
 
         full_arg_spec = dict()
         full_arg_spec.update(RSD.RSD_BACKEND_ARGS)  # args spec to this class
@@ -193,7 +192,6 @@ class RSD(object):
             bypass_checks=bypass_checks,
             no_log=no_log,
             add_file_common_args=add_file_common_args,
-            check_invalid_arguments=check_invalid_arguments,
             mutually_exclusive=mutually_exclusive,
             required_together=required_together,
             required_if=required_if,
