@@ -173,6 +173,9 @@ matrix:
     - env: T=vcenter/2.7/1
     - env: T=vcenter/3.6/1
 
+    - env: T=vcenter/2.7/2
+    - env: T=vcenter/3.6/2
+
     - env: T=cs/2.7/1
     - env: T=cs/3.6/1
 
