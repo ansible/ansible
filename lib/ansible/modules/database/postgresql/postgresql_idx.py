@@ -51,13 +51,9 @@ options:
     - Index state.
     - C(present) implies the index will be created if it does not exist.
     - C(absent) implies the index will be dropped if it exists.
-    - C(stat) returns index statistics information from the ``pg_stat_user_indexes`` standard view.
-      Supported from Ansible 2.10.
-    - "When C(stat) following parameters will be ignored:"
-    - I(schema), I(table), I(columns), I(cond), I(idxtype), I(tablespace), I(concurrent), I(cascade).
     type: str
     default: present
-    choices: [ absent, present, stat ]
+    choices: [ absent, present ]
   table:
     description:
     - Table to create index on it.
@@ -207,12 +203,6 @@ EXAMPLES = r'''
     idxname: test_idx
     cond: id > 1
 
-- name: Get index statistics of test_idx from mydb
-  postgresql_idx:
-    db: mydb
-    idxname: test_idx
-    state: stat
-
 - name: Create unique btree index if not exists test_unique_idx on column name of table products
   postgresql_idx:
     db: acme
@@ -259,11 +249,6 @@ valid:
   returned: always
   type: bool
   sample: true
-stat:
-  description: Index statistics.
-  returned: if state is stat
-  type: bool
-  sample: { 'idx_scan': 19239, 'idx_tup_read': 929329, 'idx_tup_fetch': 4949459 }
 '''
 
 try:
@@ -343,22 +328,6 @@ class Index(object):
         """
         self.__exists_in_db()
         return self.info
-
-    def get_stat(self):
-        """Get and return index statistics.
-
-        Return index statistics dictionary if index exists, otherwise False.
-        """
-        query = ("SELECT * FROM pg_stat_user_indexes "
-                 "WHERE indexrelname = %(name)s "
-                 "AND schemaname = %(schema)s")
-
-        result = exec_sql(self, query, query_params={'name': self.name, 'schema': self.schema},
-                          add_to_executed=False)
-        if result:
-            return [dict(row) for row in result]
-        else:
-            return False
 
     def __exists_in_db(self):
         """Check index existence, collect info, add it to self.info dict.
@@ -495,7 +464,7 @@ def main():
     argument_spec.update(
         idxname=dict(type='str', required=True, aliases=['name']),
         db=dict(type='str', aliases=['login_db']),
-        state=dict(type='str', default='present', choices=['absent', 'present', 'stat']),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         concurrent=dict(type='bool', default=True),
         unique=dict(type='bool', default=False),
         table=dict(type='str'),
@@ -561,14 +530,7 @@ def main():
     #
     # check_mode start
     if module.check_mode:
-        if state == 'stat':
-            if index.exists:
-                kw['stat'] = index.get_stat()
-
-            kw['changed'] = False
-            module.exit_json(**kw)
-
-        elif state == 'present' and index.exists:
+        if state == 'present' and index.exists:
             kw['changed'] = False
             module.exit_json(**kw)
 
@@ -586,14 +548,7 @@ def main():
     # check_mode end
     #
 
-    if state == 'stat':
-        if index.exists:
-            kw['stat'] = index.get_stat()
-
-        kw['changed'] = False
-        module.exit_json(**kw)
-
-    elif state == "present":
+    if state == "present":
         if idxtype and idxtype.upper() not in VALID_IDX_TYPES:
             module.fail_json(msg="Index type '%s' of %s is not in valid types" % (idxtype, idxname))
 
