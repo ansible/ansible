@@ -556,15 +556,16 @@ class Host(object):
                 return True
 
         if inventory_mode:
-            if LooseVersion(self._zbx_api_version) <= LooseVersion('4.4.0'):
-                if host['inventory']:
+            if host['inventory']:
+                # The way to read the inventory_mode is different on versions between [4.0.0, 4.4.0)
+                if LooseVersion(self._zbx_api_version) >= LooseVersion('4.0.0') and LooseVersion(self._zbx_api_version) < LooseVersion('4.4.0'):
+                    if int(host['inventory']['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
+                        return True
+                else
                     if int(host['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
                         return True
-                elif inventory_mode != 'disabled':
-                    return True
-            else:
-                if int(host['inventory_mode']) != self.inventory_mode_numeric(inventory_mode):
-                    return True
+            elif inventory_mode != 'disabled':
+                return True
 
         if inventory_zabbix:
             proposed_inventory = copy.deepcopy(host['inventory'])
