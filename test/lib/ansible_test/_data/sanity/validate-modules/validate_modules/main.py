@@ -32,7 +32,7 @@ import traceback
 
 from collections import OrderedDict
 from contextlib import contextmanager
-from distutils.version import StrictVersion
+from distutils.version import StrictVersion, LooseVersion
 from fnmatch import fnmatch
 import yaml
 
@@ -85,6 +85,9 @@ BLACKLIST_IMPORTS = {
 }
 SUBPROCESS_REGEX = re.compile(r'subprocess\.Po.*')
 OS_CALL_REGEX = re.compile(r'os\.call.*')
+
+
+LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
 
 
 class ReporterEncoder(json.JSONEncoder):
@@ -1450,6 +1453,20 @@ class ModuleValidator(Validator):
                     msg=msg,
                 )
                 continue
+
+            removed_in_version = data.get('removed_in_version', None)
+            if removed_in_version is not None and LOOSE_ANSIBLE_VERSION >= LooseVersion(str(removed_in_version)):
+                msg = "Argument '%s' in argument_spec" % arg
+                if context:
+                    msg += " found in %s" % " -> ".join(context)
+                msg += " has a deprecated removed_in_version '%s'," % removed_in_version
+                msg += " i.e. the version is less than or equal to the current version of Ansible (%s)" % ansible_version
+                self.reporter.error(
+                    path=self.object_path,
+                    code='ansible-deprecated-version',
+                    msg=msg,
+                )
+
             aliases = data.get('aliases', [])
             if arg in aliases:
                 msg = "Argument '%s' in argument_spec" % arg
