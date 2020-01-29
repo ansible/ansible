@@ -39,6 +39,47 @@ options:
     type: dictionary
     default: {}
     version_added: "2.9"
+  force:
+    description: Whether or not to set "cache-control" header with value "no-cache"
+    type: boolean
+    version_added: "2.10"
+    default: False
+  timeout:
+    description: How long to wait for the server to send data before giving up
+    type: float
+    version_added: "2.10"
+    default: 10
+  http_agent:
+    description: User-Agent to use in the request
+    type: string
+    version_added: "2.10"
+  force_basic_auth:
+    description: Force basic authentication
+    type: boolean
+    version_added: "2.10"
+    default: False
+  follow_redirects:
+    description: String of urllib2, all/yes, safe, none to determine how redirects are followed, see RedirectHandlerFactory for more information
+    type: string
+    version_added: "2.10"
+    default: 'urllib2'
+  use_gssapi:
+    description: Use GSSAPI handler of requests
+    type: boolean
+    version_added: "2.10"
+    default: False
+  unix_socket:
+    description: String of file system path to unix socket file to use when establishing connection to the provided url
+    type: string
+    version_added: "2.10"
+  ca_path:
+    description: String of file system path to CA cert bundle to use
+    type: string
+    version_added: "2.10"
+  unredirected_headers:
+    description: A list of headers to not attach on a redirected request
+    type: list
+    version_added: "2.10"
 """
 
 EXAMPLES = """
@@ -51,6 +92,9 @@ EXAMPLES = """
 
 - name: url lookup using authentication
   debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
+
+- name: url lookup using basic authentication
+  debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
 
 - name: url lookup using headers
   debug: msg="{{ lookup('url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
@@ -85,7 +129,16 @@ class LookupModule(LookupBase):
                                     use_proxy=self.get_option('use_proxy'),
                                     url_username=self.get_option('username'),
                                     url_password=self.get_option('password'),
-                                    headers=self.get_option('headers'))
+                                    headers=self.get_option('headers'),
+                                    force=self.get_option('force'),
+                                    timeout=self.get_option('timeout'),
+                                    http_agent=self.get_option('http_agent'),
+                                    force_basic_auth=self.get_option('force_basic_auth'),
+                                    follow_redirects=self.get_option('follow_redirects'),
+                                    use_gssapi=self.get_option('use_gssapi'),
+                                    unix_socket=self.get_option('unix_socket'),
+                                    ca_path=self.get_option('ca_path'),
+                                    unredirected_headers=self.get_option('unredirected_headers'))
             except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, to_native(e)))
             except URLError as e:
