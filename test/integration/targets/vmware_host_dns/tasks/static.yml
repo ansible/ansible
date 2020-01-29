@@ -19,6 +19,9 @@
         that:
           - vmware_host_dns_result_0001 is not changed
 
+    - name: Revert to original DNS configuration
+      include_tasks: teardown.yaml
+
     # Testcase 0002: Ensure changing the hostname directly on the host works
     - name: Ensure changing the hostname directly on the host works
       vmware_host_dns:
@@ -38,6 +41,9 @@
         that:
           - vmware_host_dns_result_0002 is changed
 
+    - name: Revert to original DNS configuration
+      include_tasks: teardown.yaml
+
     # Testcase 0003: Ensure changing the domain directly on the host works
     - name: Ensure changing the domain directly on the host works
       vmware_host_dns:
@@ -56,6 +62,9 @@
       assert:
         that:
           - vmware_host_dns_result_0003 is changed
+
+    - name: Revert to original DNS configuration
+      include_tasks: teardown.yaml
 
     # Testcase 0004: Ensure changing the DNS servers directly on the host works
     - name: Ensure changing the domain directly on the host works
@@ -77,6 +86,9 @@
       assert:
         that:
           - vmware_host_dns_result_0004 is changed
+
+    - name: Revert to original DNS configuration
+      include_tasks: teardown.yaml
 
     # Testcase 0005: Ensure changing the search domain directly on the host works
     - name: Ensure changing the domain directly on the host works
@@ -101,18 +113,8 @@
         that:
           - vmware_host_dns_result_0005 is changed
 
-    # Revert to original DNS configuration with a different search_domains
     - name: Revert to original DNS configuration
-      vmware_host_dns:
-        hostname: '{{ esxi1 }}'
-        username: '{{ esxi_user }}'
-        password: '{{ esxi_password }}'
-        validate_certs: False
-        type: 'static'
-        host_name: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['host_name'] }}"
-        domain: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['domain_name'] }}"
-        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
-        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
+      include_tasks: teardown.yaml
 
     # Testcase 0006: Ensure DNS config on the cluster is idempotent for static
     - name: Apply configuration on a cluster
@@ -132,16 +134,7 @@
           - vmware_host_dns_result_0006 is changed
 
     - name: Revert to original DNS configuration
-      vmware_host_dns:
-        hostname: '{{ esxi1 }}'
-        username: '{{ esxi_user }}'
-        password: '{{ esxi_password }}'
-        validate_certs: False
-        type: 'static'
-        host_name: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['host_name'] }}"
-        domain: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['domain_name'] }}"
-        dns_servers: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['ip_address'] }}"
-        search_domains: "{{ dns['results'][0]['hosts_dns_info'][esxi1]['search_domain'] }}"
+      include_tasks: teardown.yaml
 
     # Testcase 0007: Ensure changing the domain on the cluster works
     - name: Ensure changing the domain on the cluster works
@@ -161,6 +154,9 @@
       assert:
         that:
           - vmware_host_dns_result_0007 is changed
+
+    - name: Revert to original DNS configuration
+      include_tasks: teardown.yaml
 
     # Testcase 0008: Ensure changing the DNS servers on the cluster works
     - name: Ensure changing the DNS servers on the cluster works
@@ -182,6 +178,9 @@
       assert:
         that:
           - vmware_host_dns_result_0008 is changed
+
+    - name: Revert to original DNS configuration
+      include_tasks: teardown.yaml
 
     # Testcase 0009: Ensure changing the search domains on the cluster works
     - name: Ensure changing the search domains on the cluster works
@@ -207,19 +206,5 @@
           - vmware_host_dns_result_0009 is changed
 
   always:
-    # Revert to original DNS configuration
     - name: Revert to original DNS configuration
-      vmware_host_dns:
-        hostname: '{{ vcenter_hostname }}'
-        username: '{{ vcenter_username }}'
-        password: '{{ vcenter_password }}'
-        esxi_hostname: "{{ item }}"
-        validate_certs: False
-        type: 'static'
-        host_name: "{{ dns['results'][index]['hosts_dns_info'][item]['host_name'] }}"
-        domain: "{{ dns['results'][index]['hosts_dns_info'][item]['domain_name'] }}"
-        dns_servers: "{{ dns['results'][index]['hosts_dns_info'][item]['ip_address'] }}"
-        search_domains: "{{ dns['results'][index]['hosts_dns_info'][item]['search_domain'] }}"
-      loop: "{{ esxi_hosts }}"
-      loop_control:
-        index_var: index
+      include_tasks: teardown.yaml

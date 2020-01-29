@@ -1,0 +1,15 @@
+- name: Revert to original DNS configuration
+  vmware_host_dns:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: "{{ item }}"
+    validate_certs: False
+    type: 'static'
+    host_name: "{{ dns['results'][index]['hosts_dns_info'][item]['host_name'] }}"
+    domain: "{{ dns['results'][index]['hosts_dns_info'][item]['domain_name'] }}"
+    dns_servers: "{{ dns['results'][index]['hosts_dns_info'][item]['ip_address'] }}"
+    search_domains: "{{ dns['results'][index]['hosts_dns_info'][item]['search_domain'] }}"
+  loop: "{{ esxi_hosts }}"
+  loop_control:
+    index_var: index
