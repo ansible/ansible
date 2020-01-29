@@ -67,9 +67,9 @@ options:
   merge_method:
     description:
       - What requirements are placed upon merges.
-      - Possible values are merge, rebase_merge (Merge commit with semi-linear history), ff (fast-forward merges only)
+      - Possible values are C(merge), C(rebase_merge) (Merge commit with semi-linear history), C(ff) (fast-forward merges only)
     type: str
-    choices: ["merge", "rebase_merge", "ff"]
+    choices: ["ff", "merge", "rebase_merge"]
     default: merge
     version_added: "2.10"
   wiki_enabled:
