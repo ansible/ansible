@@ -1,0 +1,2 @@
+minor_changes:
+  - file - specifying ``src`` without ``state`` is now an error

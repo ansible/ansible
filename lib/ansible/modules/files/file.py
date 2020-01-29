@@ -291,15 +291,10 @@ def additional_parameter_handling(params):
         raise ParameterError(results={"msg": "recurse option requires state to be 'directory'",
                                       "path": params["path"]})
 
-    # Make sure that src makes sense with the state
+    # Fail if 'src' but no 'state' is specified
     if params['src'] and params['state'] not in ('link', 'hard'):
-        params['src'] = None
-        module.warn("The src option requires state to be 'link' or 'hard'.  This will become an"
-                    " error in Ansible 2.10")
-
-        # In 2.10, switch to this
-        # raise ParameterError(results={"msg": "src option requires state to be 'link' or 'hard'",
-        #                               "path": params["path"]})
+        raise ParameterError(results={'msg': "src option requires state to be 'link' or 'hard'",
+                                      'path': params['path']})
 
 
 def get_state(path):
