@@ -1,0 +1,4 @@
+bugfixes:
+  - net_put - fix exception when transferring binary files that already exist at destination
+minor_changes:
+  - net_put - Add 'compare' option to optionally skip comparing src and dest files
