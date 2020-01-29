@@ -77,5 +77,8 @@ notes:
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
      default login of 'root' with no password.
    - If there are problems with local connections, using I(login_unix_socket=/path/to/mysqld/socket)
-     instead of I(login_host=localhost) might help.
+     instead of I(login_host=localhost) might help. As an example, the default MariaDB installation of version 10.4
+     and later uses the unix_socket authentication plugin by default that
+     without using I(login_unix_socket=/var/run/mysqld/mysqld.sock) (the default path)
+     causes the error ``Host '127.0.0.1' is not allowed to connect to this MariaDB server``.
 '''
