@@ -352,7 +352,11 @@ class Connection(NetworkConnectionBase):
     @property
     def paramiko_conn(self):
         if self._paramiko_conn is None:
-            self._paramiko_conn = connection_loader.get('paramiko', self._play_context, '/dev/null')
+            for fq_conn_name in ['ansible.netcommon.paramiko', 'paramiko']:
+                self._paramiko_conn = connection_loader.get(fq_conn_name, self._play_context, '/dev/null')
+                if self._paramiko_conn is not None:
+                    break
+
             self._paramiko_conn.set_options(direct={'look_for_keys': not bool(self._play_context.password and not self._play_context.private_key_file)})
         return self._paramiko_conn
 
