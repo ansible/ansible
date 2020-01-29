@@ -27,6 +27,7 @@ from .util_common import (
 )
 
 from .config import (
+    IntegrationConfig,
     PosixIntegrationConfig,
     EnvironmentConfig,
     CommonConfig,
@@ -74,6 +75,14 @@ def ansible_environment(args, color=True, ansible_config=None):
         PAGER='/bin/cat',
         PATH=path,
     )
+
+    if isinstance(args, IntegrationConfig) and args.coverage:
+        # standard path injection is not effective for ansible-connection, instead the location must be configured
+        # ansible-connection only requires the injector for code coverage
+        # the correct python interpreter is already selected using the sys.executable used to invoke ansible
+        ansible.update(dict(
+            ANSIBLE_CONNECTION_PATH=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'injector', 'ansible-connection'),
+        ))
 
     if isinstance(args, PosixIntegrationConfig):
         ansible.update(dict(
