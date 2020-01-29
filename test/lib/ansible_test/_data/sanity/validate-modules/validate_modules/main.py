@@ -1212,6 +1212,13 @@ class ModuleValidator(Validator):
                     code='parameter-alias-repeated',
                     msg=msg
                 )
+            if not context and arg == 'state':
+                bad_states = set(['list', 'info']) & set(data.get('choices', set()))
+                for bad_state in bad_states:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='parameter-state-invalid-choice',
+                        msg="Argument 'state' includes the value '%s' as a choice" % bad_state)
             if not data.get('removed_in_version', None):
                 args_from_argspec.add(arg)
                 args_from_argspec.update(aliases)
