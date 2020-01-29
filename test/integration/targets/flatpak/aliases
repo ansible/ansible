@@ -1,7 +1,6 @@
 unsupported
 destructive
 skip/aix
-skip/ibmi
 skip/freebsd
 skip/osx
 skip/rhel

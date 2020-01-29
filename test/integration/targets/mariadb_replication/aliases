@@ -3,7 +3,6 @@ shippable/posix/group2
 # Make sure that this test runs in a different group than mysql_replication!
 mysql_replication
 skip/aix
-skip/ibmi
 skip/osx
 skip/freebsd
 skip/ubuntu

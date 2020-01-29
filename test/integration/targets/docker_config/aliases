@@ -2,7 +2,6 @@ shippable/posix/group3
 skip/osx
 skip/freebsd
 skip/aix
-skip/ibmi
 destructive
 skip/docker  # The tests sometimes make docker daemon unstable; hence,
              # we skip all docker-based CI runs to avoid disrupting

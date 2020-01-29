@@ -273,8 +273,8 @@ class ManagePosixCI:
             # being different and -z not being recognized. This pattern works
             # with both versions of tar.
             self.ssh(
-                'rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && gunzip %s && tar oxf %s' %
-                (remote_source_path, remote_source_path.replace('.tgz', '.tar'))
+                'rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && gunzip --stdout %s | tar oxf - && rm %s' %
+                (remote_source_path, remote_source_path)
             )
 
     def download(self, remote, local):
@@ -304,7 +304,7 @@ class ManagePosixCI:
         if isinstance(command, list):
             command = ' '.join(cmd_quote(c) for c in command)
 
-        command = command if self.core_ci.platform in ['aix', 'ibmi'] else cmd_quote(command)
+        command = cmd_quote(command) if self.become else command
         return run_command(self.core_ci.args,
                            ['ssh', '-tt', '-q'] + self.ssh_args +
                            options +

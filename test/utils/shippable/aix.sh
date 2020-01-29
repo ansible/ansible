@@ -1,1 +1,1 @@
-platform.sh
+remote.sh

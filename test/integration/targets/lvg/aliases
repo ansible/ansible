@@ -2,6 +2,5 @@ destructive
 needs/privileged
 shippable/posix/group1
 skip/aix
-skip/ibmi
 skip/freebsd
 skip/osx

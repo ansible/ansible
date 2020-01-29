@@ -12,7 +12,6 @@ import functools
 import hashlib
 import difflib
 import filecmp
-import platform as _platform  # the platform string is already used as variables name
 import random
 import string
 import shutil
@@ -1249,11 +1248,6 @@ rdr pass inet proto tcp from any to any port 443 -> 127.0.0.1 port 8443
                 # append rule when it does not exist
                 cmd = ['iptables', '-t', 'nat', '-A', 'OUTPUT'] + rule
                 run_command(args, cmd, capture=True)
-    elif _platform.system() == 'AIX':
-        # http-tester is not yet configured for AIX system. Tests marked as
-        # needs/httptester have also been marked as skip/aix until this is
-        # solved
-        pass
     else:
         raise ApplicationError('No supported port forwarding mechanism detected.')
 

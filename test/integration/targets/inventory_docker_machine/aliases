@@ -1,7 +1,6 @@
 disabled
 shippable/posix/group2
 skip/aix
-skip/ibmi
 skip/osx
 skip/freebsd
 destructive

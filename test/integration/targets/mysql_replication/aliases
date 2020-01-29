@@ -2,7 +2,6 @@ destructive
 shippable/posix/group4
 # Make sure that this test runs in a different group than mariadb_replication!
 skip/aix
-skip/ibmi
 skip/osx
 skip/freebsd
 skip/ubuntu

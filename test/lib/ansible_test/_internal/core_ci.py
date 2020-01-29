@@ -68,6 +68,7 @@ class AnsibleCoreCI:
         self.instance_id = None
         self.endpoint = None
         self.max_threshold = 1
+        self.retries = 3
         self.name = name if name else '%s-%s' % (self.platform, self.version)
         self.ci_key = os.path.expanduser('~/.ansible-core-ci.key')
         self.resource = 'jobs'
@@ -147,7 +148,10 @@ class AnsibleCoreCI:
                 self.port = 22
 
             if self.provider == 'ibmcloud':
-                self.max_threshold = 6
+                # Additional retries are neededed to accommodate images transitioning
+                # to the active state in the IBM cloud. This operation can take up to
+                # 90 seconds
+                self.retries = 7
         elif self.provider == 'parallels':
             self.endpoints = self._get_parallels_endpoints()
             self.max_threshold = 6
@@ -429,7 +433,7 @@ class AnsibleCoreCI:
         :type threshold: int
         :rtype: HttpResponse | None
         """
-        tries = 3
+        tries = self.retries
         sleep = 15
 
         data['threshold'] = threshold
