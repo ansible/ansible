@@ -125,11 +125,32 @@ matrix:
     - env: T=linux/ubuntu1604/4
     - env: T=linux/ubuntu1804/4
 
+    - env: T=osx/10.11/5
+    - env: T=rhel/7.6/5
+    - env: T=rhel/8.1/5
+    - env: T=freebsd/11.1/5
+    - env: T=freebsd/12.0/5
+    - env: T=linux/centos6/5
+    - env: T=linux/centos7/5
+    - env: T=linux/centos8/5
+    - env: T=linux/fedora30/5
+    - env: T=linux/fedora31/5
+    - env: T=linux/opensuse15py2/5
+    - env: T=linux/opensuse15/5
+    - env: T=linux/ubuntu1604/5
+    - env: T=linux/ubuntu1804/5
+
     - env: T=aws/2.7/1
     - env: T=aws/3.6/1
 
     - env: T=aws/2.7/2
     - env: T=aws/3.6/2
+
+    - env: T=aws/2.7/3
+    - env: T=aws/3.6/3
+
+    - env: T=aws/2.7/4
+    - env: T=aws/3.6/4
 
     - env: T=azure/2.7/1
     - env: T=azure/3.6/1
@@ -167,8 +188,14 @@ matrix:
     - env: T=vcenter/2.7/1
     - env: T=vcenter/3.6/1
 
+    - env: T=vcenter/2.7/2
+    - env: T=vcenter/3.6/2
+
     - env: T=cs/2.7/1
     - env: T=cs/3.6/1
+
+    - env: T=cs/2.7/2
+    - env: T=cs/3.6/2
 
     - env: T=tower/2.7/1
     - env: T=tower/3.6/1
