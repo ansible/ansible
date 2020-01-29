@@ -1,6 +1,6 @@
 cloud/aws
 destructive
-shippable/aws/group1
+shippable/aws/group4
 non_local
 needs/root
 needs/target/connection
