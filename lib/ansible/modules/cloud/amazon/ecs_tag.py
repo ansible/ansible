@@ -15,7 +15,7 @@ short_description: create and remove tags on Amazon ECS resources
 notes:
     - none
 description:
-    - Creates, removes and lists tags for Amazon ECS resources.
+    - Creates and removes tags for Amazon ECS resources.
     - Resources are referenced by their cluster name.
 version_added: '2.10'
 author:
@@ -41,9 +41,8 @@ options:
   state:
     description:
       - Whether the tags should be present or absent on the resource.
-      - Use C(list) to interrogate the tags of an ECS resource.
     default: present
-    choices: ['present', 'absent', 'list']
+    choices: ['present', 'absent']
     type: str
   tags:
     description:
@@ -70,13 +69,6 @@ EXAMPLES = r'''
     tags:
       Name: ubervol
       env: prod
-
-- name: Retrieve all tags on a cluster
-  ecs_tag:
-    cluster_name: mycluster
-    resource: http_task
-    resource_type: task
-    state: list
 
 - name: Remove the Env tag
   ecs_tag:
@@ -168,7 +160,7 @@ def main():
         resource=dict(required=False),
         tags=dict(type='dict'),
         purge_tags=dict(type='bool', default=False),
-        state=dict(default='present', choices=['present', 'absent', 'list']),
+        state=dict(default='present', choices=['present', 'absent']),
         resource_type=dict(default='cluster', choices=['cluster', 'task', 'service', 'task_definition', 'container'])
     )
     required_if = [('state', 'present', ['tags']), ('state', 'absent', ['tags'])]
@@ -192,9 +184,6 @@ def main():
     resource_arn = get_arn(ecs, module, cluster_name, resource_type, resource)
 
     current_tags = get_tags(ecs, module, resource_arn)
-
-    if state == 'list':
-        module.exit_json(changed=False, tags=current_tags)
 
     add_tags, remove = compare_aws_tags(current_tags, tags, purge_tags=purge_tags)
 
