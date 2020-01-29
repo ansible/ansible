@@ -330,7 +330,7 @@ class ManageIQgroup(object):
 
         return dict(
             changed=True,
-            msg="deleted group %s with id %i" % (group['description'], group['id']))
+            msg="deleted group %s with id %s" % (group['description'], group['id']))
 
     def edit_group(self, group, description, role, tenant, norm_managed_filters, managed_filters_merge_mode,
                    belongsto_filters, belongsto_filters_merge_mode):
