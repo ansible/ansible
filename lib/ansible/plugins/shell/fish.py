@@ -72,7 +72,7 @@ class ShellModule(ShModule):
         # checksum: success!
         # 0: Unknown error
         # 1: Remote file does not exist
-        # 2: No read permissions on the file
+        # 2: No read permisshions on the file
         # 3: File is a directory
         # 4: No python interpreter
 
