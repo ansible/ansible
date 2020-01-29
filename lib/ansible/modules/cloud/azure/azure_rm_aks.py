@@ -76,7 +76,7 @@ options:
                 required: true
             vnet_subnet_id:
                 description:
-                    - Id of subnet for Agent Pool VM's Network Interfaces 
+                    - Id of subnet for Agent Pool VM's Network Interfaces
             os_disk_size_gb:
                 description:
                     - Size of the OS disk.
