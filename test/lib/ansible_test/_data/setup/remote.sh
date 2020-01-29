@@ -91,7 +91,7 @@ elif [ "${platform}" = "aix" ]; then
             python-jinja2 \
             python-cryptography \
             python-pip && \
-        pip install --quiet virtualenv \
+        pip install --disable-pip-version-check --quiet virtualenv \
         && break
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
