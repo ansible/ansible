@@ -1,0 +1,3 @@
+bugfixes:
+- "Module arguments in suboptions which were marked as deprecated with ``removed_in_version`` did not result in a warning."
+- "The warning for module arguments deprecated with ``removed_in_version`` contained the strings ``msg`` and ``version`` instead of their values."
