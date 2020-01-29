@@ -573,7 +573,9 @@ lib/ansible/modules/cloud/amazon/ec2_placement_group_info.py validate-modules:do
 lib/ansible/modules/cloud/amazon/ec2_placement_group_info.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/cloud/amazon/ec2_snapshot_info.py validate-modules:doc-elements-mismatch
 lib/ansible/modules/cloud/amazon/ec2_snapshot_info.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/cloud/amazon/ec2_tag.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/cloud/amazon/ec2_transit_gateway_info.py validate-modules:doc-elements-mismatch
+lib/ansible/modules/cloud/amazon/ec2_vol.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/cloud/amazon/ec2_vpc_dhcp_option.py validate-modules:doc-elements-mismatch
 lib/ansible/modules/cloud/amazon/ec2_vpc_dhcp_option.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/cloud/amazon/ec2_vpc_dhcp_option_info.py validate-modules:doc-elements-mismatch
@@ -1430,6 +1432,7 @@ lib/ansible/modules/cloud/google/gcpubsub_info.py validate-modules:doc-choices-d
 lib/ansible/modules/cloud/google/gcpubsub_info.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/cloud/google/gcpubsub_info.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/google/gcpubsub_info.py validate-modules:doc-required-mismatch
+lib/ansible/modules/cloud/google/gcpubsub_info.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/cloud/google/gcpubsub_info.py validate-modules:undocumented-parameter
 lib/ansible/modules/cloud/hcloud/hcloud_network_info.py validate-modules:return-syntax-error
 lib/ansible/modules/cloud/hcloud/hcloud_server.py validate-modules:parameter-list-no-elements
@@ -1505,6 +1508,7 @@ lib/ansible/modules/cloud/misc/proxmox_template.py validate-modules:nonexistent-
 lib/ansible/modules/cloud/misc/proxmox_template.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/misc/rhevm.py validate-modules:doc-required-mismatch
 lib/ansible/modules/cloud/misc/rhevm.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/cloud/misc/rhevm.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/cloud/misc/serverless.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/cloud/misc/terraform.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/cloud/misc/terraform.py validate-modules:doc-missing-type
@@ -2045,6 +2049,7 @@ lib/ansible/modules/cloud/rackspace/rax_files.py validate-modules:doc-choices-do
 lib/ansible/modules/cloud/rackspace/rax_files.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/cloud/rackspace/rax_files.py validate-modules:doc-missing-type
 lib/ansible/modules/cloud/rackspace/rax_files.py validate-modules:doc-required-mismatch
+lib/ansible/modules/cloud/rackspace/rax_files.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/cloud/rackspace/rax_files.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/cloud/rackspace/rax_files_objects.py use-argspec-type-path
 lib/ansible/modules/cloud/rackspace/rax_files_objects.py validate-modules:doc-default-does-not-match-spec
@@ -2298,6 +2303,7 @@ lib/ansible/modules/cloud/vmware/vmware_guest_network.py validate-modules:parame
 lib/ansible/modules/cloud/vmware/vmware_guest_sendkey.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/cloud/vmware/vmware_guest_serial_port.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/cloud/vmware/vmware_guest_snapshot.py validate-modules:doc-required-mismatch
+lib/ansible/modules/cloud/vmware/vmware_host_acceptance.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/cloud/vmware/vmware_host_datastore.py validate-modules:doc-required-mismatch
 lib/ansible/modules/cloud/vmware/vmware_host_dns.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/cloud/vmware/vmware_host_facts.py validate-modules:parameter-list-no-elements
@@ -2396,6 +2402,7 @@ lib/ansible/modules/clustering/consul/consul_acl.py validate-modules:parameter-l
 lib/ansible/modules/clustering/consul/consul_kv.py validate-modules:doc-required-mismatch
 lib/ansible/modules/clustering/consul/consul_kv.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/clustering/consul/consul_session.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/clustering/consul/consul_session.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/clustering/etcd3.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/clustering/etcd3.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/clustering/k8s/k8s.py validate-modules:doc-default-does-not-match-spec
@@ -6818,6 +6825,7 @@ lib/ansible/modules/remote_management/manageiq/manageiq_policies.py validate-mod
 lib/ansible/modules/remote_management/manageiq/manageiq_policies.py validate-modules:implied-parameter-type-mismatch
 lib/ansible/modules/remote_management/manageiq/manageiq_policies.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/remote_management/manageiq/manageiq_policies.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/remote_management/manageiq/manageiq_policies.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/remote_management/manageiq/manageiq_policies.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/remote_management/manageiq/manageiq_provider.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/remote_management/manageiq/manageiq_provider.py validate-modules:doc-default-does-not-match-spec
@@ -6831,6 +6839,7 @@ lib/ansible/modules/remote_management/manageiq/manageiq_tags.py validate-modules
 lib/ansible/modules/remote_management/manageiq/manageiq_tags.py validate-modules:implied-parameter-type-mismatch
 lib/ansible/modules/remote_management/manageiq/manageiq_tags.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/remote_management/manageiq/manageiq_tags.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/remote_management/manageiq/manageiq_tags.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/remote_management/manageiq/manageiq_tags.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/remote_management/manageiq/manageiq_tenant.py validate-modules:doc-missing-type
 lib/ansible/modules/remote_management/manageiq/manageiq_tenant.py validate-modules:doc-required-mismatch
@@ -7019,6 +7028,7 @@ lib/ansible/modules/storage/netapp/_na_cdot_volume.py validate-modules:parameter
 lib/ansible/modules/storage/netapp/_na_cdot_volume.py validate-modules:undocumented-parameter
 lib/ansible/modules/storage/netapp/_na_ontap_gather_facts.py validate-modules:doc-missing-type
 lib/ansible/modules/storage/netapp/_na_ontap_gather_facts.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/storage/netapp/_na_ontap_gather_facts.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/storage/netapp/_na_ontap_gather_facts.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/storage/netapp/_sf_account_manager.py validate-modules:doc-missing-type
 lib/ansible/modules/storage/netapp/_sf_account_manager.py validate-modules:parameter-type-not-in-doc
@@ -7130,6 +7140,7 @@ lib/ansible/modules/storage/netapp/na_ontap_igroup_initiator.py validate-modules
 lib/ansible/modules/storage/netapp/na_ontap_igroup_initiator.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/storage/netapp/na_ontap_igroup_initiator.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/storage/netapp/na_ontap_info.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/storage/netapp/na_ontap_info.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/storage/netapp/na_ontap_interface.py validate-modules:doc-missing-type
 lib/ansible/modules/storage/netapp/na_ontap_interface.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/storage/netapp/na_ontap_interface.py validate-modules:parameter-type-not-in-doc
@@ -7407,10 +7418,12 @@ lib/ansible/modules/system/nosh.py validate-modules:return-syntax-error
 lib/ansible/modules/system/openwrt_init.py validate-modules:doc-missing-type
 lib/ansible/modules/system/openwrt_init.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/system/osx_defaults.py validate-modules:doc-required-mismatch
+lib/ansible/modules/system/osx_defaults.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/system/pam_limits.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/system/pamd.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/system/parted.py pylint:blacklisted-name
 lib/ansible/modules/system/parted.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/system/parted.py validate-modules:parameter-state-invalid-choice
 lib/ansible/modules/system/puppet.py use-argspec-type-path
 lib/ansible/modules/system/puppet.py validate-modules:parameter-invalid
 lib/ansible/modules/system/puppet.py validate-modules:parameter-list-no-elements

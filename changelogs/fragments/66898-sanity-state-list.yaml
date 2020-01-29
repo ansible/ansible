@@ -1,0 +1,2 @@
+minor_changes:
+  - 'ansible-test - Add a test to prevent ``state=list`` and ``state=info``'
