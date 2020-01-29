@@ -24,6 +24,14 @@ DOCUMENTATION = '''
     requirements:
       - whitelisting in configuration - see examples section below for details.
     options:
+      min_seconds:
+        description: Display timing only of duriation is more than this number of seconds
+        default: 0
+        env:
+          - name: PROFILE_TASKS_MIN_SECONDS
+        ini:
+          - section: callback_profile_tasks
+            key: min_seconds
       output_limit:
         description: Number of tasks to display in the summary
         default: 20
@@ -48,6 +56,7 @@ example: >
   To enable, add this to your ansible.cfg file in the defaults block
     [defaults]
     callback_whitelist = profile_tasks
+    min_seconds = 2
 sample output: >
 #
 #    TASK: [ensure messaging security group exists] ********************************
@@ -96,13 +105,15 @@ def timestamp(self):
         self.stats[self.current]['time'] = time.time() - self.stats[self.current]['time']
 
 
-def tasktime():
+def tasktime(min_seconds=0):
     global tn
     time_current = time.strftime('%A %d %B %Y  %H:%M:%S %z')
-    time_elapsed = secondsToStr(time.time() - tn)
-    time_total_elapsed = secondsToStr(time.time() - t0)
-    tn = time.time()
-    return filled('%s (%s)%s%s' % (time_current, time_elapsed, ' ' * 7, time_total_elapsed))
+    if (time.time() - tn) > min_seconds:
+        time_elapsed = secondsToStr(time.time() - tn)
+
+        time_total_elapsed = secondsToStr(time.time() - t0)
+        tn = time.time()
+        return filled('%s (%s)%s%s' % (time_current, time_elapsed, ' ' * 7, time_total_elapsed))
 
 
 class CallbackModule(CallbackBase):
@@ -119,6 +130,7 @@ class CallbackModule(CallbackBase):
         self.stats = collections.OrderedDict()
         self.current = None
 
+        self.min_seconds = 0
         self.sort_order = None
         self.task_output_limit = None
 
@@ -127,6 +139,12 @@ class CallbackModule(CallbackBase):
     def set_options(self, task_keys=None, var_options=None, direct=None):
 
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        self.min_seconds = self.get_option('min_seconds')
+        if not self.min_seconds:
+            self.min_seconds = 0
+        else:
+            self.min_seconds = int(self.min_seconds)
 
         self.sort_order = self.get_option('sort_order')
         if self.sort_order is not None:
@@ -148,7 +166,9 @@ class CallbackModule(CallbackBase):
         """
         Logs the start of each task
         """
-        self._display.display(tasktime())
+        msg = tasktime(self.min_seconds)
+        if msg:
+            self._display.display(msg)
         timestamp(self)
 
         # Record the start time of the current task
@@ -164,10 +184,13 @@ class CallbackModule(CallbackBase):
         self._record_task(task)
 
     def playbook_on_setup(self):
-        self._display.display(tasktime())
+        self._display.display(tasktime(self.min_seconds))
 
     def playbook_on_stats(self, stats):
-        self._display.display(tasktime())
+
+        msg = tasktime(self.min_seconds)
+        if msg:
+            self._display.display(msg)
         self._display.display(filled("", fchar="="))
 
         timestamp(self)
