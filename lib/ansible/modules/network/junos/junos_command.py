@@ -193,6 +193,7 @@ def rpc(module, items):
         name = item['name']
         xattrs = item['xattrs']
         fetch_config = False
+        file_delete = False
 
         args = item.get('args')
         text = item.get('text')
@@ -204,6 +205,9 @@ def rpc(module, items):
 
         if name == 'command' and text.startswith('show configuration') or name == 'get-configuration':
             fetch_config = True
+
+        if name == 'command' and text.startswith('file delete') or name == 'file-delete':
+            file_delete = True
 
         element = Element(name, xattrs)
 
@@ -233,6 +237,11 @@ def rpc(module, items):
                 data = reply.find('.//configuration-text')
             else:
                 data = reply.find('.//output')
+
+            if data is None and file_delete:
+                # 'file delete' does not produce output when files are successfully deleted :(
+                responses.append('')
+                continue
 
             if data is None:
                 module.fail_json(msg=tostring(reply))
