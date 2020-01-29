@@ -113,6 +113,42 @@ options:
      - '   If C(state) is set to C(present), disk will be added if not present at given SCSI Controller and Unit Number.'
      - '   If C(state) is set to C(present) and disk exists with different size, disk size is increased.'
      - '   Reducing disk size is not allowed.'
+     suboptions:
+       iolimit:
+         description:
+           - Section specifies the shares and limit for storage I/O resource.
+         suboptions:
+           limit:
+             description:
+               - Section specifies values for limit where the utilization of a virtual machine will not exceed, even if there are available resources.
+           shares:
+             description:
+               - Specifies different types of shares user can add for the given disk.
+             suboptions:
+               level:
+                 description:
+                   - Specifies different level for the shares section.
+                   - Valid values are low, normal, high, custom.
+               level_value:
+                 description:
+                   - Custom value when C(level) is set as C(custom).
+                 type: int
+             type: list
+             elements: dict
+       shares:
+         description:
+           - section for iolimit section tells about what are all different types of shares user can add for disk.
+         suboptions:
+           level:
+             description:
+               - tells about different level for the shares section, valid values are low,normal,high,custom.
+             type: str
+           level_value:
+             description:
+               - custom value when level is set as custom.
+             type: int
+         type: list
+         elements: dict
      default: []
      type: list
 extends_documentation_fragment: vmware.documentation
@@ -156,7 +192,51 @@ EXAMPLES = '''
   delegate_to: localhost
   register: disk_facts
 
-- name: Remove disk from virtual machine using name
+- name: Add disks with specified shares to the virtual machine
+  vmware_guest_disk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    disk:
+      - size_gb: 1
+        type: thin
+        datastore: datacluster0
+        state: present
+        scsi_controller: 1
+        unit_number: 1
+        disk_mode: 'independent_persistent'
+        shares:
+          level: custom
+          level_value: 1300
+  delegate_to: localhost
+  register: test_custom_shares
+
+- name: create new disk with custom IO limits and shares in IO Limits
+  vmware_guest_disk:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    disk:
+      - size_gb: 1
+        type: thin
+        datastore: datacluster0
+        state: present
+        scsi_controller: 1
+        unit_number: 1
+        disk_mode: 'independent_persistent'
+        iolimit:
+            limit: 1506
+            shares:
+              level: custom
+              level_value: 1305
+  delegate_to: localhost
+  register: test_custom_IoLimit_shares
+
+- name: Remove disks from virtual machine using name
   vmware_guest_disk:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -324,6 +404,26 @@ class PyVmomiHelper(PyVmomi):
 
         return changed, results
 
+    def get_ioandshares_diskconfig(self, disk_spec, disk):
+        io_disk_spec = vim.StorageResourceManager.IOAllocationInfo()
+        if 'iolimit' in disk:
+            io_disk_spec.limit = disk['iolimit']['limit']
+            if 'shares' in disk['iolimit']:
+                shares_spec = vim.SharesInfo()
+                shares_spec.level = disk['iolimit']['shares']['level']
+                if shares_spec.level == 'custom':
+                    shares_spec.shares = disk['iolimit']['shares']['level_value']
+                io_disk_spec.shares = shares_spec
+            disk_spec.device.storageIOAllocation = io_disk_spec
+        if 'shares' in disk:
+            shares_spec = vim.SharesInfo()
+            shares_spec.level = disk['shares']['level']
+            if shares_spec.level == 'custom':
+                shares_spec.shares = disk['shares']['level_value']
+            io_disk_spec.shares = shares_spec
+            disk_spec.device.storageIOAllocation = io_disk_spec
+        return disk_spec
+
     def ensure_disks(self, vm_obj=None):
         """
         Manage internal state of virtual machine disks
@@ -391,6 +491,7 @@ class PyVmomiHelper(PyVmomi):
                 else:
                     disk_spec.device.backing.fileName = disk['filename']
                 disk_spec.device.backing.datastore = disk['datastore']
+                disk_spec = self.get_ioandshares_diskconfig(disk_spec, disk)
                 self.config_spec.deviceChange.append(disk_spec)
                 disk_change = True
                 current_scsi_info[scsi_controller]['disks'][disk['disk_unit_number']] = disk_spec.device
@@ -403,11 +504,12 @@ class PyVmomiHelper(PyVmomi):
                     # Edit and no resizing allowed
                     if disk['size'] < disk_spec.device.capacityInKB:
                         self.module.fail_json(msg="Given disk size at disk index [%s] is smaller than found (%d < %d)."
-                                                  " Reducing disks is not allowed." % (disk['disk_index'],
-                                                                                       disk['size'],
-                                                                                       disk_spec.device.capacityInKB))
+                                                  "Reducing disks is not allowed." % (disk['disk_index'],
+                                                                                      disk['size'],
+                                                                                      disk_spec.device.capacityInKB))
                     if disk['size'] != disk_spec.device.capacityInKB:
                         disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+                        disk_spec = self.get_ioandshares_diskconfig(disk_spec, disk)
                         disk_spec.device.capacityInKB = disk['size']
                         self.config_spec.deviceChange.append(disk_spec)
                         disk_change = True
@@ -632,7 +734,10 @@ class PyVmomiHelper(PyVmomi):
                                           " 'scsi_type' value from ['%s']" % (disk_index,
                                                                               "', '".join(self.scsi_device_type.keys())))
             current_disk['scsi_type'] = scsi_contrl_type
-
+            if 'shares' in disk:
+                current_disk['shares'] = disk['shares']
+            if 'iolimit' in disk:
+                current_disk['iolimit'] = disk['iolimit']
             disks_data.append(current_disk)
         return disks_data
 
@@ -691,6 +796,11 @@ class PyVmomiHelper(PyVmomi):
         disk_index = 0
         for disk in vm_obj.config.hardware.device:
             if isinstance(disk, vim.vm.device.VirtualDisk):
+                if disk.storageIOAllocation is None:
+                    disk.storageIOAllocation = vim.StorageResourceManager.IOAllocationInfo()
+                    disk.storageIOAllocation.shares = vim.SharesInfo()
+                if disk.shares is None:
+                    disk.shares = vim.SharesInfo()
                 disks_facts[disk_index] = dict(
                     key=disk.key,
                     label=disk.deviceInfo.label,
@@ -703,6 +813,11 @@ class PyVmomiHelper(PyVmomi):
                     backing_eagerlyscrub=bool(disk.backing.eagerlyScrub),
                     controller_key=disk.controllerKey,
                     unit_number=disk.unitNumber,
+                    iolimit_limit=disk.storageIOAllocation.limit,
+                    iolimit_shares_level=disk.storageIOAllocation.shares.level,
+                    iolimit_shares_limit=disk.storageIOAllocation.shares.shares,
+                    shares_level=disk.shares.level,
+                    shares_limit=disk.shares.shares,
                     capacity_in_kb=disk.capacityInKB,
                     capacity_in_bytes=disk.capacityInBytes,
                 )
