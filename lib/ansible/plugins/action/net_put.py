@@ -99,14 +99,16 @@ class ActionModule(ActionBase):
         if dest is None:
             dest = src_file_path_name
 
-        try:
+        compare = self._task.args.get('compare')
+        if compare:
             changed = self._handle_existing_file(conn, output_file, dest, proto, sock_timeout)
             if changed is False:
                 result['changed'] = changed
                 result['destination'] = dest
                 return result
-        except Exception as exc:
-            result['msg'] = ('Warning: %s idempotency check failed. Check dest' % exc)
+        else:
+            display.vvvv('Skipping file comparison')
+            changed = True
 
         try:
             conn.copy_file(
@@ -151,25 +153,30 @@ class ActionModule(ActionBase):
                 if os.path.exists(tmp_source_file):
                     os.remove(tmp_source_file)
                 return True
+            raise
 
         try:
-            with open(source, 'r') as f:
-                new_content = f.read()
-            with open(tmp_source_file, 'r') as f:
-                old_content = f.read()
+            sha1 = hashlib.sha1()
+            with open(source, 'rb') as f:
+                while True:
+                    data = f.read(65536)
+                    if not data:
+                        break
+                    sha1.update(data)
+                checksum_old = sha1.digest()
+
+            sha1 = hashlib.sha1()
+            with open(tmp_source_file, 'rb') as f:
+                while True:
+                    data = f.read(65536)
+                    if not data:
+                        break
+                    sha1.update(data)
+                checksum_new = sha1.digest()
         except (IOError, OSError):
             os.remove(tmp_source_file)
             raise
 
-        sha1 = hashlib.sha1()
-        old_content_b = to_bytes(old_content, errors='surrogate_or_strict')
-        sha1.update(old_content_b)
-        checksum_old = sha1.digest()
-
-        sha1 = hashlib.sha1()
-        new_content_b = to_bytes(new_content, errors='surrogate_or_strict')
-        sha1.update(new_content_b)
-        checksum_new = sha1.digest()
         os.remove(tmp_source_file)
         if checksum_old == checksum_new:
             return False

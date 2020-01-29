@@ -52,6 +52,16 @@ options:
     default: binary
     choices: ['binary', 'text']
     version_added: "2.7"
+  compare:
+    description:
+      - If set to I(yes) it is checked if the file already exists at
+        I(dest). If it does exist and has the same checksum, no action will be
+        taken. This should be set to I(no) for large files, as it requires the
+        destination file to be transferred to the executing host for checksum
+        comparison.
+    type: bool
+    default: 'yes'
+    version_added: "2.10"
 
 requirements:
     - "scp"
