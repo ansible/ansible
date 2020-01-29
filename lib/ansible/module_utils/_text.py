@@ -166,7 +166,7 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
     return to_bytes(value, encoding, errors)
 
 
-def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
+def to_text(obj, encoding='utf-8-sig', errors=None, nonstring='simplerepr'):
     """Make sure that a string is a text string
 
     :arg obj: An object to make sure is a text string.  In most cases this
@@ -174,7 +174,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         ``nonstring='simplerepr'``, this can be used as a traceback-free
         version of ``str(obj)``.
     :kwarg encoding: The encoding to use to transform from a byte string to
-        a text string.  Defaults to using 'utf-8'.
+        a text string.  Defaults to using 'utf-8-sig'.
     :kwarg errors: The error handler to use if the byte string is not
         decodable using the specified encoding.  Any valid `codecs error
         handler <https://docs.python.org/2/library/codecs.html#codec-base-classes>`_
