@@ -129,7 +129,6 @@ DOCUMENTATION = """
 #timeout=self._play_context.timeout,
 """
 
-import warnings
 import os
 import socket
 import tempfile
@@ -142,7 +141,6 @@ from termios import tcflush, TCIFLUSH
 from distutils.version import LooseVersion
 from binascii import hexlify
 
-from ansible import constants as C
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
