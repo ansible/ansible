@@ -1467,6 +1467,22 @@ class ModuleValidator(Validator):
                     msg=msg,
                 )
 
+            deprecated_aliases = data.get('deprecated_aliases', None)
+            if deprecated_aliases is not None:
+                for deprecated_alias in deprecated_aliases:
+                    if LOOSE_ANSIBLE_VERSION >= LooseVersion(str(deprecated_alias['version'])):
+                        msg = "Argument '%s' in argument_spec" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " has deprecated aliases '%s' with removal in version '%s'," % (
+                            deprecated_alias['name'], deprecated_alias['version'])
+                        msg += " i.e. the version is less than or equal to the current version of Ansible (%s)" % ansible_version
+                        self.reporter.error(
+                            path=self.object_path,
+                            code='ansible-deprecated-version',
+                            msg=msg,
+                        )
+
             aliases = data.get('aliases', [])
             if arg in aliases:
                 msg = "Argument '%s' in argument_spec" % arg
