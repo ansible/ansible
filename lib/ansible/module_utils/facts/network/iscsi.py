@@ -72,7 +72,7 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
 
         iscsi_facts = {}
         iscsi_facts['iscsi_iqn'] = ""
-        if sys.platform.startswith('linux') or sys.platform.startswith('sunos'):
+        if sys.platform.startswith('linux'):
             for line in get_file_content('/etc/iscsi/initiatorname.iscsi', '').splitlines():
                 if line.startswith('#') or line.startswith(';') or line.strip() == '':
                     continue
@@ -86,7 +86,7 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                 rc, out, err = module.run_command(cmd)
                 if rc == 0 and out:
                     line = self.findstr(out, 'initiator_name')
-                    iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
+                    iscsi_facts['iscsi_iqn'] = line.split()[1].strip()
         elif sys.platform.startswith('hp-ux'):
             # try to find it in the default PATH and opt_dirs
             cmd = get_bin_path('iscsiutil', opt_dirs=['/opt/iscsi/bin'])
@@ -95,7 +95,15 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                 rc, out, err = module.run_command(cmd)
                 if out:
                     line = self.findstr(out, 'Initiator Name')
-                    iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
+                    iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].strip()
+        elif sys.platform.startswith('sunos'):
+            cmd = get_bin_path('iscsiadm')
+            if cmd:
+                cmd += " list initiator-node"
+                rc, out, err = module.run_command(cmd)
+                if rc == 0 and out:
+                    line = self.findstr(out, 'Initiator node name')
+                    iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].strip()
         return iscsi_facts
 
     def findstr(self, text, match):
