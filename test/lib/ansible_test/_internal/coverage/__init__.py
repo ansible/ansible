@@ -14,6 +14,7 @@ from ..util import (
 
 from ..util_common import (
     intercept_command,
+    ResultType,
 )
 
 from ..config import (
@@ -60,6 +61,24 @@ def run_coverage(args, output_file, command, cmd):  # type: (CoverageConfig, str
     cmd = ['python', '-m', 'coverage', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
 
     intercept_command(args, target_name='coverage', env=env, cmd=cmd, disable_coverage=True)
+
+
+def get_python_coverage_files():  # type: () -> t.List[str]
+    """Return the list of Python coverage file paths."""
+    coverage_dir = ResultType.COVERAGE.path
+    coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
+                      if '=coverage.' in f and '=python' in f]
+
+    return coverage_files
+
+
+def get_powershell_coverage_files():  # type: () -> t.List[str]
+    """Return the list of PowerShell coverage file paths."""
+    coverage_dir = ResultType.COVERAGE.path
+    coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
+                      if '=coverage.' in f and '=powershell' in f]
+
+    return coverage_files
 
 
 class CoverageConfig(EnvironmentConfig):

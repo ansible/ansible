@@ -30,6 +30,8 @@ from ..data import (
 )
 
 from . import (
+    get_python_coverage_files,
+    get_powershell_coverage_files,
     initialize_coverage,
     COVERAGE_OUTPUT_FILE_NAME,
     COVERAGE_GROUPS,
@@ -59,9 +61,7 @@ def _command_coverage_combine_python(args):
 
     modules = dict((target.module, target.path) for target in list(walk_module_targets()) if target.path.endswith('.py'))
 
-    coverage_dir = ResultType.COVERAGE.path
-    coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
-                      if '=coverage.' in f and '=python' in f]
+    coverage_files = get_python_coverage_files()
 
     counter = 0
     sources = _get_coverage_targets(args, walk_compile_targets)
@@ -165,9 +165,7 @@ def _command_coverage_combine_powershell(args):
     :type args: CoverageConfig
     :rtype: list[str]
     """
-    coverage_dir = ResultType.COVERAGE.path
-    coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
-                      if '=coverage.' in f and '=powershell' in f]
+    coverage_files = get_powershell_coverage_files()
 
     def _default_stub_value(lines):
         val = {}
