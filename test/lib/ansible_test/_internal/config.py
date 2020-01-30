@@ -330,30 +330,3 @@ class UnitsConfig(TestConfig):
             self.requirements = True
         elif self.requirements_mode == 'skip':
             self.requirements = False
-
-
-class CoverageConfig(EnvironmentConfig):
-    """Configuration for the coverage command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageConfig, self).__init__(args, 'coverage')
-
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
-        self.all = args.all if 'all' in args else False  # type: bool
-        self.stub = args.stub if 'stub' in args else False  # type: bool
-        self.coverage = False  # temporary work-around to support intercept_command in cover.py
-
-
-class CoverageReportConfig(CoverageConfig):
-    """Configuration for the coverage report command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageReportConfig, self).__init__(args)
-
-        self.show_missing = args.show_missing  # type: bool
-        self.include = args.include  # type: str
-        self.omit = args.omit  # type: str
