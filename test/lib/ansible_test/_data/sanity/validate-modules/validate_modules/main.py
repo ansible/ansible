@@ -1213,7 +1213,7 @@ class ModuleValidator(Validator):
                     msg=msg
                 )
             if not context and arg == 'state':
-                bad_states = set(['list', 'info']) & set(data.get('choices', set()))
+                bad_states = set(['list', 'info', 'get']) & set(data.get('choices', set()))
                 for bad_state in bad_states:
                     self.reporter.error(
                         path=self.object_path,
