@@ -41,6 +41,7 @@ options:
       - Whether to use the VMware instance UUID rather than the BIOS UUID.
     default: False
     type: bool
+    version_added: '2.10'
   moid:
     description:
       - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance
