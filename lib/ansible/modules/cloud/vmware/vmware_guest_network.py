@@ -70,59 +70,76 @@ options:
       - mac address of the nic that should be altered, if a mac address isn't supplied a new nic will be created
       - Required when state = absent
     type: str
+    version_added: '2.10'
   vlan_id:
     description:
       - Vlan id associated with the network
     type: int
+    version_added: '2.10'
   network_name:
     description:
       - Name of network in vsphere
     type: str
+    version_added: '2.10'
   device_type:
+    default: vmxnet3
     description:
       - device type for new network interfaces, available types are e1000, e1000e, pcnet32, vmxnet2, vmxnet3 and  sriov
     type: str
+    version_added: '2.10'
   label:
     description:
       - Alter the name of the network adapter
     type: str
+    version_added: '2.10'
   switch:
     description:
       - Name of the (dv)switch for destination network, this is only required for dvswitches
     type: str
+    version_added: '2.10'
   connected:
     default: True
     description:
       - If nic should be connected to the network
     type: bool
+    version_added: '2.10'
   start_connected:
     default: True
     description:
       - If nic should be connected to network on startup
     type: bool
+    version_added: '2.10'
   wake_onlan:
     default: False
     description:
       - Enable wake on lan
     type: bool
+    version_added: '2.10'
   directpath_io:
     default: False
     description:
       - Enable Universal Pass-through (UPT)
     type: bool
+    version_added: '2.10'
   state:
     default: present
+    choices:
+      - present
+      - absent
     description:
       - Nic state.
       - When state = absent, the mac_address parameter has to be set
     type: str
+    version_added: '2.10'
   force:
     default: false
     description:
       - Force adapter creation even if an existing adapter is attached to the same network
     type: bool
+    version_added: '2.10'
   gather_network_info:
-    aliases: gather_network_facts
+    aliases:
+      - gather_network_facts
     default: False
     description:
       - Return information about current guest network adapters
@@ -164,7 +181,7 @@ extends_documentation_fragment: vmware.documentation
 
 EXAMPLES = '''
 - name: change network for 00:50:56:11:22:33 on vm01.domain.fake
-  vmware_vm_network:
+  vmware_guest_network:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
@@ -176,7 +193,7 @@ EXAMPLES = '''
     state: present
 
 - name: add a nic on network with vlan id 2001 for 422d000d-2000-ffff-0000-b00000000000
-  vmware_vm_network:
+  vmware_guest_network:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
@@ -186,8 +203,7 @@ EXAMPLES = '''
     vlan_id: 2001
 
 - name: remove nic with mac 00:50:56:11:22:33 from vm01.domain.fake
-- name: add multiple nics to 422d000d-2000-ffff-0000-b00000000000
-  vmware_vm_network:
+  vmware_guest_network:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
     password: "{{ vcenter_password }}"
@@ -196,6 +212,24 @@ EXAMPLES = '''
     mac_address: 00:50:56:11:22:33
     name: vm01.domain.fake
     state: absent
+
+- name: add multiple nics to vm01.domain.fake
+  vmware_guest_network:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter_name }}"
+    validate_certs: no
+    name: vm01.domain.fake
+    state: present
+    vlan_id: "{{ item.vlan_id | default(omit) }}"
+    network_name: "{{ item.network_name | default(omit) }}"
+    connected: "{{ item.connected | default(omit) }}"
+  loop:
+    - vlan_id: 2000
+      connected: false
+    - network_name: guest-net
+      connected: true
 '''
 
 RETURN = '''
@@ -206,7 +240,7 @@ network_info:
   sample:
     "network_info": [
         {
-            "mac_address": "00:50:56:AA:AA:AA"
+            "mac_address": "00:50:56:AA:AA:AA",
             "allow_guest_ctl": true,
             "connected": true,
             "device_type": "vmxnet3",
@@ -493,8 +527,6 @@ class PyVmomiHelper(PyVmomi):
             changed = True
 
         return diff, changed, network_info
-
-        return False
 
     def _get_nic_info(self):
         rv = {'network_info': []}
