@@ -116,6 +116,12 @@ def argument_spec_schema():
             'apply_defaults': bool,
             'removed_in_version': Any(float, *string_types),
             'options': Self,
+            'deprecated_aliases': Any([
+                {
+                    Required('name'): Any(*string_types),
+                    Required('version'): Any(float, *string_types),
+                },
+            ]),
         }
     }
     schema[any_string_types].update(argument_spec_modifiers)
