@@ -1672,7 +1672,8 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         mutually_exclusive=[
-            ['group_name', 'group_id'],
+            # Can be uncommented when we finish the deprecation cycle.
+            # ['group', 'group_id'],
             ['exact_count', 'count'],
             ['exact_count', 'state'],
             ['exact_count', 'instance_ids'],
@@ -1683,6 +1684,12 @@ def main():
             ['network_interfaces', 'vpc_subnet_id'],
         ],
     )
+
+    if module.params.get('group') and module.params.get('group_id'):
+        module.deprecate(
+            msg='Support for passing both group and group_id has been deprecated. '
+            'Currently group_id is ignored, in future passing both will result in an error',
+            version='2.14')
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
