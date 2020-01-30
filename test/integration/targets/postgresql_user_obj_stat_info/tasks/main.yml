@@ -1,0 +1,2 @@
+# Initial tests of postgresql_user_obj_stat_info module:
+- import_tasks: postgresql_user_obj_stat_info.yml

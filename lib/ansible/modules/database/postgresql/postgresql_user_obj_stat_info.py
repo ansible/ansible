@@ -220,8 +220,9 @@ class PgUserObjStatInfo():
 
             if info_key in ('tables', 'indexes'):
                 relname = elem[name_key]
+                schemaname = elem[schema_key]
                 if not self.schema:
-                    result = exec_sql(self, "SELECT pg_relation_size (%s)" % relname,
+                    result = exec_sql(self, "SELECT pg_relation_size ('%s.%s')" % (schemaname, relname),
                                       add_to_executed=False)
                 else:
                     relname = '%s.%s' % (self.schema, relname)
@@ -233,8 +234,9 @@ class PgUserObjStatInfo():
 
                 if info_key == 'tables':
                     relname = elem[name_key]
+                    schemaname = elem[schema_key]
                     if not self.schema:
-                        result = exec_sql(self, "SELECT pg_total_relation_size (%s)" % relname,
+                        result = exec_sql(self, "SELECT pg_total_relation_size ('%s.%s')" % (schemaname, relname),
                                           add_to_executed=False)
                     else:
                         relname = '%s.%s' % (self.schema, relname)
