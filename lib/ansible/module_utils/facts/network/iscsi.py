@@ -80,22 +80,30 @@ class IscsiInitiatorNetworkCollector(NetworkCollector):
                     iscsi_facts['iscsi_iqn'] = line.split('=', 1)[1]
                     break
         elif sys.platform.startswith('aix'):
-            cmd = get_bin_path('lsattr')
-            if cmd:
-                cmd += " -E -l iscsi0"
-                rc, out, err = module.run_command(cmd)
-                if rc == 0 and out:
-                    line = self.findstr(out, 'initiator_name')
-                    iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
+            try:
+                cmd = get_bin_path('lsattr')
+            except ValueError:
+                return iscsi_facts
+
+            cmd += " -E -l iscsi0"
+            rc, out, err = module.run_command(cmd)
+            if rc == 0 and out:
+                line = self.findstr(out, 'initiator_name')
+                iscsi_facts['iscsi_iqn'] = line.split()[1].rstrip()
+
         elif sys.platform.startswith('hp-ux'):
             # try to find it in the default PATH and opt_dirs
-            cmd = get_bin_path('iscsiutil', opt_dirs=['/opt/iscsi/bin'])
-            if cmd:
-                cmd += " -l"
-                rc, out, err = module.run_command(cmd)
-                if out:
-                    line = self.findstr(out, 'Initiator Name')
-                    iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
+            try:
+                cmd = get_bin_path('iscsiutil', opt_dirs=['/opt/iscsi/bin'])
+            except ValueError:
+                return iscsi_facts
+
+            cmd += " -l"
+            rc, out, err = module.run_command(cmd)
+            if out:
+                line = self.findstr(out, 'Initiator Name')
+                iscsi_facts['iscsi_iqn'] = line.split(":", 1)[1].rstrip()
+
         return iscsi_facts
 
     def findstr(self, text, match):

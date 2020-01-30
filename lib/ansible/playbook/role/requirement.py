@@ -155,7 +155,7 @@ class RoleRequirement(RoleDefinition):
             raise AnsibleError("- scm %s is not currently supported" % scm)
 
         try:
-            scm_path = get_bin_path(scm, required=True)
+            scm_path = get_bin_path(scm)
         except (ValueError, OSError, IOError):
             raise AnsibleError("could not find/use %s, it is required to continue with installing %s" % (scm, src))
 

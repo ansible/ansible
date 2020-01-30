@@ -1973,9 +1973,12 @@ class AnsibleModule(object):
 
         bin_path = None
         try:
-            bin_path = get_bin_path(arg, required, opt_dirs)
+            bin_path = get_bin_path(arg=arg, opt_dirs=opt_dirs)
         except ValueError as e:
-            self.fail_json(msg=to_text(e))
+            if required:
+                self.fail_json(msg=to_text(e))
+            else:
+                return bin_path
 
         return bin_path
 
