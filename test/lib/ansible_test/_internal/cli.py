@@ -92,15 +92,30 @@ from .util_common import (
     CommonConfig,
 )
 
-from .cover import (
+from .coverage.combine import (
     command_coverage_combine,
+)
+
+from .coverage.erase import (
     command_coverage_erase,
+)
+
+from .coverage.html import (
     command_coverage_html,
+)
+
+from .coverage.report import (
     command_coverage_report,
+    CoverageReportConfig,
+)
+
+from .coverage.xml import (
     command_coverage_xml,
+)
+
+from .coverage import (
     COVERAGE_GROUPS,
     CoverageConfig,
-    CoverageReportConfig,
 )
 
 
