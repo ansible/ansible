@@ -109,12 +109,12 @@ except ImportError:
 
 def main():
     argument_specs = dict(
-        full_name=dict(type='str'),
-        email=dict(type='str'),
+        full_name=dict(type='str', required=False),
+        email=dict(type='str', required=False),
         old_password=dict(type='str', required=True, no_log=True),
         # Flag to specify priority of old/new password while establishing session with controller.
         # To handle both Saas and conventional (Entire state in playbook) scenario.
-        force_change=dict(type='bool', default=False)
+        force_change=dict(type='bool', required=False, default=False)
     )
     argument_specs.update(avi_common_argument_spec())
     module = AnsibleModule(argument_spec=argument_specs)
