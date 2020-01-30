@@ -124,7 +124,7 @@ class Static_routes(ConfigBase):
                   to the desired configuration
         """
         commands = []
-        if self.state in ('merged', 'replaced', 'overridden') and not want:
+        if self.state in ('merged', 'replaced', 'overridden', 'rendered') and not want:
             self._module.fail_json(msg='value of config parameter must not be empty for state {0}'.format(self.state))
         if self.state == 'overridden':
             commands.extend(self._state_overridden(want=want, have=have))
@@ -183,7 +183,6 @@ class Static_routes(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-
         commands = []
         routes = self._get_routes(have)
         for r in routes:
@@ -194,7 +193,6 @@ class Static_routes(ConfigBase):
         for r in routes:
             route_in_have = self.search_route_in_have(have, r['dest'])
             commands.extend(self._state_replaced(r, route_in_have))
-
         return commands
 
     def _state_merged(self, want, have):
@@ -218,7 +216,6 @@ class Static_routes(ConfigBase):
         :returns: the commands necessary to remove the current configuration
                   of the provided objects
         """
-
         commands = []
         if want:
             for key, value in iteritems(want):
@@ -227,7 +224,6 @@ class Static_routes(ConfigBase):
                         commands.extend(self._update_next_hop(want, have))
                     elif key == 'blackhole_config':
                         commands.extend(self._update_blackhole(key, want, have))
-
         elif have:
             commands.append(
                 self._compute_command(dest=have['dest'], remove=True)

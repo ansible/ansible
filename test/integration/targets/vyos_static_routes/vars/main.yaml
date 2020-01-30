@@ -2,7 +2,6 @@
 merged:
   before: []
 
-
   commands:
     - "set protocols static route 192.0.2.32/28 next-hop '192.0.2.10'"
     - "set protocols static route 192.0.2.32/28 next-hop '192.0.2.9'"
@@ -102,26 +101,6 @@ rendered:
     - "set protocols static route6 2001:db8:1000::/36 next-hop '2001:db8:2000:2::2'"
     - "set protocols static route6 2001:db8:1000::/36 blackhole distance '2'"
     - "set protocols static route6 2001:db8:1000::/36"
-
-parsed:
-  popolate:
-  - address_families:
-    - afi: 'ipv4'
-      routes:
-        - dest: '192.0.2.32/28'
-          blackhole_config:
-            type: 'blackhole'
-          next_hops:
-            - forward_router_address: '192.0.2.9'
-            - forward_router_address: '192.0.2.10'
-    - afi: 'ipv6'
-      routes:
-        - dest: '2001:db8:1000::/36'
-          blackhole_config:
-            distance: 2
-          next_hops:
-            - forward_router_address: '2001:db8:2000:2::1'
-            - forward_router_address: '2001:db8:2000:2::2'
 
 deleted:
   commands:

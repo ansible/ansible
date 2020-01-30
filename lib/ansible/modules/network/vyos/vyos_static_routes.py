@@ -120,7 +120,6 @@ options:
         config for comparison. This value of this option should be the
         output received from device by executing command
         C(show configuration commands | grep 'static route')
-    version_added: "2.10"
     type: str
   state:
     description:
@@ -605,50 +604,8 @@ commands:
   returned: always
   type: list
   sample:
-    - "set protocols static route 192.0.0.0/24 next-hop '192.11.11.11'"
-    - "set protocols static route 192.0.0.0/24 'blackhole'"
-rendered:
-  description: The set of CLI commands generated from the value in C(config) option
-  returned: When C(state) is I(rendered)
-  type: list
-  sample: >
-    "address_families": [
-                {
-                    "afi": "ipv4",
-                    "routes": [
-                        {
-                            "blackhole_config": {
-                                "type": "blackhole"
-                            },
-                            "dest": "192.0.0.0/24",
-                            "next_hops": [
-                                {
-                                    "forward_router_address": "192.11.11.11"
-                                },
-                                {
-                                    "forward_router_address": "192.11.11.12"
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-gathered:
-  description: The configuration as structured data transformed for the running configuration
-               fetched from remote host
-  returned: When C(state) is I(gathered)
-  type: list
-  sample: >
-    The configuration returned will always be in the same format
-    of the parameters above.
-parsed:
-  description: The configuration as structured data transformed for the value of
-               C(running_config) option
-  returned: When C(state) is I(parsed)
-  type: list
-  sample: >
-    The configuration returned will always be in the same format
-    of the parameters above.
+    - "set protocols static route 192.0.2.32/28 next-hop '192.0.2.6'"
+    - "set protocols static route 192.0.2.32/28 'blackhole'"
 """
 
 
