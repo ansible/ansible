@@ -25,6 +25,7 @@ author:
   - Diane Wang (@Tomorrow9) <dianew@vmware.com>
 notes:
   - Tested on vSphere 6.0, 6.5 and 6.7
+  - For backwards compatibility network_data is returned when using the gather_network_info and networks parameters
 options:
   name:
     description:
@@ -117,7 +118,7 @@ options:
     type: bool
     version_added: '2.10'
   directpath_io:
-    default: False
+    default: True
     description:
       - Enable Universal Pass-through (UPT)
     type: bool
@@ -239,7 +240,7 @@ network_info:
   returned: always
   type: list
   sample:
-    "network_data": [
+    "network_info": [
         {
             "mac_address": "00:50:56:AA:AA:AA",
             "allow_guest_ctl": true,
@@ -267,6 +268,43 @@ network_info:
             "wake_onlan": true
         }
     ]
+network_date:
+  description: For backwards compatibility, metadata about the virtual machine network adapters
+  returned: when using gather_network_info or networks parameters
+  type: dict
+  sample:
+    "network_data": {
+        '0': {
+            "mac_addr": "00:50:56:AA:AA:AA",
+            "mac_address": "00:50:56:AA:AA:AA",
+            "allow_guest_ctl": true,
+            "connected": true,
+            "device_type": "vmxnet3",
+            "label": "Network adapter 2",
+            "name": "admin-net",
+            "network_name": "admin-net",
+            "start_connected": true,
+            "switch": "vSwitch0",
+            "unit_number": 8,
+            "vlan_id": 10,
+            "wake_onlan": false
+        },
+        '1': {
+            "mac_addr": "00:50:56:BB:BB:BB",
+            "mac_address": "00:50:56:BB:BB:BB",
+            "allow_guest_ctl": true,
+            "connected": true,
+            "device_type": "vmxnet3",
+            "label": "Network adapter 1",
+            "name": "guest-net",
+            "network_name": "guest-net",
+            "start_connected": true,
+            "switch": "vSwitch0",
+            "unit_number": 7,
+            "vlan_id": 10,
+            "wake_onlan": true
+        }
+    }
 
 '''
 
@@ -683,10 +721,10 @@ def main():
         connected=dict(type='bool', default=True),
         start_connected=dict(type='bool', default=True),
         wake_onlan=dict(type='bool', default=False),
-        directpath_io=dict(type='bool', default=False),
+        directpath_io=dict(type='bool', default=True),
         force=dict(type='bool', default=False),
         gather_network_info=dict(type='bool', default=False, aliases=['gather_network_facts']),
-        networks=dict(type='list'),
+        networks=dict(type='list', default=[]),
         state=dict(type='str', default='present', choices=['absent', 'present'])
     )
 
@@ -705,7 +743,14 @@ def main():
 
     if module.params['gather_network_info']:
         nics = pyv._get_nic_info()
-        module.exit_json(network_info=nics.get('network_info'), changed=False)
+        network_data = {}
+        nics_sorted = sorted(nics.get('network_info'), key=lambda k: k['unit_number'])
+        for n, i in enumerate(nics_sorted):
+            key_name = '{0}'.format(n)
+            network_data[key_name] = i
+            network_data[key_name].update({'mac_addr': i['mac_address'], 'name': i['network_name']})
+
+        module.exit_json(network_info=nics.get('network_info'), network_data=network_data, changed=False)
 
     if module.params['state'] == 'present':
         diff, changed, network_info = pyv._nic_present()
@@ -716,13 +761,21 @@ def main():
         diff, changed, network_info = pyv._nic_absent()
 
     if module.params['network']:
+        network_data = {}
         module.deprecated(
             'The old way of configuring interfaces by supplying an arbitrary list will be removed, loops should be used to handle multiple intefaces',
             '2.11'
         )
         diff, changed, network_info = pyv._deprectated_list_config()
 
-    module.exit_json(changed=changed, network_data=network_info, diff=diff)
+        nics_sorted = sorted(network_info, key=lambda k: k['unit_number'])
+        for n, i in enumerate(nics_sorted):
+            key_name = '{0}'.format(n)
+            network_data[key_name] = i
+            network_data[key_name].update({'mac_addr': i['mac_address'], 'name': i['network_name']})
+        module.exit_json(changed=changed, network_info=network_info, network_data=network_data, diff=diff)
+
+    module.exit_json(changed=changed, network_info=network_info, diff=diff)
 
 
 if __name__ == '__main__':
