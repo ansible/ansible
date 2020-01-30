@@ -1152,111 +1152,39 @@ class ModuleValidator(Validator):
 
         self._validate_argument_spec(docs, spec, kwargs)
 
-    def _validate_mutually_exclusive(self, terms, spec, context):
+    def _validate_list_of_module_args(self, name, terms, spec, context):
         if terms is None:
             return
         for check in terms:
             for term in check:
                 if not isinstance(term, string_types):
-                    msg = "mutually_exclusive"
+                    msg = name
                     if context:
                         msg += " found in %s" % " -> ".join(context)
                     msg += " must contain strings in the lists or tuples; found value %r" % (term, )
                     self.reporter.error(
                         path=self.object_path,
-                        code='mutually_exclusive-type',
+                        code=name + '-type',
                         msg=msg,
                     )
             if len(set(check)) != len(check):
-                msg = "mutually_exclusive"
+                msg = name
                 if context:
                     msg += " found in %s" % " -> ".join(context)
                 msg += " has repeated terms"
                 self.reporter.error(
                     path=self.object_path,
-                    code='mutually_exclusive-collision',
+                    code=name + '-collision',
                     msg=msg,
                 )
             if not set(check) <= set(spec):
-                msg = "mutually_exclusive"
+                msg = name
                 if context:
                     msg += " found in %s" % " -> ".join(context)
                 msg += " contains terms which are not part of argument_spec: %s" % ", ".join(sorted(set(check).difference(set(spec))))
                 self.reporter.error(
                     path=self.object_path,
-                    code='mutually_exclusive-unknown',
-                    msg=msg,
-                )
-
-    def _validate_required_one_of(self, terms, spec, context):
-        if terms is None:
-            return
-        for check in terms:
-            for term in check:
-                if not isinstance(term, string_types):
-                    msg = "required_one_of"
-                    if context:
-                        msg += " found in %s" % " -> ".join(context)
-                    msg += " must contain strings in the lists or tuples; found value %r" % (term, )
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='required_one_of-type',
-                        msg=msg,
-                    )
-            if len(set(check)) != len(check):
-                msg = "required_one_of"
-                if context:
-                    msg += " found in %s" % " -> ".join(context)
-                msg += " has repeated terms"
-                self.reporter.error(
-                    path=self.object_path,
-                    code='required_one_of-collision',
-                    msg=msg,
-                )
-            if not set(check) <= set(spec):
-                msg = "required_one_of"
-                if context:
-                    msg += " found in %s" % " -> ".join(context)
-                msg += " contains terms which are not part of argument_spec: %s" % ", ".join(sorted(set(check).difference(set(spec))))
-                self.reporter.error(
-                    path=self.object_path,
-                    code='required_one_of-unknown',
-                    msg=msg,
-                )
-
-    def _validate_required_together(self, terms, spec, context):
-        if terms is None:
-            return
-        for check in terms:
-            for term in check:
-                if not isinstance(term, string_types):
-                    msg = "required_together"
-                    if context:
-                        msg += " found in %s" % " -> ".join(context)
-                    msg += " must contain strings in the lists or tuples; found value %r" % (term, )
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='required_together-type',
-                        msg=msg,
-                    )
-            if len(set(check)) != len(check):
-                msg = "required_together"
-                if context:
-                    msg += " found in %s" % " -> ".join(context)
-                msg += " has repeated terms"
-                self.reporter.error(
-                    path=self.object_path,
-                    code='required_together-collision',
-                    msg=msg,
-                )
-            if not set(check) <= set(spec):
-                msg = "required_together"
-                if context:
-                    msg += " found in %s" % " -> ".join(context)
-                msg += " contains terms which are not part of argument_spec: %s" % ", ".join(sorted(set(check).difference(set(spec))))
-                self.reporter.error(
-                    path=self.object_path,
-                    code='required_together-unknown',
+                    code=name + '-unknown',
                     msg=msg,
                 )
 
@@ -1398,9 +1326,9 @@ class ModuleValidator(Validator):
         # Use this to access type checkers later
         module = NoArgsAnsibleModule({})
 
-        self._validate_mutually_exclusive(last_context_spec.get('mutually_exclusive'), spec, context)
-        self._validate_required_together(last_context_spec.get('required_together'), spec, context)
-        self._validate_required_one_of(last_context_spec.get('required_one_of'), spec, context)
+        self._validate_list_of_module_args('mutually_exclusive', last_context_spec.get('mutually_exclusive'), spec, context)
+        self._validate_list_of_module_args('required_together', last_context_spec.get('required_together'), spec, context)
+        self._validate_list_of_module_args('required_one_of', last_context_spec.get('required_one_of'), spec, context)
         self._validate_required_if(last_context_spec.get('required_if'), spec, context, module)
         self._validate_required_by(last_context_spec.get('required_by'), spec, context)
 
