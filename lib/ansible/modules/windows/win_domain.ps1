@@ -103,7 +103,7 @@ if (-not $forest) {
     if ($sysvol_path) {
         $install_params.SysvolPath = $sysvol_path
     }
-    
+
     if ($log_path) {
         $install_params.LogPath = $log_path
     }
