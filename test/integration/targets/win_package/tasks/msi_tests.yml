@@ -352,8 +352,80 @@
 
 - name: uninstall good msi after test
   win_package:
-    path: '{{test_win_package_path}}\good.msi'
+    path: '{{ test_win_package_path }}\good.msi'
     state: absent
+
+- name: install good msi for all users
+  win_package:
+    path: '{{ test_win_package_path }}\good.msi'
+    state: present
+    arguments: ALLUSERS=1
+  register: install_good_all_users
+
+- name: get result of install good msi for all users
+  win_shell: |
+    Add-Type -Namespace Msi -Name NativeMethods -UsingNamespace System.Text -MemberDefinition @'
+    [DllImport("Msi.dll", CharSet = CharSet.Unicode)]
+    public static extern UInt32 MsiGetProductInfoExW(
+        string szProductCode,
+        string szUserSid,
+        UInt32 dwContext,
+        string szProperty,
+        StringBuilder szValue,
+        ref UInt32 pcchValue);
+    '@
+
+    $productCode = '{{ test_win_package_good_id }}'
+    $sb = New-Object -TypeName System.Text.StringBuilder -ArgumentList 0
+    $sbLength = [UInt32]0
+
+    $null = [Msi.NativeMethods]::MsiGetProductInfoExW($productCode, [NullString]::Value, 4, "State", $sb, [ref]$sbLength)
+    $sbLength += 1
+    $null = $sb.EnsureCapacity($sbLength)
+
+    $null = [Msi.NativeMethods]::MsiGetProductInfoExW($productCode, [NullString]::Value, 4, "State", $sb, [ref]$sbLength)
+    [int]$sb.ToString()
+  register: install_good_all_users_actual
+
+- name: assert install good msi for all users
+  assert:
+    that:
+    - install_good_all_users is changed
+    - install_good_all_users_actual.stdout | trim | int == 5  # INSTALLSTATE_DEFAULT
+
+- name: install good msi for all users (idempotent)
+  win_package:
+    path: '{{ test_win_package_path }}\good.msi'
+    state: present
+    arguments: ALLUSERS=1
+  register: install_good_all_users_again
+
+- name: assert install good msi for all users (idempotent)
+  assert:
+    that:
+    - not install_good_all_users_again is changed
+
+- name: uninstall good msi for all users
+  win_package:
+    product_id: '{{ test_win_package_good_id }}'
+    state: absent
+  register: uninstall_good_all_users
+
+- name: get result of uninstall good msi for all users
+  win_shell: |
+    Add-Type -Namespace Msi -Name NativeMethods -MemberDefinition @'
+    [DllImport("Msi.dll", CharSet = CharSet.Unicode)]
+    public static extern Int32 MsiQueryProductStateW(
+        string szProductCode);
+    '@
+    [Msi.NativeMethods]::MsiQueryProductStateW('{{ test_win_package_good_id }}')
+  register: uninstall_good_all_users_actual
+
+- name: assert uninstall good msi for all users
+  assert:
+    that:
+    - uninstall_good_all_users is changed
+    - uninstall_good_all_users_actual.stdout | trim | int == -1  # INSTALLSTATE_UNKNOWN
 
 - name: create custom install directory for msi install
   win_file:

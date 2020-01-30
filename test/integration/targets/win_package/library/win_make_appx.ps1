@@ -98,7 +98,7 @@ try {
     $certPassword = ([char[]]([char]33..[char]126) | Sort-Object {Get-Random})[0..16] -join ''
     $certPasswordSS = ConvertTo-SecureString -String $certPassword -AsPlainText -Force
     $null = $cert |  Export-PfxCertificate -FilePath $certPath -Password $certPasswordSS
-    
+
     $importParams = @{
         FilePath = $certPath
         CertStoreLocation = 'Cert:\LocalMachine\Root'
