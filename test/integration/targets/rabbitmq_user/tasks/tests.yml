@@ -1,17 +1,5 @@
 ---
 
-- name: Test add user in check mode
-  block:
-    - name: Add user
-      rabbitmq_user: user=joe password=changeme
-      check_mode: true
-      register: add_user
-
-    - name: Check that user adding succeeds with a change
-      assert:
-        that:
-          - add_user.changed == true
-
 - name: Test add user
   block:
     - name: Add user
@@ -33,18 +21,6 @@
       assert:
         that:
           - add_user.changed == false
-
-- name: Test change user permissions in check mode
-  block:
-    - name: Add user with permissions
-      rabbitmq_user: user=joe password=changeme vhost=/ configure_priv=.* read_priv=.* write_priv=.*
-      check_mode: true
-      register: add_user
-
-    - name: Check that changing permissions succeeds with a change
-      assert:
-        that:
-          - add_user.changed == true
 
 - name: Test change user permissions
   block:
@@ -68,18 +44,6 @@
         that:
           - add_user.changed == false
 
-- name: Test add user tags in check mode
-  block:
-    - name: Add user with tags
-      rabbitmq_user: user=joe password=changeme vhost=/ configure_priv=.* read_priv=.* write_priv=.* tags=management,administrator
-      check_mode: true
-      register: add_user
-
-    - name: Check that adding tags succeeds with a change
-      assert:
-        that:
-          - add_user.changed == true
-
 - name: Test add user tags
   block:
     - name: Add user with tags
@@ -101,18 +65,6 @@
       assert:
         that:
           - add_user.changed == false
-
-- name: Test remove user in check mode
-  block:
-    - name: Remove user
-      rabbitmq_user: user=joe state=absent
-      check_mode: true
-      register: remove_user
-
-    - name: Check that user removing succeeds with a change
-      assert:
-        that:
-          - remove_user.changed == true
 
 - name: Test remove user
   block:
