@@ -1,0 +1,3 @@
+bugfixes:
+  - openstack modules - bump the minimum openstacksdk version
+    to support the dns_domain parameter added to os_network
