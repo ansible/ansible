@@ -1,0 +1,6 @@
+---
+minor_changes:
+  - vmware_guest_network - put deprecation warning for networks parameter
+  - vmware_guest_network - network adapters can be configured without lists
+removed_features:
+  - vmware_guest_network - network_data returns a list of dicts instead of an ill formatted dict
