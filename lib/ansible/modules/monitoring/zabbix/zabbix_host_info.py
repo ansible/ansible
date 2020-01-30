@@ -125,8 +125,15 @@ class Host(object):
         search_key = 'search'
         if exact_match:
             search_key = 'filter'
-        host_list = self._zapi.host.get({'output': 'extend', 'selectParentTemplates': ['name'], search_key: {'host': [host_name]},
-                                         'selectInventory': host_inventory, 'selectGroups': 'extend'})
+        host_list = self._zapi.host.get({
+            'output': 'extend',
+            'selectParentTemplates': ['name'],
+            search_key: {'host': [host_name]},
+            'selectInventory': host_inventory,
+            'selectGroups': 'extend',
+            'selectTags': 'extend',
+            'selectMacros': 'extend'
+        })
         if len(host_list) < 1:
             self._module.fail_json(msg="Host not found: %s" % host_name)
         else:
@@ -149,7 +156,9 @@ class Host(object):
                 'selectGroups': 'extend',
                 'selectParentTemplates': ['name'],
                 'hostids': hostinterface['hostid'],
-                'selectInventory': host_inventory
+                'selectInventory': host_inventory,
+                'selectTags': 'extend',
+                'selectMacros': 'extend'
             })
             host[0]['hostinterfaces'] = hostinterface
             host_list.append(host[0])
