@@ -240,7 +240,7 @@ def _needs_update(cloud, module, router, network, internal_subnet_ids, internal_
     # check external interfaces
     if module.params['external_fixed_ips']:
         for new_iface in module.params['external_fixed_ips']:
-            subnet = cloud.get_subnet(new_iface['subnet'], filters)
+            subnet = cloud.get_subnet(new_iface['subnet'])
             exists = False
 
             # compare the requested interface with existing, looking for an existing match
