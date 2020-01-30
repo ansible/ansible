@@ -98,6 +98,13 @@ class GalaxyCLI(CLI):
                                 help='The path to the directory containing your roles. The default is the first '
                                      'writable one configured via DEFAULT_ROLES_PATH: %s ' % default_roles_path)
 
+        default_collections_path = C.config.get_configuration_definition('COLLECTIONS_PATHS').get('default', '')
+        collections_path = opt_help.argparse.ArgumentParser(add_help=False)
+        collections_path.add_argument('-p', '--collections-path', dest='collections_path', type=opt_help.unfrack_path(pathsep=True),
+                                      default=C.COLLECTIONS_PATHS, action=opt_help.PrependListAction,
+                                      help='The path to the directory containing your collections. The default is the first '
+                                      'writable one configured via COLLECTIONS_PATHS: %s ' % default_collections_path)
+
         # Add sub parser for the Galaxy role type (role or collection)
         type_parser = self.parser.add_subparsers(metavar='TYPE', dest='type')
         type_parser.required = True
