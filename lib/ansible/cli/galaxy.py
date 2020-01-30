@@ -228,10 +228,10 @@ class GalaxyCLI(CLI):
         if parser.metavar == 'COLLECTION_ACTION':
             galaxy_type = 'collection'
 
-        # Seprate methods for listing a role or collection
+        # Separate methods for listing a role or collection
         list_func = getattr(self, 'execute_list_%s' % galaxy_type)
 
-        list_parser = parser.add_parser('list', parents=parents,
+        list_parser = parser.add_parser('list_{}'.format(galaxy_type), parents=parents,
                                         help='Show the name and version of each {0} installed in the {0}s_path.'.format(galaxy_type))
 
         list_parser.set_defaults(func=list_func)
