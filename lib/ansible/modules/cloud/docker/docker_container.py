@@ -1495,16 +1495,16 @@ class TaskParameters(DockerBaseClass):
         new_vols = []
         for vol in self.volumes:
             if ':' in vol:
-                if len(vol.split(':')) == 3:
-                    host, container, mode = vol.split(':')
+                parts = vol.split(':')
+                if len(parts) == 3:
+                    host, container, mode = parts
                     if not is_volume_permissions(mode):
                         self.fail('Found invalid volumes mode: {0}'.format(mode))
                     if re.match(r'[.~]', host):
                         host = os.path.abspath(os.path.expanduser(host))
                     new_vols.append("%s:%s:%s" % (host, container, mode))
                     continue
-                elif len(vol.split(':')) == 2:
-                    parts = vol.split(':')
+                elif len(parts) == 2:
                     if not is_volume_permissions(parts[1]) and re.match(r'[.~]', parts[0]):
                         host = os.path.abspath(os.path.expanduser(parts[0]))
                         new_vols.append("%s:%s:rw" % (host, parts[1]))
@@ -1520,15 +1520,13 @@ class TaskParameters(DockerBaseClass):
         result = []
         if self.volumes:
             for vol in self.volumes:
+                # Only pass anonymous volumes to create container
                 if ':' in vol:
-                    if len(vol.split(':')) == 3:
-                        dummy, container, dummy = vol.split(':')
-                        result.append(container)
+                    parts = vol.split(':')
+                    if len(parts) == 3:
                         continue
-                    if len(vol.split(':')) == 2:
-                        parts = vol.split(':')
+                    if len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
-                            result.append(parts[1])
                             continue
                 result.append(vol)
         self.log("mounts:")
@@ -1698,7 +1696,7 @@ class TaskParameters(DockerBaseClass):
                             self.fail('Found invalid volumes mode: {0}'.format(mode))
                     elif len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
-                            host, container, mode = (vol.split(':') + ['rw'])
+                            host, container, mode = (parts + ['rw'])
                 if host is not None:
                     result[host] = dict(
                         bind=container,
@@ -2445,14 +2443,14 @@ class Container(DockerBaseClass):
             for vol in self.parameters.volumes:
                 host = None
                 if ':' in vol:
-                    if len(vol.split(':')) == 3:
-                        host, container, mode = vol.split(':')
+                    parts = vol.split(':')
+                    if len(parts) == 3:
+                        host, container, mode = parts
                         if not is_volume_permissions(mode):
                             self.fail('Found invalid volumes mode: {0}'.format(mode))
-                    if len(vol.split(':')) == 2:
-                        parts = vol.split(':')
+                    if len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
-                            host, container, mode = vol.split(':') + ['rw']
+                            host, container, mode = parts + ['rw']
                 if host:
                     param_vols.append("%s:%s:%s" % (host, container, mode))
         result = list(set(image_vols + param_vols))
@@ -2494,22 +2492,15 @@ class Container(DockerBaseClass):
 
         if self.parameters.volumes:
             for vol in self.parameters.volumes:
-                container = None
+                # We only expect anonymous volumes to show up in the list
                 if ':' in vol:
-                    if len(vol.split(':')) == 3:
-                        dummy, container, mode = vol.split(':')
-                        if not is_volume_permissions(mode):
-                            self.fail('Found invalid volumes mode: {0}'.format(mode))
-                    if len(vol.split(':')) == 2:
-                        parts = vol.split(':')
+                    parts = vol.split(':')
+                    if len(parts) == 3:
+                        continue
+                    if len(parts) == 2:
                         if not is_volume_permissions(parts[1]):
-                            dummy, container, mode = vol.split(':') + ['rw']
-                new_vol = dict()
-                if container:
-                    new_vol[container] = dict()
-                else:
-                    new_vol[vol] = dict()
-                expected_vols.update(new_vol)
+                            continue
+                expected_vols[vol] = dict()
 
         if not expected_vols:
             expected_vols = None
