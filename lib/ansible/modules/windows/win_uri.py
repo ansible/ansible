@@ -66,6 +66,7 @@ options:
     - A valid, numeric, HTTP status code that signifies success of the request.
     - Can also be comma separated list of status codes.
     type: list
+    elements: int
     default: [ 200 ]
     version_added: '2.4'
   url_username:

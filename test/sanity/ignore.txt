@@ -2740,11 +2740,9 @@ lib/ansible/modules/monitoring/zabbix/zabbix_template.py validate-modules:doc-el
 lib/ansible/modules/monitoring/zabbix/zabbix_template.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/monitoring/zabbix/zabbix_user.py validate-modules:doc-elements-mismatch
 lib/ansible/modules/monitoring/zabbix/zabbix_user.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/net_tools/basics/get_url.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/net_tools/basics/get_url.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/net_tools/basics/uri.py pylint:blacklisted-name
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:doc-required-mismatch
-lib/ansible/modules/net_tools/basics/uri.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/net_tools/basics/uri.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/net_tools/cloudflare_dns.py validate-modules:parameter-type-not-in-doc
@@ -2884,19 +2882,15 @@ lib/ansible/modules/net_tools/nmcli.py validate-modules:parameter-type-not-in-do
 lib/ansible/modules/net_tools/nsupdate.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/net_tools/nsupdate.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/net_tools/omapi_host.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/network/a10/a10_server.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/network/a10/a10_server.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/network/a10/a10_server.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/a10/a10_server_axapi3.py validate-modules:doc-choices-do-not-match-spec
-lib/ansible/modules/network/a10/a10_server_axapi3.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/network/a10/a10_server_axapi3.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/network/a10/a10_server_axapi3.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/network/a10/a10_service_group.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/network/a10/a10_service_group.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/network/a10/a10_service_group.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/a10/a10_virtual_server.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/network/a10/a10_virtual_server.py validate-modules:doc-required-mismatch
-lib/ansible/modules/network/a10/a10_virtual_server.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/network/a10/a10_virtual_server.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/network/a10/a10_virtual_server.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/network/aci/aci_aaa_user.py validate-modules:doc-required-mismatch
@@ -6561,7 +6555,6 @@ lib/ansible/modules/notification/mqtt.py validate-modules:doc-default-does-not-m
 lib/ansible/modules/notification/mqtt.py validate-modules:doc-missing-type
 lib/ansible/modules/notification/mqtt.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/notification/nexmo.py validate-modules:doc-missing-type
-lib/ansible/modules/notification/nexmo.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/notification/nexmo.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/notification/nexmo.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/notification/office_365_connector_card.py validate-modules:doc-missing-type
@@ -6707,7 +6700,6 @@ lib/ansible/modules/packaging/os/portinstall.py validate-modules:undocumented-pa
 lib/ansible/modules/packaging/os/pulp_repo.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/packaging/os/pulp_repo.py validate-modules:doc-missing-type
 lib/ansible/modules/packaging/os/pulp_repo.py validate-modules:doc-required-mismatch
-lib/ansible/modules/packaging/os/pulp_repo.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/packaging/os/pulp_repo.py validate-modules:undocumented-parameter
 lib/ansible/modules/packaging/os/redhat_subscription.py validate-modules:doc-missing-type
 lib/ansible/modules/packaging/os/redhat_subscription.py validate-modules:parameter-list-no-elements
@@ -7541,7 +7533,6 @@ lib/ansible/modules/web_infrastructure/jenkins_job.py validate-modules:doc-missi
 lib/ansible/modules/web_infrastructure/jenkins_job_info.py validate-modules:doc-missing-type
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py use-argspec-type-path
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py validate-modules:doc-missing-type
-lib/ansible/modules/web_infrastructure/jenkins_plugin.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/web_infrastructure/jenkins_plugin.py validate-modules:undocumented-parameter
 lib/ansible/modules/web_infrastructure/jenkins_script.py validate-modules:parameter-type-not-in-doc
@@ -7608,7 +7599,6 @@ lib/ansible/modules/windows/win_file_version.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_find.ps1 pslint:PSAvoidUsingEmptyCatchBlock # Keep
 lib/ansible/modules/windows/win_find.ps1 validate-modules:doc-elements-mismatch
 lib/ansible/modules/windows/win_firewall_rule.ps1 pslint:PSUseApprovedVerbs
-lib/ansible/modules/windows/win_get_url.ps1 validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/windows/win_hosts.ps1 validate-modules:doc-elements-mismatch
 lib/ansible/modules/windows/win_hotfix.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_hotfix.ps1 pslint:PSUseApprovedVerbs
@@ -7657,8 +7647,6 @@ lib/ansible/modules/windows/win_unzip.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_unzip.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/modules/windows/win_updates.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_uri.ps1 pslint:PSAvoidUsingEmptyCatchBlock # Keep
-lib/ansible/modules/windows/win_uri.ps1 validate-modules:doc-elements-mismatch
-lib/ansible/modules/windows/win_uri.ps1 validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/windows/win_user_profile.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/modules/windows/win_user_profile.ps1 validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/windows/win_wait_for.ps1 pslint:PSCustomUseLiteralPath
