@@ -47,11 +47,15 @@ options:
       the session_role were the one that had logged in originally.
     type: str
 notes:
+- C(size) and C(total_size) returned values are presented in bytes.
 - For tracking function statistics the PostgreSQL ``track_functions`` parameter must be enabled.
   See U(https://www.postgresql.org/docs/current/runtime-config-statistics.html) for more information.
 seealso:
 - module: postgresql_info
 - module: postgresql_ping
+- name: PostgreSQL statistics collector reference
+  description: Complete reference of the PostgreSQL statistics collector documentation.
+  link: https://www.postgresql.org/docs/current/monitoring-stats.html
 author:
 - Andrew Klychkov (@Andersson007)
 extends_documentation_fragment: postgres
@@ -68,7 +72,23 @@ EXAMPLES = r'''
     filter: tables, indexes
 '''
 
-RETURN = r''' # '''
+RETURN = r'''
+indexes:
+  description: User index statistics
+  returned: always
+  type: dict
+  sample: {"public": {"test_id_idx": {"idx_scan": 0, "idx_tup_fetch": 0, "idx_tup_read": 0, "relname": "test", "size": 8192, ...}}}
+tables:
+  description: User table statistics.
+  returned: always
+  type: dict
+  sample: {"public": {"test": {"analyze_count": 3, "n_dead_tup": 0, "n_live_tup": 0, "seq_scan": 2, "size": 0, "total_size": 8192, ...}}}
+functions:
+  description: User function statistics.
+  returned: always
+  type: dict
+  sample: {"public": {"inc": {"calls": 1, "funcid": 26722, "self_time": 0.23, "total_time": 0.23}}}
+'''
 
 try:
     from psycopg2.extras import DictCursor
